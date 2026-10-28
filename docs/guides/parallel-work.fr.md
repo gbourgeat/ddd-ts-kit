@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:4cef11c38d740ae1 -->
+<!-- translation-of: parallel-work.md sha256:32a68c30c8d971c2 -->
 
 # Travailler en parallèle sans collisions
 
@@ -142,7 +142,7 @@ mis de côté. Le message porte `Merge-Base: <commit>`, `Trunk: <commit>` et, qu
 trouvée écrasée sur le tronc, `Landed: <commit>` : `verify-merge` juge ensuite la fusion sur cette
 base. Une fusion terminée à la main par `git commit` garde ces *trailers*.
 
-`--dry-run` donne l'aperçu (rien ne change), `--abort` défait la fusion en cours (un fichier que le kit régénère et modifié après avoir été indexé par la fusion est restauré et nommé ; tout autre fichier changé à la main la fait refuser, code 2). L'arbre doit
+`--dry-run` donne l'aperçu (rien ne change), `--abort` défait la fusion en cours (un fichier que le kit régénère, comme une page de `docs/behaviour/` ou un `CONTEXT.md`, et modifié après avoir été indexé par la fusion est restauré et nommé ; tout autre fichier changé à la main la fait refuser, code 2). `--continue` conclut le *commit* du tronc avec lequel la fusion a commencé : si le tronc a avancé depuis, il affiche `trunk moved: ...` et, une fois la fusion validée, `npx ddd-ts-kit merge-trunk` de nouveau apporte le reste. Avec Prisma, une fusion qui a changé un fichier de `prisma/schema/` lance `npm run db:client` après `regenerate`, de sorte que `generated/schema.sql`, ignoré par git et lu par la base de test en processus, est à jour ; Drizzle, Knex et TypeORM ne dérivent aucun fichier de ce genre. L'arbre doit
 être propre (les fichiers de périphérique que le *sandbox* monte sur les chemins qu'il interdit ne comptent pas) et aucune autre fusion, aucun *rebase* ni *cherry-pick* en cours (sortie 2 sinon) ;
 le tronc n'est jamais récupéré, le *commit* qu'il nomme est affiché. `merge-trunk` demande
 git 2.40 ; un git plus ancien ne fusionne qu'à partir de la base que git calcule

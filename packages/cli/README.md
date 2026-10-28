@@ -1869,7 +1869,7 @@ ends with a commit), an unknown trunk.
 
    | Class | Paths | Resolution |
    |---|---|---|
-   | derived | `openapi/`, `clients/`, `docs/integration/`, `.dependency-cruiser.cjs`, the barrels and lists of each context | trunk side, rewritten by `regenerate` |
+   | derived | `openapi/`, `clients/`, `docs/integration/`, `docs/behaviour/`, `.dependency-cruiser.cjs`, the barrels and lists of each context | trunk side, rewritten by `regenerate` |
    | mixed document | `CONTEXT.md`, `docs/context-map.md` | a conflict inside a `<!-- ddd-ts-kit:<region> -->` region: trunk side; outside: for you |
    | registry | a conflict inside `// ddd-ts-kit:<region>` markers of any file | the base without what either side removed, plus what each added, ours first, once each; names imported from one module joined in one statement in `imports` |
    | slices | `docs/architecture/slices.md` | row by row by `#`: the furthest status (done, in progress, todo), each other cell from the side that changed it; a cell both changed differently: for you |
@@ -1891,7 +1891,11 @@ ends with a commit), an unknown trunk.
    names a table one of the branch names (generate it again on the trunk); a decision record of
    the branch whose number the trunk took since the base gets the next free one (its files, its
    `# ADR-NNNN` title, the links of its translations, recorded as `Lost-Accepted:` lines).
-6. **`regenerate`** (skipped without the config of the kit or the script); a failure stops.
+6. **`regenerate`** (skipped without the config of the kit or the script); a failure stops. With
+   Prisma, when the merge changed a file under `prisma/schema/`, then `npm run db:client`: the
+   git-ignored client and `generated/schema.sql`, which the in-process test database reads, are
+   derived from it; a failure stops. Drizzle, Knex and TypeORM derive no such file (their test
+   database reads the tracked sources), so they run nothing more.
 7. **`verify-merge`** on the uncommitted result, on the base the trailer records: an error stops
    (exit 1), with `file:line (ours|theirs)  <text>`, the rows no longer done, the tests lost;
    `--continue --accept-lost` records them in a `Lost-Accepted:` trailer and goes on.
@@ -1900,7 +1904,7 @@ ends with a commit), an unknown trunk.
    stored-events lock). Any other changed path is listed as left out and blocks it until it is
    staged or set aside. The hooks of the project run.
 
-`--abort` undoes the merge in progress as `git merge --abort` does and forgets its state. Each stop
+`--abort` undoes the merge in progress as `git merge --abort` does and forgets its state; the derived files the kit regenerated (`docs/behaviour/`, `CONTEXT.md`, the context map, ...) and modified after the merge staged them are restored and named. `--continue` concludes the trunk commit the merge started from: when the trunk ref names another commit now, the report says so (`trunkMoved: { merged, now }` in `--json`) and tells to run `merge-trunk` again once the merge is committed. Each stop
 says what to do next and keeps the merge in progress for the next `--continue`. git 2.40 is needed
 for a base git would not compute; an older git merges with `git merge` itself from
 `git merge-base` (`--since <merge base>`), and refuses `--dry-run`. Exit 0 once committed, up to
@@ -1922,7 +1926,7 @@ next: resolve each hunk, `git add <file>`, then `npx ddd-ts-kit merge-trunk --co
 ```
 
 `--json` prints the same report:
-`{ status, branch, trunk: { ref, commit }, base: { commit, evidence, landedAs?, unlanded?, notOnTrunk? }, conflicts: { plainMerge, ownDiff, automatic, forYou }, automatic: [{ file, kind, how }], forYou: [{ file, kind, why, hunks, ours: { branch, rows, change }, theirs: { ref, commits, change }, advice }], migrations, regenerate: { status, output? }, lostLines: { errors, warnings, accepted } | null, leftOut, stop?, commit?, next }`,
+`{ status, branch, trunk: { ref, commit }, base: { commit, evidence, landedAs?, unlanded?, notOnTrunk? }, conflicts: { plainMerge, ownDiff, automatic, forYou }, automatic: [{ file, kind, how }], forYou: [{ file, kind, why, hunks, ours: { branch, rows, change }, theirs: { ref, commits, change }, advice }], migrations, regenerate: { status, output? }, client?: { status, output? }, trunkMoved?: { merged, now }, lostLines: { errors, warnings, accepted } | null, leftOut, stop?, commit?, next }`,
 `status` being `up-to-date`, `dry-run`, `stopped` or `committed` and `evidence` `option`,
 `landed`, `recorded` or `merge-base`. The guard of the plugin refuses `--to-land` to a sub-agent:
 landing a branch is the conductor's step, just before its squash merge.

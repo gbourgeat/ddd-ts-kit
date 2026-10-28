@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:abcea9074d99a803 -->
+<!-- translation-of: README.md sha256:f527520a4c6fdb6b -->
 
 # ddd-ts-kit
 
@@ -1988,7 +1988,7 @@ par un *commit*), un tronc inconnu.
 
    | Classe | Chemins | Résolution |
    |---|---|---|
-   | dérivé | `openapi/`, `clients/`, `docs/integration/`, `.dependency-cruiser.cjs`, les *barrels* et listes de chaque contexte | côté du tronc, réécrit par `regenerate` |
+   | dérivé | `openapi/`, `clients/`, `docs/integration/`, `docs/behaviour/`, `.dependency-cruiser.cjs`, les *barrels* et listes de chaque contexte | côté du tronc, réécrit par `regenerate` |
    | document mixte | `CONTEXT.md`, `docs/context-map.md` | un conflit dans une région `<!-- ddd-ts-kit:<region> -->` : côté du tronc ; hors région : pour vous |
    | registre | un conflit entre des marqueurs `// ddd-ts-kit:<region>` de n'importe quel fichier | la base sans ce que l'un ou l'autre côté a retiré, plus ce que chacun a ajouté, le nôtre d'abord, une fois chacun ; dans `imports`, les noms importés d'un même module joints en une instruction |
    | tranches | `docs/architecture/slices.md` | ligne par ligne par `#` : le statut le plus avancé (done, in progress, todo), chaque autre cellule du côté qui l'a changée ; une cellule changée autrement par les deux : pour vous |
@@ -2013,7 +2013,11 @@ par un *commit*), un tronc inconnu.
    de la branche dont le tronc a pris le numéro depuis la base reçoit le prochain libre (ses
    fichiers, son titre `# ADR-NNNN`, les liens de ses traductions, consignés en lignes
    `Lost-Accepted:`).
-6. **`regenerate`** (sauté sans la configuration du kit ou le script) ; un échec arrête.
+6. **`regenerate`** (sauté sans la configuration du kit ou le script) ; un échec arrête. Avec
+   Prisma, quand la fusion a changé un fichier de `prisma/schema/`, puis `npm run db:client` : le
+   client et `generated/schema.sql`, ignorés par git et lus par la base de test en processus, en
+   sont dérivés ; un échec arrête. Drizzle, Knex et TypeORM ne dérivent aucun fichier de ce genre
+   (leur base de test lit les sources suivies), donc ils ne lancent rien de plus.
 7. **`verify-merge`** sur le résultat non commité, sur la base qu'enregistre le *trailer* : une
    erreur arrête (sortie 1), avec `file:line (ours|theirs)  <text>`, les lignes du plan qui ne
    sont plus terminées, les tests perdus ; `--continue --accept-lost` les consigne dans un
@@ -2024,7 +2028,7 @@ par un *commit*), un tronc inconnu.
    de côté et le bloque jusqu'à ce qu'il soit indexé ou mis de côté. Les *hooks* du projet
    tournent.
 
-`--abort` défait la fusion en cours comme `git merge --abort` et oublie son état. Chaque arrêt
+`--abort` défait la fusion en cours comme `git merge --abort` et oublie son état ; les fichiers dérivés que le kit a régénérés (`docs/behaviour/`, `CONTEXT.md`, la carte des contextes, ...) et modifiés après leur indexation par la fusion sont restaurés et nommés. `--continue` conclut le *commit* du tronc avec lequel la fusion a commencé : si la référence du tronc en nomme un autre maintenant, le rapport le dit (`trunkMoved: { merged, now }` en `--json`) et dit de relancer `merge-trunk` une fois la fusion validée. Chaque arrêt
 dit quoi faire ensuite et garde la fusion en cours pour le `--continue` suivant. git 2.40 est
 nécessaire pour une base que git ne calculerait pas ; un git plus ancien fusionne avec
 `git merge` lui-même depuis `git merge-base` (`--since <merge base>`), et refuse `--dry-run`.

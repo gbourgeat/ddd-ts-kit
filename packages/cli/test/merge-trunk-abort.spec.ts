@@ -43,6 +43,73 @@ function settled(code: number): string {
   return root;
 }
 
+const BEHAVIOUR = 'docs/behaviour/README.md';
+
+/** A trunk that changes a behaviour page (derived, staged by the merge) and an invoice in conflict, settled by hand. */
+function settledWithBehaviour(): string {
+  const root = trunkRepository({
+    [INVOICE]: 'class Invoice {\n}\n',
+    [BEHAVIOUR]: '# behaviour\n',
+    'ddd-ts-kit.config.json': JSON.stringify({ contexts: {} }),
+    'package.json': JSON.stringify({ name: 'billing', scripts: { regenerate: 'node -e "process.exit(3)"' } }),
+  });
+
+  onBranch(root, 'build/billing');
+  commitFiles(root, { [INVOICE]: 'class Invoice {\n  pay() {}\n}\n' }, 'feat(billing): pay');
+  onBranch(root, 'main');
+
+  commitFiles(
+    root,
+    { [INVOICE]: 'class Invoice {\n  cancel() {}\n}\n', [BEHAVIOUR]: '# behaviour\nmore\n' },
+    'feat: cancel (#2)',
+  );
+
+  onBranch(root, 'build/billing');
+
+  expect(mergeTrunk(root).code).toBe(1);
+
+  write(root, INVOICE, 'class Invoice {\n  pay() {}\n  cancel() {}\n}\n');
+  git(root, 'add', INVOICE);
+
+  return root;
+}
+
+describe('merge-trunk: a behaviour page it regenerates', () => {
+  it('is discarded by --abort, which names it, when it was modified after being staged', () => {
+    const root = settledWithBehaviour();
+
+    write(root, BEHAVIOUR, `${read(root, BEHAVIOUR)}regenerated again\n`);
+
+    expect(git(root, 'status', '--porcelain', '--', BEHAVIOUR).trim()).toBe(`MM ${BEHAVIOUR}`);
+
+    const aborted = goOn(root, '--abort');
+
+    expect(aborted.code).toBe(0);
+    expect(aborted.stdout).toContain(`discarded, the kit regenerates it: ${BEHAVIOUR}`);
+    expect(merging(root)).toBe(false);
+    expect(git(root, 'status', '--porcelain').trim()).toBe('');
+  }, 60_000);
+
+  it('is staged again after the regeneration, so that the merge can go on', () => {
+    const root = settledWithBehaviour();
+
+    write(
+      root,
+      'package.json',
+      JSON.stringify({
+        name: 'billing',
+        scripts: { regenerate: `node -e "require('fs').appendFileSync('${BEHAVIOUR}', 'x\\n')"` },
+      }),
+    );
+
+    git(root, 'add', 'package.json');
+
+    expect(goOn(root, '--continue').code).toBe(0);
+    expect(git(root, 'show', 'HEAD:' + BEHAVIOUR)).toContain('more');
+    expect(git(root, 'status', '--porcelain').trim()).toBe('');
+  }, 60_000);
+});
+
 describe('merge-trunk: a file it regenerates', () => {
   it('is staged again after the regeneration, so that the merge in progress can be aborted', () => {
     const root = settled(3);

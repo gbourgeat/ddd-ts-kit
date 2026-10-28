@@ -21,6 +21,10 @@ export interface MergeReport {
   /** What happened to the migrations: replayed, renamed, or why the merge stopped on them. */
   readonly migrations: readonly string[];
   readonly regenerate: StepRun;
+  /** `npm run db:client`, run when the merge changed a Prisma schema; absent otherwise. */
+  readonly client?: StepRun;
+  /** Set by `--continue` when the trunk moved since the merge started: the merge concludes `merged`, the trunk is now `now`. */
+  readonly trunkMoved?: { readonly merged: string; readonly now: string };
   /** The lines, rows and tests the result lost, as verify-merge reads them; null before that step. */
   readonly lostLines: LostLines | null;
   /** Changed paths that are not the merge's: they block its commit. */

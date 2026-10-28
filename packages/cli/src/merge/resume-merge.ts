@@ -2,9 +2,10 @@ import fs from 'node:fs';
 import { CliError } from '../cli-error';
 import { continueMerge, type ContinueOptions } from './continue-merge';
 import { gitPath } from './git-path';
+import { commitOf } from './lost/commit-of';
 import { mergeContextOf } from './merge-context';
 import type { MergeReport } from './merge-report';
-import { mergeState } from './merge-state';
+import { type MergeState, mergeState } from './merge-state';
 
 /** `merge-trunk --continue`: goes on with the merge merge-trunk left in progress in the project at `root`. */
 export function resumeMerge(root: string, options: ContinueOptions): MergeReport {
@@ -27,5 +28,15 @@ export function resumeMerge(root: string, options: ContinueOptions): MergeReport
     );
   }
 
-  return continueMerge(context, state, options);
+  return continueMerge(context, withTrunkMoved(context.repo.top, state), options);
+}
+
+/** The merge in progress concludes the trunk commit of its first run: when the ref names another commit now, the report says so. */
+function withTrunkMoved(top: string, state: MergeState): MergeState {
+  const { ref, commit } = state.report.trunk;
+  const now = commitOf(top, ref);
+
+  return now === undefined || now === commit
+    ? state
+    : { ...state, report: { ...state.report, trunkMoved: { merged: commit, now } } };
 }

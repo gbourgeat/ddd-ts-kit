@@ -1,5 +1,5 @@
 import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
-import { isDerived } from '../derived/is-derived';
+import { isDerivedInMerge } from './is-derived-in-merge';
 import { SLICES_FILE } from '../progress/read-slices';
 import { CLIENTS_DIRECTORY } from '../sdk/clients-directory';
 import type { MergeRepository } from './lost/merge-repository';
@@ -50,7 +50,7 @@ export function classifyConflict(file: string, repo: MergeRepository): ConflictC
     return 'client-manifest';
   }
 
-  if (isDerived(inProject, repo)) {
+  if (isDerivedInMerge(inProject, repo)) {
     return 'derived';
   }
 

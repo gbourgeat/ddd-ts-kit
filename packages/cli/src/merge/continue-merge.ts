@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { isRecord } from '../config/values/is-record';
+import { PRISMA_SCHEMA_FOLDER } from '../prisma-schema';
 import { runScript } from '../slice/run-script';
 import { commitMerge } from './commit-merge';
+import { gitProcess } from './git-process';
 import { lostLinesGate } from './lost-lines-gate';
 import type { MergeContext } from './merge-context';
 import type { MergeReport, StepRun } from './merge-report';
@@ -62,8 +64,22 @@ function checkedAndCommitted(context: MergeContext, state: MergeState, options: 
     return stopped(context, withRegenerate, { why: '`npm run regenerate` failed', next: NEXT_STEPS.regenerate });
   }
 
+  const client = prismaClient(context);
+
+  if (client?.status === 'failed') {
+    return stopped(
+      context,
+      { ...withRegenerate, report: { ...withRegenerate.report, client } },
+      { why: '`npm run db:client` failed', next: NEXT_STEPS.client },
+    );
+  }
+
   const lostLines = lostLinesGate(context.repo, options.acceptLost);
-  const checked: MergeState = { ...withRegenerate, report: { ...withRegenerate.report, lostLines } };
+
+  const checked: MergeState = {
+    ...withRegenerate,
+    report: { ...withRegenerate.report, ...(client === undefined ? {} : { client }), lostLines },
+  };
 
   if (lostLines.errors.length > 0) {
     return stopped(context, checked, {
@@ -134,6 +150,27 @@ function regenerated({ root, config }: MergeContext): StepRun {
   }
 
   const run = runScript({ root, manager: config.stack.packageManager, script: 'regenerate' });
+
+  return run.ok ? { status: 'ok' } : { status: 'failed', output: run.output };
+}
+
+/**
+ * `npm run db:client` when the merge changed a Prisma schema (the index or the working tree differs from HEAD under
+ * prisma/schema): the git-ignored client and the schema of the in-process test database are derived from it. Drizzle,
+ * Knex and TypeORM derive nothing of the kind: their test database reads the tracked sources at run time.
+ */
+function prismaClient({ root, config, repo }: MergeContext): StepRun | undefined {
+  if (config?.stack.orm !== 'prisma' || !hasScript(root, 'db:client')) {
+    return undefined;
+  }
+
+  const changed = gitProcess(repo.top, ['diff', '--name-only', 'HEAD', '--', `${repo.prefix}${PRISMA_SCHEMA_FOLDER}`]);
+
+  if (changed.stdout.trim() === '') {
+    return undefined;
+  }
+
+  const run = runScript({ root, manager: config.stack.packageManager, script: 'db:client' });
 
   return run.ok ? { status: 'ok' } : { status: 'failed', output: run.output };
 }

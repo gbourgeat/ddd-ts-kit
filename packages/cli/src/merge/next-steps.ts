@@ -9,6 +9,7 @@ export const NEXT_STEPS = {
   install: 'fix the install (its output above), then `npx ddd-ts-kit merge-trunk --continue`',
   regenerate:
     'fix what makes `npm run regenerate` fail (its output above), then `npx ddd-ts-kit merge-trunk --continue`',
+  client: 'fix what makes `npm run db:client` fail (its output above), then `npx ddd-ts-kit merge-trunk --continue`',
   lostLines:
     'restore them (`git show ORIG_HEAD:<file>`), then `npx ddd-ts-kit merge-trunk --continue`; a deliberate removal: `--continue --accept-lost` (recorded in the merge commit)',
   leftOut:
