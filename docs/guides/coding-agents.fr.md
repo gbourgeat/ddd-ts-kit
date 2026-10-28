@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:ff9574f94ae13c25 -->
+<!-- translation-of: coding-agents.md sha256:da9be1662c11ec75 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -12,6 +12,10 @@ les trois agents :
 | Codex | `codex plugin marketplace add gbourgeat/ddd-ts-kit`, puis installer `ddd-ts-kit` depuis `/plugins` et approuver ses hooks dans `/hooks` | `$start` |
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
 | Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` qu'écrit `init` : l'agent cloud l'installe, VS Code le recommande | par son nom, `start` |
+
+Une session ne trouve que les skills installées à son démarrage : ouvrez une nouvelle session
+après l'installation. Demandée dans la session qui a installé le plugin, une skill est introuvable,
+et l'agent continue sans elle.
 
 Vingt-deux skills, dans l'ordre où un projet les rencontre :
 

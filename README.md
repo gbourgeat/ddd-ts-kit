@@ -79,6 +79,10 @@ the hook of the plugin refuses a write that breaks a rule.
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, then `copilot plugin install ddd-ts-kit@ddd-ts-kit` | by its name, `start` |
 | Copilot cloud agent, VS Code | declared by the `.github/copilot/settings.json` the project gets at its bootstrap | by its name, `start` |
 
+A session finds only the skills installed when it started: open a new session after the
+install. Asked for in the session that installed the plugin, `start` is not found, and the agent
+goes on without the skill and its steps.
+
 **2. Open a session in an empty directory, and give it your needs:**
 
 ```text
@@ -91,8 +95,12 @@ each strategic choice. It writes the discovery, the bounded contexts and their g
 them one commit at a time, green on the whole gate at every step. A later session resumes from
 `docs/architecture/plan.md`: the same skill, with no argument.
 
-The machine needs Node 22.12 or later: the agent runs the CLI through `npx`. Without the plugin,
-the `AGENTS.md` and the rules by layer that the bootstrap writes still guide any agent.
+The machine needs Node 22.12 or later: the agent runs the CLI through `npx`. Before the
+bootstrap, the first `npx ddd-ts-kit` fetches the CLI from npm, once; an agent that asks before
+running a command, such as the Copilot CLI, asks for it: allow it for the directory. After the
+bootstrap, the CLI is a development dependency of the project and `npx` runs it from
+`node_modules`. Without the plugin, the `AGENTS.md` and the rules by layer that the bootstrap
+writes still guide any agent.
 
 ## Start a project
 

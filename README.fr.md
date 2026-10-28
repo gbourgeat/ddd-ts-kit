@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1ff27c2e42874190 -->
+<!-- translation-of: README.md sha256:56c08c43505f5e1f -->
 
 <div align="center">
 
@@ -83,6 +83,10 @@ règle.
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
 | Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` que le projet reçoit à son amorçage | par son nom, `start` |
 
+Une session ne trouve que les skills installées à son démarrage : ouvrez une nouvelle session
+après l'installation. Demandée dans la session qui a installé le plugin, `start` est introuvable,
+et l'agent continue sans la skill ni ses étapes.
+
 **2. Ouvrez une session dans un dossier vide, et donnez-lui vos besoins :**
 
 ```text
@@ -95,8 +99,12 @@ glossaires sous `docs/architecture/` pour que vous les relisiez, puis amorce le 
 les tranches et les construit un commit à la fois, vert sur toute la porte à chaque étape. Une
 session ultérieure reprend depuis `docs/architecture/plan.md` : la même skill, sans argument.
 
-La machine a besoin de Node 22.12 ou ultérieur : l'agent lance la CLI par `npx`. Sans le plugin,
-l'`AGENTS.md` et les règles par couche qu'écrit l'amorçage guident tout de même chaque agent.
+La machine a besoin de Node 22.12 ou ultérieur : l'agent lance la CLI par `npx`. Avant
+l'amorçage, le premier `npx ddd-ts-kit` télécharge la CLI depuis npm, une fois ; un agent qui
+demande avant de lancer une commande, comme la Copilot CLI, le demande : autorisez-le pour le
+dossier. Après l'amorçage, la CLI est une dépendance de développement du projet et `npx` la
+lance depuis `node_modules`. Sans le plugin, l'`AGENTS.md` et les règles par couche qu'écrit
+l'amorçage guident tout de même chaque agent.
 
 ## Démarrer un projet
 

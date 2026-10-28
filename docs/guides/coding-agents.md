@@ -12,6 +12,10 @@ for the three agents:
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, then `copilot plugin install ddd-ts-kit@ddd-ts-kit` | by its name, `start` |
 | Copilot cloud agent, VS Code | declared by the `.github/copilot/settings.json` that `init` writes: the cloud agent installs it, VS Code recommends it | by its name, `start` |
 
+A session finds only the skills installed when it started: open a new session after the
+install. Asked for in the session that installed the plugin, a skill is not found, and the agent
+goes on without it.
+
 Twenty-two skills, in the order a project meets them:
 
 | Skill | Use |
