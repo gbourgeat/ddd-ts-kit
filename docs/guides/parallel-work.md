@@ -721,6 +721,23 @@ excerpt; the worker starts each one once the rows it depends on are merged.
 What makes the plan work is that phases 0 and 1 are deliberately not parallel. They take a
 small fraction of the total time and remove nearly every collision from the rest.
 
+## Run the conductor unattended
+
+A conductor started with `claude -p` (a scheduled job, a script) has no one to answer. The brief
+says so, names the wave to build and tells whether the project has a remote; Claude Code does not
+expose it otherwise. The [skill](../../plugin/skills/parallel-work/SKILL.md) then holds the
+conductor to five rules:
+
+- keep the turn while a worker runs. `claude -p` waits for background agents only up to 10
+  minutes of idle (`CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS`), and not at all with `--bare`; the
+  rest stops with its work uncommitted;
+- never resume a worker with `SendMessage`: merge the trunk into its branch and launch a new
+  `context-builder` on the same worktree with the rows left (`worker-scope --resume --fresh`);
+- after two stops on one row without a new commit, finish the row itself;
+- when the owner lets it push, push the integration branch (`work/<plan>`) after each merge of a
+  worker, never the main branch: a restart loses one worker, not the run;
+- stop at the end of the wave of `plan-waves` it was given, with a report.
+
 ## Limits and when not to use it
 
 - **Parallelism does not help discovery.** While the boundaries and the language are still

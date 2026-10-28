@@ -201,7 +201,7 @@ is missing after a worker returns, write it yourself from the worker's final mes
    the row under way only and the files the earlier agent left.
 4. A rate or session limit: wait for the reset, then step 1.
 5. Bounded autonomy: after two stops on one row without a new commit, stop resuming it: split
-   the row in `slices.md` (plan-slices), or ask the owner.
+   the row in `slices.md` (plan-slices), or ask the owner (unattended: finish it yourself, section 7).
 
 A report sorts its needs. A **blocking** one stops that row: do it in your worktree and land it, have the
 worker bring the trunk in (`npx ddd-ts-kit merge-trunk`), then launch the next agent. A **note** waits for the merge of the
@@ -284,5 +284,27 @@ of the set) as you merge its branch, before `npm run verify`: `authz/granted` wa
 When a worker reports a need on a shared file: do it in your worktree, land it, tell the worker
 to merge the trunk. Remove each worktree once its branch is merged
 (`git worktree remove .worktrees/<context>`).
+
+## 7. A conductor that runs unattended
+
+The session is unattended (`claude -p`, a scheduled job) when the brief says so or when no one is
+there to answer; nothing else tells it, so a brief that starts such a run states it, the wave to
+build and whether the project has a remote. Then:
+
+- **Keep the turn while a worker runs.** Wait for its notification, or work on the trunk. Ending
+  the turn ends the session: `claude -p` waits for background agents for 10 minutes of idle at most
+  (`CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS`), `--bare` has none, and what is left stops with its
+  work uncommitted in the worktree.
+- **Never resume a worker by message** (`SendMessage` fails or restarts it without its history):
+  `npx ddd-ts-kit merge-trunk --cwd <worktree>`, then launch a new `context-builder` on the same
+  worktree with the `--fresh` resume briefing (the rows left, what the last one did).
+- **After two stops on one row without a new commit, finish the row yourself** in the worktree,
+  by the rules of its briefing; launch no third worker on it.
+- **Checkpoint.** With a remote and the owner's permission to push, after each merge of a worker
+  push the integration branch (`git push origin work/<plan>`), never the main branch. A restart then
+  loses one worker, not the run. Without that permission, commit after each merge and say in the
+  report that the branch is local.
+- **Stop at the end of the wave** of `plan-waves` you were given, with the report (merged, left, needs),
+  unless the brief names more waves or a time to stop.
 
 Token rules for everyone: [../start/token-economy.md](../start/token-economy.md).

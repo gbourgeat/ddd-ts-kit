@@ -10,6 +10,7 @@ import { source } from './source';
 const { BILLING, CATALOG, INTEGRATION_HANDLER, INTEGRATION_HANDLER_SPEC, PAYMENT_ADAPTER } = PATHS;
 const TABLES = `${BILLING}/infrastructure/persistence/create-billing-tables.schema.ts`;
 const DECLARATION = `${BILLING}/infrastructure/persistence/invoice.personal-fields.ts`;
+const MAPPER = `${BILLING}/infrastructure/persistence/invoice-events.mapper.ts`;
 const EVENT = `${CATALOG}/published-language/product-listed.v1.integration-event.ts`;
 const PAYLOAD = `${CATALOG}/published-language/product-listed.v1.payload.ts`;
 const ERASURE = `${BILLING}/application/ports/billing-personal-data-erasure.port.ts`;
@@ -31,6 +32,36 @@ export const PRIVACY_FIXTURES: readonly Fixture[] = [
     files: privacyOn({
       [TABLES]: knexTable("table.text('customer_email');"),
       [DECLARATION]: declaration("{ subject: 'id', fields: ['customer_email'], erasure: 'pseudonymise' }"),
+    }),
+  },
+  {
+    ruleId: 'privacy/declared-field',
+    name: 'a key of an event mapper that personalData seals in the same file, on the write and the read side',
+    expect: 'pass',
+    files: privacyOn({
+      [MAPPER]: source(
+        'function borrowerDataOf(subject: string, borrower: Borrower) {',
+        '  return { postalAddress: personalData(subject, borrower.postalAddress) };',
+        '}',
+        'function borrowerOf(data: StoredEventData) {',
+        "  return Borrower.create(data.text('postalAddress'));",
+        '}',
+      ),
+    }),
+  },
+  {
+    ruleId: 'privacy/declared-field',
+    name: 'a key of an event mapper named like personal data and stored in clear, beside one that is sealed',
+    expect: { file: MAPPER },
+    files: privacyOn({
+      [MAPPER]: source(
+        'function borrowerDataOf(subject: string, borrower: Borrower) {',
+        '  return { postalAddress: personalData(subject, borrower.postalAddress), email: borrower.email };',
+        '}',
+        'function borrowerOf(data: StoredEventData) {',
+        "  return Borrower.create(data.text('postalAddress'), data.text('email'));",
+        '}',
+      ),
     }),
   },
   {

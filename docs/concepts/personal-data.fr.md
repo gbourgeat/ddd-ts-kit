@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:b4ac571aa47f3db6 -->
+<!-- translation-of: personal-data.md sha256:4bff53cd653ced7d -->
 
 # Les données personnelles dans un projet généré
 
@@ -287,7 +287,9 @@ Elles lisent des noms, pas des contenus, c'est pourquoi chacune dit ce qu'elle n
 (`npx ddd-ts-kit explain privacy/declared-field`). Une colonne qui ne tient rien d'une personne dans
 un projet (la boîte aux lettres partagée d'une équipe) est une dérogation enregistrée là où elle
 s'écrit, `// ddd-ts-kit-disable-next-line privacy/declared-field -- ADR-NNNN: <why>`, ou un mot de
-`privacy.allow`.
+`privacy.allow`. Un flux d'événements n'a pas de table : une clé d'un *mapper* d'événements que le même
+fichier scelle avec `personalData(subject, value)` est déclarée par là, et seule une clé stockée en
+clair est signalée.
 
 ## Ce qui reste hors de portée
 

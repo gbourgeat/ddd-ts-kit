@@ -1,7 +1,8 @@
 import type { Project } from '../model/project';
 import type { Rule } from '../model/rule';
 import type { Violation } from '../model/violation';
-import { columnDefinitionsIn } from '../privacy/column-definitions-in';
+import type { SourceFile } from '../model/source-file';
+import { type ColumnDefinition, columnDefinitionsIn } from '../privacy/column-definitions-in';
 import { declaresName } from '../privacy/declares-name';
 import { type PersonalDeclarationOf, personalDeclarationsOf } from '../privacy/personal-declarations-of';
 import { personalTermOf } from '../privacy/personal-term-of';
@@ -11,6 +12,8 @@ import { vocabularyOf } from '../privacy/vocabulary-of';
 import { reporter } from '../support/reporter';
 
 const SUFFIX = '.personal-fields.ts';
+/** A key of an event payload sealed under the key of its data subject: `name: personalData(subject, value)`. */
+const SEALED = /\b([A-Za-z_$][\w$]*)\s*:\s*personalData\(/g;
 
 /** A column named like personal data and the context that keeps it. */
 interface Kept {
@@ -26,7 +29,9 @@ interface Kept {
  * the erasure, the export, the retention and the register read the declarations, never the
  * columns, and a column left out is a copy of the person nobody erases. Read in the persistence
  * files of the contexts (a Knex table, a Drizzle table, a TypeORM entity schema) and in the
- * models of `prisma/schema/` in the schema of a context. Silent with `stack.privacy` off.
+ * models of `prisma/schema/` in the schema of a context. A key of an event mapper that the same
+ * file seals with `personalData(subject, value)` is declared by that: it is read as `data.text('key')`
+ * and is not a column. Silent with `stack.privacy` off.
  */
 export const privacyDeclaredField: Rule = {
   id: 'privacy/declared-field',
@@ -64,7 +69,7 @@ function keptColumns(project: Project): Kept[] {
 
   return [
     ...files.flatMap((file) =>
-      columnDefinitionsIn(file).map(({ column, property, line }) => ({
+      unsealed(file, columnDefinitionsIn(file)).map(({ column, property, line }) => ({
         context: file.location.area === 'context' ? file.location.context : '',
         file: file.path,
         line,
@@ -78,6 +83,12 @@ function keptColumns(project: Project): Kept[] {
       names: [column, field],
     })),
   ];
+}
+
+function unsealed(file: SourceFile, columns: ColumnDefinition[]): ColumnDefinition[] {
+  const sealed = new Set([...file.scan.code.matchAll(SEALED)].map((match) => match[1]));
+
+  return columns.filter(({ column, property }) => ![column, property].some((name) => sealed.has(name)));
 }
 
 function undeclared(
