@@ -428,12 +428,24 @@ turn) is awaited with `await application.settled()`, then asserted at once. A fi
 when long and flaky when short; `settled` resolves as soon as the outbox holds no pending event,
 and when the time is up it fails naming what is still pending and how much of it failed.
 
+An outside system that answers nowhere in a test run (the identity provider of the identity preset)
+would keep that outbox retrying, so `settled()` would never end. The shared support
+(`test/e2e/support/start-application.ts`) answers it with its fake of `test/fakes/`, bound in
+`contextsOfTheRun()`: the identity preset binds `FakeIdentityProviderAdmin` there, and the person who
+adds another outside system binds its fake in the same place.
+
 A use case no route reaches is started by the integration event its handler receives: its
 end-to-end spec (`ddd-ts-kit generate e2e <context> <UseCase>`, with `--event <eventType>` when
 handlers of several events send its command) builds that event from the declaration of the
 upstream, hands it to the running application with `await application.publish([event])`, as the
 relay of the upstream would, then awaits `application.settled()` before asserting what a client or
 another context observes.
+
+A use case only a job starts (`generate job`, no route, no handler) gets the same spec with a
+different start: it runs the job as the scheduler would with `await application.runJob('<context>.<job>')`
+of the shared support, awaits `application.settled()`, and leaves what to observe to fill. The
+generator looks for a route, then a handler that sends the command, then a job that sends it, and
+names the three when it finds none.
 
 The acceptance of a story is an end-to-end spec written before its code, from the criteria of the
 story (`docs/architecture/stories/<story>.md`): `test/acceptance/<story>.acceptance.spec.ts`, one

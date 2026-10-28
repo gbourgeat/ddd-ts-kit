@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:9ded6af1d89cfae1 -->
+<!-- translation-of: modules.md sha256:65a6317b6ad0b127 -->
 
 # Modules du modèle
 
@@ -70,8 +70,9 @@ comment rompre leur cycle.
   base (une base par contexte), ses groupes de routes, ses gardes et ses formes partagées (un
   groupe de routes donne un préfixe aux routes d'une ressource, quel que soit le module qui leur
   répond), et les *fakes*, *builders* et mondes de ses *specs*.
-- **« Module » nomme déjà deux choses du kit** : `<context>.module.ts` (câblage explicite) et
-  `ContextModule` de `@ddd-ts-kit/di`. Les pages disent « module du modèle » partout où les deux
+- **« Module » nomme déjà d'autres choses du kit** : `<context>.module.ts` (câblage explicite),
+  le fichier de module d'un module du modèle qu'il compose (`<module>/<module>.module.ts`), et
+  `ContextModule` de `@ddd-ts-kit/di`. Les pages disent « module du modèle » partout où ils
   pourraient être confondus.
 
 ## Quand diviser un contexte, et quand ne pas le faire
@@ -105,7 +106,9 @@ src/contexts/appointments/
   appointments.permissions.ts                  l'ensemble des permissions du contexte
   appointments.declarations.ts                 généré, à la racine comme avant
   published-language/                          un par contexte
+  appointments.module.ts                       style explicite : compose les fichiers de module des modules
   booking/
+    booking.module.ts                          style explicite : ce que booking enregistre
     domain/
       aggregates/appointment.aggregate.ts
       errors/slot-taken.error.ts
@@ -136,9 +139,21 @@ Ce qui ne passe jamais dans un module : `<context>.codes.ts`,
 `<context>.declarations.ts` et `<context>.dependencies.ts`, `CONTEXT.md`, `published-language/`,
 les `*.schema.ts` de `infrastructure/persistence/` qui ne sont pas un schéma de ligne, les groupes
 de routes (`presentation/http/*.routes.ts`), `presentation/http/guards/` et
-`presentation/http/shared/`, et `test/fakes/`, `test/builders/` et `test/worlds/`. Un module n'a jamais de glossaire, de schéma de base de données, de langage
-publié ni de fichier de module à lui, et deux modules d'un même contexte n'échangent jamais
-d'événements d'intégration : une partie qui a besoin de l'un d'eux est un contexte.
+`presentation/http/shared/`, et `test/fakes/`, `test/builders/` et `test/worlds/`. Un module n'a jamais de glossaire, de schéma de base de données ni de
+langage publié à lui, et deux modules d'un même contexte n'échangent jamais d'événements
+d'intégration : une partie qui a besoin de l'un d'eux est un contexte.
+
+Dans le style explicite, ce qui câble les classes se divise de la même façon. Chaque module a son
+fichier de module, `<module>/<module>.module.ts`, le seul fichier à la racine de son dossier : il
+enregistre les *handlers*, les consommateurs, les réactions, les tâches, les permissions et les
+routes du module, et `<context>.module.ts` compose les fichiers de module et garde ce que le
+contexte tient à son propre niveau. Un contexte de quatre modules a alors cinq fichiers de module
+d'une taille lisible, et non un seul qui dépasse les 350 lignes de `clean/file-size`. Sur
+tsyringe, un fichier de module exporte `{ register(builder), onStart({ resolve }) }`, appelés
+depuis `register` et `onStart` du contexte ; câblé à la main, il exporte `registerHandlers`,
+`registerReactions`, `registerJobs`, `useCases()` et `routes(platform)`, appelés depuis les
+fonctions de même nom. Dans le style déclaré, un module n'a pas de fichier de module : ses classes
+se déclarent elles-mêmes, et chaque couche du module a ses déclarations générées.
 
 ### La configuration et CONTEXT.md
 
@@ -168,7 +183,7 @@ module :
 
 | Règle | Tient | Sévérité |
 |---|---|---|
-| `tree/closed` | accepte le dossier d'un module déclaré à la racine du contexte, et signale toujours celui que la configuration ne déclare pas ; son correctif nomme `generate module` | `error` |
+| `tree/closed` | accepte le dossier d'un module déclaré à la racine du contexte, et son fichier de module `<module>/<module>.module.ts` à la racine du module, rien d'autre à cet endroit ; signale toujours un dossier que la configuration ne déclare pas, avec `generate module` pour correctif | `error` |
 | `module/declared` | chaque module de `contexts.<name>.modules` est nommé avec des termes du glossaire de son contexte (chaque mot de son nom ; les mots techniques sont refusés (`shared`, `common`, `core`, `misc`, `utils` et les autres mots techniques de `language/no-technical-name`)) et a une ligne dans `## Modules` de `CONTEXT.md` | `error` |
 | `module/complete` | dès qu'un contexte déclare des modules, un fichier d'une couche hors de tout module, les fichiers que le contexte garde à part exceptés, est signalé, comme une *spec* restée dans `test/unit/` alors que le fichier dont elle porte le nom est dans un module, et un module encore là où 0.86 et 0.87 le mettaient (`domain/<module>/`) | `warn`, pour qu'un contexte passe en modules un commit à la fois |
 | `module/no-cycle` | les imports entre les modules d'un même contexte ne forment aucun cycle | `warn`, parce qu'Evans fait du couplage entre modules un signal pour changer le modèle, pas un refus |
@@ -194,6 +209,14 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   infrastructure/persistence/knex-appointment.repository.ts presentation/http/appointments/book-appointment
 ```
 
+- Dans le style explicite, `generate module` écrit aussi le fichier de module du module,
+  `<module>/<module>.module.ts`, et le compose depuis `<context>.module.ts`. Relancé pour un
+  module déclaré avant, il les ajoute et rien d'autre. Un générateur lancé avec `--module` écrit
+  ensuite son enregistrement dans ce fichier de module, et dans `<context>.module.ts` tant que le
+  module n'en a pas. Câblé à la main, un cas d'utilisation dont un autre fichier de module crée
+  déjà le *repository* est enregistré dans ce fichier, pour qu'un *repository* ne soit créé
+  qu'une fois par contexte. Les enregistrements écrits avant que le fichier de module existe
+  restent dans `<context>.module.ts` jusqu'à ce qu'on les déplace à la main, avec leurs imports.
 - Avec `--module`, les fichiers qu'un générateur lit (un agrégat existant, un événement, un port)
   sont trouvés dans le module qui les tient, et les imports qu'il écrit nomment leur emplacement.
   Un fichier d'un cas d'usage déjà dans un module est écrit avec lui, `--module` ou non ; un
@@ -237,6 +260,10 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   `move-to-module` ne les a pas rassemblées.
 - Dans le style déclaré assemblé par barrel, chaque couche d'un module a son
   `<layer>.declarations.ts` généré, réexporté par `<context>.declarations.ts`.
+- Dans le style explicite, `check` lit le fichier de module d'un module comme un fichier de
+  module de son contexte (`composition/only-in-module`, `declarations/port-adapter-wired`,
+  `authz/declared`, `domain-events/transactional-before-commit`), et `describe`, `docs` et les
+  générateurs lisent ensemble les enregistrements de tous les fichiers de module d'un contexte.
 - `discoverContext` de `@ddd-ts-kit/di` s'exécute sans la configuration : il lit les modules dans
   le `<context>.dependencies.ts` généré, que `ddd-ts-kit docs` écrit avec eux
   (`export const modules = [...]`), et charge les fichiers de rôle de `<module>/application/`,

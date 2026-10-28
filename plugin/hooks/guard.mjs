@@ -22,7 +22,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 const CONFIG = 'ddd-ts-kit.config.json';
 // The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
 // the version of the kit: setting a new version of the packages rewrites it.
-const KIT_VERSION = '0.97.0';
+const KIT_VERSION = '0.98.0';
 const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
 // The worktree of a story one session takes to its pull request; its code waits for the build gate.

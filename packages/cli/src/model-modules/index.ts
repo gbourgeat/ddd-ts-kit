@@ -16,3 +16,7 @@ export { moduleNameFlaw } from './module-name-flaw';
 export { WITHOUT_MODULE } from './without-module';
 export { modulesByContext, type ModulesByContext } from './modules-by-context';
 export { treeOf, type ContextTree } from './context-tree';
+export { moduleFileOf } from './module-file-of';
+export { moduleOfModuleFile } from './module-of-module-file';
+export { wiringFilesOf } from './wiring-files-of';
+export { wiringTextOf } from './wiring-text-of';

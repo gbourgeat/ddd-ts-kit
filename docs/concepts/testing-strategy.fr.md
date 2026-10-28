@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:e67d954fa8badbb3 -->
+<!-- translation-of: testing-strategy.md sha256:70adf8e7a0df7c57 -->
 
 # Stratégie de test
 
@@ -449,12 +449,24 @@ Un délai fixe est lent quand il est long et instable quand il est court ; `sett
 que l'outbox ne tient plus aucun événement en attente, et quand le temps est écoulé il échoue en
 nommant ce qui attend encore et combien en a échoué.
 
+Un système extérieur qui ne répond nulle part dans une exécution de test (le fournisseur d'identité
+du *preset* identity) ferait retenter l'outbox sans fin, et `settled()` ne se terminerait jamais. Le
+support partagé (`test/e2e/support/start-application.ts`) lui répond par son *fake* de
+`test/fakes/`, lié dans `contextsOfTheRun()` : le *preset* identity y lie `FakeIdentityProviderAdmin`,
+et qui ajoute un autre système extérieur y lie son *fake*.
+
 Un cas d'usage qu'aucune route n'atteint est lancé par l'événement d'intégration que reçoit son
 gestionnaire : sa spec de bout en bout (`ddd-ts-kit generate e2e <context> <UseCase>`, avec
 `--event <eventType>` quand des gestionnaires de plusieurs événements envoient sa commande)
 construit cet événement depuis la déclaration de l'amont, le remet à l'application qui tourne avec
 `await application.publish([event])`, comme le ferait le relais de l'amont, puis attend
 `application.settled()` avant de vérifier ce qu'un client ou un autre contexte observe.
+
+Un cas d'usage que seul un *job* lance (`generate job`, ni route ni gestionnaire) reçoit la même
+*spec* avec un autre départ : elle exécute le *job* comme le ferait l'ordonnanceur avec
+`await application.runJob('<context>.<job>')` du support partagé, attend `application.settled()`,
+et laisse à remplir ce qu'il faut observer. Le générateur cherche une route, puis un gestionnaire
+qui envoie la commande, puis un *job* qui l'envoie, et nomme les trois quand il n'en trouve aucun.
 
 L'acceptation d'une *story* est une *spec* de bout en bout écrite avant son code, à partir des
 critères de la *story* (`docs/architecture/stories/<story>.md`) :

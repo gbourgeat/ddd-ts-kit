@@ -7,17 +7,27 @@ import {
   PurgingPublisher,
   type IntegrationEvent,
   type IntegrationEventSubscriber,
+  type JobScheduler,
 } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless httpCache.varnish}}
-import type { IntegrationEvent, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+import type { IntegrationEvent, IntegrationEventSubscriber, JobScheduler } from '@ddd-ts-kit/kernel';
 {{/unless}}
+{{#if di.tsyringe}}
+import { defineContextModule } from '@ddd-ts-kit/di';
+{{/if}}
 import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
 import { relateSystemActors } from '{{alias.platform}}/auth/relationships/relate-system-actors{{alias.ext}}';
 import { relationTuples } from '{{alias.platform}}/auth/relationships/relation-tuples{{alias.ext}}';
 {{/if}}
-import { composeApplication } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+{{#if di.tsyringe}}
+import { composeApplication, everyContext } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+import type { ContextSelection } from '{{alias.platform}}/composition/context-selection{{alias.ext}}';
+{{/if}}
+{{#unless di.tsyringe}}
+import { composeApplication, everyContext } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+{{/unless}}
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';
@@ -50,6 +60,9 @@ import { noRedis, testEnvironment } from '{{alias.test}}/e2e/support/test-enviro
 import { testEnvironment } from '{{alias.test}}/e2e/support/test-environment{{alias.ext}}';
 {{/unless}}
 {{/unless}}
+
+// ddd-ts-kit:imports
+// /ddd-ts-kit:imports
 
 /** The whole application, real adapters included, as a client and another context see it. */
 export interface RunningApplication {
@@ -99,6 +112,13 @@ export interface RunningApplication {
   relate(tuple: RelationTuple): Promise<void>;
 {{/if}}
 
+  /**
+   * Runs a job at once, as its schedule would, for a spec of what only a job starts: the name is
+   * `<context>.<job>`. It rejects when the job failed or did not run. Await `settled()` next, before
+   * asserting what the job started.
+   */
+  runJob(name: string): Promise<void>;
+
 {{#if authz.rebac}}
   /**
    * Empties the database and writes the relationships of the system actors again, the state right
@@ -133,6 +153,7 @@ export async function startApplication(): Promise<RunningApplication> {
 {{/if}}
     as: async (actor) => started.client.withHeaders(await credentials.headersOf(actor)),
     publish: (events) => started.publish(events),
+    runJob: (name) => started.runJob(name),
 {{#if authz.rebac}}
     relate: (tuple) => relationTuples.write([tuple]),
 {{/if}}
@@ -159,6 +180,8 @@ interface Started {
 
   publish(events: readonly IntegrationEvent[]): Promise<void>;
 
+  runJob(name: string): Promise<void>;
+
   settled(options?: SettledOptions): Promise<void>;
 
   close(): Promise<void>;
@@ -170,13 +193,8 @@ async function start(database: TestDatabase, config: AppConfig, credentials: Cre
   const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
 
 {{/if}}
-  const application = composeApplication(database.persistence, {
-    events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}},
-    authenticator: credentials.authenticator,
-{{#if cache.redis}}
-    ...(redis === undefined ? {} : { redis }),
-{{/if}}
-  });
+  const options = optionsOf(config, credentials{{#if cache.redis}}, redis{{/if}});
+  const application = composeApplication(database.persistence, options, contextsOfTheRun());
 
   await application.start();
 
@@ -208,6 +226,7 @@ async function start(database: TestDatabase, config: AppConfig, credentials: Cre
     purges,
 {{/if}}
     publish: (events) => application.eventBus.publish(events),
+    runJob: (name) => runJob(application.jobs, name),
 {{#if events.outbox}}
     settled: (options) => settled({ outbox: () => database.persistence.outbox.stats() }, options),
 {{/if}}
@@ -228,9 +247,58 @@ async function start(database: TestDatabase, config: AppConfig, credentials: Cre
     },
   };
 }
+
+/** What the application is built on in a test run: the events, the credentials of the specs and what the environment provides. */
+function optionsOf(config: AppConfig, credentials: Credentials{{#if cache.redis}}, redis: ReturnType<typeof openRedis> | undefined{{/if}}) {
+  return {
+    events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}},
+    authenticator: credentials.authenticator,
+{{#if cache.redis}}
+    ...(redis === undefined ? {} : { redis }),
+{{/if}}
+  };
+}
 {{#if broker.provided}}
 
 function eventsOf(config: AppConfig): EventProvider {
   return {{broker.inProcessWhen}} ? inProcessEvents() : createEventProvider(config);
 }
 {{/if}}
+
+/**
+ * The contexts as a test run composes them. An outside system that answers nowhere in a test run
+ * (an identity provider, a payment service) is answered by its fake of `test/fakes/` here, where
+ * the preset or the person who adds it binds it, so that its handlers settle instead of retrying.
+ */
+{{#if di.tsyringe}}
+function contextsOfTheRun(): ContextSelection {
+  const fakes = defineContextModule({
+    name: 'end-to-end-fakes',
+    register(builder) {
+      // ddd-ts-kit:e2e-fakes
+      // /ddd-ts-kit:e2e-fakes
+    },
+  });
+
+  return { ...everyContext, modules: [...everyContext.modules, fakes] };
+}
+{{/if}}
+{{#unless di.tsyringe}}
+function contextsOfTheRun(): typeof everyContext {
+  return everyContext.map((module): (typeof everyContext)[number] => {
+    // ddd-ts-kit:e2e-fakes
+    // /ddd-ts-kit:e2e-fakes
+
+    return module;
+  });
+}
+{{/unless}}
+
+/** Runs the job now; a run that failed or did not happen fails the spec with its outcome, never the message of an error. */
+async function runJob(jobs: JobScheduler, name: string): Promise<void> {
+  const { outcome, errorCode } = await jobs.runNow(name);
+
+  if (outcome !== 'succeeded') {
+    throw new Error(`The job ${name} ended ${outcome}${errorCode === undefined ? '' : ` (${errorCode})`}.`);
+  }
+}

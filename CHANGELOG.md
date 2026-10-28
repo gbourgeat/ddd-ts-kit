@@ -4,6 +4,118 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.98.0
+
+**The test runners page measures Vitest against Jest, and says which settings make each faster.**
+`docs/tools/test-runners.md` (and its French page) said speed was not measured; it now gives the
+wall time, CPU and memory of both runners on three pairs of projects identical but for `--tests` (a
+new project, the identity preset, the scheduling example ported to Jest), cold and warm, with and
+without coverage, unit and integration specs apart, one file, and on four CPUs as on a hosted
+runner. Without coverage Jest is 24 to 29 percent faster on the larger projects; with coverage as
+generated Vitest is 1.6 to 2.4 times faster on the example, the cost of Jest's `v8` provider, while
+Jest with the `babel` provider is the fastest of the three (20.6 s against 29.5 and 48.0). The page
+also measures the coverage providers and what each one reports, the number of workers, the pool
+and isolation of Vitest, the worker threads of Jest, the related specs of a changed file, a
+pipeline without cache, the install and mutation testing, and closes on a table of recommendations
+by case, each with its measured gain and what to watch. It names two limits of the Jest template
+the measures found: coverage through `v8`, and PostgreSQL started in process once per spec file
+where the Vitest template starts it once per run.
+
+**A Jest project starts PostgreSQL in process once per run, as a Vitest project does.** On an ORM,
+`init --tests jest` writes `test/support/test-database-template.ts`, a global setup that initialises
+the PGlite cluster once and saves it, and `test/support/test-database-teardown.ts`, which deletes
+it, both named in `jest.config.js`; `open-test-database.ts` opens a copy of that cluster in each
+spec instead of running an initdb of its own, as it already did under Vitest. On the identity
+preset the integration specs under Jest take 26 CPU seconds instead of 45, for the same wall time
+on a workstation (`docs/tools/test-runners.md`), and a busy machine no longer makes the hook that
+opens the database outlast its timeout.
+
+To move: in a Jest project on an ORM, copy the two files of `test/support/` from a new project
+(`init --tests jest` with the same `--orm`), name them in `jest.config.js`
+(`globalSetup: '<rootDir>/test/support/test-database-template.ts'`,
+`globalTeardown: '<rootDir>/test/support/test-database-teardown.ts'`), and take
+`inProcessPostgres()` of the new `src/platform/database/open-test-database.ts` in place of
+`PGlite.create()`.
+
+**A Jest project measures its coverage through the `babel` provider.** The `jest.config.js` that
+`init --tests jest` writes sets `coverageProvider: 'babel'` instead of `'v8'`: on the scheduling
+example ported to Jest, a run with coverage takes 20.6 s instead of 48.0 s on a workstation, and
+65 s instead of 201 s on four CPUs, faster than the same specs under Vitest (measured in
+`docs/tools/test-runners.md`). The branches it reports are those of the `v8` provider of Vitest;
+the `v8` provider of Jest reported two to three points more. A line left out of the measure carries
+the hint the provider reads, `istanbul ignore`, which `v8` did not read, as `babel` does not read
+`v8 ignore`: the explanation of `test/coverage-governed` (`ddd-ts-kit explain`) gives both, and
+the testing rules of a new project name the one its runner reads.
+
+To move: in the `jest.config.js` of an existing Jest project, set `coverageProvider: 'babel'`,
+rewrite each `v8 ignore` comment as `istanbul ignore` with its decision record, and run
+`npm run test:coverage` once: a layer whose branch threshold sat within three points of the old
+figure can fall under it.
+
+**The test runners page says how mutation testing fares under each runner.** On the identity
+preset, Stryker completes under Vitest in 1 min 46 s with 19 processes and 1 min 54 s with 8, for
+11.6 GB and 5.4 GB of summed memory; under Jest it did not complete on a workstation of 31 GB, at
+19 or 8 processes nor with each process restarted after 10 runs, each Jest process reaching about
+2.5 GB within the first minute. `docs/tools/test-runners.md` gives the figures, a recommendation
+(`--concurrency 8` under Vitest on a workstation, the mutation job planned on Vitest) and a limit
+of Jest.
+
+**`reset()` of the end-to-end support writes the grants of the system actors again.** With `--authz rebac` and a database (any ORM), `startApplication().reset()` emptied the relation tuples with every other table, so the relationships `relateSystemActors` wrote at start were gone from the second test of a spec on, and a reaction that sent a protected command as a system actor was refused with FORBIDDEN. `reset()` now calls `relateSystemActors()` after emptying the database, which leaves the application in the state it had right after start while the specs stay isolated.
+
+To move: in a generated project, make `reset` in `test/e2e/support/start-application.ts` call `relateSystemActors()` after `database.reset()`, and drop the calls a spec made to relate its system actors again.
+
+**The privacy register no longer says "until erased" for a retention read from configuration.**
+`personalFields` accepts `configuredRetention: 'RETENTION_PERIODS'`, the key of the configuration
+that gives the period when the project reads it at run time and purges by its own job. The generated
+register and the `CONTEXT.md` write ``configured by `RETENTION_PERIODS` `` in the Kept column. The key
+is read from the source text, never the value; the kit's own purge still runs only from a literal
+`retention`, and the two together are refused.
+
+**`generate erasure-handler` on an event-sourced context says that the key of the subject erases it, instead of sending to a table.** The context has no table to erase: its personal values are sealed by `personalData(subjectId, value)`, and `privacy:erase` (`eraseDataSubject`) destroys the key, which erases them in every context. The refusal now names `personalData`, `eraseDataSubject` and the guides, and the privacy guide, the persistence and integration-event skills say that a retention date on such a context is a scheduled job that calls the same key destruction.
+
+**A file of types only no longer fails the coverage floor of a Jest project on the `v8` provider.**
+A file that declares interfaces and type aliases and is imported with `import type` only, for
+example `application/commands/pay/pay.result.ts`, is never loaded at run time, and the `v8`
+provider of Jest reported all its lines uncovered, so that the floor of the layer failed though
+nothing executable was untested. `governedJestCoverage()` now reads each source file as text and
+leaves out of `collectCoverageFrom` those that declare types only, as it does for the ports; a
+layer that holds nothing else is held to nothing, under Vitest too. Vitest and the `babel`
+provider of Jest already skipped such a file.
+
+To move: nothing; a project that moved its types into the command file to get around it can move
+them back.
+
+**`generate e2e` writes the spec of a use case only a job starts.** A use case with no route and no integration event handler used to be refused, although a job (`generate job`) is a starter of a use case too. The spec now starts the application, runs the job as the scheduler would with `await application.runJob('<context>.<job>')`, awaits `settled()` and leaves the `then` to fill. The refusal, when nothing starts the use case, names the job as a third starter it looked for. The shared support `test/e2e/support/start-application.ts` gains `runJob(name)`, which rejects when the run did not succeed, and `composeApplication` returns its `jobs` scheduler.
+
+To move: in an existing project, add `runJob(name: string): Promise<void>;` to `RunningApplication` in `test/e2e/support/start-application.ts` and implement it with `jobs.runNow(name)` on the composed application (a run whose `outcome` is not `succeeded` throws); add `readonly jobs: JobScheduler` to `Application` in `compose-application.ts`, returned as `platform.jobs` (manual wiring) or `container.resolve(JobScheduler)` (tsyringe). `generate e2e` notes a support without `runJob`.
+
+**`events/consumer-idempotent` accepts options spread from a shared object.**
+`consume(definition, { ...options, consumer: 'ctx.name' }, handler)` passes when `options` is a
+`const` of the same file initialised with an object literal that carries `processed`, or a value typed
+`ConsumeOptions`; the consumer name is still read as the literal `consumer` key. A spread whose content
+the file does not show is still refused, and the fix says that `processed` cannot be read.
+
+**`generate command --aggregate` writes a handler that changes an aggregate that exists and writes nothing, and `--creates` is the birth.** Until now every command generated with `--aggregate` called `<Aggregate>.create(...)` and saved a new row on each run, so the use case a job sends created a row on every tick until a worker filled it, and the handler did not compile when `create` of the aggregate takes other arguments (TS2554). The handler now receives the repository of the aggregate, answers `void`, and holds a `TODO(domain)` (load, call one intention method, save): it compiles against the aggregate as it is and writes nothing. `--aggregate <Name> --creates` generates the former handler, which gives birth to the aggregate and answers its identifier. `--creates` without `--aggregate` is refused. A policy added later to the permission of a generated command is asked in either form.
+
+To move: add `--creates` to the `generate command ... --aggregate` of each slice that is the birth of its aggregate (a `Start with` cell of a story included). A handler already generated is left as it is.
+
+**In the explicit style, each module of the model has its module file, `<module>/<module>.module.ts`, composed by `<context>.module.ts`.** A context divided into modules (`contexts.<name>.modules`) registered the handlers, consumers and reactions of every module in its one `<context>.module.ts`, which passed the 350 lines of `clean/file-size` on a large context, and `tree/closed` refused any other file at the root of the context, so a project had to declare an extra directory to split it. Now `generate module <context> <module>` writes `<module>/<module>.module.ts` and composes it from `<context>.module.ts`: on tsyringe the file exports `{ register(builder), onStart({ resolve }) }`, called from `register` and `onStart` of the context; wired by hand (`--di manual` or `nest`) it exports `registerHandlers`, `registerReactions`, `registerJobs`, `useCases()` and `routes(platform)`, called from the functions of the same names. `generate <kind> ... --module <module>` writes its registration there when the file exists; wired by hand, a use case whose repository another module file already creates is registered in that file, so a repository is still created once per context. `tree/closed` accepts the module file at the root of a declared module and reports any other file there; `check` reads it as a module file (`composition/only-in-module`, `declarations/port-adapter-wired`, `authz/declared`, `domain-events/transactional-before-commit`), and so do `describe`, `docs` and the generators that read the registrations. A wiring block written into a module file also merges an import it repeats once the import names the file in its module, which wrote the same import twice in a context with modules. The declared style is unchanged: a module has no module file, its classes declare themselves.
+
+To move: in an explicit context with modules, run `npx ddd-ts-kit generate module <context> <module>` again for each module (it adds the module file and its composition, and nothing else), then move the registrations of each module from `<context>.module.ts` to its module file, with their imports; a `composition/` folder declared in `extraDirectories` for this can go.
+
+**The end-to-end support binds the fake identity provider admin once the identity preset is written.**
+Opening an organisation queues `identity.organisation.opened` and `identity.member.joined`, whose
+handlers call the identity provider admin; in a test run no provider answers, so the outbox retried
+for ever and `settled()` failed (`outbox: 2 (2 failed, waiting for a retry)`) in every spec that opens
+an organisation. `test/e2e/support/start-application.ts` now composes the contexts through
+`contextsOfTheRun()`, the place where the fake of an outside system is bound, and the identity preset
+(with `init --preset identity` or `generate context identity --preset identity`) binds
+`FakeIdentityProviderAdmin` there. In the explicit style, `identityModule(platform, outside)` takes
+the adapters a test run replaces.
+
+To move: in a project written before, bind the fake yourself in `contextsOfTheRun()`; the support
+of an existing project is not rewritten.
+
 ## 0.97.0
 
 **Under the sandbox of the regulated profile, `prisma-generate` and `typeorm-generate` say that the database is out of reach instead of failing with a raw connection error.** A sandboxed command cannot open a TCP connection to the local PostgreSQL (probed on Claude Code 2.1.311 on Linux: `allowedDomains` with the host and the port, `allowLocalBinding` and `allowAllUnixSockets` all end in `ECONNREFUSED`; the sandbox's network leaves through an HTTP proxy only, and `allowLocalBinding` and `allowUnixSockets` are macOS settings), so `init` writes no setting for it. When `DATABASE_URL` is set and its server does not answer, the two commands stop before the ORM tool, exit 3 and say that migrations and database tests run outside the sandbox, by the owner or the CI. `drizzle-kit generate` needs no connection and is unchanged. The sandbox guide (and its French translation), the notes of `init` and the `persistence`, `parallel-work` and `story` skills say it.

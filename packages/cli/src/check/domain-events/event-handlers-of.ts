@@ -1,3 +1,4 @@
+import { treeOf, wiringFilesOf } from '../../model-modules';
 import { classesOf } from '../declarations/classes-of';
 import type { DeclaredClass } from '../declarations/declared-class';
 import { optionOf } from '../declarations/option-of';
@@ -32,8 +33,7 @@ export function eventHandlersOf(project: Project, file: SourceFile): EventHandle
     ? file.structure.classes.filter((shape) => shape.isExported && shape.depth === 0 && !known.has(shape.name))
     : [];
 
-  const module =
-    wired.length === 0 ? undefined : sourceAt(project, `${project.config.contextsDir}/${context}/${context}.module.ts`);
+  const modules = wired.length === 0 ? [] : moduleFiles(project, context);
 
   return [
     ...declared.map((handler) => ({
@@ -43,14 +43,30 @@ export function eventHandlersOf(project: Project, file: SourceFile): EventHandle
       isAfterCommit: declaresAfterCommit(file, handler),
       dependencies: handlerDependencies(file, handler.name),
     })),
-    ...wired.map(({ name, line }) => ({
-      name,
-      line,
-      context,
-      isAfterCommit: isRegisteredAfterCommit(module, name),
-      dependencies: [...handlerDependencies(file, name), ...boundByModule(module, { name, line })],
-    })),
+    ...wired.map(({ name, line }) => {
+      const module = registeringModule(modules, name);
+
+      return {
+        name,
+        line,
+        context,
+        isAfterCommit: isRegisteredAfterCommit(module, name),
+        dependencies: [...handlerDependencies(file, name), ...boundByModule(module, { name, line })],
+      };
+    }),
   ];
+}
+
+/** The module file of the context, then the one of each module of its model that exists. */
+function moduleFiles(project: Project, context: string): SourceFile[] {
+  return wiringFilesOf(treeOf(project.config, context), context).flatMap((path) => sourceAt(project, path) ?? []);
+}
+
+/** The module file that registers a class: the first that names it, else the module file of the context. */
+function registeringModule(modules: readonly SourceFile[], name: string): SourceFile | undefined {
+  const named = new RegExp(`(?<![\\w$])${name}(?![\\w$])`);
+
+  return modules.find((module) => named.test(module.scan.code)) ?? modules[0];
 }
 
 function isRoleFile(file: SourceFile): boolean {

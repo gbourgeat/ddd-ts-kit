@@ -40,7 +40,7 @@ const holder = anActor().withRole('holder').build();
 {{/if}}
 
 describe('{{name.title}}', () => {
-  {{#if command.hasAggregate}}
+  {{#if command.births}}
   it('saves the {{aggregate.words}} and answers its identifier', async () => {
     const { commandBus, {{aggregate.camel}}Repository } = arrange();
 
@@ -50,7 +50,7 @@ describe('{{name.title}}', () => {
     expect(await {{aggregate.camel}}Repository.findById(id)).toBeDefined();
   });
   {{/if}}
-  {{#unless command.hasAggregate}}
+  {{#unless command.births}}
   it('completes without answering anything', async () => {
     const { commandBus } = arrange();
     const command = new {{name.pascal}}Command({{access.holder}});
@@ -82,11 +82,11 @@ describe('{{name.title}}', () => {
 
 function arrange() {
   {{#if command.hasAggregate}}
-  const { commandBus, clock, ids, dispatching, domainEvents } = createTestBuses({ idPrefix: '{{aggregate.kebab}}' });
+  const { commandBus, {{#if command.births}}clock, ids, {{/if}}{{#unless command.births}}{{#if access.policy}}clock, {{/if}}{{/unless}}dispatching, domainEvents } = createTestBuses({ idPrefix: '{{aggregate.kebab}}' });
   // As the application hands it to the handler: the save announces the events of the {{aggregate.words}} to `domainEvents`.
   const {{aggregate.camel}}Repository = dispatching(new Fake{{aggregate.pascal}}Repository());
 
-  const handler = new {{name.pascal}}Handler({{aggregate.camel}}Repository, ids, clock{{#if access.policy}}, new PolicyAccess({ authorizer, clock }){{/if}});
+  const handler = new {{name.pascal}}Handler({{aggregate.camel}}Repository{{#if command.births}}, ids, clock{{/if}}{{#if access.policy}}, new PolicyAccess({ authorizer, clock }){{/if}});
 
   commandBus{{spec.guard}}.register({{name.pascal}}Command, handler);
 

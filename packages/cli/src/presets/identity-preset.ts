@@ -66,4 +66,5 @@ export const identityPreset: Preset = {
   files: (config) => presetFiles('identity', config, AFTER_STEPS),
   prismaModels: 'prisma/models.prisma.tpl',
   explicitPolicies: 'explicit/access-policies.wiring.tpl',
+  e2eFakes: 'e2e/support.wiring.tpl',
 };

@@ -40,6 +40,7 @@ beforeAll(() => {
     'command',
     'billing',
     'IssueInvoice',
+    '--creates',
     '--aggregate',
     'Invoice',
     '--permission',

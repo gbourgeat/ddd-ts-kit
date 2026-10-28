@@ -206,6 +206,13 @@ export class Workspace {
     this.rewrites.push(rewrite);
   }
 
+  /** A text with its imports as `rewriteImports` names them: a block compared with the imports of its file before it joins them. */
+  withImports(file: string, text: string): string {
+    return /\.(?:ts|tsx|mts|js|mjs)$/.test(file)
+      ? this.rewrites.reduce((written, rewrite) => rewrite(file, written), text)
+      : text;
+  }
+
   /**
    * While set, every path this command reads or writes goes through `place`: a generator names the
    * files of a context as they are without modules of its model, and the workspace finds them in
@@ -331,12 +338,6 @@ export class Workspace {
 
   private absolute(file: string): string {
     return path.join(this.root, file);
-  }
-
-  private withImports(file: string, text: string): string {
-    return /\.(?:ts|tsx|mts|js|mjs)$/.test(file)
-      ? this.rewrites.reduce((written, rewrite) => rewrite(file, written), text)
-      : text;
   }
 
   private placed(file: string, writing = false): string {

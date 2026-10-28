@@ -10,7 +10,9 @@ import { commandOutputs } from './command-outputs';
 import { queryContext } from './query-context';
 import { queryOutputs } from './query-outputs';
 
-const AGGREGATE_IMPORT = /\/domain\/aggregates\/([a-z0-9-]+)\.aggregate/;
+/** Both handlers of an aggregate import its repository; only the one that gives birth to it takes the generator of identifiers. */
+const AGGREGATE_IMPORT = /\/domain\/repositories\/([a-z0-9-]+)\.repository/;
+const BIRTH = /\bIdGenerator\b/;
 
 /** A use case as the generator writes it: the context of its templates, with or without the policy, its files and its wiring. */
 interface Generated {
@@ -75,7 +77,12 @@ function generatedUseCase(scope: Scope, name: Name, kind: string): Generated | u
     const folder = `application/commands/${name.kebab}`;
     const handler = scope.ws.read(`${scope.dir}/${folder}/${name.kebab}.handler.ts`) ?? '';
     const aggregate = AGGREGATE_IMPORT.exec(handler)?.[1];
-    const of = { name, aggregate: aggregate === undefined ? undefined : toName(aggregate) };
+
+    const of = {
+      name,
+      aggregate: aggregate === undefined ? undefined : toName(aggregate),
+      creates: BIRTH.test(handler),
+    };
 
     return {
       folder,
@@ -105,10 +112,10 @@ function rewired(
   kind: string,
   { plain, asking }: { plain: RenderContext; asking: RenderContext },
 ): Rewrite[] | undefined {
-  const after = wirings(scope, kind, asking);
+  const after = wirings(scope, { kind }, asking);
   const rewrites: Rewrite[] = [];
 
-  for (const [index, { file, wiring }] of wirings(scope, kind, plain).entries()) {
+  for (const [index, { file, wiring }] of wirings(scope, { kind }, plain).entries()) {
     const was = scope.ws.read(file) ?? '';
     const becomes = withBlocks(was, scope.ws.spoken(wiring), scope.ws.spoken(after[index]?.wiring ?? ''));
 

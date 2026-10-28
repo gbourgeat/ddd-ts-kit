@@ -28,7 +28,7 @@ The realistic sequence for an order-taking service, each line in the order it is
 | 2 | `/ddd-ts-kit:bootstrap` (or `npx ddd-ts-kit init`, `npm install`, `npm run verify`) | the project, green before any business code |
 | 3 | `npx ddd-ts-kit generate context ordering --classification core --term "Order=A shop's request to buy products" --term "Place=To submit an order"` | `src/contexts/ordering/` and its `CONTEXT.md` with the glossary |
 | 4 | `/ddd-ts-kit:plan-slices` | `docs/architecture/slices.md`: `PlaceOrder` first |
-| 5 | `/ddd-ts-kit:use-case PlaceOrder`, which runs `generate aggregate ordering Order`, `generate repository ordering Order`, `generate command ordering PlaceOrder --permission order.place --aggregate Order`, `generate route ordering PlaceOrder --method POST --path /orders`, `generate e2e ordering PlaceOrder` | the files, their specs and fakes, and the `TODO(domain)` places to fill |
+| 5 | `/ddd-ts-kit:use-case PlaceOrder`, which runs `generate aggregate ordering Order`, `generate repository ordering Order`, `generate command ordering PlaceOrder --permission order.place --aggregate Order --creates`, `generate route ordering PlaceOrder --method POST --path /orders`, `generate e2e ordering PlaceOrder` | the files, their specs and fakes, and the `TODO(domain)` places to fill |
 | 6 | `npx ddd-ts-kit todo ordering` | what is left to write in the slice, as `file:line` |
 | 7 | `npm run db:generate place-order`, `npm run docs:generate` | the migration of the new table, the OpenAPI contract with `POST /orders` |
 | 8 | `/ddd-ts-kit:quality-gate`, that is `npm run verify` | a green gate |
@@ -79,7 +79,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `/ddd-ts-kit:context-map` | upstream, downstream, pattern and contract of each pair | step 4, and when two contexts start depending on each other | `docs/architecture/context-map.md`, then the upstreams of the config | the bootstrap, or the slice that needs it |
 | `npx ddd-ts-kit generate context <name> --classification <c> --reason "..." --term "<Term>=<meaning>\|<not to be confused with>" ... --upstream ...` | declares a context with its language, the sentence of why it is of its classification, and its relationships | after the bootstrap, one per row of `contexts.md`, upstreams first | the context directory, its `CONTEXT.md`, the config entry | `npx ddd-ts-kit docs` |
 | `npx ddd-ts-kit list`, `describe <context>` | what exists, per context or for one | before planning or changing a context | a map of the contexts, or one as facts (`--json`) | `/ddd-ts-kit:plan-slices` |
-| `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | declares a [module of the model](../concepts/modules.md): the config entry, its row of `## Modules` in `CONTEXT.md`, its terms; re-runnable, it adds what is missing | when one context holds clusters of concepts of one language that a reader opens separately; never to hide a second language | the module, declared and documented | `move-to-module`, then `generate ... --module` |
+| `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | declares a [module of the model](../concepts/modules.md): the config entry, its row of `## Modules` in `CONTEXT.md`, its terms, and in the explicit style its module file `<module>/<module>.module.ts`, composed by `<context>.module.ts`; re-runnable, it adds what is missing | when one context holds clusters of concepts of one language that a reader opens separately; never to hide a second language | the module, declared and documented | `move-to-module`, then `generate ... --module` |
 | `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]` | moves files and folders of `domain/` and `application/` into a declared module, with every import of them in the project | one cluster per commit, until `module/complete` warns no more | the moved files and the rewritten imports | `npm run verify` |
 
 ## Build a slice
@@ -642,7 +642,7 @@ Kinds
   domain-error <context|shared-kernel> <Name> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]
   domain-service <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
   repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]] [--module <module>]
-  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
+  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name> [--creates]] [--term "<Term>=<meaning>"]... [--module <module>]
   query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]... [--module <module>]
   port <context> <Name> [--module <module>]
   route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]

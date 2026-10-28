@@ -44,4 +44,10 @@ export interface Preset {
    * file of the context is one of its files.
    */
   readonly explicitPolicies?: string;
+  /**
+   * The fakes the end-to-end support binds, for the outside systems the preset's handlers call and no
+   * test run reaches: a wiring of `templates/presets/<name>/` applied to the regions of
+   * `test/e2e/support/start-application.ts`, when the project has one.
+   */
+  readonly e2eFakes?: string;
 }
