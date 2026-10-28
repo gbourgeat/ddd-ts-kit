@@ -1,7 +1,7 @@
 import { toName } from '../naming';
 import type { Workspace } from '../workspace';
 import type { JobFacts } from './context-facts';
-import { type ContextTree, roleFilesOf } from '../model-modules';
+import { type ContextTree, roleFilesOf, wiringTextOf } from '../model-modules';
 
 const FOLDER = 'application/scheduling';
 const SUFFIX = '.job.ts';
@@ -10,10 +10,10 @@ const SCHEDULE = String.raw`(\{[^}]*\})`;
 /**
  * The jobs of a context: one per `*.job.ts` file, with the name and the schedule its
  * registration writes, on the class (`@Scheduled`) or in the module file of the context
- * (`builder.job(...)`, `platform.jobs.register(...)`), and the command it sends.
+ * (`builder.job(...)`, `platform.jobs.register(...)`) or of one of its modules, and the command it sends.
  */
 export function readJobs(ws: Workspace, tree: ContextTree, context: string): JobFacts[] {
-  const module = ws.read(`${tree.directory}/${context}.module.ts`) ?? '';
+  const module = wiringTextOf(ws, tree, context);
 
   return roleFilesOf(ws, tree, FOLDER)
     .filter(({ name }) => name.endsWith(SUFFIX) && !name.endsWith('.spec.ts'))

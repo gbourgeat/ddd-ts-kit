@@ -38,7 +38,7 @@ interface Implementation {
 export const declarationsPortAdapterWired: Rule = {
   id: RULE_ID,
   description:
-    'A class of infrastructure/ that implements a port some class needs is wired: declared with @Repository, @Gateway or @Adapter in the declared style, or imported by the composition root (<context>.module.ts, main.ts, apps/, the platform directory). One kept unwired on purpose says so with a suppression that points to a decision record. A file that still carries a TODO(domain) or TODO(platform) of the generator, or whose port no class needs yet, is not judged yet.',
+    'A class of infrastructure/ that implements a port some class needs is wired: declared with @Repository, @Gateway or @Adapter in the declared style, or imported by the composition root (<context>.module.ts or the <module>/<module>.module.ts of a module of its model, main.ts, apps/, the platform directory). One kept unwired on purpose says so with a suppression that points to a decision record. A file that still carries a TODO(domain) or TODO(platform) of the generator, or whose port no class needs yet, is not judged yet.',
   scope: 'project',
   run(project) {
     const composed = composedClasses(project);

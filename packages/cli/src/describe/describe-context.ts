@@ -1,5 +1,5 @@
 import type { Config } from '../config';
-import { declaredModules } from '../model-modules';
+import { declaredModules, wiringTextOf } from '../model-modules';
 import type { ContextFacts } from '../docs/context-facts';
 import type { Workspace } from '../workspace';
 import type { ContextDescription, Contracts, GatewayFact, PortFact } from './context-description';
@@ -57,7 +57,7 @@ function sourcesOf(ws: Workspace, config: Config, facts: ContextFacts): ContextS
     name: facts.name,
     directory,
     modules: declaredModules(config, facts.name),
-    module: ws.read(`${directory}/${facts.name}.module.ts`) ?? '',
+    module: wiringTextOf(ws, { directory, modules: declaredModules(config, facts.name) }, facts.name),
     ...(facts.declarations === undefined ? {} : { declarations: facts.declarations }),
   };
 }

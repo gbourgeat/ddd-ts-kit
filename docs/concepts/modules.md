@@ -64,9 +64,10 @@ cycle.
   (one database per context), its route groups, guards and shared shapes (a route group gives a
   prefix to the routes of a resource, whatever module answers them), and the fakes, builders and
   worlds of its specs.
-- **"Module" already names two things of the kit**: `<context>.module.ts` (explicit wiring) and
-  `ContextModule` of `@ddd-ts-kit/di`. The pages say "module of the model" wherever the two
-  could be confused.
+- **"Module" already names other things of the kit**: `<context>.module.ts` (explicit wiring),
+  the module file of a module of the model that it composes (`<module>/<module>.module.ts`), and
+  `ContextModule` of `@ddd-ts-kit/di`. The pages say "module of the model" wherever they could
+  be confused.
 
 ## When to divide a context, and when not
 
@@ -98,7 +99,9 @@ src/contexts/appointments/
   appointments.permissions.ts                  the permission set of the context
   appointments.declarations.ts                 generated, at the root as before
   published-language/                          one per context
+  appointments.module.ts                       explicit style: composes the module files of the modules
   booking/
+    booking.module.ts                          explicit style: what booking registers
     domain/
       aggregates/appointment.aggregate.ts
       errors/slot-taken.error.ts
@@ -128,9 +131,21 @@ What never moves into a module: `<context>.codes.ts`, `<context>.permissions.ts`
 `<context>.module.ts`, the generated `<context>.declarations.ts` and `<context>.dependencies.ts`,
 `CONTEXT.md`, `published-language/`, the `*.schema.ts` of `infrastructure/persistence/` that are
 no row schema, the route groups (`presentation/http/*.routes.ts`), `presentation/http/guards/` and
-`presentation/http/shared/`, and `test/fakes/`, `test/builders/` and `test/worlds/`. A module never has a glossary, a database schema, a
-published language or a module file of its own, and two modules of one context never exchange
-integration events: a part that needs one of them is a context.
+`presentation/http/shared/`, and `test/fakes/`, `test/builders/` and `test/worlds/`. A module never has a glossary, a database schema or a
+published language of its own, and two modules of one context never exchange integration
+events: a part that needs one of them is a context.
+
+In the explicit style, what wires the classes splits the same way. Each module has its module
+file, `<module>/<module>.module.ts`, the only file at the root of its folder: it registers the
+handlers, consumers, reactions, jobs, permissions and routes of the module, and
+`<context>.module.ts` composes the module files and keeps what the context holds at its own
+level. A context with four modules then has five module files of a readable size, not one that
+passes the 350 lines of `clean/file-size`. On tsyringe a module file exports
+`{ register(builder), onStart({ resolve }) }`, called from `register` and `onStart` of the
+context; wired by hand it exports `registerHandlers`, `registerReactions`, `registerJobs`,
+`useCases()` and `routes(platform)`, called from the functions of the same names. In the
+declared style a module has no module file: its classes declare themselves, and each layer of
+the module has its generated declarations.
 
 ### The config and CONTEXT.md
 
@@ -160,7 +175,7 @@ module:
 
 | Rule | Holds | Severity |
 |---|---|---|
-| `tree/closed` | accepts the folder of a declared module at the root of the context, and still reports one the config does not declare; its fix names `generate module` | `error` |
+| `tree/closed` | accepts the folder of a declared module at the root of the context, and its module file `<module>/<module>.module.ts` at the root of the module, nothing else there; still reports a folder the config does not declare, with `generate module` as its fix | `error` |
 | `module/declared` | every module of `contexts.<name>.modules` is named with terms of the glossary of its context (every word of its name; technical words `shared`, `common`, `core`, `misc`, `utils` and the other technical words of `language/no-technical-name`) and has a row in `## Modules` of `CONTEXT.md` | `error` |
 | `module/complete` | once a context declares modules, a file of a layer outside every module, the files the context keeps aside, is reported, and so is a spec left in `test/unit/` while the file it is named after sits in a module, and a module still where 0.86 and 0.87 put it (`domain/<module>/`) | `warn`, so that a context moves into modules one commit at a time |
 | `module/no-cycle` | the imports between the modules of one context form no cycle | `warn`, because Evans makes coupling between modules a signal to change the model, not a refusal |
@@ -186,6 +201,14 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   infrastructure/persistence/knex-appointment.repository.ts presentation/http/appointments/book-appointment
 ```
 
+- In the explicit style, `generate module` also writes the module file of the module,
+  `<module>/<module>.module.ts`, and composes it from `<context>.module.ts`. Run again for a
+  module declared before, it adds them and nothing else. A kind run with `--module` then writes
+  its registration in that module file, and in `<context>.module.ts` while the module has none.
+  Wired by hand, a use case whose repository another module file already creates is registered
+  in that file, so that a repository is created once per context. Registrations written before
+  the module file existed stay in `<context>.module.ts` until they are moved by hand, with their
+  imports.
 - With `--module`, the files a kind reads (an existing aggregate, an event, a port) are found in
   whatever module holds them, and the imports it writes name where they are. A file of a use case
   already in a module is written with it, `--module` or not; a `--module` naming another module
@@ -226,6 +249,10 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   them.
 - In the declared style assembled by barrel, each layer of a module has its generated
   `<layer>.declarations.ts`, re-exported by `<context>.declarations.ts`.
+- In the explicit style, `check` reads the module file of a module as a module file of its
+  context (`composition/only-in-module`, `declarations/port-adapter-wired`, `authz/declared`,
+  `domain-events/transactional-before-commit`), and `describe`, `docs` and the generators read
+  the registrations of every module file of a context together.
 - `discoverContext` of `@ddd-ts-kit/di` runs without the config: it reads the modules in the
   generated `<context>.dependencies.ts`, which `ddd-ts-kit docs` writes with them
   (`export const modules = [...]`), and loads the role files of `<module>/application/`,

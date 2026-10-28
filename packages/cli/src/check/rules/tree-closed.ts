@@ -6,7 +6,7 @@ import { reporter } from '../support/reporter';
 export const treeClosed: Rule = {
   id: 'tree/closed',
   description:
-    'A context holds only the canonical directories (plus its declared extraDirectories), and no source file outside a role directory; its code list and its permission set sit at its root.',
+    'A context holds only the canonical directories (plus its declared extraDirectories and the folders of its declared modules), and no source file outside a role directory; its code list and its permission set sit at its root, and the root of a module of its model holds only <module>.module.ts.',
   scope: 'project',
   run(project) {
     const report = reporter(project, this.id);

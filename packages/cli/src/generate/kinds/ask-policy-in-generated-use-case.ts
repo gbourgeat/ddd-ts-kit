@@ -112,10 +112,10 @@ function rewired(
   kind: string,
   { plain, asking }: { plain: RenderContext; asking: RenderContext },
 ): Rewrite[] | undefined {
-  const after = wirings(scope, kind, asking);
+  const after = wirings(scope, { kind }, asking);
   const rewrites: Rewrite[] = [];
 
-  for (const [index, { file, wiring }] of wirings(scope, kind, plain).entries()) {
+  for (const [index, { file, wiring }] of wirings(scope, { kind }, plain).entries()) {
     const was = scope.ws.read(file) ?? '';
     const becomes = withBlocks(was, scope.ws.spoken(wiring), scope.ws.spoken(after[index]?.wiring ?? ''));
 
