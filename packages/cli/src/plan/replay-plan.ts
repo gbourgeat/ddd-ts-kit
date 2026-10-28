@@ -49,7 +49,10 @@ export function replayPlan(root: string, rows: readonly Slice[], request: Replay
     );
 
     const plan = replayedPlan(rows, replays);
-    const again = (replay: Replay): Replay => replayed(replay.row, { text: replay.command, argv: replay.argv }, inCopy);
+
+    // Run again with --dry-run: the copy stays as the plan left it, and what one rerun writes never makes another pass.
+    const again = (replay: Replay): Replay =>
+      replayed(replay.row, { text: replay.command, argv: replay.argv }, { ...inCopy, dryRun: true });
 
     const problems = replays.flatMap((replay, at) => [
       ...words(replay),

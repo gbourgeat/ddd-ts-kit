@@ -42,6 +42,8 @@ export interface RefusedCommand {
   readonly fix: string | null;
   /** Which row generates what the command builds on, when the generator refused it for that: a later row, a later command of the row, or none. */
   readonly prerequisite: string | null;
+  /** What the generator refuses the command for once what it builds on is found, another reason to fix too; null when nothing. */
+  readonly nextRefusal: { readonly refusal: string; readonly fix: string | null } | null;
   /** All of it on one line. */
   readonly message: string;
 }

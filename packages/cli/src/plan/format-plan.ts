@@ -71,12 +71,14 @@ function problemLines(problem: PlanProblem): string[] {
   return problem.kind === 'refused-command' ? refusedLines(problem) : [`  ${problem.message}`];
 }
 
-function refusedLines({ rows, command, refusal, fix, prerequisite }: RefusedCommand): string[] {
+function refusedLines({ rows, command, refusal, fix, prerequisite, nextRefusal }: RefusedCommand): string[] {
   return [
     `  #${rows[0] ?? ''} \`${command}\` is refused by the generator:`,
     ...under(refusal),
     ...(fix === null ? [] : under(`fix: ${fix}`)),
     ...(prerequisite === null ? [] : under(prerequisite)),
+    ...(nextRefusal === null ? [] : under(`then: ${nextRefusal.refusal}`)),
+    ...(nextRefusal === null || nextRefusal.fix === null ? [] : under(`fix: ${nextRefusal.fix}`)),
   ];
 }
 

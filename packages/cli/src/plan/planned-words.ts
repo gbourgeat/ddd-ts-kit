@@ -85,8 +85,17 @@ function quoted(words: readonly string[]): string {
  */
 function rowTerms(rows: readonly Slice[]): (row: Slice) => ReadonlyMap<string, readonly string[]> {
   const byId = new Map(rows.map((row) => [row.id, row]));
+  // Each command is read once, and the terms of a row once, however many of its commands are replayed.
+  const own = new Map(rows.map((row) => [row, termsOfCommands(row)]));
+  const counted = new Map<Slice, ReadonlyMap<string, readonly string[]>>();
 
   return (row) => {
+    const known = counted.get(row);
+
+    if (known !== undefined) {
+      return known;
+    }
+
     const terms = new Map<string, string[]>();
     const seen = new Set<string>();
     const queue = [row];
@@ -99,17 +108,25 @@ function rowTerms(rows: readonly Slice[]): (row: Slice) => ReadonlyMap<string, r
       seen.add(next.id);
       queue.push(...next.dependsOn.flatMap((id) => byId.get(id) ?? []));
 
-      for (const { argv } of plannedCommands(next.startWith)) {
-        const read = readCommand(argv);
-
-        if (read !== undefined) {
-          terms.set(read.context, [...(terms.get(read.context) ?? []), ...read.terms]);
-        }
+      for (const read of own.get(next) ?? termsOfCommands(next)) {
+        terms.set(read.context, [...(terms.get(read.context) ?? []), ...read.terms]);
       }
     }
 
+    counted.set(row, terms);
+
     return terms;
   };
+}
+
+/** The terms each command of a row gives, with the context it gives them to. */
+function termsOfCommands(row: Slice): CommandTerms[] {
+  return plannedCommands(row.startWith).flatMap(({ argv }) => readCommand(argv) ?? []);
+}
+
+interface CommandTerms {
+  readonly context: string;
+  readonly terms: readonly string[];
 }
 
 /**
@@ -117,7 +134,7 @@ function rowTerms(rows: readonly Slice[]): (row: Slice) => ReadonlyMap<string, r
  * takes one or that creates it, and the terms of its `--term "<Term>=<meaning>"`, read as the generator reads them:
  * nothing for a command it cannot read, which the replay reports.
  */
-function readCommand(argv: readonly string[]): { readonly context: string; readonly terms: string[] } | undefined {
+function readCommand(argv: readonly string[]): CommandTerms | undefined {
   try {
     const args = generateArguments(argv);
     const [kindName = '', context] = args.positionals;

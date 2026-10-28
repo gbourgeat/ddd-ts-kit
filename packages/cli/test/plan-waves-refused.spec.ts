@@ -59,7 +59,7 @@ describe('plan-waves, a planned command the generator refuses', () => {
             'The aggregate Order does not exist in "billing" (src/contexts/billing/domain/aggregates/order.aggregate.ts).',
           fix: 'Create it first with `ddd-ts-kit generate aggregate billing Order`.',
           prerequisite:
-            'No row of the plan generates it: add the command the fix names to this row, or to a row it depends on.',
+            'No row of the plan generates it as the rows are written: add the command the fix names to this row or to a row it depends on, or fix the refused row that would generate it.',
         },
       ],
       waves: [],
@@ -80,7 +80,7 @@ describe('plan-waves, a planned command the generator refuses', () => {
       '  #US4.01 `generate command billing PayInvoice --aggregate Order --permission invoice.pay` is refused by the generator:',
       '    The aggregate Order does not exist in "billing" (src/contexts/billing/domain/aggregates/order.aggregate.ts).',
       '    fix: Create it first with `ddd-ts-kit generate aggregate billing Order`.',
-      '    No row of the plan generates it: add the command the fix names to this row, or to a row it depends on.',
+      '    No row of the plan generates it as the rows are written: add the command the fix names to this row or to a row it depends on, or fix the refused row that would generate it.',
     ]);
   });
 });
@@ -107,6 +107,24 @@ describe('plan-waves, a planned command refused for what the project is', () => 
     ]);
 
     expect(planOf(root, row(' --module pricing')).code).toBe(0);
+  });
+});
+
+describe('plan-waves, a command written with a flag before its kind', () => {
+  it('reads the kind after a leading flag that takes a value, as the generator does, and replays it', () => {
+    const reprice =
+      '`generate command catalog RepriceProducts --aggregate Product --permission product.reprice --term "Reprice=Set the price of products again" --module pricing`';
+
+    const job = '`generate --module pricing job catalog Reprice --every 15m --command RepriceProducts`';
+
+    const replayed = planOf(
+      root,
+      `| US6.20 | catalog | slice | Reprice products | ${reprice} | | catalog | todo |\n| US6.21 | catalog | slice | Reprice job | ${job} | US6.20 | catalog | todo |\n`,
+      '--json',
+    );
+
+    expect(jsonAt(replayed.json(), 'problems')).toEqual([]);
+    expect(replayed.code).toBe(0);
   });
 });
 
@@ -185,6 +203,35 @@ describe('plan-waves, a planned command refused on a project of relationships', 
         rows: ['US8.01'],
         refusal: expect.stringContaining('stack.authz is "rebac"'),
         fix: expect.stringContaining('without --grant'),
+      }),
+    ]);
+  });
+
+  it('says both what to wait for and the refusal that follows, when the row grants a role and its aggregate is generated later', () => {
+    const rebac = initProject('--context', 'billing:core', '--authz', 'rebac');
+
+    cli(rebac, 'generate', 'aggregate', 'billing', 'Invoice', '--term', 'Invoice=What a customer owes');
+
+    const pay =
+      '`generate command billing PayInvoice --aggregate Credit --permission invoice.pay --term "Pay=Settle an invoice" --grant user`';
+
+    const credit = '`generate aggregate billing Credit --term "Credit=What billing owes a customer"`';
+
+    const refused = planOf(
+      rebac,
+      `| US8.01 | billing | slice | Pay invoice | ${pay} | | billing | todo |\n| US8.02 | billing | skeleton | Credit | ${credit} | | conductor | todo |\n`,
+      '--json',
+    );
+
+    expect(jsonAt(refused.json(), 'problems')).toEqual([
+      expect.objectContaining({
+        rows: ['US8.01', 'US8.02'],
+        refusal: expect.stringContaining('The aggregate Credit does not exist'),
+        prerequisite: expect.stringContaining('add US8.02 to its Depends on'),
+        nextRefusal: {
+          refusal: expect.stringContaining('stack.authz is "rebac"'),
+          fix: expect.stringContaining('without --grant'),
+        },
       }),
     ]);
   });

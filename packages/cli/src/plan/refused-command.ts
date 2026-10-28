@@ -4,7 +4,7 @@ import { isStarted } from './is-started';
 import type { ReplayedPlan } from './replayed-plan';
 import type { RefusedCommand } from './wave-plan';
 
-/** Runs a replayed command again, once the whole plan has run in the copy. */
+/** Runs a replayed command again, with `--dry-run`, once the whole plan has run in the copy. */
 type Again = (replay: Replay) => Replay;
 
 /**
@@ -13,7 +13,8 @@ type Again = (replay: Replay) => Replay;
  * that the rows after it find what it generates, but its refusals are only said: its commands may
  * have run already, and the generator refuses a second run of some of them (a port already bound
  * to an adapter, a decision record whose number is taken). A command refused for what it builds
- * on is run again once the whole plan has: the files it then finds say which row generates them.
+ * on is run again once the whole plan has: the files it then finds say which row generates them,
+ * and what it is refused then, for another reason, is said too.
  */
 export function refusedCommand(plan: ReplayedPlan, at: number, again: Again): RefusedCommand[] {
   const replay = plan.replays[at];
@@ -23,23 +24,44 @@ export function refusedCommand(plan: ReplayedPlan, at: number, again: Again): Re
   }
 
   const { row, command, refusal } = replay;
-  const builtOn = refusal.missing ? prerequisiteOf(plan, at, again(replay)) : undefined;
-  const prerequisite = builtOn?.sentence ?? null;
+  const rerun = refusal.missing ? again(replay) : undefined;
+  const builtOn = rerun === undefined ? undefined : prerequisiteOf(plan, at, rerun);
+
+  const said = {
+    command,
+    refusal: refusal.message,
+    fix: refusal.fix,
+    prerequisite: builtOn?.sentence ?? null,
+    nextRefusal: nextRefusalOf(rerun),
+  };
 
   return [
     {
       kind: 'refused-command',
       rows: builtOn?.by === undefined ? [row.id] : [row.id, builtOn.by],
-      command,
-      refusal: refusal.message,
-      fix: refusal.fix,
-      prerequisite,
-      message: [`#${row.id} \`${command}\` is refused by the generator:`, refusal.message, refusal.fix, prerequisite]
-        .filter((part) => part !== null)
-        .join(' ')
-        .replace(/\s*\n\s*/g, ' '),
+      ...said,
+      message: messageOf(row, said),
     },
   ];
+}
+
+type Said = Omit<RefusedCommand, 'kind' | 'rows' | 'message'>;
+
+/** What the command is refused for once what it builds on is found, when it is another reason than a missing file. */
+function nextRefusalOf(rerun: Replay | undefined): RefusedCommand['nextRefusal'] {
+  const next = rerun?.refusal;
+
+  return next === undefined || next.missing ? null : { refusal: next.message, fix: next.fix };
+}
+
+/** All of it on one line, the lines of a refusal joined. */
+function messageOf(row: Slice, { command, refusal, fix, prerequisite, nextRefusal }: Said): string {
+  const next = nextRefusal === null ? [] : [`Then it is refused again: ${nextRefusal.refusal}`, nextRefusal.fix];
+
+  return [`#${row.id} \`${command}\` is refused by the generator:`, refusal, fix, prerequisite, ...next]
+    .filter((part) => part !== null)
+    .join(' ')
+    .replace(/\s*\n\s*/g, ' ');
 }
 
 /** Where the plan stands on what a refused command builds on. */
@@ -68,7 +90,7 @@ function prerequisiteOf(plan: ReplayedPlan, at: number, rerun: Replay): BuiltOn 
     return rerun.refusal?.missing === true
       ? {
           sentence:
-            'No row of the plan generates it: add the command the fix names to this row, or to a row it depends on.',
+            'No row of the plan generates it as the rows are written: add the command the fix names to this row or to a row it depends on, or fix the refused row that would generate it.',
           by: undefined,
         }
       : undefined;

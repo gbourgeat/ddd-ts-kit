@@ -64,6 +64,7 @@ describe('plan-waves for a reader, a plan that cannot be followed', () => {
             refusal: 'The aggregate Order does not exist in "billing".\nIt is created by an aggregate command.',
             fix: 'Create it first with `ddd-ts-kit generate aggregate billing Order`.',
             prerequisite: '#4 generates it, but #3 does not wait for it: add 4 to its Depends on.',
+            nextRefusal: { refusal: 'Then this.', fix: 'Do that.' },
             message: '#3 ...',
           },
           {
@@ -73,6 +74,7 @@ describe('plan-waves for a reader, a plan that cannot be followed', () => {
             refusal: 'Something broke.',
             fix: null,
             prerequisite: null,
+            nextRefusal: null,
             message: '#5 ...',
           },
         ],
@@ -87,6 +89,8 @@ describe('plan-waves for a reader, a plan that cannot be followed', () => {
       '    It is created by an aggregate command.',
       '    fix: Create it first with `ddd-ts-kit generate aggregate billing Order`.',
       '    #4 generates it, but #3 does not wait for it: add 4 to its Depends on.',
+      '    then: Then this.',
+      '    fix: Do that.',
       '  #5 `generate service billing` is refused by the generator:',
       '    Something broke.',
     ]);

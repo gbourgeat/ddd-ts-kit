@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:701d5d24f879d3ad -->
+<!-- translation-of: commands.md sha256:3d196ee60217986b -->
 
 # Quelle commande, quand
 
@@ -448,8 +448,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    each command the generator refuses for another reason (refused-command), its
                    refusal and fix under the row, with the row that generates what it builds on,
                    and each command that builds on a file a row it does not wait for generates
-                   (missing-dependency); the refusals of a row in progress, whose commands may have
-                   run, are listed apart and not counted
+                   (missing-dependency); a row in progress, whose commands may have run, counts for
+                   neither, its refusals listed apart
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left
