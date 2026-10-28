@@ -11,7 +11,8 @@ const CONTROL = /^(?:if|for|while|switch|catch|return|await|new)\b/;
 /**
  * The lines of a declaration that no longer fits its line, the way the formatter of a generated
  * project breaks it: the names of an import one per line, the heritage of a class clause by
- * clause, the parameters of a function or a method one per line. Undefined for anything else.
+ * clause, the parameters of a function, a method or a constructor one per line, its body empty or not.
+ * Undefined for anything else.
  */
 export function fitDeclaration(declaration: string, indent: string): string[] | undefined {
   const named = NAMED_IMPORT.exec(declaration);
@@ -58,7 +59,7 @@ function parametersApart(declaration: string, indent: string): string[] | undefi
   const close = depths.indexOf(0, open + 1);
   const isSignature = SIGNATURE.test(declaration) && !CONTROL.test(declaration);
 
-  if (!isSignature || close === -1 || !/^\)(?:: .+)?(?: \{|;)$/.test(declaration.slice(close))) {
+  if (!isSignature || close === -1 || !/^\)(?:: .+)?(?: \{\}?|;)$/.test(declaration.slice(close))) {
     return undefined;
   }
 
