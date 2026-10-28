@@ -23,12 +23,12 @@ export function resolveGroup(scope: Scope, endpoint: Endpoint, useCase: UseCase)
 
   const name = toName((asked ?? resourceOf(scope, endpoint)).replace(/Routes$/, ''));
   const file = groupFile(name.kebab);
-  const exists = scope.ws.exists(`${scope.dir}/${file}.ts`);
+  const exists = groupExists(scope, `${scope.dir}/${file}.ts`);
 
   if (asked !== undefined && !exists) {
     throw new MissingPrerequisite(
       `The route group ${name.pascal}Routes does not exist in "${scope.context.kebab}" (${scope.dir}/${file}.ts).`,
-      `ddd-ts-kit generate route-group ${scope.context.kebab} ${name.pascal} --prefix <path>`,
+      `Create it first with \`ddd-ts-kit generate route-group ${scope.context.kebab} ${name.pascal} --prefix <path>\`.`,
     );
   }
 
@@ -46,4 +46,15 @@ export function resolveGroup(scope: Scope, endpoint: Endpoint, useCase: UseCase)
 
 function defaultPrefix(scope: Scope, kebab: string): string {
   return kebab === scope.context.kebab ? '' : `/${kebab}`;
+}
+
+/** True when the group is there: the controller then builds on it. */
+function groupExists(scope: Scope, file: string): boolean {
+  const exists = scope.ws.exists(file);
+
+  if (exists) {
+    scope.flags.builtOn?.(scope.ws.placed(file));
+  }
+
+  return exists;
 }

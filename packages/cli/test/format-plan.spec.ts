@@ -31,6 +31,7 @@ function planOf(overrides: Partial<WavePlan>): WavePlan {
     waves: [],
     mergeOrder: [],
     otherStories: [],
+    started: [],
     ...overrides,
   };
 }
@@ -79,7 +80,7 @@ describe('plan-waves for a reader, a plan that cannot be followed', () => {
     );
 
     expect(text.split('\n')).toEqual([
-      'Waves (docs/architecture/slices.md): none, the generator refuses commands of these rows as written: fix the rows first',
+      'Waves (docs/architecture/slices.md): none, a worker following these rows as written would be refused: fix the rows first',
       '  #2 `generate command billing RefundInvoice`: ...',
       '  #3 `generate command billing PayInvoice --aggregate Order` is refused by the generator:',
       '    The aggregate Order does not exist in "billing".',

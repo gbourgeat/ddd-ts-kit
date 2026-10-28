@@ -2,7 +2,7 @@ import { readConfig } from '../config';
 import { CliError } from '../cli-error';
 import { findKind } from '../generate/find-kind';
 import type { Kind, KindFlags } from '../generate/kind';
-import type { LanguageProbe } from '../generate/language-probe';
+import type { GeneratorProbe } from '../generate/generator-probe';
 import { KINDS } from '../generate/kinds';
 import { placeGeneratedFiles } from '../generate/place-generated-files';
 import { refreshDocs } from '../generate/refresh-docs';
@@ -19,10 +19,12 @@ import { keepFlatPlatform } from '../platform-folders';
 
 export const generateCommand: Command = (argv, io) => generate(argv, io);
 
-/** `generate`, and with a probe of the language, the same command hearing its names instead of judging them. */
-export function generate(argv: readonly string[], io: Io, language?: LanguageProbe): number {
-  const asked = findKind(argv.find((argument) => !argument.startsWith('-')) ?? '');
-  const args = Arguments.parse(argv, optionsOf(asked));
+/**
+ * `generate`, and with a probe, the same command hearing its names instead of judging them, and
+ * telling the files it builds on and the files it created.
+ */
+export function generate(argv: readonly string[], io: Io, probe?: GeneratorProbe): number {
+  const args = generateArguments(argv);
   const [kindName, ...rest] = args.positionals;
   const kind = requestedKind(kindName, rest);
   const root = args.projectRoot;
@@ -31,7 +33,7 @@ export function generate(argv: readonly string[], io: Io, language?: LanguagePro
 
   keepFlatPlatform(ws, config);
 
-  const flags = { ...flagsOf(args), ...(language === undefined ? {} : { language }) };
+  const flags = probedFlags(flagsOf(args), probe);
 
   refuseModuleOf(kind, flags);
 
@@ -55,7 +57,11 @@ export function generate(argv: readonly string[], io: Io, language?: LanguagePro
     stopIgnoringValidation(ws, config);
   }
 
-  return printReport(io, args, ws.commit(args.flag('dry-run')));
+  const report = ws.commit(args.flag('dry-run'));
+
+  probe?.created(report.created);
+
+  return printReport(io, args, report);
 }
 
 const TEXT = { type: 'string' } as const;
@@ -114,6 +120,16 @@ const OPTIONS = {
   force: SWITCH,
   'local-only': SWITCH,
 };
+
+/** The flags, with what a probe hears in place of a flag: the names to judge and the files built on. */
+function probedFlags(flags: KindFlags, probe: GeneratorProbe | undefined): KindFlags {
+  return probe === undefined ? flags : { ...flags, language: probe.language, builtOn: probe.builtOn };
+}
+
+/** The arguments of `generate` as it reads them: the positionals wherever the flags stand, the value of each flag. */
+export function generateArguments(argv: readonly string[]): Arguments {
+  return Arguments.parse(argv, optionsOf(findKind(argv.find((argument) => !argument.startsWith('-')) ?? '')));
+}
 
 /** One flag may be a switch for a kind and a text for another: `--command` of a route, `--command <UseCase>` of a job. */
 function optionsOf(kind: Kind | undefined): Record<string, typeof TEXT | typeof SWITCH | typeof TEXTS> {

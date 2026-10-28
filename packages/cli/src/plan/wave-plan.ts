@@ -10,10 +10,12 @@ export interface WavePlan {
   readonly mergeOrder: readonly string[];
   /** The rows not done that a planned row of another story depends on, in the order of the file. */
   readonly otherStories: readonly OtherStoryRow[];
+  /** What the generator refused, replayed, in rows in progress: said, not counted, their commands may have run already. */
+  readonly started: readonly StartedRefusal[];
 }
 
 /** What keeps the plan from being followed as written: its rows cannot be ordered, or a worker following one is refused. */
-export type PlanProblem = RowProblem | RefusedCommand;
+export type PlanProblem = RowProblem | RefusedCommand | MissingDependency;
 
 export interface RowProblem {
   /** The first four keep the rows from being ordered; a word keeps a row from being run as written. */
@@ -38,10 +40,34 @@ export interface RefusedCommand {
   readonly refusal: string;
   /** What the generator says to do instead; null when the error is not a refusal of the generator. */
   readonly fix: string | null;
-  /** Which row generates what the command builds on, when the generator refused it for that: later, none, or refused too. */
+  /** Which row generates what the command builds on, when the generator refused it for that: a later row, a later command of the row, or none. */
   readonly prerequisite: string | null;
   /** All of it on one line. */
   readonly message: string;
+}
+
+/**
+ * A planned command that builds on a file another row generates, a row it does not wait for: the
+ * replay, one command after the other, found the file, but the worker of the row, on a branch of
+ * its own, would not.
+ */
+export interface MissingDependency {
+  readonly kind: 'missing-dependency';
+  /** The row, then the row that generates the file. */
+  readonly rows: readonly string[];
+  /** `generate <kind> ...`, as the row writes it. */
+  readonly command: string;
+  /** The file it builds on, as the generator found it. */
+  readonly builtOn: string;
+  readonly message: string;
+}
+
+/** A planned command of a row in progress the generator refused, replayed: not a problem of the plan. */
+export interface StartedRefusal {
+  readonly row: string;
+  readonly command: string;
+  readonly refusal: string;
+  readonly fix: string | null;
 }
 
 /** Wave 1 holds the rows whose dependencies are all done; wave n the rows whose dependencies are done or in earlier waves. */

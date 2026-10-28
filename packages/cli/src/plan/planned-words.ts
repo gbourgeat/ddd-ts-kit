@@ -4,6 +4,7 @@ import type { Glossary } from '../check/language/parse-glossary';
 import { parseGlossary } from '../check/language/parse-glossary';
 import { technicalWordsOf } from '../check/language/technical-words-of';
 import { unknownWords } from '../check/language/unknown-words';
+import { generateArguments } from '../commands/generate';
 import { findKind } from '../generate/find-kind';
 import type { HeardName } from '../generate/language-probe';
 import { toName } from '../naming';
@@ -99,10 +100,10 @@ function rowTerms(rows: readonly Slice[]): (row: Slice) => ReadonlyMap<string, r
       queue.push(...next.dependsOn.flatMap((id) => byId.get(id) ?? []));
 
       for (const { argv } of plannedCommands(next.startWith)) {
-        const context = contextOf(argv);
+        const read = readCommand(argv);
 
-        if (context !== undefined) {
-          terms.set(context, [...(terms.get(context) ?? []), ...termFlags(argv)]);
+        if (read !== undefined) {
+          terms.set(read.context, [...(terms.get(read.context) ?? []), ...read.terms]);
         }
       }
     }
@@ -111,17 +112,28 @@ function rowTerms(rows: readonly Slice[]): (row: Slice) => ReadonlyMap<string, r
   };
 }
 
-/** The context a generator command writes in: its first argument after the kind, for a kind that takes one. */
-function contextOf([kindName = '', context]: readonly string[]): string | undefined {
-  return findKind(kindName)?.positionals[0] === 'context' && context !== undefined ? toName(context).kebab : undefined;
-}
+/**
+ * The context a generator command writes in, its first argument after the kind for a kind that
+ * takes one or that creates it, and the terms of its `--term "<Term>=<meaning>"`, read as the generator reads them:
+ * nothing for a command it cannot read, which the replay reports.
+ */
+function readCommand(argv: readonly string[]): { readonly context: string; readonly terms: string[] } | undefined {
+  try {
+    const args = generateArguments(argv);
+    const [kindName = '', context] = args.positionals;
 
-/** The terms of `--term "<Term>=<meaning>"` and `--term=<Term>=<meaning>`. */
-function termFlags(argv: readonly string[]): string[] {
-  return argv.flatMap((word, index) => {
-    const value = word === '--term' ? argv[index + 1] : word.startsWith('--term=') ? word.slice(7) : undefined;
-    const term = value?.split('=')[0]?.trim() ?? '';
+    const terms = args.many('term').flatMap((value) => {
+      const term = value.split('=')[0]?.trim() ?? '';
 
-    return term === '' ? [] : [term];
-  });
+      return term === '' ? [] : [term];
+    });
+
+    const kind = findKind(kindName);
+    // `generate context <name>` writes the glossary of the context it creates.
+    const inContext = kind?.positionals[0] === 'context' || kind?.name === 'context';
+
+    return inContext && context !== undefined ? { context: toName(context).kebab, terms } : undefined;
+  } catch {
+    return undefined;
+  }
 }

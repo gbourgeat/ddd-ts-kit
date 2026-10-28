@@ -130,9 +130,11 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    generator commands of the rows in a copy of the project, in the order of the waves,
                    and reports without waves, exiting 1, each name whose words the glossary of its
                    context does not define with the --term of its row and of the rows it waits for,
-                   and each command the generator refuses for another reason (refused-command), its
-                   refusal and fix under the row, with the row that generates what it builds on;
-                   the refusals of a row in progress, whose commands may have run, are not counted
+                   each command the generator refuses for another reason (refused-command), its
+                   refusal and fix under the row, with the row that generates what it builds on,
+                   and each command that builds on a file a row it does not wait for generates
+                   (missing-dependency); the refusals of a row in progress, whose commands may have
+                   run, are listed apart and not counted
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left

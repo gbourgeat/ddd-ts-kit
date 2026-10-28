@@ -1,28 +1,29 @@
-import { findKind } from '../generate/find-kind';
-import { toName } from '../naming';
 import type { Slice } from '../progress/slice';
 import type { Replay } from './replay';
+import { isStarted } from './is-started';
+import type { ReplayedPlan } from './replayed-plan';
 import type { RefusedCommand } from './wave-plan';
 
-/** The status of a row its worker has started: its commands may have run in the project already. */
-const STARTED = 'in progress';
+/** Runs a replayed command again, once the whole plan has run in the copy. */
+type Again = (replay: Replay) => Replay;
 
 /**
  * The refusal of the command replayed at `at`, as a problem of the plan, unless its row is in
  * progress: a worker following the row as written would meet it. A row in progress is replayed so
- * that the rows after it find what it generates, but its refusals are not problems: its commands
- * may have run already, and the generator refuses a second run of some of them (a port already
- * bound to an adapter, a decision record whose number is taken).
+ * that the rows after it find what it generates, but its refusals are only said: its commands may
+ * have run already, and the generator refuses a second run of some of them (a port already bound
+ * to an adapter, a decision record whose number is taken). A command refused for what it builds
+ * on is run again once the whole plan has: the files it then finds say which row generates them.
  */
-export function refusedCommand(replays: readonly Replay[], at: number): RefusedCommand[] {
-  const replay = replays[at];
+export function refusedCommand(plan: ReplayedPlan, at: number, again: Again): RefusedCommand[] {
+  const replay = plan.replays[at];
 
-  if (replay?.refusal === undefined || replay.row.status === STARTED) {
+  if (replay?.refusal === undefined || isStarted(replay.row)) {
     return [];
   }
 
   const { row, command, refusal } = replay;
-  const builtOn = refusal.missing === null ? undefined : prerequisiteOf(refusal.missing, { replays, at });
+  const builtOn = refusal.missing ? prerequisiteOf(plan, at, again(replay)) : undefined;
   const prerequisite = builtOn?.sentence ?? null;
 
   return [
@@ -35,7 +36,8 @@ export function refusedCommand(replays: readonly Replay[], at: number): RefusedC
       prerequisite,
       message: [`#${row.id} \`${command}\` is refused by the generator:`, refusal.message, refusal.fix, prerequisite]
         .filter((part) => part !== null)
-        .join(' '),
+        .join(' ')
+        .replace(/\s*\n\s*/g, ' '),
     },
   ];
 }
@@ -47,66 +49,56 @@ interface BuiltOn {
   readonly by: string | undefined;
 }
 
-/** The replayed commands, in their order, and the index of the refused one. */
-interface Place {
-  readonly replays: readonly Replay[];
-  readonly at: number;
-}
-
 /**
- * Which row generates what is missing, `missing` being the command that creates it: one the
- * replay runs later, which the row does not wait for since it would have run before; one the
- * generator refuses too; none.
+ * The row that generates what the command found when run again, `rerun`: a later command of the
+ * same row, a row that does not wait for it, or one that does, whose command has to move. None
+ * when it is still refused for what it builds on.
  */
-function prerequisiteOf(missing: string, { replays, at }: Place): BuiltOn | undefined {
-  const wanted = keyOf(missing.replace(/^ddd-ts-kit generate /, '').split(' '));
-  const row = replays[at]?.row;
+function prerequisiteOf(plan: ReplayedPlan, at: number, rerun: Replay): BuiltOn | undefined {
+  const later = rerun.builtOn.flatMap((file) => {
+    const by = plan.creatorOf(file);
+    const creator = by === undefined || by <= at ? undefined : plan.replays[by];
 
-  if (wanted === undefined || row === undefined) {
-    return undefined;
+    return creator === undefined ? [] : [{ file, creator }];
+  });
+
+  const [first] = later;
+
+  if (first === undefined) {
+    return rerun.refusal?.missing === true
+      ? {
+          sentence:
+            'No row of the plan generates it: add the command the fix names to this row, or to a row it depends on.',
+          by: undefined,
+        }
+      : undefined;
   }
 
-  const index = replays.findIndex((replay) => keyOf(replay.argv) === wanted);
-  const generator = replays[index];
+  return generatedLater(plan, rerun.row, first);
+}
 
-  if (generator === undefined) {
+interface Generated {
+  readonly file: string;
+  readonly creator: Replay;
+}
+
+function generatedLater(plan: ReplayedPlan, row: Slice, { file, creator }: Generated): BuiltOn {
+  const by = creator.row;
+
+  if (by === row) {
     return {
-      sentence: 'No row of the plan generates it: add that command to this row, or to a row it depends on.',
+      sentence: `A later command of this row generates \`${file}\`: put \`${creator.command}\` first.`,
       by: undefined,
     };
   }
 
-  return index > at ? later(generator, row) : earlier(generator, row);
-}
-
-function later(generator: Replay, row: Slice): BuiltOn {
-  return generator.row === row
-    ? { sentence: `A later command of this row generates it: put \`${generator.command}\` first.`, by: undefined }
-    : waitedFor(generator.row.id, row);
-}
-
-/** Run before, it was refused, or wrote elsewhere than where the command looks. */
-function earlier(generator: Replay, row: Slice): BuiltOn {
-  const who = generator.row === row ? 'An earlier command of this row' : `#${generator.row.id}`;
-
-  return {
-    sentence:
-      generator.refusal === undefined
-        ? `${who} generates it, but not where this command looks for it: give both commands the same --module.`
-        : `${who} would generate it, but the generator refuses that command too: fix it first.`,
-    by: undefined,
-  };
-}
-
-function waitedFor(id: string, row: Slice): BuiltOn {
-  return { sentence: `#${id} generates it, but #${row.id} does not wait for it: add ${id} to its Depends on.`, by: id };
-}
-
-/** `aggregate billing Invoice` for the arguments of a command that generates the aggregate Invoice of billing. */
-function keyOf([kindName = '', context = '', name = '']: readonly string[]): string | undefined {
-  const kind = findKind(kindName);
-
-  return kind === undefined || context === '' || name === ''
-    ? undefined
-    : `${kind.name} ${toName(context).kebab} ${toName(name).pascal}`;
+  return plan.waitsFor(by, row)
+    ? {
+        sentence: `#${by.id} generates \`${file}\`, but it waits for #${row.id}: move \`${creator.command}\` to #${row.id}, or to a row #${row.id} depends on.`,
+        by: undefined,
+      }
+    : {
+        sentence: `#${by.id} generates \`${file}\`, but #${row.id} does not wait for it: add ${by.id} to its Depends on.`,
+        by: by.id,
+      };
 }

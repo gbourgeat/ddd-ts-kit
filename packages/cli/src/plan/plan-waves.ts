@@ -26,7 +26,7 @@ export function planWaves(rows: readonly Slice[], request: PlanRequest): WavePla
   const problems = planProblems(rows, planned);
 
   if (problems.length > 0) {
-    return { file: SLICES_FILE, context, problems, waves: [], mergeOrder: [], otherStories: [] };
+    return { file: SLICES_FILE, context, problems, waves: [], mergeOrder: [], otherStories: [], started: [] };
   }
 
   const shown = planned.filter((row) => context === null || row.context === context);
@@ -39,5 +39,6 @@ export function planWaves(rows: readonly Slice[], request: PlanRequest): WavePla
     waves,
     mergeOrder: mergeOrder(waves, planned),
     otherStories: otherStories(planned, waves),
+    started: [],
   };
 }

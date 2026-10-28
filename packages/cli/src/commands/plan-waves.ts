@@ -45,12 +45,14 @@ function withReplay(root: string, rows: readonly Slice[], plan: WavePlan): WaveP
     return plan;
   }
 
-  const problems = replayPlan(root, rows, {
+  const { problems, started } = replayPlan(root, rows, {
     context: plan.context,
-    generate: (argv, language) => void generate(argv, SILENT, language),
+    generate: (argv, probe) => void generate(argv, SILENT, probe),
   });
 
-  return problems.length === 0 ? plan : { ...plan, problems, waves: [], mergeOrder: [], otherStories: [] };
+  return problems.length === 0
+    ? { ...plan, started }
+    : { ...plan, problems, waves: [], mergeOrder: [], otherStories: [], started };
 }
 
 /** The replayed commands print nothing: their report would describe a copy of the project. */

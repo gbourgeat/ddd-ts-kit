@@ -13,11 +13,13 @@ export function requireFile(scope: Scope, prerequisite: Prerequisite): void {
   const target = `${scope.dir}/${prerequisite.file}`;
 
   if (scope.ws.exists(target)) {
+    scope.flags.builtOn?.(scope.ws.placed(target));
+
     return;
   }
 
   throw new MissingPrerequisite(
     `${prerequisite.what} does not exist in "${scope.context.kebab}" (${target}).`,
-    prerequisite.createdBy,
+    `Create it first with \`${prerequisite.createdBy}\`.`,
   );
 }

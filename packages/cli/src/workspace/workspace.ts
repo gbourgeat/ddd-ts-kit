@@ -8,6 +8,7 @@ import type { TodoLocation } from './todo-location';
 import { todosIn } from './todos-in';
 import { cannotWrite } from './cannot-write';
 import { isFileOrAbsent } from './is-file-or-absent';
+import { isLanguageStep } from './is-language-step';
 import { pruneEmptied } from './prune-emptied';
 import { writeIfAllowed } from './write-if-allowed';
 import type { WorkspaceReport } from './workspace-report';
@@ -114,6 +115,11 @@ export class Workspace {
     return [...new Set([...this.onDisk(directory, (entry) => entry.isDirectory()), ...planned])]
       .filter((name) => !name.startsWith('.'))
       .sort();
+  }
+
+  /** Where a read (with `writing`, a write) of the file goes: in the module of the model that holds it. */
+  placed(file: string, writing = false): string {
+    return this.placement === undefined ? file : this.placement(file, writing);
   }
 
   /** True when this command already wrote the file, whether it is on disk or not. */
@@ -339,12 +345,4 @@ export class Workspace {
   private absolute(file: string): string {
     return path.join(this.root, file);
   }
-
-  private placed(file: string, writing = false): string {
-    return this.placement === undefined ? file : this.placement(file, writing);
-  }
-}
-
-function isLanguageStep(todo: TodoLocation): boolean {
-  return todo.text.startsWith('define the ubiquitous language first');
 }
