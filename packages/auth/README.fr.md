@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ed293f77e4a42c57 -->
+<!-- translation-of: README.md sha256:6d265745dfee122d -->
 
 # @ddd-ts-kit/auth
 
@@ -513,8 +513,9 @@ new JwtAuthenticator({
   jwksUri: 'https://id.example.com/realms/shop/protocol/openid-connect/certs', // ou key: publicKey
   issuer: 'https://id.example.com/realms/shop',
   audience: 'shop-api',
-  algorithms: ['RS256'],        // par défaut : RS256, PS256, ES256, EdDSA
+  algorithms: ['RS256'],        // par défaut DEFAULT_JWT_ALGORITHMS : RS256, PS256, ES256, EdDSA
   clockTolerance: 5,            // en secondes, 0 par défaut
+  requireExpiry: true,          // la valeur par défaut : un jeton sans exp est refusé
   tenantClaim: 'tenant_id',     // la valeur par défaut
   toActor: (claims) => actor,   // remplace la correspondance par défaut
 });
@@ -528,20 +529,28 @@ comme attributs : `username` (`preferred_username`), `email`, et `emailVerified`
 (`email_verified`), que lit un cas d'usage qui fait confiance à l'adresse (une invitation qui y
 est envoyée).
 
-`authenticate(undefined)` renvoie l'acteur anonyme. Un jeton expiré, pas encore valide, destiné
-à une autre audience ou à un autre émetteur, signé avec une autre clé, altéré, non signé
-(`alg: none`), ou utilisant un algorithme hors de la liste autorisée lève
+`authenticate(undefined)` renvoie l'acteur anonyme. Un jeton expiré, sans `exp`, pas encore
+valide, destiné à une autre audience ou à un autre émetteur, signé avec une autre clé, altéré,
+non signé (`alg: none`), ou utilisant un algorithme hors de la liste autorisée lève
 `InvalidCredentialError` (code `UNAUTHORIZED`) avec un code de raison : `TOKEN_EXPIRED`,
-`CLAIM_MISMATCH`, `BAD_SIGNATURE`, `ALGORITHM_NOT_ALLOWED`, `UNKNOWN_KEY`, `MALFORMED_TOKEN`,
-`UNSUPPORTED_TOKEN`, `NO_SUBJECT`. Un jeu de clés impossible à récupérer n'est pas un refus :
-l'erreur est laissée telle quelle et aboutit à une réponse 5xx.
+`NO_EXPIRY`, `CLAIM_MISMATCH`, `BAD_SIGNATURE`, `ALGORITHM_NOT_ALLOWED`, `UNKNOWN_KEY`,
+`MALFORMED_TOKEN`, `UNSUPPORTED_TOKEN`, `NO_SUBJECT`. Un jeu de clés impossible à récupérer n'est
+pas un refus : l'erreur est laissée telle quelle et aboutit à une réponse 5xx.
+
+Un jeton doit porter `exp` : un jeton qui n'expire jamais sert à qui le vole jusqu'à ce que sa
+clé soit révoquée. `requireExpiry: false` l'accepte, un choix délibéré pour un émetteur dont les
+jetons n'expirent jamais ; un `exp` présent est vérifié de la même façon. `DEFAULT_JWT_ALGORITHMS`,
+exporté par l'entrée principale, est la liste autorisée quand `algorithms` n'est pas donné.
 
 La correspondance par défaut pour OIDC : `id` à partir de `sub` (obligatoire), `type: 'user'`,
 `tenantId` à partir du *claim* du *tenant* quand c'est une chaîne, aucun attribut, et `roles` à
-partir du premier *claim* présent parmi `realm_access.roles` (rôles du *realm*), `roles` (une
-liste ou des mots séparés par des espaces) et `scope`. Ils ne sont jamais fusionnés : un
-*scope* qu'un client a demandé ne doit pas passer pour un rôle. L'acteur ne garde rien du
-jeton. Faites correspondre les comptes de service à `type: 'service'` avec `toActor`.
+partir de `realm_access.roles` (rôles du *realm*) quand il est présent, sinon de `roles` (une
+liste ou des mots séparés par des espaces), jamais fusionnés. Les *scopes* ne sont jamais des
+rôles : un *scope* qu'un client a demandé ne doit pas passer pour un rôle, donc un jeton qui ne
+porte que `scope` donne un acteur sans rôle, ses *scopes* dans `session.scopes` pour `HasScope`.
+Un fournisseur dont les jetons ne portent que des *scopes* fait correspondre ses rôles avec
+`toActor`. L'acteur ne garde rien du jeton. Faites correspondre les comptes de service à
+`type: 'service'` avec `toActor`.
 
 ### Keycloak
 
@@ -660,8 +669,11 @@ s'authentifient aussi par elle. `actorOfClaims(claims)` lit les *claims* d'un je
 `ddd-ts-kit init --authn passport` écrit cette plateforme : une stratégie de `passport-jwt` sur le
 jeu de clés de l'émetteur (`jwks-rsa`), son `actorOf`, et les identifiants de bout en bout signés
 pour elle. Elle vérifie des jetons bearer, comme `--authn jwt`, avec la stratégie dans le code du
-projet : une autre stratégie qui lit un jeton bearer (des jetons opaques par
-`passport-http-bearer`, une introspection) prend sa place dans `bearer-strategy.ts`. Une stratégie
+projet : elle refuse un jeton sans `exp` sauf si on lui donne `requireExpiry: false`, et accepte
+`DEFAULT_JWT_ALGORITHMS` sauf EdDSA, que `jsonwebtoken` (sous `passport-jwt`) ne sait pas
+vérifier : un émetteur qui signe en EdDSA a besoin de `--authn jwt`. Une autre stratégie qui lit un jeton bearer
+(des jetons opaques par `passport-http-bearer`, une introspection) prend sa place dans
+`bearer-strategy.ts`. Une stratégie
 qui lit un cookie ou une session ne passe pas par le port `Authenticator`, qui ne reçoit qu'un
 identifiant : donnez-la à `passportPrincipal`, qui reçoit la requête elle-même, comme
 `resolvePrincipal` de la frontière, et déclarez son schéma de sécurité dans le contrat.
@@ -765,6 +777,11 @@ export const authorizer = new RoleBasedAuthorizer({
   systemRole: 'automation',                     // le rôle de systemActor(...), aucun par défaut
 });
 ```
+
+Le rôle système n'est détenu que par un acteur système : parmi les rôles d'un utilisateur ou d'un
+service, qu'écrit un jeton ou un en-tête, il est écarté, donc un utilisateur dont les rôles
+nomment `automation` ne détient pas ce que détient le système, et `explain` le dit
+(`automation is the role of the system, held by a system actor only`).
 
 Un droit accordé est une permission, son identifiant, `<context>:*` ou `*`. Un droit qui ne
 pourrait jamais correspondre, un rôle hérité inconnu et un cycle dans la hiérarchie sont refusés

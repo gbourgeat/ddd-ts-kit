@@ -498,8 +498,9 @@ new JwtAuthenticator({
   jwksUri: 'https://id.example.com/realms/shop/protocol/openid-connect/certs', // or key: publicKey
   issuer: 'https://id.example.com/realms/shop',
   audience: 'shop-api',
-  algorithms: ['RS256'],        // default: RS256, PS256, ES256, EdDSA
+  algorithms: ['RS256'],        // default DEFAULT_JWT_ALGORITHMS: RS256, PS256, ES256, EdDSA
   clockTolerance: 5,            // seconds, default 0
+  requireExpiry: true,          // the default: a token without exp is refused
   tenantClaim: 'tenant_id',     // the default
   toActor: (claims) => actor,   // replaces the default mapping
 });
@@ -511,17 +512,25 @@ an actor of several, among which a request names the one it works in), and the s
 of OpenID Connect as attributes: `username` (`preferred_username`), `email`, and `emailVerified`
 (`email_verified`), which a use case that trusts the address (an invitation sent to it) reads.
 
-`authenticate(undefined)` answers the anonymous actor. A token that is expired, not valid yet,
-for another audience or issuer, signed with another key, altered, unsigned (`alg: none`), or
-using an algorithm outside the allow-list raises `InvalidCredentialError` (code `UNAUTHORIZED`)
-with a reason code: `TOKEN_EXPIRED`, `CLAIM_MISMATCH`, `BAD_SIGNATURE`, `ALGORITHM_NOT_ALLOWED`,
-`UNKNOWN_KEY`, `MALFORMED_TOKEN`, `UNSUPPORTED_TOKEN`, `NO_SUBJECT`. A key set that cannot be
-fetched is not a refusal: the error is left as it is and answered as a 5xx.
+`authenticate(undefined)` answers the anonymous actor. A token that is expired, without `exp`,
+not valid yet, for another audience or issuer, signed with another key, altered, unsigned
+(`alg: none`), or using an algorithm outside the allow-list raises `InvalidCredentialError`
+(code `UNAUTHORIZED`) with a reason code: `TOKEN_EXPIRED`, `NO_EXPIRY`, `CLAIM_MISMATCH`,
+`BAD_SIGNATURE`, `ALGORITHM_NOT_ALLOWED`, `UNKNOWN_KEY`, `MALFORMED_TOKEN`, `UNSUPPORTED_TOKEN`,
+`NO_SUBJECT`. A key set that cannot be fetched is not a refusal: the error is left as it is and
+answered as a 5xx.
+
+A token must carry `exp`: one that never expires works for whoever steals it until its key is
+revoked. `requireExpiry: false` accepts it, a conscious choice for an issuer whose tokens never
+expire; an `exp` that is present is checked all the same. `DEFAULT_JWT_ALGORITHMS`, exported by
+the main entry, is the allow-list used when `algorithms` is not given.
 
 The default mapping for OIDC: `id` from `sub` (required), `type: 'user'`, `tenantId` from the
-tenant claim when it is a string, no attribute, and `roles` from the first claim present among
-`realm_access.roles` (realm roles), `roles` (a list or space-separated words) and `scope`. They
-are never merged: a scope a client asked for must not pass for a role. The actor keeps nothing
+tenant claim when it is a string, no attribute, and `roles` from `realm_access.roles` (realm
+roles) when present, else from `roles` (a list or space-separated words), never merged. The
+scopes are never roles: a scope a client asked for must not pass for a role, so a token that
+carries only `scope` gives an actor with no role, its scopes in `session.scopes` for `HasScope`.
+A provider whose tokens carry only scopes maps its roles with `toActor`. The actor keeps nothing
 of the token. Map service accounts to `type: 'service'` with `toActor`.
 
 ### Keycloak
@@ -635,9 +644,11 @@ so that the procedures, the scripts and the end-to-end tests authenticate throug
 `actorOf` of a strategy that hands its payload on. `ddd-ts-kit init --authn passport` writes
 that platform: a strategy of `passport-jwt` on the key set of the issuer (`jwks-rsa`), its
 `actorOf`, and the end-to-end credentials signed for it. It verifies bearer tokens, as
-`--authn jwt` does, with the strategy in the code of the project: another strategy that reads a
-bearer token (opaque tokens through `passport-http-bearer`, an introspection) takes its place in
-`bearer-strategy.ts`. A strategy that reads a cookie or a session does not go through the
+`--authn jwt` does, with the strategy in the code of the project: it refuses a token without
+`exp` unless given `requireExpiry: false`, and allows `DEFAULT_JWT_ALGORITHMS` but EdDSA, which
+`jsonwebtoken` (under `passport-jwt`) cannot verify: an EdDSA issuer needs `--authn jwt`.
+Another strategy that reads a bearer token (opaque tokens through `passport-http-bearer`, an
+introspection) takes its place in `bearer-strategy.ts`. A strategy that reads a cookie or a session does not go through the
 `Authenticator` port, which only receives a credential: give it to `passportPrincipal`, which
 receives the request itself, as the `resolvePrincipal` of the boundary, and declare its security
 scheme in the contract.
@@ -734,6 +745,11 @@ export const authorizer = new RoleBasedAuthorizer({
   systemRole: 'automation',                     // the role of systemActor(...), none by default
 });
 ```
+
+The system role is held by a system actor only: among the roles of a user or a service, which a
+token or a header writes, it is left out, so a user whose roles name `automation` does not hold
+what the system holds, and `explain` says so (`automation is the role of the system, held by a
+system actor only`).
 
 A grant is a permission, its id, `<context>:*` or `*`. A grant that could never match, an
 unknown inherited role and a cycle in the hierarchy are refused at construction, and so are a
