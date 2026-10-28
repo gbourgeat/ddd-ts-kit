@@ -62,7 +62,10 @@ is `protected`, which permission it requires, and two functions that read the me
 
 The decorator is accepted on a message that carries its actor (`AuthorizedCommand`,
 `AuthorizedQuery`), because a right is always somebody's. The explicit style says the same
-thing next to the handler registration: `builder.command(...).requires(permission, { resource })`.
+thing next to the handler registration: `builder.command(...).requires(permission, { resource })`. In a context divided into modules of
+the model, that registration, and so the declaration, is written by `generate command ... --module
+<module>` in `<module>/<module>.module.ts`, not in the module file of the context and not in a
+file of `application/authorization/`, which holds the policies on one element.
 
 ## What the middleware does
 

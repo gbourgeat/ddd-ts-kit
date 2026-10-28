@@ -486,6 +486,20 @@ test('every generated role of the canonical tree names its generator', () => {
   assert.equal(run('pre-write', write(join(root, 'test/e2e/journey-tenancy.e2e.spec.ts'))).output, undefined);
 });
 
+test('the declarations of the use cases of a module are not a policy file: they go to the module file of the module', () => {
+  const root = project();
+  const result = run(
+    'pre-write',
+    write(join(root, 'src/contexts/ordering/application/authorization/declare-sales-use-cases.policy.ts')),
+  );
+  assert.equal(decision(result), 'deny');
+  assert.match(reason(result), /generate policy /);
+  assert.match(reason(result), /requires\(\.\.\.\)/);
+  assert.match(reason(result), /<module>\/<module>\.module\.ts/);
+  assert.match(reason(result), /--module <module>/);
+  assert.match(reason(result), /generate module/);
+});
+
 test('a long end-to-end spec is split by behaviour into parts named after it', () => {
   const root = project();
   const part = join(root, 'test/e2e/place-order-refusals.e2e.spec.ts');

@@ -43,6 +43,7 @@ export const declarationsPortAdapterWired: Rule = {
   run(project) {
     const composed = composedClasses(project);
     const needed = neededPorts(project);
+    const roots = project.files.filter((file) => isCompositionRoot(file, project));
 
     return perFile(project, this.id, (file) => {
       const place = inLayer(file, 'infrastructure');
@@ -56,7 +57,9 @@ export const declarationsPortAdapterWired: Rule = {
           ({ shape, port }) =>
             needed(port) && !composed.has(`${file.path}#${shape.name}`) && !isDeclared(file, project, shape),
         )
-        .map((implementation) => unwired(implementation, project, place.context));
+        .map((implementation) =>
+          unwired({ ...implementation, subjects: rootsOf(roots, place.context) }, project, place.context),
+        );
     });
   },
 };
@@ -161,7 +164,11 @@ function isDeclared(file: SourceFile, project: Project, shape: ClassShape): bool
   return shape.isExported && declaredRoleOf(pathInContext(project, file) ?? '', WITHOUT_MODULE) !== undefined;
 }
 
-function unwired({ shape, port, repository }: Implementation, project: Project, context: string): Finding {
+function unwired(
+  { shape, port, repository, subjects }: Implementation & { readonly subjects: readonly string[] },
+  project: Project,
+  context: string,
+): Finding {
   const marker = `if it is kept unwired on purpose, write docs/adr/NNNN-<slug>.md and put \`// ddd-ts-kit-disable-next-line ${RULE_ID} -- ADR-NNNN: <why>\` above the class`;
 
   if (isDeclaredStyle(project)) {
@@ -172,6 +179,7 @@ function unwired({ shape, port, repository }: Implementation, project: Project, 
       line: shape.line,
       message: `${shape.name} implements the port ${port}, but carries no declaration and no file of the composition root imports it: nothing binds it, and the port is missing at run time.`,
       fix: `Put ${decorator} from ${DECLARATIONS_ENTRY} above the class, in a role file (${files}), or bind it in the platform; ${marker}.`,
+      subjects,
     };
   }
 
@@ -179,5 +187,13 @@ function unwired({ shape, port, repository }: Implementation, project: Project, 
     line: shape.line,
     message: `${shape.name} implements the port ${port}, but no file of the composition root imports it: nothing binds it, and the port is missing at run time.`,
     fix: `Bind it in ${context}.module.ts, \`builder.bind(${port}).toClass(${shape.name}, [..])\`, or in src/main.ts; ${marker}.`,
+    subjects,
   };
+}
+
+/** The files that could bind the adapter: the composition root outside the contexts and the module files of its own context. */
+function rootsOf(roots: readonly SourceFile[], context: string): string[] {
+  return roots
+    .filter(({ location }) => location.area !== 'context' || location.context === context)
+    .map(({ path }) => path);
 }

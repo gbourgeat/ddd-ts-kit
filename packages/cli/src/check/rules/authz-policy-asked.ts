@@ -40,7 +40,11 @@ export const authzPolicyAsked: Rule = {
       .filter(({ permission }) => refined.has(permission.key))
       .flatMap((requirement) =>
         handlersOf(project, requirement).flatMap((handler) =>
-          toViolations(report, handler.path, unasked(handler, requirement)),
+          toViolations(
+            report,
+            handler.path,
+            unasked(handler, requirement, refined.get(requirement.permission.key) ?? []),
+          ),
         ),
       );
   },
@@ -62,8 +66,8 @@ interface Requirement {
 }
 
 /** The permissions some policy refines, by `@Policy(<permission>, ...)` or `definePolicy({ permission, ... })`. */
-function refinedPermissions(project: Project): ReadonlySet<string> {
-  const refined = new Set<string>();
+function refinedPermissions(project: Project): ReadonlyMap<string, readonly string[]> {
+  const refined = new Map<string, string[]>();
 
   for (const file of project.files) {
     if (inLayer(file, 'application')?.inside[0] !== 'authorization') {
@@ -71,7 +75,7 @@ function refinedPermissions(project: Project): ReadonlySet<string> {
     }
 
     for (const permission of [...decoratedPolicies(file), ...definedPolicies(file)]) {
-      refined.add(permission.key);
+      refined.set(permission.key, [...(refined.get(permission.key) ?? []), file.path]);
     }
   }
 
@@ -237,7 +241,11 @@ function declares(file: SourceFile, name: string): boolean {
   return classesOf(file.scan).some((candidate) => candidate.name === name);
 }
 
-function unasked(handler: SourceFile, { message, permission }: Requirement): Finding[] {
+function unasked(
+  handler: SourceFile,
+  { message, permission, declaredIn }: Requirement,
+  policies: readonly string[],
+): Finding[] {
   if (asks(handler, permission)) {
     return [];
   }
@@ -249,6 +257,7 @@ function unasked(handler: SourceFile, { message, permission }: Requirement): Fin
       line: handlerClass?.line ?? 1,
       message: `A policy refines ${permission.written}, which ${message} requires, and ${handlerClass?.name ?? 'its handler'} never asks it: the bus checked the permission without the element, and the rule of the policy is skipped.`,
       fix: `Load the element, then call \`await this.access.authorize(${/Query$/.test(message) ? 'query' : 'command'}.actor, ${permission.written}, <aggregate>)\` with the Access port of @ddd-ts-kit/auth, before the change.`,
+      subjects: [...new Set([declaredIn.path, ...policies])].filter((path) => path !== handler.path),
     },
   ];
 }

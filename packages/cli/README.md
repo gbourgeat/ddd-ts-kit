@@ -2043,7 +2043,11 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 
 `ddd-ts-kit explain <rule-id>` prints the same kind of bad and good example for every rule.
 
-- `paths` and `--changed-since` limit what is reported, not what is analysed.
+- `paths` and `--changed-since` limit what is reported, not what is analysed. `--changed-since` keeps a
+  violation when the file it sits on changed, or when a file it names as its `subjects` did (in `--json`):
+  a finding reported on a handler but repaired in the module file (`events/consumer-idempotent`,
+  `declarations/port-adapter-wired`, `authz/declared`, `authz/policy-asked`) shows when only that
+  module file changed. `git diff` reads the commits since the merge base: commit before you check.
 - `--baseline write` records the errors a project already has, counted by file and by rule, in
   `ddd-ts-kit-baseline.json` (the shape of `eslint-suppressions.json`), for a codebase that adopts
   the kit; commit it. From then on `check` and `check-file` (the hook of the agent) leave quiet the

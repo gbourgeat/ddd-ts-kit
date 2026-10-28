@@ -23,6 +23,7 @@ import { loadLooseProject } from '../project/load-loose-project';
 import { loadProject } from '../project/load-project';
 import { toPosix } from '../project/to-posix';
 import { changedFiles } from './changed-files';
+import { isReportedSince } from './is-reported-since';
 import { knownRules } from './known-rules';
 import { selfCheck } from './self-check';
 
@@ -96,7 +97,7 @@ function checkProject(args: Arguments, rules: readonly string[]): CheckResult {
   const changed = ref === undefined ? undefined : changedFiles(root, ref);
 
   const reported = result.violations.filter(
-    (violation) => isInScope(violation, scopes) && (changed === undefined || changed.has(violation.file)),
+    (violation) => isInScope(violation, scopes) && isReportedSince(violation, changed),
   );
 
   return summarize(reported, result);
