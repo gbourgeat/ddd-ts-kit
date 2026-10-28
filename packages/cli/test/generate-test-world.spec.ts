@@ -148,6 +148,25 @@ describe('generate test-world, in the declared style', () => {
   });
 });
 
+describe('generate test-world, and the reader of a query', () => {
+  it('reads the fake of the reader of a query as standing for its port, and leaves it to the spec that gives its answer', () => {
+    const project = billingProject('world-reader');
+
+    expect(
+      cli(project, 'generate', 'query', 'billing', 'GetInvoice', '--public', '--term', 'Get=To read one invoice').code,
+    ).toBe(0);
+
+    const fake = read(project, `${BILLING}/test/fakes/get-invoice-reader.fake.ts`);
+
+    expect(fake).toContain('export class FakeGetInvoiceReader implements GetInvoiceReader {');
+    expect(fake).not.toContain('InMemory');
+
+    expect(report(cli(project, 'generate', 'test-world', 'billing', '--json')).notes).toContain(
+      'Not in the world: FakeGetInvoiceReader needs constructor arguments: a spec builds it with what it should answer.',
+    );
+  });
+});
+
 describe('generate test-world, on other stacks', () => {
   it('gives the test application alone to a context without a fake, and says so', () => {
     const root = tempDir('world-empty');
