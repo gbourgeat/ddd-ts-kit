@@ -134,7 +134,7 @@ aside. The message carries `Merge-Base: <commit>`, `Trunk: <commit>` and, when t
 found squashed there, `Landed: <commit>`: `verify-merge` judges the merge on that base later too.
 A merge finished by hand with `git commit` keeps those trailers.
 
-`--dry-run` previews (nothing changes), `--abort` undoes the merge in progress (a file the kit regenerates that was modified after the merge staged it is restored and named; any other file changed by hand makes it refuse, exit 2). The tree must be
+`--dry-run` previews (nothing changes), `--abort` undoes the merge in progress (a file the kit regenerates, such as a `docs/behaviour/` page or a `CONTEXT.md`, that was modified after the merge staged it is restored and named; any other file changed by hand makes it refuse, exit 2). `--continue` concludes the trunk commit the merge started from: when the trunk moved since, it prints `trunk moved: ...` and, once the merge is committed, `npx ddd-ts-kit merge-trunk` again brings the rest. With Prisma, a merge that changed a file under `prisma/schema/` runs `npm run db:client` after `regenerate`, so the git-ignored `generated/schema.sql` of the in-process test database is current; Drizzle, Knex and TypeORM derive no such file. The tree must be
 clean (the character devices a sandbox binds over the paths it denies are not counted) and no other merge, rebase or cherry-pick in progress (exit 2 otherwise); the trunk is never
 fetched, the commit it names is printed. `merge-trunk` needs git 2.40; an older git merges only
 from the base git computes (`--since <merge base>`), with `git merge` itself.

@@ -218,7 +218,7 @@ both sides, never by taking one side of a source file or a test (`-X theirs`, `-
 `checkout --theirs` erase the other side without a conflict, and the guard refuses them to a
 sub-agent), `git add` it, then `npx ddd-ts-kit merge-trunk --continue`: it replays the
 migrations, regenerates, runs `verify-merge` on the result and commits only once no line, row
-or test is lost (a removal decided on purpose: `--continue --accept-lost`; `--abort` undoes).
+or test is lost (a removal decided on purpose: `--continue --accept-lost`; `--abort` undoes, and restores the derived files the kit regenerated). On Prisma it also runs `npm run db:client` when the merge changed a schema, so the test database is current. When the trunk moved since the merge started, `--continue` says so: it concludes the commit of the first run, so run `merge-trunk` again after it.
 Under the sandbox, a trunk that changes the settings of the project (`.claude/settings.json`) or
 another path the session cannot write is the owner's merge: `merge-trunk` stops with nothing
 changed and exit 3, naming the paths; hand the owner the same command to run from a terminal

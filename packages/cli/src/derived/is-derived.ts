@@ -9,7 +9,7 @@ export interface DerivedTree {
 
 /**
  * What `npm run regenerate` rewrites: the dependency rules, the context map, the declarations and
- * lists of each context (at its root and in its role folders), the contracts and their clients.
+ * lists of each context (at its root and in its role folders), the pages of what the tests state, the contracts and their clients.
  * Such a file is never merged by hand: it is written again from the sources. `path` is relative
  * to the project root, with POSIX separators.
  */
@@ -27,6 +27,6 @@ export function isDerived(path: string, { contextsDir, modules }: DerivedTree): 
     ofAContext ||
     path === '.dependency-cruiser.cjs' ||
     path === 'docs/context-map.md' ||
-    /^(?:openapi|docs\/integration|clients)\//.test(path)
+    /^(?:openapi|docs\/integration|docs\/behaviour|clients)\//.test(path)
   );
 }

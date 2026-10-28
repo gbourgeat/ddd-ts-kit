@@ -34,6 +34,8 @@ function bodyLines(report: MergeReport): string[] {
     ...forYouLines(report),
     ...(report.migrations.length === 0 ? [] : ['migrations:', ...report.migrations.map((line) => `  ${line}`)]),
     ...regenerateLines(report),
+    ...clientLines(report),
+    ...movedLines(report),
     ...lostLines(report),
     ...(report.leftOut.length === 0
       ? []
@@ -133,5 +135,28 @@ function lostLines({ lostLines: found }: MergeReport): string[] {
   return [
     `lost lines: ${counted}${found.warnings.length === 0 ? '' : `, ${found.warnings.length} warning(s)`}`,
     ...findingSections(found),
+  ];
+}
+
+function clientLines({ client }: MergeReport): string[] {
+  if (client === undefined) {
+    return [];
+  }
+
+  const output = client.output === undefined ? [] : client.output.split('\n').map((line) => `  ${line}`);
+
+  return [`prisma client: ${client.status} (\`npm run db:client\`, the schema changed in this merge)`, ...output];
+}
+
+function movedLines({ trunkMoved, trunk }: MergeReport): string[] {
+  if (trunkMoved === undefined) {
+    return [];
+  }
+
+  const merged = trunkMoved.merged.slice(0, 7);
+
+  return [
+    `trunk moved: ${trunk.ref} was ${merged} when the merge started, it is ${trunkMoved.now.slice(0, 7)} now; this merge concludes ${merged}.`,
+    '  Once it is committed, run `npx ddd-ts-kit merge-trunk` again to bring the rest; or `--abort` and start again to bring it all at once.',
   ];
 }
