@@ -1,0 +1,346 @@
+// The worktree of a story or of a fix, and the main checkout of the trunk: where the code of a context waits,
+// and for what.
+
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { test } from 'node:test';
+import { bash, cli, decision, edit, git, launcher, patchConfig, project, put, reason, run, write } from './support.mjs';
+
+const STORY_SLICES = `# Slices
+
+| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| US5.01 | ordering | slice | Place order | \`generate command ordering PlaceOrder --public\` | | ordering | todo |
+`;
+
+test('in the worktree of a story, the code waits for each row designed and the acceptance locked', () => {
+  const root = storyWorktree();
+  const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
+  for (const input of [write(code), write(code, { agent_type: 'ddd-ts-kit:context-builder' })]) {
+    const refused = run('pre-write', input);
+    assert.equal(decision(refused), 'deny');
+    assert.match(reason(refused), /The code of story US5 waits for its build gate/);
+    assert.match(reason(refused), /Next: Write docs\/architecture\/stories\/US5\.md/);
+  }
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'))).output, undefined);
+  assert.equal(
+    decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public'))),
+    'deny',
+  );
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate acceptance US5')).output, undefined);
+  assert.equal(
+    decision(
+      run('pre-bash', bash(root, 'npx ddd-ts-kit story-scope US6', { agent_type: 'ddd-ts-kit:context-builder' })),
+    ),
+    'deny',
+  );
+  openTheBuildGate(root);
+  assert.equal(run('pre-write', write(code)).output, undefined);
+  assert.equal(
+    run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public')).output,
+    undefined,
+  );
+  assert.ok(existsSync(join(root, '.ddd-ts-kit/guard/story-gate.json')));
+});
+
+// Each row designed, the acceptance written and locked: what opens the code of a story.
+function openTheBuildGate(root) {
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n',
+  );
+  put(root, 'docs/architecture/reviews/US5.md', '# US5\n\n## #US5.01 Place order\n\n`PlaceOrderCommand`.\n');
+  put(
+    root,
+    'test/acceptance/us5.acceptance.spec.ts',
+    "import { it } from 'vitest';\nimport { pending } from '@ddd-ts-kit/testing/e2e';\n\nit('#US5.01 AC1 a customer places an order', pending(async () => {}));\n",
+  );
+  const locked = spawnSync('node', [cli, 'acceptance', 'US5', '--lock'], { cwd: root, encoding: 'utf8' });
+  assert.equal(locked.status, 0, locked.stderr);
+}
+
+function storyWorktree() {
+  const root = project();
+  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
+  put(root, 'docs/architecture/slices.md', STORY_SLICES);
+  return root;
+}
+
+test('in the main checkout of the trunk the code of a context waits for a worktree, and a worktree of .worktrees/ for its own install', () => {
+  const root = trunkCheckout();
+  const refused = run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts')));
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /This is the main checkout of the trunk \(branch main\)/);
+  assert.match(reason(refused), /npx ddd-ts-kit worktree <name>/);
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'))).output, undefined);
+  assert.equal(run('pre-write', write(join(root, 'docs/architecture/plan.md'))).output, undefined);
+  assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate aggregate ordering Order'))), 'deny');
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate context billing:supporting')).output, undefined);
+  const module = bash(
+    root,
+    'npx ddd-ts-kit generate module ordering checkout --purpose "Checkout" --term "Checkout=the purchase flow"',
+  );
+  assert.equal(run('pre-bash', module).output, undefined);
+  assert.match(
+    run('session', { cwd: root }).output.hookSpecificOutput.additionalContext,
+    /Main checkout of the trunk \(branch main\): the code of the contexts is written in a worktree, refused here/,
+  );
+
+  const worktree = join(root, '.worktrees', 'order-number');
+  git(root, 'worktree', 'add', '--quiet', '-b', 'work/order-number', worktree);
+  const code = join(worktree, 'src/contexts/ordering/domain/order-number.ts');
+  const borrowed = run('pre-write', write(code));
+  assert.equal(decision(borrowed), 'deny');
+  assert.match(reason(borrowed), /a worktree of \.worktrees\/ without its own node_modules/);
+  launcher(worktree);
+  assert.equal(run('pre-write', write(code)).output, undefined);
+});
+
+// A project committed on main in the main checkout of its repository, its worktrees ignored.
+function trunkCheckout(config = {}) {
+  const root = project(config);
+  put(root, '.gitignore', 'node_modules\n.worktrees/\n');
+  git(root, 'init', '--quiet', '--initial-branch', 'main');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  return root;
+}
+
+test('a project started before the worktrees setting, and one set to advised, only hear where the code goes', () => {
+  const root = trunkCheckout();
+  const path = join(root, 'ddd-ts-kit.config.json');
+  const { worktrees, ...before } = JSON.parse(readFileSync(path, 'utf8'));
+  assert.equal(worktrees, 'required');
+  writeFileSync(path, JSON.stringify(before));
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts'))).output, undefined);
+  patchConfig(root, { worktrees: 'advised' });
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts'))).output, undefined);
+  const started = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(
+    started,
+    /Main checkout of the trunk \(branch main\): the code of the contexts is written in a worktree; open one/,
+  );
+});
+
+test('in the worktree of a story, a write to a file another open story changes is said once, and so is where they meet at session start', () => {
+  const { us5, us6 } = twoStories();
+  put(us6, 'docs/notes.md', 'US6\n');
+  const first = run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' }));
+  assert.match(
+    first.output.hookSpecificOutput.additionalContext,
+    /US6 \(story\/us6, .*\) changes docs\/notes\.md too\./,
+  );
+  assert.match(first.output.hookSpecificOutput.additionalContext, /npx ddd-ts-kit stories/);
+  assert.equal(run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' })).output, undefined);
+  assert.equal(
+    run('pre-write', write(join(us5, 'docs/architecture/slices.md'), { session_id: 'crossing' })).output,
+    undefined,
+  );
+  put(us5, 'docs/notes.md', 'US5\n');
+  rmSync(join(us5, '.ddd-ts-kit/guard/stories.json'));
+  const started = run('session', { cwd: us5 }).output.hookSpecificOutput.additionalContext;
+  assert.match(started, /It meets story US6: 1 file\(s\) both change\./);
+});
+
+// Two stories open in two worktrees of one repository, the CLI of the kit installed in each.
+function twoStories() {
+  const root = project();
+  put(root, '.gitignore', 'node_modules\n.ddd-ts-kit/\n');
+  put(
+    root,
+    'docs/architecture/slices.md',
+    `${STORY_SLICES}| US6.01 | billing | slice | Issue invoice | \`generate command billing IssueInvoice --public\` | | billing | todo |\n`,
+  );
+  git(root, 'init', '--quiet', '--initial-branch', 'main');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  return Object.fromEntries(
+    ['us5', 'us6'].map((code) => {
+      const worktree = `${root}-${code}`;
+      git(root, 'worktree', 'add', '--quiet', '-b', `story/${code}`, worktree);
+      put(
+        worktree,
+        '.ddd-ts-kit/story.json',
+        JSON.stringify({ story: code.toUpperCase(), base: 'main', branch: `story/${code}` }),
+      );
+      launcher(worktree);
+      return [code, worktree];
+    }),
+  );
+}
+
+test('a session of a story starts on its phase and ends on its report, refused once for the same step', () => {
+  const root = storyWorktree();
+  const started = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(
+    started,
+    /Story US5 \(skill ddd-ts-kit:story\): done: rows\. Next: Write docs\/architecture\/stories\/US5\.md/,
+  );
+  const stopping = { cwd: root, session_id: 'story-session', stop_hook_active: false };
+  const refused = run('stop', stopping);
+  assert.equal(refused.output.decision, 'block');
+  assert.match(refused.output.reason, /story US5 is not finished/);
+  assert.match(refused.output.reason, /Go on without asking/);
+  assert.equal(run('stop', { ...stopping, stop_hook_active: true }).output, undefined);
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Report\n\n- Blocked: the owner has not said who places an order.\n\n### Verification\n\n- not verified: npm run verify, the story is blocked at phase 1.\n',
+  );
+  assert.equal(run('stop', stopping).output, undefined);
+});
+
+// The worktree of a fix: its story file with its statement and the spec that proves it, no row, no review.
+const FIX_SPEC = 'src/contexts/ordering/test/unit/order.aggregate.spec.ts';
+const FIX_TEST =
+  "import { it } from 'vitest';\n\nit('#FIX-412 refuses to cancel a shipped order', () => {\n  expect(cancel('order-1')).toBe('refused');\n});\n";
+
+test('in the worktree of a fix, the code waits for the regression spec locked, which no one then edits', () => {
+  const root = fixWorktree();
+  const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
+  const refused = run('pre-write', write(code));
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /The code of fix FIX-412 waits for its regression spec, locked/);
+  assert.match(reason(refused), /skill ddd-ts-kit:fix/);
+  assert.equal(
+    decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public'))),
+    'deny',
+  );
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate builder ordering Order')).output, undefined);
+  assert.equal(run('pre-write', write(join(root, FIX_SPEC))).output, undefined);
+  assert.match(
+    run('session', { cwd: root }).output.hookSpecificOutput.additionalContext,
+    /Fix FIX-412 \(skill ddd-ts-kit:fix\)/,
+  );
+});
+
+function fixWorktree() {
+  const root = project();
+  put(
+    root,
+    '.ddd-ts-kit/story.json',
+    JSON.stringify({ story: 'FIX-412', base: 'main', branch: 'fix/fix-412', kind: 'fix' }),
+  );
+  put(
+    root,
+    'docs/architecture/stories/FIX-412.md',
+    `# FIX-412\n\n## Statement\n\nA shipped order is cancelled.\n\n## Regression\n\n- ${FIX_SPEC}\n`,
+  );
+  return root;
+}
+
+test('once the regression spec of a fix is locked, the code opens, the session may amend the spec and a sub-agent may not', () => {
+  const root = fixWorktree();
+  const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
+  lockTheFix(root);
+  assert.equal(run('pre-write', write(code)).output, undefined);
+  assert.equal(
+    run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public')).output,
+    undefined,
+  );
+  assertSubAgentsRefusedTheLockedSpec(root);
+  assert.equal(
+    run('pre-write', edit(join(root, FIX_SPEC), { from: "'refused'", to: "'cancelled'" })).output,
+    undefined,
+  );
+  assert.equal(
+    decision(run('pre-write', write(join(root, FIX_SPEC), { agent_type: 'ddd-ts-kit:acceptance-judge' }))),
+    'deny',
+  );
+  assert.equal(
+    run('pre-write', write(join(root, 'src/contexts/ordering/test/unit/order-number.spec.ts'))).output,
+    undefined,
+  );
+  assert.equal(decision(run('pre-write', write(join(root, 'test/acceptance/fix-412.acceptance.lock.json')))), 'deny');
+});
+
+function assertSubAgentsRefusedTheLockedSpec(root) {
+  for (const writer of [
+    { agent_type: 'ddd-ts-kit:context-builder' },
+    { agent_type: 'ddd-ts-kit:domain-test-writer' },
+  ]) {
+    const held = run('pre-write', edit(join(root, FIX_SPEC), { from: "'refused'", to: "'cancelled'" }, writer));
+    assert.equal(decision(held), 'deny');
+    assert.match(reason(held), /is a regression spec of fix FIX-412, locked: it is the proof of the fix/);
+    assert.match(reason(held), /the main session of the fix writes a new version/);
+    assert.match(reason(held), /acceptance-judge agent rule on it with the statement of the fix/);
+  }
+}
+
+function lockTheFix(root) {
+  put(root, FIX_SPEC, FIX_TEST);
+  const locked = spawnSync('node', [cli, 'acceptance', 'FIX-412', '--lock'], { cwd: root, encoding: 'utf8' });
+  assert.equal(locked.status, 0, locked.stderr);
+}
+
+test('the shell runs and versions a locked regression spec of a fix, and a sub-agent never rewrites it', () => {
+  const root = fixWorktree();
+  lockTheFix(root);
+  for (const command of [
+    `npm test -- ${FIX_SPEC}`,
+    `npx vitest run ${FIX_SPEC}`,
+    `node node_modules/.bin/vitest run ${FIX_SPEC}`,
+    `git add ${FIX_SPEC}`,
+    `cat ${FIX_SPEC}`,
+    `npm test -- order.aggregate.spec.ts`,
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  for (const command of [
+    `sed -i s/refused/cancelled/ ${FIX_SPEC}`,
+    `echo "" > ${FIX_SPEC}`,
+    `rm ${FIX_SPEC}`,
+    `cp /tmp/order.aggregate.spec.ts ${FIX_SPEC}`,
+    `node -e "require('fs').writeFileSync('${FIX_SPEC}', '')"`,
+    `npm test -- ${FIX_SPEC} > ${FIX_SPEC}`,
+  ]) {
+    const held = run('pre-bash', bash(root, command, { agent_type: 'ddd-ts-kit:context-builder' }));
+    assert.equal(decision(held), 'deny', command);
+    assert.match(reason(held), /A command may read it, version it or run it/);
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, `the session: ${command}`);
+  }
+  assertSessionFormatsTheLockedSpec(root);
+  assert.equal(
+    run('pre-bash', bash(root, `sed -i s/a/b/ src/contexts/ordering/test/unit/other.spec.ts`)).output,
+    undefined,
+  );
+});
+
+function assertSessionFormatsTheLockedSpec(root) {
+  for (const command of [`npx biome format --write ${FIX_SPEC}`, `npx eslint --fix ${FIX_SPEC}`]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+}
+
+test('at stop in the worktree of a story, a done row that departed from its design is said once, without blocking', () => {
+  const root = storyWorktree();
+  openTheBuildGate(root);
+  put(root, 'docs/architecture/slices.md', STORY_SLICES.replace('| todo |', '| done |'));
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n\n## Report\n\nDelivered.\n\n### Verification\n\n- npm run verify: ok\n',
+  );
+  const session = { cwd: root, session_id: `design-${root}`, stop_hook_active: false };
+  const first = run('stop', session);
+  assert.equal(first.status, 0);
+  assert.equal(first.output.decision, undefined);
+  assert.match(
+    first.output.systemMessage,
+    /a row departed from its design: update its review section or list the compromise/,
+  );
+  assert.match(first.output.systemMessage, /`PlaceOrderCommand` \(#US5\.01, docs\/architecture\/reviews\/US5\.md:5\)/);
+  assert.match(first.output.systemMessage, /npx ddd-ts-kit story-check US5/);
+  assert.equal(run('stop', session).output, undefined);
+  assert.match(run('stop', { ...session, session_id: 'another' }).output.systemMessage, /departed from its design/);
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n\n## Report\n\nDelivered.\n\n### Compromises\n\n- `PlaceOrderCommand` is a plain function for now.\n\n### Verification\n\n- npm run verify: ok\n',
+  );
+  assert.equal(run('stop', { ...session, session_id: 'settled' }).output, undefined);
+  assert.equal(run('stop', { ...session, stop_hook_active: true }).output, undefined);
+});

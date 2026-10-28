@@ -49,7 +49,7 @@ npm run check:dashes
 npm run check:parity
 npm run docs:translations
 npm run docs:samples
-node --test plugin/hooks/guard.test.mjs
+npm run test:plugin
 ```
 
 `npm run lint` is ESLint with a content cache (`.eslintcache/`, 1 to 2 seconds when nothing changed). The

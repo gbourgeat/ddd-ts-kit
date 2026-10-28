@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:27ed3ca800f62ef5 -->
+<!-- translation-of: CONTRIBUTING.md sha256:c6966be3cbdca81a -->
 
 # Contribuer
 
@@ -54,7 +54,7 @@ npm run check:dashes
 npm run check:parity
 npm run docs:translations
 npm run docs:samples
-node --test plugin/hooks/guard.test.mjs
+npm run test:plugin
 ```
 
 `npm run lint` est ESLint avec un cache par contenu (`.eslintcache/`, 1 à 2 secondes quand rien n'a changé). Le hook de
