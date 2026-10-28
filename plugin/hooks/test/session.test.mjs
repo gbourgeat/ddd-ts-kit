@@ -2,10 +2,23 @@
 // workers to resume.
 
 import assert from 'node:assert/strict';
-import { readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { bash, cli, committed, directory, git, here, project, put, reason, run, worker } from './support.mjs';
+import {
+  bash,
+  cli,
+  cliAnswering,
+  committed,
+  directory,
+  git,
+  here,
+  project,
+  put,
+  reason,
+  run,
+  worker,
+} from './support.mjs';
 
 test('session start hands the workflow and the context map over as additional context', () => {
   const root = project();
@@ -64,6 +77,10 @@ test('the formatter advice and the install advice speak the package manager of t
   rmSync(join(root, 'node_modules'), { recursive: true });
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
   assert.match(briefing, /The dependencies are not installed here: run `pnpm install --frozen-lockfile`/);
+  const pnpmManifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  delete pnpmManifest.devDependencies['ddd-ts-kit'];
+  writeFileSync(join(root, 'package.json'), JSON.stringify(pnpmManifest));
+  assert.match(run('session', { cwd: root }).output.hookSpecificOutput.additionalContext, /`pnpm add -D ddd-ts-kit`/);
   const npm = project({}, ['--package-manager', 'npm']);
   rmSync(join(npm, 'node_modules'), { recursive: true });
   assert.match(run('session', { cwd: npm }).output.hookSpecificOutput.additionalContext, /run `npm ci`/);
@@ -86,9 +103,7 @@ test('session start names the workers to resume, and asks the CLI nothing withou
   assert.doesNotMatch(run('session', { cwd: root }).output.hookSpecificOutput.additionalContext, /Worker to resume/);
   assert.doesNotMatch(readFileSync(calls, 'utf8'), /status/);
 
-  const worktree = join(dirname(root), `${root.split('/').pop()}-ordering`);
-  git(root, 'worktree', 'add', '--quiet', '-b', 'build/ordering', worktree);
-  put(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'ordering', rows: ['3'], base: 'main' }));
+  const worktree = workerWorktree(root);
   put(worktree, 'src/contexts/ordering/domain/order.ts', 'export const order = 1;\n');
   const old = '2020-01-01T00:00:00.000Z';
   const agent = { agentId: 'a1b2', run: 1, runStartedAt: old, runStartHead: null, lastSeen: old, toolCalls: 80 };
@@ -98,4 +113,125 @@ test('session start names the workers to resume, and asks the CLI nothing withou
     briefing,
     /^Worker to resume: build\/ordering \(mid-row, agent a1b2\): `npx ddd-ts-kit worker-scope ordering --resume`, then send what it prints\.$/m,
   );
+});
+
+// A worktree of the repository beside it, on its own branch, holding the scope of a worker of ordering.
+function workerWorktree(root) {
+  const worktree = join(dirname(root), `${basename(root)}-ordering`);
+  git(root, 'worktree', 'add', '--quiet', '-b', 'build/ordering', worktree);
+  put(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'ordering', rows: ['3'], base: 'main' }));
+  return worktree;
+}
+
+// What `status --workers --json` says of four workers: two of ordering stopped, one of billing never
+// started, one of catalog done.
+const progress = (phase, next, agent) => ({
+  phase,
+  next: { action: next },
+  ...(agent ? { agent: { agentId: agent } } : {}),
+});
+const FOUR_WORKERS = {
+  workers: [
+    {
+      branch: 'build/ordering',
+      context: 'ordering',
+      worktree: '/w/ordering',
+      progress: progress('mid-row', 'send-message'),
+    },
+    { context: 'ordering', worktree: '/w/ordering-2', progress: progress('not started', 'new-agent', 'a9') },
+    {
+      branch: 'build/billing',
+      context: 'billing',
+      worktree: '/w/billing',
+      progress: progress('not started', 'new-agent'),
+    },
+    { branch: 'build/catalog', context: 'catalog', worktree: '/w/catalog', progress: progress('done', 'merge') },
+  ],
+};
+
+test('session start names each stopped worker by its branch, else its worktree, and the worktree when two build one context', () => {
+  const root = committed();
+  workerWorktree(root);
+  cliAnswering(root, { status: FOUR_WORKERS });
+  const resumed = run('session', { cwd: root })
+    .output.hookSpecificOutput.additionalContext.split('\n')
+    .filter((line) => line.startsWith('Worker to resume'));
+  assert.deepEqual(resumed, [
+    'Worker to resume: build/ordering (mid-row): `npx ddd-ts-kit worker-scope ordering --resume --worktree /w/ordering`, then send what it prints.',
+    'Worker to resume: /w/ordering-2 (not started, agent a9): `npx ddd-ts-kit worker-scope ordering --resume --worktree /w/ordering-2`, then send what it prints.',
+  ]);
+});
+
+test('with a CLI that answers no report, session start points to the commands, and stop stays open', () => {
+  const root = committed();
+  workerWorktree(root);
+  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
+  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), '#!/bin/sh\necho "not a report"\n', { mode: 0o755 });
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /^Story US5: run `npx ddd-ts-kit story US5` for where it stands\.$/m);
+  assert.match(briefing, /^Contexts:\n$/m);
+  assert.doesNotMatch(briefing, /Worker to resume/);
+  put(root, 'docs/notes.md', 'a change for the stop to check\n');
+  assert.equal(run('stop', { cwd: root, stop_hook_active: false }).output, undefined);
+});
+
+test('git files that name no checkout leave session start without workers to resume', () => {
+  const linked = project();
+  put(linked, '.git', 'not the line of a linked worktree\n');
+  assert.doesNotMatch(run('session', { cwd: linked }).output.hookSpecificOutput.additionalContext, /Worker to resume/);
+  const pruned = committed();
+  mkdirSync(join(pruned, '.git', 'worktrees', 'gone'), { recursive: true });
+  assert.doesNotMatch(run('session', { cwd: pruned }).output.hookSpecificOutput.additionalContext, /Worker to resume/);
+});
+
+test('a session started as a context worker is told the bounded context it builds', () => {
+  const root = project();
+  const briefing = run('session', { cwd: root, ...worker(root) }).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /^Worker scope: bounded context "ordering" only \(src\/contexts\/ordering\/, /m);
+});
+
+test('with the guard off, session start still hands the map over, without a version gap nor a commit reminder', () => {
+  const root = committed({ guard: 'off', commit: { maxFiles: 1, maxLines: 1 } });
+  put(root, 'node_modules/ddd-ts-kit/package.json', JSON.stringify({ name: 'ddd-ts-kit', version: '0.1.0' }));
+  put(root, 'docs/a.md', 'a\n');
+  put(root, 'docs/b.md', 'b\n');
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /ordering \[core\]/);
+  assert.doesNotMatch(briefing, /Version gap|uncommitted/);
+});
+
+test('a plan without a next step points to the plan itself', () => {
+  const root = project();
+  put(root, 'docs/architecture/plan.md', '# Architecture plan\n\nThe contexts, then the slices.\n');
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /Plan: docs\/architecture\/plan\.md .*Next: not stated, read the plan/);
+});
+
+test('the line of a context names its upstreams, and counts as none what the listing leaves out', () => {
+  const root = project();
+  const billing = { name: 'billing', classification: 'supporting', glossary: 4, aggregates: ['Invoice'] };
+  const upstreams = [{ context: 'ordering' }, 'catalog'];
+  cliAnswering(root, {
+    list: {
+      contexts: [
+        { ...billing, upstreams },
+        { name: 'catalog', classification: 'generic' },
+      ],
+    },
+  });
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(
+    briefing,
+    /^billing \[supporting\] upstreams: ordering, catalog; glossary: 4 terms; 1 aggregates, 0 commands, 0 queries, 0 published events$/m,
+  );
+  assert.match(briefing, /^catalog \[generic\] upstreams: none; glossary: 0 terms; 0 aggregates, /m);
+});
+
+test('a map longer than session start allows is cut, with the command that lists the rest', () => {
+  const root = project();
+  const contexts = Array.from({ length: 60 }, (_, index) => ({ name: `context-${index}`, classification: 'core' }));
+  cliAnswering(root, { list: { contexts } });
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /\n\(truncated: run `npx ddd-ts-kit list` for the rest\)/);
+  assert.doesNotMatch(briefing, /context-59 /);
 });

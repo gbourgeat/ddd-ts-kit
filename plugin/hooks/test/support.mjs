@@ -48,14 +48,37 @@ export function launcher(root) {
   });
 }
 
+// A CLI of the project that answers some of its commands with the report given, and hands every other
+// command to the built CLI.
+export function cliAnswering(root, answers) {
+  const reports = join(root, 'node_modules', '.reports');
+  mkdirSync(reports, { recursive: true });
+  for (const [command, report] of Object.entries(answers)) {
+    writeFileSync(join(reports, command), JSON.stringify(report));
+  }
+  const answering = `#!/bin/sh\nif [ -f "${reports}/$1" ]; then cat "${reports}/$1"; exit 0; fi\nexec node "${cli}" "$@"\n`;
+  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), answering, { mode: 0o755 });
+}
+
 export function patchConfig(root, patch) {
   const path = join(root, 'ddd-ts-kit.config.json');
   const current = JSON.parse(readFileSync(path, 'utf8'));
   writeFileSync(path, JSON.stringify({ ...current, ...patch }));
 }
 
+// The guard in one mode, given one hook input, with the environment of the test and `env` over it.
 export function run(mode, input, env = {}) {
+  return guardIn(undefined, mode, { input, env });
+}
+
+// The guard started in `directory`, as a host that sends no working directory in its input starts it.
+export function runFrom(directory, mode, input) {
+  return guardIn(directory, mode, { input, env: {} });
+}
+
+function guardIn(directory, mode, { input, env }) {
   const result = spawnSync('node', [guard, mode], {
+    cwd: directory,
     input: JSON.stringify(input),
     encoding: 'utf8',
     env: { ...process.env, TMPDIR: guardTemp, ...env },

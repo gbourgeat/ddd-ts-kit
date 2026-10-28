@@ -3,10 +3,24 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { bash, cli, decision, edit, git, launcher, patchConfig, project, put, reason, run, write } from './support.mjs';
+import {
+  bash,
+  cli,
+  cliAnswering,
+  decision,
+  edit,
+  git,
+  launcher,
+  patchConfig,
+  project,
+  put,
+  reason,
+  run,
+  write,
+} from './support.mjs';
 
 const STORY_SLICES = `# Slices
 
@@ -125,6 +139,29 @@ test('a project started before the worktrees setting, and one set to advised, on
   );
 });
 
+test('the trunk is the branch origin/HEAD names, else main or master', () => {
+  const root = trunkCheckout();
+  const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
+  put(root, '.git/refs/remotes/origin/HEAD', 'ref: refs/remotes/origin/develop\n');
+  assert.equal(run('pre-write', write(code)).output, undefined);
+  put(root, '.git/refs/remotes/origin/HEAD', 'ref: refs/remotes/origin/main\n');
+  assert.match(reason(run('pre-write', write(code))), /This is the main checkout of the trunk \(branch main\)/);
+});
+
+test('session start in a worktree of .worktrees/ without its own install says to install it first', () => {
+  const root = trunkCheckout();
+  const worktree = join(root, '.worktrees', 'order-number');
+  git(root, 'worktree', 'add', '--quiet', '-b', 'work/order-number', worktree);
+  const started = run('session', { cwd: worktree }).output.hookSpecificOutput.additionalContext;
+  assert.match(started, /is a worktree of \.worktrees\/ without its own node_modules: .* Install it first/);
+});
+
+test('a .git folder that holds no repository is no trunk: the code of a context is written there', () => {
+  const root = project();
+  mkdirSync(join(root, '.git'));
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts'))).output, undefined);
+});
+
 test('in the worktree of a story, a write to a file another open story changes is said once, and so is where they meet at session start', () => {
   const { us5, us6 } = twoStories();
   put(us6, 'docs/notes.md', 'US6\n');
@@ -191,6 +228,116 @@ test('a session of a story starts on its phase and ends on its report, refused o
     '# US5\n\n## Report\n\n- Blocked: the owner has not said who places an order.\n\n### Verification\n\n- not verified: npm run verify, the story is blocked at phase 1.\n',
   );
   assert.equal(run('stop', stopping).output, undefined);
+});
+
+test('a host that does not say the stop was refused is refused once for an unfinished story', () => {
+  const root = storyWorktree();
+  const stopping = { cwd: root, sessionId: `unsaid-${root}` };
+  assert.match(run('stop', stopping).output.reason, /story US5 is not finished/);
+  assert.equal(run('stop', stopping).output, undefined);
+});
+
+test('session start of a story says when nothing is done yet, and names its pull request once every phase is met', () => {
+  const root = storyWorktree();
+  const phase = (met) => ({ id: 'report', title: 'report', met });
+  cliAnswering(root, { story: { phases: [phase(false)], next: 'Write the statement.' } });
+  assert.match(
+    briefingOf(root),
+    /Story US5 \(skill ddd-ts-kit:story\): nothing done yet\. Next: Write the statement\./,
+  );
+  cliAnswering(root, { story: { phases: [phase(true)], next: null } });
+  assert.match(briefingOf(root), /Story US5 \(skill ddd-ts-kit:story\): done: report\. Next: its pull request/);
+});
+
+function briefingOf(root) {
+  return run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+}
+
+test('session start of a story says where it meets each other open story', () => {
+  const root = storyRepository();
+  const byHand = { ref: 'story/us6', behind: 1, settled: [], byHand: [{ file: 'docs/a.md', kind: 'text' }] };
+  answerStories(root, {
+    here: 'US5',
+    stories: [{ story: 'US5', files: [] }],
+    crossings: [
+      { stories: ['US5', 'US6'], contexts: ['ordering'], files: [], merge: byHand },
+      { stories: ['US5', 'US7'], contexts: [], files: ['docs/b.md'] },
+      { stories: ['US5', 'US8'], contexts: [], files: [] },
+    ],
+  });
+  const briefing = briefingOf(root);
+  assert.match(briefing, /^It meets story US6: contexts ordering, 1 conflict\(s\) to settle by hand\.$/m);
+  assert.match(briefing, /^It meets story US7: 1 file\(s\) both change\.$/m);
+  assert.match(briefing, /^It meets story US8: conflicts merge-trunk settles\.$/m);
+});
+
+test('session start of a story says how far its trunk moved, and when the trunk was last fetched', () => {
+  const root = storyRepository();
+  const byHand = [{ file: 'docs/a.md', kind: 'text' }];
+  answerStories(root, ownView({ trunk: trunkAhead(3, byHand) }, '2020-01-01T00:00:00.000Z'));
+  const behind = briefingOf(root);
+  assert.match(
+    behind,
+    /^The trunk moved: 3 commit\(s\) of origin\/main to merge in, 1 conflict\(s\) to settle by hand\.$/m,
+  );
+  assert.match(behind, /^The trunk is read as the fetch of 2020-01-01T00:00:00\.000Z left it: `git fetch` first\.$/m);
+  answerStories(root, ownView({ trunk: trunkAhead(2, []) }, new Date().toISOString()));
+  const fetched = briefingOf(root);
+  assert.match(fetched, /^The trunk moved: 2 commit\(s\) of origin\/main to merge in\.$/m);
+  assert.doesNotMatch(fetched, /git fetch/);
+});
+
+test('session start of a story says nothing of the other stories while it meets none and its trunk stands still', () => {
+  const root = storyRepository();
+  answerStories(root, ownView({}));
+  assert.doesNotMatch(briefingOf(root), /npx ddd-ts-kit stories/);
+});
+
+// What `stories --json` says from the worktree of US5 when it meets no other story.
+function ownView(own, fetched) {
+  return { here: 'US5', stories: [{ story: 'US5', files: [], ...own }], crossings: [], fetched };
+}
+
+function trunkAhead(behind, byHand) {
+  return { ref: 'origin/main', behind, settled: [], byHand };
+}
+
+test('in the worktree of a story, a write that merging another story would leave to settle by hand says so', () => {
+  const root = storyRepository();
+  const merge = { ref: 'story/us6', behind: 1, settled: [], byHand: [{ file: 'docs/notes.md', kind: 'text' }] };
+  answerStories(root, {
+    here: 'US5',
+    stories: [
+      { story: 'US5', files: [] },
+      { story: 'US6', worktree: '/w/us6', files: [] },
+    ],
+    crossings: [{ stories: ['US5', 'US6'], contexts: [], files: [], merge }],
+  });
+  const said = run('pre-write', write(join(root, 'docs/notes.md'), { session_id: `by-hand-${root}` }));
+  assert.match(
+    said.output.hookSpecificOutput.additionalContext,
+    /US6 \(detached, \/w\/us6\) changes docs\/notes\.md too, and merging its branch into this one now leaves that file to settle by hand\./,
+  );
+});
+
+// The worktree of a story at the top of a repository of its own: `stories` names the files from there.
+function storyRepository() {
+  const root = storyWorktree();
+  git(root, 'init', '--quiet');
+  return root;
+}
+
+// What `stories --json` says from now on: the guard reads it again, its copy of a minute ago removed.
+function answerStories(root, view) {
+  cliAnswering(root, { stories: view });
+  rmSync(join(root, '.ddd-ts-kit/guard/stories.json'), { force: true });
+}
+
+test('in the worktree of a story without the CLI installed, the code is not held and no other story is read', () => {
+  const root = storyWorktree();
+  rmSync(join(root, 'node_modules'), { recursive: true });
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts'))).output, undefined);
+  assert.equal(run('pre-write', write(join(root, 'docs/notes.md'))).output, undefined);
 });
 
 // The worktree of a fix: its story file with its statement and the spec that proves it, no row, no review.
@@ -314,6 +461,15 @@ function assertSessionFormatsTheLockedSpec(root) {
     assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
   }
 }
+
+test('a sub-agent that names the locked spec of a fix by its file name alone is held all the same', () => {
+  const root = fixWorktree();
+  lockTheFix(root);
+  const command = `cd ${dirname(FIX_SPEC)} && sed -i s/refused/cancelled/ ${basename(FIX_SPEC)}`;
+  const held = run('pre-bash', bash(root, command, { agent_type: 'ddd-ts-kit:context-builder' }));
+  assert.equal(decision(held), 'deny');
+  assert.match(reason(held), /is a regression spec of fix FIX-412, locked/);
+});
 
 test('at stop in the worktree of a story, a done row that departed from its design is said once, without blocking', () => {
   const root = storyWorktree();
