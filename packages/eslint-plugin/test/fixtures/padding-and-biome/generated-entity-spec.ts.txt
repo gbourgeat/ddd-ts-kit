@@ -1,0 +1,41 @@
+import { describe, expect, it } from 'vitest';
+
+class Line {
+  private constructor(
+    readonly id: string,
+    private readonly state: Record<string, unknown>,
+  ) {}
+  static create(id: string, state: Record<string, unknown>): Line {
+    return new Line(id, state);
+  }
+  static rehydrate(id: string, state: Record<string, unknown>): Line {
+    return new Line(id, state);
+  }
+  equals(other: Line): boolean {
+    return this.id === other.id;
+  }
+  toState(): Record<string, unknown> {
+    return { ...this.state };
+  }
+}
+
+describe('Line', () => {
+  it('is identified by its id, not by its attributes', () => {
+    const first = Line.create('line-1', {});
+    const same = Line.rehydrate('line-1', {});
+    const other = Line.create('line-2', {});
+
+    expect(first.equals(same)).toBe(true);
+    expect(first.equals(other)).toBe(false);
+  });
+
+  it('gives back the state it was rehydrated from, as a copy', () => {
+    const state = {};
+    const stored = Line.rehydrate('line-1', state);
+
+    expect(stored.toState()).toEqual(state);
+    expect(stored.toState()).not.toBe(state);
+  });
+
+  it.todo('refuses to be created when one of its invariants is violated');
+});

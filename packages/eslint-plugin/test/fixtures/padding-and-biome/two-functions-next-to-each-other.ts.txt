@@ -1,0 +1,13 @@
+export function first(): number {
+  return 1;
+}
+export function second(): number {
+  return 2;
+}
+export const third = (): number => 3;
+export const fourth = (): number => {
+  return 4;
+};
+function fifth(): void {}
+function sixth(): void {}
+export { fifth, sixth };
