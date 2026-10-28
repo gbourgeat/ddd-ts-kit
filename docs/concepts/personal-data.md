@@ -132,7 +132,13 @@ database the platform holds:
   generate erasure-handler <context>` writes the idempotent handler of the event over the erasure
   of the context, its spec on the fake and its subscription (the decorator, the module file, or the
   hand-wired platform, in a transaction behind a broker). In the monolith the platform has erased
-  that copy already, and the handler reaches nothing: an erasure is idempotent;
+  that copy already, and the handler reaches nothing: an erasure is idempotent. A context whose
+  aggregates are event-sourced has no table and needs no such handler: its personal values are
+  sealed by `personalData(subjectId, value)` and the key destroyed in step 1 erases them in every
+  context at once, so `generate erasure-handler` refuses it and says so. A projection that keeps a
+  clear copy is rebuilt once the key is gone, and an erasure on a date of the business (a retention
+  of five years after the relationship ended) is a scheduled job of your own that calls the same key
+  destruction ([Event sourcing](event-sourcing.md#personal-data-crypto-shredding));
 - a system outside the project that consumes the events of the project, and copied the person from
   one of them, subscribes to the same type: the event catalog and AsyncAPI list it;
 - an integration event that carries personal data says so (`personal: { subject, fields }` on

@@ -97,4 +97,32 @@ describe('generate erasure-handler: a context erases its copy when the platform 
     expect(refused.stderr).toContain('generate repository billing <Aggregate> --personal');
     expect(exists(root, HANDLER)).toBe(false);
   });
+
+  it('refuses an event-sourced context with the way its people are erased: the key of the subject, not a table', () => {
+    const root = initProject('--orm', 'knex', '--event-sourcing', 'on', '--context', 'billing:core');
+
+    expectOk(
+      cli(
+        root,
+        'generate',
+        'aggregate',
+        'billing',
+        'Ledger',
+        '--event-sourced',
+        '--term',
+        'Ledger=The payments of a customer',
+        '--term',
+        'Create=To open',
+      ),
+    );
+
+    const refused = cli(root, 'generate', 'erasure-handler', 'billing');
+
+    expect(refused.code).not.toBe(0);
+    expect(refused.stderr).toContain('billing is event-sourced');
+    expect(refused.stderr).toContain('personalData(subjectId, value)');
+    expect(refused.stderr).toContain('eraseDataSubject');
+    expect(refused.stderr).toContain('docs/concepts/personal-data.md');
+    expect(exists(root, HANDLER)).toBe(false);
+  });
 });

@@ -89,7 +89,10 @@ comes from the event; when the design names the handler after what it does here,
   event the platform publishes at the end of `privacy:erase`: `npx ddd-ts-kit generate
   erasure-handler <ctx>` writes that handler over the erasure of the context (needed when the
   context runs as a service of its own; in the monolith the platform erases it directly, and
-  the handler then reaches nothing, idempotently).
+  the handler then reaches nothing, idempotently). An event-sourced context has no such
+  table: the generator refuses it, because `privacy:erase` (`eraseDataSubject`) destroys the
+  key of the subject and the sealed values (`personalData`) are erased everywhere; a retention
+  date there is a scheduled job of yours that calls the same key destruction.
 - A foreign model the context does not want is translated first:
   `npx ddd-ts-kit generate acl <ctx> <upstream>`.
 - End to end, once the handler sends its command: `npx ddd-ts-kit generate e2e <ctx>
