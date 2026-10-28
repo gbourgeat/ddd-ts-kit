@@ -128,7 +128,19 @@ describe('the files an ORM reads by itself', () => {
 /** An aggregate, its command and the route of that command, in billing: the route is the first file that validates. */
 function routed(root: string, ...more: string[]): ReturnType<typeof cli> {
   cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');
-  cli(root, 'generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--public', '--allow-name');
+
+  cli(
+    root,
+    'generate',
+    'command',
+    'billing',
+    'IssueInvoice',
+    '--creates',
+    '--aggregate',
+    'Invoice',
+    '--public',
+    '--allow-name',
+  );
 
   return cli(root, 'generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices', ...more);
 }

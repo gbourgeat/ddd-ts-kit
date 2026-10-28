@@ -292,6 +292,7 @@ describe('a route of a project whose routes declare their own schemas ("stack.sc
       'command',
       'billing',
       'IssueInvoice',
+      '--creates',
       '--aggregate',
       'Invoice',
       '--permission',

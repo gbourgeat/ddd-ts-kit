@@ -87,6 +87,7 @@ describe('shipped templates', () => {
         'integration-event',
         'integration-handler',
         'job',
+        'module',
         'nest-controller',
         'personal-data',
         'pipeline',

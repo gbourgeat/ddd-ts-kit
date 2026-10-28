@@ -63,11 +63,17 @@ line so that the document is corrected. A name still to build is never listed.
 Run the `Start with` commands of the slice row, or for a typical command:
 
 ```bash
-npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> --permission <aggregate>.<action> --grant <role> --json
+npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> [--creates] --permission <aggregate>.<action> --grant <role> --json
 npx ddd-ts-kit generate error <ctx> <Refusal> <factory> --json        # one per refusal: its class, its code in <context>.codes.ts, a factory
 npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact recorded
 npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json   # [--group <Name>] [--mapper] [--serializer]
 ```
+
+`--aggregate` alone generates a command that changes an aggregate that exists: its handler receives
+the repository and writes nothing until its `TODO(domain)` is answered (load, call one intention
+method, save). Add `--creates` only when the use case is the birth of the aggregate: its handler
+calls `<Aggregate>.create`, saves and answers the identifier. A command that a job sends is almost
+never a birth: leave `--creates` out.
 
 In a context divided into modules of the model (a `## Modules` section in its `CONTEXT.md`),
 add `--module <module>` to every `generate` of the slice: the module whose terms the use case

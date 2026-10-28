@@ -250,6 +250,7 @@ describe.runIf(SLOW)('an event-sourced aggregate born as Triggered, wired by han
           'command',
           'billing',
           'AcknowledgeIncident',
+          '--creates',
           '--aggregate',
           'Incident',
           '--term',

@@ -102,6 +102,7 @@ const OPTIONS = {
   cache: TEXT,
   module: TEXT,
   'event-sourced': SWITCH,
+  creates: SWITCH,
   birth: TEXT,
   reason: TEXT,
   number: TEXT,
@@ -221,7 +222,8 @@ type Switch =
   | 'global'
   | 'mapper'
   | 'serializer'
-  | 'eventSourced';
+  | 'eventSourced'
+  | 'creates';
 
 function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
   return {
@@ -236,5 +238,6 @@ function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
     mapper: args.flag('mapper'),
     serializer: args.flag('serializer'),
     eventSourced: args.flag('event-sourced'),
+    creates: args.flag('creates'),
   };
 }

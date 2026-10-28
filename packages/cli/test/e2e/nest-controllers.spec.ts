@@ -92,6 +92,7 @@ function scaffold(root: string): void {
       'command',
       'billing',
       'IssueInvoice',
+      '--creates',
       '--aggregate',
       'Invoice',
       '--permission',

@@ -36,7 +36,7 @@ const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer(
 {{/if}}
 
 describe('{{name.title}}', () => {
-{{#if command.hasAggregate}}
+{{#if command.births}}
   it('saves the {{aggregate.words}} and answers its identifier', async () => {
     const { application, {{aggregate.camel}}Repository } = {{spec.await}}arrange();
 
@@ -46,7 +46,7 @@ describe('{{name.title}}', () => {
     expect(await {{aggregate.camel}}Repository.findById(id)).toBeDefined();
   });
 {{/if}}
-{{#unless command.hasAggregate}}
+{{#unless command.births}}
   it('completes without answering anything', async () => {
     const { application } = {{spec.await}}arrange();
     const command = new {{name.pascal}}Command({{access.holder}});

@@ -134,7 +134,18 @@ function projectDividedIntoModules(): string {
   inInvoices('value-object', 'billing', 'Money');
   inInvoices('domain-event', 'billing', 'Invoice', 'Issued');
   inInvoices('repository', 'billing', 'Invoice', '--personal', 'payer');
-  inInvoices('command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue');
+
+  inInvoices(
+    'command',
+    'billing',
+    'IssueInvoice',
+    '--creates',
+    '--aggregate',
+    'Invoice',
+    '--permission',
+    'invoice.issue',
+  );
+
   inInvoices('query', 'billing', 'SearchInvoices', '--permission', 'invoice.search', '--search');
   inInvoices('port', 'billing', 'PaymentGateway');
   inInvoices('route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices');

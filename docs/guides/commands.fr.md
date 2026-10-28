@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:5002916d6a3eecab -->
+<!-- translation-of: commands.md sha256:2c1366ff534a16fb -->
 
 # Quelle commande, quand
 
@@ -31,7 +31,7 @@ tape :
 | 2 | `/ddd-ts-kit:bootstrap` (ou `npx ddd-ts-kit init`, `npm install`, `npm run verify`) | le projet, vert avant tout code métier |
 | 3 | `npx ddd-ts-kit generate context ordering --classification core --term "Order=A shop's request to buy products" --term "Place=To submit an order"` | `src/contexts/ordering/` et son `CONTEXT.md` avec le glossaire |
 | 4 | `/ddd-ts-kit:plan-slices` | `docs/architecture/slices.md` : `PlaceOrder` d'abord |
-| 5 | `/ddd-ts-kit:use-case PlaceOrder`, qui lance `generate aggregate ordering Order`, `generate repository ordering Order`, `generate command ordering PlaceOrder --permission order.place --aggregate Order`, `generate route ordering PlaceOrder --method POST --path /orders`, `generate e2e ordering PlaceOrder` | les fichiers, leurs *specs* et leurs *fakes*, et les endroits `TODO(domain)` à remplir |
+| 5 | `/ddd-ts-kit:use-case PlaceOrder`, qui lance `generate aggregate ordering Order`, `generate repository ordering Order`, `generate command ordering PlaceOrder --permission order.place --aggregate Order --creates`, `generate route ordering PlaceOrder --method POST --path /orders`, `generate e2e ordering PlaceOrder` | les fichiers, leurs *specs* et leurs *fakes*, et les endroits `TODO(domain)` à remplir |
 | 6 | `npx ddd-ts-kit todo ordering` | ce qui reste à écrire dans la tranche, sous forme de `file:line` |
 | 7 | `npm run db:generate place-order`, `npm run docs:generate` | la migration de la nouvelle table, le contrat OpenAPI avec `POST /orders` |
 | 8 | `/ddd-ts-kit:quality-gate`, c'est-à-dire `npm run verify` | une porte verte |
@@ -82,7 +82,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | `/ddd-ts-kit:context-map` | amont, aval, patron et contrat de chaque paire | étape 4, et quand deux contextes commencent à dépendre l'un de l'autre | `docs/architecture/context-map.md`, puis les amonts de la configuration | l'amorçage, ou la tranche qui en a besoin |
 | `npx ddd-ts-kit generate context <name> --classification <c> --reason "..." --term "<Term>=<meaning>\|<not to be confused with>" ... --upstream ...` | déclare un contexte avec son langage, la phrase qui dit pourquoi il a sa classification, et ses relations | après l'amorçage, un par ligne de `contexts.md`, les amonts d'abord | le répertoire du contexte, son `CONTEXT.md`, l'entrée de configuration | `npx ddd-ts-kit docs` |
 | `npx ddd-ts-kit list`, `describe <context>` | ce qui existe, par contexte ou pour un seul | avant de planifier ou de modifier un contexte | une carte des contextes, ou un contexte sous forme de faits (`--json`) | `/ddd-ts-kit:plan-slices` |
-| `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | déclare un [module du modèle](../concepts/modules.fr.md) : l'entrée de la configuration, sa ligne de `## Modules` dans `CONTEXT.md`, ses termes ; peut être relancé, il ajoute ce qui manque | quand un contexte tient des groupes de concepts d'un même langage qu'un lecteur ouvre séparément ; jamais pour cacher un second langage | le module, déclaré et documenté | `move-to-module`, puis `generate ... --module` |
+| `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | déclare un [module du modèle](../concepts/modules.fr.md) : l'entrée de la configuration, sa ligne de `## Modules` dans `CONTEXT.md`, ses termes, et dans le style explicite son fichier de module `<module>/<module>.module.ts`, composé par `<context>.module.ts` ; peut être relancé, il ajoute ce qui manque | quand un contexte tient des groupes de concepts d'un même langage qu'un lecteur ouvre séparément ; jamais pour cacher un second langage | le module, déclaré et documenté | `move-to-module`, puis `generate ... --module` |
 | `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]` | déplace des fichiers et des dossiers de `domain/` et `application/` dans un module déclaré, avec chacun de leurs imports dans le projet | un groupe par commit, jusqu'à ce que `module/complete` n'avertisse plus | les fichiers déplacés et les imports réécrits | `npm run verify` |
 
 ## Construire une tranche
@@ -648,7 +648,7 @@ Kinds
   domain-error <context|shared-kernel> <Name> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]
   domain-service <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
   repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]] [--module <module>]
-  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
+  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name> [--creates]] [--term "<Term>=<meaning>"]... [--module <module>]
   query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]... [--module <module>]
   port <context> <Name> [--module <module>]
   route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]

@@ -8,7 +8,7 @@ import { toName, type Name } from '../../../naming';
 import type { RenderContext } from '../../../templating';
 import type { Scope } from '../../scope';
 import { jobsSending } from './jobs-sending';
-import { declaredModules } from '../../../model-modules';
+import { declaredModules, wiringTextOf } from '../../../model-modules';
 
 /** What an end-to-end spec publishes to start a use case no route reaches, and where a client reads what followed. */
 export interface Reaction {
@@ -71,7 +71,7 @@ function sourcesOf(scope: Scope): ContextSources {
     name: context.kebab,
     directory: dir,
     modules: declaredModules(config, context.kebab),
-    module: ws.read(`${dir}/${context.kebab}.module.ts`) ?? '',
+    module: wiringTextOf(ws, { directory: dir, modules: declaredModules(config, context.kebab) }, context.kebab),
   };
 }
 

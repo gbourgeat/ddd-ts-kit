@@ -76,6 +76,7 @@ describe.runIf(SLOW).each(CASES)(
         'command',
         'billing',
         'IssueInvoice',
+        '--creates',
         '--aggregate',
         'Invoice',
         '--permission',

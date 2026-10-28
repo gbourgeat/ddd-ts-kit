@@ -66,6 +66,7 @@ describe('generate repository on an event-sourced aggregate', () => {
       'command',
       'billing',
       'CloseLedger',
+      '--creates',
       '--aggregate',
       'Ledger',
       ...LEDGER_TERMS,

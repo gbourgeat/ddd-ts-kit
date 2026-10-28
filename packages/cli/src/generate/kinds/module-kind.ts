@@ -2,13 +2,18 @@ import { CLASSIFICATIONS, CONFIG_FILE, editConfigText, isOneOf } from '../../con
 import { isRecord } from '../../config/values/is-record';
 import { withModuleRow } from '../../check/modules/with-module-row';
 import { CliError } from '../../cli-error';
-import { moduleNameFlaw } from '../../model-modules';
+import { moduleFileOf, moduleNameFlaw } from '../../model-modules';
+import { renderTemplate } from '../../templating';
 import { toName, type Name } from '../../naming';
 import type { Kind } from '../kind';
 import { learnTerms } from '../learn-terms';
+import { named } from '../named';
 import { openScope } from '../open-scope';
 import type { Scope } from '../scope';
 import { spokenInLanguage } from '../spoken-in-language';
+import { vars } from '../vars';
+import { wire } from '../wire';
+import { wiringFamily } from '../wiring-family';
 
 export const moduleKind: Kind = {
   name: 'module',
@@ -16,7 +21,7 @@ export const moduleKind: Kind = {
   usage:
     'module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...',
   summary:
-    'A module of the model of a context (Evans, Modules): declared in contexts.<name>.modules, given its row in the "## Modules" table of CONTEXT.md, its terms added to the glossary. Run again, it adds what is missing. Generate into it with --module, move files into it with `ddd-ts-kit move-to-module`.',
+    'A module of the model of a context (Evans, Modules): declared in contexts.<name>.modules, given its row in the "## Modules" table of CONTEXT.md, its terms added to the glossary, and, in the explicit style, its module file <module>/<module>.module.ts, composed by <context>.module.ts. Run again, it adds what is missing. Generate into it with --module, move files into it with `ddd-ts-kit move-to-module`.',
   positionals: ['context', 'module'],
   writesShared: true,
   writesInModules: false,
@@ -30,12 +35,35 @@ export const moduleKind: Kind = {
 
     declareModule(scope, module.kebab);
     scope.ws.update(doc, withModuleRow(scope.ws.read(doc) ?? '', module.kebab, scope.flags.purpose));
+    writeModuleFile(scope, module);
 
     scope.ws.note(
       `Generate into the module with \`--module ${module.kebab}\`, or move files of ${scope.context.kebab} into it with \`ddd-ts-kit move-to-module ${scope.context.kebab} ${module.kebab} <path>...\`, one cluster of concepts per commit.`,
     );
   },
 };
+
+/**
+ * In the explicit style, the module file of the module, `<module>/<module>.module.ts`, composed by
+ * the module file of the context: what is generated with `--module` registers there, so that the
+ * module file of the context stays the size of what the context keeps at its own level.
+ */
+function writeModuleFile(scope: Scope, module: Name): void {
+  const family = wiringFamily(scope.config);
+
+  if (family === 'declared' || !scope.ws.exists(`${scope.dir}/${scope.context.kebab}.module.ts`)) {
+    return;
+  }
+
+  const context = vars(scope, { module: named(module) });
+
+  scope.ws.create(
+    `${scope.dir}/${moduleFileOf(module.kebab)}`,
+    renderTemplate(`module/module-file.${family}.ts.tpl`, context),
+  );
+
+  wire(scope, 'module', context);
+}
 
 /** A part of the model, named in the language of its context: never a role folder, never a technical grouping. */
 function moduleName(scope: Scope, input: string): Name {
