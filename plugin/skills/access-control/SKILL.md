@@ -62,7 +62,10 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
   joins `<context>.permissions.ts`, and its words are checked
   against the glossary.
 - Declared style: `@Requires(permissions['invoice.issue'])` or `@Public()` on the message
-  class. Explicit style: `.requires(...)` or `.public()` where the handler is registered.
+  class. Explicit style: `.requires(...)` or `.public()` where the handler is registered, which is
+  `<context>.module.ts`, or `<module>/<module>.module.ts` with `--module <module>` (the module
+  file keeps the context file short). Never a hand-written `application/authorization/*.policy.ts`
+  that returns declarations: a policy decides on one element.
 - Nothing else for a plain permission: no check in the controller, none in the handler. The
   generated handler spec already proves that an actor without it is refused.
 - A guard is another thing: a control at the edge over a set of routes, named in `guards` of

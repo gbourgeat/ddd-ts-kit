@@ -158,6 +158,7 @@ describe('the module file of a module of the model, wired by hand', () => {
     expect(module).toContain('const invoiceRepository = platform.adapter(');
     expect(module).toContain('new IssueInvoiceHandler(invoiceRepository, platform.ids, platform.clock)');
     expect(module).toContain("requires(IssueInvoiceCommand, billingPermissions['invoice.issue'])");
+    expect(read(root, CONTEXT_MODULE)).not.toContain('requires(');
   });
 
   it('registers a use case of another module where the repository it is given is created, never creating a second one', () => {

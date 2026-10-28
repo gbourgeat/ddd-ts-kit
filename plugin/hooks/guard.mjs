@@ -107,6 +107,12 @@ const GENERATORS = [
   [/\.acceptance\.spec\.ts$/, 'acceptance <story>'],
 ];
 
+// A policy file decides on one element. The requires(...) of the use cases are not policies: the
+// generator of a command or a query writes them, in the module file of the module it is given.
+const POLICY_FILE = /\.policy\.ts$/;
+const DECLARATIONS_HOME =
+  ' A policy decides on one element. The requires(...) declarations of the use cases are not a policy: `generate command|query ... --module <module>` writes them in <module>/<module>.module.ts, never in a file of application/authorization/. When the module file of the context is too long to take one, the module does not exist yet: report it to the conductor, who creates it with `generate module <context> <module>`.';
+
 // The acceptance of a story and its lock: a sub-agent only unwraps a scenario its rows now satisfy.
 const ACCEPTANCE_SPEC = /^test\/acceptance\/[^/]+\.acceptance\.spec\.ts$/;
 const ACCEPTANCE_LOCK = /^test\/acceptance\/[^/]+\.acceptance\.lock\.json$/;
@@ -1603,7 +1609,7 @@ function handWrittenRoleReason(project, file) {
   }
   const generator = GENERATORS.find(([suffix]) => suffix.test(path));
   return generator
-    ? `${path} is a new file of a generated role. Create it with \`npx ddd-ts-kit generate ${generator[1]} --json\`, then fill the TODO(domain) markers.`
+    ? `${path} is a new file of a generated role. Create it with \`npx ddd-ts-kit generate ${generator[1]} --json\`, then fill the TODO(domain) markers.${POLICY_FILE.test(path) ? DECLARATIONS_HOME : ''}`
     : undefined;
 }
 

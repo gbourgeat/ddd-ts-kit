@@ -131,7 +131,13 @@ context; wired by hand it exports `registerHandlers`, `registerReactions`, `regi
 `useCases()` and `routes(platform)`, called from the functions of the same names. Wired by hand, a
 repository is created once per context: a use case of another module that needs it is
 registered in the file that creates it. Registrations written before the split stay in
-`<context>.module.ts` until you move them by hand, with their imports. Never a `composition/`
+`<context>.module.ts` until you move them by hand, with their imports. The `requires(...)` or
+`public...` declaration of each use case follows its registration: it is written in the module
+file of the module (`useCases()` when wired by hand), never in a file of `application/authorization/`
+(that folder holds the policies on one element, `*.policy.ts`, and a policy file that returns declarations is
+not one). A context whose module file nears the size limit takes its next use case with
+`--module <module>`; a context not divided yet is divided by its conductor with `generate module`.
+Never a `composition/`
 folder in `extraDirectories` for this: `tree/closed` accepts the module file of a declared module,
 and nothing else at the root of a module.
 

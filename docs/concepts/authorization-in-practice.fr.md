@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:131f0049211c4fb8 -->
+<!-- translation-of: authorization-in-practice.md sha256:b8de25f101232c3c -->
 
 # L'autorisation en pratique
 
@@ -64,7 +64,10 @@ l'`AuthorizationMap` au démarrage de l'application.
 Le décorateur est accepté sur un message qui porte son acteur (`AuthorizedCommand`,
 `AuthorizedQuery`), parce qu'un droit est toujours celui de quelqu'un. Le style explicite dit la
 même chose à côté de l'enregistrement du gestionnaire :
-`builder.command(...).requires(permission, { resource })`.
+`builder.command(...).requires(permission, { resource })`. Dans un contexte divisé en modules du
+modèle, cet enregistrement, donc la déclaration, est écrit par `generate command ... --module
+<module>` dans `<module>/<module>.module.ts`, ni dans le fichier de module du contexte ni dans un
+fichier de `application/authorization/`, qui garde les politiques sur un seul élément.
 
 ## Ce que fait le *middleware*
 
