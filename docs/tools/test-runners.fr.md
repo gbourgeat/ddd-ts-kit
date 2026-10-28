@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:3ff8680d7907ce23 -->
+<!-- translation-of: test-runners.md sha256:ead93ecaba9313e8 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -480,7 +480,14 @@ export default {
 };
 ```
 
-- un `jest.e2e.config.js` qui l'étend, avec un délai plus long et un seul *worker* ;
+- un `jest.e2e.config.js` qui l'étend, avec un délai plus long et deux *workers*, chacun remplacé
+  par un neuf dès qu'il dépasse 800 Mo (`workerIdleMemoryLimit`). Jest garde dans le processus les
+  modules de chaque fichier de *spec* joué, environ 15 Mo chacun avec les modules ES, et un
+  *worker* unique tourne en bande, où cette limite ne s'applique pas : une suite d'environ 200
+  fichiers de bout en bout a alors manqué de tas. Avec `DATABASE_URL` (un serveur partagé, dont les
+  fichiers videraient les tables les uns des autres) la configuration garde un seul *worker*, en
+  bande, et le tas d'une longue suite demande `NODE_OPTIONS=--max-old-space-size=<Mo>`. Vitest
+  isole chaque fichier dans un processus à lui, sa suite de bout en bout n'a pas cette croissance ;
 - sur un ORM, la mise en place globale qui démarre PostgreSQL dans le processus une fois par
   exécution et enregistre son cluster (`test/support/test-database-template.ts`), chaque *spec* en
   ouvrant une copie, et son démontage global (`test/support/test-database-teardown.ts`), tous deux

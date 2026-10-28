@@ -84,6 +84,16 @@ describe('the test database of a project on an ORM', () => {
   });
 });
 
+describe('the memory of a long end-to-end run with Jest', () => {
+  it('replaces a worker that grew, out of band, and keeps one worker in band on a shared server', () => {
+    const config = read(initProject('--tests', 'jest', '--orm', 'prisma'), 'jest.e2e.config.js');
+
+    expect(config).toContain("workerIdleMemoryLimit: '800MB',");
+    expect(config).toContain('maxWorkers: sharedServer ? 1 : 2,');
+    expect(config).toContain("const sharedServer = (process.env.DATABASE_URL ?? '') !== '';");
+  });
+});
+
 describe('the end-to-end support', () => {
   it('settles once the outbox of the database is relayed', () => {
     expect(read(initProject(), SUPPORT)).toContain(
