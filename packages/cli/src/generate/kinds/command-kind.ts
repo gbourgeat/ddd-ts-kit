@@ -10,6 +10,7 @@ import { commandContext } from './command-context';
 import { commandOutputs } from './command-outputs';
 import { existingAggregate } from './existing-aggregate';
 import { generateRepository } from './generate-repository';
+import { repositoryLine } from './repository-line';
 import { wireRepositoryOnFirstUse } from './wire-repository-on-first-use';
 
 export const commandKind: Kind = {
@@ -60,6 +61,6 @@ export const commandKind: Kind = {
       wireRepositoryOnFirstUse(scope, aggregate);
     }
 
-    wire(scope, 'command', context);
+    wire(scope, aggregate === undefined ? 'command' : { kind: 'command', holding: repositoryLine(aggregate) }, context);
   },
 };

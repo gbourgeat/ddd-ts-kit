@@ -1,4 +1,5 @@
 import { CliError } from '../../../cli-error';
+import { treeOf, wiringTextOf } from '../../../model-modules';
 import type { Name } from '../../../naming';
 import { concept } from '../../concept';
 import { requireFile } from '../../require-file';
@@ -87,7 +88,7 @@ function nameOf(parameter: string): string {
  * registration in the module file, on the same line or on the next link of the chain.
  */
 function requiredPermission(scope: Scope, name: Name, source: string): string | undefined {
-  const module = scope.ws.read(`${scope.dir}/${scope.context.kebab}.module.ts`) ?? '';
+  const module = wiringTextOf(scope.ws, treeOf(scope.config, scope.context.kebab), scope.context.kebab);
   const between = String.raw`(?:\s*\)\s*\.requires\(\s*|\s*,\s*|[^;\n]*?)`;
   const registration = new RegExp(String.raw`\b${name.pascal}Command\b${between}\w*Permissions\['([^']+)'\]`);
   const registered = registration.exec(module)?.[1];

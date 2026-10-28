@@ -2,7 +2,7 @@ import type { Config } from '../../config';
 import type { Layer } from '../model/layer';
 import type { Location } from '../model/location';
 import { earlierPlaceOf } from '../../context-files';
-import { declaredModules, moduleSplit } from '../../model-modules';
+import { declaredModules, moduleOfModuleFile, moduleSplit } from '../../model-modules';
 import { isUnder } from './is-under';
 
 const LAYERS: readonly Layer[] = [
@@ -61,10 +61,18 @@ function locateInContexts(config: Config, relative: string): Location {
 /**
  * A module of the model is one folder of the context holding its layers, and one folder of the
  * test folders of its specs: left out, the rest of the path is what it would be without modules,
- * so every role keeps its place.
+ * so every role keeps its place. At its root, `<module>.module.ts` registers what the module holds
+ * in the explicit style: a part of the module file of the context, read as one.
  */
 function moduleLocation(config: Config, context: string, parts: readonly string[]): Location | undefined {
-  const { module, path } = moduleSplit(parts.join('/'), declaredModules(config, context));
+  const modules = declaredModules(config, context);
+  const wiring = moduleOfModuleFile(parts.join('/'), modules);
+
+  if (wiring !== undefined) {
+    return { area: 'context', context, layer: 'module', inside: [], module: wiring };
+  }
+
+  const { module, path } = moduleSplit(parts.join('/'), modules);
   const [first, ...inside] = path.split('/');
   const layer = LAYERS.find((candidate) => candidate === first);
 

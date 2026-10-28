@@ -90,7 +90,7 @@ A class says what it is on its own file, and that is its registration. There is 
   `<module>/application/application.declarations.ts`, re-exported by
   `<context>.declarations.ts` like the others; `discoverContext` reads the modules in the
   generated `<context>.dependencies.ts`, which names them, without the config, and loads the role
-  files of each module folder. A module never has a module file of its own. `npx ddd-ts-kit move-to-module` rewrites the declarations it moves.
+  files of each module folder. Declared, a module has no module file: its classes declare themselves. `npx ddd-ts-kit move-to-module` rewrites the declarations it moves.
 - `WiringError MISSING_DEPENDENCIES` or `DEPENDENCY_ARITY` at startup: the generated file is
   stale or was not loaded. Run `npx ddd-ts-kit docs`; in a test, assemble the context from its
   generated file (`contextModule('<context>', declarations)`), never from a class imported
@@ -107,8 +107,9 @@ A class says what it is on its own file, and that is its registration. There is 
 
 ## Explicit style (NestJS, manual wiring, or by choice)
 
-Every binding is written in `<context>.module.ts`, the only file of a context allowed to
-know every layer (`composition/only-in-module`):
+Every binding is written in `<context>.module.ts`, or in the module file of a module of the
+model it composes (below): the only files of a context allowed to know every layer
+(`composition/only-in-module`):
 `builder.bind(Port).toClass(Adapter, [Ports]).as('<kind>')`,
 `builder.command(Message).requires(permission).handledBy(Handler, [Ports])` (or `.public()`),
 `builder.on(definition, { consumer }).handledBy(Handler, [Ports])`. Explicit stays explicit:
@@ -118,6 +119,21 @@ markers. With NestJS or manual wiring the rule is the same in another syntax;
 keep `@Injectable()` out of `domain/` and `application/`. The rest of Nest's request pipeline
 (controllers, guards, pipes, exception filters, interceptors) stays out of every context
 (`nest/no-parallel-pipeline`): where each tool of Nest goes is in [nest.md](nest.md).
+
+A context divided into modules of the model splits its module file the same way: each module has
+`<module>/<module>.module.ts`, at the root of its folder, which registers what the module holds
+(its handlers, consumers, reactions, jobs, permissions and routes), and `<context>.module.ts`
+composes them and keeps what the context holds at its own level. `npx ddd-ts-kit generate module
+<context> <module>` writes the file and its composition (re-run it for a module declared before);
+`generate <kind> ... --module <module>` then writes the registration there. On tsyringe the file
+exports `{ register(builder), onStart({ resolve }) }`, called from `register` and `onStart` of the
+context; wired by hand it exports `registerHandlers`, `registerReactions`, `registerJobs`,
+`useCases()` and `routes(platform)`, called from the functions of the same names. Wired by hand, a
+repository is created once per context: a use case of another module that needs it is
+registered in the file that creates it. Registrations written before the split stay in
+`<context>.module.ts` until you move them by hand, with their imports. Never a `composition/`
+folder in `extraDirectories` for this: `tree/closed` accepts the module file of a declared module,
+and nothing else at the root of a module.
 
 ## Composition root
 

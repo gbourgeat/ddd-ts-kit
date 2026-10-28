@@ -3,7 +3,7 @@ import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
 import { filesUnder } from '../files-under';
-import { declaredModules, intoModule, roleFoldersOf, treeOf } from '../../model-modules';
+import { declaredModules, intoModule, roleFoldersOf, treeOf, wiringTextOf } from '../../model-modules';
 import { toName } from '../../naming';
 import { isDeclared } from '../is-declared';
 import type { Kind } from '../kind';
@@ -248,7 +248,7 @@ function register(scope: Scope, context: RenderContext, { port, kind, decorated 
 }
 
 function isBound(scope: Scope, port: string): boolean {
-  const module = scope.ws.read(`${scope.dir}/${scope.context.kebab}.module.ts`) ?? '';
+  const module = wiringTextOf(scope.ws, treeOf(scope.config, scope.context.kebab), scope.context.kebab);
 
   return new RegExp(`\\bbind\\(${port}\\)`).test(module);
 }

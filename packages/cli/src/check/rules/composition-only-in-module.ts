@@ -12,12 +12,12 @@ const ASSEMBLERS = ['contextModule', 'discoverContext'];
 const INCLUDE = /\.\s*include\s*\(/g;
 
 const ASSEMBLY_FIX =
-  'Assemble declared classes in the composition root only (src/main.ts, src/apps/<context>/main.ts, the platform directory or <context>.module.ts): everywhere else a class receives what it needs through its constructor.';
+  'Assemble declared classes in the composition root only (src/main.ts, src/apps/<context>/main.ts, the platform directory, <context>.module.ts or the <module>/<module>.module.ts of a module of its model): everywhere else a class receives what it needs through its constructor.';
 
 export const compositionOnlyInModule: Rule = {
   id: 'composition/only-in-module',
   description:
-    'Adapters are instantiated or bound, and declared classes assembled, only in <context>.module.ts, main.ts and platform/.',
+    'Adapters are instantiated or bound, and declared classes assembled, only in <context>.module.ts (and the <module>/<module>.module.ts it composes), main.ts and platform/.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => [

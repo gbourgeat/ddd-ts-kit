@@ -3,7 +3,7 @@ import type { Config } from '../../config';
 import { CONTEXT_FILES } from '../../context-files';
 import { controllersFile } from '../../nest-controllers/controllers-file';
 import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared';
-import { declaredModules, moduleSplit, WITHOUT_MODULE } from '../../model-modules';
+import { declaredModules, moduleFileOf, moduleOfModuleFile, moduleSplit, WITHOUT_MODULE } from '../../model-modules';
 import type { Flaw } from '../model/flaw';
 import { isCanonicalDirectory } from './is-canonical-directory';
 import { OPEN_DIRECTORIES } from './open-directories';
@@ -17,6 +17,8 @@ interface Placed {
   readonly inside: string;
   /** The declared module the entry sits in, when it does. */
   readonly module?: string;
+  /** The modules of the model the config declares for the context. */
+  readonly modules: readonly string[];
   readonly extras: readonly string[];
 }
 
@@ -29,6 +31,11 @@ export function strayEntry(entry: string, config: Config): Flaw | undefined {
 
   // The folder of a declared module holds its layers: it is canonical as the context itself is.
   if (placed === undefined || (placed.module !== undefined && placed.inside === '') || inDotDirectory(entry)) {
+    return undefined;
+  }
+
+  // At its root, a module of the model holds its module file, which the module file of the context composes.
+  if (moduleOfModuleFile(placed.inside, placed.modules) !== undefined) {
     return undefined;
   }
 
@@ -55,12 +62,14 @@ function place(entry: string, config: Config): Placed | undefined {
     return undefined;
   }
 
-  const { module, path: inside } = moduleSplit(rest.join('/'), declaredModules(config, context));
+  const modules = declaredModules(config, context);
+  const { module, path: inside } = moduleSplit(rest.join('/'), modules);
 
   return {
     context,
     declared: stack.style === 'declared',
     inside,
+    modules,
     ...(module === undefined ? {} : { module }),
     extras: contexts[context]?.extraDirectories ?? [],
   };
@@ -103,6 +112,13 @@ function straySource(placed: Placed): Flaw | undefined {
 
   if (open || generated || roleOf(directory) !== undefined || coveredByExtra(extras, directory)) {
     return undefined;
+  }
+
+  if (placed.modules.includes(directory)) {
+    return {
+      message: `"${inside}" sits at the root of the module ${directory}.`,
+      fix: `Move it into the directory of its role (${directory}/<layer>/<role>/); only ${moduleFileOf(directory)}, its module file in the explicit style, lives at the root of a module.`,
+    };
   }
 
   return {

@@ -11,7 +11,7 @@ export interface ContextSources {
   readonly directory: string;
   /** The modules of the model it declares. */
   readonly modules: readonly string[];
-  /** The text of the module file of an explicit context; empty in a declared one. */
+  /** The text of the module files of an explicit context, its own and those of the modules of its model; empty in a declared one. */
   readonly module: string;
   /** What the decorators say, in a declared one. */
   readonly declarations?: DeclaredFacts;
