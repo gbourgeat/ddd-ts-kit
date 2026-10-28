@@ -244,7 +244,9 @@ npx ddd-ts-kit worker-scope appointments --base origin/main --rows M1.12
 ```
 
 It adds a worktree on the branch `build/appointments` (by default in
-`.worktrees/appointments`; `--worktree <path>` and `--branch <name>` change both), cut from
+`.worktrees/appointments`; `--worktree <path>` and `--branch <name>` change both; a relative
+`--worktree` under `.worktrees/` is the one of the main checkout, so the lines of `plan-waves` work
+from any worktree, and any other relative path starts at the project you run from), cut from
 `--base` (by default the current branch), writes `.ddd-ts-kit/worker.json` naming the context in
 it, with the rows briefed, the base and the branch, and prints the briefing of that worker: the directory it may write, the generators it may
 run, its rows of `docs/architecture/slices.md` with the rules written under the tables

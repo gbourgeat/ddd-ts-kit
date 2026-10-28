@@ -6,6 +6,7 @@ import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
 import { listWorktrees } from './list-worktrees';
 import { readWorkerFile } from './read-worker-file';
 import type { WorkerFile } from './worker-file';
+import { askedWorktree } from './asked-worktree';
 
 /** Which worker of a context: the only one, or the one of a worktree or a branch. */
 export interface WorkerChoice {
@@ -70,7 +71,7 @@ function isChosen(root: string, worker: FoundWorker, choice: WorkerChoice): bool
     return true;
   }
 
-  const asked = path.resolve(root, choice.worktree);
+  const asked = askedWorktree(root, choice.worktree);
 
   return fs.existsSync(asked) && fs.realpathSync(asked) === fs.realpathSync(worker.worktree);
 }
