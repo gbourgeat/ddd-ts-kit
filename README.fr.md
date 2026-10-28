@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:833f8650122926c3 -->
+<!-- translation-of: README.md sha256:2230ff6e17f1553e -->
 
 <div align="center">
 
@@ -156,7 +156,7 @@ pnpm exec ddd-ts-kit generate context ordering --classification core \
 pnpm exec ddd-ts-kit generate context billing --classification supporting --upstream ordering:customer-supplier
 pnpm exec ddd-ts-kit generate aggregate ordering Order
 pnpm exec ddd-ts-kit generate repository ordering Order
-pnpm exec ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order
+pnpm exec ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order --creates
 pnpm exec ddd-ts-kit generate route ordering PlaceOrder --method POST --path /orders
 pnpm run docs:generate    # le contrat OpenAPI suit la nouvelle route
 pnpm run verify

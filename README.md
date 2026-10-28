@@ -149,7 +149,7 @@ pnpm exec ddd-ts-kit generate context ordering --classification core \
 pnpm exec ddd-ts-kit generate context billing --classification supporting --upstream ordering:customer-supplier
 pnpm exec ddd-ts-kit generate aggregate ordering Order
 pnpm exec ddd-ts-kit generate repository ordering Order
-pnpm exec ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order
+pnpm exec ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order --creates
 pnpm exec ddd-ts-kit generate route ordering PlaceOrder --method POST --path /orders
 pnpm run docs:generate    # the OpenAPI contract follows the new route
 pnpm run verify

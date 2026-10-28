@@ -86,6 +86,7 @@ describe('generating into a module of the model', () => {
       'command',
       'billing',
       'IssueCreditNote',
+      '--creates',
       '--aggregate',
       'CreditNote',
       '--permission',

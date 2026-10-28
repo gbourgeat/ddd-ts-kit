@@ -118,6 +118,7 @@ function scaffold(root: string, stack: StackFlags, rpc: keyof typeof FIXTURES): 
       'command',
       'billing',
       'IssueInvoice',
+      '--creates',
       '--aggregate',
       'Invoice',
       '--permission',

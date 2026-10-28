@@ -9,7 +9,7 @@ export const SLICES = `# Slices
 | # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
 |---|---|---|---|---|---|---|---|
 | US5.01 | ordering | skeleton | Order | \`generate aggregate ordering Order\` | | conductor | done |
-| US5.02 | ordering | slice | Place order | \`generate command ordering PlaceOrder --aggregate Order --permission order.place\` | US5.01 | ordering | todo |
+| US5.02 | ordering | slice | Place order | \`generate command ordering PlaceOrder --creates --aggregate Order --permission order.place\` | US5.01 | ordering | todo |
 | US5.03 | billing | slice | Invoice a customer's order | \`generate integration-handler billing ordering ordering.order.placed\` | US5.02 | billing | todo |
 | US6.01 | ordering | slice | Cancel order | \`generate command ordering CancelOrder --aggregate Order --permission order.cancel\` | | ordering | done |
 `;

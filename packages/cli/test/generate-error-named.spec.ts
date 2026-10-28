@@ -217,7 +217,7 @@ describe('the code generated around a refusal, in the form of the project', () =
       ['aggregate', 'Invoice'],
       ['entity', 'InvoiceLine', '--term', 'Line=One billed item of an invoice'],
       ['value-object', 'Money', '--term', 'Money=An amount in a currency'],
-      ['command', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue'],
+      ['command', 'IssueInvoice', '--creates', '--aggregate', 'Invoice', '--permission', 'invoice.issue'],
       ['state-machine', 'Invoice', '--value', 'draft', '--value', 'issued', '--transition', 'issue:draft>issued'],
     ];
 

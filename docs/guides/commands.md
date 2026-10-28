@@ -28,7 +28,7 @@ The realistic sequence for an order-taking service, each line in the order it is
 | 2 | `/ddd-ts-kit:bootstrap` (or `npx ddd-ts-kit init`, `npm install`, `npm run verify`) | the project, green before any business code |
 | 3 | `npx ddd-ts-kit generate context ordering --classification core --term "Order=A shop's request to buy products" --term "Place=To submit an order"` | `src/contexts/ordering/` and its `CONTEXT.md` with the glossary |
 | 4 | `/ddd-ts-kit:plan-slices` | `docs/architecture/slices.md`: `PlaceOrder` first |
-| 5 | `/ddd-ts-kit:use-case PlaceOrder`, which runs `generate aggregate ordering Order`, `generate repository ordering Order`, `generate command ordering PlaceOrder --permission order.place --aggregate Order`, `generate route ordering PlaceOrder --method POST --path /orders`, `generate e2e ordering PlaceOrder` | the files, their specs and fakes, and the `TODO(domain)` places to fill |
+| 5 | `/ddd-ts-kit:use-case PlaceOrder`, which runs `generate aggregate ordering Order`, `generate repository ordering Order`, `generate command ordering PlaceOrder --permission order.place --aggregate Order --creates`, `generate route ordering PlaceOrder --method POST --path /orders`, `generate e2e ordering PlaceOrder` | the files, their specs and fakes, and the `TODO(domain)` places to fill |
 | 6 | `npx ddd-ts-kit todo ordering` | what is left to write in the slice, as `file:line` |
 | 7 | `npm run db:generate place-order`, `npm run docs:generate` | the migration of the new table, the OpenAPI contract with `POST /orders` |
 | 8 | `/ddd-ts-kit:quality-gate`, that is `npm run verify` | a green gate |
@@ -642,7 +642,7 @@ Kinds
   domain-error <context|shared-kernel> <Name> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]
   domain-service <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
   repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]] [--module <module>]
-  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
+  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name> [--creates]] [--term "<Term>=<meaning>"]... [--module <module>]
   query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]... [--module <module>]
   port <context> <Name> [--module <module>]
   route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]
