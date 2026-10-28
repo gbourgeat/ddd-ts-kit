@@ -165,6 +165,7 @@ describe('a generated command handler', () => {
         'command',
         'billing',
         'IssueInvoice',
+        '--creates',
         '--aggregate',
         'Invoice',
         '--permission',

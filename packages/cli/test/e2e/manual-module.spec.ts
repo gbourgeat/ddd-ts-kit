@@ -62,6 +62,7 @@ describe.runIf(SLOW)('a project on manual DI', () => {
         'command',
         'support',
         `${verb}Ticket`,
+        '--creates',
         '--aggregate',
         'Ticket',
         '--permission',

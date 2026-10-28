@@ -79,6 +79,8 @@ export interface KindFlags {
   readonly eventSourced: boolean;
   /** The fact an event-sourced aggregate is born with, as `--birth <Fact>`; `Created` when absent. */
   readonly birth?: string;
+  /** A command gives birth to its `--aggregate` (its handler calls `create` and answers the identifier); without it, the command changes an existing one. */
+  readonly creates: boolean;
   /** The module of the model of the context the files of its layers and their specs are written in. */
   readonly module?: string;
   /** No flag of the command line: hears the names to judge against the glossary instead of judging them (`plan-waves`). */

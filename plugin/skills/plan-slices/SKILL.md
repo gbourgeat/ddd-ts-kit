@@ -68,9 +68,9 @@ missing. Rows with no path between them can be built in parallel.
 |---|---|---|---|---|---|---|---|
 | US1.01 | ordering | skeleton | Order | `generate aggregate ordering Order` then `generate repository ordering Order` | | conductor | todo |
 | US1.02 | ordering | contract | Order placed | `generate integration-event ordering Order Placed` | US1.01 | conductor | todo |
-| US1.03 | ordering | slice | Place order | `generate command ordering PlaceOrder --aggregate Order --permission order.place --grant customer`; `generate route ordering PlaceOrder --method POST --path /orders` | US1.01, US1.02 | ordering | todo |
+| US1.03 | ordering | slice | Place order | `generate command ordering PlaceOrder --aggregate Order --creates --permission order.place --grant customer`; `generate route ordering PlaceOrder --method POST --path /orders` | US1.01, US1.02 | ordering | todo |
 | US1.04 | billing | slice | Invoice a placed order | `generate integration-handler billing ordering ordering.order.placed` | US1.02 | billing | todo |
-| US1.05 | incidents | slice | Open an incident | `generate command incidents OpenIncident --module triage --aggregate Incident --permission incident.open` | US1.01 | incidents | todo |
+| US1.05 | incidents | slice | Open an incident | `generate command incidents OpenIncident --module triage --aggregate Incident --creates --permission incident.open` | US1.01 | incidents | todo |
 ```
 
 - Every aggregate a command row names has a `skeleton` row that generates the aggregate **and its
@@ -155,7 +155,7 @@ the commands the generator refused for another reason (a missing `--module`, an 
 earlier row generates): fix those that the plan got wrong. Otherwise it shows the rows in waves (wave 1 can start now), cut into
 batches of one or two rows that `parallel-work` hands out, each row with the status of the rows it
 waits for, and apart the rows of another story that it waits for. A batch it says names no aggregate
-gets one in `Start with` (`--aggregate <Name>`) when the slice works on one.
+gets one in `Start with` (`--aggregate <Name>`, and `--creates` when the slice is the birth of that aggregate) when the slice works on one.
 
 Aim for slices of half a day at most. A slice with more than two failures to handle, two
 aggregates or two routes is two slices.

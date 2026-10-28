@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:5002916d6a3eecab -->
+<!-- translation-of: commands.md sha256:eed30fc72e4d0b88 -->
 
 # Quelle commande, quand
 
@@ -31,7 +31,7 @@ tape :
 | 2 | `/ddd-ts-kit:bootstrap` (ou `npx ddd-ts-kit init`, `npm install`, `npm run verify`) | le projet, vert avant tout code métier |
 | 3 | `npx ddd-ts-kit generate context ordering --classification core --term "Order=A shop's request to buy products" --term "Place=To submit an order"` | `src/contexts/ordering/` et son `CONTEXT.md` avec le glossaire |
 | 4 | `/ddd-ts-kit:plan-slices` | `docs/architecture/slices.md` : `PlaceOrder` d'abord |
-| 5 | `/ddd-ts-kit:use-case PlaceOrder`, qui lance `generate aggregate ordering Order`, `generate repository ordering Order`, `generate command ordering PlaceOrder --permission order.place --aggregate Order`, `generate route ordering PlaceOrder --method POST --path /orders`, `generate e2e ordering PlaceOrder` | les fichiers, leurs *specs* et leurs *fakes*, et les endroits `TODO(domain)` à remplir |
+| 5 | `/ddd-ts-kit:use-case PlaceOrder`, qui lance `generate aggregate ordering Order`, `generate repository ordering Order`, `generate command ordering PlaceOrder --permission order.place --aggregate Order --creates`, `generate route ordering PlaceOrder --method POST --path /orders`, `generate e2e ordering PlaceOrder` | les fichiers, leurs *specs* et leurs *fakes*, et les endroits `TODO(domain)` à remplir |
 | 6 | `npx ddd-ts-kit todo ordering` | ce qui reste à écrire dans la tranche, sous forme de `file:line` |
 | 7 | `npm run db:generate place-order`, `npm run docs:generate` | la migration de la nouvelle table, le contrat OpenAPI avec `POST /orders` |
 | 8 | `/ddd-ts-kit:quality-gate`, c'est-à-dire `npm run verify` | une porte verte |
@@ -648,7 +648,7 @@ Kinds
   domain-error <context|shared-kernel> <Name> [--code CODE] [--term "<Term>=<meaning>"]... [--module <module>]
   domain-service <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
   repository <context> <Aggregate> [--tenant-scoped] [--personal <column>,<column>... [--subject <column>] [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>]] [--module <module>]
-  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
+  command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name> [--creates]] [--term "<Term>=<meaning>"]... [--module <module>]
   query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]... [--module <module>]
   port <context> <Name> [--module <module>]
   route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]

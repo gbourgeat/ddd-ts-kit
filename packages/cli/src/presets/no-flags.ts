@@ -17,4 +17,5 @@ export const NO_FLAGS: KindFlags = {
   mapper: false,
   serializer: false,
   eventSourced: false,
+  creates: false,
 };
