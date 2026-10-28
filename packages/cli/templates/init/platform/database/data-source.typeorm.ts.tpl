@@ -5,6 +5,8 @@ import { entities } from '{{alias.platform}}/database/schema{{alias.ext}}';
 export default new DataSource({
   type: 'postgres',
   url: process.env['DATABASE_URL'] ?? '',
+  // One connection when `npm run db:generate` runs on the in-process database, which is one session.
+  poolSize: Number(process.env['DATABASE_POOL_SIZE'] ?? 10),
   entities: [...entities],
   migrations: ['dist/migrations/*.js'],
 });

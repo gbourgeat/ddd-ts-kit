@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:e0e8ed91b28aade6 -->
+<!-- translation-of: persistence.md sha256:934d258243adce8c -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -515,6 +515,15 @@ le même fichier.
 | knex 3 | `knex migrate:make` (le gabarit module ES de knex, fixé dans `knexfile.js`) | `migrations/20261012093000_add-invoices.js` | appliquée : knex exécute chaque fichier qu'il n'a pas enregistré |
 | Prisma 7 | `ddd-ts-kit prisma-generate --name`, qui lance `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma transforme `-` en `_`) | appliquée par `migrate deploy`, qui exécute chaque migration qu'il n'a pas enregistrée (d'après sa documentation ; non mesuré ici) |
 | TypeORM 1.1 | `ddd-ts-kit typeorm-generate`, qui lance `typeorm migration:generate -d <data source>`, à qui l'on donne le chemin : `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (des millisecondes, et un `-` : TypeORM fixe les deux) | appliquée : TypeORM exécute chaque migration qu'il n'a pas enregistrée |
+
+Sans `DATABASE_URL` dans l'environnement, Prisma et TypeORM n'ont besoin d'aucun serveur : la
+commande démarre PostgreSQL en processus (PGlite sur `@electric-sql/pglite-socket`, comme
+`openTestDatabase()`), y rejoue les migrations du projet (`prisma migrate diff --from-migrations`,
+la base servant de base fantôme ; `typeorm migration:run`), compare le schéma et écrit la nouvelle
+migration, garde d'audit comprise. Un agent dans le bac à sable génère donc ses propres
+migrations. Avec `DATABASE_URL`, l'outil utilise ce serveur comme avant. Sous TypeORM,
+`npm run build` passe d'abord (la source de données lit les migrations compilées) ; un projet
+Prisma lit `SHADOW_DATABASE_URL` dans `prisma.config.ts`, que `init` écrit.
 
 La commande prend la description après le script : `npm run db:generate add-invoices`
 (`npm run db:generate -- audit-guard --custom` pour une migration drizzle-kit écrite à la main).
