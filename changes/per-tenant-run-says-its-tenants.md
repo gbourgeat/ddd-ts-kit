@@ -1,3 +1,0 @@
-**A run of a per-tenant job says how many tenants it ran for, and `runJob` of the e2e support fails on a run that reached none.** `JobRun` has a new `tenants` field on a succeeded per-tenant run (absent for a global job), also in the log line of the run: with an empty tenant directory the job is never called and the run is `succeeded` with `tenants: 0`. The generated `runJob(name)` throws on it, telling the spec to open a tenant (an organisation) first.
-
-To move: a project generated before keeps its `test/e2e/support/start-application.ts`; add `tenants` to the destructuring of `jobs.runNow(name)` and throw when `tenants === 0` to get the check.
