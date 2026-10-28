@@ -76,12 +76,14 @@ function check({ directory, manifest }, destination) {
 }
 
 function pack(directory, destination) {
+  // The file list of the CLI is close to 1 MiB of JSON, the default buffer of spawnSync.
   const result = spawnSync('npm', ['pack', '--json', '--pack-destination', destination], {
     cwd: directory,
     encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
   });
   if (result.status !== 0) {
-    console.error(result.stderr);
+    console.error(result.error?.message ?? result.stderr);
     return undefined;
   }
   const [{ filename, files }] = JSON.parse(result.stdout);
