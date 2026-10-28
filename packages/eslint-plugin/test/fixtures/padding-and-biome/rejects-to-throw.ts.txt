@@ -1,0 +1,23 @@
+import { describe, expect, it } from 'vitest';
+
+const pay = async (amount: number): Promise<void> => {
+  if (amount < 0) {
+    throw new Error('NEGATIVE_AMOUNT');
+  }
+};
+
+describe('a payment', () => {
+  describe('when the amount is negative', () => {
+    it('is refused', async () => {
+      await expect(pay(-1)).rejects.toThrow('NEGATIVE_AMOUNT');
+      await expect(pay(-2)).rejects.toThrow('NEGATIVE_AMOUNT');
+      await expect(
+        pay(-3),
+      ).rejects.toThrow('NEGATIVE_AMOUNT');
+      await expect(pay(-100000000000000000000000000000000000000000000000000000000000000000000000000000000000)).rejects.toThrow(
+        'NEGATIVE_AMOUNT',
+      );
+      expect(() => JSON.parse('{')).toThrow();
+    });
+  });
+});
