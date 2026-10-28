@@ -1,3 +1,4 @@
+import process from 'node:process';
 import base from './jest.config.js';
 
 // Each spec file starts its own application, and its own PostgreSQL in process unless DATABASE_URL names a server.
