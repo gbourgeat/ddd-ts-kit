@@ -117,11 +117,14 @@ function describeContext(scope: Scope, preset: Preset, rendering: Rendering): vo
   scope.ws.update(file, text);
 }
 
+/** How the generator names the adapters of an ORM whose name is not one word: `TypeOrmAccountRepository` in `type-orm-account.repository.ts`. */
+const ADAPTER_NAMES: Readonly<Record<string, RenderContext>> = { typeorm: { pascal: 'TypeOrm', kebab: 'type-orm' } };
+
 /** The prefix of the adapters the persistence of the project names its classes and files by: `Prisma`, `prisma`. */
 function adapterOf(config: Config): RenderContext {
   const { orm } = config.stack;
 
-  return { pascal: `${orm.charAt(0).toUpperCase()}${orm.slice(1)}`, kebab: orm };
+  return ADAPTER_NAMES[orm] ?? { pascal: `${orm.charAt(0).toUpperCase()}${orm.slice(1)}`, kebab: orm };
 }
 
 function scopeOf(ws: Workspace, config: Config, { context, preset }: PresetRequest): Scope {

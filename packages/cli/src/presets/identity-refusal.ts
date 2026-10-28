@@ -13,7 +13,7 @@ const NEEDED: readonly {
   { key: 'refusals', values: ['named', 'factories'], flag: '--refusals named or --refusals factories' },
   { key: 'valueObjects', values: ['throwing'], flag: '--value-objects throwing' },
   { key: 'routes', values: ['controllers', 'nest'], flag: '--routes controllers or --routes nest' },
-  { key: 'orm', values: ['knex', 'drizzle', 'prisma'], flag: '--orm knex, --orm drizzle or --orm prisma' },
+  { key: 'orm', values: ['knex', 'drizzle', 'prisma', 'typeorm'], flag: '--orm knex, drizzle, prisma or typeorm' },
   { key: 'validation', values: ['zod', 'class-validator'], flag: '--validation zod or --validation class-validator' },
   { key: 'http', values: ['express', 'fastify', 'nest'], flag: '--http express, --http fastify or --http nest' },
   {

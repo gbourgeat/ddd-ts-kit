@@ -32,6 +32,7 @@ const FLAVOURS: readonly (readonly [string, readonly string[]])[] = [
     ],
   ],
   ['prisma, zod, rbac, shared tables', ['--orm', 'prisma', '--tenancy', 'shared-table']],
+  ['typeorm, zod, rbac, shared tables', ['--orm', 'typeorm', '--tenancy', 'shared-table']],
   ['explicit, wired by hand, fastify', ['--di', 'manual', '--http', 'fastify']],
   [
     'explicit, nest, class-validator, Nest controllers',

@@ -647,7 +647,7 @@ keycloak` the authenticator reads the `organization` claim as the tenants of the
 (another authenticator gets a next step saying what to map). The preset is written for
 `declared` with `signature` dependencies, `factories`, `throwing` value objects, `controllers` or `nest` routes (Nest controllers, read from their
 signatures, on a Nest project),
-Knex or Drizzle on PostgreSQL, Zod or class-validator, Express or Fastify, and a token verifier
+Knex, Drizzle, Prisma or TypeORM on PostgreSQL, Zod or class-validator, Express or Fastify, and a token verifier
 (`jwt` or `keycloak`); another stack is refused with what to change, and so is a second context
 written from the same preset. Why, and which other contexts deserve one:
 [Bootstrap with well-designed contexts](../../docs/guides/bootstrap-with-well-designed-contexts.md).

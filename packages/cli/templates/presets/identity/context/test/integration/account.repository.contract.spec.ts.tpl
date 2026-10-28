@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { FixedClock, FixedExecutionScope, executionContext, type Actor } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Account } from '{{alias.context}}/domain/aggregates/account.aggregate{{alias.ext}}';
-import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}AccountRepository } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}{{#if orm.prisma}}prisma{{/if}}-account.repository{{alias.ext}}';
+import { {{preset.adapter.pascal}}AccountRepository } from '{{alias.context}}/infrastructure/persistence/{{preset.adapter.kebab}}-account.repository{{alias.ext}}';
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';
 import { anAccount } from '{{alias.context}}/test/builders/account.builder{{alias.ext}}';
 import { FakeAccountRepository } from '{{alias.context}}/test/fakes/account.repository.fake{{alias.ext}}';
@@ -39,10 +39,10 @@ repositoryContract<Account>(runner, {
 
 repositoryContract<Account>(runner, {
   ...expectations,
-  name: '{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}AccountRepository',
+  name: '{{preset.adapter.pascal}}AccountRepository',
   createRepository: async () => {
     await database.reset();
 
-    return new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}AccountRepository(database.persistence.database, scope, clock);
+    return new {{preset.adapter.pascal}}AccountRepository(database.persistence.database, scope, clock);
   },
 });

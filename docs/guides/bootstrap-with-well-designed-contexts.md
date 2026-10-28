@@ -71,7 +71,7 @@ exists and decides with OpenFGA (`preset-identity-generated.spec.ts`).
 | Authorization | `identityPermissions`, seven policies over `OrganisationRights` (the rights of the actor in one organisation: their role and what active delegations lend them) |
 | Published language | `organisation.opened`, `member.joined`, `member.role-changed`, `member.removed`, `delegation.granted`, `delegation.revoked`, `account.deactivated`, through the outbox |
 | Identity provider | the port `IdentityProviderAdmin`, kept in line by four consumers of the published facts, delivered at least once (organisation known, member added or removed, account disabled), with an in-memory fake and `KeycloakIdentityProviderAdmin`, a recipe for Keycloak 26 or later |
-| Adapters | Knex, Drizzle or Prisma repositories, mappers, tables (on Prisma, the models and the enums of `prisma/schema.prisma`) and the search reader, each with its contract spec |
+| Adapters | Knex, Drizzle, Prisma or TypeORM repositories, mappers, tables (on Prisma, the models and the enums of `prisma/schema.prisma`; on TypeORM, the `EntitySchema` of each table) and the search reader, each with its contract spec |
 | Tests | builders, fakes, unit specs of the model and of every handler and controller, contract specs of the repositories, the spec of the Keycloak adapter against a local HTTP server |
 | Documentation | the purpose, the classification, the glossary and a `## Design` section in `CONTEXT.md`; with tenants, a decision record |
 
@@ -87,12 +87,12 @@ refused before anything is written, with the flag that would fit:
 | `stack.refusals` | `named`, `factories` | named: one class per refusal, its code read from `<context>.codes.ts`; factories: the static factories of one class per concept |
 | `stack.valueObjects` | `throwing` | the value objects refuse an invalid value when built |
 | `stack.routes` | `controllers` | one controller class per route |
-| `stack.orm` | `knex`, `drizzle`, `prisma` | the three adapters written; TypeORM is not |
+| `stack.orm` | `knex`, `drizzle`, `prisma`, `typeorm` | the four adapters written; a custom persistence or none is refused |
 | `stack.validation` | `zod`, `class-validator` | the two families of request schemas written |
 | `stack.schemas` | `shared`, `per-route` | shared: the identifier answers are the `Accepted` of `@ddd-ts-kit/http` and the token of an invitation one schema of `presentation/http/shared/`; per route: each route keeps its own |
 | `stack.http` | `express`, `fastify`, `nest` | the routes are controllers of `@ddd-ts-kit/http`, mounted with those of the other contexts: by the server, or under Nest by the app module the platform builds |
 | `stack.authn` | `jwt`, `keycloak` | an account is the subject of a token: without a verifier every caller is anonymous and the context would serve nobody |
-| `stack.database` | `postgres` | the tables keep one current membership per account with a partial unique index (`where removed_at is null`), which MySQL has not; on Prisma it is `where: { removedAt: null }` of the `partialIndexes` preview feature, which the preset turns on in the generator of the client |
+| `stack.database` | `postgres` | the tables keep one current membership per account with a partial unique index (`where removed_at is null`), which MySQL has not; on Prisma it is `where: { removedAt: null }` of the `partialIndexes` preview feature, which the preset turns on in the generator of the client; on TypeORM it is the `where` of an index of the `EntitySchema` |
 
 On Prisma the partial unique index rests on a preview feature, `partialIndexes`, which Prisma may
 change or drop without a major version: the generator of the client turns it on, and the end-to-end

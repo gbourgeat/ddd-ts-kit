@@ -11,6 +11,7 @@ const VARIANTS: Readonly<Record<string, (config: Config) => boolean>> = {
   knex: (config) => config.stack.orm === 'knex',
   drizzle: (config) => config.stack.orm === 'drizzle',
   prisma: (config) => config.stack.orm === 'prisma',
+  typeorm: (config) => config.stack.orm === 'typeorm',
   zod: (config) => config.stack.validation === 'zod',
   'class-validator': (config) => config.stack.validation === 'class-validator',
   'per-route': (config) => config.stack.schemas === 'per-route',

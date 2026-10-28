@@ -4,7 +4,7 @@ import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
-import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}MemberRepository } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}{{#if orm.prisma}}prisma{{/if}}-member.repository{{alias.ext}}';
+import { {{preset.adapter.pascal}}MemberRepository } from '{{alias.context}}/infrastructure/persistence/{{preset.adapter.kebab}}-member.repository{{alias.ext}}';
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
 import { FakeMemberRepository } from '{{alias.context}}/test/fakes/member.repository.fake{{alias.ext}}';
@@ -41,11 +41,11 @@ repositoryContract<Member>(runner, {
 
 repositoryContract<Member>(runner, {
   ...expectations,
-  name: '{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}MemberRepository',
+  name: '{{preset.adapter.pascal}}MemberRepository',
   createRepository: async () => {
     await database.reset();
 
-    return new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}MemberRepository(database.persistence.database, scope, clock);
+    return new {{preset.adapter.pascal}}MemberRepository(database.persistence.database, scope, clock);
   },
 });
 
@@ -81,11 +81,11 @@ function adapters(): [string, () => Promise<MemberRepository>][] {
   return [
     ['FakeMemberRepository', async () => new FakeMemberRepository()],
     [
-      '{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}MemberRepository',
+      '{{preset.adapter.pascal}}MemberRepository',
       async () => {
         await database.reset();
 
-        return new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}MemberRepository(database.persistence.database, scope, clock);
+        return new {{preset.adapter.pascal}}MemberRepository(database.persistence.database, scope, clock);
       },
     ],
   ];

@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { FixedClock, FixedExecutionScope, executionContext, type Actor } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Organisation } from '{{alias.context}}/domain/aggregates/organisation.aggregate{{alias.ext}}';
-import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}OrganisationRepository } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}{{#if orm.prisma}}prisma{{/if}}-organisation.repository{{alias.ext}}';
+import { {{preset.adapter.pascal}}OrganisationRepository } from '{{alias.context}}/infrastructure/persistence/{{preset.adapter.kebab}}-organisation.repository{{alias.ext}}';
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';
 import { anOrganisation } from '{{alias.context}}/test/builders/organisation.builder{{alias.ext}}';
 import { FakeOrganisationRepository } from '{{alias.context}}/test/fakes/organisation.repository.fake{{alias.ext}}';
@@ -37,10 +37,10 @@ repositoryContract<Organisation>(runner, {
 
 repositoryContract<Organisation>(runner, {
   ...expectations,
-  name: '{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}OrganisationRepository',
+  name: '{{preset.adapter.pascal}}OrganisationRepository',
   createRepository: async () => {
     await database.reset();
 
-    return new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}OrganisationRepository(database.persistence.database, scope, clock);
+    return new {{preset.adapter.pascal}}OrganisationRepository(database.persistence.database, scope, clock);
   },
 });

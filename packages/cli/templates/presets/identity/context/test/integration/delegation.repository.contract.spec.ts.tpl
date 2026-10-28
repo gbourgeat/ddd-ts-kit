@@ -3,7 +3,7 @@ import { FixedClock, FixedExecutionScope, executionContext, type Actor } from '@
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Delegation } from '{{alias.context}}/domain/aggregates/delegation.aggregate{{alias.ext}}';
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
-import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}DelegationRepository } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}{{#if orm.prisma}}prisma{{/if}}-delegation.repository{{alias.ext}}';
+import { {{preset.adapter.pascal}}DelegationRepository } from '{{alias.context}}/infrastructure/persistence/{{preset.adapter.kebab}}-delegation.repository{{alias.ext}}';
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';
 import { aDelegation } from '{{alias.context}}/test/builders/delegation.builder{{alias.ext}}';
 import { FakeDelegationRepository } from '{{alias.context}}/test/fakes/delegation.repository.fake{{alias.ext}}';
@@ -40,11 +40,11 @@ repositoryContract<Delegation>(runner, {
 
 repositoryContract<Delegation>(runner, {
   ...expectations,
-  name: '{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}DelegationRepository',
+  name: '{{preset.adapter.pascal}}DelegationRepository',
   createRepository: async () => {
     await database.reset();
 
-    return new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}DelegationRepository(database.persistence.database, scope, clock);
+    return new {{preset.adapter.pascal}}DelegationRepository(database.persistence.database, scope, clock);
   },
 });
 
@@ -73,11 +73,11 @@ function adapters(): [string, () => Promise<DelegationRepository>][] {
   return [
     ['FakeDelegationRepository', async () => new FakeDelegationRepository()],
     [
-      '{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}DelegationRepository',
+      '{{preset.adapter.pascal}}DelegationRepository',
       async () => {
         await database.reset();
 
-        return new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}DelegationRepository(database.persistence.database, scope, clock);
+        return new {{preset.adapter.pascal}}DelegationRepository(database.persistence.database, scope, clock);
       },
     ],
   ];

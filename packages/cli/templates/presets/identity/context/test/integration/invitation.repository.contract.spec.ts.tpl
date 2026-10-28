@@ -3,7 +3,7 @@ import { FixedClock, FixedExecutionScope, executionContext, type Actor } from '@
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Invitation } from '{{alias.context}}/domain/aggregates/invitation.aggregate{{alias.ext}}';
 import type { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
-import { {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}InvitationRepository } from '{{alias.context}}/infrastructure/persistence/{{#if orm.knex}}knex{{/if}}{{#if orm.drizzle}}drizzle{{/if}}{{#if orm.prisma}}prisma{{/if}}-invitation.repository{{alias.ext}}';
+import { {{preset.adapter.pascal}}InvitationRepository } from '{{alias.context}}/infrastructure/persistence/{{preset.adapter.kebab}}-invitation.repository{{alias.ext}}';
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';
 import { anInvitation } from '{{alias.context}}/test/builders/invitation.builder{{alias.ext}}';
 import { FakeInvitationRepository } from '{{alias.context}}/test/fakes/invitation.repository.fake{{alias.ext}}';
@@ -40,11 +40,11 @@ repositoryContract<Invitation>(runner, {
 
 repositoryContract<Invitation>(runner, {
   ...expectations,
-  name: '{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}InvitationRepository',
+  name: '{{preset.adapter.pascal}}InvitationRepository',
   createRepository: async () => {
     await database.reset();
 
-    return new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}InvitationRepository(database.persistence.database, scope, clock);
+    return new {{preset.adapter.pascal}}InvitationRepository(database.persistence.database, scope, clock);
   },
 });
 
@@ -65,11 +65,11 @@ function adapters(): [string, () => Promise<InvitationRepository>][] {
   return [
     ['FakeInvitationRepository', async () => new FakeInvitationRepository()],
     [
-      '{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}InvitationRepository',
+      '{{preset.adapter.pascal}}InvitationRepository',
       async () => {
         await database.reset();
 
-        return new {{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}{{#if orm.prisma}}Prisma{{/if}}InvitationRepository(database.persistence.database, scope, clock);
+        return new {{preset.adapter.pascal}}InvitationRepository(database.persistence.database, scope, clock);
       },
     ],
   ];

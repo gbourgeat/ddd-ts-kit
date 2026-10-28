@@ -124,12 +124,6 @@ const IDENTITY_TEMPLATES = 'the templates of the preset are not written in it ye
 /** Every refusal of the identity preset, on a stack `init` accepts. */
 export const IDENTITY_PRESET_REFUSALS: readonly DeclaredRefusal[] = [
   {
-    refusal: /^The identity preset is not written for "stack\.orm": "typeorm"\.$/,
-    example: { orm: 'typeorm' },
-    kind: 'not yet',
-    why: 'its persistence templates exist for Knex, Drizzle and Prisma',
-  },
-  {
     refusal: /^The identity preset is not written for "stack\.orm": "(custom|none)"\.$/,
     example: { orm: 'none' },
     kind: 'decided',

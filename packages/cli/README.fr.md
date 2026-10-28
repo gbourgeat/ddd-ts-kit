@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6318700294fcbe13 -->
+<!-- translation-of: README.md sha256:833cd57eca262172 -->
 
 # ddd-ts-kit
 
@@ -671,7 +671,7 @@ quoi que dise `--authz` : l'attribution `'identity:*'` de `platform/auth/authori
 le *preset* écrit, et avec `--authn keycloak` l'authentificateur lit le *claim* `organization`
 comme les *tenants* de la personne (un autre authentificateur reçoit une étape suivante qui dit
 quoi faire correspondre). Le *preset* est écrit pour `declared` avec les dépendances `signature`,
-`factories`, les objets-valeurs `throwing`, les routes `controllers` ou `nest` (des contrôleurs Nest, lus dans leurs signatures, sur un projet Nest), Knex ou Drizzle sur PostgreSQL, Zod ou
+`factories`, les objets-valeurs `throwing`, les routes `controllers` ou `nest` (des contrôleurs Nest, lus dans leurs signatures, sur un projet Nest), Knex, Drizzle, Prisma ou TypeORM sur PostgreSQL, Zod ou
 class-validator, Express ou Fastify, et un vérificateur de jeton (`jwt` ou `keycloak`) ; une
 autre *stack* est refusée avec ce qu'il faut changer, de même qu'un second contexte écrit depuis
 le même *preset*. Pourquoi, et quels autres contextes en méritent un :
