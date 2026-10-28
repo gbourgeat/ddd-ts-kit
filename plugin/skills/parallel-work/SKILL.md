@@ -223,7 +223,7 @@ Under the sandbox, a trunk that changes the settings of the project (`.claude/se
 another path the session cannot write is the owner's merge: `merge-trunk` stops with nothing
 changed and exit 3, naming the paths; hand the owner the same command to run from a terminal
 outside the sandbox, and do not merge by hand or reset the worktree.
-A worker under the sandbox of the regulated profile cannot reach the database either: a Prisma or TypeORM working migration, `db:migrate` and a spec that names a `DATABASE_URL` are run by the owner or the CI (`db:generate` exits 3), not by the worker; it writes the schema and reports.
+A worker under the sandbox of the regulated profile cannot reach the database either: `db:migrate` and a spec that names a `DATABASE_URL` are run by the owner or the CI, not by the worker. Its working migration it generates itself: with `DATABASE_URL` unset, `db:generate` of Prisma and TypeORM runs on PostgreSQL in process (it exits 3 only when `DATABASE_URL` names a server that does not answer).
 Then one
 review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
 merged branch, then the branch merges or opens its pull request. The blocking findings of the

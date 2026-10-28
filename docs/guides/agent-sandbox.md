@@ -266,14 +266,18 @@ opens every socket of the machine, the container engine's included.
 So in a session under the regulated profile the agent writes the schema and the code, and the owner
 (or the pipeline) runs what needs the database, from a terminal outside the sandbox:
 
-- the migrations: `npm run db:generate <name>` under Prisma (`prisma migrate dev --create-only`
-  needs a database for its shadow) and TypeORM (`migration:generate` reads the live schema), and
-  `npm run db:migrate` under every ORM (which fails on the connection); `drizzle-kit generate` and Knex files written by hand need
-  no connection, so Drizzle generates inside the sandbox;
+- `npm run db:migrate` under every ORM (which fails on the connection);
+- the migrations are not on that list: `npm run db:generate <name>` needs no server when
+  `DATABASE_URL` is unset. Under Prisma and TypeORM the kit then starts PostgreSQL in process
+  (PGlite served over the wire protocol, the engine `openTestDatabase()` runs the tests on),
+  replays the migrations already written, diffs them against the schema and writes the new
+  migration, with the append-only statements of the audit trail. Drizzle generates from its
+  snapshots and Knex files are written by hand. A sandboxed agent generates its own migrations; on
+  TypeORM it builds first (`npm run build && npm run db:generate migrations/<name>`);
 - the integration and end-to-end specs that name a `DATABASE_URL`; the specs on the in-memory fakes
   and the end-to-end specs without `DATABASE_URL` (an in-process database) run in the session.
 
-When `DATABASE_URL` is set and its server does not answer, `prisma-generate` and `typeorm-generate`
+When `DATABASE_URL` is set and its server does not answer (unset it to generate on the in-process database), `prisma-generate` and `typeorm-generate`
 stop before the tool, exit 3 (the code of what a session cannot do here) and say it, instead of a
 raw connection error; the command is then handed to the owner as it stands.
 
