@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3eadf49ba740d093 -->
+<!-- translation-of: README.md sha256:e5847ce5e5fda748 -->
 
 # ddd-ts-kit
 
@@ -2172,8 +2172,8 @@ règle.
   garde une violation quand le fichier où elle se trouve a changé, ou quand un fichier qu'elle nomme
   dans ses `subjects` (avec `--json`) a changé : un constat signalé sur un handler mais réparé dans le
   fichier de module (`events/consumer-idempotent`, `declarations/port-adapter-wired`, `authz/declared`,
-  `authz/policy-asked`) apparaît quand seul ce fichier de module a changé. `git diff` lit les commits
-  depuis la base de fusion : commitez avant de vérifier.
+  `authz/policy-asked`) apparaît quand seul ce fichier de module a changé. Les fichiers changés sont ceux
+  modifiés depuis la base de fusion, commités ou non.
 - `--baseline write` consigne les erreurs qu'un projet a déjà, comptées par fichier et par règle,
   dans `ddd-ts-kit-baseline.json` (la forme de `eslint-suppressions.json`), pour un code existant
   qui adopte le kit ; commitez-le. Dès lors, `check` et `check-file` (le *hook* de l'agent) taisent
