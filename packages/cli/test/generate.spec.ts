@@ -253,6 +253,23 @@ describe('generate, the next steps and the document of a new context', () => {
   });
 });
 
+describe('generate, the first term of a glossary', () => {
+  it('takes away the TODO that asked for the language once --term gives the glossary its first term', () => {
+    const doc = 'src/contexts/stock/CONTEXT.md';
+
+    expect(cli(root, 'generate', 'context', 'stock', '--classification', 'supporting').code).toBe(0);
+    expect(read(root, doc)).toContain('TODO(domain): define the ubiquitous language first');
+
+    const result = report(
+      cli(root, 'generate', 'value-object', 'stock', 'Shelf', '--term', 'Shelf=Where an item waits', '--json'),
+    );
+
+    expect(read(root, doc)).not.toContain('define the ubiquitous language first');
+    expect(read(root, doc)).toContain('## Ubiquitous language\n\n| Term | Meaning | Not to be confused with |');
+    expect(result.todos.map((todo) => todo.text)).not.toContainEqual(expect.stringContaining('ubiquitous language'));
+  });
+});
+
 describe('generate context, its glossary from the draft', () => {
   it('writes the three cells of each row and the sentence of its classification given to a new context', () => {
     cli(

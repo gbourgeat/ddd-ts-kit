@@ -1,13 +1,13 @@
 # Generator kinds
 
 `npx ddd-ts-kit generate <kind> ... --json`. Common options: `--term "<Term>=<meaning>"`
-(repeatable; `"<Term>=<meaning>|<not to be confused with>"` fills the third cell of the row), `--module <module>` (on the kinds whose usage shows `[--module <module>]`, `writesInModules`
+(repeatable, on the kinds whose usage shows it; `"<Term>=<meaning>|<not to be confused with>"` fills the third cell of the row), `--module <module>` (on the kinds whose usage shows `[--module <module>]`, `writesInModules`
 in the JSON, and required by them in a context that declares modules of the model:
 the files of each layer land in `<module>/domain/`, `<module>/application/`,
 `<module>/infrastructure/` and `<module>/presentation/`, their specs in `test/unit/<module>/`;
 the kinds that write only what the context keeps aside or outside the contexts, such as
 `builder`, `test-world`, `route-group`, `guard`, `schema`, `e2e` and `service`, refuse it), `--local-only`, `--dry-run`, `--force`. The authoritative list is
-`npx ddd-ts-kit --help`; `npx ddd-ts-kit generate --help --json` gives it as data, with the
+`npx ddd-ts-kit --help`, and a flag the usage of a kind does not show is refused; `npx ddd-ts-kit generate --help --json` gives it as data, with the
 shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) and whether it takes `--module` (`writesInModules`).
 
 | Kind | Arguments | Lands in |

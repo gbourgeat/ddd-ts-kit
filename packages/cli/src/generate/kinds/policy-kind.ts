@@ -6,6 +6,7 @@ import { emit } from '../emit';
 import { isDeclared } from '../is-declared';
 import type { Kind } from '../kind';
 import { label } from '../label';
+import { learnTerms } from '../learn-terms';
 import { markPolicyQuestions } from '../mark-policy-questions';
 import { named } from '../named';
 import { openScope } from '../open-scope';
@@ -16,7 +17,7 @@ import { platformPath } from '../platform-path';
 export const policyKind: Kind = {
   name: 'policy',
   aliases: [],
-  usage: 'policy <context> <Name> --permission <aggregate>.<action>',
+  usage: 'policy <context> <Name> --permission <aggregate>.<action> [--term "<Term>=<meaning>"]...',
   summary:
     'A rule about one element (only the author, not after closing), its spec and its registration with the policies Access asks.',
   positionals: ['context', 'Name'],
@@ -24,6 +25,9 @@ export const policyKind: Kind = {
   writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
+
+    learnTerms(scope);
+
     const name = label(scope, request.args[1] ?? '', { what: 'policy', strip: ['policy'] });
     const { permission } = scope.flags;
 

@@ -135,3 +135,33 @@ describe('generate, plans and refusals', () => {
     expect(KINDS.map((kind) => kind.name)).toEqual(expect.arrayContaining(['builder', 'e2e']));
   });
 });
+
+describe('generate, a flag the kind does not take', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = explicitProject('generate-flags');
+  });
+
+  it('refuses a flag another kind takes and this one does not, rather than ignoring it, and writes nothing', () => {
+    const result = cli(root, 'generate', 'command', 'billing', 'VoidInvoice', '--public', '--search', '--json');
+
+    expect(failure(result).message).toBe('generate command does not take --search: it would be ignored.');
+    expect(failure(result).fix).toContain('Usage: ddd-ts-kit generate command <context> <UseCaseName>');
+    expect(exists(root, 'src/contexts/billing/application/commands/void-invoice')).toBe(false);
+  });
+
+  it.each([
+    ['route', ['--method', 'POST', '--path', '/invoices', '--command']],
+    ['controller', ['--method', 'POST', '--path', '/invoices', '--command']],
+    ['repository', []],
+  ])('refuses --term on a %s, which names nothing new, and says where the term goes', (kind, flags) => {
+    const term = ['--term', 'Void=Cancel an issued invoice'];
+    const result = cli(root, 'generate', kind, 'billing', 'Invoice', ...flags, ...term, '--json');
+
+    expect(failure(result).message).toBe(`generate ${kind} does not take --term: it would be ignored.`);
+    expect(failure(result).fix).toContain('give --term to the kind that names the concept first');
+    expect(failure(result).fix).toContain(`Usage: ddd-ts-kit generate ${kind} <context>`);
+    expect(read(root, 'src/contexts/billing/CONTEXT.md')).not.toContain('| Void |');
+  });
+});

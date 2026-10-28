@@ -126,7 +126,7 @@ function scaffold(root: string, stack: StackFlags, rpc: keyof typeof FIXTURES): 
       ...grantOf(stack)('accountant'),
       ...TERMS,
     ],
-    ['generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices', ...TERMS],
+    ['generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices'],
   ];
 
   for (const step of steps) {

@@ -102,6 +102,28 @@ describe('a policy and the use cases of its permission', () => {
   });
 });
 
+describe('a policy whose permission names a word the glossary does not hold yet', () => {
+  it('adds the term given with --term to the glossary, as its refusal asks, and writes the policy', () => {
+    const project = billing();
+    const policy = ['policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel'];
+
+    generate(project, 'aggregate', 'billing', 'Invoice', TERMS[0] ?? '', TERMS[1] ?? '');
+
+    const refused = cli(project, 'generate', ...policy);
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('--term "Cancel=<what it means for the business>"');
+
+    generate(project, ...policy, '--term', 'Cancel=To void an invoice before payment');
+
+    expect(read(project, `${BILLING}/CONTEXT.md`)).toContain('| Cancel | To void an invoice before payment |');
+
+    expect(read(project, `${BILLING}/application/authorization/only-issuer-cancels.policy.ts`)).toContain(
+      'class OnlyIssuerCancels',
+    );
+  });
+});
+
 describe('a policy and the use cases of its permission, beyond a plain command', () => {
   const QUERY = `${BILLING}/application/queries/get-invoice/get-invoice.handler.ts`;
   const READ = ['--term', 'Get=To read one element'];
