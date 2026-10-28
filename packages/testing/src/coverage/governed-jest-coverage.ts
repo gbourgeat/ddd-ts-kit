@@ -3,8 +3,10 @@ import { generatedDeclarations } from './generated-declarations';
 import { portFiles } from './port-files';
 import { governedSettings } from './governed-settings';
 import { heldLayers } from './held-layers';
+import { layerFolders } from './layer-folders';
 import { measuredFiles } from './measured-files';
 import { measuredLayers } from './measured-layers';
+import { typeOnlyFiles } from './type-only-files';
 
 /** The part of a Jest config that the config file of a project governs. */
 export interface GovernedJestCoverage {
@@ -16,7 +18,8 @@ export interface GovernedJestCoverage {
 /**
  * The same as `governedCoverage`, in the options of Jest, which runs every spec in one run: the
  * four layers of every context are measured and held to the `coverage` key of
- * `ddd-ts-kit.config.json`.
+ * `ddd-ts-kit.config.json`. A file of types only is left out: Jest with `v8` reports all its lines
+ * uncovered, as no spec loads it (Vitest skips it as an empty file).
  *
  *     // jest.config.js
  *     import { governedJestCoverage } from '@ddd-ts-kit/testing/coverage';
@@ -32,6 +35,10 @@ export function governedJestCoverage(root: string = process.cwd()): GovernedJest
       ...measuredFiles(contextsDir, layers).map((files) => `<rootDir>/${files}`),
       `!<rootDir>/${generatedDeclarations(contextsDir)}`,
       ...portFiles(contextsDir).map((files) => `!<rootDir>/${files}`),
+      ...typeOnlyFiles(
+        root,
+        layerFolders(root, contextsDir, layers).map(({ directory }) => directory),
+      ).map((file) => `!<rootDir>/${file}`),
     ],
     coverageThreshold: Object.fromEntries(
       held.map(({ layer, directory }) => [`./${directory}/`, { ...thresholds[layer] }]),

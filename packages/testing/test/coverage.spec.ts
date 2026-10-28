@@ -34,6 +34,53 @@ const BILLING = [
   'src/contexts/billing/infrastructure/persistence/knex-invoice.repository.ts',
 ];
 
+/** A project with a file written as given, beside the files `projectWith` writes. */
+function projectWithSource(files: Record<string, string>): string {
+  const root = projectWith({}, []);
+
+  for (const [file, source] of Object.entries(files)) {
+    mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    writeFileSync(path.join(root, file), source);
+  }
+
+  return root;
+}
+
+const RESULT = 'src/contexts/billing/application/commands/pay/pay.result.ts';
+const HANDLER = 'src/contexts/billing/application/commands/pay/pay.handler.ts';
+
+describe('a file of types only, which no spec loads and the v8 provider of Jest reports as 0 percent', () => {
+  it('leaves it out of what Jest measures, the handler beside it measured', () => {
+    const root = projectWithSource({
+      [RESULT]: 'export interface PayResult {\n  readonly paid: boolean;\n}\n',
+      [HANDLER]:
+        "import type { PayResult } from './pay.result';\nexport const pay = (): PayResult => ({ paid: true });\n",
+    });
+
+    expect(governedJestCoverage(root).collectCoverageFrom).toContain(`!<rootDir>/${RESULT}`);
+    expect(governedJestCoverage(root).collectCoverageFrom).not.toContain(`!<rootDir>/${HANDLER}`);
+    expect(Object.keys(governedJestCoverage(root).coverageThreshold)).toEqual(['./src/contexts/billing/application/']);
+  });
+
+  it('holds a layer that holds nothing else to nothing, on Jest and on Vitest', () => {
+    const root = projectWithSource({ [RESULT]: 'export type PayResult = { paid: boolean };\n' });
+
+    expect(governedJestCoverage(root).coverageThreshold).toEqual({});
+    expect(governedCoverage('test', root).thresholds).toEqual({});
+  });
+
+  it('keeps a layer that holds a type and a value held to its threshold', () => {
+    const root = projectWithSource({
+      [RESULT]: 'export type PayResult = string;\n',
+      [HANDLER]: 'export const pay = 1;\n',
+    });
+
+    expect(Object.keys(governedCoverage('test', root).thresholds)).toEqual([
+      'src/contexts/billing/application/**/*.ts',
+    ]);
+  });
+});
+
 describe('governedCoverage(), what a Vitest run measures and is held to', () => {
   it('measures the four layers of every context and holds each layer that has a source to the reference', () => {
     const root = projectWith({}, [...BILLING, 'src/contexts/shipping/domain/value-objects/parcel.vo.ts']);
