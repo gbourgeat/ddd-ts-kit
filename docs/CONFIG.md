@@ -694,7 +694,13 @@ under jest) of `@ddd-ts-kit/testing/coverage`, which reads the `coverage` key ea
 starts. One place holds a threshold, and `check` holds that place. The ports
 (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) are not measured: abstract
 members only, nothing in them runs, and under Vitest and Jest alike a layer of ports alone is held
-to nothing.
+to nothing. A file of types only (interfaces, type aliases, `import type`, `export type`), for example
+`application/commands/pay/pay.result.ts`, is not measured under Jest either: it compiles to nothing,
+no spec loads it, and the `v8` provider of Jest reports all its lines uncovered (Vitest skips it as
+an empty file, and the `babel` provider never sees it). `governedJestCoverage()` reads each source
+file as text when the config loads and leaves out those whose top-level statements are all
+declarations of types; anything it cannot tell from code that runs stays measured, and a layer of
+such files alone is held to nothing, under Vitest too.
 
 Instead of writing a number in the runner config, which `test/coverage-governed` refuses:
 

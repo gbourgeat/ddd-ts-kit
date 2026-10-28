@@ -1,20 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { affectedContexts } from './affected-contexts';
-import { contextsIn } from './contexts-in';
 import type { CoverageLayer } from './coverage-layer';
-import { modulesIn } from './modules-in';
+import { isTypeOnlyFile } from './is-type-only-file';
+import type { HeldLayer } from './held-layer';
+import { layerFolders } from './layer-folders';
 
 const SOURCE = /(?<!\.d)\.[cm]?ts$/;
 const SPEC = /\.(?:spec|test)\.[cm]?ts$/;
-
-/** A layer of one context that holds at least one source file: the unit a threshold is applied to. */
-export interface HeldLayer {
-  readonly context: string;
-  readonly layer: CoverageLayer;
-  /** Posix path of the layer directory from the root of the project. */
-  readonly directory: string;
-}
 
 /**
  * The layers a threshold applies to, among `layers`: one per context, and per module of its model,
@@ -24,19 +16,7 @@ export interface HeldLayer {
  * the others are measured by the run of everything.
  */
 export function heldLayers(root: string, contextsDir: string, layers: readonly CoverageLayer[]): HeldLayer[] {
-  const affected = affectedContexts();
-
-  return contextsIn(path.join(root, contextsDir))
-    .filter((context) => affected === undefined || affected.includes(context))
-    .flatMap((context) => {
-      const folders = ['', ...modulesIn(path.join(root, contextsDir, context)).map((module) => `${module}/`)];
-
-      return folders.flatMap((folder) =>
-        layers
-          .map((layer) => ({ context, layer, directory: `${contextsDir}/${context}/${folder}${layer}` }))
-          .filter(({ directory }) => holdsASource(path.join(root, directory))),
-      );
-    });
+  return layerFolders(root, contextsDir, layers).filter(({ directory }) => holdsASource(path.join(root, directory)));
 }
 
 function holdsASource(directory: string): boolean {
@@ -46,10 +26,17 @@ function holdsASource(directory: string): boolean {
 
   return fs
     .readdirSync(directory, { withFileTypes: true, recursive: true })
-    .some((entry) => entry.isFile() && SOURCE.test(entry.name) && !SPEC.test(entry.name) && !isPort(entry));
+    .some(
+      (entry) =>
+        entry.isFile() &&
+        SOURCE.test(entry.name) &&
+        !SPEC.test(entry.name) &&
+        !isPort(entry) &&
+        !isTypeOnlyFile(path.join(entry.parentPath, entry.name)),
+    );
 }
 
-/** A port is not measured (`portFiles`): a layer that holds nothing else is held to nothing. */
+/** A port is not measured (`portFiles`), nor a file of types only: a layer that holds nothing else is held to nothing. */
 function isPort(entry: fs.Dirent): boolean {
   const folder = entry.parentPath.split(path.sep).join('/');
 

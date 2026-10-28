@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:5f843ff8ab8e7503 -->
+<!-- translation-of: CONFIG.md sha256:a597564574e2c271 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -719,7 +719,14 @@ La configuration du lanceur de tests n'écrit aucun nombre : elle étale `govern
 `coverage` à chaque démarrage d'une exécution. Un seul endroit porte un seuil, et `check` tient
 cet endroit. Les ports (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) ne
 sont pas mesurés : membres abstraits seulement, rien ne s'y exécute, et sous Vitest comme sous
-Jest une couche qui ne contient que des ports n'est tenue à rien.
+Jest une couche qui ne contient que des ports n'est tenue à rien. Un fichier qui ne contient que des types (interfaces, alias de types,
+`import type`, `export type`), par exemple `application/commands/pay/pay.result.ts`, n'est pas
+mesuré non plus sous Jest : il se compile en rien, aucune spec ne le charge, et le fournisseur
+`v8` de Jest déclare toutes ses lignes non couvertes (Vitest l'ignore comme un fichier vide, et
+le fournisseur `babel` ne le voit jamais). `governedJestCoverage()` lit chaque fichier source
+comme du texte au chargement de la configuration et écarte ceux dont toutes les instructions de
+premier niveau déclarent des types ; ce qu'il ne sait pas distinguer d'un code qui s'exécute reste
+mesuré, et une couche qui n'en contient que de tels fichiers n'est tenue à rien, sous Vitest aussi.
 
 Au lieu d'écrire un nombre dans la configuration du lanceur, ce que `test/coverage-governed`
 refuse :
