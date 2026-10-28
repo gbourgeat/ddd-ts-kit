@@ -35,7 +35,6 @@ allowed-tools:
   - Bash(npm ci)
   - Bash(git worktree *)
   - Bash(git status *)
-  - Bash(git push origin work/*)
 ---
 
 # Work in parallel without collisions
@@ -301,8 +300,10 @@ build and whether the project has a remote. Then:
   worktree with the `--fresh` resume briefing (the rows left, what the last one did).
 - **After two stops on one row without a new commit, finish the row yourself** in the worktree,
   by the rules of its briefing; launch no third worker on it.
-- **Checkpoint.** With a remote, after each merge of a worker push the integration branch
-  (`git push origin work/<plan>`), never the main branch. A restart then loses one worker, not the run.
+- **Checkpoint.** With a remote and the owner's permission to push, after each merge of a worker
+  push the integration branch (`git push origin work/<plan>`), never the main branch. A restart then
+  loses one worker, not the run. Without that permission, commit after each merge and say in the
+  report that the branch is local.
 - **Stop at the end of the wave** of `plan-waves` you were given, with the report (merged, left, needs),
   unless the brief names more waves or a time to stop.
 

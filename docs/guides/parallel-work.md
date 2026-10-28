@@ -734,8 +734,8 @@ conductor to five rules:
 - never resume a worker with `SendMessage`: merge the trunk into its branch and launch a new
   `context-builder` on the same worktree with the rows left (`worker-scope --resume --fresh`);
 - after two stops on one row without a new commit, finish the row itself;
-- push the integration branch (`work/<plan>`) after each merge of a worker, never the main
-  branch: a restart loses one worker, not the run;
+- when the owner lets it push, push the integration branch (`work/<plan>`) after each merge of a
+  worker, never the main branch: a restart loses one worker, not the run;
 - stop at the end of the wave of `plan-waves` it was given, with a report.
 
 ## Limits and when not to use it

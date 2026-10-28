@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:51a8b1b6b40e7232 -->
+<!-- translation-of: parallel-work.md sha256:7ab01bb4ae4e0ad9 -->
 
 # Travailler en parallèle sans collisions
 
@@ -795,8 +795,9 @@ conducteur à cinq règles :
   nouveau `context-builder` sur le même worktree avec les lignes restantes
   (`worker-scope --resume --fresh`) ;
 - après deux arrêts sur une même ligne sans nouveau commit, finir la ligne soi-même ;
-- pousser la branche d'intégration (`work/<plan>`) après chaque fusion d'un worker, jamais la
-  branche principale : un redémarrage perd un worker, pas toute l'exécution ;
+- quand le propriétaire l'autorise à pousser, pousser la branche d'intégration (`work/<plan>`) après
+  chaque fusion d'un worker, jamais la branche principale : un redémarrage perd un worker, pas toute
+  l'exécution ;
 - s'arrêter à la fin de la vague de `plan-waves` reçue, avec un rapport.
 
 ## Limites et quand ne pas s'en servir
