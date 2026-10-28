@@ -139,7 +139,7 @@ built. A test states only what its rule depends on.
 the business scenario; assert what a client observes (responses, published events), never
 the database. What happens after the answer (the outbox relayed, the handlers it reaches) is
 asserted once `await application.settled()` has resolved, never after a fixed delay: it fails
-naming what is still pending. A use case no route reaches, sent by an integration event
+naming what is still pending. An outside system that answers nowhere in a test run is answered by its fake, bound in `contextsOfTheRun()` of `test/e2e/support/start-application.ts` (the identity preset binds `FakeIdentityProviderAdmin` there); without it the outbox retries and `settled()` fails. A use case no route reaches, sent by an integration event
 handler, gets the same command: its spec publishes the upstream event, built from its
 declaration, with `await application.publish([event])`, then awaits `settled()`; pass
 `--event <eventType>` when handlers of several events send it. A use case only a job

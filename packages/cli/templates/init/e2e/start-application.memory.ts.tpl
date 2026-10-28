@@ -13,11 +13,20 @@ import {
 {{#unless httpCache.varnish}}
 import type { IntegrationEvent, IntegrationEventSubscriber, JobScheduler } from '@ddd-ts-kit/kernel';
 {{/unless}}
+{{#if di.tsyringe}}
+import { defineContextModule } from '@ddd-ts-kit/di';
+{{/if}}
 import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
 import { relationTuples } from '{{alias.platform}}/auth/relationships/relation-tuples{{alias.ext}}';
 {{/if}}
-import { composeApplication } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+{{#if di.tsyringe}}
+import { composeApplication, everyContext } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+import type { ContextSelection } from '{{alias.platform}}/composition/context-selection{{alias.ext}}';
+{{/if}}
+{{#unless di.tsyringe}}
+import { composeApplication, everyContext } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+{{/unless}}
 {{#if broker.provided}}
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{/if}}
@@ -52,6 +61,8 @@ import { noRedis, testEnvironment } from '{{alias.test}}/e2e/support/test-enviro
 import { testEnvironment } from '{{alias.test}}/e2e/support/test-environment{{alias.ext}}';
 {{/unless}}
 {{/unless}}
+// ddd-ts-kit:imports
+// /ddd-ts-kit:imports
 
 /** The whole application as a client and another context see it. */
 export interface RunningApplication {
@@ -170,13 +181,8 @@ async function start(credentials: Credentials): Promise<Started> {
   const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
 {{/if}}
 
-  const application = composeApplication(persistence, {
-    events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}},
-    authenticator: credentials.authenticator,
-{{#if cache.redis}}
-    ...(redis === undefined ? {} : { redis }),
-{{/if}}
-  });
+  const options = optionsOf({{#if broker.provided}}config, {{/if}}credentials{{#if cache.redis}}, redis{{/if}});
+  const application = composeApplication(persistence, options, contextsOfTheRun());
 
   await application.start();
 
@@ -229,12 +235,52 @@ async function start(credentials: Credentials): Promise<Started> {
     },
   };
 }
+
+/** What the application is built on in a test run: the events, the credentials of the specs and what the environment provides. */
+function optionsOf({{#if broker.provided}}config: AppConfig, {{/if}}credentials: Credentials{{#if cache.redis}}, redis: ReturnType<typeof openRedis> | undefined{{/if}}) {
+  return {
+    events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}},
+    authenticator: credentials.authenticator,
+{{#if cache.redis}}
+    ...(redis === undefined ? {} : { redis }),
+{{/if}}
+  };
+}
 {{#if broker.provided}}
 
 function eventsOf(config: AppConfig): EventProvider {
   return {{broker.inProcessWhen}} ? inProcessEvents() : createEventProvider(config);
 }
 {{/if}}
+
+/**
+ * The contexts as a test run composes them. An outside system that answers nowhere in a test run
+ * (an identity provider, a payment service) is answered by its fake of `test/fakes/` here, where
+ * the preset or the person who adds it binds it, so that its handlers settle instead of retrying.
+ */
+{{#if di.tsyringe}}
+function contextsOfTheRun(): ContextSelection {
+  const fakes = defineContextModule({
+    name: 'end-to-end-fakes',
+    register(builder) {
+      // ddd-ts-kit:e2e-fakes
+      // /ddd-ts-kit:e2e-fakes
+    },
+  });
+
+  return { ...everyContext, modules: [...everyContext.modules, fakes] };
+}
+{{/if}}
+{{#unless di.tsyringe}}
+function contextsOfTheRun(): typeof everyContext {
+  return everyContext.map((module): (typeof everyContext)[number] => {
+    // ddd-ts-kit:e2e-fakes
+    // /ddd-ts-kit:e2e-fakes
+
+    return module;
+  });
+}
+{{/unless}}
 
 /** Runs the job now; a run that failed or did not happen fails the spec with its outcome, never the message of an error. */
 async function runJob(jobs: JobScheduler, name: string): Promise<void> {

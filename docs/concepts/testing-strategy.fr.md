@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:8f139e4c95c4966b -->
+<!-- translation-of: testing-strategy.md sha256:70adf8e7a0df7c57 -->
 
 # Stratégie de test
 
@@ -448,6 +448,12 @@ enregistrent à leur tour) s'attend avec `await application.settled()`, puis se 
 Un délai fixe est lent quand il est long et instable quand il est court ; `settled` se résout dès
 que l'outbox ne tient plus aucun événement en attente, et quand le temps est écoulé il échoue en
 nommant ce qui attend encore et combien en a échoué.
+
+Un système extérieur qui ne répond nulle part dans une exécution de test (le fournisseur d'identité
+du *preset* identity) ferait retenter l'outbox sans fin, et `settled()` ne se terminerait jamais. Le
+support partagé (`test/e2e/support/start-application.ts`) lui répond par son *fake* de
+`test/fakes/`, lié dans `contextsOfTheRun()` : le *preset* identity y lie `FakeIdentityProviderAdmin`,
+et qui ajoute un autre système extérieur y lie son *fake*.
 
 Un cas d'usage qu'aucune route n'atteint est lancé par l'événement d'intégration que reçoit son
 gestionnaire : sa spec de bout en bout (`ddd-ts-kit generate e2e <context> <UseCase>`, avec

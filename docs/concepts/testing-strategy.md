@@ -428,6 +428,12 @@ turn) is awaited with `await application.settled()`, then asserted at once. A fi
 when long and flaky when short; `settled` resolves as soon as the outbox holds no pending event,
 and when the time is up it fails naming what is still pending and how much of it failed.
 
+An outside system that answers nowhere in a test run (the identity provider of the identity preset)
+would keep that outbox retrying, so `settled()` would never end. The shared support
+(`test/e2e/support/start-application.ts`) answers it with its fake of `test/fakes/`, bound in
+`contextsOfTheRun()`: the identity preset binds `FakeIdentityProviderAdmin` there, and the person who
+adds another outside system binds its fake in the same place.
+
 A use case no route reaches is started by the integration event its handler receives: its
 end-to-end spec (`ddd-ts-kit generate e2e <context> <UseCase>`, with `--event <eventType>` when
 handlers of several events send its command) builds that event from the declaration of the
