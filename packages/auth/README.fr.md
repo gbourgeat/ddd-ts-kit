@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6e8d936c6533f524 -->
+<!-- translation-of: README.md sha256:ccf3ae0981ba391d -->
 
 # @ddd-ts-kit/auth
 
@@ -659,7 +659,10 @@ Il refuse par défaut :
 | ne répond rien avant `timeoutMs` (10 s) | est refusé |
 
 Un identifiant est présenté quand la requête porte un en-tête `Authorization` ; une stratégie qui
-lit un cookie dit où avec `presented: (raw) => ...`.
+lit un cookie dit où avec `presented: (raw) => ...`. L'`InvalidCredentialError` d'un refus porte
+la raison avec laquelle la stratégie a échoué quand c'est un code (`fail({ message:
+'NO_EXPIRY' })`, en majuscules séparées par des tirets bas), et `refused-by-strategy` sinon : le
+message d'une bibliothèque (`invalid signature`) n'est pas un code.
 
 `passportAuthenticator(strategy, { actorOf })` est la même stratégie derrière le port
 `Authenticator` : l'identifiant bearer est remis à la stratégie comme `Authorization: Bearer

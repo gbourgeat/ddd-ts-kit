@@ -635,7 +635,10 @@ It fails closed:
 | answers nothing within `timeoutMs` (10 s) | is refused |
 
 A credential is presented when the request carries an `Authorization` header; a strategy that
-reads a cookie says where with `presented: (raw) => ...`.
+reads a cookie says where with `presented: (raw) => ...`. The `InvalidCredentialError` of a
+refusal carries the reason the strategy failed with when it is a code (`fail({ message:
+'NO_EXPIRY' })`, in upper snake case), and `refused-by-strategy` otherwise: the message of a
+library (`invalid signature`) is not a code.
 
 `passportAuthenticator(strategy, { actorOf })` is the same strategy behind the `Authenticator`
 port: the bearer credential is handed to the strategy as `Authorization: Bearer <credential>`,
