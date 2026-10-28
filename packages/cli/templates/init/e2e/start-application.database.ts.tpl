@@ -193,17 +193,8 @@ async function start(database: TestDatabase, config: AppConfig, credentials: Cre
   const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
 
 {{/if}}
-  const application = composeApplication(
-    database.persistence,
-    {
-      events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}},
-      authenticator: credentials.authenticator,
-{{#if cache.redis}}
-      ...(redis === undefined ? {} : { redis }),
-{{/if}}
-    },
-    contextsOfTheRun(),
-  );
+  const options = optionsOf(config, credentials{{#if cache.redis}}, redis{{/if}});
+  const application = composeApplication(database.persistence, options, contextsOfTheRun());
 
   await application.start();
 
@@ -254,6 +245,17 @@ async function start(database: TestDatabase, config: AppConfig, credentials: Cre
 {{/if}}
       await database.close();
     },
+  };
+}
+
+/** What the application is built on in a test run: the events, the credentials of the specs and what the environment provides. */
+function optionsOf(config: AppConfig, credentials: Credentials{{#if cache.redis}}, redis: ReturnType<typeof openRedis> | undefined{{/if}}) {
+  return {
+    events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}},
+    authenticator: credentials.authenticator,
+{{#if cache.redis}}
+    ...(redis === undefined ? {} : { redis }),
+{{/if}}
   };
 }
 {{#if broker.provided}}
