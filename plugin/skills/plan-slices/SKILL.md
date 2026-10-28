@@ -158,8 +158,9 @@ row as it says, and when it names the row that generates what the command builds
 to `Depends on` (or move the command, when that row waits for this one). It refuses as well a
 command that builds on a file a row it does not wait for generates (`missing-dependency`), which
 the replay found only because it runs every row in one copy: add that row to `Depends on`. A row
-`in progress` is replayed but its refusals are listed apart, not counted, its commands having run
-already. Otherwise it shows the rows in waves (wave 1 can start now), cut into
+`in progress` is replayed but its refusals are listed apart, and neither they nor what it builds
+on are counted, its commands having run already. When a refused command also says `then:`, fix
+that second refusal in the same pass. Otherwise it shows the rows in waves (wave 1 can start now), cut into
 batches of one or two rows that `parallel-work` hands out, each row with the status of the rows it
 waits for, and apart the rows of another story that it waits for. A batch it says names no aggregate
 gets one in `Start with` (`--aggregate <Name>`, and `--creates` when the slice is the birth of that aggregate) when the slice works on one.
