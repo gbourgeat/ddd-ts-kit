@@ -96,7 +96,9 @@ describe('generate e2e for a use case an integration event starts', () => {
     const { message, fix } = failure(generate('e2e', 'shipping', 'ShipParcel'));
 
     expect(message).toContain('no integration event handler of it sends ShipParcelCommand');
+    expect(message).toContain('and no job of it does');
     expect(fix).toContain('ddd-ts-kit generate route shipping ShipParcel');
+    expect(fix).toContain('ddd-ts-kit generate job shipping <JobName> --every <duration> --command ShipParcel');
     expect(fix).toContain('--event <context>.<aggregate>.<fact> (handled here: billing.invoice.issued)');
   });
 
@@ -193,5 +195,64 @@ describe('generate e2e behind a broker, the handler subscribed in the module fil
     expect(jsonAt(cli(project, 'describe', 'shipping', '--json').json(), 'consumedEvents')).toEqual([
       expect.objectContaining({ type: 'billing.invoice.issued', version: 1, from: 'billing' }),
     ]);
+  });
+});
+
+describe('generate e2e for a use case only a job starts', () => {
+  it('runs the job through the support, waits for settled() and leaves the then to fill', () => {
+    const project = scaffold();
+
+    const job = cli(
+      project,
+      'generate',
+      'job',
+      'shipping',
+      'ShipDaily',
+      '--every',
+      '1d',
+      '--command',
+      'ShipParcel',
+      '--term',
+      'Daily=Once a day',
+    );
+
+    expect(job.code, job.stderr).toBe(0);
+
+    const result = cli(project, 'generate', 'e2e', 'shipping', 'ShipParcel', '--json');
+    const spec = read(project, SPEC);
+
+    expect(result.code, result.stderr).toBe(0);
+    expect(spec).toContain("await application.runJob('shipping.ship-daily');\n    await application.settled();");
+    expect(spec).toContain('when shipping.ship-daily is due');
+    expect(spec).toContain('TODO(domain): assert what a client or another context observes');
+    expect(spec).not.toContain('application.publish');
+  });
+
+  it('notes a support written before runJob existed', () => {
+    const project = scaffold();
+
+    cli(
+      project,
+      'generate',
+      'job',
+      'shipping',
+      'ShipDaily',
+      '--every',
+      '1d',
+      '--command',
+      'ShipParcel',
+      '--term',
+      'Daily=Once a day',
+    );
+
+    const support = read(project, SUPPORT);
+
+    expect(support).toContain('runJob: (name) => runJob(application.jobs, name),');
+
+    write(project, SUPPORT, support.replace(/^ *runJob\(.*$/gm, ''));
+
+    const { notes } = report(cli(project, 'generate', 'e2e', 'shipping', 'ShipParcel', '--json'));
+
+    expect(notes).toContainEqual(expect.stringContaining(`${SUPPORT} has no runJob(name)`));
   });
 });

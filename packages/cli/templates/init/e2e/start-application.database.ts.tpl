@@ -7,10 +7,11 @@ import {
   PurgingPublisher,
   type IntegrationEvent,
   type IntegrationEventSubscriber,
+  type JobScheduler,
 } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless httpCache.varnish}}
-import type { IntegrationEvent, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+import type { IntegrationEvent, IntegrationEventSubscriber, JobScheduler } from '@ddd-ts-kit/kernel';
 {{/unless}}
 import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
@@ -99,6 +100,13 @@ export interface RunningApplication {
   relate(tuple: RelationTuple): Promise<void>;
 {{/if}}
 
+  /**
+   * Runs a job at once, as its schedule would, for a spec of what only a job starts: the name is
+   * `<context>.<job>`. It rejects when the job failed or did not run. Await `settled()` next, before
+   * asserting what the job started.
+   */
+  runJob(name: string): Promise<void>;
+
 {{#if authz.rebac}}
   /**
    * Empties the database and writes the relationships of the system actors again, the state right
@@ -133,6 +141,7 @@ export async function startApplication(): Promise<RunningApplication> {
 {{/if}}
     as: async (actor) => started.client.withHeaders(await credentials.headersOf(actor)),
     publish: (events) => started.publish(events),
+    runJob: (name) => started.runJob(name),
 {{#if authz.rebac}}
     relate: (tuple) => relationTuples.write([tuple]),
 {{/if}}
@@ -158,6 +167,8 @@ interface Started {
 {{/if}}
 
   publish(events: readonly IntegrationEvent[]): Promise<void>;
+
+  runJob(name: string): Promise<void>;
 
   settled(options?: SettledOptions): Promise<void>;
 
@@ -208,6 +219,7 @@ async function start(database: TestDatabase, config: AppConfig, credentials: Cre
     purges,
 {{/if}}
     publish: (events) => application.eventBus.publish(events),
+    runJob: (name) => runJob(application.jobs, name),
 {{#if events.outbox}}
     settled: (options) => settled({ outbox: () => database.persistence.outbox.stats() }, options),
 {{/if}}
@@ -234,3 +246,12 @@ function eventsOf(config: AppConfig): EventProvider {
   return {{broker.inProcessWhen}} ? inProcessEvents() : createEventProvider(config);
 }
 {{/if}}
+
+/** Runs the job now; a run that failed or did not happen fails the spec with its outcome, never the message of an error. */
+async function runJob(jobs: JobScheduler, name: string): Promise<void> {
+  const { outcome, errorCode } = await jobs.runNow(name);
+
+  if (outcome !== 'succeeded') {
+    throw new Error(`The job ${name} ended ${outcome}${errorCode === undefined ? '' : ` (${errorCode})`}.`);
+  }
+}

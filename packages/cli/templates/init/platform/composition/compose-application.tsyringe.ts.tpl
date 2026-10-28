@@ -41,6 +41,7 @@ import {
 {{#unless broker.external}}
   IntegrationEventSubscriber,
 {{/unless}}
+  JobScheduler,
   Logger,
   Metrics,
 {{#if httpCache.perTenant}}
@@ -137,6 +138,8 @@ export interface Application {
   /** Where another context, or a test, listens to what this application publishes. */
   readonly eventSubscriber: IntegrationEventSubscriber;
   readonly logger: Logger;
+  /** Runs a job at once, for a test: `jobs.runNow('<context>.<job>')`. */
+  readonly jobs: JobScheduler;
 {{#if cache.rateLimit}}
   /** What the HTTP server asks before anything else: on the Redis protocol server, or in the memory of the process without one. */
   readonly rateLimiter: RateLimiter;
@@ -364,6 +367,7 @@ function running({ container, options, contexts }: Composed): Application {
     eventSubscriber: container.resolve(IntegrationEventSubscriber),
 {{/unless}}
     logger,
+    jobs: container.resolve(JobScheduler),
 {{#if cache.rateLimit}}
     rateLimiter: container.resolve(RateLimiter),
 {{/if}}

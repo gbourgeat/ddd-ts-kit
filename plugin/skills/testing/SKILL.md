@@ -142,7 +142,9 @@ asserted once `await application.settled()` has resolved, never after a fixed de
 naming what is still pending. A use case no route reaches, sent by an integration event
 handler, gets the same command: its spec publishes the upstream event, built from its
 declaration, with `await application.publish([event])`, then awaits `settled()`; pass
-`--event <eventType>` when handlers of several events send it. On an ORM, each spec opens a copy of the PostgreSQL
+`--event <eventType>` when handlers of several events send it. A use case only a job
+(`generate job`) starts gets `await application.runJob('<context>.<job>')` instead, then
+`settled()`. On an ORM, each spec opens a copy of the PostgreSQL
 cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
 creates its tables there.
 

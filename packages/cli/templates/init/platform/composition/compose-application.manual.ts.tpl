@@ -24,10 +24,16 @@ import { ArchiveAuditEntries } from '@ddd-ts-kit/audit';
 import { PurgeStagedFiles } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if cache.rateLimit}}
-import type { IntegrationEventPublisher, IntegrationEventSubscriber, Logger, RateLimiter } from '@ddd-ts-kit/kernel';
+import type {
+  IntegrationEventPublisher,
+  IntegrationEventSubscriber,
+  JobScheduler,
+  Logger,
+  RateLimiter,
+} from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless cache.rateLimit}}
-import type { IntegrationEventPublisher, IntegrationEventSubscriber, Logger } from '@ddd-ts-kit/kernel';
+import type { IntegrationEventPublisher, IntegrationEventSubscriber, JobScheduler, Logger } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{#if audit.route}}
 import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}';
@@ -131,6 +137,8 @@ export interface Application {
   /** Where another context, or a test, listens to what this application publishes. */
   readonly eventSubscriber: IntegrationEventSubscriber;
   readonly logger: Logger;
+  /** Runs a job at once, for a test: `jobs.runNow('<context>.<job>')`. */
+  readonly jobs: JobScheduler;
 {{#if cache.rateLimit}}
   /** What the HTTP server asks before anything else: on the Redis protocol server, or in the memory of the process without one. */
   readonly rateLimiter: RateLimiter;
@@ -217,6 +225,7 @@ export function composeApplication(
     eventSubscriber: platform.subscriber,
 {{/unless}}
     logger,
+    jobs: platform.jobs,
 {{#if cache.rateLimit}}
     rateLimiter: platform.rateLimiter,
 {{/if}}
