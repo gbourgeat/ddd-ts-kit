@@ -7,6 +7,7 @@ import { MigrationDraft } from '../refusals/migration-draft';
 import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * Moves the function routes of a project to controller classes, context by context: each
@@ -45,7 +46,7 @@ export const controllersCommand: Command = (argv, io) => {
     migration.draft.commit();
   }
 
-  io.out(args.json ? JSON.stringify({ contexts: turned, ...outcome }, null, 2) : report(outcome));
+  io.out(args.json ? stdoutJson({ contexts: turned, ...outcome }) : report(outcome));
 
   return outcome.blockers.length > 0 ? 1 : 0;
 };

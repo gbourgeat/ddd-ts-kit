@@ -1,5 +1,6 @@
 /** The line every help ends with: what each command accepts besides its own flags. */
-export const EVERY_COMMAND = 'Every command accepts --json (machine-readable output) and --cwd <dir> (project root).';
+export const EVERY_COMMAND =
+  'Every command accepts --json (machine-readable output, on one line) and --cwd <dir> (project root).';
 
 /** Every command of the CLI and its flags, as `--help` prints them and docs/guides/commands.md shows them. */
 export const USAGE = `Usage

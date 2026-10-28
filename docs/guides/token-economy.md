@@ -141,7 +141,8 @@ grep -rn "Handler" src/contexts/ordering
 npx ddd-ts-kit describe ordering --json
 ```
 
-An extract of what it answers, for the context of the first slice above:
+An extract of what it answers, for the context of the first slice above (laid out here for
+reading: the CLI prints its JSON on one line, without indentation):
 
 ```json
 {

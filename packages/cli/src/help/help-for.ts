@@ -6,6 +6,7 @@ import { commandHelp } from './command-help';
 import { kindAsked } from './kind-asked';
 import { kindHelpText } from './kind-help-text';
 import { referenceText } from './reference-text';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * What `--help` answers, `g` read as `generate`: the command it follows alone, the kind alone after
@@ -25,11 +26,11 @@ export function helpFor(asked: readonly string[]): string {
   const json = argv.includes('--json');
 
   if (kind !== undefined) {
-    return json ? JSON.stringify(kindHelp(kind), null, 2) : kindHelpText(kind);
+    return json ? stdoutJson(kindHelp(kind)) : kindHelpText(kind);
   }
 
   if (command === 'generate' && json) {
-    return JSON.stringify({ kinds: kindsHelp(KINDS) }, null, 2);
+    return stdoutJson({ kinds: kindsHelp(KINDS) });
   }
 
   return (command === undefined ? undefined : commandHelp(command)) ?? wholeHelp();

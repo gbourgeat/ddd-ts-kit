@@ -22,7 +22,7 @@ describe('<command> --help', () => {
         '',
         '  describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies',
         '',
-        'Every command accepts --json (machine-readable output) and --cwd <dir> (project root).',
+        'Every command accepts --json (machine-readable output, on one line) and --cwd <dir> (project root).',
       ].join('\n'),
     );
   });

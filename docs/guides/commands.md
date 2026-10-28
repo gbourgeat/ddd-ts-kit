@@ -308,7 +308,7 @@ Usage
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 
-Every command accepts --json (machine-readable output) and --cwd <dir> (project root).
+Every command accepts --json (machine-readable output, on one line) and --cwd <dir> (project root).
 ddd-ts-kit <command> --help prints the usage and the notes of that command alone, generate <kind> --help one kind.
 
   affected         what a pull request has to run: the contexts a change set reaches through the context

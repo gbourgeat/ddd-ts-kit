@@ -9,12 +9,13 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import { formatContext, type ContextSummary } from './format-context';
 import { knownContext } from './known-context';
+import { stdoutJson } from '../json/stdout-json';
 
 export const listCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, { context: { type: 'string' } });
   const map = mapProject(args.projectRoot, args.text('context'));
 
-  io.out(args.json ? JSON.stringify(map, null, 2) : formatProjectMap(map));
+  io.out(args.json ? stdoutJson(map) : formatProjectMap(map));
 
   return 0;
 };

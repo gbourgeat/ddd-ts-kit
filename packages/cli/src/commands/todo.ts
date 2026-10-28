@@ -5,6 +5,7 @@ import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import { knownContext } from './known-context';
+import { stdoutJson } from '../json/stdout-json';
 
 const MARKS: Readonly<Record<Remaining['kind'], string>> = {
   domain: 'TODO(domain)',
@@ -27,7 +28,7 @@ export const todoCommand: Command = (argv, io) => {
   );
 
   if (args.json) {
-    io.out(JSON.stringify({ count: remaining.length, remaining }, null, 2));
+    io.out(stdoutJson({ count: remaining.length, remaining }));
   } else {
     io.out(
       remaining.length === 0

@@ -41,7 +41,9 @@ anything is generated, with no context, with one and with several: the end-to-en
 it for real and runs it, on both package managers and on every proven stack. After the install the
 CLI is the one the project pins: `pnpm exec ddd-ts-kit <command>`, or `npx ddd-ts-kit <command>`.
 
-Every command accepts `--json` (machine-readable output, errors included) and `--cwd <dir>`.
+Every command accepts `--json` (machine-readable output, errors included, printed on one line
+without indentation; the JSON files the CLI writes keep the layout of the formatter) and
+`--cwd <dir>`.
 Commands other than `init` look for `ddd-ts-kit.config.json` in the directory and its parents.
 `ddd-ts-kit --help` prints the whole reference, `ddd-ts-kit <command> --help` (or `help <command>`)
 the usage and the notes of that command alone, and an option a command does not know is refused

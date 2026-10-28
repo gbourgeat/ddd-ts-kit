@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:49a6b451812c3e0d -->
+<!-- translation-of: README.md sha256:5902fab48898376c -->
 
 # ddd-ts-kit
 
@@ -45,8 +45,9 @@ l'installe pour de vrai et l'exécute, avec les deux gestionnaires de paquets et
 éprouvée. Après l'installation, la CLI est celle que le projet épingle :
 `pnpm exec ddd-ts-kit <command>`, ou `npx ddd-ts-kit <command>`.
 
-Chaque commande accepte `--json` (sortie lisible par une machine, erreurs comprises) et
-`--cwd <dir>`. Les commandes autres que `init` cherchent `ddd-ts-kit.config.json` dans le
+Chaque commande accepte `--json` (sortie lisible par une machine, erreurs comprises, affichée
+sur une ligne sans indentation ; les fichiers JSON que la CLI écrit gardent la mise en page du
+formateur) et `--cwd <dir>`. Les commandes autres que `init` cherchent `ddd-ts-kit.config.json` dans le
 répertoire et ses parents. `ddd-ts-kit --help` affiche toute la référence,
 `ddd-ts-kit <command> --help` (ou `help <command>`) l'usage et les notes de cette seule commande,
 et une option qu'une commande ne connaît pas est refusée avec sa ligne d'usage pour correction.

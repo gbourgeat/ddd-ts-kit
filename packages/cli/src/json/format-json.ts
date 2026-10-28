@@ -11,7 +11,8 @@ interface Place {
 /**
  * JSON as the formatter of a project lays it out (`biome.json`, width 120), so that a file the
  * CLI writes is already formatted: an object is written one key per line, a list on one line
- * when it holds no object and fits, one entry per line otherwise.
+ * when it holds no object and fits, one entry per line otherwise. What a command prints on
+ * stdout takes `stdoutJson`, on one line.
  */
 export function formatJson(value: unknown): string {
   return `${print(value, { depth: 0, before: 0, after: 0 })}\n`;

@@ -43,6 +43,7 @@ import { ArgumentsError } from './commands/arguments-error';
 import { helpFor } from './help/help-for';
 import { usageFor } from './help/usage-for';
 import { VERSION } from './version';
+import { stdoutJson } from './json/stdout-json';
 
 const COMMANDS: Readonly<Record<string, Command>> = {
   affected: affectedCommand,
@@ -128,7 +129,7 @@ function refused(error: CliError, argv: readonly string[], io: Io): number {
   const fix = (error instanceof ArgumentsError ? usageFor(argv) : undefined) ?? error.fix;
 
   if (argv.includes('--json')) {
-    io.out(JSON.stringify({ error: { message: error.message, fix } }, null, 2));
+    io.out(stdoutJson({ error: { message: error.message, fix } }));
   } else {
     io.err(`error: ${error.message}\n  fix: ${fix.split('\n').join('\n       ')}`);
   }

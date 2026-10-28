@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:c3833d983fbc7262 -->
+<!-- translation-of: token-economy.md sha256:6c870072d786935e -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -145,7 +145,8 @@ grep -rn "Handler" src/contexts/ordering
 npx ddd-ts-kit describe ordering --json
 ```
 
-Un extrait de ce qu'il répond, pour le contexte de la première tranche ci-dessus :
+Un extrait de ce qu'il répond, pour le contexte de la première tranche ci-dessus (mis en page ici
+pour la lecture : la CLI affiche son JSON sur une ligne, sans indentation) :
 
 ```json
 {
