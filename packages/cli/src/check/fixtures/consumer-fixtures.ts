@@ -77,6 +77,41 @@ export const CONSUMER_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'events/consumer-idempotent',
+    name: 'options spread from a const of the file, or from a value typed ConsumeOptions, that carries the processed-event store',
+    expect: 'pass',
+    files: project({
+      [MODULE]: [
+        'const shared = { processed, unitOfWork, scope };',
+        'export function billingModule(typed: ConsumeOptions): unknown[] {',
+        '  return [',
+        "    consume(productListedV1, { ...shared, consumer: 'billing.product-listed' }, list),",
+        "    consume(productWithdrawnV1, { ...typed, consumer: 'billing.product-withdrawn' }, withdraw),",
+        '  ];',
+        '}',
+        '',
+      ].join('\n'),
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'options spread from a shared object whose content the file does not show',
+    expect: { file: MODULE },
+    files: project({
+      [MODULE]:
+        "const shared = sharedOptions();\nexport const billingModule = [consume(productListedV1, { ...shared, consumer: 'billing.product-listed' }, list)];\n",
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'options spread from a const of the file that lacks the processed-event store',
+    expect: { file: MODULE },
+    files: project({
+      [MODULE]:
+        "const shared = { scope };\nexport const billingModule = [consume(productListedV1, { ...shared, consumer: 'billing.product-listed' }, list)];\n",
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
     name: 'declared style: a handler named by its @IntegrationEventHandler, without a module file',
     expect: 'pass',
     files: declaredProject({ [INTEGRATION_HANDLER]: DECLARED.integrationHandler, [INTEGRATION_HANDLER_SPEC]: SPEC }),

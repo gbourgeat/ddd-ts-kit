@@ -16,6 +16,9 @@ const NAME_FIX =
 const STORE_FIX =
   'Pass `processed` (the processed-event store) and `unitOfWork` in the options, or use consume(definition, { consumer, processed, unitOfWork }, handler): delivery is at least once, so a redelivery must be recognised.';
 
+const SPREAD_FIX =
+  'The options spread an object this file does not show, so `processed` cannot be read. Write `processed` and `unitOfWork` in the options, or spread a `const` of this file that is an object literal carrying `processed`, or a value typed `ConsumeOptions`.';
+
 interface ConsumerName {
   readonly name: string;
   readonly line: number;
@@ -45,10 +48,12 @@ export const eventsConsumerIdempotent: Rule = {
 function flawedRegistrations(file: SourceFile): Finding[] {
   const withoutStore = consumerRegistrations(file)
     .filter((registration) => !registration.deduplicates)
-    .map(({ line }) => ({
+    .map(({ line, spreadsUnreadable }) => ({
       line,
-      message: 'A consumer is subscribed without a processed-event store.',
-      fix: STORE_FIX,
+      message: spreadsUnreadable
+        ? 'A consumer is subscribed with options whose processed-event store cannot be read.'
+        : 'A consumer is subscribed without a processed-event store.',
+      fix: spreadsUnreadable ? SPREAD_FIX : STORE_FIX,
     }));
 
   const seen = new Set<string>();
