@@ -24,8 +24,9 @@ export interface RoleBasedAuthorizerOptions extends RoleGrantsDefinition {
   /**
    * The role given to actors of type `system`, which carry none. Default: no role. Only a system
    * actor holds it: the roles of any other actor that name it are read without it, so a token
-   * cannot hand a user what the system holds. Under `tenantOf`, a system actor belongs to the
-   * tenant its work runs in (a per-tenant job, an event of a tenant), and to none outside of one.
+   * cannot hand a user what the system holds, and a role that inherits it, at any distance, is
+   * refused at construction. Under `tenantOf`, a system actor belongs to the tenant its work runs
+   * in (a per-tenant job, an event of a tenant), and to none outside of one.
    */
   readonly systemRole?: string;
 }
@@ -198,7 +199,10 @@ function belongsTo(actor: Actor, workTenantId: string): boolean {
   return isTenantMember(actor, workTenantId) || isSystem(actor);
 }
 
-/** A tenancy option that would silently do nothing is refused at construction, like an unknown inherited role. */
+/**
+ * A tenancy option that would silently do nothing, and a role that would hand another actor what
+ * the system holds, are refused at construction, like an unknown inherited role.
+ */
 function assertTenancyOptions(
   { tenantOf, crossTenantRoles = [], systemRole }: RoleBasedAuthorizerOptions,
   grants: RoleGrants,
@@ -209,6 +213,14 @@ function assertTenancyOptions(
 
   if (unknown !== undefined) {
     throw new AuthorizationSetupError(`Role "${unknown}" is named in the options but declared in no role.`);
+  }
+
+  const heir = systemRole === undefined ? undefined : grants.includersOf(systemRole)[0];
+
+  if (heir !== undefined) {
+    throw new AuthorizationSetupError(
+      `Role "${heir}" inherits "${systemRole}", the role of the system: only a system actor holds what it grants.`,
+    );
   }
 
   if (tenantOf === undefined && crossTenantRoles.length > 0) {

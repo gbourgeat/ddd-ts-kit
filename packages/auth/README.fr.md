@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6d265745dfee122d -->
+<!-- translation-of: README.md sha256:6e8d936c6533f524 -->
 
 # @ddd-ts-kit/auth
 
@@ -781,7 +781,9 @@ export const authorizer = new RoleBasedAuthorizer({
 Le rôle système n'est détenu que par un acteur système : parmi les rôles d'un utilisateur ou d'un
 service, qu'écrit un jeton ou un en-tête, il est écarté, donc un utilisateur dont les rôles
 nomment `automation` ne détient pas ce que détient le système, et `explain` le dit
-(`automation is the role of the system, held by a system actor only`).
+(`automation is the role of the system, held by a system actor only`). Un rôle qui hérite du rôle
+système, directement ou par un autre rôle, est refusé à la construction : par lui, un utilisateur
+détiendrait ce que détient le système. Le rôle système peut hériter d'autres rôles.
 
 Un droit accordé est une permission, son identifiant, `<context>:*` ou `*`. Un droit qui ne
 pourrait jamais correspondre, un rôle hérité inconnu et un cycle dans la hiérarchie sont refusés

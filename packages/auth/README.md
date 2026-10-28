@@ -749,7 +749,9 @@ export const authorizer = new RoleBasedAuthorizer({
 The system role is held by a system actor only: among the roles of a user or a service, which a
 token or a header writes, it is left out, so a user whose roles name `automation` does not hold
 what the system holds, and `explain` says so (`automation is the role of the system, held by a
-system actor only`).
+system actor only`). A role that inherits the system role, directly or through another role, is
+refused at construction: through it, a user would hold what the system holds. The system role
+may inherit other roles.
 
 A grant is a permission, its id, `<context>:*` or `*`. A grant that could never match, an
 unknown inherited role and a cycle in the hierarchy are refused at construction, and so are a
