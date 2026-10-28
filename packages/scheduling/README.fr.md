@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4cba0471ae7aaf1c -->
+<!-- translation-of: README.md sha256:2223ee8375fcde15 -->
 
 # @ddd-ts-kit/scheduling
 
@@ -578,7 +578,10 @@ expect(mailer.sent).toHaveLength(2);
 ```
 
 `app.jobs.runNow(name)` exécute le *job* comme le ferait le planificateur (portée d'origine
-`schedule`, acteur système, verrou mis à part) et lève ce que le *job* a levé. Pour une *spec*
+`schedule`, acteur système, verrou mis à part) et lève ce que le *job* a levé. Le `JobRun` qu'elle répond porte `tenants`
+pour un *job* par *tenant*, le nombre de *tenants* pour lesquels il a tourné : `0` quand l'annuaire des
+*tenants* était vide, le *job* jamais appelé et l'exécution pourtant `succeeded`. `runJob` du support
+e2e lève sur cette exécution. Pour une *spec*
 qui porte sur le temps lui-même, `app.jobs.scheduler` est un `ManualJobScheduler` sur l'horloge de
 l'application :
 

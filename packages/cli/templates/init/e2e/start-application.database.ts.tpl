@@ -294,11 +294,15 @@ function contextsOfTheRun(): typeof everyContext {
 }
 {{/unless}}
 
-/** Runs the job now; a run that failed or did not happen fails the spec with its outcome, never the message of an error. */
+/** Runs the job now; a run that failed, did not happen or reached no tenant fails the spec, never with the message of an error. */
 async function runJob(jobs: JobScheduler, name: string): Promise<void> {
-  const { outcome, errorCode } = await jobs.runNow(name);
+  const { outcome, errorCode, tenants } = await jobs.runNow(name);
 
   if (outcome !== 'succeeded') {
     throw new Error(`The job ${name} ended ${outcome}${errorCode === undefined ? '' : ` (${errorCode})`}.`);
+  }
+
+  if (tenants === 0) {
+    throw new Error(`The job ${name} is per-tenant and ran for no tenant: open a tenant first (an organisation).`);
   }
 }

@@ -54,6 +54,14 @@ describe('scheduled jobs in the platform', () => {
     );
   });
 
+  it('fails runJob of the e2e support on a per-tenant run that reached no tenant, telling to open one', () => {
+    const support = read(initProject(), 'test/e2e/support/start-application.ts');
+
+    expect(support).toContain('const { outcome, errorCode, tenants } = await jobs.runNow(name);');
+    expect(support).toContain('if (tenants === 0) {');
+    expect(support).toContain('is per-tenant and ran for no tenant: open a tenant first');
+  });
+
   it('keeps one marker region for the settings of the jobs, in a file that needs no helper', () => {
     const settings = platform(initProject(), 'jobs/job-settings.ts');
 

@@ -1423,7 +1423,8 @@ and instances. A `JobRun` is one occurrence and its outcome (`succeeded`, `faile
 code of the error and never its message, `skipped-overlap`, `skipped-locked`, `missed`). A job
 that fails stops neither the scheduler nor the other jobs, and `runNow` answers `failed`
 instead of rejecting: only an unknown name rejects (`UnknownJobError`), and a name registered
-twice throws (`DuplicateJobError`).
+twice throws (`DuplicateJobError`). A succeeded run of a per-tenant job carries `tenants`, the
+number of tenants it ran for: `0` means the tenant directory was empty and the job was never called.
 
 A run happens inside `ExecutionScope`, in the context `executionContextOfJob(name, { correlationId,
 scheduledAt, deadline?, tenantId? })` builds: origin `schedule`, `systemActor(name)`, a correlation of its

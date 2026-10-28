@@ -445,7 +445,8 @@ A use case only a job starts (`generate job`, no route, no handler) gets the sam
 different start: it runs the job as the scheduler would with `await application.runJob('<context>.<job>')`
 of the shared support, awaits `application.settled()`, and leaves what to observe to fill. The
 generator looks for a route, then a handler that sends the command, then a job that sends it, and
-names the three when it finds none.
+names the three when it finds none. `runJob` fails when the job is per-tenant and the run reached no
+tenant (`JobRun.tenants` is `0`, the job was never called): open a tenant first, after `reset()`.
 
 The acceptance of a story is an end-to-end spec written before its code, from the criteria of the
 story (`docs/architecture/stories/<story>.md`): `test/acceptance/<story>.acceptance.spec.ts`, one

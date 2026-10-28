@@ -126,6 +126,39 @@ describe('a job declared per tenant', () => {
   });
 });
 
+describe('the run of a job declared per tenant', () => {
+  it('says how many tenants a per-tenant run reached, none included, and nothing for a global job', async () => {
+    const { scheduler } = aBench({ tenants: new InMemoryTenantDirectory(['acme', 'globex']) });
+
+    scheduler.register({ name: REMINDERS, schedule: QUARTERLY, tenancy: 'per-tenant', run: async () => undefined });
+
+    expect(await scheduler.runNow(REMINDERS)).toMatchObject({ outcome: 'succeeded', tenants: 2 });
+
+    const empty = aBench({ tenants: new InMemoryTenantDirectory([]) });
+    let called = false;
+
+    empty.scheduler.register({
+      name: REMINDERS,
+      schedule: QUARTERLY,
+      tenancy: 'per-tenant',
+      run: async () => {
+        called = true;
+      },
+    });
+
+    const reachedNobody = await empty.scheduler.runNow(REMINDERS);
+
+    expect(called).toBe(false);
+    expect(reachedNobody).toMatchObject({ outcome: 'succeeded', tenants: 0 });
+
+    const global = aBench({ tenants: new InMemoryTenantDirectory(['acme']) });
+
+    global.scheduler.register({ name: REMINDERS, schedule: QUARTERLY, run: async () => undefined });
+
+    expect(await global.scheduler.runNow(REMINDERS)).not.toHaveProperty('tenants');
+  });
+});
+
 /** A directory backed by storage, which the kit does not trust to hold only well-formed ids. */
 class ListedTenants extends TenantDirectory {
   constructor(private readonly ids: readonly string[]) {

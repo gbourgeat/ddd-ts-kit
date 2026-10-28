@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:f8e503b882baa393 -->
+<!-- translation-of: scheduled-jobs.md sha256:8d56d7f18219f700 -->
 
 # Jobs planifiés
 
@@ -130,6 +130,13 @@ occurrence**, et ce que l'annuaire liste dépend du projet :
   lui, sans erreur, jusqu'au redémarrage du processus avec une nouvelle liste. Quand les *tenants*
   vivent dans une table à vous, faites lire cet annuaire dans cette table, comme le *preset*
   d'identité le fait dans `tenant-directory.ts`.
+
+Une exécution d'un *job* par *tenant* dit pour combien de *tenants* elle a tourné : `JobRun.tenants`
+(absent pour un *job* global). Avec un annuaire vide, le *job* n'est jamais appelé et l'exécution est
+`succeeded` avec `tenants: 0` : regardez ce champ, ou `tenants` dans la ligne de journal de
+l'exécution, avant de croire qu'un *job* n'a rien fait. `application.runJob(name)` du support e2e
+lève sur une telle exécution et dit d'ouvrir d'abord un *tenant* (une organisation) ; ouvrez-en un
+dans la *spec*, après `reset()`, puis lancez le *job*.
 
 La *spec* générée exécute le *job* pour deux *tenants*. Un *job* écrit à la main sous *tenancy* doit aussi le dire :
 `scheduling/tenancy-declared` (une erreur) signale un `@Scheduled` ou un `builder.job` dont les

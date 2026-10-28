@@ -144,7 +144,8 @@ handler, gets the same command: its spec publishes the upstream event, built fro
 declaration, with `await application.publish([event])`, then awaits `settled()`; pass
 `--event <eventType>` when handlers of several events send it. A use case only a job
 (`generate job`) starts gets `await application.runJob('<context>.<job>')` instead, then
-`settled()`. On an ORM, each spec opens a copy of the PostgreSQL
+`settled()`. `runJob` throws on a per-tenant job that reached no tenant (`JobRun.tenants` is `0`):
+open a tenant first (an organisation), after `reset()`. On an ORM, each spec opens a copy of the PostgreSQL
 cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
 creates its tables there.
 

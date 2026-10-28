@@ -22,8 +22,11 @@ interface Detail {
 export class JobRecorder {
   constructor(private readonly options: RecorderOptions) {}
 
-  succeeded(job: RegisteredJob, started: StartedRun): JobRun {
-    return this.record(job, this.ran(job, started, 'succeeded'), { correlationId: started.correlationId });
+  /** `tenants` is the number of tenants a per-tenant job ran for, left out for a global job. */
+  succeeded(job: RegisteredJob, started: StartedRun, tenants?: number): JobRun {
+    const run = { ...this.ran(job, started, 'succeeded'), ...(tenants === undefined ? {} : { tenants }) };
+
+    return this.record(job, run, { correlationId: started.correlationId });
   }
 
   failed(job: RegisteredJob, started: StartedRun, error: unknown): JobRun {
@@ -112,6 +115,7 @@ export class JobRecorder {
       outcome: run.outcome,
       scheduledAt: run.scheduledAt,
       ...(run.durationMs === undefined ? {} : { durationMs: run.durationMs }),
+      ...(run.tenants === undefined ? {} : { tenants: run.tenants }),
       ...(correlationId === undefined ? {} : { correlationId }),
       ...(run.errorCode === undefined ? {} : { errorCode: run.errorCode }),
       ...(failure === undefined ? {} : { errorType: typeOf(failure.error) }),

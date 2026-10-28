@@ -557,7 +557,9 @@ expect(mailer.sent).toHaveLength(2);
 ```
 
 `app.jobs.runNow(name)` runs the job as the scheduler would (scope of origin `schedule`,
-system actor, lock aside) and throws what the job threw. For a spec about time itself,
+system actor, lock aside) and throws what the job threw. The `JobRun` it answers carries `tenants`
+for a per-tenant job, the number of tenants it ran for: `0` when the tenant directory was empty, the
+job never called and the run still `succeeded`. `runJob` of the e2e support throws on that run. For a spec about time itself,
 `app.jobs.scheduler` is a `ManualJobScheduler` on the clock of the application:
 
 <!-- checked sample -->
