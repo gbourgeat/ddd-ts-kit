@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:cac768648dc950cf -->
+<!-- translation-of: personal-data.md sha256:b4ac571aa47f3db6 -->
 
 # Les données personnelles dans un projet généré
 
@@ -134,7 +134,13 @@ l'article 19 porte au-delà de la base que tient la plateforme :
   contexte, sa *spec* sur le *fake* et son abonnement (le décorateur, le fichier module, ou la
   plateforme câblée à la main, dans une transaction derrière un *broker*). Dans le monolithe, la
   plateforme a déjà effacé cette copie, et le *handler* n'atteint rien : un effacement est
-  idempotent ;
+  idempotent. Un contexte dont les agrégats sont en *event sourcing* n'a pas de table et n'a pas
+  besoin d'un tel *handler* : ses valeurs personnelles sont scellées par `personalData(subjectId,
+  value)` et la clé détruite à l'étape 1 les efface dans tous les contextes à la fois ; `generate
+  erasure-handler` le refuse donc et le dit. Une projection qui garde une copie en clair est
+  reconstruite une fois la clé détruite, et un effacement à une date du métier (une rétention de
+  cinq ans après la fin de la relation) est un job planifié à vous qui appelle la même destruction
+  de clé ([Event sourcing](event-sourcing.fr.md#personal-data-crypto-shredding)) ;
 - un système hors du projet qui consomme les événements du projet, et a copié la personne depuis
   l'un d'eux, s'abonne au même type : le catalogue des événements et AsyncAPI le listent ;
 - un événement d'intégration qui porte des données personnelles le dit (`personal: { subject,

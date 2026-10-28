@@ -48,6 +48,13 @@ export const erasureHandlerKind: Kind = {
 function erasureAdapterOf(scope: Scope, names: PersonalNames): string {
   const adapter = scope.ws.read(`${scope.dir}/infrastructure/persistence/${names.adapterKebab}.repository.ts`);
 
+  if (adapter === undefined && isEventSourced(scope)) {
+    throw new CliError(
+      `${scope.context.kebab} is event-sourced: it has no table to erase, and no handler to write.`,
+      `Its personal values are sealed in the events by \`personalData(subjectId, value)\` in the codec of the stored events, and \`npm run privacy:erase -- <subject-id>\` (\`eraseDataSubject\` of the kernel) destroys the key of the subject in the key store, which erases them in every context at once (docs/concepts/personal-data.md, docs/concepts/event-sourcing.md). A projection that keeps a clear copy is rebuilt after the erasure. An erasure on a date of the business (a retention) calls the same key destruction from a scheduled job of your own. A handler of \`privacy.data-subject.erased\` is for a table: declare it with \`generate repository ${scope.context.kebab} <Aggregate> --personal <column>,...\` on a plain aggregate.`,
+    );
+  }
+
   if (scope.config.stack.privacy !== 'on' || adapter === undefined) {
     throw new CliError(
       `${scope.context.kebab} has no erasure of personal data to run when the platform announces one.`,
@@ -56,4 +63,9 @@ function erasureAdapterOf(scope: Scope, names: PersonalNames): string {
   }
 
   return adapter;
+}
+
+/** An event-sourced aggregate leaves the codec of its stored events in the persistence of the context, and no table. */
+function isEventSourced(scope: Scope): boolean {
+  return scope.ws.list(`${scope.dir}/infrastructure/persistence`).some((file) => file.endsWith('-events.mapper.ts'));
 }

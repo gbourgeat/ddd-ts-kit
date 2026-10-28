@@ -79,6 +79,11 @@ missing. Rows with no path between them can be built in parallel.
   `generate aggregate <ctx> <Aggregate> --event-sourced`, which needs `stack.eventSourcing` on).
   The command rows depend on it. A worker runs `generate command` with `--local-only`, which
   refuses the command that would create the missing repository (it writes shared files).
+- Erasing a person is no row for an event-sourced context: `privacy:erase` destroys the key of
+  the subject, which erases its sealed values (`personalData`), and `generate erasure-handler`
+  refuses it. Plan `erasure-handler <ctx>` only for a context with a table
+  (`generate repository <ctx> <Aggregate> --personal ...`) that runs as a service of its own; a
+  retention date on an event-sourced context is a `job` row whose command destroys the key.
 - A job or an integration event that a row needs is a conductor row of its own (`skeleton` for
   `generate job`, `contract` for `generate integration-event`), planned before the row of the
   worker, which depends on it: a worker's `--local-only` run of either is refused because both
