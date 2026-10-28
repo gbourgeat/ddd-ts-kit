@@ -1,7 +1,7 @@
 // The end of a turn: refused while architecture errors remain, then the commit reminder.
 
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { committed, git, project, put, run } from './support.mjs';
@@ -72,10 +72,49 @@ test('the reminder comes back after a commit when the tree grows again', () => {
 
 test('changed lines count against their own limit, deletions and edits included', () => {
   const root = committed({ commit: { maxFiles: 50, maxLines: 5 } });
+  put(root, 'docs/old.md', 'one\ntwo\n');
+  git(root, 'add', 'docs/old.md');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'docs: an old note');
   writeFileSync(join(root, 'README.md'), 'one\ntwo\nthree\nfour\nfive\nsix\n');
+  rmSync(join(root, 'docs/old.md'));
   const { output } = run('stop', { cwd: root, session_id: `lines-${root}` });
-  assert.match(output.systemMessage, /1 changed files and \d+ changed lines/);
+  assert.match(output.systemMessage, /2 changed files and \d+ changed lines/);
   assert.match(output.systemMessage, /project root \(1 files\)/);
+  assert.match(output.systemMessage, /docs \(1 files\)/);
+});
+
+test('a new file above a megabyte, or one that cannot be opened, counts as a file without lines', () => {
+  const root = committed({ commit: { maxFiles: 1, maxLines: 1000 } });
+  put(root, 'docs/large.md', 'a line\n'.repeat(200_000));
+  symlinkSync(join(root, 'docs/nowhere.md'), join(root, 'docs/gone.md'));
+  const { output } = run('stop', { cwd: root, session_id: `sizes-${root}` });
+  assert.match(output.systemMessage, /2 changed files and 0 changed lines are uncommitted/);
+});
+
+test('in a repository with no commit yet, every file of the project counts as new', () => {
+  const root = project({ commit: { maxFiles: 1, maxLines: 100_000 } });
+  put(root, '.gitignore', 'node_modules\n');
+  git(root, 'init', '--quiet');
+  const { output } = run('stop', { cwd: root, session_id: `unborn-${root}` });
+  assert.match(output.systemMessage, /\d+ changed files and [1-9]\d* changed lines are uncommitted/);
+});
+
+test('the reminder names a query by its use case, and a file at the root of a context as its context files', () => {
+  const root = committed({ commit: { maxFiles: 1, maxLines: 1000 } });
+  put(root, 'src/contexts/ordering/application/queries/list-orders/list-orders.notes.md', 'a\n');
+  put(root, 'src/contexts/ordering/notes.md', 'a\n');
+  const { output } = run('stop', { cwd: root, session_id: `slices-${root}` });
+  assert.match(output.systemMessage, /ordering: list-orders \(1 files\)/);
+  assert.match(output.systemMessage, /ordering: context files \(1 files\)/);
+});
+
+test('a reminder over more than eight slices names eight of them and counts the rest', () => {
+  const root = committed({ commit: { maxFiles: 1, maxLines: 1000 } });
+  for (let index = 0; index < 10; index += 1) {
+    put(root, `folder-${index}/note.md`, 'a\n');
+  }
+  const { output } = run('stop', { cwd: root, session_id: `many-${root}` });
+  assert.match(output.systemMessage, /folder-\d \(1 files\) and 2 more\./);
 });
 
 test('generated files are not counted in the size of a commit', () => {

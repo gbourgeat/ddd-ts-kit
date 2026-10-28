@@ -26,6 +26,20 @@ test('a new value object or refusal of the shared kernel is refused with its gen
   assert.equal(run('pre-write', write(join(root, 'src/shared-kernel/storable-stamp.ts'))).output, undefined);
 });
 
+test('a value object of the shared kernel that exists is edited freely', () => {
+  const root = project();
+  put(root, 'src/shared-kernel/money.vo.ts', 'export class Money {}\n');
+  assert.equal(run('pre-write', write(join(root, 'src/shared-kernel/money.vo.ts'))).output, undefined);
+});
+
+test('a config that is not JSON leaves the guard on its defaults: a new aggregate is still refused', () => {
+  const root = project();
+  writeFileSync(join(root, 'ddd-ts-kit.config.json'), '{ "guard": "off", ');
+  const result = run('pre-write', write(join(root, 'src/contexts/ordering/domain/aggregates/order.aggregate.ts')));
+  assert.equal(decision(result), 'deny');
+  assert.match(reason(result), /generate aggregate/);
+});
+
 test('in advise mode the same write asks instead of refusing', () => {
   const root = project({ guard: 'advise' });
   const { output } = run('pre-write', write(join(root, 'src/contexts/ordering/domain/aggregates/order.aggregate.ts')));
@@ -91,6 +105,32 @@ test('a new suppression is put to the project owner, an untouched one is not', (
     },
   });
   assert.equal(keeping.output, undefined);
+});
+
+test('a MultiEdit that adds a suppression in one of its edits is put to the project owner', () => {
+  const root = project();
+  const file = join(root, 'src/contexts/ordering/ordering.module.ts');
+  const edits = [
+    { old_string: 'const a = 1;', new_string: 'const a = 2;' },
+    { old_string: 'const b = 1;', new_string: '// @ts-ignore\nconst b = 1;' },
+  ];
+  const adding = run('pre-write', { tool_name: 'MultiEdit', tool_input: { file_path: file, edits } });
+  assert.equal(decision(adding), 'ask');
+  assert.match(reason(adding), /a compiler diagnostic suppression/);
+});
+
+test('an edit of a MultiEdit that leaves out a text is read as an empty text', () => {
+  const root = project();
+  const file = join(root, 'src/contexts/ordering/ordering.module.ts');
+  const multiEdit = (edit) => ({ tool_name: 'MultiEdit', tool_input: { file_path: file, edits: [edit] } });
+  assert.equal(
+    run('pre-write', multiEdit({ old_string: '// eslint-disable-next-line no-console\n' })).output,
+    undefined,
+  );
+  assert.equal(
+    decision(run('pre-write', multiEdit({ new_string: '// eslint-disable-next-line no-console\n' }))),
+    'ask',
+  );
 });
 
 test('skipping a test and relaxing the rules both need the owner', () => {
@@ -253,6 +293,8 @@ test('the declarations of a module of the model are generated too, and a module 
   for (const folder of [
     'orders/application/commands/commands.declarations.ts',
     'orders/application/application.declarations.ts',
+    // The module under its layer, as 0.86 and 0.87 laid it out.
+    'application/orders/commands/commands.declarations.ts',
   ]) {
     const declarations = run('pre-write', write(join(root, `src/contexts/ordering/${folder}`)));
     assert.equal(decision(declarations), 'deny', folder);
@@ -289,6 +331,7 @@ test('the declarations of a module of the model are generated too, and a module 
     'orders/application/commands/book-order/book-order.more.md',
     'orders/application/commands/cancel-order/cancel-order.notes.md',
     'orders/domain/value-objects/money.notes.md',
+    'test/unit/orders/book-order.notes.md',
   ]) {
     put(root, join('src/contexts/ordering', file), 'one\ntwo\n');
   }
@@ -296,6 +339,7 @@ test('the declarations of a module of the model are generated too, and a module 
   assert.match(uncommitted, /ordering: book-order \(2 files\)/);
   assert.match(uncommitted, /ordering: cancel-order \(1 files\)/);
   assert.match(uncommitted, /ordering: domain \(1 files\)/);
+  assert.match(uncommitted, /ordering: test \(1 files\)/);
 });
 
 test('the baseline of the errors is never written by an agent, on any host; prune lowers it freely', () => {
@@ -360,10 +404,7 @@ test('on trial, each judged write is recorded in the git directory of the reposi
   const file = pricingService(root, 'export class Pricing {}\n');
   const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
   assert.equal(decision(run('pre-write', { tool_name: 'Edit', tool_input: edit })), 'deny');
-  const [entry] = readFileSync(join(root, '.git/ddd-ts-kit/before-write.jsonl'), 'utf8')
-    .trim()
-    .split('\n')
-    .map((line) => JSON.parse(line));
+  const [entry] = trialRecord(root);
   assert.equal(entry.file, 'src/contexts/ordering/domain/services/pricing.service.ts');
   assert.deepEqual(entry.refused, ['layer/domain-purity']);
   assert.equal(typeof entry.ms, 'number');
@@ -377,13 +418,48 @@ test('on trial, a CLI that cannot judge the text lets the write through and is r
   const file = pricingService(root, 'export class Pricing {}\n');
   const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
   assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
-  const [entry] = readFileSync(join(root, '.git/ddd-ts-kit/before-write.jsonl'), 'utf8')
+  const [entry] = trialRecord(root);
+  assert.equal(entry.unjudged, 'Unknown option --content-from');
+  assert.equal(entry.refused, undefined);
+  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+  assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
+  assert.equal(trialRecord(root)[1].unjudged, 'no report');
+});
+
+test('on trial, an import no dependency rule refuses is written, and recorded with nothing refused', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  spawnSync('git', ['init', '--quiet'], { cwd: root });
+  const file = pricingService(root, 'export class Pricing {}\n');
+  const edit = { file_path: file, old_string: 'export', new_string: "import { Money } from './money';\nexport" };
+  assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
+  assert.deepEqual(trialRecord(root)[0].refused, []);
+});
+
+test('on trial, a new file is judged on all its lines before it is written', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  const file = join(root, 'src/contexts/ordering/domain/pricing-rules.ts');
+  const content = "import express from 'express';\nexport const rules = express;\n";
+  const result = run('pre-write', { tool_name: 'Write', tool_input: { file_path: file, content } });
+  assert.equal(decision(result), 'deny');
+  assert.match(reason(result), /layer\/domain-purity/);
+});
+
+test('on trial, a record that cannot be written leaves the write judged all the same', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  spawnSync('git', ['init', '--quiet'], { cwd: root });
+  put(root, '.git/ddd-ts-kit', 'a file where the folder of the record would be');
+  const file = pricingService(root, 'export class Pricing {}\n');
+  const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
+  assert.equal(decision(run('pre-write', { tool_name: 'Edit', tool_input: edit })), 'deny');
+});
+
+// The judged writes of the trial, one entry each, as the git directory of the repository records them.
+function trialRecord(root) {
+  return readFileSync(join(root, '.git/ddd-ts-kit/before-write.jsonl'), 'utf8')
     .trim()
     .split('\n')
     .map((line) => JSON.parse(line));
-  assert.equal(entry.unjudged, 'Unknown option --content-from');
-  assert.equal(entry.refused, undefined);
-});
+}
 
 function pricingService(root, content) {
   const file = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');

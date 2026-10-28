@@ -3,10 +3,10 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { cli, directory, launcher, project, put, run, write } from './support.mjs';
+import { cli, cliAnswering, directory, launcher, project, put, run, write } from './support.mjs';
 
 test('a written file that breaks a rule is reported to the model with the fix', () => {
   const root = project();
@@ -92,4 +92,28 @@ test('a CLI hoisted to a parent by workspaces is the one the guard runs', () => 
   const result = run('post-write', write(file));
   assert.equal(result.status, 2);
   assert.match(result.stderr, /layer\/domain-purity/);
+});
+
+test('a violation the CLI reports without a line or a fix is placed at line 1, with the command that explains it', () => {
+  const root = project();
+  const file = join(root, 'src/contexts/ordering/domain/order-number.ts');
+  put(root, 'src/contexts/ordering/domain/order-number.ts', 'export const next = 1;\n');
+  const violation = { ruleId: 'clean/naming', severity: 'error', file: 'order-number.ts', message: 'A name.' };
+  cliAnswering(root, { 'check-file': { violations: [violation] } });
+  const result = run('post-write', write(file));
+  assert.equal(result.status, 2);
+  assert.match(
+    result.stderr,
+    /\[clean\/naming\] order-number\.ts:1 A name\.\n {2}do instead: see `npx ddd-ts-kit explain clean\/naming`/,
+  );
+});
+
+test('a CLI the guard cannot start lets the written file through', () => {
+  const root = project();
+  const file = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  put(root, 'src/contexts/ordering/domain/services/pricing.service.ts', "import express from 'express';\n");
+  chmodSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), 0o644);
+  const result = run('post-write', write(file));
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, '');
 });

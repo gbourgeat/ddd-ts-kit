@@ -4,10 +4,10 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { bash, committed, decision, guard, here, put, run, worker, write } from './support.mjs';
+import { bash, committed, decision, git, guard, here, project, put, run, worker, write } from './support.mjs';
 
 // The runs of a context-builder: its tool calls counted inside pre-bash and pre-write, two notices
 // before its turn limit, its run recorded in its worktree, its stop checked.
@@ -154,12 +154,16 @@ test('at its own stop, a builder with a verified slice uncommitted is kept going
 
   const verified = builder('verified');
   run('pre-bash', bash(root, 'git status', verified));
-  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
-  const later = new Date(Date.now() + 5000);
-  put(root, '.ddd-ts-kit/verification.json', JSON.stringify({ at: later.toISOString(), head, ok: true }));
+  const later = verifiedAtHead(root);
   put(root, '.ddd-ts-kit/report.md', 'Slices done: none.\n');
   const uncommitted = run('subagent-stop', { cwd: root, ...verified, stop_hook_active: false });
   assert.match(uncommitted.output.reason, /verify-slice passed but the slice is not committed/);
+  assert.equal(
+    run('subagent-stop', { cwd: root, ...verified, stop_hook_active: false }).output,
+    undefined,
+    'once a run',
+  );
+  assert.equal(run('subagent-stop', { cwd: root, ...verified, stop_hook_active: true }).output, undefined);
 
   const done = builder('done');
   run('pre-bash', bash(root, 'git status', done));
@@ -168,6 +172,52 @@ test('at its own stop, a builder with a verified slice uncommitted is kept going
   assert.equal(run('subagent-stop', { cwd: root, ...done, stop_hook_active: false }).output, undefined);
   assert.equal(agentFile(root).lastStop.reportCurrent, true);
   assert.equal(run('subagent-stop', { cwd: root, ...builder('unknown'), stop_hook_active: false }).output, undefined);
+});
+
+// A verify-slice that passed at the commit of the worktree, a few seconds from now: after every change made so far.
+function verifiedAtHead(root) {
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
+  const later = new Date(Date.now() + 5000);
+  put(root, '.ddd-ts-kit/verification.json', JSON.stringify({ at: later.toISOString(), head, ok: true }));
+  return later;
+}
+
+test('a builder that renamed a file of its slice and verified it is kept going to commit it', () => {
+  const root = committed();
+  put(root, 'src/contexts/ordering/domain/order.ts', 'export const order = 1;\n');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'feat(ordering): an order');
+  worker(root);
+  const agent = builder('renamer');
+  run('pre-bash', bash(root, 'git status', agent));
+  git(root, 'mv', 'src/contexts/ordering/domain/order.ts', 'src/contexts/ordering/domain/purchase-order.ts');
+  verifiedAtHead(root);
+  const stopping = run('subagent-stop', { cwd: root, ...agent, stop_hook_active: false });
+  assert.match(stopping.output.reason, /verify-slice passed but the slice is not committed/);
+});
+
+test('at its stop, the slice of a builder is read in src/contexts when the config leaves contextsDir out', () => {
+  const root = committed();
+  const { contextsDir, ...config } = JSON.parse(readFileSync(join(root, 'ddd-ts-kit.config.json'), 'utf8'));
+  assert.equal(contextsDir, 'src/contexts');
+  writeFileSync(join(root, 'ddd-ts-kit.config.json'), JSON.stringify(config));
+  worker(root);
+  const agent = builder('defaults');
+  run('pre-bash', bash(root, 'git status', agent));
+  put(root, 'src/contexts/ordering/domain/order.ts', 'export const order = 1;\n');
+  verifiedAtHead(root);
+  const stopping = run('subagent-stop', { cwd: root, ...agent, stop_hook_active: false });
+  assert.match(stopping.output.reason, /verify-slice passed but the slice is not committed/);
+});
+
+test('the first start of a builder opens its first run, counted from zero', () => {
+  const root = project();
+  const agent = builder('fresh');
+  assert.equal(run('subagent-start', { cwd: root, ...agent }).output, undefined);
+  const started = JSON.parse(readFileSync(join(root, runState(agent)), 'utf8'));
+  assert.equal(started.run, 1);
+  assert.equal(started.calls, 0);
+  assert.deepEqual(started.notices, []);
 });
 
 const REPORT = join('.ddd-ts-kit', 'report.md');
@@ -190,6 +240,27 @@ test('at its stop, the final message of a builder becomes the report of its work
   run('pre-bash', bash(root, 'git status', given));
   run('subagent-stop', { cwd: root, ...given, last_assistant_message: 'From the input.', stop_hook_active: false });
   assert.equal(readFileSync(join(root, REPORT), 'utf8'), 'From the input.\n');
+});
+
+test('a builder outside a git repository has its report written at its stop all the same', () => {
+  const root = project();
+  worker(root);
+  const agent = builder('untracked');
+  run('pre-bash', bash(root, 'git status', agent));
+  run('subagent-stop', { cwd: root, ...agent, last_assistant_message: 'Slices done: none.', stop_hook_active: false });
+  assert.equal(readFileSync(join(root, REPORT), 'utf8'), 'Slices done: none.\n');
+});
+
+test('a report that cannot be written leaves the builder free to stop', () => {
+  const root = committed();
+  worker(root);
+  const agent = builder('unwritten');
+  run('pre-bash', bash(root, 'git status', agent));
+  mkdirSync(join(root, REPORT));
+  const stopping = { cwd: root, ...agent, last_assistant_message: 'Slices done: none.', stop_hook_active: false };
+  const result = run('subagent-stop', stopping);
+  assert.equal(result.status, 0);
+  assert.equal(result.output, undefined);
 });
 
 test('another agent writes no report, and a broken transcript fails open', () => {
