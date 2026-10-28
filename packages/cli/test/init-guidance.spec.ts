@@ -119,6 +119,21 @@ describe('the guidance init writes', () => {
     expect(read(root, '.claude/rules/platform.md')).toContain('npx ddd-ts-kit generate worker');
   });
 
+  it('gives the imports and the layout one line each, leaving to lint:fix and the formatter what they rewrite', () => {
+    const guide = read(initProject(...NPM), 'AGENTS.md').split('\n');
+    const imports = guide.filter((line) => line.startsWith('Imports: '));
+    const everywhere = guide.filter((line) => line.startsWith('Everywhere: '));
+
+    expect(imports).toHaveLength(1);
+    expect(imports[0]).toContain('`npm run lint:fix` rewrites them');
+    expect(imports[0]).toContain('`imports/alias-declared`');
+    expect(imports[0]).toContain('compile with `npm run build` only');
+    expect(everywhere).toHaveLength(1);
+    expect(everywhere[0]).toContain('at most 350 lines a file, 30 lines and 3 parameters a function');
+    expect(everywhere[0]).toContain('`npm run format`, then `npm run lint:fix`');
+    expect(guide.join('\n')).not.toContain('a blank line before a `return`');
+  });
+
   it('teaches that events leave with the save and that tracing stays in the platform, in the layers concerned', () => {
     const root = initProject(...NPM);
     const rule = (name: string): string => read(root, `.claude/rules/${name}.md`);
