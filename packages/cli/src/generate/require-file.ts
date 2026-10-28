@@ -1,3 +1,4 @@
+import { foundPrerequisite } from './found-prerequisite';
 import { MissingPrerequisite } from './missing-prerequisite';
 import type { Scope } from './scope';
 
@@ -12,9 +13,7 @@ export interface Prerequisite {
 export function requireFile(scope: Scope, prerequisite: Prerequisite): void {
   const target = `${scope.dir}/${prerequisite.file}`;
 
-  if (scope.ws.exists(target)) {
-    scope.flags.builtOn?.(scope.ws.placed(target));
-
+  if (foundPrerequisite(scope, target)) {
     return;
   }
 

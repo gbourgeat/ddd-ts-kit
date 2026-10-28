@@ -1,6 +1,7 @@
 import { CliError } from '../../../cli-error';
 import type { Name } from '../../../naming';
 import { filesUnder } from '../../files-under';
+import { MissingPrerequisite } from '../../missing-prerequisite';
 import type { Scope } from '../../scope';
 import { roleFoldersOf, treeOf } from '../../../model-modules';
 
@@ -19,11 +20,16 @@ export function controllerOf(scope: Scope, useCase: Name): FoundController {
   const source = found === undefined ? undefined : scope.ws.read(found);
 
   if (found === undefined || source === undefined || !source.includes('@Controller(')) {
-    throw new CliError(
+    // No controller yet is one an earlier command writes; a function route is a choice of the team.
+    const Refusal = found === undefined ? MissingPrerequisite : CliError;
+
+    throw new Refusal(
       `The context ${scope.context.kebab} has no controller for ${useCase.title}.`,
       `Write it first: \`ddd-ts-kit generate controller ${scope.context.kebab} ${useCase.pascal}\`; a function route declares \`produces\` and \`form\` in its \`defineRoute\` spec by hand.`,
     );
   }
+
+  scope.flags.builtOn?.(found);
 
   return { file: found, source };
 }
