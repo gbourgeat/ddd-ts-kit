@@ -1,8 +1,8 @@
 import { inspect } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
-import { SignJWT, UnsecuredJWT, exportJWK, type JWTPayload } from 'jose';
-import { InvalidCredentialError } from '../src';
+import { SignJWT, UnsecuredJWT, exportJWK, generateKeyPair, type JWTPayload } from 'jose';
+import { DEFAULT_JWT_ALGORITHMS, InvalidCredentialError } from '../src';
 import { JwtAuthenticator } from '../src/jwt';
 import { AUDIENCE, ISSUER, authenticator, foreign, refusalOf, signing, token, verifying } from './support/tokens';
 
@@ -54,6 +54,36 @@ describe('JwtAuthenticator', () => {
     const tolerant = new JwtAuthenticator({ key: verifying, issuer: ISSUER, audience: AUDIENCE, clockTolerance: 60 });
 
     expect((await tolerant.authenticate(justExpired)).id).toBe('ada');
+  });
+
+  it('a token without exp is refused', async () => {
+    const endless = await new SignJWT({ sub: 'ada' })
+      .setProtectedHeader({ alg: 'RS256' })
+      .setIssuer(ISSUER)
+      .setAudience(AUDIENCE)
+      .sign(signing);
+
+    const refusal = await refusalOf(endless);
+
+    expect(refusal).toBeInstanceOf(InvalidCredentialError);
+    expect(refusal).toMatchObject({ code: 'UNAUTHORIZED', reason: 'NO_EXPIRY' });
+  });
+
+  it('a token without exp is accepted when the expiry is not required, and an expired one is still refused', async () => {
+    const endless = await new SignJWT({ sub: 'ada' })
+      .setProtectedHeader({ alg: 'RS256' })
+      .setIssuer(ISSUER)
+      .setAudience(AUDIENCE)
+      .sign(signing);
+
+    const expired = await token({}, { expiresIn: Math.floor(Date.now() / 1000) - 60 });
+    const lenient = new JwtAuthenticator({ key: verifying, issuer: ISSUER, audience: AUDIENCE, requireExpiry: false });
+
+    const accepted = await lenient.authenticate(endless);
+    const refusal = await refusalOf(expired, lenient);
+
+    expect(accepted.id).toBe('ada');
+    expect(refusal).toMatchObject({ reason: 'TOKEN_EXPIRED' });
   });
 
   it('refuses a token that is not valid yet', async () => {
@@ -126,6 +156,26 @@ describe('JwtAuthenticator, signature, key and shape of the token', () => {
         algorithms: ['HS256'],
       }).authenticate(symmetric),
     ).toMatchObject({ id: 'ada' });
+  });
+
+  it('allows by default the algorithms DEFAULT_JWT_ALGORITHMS names, EdDSA among them', async () => {
+    const { publicKey, privateKey } = await generateKeyPair('EdDSA');
+
+    const edwards = await new SignJWT({ sub: 'ada' })
+      .setProtectedHeader({ alg: 'EdDSA' })
+      .setIssuer(ISSUER)
+      .setAudience(AUDIENCE)
+      .setExpirationTime('5m')
+      .sign(privateKey);
+
+    const authenticated = await new JwtAuthenticator({
+      key: publicKey,
+      issuer: ISSUER,
+      audience: AUDIENCE,
+    }).authenticate(edwards);
+
+    expect(DEFAULT_JWT_ALGORITHMS).toEqual(['RS256', 'PS256', 'ES256', 'EdDSA']);
+    expect(authenticated.id).toBe('ada');
   });
 
   it('shows no verification key when it is logged, spread or serialized', () => {
