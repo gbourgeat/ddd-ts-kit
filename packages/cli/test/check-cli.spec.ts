@@ -288,3 +288,32 @@ function fingerprintOf(issue: unknown): unknown {
 function ruleIdsOf(root: string): string[] {
   return checkJsonOf(cli(root, 'check', ...SUPPRESSIBLE, '--json')).violations.map((violation) => violation.ruleId);
 }
+
+describe('check --changed-since', () => {
+  it('judges with --changed-since a tracked file modified but not committed, staged or not, and a committed one', () => {
+    const repository = committedProject('changed-since-tracked', '--context', 'billing:core');
+    const impure = "import { z } from 'zod';\n\nexport const impure = z;\n";
+    const committed = 'src/contexts/billing/domain/services/committed.service.ts';
+    const staged = 'src/contexts/billing/domain/services/staged.service.ts';
+    const edited = 'src/contexts/billing/domain/services/edited.service.ts';
+    const untouched = 'src/contexts/billing/domain/services/untouched.service.ts';
+
+    for (const file of [staged, edited, untouched]) {
+      write(repository, file, 'export const pure = 1;\n');
+    }
+
+    git(repository, 'add', '.');
+    git(repository, 'commit', '--quiet', '-m', 'add services');
+    git(repository, 'switch', '--quiet', '--create', 'build/billing');
+    write(repository, committed, impure);
+    git(repository, 'add', '.');
+    git(repository, 'commit', '--quiet', '-m', 'commit one');
+    write(repository, staged, impure);
+    git(repository, 'add', staged);
+    write(repository, edited, impure);
+
+    const judged = checkJsonOf(cli(repository, 'check', '--changed-since', 'main', ...LAYERS, '--json'));
+
+    expect(judged.violations.map((violation) => violation.file).sort()).toEqual([committed, edited, staged].sort());
+  });
+});
