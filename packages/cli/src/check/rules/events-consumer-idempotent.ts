@@ -108,12 +108,7 @@ function unregistered(file: SourceFile, project: Project): Finding[] {
 
   const handler = exportedClass(file);
 
-  // The module file of the context and, in the explicit style, the module file of each module of its model.
-  const modules = project.files.filter(
-    ({ isTest, location }) =>
-      !isTest && inContext(location) && location.context === here.context && location.layer === 'module',
-  );
-
+  const modules = moduleFilesOf(project, here.context);
   const [module] = modules;
 
   // A handler written as a subscription (no class) registers itself; without a module file there is nowhere to look.
@@ -163,4 +158,12 @@ function registers(module: SourceFile, handlerNames: readonly string[]): boolean
   const names = handlerNames.map(identifier);
 
   return consumerRegistrations(module).some(({ code }) => names.some((name) => name.test(code)));
+}
+
+/** The module file of the context and, in the explicit style, the module file of each module of its model. */
+function moduleFilesOf(project: Project, context: string): SourceFile[] {
+  return project.files.filter(
+    ({ isTest, location }) =>
+      !isTest && inContext(location) && location.context === context && location.layer === 'module',
+  );
 }
