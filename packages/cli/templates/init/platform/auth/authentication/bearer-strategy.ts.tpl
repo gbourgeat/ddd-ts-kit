@@ -36,8 +36,13 @@ export function bearerStrategy(tokens: BearerTokens): Strategy {
 
   const requireExpiry = tokens.requireExpiry ?? true;
 
-  const handOn = (payload: unknown, done: (error: unknown, user?: unknown) => void): void =>
-    done(null, requireExpiry && !carriesExpiry(payload) ? false : payload);
+  const handOn = (payload: unknown, done: (error: unknown, user?: unknown, info?: unknown) => void): void => {
+    if (requireExpiry && !carriesExpiry(payload)) {
+      done(null, false, { message: 'NO_EXPIRY' });
+    } else {
+      done(null, payload);
+    }
+  };
 
   if ('publicKey' in tokens) {
     return new Strategy({ ...verified, secretOrKey: tokens.publicKey }, handOn);

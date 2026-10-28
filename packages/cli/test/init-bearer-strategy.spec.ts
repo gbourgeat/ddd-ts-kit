@@ -45,7 +45,10 @@ describe('init --authn passport, the strategy that verifies a bearer token', () 
   beforeAll(async () => {
     root = initProject('--http', 'nest', '--authn', 'passport');
 
-    const generated = await importGenerated(root, STRATEGY, ['passport-jwt', 'jwks-rsa']);
+    const generated = await importGenerated(root, STRATEGY, [
+      { name: 'passport-jwt', from: 'auth' },
+      { name: 'jwks-rsa', from: 'auth' },
+    ]);
 
     bearerStrategy = jsonAt(generated, 'bearerStrategy') as BearerStrategy;
   });
@@ -58,22 +61,19 @@ describe('init --authn passport, the strategy that verifies a bearer token', () 
     expect(allowed).toEqual(DEFAULT_JWT_ALGORITHMS.filter((algorithm) => algorithm !== 'EdDSA'));
   });
 
-  it('a token with exp is accepted', async () => {
-    const credential = tokenOf({ sub: 'ada', exp: Math.floor(Date.now() / 1000) + 300 });
-
-    const actor = await authenticatorOf().authenticate(credential);
-
-    expect(actor.id).toBe('ada');
-  });
-
-  it('a token without exp is refused', async () => {
-    const credential = tokenOf({ sub: 'ada' });
+  it('a token without exp is refused for its missing expiry, while the same token with exp is accepted', async () => {
+    const endless = tokenOf({ sub: 'ada' });
+    const expiring = tokenOf({ sub: 'ada', exp: Math.floor(Date.now() / 1000) + 300 });
 
     const refusal = await authenticatorOf()
-      .authenticate(credential)
+      .authenticate(endless)
       .catch((error: unknown) => error);
 
+    const actor = await authenticatorOf().authenticate(expiring);
+
     expect(refusal).toBeInstanceOf(InvalidCredentialError);
+    expect(refusal).toMatchObject({ reason: 'NO_EXPIRY' });
+    expect(actor.id).toBe('ada');
   });
 
   it('a token without exp is accepted when the expiry is not required, a conscious choice', async () => {
