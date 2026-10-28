@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 import { OrganisationName } from '{{alias.context}}/domain/value-objects/organisation-name.vo{{alias.ext}}';
 
-describe('OrganisationName', () => {
+describe('Organisation name', () => {
   it('is free text, without the spaces at its ends', () => {
     expect(OrganisationName.create(' Acme & Sons ').value).toBe('Acme & Sons');
   });

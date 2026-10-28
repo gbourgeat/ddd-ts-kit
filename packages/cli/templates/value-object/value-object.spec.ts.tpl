@@ -7,7 +7,7 @@ import { unwrap } from '@ddd-ts-kit/kernel';
 {{/if}}
 import { {{name.pascal}} } from '{{alias.context}}/domain/value-objects/{{name.kebab}}.vo{{alias.ext}}';
 
-describe('{{name.pascal}}', () => {
+describe('{{name.title}}', () => {
   it('is equal to another {{name.words}} with the same value', () => {
 {{#if valueObjects.throwing}}
     const first = {{name.pascal}}.create('sample');

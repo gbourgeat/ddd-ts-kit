@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:ff16c30dea1cd795 -->
+<!-- translation-of: event-sourcing.md sha256:afc71b9d702b0ba0 -->
 
 # Event sourcing, par agrégat
 
@@ -615,7 +615,7 @@ const rehydrate = (id: string, history: AggregateHistory<AttendanceRecordEvent>)
 const now = new Date('2026-03-09T10:00:00Z');
 const created = new AttendanceRecordCreated('practice-1.patient-1', now, 'patient-1');
 
-describe('AttendanceRecord', () => {
+describe('Attendance record', () => {
   it('notes a no-show and counts it as missed', () => {
     givenEvents(rehydrate, [created, new AttendanceRecordNoShowNoted('practice-1.patient-1', now, 'appointment-1')])
       .when((record) => record.noteNoShow('appointment-2', now))

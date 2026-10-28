@@ -270,6 +270,25 @@ describe('generate, the first term of a glossary', () => {
   });
 });
 
+describe('generate, the title of a spec of the model', () => {
+  it('names the unit in the words of the glossary, as the specs of the use cases do', () => {
+    const generated = (...args: string[]): void => {
+      expect(cli(root, 'generate', ...args, '--force').code).toBe(0);
+    };
+
+    generated('aggregate', 'billing', 'Invoice');
+    generated('entity', 'billing', 'InvoiceNote', '--term', 'Note=A remark written on an invoice');
+    generated('domain-event', 'billing', 'Invoice', 'Noted', '--term', 'Noted=Given a note');
+    generated('domain-service', 'billing', 'InvoiceNoting', '--term', 'Noting=Writing a note on an invoice');
+
+    const unit = (file: string): string => read(root, `src/contexts/billing/test/unit/${file}`);
+
+    expect(unit('invoice-note.entity.spec.ts')).toContain("describe('Invoice note', () => {");
+    expect(unit('invoice-noted.event.spec.ts')).toContain("describe('Invoice noted', () => {");
+    expect(unit('invoice-noting.service.spec.ts')).toContain("describe('Invoice noting', () => {");
+  });
+});
+
 describe('generate context, its glossary from the draft', () => {
   it('writes the three cells of each row and the sentence of its classification given to a new context', () => {
     cli(

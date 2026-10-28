@@ -1,4 +1,5 @@
 import { CliError } from '../../cli-error';
+import { toName } from '../../naming';
 import { renderTemplate } from '../../templating';
 import { applyWiring } from '../apply-wiring';
 import { declarePermission } from '../declare-permission';
@@ -40,7 +41,7 @@ export const policyKind: Kind = {
 
     declarePermission(scope, permissionNamed(scope, permission), name);
 
-    const context = vars(scope, { name: named(name), access: { permission } });
+    const context = vars(scope, { name: named(name), access: { permission, question: questionOf(permission) } });
 
     emit(scope, context, [
       ['policy/policy.ts.tpl', `application/authorization/${name.kebab}.policy.ts`],
@@ -59,3 +60,11 @@ export const policyKind: Kind = {
     }
   },
 };
+
+/** The question a policy answers, the title of its spec: `invoice.cancel` asks "Who may cancel an invoice". */
+function questionOf(permission: string): string {
+  const [element = '', action = ''] = permission.split('.');
+  const aggregate = toName(element);
+
+  return `Who may ${toName(action).words} ${aggregate.article} ${aggregate.words}`;
+}
