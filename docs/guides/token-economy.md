@@ -147,7 +147,8 @@ the generator wired for it.
 
 **Read the map, not the tree.** Start with `npx ddd-ts-kit describe <context> --json` (or
 `list --json` for the whole project) and the `CONTEXT.md` of the context in hand;
-`npx ddd-ts-kit todo <context>` then says what is left to write, as `file:line`. Read a
+`npx ddd-ts-kit todo <context> --brief` then says what is left to write, as `file:line` and the
+first words of each marker. Read a
 neighbouring context's `CONTEXT.md` and `published-language/`, never its internals: the rules
 forbid depending on them anyway.
 
@@ -188,11 +189,12 @@ reading: the CLI prints its JSON on one line, without indentation):
 
 The full answer also lists the glossary, the upstreams and downstreams, the aggregates, the
 routes with their guards, responses and error codes, the events published and consumed, the
-policies, the jobs and the contracts. `todo` answers one line per marker:
+policies, the jobs and the contracts. `todo --brief` answers one line per marker, its first words
+(without `--brief`, its kind and its whole text):
 
 ```text
-src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to a Order: ...
-src/contexts/ordering/test/unit/place-order.handler.spec.ts:39  it.todo  applies the business decision to the order
+src/contexts/ordering/application/commands/place-order/place-order.handler.ts:12  "place order" changes Orders that exist and writes nothing until you decide...
+src/contexts/ordering/test/unit/place-order.handler.spec.ts:37  applies the business decision to the order
 ```
 
 **Ask the help of one command.** `npx ddd-ts-kit <command> --help` prints the usage lines and
@@ -425,7 +427,7 @@ as a default.
 |---|---|---|---|
 | "What exists in this project?" | `ddd-ts-kit list --json`, `describe <context> --json`, `CONTEXT.md`, `docs/context-map.md` | high: replaces tree walking | none, generated |
 | "Where does this file go, what is it called?" | the canonical tree, `ddd-ts-kit generate` | high: no search, no boilerplate written | none |
-| "What is left to write in what was generated?" | `generate --json` (`todos`), `ddd-ts-kit todo [<context>]`, `ddd-ts-kit status` | high: opens only the places to fill | none |
+| "What is left to write in what was generated?" | `generate --json` (`todos`), `ddd-ts-kit todo [<context>] --brief`, `ddd-ts-kit status` | high: opens only the places to fill | none |
 | "Why is this check failing?" | the violation's `fix`, `ddd-ts-kit explain <rule-id>` | medium: no reading of the reference | none |
 | "Who calls or implements this symbol?" | a language-server plugin of the agent, or Serena | medium to high on cross-context questions | install a language server and a plugin or an MCP server; memory while indexing |
 | "Every place with this code shape", a mechanical rewrite | ast-grep | medium: one query, no false positives to read | one binary; learn the pattern syntax |

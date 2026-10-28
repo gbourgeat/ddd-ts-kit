@@ -104,7 +104,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   todo             those markers as file:line, in the project or in one context, read in every kind of file
                    they are written into: the code, the pages, the files of prisma/schema/ (a marker of
                    prisma/schema/<context>.prisma is of that context, another of the context whose
-                   database schema holds its model), the migrations, the configuration at the root
+                   database schema holds its model), the migrations, the configuration at the root;
+                   --brief prints each as file:line and its first words (up to its first : or ;), the
+                   file holding the rest; --json keeps every text
   mutation         the mutation score of the domain and application layers of each context, read from the
                    json report the last stryker run wrote (reports/mutation/mutation.json, or --report
                    <file>), each held to its "mutation" floor of the config (80 and 75 by default): detected over detected and

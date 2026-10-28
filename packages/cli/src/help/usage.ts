@@ -29,7 +29,7 @@ export const USAGE = `Usage
   ddd-ts-kit describe <context>
   ddd-ts-kit status [--workers]
   ddd-ts-kit doctor [--strict]
-  ddd-ts-kit todo [<context>]
+  ddd-ts-kit todo [<context>] [--brief]
   ddd-ts-kit plan-waves [<context>]
   ddd-ts-kit story-check <code> [--strict]
   ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]

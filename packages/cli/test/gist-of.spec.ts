@@ -35,4 +35,10 @@ describe('the gist of a marker', () => {
       'replace each entry below by a test named after the business behaviour...',
     );
   });
+
+  it('cuts before a parenthesis left open by the twelfth word', () => {
+    expect(gistOf('add one ingredient per fact a test may need to choose (a date, an amount) and nothing else')).toBe(
+      'add one ingredient per fact a test may need to choose...',
+    );
+  });
 });

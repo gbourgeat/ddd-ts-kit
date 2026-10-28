@@ -1167,6 +1167,8 @@ handlers, the policies, the gateways and the adapters are read from the decorato
 query shows what it requires (or `public`), a handler its consumer name and its event, a policy its
 permission, an adapter its port; `--json` adds them under `declarations`. In the explicit style the
 jobs are read from the `builder.job(...)` and `platform.jobs.register(...)` lines of the module file.
+The text leaves out the kinds a context holds none of, and the end-to-end specs when there is none;
+`--json` keeps every key, an empty list included.
 
 ## describe
 
@@ -1202,7 +1204,7 @@ each `CONTEXT.md`.
 
 ```
 ddd-ts-kit status [--workers]
-ddd-ts-kit todo [<context>]
+ddd-ts-kit todo [<context>] [--brief]
 ```
 
 `status` prints the `Next:` line of `docs/architecture/plan.md`, the rows of
@@ -1253,7 +1255,9 @@ current }, agent, phase, next }`, `phase` being `not started`, `mid-row`, `betwe
 and did not stop since).
 
 `todo` lists those markers as `file:line` with their kind and their text, in the project or in one
-context; `--json` prints `{ count, remaining: [{ kind, context, file, line, text }] }`.
+context; `--brief` prints each as `file:line` and its first words (up to its first `:` or `;`,
+twelve words at most), the file holding the rest, a quarter of the size mid-slice; `--json` prints
+`{ count, remaining: [{ kind, context, file, line, text }] }`, every text whole.
 
 ## plan-waves
 

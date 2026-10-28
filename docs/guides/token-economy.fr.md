@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:2b69f752c274335f -->
+<!-- translation-of: token-economy.md sha256:540f630486d8157a -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -152,7 +152,8 @@ les fichiers que le générateur a câblés pour lui.
 
 **Lire la carte, pas l'arborescence.** Commencez par `npx ddd-ts-kit describe <context> --json`
 (ou `list --json` pour tout le projet) et le `CONTEXT.md` du contexte en cours ;
-`npx ddd-ts-kit todo <context>` dit ensuite ce qui reste à écrire, sous forme de `file:line`.
+`npx ddd-ts-kit todo <context> --brief` dit ensuite ce qui reste à écrire, sous forme de
+`file:line` et des premiers mots de chaque marqueur.
 Lisez le `CONTEXT.md` et le `published-language/` d'un contexte voisin, jamais ses entrailles : les
 règles interdisent de toute façon d'en dépendre.
 
@@ -193,11 +194,12 @@ pour la lecture : la CLI affiche son JSON sur une ligne, sans indentation) :
 
 La réponse complète liste aussi le glossaire, les contextes amont et aval, les agrégats, les
 routes avec leurs gardes, leurs réponses et leurs codes d'erreur, les événements publiés et
-consommés, les politiques, les *jobs* et les contrats. `todo` répond une ligne par marqueur :
+consommés, les politiques, les *jobs* et les contrats. `todo --brief` répond une ligne par
+marqueur, ses premiers mots (sans `--brief`, son genre et son texte entier) :
 
 ```text
-src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to a Order: ...
-src/contexts/ordering/test/unit/place-order.handler.spec.ts:39  it.todo  applies the business decision to the order
+src/contexts/ordering/application/commands/place-order/place-order.handler.ts:12  "place order" changes Orders that exist and writes nothing until you decide...
+src/contexts/ordering/test/unit/place-order.handler.spec.ts:37  applies the business decision to the order
 ```
 
 **Demander l'aide d'une seule commande.** `npx ddd-ts-kit <command> --help` affiche les lignes
@@ -454,7 +456,7 @@ guide ne le recommande pas par défaut.
 |---|---|---|---|
 | « Qu'est-ce qui existe dans ce projet ? » | `ddd-ts-kit list --json`, `describe <context> --json`, `CONTEXT.md`, `docs/context-map.md` | élevée : remplace le parcours de l'arborescence | aucun, généré |
 | « Où va ce fichier, comment s'appelle-t-il ? » | l'arborescence canonique, `ddd-ts-kit generate` | élevée : ni recherche, ni code répétitif écrit | aucun |
-| « Que reste-t-il à écrire dans ce qui a été généré ? » | `generate --json` (`todos`), `ddd-ts-kit todo [<context>]`, `ddd-ts-kit status` | élevée : n'ouvre que les endroits à remplir | aucun |
+| « Que reste-t-il à écrire dans ce qui a été généré ? » | `generate --json` (`todos`), `ddd-ts-kit todo [<context>] --brief`, `ddd-ts-kit status` | élevée : n'ouvre que les endroits à remplir | aucun |
 | « Pourquoi ce contrôle échoue-t-il ? » | le `fix` de la violation, `ddd-ts-kit explain <rule-id>` | moyenne : pas de lecture de la référence | aucun |
 | « Qui appelle ou implémente ce symbole ? » | un *plugin* de serveur de langage de l'agent, ou Serena | moyenne à élevée sur les questions entre contextes | installer un serveur de langage et un *plugin* ou un serveur MCP ; de la mémoire pendant l'indexation |
 | « Chaque endroit qui a cette forme de code », une réécriture mécanique | ast-grep | moyenne : une requête, aucun faux positif à lire | un binaire ; apprendre la syntaxe des motifs |

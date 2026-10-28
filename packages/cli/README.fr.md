@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:48faa3f5f2eee81a -->
+<!-- translation-of: README.md sha256:6781339293142890 -->
 
 # ddd-ts-kit
 
@@ -1230,7 +1230,9 @@ d'usage, les gestionnaires, les politiques, les *gateways* et les adaptateurs so
 décorateurs : une commande ou une requête montre ce qu'elle exige (ou `public`), un gestionnaire
 son nom de consommateur et son événement, une politique sa permission, un adaptateur son port ;
 `--json` les ajoute sous `declarations`. Dans le style explicite, les *jobs* sont lus dans les
-lignes `builder.job(...)` et `platform.jobs.register(...)` du fichier de module.
+lignes `builder.job(...)` et `platform.jobs.register(...)` du fichier de module. Le texte omet les
+genres dont un contexte n'a aucun élément, et les *specs* de bout en bout quand il n'y en a pas ;
+`--json` garde chaque clé, liste vide comprise.
 
 ## describe
 
@@ -1268,7 +1270,7 @@ dans chaque `CONTEXT.md`.
 
 ```
 ddd-ts-kit status [--workers]
-ddd-ts-kit todo [<context>]
+ddd-ts-kit todo [<context>] [--brief]
 ```
 
 `status` affiche la ligne `Next:` de `docs/architecture/plan.md`, les lignes de
@@ -1322,7 +1324,10 @@ report: { modified, current }, agent, phase, next }`, `phase` valant `not starte
 un outil dans les trois dernières minutes sans s'arrêter depuis).
 
 `todo` liste ces marqueurs en `file:line` avec leur genre et leur texte, dans le projet ou dans
-un contexte ; `--json` affiche `{ count, remaining: [{ kind, context, file, line, text }] }`.
+un contexte ; `--brief` affiche chacun en `file:line` et ses premiers mots (jusqu'à son premier
+`:` ou `;`, douze mots au plus), le fichier gardant le reste, un quart de la taille en cours de
+tranche ; `--json` affiche `{ count, remaining: [{ kind, context, file, line, text }] }`, chaque
+texte entier.
 
 ## plan-waves
 

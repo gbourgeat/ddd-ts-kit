@@ -7,8 +7,8 @@ const FEWEST_WORDS = 6;
 /**
  * The first words of a marker, which a report prints in place of its sentence (the file holds it
  * at that line): the text up to its first `:`, `;` or end of sentence outside code; a longer one is
- * cut at its first comma past six words outside parentheses, else after twelve words, `...` marking
- * the cut.
+ * cut at its first comma past six words outside parentheses, else after twelve words, before an
+ * open parenthesis, `...` marking the cut.
  */
 export function gistOf(text: string): string {
   const words = firstClause(text.trim()).split(/\s+/);
@@ -22,6 +22,11 @@ export function gistOf(text: string): string {
   );
 
   const kept = words.slice(0, comma !== -1 && comma < MOST_WORDS ? comma + 1 : MOST_WORDS);
+
+  // A cut inside parentheses goes back to before them, and keeps what is outside.
+  while (insideParentheses(kept) && kept.length > FEWEST_WORDS) {
+    kept.pop();
+  }
 
   return `${kept.join(' ').replace(/[,(]+$/, '')}...`;
 }
