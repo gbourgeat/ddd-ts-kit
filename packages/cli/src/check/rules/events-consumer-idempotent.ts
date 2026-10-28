@@ -108,9 +108,8 @@ function unregistered(file: SourceFile, project: Project): Finding[] {
 
   const handler = exportedClass(file);
 
-  const module = project.files.find(
-    ({ location }) => inContext(location) && location.context === here.context && location.layer === 'module',
-  );
+  const modules = moduleFilesOf(project, here.context);
+  const [module] = modules;
 
   // A handler written as a subscription (no class) registers itself; without a module file there is nowhere to look.
   if (handler === undefined || module === undefined || consumerRegistrations(file).length > 0) {
@@ -123,9 +122,8 @@ function unregistered(file: SourceFile, project: Project): Finding[] {
   }
 
   const instance = handler.name.charAt(0).toLowerCase() + handler.name.slice(1);
-  const names = [handler.name, instance].map(identifier);
 
-  if (consumerRegistrations(module).some(({ code }) => names.some((name) => name.test(code)))) {
+  if (modules.some((candidate) => registers(candidate, [handler.name, instance]))) {
     return [];
   }
 
@@ -134,6 +132,7 @@ function unregistered(file: SourceFile, project: Project): Finding[] {
       line: handler.line,
       message: `The integration event handler ${handler.name} is not registered with a consumer name in ${module.path}.`,
       fix: `Register it there under a stable name: builder.on(<definition>, { consumer: '${here.context}.<name>' }).handledBy(${handler.name}, [...]), or consume(<definition>, { consumer: '${here.context}.<name>', processed, unitOfWork }, (event) => ${instance}.handle(event)).`,
+      subjects: modules.map(({ path }) => path),
     },
   ];
 }
@@ -152,4 +151,19 @@ function namesTakenElsewhere(file: SourceFile, firstUse: Map<string, string>): F
 
     return [{ line, message: `The consumer name "${name}" is already used in ${first}.`, fix: NAME_FIX }];
   });
+}
+
+/** Whether a module file names the handler, by its class or by its instance, in a registration. */
+function registers(module: SourceFile, handlerNames: readonly string[]): boolean {
+  const names = handlerNames.map(identifier);
+
+  return consumerRegistrations(module).some(({ code }) => names.some((name) => name.test(code)));
+}
+
+/** The module file of the context and, in the explicit style, the module file of each module of its model. */
+function moduleFilesOf(project: Project, context: string): SourceFile[] {
+  return project.files.filter(
+    ({ isTest, location }) =>
+      !isTest && inContext(location) && location.context === context && location.layer === 'module',
+  );
 }

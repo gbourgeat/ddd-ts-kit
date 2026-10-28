@@ -49,7 +49,7 @@ export const authzDeclared: Rule = {
 
     const declared = declaredUseCases(project);
 
-    return perFile(project, this.id, (file) => missingFromTheMap(file, declared));
+    return perFile(project, this.id, (file) => missingFromTheMap(file, declared, project));
   },
 };
 
@@ -69,7 +69,9 @@ function undeclaredRegistrations(file: SourceFile, project: Project): Finding[] 
       return [];
     }
 
-    if (declaresItsAccess(sourceDeclaring(project, file, name), name)) {
+    const declaring = sourceDeclaring(project, file, name);
+
+    if (declaresItsAccess(declaring, name)) {
       return [];
     }
 
@@ -80,6 +82,7 @@ function undeclaredRegistrations(file: SourceFile, project: Project): Finding[] 
         line: file.scan.lineAt(match.index),
         message: `The ${kind} ${name} is registered without saying who may send it.`,
         fix,
+        subjects: declaring.path === file.path ? [] : [declaring.path],
       },
     ];
   });
@@ -178,11 +181,7 @@ function declaredUseCases(project: Project): ReadonlyMap<string, ReadonlySet<str
   for (const file of project.files) {
     const { location } = file;
 
-    if (!inContext(location) || file.isTest) {
-      continue;
-    }
-
-    if (location.layer !== 'module' && !(location.layer === 'application' && location.inside[0] === 'authorization')) {
+    if (!isAuthorizationMapFile(file) || !inContext(location)) {
       continue;
     }
 
@@ -198,7 +197,11 @@ function declaredUseCases(project: Project): ReadonlyMap<string, ReadonlySet<str
   return declared;
 }
 
-function missingFromTheMap(file: SourceFile, declared: ReadonlyMap<string, ReadonlySet<string>>): Finding[] {
+function missingFromTheMap(
+  file: SourceFile,
+  declared: ReadonlyMap<string, ReadonlySet<string>>,
+  project: Project,
+): Finding[] {
   const here = inLayer(file, 'application');
   const kind = USE_CASE_FILE.exec(file.path)?.[1];
 
@@ -221,6 +224,7 @@ function missingFromTheMap(file: SourceFile, declared: ReadonlyMap<string, Reado
       line: useCase.line,
       message: `The ${kind} ${useCase.name} declares no permission and is not declared public.`,
       fix: `Add requires(${useCase.name}, <context>Permissions['<permission>']) or publicUseCase(${useCase.name}) to the authorization entries of ${here.context}.module.ts (or of a file in application/authorization/).`,
+      subjects: authorizationMapFiles(project, here.context).map(({ path }) => path),
     },
   ];
 }
@@ -228,4 +232,21 @@ function missingFromTheMap(file: SourceFile, declared: ReadonlyMap<string, Reado
 /** `commands/<use-case>/<file>` for a command, `queries/<use-case>/<file>` for a query. */
 function isUseCaseFolder(inside: readonly string[], kind: string): boolean {
   return inside.length === 3 && inside[0] === (kind === 'command' ? 'commands' : 'queries');
+}
+
+/** The module file of a context and the files of its authorization folder: where the use cases are declared in a module wired by hand. */
+function isAuthorizationMapFile(file: SourceFile): boolean {
+  const { location } = file;
+
+  return (
+    inContext(location) &&
+    !file.isTest &&
+    (location.layer === 'module' || (location.layer === 'application' && location.inside[0] === 'authorization'))
+  );
+}
+
+function authorizationMapFiles(project: Project, context: string): SourceFile[] {
+  return project.files.filter(
+    (file) => isAuthorizationMapFile(file) && inContext(file.location) && file.location.context === context,
+  );
 }
