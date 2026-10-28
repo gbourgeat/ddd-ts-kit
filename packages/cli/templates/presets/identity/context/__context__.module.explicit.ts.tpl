@@ -6,6 +6,7 @@ import { {{context.camel}}Controllers } from '{{alias.context}}/{{context.kebab}
 import type { Route } from '@ddd-ts-kit/http';
 import type { Actored, DomainEvent, Message } from '@ddd-ts-kit/kernel';
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
+import type { IdentityProviderAdmin } from '{{alias.context}}/application/ports/identity-provider-admin.port{{alias.ext}}';
 // ddd-ts-kit:imports
 import { requires, type RequirementOptions } from '@ddd-ts-kit/auth';
 import { on, subscribeAll } from '@ddd-ts-kit/events';
@@ -97,12 +98,17 @@ export interface {{context.pascal}}Wiring {
 /** Every use case of the context is asked of the context as a whole: inside an organisation, its policies decide. */
 const IN_THE_CONTEXT: RequirementOptions<Message & Actored> = { resource: () => ({ type: 'context', id: '{{context.kebab}}' }) };
 
+/** The adapters of outside systems a test run replaces by their fakes (`test/e2e/support/start-application.ts`); left out, the real ones. */
+export interface OutsideSystems {
+  readonly identityProvider?: IdentityProviderAdmin;
+}
+
 /**
  * What the declarations of the context say in the declared style: its adapters, its use cases,
  * the facts it publishes, the consumers that keep the identity provider in line, and its routes.
  */
-export function {{context.camel}}Module(platform: Platform): {{context.pascal}}Wiring {
-  const adapters = adaptersOf(platform);
+export function {{context.camel}}Module(platform: Platform, outside: OutsideSystems = {}): {{context.pascal}}Wiring {
+  const adapters = adaptersOf(platform, outside);
 
   registerAccountsAndOrganisations(platform, adapters);
   registerInvitations(platform, adapters);
@@ -155,7 +161,7 @@ export function {{context.camel}}Module(platform: Platform): {{context.pascal}}W
 }
 
 /** The adapters of the ports of the context, each observed and protected by the platform. */
-function adaptersOf(platform: Platform) {
+function adaptersOf(platform: Platform, outside: OutsideSystems) {
   const { persistence, scope, clock } = platform;
   const as = (kind: 'repository' | 'external', token: string) => ({ kind, context: '{{context.kebab}}', token });
   const connection = new EnvironmentIdentityProviderConnection();
@@ -168,7 +174,7 @@ function adaptersOf(platform: Platform) {
     delegations: platform.adapter(new {{preset.adapter.pascal}}DelegationRepository(persistence.database, scope, clock), as('repository', 'DelegationRepository')),
     reader: platform.adapter(new {{preset.adapter.pascal}}SearchMembersReader(persistence.database), as('repository', 'SearchMembersReader')),
     tokens: platform.adapter(new CryptoInvitationTokens(), as('external', 'InvitationTokens')),
-    identityProvider: platform.adapter(new KeycloakIdentityProviderAdmin(connection), as('external', 'IdentityProviderAdmin')),
+    identityProvider: platform.adapter(outside.identityProvider ?? new KeycloakIdentityProviderAdmin(connection), as('external', 'IdentityProviderAdmin')),
     access: platform.access,
   };
 }

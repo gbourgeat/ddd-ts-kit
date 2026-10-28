@@ -12,12 +12,21 @@ import {
 {{#unless httpCache.varnish}}
 import type { IntegrationEvent, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
 {{/unless}}
+{{#if style.declared}}
+import { defineContextModule } from '@ddd-ts-kit/di';
+{{/if}}
 import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
 import { relateSystemActors } from '{{alias.platform}}/auth/relationships/relate-system-actors{{alias.ext}}';
 import { relationTuples } from '{{alias.platform}}/auth/relationships/relation-tuples{{alias.ext}}';
 {{/if}}
-import { composeApplication } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+{{#if style.declared}}
+import { composeApplication, everyContext } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+import type { ContextSelection } from '{{alias.platform}}/composition/context-selection{{alias.ext}}';
+{{/if}}
+{{#unless style.declared}}
+import { composeApplication, everyContext } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
+{{/unless}}
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database{{alias.ext}}';
@@ -50,6 +59,9 @@ import { noRedis, testEnvironment } from '{{alias.test}}/e2e/support/test-enviro
 import { testEnvironment } from '{{alias.test}}/e2e/support/test-environment{{alias.ext}}';
 {{/unless}}
 {{/unless}}
+
+// ddd-ts-kit:imports
+// /ddd-ts-kit:imports
 
 /** The whole application, real adapters included, as a client and another context see it. */
 export interface RunningApplication {
@@ -170,13 +182,17 @@ async function start(database: TestDatabase, config: AppConfig, credentials: Cre
   const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
 
 {{/if}}
-  const application = composeApplication(database.persistence, {
-    events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}},
-    authenticator: credentials.authenticator,
+  const application = composeApplication(
+    database.persistence,
+    {
+      events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}},
+      authenticator: credentials.authenticator,
 {{#if cache.redis}}
-    ...(redis === undefined ? {} : { redis }),
+      ...(redis === undefined ? {} : { redis }),
 {{/if}}
-  });
+    },
+    contextsOfTheRun(),
+  );
 
   await application.start();
 
@@ -234,3 +250,32 @@ function eventsOf(config: AppConfig): EventProvider {
   return {{broker.inProcessWhen}} ? inProcessEvents() : createEventProvider(config);
 }
 {{/if}}
+
+/**
+ * The contexts as a test run composes them. An outside system that answers nowhere in a test run
+ * (an identity provider, a payment service) is answered by its fake of `test/fakes/` here, where
+ * the preset or the person who adds it binds it, so that its handlers settle instead of retrying.
+ */
+{{#if style.declared}}
+function contextsOfTheRun(): ContextSelection {
+  const fakes = defineContextModule({
+    name: 'end-to-end-fakes',
+    register(builder) {
+      // ddd-ts-kit:e2e-fakes
+      // /ddd-ts-kit:e2e-fakes
+    },
+  });
+
+  return { ...everyContext, modules: [...everyContext.modules, fakes] };
+}
+{{/if}}
+{{#unless style.declared}}
+function contextsOfTheRun(): typeof everyContext {
+  return everyContext.map((module): (typeof everyContext)[number] => {
+    // ddd-ts-kit:e2e-fakes
+    // /ddd-ts-kit:e2e-fakes
+
+    return module;
+  });
+}
+{{/unless}}

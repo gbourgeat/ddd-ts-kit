@@ -36,7 +36,10 @@ describe('the identity preset in the explicit style', () => {
     const root = initProject('--http', 'nest', '--di', 'nest', '--preset', 'identity');
 
     expect(read(root, 'src/platform/composition/compose-application.ts')).toContain('identityModule,');
-    expect(read(root, `${CONTEXT}/identity.module.ts`)).toContain('export function identityModule(platform: Platform)');
+
+    expect(read(root, `${CONTEXT}/identity.module.ts`)).toContain(
+      'export function identityModule(platform: Platform, outside: OutsideSystems = {})',
+    );
   });
 
   it('is refused in the explicit style on tsyringe, which declares its context instead', () => {

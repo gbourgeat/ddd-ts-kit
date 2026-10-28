@@ -20,6 +20,9 @@ import type { Preset } from './preset';
 import { outsideTheTenancy } from './outside-the-tenancy';
 import { presetDecision } from './preset-decision';
 
+/** The shared support of the end-to-end specs that `init` writes, where the fakes of outside systems are bound. */
+const E2E_SUPPORT = 'test/e2e/support/start-application.ts';
+
 /** The context a preset is written into, which `generate context` or `init` declared just before. */
 export interface PresetRequest {
   readonly context: string;
@@ -84,6 +87,10 @@ function layOutAfterSteps(scope: Scope, preset: Preset, rendering: Rendering): v
       platformPath(scope, 'auth/authorization/access-policies.ts'),
       render(preset.explicitPolicies),
     );
+  }
+
+  if (preset.e2eFakes !== undefined && scope.ws.read(E2E_SUPPORT) !== undefined) {
+    applyWiring(scope.ws, E2E_SUPPORT, render(preset.e2eFakes));
   }
 
   if (preset.prismaModels !== undefined && orm === 'prisma') {
