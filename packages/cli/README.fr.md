@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e5847ce5e5fda748 -->
+<!-- translation-of: README.md sha256:49a6b451812c3e0d -->
 
 # ddd-ts-kit
 
@@ -47,7 +47,10 @@ l'installe pour de vrai et l'exécute, avec les deux gestionnaires de paquets et
 
 Chaque commande accepte `--json` (sortie lisible par une machine, erreurs comprises) et
 `--cwd <dir>`. Les commandes autres que `init` cherchent `ddd-ts-kit.config.json` dans le
-répertoire et ses parents. Codes de sortie : `0` succès, `1` violations, documentation périmée
+répertoire et ses parents. `ddd-ts-kit --help` affiche toute la référence,
+`ddd-ts-kit <command> --help` (ou `help <command>`) l'usage et les notes de cette seule commande,
+et une option qu'une commande ne connaît pas est refusée avec sa ligne d'usage pour correction.
+Codes de sortie : `0` succès, `1` violations, documentation périmée
 ou, sous `--strict`, un *commit* au-delà de ses limites, `2` mauvais usage (le message dit quoi
 faire), `3` une commande qui écrit des fichiers n'a pas pu en écrire certains là où elle tournait
 (un chemin que protège le bac à sable d'un agent) : ils sont listés sous `unwritable`, tous les
@@ -711,7 +714,7 @@ le même *preset*. Pourquoi, et quels autres contextes en méritent un :
 
 ```
 ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]
-ddd-ts-kit generate --help --json
+ddd-ts-kit generate [<kind>] --help [--json]
 ```
 
 Un passage de `generate` fait cinq choses, dans cet ordre, et n'écrit rien quand la première
@@ -933,7 +936,9 @@ Next, in this order: the language of the context first, then the business decisi
 - `--local-only` refuse, en nommant les fichiers et sans rien écrire, quand le passage écrirait
   hors de `<contextsDir>/<context>/` et de `test/e2e/*.e2e.spec.ts`. `generate --help --json`
   affiche chaque genre avec son `usage`, ses `aliases`, son `summary` et son `writesShared`, plus
-  `shared` et `sharedWhen` : ce qu'il écrit hors de son contexte, et quand. Les deux servent un
+  `shared` et `sharedWhen` : ce qu'il écrit hors de son contexte, et quand ; `generate <kind>
+  --help --json` affiche ce seul genre, en un objet, et `generate <kind> --help` la même chose en
+  texte. Les deux servent un
   build réparti entre des *workers* (voir `worker-scope`).
 - Un *fake* est un point d'entrée pour knip et peut n'avoir aucun importateur pour
   dependency-cruiser : un port et son *fake* générés avant qu'un cas d'usage en ait besoin ne font

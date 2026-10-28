@@ -175,6 +175,11 @@ src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16
 src/contexts/ordering/test/unit/place-order.handler.spec.ts:39  it.todo  applies the business decision to the order
 ```
 
+**Ask the help of one command.** `npx ddd-ts-kit <command> --help` prints the usage lines and
+the notes of that command alone, and `npx ddd-ts-kit generate <kind> --help --json` one kind as
+one object; `npx ddd-ts-kit --help` prints the whole reference, about 40 KB. An option a command
+does not know is refused with the usage line of that command, or of the kind under `generate`.
+
 **Small, scoped tasks.** One use case in one context per task, then a fresh session. A task
 stated as "add the ability to cancel an appointment, in `appointments`, permission
 `appointment.cancel`" gives the agent the context, the path and the vocabulary; "improve the

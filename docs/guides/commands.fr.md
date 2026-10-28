@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:1996059bb9f5f423 -->
+<!-- translation-of: commands.md sha256:dfa71b5b43f220de -->
 
 # Quelle commande, quand
 
@@ -230,6 +230,8 @@ tableau ci-dessus).
 
 Chaque commande et chaque option, telles que `npx ddd-ts-kit --help` les affiche. Un test de la
 CLI échoue quand une commande ou une option est ajoutée sans que cette partie soit régénérée.
+`npx ddd-ts-kit <command> --help` affiche la partie d'une commande (ses lignes d'usage, sa note et
+les notes de ses options), et `npx ddd-ts-kit generate <kind> --help` un seul genre.
 
 Codes de sortie : `0` succès ; `1` des violations, une porte non franchie, une documentation
 périmée ; `2` un mauvais usage ou un refus (le message dit quoi faire) ; `3` une commande qui écrit
@@ -264,7 +266,7 @@ Usage
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
-  ddd-ts-kit generate --help --json
+  ddd-ts-kit generate [<kind>] --help [--json]
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
   ddd-ts-kit status [--workers]
@@ -313,6 +315,7 @@ Usage
   ddd-ts-kit explain <rule-id>
 
 Every command accepts --json (machine-readable output) and --cwd <dir> (project root).
+ddd-ts-kit <command> --help prints the usage and the notes of that command alone, generate <kind> --help one kind.
 
   affected         what a pull request has to run: the contexts a change set reaches through the context
                    map (a changed context and the contexts downstream of it), as filters for the test

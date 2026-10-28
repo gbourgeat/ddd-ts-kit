@@ -224,7 +224,9 @@ owner's agreement and a decision record (the last row of the table above).
 ## Reference
 
 Every command and flag, as `npx ddd-ts-kit --help` prints them. A test of the CLI fails when a
-command or a flag is added without this part being regenerated.
+command or a flag is added without this part being regenerated. `npx ddd-ts-kit <command> --help`
+prints the part of one command (its usage lines, its note and the notes of its flags), and
+`npx ddd-ts-kit generate <kind> --help` one kind.
 
 Exit codes: `0` success; `1` violations, a gate not met, stale documentation; `2` wrong usage or a
 refusal (the message says what to do); `3` a command that writes files (`init`, `generate`,
@@ -258,7 +260,7 @@ Usage
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
-  ddd-ts-kit generate --help --json
+  ddd-ts-kit generate [<kind>] --help [--json]
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
   ddd-ts-kit status [--workers]
@@ -307,6 +309,7 @@ Usage
   ddd-ts-kit explain <rule-id>
 
 Every command accepts --json (machine-readable output) and --cwd <dir> (project root).
+ddd-ts-kit <command> --help prints the usage and the notes of that command alone, generate <kind> --help one kind.
 
   affected         what a pull request has to run: the contexts a change set reaches through the context
                    map (a changed context and the contexts downstream of it), as filters for the test

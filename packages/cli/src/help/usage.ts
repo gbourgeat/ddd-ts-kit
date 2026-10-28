@@ -1,3 +1,6 @@
+/** The line every help ends with: what each command accepts besides its own flags. */
+export const EVERY_COMMAND = 'Every command accepts --json (machine-readable output) and --cwd <dir> (project root).';
+
 /** Every command of the CLI and its flags, as `--help` prints them and docs/guides/commands.md shows them. */
 export const USAGE = `Usage
   ddd-ts-kit init [--http express|fastify|hono|nest|none]
@@ -20,7 +23,7 @@ export const USAGE = `Usage
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
-  ddd-ts-kit generate --help --json
+  ddd-ts-kit generate [<kind>] --help [--json]
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
   ddd-ts-kit status [--workers]
@@ -68,4 +71,5 @@ export const USAGE = `Usage
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 
-Every command accepts --json (machine-readable output) and --cwd <dir> (project root).`;
+${EVERY_COMMAND}
+ddd-ts-kit <command> --help prints the usage and the notes of that command alone, generate <kind> --help one kind.`;

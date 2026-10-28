@@ -43,8 +43,10 @@ CLI is the one the project pins: `pnpm exec ddd-ts-kit <command>`, or `npx ddd-t
 
 Every command accepts `--json` (machine-readable output, errors included) and `--cwd <dir>`.
 Commands other than `init` look for `ddd-ts-kit.config.json` in the directory and its parents.
-Exit codes: `0` success, `1` violations, stale documentation or, under `--strict`, a commit over
-its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
+`ddd-ts-kit --help` prints the whole reference, `ddd-ts-kit <command> --help` (or `help <command>`)
+the usage and the notes of that command alone, and an option a command does not know is refused
+with its usage line as the fix. Exit codes: `0` success, `1` violations, stale documentation or,
+under `--strict`, a commit over its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
 not write some of them where it ran (a path the sandbox of an agent protects): they are listed
 under `unwritable`, every other file is written and none is deleted.
 
@@ -682,7 +684,7 @@ written from the same preset. Why, and which other contexts deserve one:
 
 ```
 ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]
-ddd-ts-kit generate --help --json
+ddd-ts-kit generate [<kind>] --help [--json]
 ```
 
 One run of `generate` does five things, in this order, and writes nothing when the first one
@@ -890,7 +892,8 @@ Next, in this order: the language of the context first, then the business decisi
 - `--local-only` refuses, naming the files and writing nothing, when the run would write outside
   `<contextsDir>/<context>/` and `test/e2e/*.e2e.spec.ts`. `generate --help --json` prints every
   kind with its `usage`, `aliases`, `summary` and `writesShared`, plus `shared` and `sharedWhen`:
-  what it writes outside its context, and when. Both serve a build split between workers (see
+  what it writes outside its context, and when; `generate <kind> --help --json` prints that kind
+  alone, as one object, and `generate <kind> --help` the same as text. Both serve a build split between workers (see
   `worker-scope`).
 - A fake is an entry point for knip and may have no importer for dependency-cruiser: a port
   and its fake generated before a use case needs them fail neither analyzer. A domain service

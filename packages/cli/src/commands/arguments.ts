@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { parseArgs, type ParseArgsConfig } from 'node:util';
-import { CliError } from '../cli-error';
+import { ArgumentsError } from './arguments-error';
 import { findRoot } from './find-root';
 
 type Options = NonNullable<ParseArgsConfig['options']>;
@@ -29,7 +29,7 @@ export class Arguments {
 
       return new Arguments(values, positionals);
     } catch (error) {
-      throw new CliError(
+      throw new ArgumentsError(
         error instanceof Error ? error.message : 'Invalid arguments.',
         'Run `ddd-ts-kit --help` for the accepted options.',
       );

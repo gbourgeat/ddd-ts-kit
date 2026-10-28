@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:18a95d128f1437e6 -->
+<!-- translation-of: token-economy.md sha256:c3833d983fbc7262 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -178,6 +178,12 @@ consommés, les politiques, les *jobs* et les contrats. `todo` répond une ligne
 src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to a Order: ...
 src/contexts/ordering/test/unit/place-order.handler.spec.ts:39  it.todo  applies the business decision to the order
 ```
+
+**Demander l'aide d'une seule commande.** `npx ddd-ts-kit <command> --help` affiche les lignes
+d'usage et les notes de cette seule commande, et `npx ddd-ts-kit generate <kind> --help --json`
+un seul genre, en un objet ; `npx ddd-ts-kit --help` affiche toute la référence, environ 40 Ko.
+Une option qu'une commande ne connaît pas est refusée avec la ligne d'usage de cette commande, ou
+du genre sous `generate`.
 
 **De petites tâches bien délimitées.** Un cas d'usage dans un contexte par tâche, puis une
 nouvelle session. Une tâche énoncée comme « ajouter la possibilité d'annuler un rendez-vous, dans
