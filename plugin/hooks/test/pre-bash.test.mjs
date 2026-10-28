@@ -63,6 +63,7 @@ test('only the conductor lands a branch with merge-trunk --to-land; a worker bri
     'npx ddd-ts-kit merge-trunk',
     'npx ddd-ts-kit merge-trunk --continue',
     'npx ddd-ts-kit merge-trunk --abort',
+    'git log --grep=--to-land',
   ]) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
@@ -106,43 +107,52 @@ test('a sub-agent never takes one side of a merge on the sources or the tests, a
   assert.equal(run('pre-bash', bash(root, 'git merge -X theirs main')).output, undefined);
 });
 
+// Each skips the hooks of the project: `--no-verify` and its short forms, other hooks, hooks turned off.
+const HOOKS_SKIPPED = [
+  'git commit --no-verify -m "x"',
+  'git commit -n -m x',
+  'git commit -anm x',
+  'git commit -m x --no-verif',
+  'git -C sub commit --no-verify',
+  'git push --no-verify',
+  'git push origin main --no-verify',
+  'git merge --no-verify feature',
+  'git pull --no-verify',
+  'git -c core.hooksPath=/dev/null commit -m x',
+  'git -c core.hooksPath=. push',
+  'git --config-env=core.hooksPath=HOOKS commit -m x',
+  'git --no-pager commit --no-verify -m x',
+  'git config core.hooksPath /dev/null',
+  'LEFTHOOK=0 git commit -m x',
+  'HUSKY=0 git push',
+  'env HUSKY=0 git commit -m x',
+  'export LEFTHOOK=0; git commit -m x',
+  'git add . && git commit --no-verify -m x',
+];
+
+// Each runs the hooks: a message or an option that only looks like a skip, a dry run, a command without git.
+const HOOKS_KEPT = [
+  'git commit -m "fix"',
+  'git commit -m "no-verify"',
+  'git commit -mnote',
+  'git commit -am "n"',
+  'git commit --no-edit',
+  'git push -n',
+  'git push --dry-run',
+  'git -c user.name=x commit -m x',
+  'git commit -m x -- -n',
+  'HUSKY=0 npm test',
+  'HUSKY=0 grep -rn git docs',
+  'echo --no-verify',
+];
+
 test('a git command that skips the hooks of the project is refused, with the hooks as the local gate', () => {
   const root = project();
-  for (const command of [
-    'git commit --no-verify -m "x"',
-    'git commit -n -m x',
-    'git commit -anm x',
-    'git commit -m x --no-verif',
-    'git -C sub commit --no-verify',
-    'git push --no-verify',
-    'git push origin main --no-verify',
-    'git merge --no-verify feature',
-    'git pull --no-verify',
-    'git -c core.hooksPath=/dev/null commit -m x',
-    'git -c core.hooksPath=. push',
-    'git config core.hooksPath /dev/null',
-    'LEFTHOOK=0 git commit -m x',
-    'HUSKY=0 git push',
-    'env HUSKY=0 git commit -m x',
-    'export LEFTHOOK=0; git commit -m x',
-    'git add . && git commit --no-verify -m x',
-  ]) {
+  for (const command of HOOKS_SKIPPED) {
     assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
     assert.match(reason(run('pre-bash', bash(root, command))), /local gate of the pipeline/, command);
   }
-  for (const command of [
-    'git commit -m "fix"',
-    'git commit -m "no-verify"',
-    'git commit -mnote',
-    'git commit -am "n"',
-    'git commit --no-edit',
-    'git push -n',
-    'git push --dry-run',
-    'git -c user.name=x commit -m x',
-    'git commit -m x -- -n',
-    'HUSKY=0 npm test',
-    'echo --no-verify',
-  ]) {
+  for (const command of HOOKS_KEPT) {
     assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
   }
   const advised = project({ guard: 'advise' });

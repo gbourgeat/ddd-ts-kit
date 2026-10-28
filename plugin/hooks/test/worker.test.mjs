@@ -231,6 +231,7 @@ const DEPENDENCY_CHANGES = [
   'npm pkg set dependencies.zod=4',
   'cd src && npm i -D zod',
   'bash -c "npm i -D zod"',
+  'npm audit fix',
 ];
 
 test('a context worker does not change the dependencies, wherever the flags stand', () => {
@@ -253,6 +254,7 @@ test('a context worker installs the lockfile freely', () => {
     'npm install --omit dev',
     'pnpm install --frozen-lockfile',
     'yarn install --immutable',
+    'npm audit',
     'git commit -m "build: npm i zod is for the conductor"',
   ]) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
@@ -312,6 +314,11 @@ const WORKER_COMMANDS_ALLOWED = [
   "node - <<'EOF'\nconsole.log(1)\nEOF",
   'python3 <<EOF\nprint(1)\nEOF',
   'cat build.js | node',
+  'deno eval "console.log(1)"',
+  'npx --version',
+  'npx ddd-ts-kit --version',
+  'npx ddd-ts-kit generate command invoicing IssueInvoice --public',
+  'git -C',
 ];
 
 const WORKER_COMMANDS_REFUSED = [
@@ -363,6 +370,18 @@ const WORKER_COMMANDS_REFUSED = [
   ['npx biome format --write .', /without `--no`.*npm run format/],
   ['npx -y biome@2 check .', /without `--no`/],
   ['pnpm dlx prettier --check .', /npm run format/],
+  ['npx -p prettier prettier --write src', /not the formatter of this project/],
+  ['find -name "*.orig" -delete', /`find -delete` changes files anywhere in the project/],
+  ['mv -t src/platform src/contexts/invoicing/a.ts', /`mv` changes src\/platform/],
+  ['cp -t src/platform src/contexts/invoicing/a.ts', /`cp` changes src\/platform/],
+  ['cp --target-directory=src/platform src/contexts/invoicing/a.ts', /`cp` changes src\/platform/],
+  ['git clean -f src/platform', /`git clean` changes src\/platform/],
+  ['git -c core.autocrlf=false checkout -- src/main.ts', /`git checkout` changes src\/main\.ts/],
+  ['git --no-pager rm src/main.ts', /`git rm` changes src\/main\.ts/],
+  [
+    'npx ddd-ts-kit generate command invoicing IssueInvoice --aggregate=Invoice --public',
+    /would also create the repository of Invoice/,
+  ],
 ];
 
 test('a context worker changes no file outside its scope, by any tool: the table of its Bash commands', () => {
@@ -434,6 +453,53 @@ test('what regenerate rewrites outside the scope, run by verify-slice inside inl
     reason(run('pre-bash', bash(root, 'npm test', agent))),
     /changed files outside your scope: src\/platform\/extra\.ts/,
   );
+});
+
+// Inline code of a worker: what it changes cannot be read in advance, only after it ran.
+const INLINE_CODE = "python3 - <<'EOF'\nprint(1)\nEOF";
+
+test('in advise mode, what the inline code of a worker changed outside its scope is put to the user', () => {
+  const root = committed({ guard: 'advise' });
+  const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-advised' };
+  assert.equal(run('pre-bash', bash(root, INLINE_CODE, agent)).output, undefined);
+  writeFileSync(join(root, 'package.json'), '{}\n');
+  assert.equal(decision(run('pre-bash', bash(root, 'npm test', agent))), 'ask');
+  assert.equal(decision(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent))), 'ask');
+});
+
+test('a shared file already changed before the inline code ran must get back the content it had then', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-3' };
+  writeFileSync(join(root, 'README.md'), 'Changed by the conductor.\n');
+  assert.equal(run('pre-bash', bash(root, INLINE_CODE, agent)).output, undefined);
+  rmSync(join(root, 'README.md'));
+  assert.match(
+    reason(run('pre-bash', bash(root, 'npm test', agent))),
+    /changed files outside your scope: README\.md\./,
+  );
+  writeFileSync(join(root, 'README.md'), 'Changed by the conductor.\n');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test('a file the inline code of a worker renamed outside its scope stops it under its new name', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-4' };
+  assert.equal(run('pre-bash', bash(root, INLINE_CODE, agent)).output, undefined);
+  git(root, 'mv', 'README.md', 'README.old.md');
+  assert.match(
+    reason(run('pre-bash', bash(root, 'npm test', agent))),
+    /changed files outside your scope: README\.old\.md\./,
+  );
+});
+
+test('a context worker never changes a file of another checkout, by a redirection or a copy', () => {
+  const root = project();
+  const other = project();
+  const agent = worker(root);
+  const redirected = run('pre-bash', bash(root, `echo x > ${other}/src/main.ts`, agent));
+  assert.match(reason(redirected), new RegExp(`writes ${other}/src/main\\.ts, in another checkout`));
+  const copied = run('pre-bash', bash(root, `cp src/main.ts ${other}/src/main.ts`, agent));
+  assert.match(reason(copied), new RegExp(`\`cp\` changes ${other}/src/main\\.ts\\.`));
 });
 
 test('inline code of the conductor is not watched', () => {

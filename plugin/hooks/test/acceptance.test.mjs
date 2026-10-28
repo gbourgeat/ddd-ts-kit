@@ -154,3 +154,27 @@ test('a command that moves to a worktree or checks a path before it reads or ver
     assert.equal(decision(run('pre-bash', input)), 'deny', input.tool_input.command);
   }
 });
+
+const VERDICT = 'test/acceptance/verdicts/us5-1.md';
+
+// Each prints a verdict, its script given by an option or not: a `w` it holds is in a pattern, an operand,
+// a text or a label, never a command.
+const SED_READINGS = [
+  `sed -n -e 1p --expression=2p ${VERDICT}`,
+  `sed -n '\\%^Verdict: w%p' ${VERDICT}`,
+  `sed -n '/Verdict\\/w/p' ${VERDICT}`,
+  `sed 'y/vw/VW/' ${VERDICT}`,
+  `sed '1a A wise line' ${VERDICT}`,
+  `sed -n ':wait;/^Verdict/p;t wait' ${VERDICT}`,
+  // An option left without its script reads as no script.
+  `sed -n 1p ${VERDICT} -e`,
+];
+
+test('a sed script that only prints reads a verdict, and one given by -e that writes it does not', () => {
+  const root = project();
+  for (const command of SED_READINGS) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  const writing = bash(root, `sed -n -e 1p -e 'w ${VERDICT}' /tmp/forged.md`);
+  assert.equal(decision(run('pre-bash', writing)), 'deny');
+});
