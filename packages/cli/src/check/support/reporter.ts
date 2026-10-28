@@ -5,5 +5,13 @@ import type { Report } from '../model/report';
 export function reporter(project: Project, ruleId: string): Report {
   const severity = project.severity(ruleId) === 'warn' ? 'warn' : 'error';
 
-  return ({ file, line }, message, fix) => ({ ruleId, severity, file, line, message, fix });
+  return ({ file, line, subjects }, message, fix) => ({
+    ruleId,
+    severity,
+    file,
+    line,
+    message,
+    fix,
+    ...(subjects === undefined || subjects.length === 0 ? {} : { subjects }),
+  });
 }

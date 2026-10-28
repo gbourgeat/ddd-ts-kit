@@ -64,7 +64,9 @@ entry of `eslint-suppressions.json` is a finding the project recorded: once it i
 fails until `npx eslint . --prune-suppressions` removes it; adding one (`--suppress-all`,
 `--suppress-rule`) is a suppression.
 
-`check --changed-since` judges the changed files only: a cycle, an unused export or a rule
+`check --changed-since` judges the changed files, and the findings whose cause is a changed file
+(a handler not registered in the module file, an adapter not wired, a use case not declared:
+they sit on one file and are repaired in another, and the `subjects` of the JSON name it) only: a cycle, an unused export or a rule
 broken by the combination with the trunk escapes it, which is why the last run is `verify`, on
 the whole tree, after merging the trunk. `npm run verify` chains types, lint, format, every spec with the coverage thresholds
 (`npm run test:coverage`), end-to-end tests, the architecture rules, the import graph

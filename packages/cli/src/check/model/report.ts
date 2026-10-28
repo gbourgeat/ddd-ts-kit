@@ -4,6 +4,8 @@ import type { Violation } from './violation';
 interface Place {
   readonly file: string;
   readonly line: number;
+  /** The other files the finding is repaired in. */
+  readonly subjects?: readonly string[] | undefined;
 }
 
 export type Report = (at: Place, message: string, fix: string) => Violation;
