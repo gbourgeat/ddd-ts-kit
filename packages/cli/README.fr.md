@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e5847ce5e5fda748 -->
+<!-- translation-of: README.md sha256:6dcd4c4bb685d51f -->
 
 # ddd-ts-kit
 
@@ -1365,15 +1365,28 @@ attend, directement ou non : un terme qu'ajoute une ligne qu'elle n'attend pas n
 cette ligne peut ne pas être fusionnée quand celle-ci se construit. Chaque mot que le glossaire ne
 définit pas (`undefined-word`) et chaque mot technique qu'aucun terme ne porte (`technical-word`)
 est signalé une fois par ligne, avec le `--term` à ajouter, sans vagues, et la commande sort avec
-1 : un worker qui suivrait cette ligne telle qu'écrite serait refusé. Les commandes que le
-générateur a refusées pour une autre raison (un `--module` manquant, un agrégat qu'aucune ligne ne
-génère, un amont non déclaré, un handler écrit à la main dont un spec de bout en bout a besoin)
-sont listées après les vagues sous `Refused for another reason than a word when the plan was
-replayed`, sans échec : les noms qu'elles introduiraient après ce refus ne sont pas jugés. Le rejeu
-coûte environ un dixième de seconde par commande. `--json` affiche
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], notReplayed: [{ row, command, refusal }] }`,
+1 : un worker qui suivrait cette ligne telle qu'écrite serait refusé. De même pour chaque commande
+que le générateur refuse pour une autre raison (`refused-command` : un `--module` manquant dans un
+contexte divisé en modules, `--grant` sur un projet dont les droits ne sont pas des rôles, un
+agrégat qu'aucune ligne ne génère, un amont non déclaré, une option inconnue), sans vagues et avec
+la sortie 1, le refus du générateur et sa correction affichés sous la ligne : corrigez la ligne.
+Quand le générateur l'a refusée pour ce sur quoi elle s'appuie (un agrégat, un port, un cas
+d'usage, un groupe de routes), le rejeu dit quelle ligne le génère : une ligne que le plan rejoue
+plus tard, que la ligne n'attend pas (`add <id> to its Depends on`, et cet identifiant dans
+`rows`), une commande suivante de la même ligne (mettez-la en premier), une ligne que le
+générateur refuse aussi, ou aucune (ajoutez la commande). Une ligne `in progress` est rejouée,
+pour que les lignes d'après trouvent ce qu'elle génère, et ses noms sont jugés, mais ses refus ne
+sont pas des problèmes : ses commandes ont pu déjà tourner dans le projet, et le générateur refuse
+une seconde exécution de certaines (un port déjà lié à un adaptateur, un enregistrement de décision
+dont le numéro est pris) ; une commande dont les fichiers existent est sinon sautée par le générateur,
+pas refusée. Le rejeu exécute chaque commande pour de vrai dans la copie, jamais avec `--dry-run`,
+pour que la commande suivante trouve ses fichiers. Le rejeu coûte environ un dixième de seconde
+par commande. `--json` affiche
+`{ file, context, problems: [{ kind, rows, message, command?, refusal?, fix?, prerequisite? }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }] }`,
 `story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
-une ligne que le contexte demandé ne montre pas.
+une ligne que le contexte demandé ne montre pas ; `command`, `refusal`, `fix` et `prerequisite`
+sont ceux d'un `refused-command`, `fix` et `prerequisite` valant `null` quand le générateur n'en
+donne pas.
 
 ## acceptance
 

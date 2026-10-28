@@ -1,4 +1,4 @@
-import type { Batch, NotReplayed, OtherStoryRow, PlannedRow, WaitedRow, Wave, WavePlan } from './wave-plan';
+import type { Batch, OtherStoryRow, PlanProblem, PlannedRow, WaitedRow, Wave, WavePlan } from './wave-plan';
 
 /** Before the squash merge of each branch, its migrations get their real names and the trunk comes in from what already landed. */
 const BEFORE_EACH_MERGE =
@@ -8,23 +8,17 @@ const BEFORE_EACH_MERGE =
 const WORD_PROBLEMS: readonly string[] = ['undefined-word', 'technical-word'];
 
 /**
- * `plan-waves` for a reader: the problems alone when there are some, else each wave and its
- * batches, the rows another story waits for, then the merge order and what to run before each
- * merge; in both cases, the planned commands the generator refused for another reason than a word.
+ * `plan-waves` for a reader: the problems alone when there are some, a refused command with what
+ * the generator says under it; else each wave and its batches, the rows another story waits for,
+ * then the merge order and what to run before each merge.
  */
 export function formatPlan(plan: WavePlan): string {
   const scope = plan.context === null ? plan.file : `${plan.file}, context ${plan.context}`;
 
   if (plan.problems.length > 0) {
-    const words = plan.problems.every((problem) => WORD_PROBLEMS.includes(problem.kind));
-
-    return [
-      words
-        ? `Waves (${scope}): none, the generator refuses names of these rows: add their terms first`
-        : `Waves (${scope}): none, the plan cannot be ordered until these rows are fixed`,
-      ...plan.problems.map((problem) => `  ${problem.message}`),
-      ...notReplayedLines(plan.notReplayed),
-    ].join('\n');
+    return [`Waves (${scope}): none, ${problemsHeading(plan.problems)}`, ...plan.problems.flatMap(problemLines)].join(
+      '\n',
+    );
   }
 
   const batches = plan.waves.flatMap((wave) => wave.batches);
@@ -41,19 +35,32 @@ export function formatPlan(plan: WavePlan): string {
     ...otherStoriesLines(plan),
     `Merge order: ${plan.mergeOrder.join(', ')}`,
     BEFORE_EACH_MERGE,
-    ...notReplayedLines(plan.notReplayed),
   ].join('\n');
 }
 
-/** The commands the replay could not run to their end: the names they introduce after the refusal were not judged. */
-function notReplayedLines(commands: readonly NotReplayed[]): string[] {
-  if (commands.length === 0) {
-    return [];
+function problemsHeading(problems: readonly PlanProblem[]): string {
+  if (problems.some((problem) => problem.kind === 'refused-command')) {
+    return 'the generator refuses commands of these rows as written: fix the rows first';
   }
 
+  return problems.every((problem) => WORD_PROBLEMS.includes(problem.kind))
+    ? 'the generator refuses names of these rows: add their terms first'
+    : 'the plan cannot be ordered until these rows are fixed';
+}
+
+/** A problem on its line; a refused command, then what the generator says and where the plan stands on what it builds on. */
+function problemLines(problem: PlanProblem): string[] {
+  if (problem.kind !== 'refused-command') {
+    return [`  ${problem.message}`];
+  }
+
+  const under = (text: string): string[] => text.split('\n').map((line) => `    ${line}`);
+
   return [
-    'Refused for another reason than a word when the plan was replayed (the names after the refusal not judged):',
-    ...commands.map((command) => `  #${command.row} \`${command.command}\`: ${command.refusal}`),
+    `  #${problem.rows[0] ?? ''} \`${problem.command}\` is refused by the generator:`,
+    ...under(problem.refusal),
+    ...(problem.fix === null ? [] : under(`fix: ${problem.fix}`)),
+    ...(problem.prerequisite === null ? [] : under(problem.prerequisite)),
   ];
 }
 

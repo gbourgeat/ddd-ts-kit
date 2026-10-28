@@ -1292,15 +1292,25 @@ context as it stands plus the `--term` of the row and of the rows it waits for, 
 term a row it does not wait for adds is not counted, since that row may not be merged when this
 one is built. Each word it does not define (`undefined-word`) and each technical word no term
 holds (`technical-word`) is reported once per row, with the `--term` to add, without waves, and
-the command exits 1: a worker following that row as written would be refused. The commands the
-generator refused for another reason (a missing `--module`, an aggregate no row generates, an
-upstream not declared, a handler written by hand that an end-to-end spec needs) are listed after
-the waves under `Refused for another reason than a word when the plan was replayed`, without
-failing: the names they would introduce after that refusal are not judged. The replay costs about
+the command exits 1: a worker following that row as written would be refused. So is each command
+the generator refuses for another reason (`refused-command`: a missing `--module` in a context
+divided into modules, `--grant` on a project whose rights are not roles, an aggregate no row
+generates, an upstream not declared, an unknown flag), without waves and with exit 1, the refusal
+of the generator and its fix printed under the row: fix the row. When the generator refused it for
+what it builds on (an aggregate, a port, a use case, a route group), the replay says which row
+generates it: a row the plan runs later, which the row does not wait for (`add <id> to its Depends
+on`, and that id in `rows`), a later command of the same row (put it first), a row the generator
+refuses too, or none (add the command). A row `in progress` is replayed, so that the rows after it
+find what it generates, and its names are judged, but its refusals are not problems: its commands
+may have run in the project already, and the generator refuses a second run of some of them (a
+port already bound to an adapter, a decision record whose number is taken); a command whose files
+exist is otherwise skipped by the generator, not refused. The replay runs each command for real in
+the copy, never with `--dry-run`, so that the next command finds its files. The replay costs about
 a tenth of a second per command. `--json` prints
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], notReplayed: [{ row, command, refusal }] }`,
+`{ file, context, problems: [{ kind, rows, message, command?, refusal?, fix?, prerequisite? }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }] }`,
 `story` being `null` for a row whose id names none and `batch` `null` for a row the context asked
-for does not show.
+for does not show; `command`, `refusal`, `fix` and `prerequisite` are those of a `refused-command`,
+`fix` and `prerequisite` `null` when the generator gives none.
 
 ## acceptance
 

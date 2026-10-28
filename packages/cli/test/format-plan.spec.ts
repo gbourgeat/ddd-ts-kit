@@ -31,24 +31,16 @@ function planOf(overrides: Partial<WavePlan>): WavePlan {
     waves: [],
     mergeOrder: [],
     otherStories: [],
-    notReplayed: [],
     ...overrides,
   };
 }
 
-describe('plan-waves for a reader', () => {
-  it('says the names to define first when only words are refused, then the commands refused for another reason', () => {
+describe('plan-waves for a reader, a plan that cannot be followed', () => {
+  it('says the names to define first when only words are refused', () => {
     const text = formatPlan(
       planOf({
         problems: [
           { kind: 'undefined-word', rows: ['2'], message: '#2 `generate command billing RefundInvoice`: ...' },
-        ],
-        notReplayed: [
-          {
-            row: '3',
-            command: 'generate command billing PayInvoice --aggregate Order',
-            refusal: 'No aggregate Order.',
-          },
         ],
       }),
     );
@@ -56,11 +48,51 @@ describe('plan-waves for a reader', () => {
     expect(text.split('\n')).toEqual([
       'Waves (docs/architecture/slices.md): none, the generator refuses names of these rows: add their terms first',
       '  #2 `generate command billing RefundInvoice`: ...',
-      'Refused for another reason than a word when the plan was replayed (the names after the refusal not judged):',
-      '  #3 `generate command billing PayInvoice --aggregate Order`: No aggregate Order.',
     ]);
   });
 
+  it('asks to fix the rows when a command is refused, with what the generator says under it, each line of it indented', () => {
+    const text = formatPlan(
+      planOf({
+        problems: [
+          { kind: 'undefined-word', rows: ['2'], message: '#2 `generate command billing RefundInvoice`: ...' },
+          {
+            kind: 'refused-command',
+            rows: ['3', '4'],
+            command: 'generate command billing PayInvoice --aggregate Order',
+            refusal: 'The aggregate Order does not exist in "billing".\nIt is created by an aggregate command.',
+            fix: 'Create it first with `ddd-ts-kit generate aggregate billing Order`.',
+            prerequisite: '#4 generates it, but #3 does not wait for it: add 4 to its Depends on.',
+            message: '#3 ...',
+          },
+          {
+            kind: 'refused-command',
+            rows: ['5'],
+            command: 'generate service billing',
+            refusal: 'Something broke.',
+            fix: null,
+            prerequisite: null,
+            message: '#5 ...',
+          },
+        ],
+      }),
+    );
+
+    expect(text.split('\n')).toEqual([
+      'Waves (docs/architecture/slices.md): none, the generator refuses commands of these rows as written: fix the rows first',
+      '  #2 `generate command billing RefundInvoice`: ...',
+      '  #3 `generate command billing PayInvoice --aggregate Order` is refused by the generator:',
+      '    The aggregate Order does not exist in "billing".',
+      '    It is created by an aggregate command.',
+      '    fix: Create it first with `ddd-ts-kit generate aggregate billing Order`.',
+      '    #4 generates it, but #3 does not wait for it: add 4 to its Depends on.',
+      '  #5 `generate service billing` is refused by the generator:',
+      '    Something broke.',
+    ]);
+  });
+});
+
+describe('plan-waves for a reader, the waves', () => {
   it('says every row is done when no batch is left', () => {
     expect(formatPlan(planOf({ waves: [{ wave: 1, batches: [] }] }))).toBe(
       'Waves (docs/architecture/slices.md): none, every row is done',

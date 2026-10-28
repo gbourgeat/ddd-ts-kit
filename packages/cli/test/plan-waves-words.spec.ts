@@ -50,7 +50,6 @@ describe('plan-waves, the names of the planned commands', () => {
         },
       ],
       waves: [],
-      notReplayed: [],
     });
 
     expect(fs.existsSync(path.join(root, 'src/contexts/billing/application/commands/refund-invoice'))).toBe(false);
@@ -77,21 +76,5 @@ describe('plan-waves, the names of the planned commands', () => {
 
     expect(unrelated.code).toBe(1);
     expect(jsonAt(unrelated.json(), 'problems')).toEqual([expect.objectContaining({ rows: ['US4.02'] })]);
-  });
-
-  it('lists without failing a command the generator refuses for another reason, its later names not judged', () => {
-    const replayed = plan(
-      '| US4.01 | billing | slice | Pay order | `generate command billing PayInvoice --aggregate Order --permission invoice.pay` | | billing | todo |\n',
-    );
-
-    expect(replayed.code).toBe(0);
-
-    expect(jsonAt(replayed.json(), 'notReplayed')).toEqual([
-      {
-        row: 'US4.01',
-        command: 'generate command billing PayInvoice --aggregate Order --permission invoice.pay',
-        refusal: expect.stringContaining('Order'),
-      },
-    ]);
   });
 });
