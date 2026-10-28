@@ -544,6 +544,7 @@ const authenticator = keycloakAuthenticator({
   audience: 'shop-api',              // what the `aud` claim must name
   clientId: 'shop-api',              // optional: its client roles join the realm roles
   tenantClaim: 'organization',       // optional, default `tenant_id`
+  requireExpiry: true,               // the default: a token without exp is refused
 });
 ```
 

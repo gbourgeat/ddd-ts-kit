@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:1c072268d638fe2e -->
+<!-- translation-of: identity.md sha256:51d257df7f08952b -->
 
 # Identité : Keycloak ou simple OIDC et JWT
 
@@ -154,7 +154,7 @@ plus bas.
 | | Keycloak avec le *preset* | Tout fournisseur OIDC avec `JwtAuthenticator` | `--authn none` |
 |---|---|---|---|
 | Ce que c'est | fournisseur d'identité open source, Apache-2.0, projet en incubation à la CNCF ; dernière version 26.8.0 (2026-10-01) | tout émetteur de JWT signés avec un point d'accès JWKS : un service d'identité hébergé, un autre serveur auto-hébergé, un service de jetons interne | un authentificateur de développement qui lit un en-tête ; il lève une erreur en production |
-| Configuration dans le kit | URL de base, realm, audience, identifiant de client et *claim* de *tenant* facultatifs | URL du jeu de clés ou une clé, émetteur, audience, algorithmes autorisés, `toActor` facultatif | aucune |
+| Configuration dans le kit | URL de base, realm, audience, identifiant de client et *claim* de *tenant* facultatifs, `requireExpiry` (`true` par défaut) | URL du jeu de clés ou une clé, émetteur, audience, algorithmes autorisés, `requireExpiry` (`true` par défaut), `toActor` facultatif | aucune |
 | Émetteur et jeu de clés | déduits de l'URL de base et du realm | donnés explicitement | sans objet |
 | Rôles | les rôles du realm, plus les rôles de client d'un client quand il est nommé | `realm_access.roles`, sinon `roles`, jamais fusionnés et jamais `scope` ; ou votre `toActor` | ce que dit l'en-tête |
 | *Tenant* | un *claim* texte ; une liste ou le *claim* `organization` : un seul élément nomme le *tenant*, plusieurs forment l'attribut `tenants`, parmi lesquels une requête HTTP en nomme un | la même chose, depuis le *claim* de *tenant* (`tenant_id` par défaut) | ce que dit l'en-tête |

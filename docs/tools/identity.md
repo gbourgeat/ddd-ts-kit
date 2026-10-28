@@ -149,7 +149,7 @@ Facts about third-party products were checked on 2026-10-10 against the sources 
 | | Keycloak with the preset | Any OIDC provider with `JwtAuthenticator` | `--authn none` |
 |---|---|---|---|
 | What it is | open-source identity provider, Apache-2.0, a CNCF incubating project; latest release 26.8.0 (2026-10-01) | any issuer of signed JWTs with a JWKS endpoint: a hosted identity service, another self-hosted server, an internal token service | a development authenticator reading a header; it throws in production |
-| Configuration in the kit | base URL, realm, audience, optional client id and tenant claim | key set URL or a key, issuer, audience, allowed algorithms, optional `toActor` | none |
+| Configuration in the kit | base URL, realm, audience, optional client id and tenant claim, `requireExpiry` (default `true`) | key set URL or a key, issuer, audience, allowed algorithms, `requireExpiry` (default `true`), optional `toActor` | none |
 | Issuer and key set | derived from the base URL and the realm | given explicitly | not applicable |
 | Roles | realm roles, plus the client roles of one client when it is named | `realm_access.roles`, else `roles`, never merged and never `scope`; or your `toActor` | whatever the header says |
 | Tenant | a text claim; a list or the `organization` claim: one names the tenant, several are the `tenants` attribute, among which a request names one | the same, from the tenant claim (`tenant_id` by default) | whatever the header says |

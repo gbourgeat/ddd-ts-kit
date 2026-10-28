@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ccf3ae0981ba391d -->
+<!-- translation-of: README.md sha256:4ed10fed2dbe675b -->
 
 # @ddd-ts-kit/auth
 
@@ -563,6 +563,7 @@ const authenticator = keycloakAuthenticator({
   audience: 'shop-api',              // ce que le claim `aud` doit nommer
   clientId: 'shop-api',              // optionnel : ses rôles de client rejoignent les rôles du realm
   tenantClaim: 'organization',       // optionnel, `tenant_id` par défaut
+  requireExpiry: true,               // la valeur par défaut : un jeton sans exp est refusé
 });
 ```
 
