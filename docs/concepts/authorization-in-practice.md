@@ -146,8 +146,8 @@ which included role, then where the request may act.
 In a generated project, the roles live in `platform/auth/roles/roles.ts`, and the super-admin holds
 `*`. A new permission is therefore reached by administrators only until a role holds it by
 name: `generate command|query|file-upload ... --permission <p> --grant <role>` writes the grant
-(and adds the role to `platform/auth/authorization/role.ts` when it is new), and without `--grant` the `next`
-steps of the generator point at the roles to edit.
+(and adds the role to `platform/auth/authorization/role.ts` when it is new), and without `--grant` a step of the
+generator (`todos`) points at the roles to edit.
 [`authz/granted`](../ARCHITECTURE.md#3-dependency-rules) warns on a permission that only the
 bare `*` reaches; a permission meant for administrators only is granted to `Role.Admin` by
 name, so that review reads the intent. Under relationships the same rule asks who is an operator:

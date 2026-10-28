@@ -83,7 +83,7 @@ describe('the guidance init writes', () => {
     }
 
     expect(guide).toMatch(
-      /1\. `describe <context> --json` and the `CONTEXT\.md`[^\n]*\n2\. Open only what the `next` list[^\n]*\n3\. `check --changed-since <ref>`/,
+      /1\. `describe <context> --json` and the `CONTEXT\.md`[^\n]*\n2\. Open only the places a generator lists under `todos`[^\n]*\n3\. `check --changed-since <ref>`/,
     );
 
     // Skills that no longer exist.

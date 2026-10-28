@@ -649,7 +649,7 @@ pipelines call, `test:coverage` (every spec once, each context and layer held to
 and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck` call by path
 (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` would run the older one.
 
-`init` and `generate context` start with the language: the first entry of `next` is the glossary
+`init` and `generate context` start with the language: the first entry of `todos` is the glossary
 of the context to fill in. Both refuse a context named `schema`, on every ORM: on Prisma the models
 of a context live in `prisma/schema/<context>.prisma`, and `prisma/schema/schema.prisma` is the
 main file every context shares (`init --force` moves a project to Prisma).
@@ -716,9 +716,9 @@ would update src/contexts/notification/notification.permissions.ts
 would update src/contexts/notification/application/application.declarations.ts
 
 Next, in this order: the language of the context first, then the business decisions only you can make
-  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor first, ...
-  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  decide what "archive notification" does to a Notification: ...
-  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour of "archive notification": ...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  "archive notification" changes Notifications that exist and writes nothing until you decide...
+  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour...
 ```
 
 | Kind | Arguments | Writes |
@@ -805,7 +805,7 @@ Next, in this order: the language of the context first, then the business decisi
   handler finds what to act on. Parameters that are optional or have a default are left out of the call.
 - **The grant of a job.** A job whose command is protected sends it as `system:<context>.<name>`,
   which has no right unless the model gives it one. `generate job` writes the grant where the model
-  makes it one line, in a `system-grants` marker region, and `next` points at that line:
+  makes it one line, in a `system-grants` marker region, and `todos` points at that line:
   `--authz rbac`, the id of the permission under the role `system` of `platform/auth/roles/roles.ts`,
   the role `createAuthorizer` gives every system actor (`systemRole`); `--authz abac`, a
   `permit('system-<job>', [permission], ({ actor }) => actor.id === 'system:<job>')` rule in
@@ -838,7 +838,7 @@ Next, in this order: the language of the context first, then the business decisi
   other name. With `--authz rebac` the requirement names the context as its resource, a starting
   point to replace by the element the right bears on. With `--authz rbac`, `--grant <role>` gives
   the permission to the role in `platform/auth/roles/roles.ts` (the role joins `role.ts` when it is
-  new); without it, a `next` step says the grant is left to do (`authz/granted`).
+  new); without it, a step of `todos` says the grant is left to do (`authz/granted`).
 - `route` hands `actorOf(context.principal)` to a protected use case and sets `security` (the scheme
   of `--authn`, or `false` for a public one). `integration-handler` carries `systemActor('<context>.<name>')`
   for the command it builds; behind a broker it listens on the subscriber of its context
@@ -881,9 +881,12 @@ Next, in this order: the language of the context first, then the business decisi
   goes through `createTestBuses()` of `@ddd-ts-kit/testing`, whose `dispatching(fake)` makes the
   save of a fake announce its events to `domainEvents`. The arrangement several specs of a
   context share is generated once, `generate test-world`, in `test/worlds/`.
-- `--json` prints `{ dryRun, created, updated, skipped, next, todos, notes }`. `next` lists the
-  `TODO(domain)` places as `file:line`, the glossary first, then the lines a command wrote for the
-  team to check (the grant of a job); `todos` adds their text.
+- `--json` prints `{ dryRun, created, updated, deleted, skipped, unwritable, todos, notes }`.
+  `todos` lists the `TODO(domain)` places, the glossary first, each as `{ file, line, gist }`:
+  `gist` is the first words of the marker (up to its first `:` or `;`, twelve words at most), whose
+  whole sentence is in the file at that line. Then come the lines a command wrote for the team to
+  check (the grant of a job), which no file explains: those also carry their whole `text`. The text
+  output prints each place on one line, `file:line  gist` (the whole `text` of a step).
 - A kind that needs something else to compile either creates it (a missing repository or
   domain event) or stops with the command that creates it (a missing aggregate, use case or
   route).

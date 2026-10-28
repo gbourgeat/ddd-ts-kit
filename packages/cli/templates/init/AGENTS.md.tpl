@@ -13,7 +13,7 @@ A ddd-ts-kit project: one bounded context per directory of `{{config.contextsDir
 ## Read less
 
 1. `describe <context> --json` and the `CONTEXT.md` of the context before the tree: do not browse `{{config.sourceRoot}}/` to learn what exists.
-2. Open only what the `next` list of a generator (`file:line`) or a violation names.
+2. Open only the places a generator lists under `todos` (`file:line`, the sentence is in the file) or a violation names.
 3. `check --changed-since <ref>` and the tests of the context while iterating; `npm run verify` once at the end.
 
 ## Rules by layer

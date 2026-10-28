@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:6c870072d786935e -->
+<!-- translation-of: token-economy.md sha256:2b69f752c274335f -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -46,7 +46,7 @@ qui les a lues.
 | **Des chemins prévisibles.** L'arborescence canonique est fermée, et le rôle d'un fichier tient dans son répertoire et son suffixe (`*.aggregate.ts`, `*.handler.ts`, `*.repository.ts`) | chercher « où est le gestionnaire de X » : le chemin se calcule à partir du nom du cas d'usage |
 | **Un concept par petit fichier** (`naming/one-concept-per-file`, un plafond de taille sur les fonctions et les fichiers) | lire un gros fichier pour en utiliser dix lignes |
 | **Du code répétitif généré.** `generate` écrit le fichier, sa *spec*, son *builder* et son câblage | écrire, et se tromper subtilement sur, la visibilité du constructeur, le suffixe, l'enregistrement |
-| **Une sortie `--json` avec `next`** : le `file:line` de chaque `TODO(domain)` | ouvrir les fichiers générés pour trouver ce qui reste à décider |
+| **Une sortie `--json` avec `todos`** : le `file:line` de chaque `TODO(domain)`, avec ses premiers mots | ouvrir les fichiers générés pour trouver ce qui reste à décider |
 | **Des cartes lisibles par une machine.** `ddd-ts-kit list --json` donne les contextes, agrégats, cas d'usage, événements, gestionnaires et permissions ; `describe <context> --json` donne un contexte sous forme de faits (les cas d'usage avec leur permission, les routes, les événements, les ports avec leurs adaptateurs, les politiques, les *gateways*, les dépendances) ; `status` et `todo` donnent la prochaine étape du plan, les tranches et les marqueurs restants sous forme de `file:line` | parcourir l'arborescence pour apprendre ce qui existe et ce qui reste |
 | **Des règles délimitées par chemin.** `init` écrit `.claude/rules/*.md`, chacune délimitée par un *frontmatter* `paths`, les mêmes règles pour Copilot dans `.github/instructions/`, délimitées par `applyTo`, à côté d'un `AGENTS.md` court que lit chaque agent | garder les règles du domaine en contexte pendant qu'il modifie une route, et l'inverse |
 | **Une documentation générée par contexte.** `CONTEXT.md` avec ses listes générées et sa `## Reference`, `docs/context-map.md` | lire le code d'un contexte voisin pour apprendre ce qu'il publie |
@@ -87,7 +87,7 @@ utilisent les formats de Claude Code, puisque le *plugin* du kit le cible.
 ## Habitudes
 
 **Générer, puis remplir.** Lancez le générateur avec `--json`, ouvrez seulement les emplacements
-listés sous `next`, implémentez chaque `TODO(domain)`, remplacez chaque `it.todo`. Ne demandez pas
+listés sous `todos`, implémentez chaque `TODO(domain)`, remplacez chaque `it.todo`. Ne demandez pas
 à un agent de « créer un agrégat » : demandez-lui de lancer le générateur et de remplir les trois
 décisions qu'il liste.
 
@@ -95,7 +95,10 @@ décisions qu'il liste.
 npx ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order --json
 ```
 
-répond, en abrégé (`todos` reprend chaque endroit de `next` avec la décision à y prendre) :
+répond, en abrégé et mis en page ici pour la lecture (la CLI l'affiche sur une ligne). Chaque
+endroit de `todos` donne les premiers mots de son `TODO(domain)`, dont la phrase entière est dans
+le fichier à cette ligne ; une étape sur une ligne que la commande a changée, écrite dans aucun
+fichier, donne aussi son `text` entier :
 
 ```json
 {
@@ -116,11 +119,28 @@ répond, en abrégé (`todos` reprend chaque endroit de `next` avec la décision
   "deleted": [],
   "skipped": [],
   "unwritable": [],
-  "next": [
-    "src/contexts/ordering/application/commands/place-order/place-order.command.ts:7",
-    "src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16",
-    "src/contexts/ordering/test/unit/place-order.handler.spec.ts:38",
-    "src/platform/auth/roles/roles.ts:15"
+  "todos": [
+    {
+      "file": "src/contexts/ordering/application/commands/place-order/place-order.command.ts",
+      "line": 7,
+      "gist": "declare the input of \"place order\" as a constructor with the actor..."
+    },
+    {
+      "file": "src/contexts/ordering/application/commands/place-order/place-order.handler.ts",
+      "line": 12,
+      "gist": "\"place order\" changes Orders that exist and writes nothing until you decide..."
+    },
+    {
+      "file": "src/contexts/ordering/test/unit/place-order.handler.spec.ts",
+      "line": 36,
+      "gist": "replace each entry below by a test named after the business behaviour..."
+    },
+    {
+      "file": "src/platform/auth/roles/roles.ts",
+      "line": 15,
+      "gist": "check this grant",
+      "text": "check this grant: the role customer now holds ordering:order.place."
+    }
   ]
 }
 ```
@@ -434,7 +454,7 @@ guide ne le recommande pas par défaut.
 |---|---|---|---|
 | « Qu'est-ce qui existe dans ce projet ? » | `ddd-ts-kit list --json`, `describe <context> --json`, `CONTEXT.md`, `docs/context-map.md` | élevée : remplace le parcours de l'arborescence | aucun, généré |
 | « Où va ce fichier, comment s'appelle-t-il ? » | l'arborescence canonique, `ddd-ts-kit generate` | élevée : ni recherche, ni code répétitif écrit | aucun |
-| « Que reste-t-il à écrire dans ce qui a été généré ? » | `generate --json` (`next`, `todos`), `ddd-ts-kit todo [<context>]`, `ddd-ts-kit status` | élevée : n'ouvre que les endroits à remplir | aucun |
+| « Que reste-t-il à écrire dans ce qui a été généré ? » | `generate --json` (`todos`), `ddd-ts-kit todo [<context>]`, `ddd-ts-kit status` | élevée : n'ouvre que les endroits à remplir | aucun |
 | « Pourquoi ce contrôle échoue-t-il ? » | le `fix` de la violation, `ddd-ts-kit explain <rule-id>` | moyenne : pas de lecture de la référence | aucun |
 | « Qui appelle ou implémente ce symbole ? » | un *plugin* de serveur de langage de l'agent, ou Serena | moyenne à élevée sur les questions entre contextes | installer un serveur de langage et un *plugin* ou un serveur MCP ; de la mémoire pendant l'indexation |
 | « Chaque endroit qui a cette forme de code », une réécriture mécanique | ast-grep | moyenne : une requête, aucun faux positif à lire | un binaire ; apprendre la syntaxe des motifs |

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5902fab48898376c -->
+<!-- translation-of: README.md sha256:48faa3f5f2eee81a -->
 
 # ddd-ts-kit
 
@@ -675,7 +675,7 @@ bibliothèque, et `@typescript/native` (`npm:typescript@~7.0.2`), que `build` et
 appellent par son chemin (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` lancerait
 l'ancien.
 
-`init` et `generate context` commencent par le langage : la première entrée de `next` est le
+`init` et `generate context` commencent par le langage : la première entrée de `todos` est le
 glossaire du contexte à remplir. Tous deux refusent un contexte nommé `schema`, quel que soit
 l'ORM : sous Prisma les modèles d'un contexte vivent dans `prisma/schema/<context>.prisma`, et
 `prisma/schema/schema.prisma` est le fichier principal que tous les contextes partagent (un projet
@@ -745,9 +745,9 @@ would update src/contexts/notification/notification.permissions.ts
 would update src/contexts/notification/application/application.declarations.ts
 
 Next, in this order: the language of the context first, then the business decisions only you can make
-  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor first, ...
-  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  decide what "archive notification" does to a Notification: ...
-  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour of "archive notification": ...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  "archive notification" changes Notifications that exist and writes nothing until you decide...
+  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour...
 ```
 
 | Genre | Arguments | Écrit |
@@ -838,7 +838,7 @@ Next, in this order: the language of the context first, then the business decisi
 - **L'autorisation d'un *job*.** Un *job* dont la commande est protégée l'envoie en tant que
   `system:<context>.<name>`, qui n'a aucun droit tant que le modèle ne lui en donne pas.
   `generate job` écrit l'autorisation là où le modèle en fait une ligne, dans une région marquée
-  `system-grants`, et `next` pointe vers cette ligne : `--authz rbac`, l'identifiant de la
+  `system-grants`, et `todos` pointe vers cette ligne : `--authz rbac`, l'identifiant de la
   permission sous le rôle `system` de `platform/auth/roles/roles.ts`, le rôle que `createAuthorizer`
   donne à chaque acteur système (`systemRole`) ; `--authz abac`, une règle
   `permit('system-<job>', [permission], ({ actor }) => actor.id === 'system:<job>')` dans
@@ -872,7 +872,7 @@ Next, in this order: the language of the context first, then the business decisi
   glossaire comme tout autre nom. Avec `--authz rebac`, l'exigence nomme le contexte comme sa
   ressource, un point de départ à remplacer par l'élément sur lequel porte le droit. Avec
   `--authz rbac`, `--grant <role>` accorde la permission au rôle dans `platform/auth/roles/roles.ts`
-  (le rôle rejoint `role.ts` s'il est nouveau) ; sans lui, une étape `next` dit que
+  (le rôle rejoint `role.ts` s'il est nouveau) ; sans lui, une étape de `todos` dit que
   l'attribution reste à faire (`authz/granted`).
 - `route` remet `actorOf(context.principal)` à un cas d'usage protégé et pose `security` (le
   schéma de `--authn`, ou `false` pour un cas d'usage public). `integration-handler` porte
@@ -923,9 +923,13 @@ Next, in this order: the language of the context first, then the business decisi
   `createTestBuses()` de `@ddd-ts-kit/testing`, dont `dispatching(fake)` fait que la sauvegarde
   d'un *fake* annonce ses événements à `domainEvents`. La mise en place que partagent plusieurs
   *specs* d'un contexte se génère une fois, `generate test-world`, dans `test/worlds/`.
-- `--json` affiche `{ dryRun, created, updated, skipped, next, todos, notes }`. `next` liste les
-  endroits `TODO(domain)` en `file:line`, le glossaire d'abord, puis les lignes qu'une commande a
-  écrites pour que l'équipe les vérifie (l'autorisation d'un *job*) ; `todos` ajoute leur texte.
+- `--json` affiche `{ dryRun, created, updated, deleted, skipped, unwritable, todos, notes }`.
+  `todos` liste les endroits `TODO(domain)`, le glossaire d'abord, chacun en `{ file, line, gist }` :
+  `gist` donne les premiers mots du marqueur (jusqu'à son premier `:` ou `;`, douze mots au plus),
+  dont la phrase entière est dans le fichier à cette ligne. Viennent ensuite les lignes qu'une
+  commande a écrites pour que l'équipe les vérifie (l'autorisation d'un *job*), qu'aucun fichier
+  n'explique : celles-là portent aussi leur `text` entier. La sortie texte affiche chaque endroit
+  sur une ligne, `file:line  gist` (le `text` entier d'une étape).
 - Un genre qui a besoin d'autre chose pour compiler soit le crée (un *repository* ou un événement
   du domaine manquant), soit s'arrête avec la commande qui le crée (un agrégat, un cas d'usage ou
   une route manquant).

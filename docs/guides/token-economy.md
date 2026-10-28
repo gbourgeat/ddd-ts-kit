@@ -43,7 +43,7 @@ instead of 900 saves on every later turn of the session, not only on the turn th
 | **Predictable paths.** The canonical tree is closed, and a file's role is in its directory and suffix (`*.aggregate.ts`, `*.handler.ts`, `*.repository.ts`) | search for "where is the handler of X": the path is computable from the use case name |
 | **One concept per small file** (`naming/one-concept-per-file`, a size ceiling on functions and files) | read a large file to use ten lines of it |
 | **Generated boilerplate.** `generate` writes the file, its spec, its builder and its wiring | write, and get subtly wrong, the constructor visibility, the suffix, the registration |
-| **`--json` output with `next`**: the `file:line` of every `TODO(domain)` | open the generated files to find what is left to decide |
+| **`--json` output with `todos`**: the `file:line` of every `TODO(domain)`, with its first words | open the generated files to find what is left to decide |
 | **Machine-readable maps.** `ddd-ts-kit list --json` gives contexts, aggregates, use cases, events, handlers, permissions; `describe <context> --json` gives one context as facts (use cases with their permission, routes, events, ports with their adapters, policies, gateways, dependencies); `status` and `todo` give the next step of the plan, the slices and the markers left as `file:line` | walk the tree to learn what exists and what is left |
 | **Path-scoped rules.** `init` writes `.claude/rules/*.md`, each scoped by a `paths` frontmatter, the same rules for Copilot in `.github/instructions/`, scoped by `applyTo`, next to a short `AGENTS.md` that every agent reads | carry the domain rules in context while editing a route, and the reverse |
 | **Generated per-context documentation.** `CONTEXT.md` with its generated lists and `## Reference`, `docs/context-map.md` | read the code of a neighbouring context to learn what it publishes |
@@ -84,14 +84,16 @@ the kit's plugin targets it.
 ## Habits
 
 **Generate, then fill.** Run the generator with `--json`, open only the locations listed under
-`next`, implement each `TODO(domain)`, replace each `it.todo`. Do not ask an agent to "create
+`todos`, implement each `TODO(domain)`, replace each `it.todo`. Do not ask an agent to "create
 an aggregate": ask it to run the generator and fill the three decisions it lists.
 
 ```bash
 npx ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order --json
 ```
 
-answers, abbreviated (`todos` repeats each place of `next` with the decision to make there):
+answers, abbreviated and laid out here for reading (the CLI prints it on one line). Each place
+of `todos` gives the first words of its `TODO(domain)`, whose whole sentence is in the file at that
+line; a step on a line the command changed, written in no file, also gives its whole `text`:
 
 ```json
 {
@@ -112,11 +114,28 @@ answers, abbreviated (`todos` repeats each place of `next` with the decision to 
   "deleted": [],
   "skipped": [],
   "unwritable": [],
-  "next": [
-    "src/contexts/ordering/application/commands/place-order/place-order.command.ts:7",
-    "src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16",
-    "src/contexts/ordering/test/unit/place-order.handler.spec.ts:38",
-    "src/platform/auth/roles/roles.ts:15"
+  "todos": [
+    {
+      "file": "src/contexts/ordering/application/commands/place-order/place-order.command.ts",
+      "line": 7,
+      "gist": "declare the input of \"place order\" as a constructor with the actor..."
+    },
+    {
+      "file": "src/contexts/ordering/application/commands/place-order/place-order.handler.ts",
+      "line": 12,
+      "gist": "\"place order\" changes Orders that exist and writes nothing until you decide..."
+    },
+    {
+      "file": "src/contexts/ordering/test/unit/place-order.handler.spec.ts",
+      "line": 36,
+      "gist": "replace each entry below by a test named after the business behaviour..."
+    },
+    {
+      "file": "src/platform/auth/roles/roles.ts",
+      "line": 15,
+      "gist": "check this grant",
+      "text": "check this grant: the role customer now holds ordering:order.place."
+    }
   ]
 }
 ```
@@ -406,7 +425,7 @@ as a default.
 |---|---|---|---|
 | "What exists in this project?" | `ddd-ts-kit list --json`, `describe <context> --json`, `CONTEXT.md`, `docs/context-map.md` | high: replaces tree walking | none, generated |
 | "Where does this file go, what is it called?" | the canonical tree, `ddd-ts-kit generate` | high: no search, no boilerplate written | none |
-| "What is left to write in what was generated?" | `generate --json` (`next`, `todos`), `ddd-ts-kit todo [<context>]`, `ddd-ts-kit status` | high: opens only the places to fill | none |
+| "What is left to write in what was generated?" | `generate --json` (`todos`), `ddd-ts-kit todo [<context>]`, `ddd-ts-kit status` | high: opens only the places to fill | none |
 | "Why is this check failing?" | the violation's `fix`, `ddd-ts-kit explain <rule-id>` | medium: no reading of the reference | none |
 | "Who calls or implements this symbol?" | a language-server plugin of the agent, or Serena | medium to high on cross-context questions | install a language server and a plugin or an MCP server; memory while indexing |
 | "Every place with this code shape", a mechanical rewrite | ast-grep | medium: one query, no false positives to read | one binary; learn the pattern syntax |

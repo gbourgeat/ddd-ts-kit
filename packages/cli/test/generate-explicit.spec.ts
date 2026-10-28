@@ -54,7 +54,7 @@ describe('generated code, in the explicit style', () => {
     expect(todos.length).toBeGreaterThan(40);
 
     for (const todo of todos) {
-      expect(todo.text.length, `${todo.file}:${todo.line}`).toBeGreaterThan(40);
+      expect(todo.gist.split(' ').length, `${todo.file}:${todo.line}`).toBeGreaterThanOrEqual(3);
     }
   });
 

@@ -33,7 +33,7 @@ describe('generate job, the grant of its system actor', () => {
       `  // ddd-ts-kit:system-grants\n${rule}\n  // /ddd-ts-kit:system-grants`,
     );
 
-    expect(generated.todos.find((todo) => todo.text.startsWith('check this rule'))).toMatchObject({
+    expect(generated.todos.find((todo) => todo.gist.startsWith('check this rule'))).toMatchObject({
       file: `${AUTH}/attributes/attribute-policies.ts`,
       // The rule takes several lines: the step points at the one that names it.
       line: 18,
@@ -61,7 +61,7 @@ describe('generate job, the grant of its system actor', () => {
       'start: () =>\n      relateSystemActors()\n        .then(() => container.start())',
     );
 
-    expect(generated.todos.find((todo) => todo.text.startsWith('check this relationship'))?.text).toContain(
+    expect(generated.todos.find((todo) => todo.gist.startsWith('check this relationship'))?.text).toContain(
       '`system:billing.cancel-stale-invoices` now operates the context `billing`',
     );
 
@@ -80,7 +80,7 @@ describe('generate job, the grant of its system actor', () => {
     const generated = report(cli(root, ...EVERY_QUARTER));
 
     expect(read(root, `${AUTH}/relationships/relate-system-actors.ts`)).not.toContain('cancel-stale-invoices');
-    expect(generated.todos.find((todo) => todo.text.startsWith('grant the system actor'))).toMatchObject({ file: JOB });
+    expect(generated.todos.find((todo) => todo.gist.startsWith('grant the system actor'))).toMatchObject({ file: JOB });
   });
 
   it('leaves the grant to the team, as a decision written in the job, under a model of their own or once the region is gone', () => {
@@ -95,15 +95,16 @@ describe('generate job, the grant of its system actor', () => {
 
     for (const root of [custom, edited]) {
       const generated = report(cli(root, ...EVERY_QUARTER));
-      const grant = generated.todos.find((todo) => todo.text.startsWith('grant the system actor'));
+      const grant = generated.todos.find((todo) => todo.gist.startsWith('grant the system actor'));
 
       expect(grant?.file).toBe(JOB);
 
-      expect(grant?.text).toContain(
+      // A marker: its whole sentence is in the job, at the line the report names.
+      expect(grant).not.toHaveProperty('text');
+
+      expect(read(root, JOB).split('\n')[(grant?.line ?? 0) - 1]).toContain(
         '`system:billing.cancel-stale-invoices` the permission `billing:invoice.cancel` in the authorization model of the platform',
       );
-
-      expect(generated.next).toContain(`${JOB}:${grant?.line}`);
     }
   });
 
