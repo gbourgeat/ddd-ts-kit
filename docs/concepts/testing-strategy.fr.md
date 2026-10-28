@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:70adf8e7a0df7c57 -->
+<!-- translation-of: testing-strategy.md sha256:15ff09ae367f3e24 -->
 
 # Stratégie de test
 
@@ -466,7 +466,9 @@ Un cas d'usage que seul un *job* lance (`generate job`, ni route ni gestionnaire
 *spec* avec un autre départ : elle exécute le *job* comme le ferait l'ordonnanceur avec
 `await application.runJob('<context>.<job>')` du support partagé, attend `application.settled()`,
 et laisse à remplir ce qu'il faut observer. Le générateur cherche une route, puis un gestionnaire
-qui envoie la commande, puis un *job* qui l'envoie, et nomme les trois quand il n'en trouve aucun.
+qui envoie la commande, puis un *job* qui l'envoie, et nomme les trois quand il n'en trouve aucun. `runJob` échoue quand le *job* est par *tenant* et que
+l'exécution n'a atteint aucun *tenant* (`JobRun.tenants` vaut `0`, le *job* n'a jamais été appelé) :
+ouvrez d'abord un *tenant*, après `reset()`.
 
 L'acceptation d'une *story* est une *spec* de bout en bout écrite avant son code, à partir des
 critères de la *story* (`docs/architecture/stories/<story>.md`) :

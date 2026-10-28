@@ -124,6 +124,12 @@ work across tenants, and the note of the command says which was written. The sch
   process restarts with a new list. Once the tenants live in a table of your own, make the
   directory read it, as the identity preset does in `tenant-directory.ts`.
 
+A run of a per-tenant job says how many tenants it ran for: `JobRun.tenants` (absent for a global
+job). With an empty directory the job is never called and the run is `succeeded` with `tenants: 0`,
+so look at that field, or at `tenants` in the log line of the run, before thinking a job did
+nothing. `application.runJob(name)` of the e2e support throws on such a run and says to open a
+tenant first (an organisation); open one in the spec, after `reset()`, then run the job.
+
 The generated spec runs the job for two tenants. A job written by hand under tenancy must say it too:
 `scheduling/tenancy-declared` (an error) reports a `@Scheduled` or `builder.job` whose options carry
 neither `tenancy: 'per-tenant'` nor `tenancy: 'global'`.

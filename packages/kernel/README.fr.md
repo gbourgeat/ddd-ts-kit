@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:298a9aa1069515a0 -->
+<!-- translation-of: README.md sha256:1a8e41caf665b63c -->
 
 # @ddd-ts-kit/kernel
 
@@ -1484,7 +1484,9 @@ d'expiration : celui-ci connaît les *jobs*, les planifications et les instances
 une occurrence et son issue (`succeeded`, `failed` avec le code de l'erreur et jamais son
 message, `skipped-overlap`, `skipped-locked`, `missed`). Un *job* qui échoue n'arrête ni le
 planificateur ni les autres *jobs*, et `runNow` répond `failed` au lieu de rejeter : seul un nom
-inconnu rejette (`UnknownJobError`), et un nom enregistré deux fois lève (`DuplicateJobError`).
+inconnu rejette (`UnknownJobError`), et un nom enregistré deux fois lève (`DuplicateJobError`). Une exécution réussie d'un *job* par *tenant*
+porte `tenants`, le nombre de *tenants* pour lesquels il a tourné : `0` veut dire que l'annuaire des
+*tenants* était vide et que le *job* n'a jamais été appelé.
 
 Une exécution se déroule dans `ExecutionScope`, dans le contexte que construit
 `executionContextOfJob(name, { correlationId, scheduledAt, deadline?, tenantId? })` : origine

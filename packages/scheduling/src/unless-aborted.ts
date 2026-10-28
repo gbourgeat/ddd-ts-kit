@@ -1,6 +1,6 @@
 /** A job that ignores its signal is left behind: the run ends when the signal is aborted, with its reason. */
-export function unlessAborted(signal: AbortSignal, work: Promise<void>): Promise<void> {
-  return new Promise((resolve, reject) => {
+export function unlessAborted<T>(signal: AbortSignal, work: Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
     signal.addEventListener(
       'abort',
       () => {

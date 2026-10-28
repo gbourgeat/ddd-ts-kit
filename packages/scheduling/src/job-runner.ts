@@ -93,9 +93,9 @@ export class JobRunner {
     const disarm = this.armTimeout(job, controller);
 
     try {
-      await unlessAborted(controller.signal, this.inScope(job, started, controller.signal));
+      const tenants = await unlessAborted(controller.signal, this.inScope(job, started, controller.signal));
 
-      return this.recorder.succeeded(job, started);
+      return this.recorder.succeeded(job, started, tenants);
     } catch (error) {
       return this.recorder.failed(job, started, error);
     } finally {
@@ -116,14 +116,16 @@ export class JobRunner {
     });
   }
 
-  private async inScope(job: RegisteredJob, started: StartedRun, signal: AbortSignal): Promise<void> {
+  private async inScope(job: RegisteredJob, started: StartedRun, signal: AbortSignal): Promise<number | undefined> {
     if (job.policy.tenancy === 'global' || this.options.tenants === undefined) {
-      return this.inTenant(job, { started, signal });
+      return this.inTenant(job, { started, signal }).then(() => undefined);
     }
 
-    await eachTenant(await this.options.tenants.tenants(), signal, (tenantId) =>
-      this.inTenant(job, { started, signal, tenantId }),
-    );
+    const tenants = await this.options.tenants.tenants();
+
+    await eachTenant(tenants, signal, (tenantId) => this.inTenant(job, { started, signal, tenantId }));
+
+    return tenants.length;
   }
 
   private async inTenant(job: RegisteredJob, { started, signal, tenantId }: TenantRun): Promise<void> {
