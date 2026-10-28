@@ -6,5 +6,10 @@ linked to the settings of a home directory), refuses the command with exit code 
 named, before anything is written. `init` refuses a home directory and the root of the file
 system: run it in the directory of the project.
 
+The directories of the config (`sourceRoot`, `contextsDir`, `sharedKernelDir`, `platformDir`)
+are read with `.` and `..` resolved, and one that is absolute or leads above the root once
+resolved (`"contextsDir": "src/../../escaped"`) stops every command that writes with exit code 2;
+`check` reports it as `config/valid`.
+
 To move: replace a symbolic link a command of the kit writes through by the file or the folder
-itself.
+itself; write each directory of the config inside the project.

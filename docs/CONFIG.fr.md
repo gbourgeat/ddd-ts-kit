@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:a597564574e2c271 -->
+<!-- translation-of: CONFIG.md sha256:023dd495e6d3ddf8 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -140,6 +140,11 @@ et `importExtension` plus bas. Les règles exactes de l'analyseur sont dans [Lim
 | `platformDir` | la plateforme technique | `<sourceRoot>/platform` |
 | `importAlias` | le préfixe qui nomme `sourceRoot` dans les imports : `@/`, ou `$`, un nom en minuscules (lettres, chiffres, traits d'union) et `/`. Chaque fichier du projet est importé par lui (`imports/alias-only`) | `@/` |
 | `importExtension` | ce par quoi se termine l'import d'un fichier du projet : `none`, rien (`@/contexts/billing/domain/aggregates/invoice.aggregate`), ou `js`, l'extension du fichier qu'émet le compilateur (`.../invoice.aggregate.js`). Tenu par `imports/extension` | `none` dans ce qu'écrit `init` ; `js` quand la clé est absente |
+
+Les quatre répertoires sont lus avec `.` et `..` résolus (`./src//contexts/` est `src/contexts`)
+et restent dans le projet : celui qui est absolu ou qui mène au-dessus de la racine une fois
+résolu (`src/../../ailleurs`) arrête toute commande qui écrit, code de sortie 2, et `check` le
+signale comme `config/valid`.
 
 `importAlias` est le seul endroit où une personne écrit l'alias. `init` (option `--import-alias`)
 en dérive les `paths` de `tsconfig.json`, et `ddd-ts-kit build-aliases` le lit quand il réécrit

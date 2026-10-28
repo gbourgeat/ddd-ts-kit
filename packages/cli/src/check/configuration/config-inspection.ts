@@ -23,6 +23,7 @@ import { isRecord } from '../support/is-record';
 import { lineOf } from '../support/line-of';
 import { lineOfSequence } from '../support/line-of-sequence';
 import { contextTenancy } from './context-tenancy';
+import { leavingDirectories } from './leaving-directories';
 import { measureSettings } from './measure-settings';
 import { moduleProblems } from './module-problems';
 import { rawConfig } from './raw-config';
@@ -143,6 +144,11 @@ export class ConfigInspection {
   }
 
   /** Another value is read as `js`: the config says something no tool does. */
+  /** A directory the generators write in that leads out of the project: every command but check refuses the config. */
+  projectDirectories(): Violation[] {
+    return leavingDirectories(rawConfig(this.project)).map(({ key, message, fix }) => this.inConfig(key, message, fix));
+  }
+
   importExtension(): Violation[] {
     const { importExtension } = this.project.config;
 
