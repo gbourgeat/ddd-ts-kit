@@ -9,9 +9,9 @@ const DEFAULT_TENANT_CLAIM = 'tenant_id';
 /**
  * The actor the claims of a verified token stand for, as `JwtAuthenticator` reads them by default:
  * `id` from `sub` (required), `type: 'user'`, the tenant from `tenantClaim` (`tenant_id`), the
- * roles from the first claim present among `realm_access.roles`, `roles` and `scope`, never
- * merged, and the profile of OpenID Connect (`username`, `email`, `emailVerified`). Pure: any
- * verifier of tokens (a strategy of Passport) maps its payload with it.
+ * roles from `realm_access.roles`, else from a `roles` claim, never from `scope`, and the profile
+ * of OpenID Connect (`username`, `email`, `emailVerified`). Pure: any verifier of tokens (a
+ * strategy of Passport) maps its payload with it.
  */
 export function actorOfClaims(claims: Claims, tenantClaim = DEFAULT_TENANT_CLAIM): Actor {
   const subject = claims['sub'];
@@ -32,8 +32,9 @@ export function actorOfClaims(claims: Claims, tenantClaim = DEFAULT_TENANT_CLAIM
 }
 
 /**
- * The first claim present wins, in the order realm roles (`realm_access.roles`), a `roles`
- * claim, OAuth scopes. They are never merged: a scope a client asked for must not pass for a role.
+ * The realm roles (`realm_access.roles`) when present, else a `roles` claim, never merged. The
+ * OAuth scopes are never roles: a scope a client asked for must not pass for a role, the session
+ * holds them as `scopes`. A provider whose tokens carry only scopes maps its roles with `toActor`.
  */
 function rolesOf(claims: Claims): readonly string[] {
   const realmAccess = claims['realm_access'];
@@ -41,9 +42,7 @@ function rolesOf(claims: Claims): readonly string[] {
   const realmRoles =
     typeof realmAccess === 'object' && realmAccess !== null && 'roles' in realmAccess ? realmAccess.roles : undefined;
 
-  const candidates = [stringsOf(realmRoles), stringsOf(claims['roles']), stringsOf(claims['scope'])];
-
-  return candidates.find((roles) => roles !== undefined) ?? [];
+  return stringsOf(realmRoles) ?? stringsOf(claims['roles']) ?? [];
 }
 
 function stringsOf(claim: unknown): readonly string[] | undefined {

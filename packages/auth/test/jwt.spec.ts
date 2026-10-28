@@ -177,8 +177,17 @@ describe('JwtAuthenticator default claim mapping', () => {
     expect(await rolesOf({ roles: 'clerk auditor' })).toEqual(['clerk', 'auditor']);
   });
 
-  it('falls back on the scopes, and never mixes them with roles', async () => {
-    expect(await rolesOf({ scope: 'openid invoices:read' })).toEqual(['openid', 'invoices:read']);
+  it('a token that carries only scopes gives an actor with no role, the scopes staying in the session', async () => {
+    const credential = await token({ scope: 'openid admin' });
+
+    const session = await authenticator().authenticateSession(credential);
+
+    expect(session.actor.roles).toEqual([]);
+    expect(session.scopes).toEqual(['openid', 'admin']);
+  });
+
+  it('never mixes the scopes with the roles a token carries', async () => {
+    expect(await rolesOf({ roles: ['clerk'], scope: 'admin' })).toEqual(['clerk']);
     expect(await rolesOf({ roles: [], scope: 'admin' })).toEqual([]);
   });
 
