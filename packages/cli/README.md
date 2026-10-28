@@ -90,6 +90,13 @@ name each dependency the stack about to be written contradicts, and the flag tha
 fastify to keep it.`), a dry run included: run `init --dry-run` first on an existing project.
 Run again later, `init` keeps the stack recorded in the config.
 
+Every file `init` and `generate` write stays inside the project: a file that is a symbolic link,
+or a path that leads out of the project through one (a linked `docs/adr`, a linked
+`.claude/settings.json`), refuses the command with exit code 2 and the path named, before
+anything is written. `init` refuses a home directory and the root of the file system, where its
+`.claude/settings.json` would be the settings of every session: run it in the directory of the
+project.
+
 `init --force` on a project that is already initialised rewrites the files `init` owns and keeps
 the config: the contexts and their upstreams, the rules, the limits, the deviations and every
 other key stay as written, and the stack changes only where a flag names a choice

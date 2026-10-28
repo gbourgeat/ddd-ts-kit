@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e5847ce5e5fda748 -->
+<!-- translation-of: README.md sha256:c8c899f23b41bd16 -->
 
 # ddd-ts-kit
 
@@ -95,6 +95,13 @@ point d'être écrite contredit, et l'option qui la garde (`package.json depends
 project is written for --http express: pass --http fastify to keep it.`), en *dry run* compris :
 lancez d'abord `init --dry-run` sur un projet existant. Relancé plus tard, `init` garde la
 *stack* enregistrée dans la configuration.
+
+Chaque fichier qu'écrivent `init` et `generate` reste dans le projet : un fichier qui est un lien
+symbolique, ou un chemin qui sort du projet par l'un d'eux (un `docs/adr` lié, un
+`.claude/settings.json` lié), fait refuser la commande avec le code de sortie 2 et le chemin
+nommé, avant toute écriture. `init` refuse un répertoire personnel et la racine du système de
+fichiers, où son `.claude/settings.json` serait le réglage de toutes les sessions : lancez-le dans
+le répertoire du projet.
 
 `init --force` sur un projet déjà initialisé réécrit les fichiers qui appartiennent à `init` et
 garde la configuration : les contextes et leurs amonts, les règles, les limites, les dérogations

@@ -29,6 +29,7 @@ import { writeOverrides } from './manifest/write-overrides';
 import { writeInstallScripts } from './manifest/write-install-scripts';
 import { recordAgentProfile } from './record-agent-profile';
 import { recordNoOutbox } from './record-no-outbox';
+import { refuseUnprojectedRoot } from './refuse-unprojected-root';
 import { resolveStack, type StackOptions } from './stack/resolve-stack';
 import { templateVars } from './template-vars';
 import { writeAgentSettings } from './write-agent-settings';
@@ -62,6 +63,8 @@ export interface InitOptions extends StackOptions {
 }
 
 export function runInit(root: string, options: InitOptions): WorkspaceReport {
+  refuseUnprojectedRoot(root);
+
   const ws = new Workspace(root, options.force);
   const config = { ...recordNoOutbox(ws, resolveStack(root, options), options.allowNoOutbox), initVersion: VERSION };
 

@@ -8,7 +8,9 @@ import type { TodoLocation } from './todo-location';
 import { todosIn } from './todos-in';
 import { cannotWrite } from './cannot-write';
 import { isFileOrAbsent } from './is-file-or-absent';
+import { namesOnDisk } from './names-on-disk';
 import { pruneEmptied } from './prune-emptied';
+import { refuseLeaving } from './refuse-leaving';
 import { writeIfAllowed } from './write-if-allowed';
 import type { WorkspaceReport } from './workspace-report';
 
@@ -90,7 +92,7 @@ export class Workspace {
       .filter((file) => path.posix.dirname(file) === directory)
       .map((file) => path.posix.basename(file));
 
-    const onDisk = this.onDisk(directory, (entry) => entry.isFile()).filter(
+    const onDisk = namesOnDisk(this.absolute(directory), (entry) => entry.isFile()).filter(
       (name) => !this.removed.has(`${directory}/${name}`),
     );
 
@@ -111,7 +113,7 @@ export class Workspace {
       return child !== undefined && rest.length > 0 ? [child] : [];
     });
 
-    return [...new Set([...this.onDisk(directory, (entry) => entry.isDirectory()), ...planned])]
+    return [...new Set([...namesOnDisk(this.absolute(directory), (entry) => entry.isDirectory()), ...planned])]
       .filter((name) => !name.startsWith('.'))
       .sort();
   }
@@ -252,9 +254,14 @@ export class Workspace {
   /**
    * Writes the plan, or (dry run) only says it. A file it cannot write here (a path the sandbox of an
    * agent protects) is reported as unwritable, in `skipped` too, and every other file is written;
-   * then no file is deleted, so that a move loses nothing.
+   * then no file is deleted, so that a move loses nothing. A path that leads out of the project
+   * refuses the whole plan first.
    */
   commit(dryRun: boolean): WorkspaceReport {
+    refuseLeaving(this.root, [...new Set([...this.pending.keys(), ...this.removed])].sort(), (file) =>
+      this.absolute(file),
+    );
+
     const unwritten: string[] = [];
     const written = this.writtenOf(dryRun, unwritten);
     const unwritable = [...new Set([...this.masked, ...unwritten])].sort();
@@ -312,18 +319,6 @@ export class Workspace {
     const at = (this.read(file) ?? '').split('\n').findIndex((line) => line.includes(anchor));
 
     return { file, line: Math.max(at, 0) + 1, text };
-  }
-
-  private onDisk(directory: string, wanted: (entry: fs.Dirent) => boolean): string[] {
-    try {
-      return fs
-        .readdirSync(this.absolute(directory), { withFileTypes: true })
-        .filter(wanted)
-        .map((entry) => entry.name);
-    } catch {
-      // A directory that does not exist yet simply holds nothing on disk.
-      return [];
-    }
   }
 
   private plannedBelow(directory: string): boolean {
