@@ -140,7 +140,7 @@ l'article 19 porte au-delà de la base que tient la plateforme :
   erasure-handler` le refuse donc et le dit. Une projection qui garde une copie en clair est
   reconstruite une fois la clé détruite, et un effacement à une date du métier (une rétention de
   cinq ans après la fin de la relation) est un job planifié à vous qui appelle la même destruction
-  de clé ([Event sourcing](event-sourcing.fr.md#personal-data-crypto-shredding)) ;
+  de clé ([Event sourcing](event-sourcing.fr.md#données-personnelles--crypto-shredding)) ;
 - un système hors du projet qui consomme les événements du projet, et a copié la personne depuis
   l'un d'eux, s'abonne au même type : le catalogue des événements et AsyncAPI le listent ;
 - un événement d'intégration qui porte des données personnelles le dit (`personal: { subject,
