@@ -5,6 +5,7 @@ import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
 import { stringsAt } from './support/strings-at';
 import { textsAt } from './support/texts-at';
+import { commitAll } from './support/commit-all';
 
 const WORKER = 'src/apps/worker/main.ts';
 
@@ -129,6 +130,7 @@ describe('generate worker, run again and refused', () => {
   it('survives a new init --force: the script, the knip entry and the default of RUN_JOBS follow the config', () => {
     const root = withWorker();
 
+    commitAll(root);
     expect(cli(root, 'init', '--force').code).toBe(0);
 
     expect(textsAt(readJson(root, 'package.json'), 'scripts')['start:worker']).toBe(

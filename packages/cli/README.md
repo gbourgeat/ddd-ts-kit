@@ -78,7 +78,11 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
 ```
 
 Works in an empty directory or an existing project. An existing file is never replaced without
-`--force`; it is reported as skipped. `init` also writes the generated contracts as the scripts
+`--force`; it is reported as skipped. `--force` replaces only what git holds: a file it would
+replace that differs from the last commit (uncommitted, staged, or untracked and not ignored)
+refuses the command with exit code 2, the files named and nothing written (`Commit or stash them
+first, then run again: git diff shows what the kit rewrote.`), and outside a git repository every
+file whose content would change does. The same holds for `generate --force`. `init` also writes the generated contracts as the scripts
 of the project write them for a project without a route or an integration event of its own
 (`openapi/openapi.yaml`, `docs/integration/asyncapi.yaml` and `event-catalog.md`; JSON under
 `"openapi": { "format": "json" }` of the config), so that the first commit holds them and

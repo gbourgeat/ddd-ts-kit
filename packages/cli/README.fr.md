@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:88327d90cb6085e6 -->
+<!-- translation-of: README.md sha256:44a10818b5b06f53 -->
 
 # ddd-ts-kit
 
@@ -83,7 +83,12 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
 ```
 
 Fonctionne dans un répertoire vide comme dans un projet existant. Un fichier existant n'est
-jamais remplacé sans `--force` ; il est signalé comme ignoré. `init` écrit aussi les contrats
+jamais remplacé sans `--force` ; il est signalé comme ignoré. `--force` ne remplace que ce que git
+détient : un fichier à remplacer qui diffère du dernier *commit* (non commité, indexé, ou non suivi
+et non ignoré) fait refuser la commande avec le code de sortie 2, les fichiers nommés et rien
+d'écrit (`Commit or stash them first, then run again: git diff shows what the kit rewrote.`), et
+hors d'un dépôt git chaque fichier dont le contenu changerait le fait. Il en va de même pour
+`generate --force`. `init` écrit aussi les contrats
 générés tels que les scripts du projet les écrivent pour un projet qui n'a encore ni route ni
 événement d'intégration à lui (`openapi/openapi.yaml`, `docs/integration/asyncapi.yaml` et
 `event-catalog.md` ; en JSON sous `"openapi": { "format": "json" }` de la configuration), afin

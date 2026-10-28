@@ -8,6 +8,7 @@ import { stringsAt } from './support/strings-at';
 import { textsAt } from './support/texts-at';
 import { KIT_RANGE } from './support/kit-range';
 import { VERSION } from '../src/version';
+import { commitAll } from './support/commit-all';
 
 const BOOTSTRAPPED = [
   'ddd-ts-kit.config.json',
@@ -295,14 +296,21 @@ describe('init in a project that already exists', () => {
     expect(read(root, 'src/platform/observability/tracing.ts')).toContain("'legacy-shop'");
   });
 
-  it('replaces existing files only with --force', () => {
+  it('replaces an existing file with --force once git holds it, and refuses to while nothing holds it', () => {
     const root = tempDir('init');
 
-    write(root, 'src/main.ts', '// mine\n');
+    write(root, 'biome.json', '{}\n');
 
-    cli(root, 'init', '--force');
+    const refused = cli(root, 'init', '--force');
 
-    expect(read(root, 'src/main.ts')).toContain('composeApplication');
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('outside a git repository, where nothing else holds them: biome.json.');
+    expect(read(root, 'biome.json')).toBe('{}\n');
+
+    commitAll(root);
+
+    expect(cli(root, 'init', '--force').code).toBe(0);
+    expect(read(root, 'biome.json')).toContain('"$schema"');
   });
 
   it('keeps the recorded stack when run again, and the version that wrote the files', () => {

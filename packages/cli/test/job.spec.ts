@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, read, write, type CliResult } from './helpers';
 import { failure, report } from './reports';
 import { jobProject } from './support/job-project';
+import { commitAll } from './support/commit-all';
 
 const BILLING = 'src/contexts/billing';
 const JOB = `${BILLING}/application/scheduling/cancel-stale-invoices.job.ts`;
@@ -93,6 +94,9 @@ describe('generate job, in the declared style', () => {
 
   it('grants the role of system actors the permission of the command, and points at the grant in the next steps', () => {
     const grant = generated.todos.find((todo) => todo.text.startsWith('check this grant'));
+
+    commitAll(root);
+
     const printed = cli(root, ...EVERY_QUARTER, '--force').stdout;
 
     expect(read(root, ROLES)).toContain(
@@ -123,6 +127,7 @@ describe('generate job, in the declared style', () => {
       ),
     );
 
+    commitAll(root);
     expect(cli(root, ...EVERY_QUARTER, '--force').code).toBe(0);
 
     expect(read(root, JOB)).toContain(

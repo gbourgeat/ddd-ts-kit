@@ -4,6 +4,7 @@ import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
 import { stringsAt } from './support/strings-at';
+import { commitAll } from './support/commit-all';
 
 const overridesOf = (root: string): unknown => jsonAt(readJson(root, 'package.json'), 'overrides');
 
@@ -49,6 +50,7 @@ describe('init forces qs 6.16, which Stryker pins below, and multer 2.5.0 under 
     expect(stringsAt(report, 'notes').join('\n')).toContain('package.json overrides multer with a range of its own');
     expect(overridesOf(root)).toEqual({ multer: '2.4.0', lodash: '^4.17.0', qs: '^6.16.0' });
 
+    commitAll(root);
     cli(root, 'init', '--package-manager', 'npm', '--http', 'nest', '--force');
 
     expect(overridesOf(root)).toEqual({ multer: '^2.5.0', lodash: '^4.17.0', qs: '^6.16.0' });

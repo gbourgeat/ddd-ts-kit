@@ -32,6 +32,11 @@ function inManifest(ws: Workspace, overrides: Record<string, string>, force: boo
 
   for (const [name, range] of Object.entries(overrides)) {
     if (current[name] === undefined || force) {
+      if (current[name] !== undefined && current[name] !== range) {
+        // --force writes the range of the kit over one of the team: git must hold the file before.
+        ws.replacing('package.json');
+      }
+
       current[name] = range;
     } else if (current[name] !== range) {
       ws.note(

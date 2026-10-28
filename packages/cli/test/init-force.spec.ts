@@ -6,6 +6,7 @@ import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
 import { toEarlierPlaces } from './support/to-earlier-places';
 import { VERSION } from '../src/version';
+import { commitAll } from './support/commit-all';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 const COMPOSITION = 'src/platform/composition/compose-application.ts';
@@ -18,6 +19,7 @@ describe('init --force on a project that is already initialised', () => {
 
     write(root, 'src/main.ts', '// mine\n');
 
+    commitAll(root);
     const forced = cli(root, 'init', '--force');
 
     expect(forced.stderr).toBe('');
@@ -55,11 +57,13 @@ describe('init --force on a project that is already initialised', () => {
     expect(initVersion).toBe(VERSION);
 
     write(root, CONFIG, `${JSON.stringify({ ...written, initVersion: '0.1.0' }, null, 2)}\n`);
+    commitAll(root);
     expect(cli(root, 'init', '--force').stderr).toBe('');
     expect(Object.keys(Object(readJson(root, CONFIG)))[0]).toBe('initVersion');
     expect(config(root, 'initVersion')).toBe(VERSION);
 
     write(root, CONFIG, `${JSON.stringify(written, null, 2)}\n`);
+    commitAll(root);
     expect(cli(root, 'init', '--force').stderr).toBe('');
     expect(Object.keys(Object(readJson(root, CONFIG)))[0]).toBe('initVersion');
     expect(config(root, 'initVersion')).toBe(VERSION);
@@ -69,6 +73,7 @@ describe('init --force on a project that is already initialised', () => {
     const root = workedOn('--orm', 'knex', '--logger', 'pino', '--authz', 'rebac');
     const before = Object(config(root, 'stack')) as Record<string, unknown>;
 
+    commitAll(root);
     expect(cli(root, 'init', '--force', '--docs-ui', 'scalar', '--cache', 'redis').stderr).toBe('');
     expect(config(root, 'stack')).toEqual({ ...before, docsUi: 'scalar', cache: 'redis' });
     expect(Object.keys(Object(config(root, 'contexts')))).toEqual(['billing', 'shipping', 'order-fulfilment']);
@@ -84,6 +89,7 @@ describe('init --force on a project that is already initialised', () => {
     const root = workedOn('--authz', 'rebac');
 
     toEarlierPlaces(root, ['billing', 'shipping']);
+    commitAll(root);
     expect(cli(root, 'init', '--force').stderr).toBe('');
 
     const registry = read(root, 'src/platform/auth/authorization/permissions.ts');
@@ -113,6 +119,7 @@ describe('init --force on a project that is already initialised', () => {
     const root = initProject('--events', 'in-memory', '--allow-no-outbox', 'One process, one database.');
     const deviations = config(root, 'deviations');
 
+    commitAll(root);
     expect(cli(root, 'init', '--force').stderr).toBe('');
     expect(config(root, 'stack', 'events')).toBe('in-memory');
     expect(config(root, 'deviations')).toEqual(deviations);
@@ -123,6 +130,7 @@ describe('init --force on a project that is already initialised', () => {
 
     changeConfig(root, { stack: { ...Object(config(root, 'stack')), events: 'custom' } });
 
+    commitAll(root);
     expect(cli(root, 'init', '--force', '--logger', 'pino').stderr).toBe('');
     expect(config(root, 'stack', 'events')).toBe('custom');
     expect(config(root, 'stack', 'logger')).toBe('pino');
@@ -135,6 +143,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
 
     write(root, CONFIG, read(root, CONFIG).replace(/\n\s*"importExtension": "js",/, ''));
 
+    commitAll(root);
     expect(cli(root, 'init', '--force').stderr).toBe('');
     expect(Object.keys(Object(readJson(root, CONFIG))).slice(5, 7)).toEqual(['importAlias', 'importExtension']);
     expect(config(root, 'importExtension')).toBe('js');
@@ -150,6 +159,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
   it('moves the declarations to the other spelling when asked, and leaves the imports of the contexts to the rule and its fix', () => {
     const root = workedOn('--import-extension', 'js');
 
+    commitAll(root);
     expect(cli(root, 'init', '--force', '--import-extension', 'none').stderr).toBe('');
 
     const found = checkJsonOf(cli(root, 'check', '--json')).violations;
@@ -183,6 +193,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
       const settings = read(root, '.claude/settings.json');
 
       expect(cli(root, 'init').stdout).not.toContain('gained');
+      commitAll(root);
       expect(cli(root, 'init', '--force').stdout).not.toContain('gained');
       expect(read(root, '.claude/settings.json')).toBe(settings);
     }
@@ -194,6 +205,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
     write(root, CONFIG, '{ not json');
 
     expect(cli(root, 'init').code).toBe(2);
+    commitAll(root);
     expect(cli(root, 'init', '--force').stderr).toBe('');
     expect(config(root, 'contexts')).toEqual({});
     expect(config(root, 'importExtension')).toBe('none');

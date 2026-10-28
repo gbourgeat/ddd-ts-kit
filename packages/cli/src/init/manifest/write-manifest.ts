@@ -68,6 +68,7 @@ function pinPackageManager(ws: Workspace, manifest: Record<string, unknown>, { c
   }
 
   if (manifest['packageManager'] === undefined || force) {
+    overwritten(ws, manifest['packageManager'], pinned);
     manifest['packageManager'] = pinned;
   } else {
     ws.note(`package.json keeps its own "packageManager"; the kit was proven with ${pinned}.`);
@@ -122,6 +123,7 @@ function mergeInto(ws: Workspace, manifest: Record<string, unknown>, force: bool
 
     for (const [name, value] of Object.entries(additions)) {
       if (current[name] === undefined || force) {
+        overwritten(ws, current[name], value);
         current[name] = value;
       } else if (JSON.stringify(current[name]) !== JSON.stringify(value)) {
         ws.note(kept(name));
@@ -130,4 +132,11 @@ function mergeInto(ws: Workspace, manifest: Record<string, unknown>, force: bool
 
     manifest[key] = current;
   };
+}
+
+/** --force writes the value of the kit over one of the team in package.json: git must hold the file before. */
+function overwritten(ws: Workspace, current: unknown, value: unknown): void {
+  if (current !== undefined && JSON.stringify(current) !== JSON.stringify(value)) {
+    ws.replacing('package.json');
+  }
 }

@@ -5,6 +5,7 @@ import { initFailure } from './support/init-failure';
 import { initProject } from './support/init-project';
 import { readJson } from './support/read-json';
 import { readYaml } from './support/read-yaml';
+import { commitAll } from './support/commit-all';
 
 const EVERY_EXTRA =
   'gitlab-sast,codeql,dependency-review,gitlab-secret-detection,gitlab-dependency-scanning,claude-review,claude-triage,intent-to-spec';
@@ -77,9 +78,11 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
     expect(read(root, '.gitlab-ci.yml')).toContain(`include:\n  - ${MARKS.sast}\n\n`);
     expect(read(root, '.gitlab-ci.yml')).not.toContain(MARKS.secretDetection);
 
+    commitAll(root);
     expect(cli(root, 'init', '--force', '--logger', 'pino').code).toBe(0);
     expect(read(root, '.gitlab-ci.yml')).toContain(MARKS.sast);
 
+    commitAll(root);
     expect(cli(root, 'init', '--force', '--ci-extras', 'none').code).toBe(0);
     expect(read(root, '.gitlab-ci.yml')).not.toContain(MARKS.sast);
     expect(readJson(root, 'ddd-ts-kit.config.json')).not.toHaveProperty('ci');

@@ -3,6 +3,7 @@ import { cli, exists, read, tempDir } from './helpers';
 import { initProject } from './support/init-project';
 import { readJson } from './support/read-json';
 import { textsAt } from './support/texts-at';
+import { commitAll } from './support/commit-all';
 
 const platform = (root: string, file: string): string => read(root, `src/platform/${file}`);
 const stackOf = (root: string): Record<string, string> => textsAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack');
@@ -246,6 +247,9 @@ describe('the event store of a generated project: --event-sourcing', () => {
 
   it('is added to an initialised project by init --force, which keeps every other choice', () => {
     const project = initProject();
+
+    commitAll(project);
+
     const forced = cli(project, 'init', '--force', ...EVENT_SOURCED);
 
     expect(forced.code, forced.stderr).toBe(0);
