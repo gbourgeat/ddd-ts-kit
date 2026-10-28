@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:32a68c30c8d971c2 -->
+<!-- translation-of: parallel-work.md sha256:44f00605c25ae7d4 -->
 
 # Travailler en parallèle sans collisions
 
@@ -261,7 +261,10 @@ npx ddd-ts-kit worker-scope appointments --base origin/main --rows M1.12
 ```
 
 Elle ajoute un *worktree* sur la branche `build/appointments` (par défaut dans
-`.worktrees/appointments` ; `--worktree <path>` et `--branch <name>` changent l'un et l'autre),
+`.worktrees/appointments` ; `--worktree <path>` et `--branch <name>` changent l'un et l'autre ;
+un `--worktree` relatif sous `.worktrees/` est celui du checkout principal, donc les lignes de
+`plan-waves` valent depuis n'importe quel *worktree*, et tout autre chemin relatif part du projet
+d'où l'on lance),
 à partir de `--base` (par défaut la branche courante), y écrit `.ddd-ts-kit/worker.json` qui
 nomme le contexte, avec les lignes de la consigne, la base et la branche, et affiche la consigne de ce *worker* : le répertoire qu'il peut écrire, les
 générateurs qu'il peut lancer, ses lignes de `docs/architecture/slices.md` avec les règles écrites
