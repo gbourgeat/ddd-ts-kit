@@ -20,7 +20,9 @@ how to start, then the rules every change follows.
 3. **Change, then check what you touched.** A documentation change needs `npm run check:dashes`,
    `npm run docs:translations` and, if it has a checked code sample, `npm run docs:samples`; a
    code change needs the build, the tests and the lint. Each package is held to a coverage floor
-   (`vitest.config.ts`): new code comes with its specs.
+   (`vitest.config.ts`): new code comes with its specs. The hooks of the plugin are held to 100
+   percent of their lines, branches and functions (`npm run test:plugin`): a branch no test
+   reaches fails it, and a branch no hook input can reach is removed.
 4. **Open a pull request.** Its title is a conventional commit subject; its template asks what
    changes, why, and how it was verified. Every pull request is reviewed by the maintainer.
 

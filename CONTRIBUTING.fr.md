@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:c6966be3cbdca81a -->
+<!-- translation-of: CONTRIBUTING.md sha256:9b9306b4ea1a31f4 -->
 
 # Contribuer
 
@@ -22,7 +22,9 @@ une règle. Cette page dit comment commencer, puis les règles que suit chaque c
    `npm run check:dashes`, `npm run docs:translations` et, s'il contient un exemple de code
    vérifié, `npm run docs:samples` ; un changement de code demande la construction, les tests et
    le lint. Chaque package est tenu à un seuil de couverture (`vitest.config.ts`) : le nouveau
-   code vient avec ses specs.
+   code vient avec ses specs. Les *hooks* du plugin sont tenus à 100 % de leurs lignes, branches
+   et fonctions (`npm run test:plugin`) : une branche qu'aucun test n'atteint le fait échouer, et
+   une branche qu'aucune entrée de *hook* ne peut atteindre est retirée.
 4. **Ouvrir une pull request.** Son titre est un sujet de commit conventionnel ; son modèle
    demande ce qui change, pourquoi, et comment cela a été vérifié. Chaque pull request est relue
    par le mainteneur.
