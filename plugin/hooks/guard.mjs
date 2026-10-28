@@ -513,7 +513,11 @@ async function countBuilderCall(input, project, command) {
   const places = isBuilder(input) && project?.mode !== 'off' ? builderPlaces(input, project) : undefined;
   if (places) {
     const runs = await import('./builder-runs.mjs');
-    notice = runs.countCall(input, places, command);
+    try {
+      notice = runs.countCall(input, places, command);
+    } catch {
+      // a count that fails never drops the decision of the call
+    }
   }
 }
 
@@ -997,7 +1001,7 @@ function isDirectory(path) {
 }
 
 // The text of a file, or `otherwise` when it cannot be read: missing, a folder, or not readable by this user.
-function readText(path, otherwise = undefined) {
+function readText(path, otherwise) {
   try {
     return readFileSync(path, 'utf8');
   } catch {
@@ -1573,11 +1577,13 @@ function fixBuildReason({ story, locked }) {
 // The size and the time of change of every file the build gate of a story reads.
 function storyInputsKey(project) {
   const hash = createHash('sha256');
-  for (const input of STORY_INPUTS) {
-    for (const file of filesBelow(join(project.root, input))) {
-      const stat = statSync(file, { throwIfNoEntry: false });
-      hash.update(`${file}\0${stat?.size}\0${stat?.mtimeMs}\n`);
-    }
+  const entries = STORY_INPUTS.flatMap((input) => filesBelow(join(project.root, input))).map((file) => ({
+    file,
+    stat: statSync(file, { throwIfNoEntry: false }),
+  }));
+  // A file that vanished between the listing and the stat is left out.
+  for (const { file, stat } of entries.filter((entry) => entry.stat !== undefined)) {
+    hash.update(`${file}\0${stat.size}\0${stat.mtimeMs}\n`);
   }
   return hash.digest('hex');
 }

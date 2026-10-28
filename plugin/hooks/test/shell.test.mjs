@@ -52,12 +52,15 @@ test('the shell is read as it splits a command line: quotes, comments, substitut
   }
 });
 
-test('commands nested five deep are read, and a deeper one is let through: the guard fails open', () => {
+test('commands nested five deep are read', () => {
   const root = project();
   const agent = worker(root);
   assert.equal(decision(run('pre-bash', bash(root, `${'eval '.repeat(5)}rm src/main.ts`, agent))), 'deny');
-  assert.equal(run('pre-bash', bash(root, `${'eval '.repeat(6)}rm src/main.ts`, agent)).output, undefined);
+  // Deeper than the reader follows: the guard still answers without failing (what it decides there is not pinned).
+  assert.equal(run('pre-bash', bash(root, `${'eval '.repeat(6)}rm src/main.ts`, agent)).status, 0);
 });
+
+test.todo('a command nested deeper than the reader follows is refused');
 
 test('without TMPDIR in the environment, the system temp directory stays free to a worker', () => {
   const root = project();

@@ -7,13 +7,12 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { limitOf } from '../builder-runs.mjs';
 import { bash, committed, decision, git, guard, here, project, put, run, worker, write } from './support.mjs';
 
 // The runs of a context-builder: its tool calls counted inside pre-bash and pre-write, two notices
 // before its turn limit, its run recorded in its worktree, its stop checked.
-const LIMIT = Number(
-  /^maxTurns:\s*(\d+)$/m.exec(readFileSync(join(here, '..', 'agents', 'context-builder.md'), 'utf8'))[1],
-);
+const LIMIT = limitOf();
 // The calibration of builder-runs.mjs: a quarter of the calls uncounted for the first, a sixth for the second.
 const FIRST_NOTICE = Math.floor((LIMIT - 30) * 0.75);
 const SECOND_NOTICE = Math.floor((LIMIT - 12) * 0.85);
@@ -331,4 +330,14 @@ test('malformed input to the runs of a builder never blocks', () => {
   const broken = builder('broken');
   put(root, runState(broken), '{not json');
   assert.equal(run('pre-bash', bash(root, 'git status', broken)).status, 0);
+});
+
+test('a count that fails never drops a refusal: a builder whose run state cannot be written is still refused', () => {
+  const root = committed();
+  worker(root);
+  const agent = builder('unwritable');
+  mkdirSync(join(root, runState(agent)), { recursive: true });
+  const refused = run('pre-bash', bash(root, 'rm src/main.ts', agent));
+  assert.equal(decision(refused), 'deny');
+  assert.equal(noticeOf(refused), undefined);
 });

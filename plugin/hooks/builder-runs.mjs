@@ -165,7 +165,7 @@ function thresholdsOf(limit) {
 
 // The turn limit of the agent, from its own definition next to the hooks: `maxTurns` of its front matter,
 // which the plugin ships with it (its tests read it too).
-function limitOf() {
+export function limitOf() {
   const definition = join(dirname(fileURLToPath(import.meta.url)), '..', 'agents', 'context-builder.md');
   const [, front] = /^---\n([\s\S]*?)\n---/.exec(readFileSync(definition, 'utf8'));
   return Number(/^maxTurns:\s*(\d+)\s*$/m.exec(front)[1]);
