@@ -98,7 +98,8 @@ comes from the event; when the design names the handler after what it does here,
 - End to end, once the handler sends its command: `npx ddd-ts-kit generate e2e <ctx>
   <UseCase>` publishes the upstream event through the running application
   (`application.publish`), awaits `settled()` and leaves what to observe; `--event
-  <eventType>` when handlers of several events send that command.
+  <eventType>` when handlers of several events send that command. A use case only a job
+  starts gets `await application.runJob('<ctx>.<job>')` instead of the publication.
 
 ## Evolve
 

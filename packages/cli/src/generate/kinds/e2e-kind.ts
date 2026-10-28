@@ -9,7 +9,7 @@ import { named } from '../named';
 import { openScope } from '../open-scope';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
-import { reactionOf } from './e2e/reaction-of';
+import { reactionOf, type JobStart, type Reaction } from './e2e/reaction-of';
 import { tracedCommand } from './traced-command';
 import { declaredModules } from '../../model-modules';
 
@@ -18,7 +18,7 @@ export const e2eKind: Kind = {
   aliases: [],
   usage: 'e2e <context> <UseCaseName> [--event <eventType>]',
   summary:
-    'An end-to-end spec on the whole application, in test/e2e/ at the project root: driving the route of a use case, or, for a use case no route reaches, publishing the integration event its handler receives (--event names it when several do).',
+    'An end-to-end spec on the whole application, in test/e2e/ at the project root: driving the route of a use case, or, for a use case no route reaches, publishing the integration event its handler receives (--event names it when several do) or running the job that sends its command.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   writesInModules: false,
@@ -29,13 +29,14 @@ export const e2eKind: Kind = {
     const endpoint = scope.flags.event === undefined ? endpointOf(scope, name, file) : undefined;
     const spec = `test/e2e/${name.kebab}.e2e.spec.ts`;
 
+    let starts: Starter = 'route';
+
     if (endpoint === undefined) {
       const reaction = reactionOf(scope, name, file);
 
-      scope.ws.create(
-        spec,
-        renderTemplate('e2e/e2e-reaction.spec.ts.tpl', vars(scope, { name: named(name), ...reaction })),
-      );
+      starts = 'jobs' in reaction ? 'job' : 'event';
+
+      scope.ws.create(spec, reactionSpec(scope, name, reaction));
     } else {
       const traced = tracedCommand(scope, name);
       const command = `{ name: 'command ${name.pascal}Command'${traced.saved} }`;
@@ -50,19 +51,41 @@ export const e2eKind: Kind = {
       );
     }
 
-    noteSupport(scope, endpoint === undefined);
+    noteSupport(scope, starts);
   },
 };
+
+/** The spec of a use case no route reaches: it publishes the event its handler receives, or runs the job that sends its command. */
+function reactionSpec(scope: Scope, name: Name, reaction: Reaction | JobStart): string {
+  if (!('jobs' in reaction)) {
+    return renderTemplate('e2e/e2e-reaction.spec.ts.tpl', vars(scope, { name: named(name), ...reaction }));
+  }
+
+  const cases = reaction.jobs
+    .map((job) =>
+      renderTemplate('e2e/e2e-job-case.ts.tpl', vars(scope, { name: named(name), job: { name: job } })).trimEnd(),
+    )
+    .join('\n\n');
+
+  return renderTemplate('e2e/e2e-job.spec.ts.tpl', vars(scope, { name: named(name), e2e: { ...reaction.e2e, cases } }));
+}
+
+/** What starts the use case the spec drives. */
+type Starter = 'route' | 'event' | 'job';
 
 const SUPPORT = 'test/e2e/support/start-application.ts';
 
 /** What the spec needs of the support of the project: `init` writes it, older projects add `publish` by hand. */
-function noteSupport(scope: Scope, publishes: boolean): void {
+function noteSupport(scope: Scope, starts: Starter): void {
   const support = scope.ws.read(SUPPORT);
 
   if (support === undefined) {
     scope.ws.note(`${SUPPORT} is missing: \`ddd-ts-kit init\` creates it (existing files are kept).`);
-  } else if (publishes && !/^\s*publish\(/m.test(support)) {
+  } else if (starts === 'job' && !/^\s*runJob\(/m.test(support)) {
+    scope.ws.note(
+      `${SUPPORT} has no runJob(name): add \`runJob(name: string): Promise<void>;\` to RunningApplication and implement it with \`async (name) => { await application.jobs.runNow(name); }\` on the composed application (\`jobs\` is its JobScheduler: \`platform.jobs\` by hand, \`container.resolve(JobScheduler)\` on tsyringe), as a new project has it.`,
+    );
+  } else if (starts === 'event' && !/^\s*publish\(/m.test(support)) {
     scope.ws.note(
       `${SUPPORT} has no publish(events): add \`publish(events: readonly IntegrationEvent[]): Promise<void>;\` to RunningApplication and implement it with \`(events) => application.eventBus.publish(events)\` on the composed application, as a new project has it.`,
     );

@@ -47,7 +47,11 @@ describe('scheduled jobs in the platform', () => {
 
     expect(platform(root, 'composition/compose-application.ts')).toContain('jobs: options.jobs ?? { start: false },');
     expect(read(root, 'scripts/openapi.ts')).not.toContain('jobs');
-    expect(read(root, 'test/e2e/support/start-application.ts')).not.toContain('jobs');
+    expect(read(root, 'test/e2e/support/start-application.ts')).not.toContain('jobs: {');
+
+    expect(read(root, 'test/e2e/support/start-application.ts')).toContain(
+      'runJob: (name) => runJob(application.jobs, name),',
+    );
   });
 
   it('keeps one marker region for the settings of the jobs, in a file that needs no helper', () => {

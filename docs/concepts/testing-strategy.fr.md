@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:25c3602af1e96471 -->
+<!-- translation-of: testing-strategy.md sha256:70adf8e7a0df7c57 -->
 
 # Stratégie de test
 
@@ -461,6 +461,12 @@ gestionnaire : sa spec de bout en bout (`ddd-ts-kit generate e2e <context> <UseC
 construit cet événement depuis la déclaration de l'amont, le remet à l'application qui tourne avec
 `await application.publish([event])`, comme le ferait le relais de l'amont, puis attend
 `application.settled()` avant de vérifier ce qu'un client ou un autre contexte observe.
+
+Un cas d'usage que seul un *job* lance (`generate job`, ni route ni gestionnaire) reçoit la même
+*spec* avec un autre départ : elle exécute le *job* comme le ferait l'ordonnanceur avec
+`await application.runJob('<context>.<job>')` du support partagé, attend `application.settled()`,
+et laisse à remplir ce qu'il faut observer. Le générateur cherche une route, puis un gestionnaire
+qui envoie la commande, puis un *job* qui l'envoie, et nomme les trois quand il n'en trouve aucun.
 
 L'acceptation d'une *story* est une *spec* de bout en bout écrite avant son code, à partir des
 critères de la *story* (`docs/architecture/stories/<story>.md`) :

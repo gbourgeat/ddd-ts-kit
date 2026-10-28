@@ -441,6 +441,12 @@ upstream, hands it to the running application with `await application.publish([e
 relay of the upstream would, then awaits `application.settled()` before asserting what a client or
 another context observes.
 
+A use case only a job starts (`generate job`, no route, no handler) gets the same spec with a
+different start: it runs the job as the scheduler would with `await application.runJob('<context>.<job>')`
+of the shared support, awaits `application.settled()`, and leaves what to observe to fill. The
+generator looks for a route, then a handler that sends the command, then a job that sends it, and
+names the three when it finds none.
+
 The acceptance of a story is an end-to-end spec written before its code, from the criteria of the
 story (`docs/architecture/stories/<story>.md`): `test/acceptance/<story>.acceptance.spec.ts`, one
 scenario per criterion, through the API only. Each scenario runs wrapped in `pending(...)` of
