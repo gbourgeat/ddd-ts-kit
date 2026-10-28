@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { Io } from '../commands/io';
+import { errorCodeOf } from '../workspace/error-code-of';
 import { runOnInProcessDatabase } from './run-on-in-process-database';
 
 export interface OfflinePrismaMigration {
@@ -51,10 +52,7 @@ function diffOnInProcessDatabase({ root, folder }: OfflinePrismaMigration, scrip
   const lock = path.join(migrations, 'migration_lock.toml');
 
   fs.mkdirSync(migrations, { recursive: true });
-
-  if (!fs.existsSync(lock)) {
-    fs.writeFileSync(lock, LOCK);
-  }
+  writeLockUnlessPresent(lock);
 
   return runOnInProcessDatabase(root, [
     {
@@ -102,4 +100,15 @@ function slugOf(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
+}
+
+/** Writes the lock of a first migration in one step, so that a lock already there is never overwritten. */
+function writeLockUnlessPresent(lock: string): void {
+  try {
+    fs.writeFileSync(lock, LOCK, { flag: 'wx' });
+  } catch (error) {
+    if (errorCodeOf(error) !== 'EEXIST') {
+      throw error;
+    }
+  }
 }
