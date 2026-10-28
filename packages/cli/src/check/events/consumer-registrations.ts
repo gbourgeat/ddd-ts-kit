@@ -49,11 +49,12 @@ export function consumerRegistrations(file: SourceFile): ConsumerRegistration[] 
     }
 
     const line = file.scan.lineAt(span.start);
-    const given = match[1] !== undefined || match[2] === 'idempotent' || STORE_OPTION.test(registered);
-    const spreads = [...registered.matchAll(SPREAD)].map((spread) => spread[1] ?? '');
-    const readFromSpread = !given && spreads.some((name) => spreadCarriesStore(file, name));
-    const deduplicates = given || readFromSpread;
-    const spreadsUnreadable = !deduplicates && spreads.length > 0;
+
+    const { deduplicates, spreadsUnreadable } = storeOf(
+      file,
+      registered,
+      match[1] !== undefined || match[2] === 'idempotent',
+    );
 
     return [
       {
@@ -66,6 +67,21 @@ export function consumerRegistrations(file: SourceFile): ConsumerRegistration[] 
       },
     ];
   });
+}
+
+function storeOf(
+  file: SourceFile,
+  registered: string,
+  given: boolean,
+): Pick<ConsumerRegistration, 'deduplicates' | 'spreadsUnreadable'> {
+  if (given || STORE_OPTION.test(registered)) {
+    return { deduplicates: true, spreadsUnreadable: false };
+  }
+
+  const spreads = [...registered.matchAll(SPREAD)].map((spread) => spread[1] ?? '');
+  const deduplicates = spreads.some((name) => spreadCarriesStore(file, name));
+
+  return { deduplicates, spreadsUnreadable: !deduplicates && spreads.length > 0 };
 }
 
 function firstLiteral(file: SourceFile, { open, end }: Span): StringRecord | undefined {
