@@ -128,7 +128,40 @@ function probedFlags(flags: KindFlags, probe: GeneratorProbe | undefined): KindF
 
 /** The arguments of `generate` as it reads them: the positionals wherever the flags stand, the value of each flag. */
 export function generateArguments(argv: readonly string[]): Arguments {
-  return Arguments.parse(argv, optionsOf(findKind(argv.find((argument) => !argument.startsWith('-')) ?? '')));
+  return Arguments.parse(argv, optionsOf(kindIn(argv)));
+}
+
+/**
+ * The kind a command line asks for: its first word that is neither a flag nor the value of one
+ * (`generate --module pricing job catalog Reprice` asks for a job). A flag that is a text for some
+ * kinds only (`--command <UseCase>` of a job) takes the next word unless that word is a kind.
+ */
+function kindIn(argv: readonly string[]): Kind | undefined {
+  for (let index = 0; index < argv.length; index += 1) {
+    const word = argv[index] ?? '';
+
+    if (!word.startsWith('-')) {
+      return findKind(word);
+    }
+
+    const next = argv[index + 1] ?? '';
+
+    if (!word.includes('=') && takesValue(word.replace(/^-+/, ''), next)) {
+      index += 1;
+    }
+  }
+
+  return undefined;
+}
+
+function takesValue(flag: string, next: string): boolean {
+  const option = Object.entries(OPTIONS).find(([name]) => name === flag)?.[1];
+
+  if (flag === 'cwd' || option?.type === 'string') {
+    return true;
+  }
+
+  return KINDS.some((kind) => kind.textFlags?.includes(flag) === true) && findKind(next) === undefined;
 }
 
 /** One flag may be a switch for a kind and a text for another: `--command` of a route, `--command <UseCase>` of a job. */
