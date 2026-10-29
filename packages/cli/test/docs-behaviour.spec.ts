@@ -118,8 +118,8 @@ describe.each(['a'])('%s, by cause', () => {
     { title: 'unit', entries: [{ heading: 'a', specs: [specOfPage('a.spec.ts', rulesIn(source))] }] },
   ]);
 
-  it('shows no placeholder: for each case after the text before it, trimmed of its comma, each case inside a title', () => {
-    expect(page).toContain('- **AppointmentExportGateway for each case**\n');
+  it('shows no placeholder: for each case after the text before it, each case inside a title or opening it', () => {
+    expect(page).toContain('- **AppointmentExportGateway, for each case**\n');
     expect(page).toContain('  - refuses each case with 422\n');
     expect(page).toContain('- **each case, by cause**\n');
     expect(page).not.toMatch(/%s/);
