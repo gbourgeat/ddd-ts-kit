@@ -1,13 +1,9 @@
 ---
 name: wiring
 description: >-
-  Explains how the classes of a bounded context reach the composition root in a ddd-ts-kit
-  project. Ports as abstract classes used as injection tokens, the declared style
-  (decorators of the kernel, dependencies stated by the constructor signature, generated
-  declarations per layer) or the explicit module file, values bound in the platform, fakes in tests. Use
-  when binding an adapter to a port, adding a dependency to a handler, replacing an adapter
-  by a fake, composing main.ts, or when a WiringError, DeclarationError, ports/*,
-  declarations/* or composition/only-in-module is reported.
+  Use when binding an adapter to a port, adding a dependency to a handler, replacing an
+  adapter by a fake, composing main.ts, or on a WiringError, DeclarationError, ports/*,
+  declarations/* or composition/only-in-module. Dependency injection, the composition root.
 allowed-tools:
   - Read
   - Bash(npx ddd-ts-kit generate *)

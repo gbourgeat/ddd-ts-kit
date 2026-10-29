@@ -1,11 +1,10 @@
 ---
 name: story-verifier
 description: >-
-  Read-only verifier of a story at its close, in a fresh context: starts the application the
-  way the end-to-end tests do, exercises each route the rows of the story added or changed and
-  the two nearest flows, reads the design review and the report, and reports what it ran, what
-  it saw, and every behaviour that does not match the design or a D<n> decision. Launched by
-  the story skill at phase 7, after the architecture-reviewer. Fixes nothing.
+  Read-only verifier of a story at its close, in a fresh context: starts the application as
+  the end-to-end tests do, exercises each route the story added or changed and the two
+  nearest flows, and reports what it ran, what it saw and each behaviour that contradicts
+  the design or a D<n> decision. Launched by the story skill at phase 7. Fixes nothing.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit, NotebookEdit
 model: inherit

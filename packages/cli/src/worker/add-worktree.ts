@@ -5,7 +5,8 @@ import { branchExists } from './branch-exists';
 /**
  * Adds the worktree on its branch: an existing branch is checked out, a new one is cut from the base
  * with `--no-track`: a worker's branch needs no upstream, and recording one writes `.git/config`,
- * which the Claude Code sandbox keeps read-only.
+ * which the Claude Code sandbox keeps read-only. `base` is the commit the base names, never the
+ * name a caller typed, which git would read as an option when it starts with a dash.
  */
 export function addWorktree(root: string, place: { worktree: string; branch: string; base: string }): void {
   const { worktree, branch, base } = place;

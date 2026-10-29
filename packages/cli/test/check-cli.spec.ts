@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { RULE_DOCS } from '../src/check/explain/rule-docs';
 import { AGGREGATE, changeConfig, checkJsonOf, errorFixOf, HANDLER, isRecord } from './check-support';
@@ -315,5 +317,19 @@ describe('check --changed-since', () => {
     const judged = checkJsonOf(cli(repository, 'check', '--changed-since', 'main', ...LAYERS, '--json'));
 
     expect(judged.violations.map((violation) => violation.file).sort()).toEqual([committed, edited, staged].sort());
+  });
+
+  it('refuses a ref that names no commit, one that starts with a dash included, before git reads it as an option', () => {
+    const repository = committedProject('changed-since-refused', '--context', 'billing:core');
+    const output = path.join(tempDir('changed-since-output'), 'diff.txt');
+
+    const unknown = cli(repository, 'check', '--changed-since', 'no-such-branch');
+    const option = cli(repository, 'check', `--changed-since=--output=${output}`);
+
+    expect(unknown.code).toBe(2);
+    expect(unknown.stderr).toContain('error: no-such-branch is not a commit of this repository.');
+    expect(option.code).toBe(2);
+    expect(option.stderr).toContain(`error: --output=${output} is not a commit of this repository.`);
+    expect(fs.existsSync(output)).toBe(false);
   });
 });

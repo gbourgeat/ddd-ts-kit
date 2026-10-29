@@ -12,6 +12,7 @@ import { wire } from '../wire';
 import { wiringFamily } from '../wiring-family';
 import { publishInIndex } from './publish-in-index';
 import { platformPath } from '../platform-path';
+import { ownEntry } from '../../config/values/own-entry';
 
 export const gatewayKind: Kind = {
   name: 'gateway',
@@ -46,8 +47,12 @@ export const gatewayKind: Kind = {
 
 function declaredUpstream(scope: Scope, upstream: string): string {
   if (
-    scope.config.contexts[scope.context.kebab]?.upstreams.some((candidate) => candidate.context === upstream) === true
+    ownEntry(scope.config.contexts, scope.context.kebab)?.upstreams.some(
+      (candidate) => candidate.context === upstream,
+    ) === true
   ) {
+    scope.flags.builtOn?.(`${scope.config.contextsDir}/${upstream}/CONTEXT.md`);
+
     return upstream;
   }
 

@@ -1,13 +1,9 @@
 ---
 name: document
 description: >-
-  Keeps the generated documents and contracts of a ddd-ts-kit project current: the OpenAPI
-  contract from the routes, the event catalog and the AsyncAPI document from the integration
-  events, the generated lists and diagram, plus the written integration notes and decision
-  records. Use when a route, a schema, an error code or an integration event changes, when
-  the user asks for the API contract, Swagger, client generation, an ADR or the integration
-  documentation, or when the pipeline reports documentation or contract drift. The glossary
-  and CONTEXT.md belong to glossary; relationships and the map to context-map.
+  Use when a route, a schema, an error code or an integration event changes, when asked for
+  the API contract, OpenAPI, Swagger, client generation, AsyncAPI, the event catalog, an ADR
+  or integration docs, or when the pipeline reports documentation or contract drift.
 argument-hint: "[openapi|events|adr <title>]"
 allowed-tools:
   - Read
@@ -31,7 +27,9 @@ Scope requested: `$ARGUMENTS` (everything when empty)
 
 Two kinds of content, never mixed: **generated** (derived from code and config, rewritten by
 a command, checked for drift in the pipeline, never edited by hand: the guard refuses) and
-**written** (decisions and meaning no tool can derive, short).
+**written** (decisions and meaning no tool can derive, short). The glossary and `CONTEXT.md`
+belong to skill `ddd-ts-kit:glossary`; the relationships and the map to skill
+`ddd-ts-kit:context-map`.
 
 | File | Kind | Rewritten by |
 |---|---|---|

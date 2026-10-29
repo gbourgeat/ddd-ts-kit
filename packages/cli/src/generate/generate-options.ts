@@ -55,5 +55,8 @@ export const GENERATE_OPTIONS = {
   'time-zone': TEXT,
 };
 
+/** Every flag of `generate`, by its name: a kind that does not show one in its usage refuses it. */
+export const GENERATE_FLAGS: readonly string[] = Object.keys(GENERATE_OPTIONS);
+
 /** How `generate` parses one flag. */
 export type GenerateOption = typeof TEXT | typeof SWITCH | typeof TEXTS;

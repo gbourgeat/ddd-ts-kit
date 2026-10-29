@@ -1,4 +1,4 @@
-import { COMMON_FLAGS } from '../commands/generate-options';
+import { COMMON_FLAGS } from '../generate/generate-options';
 
 /** The line every help ends with: what each command accepts besides its own flags. */
 export const EVERY_COMMAND =

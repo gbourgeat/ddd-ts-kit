@@ -1,12 +1,9 @@
 ---
 name: intent
 description: >-
-  Captures an idea as an intent before any story, in the words of whoever has it: brainstorms
-  with the originator until the idea is concrete (the problem, the outcome, who and what it
-  touches, the constraints, what the author would observe), then writes
-  docs/architecture/intents/<slug>.md from the template with Status: draft, for the product
-  owner to accept in a pull request. Run by a person, from Claude Code, Cowork or claude.ai with
-  a git connector, with /ddd-ts-kit:intent; the template is also filled by hand.
+  Captures an idea as an intent before any story: brainstorms with whoever has it until it
+  is concrete (problem, outcome, constraints), then writes
+  docs/architecture/intents/<slug>.md for the product owner. Run with /ddd-ts-kit:intent.
 argument-hint: "[the idea in plain words, or nothing to be asked]"
 disable-model-invocation: true
 allowed-tools:
@@ -26,7 +23,8 @@ Idea: `$ARGUMENTS`
 You help the person who has the idea write it down in their own words, before anyone designs
 anything. You decide nothing about the solution: an intent says what is wrong, what would be
 true once it is solved, and how its author would see it. Reading costs:
-[../start/token-economy.md](../start/token-economy.md).
+[../start/token-economy.md](../start/token-economy.md). It runs from Claude Code, Cowork or
+claude.ai with a git connector; the template is also filled by hand.
 
 ## 1. Make the idea concrete
 

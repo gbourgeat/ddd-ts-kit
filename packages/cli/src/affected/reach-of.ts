@@ -1,5 +1,6 @@
 import type { Config } from '../config';
 import type { PathReach } from './path-reach';
+import { ownEntry } from '../config/values/own-entry';
 
 /** Written for people and agents, never loaded by a spec, a build or a tool of the pipeline other than the documents gate, which always runs. */
 const DOCUMENT_DIRECTORIES = ['docs/', 'openapi/', '.claude/', '.github/instructions/', '.github/copilot/'];
@@ -27,7 +28,7 @@ export function reachOf(config: Config, file: string): PathReach {
 function contextReach(config: Config, inside: string): PathReach {
   const [context = '', ...rest] = inside.split('/');
 
-  if (rest.length === 0 || config.contexts[context] === undefined) {
+  if (rest.length === 0 || ownEntry(config.contexts, context) === undefined) {
     return { kind: 'everything', reason: `${config.contextsDir}/${inside} belongs to no declared context` };
   }
 

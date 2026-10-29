@@ -3,6 +3,7 @@ import type { CruiseRule } from './cruise-rule';
 import { escapePattern } from './escape-pattern';
 import { packagePatterns } from './package-patterns';
 import { testFiles } from './test-files';
+import { ownEntry } from '../config/values/own-entry';
 
 export function contextRules(config: Config): CruiseRule[] {
   const contexts = `^${escapePattern(config.contextsDir)}`;
@@ -46,7 +47,7 @@ function undeclaredContext(config: Config, publishedLanguage: string): CruiseRul
 
 function declaredRelationship(config: Config, name: string): CruiseRule {
   const contexts = `^${escapePattern(config.contextsDir)}`;
-  const upstreams = config.contexts[name]?.upstreams.map((upstream) => upstream.context) ?? [];
+  const upstreams = ownEntry(config.contexts, name)?.upstreams.map((upstream) => upstream.context) ?? [];
   const allowed = [name, ...upstreams].map(escapePattern).join('|');
 
   return {

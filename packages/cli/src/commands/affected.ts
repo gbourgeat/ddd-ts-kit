@@ -14,7 +14,10 @@ const FORMATS = ['text', 'json', 'github', 'env'];
 /**
  * `affected`: what a pull request has to run, read from the context map and the paths that
  * differ between two commits. Without `--base` everything is selected, which is what the
- * default branch runs; so is it whenever git cannot give the difference. `--run <script>` runs
+ * default branch runs; so is it whenever git cannot give the difference, a ref that names no
+ * commit included (the pre-push hook of a clone without origin/HEAD runs everything). A value
+ * that starts with a dash is refused: no ref does, and git would read it as one of its options.
+ * `--run <script>` runs
  * that script of the project on the selection, as the pipeline does: the pre-push hook of a
  * project tests the contexts its branch reaches, not every context.
  */
@@ -53,9 +56,24 @@ function selectionFor(root: string, config: Config, args: Arguments): Selection 
     return everything(config, 'no base to compare with');
   }
 
-  const changed = changedPaths(root, base, args.text('head') ?? 'HEAD');
+  const head = args.text('head') ?? 'HEAD';
+
+  refuseOption('base', base);
+  refuseOption('head', head);
+
+  const changed = changedPaths(root, base, head);
 
   return changed === undefined
     ? everything(config, `git cannot tell what changed since ${base}`)
     : selectAffected(config, changed);
+}
+
+/** A value git would read as one of its options: `--base=--output=<file>` once wrote the difference into that file. */
+function refuseOption(option: string, ref: string): void {
+  if (ref.startsWith('-')) {
+    throw new CliError(
+      `${ref} is not a commit of this repository: no ref starts with a dash.`,
+      `Name a branch, a tag or a commit: \`--${option} origin/main\`.`,
+    );
+  }
 }

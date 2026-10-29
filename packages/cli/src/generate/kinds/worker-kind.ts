@@ -8,6 +8,7 @@ import type { Kind } from '../kind';
 import { addComposeService } from './extraction/add-compose-service';
 import { editJson } from './extraction/edit-json';
 import { EntryPoint } from './extraction/entry-point';
+import { ownEntry } from '../../config/values/own-entry';
 
 const NAME = 'worker';
 
@@ -21,7 +22,7 @@ export const workerKind: Kind = {
   writesShared: true,
   writesInModules: false,
   run: ({ ws, config }) => {
-    if (config.contexts[NAME] !== undefined) {
+    if (ownEntry(config.contexts, NAME) !== undefined) {
       throw takenByAContext();
     }
 

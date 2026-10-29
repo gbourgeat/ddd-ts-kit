@@ -8,7 +8,7 @@ import { ensureMergeable } from './ensure-mergeable';
 import { forYouEntry } from './for-you-entry';
 import { gitVersion } from './git-version';
 import { landedPoint } from './landed-point';
-import { commitOf } from './lost/commit-of';
+import { commitOf } from '../commit/commit-of';
 import { type MergeContext, mergeContextOf } from './merge-context';
 import { mergeMessage } from './merge-message';
 import type { MergeReport } from './merge-report';

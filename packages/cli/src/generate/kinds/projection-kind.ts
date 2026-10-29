@@ -1,5 +1,6 @@
 import { CONFIG_FILE } from '../../config';
 import { CliError } from '../../cli-error';
+import { MissingPrerequisite } from '../missing-prerequisite';
 import { parseContextName, toName, type Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
@@ -15,6 +16,7 @@ import { wiringFamily } from '../wiring-family';
 import { subscriptionVars } from './subscription-vars';
 import type { EventDeclaration } from './event-declaration';
 import { findEventDeclaration } from './find-event-declaration';
+import { ownEntry } from '../../config/values/own-entry';
 
 export const projectionKind: Kind = {
   name: 'projection',
@@ -72,7 +74,7 @@ function publisherOf(scope: Scope, eventType: string): Name {
   }
 
   const publisher = parseContextName(parts[0] ?? '');
-  const upstreams = scope.config.contexts[scope.context.kebab]?.upstreams ?? [];
+  const upstreams = ownEntry(scope.config.contexts, scope.context.kebab)?.upstreams ?? [];
 
   if (publisher.kebab === scope.context.kebab || upstreams.some(({ context }) => context === publisher.kebab)) {
     return publisher;
@@ -84,10 +86,10 @@ function publisherOf(scope: Scope, eventType: string): Name {
   );
 }
 
-function undeclaredEvent(publisher: Name, eventType: string): CliError {
+function undeclaredEvent(publisher: Name, eventType: string): MissingPrerequisite {
   const [, aggregate = '', fact = ''] = eventType.split('.');
 
-  return new CliError(
+  return new MissingPrerequisite(
     `${publisher.kebab} declares no ${eventType} in its published language.`,
     `A projection applies an event through its declaration, @On(<definition>): create it first with \`ddd-ts-kit generate integration-event ${publisher.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}\`, then run the command again.`,
   );

@@ -4,6 +4,7 @@ import { declaredModules } from './declared-modules';
 import { intoModule } from './into-module';
 import { isContextLevel } from './is-context-level';
 import { MODULE_LAYERS, MODULE_TEST_FOLDERS } from './module-layers';
+import { ownEntry } from '../config/values/own-entry';
 
 /** The module of the model a command writes in: `--module <module>` for the context it was given. */
 interface AskedModule {
@@ -164,7 +165,7 @@ function useCaseFoldersOf(relative: string): string[] {
 
 /** A file written in a context that declares modules, without saying which one: refused, with the way out. */
 function unplaced(sources: PlacementSources, { context, relative }: RolePath, file: string): string {
-  const declared = (sources.config.contexts[context]?.modules ?? []).length > 0;
+  const declared = (ownEntry(sources.config.contexts, context)?.modules ?? []).length > 0;
 
   return declared ? sources.unplaced(context, relative) : file;
 }

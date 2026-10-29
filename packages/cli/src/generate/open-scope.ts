@@ -1,9 +1,12 @@
 import type { Config } from '../config';
 import { CliError } from '../cli-error';
-import { toName, type Name } from '../naming';
+import type { Name } from '../naming';
+import { contextArgument } from './context-argument';
+import { MissingPrerequisite } from './missing-prerequisite';
 import type { KindRequest } from './kind';
 import type { Scope } from './scope';
 import { SHARED_KERNEL, sharedKernelScope } from './shared-kernel-scope';
+import { ownEntry } from '../config/values/own-entry';
 
 /** What a kind accepts as its first argument besides a context. */
 export interface ScopeOptions {
@@ -14,7 +17,6 @@ export interface ScopeOptions {
 /** Opens the context named by the first positional argument of a request, or the shared kernel for the kinds that write there. */
 export function openScope(request: KindRequest, options: ScopeOptions = {}): Scope {
   const { ws, config, flags } = request;
-  const context = toName(request.args[0] ?? '');
 
   if (request.args[0] === SHARED_KERNEL) {
     if (options.sharedKernel === true) {
@@ -24,18 +26,24 @@ export function openScope(request: KindRequest, options: ScopeOptions = {}): Sco
     throw notInSharedKernel(config);
   }
 
-  if (config.contexts[context.kebab] === undefined) {
+  const context = contextArgument(config, request.args[0] ?? '');
+
+  if (ownEntry(config.contexts, context.kebab) === undefined) {
     throw unknownContext(config, context);
   }
 
-  return { ws, config, context, dir: `${config.contextsDir}/${context.kebab}`, flags };
+  const dir = `${config.contextsDir}/${context.kebab}`;
+
+  flags.builtOn?.(`${dir}/CONTEXT.md`);
+
+  return { ws, config, context, dir, flags };
 }
 
-function unknownContext(config: Config, context: Name): CliError {
+function unknownContext(config: Config, context: Name): MissingPrerequisite {
   const known = Object.keys(config.contexts);
   const create = `\`ddd-ts-kit generate context ${context.kebab} --classification <core|supporting|generic>\``;
 
-  return new CliError(
+  return new MissingPrerequisite(
     `Unknown context "${context.kebab}".`,
     known.length > 0
       ? `Use one of: ${known.join(', ')}; or create it with ${create}.`
