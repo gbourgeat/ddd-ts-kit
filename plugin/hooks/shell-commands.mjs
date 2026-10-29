@@ -217,12 +217,13 @@ function unwrapOnce(rest) {
 
 /** The text a command hands to another to split, read at each layer of its wrappers (`nice npx ...`). */
 function wrappedTextOf(words) {
-  for (let rest = words; ; rest = unwrapOnce(rest)) {
-    const text = wrappedText(rest);
-    if (text !== undefined || unwrapOnce(rest) === rest) {
-      return text;
-    }
+  let rest = words;
+  let text = wrappedText(rest);
+  while (text === undefined && unwrapOnce(rest) !== rest) {
+    rest = unwrapOnce(rest);
+    text = wrappedText(rest);
   }
+  return text;
 }
 
 /** The words after the options of a wrapper, its assignments (`env`), and its leading operand. */
