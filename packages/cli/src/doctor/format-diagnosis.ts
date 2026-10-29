@@ -33,9 +33,9 @@ function projectLines(findings: readonly DoctorFinding[], version: string, manag
     `Compared with what ddd-ts-kit ${version} writes:`,
     ...findings.map(lineOf),
     '',
-    ...fixesOf(findings),
-    ...folderFixesOf(findings),
-    ...hookFixesOf(findings).map((fix) => inDialect(fix, manager)),
+    ...[...fixesOf(findings), ...folderFixesOf(findings), ...hookFixesOf(findings)].map((fix) =>
+      inDialect(fix, manager),
+    ),
     ...installScriptFixesOf(findings, manager),
   ];
 }

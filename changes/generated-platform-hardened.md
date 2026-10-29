@@ -6,4 +6,6 @@
 
 **The generated `.gitignore` and `.dockerignore` leave out every `.env.*` file but `.env.example`.** They ignored `.env` alone, so `.env.local`, `.env.production` or `.env.development.local`, files the agent permissions of the kit already refuse to read, could be committed or copied into the image.
 
+**`doctor` writes its fixes in the dialect of the project.** In a pnpm project the fix of a missing script, of a package at another range or of the platform folders said `npx ddd-ts-kit ...`; it now says `pnpm exec ddd-ts-kit ...`, as the fix of the hooks already did.
+
 To move: an existing project copies from a fresh `init` the `problemErrorHandler` lines (`ProblemExceptionFilter` on Nest) of `src/platform/http/start-http-server.ts`, with `'logger'` in the `Served` type; `trustProxy` of `app-config.ts`, `readTrustProxy` of `load-config.ts` and the line that applies it in `start-http-server.ts` (`callerAddress` on Hono), then sets `TRUST_PROXY` where it runs behind a proxy. In `docker-compose.yml`, prefix each published port with `127.0.0.1:`. Add `.env.*` and `!.env.example` under `.env` in `.gitignore` and in `.dockerignore`.
