@@ -828,15 +828,19 @@ test('code of a worker that commits its own change outside the scope is caught b
   assert.ok(
     stopped.includes(`(\`${back}\`, then \`git rm -- src/platform/evil.ts\`, then \`git commit\` to record it`),
   );
-  for (const command of [back, 'git rm -- src/platform/evil.ts', 'git commit -m "revert: put the platform back"']) {
+  for (const command of [back, 'git rm -- src/platform/evil.ts']) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
+  // The commit records the restoration once it is staged, not before.
+  const commit = 'git commit -m "revert: put the platform back"';
+  assert.equal(decision(run('pre-bash', bash(root, commit, agent))), 'deny');
   git(root, 'checkout', head, '--', 'src/main.ts');
   git(root, 'rm', '--quiet', '--', 'src/platform/evil.ts');
   assert.match(
     reason(run('pre-bash', bash(root, 'npm test', agent))),
     /outside your scope: src\/main\.ts, src\/platform\/evil\.ts/,
   );
+  assert.equal(run('pre-bash', bash(root, commit, agent)).output, undefined);
   git(root, 'commit', '--quiet', '--no-verify', '--message', 'revert');
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
 });
@@ -858,6 +862,35 @@ test('code of a worker that commits a shared file already changed before it ran 
   assert.match(reason(run('pre-bash', bash(root, 'npm test', agent))), /outside your scope: README\.md\./);
   spawnSync('sh', ['-c', keep], { cwd: root });
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test('a commit puts back held files only when it records their restoration, and the checks of a command still apply', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'restoring', agent_id: 'builder-1' };
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
+  assert.equal(run('pre-bash', bash(root, INLINE_CODE, agent)).output, undefined);
+  writeFileSync(join(root, 'src/main.ts'), 'pwned\n');
+  git(root, 'commit', '--quiet', '--no-verify', '--all', '--message', 'x');
+  const back = `git checkout ${head.slice(0, 12)} -- src/main.ts`;
+  for (const command of [
+    'git commit --amend -m x',
+    'git commit --no-verify -m x',
+    `${back} && npx prettier --write src/main.ts`,
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, agent))), 'deny', command);
+  }
+  git(root, 'checkout', head, '--', 'src/main.ts');
+  put(root, 'src/platform/extra.ts', 'export const extra = 1;\n');
+  git(root, 'add', 'src/platform/extra.ts');
+  assert.match(reason(run('pre-bash', bash(root, 'git commit -m revert', agent))), /outside your scope: src\/main\.ts/);
+  git(root, 'rm', '--quiet', '--cached', 'src/platform/extra.ts');
+  rmSync(join(root, 'src/platform/extra.ts'));
+  assert.equal(run('pre-bash', bash(root, 'git commit -m revert', agent)).output, undefined);
+  assert.equal(
+    run('pre-bash', bash(root, 'git commit -m "revert" -- src/main.ts', agent)).output?.hookSpecificOutput
+      .permissionDecision,
+    'deny',
+  );
 });
 
 test("a worker's own commit, a decision record of its slice included, and the trunk a merge brings in do not stop it", () => {

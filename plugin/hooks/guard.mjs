@@ -768,9 +768,10 @@ function workerCommandReason(project, input, { context, command, commands }) {
     return changed;
   }
   const pending = pendingChangeReason(project, input, commands);
-  if (pending) {
+  if (pending?.reason) {
     return pending.reason;
   }
+  // A command that puts back held files changes them outside the scope: only that check is lifted.
   const refusal =
     deeplyNestedReason(commands) ??
     sharedGeneratorReason(project, context, commands) ??
@@ -778,8 +779,8 @@ function workerCommandReason(project, input, { context, command, commands }) {
     workingMigrationReason(command) ??
     formatterReason(project, commands) ??
     unknownProgramReason(commands) ??
-    fileChangeReason(project, input, commands);
-  if (!refusal) {
+    (pending ? undefined : fileChangeReason(project, input, commands));
+  if (!refusal && !pending) {
     noteBeforeCode(project, input, commands);
   }
   return refusal;
@@ -3417,7 +3418,8 @@ function heldChangeReason(project, input, commands) {
   }
   const paths = new Set(left.map(([path]) => path));
   const acting = commands.filter(({ words }) => !NEUTRAL_PROGRAMS.has(shell.commandName(words)));
-  if (acting.length > 0 && acting.every((command) => putsBack(project, command, paths))) {
+  const restoring = (command) => isGitCommit(command) && recordsRestoration(project, input, { now, since, left });
+  if (acting.length > 0 && acting.every((command) => putsBack(project, command, paths) || restoring(command))) {
     return { undoing: true };
   }
 
@@ -3448,12 +3450,38 @@ function putsBack(project, command, paths) {
   return (
     touched.every(({ place }) => place !== undefined && paths.has(projectPath(project, place))) &&
     !runsCode(command) &&
-    (touched.length > 0 || isGitCommit(command))
+    touched.length > 0
   );
 }
 
-function isGitCommit({ words }) {
-  return shell.commandName(words) === 'git' && gitInvocation(words.slice(1)).subcommand === 'commit';
+// A plain `git commit`: no `-a`, no paths of its own, so that it records the index alone.
+function isGitCommit(command) {
+  const { subcommand, tail } = gitInvocation(command.words.slice(1));
+  return (
+    shell.commandName(command.words) === 'git' &&
+    subcommand === 'commit' &&
+    changedPaths(command).length === 0 &&
+    shell.operands(tail, [...COMMIT_VALUED_OPTIONS]).length === 0
+  );
+}
+
+// A commit records the restoration of the held files a commit changed when each of them is staged
+// as the commit noted before holds it, and nothing else outside the scope is staged.
+function recordsRestoration(project, input, { now, since, left }) {
+  const staged = (git(project, ['diff', '--cached', '--name-only', '-z']) ?? '').split('\0').filter(Boolean);
+  const outside = worktreeOutside(project, input);
+  const held = new Set(left.map(([path]) => path));
+  const committed = left.filter(
+    ([path, target]) => target.head !== now.head && commitsOf(project, since, target.head).has(path),
+  );
+  return (
+    committed.length > 0 &&
+    staged.every((path) => held.has(path) || !outside(path)) &&
+    committed.every(
+      ([path, target]) =>
+        staged.includes(path) && git(project, ['diff', '--cached', '--quiet', target.head, '--', path]) !== undefined,
+    )
+  );
 }
 
 function putBackReason(project, state, left) {
