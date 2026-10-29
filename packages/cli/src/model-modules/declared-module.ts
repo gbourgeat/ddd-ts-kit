@@ -8,13 +8,13 @@ import { declaredModules } from './declared-modules';
  * with the command that declares it, when the context does not declare it.
  */
 export function declaredModule(config: Config, context: string, asked: string): string {
+  const declared = declaredModules(config, context);
+
   const module = readName(
     asked,
     'module',
-    `Name a module of ${context} as the config declares it: ${declaredModules(config, context).join(', ') || 'none is declared yet'}.`,
+    `Name a module of ${context} as the config declares it: ${declared.join(', ') || 'none is declared yet'}.`,
   ).kebab;
-
-  const declared = declaredModules(config, context);
 
   if (!declared.includes(module)) {
     throw new CliError(
