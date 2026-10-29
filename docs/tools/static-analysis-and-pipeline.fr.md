@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:703515bed3204bcc -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:205ef766e30013b5 -->
 
 # L'analyse statique et le pipeline
 
@@ -202,7 +202,10 @@ pre-commit:
       glob: 'src/**/*.{ts,mts,cts}'
       run: npx --no -- ddd-ts-kit check {staged_files}
     - name: behaviour pages
-      glob: '**/*.spec.ts'
+      glob:
+        - '**/*.spec.ts'
+        - 'src/**/*.{ts,mts,cts}'
+        - 'ddd-ts-kit.config.json'
       run: 'if [ -f .ddd-ts-kit/worker.json ]; then echo "behaviour pages: left to the trunk, as every shared file of a worker."; else npx --no -- ddd-ts-kit docs --behaviour && git add docs/behaviour; fi'
     - name: commit size
       run: npx --no -- ddd-ts-kit check --commit-size --staged
@@ -371,7 +374,7 @@ D'après [`pipeline/README.md`](../../pipeline/README.md), le
 - **knip.** Fichier, export, type et dépendance inutilisés signalés sur le projet d'exemple.
 - **Les *hooks*.** lefthook : ESLint, la vérification du format par Biome et le *checker* sur les
   fichiers indexés avant un *commit*, les pages de ce qu'énoncent les tests régénérées et ajoutées
-  quand une *spec* est indexée (laissées au tronc dans le worktree d'un worker), avec
+  quand une *spec*, une source sous `src/` ou `ddd-ts-kit.config.json` est indexée (laissées au tronc dans le worktree d'un worker), avec
   `check --commit-size --staged` à titre indicatif ; vérification de types et tests unitaires avant
   un *push* ; commitlint sur le message.
 - **Des seuils de couverture par couche**, les plus hauts pour `domain/`, les plus bas pour

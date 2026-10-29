@@ -195,7 +195,10 @@ pre-commit:
       glob: 'src/**/*.{ts,mts,cts}'
       run: npx --no -- ddd-ts-kit check {staged_files}
     - name: behaviour pages
-      glob: '**/*.spec.ts'
+      glob:
+        - '**/*.spec.ts'
+        - 'src/**/*.{ts,mts,cts}'
+        - 'ddd-ts-kit.config.json'
       run: 'if [ -f .ddd-ts-kit/worker.json ]; then echo "behaviour pages: left to the trunk, as every shared file of a worker."; else npx --no -- ddd-ts-kit docs --behaviour && git add docs/behaviour; fi'
     - name: commit size
       run: npx --no -- ddd-ts-kit check --commit-size --staged
@@ -356,7 +359,7 @@ From [`pipeline/README.md`](../../pipeline/README.md), the
   violation.
 - **knip.** Unused file, export, type and dependency reported on the sample project.
 - **Hooks.** lefthook: ESLint, the Biome format check and the checker on staged files before a
-  commit, the pages of what the tests state regenerated and added when a spec is staged (left to
+  commit, the pages of what the tests state regenerated and added when a spec, a source under `src/` or `ddd-ts-kit.config.json` is staged (left to
   the trunk in the worktree of a worker), with the advisory `check --commit-size --staged`; type
   check and unit tests before a push; commitlint on the message.
 - **Coverage thresholds per layer**, highest for `domain/`, lowest for `infrastructure/`, read

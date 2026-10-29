@@ -25,8 +25,8 @@ export const FLAG_NOTES: readonly Note[] = [
     command: 'docs',
     lines: [
       'docs writes the pages of what the tests state (docs/behaviour/) alone, every other generated',
-      'document left as it is: what the pre-commit hook runs when a spec is staged; with --check,',
-      'those pages alone are compared',
+      'document left as it is: what the pre-commit hook runs when a spec, a source under src/ or the',
+      'config is staged; with --check, those pages alone are compared',
     ],
   },
   {
