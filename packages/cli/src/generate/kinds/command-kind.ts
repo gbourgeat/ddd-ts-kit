@@ -1,12 +1,15 @@
 import { CliError } from '../../cli-error';
+import type { Name } from '../../naming';
 import { concept } from '../concept';
 import { emit } from '../emit';
 import type { Kind } from '../kind';
 import { learnTerms } from '../learn-terms';
 import { refinedByPolicy } from '../refined-by-policy';
 import { openScope } from '../open-scope';
+import type { Scope } from '../scope';
 import { wire } from '../wire';
 import { commandContext } from './command-context';
+import type { UseCaseContext } from './use-case-context';
 import { commandOutputs } from './command-outputs';
 import { existingAggregate } from './existing-aggregate';
 import { generateRepository } from './generate-repository';
@@ -42,25 +45,38 @@ export const commandKind: Kind = {
 
     const { permission } = scope.flags;
 
-    const context = commandContext(
+    const generated = commandContext(
       scope,
       { name, aggregate, creates: scope.flags.creates },
       permission !== undefined && refinedByPolicy(scope, permission),
     );
 
-    if (
-      aggregate !== undefined &&
-      !scope.ws.exists(`${scope.dir}/domain/repositories/${aggregate.kebab}.repository.ts`)
-    ) {
-      generateRepository(scope, aggregate);
-    }
-
-    emit(scope, context, commandOutputs(scope, name));
-
-    if (aggregate !== undefined) {
-      wireRepositoryOnFirstUse(scope, aggregate);
-    }
-
-    wire(scope, aggregate === undefined ? 'command' : { kind: 'command', holding: repositoryLine(aggregate) }, context);
+    writeCommand(scope, { name, aggregate }, generated);
   },
 };
+
+/** The files of the command, its repository when it is the first use of one, its wiring, and the note about the world. */
+function writeCommand(
+  scope: Scope,
+  { name, aggregate }: { name: Name; aggregate: Name | undefined },
+  { vars, worldHint }: UseCaseContext,
+): void {
+  if (
+    aggregate !== undefined &&
+    !scope.ws.exists(`${scope.dir}/domain/repositories/${aggregate.kebab}.repository.ts`)
+  ) {
+    generateRepository(scope, aggregate);
+  }
+
+  emit(scope, vars, commandOutputs(scope, name));
+
+  if (worldHint !== undefined) {
+    scope.ws.note(worldHint);
+  }
+
+  if (aggregate !== undefined) {
+    wireRepositoryOnFirstUse(scope, aggregate);
+  }
+
+  wire(scope, aggregate === undefined ? 'command' : { kind: 'command', holding: repositoryLine(aggregate) }, vars);
+}

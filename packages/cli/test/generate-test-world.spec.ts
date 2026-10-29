@@ -41,7 +41,7 @@ describe('generate test-world, in the declared style', () => {
     const world = read(root, WORLD);
 
     expect(world).toContain(
-      "import { contextModule, createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';",
+      "import { contextModule, createTestApplication, fake, type ContextModule, type Override } from '@ddd-ts-kit/di';",
     );
 
     expect(world).toContain("import * as billingDeclarations from '@/contexts/billing/billing.declarations';");
@@ -61,17 +61,27 @@ describe('generate test-world, in the declared style', () => {
     );
 
     expect(world).toContain('  readonly given?: (fakes: BillingWorldFakes) => Promise<void>;');
+    expect(world).toContain('  readonly fakes?: readonly Override[];');
+    expect(world).not.toContain('tenants');
 
+    expect(world).toContain('  const fakes = buildFakes();\n\n  await given?.(fakes);');
+
+    // Built apart, so that the world stays a list of steps however many fakes the context has.
     expect(world).toContain(
-      '  const fakes = { invoiceRepository: new FakeInvoiceRepository(), paymentGateway: new FakePaymentGateway() };\n\n  await given?.(fakes);',
+      'function buildFakes(): BillingWorldFakes {\n  return { invoiceRepository: new FakeInvoiceRepository(), paymentGateway: new FakePaymentGateway() };\n}',
     );
 
     expect(world).toContain(
       "    ...settings,\n    eventBusFailures: 'as-thrown',\n    modules: [platformTestModule, context, ...modules],",
     );
 
+    // A fake the spec hands replaces the one the world builds for the same port: one override per port.
     expect(world).toContain(
-      '    fakes: [fake(InvoiceRepository, fakes.invoiceRepository), fake(PaymentGateway, fakes.paymentGateway)],',
+      '    fakes: overridden(settings.fakes, [\n      fake(InvoiceRepository, fakes.invoiceRepository),\n      fake(PaymentGateway, fakes.paymentGateway),\n    ]),',
+    );
+
+    expect(world).toContain(
+      '// The fakes a spec hands replace those the world builds for the same port.\nfunction overridden(handed: readonly Override[] | undefined, built: readonly Override[]): Override[] {',
     );
 
     expect(world).toContain('  return { application, ...fakes };');
@@ -195,10 +205,12 @@ describe('generate test-world, on other stacks', () => {
     const world = read(root, WORLD);
 
     expect(world).toContain(
-      "import { contextModule, createTestApplication, type ContextModule } from '@ddd-ts-kit/di';",
+      "import { contextModule, createTestApplication, type ContextModule, type Override } from '@ddd-ts-kit/di';",
     );
 
-    expect(world).not.toContain('fakes');
+    // The fakes a spec hands it go to the test application with the other settings.
+    expect(world).toContain('  readonly fakes?: readonly Override[];');
+    expect(world).not.toContain('const fakes');
     expect(world).not.toContain('given');
 
     expect(world).toContain(
@@ -210,6 +222,18 @@ describe('generate test-world, on other stacks', () => {
     expect(generated.notes).toEqual([
       `${BILLING}/test/fakes/ holds no fake the world can build: it gives the test application alone. Generate a port or a repository (each comes with its fake), then run again with --force.`,
     ]);
+  });
+
+  it('takes the tenants a per-tenant job runs for, under tenancy', () => {
+    const root = tempDir('world-tenancy');
+
+    expect(cli(root, 'init', '--authz', 'rbac', '--tenancy', 'shared-table').code).toBe(0);
+    expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core').code).toBe(0);
+    expect(cli(root, 'generate', 'test-world', 'billing').code).toBe(0);
+
+    expect(read(root, WORLD)).toContain(
+      '  readonly fakes?: readonly Override[];\n  readonly tenants?: readonly string[];',
+    );
   });
 
   it('assembles the context from its module file in the explicit style, and discovers it under discovery', () => {

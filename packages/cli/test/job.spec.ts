@@ -78,9 +78,7 @@ describe('generate job, in the declared style', () => {
 
     expect(spec).toContain("await application.jobs.runNow('billing.cancel-stale-invoices');");
 
-    expect(spec).toContain(
-      "roles: { scheduler: [billingPermissions['invoice.cancel']] },\n    systemRole: 'scheduler',",
-    );
+    expect(spec).toContain("const { authorizer } = holdersOf(billingPermissions['invoice.cancel']);");
 
     expect(spec).toContain("const context = contextModule('billing', billingDeclarations);");
     expect(spec).toContain('modules: [platformTestModule, context, authorization]');

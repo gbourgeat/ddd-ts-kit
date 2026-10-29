@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4ed10fed2dbe675b -->
+<!-- translation-of: README.md sha256:39cb687fd254e9bd -->
 
 # @ddd-ts-kit/auth
 
@@ -20,7 +20,7 @@ npm i jose            # seulement pour @ddd-ts-kit/auth/jwt
 | `@ddd-ts-kit/auth/jwt` | `JwtAuthenticator`, `keycloakAuthenticator` | `jose` (dépendance *peer* optionnelle), le seul fichier qui l'importe |
 | `@ddd-ts-kit/auth/passport` | `passportPrincipal` : une stratégie de Passport comme `resolvePrincipal` de la frontière HTTP | rien : il exécute la stratégie qu'on lui donne |
 | `@ddd-ts-kit/auth/di` | `authorizationModule`, `authorizationMapOf`, et de nouveau les classes que le module lie : `Authorizer`, `Authenticator`, `Access`, `AuthorizationMap` | `@ddd-ts-kit/di` (dépendance *peer* optionnelle) |
-| `@ddd-ts-kit/auth/testing` | `anActor()` et son `ActorBuilder`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, les deux suites de contrat | `@ddd-ts-kit/testing` (dépendance *peer* optionnelle), le *runner* que vous passez |
+| `@ddd-ts-kit/auth/testing` | `anActor()` et son `ActorBuilder`, `holdersOf()`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, les deux suites de contrat | `@ddd-ts-kit/testing` (dépendance *peer* optionnelle), le *runner* que vous passez |
 
 Le modèle de l'acteur vit dans `@ddd-ts-kit/kernel` : `Actor`, `anonymousActor()`,
 `systemActor(name)`, `AuthorizedCommand`, `AuthorizedQuery`, le port `ActorContext` et ses deux
@@ -1237,6 +1237,13 @@ const accountant = anActor().named('ada').ofTenant('acme').withRole('accountant'
   l'infrastructure voit à travers `ActorContext` (par défaut : l'utilisateur `test-user`) ;
   `app.actorContext.actAs(actor)` le change. L'acteur d'un cas d'usage est celui que le test met
   dans la commande.
+- **La permission d'un cas d'usage.** `holdersOf(permission, ...autres)` donne `holder`, un
+  utilisateur du rôle `holder`, et `authorizer`, qui accorde les permissions à ce rôle et à tout
+  acteur système (une tâche planifiée, une réaction) et refuse tous les autres, dont un acteur
+  de `anActor()` seul : `const { holder, authorizer } = holdersOf(billingPermissions['invoice.issue'])`,
+  puis `authorizationModule({ authorizer })` ou `authorizationMiddleware({ authorizer, map })`.
+  Les *specs* générées des gestionnaires, des requêtes et des tâches planifiées arrangent leurs
+  droits avec lui.
 - **Les droits d'un contexte.** Listez `authorizationModule({ authorizer })` avec le vrai
   modèle, ou avec un `RecordingAuthorizer` pour vérifier ce qui a été demandé sous forme de
   données (`authorizer.checks`) ; remplacez l'autorisateur d'une application composée par

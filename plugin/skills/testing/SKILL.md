@@ -83,8 +83,15 @@ refusal is asserted by its code and its facts, never by a message or the class o
 
 ## Handler specs
 
-The generated `arrange()` builds a test application from the platform test module, the
-context (`contextModule('<context>', declarations)` or its module) and the fakes. Execute
+Generate the world of the context first (`generate test-world <ctx>`, below): a handler, query
+or job spec generated after it arranges through it, `arrange()` being one call of the world.
+Generated before it, `arrange()` builds a test application from the platform test module, the
+context (`contextModule('<context>', declarations)` or its module) and the fakes, and under a
+container a comment says the world would shorten it. A world the generator cannot read (it looks
+for `export function a<Context>World` and its `<Context>WorldOptions`) is said so, never forced. Either way `holdersOf(permission)` of `@ddd-ts-kit/auth/testing`
+gives the actor holding the permission and the authorizer granting it (to the system actor of a
+job too): `const { holder, authorizer } = holdersOf(billingPermissions['invoice.issue'])`, the
+authorizer handed to `authorizationModule` or `authorizationMiddleware`. Execute
 through `application.commandBus` or `queryBus` with an actor built by `anActor()`. Cover: the
 happy path, each failure by its error code, nothing saved or published on failure, and the
 refusal of an actor without the permission (generated). Reactions: dispatch the event and
@@ -101,9 +108,10 @@ included.
 
 ## Worlds
 
-When a second spec of a context repeats the arrangement of another (the same test application
-or buses, the same fakes), generate a world instead of copying it or writing a helper:
-`npx ddd-ts-kit generate test-world <ctx> [Name]` writes `test/worlds/<name>.world.ts`.
+The arrangement the specs of a context share (the same test application or buses, the same
+fakes) is a world, generated once instead of copied or written as a helper:
+`npx ddd-ts-kit generate test-world <ctx> [Name]` writes `test/worlds/<name>.world.ts`. The one
+named after the context is the one the generators of use cases and jobs arrange through.
 
 ```ts
 const { application, orderRepository } = await anOrderingWorld({
@@ -117,8 +125,10 @@ const { application, orderRepository } = await anOrderingWorld({
 
 It builds every fake of `test/fakes/` and returns each under the name of its port; `given`
 stores the starting state before the application wires the fakes, so the events recorded while
-building it are not announced. The permission, the data and the facts a spec listens to stay in
-the spec. Run it again with `--force` once the context has a new fake. Nothing else goes in
+building it are not announced; `fakes` takes the fake of a port it cannot build alone (a reader
+that answers what the spec gives it). The permission, the data and the facts a spec listens to
+stay in the spec. Run it again with `--force` once the context has a new fake: a use case whose
+spec needs a fake the world lacks is generated without the world, and the output says so. Nothing else goes in
 `test/unit/` or `test/integration/` but specs (`test/helper-placed`): an arrangement is a world,
 test data a builder, an in-memory port a fake.
 

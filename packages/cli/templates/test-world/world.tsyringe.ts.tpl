@@ -20,6 +20,10 @@ export interface {{world.pascal}}WorldOptions {
   readonly now?: Date;
   readonly idPrefix?: string;
   readonly modules?: readonly ContextModule[];
+  readonly fakes?: readonly Override[];
+{{#if world.tenanted}}
+  readonly tenants?: readonly string[];
+{{/if}}
 {{#if world.hasFakes}}
   readonly given?: (fakes: {{world.pascal}}WorldFakes) => Promise<void>;
 {{/if}}
@@ -31,7 +35,7 @@ export async function {{world.article}}{{world.pascal}}World({ modules = [nobody
 
 {{/if}}
 {{#if world.hasFakes}}
-{{world.built}}
+  const fakes = buildFakes();
 
   await given?.(fakes);
 
@@ -52,3 +56,18 @@ export async function {{world.article}}{{world.pascal}}World({ modules = [nobody
   return { application };
 {{/unless}}
 }
+{{#if world.hasFakes}}
+
+{{world.replacing}}
+function overridden(handed: readonly Override[] | undefined, built: readonly Override[]): Override[] {
+  const replaced = new Set((handed ?? []).map(([port]) => port));
+
+  return [...built.filter(([port]) => !replaced.has(port)), ...(handed ?? [])];
+}
+{{/if}}
+{{#if world.hasFakes}}
+
+function buildFakes(): {{world.pascal}}WorldFakes {
+{{world.built}}
+}
+{{/if}}

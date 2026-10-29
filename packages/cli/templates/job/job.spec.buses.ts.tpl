@@ -1,8 +1,13 @@
 import { describe, expect, it } from '{{tests.module}}';
 import type { Message } from '@ddd-ts-kit/kernel';
+{{#unless world.through}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
+{{/unless}}
 import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
 import { {{name.pascal}}Job } from '{{alias.context}}/application/scheduling/{{name.kebab}}.job{{alias.ext}}';
+{{#if world.through}}
+{{world.import}}
+{{/if}}
 
 const occurrence = {
   scheduledAt: new Date('2026-01-01T07:00:00.000Z'),
@@ -16,7 +21,7 @@ const occurrence = {
 
 describe('{{name.title}}, when its time comes', () => {
   it('sends {{job.commandWords}}{{job.asActor}}', async () => {
-    const { job, sent } = arrange();
+    const { job, sent } = {{world.await}}arrange();
 
     await job.run(occurrence);
 
@@ -32,8 +37,16 @@ describe('{{name.title}}, when its time comes', () => {
   it.todo('has the same outcome when the same occurrence runs twice');
 });
 
-function arrange() {
+{{#unless world.through}}
+{{world.comment}}
+{{/unless}}
+{{world.async}}function arrange() {
+{{#if world.through}}
+  const { commandBus } = await {{world.builder}}();
+{{/if}}
+{{#unless world.through}}
   const { commandBus } = createTestBuses();
+{{/unless}}
   const sent: Message[] = [];
 
   commandBus.register({{job.command}}Command, {

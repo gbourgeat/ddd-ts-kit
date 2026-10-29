@@ -1,6 +1,6 @@
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { contextModule, createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';
+import { contextModule, createTestApplication, fake, type ContextModule, type Override } from '@ddd-ts-kit/di';
 import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
@@ -25,18 +25,15 @@ export interface NotificationWorldOptions {
   readonly now?: Date;
   readonly idPrefix?: string;
   readonly modules?: readonly ContextModule[];
+  readonly fakes?: readonly Override[];
+  readonly tenants?: readonly string[];
   readonly given?: (fakes: NotificationWorldFakes) => Promise<void>;
 }
 
 export async function aNotificationWorld({ modules = [nobody], given, ...settings }: NotificationWorldOptions = {}) {
   const context = contextModule('notification', notificationDeclarations);
 
-  const fakes = {
-    contacts: new FakeContacts(),
-    mailer: new FakeMailer(),
-    notificationRepository: new FakeNotificationRepository(),
-    reminderRepository: new FakeReminderRepository(),
-  };
+  const fakes = buildFakes();
 
   await given?.(fakes);
 
@@ -44,13 +41,29 @@ export async function aNotificationWorld({ modules = [nobody], given, ...setting
     ...settings,
     eventBusFailures: 'as-thrown',
     modules: [platformTestModule, context, ...modules],
-    fakes: [
+    fakes: overridden(settings.fakes, [
       fake(Contacts, fakes.contacts),
       fake(Mailer, fakes.mailer),
       fake(NotificationRepository, fakes.notificationRepository),
       fake(ReminderRepository, fakes.reminderRepository),
-    ],
+    ]),
   });
 
   return { application, ...fakes };
+}
+
+// The fakes a spec hands replace those the world builds for the same port.
+function overridden(handed: readonly Override[] | undefined, built: readonly Override[]): Override[] {
+  const replaced = new Set((handed ?? []).map(([port]) => port));
+
+  return [...built.filter(([port]) => !replaced.has(port)), ...(handed ?? [])];
+}
+
+function buildFakes(): NotificationWorldFakes {
+  return {
+    contacts: new FakeContacts(),
+    mailer: new FakeMailer(),
+    notificationRepository: new FakeNotificationRepository(),
+    reminderRepository: new FakeReminderRepository(),
+  };
 }

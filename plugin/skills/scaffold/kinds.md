@@ -41,7 +41,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) and wheth
 | `integration-handler` (`consumer`) | `<ctx> <upstream> <event-type>` | `application/integration/handlers/<name>.integration-handler.ts`, consumer `<ctx>.<name>`, spec |
 | `acl` | `<ctx> <upstream-or-system>` | `infrastructure/anti-corruption/<name>.translator.ts`, spec |
 | `builder` | `<ctx> <Aggregate>` | `test/builders/` |
-| `test-world` | `<ctx> [Name]` | `test/worlds/<name>.world.ts`: `a<Name>World({ now, idPrefix, given })`, the test application (or the buses) with every fake of `test/fakes/`, each returned under the name of its port; the arrangement several specs share |
+| `test-world` | `<ctx> [Name]` | `test/worlds/<name>.world.ts`: `a<Name>World({ now, idPrefix, given })`, the test application (or the buses) with every fake of `test/fakes/`, each returned under the name of its port; the arrangement several specs share, the one the specs of `command`, `query` and `job` generated after it arrange through |
 | `e2e` | `<ctx> <UseCase> [--event <eventType>]` | `test/e2e/<use-case>.e2e.spec.ts` (needs the route, an integration event handler that sends the command (the spec publishes its event), or a job that sends it (the spec runs it with `application.runJob`)) |
 | `service` | `<ctx>` | `src/apps/<ctx>/main.ts`: the context run alone, a start script, a compose service |
 | `worker` | | `src/apps/worker/main.ts`: a process for the scheduled jobs and the queues, a start script, a compose service |

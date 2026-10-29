@@ -126,8 +126,6 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
   scaffoldOrderFulfilment(step, withHttp, grantOf(stack, more));
   scaffoldBillingLifecycle(step);
   scaffoldNamedReactions(step);
-  // The arrangement the specs of billing share, once every fake of the context exists.
-  step('generate', 'test-world', 'billing');
   step('generate', 'worker');
 
   return results;
@@ -181,6 +179,8 @@ function scaffoldBilling(step: Step, withHttp: boolean, grant: (role: string) =>
     ...grant('accountant'),
   );
 
+  // The world of billing, once its repository exists: the use cases and jobs generated after it arrange through it, IssueInvoice above without it.
+  step('generate', 'test-world', 'billing');
   step('generate', 'command', 'billing', 'CancelInvoice', '--permission', 'invoice.cancel', ...grant('accountant'));
 
   step(

@@ -1,14 +1,16 @@
 import { describe, expect, it } from '{{tests.module}}';
 {{#if access.protected}}
 {{#if access.policy}}
-import { AuthorizationMap, PolicyAccess, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
+import { AuthorizationMap, PolicyAccess, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
 {{/if}}
 {{#unless access.policy}}
-import { AuthorizationMap, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
+import { AuthorizationMap, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
 {{/unless}}
-import { anActor } from '@ddd-ts-kit/auth/testing';
+import { anActor, holdersOf } from '@ddd-ts-kit/auth/testing';
 {{/if}}
+{{#unless world.through}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
+{{/unless}}
 {{#if access.protected}}
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 {{/if}}
@@ -16,32 +18,23 @@ import { {{name.pascal}}Handler } from '{{alias.context}}/application/queries/{{
 import { {{name.pascal}}Query } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.query{{alias.ext}}';
 import type { {{name.pascal}}Result } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result{{alias.ext}}';
 import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.kebab}}-reader.fake{{alias.ext}}';
+{{#if world.through}}
+{{world.import}}
+{{/if}}
 {{#if access.protected}}
 
-{{#if access.policy}}
-const authorizer = new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } });
+const { holder, authorizer } = holdersOf({{context.camel}}Permissions['{{access.permission}}']);
 
 const holders = authorizationMiddleware({
   authorizer,
   map: AuthorizationMap.of(requires({{name.pascal}}Query, {{context.camel}}Permissions['{{access.permission}}'])),
 });
 {{/if}}
-{{#unless access.policy}}
-const holders = authorizationMiddleware({
-  authorizer: new RoleBasedAuthorizer({
-    roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },
-  }),
-  map: AuthorizationMap.of(requires({{name.pascal}}Query, {{context.camel}}Permissions['{{access.permission}}'])),
-});
-{{/unless}}
-
-const holder = anActor().withRole('holder').build();
-{{/if}}
 
 describe('{{name.title}}', () => {
   it('answers what the read model holds', async () => {
     const answer: {{name.pascal}}Result = {};
-    const queryBus = arrange(answer);
+    const queryBus = {{world.await}}arrange(answer);
     const query = new {{name.pascal}}Query({{access.holder}});
 
     expect(await queryBus.execute(query)).toEqual(answer);
@@ -49,7 +42,7 @@ describe('{{name.title}}', () => {
   {{#if access.protected}}
 
   it('is refused to an actor who does not hold the permission {{access.permission}}', async () => {
-    const queryBus = arrange({});
+    const queryBus = {{world.await}}arrange({});
     const query = new {{name.pascal}}Query(anActor().build());
 
     await expect(queryBus.execute(query)).rejects.toMatchObject({ code: 'FORBIDDEN' });
@@ -61,13 +54,26 @@ describe('{{name.title}}', () => {
   it.todo('applies each criterion of the query');
 });
 
-function arrange(answer: {{name.pascal}}Result) {
+{{#unless world.through}}
+{{world.comment}}
+{{/unless}}
+{{world.async}}function arrange(answer: {{name.pascal}}Result) {
 {{#if access.policy}}
+{{#if world.through}}
+  const { queryBus, clock } = await {{world.builder}}({{world.options}});
+{{/if}}
+{{#unless world.through}}
   const { queryBus, clock } = createTestBuses();
+{{/unless}}
   const handler = new {{name.pascal}}Handler(new Fake{{name.pascal}}Reader(answer), new PolicyAccess({ authorizer, clock }));
 {{/if}}
 {{#unless access.policy}}
+{{#if world.through}}
+  const { queryBus } = await {{world.builder}}({{world.options}});
+{{/if}}
+{{#unless world.through}}
   const { queryBus } = createTestBuses();
+{{/unless}}
   const handler = new {{name.pascal}}Handler(new Fake{{name.pascal}}Reader(answer));
 {{/unless}}
 

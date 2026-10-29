@@ -8,6 +8,7 @@ export {
 } from './testing/authorizer-contract';
 export { DenyAll } from './testing/deny-all';
 export { FakeAuthenticator } from './testing/fake-authenticator';
+export { holdersOf, type Holders } from './testing/holders-of';
 export { RecordingAuthorizer } from './testing/recording-authorizer';
 export {
   relationTupleStoreContract,

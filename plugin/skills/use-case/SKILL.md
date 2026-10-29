@@ -61,11 +61,18 @@ line so that the document is corrected. A name still to build is never listed.
 Run the `Start with` commands of the slice row, or for a typical command:
 
 ```bash
+npx ddd-ts-kit generate test-world <ctx> --json   # once per context, before its first use case, again with --force when it gains a fake
 npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> [--creates] --permission <aggregate>.<action> --grant <role> --json
 npx ddd-ts-kit generate error <ctx> <Refusal> <factory> --json        # one per refusal: its class, its code in <context>.codes.ts, a factory
 npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact recorded
 npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json   # [--group <Name>] [--mapper] [--serializer]
 ```
+
+The world comes first: `generate test-world <ctx>` writes `test/worlds/<ctx>.world.ts`, the
+test application (or the buses) with every fake of the context, and nothing writes it for you.
+Then the use case: its spec arranges through that world in a few lines, `holdersOf(permission)`
+giving the actor and the authorizer; generated before the world, it builds the test application
+itself and the output says so.
 
 `--aggregate` alone generates a command that changes an aggregate that exists: its handler receives
 the repository and writes nothing until its `TODO(domain)` is answered (load, call one intention
@@ -156,8 +163,9 @@ story states it.
    the aggregate recorded, and they are dispatched once the handler has returned, before the
    commit: no `pullEvents()`, no dispatcher in a handler
    (`domain-events/dispatched-on-save`). Time and identifiers come from `Clock` and
-   `IdGenerator`. When the handler specs of the context arrange the same application, take it
-   from a world (`npx ddd-ts-kit generate test-world <ctx>`, in `test/worlds/`).
+   `IdGenerator`. Arrange through the world of the context, as the generated spec does:
+   `given` stores the aggregates the test starts from, built by the builders;
+   `createTestApplication` stays for a class tested alone.
 3. **Presentation.** The route, one controller class with one method
    (`presentation/http/<resource>/<use-case>/<use-case>.controller.ts`): its decorator declares
    the method, the path after the prefix of its route group, the schemas (shape only), the

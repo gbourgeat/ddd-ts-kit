@@ -22,7 +22,7 @@ export async function {{world.article}}{{world.pascal}}World({ given, ...setting
 export async function {{world.article}}{{world.pascal}}World(settings: {{world.pascal}}WorldOptions = {}) {
 {{/unless}}
 {{#if world.hasFakes}}
-{{world.built}}
+  const fakes = buildFakes();
 
   await given?.(fakes);
 
@@ -31,3 +31,9 @@ export async function {{world.article}}{{world.pascal}}World(settings: {{world.p
 
 {{world.returnedBuses}}
 }
+{{#if world.hasFakes}}
+
+function buildFakes(): {{world.pascal}}WorldFakes {
+{{world.built}}
+}
+{{/if}}
