@@ -2,17 +2,22 @@
 // workers to resume.
 
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { test } from 'node:test';
 import {
   bash,
   cli,
   cliAnswering,
+  cliModule,
   committed,
   directory,
   git,
   here,
+  installed,
+  installedVersion,
+  launcher,
   project,
   put,
   reason,
@@ -35,7 +40,7 @@ test('session start says when the installed packages are not the version the ski
   const briefing = (installed) => {
     const root = project();
     if (installed !== undefined) {
-      put(root, 'node_modules/ddd-ts-kit/package.json', JSON.stringify({ name: 'ddd-ts-kit', version: installed }));
+      installedVersion(root, installed);
     }
     return run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
   };
@@ -95,10 +100,9 @@ test('session start names the workers to resume, and asks the CLI nothing withou
   writeFileSync(join(root, '.gitignore'), 'node_modules\n.ddd-ts-kit/\n');
   const calls = join(root, 'node_modules', 'calls.log');
   writeFileSync(calls, '');
-  writeFileSync(
-    join(root, 'node_modules', '.bin', 'ddd-ts-kit'),
-    `#!/bin/sh\necho "$*" >> "${calls}"\nexec node "${cli}" "$@"\n`,
-    { mode: 0o755 },
+  launcher(
+    root,
+    `import { appendFileSync } from 'node:fs';\nappendFileSync(${JSON.stringify(calls)}, process.argv.slice(2).join(' ') + '\\n');\nawait import(${JSON.stringify(cliModule)});\n`,
   );
   assert.doesNotMatch(run('session', { cwd: root }).output.hookSpecificOutput.additionalContext, /Worker to resume/);
   assert.doesNotMatch(readFileSync(calls, 'utf8'), /status/);
@@ -166,7 +170,7 @@ test('with a CLI that answers no report, session start points to the commands, a
   const root = committed();
   workerWorktree(root);
   put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
-  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), '#!/bin/sh\necho "not a report"\n', { mode: 0o755 });
+  launcher(root, "console.log('not a report');\n");
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
   assert.match(briefing, /^Story US5: run `npx ddd-ts-kit story US5` for where it stands\.$/m);
   assert.match(briefing, /^Contexts:\n$/m);
@@ -192,7 +196,7 @@ test('a session started as a context worker is told the bounded context it build
 
 test('with the guard off, session start still hands the map over, without a version gap nor a commit reminder', () => {
   const root = committed({ guard: 'off', commit: { maxFiles: 1, maxLines: 1 } });
-  put(root, 'node_modules/ddd-ts-kit/package.json', JSON.stringify({ name: 'ddd-ts-kit', version: '0.1.0' }));
+  installedVersion(root, '0.1.0');
   put(root, 'docs/a.md', 'a\n');
   put(root, 'docs/b.md', 'b\n');
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
@@ -235,3 +239,47 @@ test('a map longer than session start allows is cut, with the command that lists
   assert.match(briefing, /\n\(truncated: run `npx ddd-ts-kit list` for the rest\)/);
   assert.doesNotMatch(briefing, /context-59 /);
 });
+
+test('the guard runs no CLI installed above the top of the repository of the project', () => {
+  const parent = directory('planted');
+  const marker = join(parent, 'ran');
+  plantedCli(parent, marker);
+  const root = join(parent, 'project');
+  mkdirSync(root);
+  const init = spawnSync('node', [cli, 'init', '--orm', 'none', '--context', 'ordering:core'], { cwd: root });
+  assert.equal(init.status, 0, String(init.stderr));
+  const outside = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(outside, /The dependencies are not installed here/);
+  git(root, 'init', '--quiet');
+  run('session', { cwd: root });
+  assert.equal(existsSync(marker), false);
+});
+
+test('a CLI that is no bin of the package of the kit is never run, and the session says it is not installed', () => {
+  const root = project();
+  const marker = join(root, 'ran');
+  rmSync(join(root, 'node_modules', 'ddd-ts-kit'), { recursive: true });
+  rmSync(join(root, 'node_modules', '.bin'), { recursive: true });
+  mkdirSync(join(root, 'node_modules', '.bin'));
+  const script = `#!/bin/sh\ntouch "${marker}"\n`;
+  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), script, { mode: 0o755 });
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /The dependencies are not installed here/);
+  assert.doesNotMatch(briefing, /Contexts:/);
+  plantedCli(root, marker, '../../ran.mjs');
+  put(root, 'ran.mjs', `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(marker)}, 'ran');\n`);
+  run('session', { cwd: root });
+  plantedCli(root, marker);
+  const manifest = { name: 'not-the-kit', bin: { 'ddd-ts-kit': 'bin.mjs' } };
+  writeFileSync(join(root, 'node_modules', 'ddd-ts-kit', 'package.json'), JSON.stringify(manifest));
+  run('session', { cwd: root });
+  writeFileSync(join(root, 'node_modules', 'ddd-ts-kit', 'package.json'), JSON.stringify({ name: 'ddd-ts-kit' }));
+  assert.match(run('session', { cwd: root }).output.hookSpecificOutput.additionalContext, /not installed here/);
+  assert.equal(existsSync(marker), false);
+});
+
+// A package that says it is the kit, planted where the guard must not look: its bin leaves a marker.
+function plantedCli(root, marker, bin = 'bin.mjs') {
+  const source = `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(marker)}, 'ran');\n`;
+  installed(root, { name: 'ddd-ts-kit', bin: { 'ddd-ts-kit': bin }, source });
+}

@@ -6,7 +6,21 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { bash, cli, decision, git, patch, patchConfig, project, put, reason, run, worker, write } from './support.mjs';
+import {
+  bash,
+  cli,
+  decision,
+  git,
+  launcher,
+  patch,
+  patchConfig,
+  project,
+  put,
+  reason,
+  run,
+  worker,
+  write,
+} from './support.mjs';
 
 test('a new file of a generated role is refused with the generator command', () => {
   const root = project();
@@ -413,15 +427,14 @@ test('on trial, each judged write is recorded in the git directory of the reposi
 test('on trial, a CLI that cannot judge the text lets the write through and is recorded as not judged', () => {
   const root = project({ dependenciesBeforeWrite: true });
   spawnSync('git', ['init', '--quiet'], { cwd: root });
-  const older = `#!/bin/sh\necho '{"error":{"message":"Unknown option --content-from"}}'\n`;
-  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), older, { mode: 0o755 });
+  launcher(root, `console.log('{"error":{"message":"Unknown option --content-from"}}');\n`);
   const file = pricingService(root, 'export class Pricing {}\n');
   const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
   assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
   const [entry] = trialRecord(root);
   assert.equal(entry.unjudged, 'Unknown option --content-from');
   assert.equal(entry.refused, undefined);
-  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+  launcher(root, 'process.exit(1);\n');
   assert.equal(run('pre-write', { tool_name: 'Edit', tool_input: edit }).output, undefined);
   assert.equal(trialRecord(root)[1].unjudged, 'no report');
 });

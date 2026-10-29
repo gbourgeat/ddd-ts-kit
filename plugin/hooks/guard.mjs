@@ -13,6 +13,7 @@ import {
   openSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -639,16 +640,21 @@ function postWrite(input) {
 
 // With `formatOnWrite` in the config, the Biome the project installed lays out each written file
 // before it is checked, so that the layout is settled at the write and the lint findings that follow
-// a wrapped line come back in the same output. One file, the project's binary only, never `npx biome`.
+// a wrapped line come back in the same output. One file, the bin of the package the project installed
+// only, never `npx biome`.
 function formatWrites(writes) {
   for (const { file } of writes) {
     const project = findProject(dirname(file));
     if (!project?.formatOnWrite || project.mode === 'off' || !FORMATTED_FILE.test(file) || !existsSync(file)) {
       continue;
     }
-    const biome = join(project.root, 'node_modules', '.bin', 'biome');
-    if (existsSync(biome)) {
-      spawnSync(biome, ['format', '--write', file], { cwd: project.root, encoding: 'utf8', timeout: FORMAT_TIMEOUT });
+    const biome = installedBin(join(project.root, 'node_modules', '@biomejs', 'biome'), '@biomejs/biome', 'biome');
+    if (biome) {
+      spawnSync(process.execPath, [biome.bin, 'format', '--write', file], {
+        cwd: project.root,
+        encoding: 'utf8',
+        timeout: FORMAT_TIMEOUT,
+      });
     }
   }
 }
@@ -920,18 +926,34 @@ function describeProject(root) {
 }
 
 // The CLI the project installed, where Node would find it: in the project, or hoisted to a parent
-// by the workspaces of npm or pnpm (a project of a monorepo, the example of this repository).
+// by the workspaces of npm or pnpm (a project of a monorepo, the example of this repository), never
+// above the top of its repository, where a folder another user writes (the temp dir) could hold one.
 function installedCli(root) {
+  const top = repositoryTop(root) ?? root;
   let directory = root;
   for (;;) {
-    const cli = join(directory, 'node_modules', '.bin', 'ddd-ts-kit');
-    if (existsSync(cli)) {
+    const cli = installedBin(join(directory, 'node_modules', 'ddd-ts-kit'), 'ddd-ts-kit', 'ddd-ts-kit');
+    if (cli || directory === top) {
       return cli;
     }
-    if (dirname(directory) === directory) {
-      return undefined;
-    }
     directory = dirname(directory);
+  }
+}
+
+// The bin `command` of the package `name` installed in `home`, and its version: the file its manifest
+// names, inside the package once links are followed. The guard runs it with Node, never through
+// node_modules/.bin, whose entry may be any file a repository commits (and is a shell shim on pnpm).
+function installedBin(home, name, command) {
+  const manifest = readJson(join(home, 'package.json'));
+  if (manifest?.name !== name) {
+    return undefined;
+  }
+  try {
+    const bin = realpathSync(resolve(home, manifest.bin[command]));
+    return bin.startsWith(`${realpathSync(home)}${sep}`) ? { bin, version: manifest.version } : undefined;
+  } catch {
+    // No bin of that name, or a file that is not there.
+    return undefined;
   }
 }
 
@@ -2905,9 +2927,9 @@ function isChecked(file) {
 }
 
 function runCli(project, args, timeout) {
-  const run = spawnSync(project.cli, args, { cwd: project.root, encoding: 'utf8', timeout });
+  const run = spawnSync(process.execPath, [project.cli.bin, ...args], { cwd: project.root, encoding: 'utf8', timeout });
   try {
-    return JSON.parse(run.stdout ?? '');
+    return JSON.parse(run.stdout);
   } catch {
     return undefined;
   }
