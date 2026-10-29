@@ -180,7 +180,8 @@ export class Workspace {
       return;
     }
 
-    this.pending.set(file, { content, existed: true });
+    // A file not on disk yet is created, a derived one included.
+    this.pending.set(file, { content, existed: fs.existsSync(this.absolute(file)) });
   }
 
   /**
