@@ -3553,7 +3553,7 @@ function contentHash(file, keep) {
     return null;
   }
   const hash = createHash('sha256').update(content).digest('hex');
-  if (keep) {
+  if (keep && !existsSync(join(keep, hash))) {
     writeKitFile(join(keep, hash), content);
   }
   return hash;

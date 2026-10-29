@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
@@ -655,6 +655,22 @@ test('a shared file already changed before the inline code ran must get back the
   spawnSync('sh', ['-c', restore], { cwd: root });
   assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), 'Changed by the conductor.\n');
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test('the content of a shared file already changed is kept once, not rewritten at every noted command', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'kept', agent_id: 'builder-1' };
+  writeFileSync(join(root, 'README.md'), 'Changed by the conductor.\n');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  const held = join(
+    root,
+    '.ddd-ts-kit/guard/held',
+    createHash('sha256').update('Changed by the conductor.\n').digest('hex'),
+  );
+  const old = new Date(Date.now() - 3600 * 1000);
+  utimesSync(held, old, old);
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  assert.equal(statSync(held).mtimeMs, old.getTime());
 });
 
 test('a shared file deleted before the code of a worker ran, and made again by it, is to be removed again', () => {
