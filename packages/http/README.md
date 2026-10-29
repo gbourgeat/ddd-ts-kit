@@ -1173,8 +1173,12 @@ app.listen(3000);
 
 `problemErrorHandler` answers as a problem what reaches Express before a route of the kit: a body
 `express.json()` cannot parse is 400 `MALFORMED_BODY`, a body over its limit (100 kB by default)
-413 `BODY_TOO_LARGE`, another error with a client status (`status` 4xx) that status, the error a
-middleware passes to `next` 500 `INTERNAL_ERROR`. Without it, the final handler of Express
+413 `BODY_TOO_LARGE`, another error that carries a status (`status` or `statusCode`, 4xx or 5xx)
+that status, with the code the kit gives it (`UNAUTHORIZED`, `VALIDATION_FAILED` for 422,
+`SERVICE_UNAVAILABLE` for the 503 of a store down) and the headers it carries for its client
+(`WWW-Authenticate`, `Allow`, `Retry-After`), and any other error a middleware passes to `next`
+500 `INTERNAL_ERROR`, with nothing of its message. An empty body reaches the route as absent
+(`undefined`), as on every framework, for its validation to decide. Without it, the final handler of Express
 answers an HTML page, with the stack outside production, and writes the error to stderr, the
 body it quotes included. The handler writes to `logger` the type of the error
 (`entity.parse.failed`), the status and the request id, never the message nor the body: a
@@ -1203,8 +1207,11 @@ await app.register(fastifyRoutes(routes, options), { prefix: '/api' });
 `problemErrorHandler` of `@ddd-ts-kit/http/fastify` does on Fastify what the one of Express does:
 a body its parser refuses is 400 `MALFORMED_BODY`, a body over `bodyLimit` (1 MiB by default)
 413 `BODY_TOO_LARGE`, a media type no parser reads 415 `UNSUPPORTED_MEDIA_TYPE`, a hook that
-throws 500 `INTERNAL_ERROR`, instead of `{ statusCode, code, error, message }`, which carries the
-message of an unexpected error to the client. Set it before the routes are mounted.
+throws the status it carries or 500 `INTERNAL_ERROR`, with its headers kept as on Express, instead of `{ statusCode, code, error, message }`, which carries the
+message of an unexpected error to the client. Set it before the routes are mounted. The parser
+of Fastify refuses an empty JSON body, which Express and Hono hand over as absent: `mountFastify`
+registers the routes in a context of their own where an empty body reaches them as absent, any
+other read by the JSON parser of Fastify.
 
 ## Hono 4
 
@@ -1233,9 +1240,9 @@ without holding the body whole. A body in a media type the route consumes (`cons
 as text under the same limit, for its representation; another media type is not read, and the
 pipeline answers 415 when representations are mounted. An upload and a raw body are read from
 the request stream, with the limits their route declares, and a stream answer or a streamed
-list is streamed. A middleware in front of the routes that throws is answered 500
-`INTERNAL_ERROR` as a problem by `problemErrorHandler`, logged as on Express, instead of a text
-with the error written to stderr. A request carries `HonoRaw` as
+list is streamed. A middleware in front of the routes that throws is answered as a problem by
+`problemErrorHandler`, 500 `INTERNAL_ERROR` or the status of an `HTTPException` with the headers
+of its response, logged as on Express, instead of a text with the error written to stderr. A request carries `HonoRaw` as
 its raw request (its headers as a record, which the authenticators of the kit read, and the
 `Context` of Hono), and a repeated query parameter is a list, as on Express and Fastify. The
 adapter imports nothing of Hono at run time and `node:stream` for the streams: the kit proves
@@ -1279,8 +1286,10 @@ a middleware that fails, is answered by the exception filter of Nest with `{ sta
 a message that may quote the body, and logged whole. `ProblemExceptionFilter` answers it as a
 problem instead, on Express and on Fastify, and logs it as `problemErrorHandler` does:
 `app.useGlobalFilters(new ProblemExceptionFilter(app.getHttpAdapter(), { logger }))`. A body too
-large is 413 `BODY_TOO_LARGE`, a path no route serves 404 `NOT_FOUND`; Nest turns a body that is
-not JSON into a `BadRequestException` of its own before any filter, so it is 400 `BAD_REQUEST`.
+large is 413 `BODY_TOO_LARGE`, a path no route serves 404 `NOT_FOUND`, a body that is not JSON
+400 `MALFORMED_BODY` as on the other frameworks: Nest wraps the error of its parser in an
+exception of its own before any filter, which the filter tells by its status, its message and a
+JSON request whose body was never read.
 
 ### Nest controllers served by the kit
 

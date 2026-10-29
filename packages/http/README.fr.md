@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:43857aabe2b5a418 -->
+<!-- translation-of: README.md sha256:6b9aa1874d4df52f -->
 
 # @ddd-ts-kit/http
 
@@ -1224,8 +1224,12 @@ app.listen(3000);
 `problemErrorHandler` répond sous forme de *problem* à ce qui atteint Express avant une route du
 kit : un corps que `express.json()` ne sait pas analyser reçoit un 400 `MALFORMED_BODY`, un corps
 au-delà de sa limite (100 ko par défaut) un 413 `BODY_TOO_LARGE`, une autre erreur porteuse d'un
-statut client (`status` 4xx) ce statut, l'erreur qu'un middleware passe à `next` un 500
-`INTERNAL_ERROR`. Sans lui, le gestionnaire final d'Express répond une page HTML, avec la pile
+statut (`status` ou `statusCode`, 4xx ou 5xx) ce statut, avec le code que le kit lui donne
+(`UNAUTHORIZED`, `VALIDATION_FAILED` pour 422, `SERVICE_UNAVAILABLE` pour le 503 d'un stockage
+en panne) et les en-têtes qu'elle porte pour son client (`WWW-Authenticate`, `Allow`,
+`Retry-After`), et toute autre erreur qu'un middleware passe à `next` un 500 `INTERNAL_ERROR`,
+sans rien de son message. Un corps vide atteint la route comme absent (`undefined`), comme sur
+chaque framework, pour que sa validation décide. Sans lui, le gestionnaire final d'Express répond une page HTML, avec la pile
 hors production, et écrit l'erreur sur stderr, corps cité compris. Le gestionnaire écrit dans
 `logger` le type de l'erreur (`entity.parse.failed`), le statut et l'identifiant de la requête,
 jamais le message ni le corps : un refus comme avertissement, une panne comme erreur.
@@ -1253,9 +1257,13 @@ await app.register(fastifyRoutes(routes, options), { prefix: '/api' });
 `problemErrorHandler` de `@ddd-ts-kit/http/fastify` fait sur Fastify ce que fait celui
 d'Express : un corps que son analyseur refuse reçoit un 400 `MALFORMED_BODY`, un corps au-delà de
 `bodyLimit` (1 Mio par défaut) un 413 `BODY_TOO_LARGE`, un type de média qu'aucun analyseur ne
-lit un 415 `UNSUPPORTED_MEDIA_TYPE`, un hook qui lève une erreur un 500 `INTERNAL_ERROR`, au lieu
+lit un 415 `UNSUPPORTED_MEDIA_TYPE`, un hook qui lève une erreur le statut qu'elle porte ou un
+500 `INTERNAL_ERROR`, ses en-têtes gardés comme sur Express, au lieu
 de `{ statusCode, code, error, message }`, qui porte au client le message d'une erreur
-inattendue. Installez-le avant de monter les routes.
+inattendue. Installez-le avant de monter les routes. L'analyseur de Fastify refuse un corps JSON
+vide, qu'Express et Hono transmettent comme absent : `mountFastify` enregistre les routes dans un
+contexte à elles où un corps vide les atteint comme absent, tout autre corps lu par l'analyseur
+JSON de Fastify.
 
 ## Hono 4
 
@@ -1285,9 +1293,10 @@ un type de média que la route consomme (`consumes`) est lu comme du texte sous 
 pour sa représentation ; un autre type de média n'est pas lu, et le pipeline répond 415 quand des
 représentations sont montées. Un téléversement et un corps brut sont lus depuis le flux de la
 requête HTTP, avec les limites que déclare leur route, et une réponse en flux ou une liste en flux
-est envoyée en flux. Un middleware placé devant les routes qui lève une erreur reçoit un 500
-`INTERNAL_ERROR` sous forme de *problem* par `problemErrorHandler`, journalisé comme sur Express,
-au lieu d'un texte avec l'erreur écrite sur stderr. Une requête HTTP porte `HonoRaw`
+est envoyée en flux. Un middleware placé devant les routes qui lève une erreur reçoit sa réponse
+sous forme de *problem* de `problemErrorHandler`, un 500 `INTERNAL_ERROR` ou le statut d'une
+`HTTPException` avec les en-têtes de sa réponse, journalisé comme sur Express, au lieu d'un texte
+avec l'erreur écrite sur stderr. Une requête HTTP porte `HonoRaw`
 comme requête brute (ses en-têtes sous forme d'objet, que lisent les authentificateurs du kit,
 et le `Context` de Hono), et un paramètre de chaîne de requête répété est une liste, comme sur
 Express et Fastify. L'adaptateur n'importe rien de Hono à l'exécution, et `node:stream` pour les
@@ -1334,9 +1343,10 @@ Nest, `{ statusCode, message }`, un message qui peut citer le corps, et est jour
 `ProblemExceptionFilter` y répond plutôt sous forme de *problem*, sur Express comme sur Fastify,
 et le journalise comme `problemErrorHandler` :
 `app.useGlobalFilters(new ProblemExceptionFilter(app.getHttpAdapter(), { logger }))`. Un corps
-trop grand reçoit un 413 `BODY_TOO_LARGE`, un chemin qu'aucune route ne sert un 404 `NOT_FOUND` ;
-Nest change un corps qui n'est pas du JSON en une `BadRequestException` à lui avant tout filtre,
-il reçoit donc un 400 `BAD_REQUEST`.
+trop grand reçoit un 413 `BODY_TOO_LARGE`, un chemin qu'aucune route ne sert un 404 `NOT_FOUND`,
+un corps qui n'est pas du JSON un 400 `MALFORMED_BODY` comme sur les autres frameworks : Nest
+enveloppe l'erreur de son analyseur dans une exception à lui avant tout filtre, que le filtre
+reconnaît à son statut, à son message et à une requête JSON dont le corps n'a jamais été lu.
 
 ### Contrôleurs Nest servis par le kit
 

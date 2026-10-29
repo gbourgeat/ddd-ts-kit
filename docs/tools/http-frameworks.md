@@ -282,7 +282,7 @@ From [`packages/http/README.md`](../../packages/http/README.md) and
   pipeline on Express (`express.json()`, 100 kB by default), Fastify (1 MiB) and NestJS. It is
   answered as a problem, 400 `MALFORMED_BODY` or 413 `BODY_TOO_LARGE`, by `problemErrorHandler`
   of `@ddd-ts-kit/http/express` and `@ddd-ts-kit/http/fastify` and by `ProblemExceptionFilter` of
-  `@ddd-ts-kit/http/nest` (where Nest turns malformed JSON into 400 `BAD_REQUEST`), which the
+  `@ddd-ts-kit/http/nest`, which the
   generated `start-http-server.ts` installs, and which log the type of the error and its status,
   never the body; without them, by the framework's own error handler, which may write the body
   to stderr. On Hono the adapter reads the body: a body beyond `bodyLimit` (1 MiB by default) is
