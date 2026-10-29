@@ -6,8 +6,7 @@ import type { AcceptanceProblem } from './acceptance-problem';
 import { countsFor } from './counts-for';
 import { driftOf, type Judged } from './drift';
 import { lockFileOf } from './lock-file-of';
-import { readCommittedLock } from './read-committed-lock';
-import { readLock } from './read-lock';
+import { type PreviousLock, previousLockOf } from './previous-lock-of';
 import { readVerdicts } from './read-verdicts';
 import { regressionDriftOf } from './regression-drift-of';
 import type { StoryAcceptance } from './story-acceptance';
@@ -47,10 +46,9 @@ export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
 
   requireWritten(story);
 
-  const onDisk = readLock(ws, story.story);
-  const committed = ws.exists(lockFileOf(story.story)) ? undefined : readCommittedLock(ws, story.story);
-  const previous = onDisk ?? (committed?.kind === 'found' ? committed.lock : undefined);
-  const amendments = amendmentsOf(ws, { lock: previous, removed: committed?.kind === 'found' }, request);
+  const found = previousLockOf(ws, story.story);
+  const previous = 'lock' in found ? found.lock : undefined;
+  const amendments = amendmentsOf(ws, found, request);
   const written = story.scenarios.filter(({ state }) => state === 'pending' || state === 'active');
   const tests = lockedTests(story);
 
@@ -66,10 +64,7 @@ export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
 
   ws.update(file, formatJson(lock));
 
-  const notes =
-    committed?.kind === 'unchecked'
-      ? [`The previous lock of ${story.story} could not be checked: this is not a git repository.`]
-      : [];
+  const notes = notesOf(found, story.story);
 
   return { file, scenarios: written.length, tests: tests.length, amendments, notes };
 }
@@ -120,8 +115,8 @@ function requireRegression(story: StoryAcceptance, blocking: readonly Acceptance
 }
 
 /** The changes since the previous lock with their `amend` verdicts; refused while one has none. */
-function amendmentsOf(ws: Workspace, previous: Previous, { story, on }: LockRequest): Amendment[] {
-  const { lock } = previous;
+function amendmentsOf(ws: Workspace, found: PreviousLock, { story, on }: LockRequest): Amendment[] {
+  const lock = 'lock' in found ? found.lock : undefined;
 
   const changes =
     lock === undefined
@@ -134,8 +129,8 @@ function amendmentsOf(ws: Workspace, previous: Previous, { story, on }: LockRequ
   const verdicts = readVerdicts(ws, story.story);
   const unjudged = changes.filter((change) => verdictOn(change, verdicts)?.verdict !== 'amend');
 
-  if (unjudged.length > 0 && previous.removed) {
-    throw removedLockRefusal(story.story, unjudged);
+  if (unjudged.length > 0 && found.kind === 'committed') {
+    throw removedLockRefusal(story.story, found.commit, unjudged);
   }
 
   if (unjudged.length > 0) {
@@ -158,15 +153,22 @@ function amendmentsOf(ws: Workspace, previous: Previous, { story, on }: LockRequ
   });
 }
 
-/** The lock to compare with, and whether it was read from a commit because the file was removed. */
-interface Previous {
-  readonly lock: AcceptanceLock | undefined;
-  readonly removed: boolean;
+/** What the lock could not check, or decided not to compare with, said once. */
+function notesOf(found: PreviousLock, story: string): string[] {
+  if (found.kind === 'unchecked') {
+    return [
+      `The previous lock of ${story} could not be checked: git did not answer (no repository, or git not installed).`,
+    ];
+  }
+
+  return found.kind === 'deleted'
+    ? [`The lock of ${story} was removed by the commit ${found.commit.slice(0, 8)}: locked again without comparison.`]
+    : [];
 }
 
-function removedLockRefusal(story: string, unjudged: readonly Judged[]): CliError {
+function removedLockRefusal(story: string, commit: string, unjudged: readonly Judged[]): CliError {
   return new CliError(
-    `The lock of ${story} was removed, and changed since the last commit of it without a verdict that lets it through: ${unjudged.map((change) => `${change.subject} (fingerprint ${change.fingerprint})`).join(', ')}.`,
-    `Restore it (\`git checkout -- ${lockFileOf(story)}\`), then let the acceptance-judge agent rule on each change with its subject and fingerprint, and lock again once it wrote \`Verdict: amend\`.`,
+    `The lock of ${story} was removed or emptied, and changed since its last commit without a verdict that lets it through: ${unjudged.map((change) => `${change.subject} (fingerprint ${change.fingerprint})`).join(', ')}.`,
+    `Restore it (\`git checkout ${commit.slice(0, 8)} -- ${lockFileOf(story)}\`), then let the acceptance-judge agent rule on each change with its subject and fingerprint, and lock again once it wrote \`Verdict: amend\`.`,
   );
 }

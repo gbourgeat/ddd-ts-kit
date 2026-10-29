@@ -4,7 +4,7 @@ import { ACCEPTANCE_DIR, acceptanceFileOf } from './acceptance-file-of';
 import type { AcceptanceProblem } from './acceptance-problem';
 import { type Criterion, criteriaIn } from './criteria-in';
 import { lockFileOf } from './lock-file-of';
-import { readLock } from './read-lock';
+import { previousLockOf } from './previous-lock-of';
 import { readVerdicts } from './read-verdicts';
 import { lockProblems } from './lock-problems';
 import { readRegression } from './read-regression';
@@ -61,7 +61,8 @@ function acceptanceOf(ws: Workspace, story: string, slices: readonly Slice[]): S
   const text = ws.read(file);
   const scenarios = text === undefined ? [] : scenariosIn(text);
   const { specification, criteria, regression } = specificationOf(ws, story);
-  const lock = readLock(ws, story);
+  const previous = previousLockOf(ws, story);
+  const lock = 'lock' in previous ? previous.lock : undefined;
 
   const rows = rowsOf(story, slices, scenarios);
 
@@ -80,11 +81,12 @@ function acceptanceOf(ws: Workspace, story: string, slices: readonly Slice[]): S
     criteria,
     scenarios,
     ...(regression === undefined ? {} : { regression }),
-    ...(lock === undefined ? {} : { lock: lockFileOf(story) }),
+    ...(previous.kind === 'on-disk' ? { lock: lockFileOf(story) } : {}),
     amendments: lock?.amendments ?? [],
     problems: [
       ...wholeProblems(story, { file, text, rows, criteria, scenarios, specification, regression }),
       ...scenarios.flatMap((scenario) => scenarioProblems(scenario, context)),
+      ...(previous.kind === 'committed' ? [removedProblem(story, previous.commit)] : []),
       ...lockProblems({ story, lock, scenarios, criteria, regression, verdicts: readVerdicts(ws, story) }),
     ],
   };
@@ -132,4 +134,13 @@ function rowsOf(story: string, slices: readonly Slice[], scenarios: readonly Sce
       status: row.status,
       scenarios: scenarios.filter((scenario) => scenario.rows.includes(row.id)),
     }));
+}
+
+/** A lock a commit holds that the disk no longer does: restoring it is the first step. */
+function removedProblem(story: string, commit: string): AcceptanceProblem {
+  return {
+    kind: 'drift',
+    at: lockFileOf(story),
+    message: `The lock of ${story} was removed or emptied: restore it (\`git checkout ${commit.slice(0, 8)} -- ${lockFileOf(story)}\`), then lock again once the changes since have their verdicts.`,
+  };
 }

@@ -113,10 +113,7 @@ describe('the regression specs of a fix', () => {
     const locked = cli(root, 'acceptance', 'FIX-412', '--lock');
 
     expect(locked.code).toBe(0);
-
-    expect(locked.stdout).toBe(
-      `Locked 2 regression tests of FIX-412 in ${LOCK}: commit it with them.\nThe previous lock of FIX-412 could not be checked: this is not a git repository.`,
-    );
+    expect(locked.stdout).toBe(`Locked 2 regression tests of FIX-412 in ${LOCK}: commit it with them.`);
 
     expect(JSON.parse(read(root, LOCK))).toEqual({
       story: 'FIX-412',
