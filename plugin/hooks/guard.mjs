@@ -265,9 +265,51 @@ const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>', '>&']);
 const IN_PLACE_EDITORS = new Set(['vim', 'vi', 'ex', 'ed']);
 const EXTRACTORS = new Set(['tar', 'unzip']);
 // Linters and test runners that write the paths they are given, behind a flag.
+// For a writer of its operands, `subcommands` are the words that name an action, not a path, and
+// `valued` the options whose value is no path it writes.
 const TOOL_WRITES = {
-  eslint: { kind: 'operands', flags: ['--fix', '--fix-dry-run'] },
-  biome: { kind: 'operands', flags: ['--write', '--fix'] },
+  eslint: {
+    kind: 'operands',
+    flags: ['--fix', '--fix-dry-run'],
+    subcommands: [],
+    valued: [
+      '-c',
+      '--config',
+      '--ext',
+      '--parser',
+      '--parser-options',
+      '--plugin',
+      '--rule',
+      '--rulesdir',
+      '--env',
+      '--global',
+      '--ignore-path',
+      '--ignore-pattern',
+      '-f',
+      '--format',
+      '-o',
+      '--output-file',
+      '--max-warnings',
+      '--cache-location',
+      '--resolve-plugins-relative-to',
+    ],
+  },
+  biome: {
+    kind: 'operands',
+    flags: ['--write', '--fix'],
+    subcommands: ['format', 'check', 'lint', 'ci'],
+    valued: [
+      '--config-path',
+      '--max-diagnostics',
+      '--diagnostic-level',
+      '--log-level',
+      '--log-kind',
+      '--reporter',
+      '--stdin-file-path',
+      '--vcs-root',
+      '--files-max-size',
+    ],
+  },
   vitest: { kind: 'valued', valued: ['--outputFile', '--outputJson'] },
 };
 const DOWNLOAD_FLAGS = {
@@ -2470,7 +2512,7 @@ function toolWrites(name, args, at) {
     spec.kind === 'valued'
       ? valuedTargets(args, spec.valued)
       : spec.flags.some((flag) => args.includes(flag))
-        ? shell.operands(args)
+        ? shell.operands(args, spec.valued).filter((word) => !spec.subcommands.includes(word))
         : [];
   return targets.map((word) => at(word, name));
 }

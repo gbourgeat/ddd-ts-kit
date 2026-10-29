@@ -448,7 +448,7 @@ const UNKNOWN_WRITERS = [
   ['git checkout-index --all', /`git checkout-index` changes the whole project/],
   ['git commit -am x', /`git commit` changes the whole project/],
   ['npx eslint --fix src/main.ts', /`eslint` changes src\/main\.ts/],
-  ['npx --no -- biome format --write src/main.ts', /`biome` changes/],
+  ['npx --no -- biome format --write src/main.ts', /`biome` changes src\/main\.ts/],
   ['npx vitest run --outputFile=src/main.ts', /`vitest` changes src\/main\.ts/],
   ['npx vitest run --outputFile', /`vitest` changes files only the shell knows/],
   ['npx ddd-ts-kit init --force', /init --force/],
@@ -465,6 +465,23 @@ const UNKNOWN_WRITERS_ALLOWED = [
   'git stash list',
   'git diff --stat main',
 ];
+
+// A formatter or a linter that writes inside the scope: its subcommand and the values of its options are not paths.
+const IN_SCOPE_FORMATS = [
+  'npx --no -- biome format --write src/contexts/invoicing/x.ts',
+  'npx --no -- biome check --write --config-path biome.json src/contexts/invoicing/domain',
+  'npx eslint --fix --ext .ts -c eslint.config.js src/contexts/invoicing/domain',
+];
+
+test('a worker formats and lints its own files: only the paths a formatter is given are judged', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const command of IN_SCOPE_FORMATS) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  const outside = run('pre-bash', bash(root, 'npx eslint --fix -c eslint.config.js src/main.ts', agent));
+  assert.match(reason(outside), /`eslint` changes src\/main\.ts/);
+});
 
 test('a worker is refused the writers the tables do not know: redirections, sed, awk, editors, downloads, git, runners', () => {
   const root = project({}, ['--package-manager', 'npm']);
