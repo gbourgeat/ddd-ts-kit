@@ -107,7 +107,7 @@ function remind({ config, draft }: Migration): void {
     'Run the formatter, then `ddd-ts-kit docs` (the generated file of each context registers what each controller is given), then the checks.',
     'Move what a controller kept below its class to a request mapper or a serializer (`<name>.mapper.ts`, `<name>.serializer.ts`): a controller calls its bus and nothing else.',
     'Each group stands behind `Authenticated`: give a group its own guards where a set of routes asks for more (a role, a membership). The permissions stay on the use cases.',
-    "The spec of each controller runs it without its guards (`{ guards: 'skip' }`): pass a caller with `resolvePrincipal` and drop the option to hold the guards too.",
+    "The spec of each controller sent through `routeOf` stands behind the guards of its group; one that calls `executeRoute` runs it without them (`{ guards: 'skip' }`): send it through `routeOf` of @ddd-ts-kit/http/testing to hold the guards too.",
   );
 
   if (isDeclared(config) && !composition.includes("of('controller')")) {

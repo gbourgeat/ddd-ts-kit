@@ -46,15 +46,15 @@ export function writeBusinessDecisions(root: string): void {
     ],
   ]);
 
-  // The generated spec hands the handler an event: now that the handler sends a command, the bus of the spec knows it.
+  // The generated spec hands the handler an event and asserts what it records: now that the handler sends a command, the spec names it.
   edit(root, SHIPPING_HANDLER_SPEC, [
     [
       /(import \{ BillingInvoiceIssuedIntegrationHandler \} from '([^']*)contexts\/shipping\/[^\n]*\n)/,
       "$1import { PrepareParcelCommand } from '$2contexts/shipping/application/commands/prepare-parcel/prepare-parcel.command';\n",
     ],
     [
-      /const handler = new (\w+)\(new InMemoryCommandBus\(\)\);\n(\s+const meta)/,
-      'const commands = new InMemoryCommandBus().register(PrepareParcelCommand, { execute: async () => undefined });\n    const handler = new $1(commands);\n$2',
+      /(await handler\.handle\(fact\);\n\n)[^\n]*\n[^\n]*\n/,
+      '$1    expect(commands.executed).toEqual([new PrepareParcelCommand()]);\n',
     ],
   ]);
 

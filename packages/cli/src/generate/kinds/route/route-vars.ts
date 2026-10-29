@@ -4,6 +4,7 @@ import type { RenderContext } from '../../../templating';
 import type { Scope } from '../../scope';
 import { dtoClasses } from './dto-classes';
 import { sharesSchemas } from './shares-schemas';
+import { specVars } from './spec-vars';
 import { successStatus } from './success-status';
 import type { Endpoint } from './endpoint';
 import type { UseCase } from './use-case';
@@ -47,6 +48,7 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
     ...busVars(useCase, inContext(`${useCase.messageFile}.ts`)),
     ...securityVars(scope, useCase),
     ...parameterVars(endpoint.parameters),
+    ...specVars(name, endpoint, useCase),
   };
 }
 

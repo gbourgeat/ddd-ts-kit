@@ -89,6 +89,10 @@ through `application.commandBus` or `queryBus` with an actor built by `anActor()
 happy path, each failure by its error code, nothing saved or published on failure, and the
 refusal of an actor without the permission (generated). Reactions: dispatch the event and
 assert the command's effect; an integration event handler run twice changes state once.
+A reaction or a controller alone is given a `RecordingCommandBus` (or `RecordingQueryBus`) of
+`@ddd-ts-kit/kernel/testing` and asserts `executed`; a controller or a route is sent its
+request by `routeOf(controller).send(...)` of `@ddd-ts-kit/http/testing`, guards included, as
+the generated specs do; the phase of a reaction is the kernel's to prove, never a spec's.
 
 Always assemble the context from its generated file: it is what registers what each
 constructor is injected, so neither the test nor the handler lists a dependency. To test one

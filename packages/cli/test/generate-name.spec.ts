@@ -69,7 +69,7 @@ describe('generate takes --name for a handler its event would name otherwise', (
     expect(handler).toContain('InvoiceIssued');
 
     expect(read(root, `${BILLING}/test/unit/remind-customer.event-handler.spec.ts`)).toContain(
-      'new RemindCustomerEventHandler()',
+      'new RemindCustomerEventHandler(commands)',
     );
 
     expect(exists(root, `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`)).toBe(true);

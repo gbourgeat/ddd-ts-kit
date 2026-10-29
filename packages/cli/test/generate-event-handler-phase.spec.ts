@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, read, scaffoldEverything, tempDir } from './helpers';
 
 const UNIT = 'src/contexts/billing/test/unit';
+const HANDLERS = 'src/contexts/billing/application/event-handlers';
 
 let root: string;
 
@@ -11,26 +12,31 @@ beforeAll(() => {
 });
 
 describe('generate event-handler and the phase of the reaction', () => {
-  it('writes a spec that runs the reaction before the commit of a unit of work, by default', () => {
+  it('writes a reaction before the commit by default, given the command bus, and a spec that gives it the fact and asserts the command it records', () => {
     const spec = read(root, `${UNIT}/invoice-issued.event-handler.spec.ts`);
 
-    expect(spec).toContain(
-      "it('reacts at the end of the unit of work, before the commit, without failing', async () => {",
+    expect(read(root, `${HANDLERS}/invoice-issued.event-handler.ts`)).toContain(
+      'constructor(private readonly commands: CommandBus) {}',
     );
 
-    expect(spec).toContain("domainEvents.on(InvoiceIssued.eventName, asSubscribed, { phase: 'before-commit' });");
-    expect(spec).toContain("expect(reactedAt).toEqual(['before-commit']);");
+    expect(spec).toContain("import { RecordingCommandBus } from '@ddd-ts-kit/kernel/testing';");
+    expect(spec).toContain("it('carries out the policy that follows the fact', async () => {");
+    expect(spec).toContain('await new InvoiceIssuedEventHandler(commands).handle(fact);');
+    expect(spec).toContain('expect(commands.executed).toEqual([]);');
+    expect(spec).not.toContain('unitOfWorkStage');
   });
 
-  it('writes a spec that runs the reaction once the unit of work has committed, with --phase after-commit', () => {
+  it('writes a reaction once the unit of work has committed with --phase after-commit, and a spec of the same shape', () => {
     const spec = read(root, `${UNIT}/invoice-marked-as-paid.event-handler.spec.ts`);
 
-    expect(spec).toContain("it('reacts once the unit of work has committed, without failing', async () => {");
+    expect(read(root, `${HANDLERS}/invoice-marked-as-paid.event-handler.ts`)).toContain(
+      "@DomainEventHandler(InvoiceMarkedAsPaid, { phase: 'after-commit' })",
+    );
 
-    expect(spec).toContain("domainEvents.on(InvoiceMarkedAsPaid.eventName, asSubscribed, { phase: 'after-commit' });");
-
-    expect(spec).toContain("expect(reactedAt).toEqual(['after-commit']);");
-    expect(spec).toContain('expect(domainEvents.afterCommitFailures).toEqual([]);');
+    expect(spec).toContain("it('carries out the effect that follows the commit of the fact', async () => {");
+    expect(spec).toContain('await new InvoiceMarkedAsPaidEventHandler(commands).handle(fact);');
+    expect(spec).toContain('an effect through a port hands the handler the fake of the port');
+    expect(spec).not.toContain('afterCommitFailures');
   });
 
   it('refuses a phase it does not know, and says which exist', () => {

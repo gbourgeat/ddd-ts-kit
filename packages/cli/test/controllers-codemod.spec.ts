@@ -74,7 +74,7 @@ describe('controllers, on a declared project of function routes', () => {
     expect(exists(root, `${HTTP}/billing.routes.ts`)).toBe(false);
 
     expect(read(root, 'src/contexts/billing/test/unit/issue-invoice.controller.spec.ts')).toContain(
-      "controllerRoute(new IssueInvoiceController(commands), { guards: 'skip' })",
+      'routeOf(new IssueInvoiceController(commands))',
     );
 
     expect(read(root, 'src/platform/composition/compose-application.ts')).not.toContain('billingRoutes');
