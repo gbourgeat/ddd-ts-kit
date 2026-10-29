@@ -416,7 +416,8 @@ function sayNotice() {
 }
 
 function session(input) {
-  briefingEnds = Date.now() + BRIEFING_BUDGET * TIME_SCALE;
+  // A whole number of milliseconds: a time limit of spawnSync is an integer.
+  briefingEnds = Date.now() + Math.round(BRIEFING_BUDGET * TIME_SCALE);
   const directory = input.cwd ?? process.cwd();
   const project = findProject(directory);
   if (project) {

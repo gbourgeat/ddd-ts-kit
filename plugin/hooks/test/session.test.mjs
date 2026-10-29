@@ -80,6 +80,16 @@ test('a briefing past its budget skips the CLI calls left, and says it was cut s
   assert.doesNotMatch(run('session', { cwd: project() }).output.hookSpecificOutput.additionalContext, /cut short/);
 });
 
+test('a time scale whose budget is no whole number of milliseconds still gives a briefing', () => {
+  const root = committed();
+  workerWorktree(root);
+  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main' }));
+  cliAnswering(root, {}, { story: 2000, status: 2000 });
+  const scale = { DDD_TS_KIT_GUARD_TIME_SCALE: '0.1234567' };
+  const briefing = run('session', { cwd: root }, scale).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /^Briefing cut short: /m);
+});
+
 test('session start stays short: one line per context, far below the host limit', () => {
   const root = project();
   const context = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
