@@ -31,6 +31,13 @@ describe('a bounded context named after what every JavaScript object has', () =>
     });
   });
 
+  it.each(OBJECT_NAMES)('is an unknown preset to init --preset as %s', (name) => {
+    const refused = cli(tempDir('init'), 'init', '--preset', name, '--dry-run');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain(`error: Unknown preset "${name}".`);
+  });
+
   it('is an unknown context to the commands that read one, not the prototype of the config', () => {
     const root = initProject('--context', 'billing:core', '--audit', 'off');
 
