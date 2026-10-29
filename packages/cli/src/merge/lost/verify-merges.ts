@@ -41,11 +41,16 @@ export function verifyMerges(request: MergesToVerify): MergeVerification {
 }
 
 function named(repo: MergeRepository, commit: string, request: MergesToVerify): MergeToVerify {
-  const fix = 'Pass a merge commit, or a squash commit with --theirs <branch head>.';
-  const [record] = mergeRecords(repo.top, ['-1', knownCommit(repo.top, commit, fix), '--']);
+  const hash = knownCommit(repo.top, commit, 'Pass a merge commit, or a squash commit with --theirs <branch head>.');
+  const [record] = mergeRecords(repo.top, ['-1', hash, '--']);
 
   if (record === undefined) {
-    throw new CliError(`${commit} is not a commit of this repository.`, fix);
+    const short = hash.slice(0, 7);
+
+    throw new CliError(
+      `git log could not read the commit ${short} that ${commit} names.`,
+      `Run \`git log -1 ${short}\` to read why (a setting of git it refuses, an object it cannot read), then verify-merge again.`,
+    );
   }
 
   return mergeOfRecord(repo.top, record, request);

@@ -244,6 +244,21 @@ describe('verify-merge, refusals', () => {
     }
   });
 
+  it('says that git log could not read a commit it was given, which names one: not that it names none', () => {
+    const root = mergeRepository(PAY_AND_CANCEL);
+
+    mergeWith(root, BOTH_KEPT);
+    git(root, 'config', 'log.date', 'nonsense');
+
+    const refused = cli(root, 'verify-merge', 'HEAD');
+    const head = git(root, 'rev-parse', '--short', 'HEAD').trim();
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain(`error: git log could not read the commit ${head} that HEAD names.`);
+    expect(refused.stderr).toContain(`fix: Run \`git log -1 ${head}\` to read why`);
+    expect(refused.stderr).not.toContain('is not a commit of this repository');
+  });
+
   it('lists the merges since a branch whose name starts with a dash, the commit it names given to git', () => {
     const root = mergeRepository(PAY_AND_CANCEL);
 
