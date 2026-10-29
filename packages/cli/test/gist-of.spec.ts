@@ -41,4 +41,30 @@ describe('the gist of a marker', () => {
       'add one ingredient per fact a test may need to choose...',
     );
   });
+
+  it('goes back before a parenthesis its clause leaves open, and marks the cut', () => {
+    expect(gistOf('name the permission of the use case as its @Requires does (requires: billing.invoice.issue)')).toBe(
+      'name the permission of the use case as its @Requires does...',
+    );
+  });
+
+  it('goes back before a parenthesis opened early, keeping at least the first word', () => {
+    expect(gistOf('one two (three four five six seven eight nine ten eleven twelve thirteen) fourteen')).toBe(
+      'one two...',
+    );
+
+    expect(gistOf('(one two three four five six seven eight nine ten eleven twelve thirteen) fourteen')).toBe(
+      '(one...',
+    );
+  });
+
+  it.each([
+    ['see e.g. the invoice of the customer', 'see e.g. the invoice of the customer'],
+    ['say what it is, i.e. the rule it holds', 'say what it is, i.e. the rule it holds'],
+    ['the lines, the columns, etc. of the table', 'the lines, the columns, etc. of the table'],
+    ['a refusal vs. a failure of the store', 'a refusal vs. a failure of the store'],
+    ['follow option b. of the plan', 'follow option b. of the plan'],
+  ])('does not end its clause on an abbreviation or a one-letter segment: %s', (text, gist) => {
+    expect(gistOf(text)).toBe(gist);
+  });
 });
