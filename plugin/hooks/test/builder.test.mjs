@@ -521,3 +521,16 @@ test('a commit or a merge of the conductor in its own checkout while a worker co
     /src\/platform\/evil\.ts/,
   );
 });
+
+test('the worktree of a pinned worker reached through a link is the same worktree, not another worker', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const link = join(directory('link'), 'billing');
+  symlinkSync(worktree, link);
+  const agent = builder('linked', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent)).output, undefined);
+  assert.equal(run('pre-bash', bash(conductor, `cd ${link} && git status`, agent)).output, undefined);
+  assert.match(
+    reason(run('pre-bash', bash(conductor, `cd ${link} && echo x > src/main.ts`, agent))),
+    /context "billing"/,
+  );
+});

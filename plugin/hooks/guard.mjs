@@ -1659,17 +1659,19 @@ function workerScope(project, input) {
   return scopes.get(project.root);
 }
 
+// The worktree is recorded and compared by its real path: a link to it, or another spelling of it, is the same.
 function pinnedScope(project, input) {
   const current = namedContext(project);
   const pin = stateFile('scope', findProject(input.cwd ?? process.cwd()) ?? project, input);
   const pinned = readJson(pin);
+  const worktree = realpathSync(project.root);
   if (!isPin(pinned)) {
     if (current) {
-      writeState(pin, { context: current, worktree: project.root });
+      writeState(pin, { context: current, worktree });
     }
     return current && { context: current };
   }
-  if (pinned.worktree !== project.root) {
+  if (pinned.worktree !== worktree) {
     return current && { context: current, changed: otherWorktreeReason(pinned, project) };
   }
   return current === pinned.context
