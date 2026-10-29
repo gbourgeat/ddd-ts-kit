@@ -1,6 +1,7 @@
 import type { Endpoint } from './endpoint';
 import type { MessageField } from './message-fields-of';
 import type { UseCase } from './use-case';
+import { carriesBody } from './carries-body';
 
 /** The types a route reads from a request and validates in each library of the kit. */
 export type FieldKind = 'string' | 'number' | 'boolean';
@@ -21,7 +22,6 @@ export interface MessagePlan {
 }
 
 const KINDS: readonly string[] = ['string', 'number', 'boolean'];
-const WITH_BODY: readonly string[] = ['POST', 'PUT', 'PATCH'];
 /** The libraries whose schema of a body the generator writes field by field. */
 const BODY_LIBRARIES: readonly string[] = ['zod', 'class-validator', 'typebox', 'standard-schema'];
 
@@ -64,7 +64,7 @@ function readFieldOf(field: MessageField, endpoint: Endpoint): ReadField | undef
     return kind === 'string' ? { ...field, kind, from: 'params' } : undefined;
   }
 
-  return WITH_BODY.includes(endpoint.method) ? { ...field, kind, from: 'body' } : undefined;
+  return carriesBody(endpoint.method) ? { ...field, kind, from: 'body' } : undefined;
 }
 
 function isKind(type: string): type is FieldKind {

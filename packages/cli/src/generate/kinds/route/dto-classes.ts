@@ -1,7 +1,6 @@
 import type { Endpoint } from './endpoint';
 import type { UseCase } from './use-case';
-
-const WITH_BODY = ['POST', 'PUT', 'PATCH'];
+import { carriesBody } from './carries-body';
 
 /**
  * The class-validator classes a route reads and answers with, by the role each plays: one class
@@ -14,7 +13,7 @@ export function dtoClasses(endpoint: Endpoint, useCase: UseCase, sharesAccepted:
 
   return [
     ...(endpoint.parameters.length > 0 ? ['params'] : []),
-    ...(WITH_BODY.includes(endpoint.method) ? ['body'] : []),
+    ...(carriesBody(endpoint.method) ? ['body'] : []),
     ...(useCase.returnsId && !sharesAccepted ? ['accepted'] : []),
     ...(useCase.isQuery ? ['answer'] : []),
   ];

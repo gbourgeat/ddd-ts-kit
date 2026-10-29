@@ -3,8 +3,7 @@ import type { ControllerPlan } from './controller-plan';
 import { planOf } from './plan-of';
 import { writesParamsOf } from './writes-params-of';
 import { sharesSchemas } from './shares-schemas';
-
-const WITH_BODY = ['POST', 'PUT', 'PATCH'];
+import { carriesBody } from './carries-body';
 
 /** The types a controller and its mapper name: classes with class-validator, the output of the schemas otherwise. */
 export interface ControllerTypes {
@@ -26,7 +25,7 @@ export function controllerTypes(scope: Scope, plan: ControllerPlan): ControllerT
   const { validation } = scope.config.stack;
   const shared = sharesSchemas(scope.config);
   const usesClasses = validation === 'class-validator';
-  const hasBody = WITH_BODY.includes(endpoint.method);
+  const hasBody = carriesBody(endpoint.method);
 
   const hasTypedParams =
     (endpoint.parameters.length > 0 && (validation === 'zod' || validation === 'typebox' || usesClasses)) ||

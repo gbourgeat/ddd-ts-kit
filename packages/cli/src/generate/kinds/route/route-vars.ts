@@ -14,6 +14,7 @@ import { specVars } from './spec-vars';
 import { successStatus } from './success-status';
 import type { Endpoint } from './endpoint';
 import type { UseCase } from './use-case';
+import { carriesBody } from './carries-body';
 
 /** The validation libraries whose templates declare a schema for the path parameters. */
 const TYPES_PARAMETERS: readonly string[] = ['zod', 'class-validator', 'typebox'];
@@ -31,7 +32,7 @@ export interface RouteParts {
 export function routeVars(scope: Scope, parts: RouteParts, reading = planOf(scope, parts, false)): RenderContext {
   const { name, endpoint, useCase } = parts;
   const status = successStatus(endpoint, useCase);
-  const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
+  const hasBody = carriesBody(endpoint.method);
   const { config, context } = scope;
   const shared = sharesSchemas(config);
   const inContext = (file: string): string => specifierOf(config, `${config.contextsDir}/${context.kebab}/${file}`);
@@ -73,7 +74,7 @@ function acceptedVars(useCase: UseCase, shared: boolean): RenderContext {
 
 /** Whether the route declares schemas, and an object of any shape for the parts whose schema the generator leaves to the team. */
 function schemaVars(scope: Scope, { endpoint, useCase }: RouteParts, reading: MessagePlan): RenderContext {
-  const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
+  const hasBody = carriesBody(endpoint.method);
   const shared = sharesSchemas(scope.config);
 
   return {
@@ -88,7 +89,7 @@ function schemaVars(scope: Scope, { endpoint, useCase }: RouteParts, reading: Me
 
 function requestVars(scope: Scope, { parameters, method }: Endpoint, reading: MessagePlan): RenderContext {
   const { validation } = scope.config.stack;
-  const hasBody = ['POST', 'PUT', 'PATCH'].includes(method);
+  const hasBody = carriesBody(method);
 
   const typedParameters =
     (parameters.length > 0 && TYPES_PARAMETERS.includes(validation)) || writesParamsOf(validation, reading);

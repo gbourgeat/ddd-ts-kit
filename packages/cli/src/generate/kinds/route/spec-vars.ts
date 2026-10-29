@@ -4,6 +4,7 @@ import type { Endpoint } from './endpoint';
 import type { FieldKind, MessagePlan, ReadField } from './message-plan';
 import { sampleParams } from './sample-params';
 import type { UseCase } from './use-case';
+import { carriesBody } from './carries-body';
 
 /** What a spec is written for: the route, the use case it calls and the status it answers when that succeeds. */
 interface Specified {
@@ -68,9 +69,7 @@ function sentRequestOf({ method, parameters }: Endpoint, reading: MessagePlan): 
 
   const parts = [
     ...(parameters.length > 0 ? [`params: ${sampleParams(parameters)}`] : []),
-    ...(['POST', 'PUT', 'PATCH'].includes(method)
-      ? [body.length === 0 ? 'body: {}' : `body: { ${body.join(', ')} }`]
-      : []),
+    ...(carriesBody(method) ? [body.length === 0 ? 'body: {}' : `body: { ${body.join(', ')} }`] : []),
   ];
 
   return parts.length === 0 ? '' : `{ ${parts.join(', ')} }`;
