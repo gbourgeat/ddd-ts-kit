@@ -22,6 +22,11 @@ describe('a name the kit would have to rewrite to read', () => {
 
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain(notAName(input, 'context', kept));
+
+    expect(refused.stderr).toContain(
+      'fix: Name the bounded context in kebab-case after the business capability, for example billing or order-fulfilment.',
+    );
+
     expect(exists(root, `src/contexts/${kept}`)).toBe(false);
     expect(read(root, 'ddd-ts-kit.config.json')).toBe(config);
   });
