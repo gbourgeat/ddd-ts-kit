@@ -187,3 +187,18 @@ export function committed(config = {}) {
   git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
   return root;
 }
+
+// A conductor's checkout on the trunk, a real git worktree under .worktrees/ with a worker scope,
+// its own install so Node does not borrow the trunk's packages.
+export function conductorWithWorker() {
+  const conductor = project();
+  writeFileSync(join(conductor, '.gitignore'), 'node_modules\n.worktrees/\n');
+  git(conductor, 'init', '--quiet', '--initial-branch', 'main');
+  git(conductor, 'add', '--all');
+  git(conductor, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  const worktree = join(conductor, '.worktrees', 'billing');
+  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/billing', worktree);
+  launcher(worktree);
+  put(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing' }));
+  return { conductor, worktree };
+}

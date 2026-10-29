@@ -9,7 +9,9 @@ import { basename, resolve } from 'node:path';
 export const UNKNOWN = '\u0000';
 
 const DEPTH = 5;
-const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh']);
+export const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'fish']);
+// The options of a shell that take a value (`-o errexit`, `-O extglob`, `--rcfile <file>`).
+const SHELL_VALUED = new Set(['-o', '+o', '-O', '+O', '--rcfile', '--init-file']);
 // Words that open or close a compound command: the command, if any, comes after them. `coproc`
 // starts a command in the background, its name after it.
 const KEYWORDS = new Set([
@@ -242,14 +244,36 @@ function afterOptions(words, { valued, skip }) {
 function nestedCommands(words, directory, depth) {
   const name = commandName(words);
   if (SHELLS.has(name)) {
-    const code = words.indexOf('-c');
-    return code === -1 || words[code + 1] === undefined ? [] : simpleCommands(words[code + 1], directory, depth + 1);
+    const code = shellCode(words);
+    return code === undefined ? [] : simpleCommands(code, directory, depth + 1);
   }
   if (name === 'eval') {
     return simpleCommands(words.slice(1).join(' '), directory, depth + 1);
   }
 
   return name === 'find' ? findExecutions(words, directory) : [];
+}
+
+/**
+ * The text a shell is given by `-c`, alone or in a combined short flag (`-lc`, `-ec`): its first
+ * operand after the options. Without it, the shell runs a script or its input, which the guard
+ * cannot read: such a command is checked after it ran.
+ */
+function shellCode(words) {
+  let command = false;
+  for (let index = 1; index < words.length; index += 1) {
+    const word = words[index];
+    if (SHELL_VALUED.has(word)) {
+      index += 1;
+    } else if (word === '--' || word === '-') {
+      return command ? words[index + 1] : undefined;
+    } else if (/^[-+]./.test(word)) {
+      command ||= /^-[a-zA-Z]*c[a-zA-Z]*$/.test(word);
+    } else {
+      return command ? word : undefined;
+    }
+  }
+  return undefined;
 }
 
 // A command another computes from a text the shell alone splits: `su`/`doas`/`script`/`flock` from
