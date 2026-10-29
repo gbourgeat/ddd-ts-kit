@@ -1,5 +1,10 @@
 /** A format placeholder of a title written for a table (`describe.each`, `it.each`): `%s`, `%i`, `%d`, `%o`, `%j`, `$name`. */
-const PLACEHOLDER = /(?:,\s*)?(?:%[sdifjoOp]|\$[A-Za-z_][\w.]*)/;
+const CASE = String.raw`%[sdifjoOp]|\$[A-Za-z_][\w.]*`;
+const PLACEHOLDER = new RegExp(String.raw`(?:,\s*)?(?:${CASE})`);
+/** Placeholders in a row, `%s, %s`: one table of cases, read once. */
+const RUN = new RegExp(String.raw`(${CASE})(?:\s*,?\s*(?:${CASE}))+`, 'g');
+/** What a word does not follow with a space: an opening quote or bracket. */
+const OPENING = /["'`([{“‘]$/;
 
 /** The prepositions a title leaves before its placeholder: `read from %s`. */
 const TRAILING_PREPOSITION = /(?:,|\s(?:from|of|to|with|by|for|in|on|as|at|than))$/i;
@@ -12,7 +17,8 @@ const TRAILING_PREPOSITION = /(?:,|\s(?:from|of|to|with|by|for|in|on|as|at|than)
  * `AppointmentExportGateway (each case)`, `read from %s` is `read (each case)`, `%s, by cause` is
  * `each case, by cause`, `refuses %s with 422` is `refuses each case with 422`.
  */
-export function readableTitle(title: string): string {
+export function readableTitle(text: string): string {
+  const title = text.replace(RUN, '$1');
   const found = PLACEHOLDER.exec(title);
 
   if (found === null) {
@@ -28,7 +34,9 @@ export function readableTitle(title: string): string {
     return `each case${rest}`;
   }
 
-  return last ? `${withoutPreposition(before)} (each case)` : `${before} each case${rest}`;
+  return last
+    ? `${withoutPreposition(before)} (each case)`
+    : `${before}${OPENING.test(before) ? '' : ' '}each case${rest}`;
 }
 
 function withoutPreposition(text: string): string {

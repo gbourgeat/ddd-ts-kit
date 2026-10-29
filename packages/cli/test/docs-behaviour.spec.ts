@@ -109,6 +109,8 @@ describe('behaviourPage, the title of a table of cases', () => {
   it('lists the rows', () => {});
   it.each(['x'])('refuses %s with 422', () => {});
   it.each(['x'])('accepts the kind %s', () => {});
+  it.each(['x'])('gives the ranges of %s, %s, in the order', () => {});
+  it.each(['x'])('refuses "%s", which it does not know', () => {});
 });
 describe.each(['a'])('%s, by cause', () => {
   it('keeps the oldest', () => {});
@@ -123,6 +125,8 @@ describe.each(['a'])('%s, by cause', () => {
     expect(page).toContain('- **AppointmentExportGateway (each case)**\n');
     expect(page).toContain('  - refuses each case with 422\n');
     expect(page).toContain('  - accepts the kind (each case)\n');
+    expect(page).toContain('  - gives the ranges of each case, in the order\n');
+    expect(page).toContain('  - refuses "each case", which it does not know\n');
     expect(page).toContain('- **each case, by cause**\n');
     expect(page).not.toMatch(/%s/);
   });
