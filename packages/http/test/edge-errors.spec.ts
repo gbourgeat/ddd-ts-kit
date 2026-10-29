@@ -22,15 +22,29 @@ const PROBLEM = 'application/problem+json; charset=utf-8';
 
 type Start = (logger: InMemoryLogger | undefined) => Promise<RunningServer>;
 
+/** What the middlewares in front of the routes raise, by path: a failure, a store down on purpose. */
+const RAISED: Readonly<Record<string, () => Error>> = {
+  '/failing': () => new Error(SECRET),
+  '/unavailable': () => Object.assign(new Error(SECRET), { status: 503 }),
+};
+
 /** A middleware in front of the routes that fails, as the limit of each caller does when its store does. */
-function failing(_request: Request, _response: Response, next: NextFunction): void {
-  next(new Error(SECRET));
+function raising(path: string) {
+  return (_request: Request, _response: Response, next: NextFunction): void => {
+    next(RAISED[path]?.());
+  };
+}
+
+function raiseOn(app: { use(path: string, handler: ReturnType<typeof raising>): unknown }): void {
+  for (const path of Object.keys(RAISED)) {
+    app.use(path, raising(path));
+  }
 }
 
 const startExpress: Start = async (logger) => {
   const app = express();
 
-  app.use('/failing', failing);
+  raiseOn(app);
   app.use(express.json());
   mountExpress(app, orderRoutes);
   app.use(expressErrorHandler(logger === undefined ? {} : { logger }));
@@ -44,8 +58,10 @@ const startFastify: Start = async (logger) => {
   app.setErrorHandler(fastifyErrorHandler(logger === undefined ? {} : { logger }));
 
   app.addHook('onRequest', async (request) => {
-    if (request.url === '/failing') {
-      throw new Error(SECRET);
+    const raised = RAISED[request.url];
+
+    if (raised !== undefined) {
+      throw raised();
     }
   });
 
@@ -61,9 +77,11 @@ const startHono: Start = async (logger) => {
 
   app.onError(honoErrorHandler(logger === undefined ? {} : { logger }));
 
-  app.use('/failing', () => {
-    throw new Error(SECRET);
-  });
+  for (const [path, raised] of Object.entries(RAISED)) {
+    app.use(path, () => {
+      throw raised();
+    });
+  }
 
   mountHono(app, orderRoutes, { bodyLimit: 1024 });
 
@@ -84,7 +102,7 @@ function nestOver(platform: 'express' | 'fastify'): Start {
 
     app.useGlobalFilters(new ProblemExceptionFilter(app.getHttpAdapter(), logger === undefined ? {} : { logger }));
 
-    app.use('/failing', failing);
+    raiseOn(app);
     await app.listen(0, '127.0.0.1');
 
     return { url: await app.getUrl(), close: () => app.close() };
@@ -250,6 +268,41 @@ describe.each([
     expect(response.status).toBe(500);
     expect(problem).toMatchObject({ code: 'INTERNAL_ERROR', requestId: expect.any(String) });
     expect(response.headers.get('x-request-id')).toBe((problem as { requestId: string }).requestId);
+  });
+});
+
+describe.each([
+  ['Express', startExpress],
+  ['Fastify', startFastify],
+  ['Hono', startHono],
+  ['Nest over Express', nestOver('express')],
+  ['Nest over Fastify', nestOver('fastify')],
+] as const)('a middleware in front of the routes of %s that fails with a server status', (_name, start) => {
+  it('keeps the status, answered with the code of the kit and nothing of the failure, and logged as an error', async () => {
+    const logger = new InMemoryLogger();
+
+    const response = await fetch(`${await started(start, logger)}/unavailable`, {
+      headers: { 'x-request-id': 'req-3' },
+    });
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get('content-type')).toBe(PROBLEM);
+
+    expect(await response.json()).toEqual({
+      type: 'about:blank',
+      title: 'Service Unavailable',
+      status: 503,
+      code: 'SERVICE_UNAVAILABLE',
+      requestId: 'req-3',
+    });
+
+    expect(logger.entries).toEqual([
+      {
+        level: 'error',
+        message: 'request failed before its route',
+        fields: { errorType: 'Error', status: 503, requestId: 'req-3' },
+      },
+    ]);
   });
 });
 

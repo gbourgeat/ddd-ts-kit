@@ -51,3 +51,27 @@ describe('the table of the statuses', () => {
     expect([codeOfStatus(499), codeOfStatus(599)]).toEqual(['BAD_REQUEST', 'INTERNAL_ERROR']);
   });
 });
+
+describe('a failure at the edge that carries a server status', () => {
+  it.each([
+    [502, 'Bad Gateway', 'BAD_GATEWAY'],
+    [503, 'Service Unavailable', 'SERVICE_UNAVAILABLE'],
+    [504, 'Gateway Timeout', 'GATEWAY_TIMEOUT'],
+    [599, 'Server Error', 'INTERNAL_ERROR'],
+  ])('keeps %i, its code from the table and nothing of its message', (status, title, code) => {
+    expect(answered(raised({ status })).problem).toEqual({
+      type: 'about:blank',
+      title,
+      status,
+      code,
+      requestId: 'req-1',
+    });
+  });
+
+  it.each([[{}], [{ status: 600 }], [{ status: 503.5 }], [{ status: '503' }], [{ statusCode: 302 }]])(
+    'is a 500 when the status it carries is not one of a failure (%j)',
+    (fields) => {
+      expect(answered(raised(fields)).problem).toMatchObject({ status: 500, code: 'INTERNAL_ERROR' });
+    },
+  );
+});
