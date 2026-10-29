@@ -350,8 +350,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    audit/search-audit-entries/; every import of them under the source root, test/ and
                    scripts/ follows, and the scripts of package.json; a file the kit did not write at
                    the root of the platform or of auth/ stays where it is, named, unless --place
-                   <file>=<folder> (both from the platform) gives it its folder; the generators and
-                   init --force keep either layout until then
+                   <file>=<folder> (both from the platform, a file outside it refused) gives it its
+                   folder; the generators and init --force keep either layout until then
   move-to-module   takes files of a context into a module of its model, declared first with generate module,
                    each to <module>/<layer>/ and each spec to test/<unit|integration>/<module>/: each <path>
                    is a file or a folder of a role or a spec, relative to the context
