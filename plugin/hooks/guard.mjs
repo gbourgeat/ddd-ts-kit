@@ -421,15 +421,39 @@ async function preBash(input) {
     return;
   }
   const context = workerContext(project, input);
-  if (!context) {
+  if (!context && !isBuilder(input)) {
     return;
   }
   shell = await import('./shell-commands.mjs');
   const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
-  const refusal = workerCommandReason(project, input, { context, command, commands });
+  const refusal = context
+    ? workerCommandReason(project, input, { context, command, commands })
+    : builderStrayReason(input, commands);
   if (refusal) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
   }
+}
+
+// A context-builder keeps the working directory of its session, so the scope of a worker is found
+// only when the command moves into its worktree (`cd <worktree> && ...` or `--cwd`). When the
+// session has worker worktrees and a builder's command touches no scoped project, a write by that
+// command lands where the guard cannot judge it: it is refused, with the one shape it reads.
+function builderStrayReason(input, commands) {
+  if (!isBuilder(input)) {
+    return undefined;
+  }
+  const session = findProject(input.cwd ?? process.cwd());
+  if (!session || session.mode === 'off' || !hasWorkerWorktree(session.root) || !builderWrites(commands)) {
+    return undefined;
+  }
+  return 'A worker runs every command as `cd <worktree> && ...` so that the guard reads it against the scope of that worktree; this command writes without moving into a worktree of your project. Run it as `cd <worktree> && ...`.';
+}
+
+function builderWrites(commands) {
+  return commands.some(
+    (command) =>
+      writtenTargets(command).length > 0 || changedPaths(command).length > 0 || inlineCode(command) !== undefined,
+  );
 }
 
 // What no agent runs, then what waits for a place, a landing, a lock or a generator first.

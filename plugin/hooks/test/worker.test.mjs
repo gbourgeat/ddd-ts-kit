@@ -4,7 +4,20 @@ import assert from 'node:assert/strict';
 import { rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { bash, committed, decision, directory, git, project, put, reason, run, worker, write } from './support.mjs';
+import {
+  bash,
+  committed,
+  decision,
+  directory,
+  git,
+  launcher,
+  project,
+  put,
+  reason,
+  run,
+  worker,
+  write,
+} from './support.mjs';
 
 test('a context worker writes inside its bounded context and its end-to-end specs only', () => {
   const root = project();
@@ -535,3 +548,42 @@ test('the worktree of a worker is found in its command, and other agents run any
   assert.equal(run('pre-bash', bash(root, command)).output, undefined);
   assert.equal(run('pre-bash', { cwd: root, tool_name: 'Bash', tool_input: {}, ...agent }).output, undefined);
 });
+
+test('a context-builder is held to run every command as cd <worktree> && ..., not from the conductor', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = { agent_type: 'ddd-ts-kit:context-builder' };
+  const stray = [
+    `echo x > ${worktree}/src/main.ts`,
+    `echo x > ${worktree}/src/contexts/ordering/x.ts`,
+    `true && cd ${worktree} && echo x > src/main.ts`,
+    `cd ${worktree} || exit 1; echo x > src/main.ts`,
+    `git -C ${worktree} checkout -- src/main.ts`,
+    `(cd ${worktree} && npx ddd-ts-kit generate aggregate ordering Order)`,
+  ];
+  for (const command of stray) {
+    assert.equal(decision(run('pre-bash', bash(conductor, command, agent))), 'deny', command);
+  }
+  assert.match(reason(run('pre-bash', bash(conductor, stray[0], agent))), /cd <worktree> && /);
+  // The reference shape reaches the scope of the worktree, which refuses the write by its context.
+  const reference = run('pre-bash', bash(conductor, `cd ${worktree} && echo x > src/main.ts`, agent));
+  assert.equal(decision(reference), 'deny');
+  assert.match(reason(reference), /You build the context "billing"/);
+  // A read from the conductor, moving into no worktree, is left alone.
+  const read = bash(conductor, `cat ${worktree}/src/contexts/billing/CONTEXT.md`, agent);
+  assert.equal(run('pre-bash', read).output, undefined);
+});
+
+// A conductor's checkout on the trunk, a real git worktree under .worktrees/ with a worker scope,
+// its own install so Node does not borrow the trunk's packages.
+function conductorWithWorker() {
+  const conductor = project();
+  writeFileSync(join(conductor, '.gitignore'), 'node_modules\n.worktrees/\n');
+  git(conductor, 'init', '--quiet', '--initial-branch', 'main');
+  git(conductor, 'add', '--all');
+  git(conductor, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  const worktree = join(conductor, '.worktrees', 'billing');
+  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/billing', worktree);
+  launcher(worktree);
+  put(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing' }));
+  return { conductor, worktree };
+}
