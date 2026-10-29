@@ -34,9 +34,12 @@ describe('generate takes --name for a handler its event would name otherwise', (
     expect(handler).toContain('export class PrepareParcelIntegrationHandler');
     expect(handler).toContain("'shipping.prepare-parcel'");
 
-    expect(read(root, `${SHIPPING}/test/unit/prepare-parcel.integration-handler.spec.ts`)).toContain(
-      "expect(PrepareParcelIntegrationHandler.eventType).toBe('billing.invoice.issued');",
-    );
+    const spec = read(root, `${SHIPPING}/test/unit/prepare-parcel.integration-handler.spec.ts`);
+
+    expect(spec).toContain("expect(PrepareParcelIntegrationHandler.eventType).toBe('billing.invoice.issued');");
+    // The command it executes is the decision of the team: pending until then, never green by construction.
+    expect(spec).toContain("it.todo('executes the command that follows the upstream fact');");
+    expect(spec).not.toContain('expect(commands.executed).toEqual([]);');
   });
 
   it('keeps the name read from the event without --name', () => {

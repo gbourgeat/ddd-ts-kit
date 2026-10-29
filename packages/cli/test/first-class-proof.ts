@@ -12,6 +12,19 @@ const DECLARED_READER =
 const EXPLICIT_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-search-invoices.reader.ts';
 const LINES = "[{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }]";
 
+/** The test of what shipping does when billing issues an invoice, in the place of its pending entry. */
+const PREPARES_A_PARCEL = `  it('prepares a parcel when billing issues an invoice', async () => {
+    const commands = new RecordingCommandBus();
+    const meta = { id: 'event-1', occurredAt: '2026-01-01T00:00:00.000Z' };
+    const issued = invoiceIssuedV2.create({ invoiceId: 'invoice-1' }, meta);
+
+    await new BillingInvoiceIssuedIntegrationHandler(commands).handle(issued);
+
+    expect(commands.executed).toEqual([new PrepareParcelCommand()]);
+  });
+
+`;
+
 /**
  * What a team writes after `init` and `generate` in the project of the first-class stack, kept
  * to the minimum the proof needs: the aggregate records its birth fact, the list reads three
@@ -46,15 +59,15 @@ export function writeBusinessDecisions(root: string): void {
     ],
   ]);
 
-  // The generated spec hands the handler an event and asserts what it records: now that the handler sends a command, the spec names it.
+  // The command the handler executes is decided: the pending entry of its spec becomes the test of it.
   edit(root, SHIPPING_HANDLER_SPEC, [
     [
       /(import \{ BillingInvoiceIssuedIntegrationHandler \} from '([^']*)contexts\/shipping\/[^\n]*\n)/,
-      "$1import { PrepareParcelCommand } from '$2contexts/shipping/application/commands/prepare-parcel/prepare-parcel.command';\n",
+      "$1import { PrepareParcelCommand } from '$2contexts/shipping/application/commands/prepare-parcel/prepare-parcel.command';\nimport { invoiceIssuedV2 } from '$2contexts/billing/published-language';\n",
     ],
     [
-      /(await handler\.handle\(fact\);\n\n)[^\n]*\n[^\n]*\n/,
-      '$1    expect(commands.executed).toEqual([new PrepareParcelCommand()]);\n',
+      / {2}\/\/ TODO\(domain\): replace each entry below[^\n]*\n {2}it\.todo\('executes the command that follows the upstream fact'\);\n/,
+      PREPARES_A_PARCEL,
     ],
   ]);
 
