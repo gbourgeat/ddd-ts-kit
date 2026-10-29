@@ -60,9 +60,10 @@ every session within 1% of the context window, about 2,000 tokens on a 200k wind
 drops the descriptions of the skills invoked least, which then stop triggering on their keywords.
 The listing also carries `ddd-ts-kit:<name>` for each entry (about 660 characters for the 26),
 and this technical text runs at about 3.5 characters per token: (6,500 + 660) / 3.5 is about
-2,050 tokens if all 26 were listed, but the six skills run by the user only
-(`disable-model-invocation`) are not, which leaves the 20 others at about 1,600 tokens. A test of
-the plugin (`node --test plugin/skills/descriptions.test.mjs`) holds the limits.
+2,050 tokens if all 26 were listed, but `bootstrap`, `fix`, `intent`, `pull-request`, `start`
+and `story`, run by the user only (`disable-model-invocation`), are not, which leaves the 20
+others at about 1,600 tokens. A test of the plugin
+(`node --test plugin/skills/descriptions.test.mjs`) holds the limits.
 
 The hook is the part that makes the rest binding. In a project that has a
 `ddd-ts-kit.config.json` it reminds the workflow and the context map at session start, says

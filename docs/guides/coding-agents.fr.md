@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:307550ff672de2e1 -->
+<!-- translation-of: coding-agents.md sha256:011843fdc296d80f -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -63,8 +63,8 @@ la liste des skills dans chaque session dans la limite de 1 % de la fenêtre de 
 invoquées, qui ne se déclenchent alors plus sur leurs mots-clés. La liste porte aussi
 `ddd-ts-kit:<nom>` pour chaque entrée (environ 660 caractères pour les vingt-six), et ce texte
 technique compte environ 3,5 caractères par token : (6 500 + 660) / 3,5 font environ 2 050
-tokens si les vingt-six étaient listées, mais les six skills lancées par l'utilisateur seul
-(`disable-model-invocation`) ne le sont pas, ce qui laisse les vingt autres à environ 1 600
+tokens si les vingt-six étaient listées, mais `bootstrap`, `fix`, `intent`, `pull-request`,
+`start` et `story`, lancées par l'utilisateur seul (`disable-model-invocation`), ne le sont pas, ce qui laisse les vingt autres à environ 1 600
 tokens. Un test du plugin (`node --test plugin/skills/descriptions.test.mjs`) tient ces limites.
 
 Le hook est la partie qui rend le reste contraignant. Dans un projet qui a un
