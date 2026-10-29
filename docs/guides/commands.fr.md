@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:1a8c4aa2b54a30b4 -->
+<!-- translation-of: commands.md sha256:e5c11d0d05162f5f -->
 
 # Quelle commande, quand
 
@@ -239,7 +239,10 @@ des fichiers (`init`, `generate`, `docs`, `sdk`, un déplacement) n'a pas pu en 
 où elle tournait, comme les chemins que protège le bac à sable d'un agent. Avec `3`, le rapport les
 liste sous `unwritable` (et dans `skipped`), *dry run* compris ; tous les autres fichiers sont
 écrits et aucun n'est supprimé. Relancez la même commande là où ils peuvent être écrits, hors du
-bac à sable : `init` donne la commande dans une note.
+bac à sable : `init` donne la commande dans une note. `4` est une erreur interne du kit, jamais une
+erreur de l'appelant : une ligne avec la version du kit et où la signaler (sous `--json`, une
+`error` avec `"internal": true`) ; signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues
+avec la commande qu'elle donne.
 
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->
@@ -357,8 +360,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    audit/search-audit-entries/; every import of them under the source root, test/ and
                    scripts/ follows, and the scripts of package.json; a file the kit did not write at
                    the root of the platform or of auth/ stays where it is, named, unless --place
-                   <file>=<folder> (both from the platform) gives it its folder; the generators and
-                   init --force keep either layout until then
+                   <file>=<folder> (both from the platform, a file outside it refused) gives it its
+                   folder; the generators and init --force keep either layout until then
   move-to-module   takes files of a context into a module of its model, declared first with generate module,
                    each to <module>/<layer>/ and each spec to test/<unit|integration>/<module>/: each <path>
                    is a file or a folder of a role or a spec, relative to the context

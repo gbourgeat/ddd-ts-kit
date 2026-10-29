@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ee107298fc8ff00d -->
+<!-- translation-of: README.md sha256:63e3124f35077263 -->
 
 # ddd-ts-kit
 
@@ -56,7 +56,11 @@ Codes de sortie : `0` succès, `1` violations, documentation périmée
 ou, sous `--strict`, un *commit* au-delà de ses limites, `2` mauvais usage (le message dit quoi
 faire), `3` une commande qui écrit des fichiers n'a pas pu en écrire certains là où elle tournait
 (un chemin que protège le bac à sable d'un agent) : ils sont listés sous `unwritable`, tous les
-autres fichiers sont écrits et aucun n'est supprimé.
+autres fichiers sont écrits et aucun n'est supprimé ; `4` une erreur interne du kit, dite en une
+ligne avec sa version (`internal error of ddd-ts-kit <version>: ...`, sa pile d'appels à la suite
+quand `DDD_TS_KIT_DEBUG` est défini ; sous `--json` une `error` avec sa `stack` et
+`"internal": true`) : signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues avec la
+commande et la pile d'appels.
 
 ## init
 
@@ -692,6 +696,12 @@ contexte et chaque couche tenus aux seuils de `ddd-ts-kit.config.json`) et `veri
 toute la base : typecheck, lint, `format:check`, `test:coverage`, tests de bout en bout,
 `check:arch`, `depcruise`, `deadcode`, `docs:check`.
 
+`db:generate` prend ce que fait la migration, en lettres, chiffres, tirets et tirets bas,
+commençant par une lettre ou un chiffre (`npm run db:generate add-invoices`, sous TypeORM
+`migrations/add-invoices`) : `drizzle-generate`, `prisma-generate` et `typeorm-generate` refusent
+tout autre nom avant que l'ORM ne le lise, puisqu'une valeur qui commence par un tiret serait l'une
+de ses options ; `typeorm-generate` refuse aussi un dossier hors du projet.
+
 `package.json` porte deux compilateurs : `typescript ~6.0.3`, que les outils chargent comme une
 bibliothèque, et `@typescript/native` (`npm:typescript@~7.0.2`), que `build` et `typecheck`
 appellent par son chemin (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` lancerait
@@ -701,7 +711,13 @@ l'ancien.
 glossaire du contexte à remplir. Tous deux refusent un contexte nommé `schema`, quel que soit
 l'ORM : sous Prisma les modèles d'un contexte vivent dans `prisma/schema/<context>.prisma`, et
 `prisma/schema/schema.prisma` est le fichier principal que tous les contextes partagent (un projet
-passe à Prisma par `init --force`).
+passe à Prisma par `init --force`). Ils refusent aussi les noms que tout objet JavaScript porte
+(`constructor`, `prototype`, `__proto__`, `toString`, `hasOwnProperty`, `valueOf`) : un contexte
+est une clé de la configuration et des objets construits à partir d'elle. Un contexte ou un
+module se nomme en lettres, chiffres et tirets, lu dans n'importe quelle casse et avec `-`, `_` ou
+des espaces entre ses mots (`OrderFulfilment`, `order_fulfilment`) ; chaque commande refuse un nom
+dont elle devrait laisser tomber une partie pour le lire, comme `../billing` ou `Évil`, et dit ce
+qu'elle aurait lu (`billing`, `vil`).
 
 ### Presets
 
@@ -2150,9 +2166,11 @@ est utilisée quand le clone l'a). Chaque chemin modifié atteint quelque chose 
 
 Sans `--base`, ou quand git ne sait pas dire ce qui a changé (une référence inconnue, un clone
 superficiel sans la base), tout est retenu : c'est ce qu'obtiennent la branche par défaut et
-l'exécution nocturne. La sélection n'est jamais plus étroite que les relations déclarées, parce
-que `context/declared-relationship` garde chaque import entre contextes à l'intérieur d'elles, et
-que cette règle tourne sur le projet entier dans chaque *pipeline*.
+l'exécution nocturne. Un `--base` ou un `--head` qui commence par un tiret est refusé (code de
+sortie 2) : aucune référence ne commence ainsi, et git la lirait comme l'une de ses options. La
+sélection n'est jamais plus étroite que les relations déclarées, parce que
+`context/declared-relationship` garde chaque import entre contextes à l'intérieur d'elles, et que
+cette règle tourne sur le projet entier dans chaque *pipeline*.
 
 ![Un changement dans le contexte scheduling de l'application d'exemple : scheduling est retenu, et avec lui notification et analytics, qui sont en aval de lui dans la carte des contextes ; identity, en amont, est laissé à la branche par défaut](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-affected-selection.fr.svg)
 
@@ -2268,7 +2286,9 @@ règle.
   échoue jusqu'à ce que le propriétaire réécrive la *baseline*. Une
   *baseline* fait taire les anciennes erreurs ; elle ne rend pas vérifiable une arborescence hors
   de l'arborescence canonique.
-  `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet.
+  `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet, sur le
+  *commit* que nomme la référence : une référence qui ne nomme aucun *commit* est refusée (code de
+  sortie 2, `<ref> is not a commit of this repository`), comme par chaque commande qui en prend une.
 - `--format github` affiche des annotations `::error file=...,line=...::`.
 - `--explain` fait suivre les violations de chaque règle qu'elles signalent, une fois, avec sa
   description et la raison de son existence (comme `explain` l'affiche, sans les exemples), et

@@ -243,4 +243,49 @@ describe('verify-merge, refusals', () => {
       expect(result.stderr).toContain(message);
     }
   });
+
+  it('says that git log could not read a commit it was given, which names one: not that it names none', () => {
+    const root = mergeRepository(PAY_AND_CANCEL);
+
+    mergeWith(root, BOTH_KEPT);
+    git(root, 'config', 'log.date', 'nonsense');
+
+    const refused = cli(root, 'verify-merge', 'HEAD');
+    const head = git(root, 'rev-parse', '--short', 'HEAD').trim();
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain(`error: git log could not read the commit ${head} that HEAD names.`);
+    expect(refused.stderr).toContain(`fix: Run \`git log -1 ${head}\` to read why`);
+    expect(refused.stderr).not.toContain('is not a commit of this repository');
+  });
+
+  it('lists the merges since a branch whose name starts with a dash, the commit it names given to git', () => {
+    const root = mergeRepository(PAY_AND_CANCEL);
+
+    mergeWith(root, BOTH_KEPT);
+    git(root, 'update-ref', 'refs/heads/-x', 'main');
+
+    const since = cli(root, 'verify-merge', '--since=-x', '--json');
+
+    expect(since.code).toBe(0);
+    expect(since.json()).toMatchObject({ since: '-x', merges: [expect.anything()] });
+  });
+
+  it('refuses a ref that starts with a dash as a commit it does not name, before git reads it as an option', () => {
+    const root = mergeRepository(PAY_AND_CANCEL);
+    const output = path.join(tempDir('verify-merge-output'), 'log.txt');
+
+    const dashed = `--output=${output}`;
+
+    for (const refused of [
+      cli(root, 'verify-merge', `--since=${dashed}`),
+      cli(root, 'verify-merge', 'main', `--theirs=${dashed}`),
+      cli(root, 'verify-merge', 'HEAD', '--theirs', 'main', `--base=${dashed}`),
+    ]) {
+      expect(refused.code).toBe(2);
+      expect(refused.stderr).toContain(`--output=${output} is not a commit of this repository.`);
+    }
+
+    expect(fs.existsSync(output)).toBe(false);
+  });
 });

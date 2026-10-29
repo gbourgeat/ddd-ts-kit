@@ -30,12 +30,12 @@ const SCRIPTS = ['regenerate', 'test'];
  * tells everything that is left. In the worktree of a worker, the answer names the row being
  * closed and its commit command, and is kept in `.ddd-ts-kit/verification.json` for the conductor.
  */
-export function verifySlice({ root, config, context, since }: SliceToVerify): SliceVerification {
+export function verifySlice({ root, config, context, since, sinceCommit }: SliceToVerify): SliceVerification {
   requireScripts(root);
 
   const manager = config.stack.packageManager;
   const regenerate = runScript({ root, manager, script: 'regenerate' });
-  const changed = changedFiles(root, since);
+  const changed = changedFiles(root, sinceCommit);
   const project = loadProject(root);
   const run = runCheck(project, { rules: [] });
 
@@ -45,7 +45,7 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
   );
 
   const tests = runScript({ root, manager, script: 'test', args: [context] });
-  const merges = verifyMerges({ root, since });
+  const merges = verifyMerges({ root, since, sinceCommit });
   const entries = changedEntries(root);
 
   return closedByWorker(root, {
@@ -57,7 +57,7 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
     merges,
     nearTheLimit: nearTheLimit(root, changed),
     ...planStaging(entries, { config, context, storage: storageOfSlice({ root, config, context }, entries) }),
-    citedRemovals: citedRemovals(project, since),
+    citedRemovals: citedRemovals(project, sinceCommit),
     ok: regenerate.ok && check.errorCount === 0 && tests.ok,
   });
 }

@@ -1,13 +1,9 @@
 ---
 name: pull-request
 description: >-
-  Takes the pull request of a story to green, from the worktree of the story: sweeps its
-  unresolved review comments and its failing checks, addresses each under the rules of the
-  story (a change the design did not foresee becomes a decision, a request to weaken a check
-  goes through the deviation skill, never a force-push), pushes, waits for the checks, and
-  repeats until the pull request is green and waits only on the code owner; then reports what
-  was changed and what was declined and why. Run by the user once the story skill opened the
-  pull request, with /ddd-ts-kit:pull-request <number>, from the worktree of the story.
+  Takes the pull request of a story to green: failing checks, then each unresolved review
+  comment under the rules of the story, never force-pushed, until only the code owner is
+  waited on. Run by the user with /ddd-ts-kit:pull-request <number>.
 argument-hint: "<number>"
 disable-model-invocation: true
 allowed-tools:

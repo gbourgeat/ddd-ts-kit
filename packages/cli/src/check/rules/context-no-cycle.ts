@@ -3,6 +3,7 @@ import type { Rule } from '../model/rule';
 import { cyclesIn } from '../support/cycles-in';
 import { lineOf } from '../support/line-of';
 import { reporter } from '../support/reporter';
+import { ownEntry } from '../../config/values/own-entry';
 
 const FIX =
   'Decide which context is upstream and remove the opposite upstream entry; the downstream reacts to integration events instead of being imported.';
@@ -29,6 +30,6 @@ export const contextNoCycle: Rule = {
 /** Each cycle of the declared upstreams, once, as the contexts met from its first one. */
 function cyclesOf(contexts: Config['contexts']): string[][] {
   return cyclesIn(Object.keys(contexts), (name) =>
-    (contexts[name]?.upstreams ?? []).map((upstream) => upstream.context),
+    (ownEntry(contexts, name)?.upstreams ?? []).map((upstream) => upstream.context),
   );
 }

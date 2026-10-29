@@ -16,6 +16,7 @@ import { wiringFamily } from '../wiring-family';
 import { subscriptionVars } from './subscription-vars';
 import type { EventDeclaration } from './event-declaration';
 import { findEventDeclaration } from './find-event-declaration';
+import { ownEntry } from '../../config/values/own-entry';
 
 export const projectionKind: Kind = {
   name: 'projection',
@@ -73,7 +74,7 @@ function publisherOf(scope: Scope, eventType: string): Name {
   }
 
   const publisher = parseContextName(parts[0] ?? '');
-  const upstreams = scope.config.contexts[scope.context.kebab]?.upstreams ?? [];
+  const upstreams = ownEntry(scope.config.contexts, scope.context.kebab)?.upstreams ?? [];
 
   if (publisher.kebab === scope.context.kebab || upstreams.some(({ context }) => context === publisher.kebab)) {
     return publisher;

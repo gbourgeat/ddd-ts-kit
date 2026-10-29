@@ -19,10 +19,18 @@ export function refNotes(root: string, ref: string): string[] {
 
 function behind(root: string, ref: string): string[] {
   const local = runGit(root, ['rev-parse', '--verify', '--quiet', `refs/heads/${ref}`]) !== undefined;
-  const upstream = local ? runGit(root, ['rev-parse', '--abbrev-ref', `${ref}@{upstream}`])?.trim() : undefined;
+
+  // Read by the full name of the branch, which never starts with a dash as a short name can.
+  const upstream = local
+    ? runGit(root, ['for-each-ref', '--format=%(upstream:short)', `refs/heads/${ref}`])?.trim() || undefined
+    : undefined;
 
   const count =
-    upstream === undefined ? 0 : Number(runGit(root, ['rev-list', '--count', `${ref}..${upstream}`])?.trim() ?? 0);
+    upstream === undefined
+      ? 0
+      : Number(
+          runGit(root, ['rev-list', '--count', '--end-of-options', `refs/heads/${ref}..${upstream}`])?.trim() ?? 0,
+        );
 
   return count > 0
     ? [

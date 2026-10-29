@@ -40,8 +40,10 @@ import { verifySliceCommand } from './commands/verify-slice';
 import { workerScopeCommand } from './commands/worker-scope';
 import { CliError } from './cli-error';
 import { ArgumentsError } from './commands/arguments-error';
+import { ownEntry } from './config/values/own-entry';
 import { helpFor } from './help/help-for';
 import { usageFor } from './help/usage-for';
+import { ISSUES_URL } from './issues-url';
 import { VERSION } from './version';
 import { stdoutJson } from './json/stdout-json';
 
@@ -88,6 +90,9 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   explain: explainCommand,
 };
 
+/** The exit code of a fault of the kit itself, apart from `1` (violations) and `2` (a mistake of the caller). */
+const INTERNAL_ERROR = 4;
+
 const processIo: Io = {
   out: (text) => void process.stdout.write(`${text}\n`),
   err: (text) => void process.stderr.write(`${text}\n`),
@@ -120,11 +125,34 @@ export function run(asked: readonly string[], io: Io = processIo): number {
     return commandNamed(command)(rest, io);
   } catch (error) {
     if (!(error instanceof CliError)) {
-      throw error;
+      return internalError(argv, error, io);
     }
 
     return refused(error, argv, io);
   }
+}
+
+/**
+ * A fault of the kit, not of the caller: said in one line with the version and where to report
+ * it, never with the exit code of a violation. Its stack trace, which tells where, follows the
+ * line when `DDD_TS_KIT_DEBUG` is set, and is always in the JSON of `--json`.
+ */
+function internalError(argv: readonly string[], error: unknown, io: Io): number {
+  const message = `internal error of ddd-ts-kit ${VERSION}: ${error instanceof Error ? error.message : String(error)}`;
+  const fix = `Please report it at ${ISSUES_URL} with the command: ddd-ts-kit ${argv.join(' ')}`;
+  const stack = error instanceof Error ? error.stack : undefined;
+
+  if (argv.includes('--json')) {
+    io.out(stdoutJson({ error: { message, fix, ...(stack === undefined ? {} : { stack }) }, internal: true }));
+  } else {
+    io.err(`${message}; ${fix.charAt(0).toLowerCase()}${fix.slice(1)}`);
+
+    if (stack !== undefined && (process.env['DDD_TS_KIT_DEBUG'] ?? '') !== '') {
+      io.err(stack);
+    }
+  }
+
+  return INTERNAL_ERROR;
 }
 
 /** Prints a mistake of the caller with its fix; a refused argument is answered with the usage of its command or kind. */
@@ -144,11 +172,11 @@ function refused(error: CliError, argv: readonly string[], io: Io): number {
 function canonical(asked: readonly string[]): string[] {
   const [first, ...rest] = asked[0] === 'help' && asked.length > 1 ? [...asked.slice(1), '--help'] : asked;
 
-  return first === undefined ? [] : [ALIASES[first] ?? first, ...rest];
+  return first === undefined ? [] : [ownEntry(ALIASES, first) ?? first, ...rest];
 }
 
 function commandNamed(name: string): Command {
-  const command = COMMANDS[name];
+  const command = ownEntry(COMMANDS, name);
 
   if (command !== undefined) {
     return command;

@@ -1,13 +1,9 @@
 ---
 name: story
 description: >-
-  Takes one user story from its statement to a green pull request in one session, in its own
-  worktree: every question to the owner first, then without stopping the story file and its
-  acceptance criteria, its rows, a design review of each row, the acceptance tests written and
-  locked before any code, one context-builder agent per row confined to its context, the
-  review, the verification, the pull request and a report of every provisional decision and
-  compromise. Run by the user, with /ddd-ts-kit:story, once per story; several terminals take
-  several stories at once.
+  Takes one user story to a green pull request in its own worktree: questions first, then
+  the story file, its rows, a design review, acceptance tests locked before code, one
+  context-builder per row, review, verification. Run by the user with /ddd-ts-kit:story.
 argument-hint: "<story code> [--headless] [the story in plain words, a file, an intent, or a tracker key]"
 disable-model-invocation: true
 allowed-tools:
@@ -59,7 +55,7 @@ become `## Statement`, word for word; each line of its `## Constraints` is liste
 each line of its `## Acceptance, as the author would observe it` is the first draft of a
 criterion, rewritten as what a client observes through the API; its author and status go on
 the `From:` line of `## Origin`. Read `docs/architecture/plan.md`, the `CONTEXT.md` of each
-context the story touches and `npx ddd-ts-kit describe <context> --json`, once each. List every question
+context the story touches and `npx ddd-ts-kit describe <context>`, once each. List every question
 whose answer changes an artefact of the story: a business rule you would have to guess, who
 holds a permission, a word missing from a glossary, a criterion that cannot be observed, a
 boundary or a relationship between contexts. Ask them in one go with AskUserQuestion (four per
@@ -160,18 +156,14 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
 
 ## 7. Close
 
-1. Bring the trunk in: commit, `git fetch`, then `npx ddd-ts-kit merge-trunk --trunk <base>`. It settles what
-   the kit derives and leaves the rest to you, as skill `ddd-ts-kit:parallel-work` says; settle
-   it, then `npx ddd-ts-kit merge-trunk --continue`. When it exits 3 (the trunk changes the settings
-   of the project or another path the sandbox protects), nothing was changed: the merge is the
-   owner's, from a terminal outside the sandbox; hand over the command and wait.
+1. Bring the trunk in: commit, `git fetch`, then `npx ddd-ts-kit merge-trunk --trunk <base>`,
+   resolve what it stops on keeping both sides, `--continue` (skill `ddd-ts-kit:quality-gate`,
+   "Bring the trunk in"); on exit 3, hand the owner the command it prints and wait.
    A migration to generate (Prisma, TypeORM) or a spec against a real database exits 3 under the sandbox too (no setting reaches the database): the owner or the CI runs it.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
-   fixed, the others settled or written as `TODO(review): #<row> ...`. The rule of two: a
-   finding that repeats one already recorded for the project (the same rule id or the same
-   remark in an earlier file of `docs/architecture/reviews/`, or a `TODO(review)` marker) is
-   written in this branch as a line under `## Mistakes seen here` of `AGENTS.md`, or as a rule
-   of `ddd-ts-kit.config.json` when the kit has one for it. Keep the review: append `## Findings`
+   fixed, the others settled or written as the `TODO(review)` line the reviewer gives, and each
+   line it gives for `## Mistakes seen here` of `AGENTS.md` (the rule of two) committed in this
+   branch: skill `ddd-ts-kit:quality-gate`, "Review remarks". Keep the review: append `## Findings`
    to `docs/architecture/reviews/$0.md`, one line per finding with its pass (the rule id or the
    principle the reviewer named), its `file:line` and its outcome, `fixed in <commit>`,
    `written as TODO(review)` or `dismissed by ADR-<n>`; the record outlives the pull request.

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { CliError } from '../cli-error';
 import { continueMerge, type ContinueOptions } from './continue-merge';
 import { gitPath } from './git-path';
-import { commitOf } from './lost/commit-of';
+import { commitOf } from '../commit/commit-of';
 import { mergeContextOf } from './merge-context';
 import type { MergeReport } from './merge-report';
 import { type MergeState, mergeState } from './merge-state';

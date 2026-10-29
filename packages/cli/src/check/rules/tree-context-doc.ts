@@ -6,6 +6,7 @@ import type { Finding } from '../model/finding';
 import type { Rule } from '../model/rule';
 import { reporter } from '../support/reporter';
 import { toViolations } from '../support/to-violations';
+import { ownEntry } from '../../config/values/own-entry';
 
 export const treeContextDoc: Rule = {
   id: 'tree/context-doc',
@@ -30,7 +31,7 @@ export const treeContextDoc: Rule = {
       }
 
       const lines = text.split('\n').map((line) => line.trim());
-      const expected = project.config.contexts[context]?.classification;
+      const expected = ownEntry(project.config.contexts, context)?.classification;
 
       return toViolations(report, file, [
         ...missingSections(lines),

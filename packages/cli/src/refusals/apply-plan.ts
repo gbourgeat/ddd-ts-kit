@@ -20,6 +20,7 @@ import { renderFactory } from './render-factory';
 import { rewriteUsages } from './rewrite-usages';
 import { specParts } from './spec-parts';
 import { withImports } from './with-imports';
+import { ownEntry } from '../config/values/own-entry';
 
 interface Tree {
   readonly ws: Workspace;
@@ -72,7 +73,7 @@ export function applyPlan(tree: Tree, plan: MigrationPlan, draft: MigrationDraft
 /** The classes still there whose plan entry says where they go; one that cannot move mechanically is said, and left. */
 function plannedMoves({ ws, config }: Tree, plan: MigrationPlan, draft: MigrationDraft): PlannedMove[] {
   return legacyErrors(ws, config).flatMap((error) => {
-    const entry = (plan.contexts[error.context] ?? []).find(
+    const entry = (ownEntry(plan.contexts, error.context) ?? []).find(
       (candidate) => candidate.class === error.className && candidate.file === error.file,
     );
 

@@ -4,6 +4,7 @@ import { drizzleHistoryFindings } from '../check/migrations/drizzle-history-find
 import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder';
 import { readDrizzleMigrations } from '../check/migrations/read-drizzle-migrations';
 import { CliError } from '../cli-error';
+import { knownCommit } from '../commit/known-commit';
 import { runGit } from '../commit/run-git';
 import type { BranchMigration } from './branch-migration';
 import { branchMigrations } from './branch-migrations';
@@ -23,9 +24,14 @@ export function planReplay({ root, base }: Pick<ReplayPlan, 'root' | 'base'>): R
   const folder = drizzleOutFolder(root);
 
   refuseConflictMarkers(root, `${folder}/meta/_journal.json`, base);
-  refuseUnknownBase(root, base);
 
-  const onBase = sqlTags(runGit(root, ['ls-tree', '--name-only', base, '--', `${folder}/`]) ?? '');
+  const commit = knownCommit(
+    root,
+    base,
+    'Fetch it (`git fetch origin`), or name the trunk the branch merged with `--base <ref>`.',
+  );
+
+  const onBase = sqlTags(runGit(root, ['ls-tree', '--name-only', commit, '--', `${folder}/`]) ?? '');
   const files = migrationFiles(root, folder);
   const here = sqlTags([...files.keys()].join('\n'));
   const notMerged = onBase.filter((tag) => !here.includes(tag));
@@ -63,15 +69,6 @@ function refuseConflictMarkers(root: string, journal: string, base: string): voi
     throw new CliError(
       `${journal} still holds the conflict markers of a merge.`,
       `Take the journal of the base, \`git checkout ${base} -- ${journal}\`, then run the replay again: it finds the migrations of the branch by their files.`,
-    );
-  }
-}
-
-function refuseUnknownBase(root: string, base: string): void {
-  if (runGit(root, ['rev-parse', '--verify', '--quiet', `${base}^{commit}`]) === undefined) {
-    throw new CliError(
-      `${base} is not a commit of this repository.`,
-      'Fetch it (`git fetch origin`), or name the trunk the branch merged with `--base <ref>`.',
     );
   }
 }

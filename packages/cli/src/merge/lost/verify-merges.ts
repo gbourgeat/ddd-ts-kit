@@ -1,4 +1,5 @@
 import { CliError } from '../../cli-error';
+import { knownCommit } from '../../commit/known-commit';
 import { inProgressMerge } from './in-progress-merge';
 import type { MergeCheck } from './merge-check';
 import { mergeOfRecord } from './merge-of-record';
@@ -8,7 +9,7 @@ import { mergeRepositoryOf } from './merge-repository-of';
 import type { MergeToVerify } from './merge-to-verify';
 import type { MergeVerification } from './merge-verification';
 import { mergesSince } from './merges-since';
-import { sinceOf } from './since-of';
+import { type Since, sinceOf } from './since-of';
 import { verifyMerge } from './verify-merge';
 
 /** What the caller asks `verify-merge` to check. */
@@ -18,6 +19,8 @@ export interface MergesToVerify {
   /** One commit: a merge commit, or a squash commit with `theirs`. */
   readonly commit?: string;
   readonly since?: string;
+  /** The commit `since` names, when the caller resolved it already. */
+  readonly sinceCommit?: string;
   readonly theirs?: string;
   readonly base?: string;
 }
@@ -28,29 +31,32 @@ export interface MergesToVerify {
  */
 export function verifyMerges(request: MergesToVerify): MergeVerification {
   const repo = mergeRepositoryOf(request.root);
-  const since = request.commit === undefined ? sinceOf(request.root, repo.top, request.since) : undefined;
+  const since = request.commit === undefined ? sinceOf(request.root, repo.top, request) : undefined;
   const merges = request.commit === undefined ? listed(repo, request, since) : [named(repo, request.commit, request)];
 
   return summarized(
-    since,
+    since?.name,
     merges.map((merge) => verifyMerge(repo, merge)),
   );
 }
 
 function named(repo: MergeRepository, commit: string, request: MergesToVerify): MergeToVerify {
-  const [record] = mergeRecords(repo.top, ['-1', commit, '--']);
+  const hash = knownCommit(repo.top, commit, 'Pass a merge commit, or a squash commit with --theirs <branch head>.');
+  const [record] = mergeRecords(repo.top, ['-1', hash, '--']);
 
   if (record === undefined) {
+    const short = hash.slice(0, 7);
+
     throw new CliError(
-      `${commit} is not a commit of this repository.`,
-      'Pass a merge commit, or a squash commit with --theirs <branch head>.',
+      `git log could not read the commit ${short} that ${commit} names.`,
+      `Run \`git log -1 ${short}\` to read why (a setting of git it refuses, an object it cannot read), then verify-merge again.`,
     );
   }
 
   return mergeOfRecord(repo.top, record, request);
 }
 
-function listed(repo: MergeRepository, request: MergesToVerify, since: string | undefined): MergeToVerify[] {
+function listed(repo: MergeRepository, request: MergesToVerify, since: Since | undefined): MergeToVerify[] {
   if (request.theirs !== undefined) {
     throw new CliError(
       '--theirs names the branch a squash commit took in: it needs that commit.',
@@ -68,7 +74,7 @@ function listed(repo: MergeRepository, request: MergesToVerify, since: string | 
   }
 
   return [
-    ...(since === undefined ? [] : mergesSince(repo.top, since)),
+    ...(since === undefined ? [] : mergesSince(repo.top, since.commit)),
     ...(inProgress === undefined ? [] : [inProgress]),
   ];
 }

@@ -203,7 +203,7 @@ describe('mutation, the survivors it lists', () => {
     const unknown = cli(root, 'mutation', '--changed', 'no-such-ref');
 
     expect(unknown.code).toBe(2);
-    expect(unknown.stderr).toContain('The files changed since no-such-ref cannot be listed.');
+    expect(unknown.stderr).toContain('no-such-ref is not a commit of this repository.');
   });
 
   it('asks for a run when no report exists', () => {

@@ -1,14 +1,10 @@
 ---
 name: cross-cutting
 description: >-
-  Keeps technical concerns out of business code in a ddd-ts-kit project. Logging, metrics,
-  tracing, error reporting, the audit trail, retry, timeout, circuit breaker, caching and
-  rate limiting are applied from outside the use cases (the composition root, bus
-  middlewares, adapters), on the standard interfaces of the kernel. Use when adding logs,
-  metrics, traces, an error tracker, an audit log, resilience or a cache, when choosing a
-  logger, when code needs a correlation id, the tenant or the session, when about to
-  declare a home-made Logger, UserContext or paginated result, or when aspects/*,
-  standard/* or a tracing or audit import in domain or application is reported.
+  Use for logs, metrics, traces, error tracking, audit log, retry, timeout, circuit breaker,
+  cache, rate limit, choosing a logger, correlation id, tenant or session, a home-made
+  Logger, UserContext or paginated result, on aspects/*, standard/*, a tracing or audit
+  import in domain or application.
 allowed-tools:
   - Read
   - Edit

@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { CliError } from '../cli-error';
 import type { Config } from '../config';
 import type { Workspace } from '../workspace';
@@ -13,7 +14,8 @@ export function placements(values: readonly string[], ws: Workspace, config: Con
 }
 
 function placement(value: string, ws: Workspace, config: Config): [string, string] {
-  const [file = '', folder = '', ...rest] = value.split('=');
+  const [written = '', folder = '', ...rest] = value.split('=');
+  const file = written === '' ? '' : insidePlatform(value, written, config);
   const folders = [...PLATFORM_FOLDER_NAMES, ...ws.directories(config.platformDir)];
 
   if (rest.length > 0 || file === '' || !folders.includes(folder)) {
@@ -38,4 +40,28 @@ function placement(value: string, ws: Workspace, config: Config): [string, strin
   }
 
   return [file, folder];
+}
+
+/**
+ * The file by its path from the platform, once normalised; refused when it leaves the platform,
+ * `../main.ts` say, which the command would report moved and could not move.
+ */
+function insidePlatform(value: string, written: string, config: Config): string {
+  if (written.includes('\\')) {
+    throw new CliError(
+      `--place ${value} names ${written}, written with a backslash: the kit reads paths with \`/\` only (on Windows, through WSL 2).`,
+      'Write the path with `/`, from the platform: --place auth/role-grants.ts=auth/roles.',
+    );
+  }
+
+  const file = path.posix.normalize(written);
+
+  if (path.posix.isAbsolute(file) || file === '..' || file.startsWith('../')) {
+    throw new CliError(
+      `--place ${value} names ${written}, which is outside ${config.platformDir}/: the command moves the files of the platform only.`,
+      `Name a file by its path from ${config.platformDir}/, as the command listed it: --place auth/role-grants.ts=auth/roles.`,
+    );
+  }
+
+  return file;
 }

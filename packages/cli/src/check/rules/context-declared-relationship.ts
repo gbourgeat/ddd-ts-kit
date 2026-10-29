@@ -2,6 +2,7 @@ import type { Rule } from '../model/rule';
 import type { SourceFile } from '../model/source-file';
 import { inContext } from '../support/in-context';
 import { perFile } from '../support/per-file';
+import { ownEntry } from '../../config/values/own-entry';
 
 export const contextDeclaredRelationship: Rule = {
   id: 'context/declared-relationship',
@@ -15,7 +16,7 @@ export const contextDeclaredRelationship: Rule = {
       }
 
       const here = file.location.context;
-      const upstreams = project.config.contexts[here]?.upstreams.map((upstream) => upstream.context) ?? [];
+      const upstreams = ownEntry(project.config.contexts, here)?.upstreams.map((upstream) => upstream.context) ?? [];
 
       return importedLanguages(file, here)
         .filter(({ context }) => !upstreams.includes(context))

@@ -13,6 +13,7 @@ import { readPersonalData } from './read-personal-data';
 import { readProcesses } from './read-processes';
 import { readStateMachines } from './read-state-machines';
 import { withoutComments } from './without-comments';
+import { ownEntry } from '../config/values/own-entry';
 
 type RoleNames = Pick<ContextFacts, 'commands' | 'queries' | 'policies' | 'gateways' | 'integrationEventHandlers'>;
 
@@ -20,7 +21,7 @@ type RoleNames = Pick<ContextFacts, 'commands' | 'queries' | 'policies' | 'gatew
 export function readContext(ws: Workspace, config: Config, name: string): ContextFacts {
   const tree = treeOf(config, name);
   const { directory } = tree;
-  const declared = config.contexts[name];
+  const declared = ownEntry(config.contexts, name);
   const doc = ws.read(`${directory}/CONTEXT.md`) ?? '';
   const declarations = config.stack.style === 'declared' ? readDeclarations(ws, tree) : undefined;
 
