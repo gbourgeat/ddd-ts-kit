@@ -6,8 +6,8 @@ Each page lists, in the words of the test titles, the rules a context holds, one
 
 | Page | Rules stated | Planned | Generated, of the titles | Specs |
 |---|---|---|---|---|
-| [analytics](analytics.md) | 66 | 0 | 4 of 66 | 12 |
-| [identity](identity.md) | 226 | 0 | 51 of 226 | 68 |
-| [notification](notification.md) | 143 | 0 | 28 of 143 | 31 |
+| [analytics](analytics.md) | 66 | 0 | 3 of 66 | 12 |
+| [identity](identity.md) | 226 | 0 | 45 of 226 | 68 |
+| [notification](notification.md) | 143 | 0 | 17 of 143 | 31 |
 | [scheduling](scheduling.md) | 632 | 3 | 63 of 635 | 169 |
 | [the application](application.md) | 32 | 0 | 2 of 32 | 8 |
