@@ -90,6 +90,20 @@ describe('config/valid on the directories the generators write in', () => {
     expect(exists(parent, 'escaped')).toBe(false);
   });
 
+  it('lets every reading entry of check judge such a config, the per-file check of the editor hook included', () => {
+    const root = initProject(...NPM);
+
+    changeConfig(root, { sourceRoot: '../src' });
+
+    expect(cli(root, 'check-file', 'src/main.ts').code).not.toBe(2);
+    expect(cli(root, 'rules').code).toBe(0);
+
+    const reported = cli(root, 'check', '--rule', 'config/valid');
+
+    expect(reported.code).toBe(1);
+    expect(reported.stdout).toContain('"sourceRoot" is "../src", which leads out of the project');
+  });
+
   it('reads a directory written otherwise as its normalised path', () => {
     const root = initProject(...NPM);
 
