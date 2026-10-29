@@ -61,10 +61,14 @@ export const policyKind: Kind = {
   },
 };
 
-/** The question a policy answers, the title of its spec: `invoice.cancel` asks "Who may cancel an invoice". */
+/**
+ * The question a policy answers, the title of its spec: the last segment of the permission is its
+ * action, the ones before it its element. `invoice.cancel` asks "Who may cancel an invoice",
+ * `invoice.line.add` "Who may add an invoice line".
+ */
 function questionOf(permission: string): string {
-  const [element = '', action = ''] = permission.split('.');
-  const aggregate = toName(element);
+  const segments = permission.split('.');
+  const element = toName(segments.slice(0, -1).join('-'));
 
-  return `Who may ${toName(action).words} ${aggregate.article} ${aggregate.words}`;
+  return `Who may ${toName(segments.at(-1) ?? '').words} ${element.article} ${element.words}`;
 }
