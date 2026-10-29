@@ -115,7 +115,9 @@ line, rewrite outside the scope among the files their tools rewrite (code, JSON,
 with the script that rewrote it, not held: the worker leaves it out of its commits. The scope is pinned at the worker's first
 call: a scope file removed or changed stops it until the conductor restores it. The kit's own
 `merge-trunk` is not noted, and an install of the lockfile leaves the packages out of the note. It
-refuses a dependency change and another formatter than `npm run format`. The same shell reading holds the `domain-test-writer` to the paths of a test, the
+refuses a dependency change and another formatter than `npm run format`. A sub-agent is refused
+deleting, moving or resetting a branch checked out in another worktree (another worker's, or the
+trunk). The same shell reading holds the `domain-test-writer` to the paths of a test, the
 code of a story to its build gate, and every session's hand-writing of a generated file or the
 baseline, each by the places a command writes rather than its text; a Codex `apply_patch` sent
 through the shell is read as a patch.

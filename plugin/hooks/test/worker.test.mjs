@@ -771,6 +771,10 @@ const CODE_THE_GUARD_CANNOT_READ = [
   'git log --output=notes.txt',
   'rg --pre ./x.sh Order src',
   'sort -o notes.txt notes.txt',
+  'git branch scratch',
+  'git branch -m scratch scratch-2',
+  'git branch -D scratch-2',
+  'git branch --unset-upstream',
 ];
 
 test('every command of a worker that runs code the guard cannot read is noted, and what it deleted stops the worker', () => {
@@ -803,6 +807,11 @@ test('a worker command made of pure readers only is not noted; a legitimate npm 
     'find src/contexts/ordering -name "*.ts"',
     'echo "notes" > "$TMPDIR/notes.txt"',
     'cd src && pwd',
+    'git branch',
+    'git branch --list "work/*"',
+    'git branch -a',
+    'git branch -r',
+    'git branch --show-current',
   ]) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
     assert.equal(noted(root, agent), false, command);

@@ -379,8 +379,14 @@ const GIT_READ_ONLY = new Set([
   'merge-base',
   'rev-list',
   'shortlog',
-  'branch',
 ]);
+// The options of `git branch` that delete, move, copy or reset a branch, and those that change its settings.
+const BRANCH_DELETES = ['-d', '-D', '--delete'];
+const BRANCH_MOVES = ['-m', '-M', '--move', '-c', '-C', '--copy'];
+const BRANCH_RESETS = ['-f', '--force'];
+const BRANCH_SETTINGS = ['-u', '--set-upstream-to', '--unset-upstream', '--edit-description'];
+// The options of `git branch` that list branches, an operand then being a pattern or a commit.
+const BRANCH_LISTS = ['--list', '-l', '-a', '--all', '-r', '--remotes', '--show-current', '--contains', '--merged'];
 // The scripts of a project that rewrite files by its own tools, which `init` writes and the skills name.
 const SANCTIONED_SCRIPTS = new Set([
   'format',
@@ -769,6 +775,7 @@ async function preparingReason(project, input, command) {
     baselineWriteReason(command) ??
     (await hooksSkippedReason(input, command)) ??
     (await gitConfigReason(input, command)) ??
+    (await otherBranchReason(input, command)) ??
     (await workerPlaceReason(input, command)) ??
     (await landingReason(input, command)) ??
     oneSideMergeReason(project, input, command) ??
@@ -2354,6 +2361,50 @@ function hooksSkippedBySubcommand(subcommand, rest) {
 
 // Config keys a sub-agent must not set: each runs a command in every checkout of the repository
 // (fsmonitor, pager, editor, sshCommand, hooksPath, an alias, a diff or filter driver, gpg).
+// A sub-agent never deletes, moves or resets a branch checked out in another worktree of the
+// repository: the branch of another worker, or the trunk of the conductor.
+async function otherBranchReason(input, command) {
+  if (!input.agent_type || !/\bbranch\b/.test(command)) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const cwd = input.cwd ?? process.cwd();
+  for (const simple of shell.simpleCommands(command, cwd)) {
+    const names = rewrittenBranches(simple.words);
+    const taken =
+      names.length > 0 ? names.find((name) => otherWorktreeBranches(simple.directory ?? cwd).has(name)) : undefined;
+    if (taken) {
+      return `A sub-agent never deletes, moves or resets the branch of another worktree: \`${taken}\` is checked out in another worktree of the repository. ${REPORT_TO_CONDUCTOR}`;
+    }
+  }
+  return undefined;
+}
+
+// The branches `git branch` deletes, moves, copies (both names) or resets (the first operand).
+function rewrittenBranches(words) {
+  const { subcommand, tail } = gitInvocation(words.slice(1));
+  if (shell.commandName(words) !== 'git' || subcommand !== 'branch') {
+    return [];
+  }
+  const names = shell.operands(tail);
+  if (tail.some((word) => BRANCH_DELETES.includes(word) || BRANCH_MOVES.includes(word))) {
+    return names;
+  }
+  return tail.some((word) => BRANCH_RESETS.includes(word)) ? names.slice(0, 1) : [];
+}
+
+// The branches checked out in the worktrees of the repository of `directory`, but its own.
+function otherWorktreeBranches(directory) {
+  const checkout = { root: directory };
+  const own = git(checkout, ['rev-parse', '--show-toplevel'])?.trim();
+  const blocks = (git(checkout, ['worktree', 'list', '--porcelain']) ?? '').split('\n\n');
+  return new Set(
+    blocks
+      .filter((block) => block.split('\n')[0] !== `worktree ${own}`)
+      .flatMap((block) => /^branch refs\/heads\/(.+)$/m.exec(block)?.slice(1) ?? []),
+  );
+}
+
 const DANGEROUS_CONFIG = [
   /^core\.fsmonitor$/i,
   /^core\.pager$/i,
@@ -3213,8 +3264,17 @@ function isPureReader({ words }) {
   if (name !== 'git') {
     return PURE_READERS.has(name);
   }
+  const { subcommand, tail } = gitInvocation(words.slice(1));
+  const reads = subcommand === 'branch' ? listsBranches(tail) : GIT_READ_ONLY.has(subcommand);
+  return reads && !words.some((word) => word.startsWith('--output'));
+}
+
+// `git branch` reads with no operand or when it lists, and with none of the options that write.
+function listsBranches(tail) {
+  const writes = [...BRANCH_DELETES, ...BRANCH_MOVES, ...BRANCH_RESETS, ...BRANCH_SETTINGS];
   return (
-    GIT_READ_ONLY.has(gitInvocation(words.slice(1)).subcommand) && !words.some((word) => word.startsWith('--output'))
+    !tail.some((word) => writes.includes(word)) &&
+    (shell.operands(tail).length === 0 || tail.some((word) => BRANCH_LISTS.includes(word)))
   );
 }
 

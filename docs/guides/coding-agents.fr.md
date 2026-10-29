@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:d0ff77ea4a0df60c -->
+<!-- translation-of: coding-agents.md sha256:423ca368f4e82e83 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -125,7 +125,9 @@ sans retenir le *worker* : il le laisse hors de ses commits. Le
 périmètre est fixé au premier appel du *worker* : un fichier de périmètre supprimé ou changé
 l'arrête jusqu'à ce que le chef d'orchestre le rétablisse. Le `merge-trunk` du kit n'est pas noté,
 et une installation du *lockfile* laisse les paquets hors de la note. Il refuse un changement de
-dépendance et un autre formateur que `npm run format`. La même lecture
+dépendance et un autre formateur que `npm run format`. Un sous-agent ne peut ni supprimer, ni
+déplacer, ni réinitialiser une branche extraite dans un autre *worktree* (celle d'un autre
+*worker*, ou le tronc). La même lecture
 du *shell* tient le `domain-test-writer` aux chemins d'un test, le code d'une *story* à sa barrière
 de construction, et toute écriture à la main d'un fichier généré ou de la *baseline* par n'importe
 quelle session, chacune par les endroits qu'une commande écrit plutôt que par son texte ; un

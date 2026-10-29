@@ -576,3 +576,28 @@ test('a builder runs no test runner or script from the conductor checkout: a pat
   }
   assert.equal(run('pre-bash', bash(conductor, `/bin/cat ${worktree}/README.md`, agent)).output, undefined);
 });
+
+test("a sub-agent never deletes, moves or resets the branch of another worker's worktree", () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const other = join(conductor, '.worktrees', 'shipping');
+  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/shipping', other);
+  git(conductor, 'branch', 'scratch');
+  const agent = builder('branches', { cwd: conductor });
+  for (const command of [
+    'git branch -D work/shipping',
+    'git branch --delete --force main',
+    'git branch -m work/shipping shipping-old',
+    'git branch -M scratch work/shipping',
+    'git branch -f work/shipping HEAD',
+  ]) {
+    const refused = run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent));
+    assert.match(reason(refused), /never deletes, moves or resets the branch of another worktree/, command);
+  }
+  for (const command of [
+    'git branch -D scratch',
+    'git branch -m work/billing work/billing-2',
+    'git branch -f scratch HEAD',
+  ]) {
+    assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent)).output, undefined, command);
+  }
+});
