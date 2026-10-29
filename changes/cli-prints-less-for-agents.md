@@ -8,4 +8,6 @@ What a command prints under `--json` (and `check`, `affected` and `measures` und
 
 The `AGENTS.md` that `init` writes gave about 320 words, read in every session, to imports and to the layout of a file, which `npm run lint:fix` and the formatter rewrite anyway: each is now one line, keeping what neither rewrites (one export per file, the sizes, `private` over `#name`, no second alias mapping, `npm run build` to compile, no Prettier). A project generated before keeps its `AGENTS.md`; the two lines of a new `init` can replace its paragraphs `Imports:` and `Everywhere:`.
 
+The skills and agents of the plugin send an agent to the `todos` places of a generator instead of the `next` list, give the output of every kind with the keys it now has, and look up the arguments of one kind with `generate <kind> --help` instead of the whole `--help`.
+
 To move: a script that reads the output of `--json` line by line, or with a pattern on its indentation, parses it instead (`JSON.parse`, `jq`). A reader of the `--json` of `generate` that used `next` builds the same `file:line` from `todos` (`${file}:${line}`); one that used `todos[].text` reads `gist`, or the line of the file it names for the whole sentence (`text` remains on a step only).

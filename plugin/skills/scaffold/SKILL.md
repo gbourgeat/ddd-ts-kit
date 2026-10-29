@@ -42,10 +42,10 @@ the tree, so a generated file conforms by construction and costs no tokens.
    ```bash
    npx ddd-ts-kit generate <kind> ... --json
    ```
-   Exact arguments of every kind: [kinds.md](kinds.md), or `npx ddd-ts-kit --help`. A
+   Exact arguments of every kind: [kinds.md](kinds.md), or `npx ddd-ts-kit generate <kind> --help` for one. A
    worker confined to one context adds `--local-only`: the command refuses, and writes
    nothing, when it would write a shared file.
-3. **Open only the `next` places**, each a `file:line` holding a `TODO(domain)` that states
+3. **Open only the `todos` places**, each a `file:line` holding a `TODO(domain)` that states
    the decision expected. Decide, write, delete the marker. A marker you cannot resolve is a
    question for the user, not a guess. `notes` says what the generator could not do.
 4. **Replace each `it.todo`** of the generated spec by a real test (skill
