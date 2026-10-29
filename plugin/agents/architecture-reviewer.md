@@ -88,11 +88,8 @@ what to do instead, and, when `REVIEW.md` names passes, the pass it belongs to (
   `file:line` it belongs to and the marker line to write there, in the comment syntax of the
   file, naming the row the remark belongs to (from the briefing, the commit or `slices.md`):
   `// TODO(review): #<row id> <the remark, what to do instead>`. The id ties it to its story:
-  `story-check` blocks that story on it, and no other. You never write it: the conductor,
-  or the agent that fixes the branch, writes it or settles the remark at once, and the story is
-  closed only when `npx ddd-ts-kit story-check <code>` exits 0. Asked whether a story or a
-  milestone can close, run it and report what it lists, each blocker with its `file:line` and why
-  it is the story's, then the unattributed markers it lists without blocking.
+  `story-check` blocks that story on it, and no other. You never write it. Asked whether a story
+  or a milestone can close, run `npx ddd-ts-kit story-check <code>` and report what it lists.
 
 Asked for a design review of rows still to build, write it to be saved as
 `docs/architecture/reviews/<topic>.md`: one heading `## #<id> <slice>` per row, every class,

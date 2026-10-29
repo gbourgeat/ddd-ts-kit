@@ -204,6 +204,8 @@ A report sorts its needs. A **blocking** one stops that row: do it in your workt
 worker bring the trunk in (`npx ddd-ts-kit merge-trunk`), then launch the next agent. A **note** waits for the merge of the
 branch (step 6): the run goes on.
 
+### Bring the trunk in
+
 Each agent commits its rows. When the rows of a branch are committed: bring the trunk into the
 branch, `npx ddd-ts-kit merge-trunk --cwd <worktree>`, never `git merge` alone. It computes the
 merge from the newest commit of the branch the trunk holds (a first row already squash-merged, a
@@ -221,13 +223,15 @@ another path the session cannot write is the owner's merge: `merge-trunk` stops 
 changed and exit 3, naming the paths; hand the owner the same command to run from a terminal
 outside the sandbox, and do not merge by hand or reset the worktree.
 A worker under the sandbox of the regulated profile cannot reach the database either: a Prisma or TypeORM working migration, `db:migrate` and a spec that names a `DATABASE_URL` are run by the owner or the CI (`db:generate` exits 3), not by the worker; it writes the schema and reports.
-Then one
-review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
-merged branch, then the branch merges or opens its pull request. The blocking findings of the
-review are fixed on the branch; each non-blocking one is settled at once or written, before the
-merge, as the `TODO(review): #<row id> <remark>` line the review gives, at its `file:line`, by you or the
-agent that fixes the branch, never left in the body of a pull request. `check --changed-since` sees
-the files of the branch only: a cycle, an unused export or a rule broken by what the trunk
+
+### Review the batch
+
+Then one review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run
+verify` on the merged branch, then the branch merges or opens its pull request. The blocking
+findings of the review are fixed on the branch; each non-blocking one is settled at once or
+written, before the merge, as the `TODO(review)` line the review gives (skill
+`ddd-ts-kit:quality-gate`, "Review remarks"). `check --changed-since` sees the files of the
+branch only: a cycle, an unused export or a rule broken by what the trunk
 gained meanwhile shows only in `verify` on the whole tree. A host without the
 agents of the plugin (Codex) runs one session per worktree, its briefing as the first prompt:
 the guard does not hold that session to its context, the briefing and the review do. A person
@@ -252,15 +256,9 @@ second merge can conflict. For each branch:
    `--to-land`: the guard refuses it to a sub-agent;
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;
 3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
-   a slice merges with `TODO(review)` markers, but a story or a milestone is closed only when
-   `npx ddd-ts-kit story-check <code>` exits 0 (`status` names a story whose rows are all done
-   while markers of its own keep it open): each marker it says is the story's handled in a slice,
-   or dismissed by a decision record (`npx ddd-ts-kit generate adr "<title>"`, quoting the remark
-   without its marker), the marker deleted in the same commit. A marker belongs to the story of
-   the row its text names, else of the row the commit that wrote it names (its `Slice:` trailer);
-   one that belongs to no row blocks only when no other open story works in its context, and is
-   listed otherwise: settle it or name its row in it; `--strict` blocks on every marker of the
-   story's contexts;
+   a slice merges with `TODO(review)` markers, a story or a milestone closes once
+   `npx ddd-ts-kit story-check <code>` exits 0 (skill `ddd-ts-kit:quality-gate`, "Review
+   remarks");
 4. the other workers bring the trunk into their branch with `merge-trunk` before their next
    slice; a branch reused for its next row does the same, from where its first row landed.
 

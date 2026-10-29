@@ -157,18 +157,14 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
 
 ## 7. Close
 
-1. Bring the trunk in: commit, `git fetch`, then `npx ddd-ts-kit merge-trunk --trunk <base>`. It settles what
-   the kit derives and leaves the rest to you, as skill `ddd-ts-kit:parallel-work` says; settle
-   it, then `npx ddd-ts-kit merge-trunk --continue`. When it exits 3 (the trunk changes the settings
-   of the project or another path the sandbox protects), nothing was changed: the merge is the
-   owner's, from a terminal outside the sandbox; hand over the command and wait.
+1. Bring the trunk in: commit, `git fetch`, then `npx ddd-ts-kit merge-trunk --trunk <base>`,
+   resolve what it stops on keeping both sides, `--continue` (skill `ddd-ts-kit:parallel-work`,
+   "Bring the trunk in"); on exit 3, hand the owner the command it prints and wait.
    A migration to generate (Prisma, TypeORM) or a spec against a real database exits 3 under the sandbox too (no setting reaches the database): the owner or the CI runs it.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
-   fixed, the others settled or written as `TODO(review): #<row> ...`. The rule of two: a
-   finding that repeats one already recorded for the project (the same rule id or the same
-   remark in an earlier file of `docs/architecture/reviews/`, or a `TODO(review)` marker) is
-   written in this branch as a line under `## Mistakes seen here` of `AGENTS.md`, or as a rule
-   of `ddd-ts-kit.config.json` when the kit has one for it. Keep the review: append `## Findings`
+   fixed, the others settled or written as the `TODO(review)` line the reviewer gives, and each
+   line it gives for `## Mistakes seen here` of `AGENTS.md` (the rule of two) committed in this
+   branch: skill `ddd-ts-kit:quality-gate`, "Review remarks". Keep the review: append `## Findings`
    to `docs/architecture/reviews/$0.md`, one line per finding with its pass (the rule id or the
    principle the reviewer named), its `file:line` and its outcome, `fixed in <commit>`,
    `written as TODO(review)` or `dismissed by ADR-<n>`; the record outlives the pull request.

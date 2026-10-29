@@ -46,7 +46,7 @@ The size and message of the commit are skill `ddd-ts-kit:commit-discipline`.
 | after each write | nothing: the guard runs `check-file` and returns the violations | none |
 | while iterating | `npx ddd-ts-kit verify-slice <context> --since <base>`: regenerate, the rules on the changed files, the specs of the context, the files near the size limit and the paths of the slice to stage (the pages of `docs/behaviour/` and the schema of the ORM the generator changed for the context included), in one run; a path it leaves out is never staged with the slice | seconds |
 | before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left but `TODO(review)`), `npx ddd-ts-kit check --commit-size` | under a minute |
-| to bring the trunk into the branch | `npx ddd-ts-kit merge-trunk`: one merge commit from the branch's own diff, derived files settled, `verify-merge` on the result before its commit; on a stop, resolve each hunk, `git add`, `merge-trunk --continue` | seconds |
+| to bring the trunk into the branch | `npx ddd-ts-kit merge-trunk`: one merge commit from the branch's own diff, derived files settled, `verify-merge` on the result before its commit; on a stop, resolve each hunk keeping both sides, `git add`, `merge-trunk --continue` (skill `ddd-ts-kit:parallel-work`, "Bring the trunk in") | seconds |
 | after a merge made otherwise | `npx ddd-ts-kit verify-merge`: each line, row done or test the merge lost, to restore from its side; it exits 1 on one (the pre-push hook and `verify-slice` run it too, and only warn in this version) | a second |
 | before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in; each non-blocking remark of the review written as a `TODO(review)` or settled | everything |
 | before the code of a story | `npx ddd-ts-kit acceptance <story> --gate written`: every slice row and criterion has a scenario, wrapped in `pending(...)`, locked and committed | seconds |
@@ -82,7 +82,7 @@ first three.
 A review sorts its findings: a blocking one is fixed before the merge; a non-blocking one is
 settled at once, or written before the merge as `TODO(review): #<row id> <remark>` at the line it is
 about, by whoever fixes the branch (the `architecture-reviewer` agent gives the line and its
-`file:line`, and never writes it). A slice may merge with `TODO(review)` markers; a story or a
+`file:line`, and never writes it), never left in the body of a pull request. A slice may merge with `TODO(review)` markers; a story or a
 milestone is closed only when `npx ddd-ts-kit story-check <code>` exits 0: every marker of its
 own handled, or dismissed by a decision record (`npx ddd-ts-kit generate adr "<title>"`,
 quoting the remark without its marker) with the marker deleted in the same commit. A marker is
