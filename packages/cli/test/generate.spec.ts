@@ -287,6 +287,16 @@ describe('generate, the title of a spec of the model', () => {
     expect(unit('invoice-noted.event.spec.ts')).toContain("describe('Invoice noted', () => {");
     expect(unit('invoice-noting.service.spec.ts')).toContain("describe('Invoice noting', () => {");
   });
+
+  it('builds the domain service it describes with nothing, a port or a store being no part of it', () => {
+    const spec = read(root, 'src/contexts/billing/test/unit/invoice-noting.service.spec.ts');
+
+    expect(spec).toContain(
+      "import { InvoiceNotingService } from '@/contexts/billing/domain/services/invoice-noting.service';",
+    );
+
+    expect(spec).toContain('expect(() => new InvoiceNotingService()).not.toThrow();');
+  });
 });
 
 describe('generate context, its glossary from the draft', () => {
