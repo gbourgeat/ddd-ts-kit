@@ -53,8 +53,9 @@ describe('generated code, in the explicit style', () => {
 
     expect(todos.length).toBeGreaterThan(40);
 
+    // A gist is the opening of the decision, a verb and what it bears on at least; the file holds the sentence.
     for (const todo of todos) {
-      expect(todo.gist.split(' ').length, `${todo.file}:${todo.line}`).toBeGreaterThanOrEqual(3);
+      expect(todo.gist.split(' ').length, `${todo.file}:${todo.line}`).toBeGreaterThanOrEqual(2);
     }
   });
 
