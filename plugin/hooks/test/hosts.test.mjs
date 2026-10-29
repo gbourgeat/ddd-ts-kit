@@ -62,6 +62,30 @@ test('Codex: what Claude Code asks the owner is said to the user, never a questi
   );
 });
 
+test('Codex: an apply_patch run through the shell tool is read as a patch, held to the scope', () => {
+  const root = project();
+  const agent = worker(root);
+  const out = ['*** Begin Patch', '*** Add File: src/contexts/billing/x.ts', '+export const x = 1;', '*** End Patch'];
+  const stray = {
+    cwd: root,
+    turn_id: 'turn-1',
+    tool_name: 'shell',
+    tool_input: { command: `apply_patch <<'EOF'\n${out.join('\n')}\nEOF` },
+    ...agent,
+  };
+  const result = run('pre-bash', stray);
+  assert.equal(decision(result), 'deny');
+  assert.match(reason(result), /another bounded context/);
+  const inside = [
+    '*** Begin Patch',
+    '*** Add File: src/contexts/ordering/y.ts',
+    '+export const y = 1;',
+    '*** End Patch',
+  ];
+  const allowed = { ...stray, tool_input: { command: `apply_patch <<'EOF'\n${inside.join('\n')}\nEOF` } };
+  assert.equal(run('pre-bash', allowed).output, undefined);
+});
+
 test('Codex: a patched file that breaks a rule blocks the result of the tool with the fix', () => {
   const root = project();
   put(

@@ -477,6 +477,30 @@ test('a worker is refused the writers the tables do not know: redirections, sed,
   }
 });
 
+test('a domain-test-writer is held to test paths by the shell, as it is by the editor tools', () => {
+  const root = project();
+  const agent = { agent_type: 'ddd-ts-kit:domain-test-writer' };
+  const refused = run('pre-bash', bash(root, 'echo x > src/contexts/ordering/domain/order.ts', agent));
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /test writer changes tests only/);
+  const spec = 'echo x > src/contexts/ordering/test/unit/order.spec.ts';
+  assert.equal(run('pre-bash', bash(root, spec, agent)).output, undefined);
+});
+
+test('the main session does not hand-write a generated file or the baseline through the shell', () => {
+  const root = project();
+  for (const [command, expected] of [
+    ['cat > openapi/openapi.yaml', /openapi\/openapi\.yaml is generated/],
+    ['printf x > ddd-ts-kit-baseline.json', /ddd-ts-kit-baseline\.json/],
+  ]) {
+    const result = run('pre-bash', bash(root, command));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  // Writing a context file by hand from the main session, outside any story, stays allowed.
+  assert.equal(run('pre-bash', bash(root, 'echo x > src/contexts/ordering/domain/order.ts')).output, undefined);
+});
+
 test('a worker writes only inside its worktree, the devices and the temp directory, nowhere else', () => {
   const root = project({}, ['--package-manager', 'npm']);
   const agent = worker(root, 'invoicing');

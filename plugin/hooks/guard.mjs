@@ -7,6 +7,7 @@ import {
   closeSync,
   existsSync,
   fstatSync,
+  globSync,
   mkdirSync,
   mkdtempSync,
   openSync,
@@ -119,22 +120,11 @@ const ACCEPTANCE_LOCK = /^test\/acceptance\/[^/]+\.acceptance\.lock\.json$/;
 // The verdicts that let a locked acceptance change: written by the acceptance-judge agent alone.
 const ACCEPTANCE_VERDICT = /^test\/acceptance\/verdicts\/[^/]+\.md$/;
 const JUDGE_AGENT = 'acceptance-judge';
-// What a command may do with the lock or a verdict outside the judge: read it, version it, run the kit.
-const READING_PROGRAMS = new Set([
-  'git',
-  'cat',
-  'ls',
-  'head',
-  'tail',
-  'grep',
-  'rg',
-  'wc',
-  'diff',
-  'jq',
-  'npx',
-  'pnpm',
-  'ddd-ts-kit',
-]);
+// What a command may do with the lock or a verdict outside the judge: read it, or run the kit
+// (`ddd-ts-kit` directly, or `npx ddd-ts-kit` seen through kitInvocations); `npx`/`pnpm` of anything
+// else can write, and `git` reads only through the subcommands of GIT_READS.
+const READING_PROGRAMS = new Set(['cat', 'ls', 'head', 'tail', 'grep', 'rg', 'wc', 'diff', 'jq', 'ddd-ts-kit']);
+const GIT_READS = new Set(['log', 'show', 'diff', 'status', 'add', 'commit', 'ls-files']);
 // What touches no file: a command line moves to a worktree or checks a path before it reads or versions one.
 const NEUTRAL_PROGRAMS = new Set(['cd', 'pushd', 'popd', 'pwd', 'true', 'test', '[']);
 // awk reads, unless its program comes from a file or may write (`print > "f"`, a pipe, `system`, `@include`).
@@ -431,6 +421,9 @@ async function preBash(input) {
   if (typeof command !== 'string') {
     return;
   }
+  if (hostOf(input) === 'codex' && /^\s*\*\*\* Begin Patch/m.test(command)) {
+    return codexShellPatch(input, command);
+  }
   const project = findProject(commandDirectory(command, input.cwd ?? process.cwd()));
   await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
@@ -442,16 +435,51 @@ async function preBash(input) {
     return;
   }
   const context = workerContext(project, input);
-  if (!context && !isBuilder(input)) {
-    return;
-  }
   shell = await import('./shell-commands.mjs');
   const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
   const refusal = context
     ? workerCommandReason(project, input, { context, command, commands })
-    : builderStrayReason(input, commands);
+    : (builderStrayReason(input, commands) ?? sessionShellReason(project, input, commands));
   if (refusal) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
+  }
+}
+
+// What the shell writes of a session that is not a context worker meet: the story build gate and
+// the generated or baseline files for everyone, and the test-writer held to the paths of a test.
+function sessionShellReason(project, input, commands) {
+  for (const command of commands) {
+    for (const { place, by } of [...writtenTargets(command), ...changedPaths(command)]) {
+      const refusal = sessionPlaceReason(project, input, place);
+      if (refusal) {
+        return `${by}: ${refusal}`;
+      }
+    }
+  }
+  return undefined;
+}
+
+function sessionPlaceReason(project, input, place) {
+  const owner = place === undefined ? undefined : findProject(place);
+  if (!owner || owner.root !== project.root) {
+    return undefined;
+  }
+  if (String(input.agent_type ?? '').includes('domain-test-writer')) {
+    return testWriterScopeReason(project, place, input);
+  }
+  return storyCodeReason(project, place) ?? generatedFileReason(project, place) ?? baselineFileReason(project, place);
+}
+
+// Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: the
+// patch in the command is judged the same way a write through the editor tool is.
+function codexShellPatch(input, command) {
+  const patch = command.slice(command.indexOf('*** Begin Patch'));
+  const verdicts = patchWrites(patch, input.cwd ?? process.cwd())
+    .map((written) => verdictOn(written, input))
+    .filter(Boolean);
+  const verdict = verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
+  if (verdict) {
+    decide(input, verdict.decision, verdict.reason);
   }
 }
 
@@ -1268,20 +1296,25 @@ function verdictReason(judging, path) {
 // regression spec of a fix may also run it, with a test runner; a sub-agent never rewrites it (the main session may).
 async function acceptanceFilesShellReason(project, input, command) {
   const judging = isJudge(input);
-  const held = (input.agent_type ? (fixOf(project)?.files ?? []) : []).filter(
-    (file) => command.includes(file) || command.includes(file.split('/').pop()),
+  shell = await import('./shell-commands.mjs');
+  const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
+  const written = writtenProjectPaths(project, commands);
+  const fixFiles = input.agent_type ? (fixOf(project)?.files ?? []) : [];
+  // A command touches a held file by the place it writes (a glob expanded) or by naming it in text.
+  const held = fixFiles.filter(
+    (file) => written.includes(file) || command.includes(file) || command.includes(file.split('/').pop()),
   );
-  if (!judging && held.length === 0 && !/acceptance\/verdicts|\.acceptance\.lock\.json/.test(command)) {
+  const governed =
+    written.some((path) => ACCEPTANCE_LOCK.test(path) || path.startsWith('test/acceptance/verdicts/')) ||
+    /acceptance\/verdicts|\.acceptance\.lock\.json/.test(command);
+  if (!judging && held.length === 0 && !governed) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const writing = shell
-    .simpleCommands(command, input.cwd ?? process.cwd())
-    .some(
-      (simple) =>
-        !(readsOnly(simple.words) || (held.length > 0 && runsTests(simple))) ||
-        simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
-    );
+  const writing = commands.some(
+    (simple) =>
+      !(readsOnly(simple.words) || (held.length > 0 && runsTests(simple))) ||
+      simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
+  );
   if (!writing) {
     return undefined;
   }
@@ -1294,12 +1327,48 @@ async function acceptanceFilesShellReason(project, input, command) {
     : `${lockedRegressionReason(project, spec, input)} A command may read it, version it or run it (\`npm test -- ${spec}\`).`;
 }
 
+// The project paths a command writes, each glob expanded against the tree so a pattern that names a
+// lock, a verdict or a held regression spec is seen, not only a path spelled out in the command.
+function writtenProjectPaths(project, commands) {
+  const places = commands
+    .flatMap((command) => [...writtenTargets(command), ...changedPaths(command)])
+    .map(({ place }) => place)
+    .filter((place) => place !== undefined);
+  const paths = new Set();
+  for (const place of places) {
+    for (const file of expandGlob(place)) {
+      paths.add(projectPath(project, file));
+    }
+  }
+  return [...paths];
+}
+
+function expandGlob(place) {
+  if (!/[*?[]/.test(place)) {
+    return [place];
+  }
+  try {
+    const matches = globSync(place);
+    return matches.length > 0 ? matches : [place];
+  } catch {
+    return [place];
+  }
+}
+
 // A command that writes no file by itself, its redirections aside: a neutral one (`cd`, `test`), a reader,
 // `sed` without an in-place edit nor a script that writes, `awk` whose program writes nothing, `less` without a log.
 function readsOnly(words) {
   const name = shell.commandName(words);
   const args = words.slice(1);
   if (NEUTRAL_PROGRAMS.has(name) || READING_PROGRAMS.has(name)) {
+    return true;
+  }
+  if (name === 'git') {
+    return GIT_READS.has(gitInvocation(args, undefined).subcommand);
+  }
+  // `npx ddd-ts-kit ...`, `pnpm exec ddd-ts-kit ...`: a launcher of the kit reads the lock; `npx`
+  // of anything else can write it.
+  if (kitInvocations([{ words }]).length > 0) {
     return true;
   }
   if (name === 'sed') {
