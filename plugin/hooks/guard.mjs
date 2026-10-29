@@ -20,6 +20,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { writeKitFile } from './kit-files.mjs';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 // The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
@@ -2932,8 +2933,7 @@ function stateFile(kind, project, input) {
 }
 
 function writeState(file, state) {
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, JSON.stringify(state), { mode: 0o600 });
+  writeKitFile(file, JSON.stringify(state));
 }
 
 function describePlace(project, place) {
