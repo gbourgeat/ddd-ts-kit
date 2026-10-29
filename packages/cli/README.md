@@ -51,9 +51,10 @@ with its usage line as the fix. Exit codes: `0` success, `1` violations, stale d
 under `--strict`, a commit over its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
 not write some of them where it ran (a path the sandbox of an agent protects): they are listed
 under `unwritable`, every other file is written and none is deleted; `4` an internal error of the
-kit, said in one line with its version (`internal error of ddd-ts-kit <version>: ...`, under
-`--json` an `error` with `"internal": true`): report it at
-https://github.com/gbourgeat/ddd-ts-kit/issues with the command.
+kit, said in one line with its version (`internal error of ddd-ts-kit <version>: ...`, its stack
+trace after it when `DDD_TS_KIT_DEBUG` is set; under `--json` an `error` with its `stack` and
+`"internal": true`): report it at https://github.com/gbourgeat/ddd-ts-kit/issues with the command
+and the stack trace.
 
 ## init
 

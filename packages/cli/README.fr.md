@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:939e4fac1084ff5e -->
+<!-- translation-of: README.md sha256:fc4d8446b32ae133 -->
 
 # ddd-ts-kit
 
@@ -57,9 +57,10 @@ ou, sous `--strict`, un *commit* au-delà de ses limites, `2` mauvais usage (le 
 faire), `3` une commande qui écrit des fichiers n'a pas pu en écrire certains là où elle tournait
 (un chemin que protège le bac à sable d'un agent) : ils sont listés sous `unwritable`, tous les
 autres fichiers sont écrits et aucun n'est supprimé ; `4` une erreur interne du kit, dite en une
-ligne avec sa version (`internal error of ddd-ts-kit <version>: ...`, sous `--json` une `error`
-avec `"internal": true`) : signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues avec la
-commande.
+ligne avec sa version (`internal error of ddd-ts-kit <version>: ...`, sa pile d'appels à la suite
+quand `DDD_TS_KIT_DEBUG` est défini ; sous `--json` une `error` avec sa `stack` et
+`"internal": true`) : signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues avec la
+commande et la pile d'appels.
 
 ## init
 

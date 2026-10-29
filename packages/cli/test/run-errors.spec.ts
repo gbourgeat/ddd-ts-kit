@@ -42,8 +42,10 @@ describe('the commands of ddd-ts-kit', () => {
 });
 
 describe('an internal error of ddd-ts-kit', () => {
-  it('says the version and where to report it with the command, and exits 4 instead of printing a stack trace', () => {
+  it('says the version and where to report it with the command in one line, and exits 4', () => {
     const terminal = terminalFailingOnce();
+
+    delete process.env['DDD_TS_KIT_DEBUG'];
 
     const code = run(['--version'], terminal.io);
 
@@ -65,9 +67,28 @@ describe('an internal error of ddd-ts-kit', () => {
       error: {
         message: `internal error of ddd-ts-kit ${VERSION}: the terminal is gone`,
         fix: `Please report it at ${ISSUES_URL} with the command: ddd-ts-kit --version --json`,
+        stack: expect.stringMatching(/^TypeError: the terminal is gone\n {4}at /),
       },
       internal: true,
     });
+  });
+
+  it('prints its stack trace after the line when DDD_TS_KIT_DEBUG is set, for the report to say where', () => {
+    const terminal = terminalFailingOnce();
+
+    process.env['DDD_TS_KIT_DEBUG'] = '1';
+
+    try {
+      expect(run(['--version'], terminal.io)).toBe(4);
+    } finally {
+      delete process.env['DDD_TS_KIT_DEBUG'];
+    }
+
+    const [line, stack] = terminal.err;
+
+    expect(line).toContain(`internal error of ddd-ts-kit ${VERSION}: the terminal is gone; please report it`);
+    expect(stack).toMatch(/^TypeError: the terminal is gone\n {4}at /);
+    expect(terminal.err).toHaveLength(2);
   });
 
   it('is reported where the package says its issues are', () => {
