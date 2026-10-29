@@ -20,7 +20,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { linkedFolder, writeKitFile } from './kit-files.mjs';
+import { linkedFolder, removeKitFile, writeKitFile } from './kit-files.mjs';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 // The most of the config the guard reads: a larger one is not read, and the guard judges nothing there.
@@ -761,7 +761,7 @@ async function subagentStart(input) {
   }
   const worker = readJson(places.state)?.worker;
   if (typeof worker === 'string') {
-    rmSync(stateFile('before-inline', { root: worker }, input), { force: true });
+    removeKitFile(stateFile('before-inline', { root: worker }, input));
     pruneGuardState(worker);
   }
   (await import('./builder-runs.mjs')).startRun(input, places);
@@ -3300,9 +3300,7 @@ function alreadyRemembered(marker) {
 }
 
 function forget(marker) {
-  if (!linkedFolder(marker)) {
-    rmSync(marker, { force: true });
-  }
+  removeKitFile(marker);
   return undefined;
 }
 
@@ -3311,13 +3309,10 @@ function forget(marker) {
 function pruneGuardState(root) {
   const state = join(root, GUARD_STATE);
   const markers = join(root, GUARD_MARKERS);
-  const files = [
-    ...filesIn(state).filter((file) => BUILDER_STATE.test(relative(state, file))),
-    ...(linkedFolder(join(markers, 'any')) ? [] : filesIn(markers)),
-  ];
+  const files = [...filesIn(state).filter((file) => BUILDER_STATE.test(relative(state, file))), ...filesIn(markers)];
   const before = Date.now() - MARKER_TTL;
   for (const file of files.filter((path) => statSync(path, { throwIfNoEntry: false })?.mtimeMs < before)) {
-    rmSync(file, { force: true });
+    removeKitFile(file);
   }
 }
 

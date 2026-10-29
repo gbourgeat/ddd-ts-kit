@@ -400,6 +400,20 @@ test('a new run of a builder drops the note its last run left before inline code
   assert.equal(existsSync(outside), true);
 });
 
+test('a new run of a builder removes no note through a folder of the guard its worktree links elsewhere', () => {
+  const root = committed();
+  const worktree = project();
+  const agent = builder('linked-worktree');
+  put(root, runState(agent), JSON.stringify({ run: 1, calls: 3, notices: [], worker: worktree }));
+  const shared = directory('shared');
+  const note = `before-inline-${stateKey(agent)}.json`;
+  put(shared, note, '{}');
+  mkdirSync(join(worktree, '.ddd-ts-kit'), { recursive: true });
+  symlinkSync(shared, join(worktree, '.ddd-ts-kit/guard'));
+  run('subagent-start', { cwd: root, ...agent });
+  assert.deepEqual(readdirSync(shared), [note]);
+});
+
 test('malformed input to the runs of a builder never blocks', () => {
   for (const mode of ['subagent-start', 'subagent-stop']) {
     const result = spawnSync('node', [guard, mode], { input: 'not json', encoding: 'utf8' });

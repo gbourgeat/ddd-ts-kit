@@ -261,3 +261,17 @@ test('a folder of markers a repository links elsewhere is neither written nor pr
   run('session', session);
   assert.deepEqual(readdirSync(elsewhere), ['commit-reminder-0123']);
 });
+
+test('a folder of the guard a repository links elsewhere has nothing pruned through the link', () => {
+  const root = committed();
+  const shared = directory('shared');
+  for (const file of ['turns-0123456789abcdef.json', 'markers/stop-0123']) {
+    put(shared, file, '{}');
+    utimesSync(join(shared, file), WEEK_AGO, WEEK_AGO);
+  }
+  mkdirSync(join(root, '.ddd-ts-kit'));
+  symlinkSync(shared, join(root, '.ddd-ts-kit/guard'));
+  run('session', { cwd: root });
+  assert.deepEqual(readdirSync(shared).sort(), ['markers', 'turns-0123456789abcdef.json']);
+  assert.deepEqual(readdirSync(join(shared, 'markers')), ['stop-0123']);
+});

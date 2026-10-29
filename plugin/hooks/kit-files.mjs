@@ -3,7 +3,7 @@
 // of them (`.ddd-ts-kit/report.md -> ~/.bashrc`). A write goes through no link: no folder from
 // .ddd-ts-kit down may be one, and the file is opened without following one. A write that cannot be
 // made is skipped: the guard fails open.
-import { closeSync, constants, lstatSync, mkdirSync, openSync, writeSync } from 'node:fs';
+import { closeSync, constants, lstatSync, mkdirSync, openSync, rmSync, writeSync } from 'node:fs';
 import { dirname, sep } from 'node:path';
 
 const KIT_FOLDER = '.ddd-ts-kit';
@@ -25,6 +25,13 @@ export function writeKitFile(file, text) {
     if (descriptor !== undefined) {
       closeSync(descriptor);
     }
+  }
+}
+
+/** Removes `file`, unless a link stands on the way: a link is never followed to remove what it points at. */
+export function removeKitFile(file) {
+  if (!linkedFolder(file)) {
+    rmSync(file, { force: true });
   }
 }
 
