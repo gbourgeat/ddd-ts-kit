@@ -534,3 +534,23 @@ test('the worktree of a pinned worker reached through a link is the same worktre
     /context "billing"/,
   );
 });
+
+test('the scope pin of a builder is pruned at the session start of the conductor and released at its stop', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const pinOf = (agent) => join(conductor, '.ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`);
+  const stopped = builder('stopped', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, stopped)).output, undefined);
+  assert.equal(existsSync(pinOf(stopped)), true);
+  run('subagent-stop', { cwd: conductor, ...stopped });
+  assert.equal(existsSync(pinOf(stopped)), false);
+  // A pin whose scope file changed stays at the stop, for the conductor to see; a week later it goes.
+  const changed = builder('changed', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, changed)).output, undefined);
+  rmSync(join(worktree, '.ddd-ts-kit/worker.json'));
+  run('subagent-stop', { cwd: conductor, ...changed });
+  assert.equal(existsSync(pinOf(changed)), true);
+  const old = new Date(Date.now() - 8 * 24 * 3600 * 1000);
+  utimesSync(pinOf(changed), old, old);
+  run('session', { cwd: conductor, source: 'startup' });
+  assert.equal(existsSync(pinOf(changed)), false);
+});

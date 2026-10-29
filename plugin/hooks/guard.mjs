@@ -906,11 +906,25 @@ async function subagentStart(input) {
   (await import('./builder-runs.mjs')).startRun(input, places);
 }
 
+// A builder that ends, unless kept going once, releases the pin of its scope when its scope file is
+// still the one pinned; a pin whose scope file changed stays, for the conductor to see, a week at most.
 async function subagentStop(input) {
   const places = isBuilder(input) ? builderPlaces(input, undefined) : undefined;
-  const reason = places ? (await import('./builder-runs.mjs')).stopRun(input, places) : undefined;
+  if (!places) {
+    return;
+  }
+  const reason = (await import('./builder-runs.mjs')).stopRun(input, places);
   if (reason) {
     emit({ decision: 'block', reason });
+  } else {
+    releasePin(stateFile('scope', findProject(input.cwd ?? process.cwd()), input));
+  }
+}
+
+function releasePin(pin) {
+  const pinned = readJson(pin);
+  if (isPin(pinned) && named(readJson(join(pinned.worktree, WORKER_SCOPE))?.context, CONTEXT_NAME) === pinned.context) {
+    removeKitFile(pin);
   }
 }
 
