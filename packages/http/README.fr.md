@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6b9aa1874d4df52f -->
+<!-- translation-of: README.md sha256:0c10cd7b6488666b -->
 
 # @ddd-ts-kit/http
 
@@ -166,6 +166,7 @@ anonyme atteindre `handle`.
 | `HttpRequest<{ params, query, headers, body }>` | la requête HTTP telle que `handle`, un *mapper* ou une garde la nomment, avec `actor` et `context` |
 | `controllerRoutes(controllers, { resolve, security, guards })` | la `Route` de chaque contrôleur, donné comme classe (construite par `resolve`) ou comme instance ; `security` nomme les schémas de sécurité de l'application (`['bearer']` par défaut) ; `guards: 'skip'` sert à la *spec* d'un contrôleur seul |
 | `controllerRoute(controller, options)` | l'unique route d'un contrôleur, pour une *spec* |
+| `routeOf(controller or route, options)` | (`@ddd-ts-kit/http/testing`) la route d'une *spec* et `send(request)`, par tout le pipeline au nom d'un `caller` authentifié, gardes comprises sauf si `guards: 'skip'` dit le contraire, réponses vérifiées : voir [La *spec* d'une route](#la-spec-dune-route--routeof) |
 
 Un contrôleur sans groupe et sans garde est refusé dès que sa classe est définie. Les gardes
 s'exécutent dans l'ordre, après la validation et avant `handle`, dans la portée d'exécution de
@@ -245,6 +246,68 @@ export const invalid = await executeRoute(getOrder, request('x')); // 422, VALID
 Passez les options de l'application en troisième argument (`validateResponses: true` dans les
 tests, `resolvePrincipal` pour appeler au nom d'un acteur donné) : la réponse est celle que le
 serveur enverrait, en-têtes compris.
+
+### La *spec* d'une route : `routeOf`
+
+`routeOf` de `@ddd-ts-kit/http/testing` est cet appel, réglé une fois pour toute une *spec* : il
+prend un contrôleur (une instance, ou sa classe avec `resolve`) ou une route déjà construite
+(`defineRoute`, `nestControllerRoute`), et `send` lui confie une requête, chaque partie omise
+étant vide. Chaque requête traverse tout le pipeline, gardes comprises, au nom de `caller`, un
+utilisateur authentifié (`user-1`, sans rôle) sauf si la *spec* en nomme un autre, et sa réponse
+est vérifiée contre la déclaration (`validateResponses: true`). Les autres options
+d'`executeRoute` (`errorMapper` par exemple) sont données une fois, à côté ; `guards: 'skip'`
+laisse de côté les gardes d'un contrôleur, pour la *spec* qui le dit. La *spec* générée de chaque
+route et de chaque contrôleur est écrite avec lui, et avec un bus enregistreur de
+`@ddd-ts-kit/kernel/testing`, pour vérifier ce que le cas d'usage a reçu :
+
+<!-- checked sample -->
+```ts
+import { z } from 'zod';
+import { AuthorizedCommand, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
+import { Authenticated, Controller, RouteGroup, controllerRoutes, type HttpRequest } from '@ddd-ts-kit/http';
+import type { Infer } from '@ddd-ts-kit/validation';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+/** The command of the use case, in the application layer (its @Requires permission left out here). */
+class PlaceOrder extends AuthorizedCommand<string> {
+  constructor(
+    actor: Actor,
+    readonly customerId: string,
+  ) {
+    super(actor);
+  }
+}
+
+const body = zodSchema(z.object({ customerId: z.string().min(1) }));
+const placed = zodSchema(z.object({ id: z.string() }), { io: 'output' });
+
+type PlaceOrderBody = Infer<typeof body>; // { customerId: string }
+type Placed = Infer<typeof placed>; // { id: string }
+
+@RouteGroup({ prefix: '/orders', tags: ['orders'], guards: [Authenticated], errors: ['FORBIDDEN'] })
+export class OrdersRoutes {}
+
+@Controller({
+  group: OrdersRoutes,
+  method: 'POST',
+  path: '/',
+  summary: 'Place an order',
+  body,
+  response: { status: 201, body: placed },
+  errors: ['OUT_OF_STOCK'],
+})
+export class PlaceOrderController {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle({ body, actor }: HttpRequest<{ body: PlaceOrderBody }>): Promise<Placed> {
+    return { id: await this.commands.execute(new PlaceOrder(actor, body.customerId)) };
+  }
+}
+
+declare const application: { resolve<T>(target: abstract new (...args: never) => T): T };
+
+export const routes = controllerRoutes([PlaceOrderController], { resolve: application.resolve });
+```
 
 ## Cache HTTP
 
