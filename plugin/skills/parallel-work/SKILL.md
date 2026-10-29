@@ -72,8 +72,8 @@ puts the rows not done in waves (wave 1: every dependency done; wave n: after ea
 cuts each wave into batches of one owner and one or two rows on one aggregate, prints the
 `worker-scope` command of each batch, marks two batches of a wave likely to touch the same files
 (same aggregate: run them one after the other) or unknown (no aggregate named: read their rows
-before running them side by side), and gives the merge order. It refuses a cycle, an unknown id or a row without owner: fix
-`slices.md` first. Launch a wave's batches side by side, the next wave once they merged.
+before running them side by side), and gives the merge order. It refuses a cycle, an unknown id or a row without owner,
+a name the glossary does not define and a command the generator refuses: fix `slices.md` first. Launch a wave's batches side by side, the next wave once they merged.
 Before a wave, read `Rows another story waits for, not done`: a row of another story that no
 batch you launch and no open story (`npx ddd-ts-kit stories`) carries leaves its waiting rows
 blocked; plan it, or hold those rows back.

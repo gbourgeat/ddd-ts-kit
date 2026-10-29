@@ -1,7 +1,7 @@
 import { CliError } from '../cli-error';
 import { formatPlan } from '../plan/format-plan';
-import { plannedWords } from '../plan/planned-words';
 import { planWaves } from '../plan/plan-waves';
+import { replayPlan } from '../plan/replay-plan';
 import type { WavePlan } from '../plan/wave-plan';
 import { readSlices, SLICES_FILE } from '../progress/read-slices';
 import type { Slice } from '../progress/slice';
@@ -17,7 +17,8 @@ import { stdoutJson } from '../json/stdout-json';
  * into batches of one or two rows, with the command that briefs each batch and the order of the
  * merges. Exits 1, without waves, while a cycle, an unknown dependency or a row without owner
  * keeps the rows from being ordered, or while a planned command, replayed in a copy of the
- * project, introduces a name the glossary of its context does not hold.
+ * project, introduces a name the glossary of its context does not hold or is refused by the
+ * generator for any other reason.
  */
 export const planWavesCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {});
@@ -32,34 +33,27 @@ export const planWavesCommand: Command = (argv, io) => {
   }
 
   const context = contextOf(rows, args.positionals[0]);
-  const plan = withWords(root, rows, planWaves(rows, { context }));
+  const plan = withReplay(root, rows, planWaves(rows, { context }));
 
   io.out(args.json ? stdoutJson(plan) : formatPlan(plan));
 
   return plan.problems.length === 0 ? 0 : 1;
 };
 
-/** The plan, once the rows can be ordered, with what the replay of its commands found: no waves while a name is refused. */
-function withWords(root: string, rows: readonly Slice[], plan: WavePlan): WavePlan {
+/** The plan, once the rows can be ordered, with what the replay of its commands found: no waves while a worker would be refused. */
+function withReplay(root: string, rows: readonly Slice[], plan: WavePlan): WavePlan {
   if (plan.problems.length > 0) {
     return plan;
   }
 
-  const words = plannedWords(root, rows, {
+  const { problems, started } = replayPlan(root, rows, {
     context: plan.context,
-    generate: (argv, language) => void generate(argv, SILENT, language),
+    generate: (argv, probe) => void generate(argv, SILENT, probe),
   });
 
-  return words.problems.length === 0
-    ? { ...plan, notReplayed: words.notReplayed }
-    : {
-        ...plan,
-        problems: words.problems,
-        waves: [],
-        mergeOrder: [],
-        otherStories: [],
-        notReplayed: words.notReplayed,
-      };
+  return problems.length === 0
+    ? { ...plan, started }
+    : { ...plan, problems, waves: [], mergeOrder: [], otherStories: [], started };
 }
 
 /** The replayed commands print nothing: their report would describe a copy of the project. */

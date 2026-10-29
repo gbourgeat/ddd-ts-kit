@@ -1,5 +1,7 @@
 import { CliError } from '../../../cli-error';
 import { toName } from '../../../naming';
+import { foundPrerequisite } from '../../found-prerequisite';
+import { MissingPrerequisite } from '../../missing-prerequisite';
 import type { Scope } from '../../scope';
 import type { Endpoint } from './endpoint';
 import { groupFile } from './group-file';
@@ -22,10 +24,10 @@ export function resolveGroup(scope: Scope, endpoint: Endpoint, useCase: UseCase)
 
   const name = toName((asked ?? resourceOf(scope, endpoint)).replace(/Routes$/, ''));
   const file = groupFile(name.kebab);
-  const exists = scope.ws.exists(`${scope.dir}/${file}.ts`);
+  const exists = foundPrerequisite(scope, `${scope.dir}/${file}.ts`);
 
   if (asked !== undefined && !exists) {
-    throw new CliError(
+    throw new MissingPrerequisite(
       `The route group ${name.pascal}Routes does not exist in "${scope.context.kebab}" (${scope.dir}/${file}.ts).`,
       `Create it first with \`ddd-ts-kit generate route-group ${scope.context.kebab} ${name.pascal} --prefix <path>\`.`,
     );

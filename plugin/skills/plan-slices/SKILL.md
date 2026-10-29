@@ -147,9 +147,19 @@ in `Depends on`, an id no row carries and a row without owner. It then replays t
 commands of the rows, in a copy of the project and in the order of the waves, and refuses each
 name a command introduces whose words the glossary of its context does not define, counting the
 `--term` of the row and of the rows it waits for: add the `--term` it names to that row, or to a
-row it depends on, rather than renaming against the glossary. It lists apart, without failing,
-the commands the generator refused for another reason (a missing `--module`, an aggregate no
-earlier row generates): fix those that the plan got wrong. Otherwise it shows the rows in waves (wave 1 can start now), cut into
+row it depends on, rather than renaming against the glossary. It refuses just as well, with exit
+1, each command the generator refuses for another reason (`refused-command`: a missing `--module`
+in a context divided into modules, `--grant` where the rights are not roles, an aggregate no
+earlier row generates), the refusal and the fix of the generator printed under the row: fix the
+row as it says, and when it names the rows that generate what the command builds on, of its
+context or of another, add each to `Depends on` (or move the command, when that row waits for this
+one). It refuses as well a
+command that builds on a file a row it does not wait for generates (`missing-dependency`), which
+the replay found only because it runs every row in one copy: add that row to `Depends on`. A row
+`in progress` is replayed but its refusals are listed apart, and neither its names, nor its
+refusals, nor what it builds on are counted, its commands having run already and its worker
+holding its terms. When a refused command also says `then:`, fix
+that second refusal in the same pass. Otherwise it shows the rows in waves (wave 1 can start now), cut into
 batches of one or two rows that `parallel-work` hands out, each row with the status of the rows it
 waits for, and apart the rows of another story that it waits for. A batch it says names no aggregate
 gets one in `Start with` (`--aggregate <Name>`, and `--creates` when the slice is the birth of that aggregate) when the slice works on one.
