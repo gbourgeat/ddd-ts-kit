@@ -1,5 +1,6 @@
 import { correlationIdOf } from '../pipeline/correlation-id-of';
 import { CORRELATION_HEADER } from '../pipeline/correlation-header';
+import { PROBLEM_CONTENT_TYPE } from '../pipeline/problem-content-type';
 import { wellFormedIdentifier } from '../pipeline/well-formed-identifier';
 import type { RawHeaders } from '../route/raw-headers';
 import type { EdgeRefusal } from './edge-refusal';
@@ -11,8 +12,6 @@ export interface EdgeAnswer {
   readonly headers: Readonly<Record<string, string>>;
   readonly problem: Problem;
 }
-
-const PROBLEM_CONTENT_TYPE = 'application/problem+json; charset=utf-8';
 
 /** The problem of the refusal, with the identifiers of the request the pipeline would have given it. */
 export function edgeAnswer(headers: Readonly<RawHeaders>, refusal: EdgeRefusal): EdgeAnswer {
