@@ -154,8 +154,9 @@ row it depends on, rather than renaming against the glossary. It refuses just as
 1, each command the generator refuses for another reason (`refused-command`: a missing `--module`
 in a context divided into modules, `--grant` where the rights are not roles, an aggregate no
 earlier row generates), the refusal and the fix of the generator printed under the row: fix the
-row as it says, and when it names the row that generates what the command builds on, add that row
-to `Depends on` (or move the command, when that row waits for this one). It refuses as well a
+row as it says, and when it names the rows that generate what the command builds on, of its
+context or of another, add each to `Depends on` (or move the command, when that row waits for this
+one). It refuses as well a
 command that builds on a file a row it does not wait for generates (`missing-dependency`), which
 the replay found only because it runs every row in one copy: add that row to `Depends on`. A row
 `in progress` is replayed but its refusals are listed apart, and neither its names, nor its
