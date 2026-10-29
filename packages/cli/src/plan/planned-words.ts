@@ -10,6 +10,7 @@ import type { HeardName } from '../generate/language-probe';
 import { toName } from '../naming';
 import type { Slice } from '../progress/slice';
 import { plannedCommands } from './planned-commands';
+import { transitiveDependencies } from './transitive-dependencies';
 import type { Replay } from './replay';
 import type { RowProblem } from './wave-plan';
 
@@ -84,9 +85,9 @@ function quoted(words: readonly string[]): string {
  * waits for, transitively, each given to the context its command writes in.
  */
 function rowTerms(rows: readonly Slice[]): (row: Slice) => ReadonlyMap<string, readonly string[]> {
-  const byId = new Map(rows.map((row) => [row.id, row]));
+  const waitedBy = transitiveDependencies(rows);
   // Each command is read once, and the terms of a row once, however many of its commands are replayed.
-  const own = new Map(rows.map((row) => [row, termsOfCommands(row)]));
+  const own = new Map(rows.map((row) => [row.id, termsOfCommands(row)]));
   const counted = new Map<Slice, ReadonlyMap<string, readonly string[]>>();
 
   return (row) => {
@@ -97,18 +98,9 @@ function rowTerms(rows: readonly Slice[]): (row: Slice) => ReadonlyMap<string, r
     }
 
     const terms = new Map<string, string[]>();
-    const seen = new Set<string>();
-    const queue = [row];
 
-    for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
-      if (seen.has(next.id)) {
-        continue;
-      }
-
-      seen.add(next.id);
-      queue.push(...next.dependsOn.flatMap((id) => byId.get(id) ?? []));
-
-      for (const read of own.get(next) ?? []) {
+    for (const id of new Set([row.id, ...waitedBy(row)])) {
+      for (const read of own.get(id) ?? []) {
         terms.set(read.context, [...(terms.get(read.context) ?? []), ...read.terms]);
       }
     }

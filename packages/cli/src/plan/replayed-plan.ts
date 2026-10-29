@@ -1,5 +1,6 @@
 import type { Slice } from '../progress/slice';
 import type { Replay } from './replay';
+import { transitiveDependencies } from './transitive-dependencies';
 
 /** The replay of a whole plan, in its order, read for what a command needs from another row. */
 export interface ReplayedPlan {
@@ -20,30 +21,7 @@ export function replayedPlan(rows: readonly Slice[], replays: readonly Replay[])
     }
   });
 
-  const byId = new Map(rows.map((row) => [row.id, row]));
-  const waited = new Map<string, ReadonlySet<string>>();
-
-  const waitedBy = (row: Slice): ReadonlySet<string> => {
-    const known = waited.get(row.id);
-
-    if (known !== undefined) {
-      return known;
-    }
-
-    const found = new Set<string>();
-    const queue = [...row.dependsOn];
-
-    for (let id = queue.shift(); id !== undefined; id = queue.shift()) {
-      if (!found.has(id)) {
-        found.add(id);
-        queue.push(...(byId.get(id)?.dependsOn ?? []));
-      }
-    }
-
-    waited.set(row.id, found);
-
-    return found;
-  };
+  const waitedBy = transitiveDependencies(rows);
 
   return {
     replays,
