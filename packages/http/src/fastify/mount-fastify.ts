@@ -11,9 +11,10 @@ import type { FastifyMountOptions } from './fastify-mount-options';
 
 /**
  * Registers the routes on a Fastify 5 instance. Validation stays in the shared pipeline. The
- * routes that read their body as a stream (an upload, a raw body) are registered in a context of
- * their own, where no body parser runs: the rest of the instance keeps its parsers. A media type
- * a route consumes (`consumes`) is given a parser that hands the body over as text.
+ * routes are registered in a context of their own: where they read JSON, an empty body reaches
+ * them as absent, as on Express and Hono; those that read their body as a stream (an upload, a raw
+ * body) in another, where no body parser runs. The rest of the instance keeps its parsers. A media
+ * type a route consumes (`consumes`) is given a parser that hands the body over as text.
  */
 export function mountFastify(
   instance: FastifyInstance,
@@ -28,7 +29,11 @@ export function mountFastify(
   const parsed = routes.filter((route) => !readsItsStream(route));
 
   readAsText(instance, parsed);
-  register(instance, parsed, options);
+
+  void instance.register(async (scope) => {
+    readEmptyJsonAsAbsent(scope);
+    register(scope, parsed, options);
+  });
 
   if (streamed.length > 0) {
     void instance.register(async (unparsed) => {
@@ -45,6 +50,28 @@ export function mountFastify(
 
 function readsItsStream(route: Route): boolean {
   return route.upload !== undefined || route.rawBody === true;
+}
+
+/**
+ * The JSON parser of Fastify refuses an empty body (`FST_ERR_CTP_EMPTY_JSON_BODY`), which Express
+ * and Hono hand over as absent: in the context of the routes, an empty body is absent, any other
+ * read by the parser of Fastify, so that the validation of the route decides on every framework.
+ */
+function readEmptyJsonAsAbsent(scope: FastifyInstance): void {
+  const { onProtoPoisoning, onConstructorPoisoning } = scope.initialConfig;
+  const parse = scope.getDefaultJsonParser(onProtoPoisoning ?? 'error', onConstructorPoisoning ?? 'error');
+
+  scope.removeContentTypeParser('application/json');
+
+  scope.addContentTypeParser('application/json', { parseAs: 'string' }, (request, body, done) => {
+    const text = typeof body === 'string' ? body : body.toString('utf8');
+
+    if (text === '') {
+      done(null, undefined);
+    } else {
+      void parse(request, text, done);
+    }
+  });
 }
 
 function readAsText(instance: FastifyInstance, routes: readonly Route[]): void {

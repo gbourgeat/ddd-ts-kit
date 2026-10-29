@@ -52,6 +52,32 @@ describe.each([
   ['Hono', startHono],
   ['Nest over Express', nestOver('express')],
   ['Nest over Fastify', nestOver('fastify')],
+] as const)('an empty body in JSON on %s', (_name, start) => {
+  it('reaches the route as an absent body', async () => {
+    const response = await fetch(`${await started(start)}/echo`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '',
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ absent: true });
+  });
+
+  it('is refused by the validation of a route that requires a body', async () => {
+    const response = await postOrder(await started(start), '');
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ code: 'VALIDATION_FAILED', issues: [{ path: 'body' }] });
+  });
+});
+
+describe.each([
+  ['Express', startExpress],
+  ['Fastify', startFastify],
+  ['Hono', startHono],
+  ['Nest over Express', nestOver('express')],
+  ['Nest over Fastify', nestOver('fastify')],
 ] as const)('a body %s cannot read as JSON', (_name, start) => {
   it('is answered 400 MALFORMED_BODY as a problem, with the identifiers of the request', async () => {
     const response = await postOrder(await started(start, new InMemoryLogger()), MALFORMED);

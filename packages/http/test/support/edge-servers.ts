@@ -12,8 +12,29 @@ import { mountExpress, problemErrorHandler as expressErrorHandler } from '../../
 import { mountFastify, problemErrorHandler as fastifyErrorHandler } from '../../src/fastify';
 import { mountHono, problemErrorHandler as honoErrorHandler } from '../../src/hono';
 import { createRoutesModule, ProblemExceptionFilter } from '../../src/nest';
+import { z } from 'zod';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { defineRoute, type Route } from '../../src';
 import { orderRoutes, SECRET } from './orders';
 import type { RunningServer } from './running-server';
+
+/** A route that says whether a body reached it, any body its schema lets through. */
+const echoBody = defineRoute(
+  {
+    method: 'POST',
+    path: '/echo',
+    operationId: 'echoBody',
+    summary: 'Say whether a body arrived',
+    request: { body: zodSchema(z.unknown()) },
+    responses: {
+      200: { description: 'What arrived.', body: zodSchema(z.object({ absent: z.boolean() }), { io: 'output' }) },
+    },
+    security: false,
+  },
+  ({ body }) => ({ status: 200, body: { absent: body === undefined } }),
+);
+
+const EDGE_ROUTES: readonly Route[] = [...orderRoutes, echoBody];
 
 /** The challenge a middleware in front of the routes refuses with, on `/unauthenticated`. */
 export const CHALLENGE = 'Bearer realm="orders"';
@@ -56,7 +77,7 @@ export const startExpress: Start = async (logger) => {
 
   raiseOn(app);
   app.use(express.json());
-  mountExpress(app, orderRoutes);
+  mountExpress(app, EDGE_ROUTES);
   app.use(expressErrorHandler(logger === undefined ? {} : { logger }));
 
   return listening(app.listen(0, '127.0.0.1'));
@@ -75,7 +96,7 @@ export const startFastify: Start = async (logger) => {
     }
   });
 
-  mountFastify(app, orderRoutes);
+  mountFastify(app, EDGE_ROUTES);
 
   const url = await app.listen({ port: 0, host: '127.0.0.1' });
 
@@ -93,14 +114,14 @@ export const startHono: Start = async (logger) => {
     });
   }
 
-  mountHono(app, orderRoutes, { bodyLimit: 1024 });
+  mountHono(app, EDGE_ROUTES, { bodyLimit: 1024 });
 
   return listening(serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' }));
 };
 
 export function nestOver(platform: 'express' | 'fastify'): Start {
   return async (logger) => {
-    const module = createRoutesModule(orderRoutes);
+    const module = createRoutesModule(EDGE_ROUTES);
 
     const app =
       platform === 'express'
