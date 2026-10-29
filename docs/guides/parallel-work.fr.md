@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:7ab01bb4ae4e0ad9 -->
+<!-- translation-of: parallel-work.md sha256:69afaa7833f5ccb7 -->
 
 # Travailler en parallèle sans collisions
 
@@ -171,8 +171,8 @@ branche à arriver est cohérente par elle-même ; la seconde lance `npx ddd-ts-
 qui prend le côté du tronc de chaque fichier dérivé, régénère et commite le résultat. La garde le
 sait : `verify-slice` lance `regenerate` dans le *worktree*, ce qui réécrit les fichiers dérivés
 hors du contexte du *worker* (`clients/`, `docs/behaviour/`, `docs/context-map.md`, `openapi/`,
-`docs/integration/`, `.dependency-cruiser.cjs`), et un *worker* dont du code en ligne a tourné
-entre-temps (`verify-slice --json | node -e ...`) n'est pas arrêté pour eux ; tout autre fichier
+`docs/integration/`, `.dependency-cruiser.cjs`), et un *worker* dont du code a tourné entre-temps
+(`verify-slice` lui-même, ou sa sortie passée à `node -e ...`) n'est pas arrêté pour eux ; tout autre fichier
 hors de son périmètre l'arrête encore.
 
 ### Les migrations
@@ -339,7 +339,7 @@ Scope
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:
-  a write outside it is refused, and inline code (`node -e`, a heredoc) that changed one stops you. A slice that changes the stored state generates a
+  a write outside it is refused, and the code you run that the guard cannot read (inline code, a script, your tests) is checked after it ran: a shared file it changed stops you until you put it back as the guard says. A slice that changes the stored state generates a
   working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
   recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
@@ -453,11 +453,15 @@ qui écrit des fichiers partagés et un changement de dépendance, où que se tr
 (`npm i -D zod`) ; l'installation propre reste libre. Le même périmètre vaut pour le *shell* :
 une édition en place comme `sed -i`, une redirection ou `tee`, et `cp`, `mv`, `rm`, `touch`,
 `git checkout -- <path>` ou `git restore` passent dans le périmètre et sont refusés hors de lui,
-ou sur un chemin que seul le *shell* connaît (`"$FILE"`). Le code en ligne donné à un interpréteur
-(`node -e`, un *heredoc*) ne se lit pas d'avance : il s'exécute, la garde note les fichiers hors
-du périmètre avant lui et les compare à la commande suivante du *worker*, et un fichier qu'il y a
-changé arrête le *worker* jusqu'à ce qu'il soit remis en état (`git restore`, ou `rm` d'un
-nouveau fichier, permis pour ces fichiers). `npx prettier` dans un projet dont `format` lance
+ou sur un chemin que seul le *shell* connaît (`"$FILE"`). Le code que la garde ne peut pas lire
+(du code en ligne donné à un interpréteur, un script, un *shell* nourri par son entrée, un script
+de test ou de paquet) ne se lit pas d'avance : il s'exécute, la garde note l'état hors du
+périmètre avant chaque telle commande (ses fichiers et `HEAD`) et le compare à la commande
+suivante du *worker*, et un fichier qu'il y a changé, supprimé ou commité compris, arrête le
+*worker* jusqu'à ce qu'il soit remis en état par la commande que la garde nomme
+(`git checkout HEAD -- <path>`, le contenu gardé d'un fichier déjà modifié, `git mv` en retour, ou
+`rm` d'un nouveau fichier, permis pour ces fichiers). Le périmètre est fixé au premier appel du
+*worker* : un fichier de périmètre supprimé ou changé l'arrête. `npx prettier` dans un projet dont `format` lance
 Biome et un `npx biome` nu sont refusés. Une sortie vers
 `/dev/null` ou le répertoire temporaire du système reste libre, et le chef d'orchestre n'est
 tenu à rien de tout cela. Un *worker* passe `--local-only`

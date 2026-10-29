@@ -97,9 +97,21 @@ writes, `vim`/`ed`, `rsync`, `curl -o`, `wget -O`, `tar -x`, `git stash`/`reset 
 add`/`checkout -f`, `eslint --fix`, `biome --write`). A worker's only free places outside its scope
 are `/dev/null`, the standard devices and the temporary directory (`$TMPDIR`); any other absolute
 place is refused. A command nested deeper than the reader follows (more than five shells or `eval`s)
-is refused rather than let through unread. It stops the worker when its inline code (`node -e`, a
-heredoc) changed a file outside it, and refuses a dependency change and another formatter than
-`npm run format`. The same shell reading holds the `domain-test-writer` to the paths of a test, the
+is refused rather than let through unread. Code it cannot read (inline code such as `node -e`, a
+script, a shell fed on its input, `make`, a package script or runner such as `npm test` or `npx`)
+runs, but before each command of a worker that runs some (every command but the pure readers:
+`cat`, `ls`, `grep`, `git log`, `git status`...), the guard notes the state outside the scope (the
+`git status` and `HEAD` of the worktree, of the session's checkout when it is another, and the
+manifest and bin of the kit's CLI and of Biome in `node_modules`), and compares it at the worker's
+next call. A file of the worktree changed outside the scope, deleted or committed included, stops the
+worker until it is put back with the command the guard names: its committed content (`git checkout
+<commit> -- <path>`, then `git commit` when a commit changed it), the content it had before the
+command when it was already changed (kept under `.ddd-ts-kit/guard/held/`), `git mv` back for a
+rename, `rm` for a new file. A change in the session's checkout or in those packages is said once,
+for the conductor, who alone knows whether it made it. The scope is pinned at the worker's first
+call: a scope file removed or changed stops it until the conductor restores it. The kit's own
+`merge-trunk` is not noted, and an install of the lockfile leaves the packages out of the note. It
+refuses a dependency change and another formatter than `npm run format`. The same shell reading holds the `domain-test-writer` to the paths of a test, the
 code of a story to its build gate, and every session's hand-writing of a generated file or the
 baseline, each by the places a command writes rather than its text; a Codex `apply_patch` sent
 through the shell is read as a patch.
@@ -129,7 +141,7 @@ refused: a command may move or check a path (`cd`, `pushd`, `popd`, `pwd`, `test
 `show`, `status`) or run the kit (`ddd-ts-kit`, `npx ddd-ts-kit`); any other program (a bare `npx`
 or `pnpm`, `git checkout`/`stash`), or a redirection to a file, is a write, which only the CLI and
 that agent make. No hook
-runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository), and does not enumerate the writes outside the worktree of code it cannot read; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
+runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository), and of what code it cannot read writes, it compares only what is noted above: other git-ignored files and the places outside those checkouts are not enumerated; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
 Each agent gets what its host runs. The skills work in all three. The six agents are sub-agents

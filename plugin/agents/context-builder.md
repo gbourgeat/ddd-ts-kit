@@ -71,10 +71,10 @@ install of its package manager), never an install that names a package.
 - You write inside your scope only, with the Edit and Write tools or with the shell: the guard
   holds an in-place edit (`sed -i`, `perl -i`), a redirection (`>`, `>>`, `tee`), `cp`, `mv`,
   `rm`, `touch`, `git checkout -- <path>` and `git restore` to the same scope as a write, and
-  refuses one outside it, or to a path only the shell knows (`"$FILE"`). Inline code (`node -e`,
-  `python3 - <<EOF`) runs, but if it changed a file outside your scope, the guard stops you
-  until you put that file back with the command it names. Output to `/dev/null` or to the
-  system temp directory stays free.
+  refuses one outside it, or to a path only the shell knows (`"$FILE"`). Your inline code, your
+  scripts and the tests you run are checked after the fact: a shared file they changed stops you
+  until you put it back as the guard says, with the command it names. Output to `/dev/null` or to
+  the system temp directory stays free.
 - When you need something outside your scope (a field in an upstream contract, a new
   aggregate, a dependency, a platform binding): do not work around it and do not retry a
   refused write. Finish the slices that do not depend on it and put the need in your report.
