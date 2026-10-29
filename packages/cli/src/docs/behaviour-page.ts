@@ -3,6 +3,7 @@ import { citedRows } from './cited-rows';
 import { countsOf, type PageCounts } from './counts-of';
 import type { PageEntry, PageSection } from './page-section';
 import type { RuleGroup, SpecRules, StatedRule } from './rules-in';
+import { readableTitle } from './readable-title';
 import { rulesWhere } from './rules-where';
 
 /** The sub-list of a heading that holds the titles a template of the kit wrote, after the rules written for the project. */
@@ -86,7 +87,7 @@ function rulesLines(rules: SpecRules, depth: number): string[] {
 function ruleLine(rule: StatedRule, depth: number): string {
   const { prefix, text } = citedRows(rule.title);
 
-  return `${'  '.repeat(depth)}- ${prefix === '' || text === rule.title ? '' : `\`${prefix}\` `}${text}${suffix(rule.state)}`;
+  return `${'  '.repeat(depth)}- ${prefix === '' || text === rule.title ? '' : `\`${prefix}\` `}${readableTitle(text)}${suffix(rule.state)}`;
 }
 
 /** The rows of the plan the titles of the page cite, and how many titles cite each, so that a reviewer checks that each rule line of a row has its title. */
@@ -121,7 +122,7 @@ function plannedLast(rules: readonly StatedRule[]): StatedRule[] {
 }
 
 function groupLines(group: RuleGroup, depth: number): string[] {
-  return [`${'  '.repeat(depth)}- **${group.title}**`, ...rulesLines(group, depth + 1)];
+  return [`${'  '.repeat(depth)}- **${readableTitle(group.title)}**`, ...rulesLines(group, depth + 1)];
 }
 
 function suffix(state: 'stated' | 'planned' | 'aside'): string {

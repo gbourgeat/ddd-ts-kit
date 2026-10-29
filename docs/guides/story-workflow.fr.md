@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:39d8094e454d1ff6 -->
+<!-- translation-of: story-workflow.md sha256:20f4856034a53bc7 -->
 
 # Parcours d'une story : une session par user story
 
@@ -132,7 +132,9 @@ critère. Un critère changé après le verrou, ou un scénario qui ne correspon
 critère, est jugé avant d'être verrouillé à nouveau, par l'agent `acceptance-judge`, qui n'a pas
 fait le changement : il compare la version verrouillée, la nouvelle, le critère et les réponses
 du responsable du projet, et écrit un verdict pour cette version précise. Chaque verdict est un
-amendement que le rapport liste pour que le responsable du projet le valide. Aucun agent ne fait
+amendement que le rapport liste pour que le responsable du projet le valide. Supprimer le verrou ne
+contourne rien : sans fichier de verrou, `--lock` compare avec le dernier qu'un commit contient et
+refuse un changement sans verdict. Aucun agent ne fait
 passer un test en le réécrivant : la garde ne laisse un sous-agent que retirer `pending(...)`, et
 seul le juge écrit un verdict. Voir la [stratégie de test](../concepts/testing-strategy.fr.md)
 et `ddd-ts-kit acceptance` dans les [commandes](commands.fr.md).
