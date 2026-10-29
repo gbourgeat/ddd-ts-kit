@@ -1,12 +1,10 @@
 ---
 name: discover-domain
 description: >-
-  Runs a light event storming in writing, from a statement of needs: actors, commands,
-  domain events, policies, read models and external systems, laid out on a timeline, in the
-  business's own words. Produces docs/architecture/discovery.md. Use as the first step of a
-  new project or a new area of a product, before any boundary or any code, or when the user
-  describes a business process to build. To cut the result into contexts use
-  bounded-contexts.
+  Use as the first step of a new project or a new area of a product, before any boundary or
+  code, or when the user describes a business process to build. A light event storming in
+  writing: actors, commands, domain events, policies, read models, external systems, on a
+  timeline.
 argument-hint: "[the needs, or the process to explore]"
 allowed-tools:
   - Read

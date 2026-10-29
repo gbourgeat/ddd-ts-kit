@@ -1,14 +1,10 @@
 ---
 name: bounded-contexts
 description: >-
-  Finds the bounded contexts of a system and classifies each as core, supporting or generic,
-  from the domain discovery or from an existing model. Produces
-  docs/architecture/contexts.md with the reason for every boundary. Use when cutting a
-  system into contexts, when a concept has no obvious home, when a context grows two
-  vocabularies, when a context grows too large to read, when two contexts need each other,
-  or when the user asks about boundaries, subdomains, sub-contexts, modules, splitting or
-  merging contexts. For the terms of one context use glossary; for the relationships between
-  contexts use context-map.
+  Use when cutting a system into bounded contexts, when a concept has no obvious home, a
+  context grows two vocabularies or too large, two contexts need each other, or the user
+  asks about boundaries, subdomains, sub-contexts, modules, splitting or merging contexts.
+  Classifies each core, supporting or generic.
 argument-hint: "[context or concept under discussion]"
 allowed-tools:
   - Read
@@ -23,6 +19,9 @@ Under discussion: `$ARGUMENTS`
 
 Input: `docs/architecture/discovery.md` for a new system, `npx ddd-ts-kit list --json` for an
 existing one. Boundaries are the owner's decision: propose, argue, wait.
+
+The terms of one context are skill `ddd-ts-kit:glossary`; the relationships between contexts,
+skill `ddd-ts-kit:context-map`.
 
 ## 1. Propose candidates
 

@@ -1,14 +1,10 @@
 ---
 name: fix
 description: >-
-  Repairs one defect in its own worktree, the proof first: finds the layer of the defect,
-  writes the spec that reproduces it at that level, sees it fail on an assertion, locks it
-  (`ddd-ts-kit acceptance <code> --lock`) and commits it before any code; the guard then
-  holds that spec from the sub-agents while the fix is built, and a spec that turns out wrong
-  is rewritten by the session and ruled on by the acceptance-judge agent, with the statement
-  of the defect as the criterion. Closes with the
-  verification, the review and the pull request, as a story does. Run by the user, with
-  /ddd-ts-kit:fix, once per defect.
+  Repairs one defect in its own worktree, proof first: a spec that reproduces it at its
+  layer, seen failing, locked with `ddd-ts-kit acceptance <code> --lock` and committed
+  before any code; then the fix and its pull request. Run by the user with /ddd-ts-kit:fix,
+  once per defect.
 argument-hint: "<fix code> [the defect in plain words, an issue key, an incident record]"
 disable-model-invocation: true
 allowed-tools:

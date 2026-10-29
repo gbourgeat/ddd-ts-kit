@@ -1,13 +1,10 @@
 ---
 name: extract-service
 description: >-
-  Keeps every bounded context ready to run as an independent service, and performs the
-  extraction when asked. Checks the isolation rules (own data, no shared transaction,
-  collaboration by integration events through the outbox, synchronous needs behind a port),
-  the standalone entry point and the per-context boot test. Use when the user mentions
-  microservices, splitting the monolith, deploying or scaling one context alone, when a
-  context needs data or a synchronous answer from another, or when context/extractable is
-  reported. To choose the relationship between two contexts use context-map.
+  Use when the user mentions microservices, splitting the monolith, deploying or scaling one
+  context alone, when a context needs data or a synchronous answer from another, or when
+  context/extractable is reported. Keeps each bounded context extractable, and extracts it
+  when asked.
 argument-hint: "<context>"
 allowed-tools:
   - Bash(npx ddd-ts-kit check *)

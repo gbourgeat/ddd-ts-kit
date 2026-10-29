@@ -1,14 +1,11 @@
 ---
 name: context-map
 description: >-
-  Draws and maintains the context map of a ddd-ts-kit project. For every pair of contexts
-  that collaborate, names the upstream, the downstream, the relationship pattern
-  (published-language, customer-supplier, conformist, anti-corruption-layer,
-  open-host-service, shared-kernel) and the contract exchanged, with no cycle. Use when two
-  contexts start depending on each other, when a context needs data or a reaction from
-  another, when choosing or changing a relationship pattern, when context/no-cycle or
-  context/declared-relationship is reported, or as the context map step of a new project.
-  To implement the exchange use integration-event.
+  Use when two contexts start depending on each other, when a context needs data or a
+  reaction from another, when choosing upstream, downstream, pattern (customer-supplier,
+  conformist, anti-corruption layer, open-host service, shared kernel, published language),
+  when context/no-cycle or context/declared-relationship is reported, or for the context
+  map.
 argument-hint: "[downstream upstream]"
 allowed-tools:
   - Read
@@ -25,7 +22,8 @@ allowed-tools:
 Relationship under discussion: `$ARGUMENTS`
 
 A relationship is declared, never implied by an import. The pattern is the owner's decision:
-it says who adapts to whom, which is a matter of teams as much as of code.
+it says who adapts to whom, which is a matter of teams as much as of code. The exchange itself
+is built with skill `ddd-ts-kit:integration-event`.
 
 ## 1. List the collaborations
 

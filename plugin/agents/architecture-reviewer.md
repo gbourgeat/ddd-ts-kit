@@ -1,12 +1,11 @@
 ---
 name: architecture-reviewer
 description: >-
-  Read-only reviewer of a diff, a worker's branch or one whole bounded context against the
-  ddd-ts-kit rules (strategic and tactical DDD, Clean Architecture dependencies, access
-  control, clean code, tests). Use after a slice is built and before it is merged, before a
-  pull request, or for a design review of a context before refactoring it. Changes nothing
-  and returns findings with file and line, blocking or not, each non-blocking one with the
-  TODO(review) line to write.
+  Read-only reviewer of a diff, a worker's branch or a whole bounded context against the
+  ddd-ts-kit rules (DDD, Clean Architecture, access control, clean code, tests). Use after a
+  slice is built and before it is merged, before a pull request, or before refactoring a
+  context. Returns findings with file and line, blocking or not, each non-blocking one with
+  its TODO(review) line.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit, NotebookEdit
 model: inherit

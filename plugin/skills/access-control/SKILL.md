@@ -1,12 +1,10 @@
 ---
 name: access-control
 description: >-
-  Designs or reviews authentication and authorization in a ddd-ts-kit project. Every use
-  case declares the permission it requires or says it is public, rights are decided in the
-  application layer, the actor is explicit, searches are narrowed by an access scope. Covers
-  policies on one element and the choice between roles, attributes and relationships. Use
-  when adding a permission, a role or an ownership rule, when code needs the connected user
-  or the tenant, when filtering a list by rights, or when an authz/* rule is reported.
+  Use when adding a permission, a role or an ownership rule, when code needs the connected
+  user or the tenant, when filtering a list by rights, or when an authz/* rule is reported.
+  Authentication, authorization, the actor, access scopes, policies, roles, attributes,
+  relationships (ReBAC).
 allowed-tools:
   - Read
   - Bash(npx ddd-ts-kit generate *)

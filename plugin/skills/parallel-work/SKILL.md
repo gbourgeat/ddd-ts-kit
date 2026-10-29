@@ -1,13 +1,10 @@
 ---
 name: parallel-work
 description: >-
-  Splits the planned slices between several agents or people so that they cannot collide.
-  One worker per bounded context, contracts and skeleton committed first, a git worktree per
-  worker, shared files touched by the conductor only and regenerated instead of merged, a
-  fixed merge order, and a short briefing per worker. Use when the user wants several
-  agents or developers to build at the same time, asks how to parallelise or share the
-  work, or before launching more than one context-builder agent. To order the work first
-  use plan-slices.
+  Use when the user wants several agents or developers to build at the same time, asks how
+  to parallelise or share the work, before launching more than one context-builder agent, or
+  to merge the trunk (merge-trunk). One worker per bounded context, a git worktree each,
+  contracts first.
 argument-hint: "[contexts to build in parallel]"
 allowed-tools:
   - Read
@@ -42,8 +39,8 @@ allowed-tools:
 Contexts asked for: `$ARGUMENTS`
 
 You are the conductor: you own the trunk, the shared files and the merges. Workers own one
-bounded context each. Input: `docs/architecture/slices.md`. Launch nothing before the owner
-approved the split.
+bounded context each. Input: `docs/architecture/slices.md` (skill `ddd-ts-kit:plan-slices` orders
+it). Launch nothing before the owner approved the split.
 
 ## 1. Decide whether it pays
 

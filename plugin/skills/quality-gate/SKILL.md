@@ -1,11 +1,10 @@
 ---
 name: quality-gate
 description: >-
-  Runs the checks of a ddd-ts-kit project at the right scope (the changed files while
-  iterating, the whole gate before a slice is closed or merged) and fixes what fails at the
-  root cause. Use before closing a slice or opening a pull or merge request, when the user
-  asks whether the work is clean, done or ready, or when a check, the guard or the pipeline
-  reports a violation. For the size and message of the commit use commit-discipline.
+  Use before closing a slice or opening a pull or merge request, when the user asks whether
+  the work is clean, done or ready, when a check, the guard or the pipeline reports a
+  violation, or to write or settle a TODO(review). Runs the checks at the right scope and
+  fixes the root cause.
 allowed-tools:
   - Read
   - Edit
@@ -37,6 +36,8 @@ allowed-tools:
 ---
 
 # Quality gate
+
+The size and message of the commit are skill `ddd-ts-kit:commit-discipline`.
 
 ## Scope the run
 

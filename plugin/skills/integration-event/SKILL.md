@@ -1,13 +1,10 @@
 ---
 name: integration-event
 description: >-
-  Makes two bounded contexts collaborate through a versioned integration event: declaring it
-  in the producer's published language, publishing through the outbox, handling it
-  idempotently in the consumer, evolving its payload, choosing a broker. Use when a context
-  must react to another, when building a contract row of the slices, or when the user
-  mentions events between contexts, messaging, outbox, consumers, RabbitMQ, Kafka, NATS,
-  Redis Streams or eventual consistency. To decide who is upstream and which pattern, use
-  context-map first.
+  Use when a context must react to another, when building a contract row of the slices, or
+  when the user mentions events between contexts, messaging, outbox, consumers, RabbitMQ,
+  Kafka, NATS, Redis Streams or eventual consistency. Versioned, published through the
+  outbox, handled idempotently.
 argument-hint: "<producer-context> <Aggregate> <Fact>"
 allowed-tools:
   - Read

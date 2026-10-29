@@ -1,12 +1,10 @@
 ---
 name: commit-discipline
 description: >-
-  Keeps commits small and meaningful in a ddd-ts-kit project. One use case or one concept
-  per commit, generated files in the commit of what generated them, conventional messages
-  scoped by bounded context, a target size, and how to split a change that grew. Use when
-  about to commit, when the user asks to commit, to write a commit message or to split a
-  change, or when the guard reports too many uncommitted changes. To check the code before
-  the commit use quality-gate.
+  Use when about to commit, when the user asks to commit, to write a commit message or to
+  split a change, or when the guard reports too many uncommitted changes. One use case or
+  one concept per commit, generated files with their cause, conventional messages scoped by
+  context.
 allowed-tools:
   - Bash(git status *)
   - Bash(git diff *)
@@ -20,7 +18,8 @@ allowed-tools:
 # Commit discipline
 
 A commit is one thing a reviewer can understand and a team can revert. In this architecture
-that thing has a natural size: **one slice**.
+that thing has a natural size: **one slice**. The checks before the commit are skill
+`ddd-ts-kit:quality-gate`.
 
 ## What goes in one commit
 

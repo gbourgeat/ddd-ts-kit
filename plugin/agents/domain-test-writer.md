@@ -1,11 +1,11 @@
 ---
 name: domain-test-writer
 description: >-
-  Writes behaviour-focused specs for one bounded context of a ddd-ts-kit project: turns the
-  it.todo entries left by the generators into real tests for aggregates, value objects,
-  domain services, handlers, policies and event handlers, with builders and fakes, never
-  mocks. Use when a spec is missing, when test/spec-required fails, or to cover a context
-  after its behaviour was written. Changes tests only.
+  Writes behaviour-focused specs for one bounded context: turns the it.todo entries left by
+  the generators into tests of aggregates, value objects, services, handlers, policies and
+  event handlers, with builders and fakes, never mocks. Use when a spec is missing, when
+  test/spec-required fails, or to cover a context after its behaviour was written. Changes
+  tests only.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
 maxTurns: 40

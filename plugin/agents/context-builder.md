@@ -1,12 +1,11 @@
 ---
 name: context-builder
 description: >-
-  Worker that builds the planned slices of ONE bounded context of a ddd-ts-kit project,
-  inside the git worktree it is given: generates each slice, fills the business decisions,
-  writes the tests, verifies, commits one slice at a time, and reports. Several can run at
-  once, one per context. Use from the parallel-work skill, with a briefing naming the
-  context, the worktree, the slices and the contracts. It never touches shared files or
-  another context: it reports the need instead.
+  Worker that builds the planned slices of ONE bounded context in the git worktree it is
+  given: generates, fills the business decisions, writes the tests, verifies and commits one
+  slice at a time, then reports. Several run at once, one per context. Use from the
+  parallel-work skill, with a briefing. Never touches shared files or another context: it
+  reports the need.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
 maxTurns: 150

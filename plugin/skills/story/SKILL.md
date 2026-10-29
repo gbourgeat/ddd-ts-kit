@@ -1,13 +1,10 @@
 ---
 name: story
 description: >-
-  Takes one user story from its statement to a green pull request in one session, in its own
-  worktree: every question to the owner first, then without stopping the story file and its
-  acceptance criteria, its rows, a design review of each row, the acceptance tests written and
-  locked before any code, one context-builder agent per row confined to its context, the
-  review, the verification, the pull request and a report of every provisional decision and
-  compromise. Run by the user, with /ddd-ts-kit:story, once per story; several terminals take
-  several stories at once.
+  Takes one user story to a green pull request in its own worktree: the owner's questions
+  first, then the story file, its rows, a design review, acceptance tests locked before
+  code, one context-builder per row, review, verification. Run by the user with
+  /ddd-ts-kit:story.
 argument-hint: "<story code> [--headless] [the story in plain words, a file, an intent, or a tracker key]"
 disable-model-invocation: true
 allowed-tools:

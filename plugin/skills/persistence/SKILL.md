@@ -1,12 +1,10 @@
 ---
 name: persistence
 description: >-
-  Implements or reviews the persistence of a bounded context behind repository ports.
-  Repository port, ORM adapter, mapper, fake and contract suite, unit of work, optimistic
-  concurrency, audit and tenant columns, read models, migrations, on Drizzle, Knex, Prisma,
-  TypeORM or a custom store. Use when adding a table, a repository, a lookup, a read model
-  or a migration, when replacing the in-memory adapter by a real one, when choosing an ORM,
-  or when persistence types leak out of infrastructure.
+  Use when adding a table, a repository, a lookup, a read model or a migration, when
+  replacing the in-memory adapter by a real one, when choosing an ORM, or when persistence
+  types leak out of infrastructure. Mapper, fake, contract suite, unit of work, optimistic
+  concurrency, on Drizzle, Knex, Prisma or TypeORM.
 argument-hint: "<context> <Aggregate>"
 allowed-tools:
   - Read

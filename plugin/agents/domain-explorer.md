@@ -1,12 +1,11 @@
 ---
 name: domain-explorer
 description: >-
-  Read-only explorer of a ddd-ts-kit project that answers one precise question about what
-  exists and where: where a concept or a use case lives, what a bounded context exposes
-  (published events, read contracts, routes, permissions), who publishes or handles an
-  event, which contexts depend on which. Use instead of browsing the tree when the answer
-  needs another context or more than three files. Returns a compact answer with paths, never
-  file contents.
+  Read-only explorer that answers one precise question about a ddd-ts-kit project: where a
+  concept or a use case lives, what a context exposes (events, read contracts, routes,
+  permissions), who publishes or handles an event, which contexts depend on which. Use
+  instead of browsing the tree when the answer needs another context or more than three
+  files. Returns paths, not contents.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit, NotebookEdit
 model: inherit

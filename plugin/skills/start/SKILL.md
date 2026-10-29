@@ -2,11 +2,9 @@
 name: start
 description: >-
   Conducts a project from a statement of needs to working bounded contexts, strategic design
-  first. Drives the steps in order (discover the domain, find the bounded contexts, write the
-  glossaries, draw the context map, choose the stack and bootstrap, plan the slices, build),
-  keeps the state in docs/architecture/plan.md so any later session resumes from one file,
-  and stops for the owner's decision at each strategic choice. Run by the user only, with
-  /ddd-ts-kit:start, to begin a project or to resume one.
+  first (discovery, contexts, glossaries, context map, bootstrap, slices, build), its state
+  in docs/architecture/plan.md. Run by the user with /ddd-ts-kit:start, to begin or to
+  resume a project.
 argument-hint: "[the needs in plain words | nothing to resume]"
 disable-model-invocation: true
 allowed-tools:

@@ -1,10 +1,10 @@
 ---
 name: deviation
 description: >-
-  Handles a request or a temptation to go around the architecture. Use when the user asks to
-  skip a rule, do it quick and dirty, disable a check, add an eslint-disable or ts-ignore,
-  put logic where it does not belong "just this once", skip tests or the glossary, or when
-  the guard asks for confirmation on a suppression or a change of the rules.
+  Use when the user asks to skip a rule, do it quick and dirty, disable a check, add an
+  eslint-disable or ts-ignore, put logic where it does not belong "just this once", skip
+  tests or the glossary, or when the guard asks to confirm a suppression or a change of the
+  rules.
 allowed-tools:
   - Read
   - Bash(npx ddd-ts-kit explain *)

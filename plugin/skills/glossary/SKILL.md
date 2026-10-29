@@ -1,12 +1,10 @@
 ---
 name: glossary
 description: >-
-  Writes the ubiquitous language of a bounded context, before any code, and keeps its
-  CONTEXT.md, the per-context document every agent reads first. One row per term with its
-  meaning here and what it must not be confused with. Use when a business term is missing,
-  ambiguous or used with two meanings, when the generator or language/glossary-term refuses
-  a name, when a CONTEXT.md is empty or stale, or as the glossary step of a new project.
-  For the boundary itself use bounded-contexts.
+  Use when a business term is missing, ambiguous or used with two meanings, when the
+  generator or language/glossary-term refuses a name, when a CONTEXT.md is empty or stale,
+  or for the glossary step of a new project. The ubiquitous language of a bounded context,
+  one row per term.
 argument-hint: "[context]"
 allowed-tools:
   - Read
@@ -26,6 +24,8 @@ generator refuses a name whose words it does not define, and `language/glossary-
 the check. A refusal class is named from it too (`SlotTaken`: `Slot`, `Take`), with the
 qualifiers of a refusal besides: `invalid`, `unknown`, `already`, `too`, `no`, `missing`,
 `required` (`BookingTooLate`, `InvalidAppointment`).
+
+The boundary of a context itself is skill `ddd-ts-kit:bounded-contexts`.
 
 ## Where it is written
 

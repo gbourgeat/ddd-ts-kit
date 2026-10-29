@@ -1,12 +1,10 @@
 ---
 name: use-case
 description: >-
-  Builds one vertical slice inside one bounded context, test first: the behaviour of the
-  aggregate, the command or query with its permission, the handler, the route and their
-  specs, generated then filled. Use when the user asks for a feature, an endpoint, a
-  business rule or "add the ability to ...", or to build the next row of
-  docs/architecture/slices.md. For a single file use scaffold; for a reaction to another
-  context use integration-event.
+  Use when the user asks for a feature, an endpoint, a business rule or "add the ability to
+  ...", or to build the next row of docs/architecture/slices.md. One vertical slice in one
+  bounded context, test first: aggregate behaviour, command or query with its permission,
+  handler, route, specs.
 argument-hint: "<context> <use case in plain words, or the slice number>"
 allowed-tools:
   - Read
@@ -33,6 +31,7 @@ Context: `$0`. Use case: `$ARGUMENTS`
 One use case, one context, one commit. Read `src/contexts/$0/CONTEXT.md` and the row of
 `docs/architecture/slices.md` when there is one; do not browse the tree
 (`npx ddd-ts-kit describe $0 --json` says what exists: use cases, routes, events, ports).
+A single file is skill `ddd-ts-kit:scaffold`.
 
 Write it in a worktree, not in the main checkout of the trunk (the guard refuses it there in a
 project whose config says `"worktrees": "required"`): `npx ddd-ts-kit worktree <use-case>` opens

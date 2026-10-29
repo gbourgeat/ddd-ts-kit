@@ -1,12 +1,10 @@
 ---
 name: plan-slices
 description: >-
-  Plans the work of a bootstrapped project as vertical slices per bounded context, each one
-  use case end to end, with the generator commands that start it, an explicit dependency
-  order and an owner. Produces docs/architecture/slices.md, the backlog every worker reads.
   Use after the bootstrap, when the user asks what to build first, to order or size the
-  work, or before splitting it between several agents or people. To build one slice use
-  use-case; to hand slices to several workers use parallel-work.
+  work, or before splitting it between several agents or people. Plans vertical slices per
+  bounded context, with their generator commands, dependency order and owner, in
+  docs/architecture/slices.md.
 argument-hint: "[context, or nothing for all]"
 allowed-tools:
   - Read
