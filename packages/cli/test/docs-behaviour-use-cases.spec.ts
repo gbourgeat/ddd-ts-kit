@@ -95,3 +95,31 @@ describe('The page of a context, a scenario whose row two use cases cite', () =>
     expect(page('application')).toContain('- `#US1.04 AC1` a customer is invoiced, then cancels');
   });
 });
+
+describe('The page of a context, a policy that decides the permission of two use cases', () => {
+  const root = behaviourProject({
+    'src/contexts/billing/application/commands/refund-invoice/refund-invoice.handler.ts': 'export class X {}\n',
+    'src/contexts/billing/billing.module.ts': [
+      "builder.command(CancelInvoiceCommand).requires(billingPermissions['invoice.cancel']).handledBy(CancelInvoiceHandler);",
+      "builder.command(RefundInvoiceCommand).requires(billingPermissions['invoice.cancel']).handledBy(RefundInvoiceHandler);",
+      '',
+    ].join('\n'),
+    [`${UNIT}/cancel-invoice.handler.spec.ts`]: specOf('Cancel invoice', ['refuses an invoice already paid']),
+    [`${UNIT}/refund-invoice.handler.spec.ts`]: specOf('Refund invoice', ['refunds what was paid']),
+    [`${UNIT}/late-cancellation.policy.spec.ts`]: specOf('Who may cancel an invoice', ['lets the accountant cancel']),
+  });
+
+  const page = behaviourPages(root);
+
+  it('lists its rules under the first of them, says it is shared, and names it under the other one', () => {
+    expect(page('billing')).toContain(
+      '### Cancel invoice (command)\n\n`unit/cancel-invoice.handler.spec.ts`, `unit/late-cancellation.policy.spec.ts` (shared with Refund invoice)\n',
+    );
+
+    expect(page('billing')).toContain(
+      '### Refund invoice (command)\n\n`unit/refund-invoice.handler.spec.ts`, `unit/late-cancellation.policy.spec.ts` (listed under Cancel invoice)\n\n- **Refund invoice**\n  - refunds what was paid\n\n',
+    );
+
+    expect(page('billing').match(/lets the accountant cancel/g)).toHaveLength(1);
+  });
+});

@@ -2,6 +2,7 @@ import type { UseCaseFact } from '../describe/context-description';
 import { toName } from '../naming';
 import type { PageEntry, PageSection, SpecOfPage } from './page-section';
 import { MODEL_ROLES, REACTION_ROLES, SPEC_ROLES, USE_CASE_ROLES } from './spec-roles';
+import { policyOwners } from './policy-owners';
 import { useCaseOfSpec } from './use-case-of-spec';
 import type { UseCasesOfContext } from './use-cases-of-context';
 import { specsByDirectory } from './specs-by-directory';
@@ -62,7 +63,7 @@ function sharedOut(known: UseCasesOfContext, specs: readonly SpecOfPage[]): Shar
         : undefined;
 
     if (useCase !== undefined) {
-      shared.useCases.set(useCase, [...(shared.useCases.get(useCase) ?? []), spec]);
+      shareUseCase(shared.useCases, known, spec);
     } else if (parts === undefined) {
       shared.others.push(spec);
     } else {
@@ -71,6 +72,36 @@ function sharedOut(known: UseCasesOfContext, specs: readonly SpecOfPage[]): Shar
   }
 
   return shared;
+}
+
+/**
+ * A spec under its use case. A policy that decides the permission of several use cases states its
+ * rules under the first of them, which says it is shared, and is named under each other one.
+ */
+function shareUseCase(useCases: Map<UseCaseFact, SpecOfPage[]>, known: UseCasesOfContext, spec: SpecOfPage): void {
+  const [first, ...others] = spec.subject.role === 'policy' ? policyOwners(known, spec.subject.subject) : [];
+  const owner = first ?? useCaseOfSpec(known, spec.subject);
+
+  const add = (useCase: UseCaseFact, placed: SpecOfPage): void => {
+    useCases.set(useCase, [...(useCases.get(useCase) ?? []), placed]);
+  };
+
+  if (owner === undefined) {
+    return;
+  }
+
+  const titles = others.map((useCase) => toName(useCase.name).title);
+
+  add(owner, titles.length === 0 ? spec : { ...spec, note: `shared with ${titles.join(', ')}` });
+
+  for (const other of others) {
+    add(other, {
+      ...spec,
+      rules: { rules: [], groups: [] },
+      generated: new Set(),
+      note: `listed under ${toName(owner.name).title}`,
+    });
+  }
 }
 
 interface Placed {

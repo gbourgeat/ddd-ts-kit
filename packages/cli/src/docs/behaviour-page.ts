@@ -63,7 +63,7 @@ function entryLines({ heading, specs }: PageEntry): string[] {
     '',
     `### ${heading}`,
     '',
-    specs.map((spec) => `\`${spec.file}\``).join(', '),
+    specs.map((spec) => `\`${spec.file}\`${spec.note === undefined ? '' : ` (${spec.note})`}`).join(', '),
     '',
     ...specs.flatMap((spec) =>
       rulesLines(

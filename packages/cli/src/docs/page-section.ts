@@ -23,4 +23,6 @@ export interface SpecOfPage {
   readonly rules: SpecRules;
   readonly subject: SpecSubject;
   readonly generated: ReadonlySet<StatedRule>;
+  /** What the list of specs of a heading says of it: `shared with Refund invoice`, `listed under Cancel invoice`. */
+  readonly note?: string;
 }

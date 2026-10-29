@@ -1,12 +1,13 @@
 import type { UseCaseFact } from '../describe/context-description';
-import { toName } from '../naming';
+import { policyOwners } from './policy-owners';
 import { kebabOfUseCase as kebabOf } from './kebab-of-use-case';
 import type { SpecSubject } from './spec-subject';
 import type { UseCasesOfContext } from './use-cases-of-context';
 
 /**
  * The use case a spec of the context states the rules of, by its name and its role: the handler of
- * the use case; its policy, named after it or deciding the permission it alone requires; its
+ * the use case; its policy, named after it or deciding the permission it requires (the first of
+ * them when several do); its
  * controller or route, by the use case the route sends; its reader. None for any other spec.
  */
 export function useCaseOfSpec(known: UseCasesOfContext, { subject, role }: SpecSubject): UseCaseFact | undefined {
@@ -16,7 +17,7 @@ export function useCaseOfSpec(known: UseCasesOfContext, { subject, role }: SpecS
     case 'handler':
       return named;
     case 'policy':
-      return named ?? decidedBy(known, subject);
+      return policyOwners(known, subject)[0];
     case 'controller':
     case 'route':
       return sentBy(known, `${subject}.${role}.ts`) ?? named;
@@ -27,14 +28,6 @@ export function useCaseOfSpec(known: UseCasesOfContext, { subject, role }: SpecS
     default:
       return undefined;
   }
-}
-
-/** The use case that alone requires the permission the policy of that name decides. */
-function decidedBy({ useCases, policies }: UseCasesOfContext, subject: string): UseCaseFact | undefined {
-  const policy = policies.find((candidate) => toName(candidate.name).kebab === subject);
-  const requiring = useCases.filter((useCase) => policy !== undefined && useCase.permission === policy.permission);
-
-  return requiring.length === 1 ? requiring[0] : undefined;
 }
 
 /** The use case the routes of a file send, when they all send the same one. */
