@@ -413,6 +413,70 @@ test('a context worker changes no file outside its scope, by any tool: the table
   assert.match(redirected, /system temp directory stays free/);
 });
 
+// Writers the cp and mv tables do not know, each landing a file of src/main.ts or the platform.
+const UNKNOWN_WRITERS = [
+  ['echo x >&src/main.ts', /You build the context "invoicing"/],
+  ["sed 'w src/main.ts' README.md", /sed script that writes a file/],
+  ["sed -n '1w src/main.ts' README.md", /sed script that writes a file/],
+  ['awk \'BEGIN{print "x" > "src/main.ts"}\'', /awk program that writes/],
+  ['gawk -i inplace "{print}" src/main.ts', /awk program that writes/],
+  ['ruby -i -pe 1 src/main.ts', /`ruby -i` editing src\/main\.ts/],
+  ['vim -es -c "w src/main.ts" -c q', /`vim` changes/],
+  ['ed -s src/main.ts', /`ed` changes src\/main\.ts/],
+  ['rsync a src/main.ts', /`rsync` changes src\/main\.ts/],
+  ['curl -o src/main.ts https://example.test/x', /`curl` changes src\/main\.ts/],
+  ['curl -O https://example.test/src.ts', /curl -O/],
+  ['wget -O src/main.ts https://example.test/x', /`wget` changes src\/main\.ts/],
+  ['wget -P src/platform https://example.test/x', /`wget` changes src\/platform/],
+  ['wget -O', /files only the shell knows/],
+  ['tar -xf /tmp/x.tar', /`tar` changes files only the shell knows/],
+  ['unzip -o /tmp/x.zip', /`unzip` changes files only the shell knows/],
+  ['find src -fprint src/main.ts', /`find fprint` changes src\/main\.ts/],
+  ['git diff --output=src/main.ts', /`git diff` changes src\/main\.ts/],
+  ['git diff -o', /`git diff` changes files only the shell knows/],
+  ['git format-patch -o src/platform HEAD~1', /`git format-patch` changes src\/platform/],
+  ['git stash', /`git stash` changes the whole project/],
+  ['git stash -u', /`git stash` changes the whole project/],
+  ['git checkout -f', /`git checkout` changes the whole project/],
+  ['git checkout --pathspec-from-file=list HEAD~1', /`git checkout` changes files only the shell knows/],
+  ['git reset --hard HEAD~1', /`git reset` changes the whole project/],
+  ['git switch -f main', /`git switch` changes the whole project/],
+  ['git read-tree -u --reset HEAD', /`git read-tree` changes the whole project/],
+  ['git checkout-index -f -a', /`git checkout-index` changes the whole project/],
+  ['git worktree add .worktrees/evil', /`git worktree` changes \.worktrees\/evil/],
+  ['git commit -am x', /`git commit` changes the whole project/],
+  ['npx eslint --fix src/main.ts', /`eslint` changes src\/main\.ts/],
+  ['npx --no -- biome format --write src/main.ts', /`biome` changes/],
+  ['npx vitest run --outputFile=src/main.ts', /`vitest` changes src\/main\.ts/],
+  ['npx vitest run --outputFile', /`vitest` changes files only the shell knows/],
+  ['npx ddd-ts-kit init --force', /init --force/],
+  ['npx ddd-ts-kit depcruise-config --write', /depcruise-config --write/],
+];
+
+const UNKNOWN_WRITERS_ALLOWED = [
+  'npx eslint src/contexts/invoicing/domain',
+  'npx eslint --fix src/contexts/invoicing/domain',
+  'awk "NR == 1" README.md',
+  'tar -tf /tmp/x.tar',
+  'unzip -l /tmp/x.zip',
+  'rsync src/contexts/invoicing/a.ts',
+  'git stash list',
+  'git diff --stat main',
+];
+
+test('a worker is refused the writers the tables do not know: redirections, sed, awk, editors, downloads, git, runners', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const [command, expected] of UNKNOWN_WRITERS) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  for (const command of UNKNOWN_WRITERS_ALLOWED) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
 test('inline code of a worker runs, and what it changed outside the scope stops the worker until put back', () => {
   const root = committed();
   const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-1' };

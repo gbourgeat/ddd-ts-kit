@@ -269,7 +269,28 @@ const INLINE_CODE = {
   perl: /^-[a-zA-Z]*[eE][a-zA-Z]*$/,
   php: /^-r$/,
 };
-const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>']);
+const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>', '>&']);
+// Editors that rewrite the files they open in place, and archive tools that write places only the
+// shell resolves (the current directory, a -C or -d target).
+const IN_PLACE_EDITORS = new Set(['vim', 'vi', 'ex', 'ed']);
+const EXTRACTORS = new Set(['tar', 'unzip']);
+// Linters and test runners that write the paths they are given, behind a flag.
+const TOOL_WRITES = {
+  eslint: { kind: 'operands', flags: ['--fix', '--fix-dry-run'] },
+  biome: { kind: 'operands', flags: ['--write', '--fix'] },
+  vitest: { kind: 'valued', valued: ['--outputFile', '--outputJson'] },
+};
+const DOWNLOAD_FLAGS = {
+  curl: ['-o', '--output'],
+  wget: ['-O', '--output-document', '-P', '--directory-prefix'],
+};
+// git subcommands that rewrite tracked files the command does not name, by one of their flags.
+const GIT_FORCE_WRITERS = {
+  reset: ['--hard', '--merge', '--keep'],
+  switch: ['-f', '--force', '--discard-changes'],
+  checkout: ['-f', '--force'],
+  'read-tree': ['-u'],
+};
 // The commands that change the paths they are given, with the options that take a value, and which
 // operands they change: all of them, or the destination only.
 const PATH_COMMANDS = {
@@ -1982,6 +2003,20 @@ function sharedGeneratorReason(project, context, commands) {
       return `\`generate command --aggregate ${aggregate}\` would also create the repository of ${aggregate}, which registers in shared files. ${REPORT_TO_CONDUCTOR}`;
     }
   }
+  return sharedKitWriteReason(commands);
+}
+
+// Other kit commands that write files of every context: `init --force` rewrites the whole project,
+// `depcruise-config --write` rewrites the generated dependency rules.
+function sharedKitWriteReason(commands) {
+  for (const { subcommand, args } of kitInvocations(commands)) {
+    if (subcommand === 'init' && args.includes('--force')) {
+      return `\`init --force\` rewrites the project from the kit, including files of every context. ${REPORT_TO_CONDUCTOR}`;
+    }
+    if (subcommand === 'depcruise-config' && args.includes('--write')) {
+      return `\`depcruise-config --write\` rewrites the generated .dependency-cruiser.cjs from ${CONFIG}, which is shared. ${REPORT_TO_CONDUCTOR}`;
+    }
+  }
   return undefined;
 }
 
@@ -2132,10 +2167,15 @@ function shellWriteReason(project, input, { place, by }) {
 // `sed -i`, `perl -i` and `tee` write the files they are given.
 function inPlaceTargets({ words }) {
   const name = shell.commandName(words);
+  const args = words.slice(1);
   if (name === 'tee') {
-    return shell.operands(words.slice(1)).map((word) => ({ word, by: `\`tee\` writing ${word}` }));
+    return shell.operands(args).map((word) => ({ word, by: `\`tee\` writing ${word}` }));
   }
-  const files = name === 'sed' || name === 'perl' ? inPlaceFiles(words.slice(1)) : [];
+  // A sed script writes a file by `w file`, `W file` or an `s///w` flag, whose target the script hides.
+  if (name === 'sed' && !inPlaceFlag(args) && sedWrites(args)) {
+    return [{ word: shell.UNKNOWN, by: 'a sed script that writes a file' }];
+  }
+  const files = ['sed', 'perl', 'ruby'].includes(name) ? inPlaceFiles(args) : [];
 
   return files.map((word) => ({ word, by: `\`${name} -i\` editing ${word}` }));
 }
@@ -2184,6 +2224,11 @@ function inlineCode({ words, heredoc, piped, redirects }) {
 // The paths a command changes, each with what changes it.
 function changedPaths({ words, directory }) {
   const name = shell.commandName(words);
+  return tableWrites(name, words, directory) ?? programWrites(name, words, directory) ?? [];
+}
+
+// cp, mv, rm, dd, find -delete, patch and git: the writers whose targets the tables already read.
+function tableWrites(name, words, directory) {
   const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
   if (name in PATH_COMMANDS) {
     return pathOperands(name, words.slice(1)).map((word) => at(word, name));
@@ -2198,8 +2243,102 @@ function changedPaths({ words, directory }) {
   if (name === 'patch' && !words.includes('--dry-run')) {
     return [{ place: undefined, by: 'patch' }];
   }
+  return name === 'git' ? gitChangedPaths(words.slice(1), directory) : undefined;
+}
 
-  return name === 'git' ? gitChangedPaths(words.slice(1), directory) : [];
+// The writers the cp and mv tables miss: an editor that rewrites in place, a downloader, an archive
+// tool, an awk program, a linter or runner given a path, or find writing a listing to a file.
+function programWrites(name, words, directory) {
+  const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
+  const args = words.slice(1);
+  if (IN_PLACE_EDITORS.has(name)) {
+    return shell.operands(args).map((word) => at(word, name));
+  }
+  if (name === 'rsync') {
+    const operands = shell.operands(args, RSYNC_VALUED);
+    return operands.length > 1 ? [at(operands.at(-1), 'rsync')] : [];
+  }
+  if (name === 'curl' || name === 'wget') {
+    return downloadWrites(name, args, at);
+  }
+  if (EXTRACTORS.has(name)) {
+    return extracts(name, args) ? [{ place: undefined, by: name }] : [];
+  }
+  if (AWK_PROGRAMS.has(name)) {
+    return awkWrites(args) ? [{ place: undefined, by: 'an awk program that writes a file' }] : [];
+  }
+  if (name === 'find') {
+    return findListings(words, at);
+  }
+  return name in TOOL_WRITES ? toolWrites(name, args, at) : undefined;
+}
+
+const RSYNC_VALUED = ['-e', '--rsh', '--exclude', '--include', '--files-from', '-f', '--filter', '--compare-dest'];
+
+// curl writes `-o file`/`--output file` and the basename of the URL with `-O`; wget writes `-O file`
+// and under the directory of `-P`/`--directory-prefix`.
+function downloadWrites(name, args, at) {
+  const flags = DOWNLOAD_FLAGS[name];
+  const writes = [];
+  for (let index = 0; index < args.length; index += 1) {
+    if (flags.includes(args[index])) {
+      writes.push(at(args[index + 1] ?? shell.UNKNOWN, name));
+    }
+  }
+  if (name === 'curl' && args.some((word) => /^-[A-Za-z]*O[A-Za-z]*$/.test(word) && !word.startsWith('--'))) {
+    writes.push({ place: undefined, by: 'curl -O' });
+  }
+  return writes;
+}
+
+// tar extracts with `-x`/`--extract`; unzip extracts unless it only lists or tests the archive.
+function extracts(name, args) {
+  if (name === 'unzip') {
+    return !args.some((word) => word === '-l' || word === '-t');
+  }
+  return args.some((word) => /^-?-?x/.test(word) || word === '--extract');
+}
+
+// An awk program writes when it edits in place (`-i inplace`), redirects, pipes, or calls `system`.
+function awkWrites(args) {
+  const inPlace = args.some((word) => /^-i(nplace)?$/.test(word)) && args.includes('inplace');
+  return inPlace || args.some((word) => /[>|]|\bsystem\b/.test(word));
+}
+
+// `find ... -fprint file`, `-fprintf file ...`, `-fls file`: the file after the action is written.
+function findListings(words, at) {
+  const writes = [];
+  words.forEach((word, index) => {
+    if (['-fprint', '-fprintf', '-fls'].includes(word)) {
+      writes.push(at(words[index + 1] ?? shell.UNKNOWN, `find ${word.slice(1)}`));
+    }
+  });
+  return writes;
+}
+
+function toolWrites(name, args, at) {
+  const spec = TOOL_WRITES[name];
+  const targets =
+    spec.kind === 'valued'
+      ? valuedTargets(args, spec.valued)
+      : spec.flags.some((flag) => args.includes(flag))
+        ? shell.operands(args)
+        : [];
+  return targets.map((word) => at(word, name));
+}
+
+// The values of `--outputFile file` and `--outputFile=file`, whatever the flag the runner takes.
+function valuedTargets(args, valued) {
+  const targets = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const joined = valued.find((flag) => args[index].startsWith(`${flag}=`));
+    if (valued.includes(args[index])) {
+      targets.push(args[index + 1] ?? shell.UNKNOWN);
+    } else if (joined) {
+      targets.push(args[index].slice(joined.length + 1));
+    }
+  }
+  return targets;
 }
 
 function pathOperands(name, args) {
@@ -2222,6 +2361,10 @@ function pathOperands(name, args) {
 function gitChangedPaths(args, directory) {
   const { subcommand, tail, moved } = gitInvocation(args, directory);
   const at = (word) => ({ place: shell.placeOf(word, moved), by: `git ${subcommand}` });
+  const forced = forcedGitWrite(subcommand, tail, at);
+  if (forced) {
+    return forced;
+  }
   if (subcommand === 'checkout') {
     return checkedOutPaths(tail, moved).map(at);
   }
@@ -2240,6 +2383,46 @@ function gitChangedPaths(args, directory) {
   const checking = tail.some((word) => /^--(check|stat|numstat|summary|cached)$/.test(word));
 
   return subcommand === 'apply' && !checking ? [{ place: undefined, by: 'git apply' }] : [];
+}
+
+// git writers that rewrite the work tree a worker does not name: a forced checkout, switch, reset
+// or read-tree; a stash or checkout-index; a new worktree; a commit of every tracked change; a
+// patch or report written out; or paths read from a file.
+function forcedGitWrite(subcommand, tail, at) {
+  if ((GIT_FORCE_WRITERS[subcommand] ?? []).some((flag) => tail.includes(flag))) {
+    return [at('.')];
+  }
+  if (tail.some((word) => word.startsWith('--pathspec-from-file'))) {
+    return [{ place: undefined, by: `git ${subcommand}` }];
+  }
+  if (touchesWorktree(subcommand, tail)) {
+    return [at('.')];
+  }
+  if (subcommand === 'worktree' && tail[0] === 'add') {
+    return [at(shell.operands(tail.slice(1), ['-b', '-B']).at(-1) ?? '.')];
+  }
+  if (subcommand === 'commit' && tail.some((word) => /^-[^-]*a/.test(word) || word === '--all')) {
+    return [at('.')];
+  }
+  const out = gitOutputFile(subcommand, tail);
+  return out === undefined ? undefined : [at(out)];
+}
+
+// stash writes the work tree unless it only reads it (list, show), and checkout-index with -a or -f.
+function touchesWorktree(subcommand, tail) {
+  if (subcommand === 'checkout-index') {
+    return tail.some((word) => /^-[a-zA-Z]*[af]/.test(word) || word === '--all');
+  }
+  const action = tail.find((word) => !word.startsWith('-')) ?? '';
+  return subcommand === 'stash' && !['list', 'show', 'drop', 'clear', 'branch'].includes(action);
+}
+
+// The file `git diff --output` and `git format-patch -o` write to, given spaced or joined.
+function gitOutputFile(subcommand, tail) {
+  if (subcommand === 'diff') {
+    return valuedTargets(tail, ['--output', '-o'])[0];
+  }
+  return subcommand === 'format-patch' ? valuedTargets(tail, ['-o', '--output-directory'])[0] : undefined;
 }
 
 // The options before the subcommand of git; `-C <directory>` moves where its paths are read from.
