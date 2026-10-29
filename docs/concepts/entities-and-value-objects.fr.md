@@ -1,5 +1,5 @@
 [English](entities-and-value-objects.md) · **Français**
-<!-- translation-of: entities-and-value-objects.md sha256:c24fb54a4349879c -->
+<!-- translation-of: entities-and-value-objects.md sha256:5945c42b5cfb4bbb -->
 
 # Entités et objets-valeurs
 
@@ -144,7 +144,7 @@ class TimeSlot extends ValueObject<TimeSlotProps> {
 
 const at = (time: string): Date => new Date(`2026-03-03T${time}:00.000Z`);
 
-describe('TimeSlot', () => {
+describe('Time slot', () => {
   it('is equal to another slot with the same start and end', () => {
     expect(TimeSlot.create(at('09:00'), at('09:30')).equals(TimeSlot.create(at('09:00'), at('09:30')))).toBe(true);
   });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { COMMON_FLAGS } from '../src/commands/generate-options';
 import { findKind } from '../src/generate/find-kind';
 import { KINDS } from '../src/generate/kinds';
 import { commandHelp } from '../src/help/command-help';
@@ -117,7 +118,7 @@ describe('generate <kind> --help', () => {
     expect(help).toContain('Writes outside its context: <sharedKernelDir>/<name>.vo.ts and its spec;');
     expect(help).toContain('Only when the first argument is shared-kernel');
     expect(help).toContain('Takes [--module <module>]');
-    expect(help).toContain('Every kind also takes [--term "<Term>=<meaning>[|<not to be confused with>]"]...');
+    expect(help).toContain(`Every kind also takes ${COMMON_FLAGS.map((flag) => `[--${flag}]`).join(' ')}`);
     expect(help).not.toContain('aggregate <context> <Name>');
   });
 

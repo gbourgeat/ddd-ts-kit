@@ -2,6 +2,8 @@
 export interface FakeClass {
   readonly name: string;
   readonly candidates: readonly string[];
+  /** The class it extends, when it extends one. */
+  readonly extended: string | undefined;
 }
 
 /** `export class X extends Base<T> implements A, B<U> {`, over as many lines as it takes. */
@@ -17,13 +19,13 @@ export function fakeClass(source: string): FakeClass | undefined {
 
   const clause = withoutTypeArguments(header[2] ?? '');
   const implemented = /\bimplements\s+([\w\s.,]+)$/.exec(clause)?.[1] ?? '';
-  const extended = /\bextends\s+([\w.]+)/.exec(clause)?.[1];
+  const extended = /\bextends\s+([\w.]+)/.exec(clause)?.[1]?.split('.').at(-1);
 
   const candidates = [...implemented.split(','), ...(extended === undefined ? [] : [extended])]
     .map((candidate) => candidate.trim().split('.').at(-1) ?? '')
     .filter((candidate) => candidate !== '');
 
-  return { name: header[1] ?? '', candidates };
+  return { name: header[1] ?? '', candidates, extended };
 }
 
 /** `Base<Map<string, T>>` becomes `Base`: the commas of type arguments separate nothing here. */

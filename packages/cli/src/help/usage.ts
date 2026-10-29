@@ -1,3 +1,5 @@
+import { COMMON_FLAGS } from '../commands/generate-options';
+
 /** The line every help ends with: what each command accepts besides its own flags. */
 export const EVERY_COMMAND =
   'Every command accepts --json (machine-readable output, on one line) and --cwd <dir> (project root).';
@@ -23,7 +25,7 @@ export const USAGE = `Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate <kind> ... ${COMMON_FLAGS.map((flag) => `[--${flag}]`).join(' ')}     (alias: g)
   ddd-ts-kit generate [<kind>] --help [--json]
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>

@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { OrganisationRights } from '{{alias.context}}/domain/value-objects/organisation-rights.vo{{alias.ext}}';
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 
-describe('OrganisationRights', () => {
+describe('Organisation rights', () => {
   it('holds each right once, whatever gave it twice', () => {
     const rights = OrganisationRights.of('acme', 'account-ada', [
       MemberRight.ReadMembers,

@@ -60,6 +60,13 @@ describe('generate error, in a project of one class per refusal ("stack.refusals
     expect(read(root, ISSUED_SPEC)).toContain("expect(error.code).toBe('INVOICE_ALREADY_ISSUED');");
   });
 
+  it('states the refusal of its spec case by its code and its facts, never by its message', () => {
+    const spec = read(root, ISSUED_SPEC);
+
+    expect(spec).toContain("expect(error.code).toBe('INVOICE_ALREADY_ISSUED');\n    expect(error.facts).toEqual({});");
+    expect(spec).not.toContain('error.message');
+  });
+
   it('adds a factory to the class and its case to the spec, the code listed once', () => {
     const added = report(generate(root, 'InvoiceAlreadyIssuedError', 'with-issue-date'));
     const source = read(root, ISSUED);

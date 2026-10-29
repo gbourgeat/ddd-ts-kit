@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 import { DisplayName } from '{{alias.context}}/domain/value-objects/display-name.vo{{alias.ext}}';
 
-describe('DisplayName', () => {
+describe('Display name', () => {
   it('is what the person wrote, without the spaces at its ends', () => {
     expect(DisplayName.create('  Grace Hopper ').value).toBe('Grace Hopper');
   });

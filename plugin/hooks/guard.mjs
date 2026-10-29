@@ -513,7 +513,11 @@ async function countBuilderCall(input, project, command) {
   const places = isBuilder(input) && project?.mode !== 'off' ? builderPlaces(input, project) : undefined;
   if (places) {
     const runs = await import('./builder-runs.mjs');
-    notice = runs.countCall(input, places, command);
+    try {
+      notice = runs.countCall(input, places, command);
+    } catch {
+      // a count that fails never drops the decision of the call
+    }
   }
 }
 
@@ -769,7 +773,8 @@ function describeProject(root) {
 // The CLI the project installed, where Node would find it: in the project, or hoisted to a parent
 // by the workspaces of npm or pnpm (a project of a monorepo, the example of this repository).
 function installedCli(root) {
-  for (let directory = root; ; directory = dirname(directory)) {
+  let directory = root;
+  for (;;) {
     const cli = join(directory, 'node_modules', '.bin', 'ddd-ts-kit');
     if (existsSync(cli)) {
       return cli;
@@ -777,6 +782,7 @@ function installedCli(root) {
     if (dirname(directory) === directory) {
       return undefined;
     }
+    directory = dirname(directory);
   }
 }
 
@@ -958,10 +964,8 @@ function hasWorkerWorktree(root) {
     return false;
   }
   const dotGit = join(top, '.git');
-  const gitDir = isDirectory(dotGit)
-    ? dotGit
-    : resolve(top, /^gitdir:\s*(.+)$/m.exec(readText(dotGit) ?? '')?.[1] ?? '');
-  const common = resolve(gitDir, (readText(join(gitDir, 'commondir')) ?? '.').trim());
+  const gitDir = isDirectory(dotGit) ? dotGit : resolve(top, /^gitdir:\s*(.+)$/m.exec(readText(dotGit, ''))?.[1] ?? '');
+  const common = resolve(gitDir, readText(join(gitDir, 'commondir'), '.').trim());
   const prefix = relative(top, root);
   let names;
   try {
@@ -970,19 +974,21 @@ function hasWorkerWorktree(root) {
     return false;
   }
   return names.some((name) => {
-    const checkout = dirname((readText(join(common, 'worktrees', name, 'gitdir')) ?? '').trim());
+    const checkout = dirname(readText(join(common, 'worktrees', name, 'gitdir'), '').trim());
     return checkout !== '.' && existsSync(join(checkout, prefix, WORKER_SCOPE));
   });
 }
 
 function repositoryTop(from) {
-  for (let directory = resolve(from); ; directory = dirname(directory)) {
+  let directory = resolve(from);
+  for (;;) {
     if (existsSync(join(directory, '.git'))) {
       return directory;
     }
     if (dirname(directory) === directory) {
       return undefined;
     }
+    directory = dirname(directory);
   }
 }
 
@@ -994,11 +1000,12 @@ function isDirectory(path) {
   }
 }
 
-function readText(path) {
+// The text of a file, or `otherwise` when it cannot be read: missing, a folder, or not readable by this user.
+function readText(path, otherwise) {
   try {
     return readFileSync(path, 'utf8');
   } catch {
-    return undefined;
+    return otherwise;
   }
 }
 
@@ -1282,7 +1289,7 @@ function sedScriptWrites(script) {
 // `s/pattern/text/flags`: the flags `w` and `e` write a file or run a command.
 function substitutionWrites(scan) {
   skipDelimited(scan, 2);
-  const flags = /^[^;}\n]*/.exec(scan.script.slice(scan.at))?.[0] ?? '';
+  const [flags] = /^[^;}\n]*/.exec(scan.script.slice(scan.at));
   scan.at += flags.length;
   return /[we]/.test(flags);
 }
@@ -1459,12 +1466,12 @@ function trunkCheckoutBranch(project) {
   if (!git || !isDirectory(git)) {
     return undefined;
   }
-  const branch = /^ref: refs\/heads\/(.+)$/m.exec(readText(join(git, 'HEAD')) ?? '')?.[1];
-  const remote = /^ref: refs\/remotes\/origin\/(.+)$/m.exec(readText(join(git, 'refs/remotes/origin/HEAD')) ?? '')?.[1];
+  const branch = /^ref: refs\/heads\/(.+)$/m.exec(readText(join(git, 'HEAD'), ''))?.[1];
+  const remote = /^ref: refs\/remotes\/origin\/(.+)$/m.exec(readText(join(git, 'refs/remotes/origin/HEAD'), ''))?.[1];
   const trunk = remote ? branch === remote : ['main', 'master'].includes(branch);
   const born =
     existsSync(join(git, 'refs/heads', branch ?? '')) ||
-    (readText(join(git, 'packed-refs')) ?? '').includes(` refs/heads/${branch}\n`);
+    readText(join(git, 'packed-refs'), '').includes(` refs/heads/${branch}\n`);
   return trunk && born ? branch : undefined;
 }
 
@@ -1570,11 +1577,13 @@ function fixBuildReason({ story, locked }) {
 // The size and the time of change of every file the build gate of a story reads.
 function storyInputsKey(project) {
   const hash = createHash('sha256');
-  for (const input of STORY_INPUTS) {
-    for (const file of filesBelow(join(project.root, input))) {
-      const stat = statSync(file, { throwIfNoEntry: false });
-      hash.update(`${file}\0${stat?.size ?? ''}\0${stat?.mtimeMs ?? ''}\n`);
-    }
+  const entries = STORY_INPUTS.flatMap((input) => filesBelow(join(project.root, input))).map((file) => ({
+    file,
+    stat: statSync(file, { throwIfNoEntry: false }),
+  }));
+  // A file that vanished between the listing and the stat is left out.
+  for (const { file, stat } of entries.filter((entry) => entry.stat !== undefined)) {
+    hash.update(`${file}\0${stat.size}\0${stat.mtimeMs}\n`);
   }
   return hash.digest('hex');
 }
@@ -1872,7 +1881,7 @@ function kitInvocations(commands) {
 }
 
 function isKitLauncher(word) {
-  const name = word.split('/').pop() ?? '';
+  const name = word.split('/').pop();
   return (
     /^ddd-ts-kit(?:@\S+)?$/.test(name) ||
     /(?:^|\/)(?:cli|ddd-ts-kit)\/dist\/bin\.[cm]?js$/.test(word) ||
@@ -2472,7 +2481,8 @@ function numstatChange(entry) {
   return { path: path.join('\t'), lines: (Number(added) || 0) + (Number(deleted) || 0) };
 }
 
-// Sized and read through one descriptor: the file measured is the file counted.
+// Sized and read through one descriptor: the file measured is the file counted. A file that cannot be
+// opened, a broken link among them, counts no line.
 function lineCount(file) {
   let descriptor;
   try {
@@ -2484,12 +2494,13 @@ function lineCount(file) {
           .split('\n')
           .filter((line, index, all) => index < all.length - 1 || line !== '').length;
   } catch {
-    return 0;
+    // Counted below, as no line.
   } finally {
     if (descriptor !== undefined) {
       closeSync(descriptor);
     }
   }
+  return 0;
 }
 
 function isDerived(project, path) {
