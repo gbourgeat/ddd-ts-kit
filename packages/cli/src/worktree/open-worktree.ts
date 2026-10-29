@@ -3,7 +3,7 @@ import { CliError } from '../cli-error';
 import { runGit } from '../commit/run-git';
 import type { Config } from '../config';
 import { addWorktree } from '../worker/add-worktree';
-import { baseOf } from '../worker/base-of';
+import { type Base, baseOf } from '../worker/base-of';
 import { ensureContainsBase } from '../worker/ensure-contains-base';
 import { type DependencyInstall, installDependencies } from '../worker/install-dependencies';
 import { installNotes } from '../worker/install-notes';
@@ -53,7 +53,7 @@ export function openWorktree(root: string, config: Config, request: WorktreeRequ
     dryRun: request.dryRun,
     worktree: inside,
     branch,
-    base,
+    base: base.name,
     created,
     ...(install === undefined ? {} : { install }),
     notes: [...(note === undefined ? [] : [note]), ...notesAfter(request, { inside, config, install })],
@@ -64,9 +64,9 @@ export function openWorktree(root: string, config: Config, request: WorktreeRequ
 function prepare(
   root: string,
   config: Config,
-  place: { worktree: string; inside: string; branch: string; base: string; request: WorktreeRequest },
+  place: { worktree: string; inside: string; branch: string; base: Base; request: WorktreeRequest },
 ): DependencyInstall | undefined {
-  addWorktree(root, place);
+  addWorktree(root, { worktree: place.worktree, branch: place.branch, base: place.base.commit });
 
   return place.request.install ? installDependencies(place.inside, config.stack.packageManager) : undefined;
 }

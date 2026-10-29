@@ -1,11 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { CliError } from '../cli-error';
-import { commitOf } from '../commit/commit-of';
 import { runGit } from '../commit/run-git';
 import type { Config } from '../config';
 import { addWorktree } from '../worker/add-worktree';
-import { baseOf } from '../worker/base-of';
+import { type Base, baseOf } from '../worker/base-of';
 import { ensureContainsBase } from '../worker/ensure-contains-base';
 import { installDependencies } from '../worker/install-dependencies';
 import { isWorktree } from '../worker/is-worktree';
@@ -85,7 +84,7 @@ export function openStoryScope(root: string, config: Config, request: StoryReque
     dryRun: request.dryRun,
     worktree: inside,
     branch,
-    base,
+    base: base.name,
     created,
     ...(install === undefined ? {} : { install }),
     others: all.filter((open) => open.story.toLowerCase() !== story.toLowerCase()),
@@ -126,7 +125,7 @@ function identityOf(
 }
 
 /** The base, which is never the branch of another story: a story is cut from the trunk. */
-function baseOutsideStory(root: string, config: Config, base: string | undefined): string {
+function baseOutsideStory(root: string, config: Config, base: string | undefined): Base {
   const open = readStoryPlace(root);
 
   if (base === undefined && open !== undefined) {
@@ -164,7 +163,7 @@ interface PreparedStory extends StoryIdentity {
   readonly created: boolean;
   readonly install: boolean;
   readonly story: string;
-  readonly base: string;
+  readonly base: Base;
   readonly branch: string;
   readonly config: Config;
 }
@@ -174,15 +173,13 @@ function prepare(root: string, place: PreparedStory): ReturnType<typeof installD
   const { worktree, inside, created, story, base, branch, config, kind, from } = place;
 
   if (created) {
-    addWorktree(root, { worktree, branch, base });
+    addWorktree(root, { worktree, branch, base: base.commit });
   }
-
-  const baseCommit = commitOf(root, base);
 
   const written: StoryPlace = {
     story,
-    base,
-    ...(baseCommit === undefined ? {} : { baseCommit }),
+    base: base.name,
+    baseCommit: base.commit,
     branch,
     kind,
     ...(from === undefined ? {} : { from }),

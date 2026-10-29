@@ -9,7 +9,7 @@ import { mergeRepositoryOf } from './merge-repository-of';
 import type { MergeToVerify } from './merge-to-verify';
 import type { MergeVerification } from './merge-verification';
 import { mergesSince } from './merges-since';
-import { sinceOf } from './since-of';
+import { type Since, sinceOf } from './since-of';
 import { verifyMerge } from './verify-merge';
 
 /** What the caller asks `verify-merge` to check. */
@@ -33,7 +33,7 @@ export function verifyMerges(request: MergesToVerify): MergeVerification {
   const merges = request.commit === undefined ? listed(repo, request, since) : [named(repo, request.commit, request)];
 
   return summarized(
-    since,
+    since?.name,
     merges.map((merge) => verifyMerge(repo, merge)),
   );
 }
@@ -49,7 +49,7 @@ function named(repo: MergeRepository, commit: string, request: MergesToVerify): 
   return mergeOfRecord(repo.top, record, request);
 }
 
-function listed(repo: MergeRepository, request: MergesToVerify, since: string | undefined): MergeToVerify[] {
+function listed(repo: MergeRepository, request: MergesToVerify, since: Since | undefined): MergeToVerify[] {
   if (request.theirs !== undefined) {
     throw new CliError(
       '--theirs names the branch a squash commit took in: it needs that commit.',
@@ -67,7 +67,7 @@ function listed(repo: MergeRepository, request: MergesToVerify, since: string | 
   }
 
   return [
-    ...(since === undefined ? [] : mergesSince(repo.top, since)),
+    ...(since === undefined ? [] : mergesSince(repo.top, since.commit)),
     ...(inProgress === undefined ? [] : [inProgress]),
   ];
 }

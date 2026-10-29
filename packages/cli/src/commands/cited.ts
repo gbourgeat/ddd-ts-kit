@@ -52,7 +52,8 @@ export const citedCommand: Command = (argv, io) => {
     return 0;
   }
 
-  const report = staleNamesAt(root, config, { ref: baseRef(root, args.text('base')), rows });
+  const ref = args.text('base') ?? (runGit(root, ['branch', '--show-current'])?.trim() || 'HEAD');
+  const report = staleNamesAt(root, config, { ref, commit: knownRef(root, ref), rows });
 
   io.out(args.json ? stdoutJson(report) : formatCitations(report, rows));
 
@@ -85,18 +86,11 @@ function chosenRows(
   return [...ids];
 }
 
-/** `--base` when given, which must name a commit; the current branch otherwise. */
-function baseRef(root: string, base: string | undefined): string {
-  return base === undefined ? runGit(root, ['branch', '--show-current'])?.trim() || 'HEAD' : knownRef(root, base);
-}
-
-/** A ref the user gave, once it names a commit: kept by its name, which the report prints. */
+/** The commit a ref names, which git is given; the ref stays by its name in the report. Refused when it names none. */
 function knownRef(root: string, ref: string): string {
-  knownCommit(
+  return knownCommit(
     root,
     ref,
     'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.',
   );
-
-  return ref;
 }

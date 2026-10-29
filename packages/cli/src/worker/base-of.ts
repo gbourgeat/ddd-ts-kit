@@ -1,19 +1,27 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { CliError } from '../cli-error';
-import { commitOf } from '../commit/commit-of';
+import { knownCommit } from '../commit/known-commit';
 import { runGit } from '../commit/run-git';
 import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
 import type { Config } from '../config';
+
+const FIX = 'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.';
+
+/** A base by the name the caller gave, which a briefing and a scope file keep, and the commit it names, which git is given. */
+export interface Base {
+  readonly name: string;
+  readonly commit: string;
+}
 
 /**
  * The ref a worker's worktree is cut from and checked against: `--base` when given, which must
  * name a commit, or else the current branch. Without `--base`, refuses to run from the worktree
  * of a worker: its branch would become the trunk of the new one.
  */
-export function baseOf(root: string, config: Config, base: string | undefined): string {
+export function baseOf(root: string, config: Config, base: string | undefined): Base {
   if (base !== undefined) {
-    return knownRef(root, base);
+    return { name: base, commit: knownCommit(root, base, FIX) };
   }
 
   const current = runGit(root, ['branch', '--show-current'])?.trim() || 'HEAD';
@@ -26,18 +34,7 @@ export function baseOf(root: string, config: Config, base: string | undefined): 
     );
   }
 
-  return current;
-}
-
-function knownRef(root: string, base: string): string {
-  if (commitOf(root, base) === undefined) {
-    throw new CliError(
-      `The base ${base} is not a commit of this repository.`,
-      'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.',
-    );
-  }
-
-  return base;
+  return { name: current, commit: knownCommit(root, current, FIX) };
 }
 
 /** What makes the current checkout a worker's: its scope file, or a branch named `build/<context>`. */

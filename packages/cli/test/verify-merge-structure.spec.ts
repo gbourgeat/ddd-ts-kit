@@ -244,6 +244,18 @@ describe('verify-merge, refusals', () => {
     }
   });
 
+  it('lists the merges since a branch whose name starts with a dash, the commit it names given to git', () => {
+    const root = mergeRepository(PAY_AND_CANCEL);
+
+    mergeWith(root, BOTH_KEPT);
+    git(root, 'update-ref', 'refs/heads/-x', 'main');
+
+    const since = cli(root, 'verify-merge', '--since=-x', '--json');
+
+    expect(since.code).toBe(0);
+    expect(since.json()).toMatchObject({ since: '-x', merges: [expect.anything()] });
+  });
+
   it('refuses a ref that starts with a dash as a commit it does not name, before git reads it as an option', () => {
     const root = mergeRepository(PAY_AND_CANCEL);
     const output = path.join(tempDir('verify-merge-output'), 'log.txt');

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { staleNamesAt } from '../citations/stale-names-at';
 import { CliError } from '../cli-error';
-import { commitOf } from '../commit/commit-of';
+import { knownCommit } from '../commit/known-commit';
 import { runGit } from '../commit/run-git';
 import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
 import type { Config } from '../config';
@@ -55,13 +55,12 @@ export interface WorkerRequest {
  */
 export function openWorkerScope(root: string, config: Config, request: WorkerRequest): WorkerScope {
   const { context, dryRun } = request;
-  const { project, worktree, branch, trunk, created, inside, placeNote } = placeOf(root, config, request);
+  const place = placeOf(root, config, request);
+  const { project, worktree, branch, trunk, created, inside, placeNote } = place;
   const { slices, notes } = briefedRows(new Workspace(root, false), context, request.rows);
-  const manager = config.stack.packageManager;
-  const citations = staleNamesAt(root, config, { ref: trunk, rows: slices.map((row) => row.id) });
-
   const rows = slices.map((row) => row.id);
-  const install = prepareWorktree(root, request, { worktree, branch, trunk, created, inside, rows, manager });
+  const citations = staleNamesAt(root, config, { ref: trunk, commit: place.baseCommit, rows });
+  const install = prepareWorktree(root, request, { ...place, rows, manager: config.stack.packageManager });
   const generators = workerGenerators(KINDS);
   const briefing = briefingOf({ config, context, project, root: inside, branch, trunk, generators, slices, citations });
 
@@ -83,18 +82,13 @@ export function openWorkerScope(root: string, config: Config, request: WorkerReq
       ...notes,
       ...designNote(citations),
       ...citations.notes,
-      ...notesOf(root, dryRun ? root : inside, { manager, install, placeNote }),
+      ...notesOf(root, dryRun ? root : inside, { manager: config.stack.packageManager, install, placeNote }),
     ],
   };
 }
 
 /** The place of a worker as `prepareWorktree` needs it. */
-interface PreparedPlace {
-  readonly worktree: string;
-  readonly branch: string;
-  readonly trunk: string;
-  readonly created: boolean;
-  readonly inside: string;
+interface PreparedPlace extends Place {
   readonly rows: readonly string[];
   readonly manager: Config['stack']['packageManager'];
 }
@@ -104,17 +98,17 @@ interface PreparedPlace {
  * install of a worktree it created, unless refused; answers that install, if it made one.
  */
 function prepareWorktree(root: string, request: WorkerRequest, place: PreparedPlace): DependencyInstall | undefined {
-  const { worktree, branch, trunk, created, inside, rows, manager } = place;
+  const { worktree, branch, trunk, baseCommit, created, inside, rows, manager } = place;
 
   if (request.dryRun) {
     return undefined;
   }
 
   if (created) {
-    addWorktree(root, { worktree, branch, base: trunk });
+    addWorktree(root, { worktree, branch, base: baseCommit });
   }
 
-  writeScope(root, inside, { context: request.context, rows: [...rows], base: trunk, branch });
+  writeScope(inside, { context: request.context, rows: [...rows], base: trunk, branch }, baseCommit);
 
   return created && request.install ? installDependencies(inside, manager) : undefined;
 }
@@ -132,7 +126,10 @@ interface Place {
   readonly project: string;
   readonly worktree: string;
   readonly branch: string;
+  /** The base by its name, as the briefing and the scope file keep it. */
   readonly trunk: string;
+  /** The commit the base names, which git is given. */
+  readonly baseCommit: string;
   /** False when the worktree is already one of the repository. */
   readonly created: boolean;
   readonly inside: string;
@@ -146,23 +143,24 @@ function placeOf(root: string, config: Config, request: WorkerRequest): Place {
   }
 
   const prefix = repositoryPrefix(root);
-  const trunk = baseOf(root, config, request.base);
+  const base = baseOf(root, config, request.base);
   const project = path.basename(root);
   const { worktree, note } = worktreeOf(root, request.worktree, request.context);
   const branch = request.branch ?? `build/${request.context}`;
   const created = !isWorktree(root, worktree);
 
   if (!created) {
-    ensureContainsBase(worktree, runGit(worktree, ['branch', '--show-current'])?.trim() || 'HEAD', trunk);
+    ensureContainsBase(worktree, runGit(worktree, ['branch', '--show-current'])?.trim() || 'HEAD', base);
   } else if (branchExists(root, branch)) {
-    ensureContainsBase(root, branch, trunk);
+    ensureContainsBase(root, branch, base);
   }
 
   return {
     project,
     worktree,
     branch,
-    trunk,
+    trunk: base.name,
+    baseCommit: base.commit,
     created,
     inside: path.join(worktree, prefix),
     ...(note === undefined ? {} : { placeNote: note }),
@@ -184,7 +182,7 @@ function herePlace(root: string, request: WorkerRequest): Place {
     project: path.basename(root),
     worktree: root,
     branch: runGit(root, ['branch', '--show-current'])?.trim() || story.branch,
-    trunk: request.base ?? story.base,
+    ...hereBase(root, request.base ?? story.base),
     created: false,
     inside: root,
   };
@@ -195,14 +193,13 @@ function herePlace(root: string, request: WorkerRequest): Place {
  * names now is recorded next to it: the base is a moving name, the commit tells later where the
  * branch started.
  */
-function writeScope(root: string, inside: string, scope: WorkerFile & { readonly base: string }): void {
+function writeScope(inside: string, scope: WorkerFile & { readonly base: string }, baseCommit: string): void {
   const file = path.join(inside, WORKER_SCOPE_FILE);
-  const baseCommit = commitOf(root, scope.base);
   const { branch, ...recorded } = scope;
 
   const written: WorkerFile = {
     ...recorded,
-    ...(baseCommit === undefined ? {} : { baseCommit }),
+    baseCommit,
     ...(branch === undefined ? {} : { branch }),
   };
 
@@ -239,4 +236,11 @@ function dependencyNotes(root: string, inside: string, { manager, install }: Dep
   const output = install === undefined ? [] : install.output.split('\n').map((line) => `  ${line}`);
 
   return [[`${failed}${run}`, ...output].join('\n')];
+}
+
+/** The base of a worker briefed inside a story: `--base`, else the base of the story, with the commit it names. */
+function hereBase(root: string, name: string): Pick<Place, 'trunk' | 'baseCommit'> {
+  const fix = 'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.';
+
+  return { trunk: name, baseCommit: knownCommit(root, name, fix) };
 }
