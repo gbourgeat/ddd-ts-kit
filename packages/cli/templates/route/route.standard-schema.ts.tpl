@@ -21,10 +21,20 @@ const anyObject: StandardSchemaV1<unknown, Record<string, unknown>> = {
 };
 
 {{/if}}
+{{#if route.writesParams}}
+{{route.paramsDeclaration}}
+
+{{/if}}
 {{#if route.hasBody}}
+{{#if route.writesBody}}
+{{route.bodyDeclaration}}
+
+{{/if}}
+{{#unless route.writesBody}}
 // TODO(domain): replace `anyObject` by the schema of "{{name.words}}" written with your Standard Schema library (shape constraints only; business rules stay in the domain) and describe it in the JSON Schema next to it.
 const body = standardSchema(anyObject, { type: 'object' });
 
+{{/unless}}
 {{/if}}
 {{#if route.ownAccepted}}
 const acceptedShape: StandardSchemaV1<unknown, { readonly id: string }> = {
@@ -58,8 +68,8 @@ export function {{name.camel}}Route({{route.bus}}: {{route.busType}}): Route {
       operationId: '{{name.camel}}',
       summary: '{{name.title}}',
       tags: ['{{context.kebab}}'],
-      {{#if route.hasBody}}
-      request: { body },
+      {{#if route.hasRequest}}
+      request: { {{route.requestParts}} },
       {{/if}}
       {{#if route.returnsId}}
       responses: { {{route.status}}: { description: 'Done; the body carries the identifier.', body: {{route.acceptedBody}} } },
@@ -76,20 +86,29 @@ export function {{name.camel}}Route({{route.bus}}: {{route.busType}}): Route {
     },
     async (input) => {
       {{#if route.isQuery}}
+      {{#unless route.readsMessage}}
       // TODO(domain): build the query from `input` (params, query string); the actor is already there and map its answer to the public fields.
-      await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+      {{/unless}}
+      {{#if route.readsMessage}}
+      // TODO(domain): map the answer of the query to the public fields.
+      {{/if}}
+      await {{route.bus}}.execute({{route.routeMessage}});
 
       return { status: {{route.status}}, body: {} };
       {{/if}}
       {{#if route.returnsId}}
+      {{#unless route.readsMessage}}
       // TODO(domain): build the command from `input` (body, params); the actor is already there.
-      const id = await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+      {{/unless}}
+      const id = await {{route.bus}}.execute({{route.routeMessage}});
 
       return { status: {{route.status}}, body: { id } };
       {{/if}}
       {{#if route.returnsNothing}}
+      {{#unless route.readsMessage}}
       // TODO(domain): build the command from `input` (body, params); the actor is already there.
-      await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+      {{/unless}}
+      await {{route.bus}}.execute({{route.routeMessage}});
 
       return { status: {{route.status}} };
       {{/if}}

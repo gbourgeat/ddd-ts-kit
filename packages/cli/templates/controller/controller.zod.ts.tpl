@@ -16,12 +16,18 @@ const params = zodSchema(z.object({ {{route.zodParams}} }));
 
 {{/if}}
 {{#if route.hasBody}}
+{{#if route.writesBody}}
+{{route.bodyDeclaration}}
+
+{{/if}}
+{{#unless route.writesBody}}
 const body = zodSchema(
   z.object({
     // TODO(domain): declare the fields the client sends for "{{name.words}}", with shape constraints only (types, formats, lengths); business rules stay in the domain.
   }),
 );
 
+{{/unless}}
 {{/if}}
 {{#if route.ownAccepted}}
 const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
@@ -68,7 +74,9 @@ export class {{name.pascal}}Controller {
   {{#if route.isQuery}}
   async handle({{route.requestParam}}): Promise<{{route.answerType}}> {
     {{#unless route.mapper}}
+    {{#unless route.readsMessage}}
     // TODO(domain): build the query from `request` (params, query string); the actor is already there.
+    {{/unless}}
     {{/unless}}
     {{#if route.serializer}}
     return this.serializer.serialize(await this.{{route.bus}}.execute({{route.message}}));
@@ -84,7 +92,9 @@ export class {{name.pascal}}Controller {
   {{#if route.returnsId}}
   async handle({{route.requestParam}}): Promise<{{route.acceptedType}}> {
     {{#unless route.mapper}}
+    {{#unless route.readsMessage}}
     // TODO(domain): build the command from `request` (body, params); the actor is already there.
+    {{/unless}}
     {{/unless}}
     const id = await this.{{route.bus}}.execute({{route.message}});
 
@@ -94,7 +104,9 @@ export class {{name.pascal}}Controller {
   {{#if route.returnsNothing}}
   async handle({{route.requestParam}}): Promise<void> {
     {{#unless route.mapper}}
+    {{#unless route.readsMessage}}
     // TODO(domain): build the command from `request` (body, params); the actor is already there.
+    {{/unless}}
     {{/unless}}
     await this.{{route.bus}}.execute({{route.message}});
   }

@@ -74,6 +74,12 @@ Then the use case: its spec arranges through that world in a few lines, `holders
 giving the actor and the authorizer; generated before the world, it builds the test application
 itself and the output says so.
 
+Order the work so that the route reads the command: generate the command, fill its constructor
+(`constructor(actor: Actor, readonly invoiceId: string, readonly reason: string) { super(actor); }`),
+then generate the route, which writes the body schema, the call and a spec that sends a valid
+body from those fields (a string, a number or a boolean; a path parameter is read from the path;
+any other type stays a `TODO(domain)`).
+
 `--aggregate` alone generates a command that changes an aggregate that exists: its handler receives
 the repository and writes nothing until its `TODO(domain)` is answered (load, call one intention
 method, save). Add `--creates` only when the use case is the birth of the aggregate: its handler

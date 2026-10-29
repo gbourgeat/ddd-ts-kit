@@ -12,12 +12,18 @@ const params = zodSchema(z.object({ {{route.zodParams}} }));
 
 {{/if}}
 {{#if route.hasBody}}
+{{#if route.writesBody}}
+{{route.bodyDeclaration}}
+
+{{/if}}
+{{#unless route.writesBody}}
 const body = zodSchema(
   z.object({
     // TODO(domain): declare the fields the client sends for "{{name.words}}", with shape constraints only (types, formats, lengths); business rules stay in the domain.
   }),
 );
 
+{{/unless}}
 {{/if}}
 {{#if route.ownAccepted}}
 const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
@@ -58,20 +64,29 @@ export function {{name.camel}}Route({{route.bus}}: {{route.busType}}): Route {
     },
     async (input) => {
       {{#if route.isQuery}}
+      {{#unless route.readsMessage}}
       // TODO(domain): build the query from `input` (params, query string); the actor is already there and map its answer to the public fields.
-      await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+      {{/unless}}
+      {{#if route.readsMessage}}
+      // TODO(domain): map the answer of the query to the public fields.
+      {{/if}}
+      await {{route.bus}}.execute({{route.routeMessage}});
 
       return { status: {{route.status}}, body: {} };
       {{/if}}
       {{#if route.returnsId}}
+      {{#unless route.readsMessage}}
       // TODO(domain): build the command from `input` (body, params); the actor is already there.
-      const id = await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+      {{/unless}}
+      const id = await {{route.bus}}.execute({{route.routeMessage}});
 
       return { status: {{route.status}}, body: { id } };
       {{/if}}
       {{#if route.returnsNothing}}
+      {{#unless route.readsMessage}}
       // TODO(domain): build the command from `input` (body, params); the actor is already there.
-      await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+      {{/unless}}
+      await {{route.bus}}.execute({{route.routeMessage}});
 
       return { status: {{route.status}} };
       {{/if}}

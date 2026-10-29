@@ -873,6 +873,16 @@ Next, in this order: the language of the context first, then the business decisi
   point to replace by the element the right bears on. With `--authz rbac`, `--grant <role>` gives
   the permission to the role in `platform/auth/roles/roles.ts` (the role joins `role.ts` when it is
   new); without it, a step of `todos` says the grant is left to do (`authz/granted`).
+- `route` reads the constructor of its command or query when it already declares its fields, past
+  the actor: a string, a number or a boolean is read from the path when the route names a parameter
+  after it (a string), from the body otherwise, and the route writes the body schema in the library
+  of the stack (`zod`, `class-validator`, `typebox`, a hand-written Standard Schema of the body and
+  of the path parameters under `standard-schema`), the call
+  `new CancelInvoiceCommand(request.actor, request.params.invoiceId, request.body.reason)` and a
+  spec that sends a valid body and asserts that command. The reading stops at the first field of
+  another type (a value object, a date, a nested object, an optional field), which stays a
+  `TODO(domain)` of the schema and of the call; a request mapper (`--mapper`) builds the message
+  itself. Generate the command, fill its constructor, then generate the route.
 - `route` hands `actorOf(context.principal)` to a protected use case and sets `security` (the scheme
   of `--authn`, or `false` for a public one). `integration-handler` carries `systemActor('<context>.<name>')`
   for the command it builds; behind a broker it listens on the subscriber of its context

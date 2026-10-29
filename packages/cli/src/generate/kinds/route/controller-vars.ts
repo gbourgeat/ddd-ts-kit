@@ -3,21 +3,26 @@ import type { Scope } from '../../scope';
 import { controllerImports, type ControllerImports } from './controller-imports';
 import type { ControllerPlan } from './controller-plan';
 import { controllerTypes, type ControllerTypes } from './controller-types';
+import type { MessagePlan } from './message-plan';
+import { planOf } from './plan-of';
 import { routeVars } from './route-vars';
 import { sharesSchemas } from './shares-schemas';
+import { messageCall } from './message-call';
+import { NOTHING_READ } from './message-plan';
 
 /** What the templates of a controller read, over what the templates of a route read: its group, its types and its neighbours. */
 export function controllerVars(scope: Scope, plan: ControllerPlan): RenderContext {
-  const types = controllerTypes(scope, plan);
-  const imports = controllerImports(scope, plan);
   const { useCase, withMapper, withSerializer } = plan;
-  const readsRequest = useCase.isProtected || withMapper;
+  const reading = planOf(scope, plan, withMapper);
+  const types = controllerTypes(scope, plan, reading);
+  const imports = controllerImports(scope, plan);
+  const readsRequest = useCase.isProtected || withMapper || reading.read.length > 0;
 
   return {
-    ...routeVars(scope, plan),
+    ...routeVars(scope, plan, reading),
     ...declarationVars(scope, plan, readsRequest),
     ...neighbourVars(scope, plan),
-    ...handleVars(plan, types, readsRequest),
+    ...handleVars(plan, { types, reading }, readsRequest),
     mapper: withMapper,
     serializer: withSerializer,
     imports: lines(controllerFileImports(plan, imports)),
@@ -29,10 +34,14 @@ export function controllerVars(scope: Scope, plan: ControllerPlan): RenderContex
 /** What `handle` reads, sends and answers. */
 function handleVars(
   { useCase, withMapper }: ControllerPlan,
-  types: ControllerTypes,
+  { types, reading }: { readonly types: ControllerTypes; readonly reading: MessagePlan },
   readsRequest: boolean,
 ): RenderContext {
-  const message = `new ${useCase.message}(${useCase.isProtected ? 'request.actor' : ''})`;
+  const message = messageCall(useCase, reading, {
+    actor: 'request.actor',
+    field: (field) => `request.${field.from}.${field.name}`,
+  });
+
   const answers = declaresAnswer(useCase, types);
 
   return {
@@ -108,7 +117,7 @@ function mapperVars({ useCase }: ControllerPlan, { types, imports }: Written): R
     mapperImports: lines([imports.message, ...usedTypes]),
     messageKind: useCase.isQuery ? 'query' : 'command',
     actorNote: useCase.isProtected ? '; the actor is already there' : '',
-    mapperMessage: `new ${useCase.message}(${useCase.isProtected ? 'request.actor' : ''})`,
+    mapperMessage: messageCall(useCase, NOTHING_READ, { actor: 'request.actor', field: () => '' }),
   };
 }
 

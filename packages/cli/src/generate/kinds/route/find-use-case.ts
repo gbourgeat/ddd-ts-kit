@@ -3,6 +3,7 @@ import type { Name } from '../../../naming';
 import type { KindFlags } from '../../kind';
 import { requireFile } from '../../require-file';
 import type { Scope } from '../../scope';
+import { messageFieldsOf } from './message-fields-of';
 import type { UseCase } from './use-case';
 
 type MessageKind = 'command' | 'query';
@@ -35,11 +36,14 @@ export function findUseCase(scope: Scope, name: Name, flags: KindFlags): UseCase
 }
 
 /** What the source of the message says about it, read from its declaration. */
-function shapeOf(source: string, isQuery: boolean): Pick<UseCase, 'returnsId' | 'isProtected' | 'isSearch'> {
+function shapeOf(source: string, isQuery: boolean): Pick<UseCase, 'returnsId' | 'isProtected' | 'isSearch' | 'fields'> {
+  const isProtected = /extends\s+Authorized(?:Command|Query)\b/.test(source);
+
   return {
+    fields: messageFieldsOf(source, isProtected),
     // A command that answers an identifier is declared `extends Command<string>` or `extends AuthorizedCommand<string>`.
     returnsId: !isQuery && /extends\s+(?:Authorized)?Command<\s*string\s*>/.test(source),
-    isProtected: /extends\s+Authorized(?:Command|Query)\b/.test(source),
+    isProtected,
     isSearch: isQuery && /\breadonly page: PageRequest</.test(source),
   };
 }

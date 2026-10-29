@@ -9,8 +9,13 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 const params = classSchema({{name.pascal}}Params);
 {{/if}}
 {{#if route.hasBody}}
+{{#if route.writesBody}}
+{{route.bodyDeclaration}}
+{{/if}}
+{{#unless route.writesBody}}
 // TODO(domain): once {{name.pascal}}Body has its decorated fields, drop the second argument: it only lets a class without any decorated field through.
 const body = classSchema({{name.pascal}}Body, { validator: { forbidUnknownValues: false } });
+{{/unless}}
 {{/if}}
 {{#if route.ownAccepted}}
 const accepted = classSchema({{name.pascal}}Accepted);
@@ -54,7 +59,9 @@ export class {{name.pascal}}Controller {
   {{#if route.isQuery}}
   async handle({{route.requestParam}}): Promise<{{route.answerType}}> {
     {{#unless route.mapper}}
+    {{#unless route.readsMessage}}
     // TODO(domain): build the query from `request` (params, query string); the actor is already there.
+    {{/unless}}
     {{/unless}}
     {{#if route.serializer}}
     return this.serializer.serialize(await this.{{route.bus}}.execute({{route.message}}));
@@ -70,7 +77,9 @@ export class {{name.pascal}}Controller {
   {{#if route.returnsId}}
   async handle({{route.requestParam}}): Promise<{{route.acceptedType}}> {
     {{#unless route.mapper}}
+    {{#unless route.readsMessage}}
     // TODO(domain): build the command from `request` (body, params); the actor is already there.
+    {{/unless}}
     {{/unless}}
     const id = await this.{{route.bus}}.execute({{route.message}});
 
@@ -80,7 +89,9 @@ export class {{name.pascal}}Controller {
   {{#if route.returnsNothing}}
   async handle({{route.requestParam}}): Promise<void> {
     {{#unless route.mapper}}
+    {{#unless route.readsMessage}}
     // TODO(domain): build the command from `request` (body, params); the actor is already there.
+    {{/unless}}
     {{/unless}}
     await this.{{route.bus}}.execute({{route.message}});
   }

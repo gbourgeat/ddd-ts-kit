@@ -11,8 +11,13 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 const params = classSchema({{name.pascal}}Params);
 {{/if}}
 {{#if route.hasBody}}
+{{#if route.writesBody}}
+{{route.bodyDeclaration}}
+{{/if}}
+{{#unless route.writesBody}}
 // TODO(domain): once {{name.pascal}}Body has its decorated fields, drop the second argument: it only lets a class without any decorated field through.
 const body = classSchema({{name.pascal}}Body, { validator: { forbidUnknownValues: false } });
+{{/unless}}
 {{/if}}
 {{#if route.ownAccepted}}
 const accepted = classSchema({{name.pascal}}Accepted);
@@ -48,20 +53,29 @@ export function {{name.camel}}Route({{route.bus}}: {{route.busType}}): Route {
     },
     async (input) => {
       {{#if route.isQuery}}
+      {{#unless route.readsMessage}}
       // TODO(domain): build the query from `input` (params, query string); the actor is already there and map its answer to the public fields.
-      await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+      {{/unless}}
+      {{#if route.readsMessage}}
+      // TODO(domain): map the answer of the query to the public fields.
+      {{/if}}
+      await {{route.bus}}.execute({{route.routeMessage}});
 
       return { status: {{route.status}}, body: {} };
       {{/if}}
       {{#if route.returnsId}}
+      {{#unless route.readsMessage}}
       // TODO(domain): build the command from `input` (body, params); the actor is already there.
-      const id = await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+      {{/unless}}
+      const id = await {{route.bus}}.execute({{route.routeMessage}});
 
       return { status: {{route.status}}, body: { id } };
       {{/if}}
       {{#if route.returnsNothing}}
+      {{#unless route.readsMessage}}
       // TODO(domain): build the command from `input` (body, params); the actor is already there.
-      await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+      {{/unless}}
+      await {{route.bus}}.execute({{route.routeMessage}});
 
       return { status: {{route.status}} };
       {{/if}}
