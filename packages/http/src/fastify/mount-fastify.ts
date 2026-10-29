@@ -64,7 +64,7 @@ function readEmptyJsonAsAbsent(scope: FastifyInstance): void {
   scope.removeContentTypeParser('application/json');
 
   scope.addContentTypeParser('application/json', { parseAs: 'string' }, (request, body, done) => {
-    const text = typeof body === 'string' ? body : body.toString('utf8');
+    const text = String(body);
 
     if (text === '') {
       done(null, undefined);
