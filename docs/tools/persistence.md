@@ -492,6 +492,15 @@ refuses to run without the description: two branches never write the same file.
 | Prisma 7 | `ddd-ts-kit prisma-generate --name`, which runs `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma turns `-` into `_`) | applied by `migrate deploy`, which runs every migration it has not recorded (its documentation; not measured here) |
 | TypeORM 1.1 | `ddd-ts-kit typeorm-generate`, which runs `typeorm migration:generate -d <data source>`, given the path: `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (milliseconds, and a `-`: TypeORM fixes both) | applied: TypeORM runs every migration it has not recorded |
 
+With no `DATABASE_URL` in the environment, Prisma and TypeORM need no server: the command starts
+PostgreSQL in process (PGlite over `@electric-sql/pglite-socket`, as `openTestDatabase()` does),
+replays the migrations of the project on it (`prisma migrate diff --from-migrations`, with the
+database as its shadow; `typeorm migration:run`), diffs the schema against it and writes the new
+migration, audit guard included. A sandboxed agent therefore generates its own migrations. With
+`DATABASE_URL` set, the tool uses that server as before. On TypeORM, `npm run build` comes first
+(the data source reads the compiled migrations); a Prisma project reads `SHADOW_DATABASE_URL` in
+`prisma.config.ts`, which `init` writes.
+
 The command takes the description after the script: `npm run db:generate add-invoices`
 (`npm run db:generate -- audit-guard --custom` for a hand-written drizzle-kit migration). With
 an audit trail, the commands of the kit add the statements of its append-only guard to the

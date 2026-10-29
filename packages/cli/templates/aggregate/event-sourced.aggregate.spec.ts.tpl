@@ -6,7 +6,7 @@ import { {{name.article}}{{name.pascal}} } from '{{alias.context}}/test/builders
 
 const bornAt = new Date('2026-03-01T00:00:00.000Z');
 
-describe('{{name.pascal}}', () => {
+describe('{{name.title}}', () => {
   it('records its birth, and holds the state that event gives', () => {
     const born = {{name.pascal}}.create('{{name.kebab}}-7', bornAt);
 

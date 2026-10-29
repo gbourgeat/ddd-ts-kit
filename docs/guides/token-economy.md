@@ -171,7 +171,7 @@ routes with their guards, responses and error codes, the events published and co
 policies, the jobs and the contracts. `todo` answers one line per marker:
 
 ```text
-src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to a Order: ...
+src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to an Order: ...
 src/contexts/ordering/test/unit/place-order.handler.spec.ts:39  it.todo  applies the business decision to the order
 ```
 

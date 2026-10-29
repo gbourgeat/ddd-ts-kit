@@ -1,0 +1,23 @@
+export async function run(task: () => Promise<number>): Promise<number> {
+  let attempts = 0;
+  try {
+    attempts += 1;
+    return await task();
+  } catch (error) {
+    attempts += 1;
+    console.error(error);
+    throw error;
+  } finally {
+    console.log(attempts);
+  }
+}
+
+export function tidy(task: () => void): void {
+  task();
+  try {
+    task();
+  } catch {
+    task();
+  }
+  task();
+}

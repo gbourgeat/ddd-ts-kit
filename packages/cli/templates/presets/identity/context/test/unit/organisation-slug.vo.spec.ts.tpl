@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 import { OrganisationSlug } from '{{alias.context}}/domain/value-objects/organisation-slug.vo{{alias.ext}}';
 
-describe('OrganisationSlug', () => {
+describe('Organisation slug', () => {
   it('is lower-case letters, digits and hyphens, up to 63 of them', () => {
     expect(OrganisationSlug.create(' Acme-42 ').value).toBe('acme-42');
     expect(OrganisationSlug.create('a'.repeat(63)).value).toHaveLength(63);

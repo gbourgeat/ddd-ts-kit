@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:2ec506e4f743ff64 -->
+<!-- translation-of: quality-baseline.md sha256:7044afd7d9ed70a0 -->
 
 # Base de qualité
 
@@ -112,7 +112,7 @@ d'abord et sur ce qui a changé ; les plus larges tournent plus tard, sur tous l
 | format | kit `ci:format` ; exemple et projet `format:check` | `ci:format`, dans le *job* de lint | fichiers indexés, avant un *commit* |
 | code mort | kit `ci:deadcode` ; exemple et projet `deadcode` | `ci:deadcode` | non |
 | graphe des dépendances | kit `depcruise` (dans `ci:arch`) ; exemple et projet `depcruise` | kit `ci:arch` ; exemple et projet `ci:arch:graph` | non |
-| architecture | kit `check:self`, les *fixtures* de chaque règle, et les tests de la garde (dans `ci:arch`) ; exemple et projet `check:arch` | kit `ci:arch` ; exemple et projet `ci:arch:check` | projet et exemple : fichiers indexés, avant un *commit* ; à chaque écriture par le *hook* d'éditeur |
+| architecture | kit `check:self`, les *fixtures* de chaque règle, et les tests des *hooks* du plugin, tenus à 100 % de leurs lignes, branches et fonctions (`test:plugin`, dans `ci:arch`) ; exemple et projet `check:arch` | kit `ci:arch` ; exemple et projet `ci:arch:check` | projet et exemple : fichiers indexés, avant un *commit* ; à chaque écriture par le *hook* d'éditeur |
 | familles à parité | kit `check:parity` : les quatre ORM, les brokers et les loggers offrent les mêmes options et exécutent leurs contrats avec les mêmes capacités, ou `pipeline/monorepo/families.mjs` dit pourquoi non (dans `ci:arch`) | kit `ci:arch` | non |
 | première migration sur un vrai PostgreSQL | kit `ci:test:migrations` : un projet avec un journal d'audit sur Drizzle, Prisma et TypeORM, installé pour de vrai, génère sa première migration avec l'outil de son ORM (le garde d'audit ajouté), l'applique à une base neuve et passe chaque porte | le job `migrations` la nuit, à la demande et sur la pull request d'une release, et la release | non |
 | paires de valeurs de capacité | kit `ci:test:pairwise` : des *stacks* choisies pour faire rencontrer chaque valeur d'un flag de capacité à chaque valeur de tous les autres qu'`init` accepte (`test/support/pairwise.ts`), générées entières et typées ; l'exécution unitaire prouve que toutes les paires sont rencontrées | le job `pairwise` la nuit et sur la pull request d'une release, et la release | non |
@@ -242,7 +242,9 @@ ESLint et le formateur ne se battent jamais, parce qu'ils décident de choses di
 préréglages du *plugin* n'activent aucune règle sur l'emplacement d'un jeton ; ils gardent les
 deux choses qu'un formateur ne décide pas : les lignes vides entre les instructions
 (`clean/blank-lines`) et les accolades d'une branche (`clean/braces`). Lancés dans un ordre ou
-dans l'autre, le second outil ne trouve rien à changer.
+dans l'autre, le second outil ne trouve rien à changer une fois le premier tour fini.
+`packages/eslint-plugin/test/presets/padding-and-biome.spec.ts` tient cet accord sur un corpus de
+fichiers en forme de spec.
 
 ```ts
 // au lieu de : le formateur garde les deux lignes telles quelles, puisque aucune ne casse sa mise en page

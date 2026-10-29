@@ -80,6 +80,19 @@ describe('a rendered source file', () => {
     ]);
   });
 
+  it('keeps a constructor that receives one dependency on its line, and gives it its own once it no longer fits', () => {
+    const short = '  constructor(private readonly invoiceRepository: InvoiceRepository) {}';
+    const long = `  constructor(private readonly internationalPurchaseOrderAwaitingApprovalRepository: ${LONG}AwaitingApprovalRepository) {}`;
+
+    expect(fitSource(short)).toBe(short);
+
+    expect(fitSource(long).split('\n')).toEqual([
+      '  constructor(',
+      `    private readonly internationalPurchaseOrderAwaitingApprovalRepository: ${LONG}AwaitingApprovalRepository,`,
+      '  ) {}',
+    ]);
+  });
+
   it('sets a statement it broke apart from its neighbours, and leaves comments and short lines alone', () => {
     const call = `await this.access.scope(query.actor, ${LONG}Permissions['international-purchase-order.search'], 'international-purchase-order');`;
     const comment = `  // ${'a long comment '.repeat(10)}`;

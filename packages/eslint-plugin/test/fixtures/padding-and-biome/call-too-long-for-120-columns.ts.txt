@@ -1,0 +1,13 @@
+import { describe, expect, it } from 'vitest';
+
+const combine = (...parts: string[]): string => parts.join('-');
+
+describe('a long call', () => {
+  it('is wrapped by Biome', () => {
+    const value = combine('a-very-long-argument-number-one', 'a-very-long-argument-number-two', 'a-very-long-argument-number-three');
+    expect(value).toContain('number-three');
+    expect(combine('a-very-long-argument-number-one', 'a-very-long-argument-number-two', 'a-very-long-argument-number-three')).toContain('three');
+    const other = combine('x');
+    expect(other).toBe('x');
+  });
+});

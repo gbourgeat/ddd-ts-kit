@@ -1,0 +1,21 @@
+import { describe, expect, it } from 'vitest';
+
+describe('a callback', () => {
+  it('ends in a return', () => {
+    const values = [1, 2, 3].map((value) => {
+      const doubled = value * 2;
+      return doubled;
+    });
+    const filtered = values.filter((value) => {
+      if (value > 2) {
+        return true;
+      }
+      return false;
+    });
+    const run = () => {
+      expect(filtered).toHaveLength(2);
+      return filtered;
+    };
+    expect(run()).toEqual([4, 6]);
+  });
+});

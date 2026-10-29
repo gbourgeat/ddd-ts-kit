@@ -69,12 +69,15 @@ describe.each([
     }
   });
 
-  it('leaves the tool to say what it lacks when DATABASE_URL is not set', () => {
+  it('starts no probe when DATABASE_URL is not set: it generates on the in-process database, or says what it lacks', () => {
     const root = projectWithTool(bin);
 
     delete process.env['DATABASE_URL'];
 
-    expect(cli(root, command, ...args).stderr).not.toContain('cannot be reached');
-    expect(exists(root, 'tool-ran')).toBe(true);
+    const result = cli(root, command, ...args);
+
+    expect(result.stderr).not.toContain('cannot be reached');
+    expect(result.code).not.toBe(0);
+    expect(exists(root, 'tool-ran')).toBe(false);
   });
 });

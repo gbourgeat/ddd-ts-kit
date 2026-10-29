@@ -14,6 +14,8 @@ export interface KeycloakAuthenticatorOptions extends KeycloakClaimOptions {
   readonly audience: string | readonly string[];
   readonly algorithms?: readonly string[];
   readonly clockTolerance?: number;
+  /** Default `true`: a token without `exp` is refused. See `requireExpiry` of `JwtAuthenticator`. */
+  readonly requireExpiry?: boolean;
   /** Default `act`. See the README for the session note of an administrator impersonating a user. */
   readonly impersonatorClaim?: string;
   readonly toSessionExtensions?: (claims: JWTPayload) => SessionExtensionValues;
@@ -25,7 +27,17 @@ export interface KeycloakAuthenticatorOptions extends KeycloakClaimOptions {
  * `email` and `groups` as attributes, `sid` as session id.
  */
 export function keycloakAuthenticator(options: KeycloakAuthenticatorOptions): JwtAuthenticator {
-  const { baseUrl, realm, audience, algorithms, clockTolerance, impersonatorClaim, toSessionExtensions } = options;
+  const {
+    baseUrl,
+    realm,
+    audience,
+    algorithms,
+    clockTolerance,
+    requireExpiry,
+    impersonatorClaim,
+    toSessionExtensions,
+  } = options;
+
   const issuer = `${withoutTrailingSlashes(baseUrl)}/realms/${encodeURIComponent(realm)}`;
 
   return new JwtAuthenticator({
@@ -36,6 +48,7 @@ export function keycloakAuthenticator(options: KeycloakAuthenticatorOptions): Jw
     authenticationMethod: keycloakAuthenticationMethod,
     ...(algorithms === undefined ? {} : { algorithms }),
     ...(clockTolerance === undefined ? {} : { clockTolerance }),
+    ...(requireExpiry === undefined ? {} : { requireExpiry }),
     ...(impersonatorClaim === undefined ? {} : { impersonatorClaim }),
     ...(toSessionExtensions === undefined ? {} : { toSessionExtensions }),
   });

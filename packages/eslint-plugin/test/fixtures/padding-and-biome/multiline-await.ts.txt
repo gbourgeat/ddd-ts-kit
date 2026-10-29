@@ -1,0 +1,22 @@
+import { describe, expect, it } from 'vitest';
+
+const send = async (input: { id: string; amount: number; currency: string }): Promise<string> => input.id;
+
+describe('a payment', () => {
+  it('is sent', async () => {
+    const reference = await send({
+      id: 'payment-1',
+      amount: 100,
+      currency: 'EUR',
+    });
+    expect(reference).toBe('payment-1');
+    await send({
+      id: 'payment-2',
+      amount: 100,
+      currency: 'EUR',
+    });
+    await send({ id: 'payment-3', amount: 100, currency: 'EUR' });
+    const other = await send({ id: 'payment-4', amount: 1, currency: 'EUR' });
+    expect(other).toBe('payment-4');
+  });
+});

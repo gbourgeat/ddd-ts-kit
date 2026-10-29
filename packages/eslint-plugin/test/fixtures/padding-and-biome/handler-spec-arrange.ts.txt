@@ -1,0 +1,38 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+
+interface Application {
+  commandBus: { execute: (command: { name: string }) => Promise<string> };
+}
+
+async function arrange(): Promise<{ application: Application; saved: string[] }> {
+  const saved: string[] = [];
+  const application: Application = {
+    commandBus: {
+      execute: async (command) => {
+        saved.push(command.name);
+        return command.name;
+      },
+    },
+  };
+  return { application, saved };
+}
+
+describe('PlaceOrderHandler', () => {
+  let world: Awaited<ReturnType<typeof arrange>>;
+
+  beforeEach(async () => {
+    world = await arrange();
+  });
+
+  it('places an order', async () => {
+    const result = await world.application.commandBus.execute({ name: 'place' });
+    expect(result).toBe('place');
+    expect(world.saved).toEqual(['place']);
+  });
+
+  it('saves nothing when the command is refused', async () => {
+    const { application, saved } = await arrange();
+    await application.commandBus.execute({ name: 'refused' });
+    expect(saved).toHaveLength(1);
+  });
+});

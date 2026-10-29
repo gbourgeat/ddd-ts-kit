@@ -456,7 +456,14 @@ export default {
 };
 ```
 
-- a `jest.e2e.config.js` extending it, with a longer timeout and one worker;
+- a `jest.e2e.config.js` extending it, with a longer timeout and two workers, each replaced by a fresh
+  one once it holds more than 800 MB (`workerIdleMemoryLimit`). Jest keeps the modules of every spec
+  file it ran in the process, about 15 MB each with ES modules, and a single worker runs in band,
+  where that limit does not apply: a suite of about 200 end-to-end files then ran out of heap. With
+  `DATABASE_URL` set (a shared server, whose tables the files would empty for one another) the
+  config keeps one worker, in band, and the heap of a long suite needs
+  `NODE_OPTIONS=--max-old-space-size=<MB>`. Vitest isolates each file in a process of its own, so
+  its end-to-end suite has no such growth;
 - on an ORM, the global setup that starts PostgreSQL in process once per run and saves its
   cluster (`test/support/test-database-template.ts`), each spec opening a copy, and its global
   teardown (`test/support/test-database-teardown.ts`), both named in `jest.config.js`;

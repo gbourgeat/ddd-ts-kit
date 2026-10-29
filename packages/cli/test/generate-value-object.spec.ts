@@ -29,6 +29,23 @@ describe('generate value-object, by the form the config says', () => {
     expect(read(root, '.claude/rules/domain.md')).toContain('with no `unwrap`');
   });
 
+  it('names the form it accepts with the article its name takes: an amount, a currency', () => {
+    const generate = (name: string, ...terms: string[]): void => {
+      expect(cli(root, 'generate', 'value-object', 'billing', name, ...terms, '--force').code).toBe(0);
+    };
+
+    generate('Amount', '--term', 'Amount=How much is due');
+    generate('Currency');
+
+    expect(read(root, 'src/contexts/billing/test/unit/amount.vo.spec.ts')).toContain(
+      "it.todo('accepts every valid form of an amount');",
+    );
+
+    expect(read(root, 'src/contexts/billing/test/unit/currency.vo.spec.ts')).toContain(
+      "it.todo('accepts every valid form of a currency');",
+    );
+  });
+
   it('writes a factory that returns a Result when the config says so, or says nothing', () => {
     for (const valueObjects of ['result', undefined]) {
       const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { stack: Record<string, unknown> };

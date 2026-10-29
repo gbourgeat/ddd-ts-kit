@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read } from './helpers';
+import { bin, findingsOf } from './e2e/run-in';
+import { type CliResult, cli, read } from './helpers';
 import { expectOk } from './support/expect-ok';
 import { initProject } from './support/init-project';
 
@@ -88,6 +89,7 @@ describe('generate command --aggregate, birth or change', () => {
     const handler = read(root, HANDLER('issue-invoice'));
 
     expect(handler).toContain('Invoice.create(this.ids.next(), this.clock.now())');
+    expect(handler).toContain('decide what "issue invoice" does to an Invoice:');
     expect(handler).toContain('Promise<string>');
     expect(read(root, COMMAND('issue-invoice'))).toContain('AuthorizedCommand<string>');
   });
@@ -159,5 +161,32 @@ describe('generate command --creates and the policy of a change', () => {
     );
 
     expect(handler).not.toContain('IdGenerator');
+  });
+});
+
+const HANDLERS = ['issue-invoice', 'void-invoice', 'reissue-invoice', 'issue-invoices'].map(HANDLER);
+
+/** What the formatter of the project would change in the handlers: empty when the generator already wrote them its way. */
+const unformatted = (root: string): string =>
+  findingsOf(root, { command: bin('biome'), args: ['format', '--max-diagnostics=20', ...HANDLERS] });
+
+describe('the handler of every kind of command is written as the formatter of the project lays it out', () => {
+  it('a birth, a change, a change a policy refines, a command on no aggregate', () => {
+    const root = billing();
+
+    const command = (...args: readonly string[]): CliResult =>
+      expectOk(cli(root, 'generate', 'command', 'billing', ...args));
+
+    command('IssueInvoice', '--aggregate', 'Invoice', '--creates', '--permission', 'invoice.issue');
+    command('VoidInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.void');
+    command('ReissueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.reissue', '--term', 'Reissue=Again');
+    expectOk(cli(root, 'generate', 'policy', 'billing', 'OnlyIssuerReissues', '--permission', 'invoice.reissue'));
+    command('IssueInvoices', '--permission', 'invoice.batch', '--term', 'Batch=Several at once');
+
+    expect(read(root, HANDLER('void-invoice'))).toContain(
+      '  constructor(private readonly invoiceRepository: InvoiceRepository) {}\n',
+    );
+
+    expect(unformatted(root)).toBe('');
   });
 });

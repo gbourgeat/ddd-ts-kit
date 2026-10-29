@@ -1,0 +1,22 @@
+const build = (input: { id: string; name: string }): string => input.id + input.name;
+
+export function make(id: string): string {
+  const name = 'a';
+  build({
+    id,
+    name,
+  });
+  return build({
+    id,
+    name,
+  });
+}
+
+export function makeAgain(id: string): string {
+  build({
+    id,
+    name: 'b',
+  });
+
+  return id;
+}
