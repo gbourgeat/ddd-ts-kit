@@ -7,6 +7,7 @@ import type { Scope } from '../../scope';
 import { commandInputOf } from './command-input';
 import { constructorParameters } from './constructor-parameters';
 import type { SentCommand } from './sent-command';
+import { withoutComments } from './without-comments';
 
 const OPTIONAL = /^[^:=]*\?\s*:|=/;
 const INSTANT = /:\s*Date\b/;
@@ -48,14 +49,6 @@ export function readSentCommand(scope: Scope, input: string, sender: CommandSend
   refuseUnknownInput({ scope, name }, [...(takesInstant ? [] : [first]), ...others]);
 
   return { name, isProtected, permission, takesInstant, inputs: [] };
-}
-
-/** A generated command describes its constructor in a `TODO(domain)` comment before it has one. */
-function withoutComments(source: string): string {
-  return source
-    .split('\n')
-    .filter((line) => !line.trim().startsWith('//'))
-    .join('\n');
 }
 
 interface Sent {

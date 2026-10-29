@@ -37,11 +37,13 @@ export function findUseCase(scope: Scope, name: Name, flags: KindFlags): UseCase
 
 /** What the source of the message says about it, read from its declaration. */
 function shapeOf(source: string, isQuery: boolean): Pick<UseCase, 'returnsId' | 'isProtected' | 'isSearch' | 'fields'> {
+  const isProtected = /extends\s+Authorized(?:Command|Query)\b/.test(source);
+
   return {
-    fields: messageFieldsOf(source),
+    fields: messageFieldsOf(source, isProtected),
     // A command that answers an identifier is declared `extends Command<string>` or `extends AuthorizedCommand<string>`.
     returnsId: !isQuery && /extends\s+(?:Authorized)?Command<\s*string\s*>/.test(source),
-    isProtected: /extends\s+Authorized(?:Command|Query)\b/.test(source),
+    isProtected,
     isSearch: isQuery && /\breadonly page: PageRequest</.test(source),
   };
 }

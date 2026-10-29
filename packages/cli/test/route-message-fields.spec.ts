@@ -10,7 +10,8 @@ export class CancelInvoiceCommand extends AuthorizedCommand {
   /** Who cancels, and why. */
   constructor(
     actor: Actor,
-    readonly invoiceId: string, // the path names it
+    // The path names it.
+    readonly invoiceId: string,
     readonly reason: string,
     readonly refundAmount: number,
   ) {
@@ -29,14 +30,14 @@ function useCaseOf(source: string, overrides: Partial<UseCase> = {}): UseCase {
     returnsId: false,
     isProtected: true,
     isSearch: false,
-    fields: messageFieldsOf(source),
+    fields: messageFieldsOf(source, overrides.isProtected ?? true),
     ...overrides,
   };
 }
 
 describe('the fields of a message, read from its constructor', () => {
   it('are the parameters past the actor, comments left out, each with its type', () => {
-    expect(messageFieldsOf(CANCEL)).toEqual([
+    expect(messageFieldsOf(CANCEL, true)).toEqual([
       { name: 'invoiceId', type: 'string', optional: false },
       { name: 'reason', type: 'string', optional: false },
       { name: 'refundAmount', type: 'number', optional: false },
@@ -49,15 +50,35 @@ describe('the fields of a message, read from its constructor', () => {
 
     const generated = `export class CancelInvoiceCommand extends AuthorizedCommand {\n  // TODO(domain): declare the input as a constructor, for example \`constructor(actor: Actor, readonly customerId: string) { super(actor); }\`.\n}`;
 
-    expect(messageFieldsOf(published)).toEqual([{ name: 'text', type: 'string', optional: false }]);
-    expect(messageFieldsOf(generated)).toEqual([]);
+    expect(messageFieldsOf(published, false)).toEqual([{ name: 'text', type: 'string', optional: false }]);
+    expect(messageFieldsOf(generated, true)).toEqual([]);
+  });
+
+  it('keep a string that holds two slashes, and leave out only whole-line and block comments', () => {
+    const source = [
+      'class A {',
+      '  // The label is shown as it is.',
+      "  constructor(actor: Actor, readonly label: string = 'a // b', readonly reason: string) {",
+      '    super(actor);',
+      '  }',
+      '}',
+    ].join('\n');
+
+    expect(messageFieldsOf(source, true).map((field) => field.name)).toEqual(['label', 'reason']);
+  });
+
+  it('skip the first parameter of a protected message whatever its type says, a default actor included', () => {
+    const source =
+      "class A {\n  constructor(readonly actor: Actor = systemActor('billing.sweep'), readonly invoiceId: string) {\n    super(actor);\n  }\n}";
+
+    expect(messageFieldsOf(source, true).map((field) => field.name)).toEqual(['invoiceId']);
   });
 
   it('skip an actor declared as a property of the message', () => {
     const source =
       'class A {\n  constructor(readonly actor: Actor, readonly invoiceId: string) {\n    super(actor);\n  }\n}';
 
-    expect(messageFieldsOf(source).map((field) => field.name)).toEqual(['invoiceId']);
+    expect(messageFieldsOf(source, true).map((field) => field.name)).toEqual(['invoiceId']);
   });
 });
 
