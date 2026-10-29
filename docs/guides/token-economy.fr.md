@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:b4f54154bbfc2cb1 -->
+<!-- translation-of: token-economy.md sha256:350af0bb70017a5e -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -47,7 +47,7 @@ qui les a lues.
 | **Un concept par petit fichier** (`naming/one-concept-per-file`, un plafond de taille sur les fonctions et les fichiers) | lire un gros fichier pour en utiliser dix lignes |
 | **Du code répétitif généré.** `generate` écrit le fichier, sa *spec*, son *builder* et son câblage | écrire, et se tromper subtilement sur, la visibilité du constructeur, le suffixe, l'enregistrement |
 | **Une sortie `--json` avec `todos`** : le `file:line` de chaque `TODO(domain)`, avec ses premiers mots | ouvrir les fichiers générés pour trouver ce qui reste à décider |
-| **Des cartes lisibles par une machine.** `ddd-ts-kit list --json` donne les contextes, agrégats, cas d'usage, événements, gestionnaires et permissions ; `describe <context> --json` donne un contexte sous forme de faits (les cas d'usage avec leur permission, les routes, les événements, les ports avec leurs adaptateurs, les politiques, les *gateways*, les dépendances) ; `status` et `todo` donnent la prochaine étape du plan, les tranches et les marqueurs restants sous forme de `file:line` | parcourir l'arborescence pour apprendre ce qui existe et ce qui reste |
+| **Des cartes de faits.** `ddd-ts-kit list` donne les contextes, agrégats, cas d'usage, événements, gestionnaires et permissions ; `describe <context>` donne un contexte sous forme de faits (les cas d'usage avec leur permission, les routes, les événements, les ports avec leurs adaptateurs, les politiques, les *gateways*, les dépendances), en texte : la carte que lit un agent, `--json` donnant les mêmes faits pour un script (`describe scheduling` de l'exemple pèse 14,8 Ko en texte, 32,5 Ko en JSON) ; `status` et `todo` donnent la prochaine étape du plan, les tranches et les marqueurs restants sous forme de `file:line` | parcourir l'arborescence pour apprendre ce qui existe et ce qui reste |
 | **Des règles délimitées par chemin.** `init` écrit `.claude/rules/*.md`, chacune délimitée par un *frontmatter* `paths`, les mêmes règles pour Copilot dans `.github/instructions/`, délimitées par `applyTo`, à côté d'un `AGENTS.md` court que lit chaque agent | garder les règles du domaine en contexte pendant qu'il modifie une route, et l'inverse |
 | **Une documentation générée par contexte.** `CONTEXT.md` avec ses listes générées et sa `## Reference`, `docs/context-map.md` | lire le code d'un contexte voisin pour apprendre ce qu'il publie |
 | **Une phrase de correction sur chaque violation**, et `explain <rule-id>` | deviner une règle à partir d'un contrôle en échec |
@@ -68,7 +68,7 @@ avec la CLI installée, une session commence par :
 ddd-ts-kit project (DDD, Clean Architecture). The rules are checked: `npx ddd-ts-kit explain <rule-id>`.
 Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.
 Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).
-Read `npx ddd-ts-kit list --json` and the CONTEXT.md of one context instead of browsing the tree.
+Read `npx ddd-ts-kit list` (text; `--json` for a script) and the CONTEXT.md of one context instead of browsing the tree.
 Plan: docs/architecture/plan.md (resume with /ddd-ts-kit:start). Next: done
 Contexts:
 analytics [supporting] upstreams: scheduling; glossary: 9 terms; 0 aggregates, 0 commands, 1 queries, 0 published events
@@ -80,7 +80,7 @@ scheduling [core] upstreams: identity; glossary: 65 terms; 4 aggregates, 19 comm
 Dix lignes, et l'agent connaît les règles de la maison, l'état du projet et ce que contient chaque
 contexte, avant d'avoir ouvert un seul fichier.
 
-Rien de tout cela n'est propre à un produit d'agent : une convention de chemins et une carte JSON
+Rien de tout cela n'est propre à un produit d'agent : une convention de chemins et une carte de faits
 aident tout outil qui lit des fichiers. Les fichiers de règles délimitées par chemin et le *hook*
 utilisent les formats de Claude Code, puisque le *plugin* du kit le cible.
 
@@ -150,8 +150,8 @@ commande, la décision du gestionnaire, les tests à écrire, l'attribution au r
 L'agent lit ces lignes et leurs voisines, pas les quatre fichiers depuis le début, et jamais
 les fichiers que le générateur a câblés pour lui.
 
-**Lire la carte, pas l'arborescence.** Commencez par `npx ddd-ts-kit describe <context> --json`
-(ou `list --json` pour tout le projet) et le `CONTEXT.md` du contexte en cours ;
+**Lire la carte, pas l'arborescence.** Commencez par `npx ddd-ts-kit describe <context>` (ou
+`list` pour tout le projet) et le `CONTEXT.md` du contexte en cours ;
 `npx ddd-ts-kit todo <context> --brief` dit ensuite ce qui reste à écrire, sous forme de
 `file:line` et des premiers mots de chaque marqueur.
 Lisez le `CONTEXT.md` et le `published-language/` d'un contexte voisin, jamais ses entrailles : les
@@ -163,33 +163,25 @@ ls -R src/contexts/ordering
 grep -rn "Handler" src/contexts/ordering
 
 # Écrire : un seul appel, rien que des faits
-npx ddd-ts-kit describe ordering --json
+npx ddd-ts-kit describe ordering
 ```
 
-Un extrait de ce qu'il répond, pour le contexte de la première tranche ci-dessus (mis en page ici
-pour la lecture : la CLI affiche son JSON sur une ligne, sans indentation) :
+Un extrait de ce qu'il répond, pour le contexte de la première tranche ci-dessus (les genres dont
+il n'a aucun élément affichent `none`, omis ici). Le texte est la carte que lit un agent : sur
+l'exemple, `describe scheduling` pèse 14,8 Ko en texte contre 32,5 Ko en `--json`, qui donne les
+mêmes faits, avec leurs fichiers, sur une ligne pour un script :
 
-```json
-{
-  "name": "ordering",
-  "classification": "core",
-  "useCases": [
-    {
-      "kind": "command",
-      "name": "PlaceOrder",
-      "permission": "order.place",
-      "file": "src/contexts/ordering/application/commands/place-order"
-    }
-  ],
-  "ports": [
-    {
-      "name": "OrderRepository",
-      "kind": "repository",
-      "adapters": ["DrizzleOrderRepository"],
-      "file": "src/contexts/ordering/domain/repositories/order.repository.ts"
-    }
-  ]
-}
+```text
+ordering [core]
+  purpose: Takes the orders of the customers.
+  language: src/contexts/ordering/CONTEXT.md (2 terms)
+  aggregates: Order
+  permissions: order.place
+  use cases:
+    command PlaceOrder (order.place)
+  ports:
+    OrderRepository [repository], by DrizzleOrderRepository
+  contracts: openapi/openapi.yaml, docs/integration/event-catalog.md
 ```
 
 La réponse complète liste aussi le glossaire, les contextes amont et aval, les agrégats, les
@@ -387,7 +379,7 @@ fichiers exacts : `rg -l "appointment.cancel" -g "*.command.ts"`, ou
   par l'API du compilateur TypeScript ; qu'il fonctionne avec la double installation TypeScript 6
   et 7 d'un projet généré n'a pas été vérifié.
 
-*Avec ce kit :* `ddd-ts-kit list --json` (et `describe <context> --json`) est déjà un index des
+*Avec ce kit :* `ddd-ts-kit list` (et `describe <context>`, avec `--json` pour un outil) est déjà un index des
 concepts de l'architecture (agrégats, cas d'usage, événements, gestionnaires, permissions). Un
 index de symboles le complète pour tout ce qui se trouve sous ce niveau. Pour la plupart des
 projets, un serveur de langage couvre le besoin et aucun de ces deux outils ne vaut la peine
@@ -454,7 +446,7 @@ guide ne le recommande pas par défaut.
 
 | Problème | Outil | Économie attendue | Coût de mise en place |
 |---|---|---|---|
-| « Qu'est-ce qui existe dans ce projet ? » | `ddd-ts-kit list --json`, `describe <context> --json`, `CONTEXT.md`, `docs/context-map.md` | élevée : remplace le parcours de l'arborescence | aucun, généré |
+| « Qu'est-ce qui existe dans ce projet ? » | `ddd-ts-kit list`, `describe <context>` (`--json` pour un script), `CONTEXT.md`, `docs/context-map.md` | élevée : remplace le parcours de l'arborescence | aucun, généré |
 | « Où va ce fichier, comment s'appelle-t-il ? » | l'arborescence canonique, `ddd-ts-kit generate` | élevée : ni recherche, ni code répétitif écrit | aucun |
 | « Que reste-t-il à écrire dans ce qui a été généré ? » | `generate --json` (`todos`), `ddd-ts-kit todo [<context>] --brief`, `ddd-ts-kit status` | élevée : n'ouvre que les endroits à remplir | aucun |
 | « Pourquoi ce contrôle échoue-t-il ? » | le `fix` de la violation, `ddd-ts-kit explain <rule-id>` | moyenne : pas de lecture de la référence | aucun |

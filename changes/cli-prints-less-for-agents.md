@@ -10,4 +10,6 @@ The `AGENTS.md` that `init` writes gave about 320 words, read in every session, 
 
 The skills and agents of the plugin send an agent to the `todos` places of a generator instead of the `next` list, give the output of every kind with the keys it now has, and look up the arguments of one kind with `generate <kind> --help` instead of the whole `--help`.
 
+The `AGENTS.md` that `init` writes, and the session line of the guard, send an agent to `npx ddd-ts-kit list` and `npx ddd-ts-kit describe <context>`, the text form being the map it reads (14.8 KB for the largest context of the example, against 32.5 KB as JSON), `--json` being for a script.
+
 To move: a script that reads the output of `--json` line by line, or with a pattern on its indentation, parses it instead (`JSON.parse`, `jq`). A reader of the `--json` of `generate` that used `next` builds the same `file:line` from `todos` (`${file}:${line}`); one that used `todos[].text` reads `gist`, or the line of the file it names for the whole sentence (`text` remains on a step only).

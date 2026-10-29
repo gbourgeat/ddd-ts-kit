@@ -44,7 +44,7 @@ instead of 900 saves on every later turn of the session, not only on the turn th
 | **One concept per small file** (`naming/one-concept-per-file`, a size ceiling on functions and files) | read a large file to use ten lines of it |
 | **Generated boilerplate.** `generate` writes the file, its spec, its builder and its wiring | write, and get subtly wrong, the constructor visibility, the suffix, the registration |
 | **`--json` output with `todos`**: the `file:line` of every `TODO(domain)`, with its first words | open the generated files to find what is left to decide |
-| **Machine-readable maps.** `ddd-ts-kit list --json` gives contexts, aggregates, use cases, events, handlers, permissions; `describe <context> --json` gives one context as facts (use cases with their permission, routes, events, ports with their adapters, policies, gateways, dependencies); `status` and `todo` give the next step of the plan, the slices and the markers left as `file:line` | walk the tree to learn what exists and what is left |
+| **Maps of facts.** `ddd-ts-kit list` gives contexts, aggregates, use cases, events, handlers, permissions; `describe <context>` gives one context as facts (use cases with their permission, routes, events, ports with their adapters, policies, gateways, dependencies), as text: the map an agent reads, `--json` being the same facts for a script (`describe scheduling` of the example is 14.8 KB as text, 32.5 KB as JSON); `status` and `todo` give the next step of the plan, the slices and the markers left as `file:line` | walk the tree to learn what exists and what is left |
 | **Path-scoped rules.** `init` writes `.claude/rules/*.md`, each scoped by a `paths` frontmatter, the same rules for Copilot in `.github/instructions/`, scoped by `applyTo`, next to a short `AGENTS.md` that every agent reads | carry the domain rules in context while editing a route, and the reverse |
 | **Generated per-context documentation.** `CONTEXT.md` with its generated lists and `## Reference`, `docs/context-map.md` | read the code of a neighbouring context to learn what it publishes |
 | **A fix sentence on every violation**, and `explain <rule-id>` | guess at a rule from a failing check |
@@ -65,7 +65,7 @@ the CLI installed, a session starts with:
 ddd-ts-kit project (DDD, Clean Architecture). The rules are checked: `npx ddd-ts-kit explain <rule-id>`.
 Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.
 Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).
-Read `npx ddd-ts-kit list --json` and the CONTEXT.md of one context instead of browsing the tree.
+Read `npx ddd-ts-kit list` (text; `--json` for a script) and the CONTEXT.md of one context instead of browsing the tree.
 Plan: docs/architecture/plan.md (resume with /ddd-ts-kit:start). Next: done
 Contexts:
 analytics [supporting] upstreams: scheduling; glossary: 9 terms; 0 aggregates, 0 commands, 1 queries, 0 published events
@@ -77,7 +77,7 @@ scheduling [core] upstreams: identity; glossary: 65 terms; 4 aggregates, 19 comm
 Ten lines, and the agent knows the rules of the house, where the project stands and what each
 context holds, before it has opened a single file.
 
-None of this is specific to one agent product: a path convention and a JSON map help any tool
+None of this is specific to one agent product: a path convention and a map of facts help any tool
 that reads files. The path-scoped rule files and the hook use the Claude Code formats, since
 the kit's plugin targets it.
 
@@ -145,8 +145,8 @@ the decision of the handler, the tests to write, the grant of the role to check.
 reads those lines and their neighbours, not the four files from the top, and never the files
 the generator wired for it.
 
-**Read the map, not the tree.** Start with `npx ddd-ts-kit describe <context> --json` (or
-`list --json` for the whole project) and the `CONTEXT.md` of the context in hand;
+**Read the map, not the tree.** Start with `npx ddd-ts-kit describe <context>` (or `list` for
+the whole project) and the `CONTEXT.md` of the context in hand;
 `npx ddd-ts-kit todo <context> --brief` then says what is left to write, as `file:line` and the
 first words of each marker. Read a
 neighbouring context's `CONTEXT.md` and `published-language/`, never its internals: the rules
@@ -158,33 +158,25 @@ ls -R src/contexts/ordering
 grep -rn "Handler" src/contexts/ordering
 
 # Write: one call, facts only
-npx ddd-ts-kit describe ordering --json
+npx ddd-ts-kit describe ordering
 ```
 
-An extract of what it answers, for the context of the first slice above (laid out here for
-reading: the CLI prints its JSON on one line, without indentation):
+An extract of what it answers, for the context of the first slice above (the kinds it holds none
+of print `none`, left out here). The text is the map an agent reads: on the scheduling example,
+`describe scheduling` is 14.8 KB as text against 32.5 KB as `--json`, which gives the same facts,
+with their files, on one line for a script:
 
-```json
-{
-  "name": "ordering",
-  "classification": "core",
-  "useCases": [
-    {
-      "kind": "command",
-      "name": "PlaceOrder",
-      "permission": "order.place",
-      "file": "src/contexts/ordering/application/commands/place-order"
-    }
-  ],
-  "ports": [
-    {
-      "name": "OrderRepository",
-      "kind": "repository",
-      "adapters": ["DrizzleOrderRepository"],
-      "file": "src/contexts/ordering/domain/repositories/order.repository.ts"
-    }
-  ]
-}
+```text
+ordering [core]
+  purpose: Takes the orders of the customers.
+  language: src/contexts/ordering/CONTEXT.md (2 terms)
+  aggregates: Order
+  permissions: order.place
+  use cases:
+    command PlaceOrder (order.place)
+  ports:
+    OrderRepository [repository], by DrizzleOrderRepository
+  contracts: openapi/openapi.yaml, docs/integration/event-catalog.md
 ```
 
 The full answer also lists the glossary, the upstreams and downstreams, the aggregates, the
@@ -364,7 +356,7 @@ to list every consumer. List files (`-l`) before reading matches, and bound the 
   API; whether it runs against the dual TypeScript 6 and 7 setup of a generated project was
   not verified.
 
-*With this kit:* `ddd-ts-kit list --json` (and `describe <context> --json`) is already an index of the architecture's concepts
+*With this kit:* `ddd-ts-kit list` (and `describe <context>`, with `--json` for a tool) is already an index of the architecture's concepts
 (aggregates, use cases, events, handlers, permissions). A symbol index complements it for
 everything below that level. For most projects a language server covers the need and neither
 of these is worth setting up.
@@ -425,7 +417,7 @@ as a default.
 
 | Problem | Tool | Expected saving | Cost to set up |
 |---|---|---|---|
-| "What exists in this project?" | `ddd-ts-kit list --json`, `describe <context> --json`, `CONTEXT.md`, `docs/context-map.md` | high: replaces tree walking | none, generated |
+| "What exists in this project?" | `ddd-ts-kit list`, `describe <context>` (`--json` for a script), `CONTEXT.md`, `docs/context-map.md` | high: replaces tree walking | none, generated |
 | "Where does this file go, what is it called?" | the canonical tree, `ddd-ts-kit generate` | high: no search, no boilerplate written | none |
 | "What is left to write in what was generated?" | `generate --json` (`todos`), `ddd-ts-kit todo [<context>] --brief`, `ddd-ts-kit status` | high: opens only the places to fill | none |
 | "Why is this check failing?" | the violation's `fix`, `ddd-ts-kit explain <rule-id>` | medium: no reading of the reference | none |

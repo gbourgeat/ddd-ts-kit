@@ -54,8 +54,8 @@ describe('the guidance init writes', () => {
     const commands = [
       'npm run verify',
       'npx ddd-ts-kit check --changed-since <ref>',
-      'npx ddd-ts-kit list --json',
-      'npx ddd-ts-kit describe <context> --json',
+      'npx ddd-ts-kit list`',
+      'npx ddd-ts-kit describe <context>`',
       'npx ddd-ts-kit status',
       'npx ddd-ts-kit todo [<context>]',
       'npx ddd-ts-kit docs',
@@ -83,8 +83,11 @@ describe('the guidance init writes', () => {
     }
 
     expect(guide).toMatch(
-      /1\. `describe <context> --json` and the `CONTEXT\.md`[^\n]*\n2\. Open only the places a generator lists under `todos`[^\n]*\n3\. `check --changed-since <ref>`/,
+      /1\. `npx ddd-ts-kit describe <context>` and the `CONTEXT\.md`[^\n]*\n2\. Open only the places a generator lists under `todos`[^\n]*\n3\. `check --changed-since <ref>`/,
     );
+
+    // The map an agent reads is the text form; --json is for a script.
+    expect(guide).not.toMatch(/`npx ddd-ts-kit (?:list|describe <context>) --json`/);
 
     // Skills that no longer exist.
     expect(guide).not.toMatch(/model-context|openapi-contract/);
