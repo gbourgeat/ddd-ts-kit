@@ -4,11 +4,33 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
+import { join, relative } from 'node:path';
 import { test } from 'node:test';
 import { limitOf } from '../builder-runs.mjs';
-import { bash, committed, decision, git, guard, here, project, put, run, worker, write } from './support.mjs';
+import {
+  bash,
+  committed,
+  decision,
+  directory,
+  git,
+  guard,
+  here,
+  project,
+  put,
+  run,
+  worker,
+  write,
+} from './support.mjs';
 
 // The runs of a context-builder: its tool calls counted inside pre-bash and pre-write, two notices
 // before its turn limit, its run recorded in its worktree, its stop checked.
@@ -293,6 +315,40 @@ test('another agent writes no report, and a broken transcript fails open', () =>
   assert.equal(existsSync(join(root, REPORT)), false);
 });
 
+test('a report or a run state a repository links elsewhere is never written through the link', () => {
+  const root = committed();
+  worker(root);
+  const outside = directory('outside');
+  const [report, state] = [join(outside, 'bashrc'), join(outside, 'state')];
+  writeFileSync(report, 'untouched\n');
+  writeFileSync(state, 'untouched\n');
+  symlinkSync(report, join(root, REPORT));
+  const agent = builder('linked');
+  mkdirSync(join(root, '.ddd-ts-kit', 'guard'));
+  symlinkSync(state, join(root, runState(agent)));
+  run('pre-bash', bash(root, 'git status', agent));
+  const stopped = run('subagent-stop', {
+    cwd: root,
+    ...agent,
+    last_assistant_message: 'Done.',
+    stop_hook_active: false,
+  });
+  assert.equal(stopped.status, 0);
+  assert.equal(readFileSync(report, 'utf8'), 'untouched\n');
+  assert.equal(readFileSync(state, 'utf8'), 'untouched\n');
+});
+
+test('a .ddd-ts-kit folder that is a link receives no write of the guard', () => {
+  const root = committed();
+  const elsewhere = directory('elsewhere');
+  put(elsewhere, 'worker.json', JSON.stringify({ context: 'ordering' }));
+  symlinkSync(elsewhere, join(root, '.ddd-ts-kit'));
+  const agent = builder('linked-folder');
+  assert.equal(decision(run('pre-bash', bash(root, 'rm src/main.ts', agent))), 'deny');
+  run('subagent-stop', { cwd: root, ...agent, last_assistant_message: 'Done.', stop_hook_active: false });
+  assert.deepEqual(readdirSync(elsewhere), ['worker.json']);
+});
+
 function transcript(root, lines) {
   const file = join(root, 'transcript.jsonl');
   writeFileSync(file, lines.map((line) => (typeof line === 'string' ? line : JSON.stringify(line))).join('\n'));
@@ -319,6 +375,45 @@ test('the hooks add no entry on every tool call: two rare events, filtered by th
   ]);
 });
 
+test('an agent of the project named context-builder without the prefix of the plugin is held to its scope, not counted', () => {
+  const root = committed();
+  worker(root);
+  const agent = builder('unprefixed', { agent_type: 'context-builder' });
+  assert.equal(decision(run('pre-bash', bash(root, 'rm src/main.ts', agent))), 'deny');
+  run('subagent-start', { cwd: root, ...agent });
+  assert.equal(existsSync(join(root, runState(agent))), false);
+  assert.equal(existsSync(join(root, '.ddd-ts-kit', 'agent.json')), false);
+});
+
+test('a new run of a builder drops the note its last run left before inline code, and keeps what that code changed', () => {
+  const root = committed();
+  worker(root);
+  const agent = builder('resumed');
+  run('pre-bash', bash(root, 'git status', agent));
+  const [note, outside] = ['before-inline', 'outside'].map((kind) =>
+    join(root, `.ddd-ts-kit/guard/${kind}-${stateKey(agent)}.json`),
+  );
+  put(root, relative(root, note), '{}');
+  put(root, relative(root, outside), '{}');
+  run('subagent-start', { cwd: root, ...agent });
+  assert.equal(existsSync(note), false);
+  assert.equal(existsSync(outside), true);
+});
+
+test('a new run of a builder removes no note through a folder of the guard its worktree links elsewhere', () => {
+  const root = committed();
+  const worktree = project();
+  const agent = builder('linked-worktree');
+  put(root, runState(agent), JSON.stringify({ run: 1, calls: 3, notices: [], worker: worktree }));
+  const shared = directory('shared');
+  const note = `before-inline-${stateKey(agent)}.json`;
+  put(shared, note, '{}');
+  mkdirSync(join(worktree, '.ddd-ts-kit'), { recursive: true });
+  symlinkSync(shared, join(worktree, '.ddd-ts-kit/guard'));
+  run('subagent-start', { cwd: root, ...agent });
+  assert.deepEqual(readdirSync(shared), [note]);
+});
+
 test('malformed input to the runs of a builder never blocks', () => {
   for (const mode of ['subagent-start', 'subagent-stop']) {
     const result = spawnSync('node', [guard, mode], { input: 'not json', encoding: 'utf8' });
@@ -340,4 +435,8 @@ test('a count that fails never drops a refusal: a builder whose run state cannot
   const refused = run('pre-bash', bash(root, 'rm src/main.ts', agent));
   assert.equal(decision(refused), 'deny');
   assert.equal(noticeOf(refused), undefined);
+  // A state that is no run makes the count itself throw.
+  const odd = builder('odd');
+  put(root, runState(odd), '"not a run"');
+  assert.equal(decision(run('pre-bash', bash(root, 'rm src/main.ts', odd))), 'deny');
 });

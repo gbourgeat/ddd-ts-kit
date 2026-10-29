@@ -3,10 +3,10 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { cli, cliAnswering, directory, launcher, project, put, run, write } from './support.mjs';
+import { cli, cliAnswering, directory, git, installed, launcher, patch, project, put, run, write } from './support.mjs';
 
 test('a written file that breaks a rule is reported to the model with the fix', () => {
   const root = project();
@@ -38,14 +38,21 @@ test('with formatOnWrite, the Biome of the project lays a written file out befor
   assert.equal(calls().length, 1);
 });
 
-// A Biome like the one npm installs: it records how it was called, and lays the file out.
+// A Biome like the one npm installs, the package @biomejs/biome: it records how it was called, and
+// lays the file out.
 function fakeBiome(root, { failing = false } = {}) {
   const log = join(root, 'biome-calls.log');
-  const script = failing
-    ? `#!/bin/sh\necho "$@" >> "${log}"\nexit 1\n`
-    : `#!/bin/sh\necho "$@" >> "${log}"\nsed -i 's/const a=1/const a = 1;/' "$3"\n`;
-  mkdirSync(join(root, 'node_modules', '.bin'), { recursive: true });
-  writeFileSync(join(root, 'node_modules', '.bin', 'biome'), script, { mode: 0o755 });
+  const lays = failing
+    ? 'process.exit(1);'
+    : "writeFileSync(file, readFileSync(file, 'utf8').replace('const a=1', 'const a = 1;'));";
+  const source = [
+    "import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';",
+    'const file = process.argv[4];',
+    `appendFileSync(${JSON.stringify(log)}, process.argv.slice(2).join(' ') + '\\n');`,
+    lays,
+    '',
+  ].join('\n');
+  installed(root, { name: '@biomejs/biome', bin: { biome: 'bin.mjs' }, source });
   return () => (existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n') : []);
 }
 
@@ -60,11 +67,16 @@ test('with formatOnWrite off, without the Biome of the project, or with a Biome 
   assert.deepEqual(unasked(), []);
   assert.match(readFileSync(file, 'utf8'), /const a=1/);
 
+  // A biome of node_modules/.bin that is no bin of the package @biomejs/biome is never run.
   const uninstalled = project({ formatOnWrite: true });
   const elsewhere = join(uninstalled, note);
+  const marker = join(uninstalled, 'ran');
   put(uninstalled, note, 'const a=1\nexport const pricingNote = a;\n');
+  mkdirSync(join(uninstalled, 'node_modules', '.bin'), { recursive: true });
+  writeFileSync(join(uninstalled, 'node_modules', '.bin', 'biome'), `#!/bin/sh\ntouch "${marker}"\n`, { mode: 0o755 });
   assert.equal(run('post-write', write(elsewhere)).status, 0);
   assert.match(readFileSync(elsewhere, 'utf8'), /const a=1/);
+  assert.equal(existsSync(marker), false);
 
   const failing = project({ formatOnWrite: true });
   const broken = fakeBiome(failing, { failing: true });
@@ -85,6 +97,7 @@ test('a CLI hoisted to a parent by workspaces is the one the guard runs', () => 
     encoding: 'utf8',
   });
   assert.equal(init.status, 0, init.stderr);
+  git(workspaceRoot, 'init', '--quiet');
   launcher(workspaceRoot);
   const file = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
   mkdirSync(dirname(file), { recursive: true });
@@ -112,8 +125,44 @@ test('a CLI the guard cannot start lets the written file through', () => {
   const root = project();
   const file = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
   put(root, 'src/contexts/ordering/domain/services/pricing.service.ts', "import express from 'express';\n");
-  chmodSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), 0o644);
+  launcher(root, 'not JavaScript: (\n');
   const result = run('post-write', write(file));
   assert.equal(result.status, 0);
   assert.equal(result.stderr, '');
+});
+
+test('a patch of many files has its first five checked, and says the others were not', () => {
+  const root = project();
+  cliAnswering(root, { 'check-file': { violations: [] } });
+  const files = Array.from(
+    { length: 7 },
+    (_, index) => `*** Add File: src/platform/note-${index}.ts\n+export const n = ${index};`,
+  );
+  const result = run('post-write', patch(root, ...files));
+  assert.equal(
+    result.output.systemMessage,
+    'ddd-ts-kit: 2 more written file(s) not checked here: run `npx ddd-ts-kit check`',
+  );
+  const one = run('post-write', patch(root, files[0]));
+  assert.equal(one.output, undefined);
+  const violation = { ruleId: 'clean/naming', severity: 'error', file: 'note-0.ts', message: 'A name.' };
+  cliAnswering(root, { 'check-file': { violations: [violation] } });
+  const blocked = run('post-write', patch(root, ...files)).output;
+  assert.equal(blocked.decision, 'block');
+  assert.match(
+    blocked.reason,
+    /breaks 5 architecture rule\(s\)[\s\S]*\nddd-ts-kit: 2 more written file\(s\) not checked here/,
+  );
+});
+
+test('with formatOnWrite, every file of a patch is laid out, the first five only checked', () => {
+  const root = project({ formatOnWrite: true });
+  const calls = fakeBiome(root);
+  cliAnswering(root, { 'check-file': { violations: [] } });
+  const files = Array.from({ length: 7 }, (_, index) => `src/platform/note-${index}.ts`);
+  for (const file of files) {
+    put(root, file, 'const a=1\n');
+  }
+  run('post-write', patch(root, ...files.map((file) => `*** Update File: ${file}\n+const a=1`)));
+  assert.equal(calls().length, 7);
 });

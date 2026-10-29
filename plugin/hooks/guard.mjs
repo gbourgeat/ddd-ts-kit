@@ -13,14 +13,18 @@ import {
   openSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { linkedFolder, removeKitFile, writeKitFile } from './kit-files.mjs';
 
 const CONFIG = 'ddd-ts-kit.config.json';
+// The most of the config the guard reads: a larger one is not read, and the guard judges nothing there.
+const CONFIG_BYTES = 256 * 1024;
 // The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
 // the version of the kit: setting a new version of the packages rewrites it.
 const KIT_VERSION = '0.99.0';
@@ -47,13 +51,38 @@ const STORY_INPUTS = [
 // The report a worker keeps current after each commit and before it ends, ignored by git: what the conductor reads when it stops.
 const WORKER_REPORT = '.ddd-ts-kit/report.md';
 const WORKER_AGENT = 'context-builder';
+// The builder of the plugin, as its hooks of SubagentStart and SubagentStop match it: the one counted.
+const BUILDER_AGENT = `ddd-ts-kit:${WORKER_AGENT}`;
+// What the config may say of the guard; anything else is read as enforce.
+const GUARD_MODES = ['off', 'advise', 'enforce'];
 // The host caps SessionStart context at 10 000 characters; a session should start far below it.
 const SESSION_CONTEXT_LIMIT = 3000;
+// What the guard says of a text read from the repository, the plan line or a next step: at most this many characters.
+const QUOTED_LIMIT = 300;
+// The grammars of the names read from the repository that the guard repeats: anything else is not repeated.
+const STORY_ID = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
+const CONTEXT_NAME = /^[a-z][a-z0-9-]*$/;
+const GIT_REF = /^(?!-)[\p{L}\p{N}_./-]+$/u;
+// A space is allowed (a project under "My Projects"); a quote, a backquote, a dollar or a backslash is not.
+const ABSOLUTE_PATH = /^\/[\p{L}\p{N} _@%+=:,./-]*$/u;
+const LABEL = /^[a-z][a-z -]*$/;
+const AGENT_ID = /^[\w-]+$/;
 const COMMIT_DEFAULTS = { maxFiles: 20, maxLines: 600 };
 const COUNTED_FILE_BYTES = 1_000_000;
 // The files Biome formats: with `formatOnWrite` in the config, the project's own Biome lays one out as it is written.
 const FORMATTED_FILE = /\.(?:[cm]?[jt]sx?|jsonc?)$/;
 const FORMAT_TIMEOUT = 5000;
+// The tests of the guard shrink its time limits with DDD_TS_KIT_GUARD_TIME_SCALE (a fiftieth) to reach
+// them with a CLI that sleeps; a user has no reason to set it.
+const TIME_SCALE = timeScale(process.env.DDD_TS_KIT_GUARD_TIME_SCALE);
+// What a session start gives the CLI in all, of the 15 s of its hook: past it, the calls left are skipped.
+const BRIEFING_BUDGET = 10_000;
+const BRIEFING_CUT =
+  'Briefing cut short: the CLI did not answer in time; `npx ddd-ts-kit status` and `npx ddd-ts-kit list` say the rest.';
+// The written files one call of post-write checks, of the 15 s of its hook: a patch of Codex can hold many.
+const POST_WRITE_FILES = 5;
+// The written files one call of pre-write has the CLI judge before they land, of the 5 s of its hook.
+const CLI_WRITE_FILES = 2;
 
 // The contracts in YAML or JSON (openapi/<document>, the form of a route in openapi/forms/, the
 // AsyncAPI document), the event catalog and the split of the contract that `ddd-ts-kit docs`
@@ -216,6 +245,11 @@ const PRISMA_CONTEXT_SCHEMA = /^prisma\/schema\/([a-z][a-z0-9-]*)\.prisma$/;
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
 // Where the guard keeps the state of a worker between two of its calls: the kit's ignored folder.
 const GUARD_STATE = '.ddd-ts-kit/guard';
+// The markers of what was said or refused once, in the guard's folder of the project, kept a week.
+const GUARD_MARKERS = `${GUARD_STATE}/markers`;
+const MARKER_TTL = 7 * 24 * 3600 * 1000;
+// The state of the runs of a builder, by session and agent: kept a week too.
+const BUILDER_STATE = /^(?:turns|before-inline|outside)-[0-9a-f]{16}\.json$/;
 const FREE_OUTPUT = 'Output to /dev/null or to the system temp directory stays free.';
 const EDIT_WITH_TOOLS = `Inside your scope, the editor tools and the shell may both write; outside it, nothing may. ${FREE_OUTPUT}`;
 // The clean install of each package manager: what installs the lockfile as it is.
@@ -346,6 +380,15 @@ const MODES = {
   'subagent-stop': subagentStop,
 };
 
+// The projects this run of the guard has described: a hook finds the same one several times.
+const projects = new Map();
+// The scope files of the story worktrees this run has read, by project root.
+const storyScopes = new Map();
+// The end of the time of a session start for the CLI, and whether a call was skipped or stopped for it.
+let briefingEnds;
+let briefingCut = false;
+// The seconds after which a run of the CLI was stopped, by its command: the stop says it of `check`.
+const timedOut = new Map();
 // The reader of shell commands, loaded only when a worker runs one: every other call of the guard skips its cost.
 let shell;
 // The notice due to a context-builder near its turn limit, said with the decision of the call or alone.
@@ -376,8 +419,13 @@ function sayNotice() {
 }
 
 function session(input) {
+  // A whole number of milliseconds: a time limit of spawnSync is an integer.
+  briefingEnds = Date.now() + Math.round(BRIEFING_BUDGET * TIME_SCALE);
   const directory = input.cwd ?? process.cwd();
   const project = findProject(directory);
+  if (project) {
+    pruneGuardState(project.root);
+  }
   const lines = project ? projectBriefing(project, input) : planPointer(directory);
   if (lines.length === 0) {
     return;
@@ -385,21 +433,12 @@ function session(input) {
   emit({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: lines.join('\n') } });
 }
 
-// A patch of Codex can touch several files: a refusal of any of them wins over a question.
 async function preWrite(input) {
   if (isBuilder(input)) {
     const [first] = writesOf(input);
     await countBuilderCall(input, first && findProject(dirname(first.file)));
   }
-  const pending = pendingOfWriter(input);
-  if (pending) {
-    decide(input, pending.mode === 'advise' ? 'ask' : 'deny', pending.reason);
-    return;
-  }
-  const verdicts = writesOf(input)
-    .map((written) => verdictOn(written, input))
-    .filter(Boolean);
-  const verdict = verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
+  const verdict = writesVerdict(judgedWrites(writesOf(input)), input, () => pendingOfWriter(input));
   if (verdict?.decision !== 'deny') {
     noteCrossings(input);
   }
@@ -431,27 +470,71 @@ function pendingOfWriter(input) {
     return undefined;
   }
   const pending = pendingChangeReason(project, input, []);
-  return pending?.reason ? { mode: project.mode, reason: pending.reason } : undefined;
+  return pending?.reason ? { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: pending.reason } : undefined;
 }
 
-function verdictOn({ file, written, replaced }, input) {
-  const project = findProject(dirname(file));
-  if (!project || project.mode === 'off') {
-    return undefined;
+// The writes of a call in a project the guard judges, each with its project.
+function judgedWrites(writes) {
+  return writes
+    .map((written) => ({ ...written, project: findProject(dirname(written.file)) }))
+    .filter(({ project }) => project && project.mode !== 'off');
+}
+
+// A patch of Codex can touch several files: a refusal of any of them wins over a question. The
+// refusals that start no process come first, so that they hold within the time of the hook; then
+// those the CLI decides; then what `pending` reads with git; then the questions.
+function writesVerdict(writes, input, pending) {
+  return (
+    refusalOf(writes, input, quickRefusal) ??
+    cliVerdict(writes, input) ??
+    pending() ??
+    writes.map(deviationOf).find(Boolean)
+  );
+}
+
+// The first refusal, read file by file until one denies; a question waits for a denial of a later file.
+function refusalOf(writes, input, check) {
+  let asked;
+  for (const written of writes) {
+    const reason = check(written, input);
+    if (reason && written.project.mode !== 'advise') {
+      return { decision: 'deny', reason };
+    }
+    asked ??= reason ? { decision: 'ask', reason } : undefined;
   }
-  const refusal =
+  return asked;
+}
+
+// The first files the CLI may judge (TypeScript, the code of a context: the build gate of a fix is
+// read without it) are judged before the write; the others are left to the check after it, and said.
+function cliVerdict(writes, input) {
+  const judged = writes.filter(
+    ({ project, file }) => /\.(ts|mts|cts)$/.test(file) || insideContexts(project, projectPath(project, file)),
+  );
+  const verdict = refusalOf(judged.slice(0, CLI_WRITE_FILES), input, cliRefusal);
+  if (!verdict && judged.length > CLI_WRITE_FILES) {
+    notice = `ddd-ts-kit: ${judged.length - CLI_WRITE_FILES} more written file(s) not judged before the write here: the check after it reads them.`;
+  }
+  return verdict;
+}
+
+function quickRefusal({ project, file, written, replaced }, input) {
+  return (
     baselineFileReason(project, file) ??
     acceptanceReason(project, input, { file, written, replaced }) ??
-    storyCodeReason(project, file) ??
-    worktreeCodeReason(project, file) ??
     generatedFileReason(project, file) ??
-    testWriterScopeReason(project, file, input) ??
     (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
-    handWrittenRoleReason(project, file) ??
-    dependencyReason(project, { file, written, replaced }, input);
-  if (refusal) {
-    return { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: refusal };
-  }
+    testWriterScopeReason(project, file, input) ??
+    worktreeCodeReason(project, file) ??
+    handWrittenRoleReason(project, file)
+  );
+}
+
+function cliRefusal({ project, file, written, replaced }, input) {
+  return storyCodeReason(project, file) ?? dependencyReason(project, { file, written, replaced }, input);
+}
+
+function deviationOf({ project, file, written, replaced }) {
   const deviation = governedFileReason(project, file) ?? escapeReason(written, replaced);
   return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
@@ -529,10 +612,8 @@ async function codexPatchVerdict(input, command, cwd) {
     return undefined;
   }
   const start = command.indexOf('*** Begin Patch');
-  const verdicts = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd)
-    .map((written) => verdictOn(written, input))
-    .filter(Boolean);
-  return verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
+  const writes = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd);
+  return writesVerdict(judgedWrites(writes), input, () => undefined);
 }
 
 // A context-builder keeps the working directory of its session, so the scope of a worker is found
@@ -615,20 +696,22 @@ function unknownProgramReason(commands) {
 }
 
 function postWrite(input) {
-  const writes = writesOf(input);
-  formatWrites(writes);
-  const errors = writes
-    .filter(({ file }) => isChecked(file))
-    .flatMap(({ file }) => {
-      const project = findProject(dirname(file));
-      return project?.cli && project.mode !== 'off'
-        ? errorsOf(runCli(project, ['check-file', file, '--json'], 12000))
-        : [];
-    });
+  const all = writesOf(input);
+  // Biome lays out every written file, which is quick; the check, which is not, reads the first ones.
+  formatWrites(all);
+  const writes = all.slice(0, POST_WRITE_FILES);
+  const errors = writes.filter(({ file }) => isChecked(file)).flatMap(({ file }) => checkWritten(file));
+  const unchecked =
+    all.length > writes.length
+      ? `ddd-ts-kit: ${all.length - writes.length} more written file(s) not checked here: run \`npx ddd-ts-kit check\``
+      : undefined;
   if (errors.length === 0) {
-    return;
+    return unchecked ? emit({ systemMessage: unchecked }) : undefined;
   }
-  const feedback = `ddd-ts-kit: the file just written breaks ${errors.length} architecture rule(s). Fix them now, do not suppress.\n${describe(errors)}`;
+  const feedback = [
+    `ddd-ts-kit: the file just written breaks ${errors.length} architecture rule(s). Fix them now, do not suppress.\n${describe(errors)}`,
+    ...(unchecked ? [unchecked] : []),
+  ].join('\n');
   // Codex hands the reason of a block to the model in place of the result of the tool.
   if (hostOf(input) === 'codex') {
     return emit({ decision: 'block', reason: feedback });
@@ -637,25 +720,36 @@ function postWrite(input) {
   process.exitCode = 2;
 }
 
+function checkWritten(file) {
+  const project = findProject(dirname(file));
+  return project?.cli && project.mode !== 'off' ? errorsOf(runCli(project, ['check-file', file, '--json'], 12000)) : [];
+}
+
 // With `formatOnWrite` in the config, the Biome the project installed lays out each written file
 // before it is checked, so that the layout is settled at the write and the lint findings that follow
-// a wrapped line come back in the same output. One file, the project's binary only, never `npx biome`.
+// a wrapped line come back in the same output. One file, the bin of the package the project installed
+// only, never `npx biome`.
 function formatWrites(writes) {
   for (const { file } of writes) {
     const project = findProject(dirname(file));
     if (!project?.formatOnWrite || project.mode === 'off' || !FORMATTED_FILE.test(file) || !existsSync(file)) {
       continue;
     }
-    const biome = join(project.root, 'node_modules', '.bin', 'biome');
-    if (existsSync(biome)) {
-      spawnSync(biome, ['format', '--write', file], { cwd: project.root, encoding: 'utf8', timeout: FORMAT_TIMEOUT });
+    const biome = installedBin(join(project.root, 'node_modules', '@biomejs', 'biome'), '@biomejs/biome', 'biome');
+    if (biome) {
+      spawnSync(process.execPath, [biome.bin, 'format', '--write', file], {
+        cwd: project.root,
+        encoding: 'utf8',
+        timeout: FORMAT_TIMEOUT,
+      });
     }
   }
 }
 
-// A context-builder of Claude Code: its tool calls are counted, its runs and stops recorded.
+// The context-builder of the plugin in Claude Code: its tool calls are counted, its runs and stops recorded.
+// An agent of the project named otherwise is held to the scope of a worker (`workerContext`), not counted.
 function isBuilder(input) {
-  return hostOf(input) === 'claude' && String(input.agent_type ?? '').includes(WORKER_AGENT);
+  return hostOf(input) === 'claude' && input.agent_type === BUILDER_AGENT;
 }
 
 async function countBuilderCall(input, project, command) {
@@ -682,11 +776,20 @@ function builderPlaces(input, project) {
   return { state: stateFile('turns', home, input), worker };
 }
 
+// A new run of a builder: the note its last run left before inline code is dropped, since what
+// changed outside its scope since then is the conductor's as much as its own; what that code changed
+// and was not put back stays recorded.
 async function subagentStart(input) {
   const places = isBuilder(input) ? builderPlaces(input, undefined) : undefined;
-  if (places) {
-    (await import('./builder-runs.mjs')).startRun(input, places);
+  if (!places) {
+    return;
   }
+  const worker = readJson(places.state)?.worker;
+  if (typeof worker === 'string') {
+    removeKitFile(stateFile('before-inline', { root: worker }, input));
+    pruneGuardState(worker);
+  }
+  (await import('./builder-runs.mjs')).startRun(input, places);
 }
 
 async function subagentStop(input) {
@@ -713,18 +816,30 @@ function stop(input) {
   if (unfinished) {
     return emit({ decision: 'block', reason: unfinished });
   }
-  const reminders = [commitReminder(project, input, { repeat: false }), designReminder(project, input)].filter(Boolean);
+  const reminders = [
+    timedOutCheck(),
+    commitReminder(project, input, { repeat: false }),
+    designReminder(project, input),
+  ].filter(Boolean);
   // Warnings shown to the user, never a block: the size of a commit and a design departed from are advice.
   if (reminders.length > 0) {
     emit({ systemMessage: reminders.join('\n') });
   }
 }
 
+// A check stopped at its time limit lets the stop through: the session is told it did not finish.
+function timedOutCheck() {
+  const seconds = timedOut.get('check');
+  return seconds === undefined
+    ? undefined
+    : `architecture check timed out after ${seconds} s: run \`npx ddd-ts-kit check\``;
+}
+
 // In the worktree of a story, a done row whose design review cites a name the code does not have,
 // with no compromise listed in the report: said once per session for the same names, never blocking.
 function designReminder(project, input) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || !project.cli || fixOf(project) !== undefined) {
+  const story = storyOf(project);
+  if (story === undefined || !project.cli || fixOf(project) !== undefined) {
     return undefined;
   }
   const design = runCli(project, ['story-check', story, '--json'], 20000)?.design ?? [];
@@ -737,7 +852,7 @@ function designReminder(project, input) {
     )
     .digest('hex')
     .slice(0, 24);
-  if (alreadyRemembered(join(tmpdir(), `ddd-ts-kit-design-${key}`))) {
+  if (alreadyRemembered(markerOf(project, 'design', key))) {
     return undefined;
   }
   const named = design
@@ -750,8 +865,8 @@ function designReminder(project, input) {
 // The session of a story ends on its report: written once the pull request is open, or with what
 // blocks the story. Refused once for the same step, so that a session that cannot go on still stops.
 function unfinishedStoryReason(project, input) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || !project.cli) {
+  const story = storyOf(project);
+  if (story === undefined || !project.cli) {
     return undefined;
   }
   const phases = runCli(project, ['story', story, '--json'], 8000);
@@ -763,10 +878,10 @@ function unfinishedStoryReason(project, input) {
     .update(`${project.root}\n${sessionOf(input)}\n${phases.next}`)
     .digest('hex')
     .slice(0, 24);
-  if (typeof input.stop_hook_active !== 'boolean' && alreadyRemembered(join(tmpdir(), `ddd-ts-kit-story-${key}`))) {
+  if (typeof input.stop_hook_active !== 'boolean' && alreadyRemembered(markerOf(project, 'story', key))) {
     return undefined;
   }
-  return `ddd-ts-kit: story ${story} is not finished. Next: ${phases.next} Go on without asking: a question now is a provisional decision, recorded in docs/architecture/stories/${story}.md. If something truly blocks the story, write its \`## Report\` there with what blocks it and every decision taken so far, then stop.`;
+  return `ddd-ts-kit: story ${story} is not finished. Next: ${quoted(phases.next)} Go on without asking: a question now is a provisional decision, recorded in docs/architecture/stories/${story}.md. If something truly blocks the story, write its \`## Report\` there with what blocks it and every decision taken so far, then stop.`;
 }
 
 function remainingErrors(project) {
@@ -788,7 +903,7 @@ function stopAlreadyRefused(project, input, errors) {
     .digest('hex')
     .slice(0, 24);
 
-  return alreadyRemembered(join(tmpdir(), `ddd-ts-kit-stop-${key}`));
+  return alreadyRemembered(markerOf(project, 'stop', key));
 }
 
 function blockStop(errors) {
@@ -895,20 +1010,33 @@ function findProject(from) {
 }
 
 function describeProject(root) {
-  const config = readJson(join(root, CONFIG)) ?? {};
+  if (!projects.has(root)) {
+    projects.set(root, readProject(root));
+  }
+  return projects.get(root);
+}
+
+// What the guard reads of a project, its config read once: a field of the wrong type is its default.
+function readProject(root) {
+  const { config, tooLarge } = readConfig(join(root, CONFIG));
+  const text = (key, otherwise) =>
+    Object.hasOwn(config, key) && typeof config[key] === 'string' && config[key] !== '' ? config[key] : otherwise;
   return {
     root,
     cli: installedCli(root),
-    sourceRoot: config.sourceRoot ?? 'src',
-    contextsDir: config.contextsDir ?? 'src/contexts',
-    sharedKernelDir: config.sharedKernelDir ?? `${config.sourceRoot ?? 'src'}/shared-kernel`,
+    sourceRoot: text('sourceRoot', 'src'),
+    contextsDir: text('contextsDir', 'src/contexts'),
+    sharedKernelDir: text('sharedKernelDir', `${text('sourceRoot', 'src')}/shared-kernel`),
     // The modules of the model each context declares: one folder of the context holding its layers.
     modules: modulesByContext(config.contexts),
-    platformDir: config.platformDir ?? 'src/platform',
+    platformDir: text('platformDir', 'src/platform'),
     commit: commitLimits(config.commit),
     packageManager: config.stack?.packageManager === 'pnpm' ? 'pnpm' : 'npm',
-    // enforce: block; advise: ask the user; off: silent.
-    mode: process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce',
+    // enforce: block; advise: ask the user; off: silent; any other value, enforce, said at session start.
+    // A config too large to read leaves the guard off there, said at session start too.
+    ...(tooLarge === undefined
+      ? guardMode(process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce')
+      : { mode: 'off', tooLarge }),
     // required (what init writes in a new project): the code of a context is refused in the main checkout
     // of the trunk; advised (the key absent, a project started before): only said.
     worktrees: config.worktrees === 'required' ? 'required' : 'advised',
@@ -919,19 +1047,63 @@ function describeProject(root) {
   };
 }
 
+// The config as an object of JSON, read through one descriptor and never above CONFIG_BYTES; one
+// that cannot be read or parsed is the defaults.
+function readConfig(path) {
+  try {
+    const descriptor = openSync(path, 'r');
+    try {
+      const size = fstatSync(descriptor).size;
+      if (size > CONFIG_BYTES) {
+        return { config: {}, tooLarge: size };
+      }
+      const config = JSON.parse(readFileSync(descriptor, 'utf8'));
+      return { config: isRecord(config) ? config : {} };
+    } finally {
+      closeSync(descriptor);
+    }
+  } catch {
+    return { config: {} };
+  }
+}
+
+function isRecord(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function guardMode(asked) {
+  return GUARD_MODES.includes(asked) ? { mode: asked } : { mode: 'enforce', unknownMode: asked };
+}
+
 // The CLI the project installed, where Node would find it: in the project, or hoisted to a parent
-// by the workspaces of npm or pnpm (a project of a monorepo, the example of this repository).
+// by the workspaces of npm or pnpm (a project of a monorepo, the example of this repository), never
+// above the top of its repository, where a folder another user writes (the temp dir) could hold one.
 function installedCli(root) {
+  const top = repositoryTop(root) ?? root;
   let directory = root;
   for (;;) {
-    const cli = join(directory, 'node_modules', '.bin', 'ddd-ts-kit');
-    if (existsSync(cli)) {
+    const cli = installedBin(join(directory, 'node_modules', 'ddd-ts-kit'), 'ddd-ts-kit', 'ddd-ts-kit');
+    if (cli || directory === top) {
       return cli;
     }
-    if (dirname(directory) === directory) {
-      return undefined;
-    }
     directory = dirname(directory);
+  }
+}
+
+// The bin `command` of the package `name` installed in `home`, and its version: the file its manifest
+// names, inside the package once links are followed. The guard runs it with Node, never through
+// node_modules/.bin, whose entry may be any file a repository commits (and is a shell shim on pnpm).
+function installedBin(home, name, command) {
+  const manifest = readJson(join(home, 'package.json'));
+  if (manifest?.name !== name) {
+    return undefined;
+  }
+  try {
+    const bin = realpathSync(resolve(home, manifest.bin[command]));
+    return bin.startsWith(`${realpathSync(home)}${sep}`) ? { bin, version: manifest.version } : undefined;
+  } catch {
+    // No bin of that name, or a file that is not there.
+    return undefined;
   }
 }
 
@@ -955,6 +1127,7 @@ function projectBriefing(project, input) {
     'Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.',
     'Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).',
     'Read `npx ddd-ts-kit list` (text; `--json` for a script) and the CONTEXT.md of one context instead of browsing the tree.',
+    ...configNotice(project),
     ...(project.mode === 'off' ? [] : versionGap(project)),
     ...planPointer(project.root),
     ...workerNotice(project, input),
@@ -967,9 +1140,24 @@ function projectBriefing(project, input) {
   } else {
     lines.push(installAdvice(project));
   }
+  if (briefingCut) {
+    lines.push(BRIEFING_CUT);
+  }
   const reminder = project.mode === 'off' ? undefined : commitReminder(project, input, { repeat: true });
 
   return reminder ? [...lines, reminder] : lines;
+}
+
+// What the guard could not take of the config as written: a mode it does not know, a file too large.
+function configNotice(project) {
+  if (project.tooLarge !== undefined) {
+    return [
+      `${CONFIG} holds ${Math.round(project.tooLarge / 1024)} KB, more than the ${CONFIG_BYTES / 1024} KB the guard reads: it judges nothing in this project until the config is smaller.`,
+    ];
+  }
+  return project.unknownMode === undefined
+    ? []
+    : [`guard: ${quoted(project.unknownMode)} is not a mode (${GUARD_MODES.join(', ')}): enforce applies.`];
 }
 
 // A worktree of a project that already depends on the kit lacks its install, not the kit.
@@ -986,7 +1174,7 @@ function installAdvice(project) {
 // The skills describe KIT_VERSION while the checks run the CLI the project installed, and the
 // plugin is updated apart from the lockfile. A gap is said at session start, never blocked.
 function versionGap(project) {
-  const installed = readJson(join(project.root, 'node_modules', 'ddd-ts-kit', 'package.json'))?.version;
+  const installed = project.cli?.version;
   if (typeof installed !== 'string' || compatible(installed, KIT_VERSION)) {
     return [];
   }
@@ -1020,17 +1208,46 @@ function planPointer(root) {
   if (plan === undefined) {
     return [];
   }
-  const next = /^Next:\s*(.+)$/m.exec(plan)?.[1]?.trim();
-
+  const next = /^Next:\s*(.+)$/m.exec(plan)?.[1];
   return [
-    `Plan: ${PLAN} (resume with /ddd-ts-kit:start). Next: ${(next ?? 'not stated, read the plan').slice(0, 300)}`,
+    `Plan (${PLAN}): ${next ? quoted(next) : 'no next step stated, read the plan'}. Resume with /ddd-ts-kit:start.`,
   ];
+}
+
+// A text read from the repository (the plan, the files of a story through the CLI) said as data,
+// never as a word of the guard: on one line, without backquote nor double quote, cut, never opening
+// with the prefix of the guard's own decisions, between double quotes.
+function quoted(text) {
+  const flat = String(text)
+    .replace(/[\p{Cf}`"]/gu, '')
+    .replace(/[\s\p{Cc}]+/gu, ' ')
+    .replace(/^(?:\s*ddd-ts-kit\s*:)+/i, '')
+    .trim();
+  return `"${flat.slice(0, QUOTED_LIMIT)}"`;
+}
+
+// The story of the worktree, by an id the CLI would take.
+function storyOf(project) {
+  return named(storyScope(project)?.story, STORY_ID);
+}
+
+// The scope file of a story worktree, read once a run like the config.
+function storyScope(project) {
+  if (!storyScopes.has(project.root)) {
+    storyScopes.set(project.root, readJson(join(project.root, STORY_SCOPE)));
+  }
+  return storyScopes.get(project.root);
+}
+
+// A name read from the repository, when it follows its grammar; else nothing, and it is not repeated.
+function named(value, grammar) {
+  return typeof value === 'string' && grammar.test(value) ? value : undefined;
 }
 
 // In the worktree of a story: the story, its phase and its next step, so that a session resumes it.
 function storyNotice(project) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || project.mode === 'off' || !project.cli) {
+  const story = storyOf(project);
+  if (story === undefined || project.mode === 'off' || !project.cli) {
     return [];
   }
   const phases = runCli(project, ['story', story, '--json'], 6000);
@@ -1040,7 +1257,7 @@ function storyNotice(project) {
   const done = phases.phases.filter(({ met }) => met).map(({ title }) => title);
   const kind = fixOf(project) === undefined ? ['Story', 'story'] : ['Fix', 'fix'];
   return [
-    `${kind[0]} ${story} (skill ddd-ts-kit:${kind[1]}): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ?? 'its pull request'}`,
+    `${kind[0]} ${story} (skill ddd-ts-kit:${kind[1]}): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ? quoted(phases.next) : 'its pull request'}`,
     ...meetingNotice(project),
   ];
 }
@@ -1053,21 +1270,23 @@ function meetingNotice(project) {
     return [];
   }
   const meetings = view.crossings.map(({ stories: [, other], contexts, files, merge }) => {
+    const shown = contexts.filter((name) => named(name, CONTEXT_NAME));
     const parts = [
-      ...(contexts.length === 0 ? [] : [`contexts ${contexts.join(', ')}`]),
+      ...(shown.length === 0 ? [] : [`contexts ${shown.join(', ')}`]),
       ...(files.length === 0 ? [] : [`${files.length} file(s) both change`]),
       ...((merge?.byHand.length ?? 0) === 0 ? [] : [`${merge.byHand.length} conflict(s) to settle by hand`]),
     ];
-    return `It meets story ${other}: ${parts.length === 0 ? 'conflicts merge-trunk settles' : parts.join(', ')}.`;
+    const story = named(other, STORY_ID);
+    return `It meets ${story ? `story ${story}` : 'another open story'}: ${parts.length === 0 ? 'conflicts merge-trunk settles' : parts.join(', ')}.`;
   });
   const trunk = own.trunk?.behind
     ? [
-        `The trunk moved: ${own.trunk.behind} commit(s) of ${own.trunk.ref} to merge in${own.trunk.byHand.length === 0 ? '' : `, ${own.trunk.byHand.length} conflict(s) to settle by hand`}.`,
+        `The trunk moved: ${own.trunk.behind} commit(s) of ${named(own.trunk.ref, GIT_REF) ?? 'the trunk'} to merge in${own.trunk.byHand.length === 0 ? '' : `, ${own.trunk.byHand.length} conflict(s) to settle by hand`}.`,
       ]
     : [];
   const fetched = view.fetched ? Date.parse(view.fetched) : undefined;
   if (fetched !== undefined && Date.now() - fetched > STALE_FETCH) {
-    trunk.push(`The trunk is read as the fetch of ${view.fetched} left it: \`git fetch\` first.`);
+    trunk.push(`The trunk is read as the fetch of ${new Date(fetched).toISOString()} left it: \`git fetch\` first.`);
   }
   return meetings.length + trunk.length === 0
     ? []
@@ -1099,10 +1318,22 @@ function workersToResume(project) {
       ['send-message', 'new-agent'].includes(progress?.next?.action) &&
       (progress.agent || progress.phase !== 'not started'),
   );
-  return stopped.map(
-    ({ branch, context, worktree, progress }) =>
-      `Worker to resume: ${branch ?? worktree} (${progress.phase}${progress.agent ? `, agent ${progress.agent.agentId}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${workers.filter((other) => other.context === context).length > 1 ? ` --worktree ${worktree}` : ''}\`, then send what it prints.`,
-  );
+  return stopped.map((stoppedWorker) => resumeLine(stoppedWorker, workers));
+}
+
+// The line of a worker to resume, when each name it repeats follows its grammar: its worktree is
+// needed only when it names the worker (no branch) or tells two workers of one context apart.
+function resumeLine({ branch, context, worktree, progress }, workers) {
+  const agent = progress.agent ? named(progress.agent.agentId, AGENT_ID) : '';
+  const path = named(worktree, ABSOLUTE_PATH);
+  const shown = branch === undefined ? path : named(branch, GIT_REF);
+  const shared = workers.filter((other) => other.context === context).length > 1;
+  const names = [named(context, CONTEXT_NAME), named(progress.phase, LABEL), agent, shown, shared ? path : ''];
+  if (names.includes(undefined)) {
+    return 'Worker to resume: one whose names the guard does not repeat: `npx ddd-ts-kit status --workers` lists it.';
+  }
+  const where = shared ? ` --worktree ${path.includes(' ') ? `'${path}'` : path}` : '';
+  return `Worker to resume: ${shown} (${progress.phase}${agent ? `, agent ${agent}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${where}\`, then send what it prints.`;
 }
 
 // Read from git's own files, without running git: the worktrees of the repository listed under
@@ -1160,7 +1391,10 @@ function readText(path, otherwise) {
 
 function contextMap(project) {
   const listing = runCli(project, ['list', '--json'], 8000);
-  const text = (listing?.contexts ?? []).map(contextLine).join('\n');
+  const text = (listing?.contexts ?? [])
+    .filter((context) => named(context.name, CONTEXT_NAME))
+    .map(contextLine)
+    .join('\n');
   return text.length > SESSION_CONTEXT_LIMIT
     ? `${text.slice(0, SESSION_CONTEXT_LIMIT)}\n(truncated: run \`npx ddd-ts-kit list\` for the rest)`
     : text;
@@ -1168,9 +1402,14 @@ function contextMap(project) {
 
 function contextLine(context) {
   const size = (key) => (context[key] ?? []).length;
-  const upstreams = (context.upstreams ?? []).map((upstream) => upstream.context ?? upstream).join(', ') || 'none';
+  const upstreams =
+    (context.upstreams ?? [])
+      .map((upstream) => upstream.context ?? upstream)
+      .filter((name) => named(name, CONTEXT_NAME))
+      .join(', ') || 'none';
+  const classification = named(context.classification, CONTEXT_NAME) ?? 'unclassified';
 
-  return `${context.name} [${context.classification}] upstreams: ${upstreams}; glossary: ${context.glossary ?? 0} terms; ${size('aggregates')} aggregates, ${size('commands')} commands, ${size('queries')} queries, ${size('publishedEvents')} published events`;
+  return `${context.name} [${classification}] upstreams: ${upstreams}; glossary: ${context.glossary ?? 0} terms; ${size('aggregates')} aggregates, ${size('commands')} commands, ${size('queries')} queries, ${size('publishedEvents')} published events`;
 }
 
 function generatedFileReason(project, file) {
@@ -1212,7 +1451,7 @@ function isBarrel(project, path) {
  * (test/unit/<module>/...); 0.86 and 0.87 put it under domain/ and application/ (application/<module>/...).
  */
 function outsideItsModule(project, context, parts) {
-  const modules = project.modules?.[context] ?? [];
+  const modules = project.modules[context] ?? [];
   const [first, second, ...rest] = parts;
   if (modules.includes(first) && ['domain', 'application', 'infrastructure', 'presentation'].includes(second)) {
     return [second, ...rest];
@@ -1223,12 +1462,13 @@ function outsideItsModule(project, context, parts) {
   return (first === 'domain' || first === 'application') && modules.includes(second) ? [first, ...rest] : parts;
 }
 
+// By context name, in a map without prototype: a context named `constructor` or `__proto__` is a name.
 function modulesByContext(contexts) {
-  const named = (context) => {
-    const modules = context?.modules;
-    return modules && typeof modules === 'object' && !Array.isArray(modules) ? Object.keys(modules) : [];
-  };
-  return Object.fromEntries(Object.entries(contexts ?? {}).map(([name, context]) => [name, named(context)]));
+  const modules = Object.create(null);
+  for (const [name, context] of Object.entries(isRecord(contexts) ? contexts : {})) {
+    modules[name] = isRecord(context?.modules) ? Object.keys(context.modules) : [];
+  }
+  return modules;
 }
 
 function insideContexts(project, path) {
@@ -1325,13 +1565,13 @@ function isJudge(input) {
 // The fix of the worktree, when its story.json says `kind: 'fix'` (absent, a story): its code, whether
 // its lock is written, and the regression specs the lock lists, relative to the project.
 function fixOf(project) {
-  const scope = readJson(join(project.root, STORY_SCOPE));
-  if (typeof scope?.story !== 'string' || scope.kind !== 'fix') {
+  const story = storyOf(project);
+  if (story === undefined || storyScope(project).kind !== 'fix') {
     return undefined;
   }
-  const lock = join(project.root, 'test/acceptance', `${scope.story.toLowerCase()}.acceptance.lock.json`);
+  const lock = join(project.root, 'test/acceptance', `${story.toLowerCase()}.acceptance.lock.json`);
   const files = (readJson(lock)?.regression ?? []).map((test) => test?.file).filter((file) => typeof file === 'string');
-  return { story: scope.story, locked: existsSync(lock), files: [...new Set(files)] };
+  return { story, locked: existsSync(lock), files: [...new Set(files)] };
 }
 
 // The regression spec of a fix, once locked, is the proof of the fix: a sub-agent never rewrites it. The
@@ -1693,7 +1933,12 @@ function forYouWith(view, own, other) {
 }
 
 function crossingLine(other, forYou, path) {
-  const where = `${other.story} (${other.branch ?? 'detached'}, ${other.worktree})`;
+  const [story, branch] = [named(other.story, STORY_ID), named(other.branch ?? 'detached', GIT_REF)];
+  const worktree = named(other.worktree, ABSOLUTE_PATH);
+  const where =
+    story === undefined || branch === undefined
+      ? 'Another open story'
+      : `${story} (${worktree === undefined ? branch : `${branch}, ${worktree}`})`;
   return forYou.includes(path)
     ? `${where} changes ${path} too, and merging its branch into this one now leaves that file to settle by hand.`
     : `${where} changes ${path} too.`;
@@ -1704,7 +1949,7 @@ function crossingMarker(project, input, subject) {
     .update(`${project.root}\n${sessionOf(input)}\n${subject}`)
     .digest('hex')
     .slice(0, 24);
-  return join(tmpdir(), `ddd-ts-kit-crossing-${key}`);
+  return markerOf(project, 'crossing', key);
 }
 
 // What `stories --json` says, read again once its copy in the guard's folder is a minute old,
@@ -1732,8 +1977,8 @@ function storiesOf(project) {
 }
 
 function storyBuildReason(project) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string') {
+  const story = storyOf(project);
+  if (story === undefined) {
     return undefined;
   }
   const fix = fixOf(project);
@@ -1755,7 +2000,7 @@ function storyBuildReason(project) {
     }
     return undefined;
   }
-  return `The code of story ${story} waits for its build gate: a design review section per row and the acceptance written and locked, before any code. Next: ${gate.next} (\`npx ddd-ts-kit story ${story}\` shows every phase).`;
+  return `The code of story ${story} waits for its build gate: a design review section per row and the acceptance written and locked, before any code. Next: ${quoted(gate.next)} (\`npx ddd-ts-kit story ${story}\` shows every phase).`;
 }
 
 // The build gate of a fix is its proof: the regression spec written, listed and locked; no row, no review.
@@ -2256,7 +2501,7 @@ function aggregateOption(args) {
 // The repository port of an aggregate, at the level of the context or in a module of its model.
 function hasRepository(project, context, aggregate) {
   const name = aggregate.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-  return ['', ...(project.modules?.[context] ?? [])].some((module) =>
+  return ['', ...(project.modules[context] ?? [])].some((module) =>
     existsSync(
       join(project.root, project.contextsDir, context, module, 'domain', 'repositories', `${name}.repository.ts`),
     ),
@@ -2857,8 +3102,7 @@ function stateFile(kind, project, input) {
 }
 
 function writeState(file, state) {
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, JSON.stringify(state), { mode: 0o600 });
+  writeKitFile(file, JSON.stringify(state));
 }
 
 function describePlace(project, place) {
@@ -2904,13 +3148,37 @@ function isChecked(file) {
   return /\.(ts|mts|cts)$/.test(file) || file.endsWith('CONTEXT.md');
 }
 
+// A run of the CLI, stopped at its time limit, and within what is left of a session start: past
+// that, it is not started.
 function runCli(project, args, timeout) {
-  const run = spawnSync(project.cli, args, { cwd: project.root, encoding: 'utf8', timeout });
+  const left = briefingEnds === undefined ? Number.POSITIVE_INFINITY : briefingEnds - Date.now();
+  const limit = Math.min(Math.round(timeout * TIME_SCALE), left);
+  if (limit <= 0) {
+    briefingCut = true;
+    return undefined;
+  }
+  const run = spawnSync(process.execPath, [project.cli.bin, ...args], {
+    cwd: project.root,
+    encoding: 'utf8',
+    timeout: limit,
+  });
+  if (run.error?.code === 'ETIMEDOUT') {
+    timedOut.set(args[0], Math.round(limit / 1000));
+    briefingCut = briefingEnds !== undefined;
+  }
+  // A report is an object of JSON: no output (a run that could not start, whose null parses as null),
+  // `null` or a bare value is none.
   try {
-    return JSON.parse(run.stdout ?? '');
+    const report = JSON.parse(run.stdout);
+    return isRecord(report) ? report : undefined;
   } catch {
     return undefined;
   }
+}
+
+function timeScale(asked) {
+  const scale = Number(asked);
+  return scale > 0 && scale <= 1 ? scale : 1;
 }
 
 function errorsOf(report) {
@@ -3048,25 +3316,57 @@ function reminderMarker(project, input) {
     .update(`${project.root}\n${sessionOf(input)}`)
     .digest('hex')
     .slice(0, 24);
-  return join(tmpdir(), `ddd-ts-kit-commit-reminder-${key}`);
+  return markerOf(project, 'commit-reminder', key);
 }
 
-// Leaves the marker and says whether it was there, in one exclusive creation: the temp dir is shared,
-// so the marker is private and never follows nor rewrites a file put under its name.
+function markerOf(project, kind, key) {
+  return join(project.root, GUARD_MARKERS, `${kind}-${key}`);
+}
+
+// Leaves the marker and says whether it was there, in one exclusive creation that never follows nor
+// rewrites a file put under its name, in a folder that is no link. Only the marker found there counts
+// as remembered: one that cannot be left (a folder that is a link, a checkout that cannot be written)
+// leaves what it guards said, or refused, again.
 function alreadyRemembered(marker) {
+  if (linkedFolder(marker)) {
+    return false;
+  }
+  try {
+    mkdirSync(dirname(marker), { recursive: true });
+  } catch {
+    return false;
+  }
   try {
     writeFileSync(marker, '', { flag: 'wx', mode: 0o600 });
-
     return false;
   } catch (error) {
-    // Without a marker the reminder is only said more often.
     return error?.code === 'EEXIST';
   }
 }
 
 function forget(marker) {
-  rmSync(marker, { force: true });
+  removeKitFile(marker);
   return undefined;
+}
+
+// The markers and the runs of builders a week old, left by sessions and agents that ended, never
+// through a folder that is a link.
+function pruneGuardState(root) {
+  const state = join(root, GUARD_STATE);
+  const markers = join(root, GUARD_MARKERS);
+  const files = [...filesIn(state).filter((file) => BUILDER_STATE.test(relative(state, file))), ...filesIn(markers)];
+  const before = Date.now() - MARKER_TTL;
+  for (const file of files.filter((path) => statSync(path, { throwIfNoEntry: false })?.mtimeMs < before)) {
+    removeKitFile(file);
+  }
+}
+
+function filesIn(folder) {
+  try {
+    return readdirSync(folder).map((name) => join(folder, name));
+  } catch {
+    return [];
+  }
 }
 
 function emit(output) {

@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:d61e96dcd756c29b -->
+<!-- translation-of: coding-agents.md sha256:b37bf26b36563836 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -78,12 +78,15 @@ pipeline) et, à un sous-agent, un `git config` qui fixe une valeur ou un `git -
 lance une commande dans chaque *checkout* (`core.fsmonitor`, `core.pager`, `core.editor`,
 `core.sshCommand`, un `alias.*`, un pilote *diff* ou *filter*), demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
-écrit et renvoie les violations avec leur correction (avec `"dependenciesBeforeWrite": true`, à
+écrit et renvoie les violations avec leur correction (les cinq premiers d'un *patch* de Codex,
+les autres nommés comme non vérifiés ; avec `"dependenciesBeforeWrite": true`, à
 l'essai, il refuse avant l'écriture un nouvel import qui enfreint une règle de dépendance), et
 refuse de terminer tant que des
-erreurs d'architecture restent. Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
-d'abord le Biome que le projet a installé sur le fichier écrit (`node_modules/.bin/biome format
---write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
+erreurs d'architecture restent (une vérification qui ne finit pas à temps laisse la session
+terminer et le dit ; un début de session qui passe dix secondes d'appels à la CLI saute ceux qui
+restent et dit qu'il a été écourté). Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
+d'abord le Biome que le projet a installé sur le fichier écrit (le *bin* de son paquet
+`@biomejs/biome`, `format --write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
 l'écriture et que les constats du lint qui suivent une ligne repliée reviennent dans la même
 sortie ; une exécution qui échoue ne change rien. Il rappelle, sans bloquer, quand les changements non commités
 dépassent la taille conseillée d'un commit, et dans le worktree d'un worker
@@ -108,7 +111,9 @@ du *shell* tient le `domain-test-writer` aux chemins d'un test, le code d'une *s
 de construction, et toute écriture à la main d'un fichier généré ou de la *baseline* par n'importe
 quelle session, chacune par les endroits qu'une commande écrit plutôt que par son texte ; un
 `apply_patch` de Codex envoyé par le *shell* est lu comme un *patch*.
-Pour un `context-builder`, il compte les appels d'outils dans ces mêmes *hooks* et avertit
+Pour un `context-builder` (l'agent du *plugin*, `ddd-ts-kit:context-builder` : un agent du projet
+nommé `context-builder` sans ce préfixe est tenu à la portée de son *worktree*, mais ni compté ni
+enregistré), il compte les appels d'outils dans ces mêmes *hooks* et avertit
 l'agent deux fois avant sa limite de tours, enregistre ses exécutions dans son *worktree*
 (`.ddd-ts-kit/agent.json`), et écoute deux événements rares de Claude Code, filtrés sur cet agent :
 `SubagentStart` (un lancement ou une reprise démarre un nouveau compte) et `SubagentStop` (quand il
@@ -137,7 +142,7 @@ chemin (`cd`, `pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `
 checkout`/`stash`), ou une redirection vers un
 fichier, est une écriture, que seuls la CLI et cet agent font. Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
-panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
+panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt), et n'énumère pas les écritures hors du *worktree* d'un code qu'il ne peut pas lire ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
 
 Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les six

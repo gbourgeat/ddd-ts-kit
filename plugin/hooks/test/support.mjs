@@ -3,19 +3,21 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { after } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // The folder of the hooks, above this one.
 export const here = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const guard = join(here, 'guard.mjs');
 export const cli = join(here, '..', '..', 'packages', 'cli', 'dist', 'bin.js');
+// The built CLI as a module a launcher imports: it reads its arguments from the process, as its bin does.
+export const cliModule = pathToFileURL(cli).href;
 
 // Everything these tests write lives under one directory, removed when they end, passed or failed:
-// the projects, and the temporary directory the guard is given for its commit reminder markers.
+// the projects, and the temporary directory the guard is given (a worker's free place for its output).
 export const workspace = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-guard-'));
 export const guardTemp = join(workspace, 'tmp');
 
@@ -40,25 +42,59 @@ export function directory(label) {
   return mkdtempSync(join(workspace, `${label}-`));
 }
 
-// A launcher like the one npm writes: the compiled entry file itself is not executable.
-export function launcher(root) {
+// The CLI installed as npm installs it, the package ddd-ts-kit in node_modules: the guard runs the
+// bin its manifest names, with Node. `source` is that bin, by default one that hands every command
+// to the built CLI.
+export function launcher(root, source = `await import(${JSON.stringify(cliModule)});\n`) {
+  installed(root, { name: 'ddd-ts-kit', bin: { 'ddd-ts-kit': 'bin.mjs' }, source });
+}
+
+// A package of node_modules with its manifest and its one bin file, `bin.mjs`, linked from
+// node_modules/.bin under each command of `bin` as npm links it.
+export function installed(root, { name, bin, source }) {
+  const home = join(root, 'node_modules', ...name.split('/'));
+  mkdirSync(home, { recursive: true });
+  writeFileSync(join(home, 'package.json'), JSON.stringify({ name, bin }));
+  writeFileSync(join(home, 'bin.mjs'), `#!/usr/bin/env node\n${source}`, { mode: 0o755 });
   mkdirSync(join(root, 'node_modules', '.bin'), { recursive: true });
-  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), `#!/bin/sh\nexec node "${cli}" "$@"\n`, {
-    mode: 0o755,
-  });
+  for (const command of Object.keys(bin)) {
+    rmSync(join(root, 'node_modules', '.bin', command), { force: true });
+    symlinkSync(join('..', name, 'bin.mjs'), join(root, 'node_modules', '.bin', command));
+  }
+}
+
+// The version the manifest of the installed CLI states.
+export function installedVersion(root, version) {
+  const path = join(root, 'node_modules', 'ddd-ts-kit', 'package.json');
+  writeFileSync(path, JSON.stringify({ ...JSON.parse(readFileSync(path, 'utf8')), version }));
 }
 
 // A CLI of the project that answers some of its commands with the report given, and hands every other
-// command to the built CLI.
-export function cliAnswering(root, answers) {
+// command to the built CLI; a command of `delays` first sleeps that many milliseconds.
+export function cliAnswering(root, answers, delays = {}) {
   const reports = join(root, 'node_modules', '.reports');
   mkdirSync(reports, { recursive: true });
   for (const [command, report] of Object.entries(answers)) {
     writeFileSync(join(reports, command), JSON.stringify(report));
   }
-  const answering = `#!/bin/sh\nif [ -f "${reports}/$1" ]; then cat "${reports}/$1"; exit 0; fi\nexec node "${cli}" "$@"\n`;
-  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), answering, { mode: 0o755 });
+  for (const [command, ms] of Object.entries(delays)) {
+    writeFileSync(join(reports, `${command}.delay`), String(ms));
+  }
+  launcher(
+    root,
+    [
+      "import { existsSync, readFileSync } from 'node:fs';",
+      `const report = ${JSON.stringify(reports)} + '/' + process.argv[2];`,
+      "const delay = existsSync(`${report}.delay`) ? Number(readFileSync(`${report}.delay`, 'utf8')) : 0;",
+      'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delay);',
+      `if (existsSync(report)) process.stdout.write(readFileSync(report, 'utf8')); else await import(${JSON.stringify(cliModule)});`,
+      '',
+    ].join('\n'),
+  );
 }
+
+// The guard with its time limits shrunk to a fiftieth: a CLI that sleeps reaches them in a test.
+export const SHORT_TIMES = { DDD_TS_KIT_GUARD_TIME_SCALE: '0.02' };
 
 export function patchConfig(root, patch) {
   const path = join(root, 'ddd-ts-kit.config.json');
@@ -142,9 +178,10 @@ export function edit(file, { from, to }, extra = {}) {
   };
 }
 
+// A project committed in a repository of its own, ignoring what init's .gitignore ignores of the kit.
 export function committed(config = {}) {
   const root = project(config);
-  writeFileSync(join(root, '.gitignore'), 'node_modules\n');
+  writeFileSync(join(root, '.gitignore'), 'node_modules\n.ddd-ts-kit/\n');
   git(root, 'init', '--quiet');
   git(root, 'add', '--all');
   git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');

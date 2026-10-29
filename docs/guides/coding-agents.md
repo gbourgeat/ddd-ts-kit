@@ -76,10 +76,12 @@ of the pipeline) and, to a sub-agent, a `git config` that sets a value or a `git
 runs a command in every checkout (`core.fsmonitor`, `core.pager`, `core.editor`, `core.sshCommand`,
 an `alias.*`, a diff or filter driver), asks the
 project owner before a suppression, a skipped test or a change of the rules is written, checks
-every written file and returns the violations with their fix (with `"dependenciesBeforeWrite": true`, on trial,
+every written file and returns the violations with their fix (the first five of a Codex patch, the
+others named as not checked; with `"dependenciesBeforeWrite": true`, on trial,
 it refuses before the write a new import that breaks a dependency rule), and refuses to finish while
-architecture errors remain. With `"formatOnWrite": true` in the config (written by `init` for a new project), it first runs the Biome
-the project installed on the written file (`node_modules/.bin/biome format --write`, one file,
+architecture errors remain (a check that does not end in time lets the session finish and says so;
+a session start past ten seconds of CLI calls skips the ones left and says it was cut short). With `"formatOnWrite": true` in the config (written by `init` for a new project), it first runs the Biome
+the project installed on the written file (the bin of its `@biomejs/biome` package, `format --write`, one file,
 never another formatter), so that the layout is settled at the write and the lint findings
 that follow a wrapped line come back in the same output; a run that fails changes nothing. It reminds, without blocking, when the uncommitted changes exceed
 the advised size of a commit, and in a worker's worktree (`.ddd-ts-kit/worker.json`) it
@@ -101,7 +103,9 @@ heredoc) changed a file outside it, and refuses a dependency change and another 
 code of a story to its build gate, and every session's hand-writing of a generated file or the
 baseline, each by the places a command writes rather than its text; a Codex `apply_patch` sent
 through the shell is read as a patch.
-For a `context-builder`, it counts the tool calls inside those same hooks and warns the agent
+For a `context-builder` (the agent of the plugin, `ddd-ts-kit:context-builder`: an agent of the project
+named `context-builder` without that prefix is held to the scope of its worktree, but neither counted nor
+recorded), it counts the tool calls inside those same hooks and warns the agent
 twice before its turn limit, records its runs in its worktree (`.ddd-ts-kit/agent.json`), and
 listens to two rare events of Claude Code, filtered by that agent: `SubagentStart` (a launch or a
 resume starts a new count) and `SubagentStop` (when it ends on its own, it is kept going once to
@@ -125,7 +129,7 @@ refused: a command may move or check a path (`cd`, `pushd`, `popd`, `pwd`, `test
 `show`, `status`) or run the kit (`ddd-ts-kit`, `npx ddd-ts-kit`); any other program (a bare `npx`
 or `pnpm`, `git checkout`/`stash`), or a redirection to a file, is a write, which only the CLI and
 that agent make. No hook
-runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
+runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository), and does not enumerate the writes outside the worktree of code it cannot read; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
 Each agent gets what its host runs. The skills work in all three. The six agents are sub-agents
