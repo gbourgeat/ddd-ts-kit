@@ -143,12 +143,12 @@ export class ConfigInspection {
         ];
   }
 
-  /** Another value is read as `js`: the config says something no tool does. */
-  /** A directory the generators write in that leads out of the project: every command but check refuses the config. */
+  /** A directory the generators write in that leads out of the project: every command that writes refuses the config. */
   projectDirectories(): Violation[] {
     return leavingDirectories(rawConfig(this.project)).map(({ key, message, fix }) => this.inConfig(key, message, fix));
   }
 
+  /** Another value is read as `js`: the config says something no tool does. */
   importExtension(): Violation[] {
     const { importExtension } = this.project.config;
 
