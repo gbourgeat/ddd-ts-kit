@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:090dba0eb038537b -->
+<!-- translation-of: identity.md sha256:51d257df7f08952b -->
 
 # Identité : Keycloak ou simple OIDC et JWT
 
@@ -154,9 +154,9 @@ plus bas.
 | | Keycloak avec le *preset* | Tout fournisseur OIDC avec `JwtAuthenticator` | `--authn none` |
 |---|---|---|---|
 | Ce que c'est | fournisseur d'identité open source, Apache-2.0, projet en incubation à la CNCF ; dernière version 26.8.0 (2026-10-01) | tout émetteur de JWT signés avec un point d'accès JWKS : un service d'identité hébergé, un autre serveur auto-hébergé, un service de jetons interne | un authentificateur de développement qui lit un en-tête ; il lève une erreur en production |
-| Configuration dans le kit | URL de base, realm, audience, identifiant de client et *claim* de *tenant* facultatifs | URL du jeu de clés ou une clé, émetteur, audience, algorithmes autorisés, `toActor` facultatif | aucune |
+| Configuration dans le kit | URL de base, realm, audience, identifiant de client et *claim* de *tenant* facultatifs, `requireExpiry` (`true` par défaut) | URL du jeu de clés ou une clé, émetteur, audience, algorithmes autorisés, `requireExpiry` (`true` par défaut), `toActor` facultatif | aucune |
 | Émetteur et jeu de clés | déduits de l'URL de base et du realm | donnés explicitement | sans objet |
-| Rôles | les rôles du realm, plus les rôles de client d'un client quand il est nommé | le premier *claim* présent parmi `realm_access.roles`, `roles`, `scope`, jamais fusionnés ; ou votre `toActor` | ce que dit l'en-tête |
+| Rôles | les rôles du realm, plus les rôles de client d'un client quand il est nommé | `realm_access.roles`, sinon `roles`, jamais fusionnés et jamais `scope` ; ou votre `toActor` | ce que dit l'en-tête |
 | *Tenant* | un *claim* texte ; une liste ou le *claim* `organization` : un seul élément nomme le *tenant*, plusieurs forment l'attribut `tenants`, parmi lesquels une requête HTTP en nomme un | la même chose, depuis le *claim* de *tenant* (`tenant_id` par défaut) | ce que dit l'en-tête |
 | Comptes de service | reconnus (`preferred_username` commençant par `service-account-`) | traduits par votre `toActor` | sans objet |
 | Développement local | `init --authn keycloak` ajoute un service compose et un fichier de realm avec des utilisateurs de démonstration | vous apportez le fournisseur, ou signez vous-même des jetons de test | immédiat |
@@ -188,10 +188,12 @@ Tout se trouve dans [`@ddd-ts-kit/auth`](../../packages/auth/README.fr.md), entr
 *peer* facultative).
 
 **L'authentificateur générique** vérifie la signature, l'émetteur, l'audience, l'expiration et
-l'algorithme. Les familles d'algorithmes asymétriques seulement, sauf indication contraire, et
-`alg: none` est toujours refusé. Un jeton refusé lève une seule erreur avec un code de raison
-(`TOKEN_EXPIRED`, `CLAIM_MISMATCH`, `BAD_SIGNATURE`, `ALGORITHM_NOT_ALLOWED`, `UNKNOWN_KEY`,
-`MALFORMED_TOKEN`, `UNSUPPORTED_TOKEN`, `NO_SUBJECT`). Un jeu de clés qui ne peut pas être
+l'algorithme. Un jeton sans `exp` est refusé, sauf si `requireExpiry: false` dit que les jetons
+de l'émetteur n'expirent jamais. Les familles d'algorithmes asymétriques seulement, sauf
+indication contraire (`DEFAULT_JWT_ALGORITHMS`), et `alg: none` est toujours refusé. Un jeton
+refusé lève une seule erreur avec un code de raison (`TOKEN_EXPIRED`, `NO_EXPIRY`,
+`CLAIM_MISMATCH`, `BAD_SIGNATURE`, `ALGORITHM_NOT_ALLOWED`, `UNKNOWN_KEY`, `MALFORMED_TOKEN`,
+`UNSUPPORTED_TOKEN`, `NO_SUBJECT`). Un jeu de clés qui ne peut pas être
 récupéré n'est pas un refus : il reçoit une réponse 5xx. Rien du jeton n'est gardé dans l'acteur
 ni dans la session, et la clé de vérification n'est pas une propriété de l'objet, si bien que
 journaliser l'authentificateur ne montre aucune clé.
@@ -324,8 +326,9 @@ n'est pas exécuté contre un vrai Keycloak par le *pipeline* du kit. Voir
   *claim* `organization` : elles sont les `tenants` de l'acteur, et chaque requête HTTP nomme
   celui dans lequel elle travaille (`x-tenant-id`) ; une requête sans lui ne travaille dans aucun
   *tenant*.
-- **Une portée n'est pas un rôle.** La correspondance par défaut ne fusionne jamais `scope` avec
-  les rôles ; ne le contournez pas, écrivez un `toActor`.
+- **Une portée n'est pas un rôle.** La correspondance par défaut ne lit jamais `scope` comme des
+  rôles : un jeton qui ne porte que des portées donne un acteur sans rôle. Un fournisseur dont
+  les jetons ne portent aucun *claim* de rôle a besoin d'un `toActor` qui les fait correspondre.
 - **Le realm généré et l'authentificateur de développement par en-tête sont pour un usage
   local.** Le second lève une erreur en production, à dessein.
 - **L'authentification n'est pas l'autorisation.** Le *preset* remplit `actor.roles` ; ce qu'un

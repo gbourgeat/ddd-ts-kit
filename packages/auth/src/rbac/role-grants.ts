@@ -45,6 +45,11 @@ export class RoleGrants {
     return this.own.has(role);
   }
 
+  /** The roles that include this one, at any distance. */
+  includersOf(role: string): readonly string[] {
+    return [...this.included].filter(([, lineage]) => lineage.includes(role)).map(([includer]) => includer);
+  }
+
   /** Everything the role grants: its own grants, then those of each role it includes. */
   patternsOf(role: string): readonly string[] {
     return [...new Set(this.selfAndIncluded(role).flatMap((each) => this.own.get(each) ?? []))];

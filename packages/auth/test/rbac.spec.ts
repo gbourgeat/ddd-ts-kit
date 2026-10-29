@@ -271,4 +271,78 @@ describe('RoleBasedAuthorizer and the system actor', () => {
     expect((await authorizer.check({ actor: job, permission: issue })).allowed).toBe(false);
     expect((await authorizer.check({ actor: { ...bob, roles: [] }, permission: read })).allowed).toBe(false);
   });
+
+  it('a user whose roles name the system role does not hold what the system holds', async () => {
+    const authorizer = new RoleBasedAuthorizer({ roles: { ...roles, automation: [read] }, systemRole: 'automation' });
+    const impostor: Actor = { ...bob, roles: ['automation'] };
+
+    const decision = await authorizer.check({ actor: impostor, permission: read });
+    const scope = await authorizer.listAccessible({ actor: impostor, permission: read, resourceType: 'invoice' });
+
+    expect(decision).toEqual({ allowed: false, reason: 'NO_MATCHING_ROLE' });
+    expect(scope).toEqual({ kind: 'none' });
+  });
+
+  it('a user whose roles name the system role keeps what its other roles grant', async () => {
+    const authorizer = new RoleBasedAuthorizer({ roles: { ...roles, automation: [issue] }, systemRole: 'automation' });
+    const clerk: Actor = { ...bob, roles: ['clerk', 'automation'] };
+
+    const reading = await authorizer.check({ actor: clerk, permission: read });
+    const issuing = await authorizer.check({ actor: clerk, permission: issue });
+
+    expect(reading).toEqual({ allowed: true });
+    expect(issuing).toEqual({ allowed: false, reason: 'NO_MATCHING_ROLE' });
+  });
+
+  it('refuses a role that inherits the system role, at any distance', () => {
+    const grants = { ...roles, lead: [], automation: ['*'] };
+
+    const direct = () =>
+      new RoleBasedAuthorizer({ roles: grants, inherits: { clerk: ['automation'] }, systemRole: 'automation' });
+
+    const transitive = () =>
+      new RoleBasedAuthorizer({
+        roles: grants,
+        inherits: { clerk: ['lead'], lead: ['automation'] },
+        systemRole: 'automation',
+      });
+
+    expect(direct).toThrow(
+      new AuthorizationSetupError(
+        'Role "clerk" inherits "automation", the role of the system: only a system actor holds what it grants.',
+      ),
+    );
+
+    expect(transitive).toThrow(AuthorizationSetupError);
+    expect(transitive).toThrow(/inherits "automation", the role of the system/);
+  });
+
+  it('lets the system role inherit other roles', async () => {
+    const authorizer = new RoleBasedAuthorizer({
+      roles: { ...roles, automation: [] },
+      inherits: { automation: ['clerk'] },
+      systemRole: 'automation',
+    });
+
+    const decision = await authorizer.check({ actor: systemActor('invoice-reminder'), permission: read });
+
+    expect(decision).toEqual({ allowed: true });
+  });
+
+  it('a user whose roles name the system role does not act across tenants through it', async () => {
+    const authorizer = new RoleBasedAuthorizer({
+      roles: { ...roles, automation: ['*'] },
+      tenantOf: tenantOfContext,
+      crossTenantRoles: ['automation'],
+      systemRole: 'automation',
+    });
+
+    const decision = await authorizer.check({
+      actor: { ...ada, roles: ['clerk', 'automation'] },
+      permission: read,
+      context: { tenantId: 'globex' },
+    });
+
+    expect(decision).toEqual({ allowed: false, reason: 'TENANT_MISMATCH' });
+  });
 });
