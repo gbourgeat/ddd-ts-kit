@@ -44,6 +44,23 @@ describe('verify-slice', () => {
     expect(result.stdout).toContain('next: fix the causes above, then run verify-slice again');
   });
 
+  it('reads --since once as the commit it names, a branch named -x included, for every step', () => {
+    withScripts('node -e ""');
+    git(root, 'update-ref', 'refs/heads/-x', 'main');
+    git(root, 'switch', '--quiet', '--create', 'build/billing');
+    write(root, SERVICE, IMPURE);
+
+    const result = cli(root, 'verify-slice', 'billing', '--since=-x', '--json');
+
+    expect(result.stderr).toBe('');
+    expect(result.code).toBe(1);
+
+    expect(result.json()).toMatchObject({
+      since: '-x',
+      check: { violations: expect.arrayContaining([expect.objectContaining({ file: SERVICE })]) },
+    });
+  });
+
   it('refuses a --since that names no commit before any step runs', () => {
     const marker = path.join(root, 'regenerated.txt');
 

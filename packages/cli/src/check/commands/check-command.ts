@@ -22,12 +22,16 @@ import type { Violation } from '../model/violation';
 import { loadLooseProject } from '../project/load-loose-project';
 import { loadProject } from '../project/load-project';
 import { toPosix } from '../project/to-posix';
+import { knownCommit } from '../../commit/known-commit';
 import { changedFiles } from './changed-files';
 import { isReportedSince } from './is-reported-since';
 import { knownRules } from './known-rules';
 import { selfCheck } from './self-check';
 
 const FORMATS: readonly CheckFormat[] = ['text', 'json', 'github', 'gitlab'];
+
+const CHANGED_SINCE_FIX =
+  'Run it in a git repository and name a branch, a tag or a commit git knows (`git fetch origin` first in CI, with enough history): `--changed-since origin/main`.';
 
 export const checkCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
@@ -94,7 +98,7 @@ function checkProject(args: Arguments, rules: readonly string[]): CheckResult {
   );
 
   const ref = args.text('changed-since');
-  const changed = ref === undefined ? undefined : changedFiles(root, ref);
+  const changed = ref === undefined ? undefined : changedFiles(root, knownCommit(root, ref, CHANGED_SINCE_FIX));
 
   const reported = result.violations.filter(
     (violation) => isInScope(violation, scopes) && isReportedSince(violation, changed),

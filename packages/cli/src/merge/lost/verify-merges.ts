@@ -19,6 +19,8 @@ export interface MergesToVerify {
   /** One commit: a merge commit, or a squash commit with `theirs`. */
   readonly commit?: string;
   readonly since?: string;
+  /** The commit `since` names, when the caller resolved it already. */
+  readonly sinceCommit?: string;
   readonly theirs?: string;
   readonly base?: string;
 }
@@ -29,7 +31,7 @@ export interface MergesToVerify {
  */
 export function verifyMerges(request: MergesToVerify): MergeVerification {
   const repo = mergeRepositoryOf(request.root);
-  const since = request.commit === undefined ? sinceOf(request.root, repo.top, request.since) : undefined;
+  const since = request.commit === undefined ? sinceOf(request.root, repo.top, request) : undefined;
   const merges = request.commit === undefined ? listed(repo, request, since) : [named(repo, request.commit, request)];
 
   return summarized(

@@ -23,13 +23,13 @@ export const verifySliceCommand: Command = (argv, io) => {
     );
   }
 
-  knownCommit(
+  const sinceCommit = knownCommit(
     root,
     since,
     'Fetch it first (`git fetch origin`), or name the trunk of your briefing: `--since origin/main`.',
   );
 
-  const verification = verifySlice({ root, config, context, since });
+  const verification = verifySlice({ root, config, context, since, sinceCommit });
 
   io.out(args.json ? stdoutJson(verification) : formatSliceVerification(verification));
 
