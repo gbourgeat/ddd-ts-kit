@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d2f0b6464f68d1de -->
+<!-- translation-of: README.md sha256:c6115740f30ca20f -->
 
 # ddd-ts-kit
 
@@ -1382,13 +1382,13 @@ une branche à lui, serait refusé (`#US5.02 ... builds on <file>, which #US5.01
 US5.01 to its Depends on`). Une commande refusée pour ce sur quoi elle s'appuie est rejouée une
 fois tout le plan rejoué, avec `--dry-run` pour que la copie reste telle que le plan l'a laissée et
 qu'aucun rejeu ne passe sur ce qu'un autre a écrit, et les fichiers qu'elle trouve alors disent
-quelle ligne génère ce qu'il lui fallait : une ligne suivante qu'elle n'attend pas (`add <id> to its Depends on`, et cet
-identifiant dans `rows`), une ligne suivante qui l'attend (déplacez la commande qui le génère dans
+quelle ligne génère ce qu'il lui fallait, chaque fichier en une passe : une ligne suivante qu'elle n'attend pas (`add <id>
+to its Depends on`, et cet identifiant dans `rows`, autant d'identifiants que de lignes), une ligne suivante qui l'attend (déplacez la commande qui le génère dans
 cette ligne ou dans une ligne d'avant, plutôt que de faire un cycle), une commande suivante de la
 même ligne (mettez-la en premier), ou aucune telles que les lignes sont écrites (ajoutez la
 commande que nomme la correction, ou corrigez la ligne refusée qui la générerait) ; ce pour quoi
-elle est alors refusée, pour une autre raison (un `--grant` une fois l'agrégat trouvé), est dit
-aussi (`then:`, `nextRefusal`), pour que corriger l'ordre ne soit pas suivi d'un autre refus. Une
+elle est alors refusée, pour une autre raison (un `--grant` une fois l'agrégat trouvé) ou pour un
+autre fichier qu'aucune ligne ne génère, est dit aussi (`then:`, `nextRefusal`), pour que corriger l'ordre ne soit pas suivi d'un autre refus. Une
 ligne `in progress` est rejouée, pour que les lignes d'après trouvent ce qu'elle génère, mais ni
 ses noms, ni ses refus, ni ce sur quoi elle s'appuie ne sont des problèmes : son worker a pu
 ajouter sur sa branche le terme qu'il faut à un nom, ses commandes ont pu déjà tourner dans le
@@ -1401,8 +1401,9 @@ rejeu coûte environ un dixième de seconde par commande. `--json` affiche
 `{ file, context, problems: [{ kind, rows, message, command?, refusal?, fix?, prerequisite?, nextRefusal?, builtOn? }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], started: [{ row, command, refusal, fix }] }`,
 `story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
 une ligne que le contexte demandé ne montre pas ; `command`, `refusal`, `fix` et `prerequisite`
-sont ceux d'un `refused-command`, `fix`, `prerequisite` et `nextRefusal` (`{ refusal, fix }`) valant
-`null` quand il n'y en a pas, `command` et `builtOn` ceux d'une `missing-dependency` ; `message` tient un problème
+sont ceux d'un `refused-command`, `fix`, `prerequisite` et `nextRefusal` (`{ refusal, fix, prerequisite }`, son
+`prerequisite` disant qu'aucune ligne ne génère le fichier qui lui manque alors) valant `null` quand
+il n'y en a pas, `command` et `builtOn` ceux d'une `missing-dependency` ; `message` tient un problème
 sur une ligne.
 
 ## acceptance

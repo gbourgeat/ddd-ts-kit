@@ -25,7 +25,7 @@ export interface Replay {
 }
 
 /** What the generator refused a command with, said of the project rather than of its copy. */
-interface Refusal {
+export interface Refusal {
   readonly message: string;
   /** What the generator says to do instead; null when the error is not a refusal of the generator. */
   readonly fix: string | null;

@@ -231,6 +231,7 @@ describe('plan-waves, a planned command refused on a project of relationships', 
         nextRefusal: {
           refusal: expect.stringContaining('stack.authz is "rebac"'),
           fix: expect.stringContaining('without --grant'),
+          prerequisite: null,
         },
       }),
     ]);

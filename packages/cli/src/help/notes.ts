@@ -131,7 +131,7 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    and reports without waves, exiting 1, each name whose words the glossary of its
                    context does not define with the --term of its row and of the rows it waits for,
                    each command the generator refuses for another reason (refused-command), its
-                   refusal and fix under the row, with the row that generates what it builds on,
+                   refusal and fix under the row, with the rows that generate what it builds on,
                    and each command that builds on a file a row it does not wait for generates
                    (missing-dependency); a row in progress, whose commands may have run and whose
                    worker may have added a term, counts for none, its refusals listed apart

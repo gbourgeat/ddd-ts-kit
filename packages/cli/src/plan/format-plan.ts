@@ -79,6 +79,7 @@ function refusedLines({ rows, command, refusal, fix, prerequisite, nextRefusal }
     ...(prerequisite === null ? [] : under(prerequisite)),
     ...(nextRefusal === null ? [] : under(`then: ${nextRefusal.refusal}`)),
     ...(nextRefusal === null || nextRefusal.fix === null ? [] : under(`fix: ${nextRefusal.fix}`)),
+    ...(nextRefusal === null || nextRefusal.prerequisite === null ? [] : under(nextRefusal.prerequisite)),
   ];
 }
 

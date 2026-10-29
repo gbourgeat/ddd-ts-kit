@@ -32,7 +32,7 @@ export interface RowProblem {
  */
 export interface RefusedCommand {
   readonly kind: 'refused-command';
-  /** The row; then, when a row the plan runs later generates what the command builds on, that row. */
+  /** The row; then each row the plan runs later that generates what the command builds on. */
   readonly rows: readonly string[];
   /** `generate <kind> ...`, as the row writes it. */
   readonly command: string;
@@ -40,10 +40,17 @@ export interface RefusedCommand {
   readonly refusal: string;
   /** What the generator says to do instead; null when the error is not a refusal of the generator. */
   readonly fix: string | null;
-  /** Which row generates what the command builds on, when the generator refused it for that: a later row, a later command of the row, or none. */
+  /** Which rows generate what the command builds on, when the generator refused it for that: later rows, a later command of the row, or none. */
   readonly prerequisite: string | null;
-  /** What the generator refuses the command for once what it builds on is found, another reason to fix too; null when nothing. */
-  readonly nextRefusal: { readonly refusal: string; readonly fix: string | null } | null;
+  /**
+   * What the generator refuses the command for once what it builds on is found, another reason to
+   * fix too, with, when it is another file it builds on, that no row generates it; null when nothing.
+   */
+  readonly nextRefusal: {
+    readonly refusal: string;
+    readonly fix: string | null;
+    readonly prerequisite: string | null;
+  } | null;
   /** All of it on one line. */
   readonly message: string;
 }
