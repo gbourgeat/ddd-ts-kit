@@ -18,6 +18,7 @@ import { parseRuleSetting } from './parse-rule-setting';
 import { parseSdk } from './parse-sdk';
 import { parseStack } from './parse-stack';
 import { directoriesOf } from './directories-of';
+import { insideDefaultsOf } from './inside-defaults-of';
 import { leavesProject } from './leaves-project';
 import { leavingDirectoryProblem } from './leaving-directory-problem';
 import { normalizedDirectory } from './normalized-directory';
@@ -67,24 +68,24 @@ function confinedDirectories(
   { leaving }: ParseOptions,
 ): Record<ProjectDirectory, string> {
   const written = directoriesOf(raw);
+  const defaults = insideDefaultsOf(raw);
   const out = PROJECT_DIRECTORIES.filter((key) => leavesProject(written[key]));
   const [first] = out;
 
   if (first !== undefined && leaving === 'refuse') {
-    const { message, fix } = leavingDirectoryProblem(first, written[first]);
+    const { message, fix } = leavingDirectoryProblem(first, written[first], normalizedDirectory(defaults[first]));
 
     throw new CliError(`${CONFIG_FILE}: ${message}`, `${fix} \`ddd-ts-kit check --rule config/valid\` reports it too.`);
   }
 
-  const confined = directoriesOf(
-    Object.fromEntries(Object.entries(raw).filter(([key]) => !out.some((left) => left === key))),
-  );
+  const confined = (key: ProjectDirectory): string =>
+    normalizedDirectory((out.includes(key) ? defaults : written)[key]);
 
   return {
-    sourceRoot: normalizedDirectory(confined.sourceRoot),
-    contextsDir: normalizedDirectory(confined.contextsDir),
-    sharedKernelDir: normalizedDirectory(confined.sharedKernelDir),
-    platformDir: normalizedDirectory(confined.platformDir),
+    sourceRoot: confined('sourceRoot'),
+    contextsDir: confined('contextsDir'),
+    sharedKernelDir: confined('sharedKernelDir'),
+    platformDir: confined('platformDir'),
   };
 }
 

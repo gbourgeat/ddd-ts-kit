@@ -35,6 +35,7 @@ export { isControlPlane } from './is-control-plane';
 export { isOneOf } from './is-one-of';
 export { openApiProblems } from './open-api-problems';
 export { parseConfig, type ParseOptions } from './parse-config';
+export { insideDefaultsOf } from './inside-defaults-of';
 export { leavesProject } from './leaves-project';
 export { leavingDirectoryProblem } from './leaving-directory-problem';
 export { PROJECT_DIRECTORIES } from './project-directories';

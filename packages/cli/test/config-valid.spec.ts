@@ -68,6 +68,16 @@ describe('config/valid on the directories the generators write in', () => {
     ]);
   });
 
+  it('gives as the example of the fix the directory under the source root of the project', () => {
+    const root = projectWith({}, { sourceRoot: 'lib', contextsDir: '../contexts' });
+
+    expect(cli(root, 'check', '--rule', 'config/valid').stdout).toContain(
+      'Write it inside the project, relative to its root, such as "lib/contexts".',
+    );
+
+    expect(cli(root, 'list').stderr).toContain('such as "lib/contexts".');
+  });
+
   it('accepts a directory written with "./", a doubled slash or a ".." that stays inside', () => {
     expect(aboutDirectories(projectWith({}, { contextsDir: './src//domains/../contexts/' }))).toEqual([]);
   });
