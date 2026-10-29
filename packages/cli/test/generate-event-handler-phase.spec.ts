@@ -12,7 +12,7 @@ beforeAll(() => {
 });
 
 describe('generate event-handler and the phase of the reaction', () => {
-  it('writes a reaction before the commit by default, given the command bus, and a spec whose policy is pending, its shape in a comment', () => {
+  it('writes a reaction before the commit by default, given the command bus, and a spec whose policy is pending beside what the fresh handler does', () => {
     const spec = read(root, `${UNIT}/invoice-issued.event-handler.spec.ts`);
 
     expect(read(root, `${HANDLERS}/invoice-issued.event-handler.ts`)).toContain(
@@ -20,9 +20,10 @@ describe('generate event-handler and the phase of the reaction', () => {
     );
 
     expect(spec).toContain("it.todo('carries out the policy that follows the fact');");
-    expect(spec).toContain('give `new InvoiceIssuedEventHandler(commands)` a `RecordingCommandBus`');
-    expect(spec).toContain('`expect(commands.executed).toEqual([new ...Command(...)])`');
-    expect(spec).not.toContain('\n    expect(');
+    expect(spec).toContain('TODO(domain): replace this test by the entries below once the policy is written');
+    // One running test says what the fresh handler does, so that a generated project covers it as generated.
+    expect(spec).toContain("it('handles the fact and sends no command until the policy is written', async () => {");
+    expect(spec).toContain('await new InvoiceIssuedEventHandler(commands).handle(fact);');
     expect(spec).not.toContain('unitOfWorkStage');
   });
 
@@ -34,8 +35,14 @@ describe('generate event-handler and the phase of the reaction', () => {
     expect(handler).not.toContain('constructor(');
     expect(handler).not.toContain('private readonly commands');
     expect(spec).toContain("it.todo('carries out the effect that follows the commit of the fact');");
-    expect(spec).toContain('the fake of its port, hand it the fact');
+    expect(spec).toContain('the handler given the fake of its port and the fact');
     expect(spec).not.toContain('RecordingCommandBus()');
+    expect(spec).toContain("it('handles the fact and has no effect until the effect is written', async () => {");
+
+    expect(spec).toContain(
+      'await expect(new InvoiceMarkedAsPaidEventHandler().handle(fact)).resolves.toBeUndefined();',
+    );
+
     expect(spec).not.toContain('afterCommitFailures');
   });
 

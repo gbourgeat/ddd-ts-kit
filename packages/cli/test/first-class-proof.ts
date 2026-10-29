@@ -15,7 +15,6 @@ const LINES = "[{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }]";
 /** The test of what shipping does when billing issues an invoice, in the place of its pending entry. */
 const PREPARES_A_PARCEL = `  it('prepares a parcel when billing issues an invoice', async () => {
     const commands = new RecordingCommandBus();
-    const meta = { id: 'event-1', occurredAt: '2026-01-01T00:00:00.000Z' };
     const issued = invoiceIssuedV2.create({ invoiceId: 'invoice-1' }, meta);
 
     await new BillingInvoiceIssuedIntegrationHandler(commands).handle(issued);
@@ -63,10 +62,10 @@ export function writeBusinessDecisions(root: string): void {
   edit(root, SHIPPING_HANDLER_SPEC, [
     [
       /(import \{ BillingInvoiceIssuedIntegrationHandler \} from '([^']*)contexts\/shipping\/[^\n]*\n)/,
-      "$1import { PrepareParcelCommand } from '$2contexts/shipping/application/commands/prepare-parcel/prepare-parcel.command';\nimport { invoiceIssuedV2 } from '$2contexts/billing/published-language';\n",
+      "$1import { PrepareParcelCommand } from '$2contexts/shipping/application/commands/prepare-parcel/prepare-parcel.command';\n",
     ],
     [
-      / {2}\/\/ TODO\(domain\): replace each entry below[^\n]*\n {2}it\.todo\('executes the command that follows the upstream fact'\);\n/,
+      / {2}\/\/ TODO\(domain\): replace this test by the entries below[^\n]*\n {2}it\('receives the event[\s\S]*?\n {2}\}\);\n\n {2}it\.todo\('executes the command that follows the upstream fact'\);\n/,
       PREPARES_A_PARCEL,
     ],
   ]);

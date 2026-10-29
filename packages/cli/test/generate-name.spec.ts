@@ -39,7 +39,10 @@ describe('generate takes --name for a handler its event would name otherwise', (
     expect(spec).toContain("expect(PrepareParcelIntegrationHandler.eventType).toBe('billing.invoice.issued');");
     // The command it executes is the decision of the team: pending until then, never green by construction.
     expect(spec).toContain("it.todo('executes the command that follows the upstream fact');");
-    expect(spec).not.toContain('expect(commands.executed).toEqual([]);');
+
+    expect(spec).toContain(
+      "it('receives the event and sends no command until what shipping does is written', async () => {",
+    );
   });
 
   it('keeps the name read from the event without --name', () => {
