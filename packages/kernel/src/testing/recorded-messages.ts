@@ -7,7 +7,11 @@ interface Answer {
   answer(message: Message): unknown;
 }
 
-/** The messages a recording bus was handed, in order, and what it answers for each type. */
+/**
+ * The messages a recording bus was handed, in order, and what it answers for each type: the
+ * answer told for the class of a message, else for the nearest class above it; a message no
+ * answer covers is recorded all the same and answered `undefined`.
+ */
 export class RecordedMessages<M extends Message> {
   readonly list: M[] = [];
 
@@ -20,9 +24,22 @@ export class RecordedMessages<M extends Message> {
   async received<T extends M>(message: T): Promise<ResultOf<T>> {
     this.list.push(message);
 
-    const answered: unknown = await this.answers.get(message.constructor)?.answer(message);
+    const answered: unknown = await this.answerOf(message)?.answer(message);
 
     // eslint-disable-next-line ddd-ts-kit/clean-no-escape-hatch -- answers of every message type share one map: the link between a type and its result is only known to answer()
     return answered as ResultOf<T>;
+  }
+
+  /** The answer told for the class of the message or, failing that, for the nearest class above it. */
+  private answerOf(message: Message): Answer | undefined {
+    for (let type: unknown = message.constructor; typeof type === 'function'; type = Object.getPrototypeOf(type)) {
+      const answer = this.answers.get(type);
+
+      if (answer !== undefined) {
+        return answer;
+      }
+    }
+
+    return undefined;
   }
 }

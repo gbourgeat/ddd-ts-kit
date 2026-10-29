@@ -21,7 +21,11 @@ export class RecordingQueryBus extends QueryBus {
     return this.recorded.list;
   }
 
-  /** What the bus answers for each query of `type` from now on, or the refusal the function throws. Told twice, the last answer holds. */
+  /**
+   * What the bus answers for each query of `type` from now on, or the refusal the function throws.
+   * Told twice, the last answer holds. A subclass of `type` is answered the same, unless told an
+   * answer of its own.
+   */
   answering<Q extends Query<unknown>>(
     type: MessageType<Q>,
     answer: (query: Q) => ResultOf<Q> | Promise<ResultOf<Q>>,

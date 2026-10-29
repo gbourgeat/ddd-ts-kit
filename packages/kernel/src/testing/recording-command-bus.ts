@@ -27,7 +27,8 @@ export class RecordingCommandBus extends CommandBus {
 
   /**
    * What the bus answers for each command of `type` from now on: an identifier, nothing, or a
-   * refusal the function throws. Told twice, the last answer holds.
+   * refusal the function throws. Told twice, the last answer holds. A subclass of `type` is
+   * answered the same, unless told an answer of its own.
    */
   answering<C extends Command<unknown>>(
     type: MessageType<C>,

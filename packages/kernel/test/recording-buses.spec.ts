@@ -8,6 +8,8 @@ class PlaceOrder extends Command<string> {
   }
 }
 
+class PlaceUrgentOrder extends PlaceOrder {}
+
 class CancelOrder extends Command {
   constructor(readonly orderId: string) {
     super();
@@ -47,6 +49,15 @@ describe('RecordingCommandBus', () => {
 
     expect(id).toBe('order-for-sku-2');
     await expect(commands.execute(new CancelOrder('order-1'))).resolves.toBeUndefined();
+  });
+
+  it('answers a command of a subclass what it was told for its nearest class above, and records it', async () => {
+    const commands = new RecordingCommandBus().answering(PlaceOrder, (command) => `order-for-${command.sku}`);
+
+    const urgent: string = await commands.execute(new PlaceUrgentOrder('sku-3'));
+
+    expect(urgent).toBe('order-for-sku-3');
+    expect(commands.executed).toEqual([new PlaceUrgentOrder('sku-3')]);
   });
 
   it('keeps the last answer it was told, and records a command it answers with a refusal', async () => {
