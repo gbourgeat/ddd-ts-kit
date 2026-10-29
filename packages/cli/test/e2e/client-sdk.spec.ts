@@ -62,8 +62,11 @@ describe.runIf(SLOW)('a project generated with --sdk', () => {
 
 /** A context, its aggregate, a command and the route that exposes it: what a team adds to a new project. */
 function addRoute(root: string): void {
+  // The terms go with the context that names them; a route names nothing new and refuses --term.
+  const terms = ['--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final'];
+
   const steps = [
-    ['context', 'billing', '--classification', 'core', '--purpose', 'Bills customers for what they bought.'],
+    ['context', 'billing', '--classification', 'core', '--purpose', 'Bills customers for what they bought.', ...terms],
     ['aggregate', 'billing', 'Invoice'],
     [
       'command',
@@ -80,10 +83,8 @@ function addRoute(root: string): void {
     ['route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices'],
   ];
 
-  const terms = ['--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final'];
-
   for (const step of steps) {
-    expect(cli(root, 'generate', ...step, ...terms).code, step.join(' ')).toBe(0);
+    expect(cli(root, 'generate', ...step).code, step.join(' ')).toBe(0);
   }
 }
 
