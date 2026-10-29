@@ -1,0 +1,38 @@
+import { describe, expect, it } from 'vitest';
+
+class OrderBuilder {
+  private paid = false;
+  private lines: number[] = [];
+  withLine(price: number): this {
+    this.lines.push(price);
+    return this;
+  }
+  asPaid(): this {
+    this.paid = true;
+    return this;
+  }
+  build(): { paid: boolean; total: number } {
+    return { paid: this.paid, total: this.lines.reduce((sum, price) => sum + price, 0) };
+  }
+}
+const anOrder = (): OrderBuilder => new OrderBuilder();
+
+describe('an order', () => {
+  describe('with lines', () => {
+    describe('when it is paid', () => {
+      it('is paid', () => {
+        // given
+        const order = anOrder().withLine(10).withLine(20).asPaid().build();
+        // then
+        expect(order.paid).toBe(true);
+        expect(order.total).toBe(30);
+      });
+    });
+  });
+  describe('without lines', () => {
+    it('costs nothing', () => {
+      const order = anOrder().build();
+      expect(order.total).toBe(0);
+    });
+  });
+});

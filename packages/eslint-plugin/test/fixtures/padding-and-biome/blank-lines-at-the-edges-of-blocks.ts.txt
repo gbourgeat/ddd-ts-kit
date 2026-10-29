@@ -1,0 +1,26 @@
+export function run(value: number): number {
+
+  const doubled = value * 2;
+
+
+  if (doubled > 10) {
+
+    return 10;
+
+  }
+
+  return doubled;
+
+}
+
+export class Counter {
+
+  private count = 0;
+
+  increment(): void {
+
+    this.count += 1;
+
+  }
+
+}

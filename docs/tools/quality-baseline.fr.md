@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:f4cac4de9e13a488 -->
+<!-- translation-of: quality-baseline.md sha256:7044afd7d9ed70a0 -->
 
 # Base de qualité
 
@@ -242,7 +242,9 @@ ESLint et le formateur ne se battent jamais, parce qu'ils décident de choses di
 préréglages du *plugin* n'activent aucune règle sur l'emplacement d'un jeton ; ils gardent les
 deux choses qu'un formateur ne décide pas : les lignes vides entre les instructions
 (`clean/blank-lines`) et les accolades d'une branche (`clean/braces`). Lancés dans un ordre ou
-dans l'autre, le second outil ne trouve rien à changer.
+dans l'autre, le second outil ne trouve rien à changer une fois le premier tour fini.
+`packages/eslint-plugin/test/presets/padding-and-biome.spec.ts` tient cet accord sur un corpus de
+fichiers en forme de spec.
 
 ```ts
 // au lieu de : le formateur garde les deux lignes telles quelles, puisque aucune ne casse sa mise en page

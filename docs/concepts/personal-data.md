@@ -279,7 +279,8 @@ They read names, not contents, which is why each one says what it cannot see
 (`npx ddd-ts-kit explain privacy/declared-field`). A column that holds nothing of a person in a
 project (the shared mailbox of a team) is a deviation recorded where it is written,
 `// ddd-ts-kit-disable-next-line privacy/declared-field -- ADR-NNNN: <why>`, or a word of
-`privacy.allow`.
+`privacy.allow`. An event stream has no table: a key of an event mapper that the same file seals
+with `personalData(subject, value)` is declared by that, and only a key stored in clear is reported.
 
 ## What stays out of reach
 

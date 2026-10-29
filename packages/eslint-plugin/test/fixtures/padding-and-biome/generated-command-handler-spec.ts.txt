@@ -1,0 +1,41 @@
+import { describe, expect, it } from 'vitest';
+
+class PlaceOrderCommand {
+  constructor(readonly actor: { id: string }) {}
+}
+
+const anActor = () => ({ build: () => ({ id: 'actor-1' }) });
+
+function arrange() {
+  const saved: string[] = [];
+  const commandBus = {
+    execute: async (command: PlaceOrderCommand): Promise<string> => {
+      saved.push(command.actor.id);
+      return 'order-1';
+    },
+  };
+
+  return { commandBus, saved };
+}
+
+describe('Place order', () => {
+  it('saves the order and answers its identifier', async () => {
+    const { commandBus, saved } = arrange();
+
+    const id = await commandBus.execute(new PlaceOrderCommand(anActor().build()));
+
+    expect(id).toBe('order-1');
+    expect(saved).toHaveLength(1);
+  });
+
+  it('completes without answering anything', async () => {
+    const { commandBus } = arrange();
+    const command = new PlaceOrderCommand(anActor().build());
+
+    await expect(commandBus.execute(command)).resolves.toBe('order-1');
+  });
+
+  // TODO(domain): replace each entry below by a test named after the business behaviour.
+  it.todo('applies the business decision to the order');
+  it.todo('saves and publishes nothing when the command is refused');
+});

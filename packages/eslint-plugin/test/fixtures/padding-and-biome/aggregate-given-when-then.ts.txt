@@ -1,0 +1,29 @@
+import { describe, expect, it } from 'vitest';
+
+const given = <T>(subject: T) => ({
+  when: (action: (subject: T) => void) => {
+    action(subject);
+    return { thenEvents: (names: string[]) => expect(names).toBeDefined() };
+  },
+});
+
+describe('Order', () => {
+  describe('pay', () => {
+    it('emits the paid event', () => {
+      given({ paid: false })
+        .when((order) => {
+          order.paid = true;
+        })
+        .thenEvents(['ordering.order.paid']);
+    });
+
+    it('is refused twice', () => {
+      const order = { paid: true };
+      expect(() => {
+        if (order.paid) {
+          throw new Error('ORDER_ALREADY_PAID');
+        }
+      }).toThrow('ORDER_ALREADY_PAID');
+    });
+  });
+});

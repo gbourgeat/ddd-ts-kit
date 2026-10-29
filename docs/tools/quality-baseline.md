@@ -227,7 +227,9 @@ possible, so a very long name can still leave one line for `npm run format` to w
 ESLint and the formatter never fight, because they decide different things. The presets of the
 plugin enable no rule about where a token goes; they keep the two things a formatter does not
 decide: the blank lines between statements (`clean/blank-lines`) and the braces of a branch
-(`clean/braces`). Run in either order, the second tool finds nothing to change.
+(`clean/braces`). Run in either order, the second tool finds nothing to change once the first round is
+over. `packages/eslint-plugin/test/presets/padding-and-biome.spec.ts` holds that agreement on a corpus of
+spec-shaped files.
 
 ```ts
 // instead of: the formatter keeps both lines as they are, since neither breaks its layout

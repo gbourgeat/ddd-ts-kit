@@ -1,0 +1,26 @@
+interface Order {
+  id: string;
+}
+
+export class FakeOrderRepository {
+  private readonly orders = new Map<string, Order>();
+  private saves = 0;
+  readonly name = 'fake';
+  async save(order: Order): Promise<void> {
+    this.saves += 1;
+    this.orders.set(order.id, order);
+  }
+  async find(id: string): Promise<Order | undefined> {
+    return this.orders.get(id);
+  }
+
+  count(): number {
+    return this.saves;
+  }
+  get size(): number {
+    return this.orders.size;
+  }
+  static create(): FakeOrderRepository {
+    return new FakeOrderRepository();
+  }
+}

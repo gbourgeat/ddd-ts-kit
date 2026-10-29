@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:01ef87aaa435f39f -->
+<!-- translation-of: agent-sandbox.md sha256:41ac494c7e3cbe91 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -284,15 +284,19 @@ de conteneurs comprise.
 Dans une session sous le profil régulé, l'agent écrit donc le schéma et le code, et le propriétaire
 (ou la chaîne) lance ce qui demande la base, depuis un terminal hors du bac à sable :
 
-- les migrations : `npm run db:generate <nom>` sous Prisma (`prisma migrate dev --create-only` a
-  besoin d'une base pour sa base fantôme) et TypeORM (`migration:generate` lit le schéma vivant), et
-  `npm run db:migrate` sous tous les ORM (qui échoue sur la connexion) ; `drizzle-kit generate` et les fichiers Knex écrits à la
-  main n'ont besoin d'aucune connexion, donc Drizzle génère dans le bac à sable ;
+- `npm run db:migrate` sous tous les ORM (qui échoue sur la connexion) ;
+- les migrations n'y figurent pas : `npm run db:generate <nom>` n'a besoin d'aucun serveur quand
+  `DATABASE_URL` n'est pas définie. Sous Prisma et TypeORM, le kit démarre alors PostgreSQL en
+  processus (PGlite servi sur le protocole réseau, le moteur de `openTestDatabase()`), y rejoue les
+  migrations déjà écrites, compare le schéma et écrit la nouvelle migration, avec les instructions
+  d'append-only de la piste d'audit. Drizzle génère depuis ses instantanés et les fichiers Knex
+  s'écrivent à la main. Un agent dans le bac à sable génère donc ses propres migrations ; sous
+  TypeORM, il compile d'abord (`npm run build && npm run db:generate migrations/<nom>`) ;
 - les specs d'intégration et de bout en bout qui nomment une `DATABASE_URL` ; les specs sur les
   doublures en mémoire et les specs de bout en bout sans `DATABASE_URL` (base en processus) tournent
   dans la session.
 
-Quand `DATABASE_URL` est définie et que son serveur ne répond pas, `prisma-generate` et
+Quand `DATABASE_URL` est définie et que son serveur ne répond pas (la retirer génère sur la base en processus), `prisma-generate` et
 `typeorm-generate` s'arrêtent avant l'outil, sortent en 3 (le code de ce qu'une session ne peut pas
 faire ici) et le disent, au lieu d'une erreur de connexion brute ; la commande est alors remise au
 propriétaire telle quelle.
