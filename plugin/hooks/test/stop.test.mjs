@@ -257,7 +257,7 @@ test('a folder of markers a repository links elsewhere is neither written nor pr
   put(root, 'docs/a.md', 'a\n');
   put(root, 'docs/b.md', 'b\n');
   const session = { cwd: root, session_id: `linked-${root}` };
-  assert.equal(run('stop', session).output, undefined);
+  assert.match(run('stop', session).output.systemMessage, /uncommitted/);
   run('session', session);
   assert.deepEqual(readdirSync(elsewhere), ['commit-reminder-0123']);
 });
@@ -274,4 +274,26 @@ test('a folder of the guard a repository links elsewhere has nothing pruned thro
   run('session', { cwd: root });
   assert.deepEqual(readdirSync(shared).sort(), ['markers', 'turns-0123456789abcdef.json']);
   assert.deepEqual(readdirSync(join(shared, 'markers')), ['stop-0123']);
+});
+
+test('a marker the guard cannot leave lets it say and refuse again, never counts as already said', () => {
+  const reminded = committed({ commit: { maxFiles: 1, maxLines: 1000 } });
+  put(reminded, '.ddd-ts-kit/guard', 'a file where the folder of the guard would be');
+  put(reminded, 'docs/a.md', 'a\n');
+  put(reminded, 'docs/b.md', 'b\n');
+  const session = { cwd: reminded, session_id: `unwritable-${reminded}` };
+  for (const _ of [1, 2]) {
+    assert.match(run('stop', session).output.systemMessage, /uncommitted/);
+  }
+  const refused = project();
+  put(refused, '.ddd-ts-kit/guard', 'a file where the folder of the guard would be');
+  put(
+    refused,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const stopping = { cwd: refused, sessionId: `unwritable-${refused}` };
+  for (const _ of [1, 2]) {
+    assert.equal(run('stop', stopping).output.decision, 'block');
+  }
 });

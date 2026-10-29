@@ -3284,18 +3284,23 @@ function markerOf(project, kind, key) {
 }
 
 // Leaves the marker and says whether it was there, in one exclusive creation that never follows nor
-// rewrites a file put under its name, in a folder that is no link. A marker that cannot be left counts
-// as there: what it would say or refuse again is not, and the guard fails open.
+// rewrites a file put under its name, in a folder that is no link. Only the marker found there counts
+// as remembered: one that cannot be left (a folder that is a link, a checkout that cannot be written)
+// leaves what it guards said, or refused, again.
 function alreadyRemembered(marker) {
   if (linkedFolder(marker)) {
-    return true;
+    return false;
   }
   try {
     mkdirSync(dirname(marker), { recursive: true });
+  } catch {
+    return false;
+  }
+  try {
     writeFileSync(marker, '', { flag: 'wx', mode: 0o600 });
     return false;
-  } catch {
-    return true;
+  } catch (error) {
+    return error?.code === 'EEXIST';
   }
 }
 

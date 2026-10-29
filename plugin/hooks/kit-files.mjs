@@ -39,9 +39,18 @@ export function removeKitFile(file) {
 export function linkedFolder(file) {
   const parts = file.split(sep);
   for (let end = parts.lastIndexOf(KIT_FOLDER) + 1; end < parts.length; end += 1) {
-    if (lstatSync(parts.slice(0, end).join(sep), { throwIfNoEntry: false })?.isSymbolicLink()) {
+    if (isLink(parts.slice(0, end).join(sep))) {
       return true;
     }
   }
   return false;
+}
+
+// A path that is missing, or under a file rather than a folder, is no link.
+function isLink(path) {
+  try {
+    return lstatSync(path).isSymbolicLink();
+  } catch {
+    return false;
+  }
 }
