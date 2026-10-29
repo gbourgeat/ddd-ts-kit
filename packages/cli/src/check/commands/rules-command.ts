@@ -7,6 +7,7 @@ import { DEFAULT_SEVERITIES } from '../catalogue/default-severities';
 import { DELEGATED_RULES } from '../catalogue/delegated-rules';
 import { RULES } from '../catalogue/rules';
 import { SUPPRESSION_RULE } from '../catalogue/suppression-rule';
+import { stdoutJson } from '../../json/stdout-json';
 
 interface ListedRule {
   readonly id: string;
@@ -22,7 +23,7 @@ export const rulesCommand: Command = (argv, io) => {
   const width = Math.max(...rules.map((rule) => rule.id.length));
   const lines = rules.map((rule) => `${rule.id.padEnd(width)}  ${rule.severity.padEnd(5)}  ${rule.description}`);
 
-  io.out(args.json ? JSON.stringify(rules, null, 2) : lines.join('\n'));
+  io.out(args.json ? stdoutJson(rules) : lines.join('\n'));
 
   return 0;
 };

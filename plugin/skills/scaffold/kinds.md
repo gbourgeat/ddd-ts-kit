@@ -7,7 +7,7 @@ the files of each layer land in `<module>/domain/`, `<module>/application/`,
 `<module>/infrastructure/` and `<module>/presentation/`, their specs in `test/unit/<module>/`;
 the kinds that write only what the context keeps aside or outside the contexts, such as
 `builder`, `test-world`, `route-group`, `guard`, `schema`, `e2e` and `service`, refuse it), `--local-only`, `--dry-run`, `--force`. The authoritative list is
-`npx ddd-ts-kit --help`, and a flag the usage of a kind does not show is refused; `npx ddd-ts-kit generate --help --json` gives it as data, with the
+`npx ddd-ts-kit generate <kind> --help` for one kind, and a flag the usage of a kind does not show is refused; `npx ddd-ts-kit generate --help --json` gives them all as data, with the
 shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) and whether it takes `--module` (`writesInModules`).
 
 | Kind | Arguments | Lands in |
@@ -47,5 +47,6 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) and wheth
 | `worker` | | `src/apps/worker/main.ts`: a process for the scheduled jobs and the queues, a start script, a compose service |
 | `adr` | `"<title>" [--deviation <what>] [--reason "<why>"]` | `docs/adr/NNNN-<slug>.md` |
 
-Output of every kind: `{ dryRun, created, updated, skipped, next, todos, notes }`. `next` is
-the list of `TODO(domain)` places as `file:line`, the glossary first; `todos` adds their text.
+Output of every kind: `{ dryRun, created, updated, deleted, skipped, unwritable, todos, notes }`.
+`todos` is the list of `TODO(domain)` places, the glossary first, each `{ file, line, gist }`:
+the sentence is in the file at that line; a step on a line the command changed keeps its `text`.

@@ -97,7 +97,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `npx ddd-ts-kit acceptance [<story>] [--gate written\|passing]` | the scenarios of each story against its rows and criteria: left to write, pending, drifted from the lock, inconsistent, and the amendments to validate | before the code of a story (`written`), before closing it (`passing`) | a short text, `--json` for data; exits 1 while the gate is not met | write, lock, build, or report the amendments |
 | `/ddd-ts-kit:use-case <UseCase>` | one slice end to end, test first | for each row of the slices | domain, handler, route and specs, filled | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below); `--module <module>` writes into a module of the model, and is required in a context that declares modules | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
-| `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left, in the code, the pages, the files of `prisma/schema/` (under the context of the file or of the model), the migrations and the configuration at the root | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
+| `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left, in the code, the pages, the files of `prisma/schema/` (under the context of the file or of the model), the migrations and the configuration at the root | before closing a slice, a story or a milestone | `file:line` entries, with their first words only under `--brief` | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
 | `npx ddd-ts-kit story-check <code> [--strict]` | whether a story or a milestone (`M1` for the rows `M1.*`) can close: every row `done`, no marker of its own left, a marker being its own when its text, the commit that wrote it or the worker holding it names one of its rows, or when it belongs to no row in a context no other open story works in | before a story or a milestone is declared closed; `status` names one whose rows are done while markers keep it open | one line when it can close; else each blocker with why it is the story's, its `file:line` and its fix, then the unattributed markers it lists without blocking; exits 0, 1, or 2 on an unknown code | handle each blocker or dismiss it with `generate adr`, then delete the marker; name the row in an unattributed one (`TODO(review): #M1.03 ...`) |
 | `npx ddd-ts-kit measures [--since <date>] [--story <code>]` | what the loop of each story cost and left, from git and `docs/architecture/`: design, build and lead time, the requirements changed after the build started, the provisional decisions, the compromises, the review markers settled and the findings repeated across stories, the verification, the stories built at the same time, the origin, the incidents repeated; then the medians of the period; `--by-author` only when the team agreed on it | once a month, by whoever tunes the setup; before a retrospective | one line per story and the medians, `--json` for a dashboard; exits 0 | a repeated remark becomes a line of `AGENTS.md` or a rule of the config; a long design time, a question asked earlier |
 | `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees, with the documents of each row's design and the names they cite the trunk does not have | each worker's `use-case` |
@@ -224,7 +224,9 @@ owner's agreement and a decision record (the last row of the table above).
 ## Reference
 
 Every command and flag, as `npx ddd-ts-kit --help` prints them. A test of the CLI fails when a
-command or a flag is added without this part being regenerated.
+command or a flag is added without this part being regenerated. `npx ddd-ts-kit <command> --help`
+prints the part of one command (its usage lines, its note and the notes of its flags), and
+`npx ddd-ts-kit generate <kind> --help` one kind.
 
 Exit codes: `0` success; `1` violations, a gate not met, stale documentation; `2` wrong usage or a
 refusal (the message says what to do); `3` a command that writes files (`init`, `generate`,
@@ -258,12 +260,12 @@ Usage
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
-  ddd-ts-kit generate --help --json
+  ddd-ts-kit generate [<kind>] --help [--json]
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
   ddd-ts-kit status [--workers]
   ddd-ts-kit doctor [--strict]
-  ddd-ts-kit todo [<context>]
+  ddd-ts-kit todo [<context>] [--brief]
   ddd-ts-kit plan-waves [<context>]
   ddd-ts-kit story-check <code> [--strict]
   ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
@@ -306,7 +308,9 @@ Usage
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 
-Every command accepts --json (machine-readable output) and --cwd <dir> (project root).
+Every command accepts --json (machine-readable output, on one line) and --cwd <dir> (project root).
+ddd-ts-kit <command> --help prints the usage and the notes of that command alone, generate <kind> --help one kind;
+--json gives either as data.
 
   affected         what a pull request has to run: the contexts a change set reaches through the context
                    map (a changed context and the contexts downstream of it), as filters for the test
@@ -413,7 +417,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   todo             those markers as file:line, in the project or in one context, read in every kind of file
                    they are written into: the code, the pages, the files of prisma/schema/ (a marker of
                    prisma/schema/<context>.prisma is of that context, another of the context whose
-                   database schema holds its model), the migrations, the configuration at the root
+                   database schema holds its model), the migrations, the configuration at the root;
+                   --brief prints each as file:line and its first words (up to its first : or ;), the
+                   file holding the rest; --json keeps every text
   mutation         the mutation score of the domain and application layers of each context, read from the
                    json report the last stryker run wrote (reports/mutation/mutation.json, or --report
                    <file>), each held to its "mutation" floor of the config (80 and 75 by default): detected over detected and
@@ -615,6 +621,10 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,
                    AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed
                    as kept) and merges .gitignore and .dockerignore, the lines of the team kept
+  --force          generate replaces the files that exist with what the kit writes, only while git holds
+                   them: a file to replace that differs from the last commit refuses the command, exit 2,
+                   the files named, nothing written; outside a git repository, every file whose content
+                   would change does; commit or stash first, then git diff shows what the kit rewrote
   --sdk            init records "sdk" in the config and generates the clients with the project
   --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
                    a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being

@@ -1,4 +1,4 @@
-import type { TodoLocation } from './todo-location';
+import type { TodoPlace } from './todo-place';
 
 /** What a command wrote, or would write, and what is left to decide. */
 export interface WorkspaceReport {
@@ -12,7 +12,7 @@ export interface WorkspaceReport {
   readonly kept: string[];
   /** Files this command could not write where it ran, such as paths the sandbox of an agent protects; also in `skipped`. */
   readonly unwritable: string[];
-  readonly next: string[];
-  readonly todos: TodoLocation[];
+  /** The `TODO(domain)` of the files written, then the steps on the lines a command changed, the language first. */
+  readonly todos: TodoPlace[];
   readonly notes: string[];
 }

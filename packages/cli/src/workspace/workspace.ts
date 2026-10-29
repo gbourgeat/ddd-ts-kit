@@ -4,9 +4,10 @@ import { CONFIG_FILE } from '../config';
 import { inDialect } from '../package-manager/in-dialect';
 import { packageManagerOf } from '../package-manager/package-manager-of';
 import type { NextStep } from './next-step';
-import type { TodoLocation } from './todo-location';
-import { todosIn } from './todos-in';
+import { gistOf } from './gist-of';
 import { isLanguageStep } from './is-language-step';
+import type { TodoPlace } from './todo-place';
+import { todosIn } from './todos-in';
 import { isFileOrAbsent } from './is-file-or-absent';
 import { namesOnDisk } from './names-on-disk';
 import { pruneEmptied } from './prune-emptied';
@@ -296,7 +297,8 @@ export class Workspace {
       .filter(({ existed }) => !existed || this.force)
       .flatMap(({ file, content }) => todosIn(file, content));
 
-    const todos = [...left, ...this.steps.map((step) => this.located(step))];
+    const markers = left.map(({ file, line, text }): TodoPlace => ({ file, line, gist: gistOf(text) }));
+    const todos = [...markers, ...this.steps.map((step) => this.located(step))];
 
     if (!dryRun) {
       deleted.forEach((file) => this.remove(file));
@@ -312,7 +314,6 @@ export class Workspace {
       skipped: [...new Set([...this.skipped, ...unwritable])].sort(),
       kept: [...this.kept].sort(),
       unwritable,
-      next: todos.map((todo) => `${todo.file}:${todo.line}`),
       todos,
       notes: this.notes.map((note) => this.spoken(note)),
     };
@@ -326,10 +327,11 @@ export class Workspace {
     }
   }
 
-  private located({ file, anchor, text }: NextStep): TodoLocation {
+  /** A step, with its whole sentence: it is written in no file. */
+  private located({ file, anchor, text }: NextStep): TodoPlace {
     const at = (this.read(file) ?? '').split('\n').findIndex((line) => line.includes(anchor));
 
-    return { file, line: Math.max(at, 0) + 1, text };
+    return { file, line: Math.max(at, 0) + 1, gist: gistOf(text), text };
   }
 
   private absolute(file: string): string {

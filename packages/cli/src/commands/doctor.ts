@@ -5,6 +5,7 @@ import { formatDiagnosis } from '../doctor/format-diagnosis';
 import { VERSION } from '../version';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * What --strict fails on: what the project lacks, and what keeps this checkout from running it.
@@ -41,7 +42,7 @@ export const doctorCommand: Command = (argv, io) => {
 
   io.out(
     args.json
-      ? JSON.stringify({ version: VERSION, findings }, null, 2)
+      ? stdoutJson({ version: VERSION, findings })
       : formatDiagnosis(findings, VERSION, config.stack.packageManager),
   );
 

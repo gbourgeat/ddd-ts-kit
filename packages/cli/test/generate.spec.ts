@@ -162,20 +162,31 @@ describe('generate, a technical word the ubiquitous language defines', () => {
 });
 
 describe('generate, the next steps and the document of a new context', () => {
-  it('lists every TODO(domain) of the created files as file:line', () => {
+  it('lists every TODO(domain) of the created files as file:line with its first words, the sentence left in the file', () => {
     const result = report(
       cli(root, 'generate', 'entity', 'billing', 'InvoiceLine', '--term', 'Line=One billed item', '--json'),
     );
 
-    expect(result.next.length).toBeGreaterThan(0);
-    expect(result.next).toEqual(result.todos.map((todo) => `${todo.file}:${todo.line}`));
+    expect(result).not.toHaveProperty('next');
+    expect(result.todos.length).toBeGreaterThan(0);
 
     for (const todo of result.todos) {
       const line = read(root, todo.file).split('\n')[todo.line - 1] ?? '';
 
-      expect(line).toContain('TODO(domain):');
-      expect(line).toContain(todo.text.slice(0, 30));
+      expect(todo).not.toHaveProperty('text');
+      expect(line).toContain(`TODO(domain): ${todo.gist.replace(/\.\.\.$/, '')}`);
     }
+  });
+
+  it('prints each place on one line, as file:line and the first words of its marker', () => {
+    const printed = cli(root, 'generate', 'entity', 'billing', 'InvoiceItem', '--term', 'Item=One billed thing').stdout;
+    const places = printed.split('\n').filter((line) => line.startsWith('  src/'));
+
+    expect(places).toContain(
+      '  src/contexts/billing/domain/entities/invoice-item.entity.ts:4  declare the attributes of InvoiceItem with value objects, not primitives',
+    );
+
+    expect(places.every((line) => line.length < 200)).toBe(true);
   });
 
   it('puts the definition of the language first in the next steps of a new context', () => {
@@ -193,8 +204,11 @@ describe('generate, the next steps and the document of a new context', () => {
       ),
     );
 
-    expect(result.next[0]).toMatch(/^src\/contexts\/catalog\/CONTEXT\.md:\d+$/);
-    expect(result.todos[0]?.text).toContain('define the ubiquitous language first');
+    expect(result.todos[0]).toEqual({
+      file: 'src/contexts/catalog/CONTEXT.md',
+      line: expect.any(Number),
+      gist: 'define the ubiquitous language first',
+    });
 
     expect(result.updated).toEqual(
       expect.arrayContaining([

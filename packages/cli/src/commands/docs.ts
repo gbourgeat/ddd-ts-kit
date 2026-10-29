@@ -17,6 +17,7 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
 import { printReport } from './print-report';
+import { stdoutJson } from '../json/stdout-json';
 
 export const docsCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
@@ -97,7 +98,7 @@ function reportCheck(io: Io, args: Arguments, { ws, config, kept }: DocsRun): nu
   const warnings = kept.map((context) => earlierLayoutWarning(config, context));
 
   if (args.json) {
-    io.out(JSON.stringify({ ok, stale, drift, unrecorded, formerlyRecorded, emptilyRecorded, warnings }, null, 2));
+    io.out(stdoutJson({ ok, stale, drift, unrecorded, formerlyRecorded, emptilyRecorded, warnings }));
   } else if (ok) {
     io.out(['The generated documentation is up to date.', ...warningLines(warnings)].join('\n'));
   } else {

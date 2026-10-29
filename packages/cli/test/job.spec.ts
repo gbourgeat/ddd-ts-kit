@@ -93,7 +93,7 @@ describe('generate job, in the declared style', () => {
   });
 
   it('grants the role of system actors the permission of the command, and points at the grant in the next steps', () => {
-    const grant = generated.todos.find((todo) => todo.text.startsWith('check this grant'));
+    const grant = generated.todos.find((todo) => todo.gist.startsWith('check this grant'));
 
     commitAll(root);
 
@@ -109,7 +109,6 @@ describe('generate job, in the declared style', () => {
       'gives `system:billing.cancel-stale-invoices` the permission `billing:invoice.cancel`',
     );
 
-    expect(generated.next).toContain(`${ROLES}:17`);
     expect(generated.updated).toContain(ROLES);
     expect(read(root, JOB)).not.toContain('grant the system actor');
     expect(printed).toContain(`${ROLES}:17  check this grant: the role \`system\`, which every system actor holds`);
@@ -144,7 +143,7 @@ describe('generate job, in the declared style', () => {
 
     expect(reminder).toContain('await this.commands.execute(new RemindInvoicesCommand());');
     expect(reminder).not.toContain('systemActor');
-    expect(open.todos.some((todo) => todo.text.startsWith('grant the system actor'))).toBe(false);
+    expect(open.todos.some((todo) => todo.gist.startsWith('grant the system actor'))).toBe(false);
   });
 });
 

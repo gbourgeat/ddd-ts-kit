@@ -241,8 +241,8 @@ describe('init, the choices it records and the ones it refuses', () => {
       '9. **Document**',
     ].map((step) => readme.indexOf(step));
 
-    expect(stringsAt(report, 'next')[0]).toMatch(/^src\/contexts\/billing\/CONTEXT\.md:\d+$/);
-    expect(String(jsonAt(report, 'todos', '0', 'text'))).toContain('define the ubiquitous language first');
+    expect(jsonAt(report, 'todos', '0', 'file')).toBe('src/contexts/billing/CONTEXT.md');
+    expect(jsonAt(report, 'todos', '0', 'gist')).toBe('define the ubiquitous language first');
     expect(steps.every((position, index) => position > (steps[index - 1] ?? -1))).toBe(true);
     expect(readme).toContain('Follow them in order: it is the path the kit supports');
   });

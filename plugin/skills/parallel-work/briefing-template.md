@@ -42,7 +42,7 @@ and put each line in your report as a note for the conductor, who corrects the d
 Contracts you consume (read-only): src/contexts/<upstream>/published-language/
 
 Read first, and only: src/contexts/<context>/CONTEXT.md, then
-`npx ddd-ts-kit describe <context> --json`. Then the `next` places each generator prints.
+`npx ddd-ts-kit describe <context> --json`. Then the `todos` places each generator prints.
 
 For each slice: generate with --local-only --json, fill the TODO(domain) markers, replace every it.todo
 by a test, then `npx ddd-ts-kit verify-slice <context> --since <main>` (regenerate, the rules on your changed
