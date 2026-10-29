@@ -23,6 +23,8 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { writeKitFile } from './kit-files.mjs';
 
 const CONFIG = 'ddd-ts-kit.config.json';
+// The most of the config the guard reads: a larger one is not read, and the guard judges nothing there.
+const CONFIG_BYTES = 256 * 1024;
 // The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
 // the version of the kit: setting a new version of the packages rewrites it.
 const KIT_VERSION = '0.99.0';
@@ -361,6 +363,8 @@ const MODES = {
   'subagent-stop': subagentStop,
 };
 
+// The projects this run of the guard has described: a hook finds the same one several times.
+const projects = new Map();
 // The reader of shell commands, loaded only when a worker runs one: every other call of the guard skips its cost.
 let shell;
 // The notice due to a context-builder near its turn limit, said with the decision of the call or alone.
@@ -916,20 +920,33 @@ function findProject(from) {
 }
 
 function describeProject(root) {
-  const config = readJson(join(root, CONFIG)) ?? {};
+  if (!projects.has(root)) {
+    projects.set(root, readProject(root));
+  }
+  return projects.get(root);
+}
+
+// What the guard reads of a project, its config read once: a field of the wrong type is its default.
+function readProject(root) {
+  const { config, tooLarge } = readConfig(join(root, CONFIG));
+  const text = (key, otherwise) =>
+    Object.hasOwn(config, key) && typeof config[key] === 'string' && config[key] !== '' ? config[key] : otherwise;
   return {
     root,
     cli: installedCli(root),
-    sourceRoot: config.sourceRoot ?? 'src',
-    contextsDir: config.contextsDir ?? 'src/contexts',
-    sharedKernelDir: config.sharedKernelDir ?? `${config.sourceRoot ?? 'src'}/shared-kernel`,
+    sourceRoot: text('sourceRoot', 'src'),
+    contextsDir: text('contextsDir', 'src/contexts'),
+    sharedKernelDir: text('sharedKernelDir', `${text('sourceRoot', 'src')}/shared-kernel`),
     // The modules of the model each context declares: one folder of the context holding its layers.
     modules: modulesByContext(config.contexts),
-    platformDir: config.platformDir ?? 'src/platform',
+    platformDir: text('platformDir', 'src/platform'),
     commit: commitLimits(config.commit),
     packageManager: config.stack?.packageManager === 'pnpm' ? 'pnpm' : 'npm',
     // enforce: block; advise: ask the user; off: silent; any other value, enforce, said at session start.
-    ...guardMode(process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce'),
+    // A config too large to read leaves the guard off there, said at session start too.
+    ...(tooLarge === undefined
+      ? guardMode(process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce')
+      : { mode: 'off', tooLarge }),
     // required (what init writes in a new project): the code of a context is refused in the main checkout
     // of the trunk; advised (the key absent, a project started before): only said.
     worktrees: config.worktrees === 'required' ? 'required' : 'advised',
@@ -938,6 +955,30 @@ function describeProject(root) {
     // On trial: the dependency rules judge the text about to be written, before the write; absent, after it.
     dependenciesBeforeWrite: config.dependenciesBeforeWrite === true,
   };
+}
+
+// The config as an object of JSON, read through one descriptor and never above CONFIG_BYTES; one
+// that cannot be read or parsed is the defaults.
+function readConfig(path) {
+  try {
+    const descriptor = openSync(path, 'r');
+    try {
+      const size = fstatSync(descriptor).size;
+      if (size > CONFIG_BYTES) {
+        return { config: {}, tooLarge: size };
+      }
+      const config = JSON.parse(readFileSync(descriptor, 'utf8'));
+      return { config: isRecord(config) ? config : {} };
+    } finally {
+      closeSync(descriptor);
+    }
+  } catch {
+    return { config: {} };
+  }
+}
+
+function isRecord(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function guardMode(asked) {
@@ -996,9 +1037,7 @@ function projectBriefing(project, input) {
     'Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.',
     'Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).',
     'Read `npx ddd-ts-kit list` (text; `--json` for a script) and the CONTEXT.md of one context instead of browsing the tree.',
-    ...(project.unknownMode === undefined
-      ? []
-      : [`guard: ${quoted(project.unknownMode)} is not a mode (${GUARD_MODES.join(', ')}): enforce applies.`]),
+    ...configNotice(project),
     ...(project.mode === 'off' ? [] : versionGap(project)),
     ...planPointer(project.root),
     ...workerNotice(project, input),
@@ -1014,6 +1053,18 @@ function projectBriefing(project, input) {
   const reminder = project.mode === 'off' ? undefined : commitReminder(project, input, { repeat: true });
 
   return reminder ? [...lines, reminder] : lines;
+}
+
+// What the guard could not take of the config as written: a mode it does not know, a file too large.
+function configNotice(project) {
+  if (project.tooLarge !== undefined) {
+    return [
+      `${CONFIG} holds ${Math.round(project.tooLarge / 1024)} KB, more than the ${CONFIG_BYTES / 1024} KB the guard reads: it judges nothing in this project until the config is smaller.`,
+    ];
+  }
+  return project.unknownMode === undefined
+    ? []
+    : [`guard: ${quoted(project.unknownMode)} is not a mode (${GUARD_MODES.join(', ')}): enforce applies.`];
 }
 
 // A worktree of a project that already depends on the kit lacks its install, not the kit.
@@ -1295,7 +1346,7 @@ function isBarrel(project, path) {
  * (test/unit/<module>/...); 0.86 and 0.87 put it under domain/ and application/ (application/<module>/...).
  */
 function outsideItsModule(project, context, parts) {
-  const modules = project.modules?.[context] ?? [];
+  const modules = project.modules[context] ?? [];
   const [first, second, ...rest] = parts;
   if (modules.includes(first) && ['domain', 'application', 'infrastructure', 'presentation'].includes(second)) {
     return [second, ...rest];
@@ -1306,12 +1357,13 @@ function outsideItsModule(project, context, parts) {
   return (first === 'domain' || first === 'application') && modules.includes(second) ? [first, ...rest] : parts;
 }
 
+// By context name, in a map without prototype: a context named `constructor` or `__proto__` is a name.
 function modulesByContext(contexts) {
-  const named = (context) => {
-    const modules = context?.modules;
-    return modules && typeof modules === 'object' && !Array.isArray(modules) ? Object.keys(modules) : [];
-  };
-  return Object.fromEntries(Object.entries(contexts ?? {}).map(([name, context]) => [name, named(context)]));
+  const modules = Object.create(null);
+  for (const [name, context] of Object.entries(isRecord(contexts) ? contexts : {})) {
+    modules[name] = isRecord(context?.modules) ? Object.keys(context.modules) : [];
+  }
+  return modules;
 }
 
 function insideContexts(project, path) {
@@ -2344,7 +2396,7 @@ function aggregateOption(args) {
 // The repository port of an aggregate, at the level of the context or in a module of its model.
 function hasRepository(project, context, aggregate) {
   const name = aggregate.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-  return ['', ...(project.modules?.[context] ?? [])].some((module) =>
+  return ['', ...(project.modules[context] ?? [])].some((module) =>
     existsSync(
       join(project.root, project.contextsDir, context, module, 'domain', 'repositories', `${name}.repository.ts`),
     ),
