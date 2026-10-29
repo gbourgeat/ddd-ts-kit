@@ -118,6 +118,11 @@ export class Workspace {
       .sort();
   }
 
+  /** Where a read (with `writing`, a write) of the file goes: in the module of the model that holds it. */
+  placed(file: string, writing = false): string {
+    return this.placement === undefined ? file : this.placement(file, writing);
+  }
+
   /** True when this command already wrote the file, whether it is on disk or not. */
   planned(file: string): boolean {
     return this.pending.has(this.placed(file));
@@ -341,9 +346,5 @@ export class Workspace {
 
   private absolute(file: string): string {
     return path.join(this.root, file);
-  }
-
-  private placed(file: string, writing = false): string {
-    return this.placement === undefined ? file : this.placement(file, writing);
   }
 }

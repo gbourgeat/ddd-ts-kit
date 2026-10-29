@@ -1,13 +1,12 @@
-import { findKind } from '../generate/find-kind';
-import type { Kind } from '../generate/kind';
-import { KINDS } from '../generate/kinds';
+import { findKind } from './find-kind';
 import { GENERATE_OPTIONS } from './generate-options';
+import type { Kind } from './kind';
+import { KINDS } from './kinds';
 
 /**
  * The kind a command line asks for: its first word that is neither a flag nor the value of one
  * (`generate --module pricing job catalog Reprice` asks for a job). A flag that is a text for some
  * kinds only (`--command <UseCase>` of a job) takes the next word unless that word is a kind.
- * #537 writes the same reader, private, behind `generateArguments`: keep one once both land.
  */
 export function kindIn(argv: readonly string[]): Kind | undefined {
   for (let index = 0; index < argv.length; index += 1) {

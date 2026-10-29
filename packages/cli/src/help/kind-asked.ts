@@ -1,4 +1,4 @@
-import { kindIn } from '../commands/kind-in';
+import { kindIn } from '../generate/kind-in';
 import type { Kind } from '../generate/kind';
 
 /** The kind a command line of `generate` names, read past the values of its flags; none for another command. */

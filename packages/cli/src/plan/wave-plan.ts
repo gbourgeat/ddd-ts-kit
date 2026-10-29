@@ -3,18 +3,21 @@ export interface WavePlan {
   readonly file: string;
   /** The context asked for; null for the whole plan. */
   readonly context: string | null;
-  /** What makes the plan impossible to order; when there is one, `waves` and `mergeOrder` are empty. */
+  /** What makes the plan impossible to order or to follow as written; when there is one, `waves` and `mergeOrder` are empty. */
   readonly problems: readonly PlanProblem[];
   readonly waves: readonly Wave[];
   /** The ids of the batches, by wave, then the batch more rows wait for first. */
   readonly mergeOrder: readonly string[];
   /** The rows not done that a planned row of another story depends on, in the order of the file. */
   readonly otherStories: readonly OtherStoryRow[];
-  /** The planned commands the generator refused, replayed, for another reason than a word; empty when they were not replayed. */
-  readonly notReplayed: readonly NotReplayed[];
+  /** What the generator refused, replayed, in rows in progress: said, not counted, their commands may have run already. */
+  readonly started: readonly StartedRefusal[];
 }
 
-export interface PlanProblem {
+/** What keeps the plan from being followed as written: its rows cannot be ordered, or a worker following one is refused. */
+export type PlanProblem = RowProblem | RefusedCommand | MissingDependency;
+
+export interface RowProblem {
   /** The first four keep the rows from being ordered; a word keeps a row from being run as written. */
   readonly kind: 'cycle' | 'unknown-dependency' | 'no-owner' | 'duplicate-id' | 'undefined-word' | 'technical-word';
   /** The ids involved, in order: the rows of a cycle, a row then the id it names. */
@@ -22,12 +25,58 @@ export interface PlanProblem {
   readonly message: string;
 }
 
-/** A planned command the generator refused when the plan was replayed: the names it would introduce after the refusal are not judged. */
-export interface NotReplayed {
-  readonly row: string;
+/**
+ * A planned command the generator refuses, replayed in its place in the waves, for any other
+ * reason than a word: a missing `--module`, a flag the project does not take, what it builds on
+ * not generated yet. A worker following the row as written would be refused the same way.
+ */
+export interface RefusedCommand {
+  readonly kind: 'refused-command';
+  /** The row; then each row the plan runs later that generates what the command builds on. */
+  readonly rows: readonly string[];
   /** `generate <kind> ...`, as the row writes it. */
   readonly command: string;
+  /** What the generator says. */
   readonly refusal: string;
+  /** What the generator says to do instead; null when the error is not a refusal of the generator. */
+  readonly fix: string | null;
+  /** Which rows generate what the command builds on, when the generator refused it for that: later rows, a later command of the row, or none. */
+  readonly prerequisite: string | null;
+  /**
+   * What the generator refuses the command for once what it builds on is found, another reason to
+   * fix too, with, when it is another file it builds on, that no row generates it; null when nothing.
+   */
+  readonly nextRefusal: {
+    readonly refusal: string;
+    readonly fix: string | null;
+    readonly prerequisite: string | null;
+  } | null;
+  /** All of it on one line. */
+  readonly message: string;
+}
+
+/**
+ * A planned command that builds on a file another row generates, a row it does not wait for: the
+ * replay, one command after the other, found the file, but the worker of the row, on a branch of
+ * its own, would not.
+ */
+export interface MissingDependency {
+  readonly kind: 'missing-dependency';
+  /** The row, then the row that generates the file. */
+  readonly rows: readonly string[];
+  /** `generate <kind> ...`, as the row writes it. */
+  readonly command: string;
+  /** The file it builds on, as the generator found it. */
+  readonly builtOn: string;
+  readonly message: string;
+}
+
+/** A planned command of a row in progress the generator refused, replayed: not a problem of the plan. */
+export interface StartedRefusal {
+  readonly row: string;
+  readonly command: string;
+  readonly refusal: string;
+  readonly fix: string | null;
 }
 
 /** Wave 1 holds the rows whose dependencies are all done; wave n the rows whose dependencies are done or in earlier waves. */

@@ -1,11 +1,11 @@
-import type { Slice } from '../progress/slice';
+import { type Slice, SLICE_STATUS } from '../progress/slice';
 
 /**
  * The rows a plan orders, in the order of the file: those not done, of the context when one is
  * asked for, and the rows not done they wait for, transitively, whatever their context.
  */
 export function rowsToPlan(rows: readonly Slice[], context: string | null): Slice[] {
-  const open = rows.filter((row) => row.status !== 'done');
+  const open = rows.filter((row) => row.status !== SLICE_STATUS.done);
   const kept = new Set(open.filter((row) => context === null || row.context === context));
   const queue = [...kept];
 

@@ -28,6 +28,7 @@ export const contextKind: Kind = {
       purpose: flags.purpose ?? preset?.purpose,
       classificationReason: flags.reason ?? preset?.classificationReason,
       terms: parseTerms(flags.term),
+      builtOn: flags.builtOn,
     });
 
     if (preset !== undefined) {

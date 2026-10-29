@@ -1,4 +1,5 @@
 import { CliError } from '../../cli-error';
+import { prerequisiteRefusal } from '../prerequisite-refusal';
 import type { Scope } from '../scope';
 import { emit } from '../emit';
 import { isDeclared } from '../is-declared';
@@ -46,7 +47,8 @@ export const erasureHandlerKind: Kind = {
 
 /** The erasure the handler calls: the one `generate repository --personal` wrote for the context, or nothing to call. */
 function erasureAdapterOf(scope: Scope, names: PersonalNames): string {
-  const adapter = scope.ws.read(`${scope.dir}/infrastructure/persistence/${names.adapterKebab}.repository.ts`);
+  const file = `${scope.dir}/infrastructure/persistence/${names.adapterKebab}.repository.ts`;
+  const adapter = scope.ws.read(file);
 
   if (adapter === undefined && isEventSourced(scope)) {
     throw new CliError(
@@ -56,11 +58,15 @@ function erasureAdapterOf(scope: Scope, names: PersonalNames): string {
   }
 
   if (scope.config.stack.privacy !== 'on' || adapter === undefined) {
-    throw new CliError(
+    // On a project that keeps personal data, the repository that declares it is written by an earlier command.
+    throw prerequisiteRefusal(
+      scope.config.stack.privacy === 'on',
       `${scope.context.kebab} has no erasure of personal data to run when the platform announces one.`,
       `Declare what a table of ${scope.context.kebab} keeps of a person first, with \`ddd-ts-kit generate repository ${scope.context.kebab} <Aggregate> --personal <column>,...\` (on a project with \`stack.privacy\` on: \`ddd-ts-kit init --force --privacy on\`), then run the command again.`,
     );
   }
+
+  scope.flags.builtOn?.(scope.ws.placed(file));
 
   return adapter;
 }
