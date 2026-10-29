@@ -26,6 +26,7 @@ import { contextTenancy } from './context-tenancy';
 import { measureSettings } from './measure-settings';
 import { moduleProblems } from './module-problems';
 import { rawConfig } from './raw-config';
+import { ownEntry } from '../../config/values/own-entry';
 
 /** What `config/valid` looks at in one project, each finding placed on a line of the config file. */
 export class ConfigInspection {
@@ -53,7 +54,7 @@ export class ConfigInspection {
     const fix = `Declare it under "contexts" in ${CONFIG_FILE} with its classification and upstreams.`;
 
     return this.project.contextsOnDisk
-      .filter((name) => contexts[name] === undefined)
+      .filter((name) => ownEntry(contexts, name) === undefined)
       .map((name) =>
         this.report(
           { file: `${contextsDir}/${name}`, line: 1 },
@@ -268,7 +269,7 @@ export class ConfigInspection {
           'Remove the entry: a context does not depend on itself.',
         ),
       );
-    } else if (this.project.config.contexts[upstream.context] === undefined) {
+    } else if (ownEntry(this.project.config.contexts, upstream.context) === undefined) {
       const create = `\`ddd-ts-kit generate context ${upstream.context} --classification <core|supporting|generic>\``;
 
       violations.push(
@@ -309,7 +310,7 @@ export class ConfigInspection {
   /** `contexts.<name>.modules` as the file holds it, before parsing drops what it cannot read. */
   private writtenModules(name: string): unknown {
     const contexts = rawConfig(this.project)['contexts'];
-    const context = isRecord(contexts) ? contexts[name] : undefined;
+    const context = isRecord(contexts) ? ownEntry(contexts, name) : undefined;
 
     return isRecord(context) ? context['modules'] : undefined;
   }

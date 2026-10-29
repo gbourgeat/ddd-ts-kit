@@ -21,6 +21,7 @@ import type { Workspace } from '../workspace';
 import { filesUnder } from './files-under';
 import { isDeclared } from './is-declared';
 import { workspaceSources } from './workspace-sources';
+import { ownEntry } from '../config/values/own-entry';
 
 /**
  * Rewrites the generated files of every declared context from its tree: with a barrel, the
@@ -43,7 +44,9 @@ export function refreshBarrels(ws: Workspace, config: Config, earlier: EarlierDe
 
   for (const context of ws.directories(config.contextsDir)) {
     const layout =
-      config.contexts[context] === undefined ? undefined : refreshContext(ws, { config, sources, context, earlier });
+      ownEntry(config.contexts, context) === undefined
+        ? undefined
+        : refreshContext(ws, { config, sources, context, earlier });
 
     if (layout !== undefined) {
       kept.push({ context, layout });

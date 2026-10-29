@@ -4,6 +4,7 @@ import { toName, type Name } from '../naming';
 import type { KindRequest } from './kind';
 import type { Scope } from './scope';
 import { SHARED_KERNEL, sharedKernelScope } from './shared-kernel-scope';
+import { ownEntry } from '../config/values/own-entry';
 
 /** What a kind accepts as its first argument besides a context. */
 export interface ScopeOptions {
@@ -24,7 +25,7 @@ export function openScope(request: KindRequest, options: ScopeOptions = {}): Sco
     throw notInSharedKernel(config);
   }
 
-  if (config.contexts[context.kebab] === undefined) {
+  if (ownEntry(config.contexts, context.kebab) === undefined) {
     throw unknownContext(config, context);
   }
 

@@ -6,6 +6,7 @@ import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { ownEntry } from '../config/values/own-entry';
 
 const MANUAL =
   'Run the formatter, then the checks and the tests: an import the command could not read still names the old path.';
@@ -16,7 +17,7 @@ export const contextLayoutCommand: Command = (argv, io) => {
   const ws = new Workspace(args.projectRoot, false);
   const { config } = readConfig(args.projectRoot);
   const asked = args.positionals.map((name) => toName(name).kebab);
-  const unknown = asked.filter((context) => config.contexts[context] === undefined);
+  const unknown = asked.filter((context) => ownEntry(config.contexts, context) === undefined);
 
   if (unknown.length > 0) {
     throw new CliError(

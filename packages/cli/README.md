@@ -46,7 +46,10 @@ Commands other than `init` look for `ddd-ts-kit.config.json` in the directory an
 Exit codes: `0` success, `1` violations, stale documentation or, under `--strict`, a commit over
 its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
 not write some of them where it ran (a path the sandbox of an agent protects): they are listed
-under `unwritable`, every other file is written and none is deleted.
+under `unwritable`, every other file is written and none is deleted; `4` an internal error of the
+kit, said in one line with its version (`internal error of ddd-ts-kit <version>: ...`, under
+`--json` an `error` with `"internal": true`): report it at
+https://github.com/gbourgeat/ddd-ts-kit/issues with the command.
 
 ## init
 
@@ -648,7 +651,9 @@ and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck
 `init` and `generate context` start with the language: the first entry of `next` is the glossary
 of the context to fill in. Both refuse a context named `schema`, on every ORM: on Prisma the models
 of a context live in `prisma/schema/<context>.prisma`, and `prisma/schema/schema.prisma` is the
-main file every context shares (`init --force` moves a project to Prisma).
+main file every context shares (`init --force` moves a project to Prisma). They refuse too the
+names every JavaScript object has (`constructor`, `prototype`, `__proto__`, `toString`,
+`hasOwnProperty`, `valueOf`): a context is a key of the config and of the objects built from it.
 
 ### Presets
 

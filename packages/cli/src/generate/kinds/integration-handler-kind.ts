@@ -15,6 +15,7 @@ import { findEventDeclaration } from './find-event-declaration';
 import { subscriptionVars } from './subscription-vars';
 import { givenName } from '../given-name';
 import { learnTerms } from '../learn-terms';
+import { ownEntry } from '../../config/values/own-entry';
 
 export const integrationHandlerKind: Kind = {
   name: 'integration-handler',
@@ -82,8 +83,9 @@ function declaredUpstream(scope: Scope, input: string): Name {
   const upstream = parseContextName(input);
 
   const declared =
-    scope.config.contexts[scope.context.kebab]?.upstreams.some((candidate) => candidate.context === upstream.kebab) ===
-    true;
+    ownEntry(scope.config.contexts, scope.context.kebab)?.upstreams.some(
+      (candidate) => candidate.context === upstream.kebab,
+    ) === true;
 
   if (declared) {
     return upstream;

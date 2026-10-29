@@ -1,3 +1,4 @@
+import { ownEntry } from '../config/values/own-entry';
 import type { Config } from '../config';
 import type { Workspace } from '../workspace';
 import { behaviourPage } from './behaviour-page';
@@ -71,7 +72,7 @@ function sectionsOf(ws: Workspace, testDir: string): PageSection[] {
   ];
 
   const sections = ordered.map((name) => ({
-    title: SECTION_TITLES[name] ?? `${capitalised(name)} specs`,
+    title: ownEntry(SECTION_TITLES, name) ?? `${capitalised(name)} specs`,
     specs: specsUnder(ws, `${testDir}/${name}`).map((file) => specOf(ws, testDir, file)),
   }));
 

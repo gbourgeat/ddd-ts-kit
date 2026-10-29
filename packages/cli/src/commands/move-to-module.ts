@@ -9,6 +9,7 @@ import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { ownEntry } from '../config/values/own-entry';
 
 /** Takes files of the model and of the use cases of a context into a module of its model, their imports with them. */
 export const moveToModuleCommand: Command = (argv, io) => {
@@ -57,7 +58,7 @@ export const moveToModuleCommand: Command = (argv, io) => {
 };
 
 function assertDeclared(config: Config, context: string, module: string): void {
-  if (config.contexts[context] === undefined) {
+  if (ownEntry(config.contexts, context) === undefined) {
     throw new CliError(`Unknown context "${context}".`, `Use one of: ${Object.keys(config.contexts).join(', ')}.`);
   }
 

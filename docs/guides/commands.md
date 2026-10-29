@@ -231,7 +231,10 @@ refusal (the message says what to do); `3` a command that writes files (`init`, 
 `docs`, `sdk`, a move) could not write some of them where it ran, such as the paths the sandbox of
 an agent protects. With `3` the report lists them under `unwritable` (and in `skipped`), a dry run
 included; every other file is written and none is deleted. Run the same command where they can be
-written, outside the sandbox: `init` gives the command in a note.
+written, outside the sandbox: `init` gives the command in a note. `4` is an internal error of the
+kit, never a mistake of the caller: one line with the version of the kit and where to report it
+(under `--json`, an `error` with `"internal": true`); report it at
+https://github.com/gbourgeat/ddd-ts-kit/issues with the command it gives.
 
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->

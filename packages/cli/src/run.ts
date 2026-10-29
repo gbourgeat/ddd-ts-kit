@@ -39,9 +39,11 @@ import { verifyMergeCommand } from './commands/verify-merge';
 import { verifySliceCommand } from './commands/verify-slice';
 import { workerScopeCommand } from './commands/worker-scope';
 import { CliError } from './cli-error';
+import { ownEntry } from './config/values/own-entry';
 import { KINDS } from './generate/kinds';
 import { kindsHelp } from './generate/kinds-help';
 import { referenceText } from './help/reference-text';
+import { ISSUES_URL } from './issues-url';
 import { VERSION } from './version';
 
 const COMMANDS: Readonly<Record<string, Command>> = {
@@ -88,6 +90,9 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   explain: explainCommand,
 };
 
+/** The exit code of a fault of the kit itself, apart from `1` (violations) and `2` (a mistake of the caller). */
+const INTERNAL_ERROR = 4;
+
 const processIo: Io = {
   out: (text) => void process.stdout.write(`${text}\n`),
   err: (text) => void process.stderr.write(`${text}\n`),
@@ -116,7 +121,7 @@ export function run(argv: readonly string[], io: Io = processIo): number {
     return commandNamed(command)(rest, io);
   } catch (error) {
     if (!(error instanceof CliError)) {
-      throw error;
+      return internalError(argv, error, io);
     }
 
     if (argv.includes('--json')) {
@@ -129,8 +134,26 @@ export function run(argv: readonly string[], io: Io = processIo): number {
   }
 }
 
+/**
+ * A fault of the kit, not of the caller: said in one line with the version and where to report
+ * it, under `--json` as JSON too, and never as the stack trace of Node with the exit code of a
+ * violation.
+ */
+function internalError(argv: readonly string[], error: unknown, io: Io): number {
+  const message = `internal error of ddd-ts-kit ${VERSION}: ${error instanceof Error ? error.message : String(error)}`;
+  const fix = `Please report it at ${ISSUES_URL} with the command: ddd-ts-kit ${argv.join(' ')}`;
+
+  if (argv.includes('--json')) {
+    io.out(JSON.stringify({ error: { message, fix }, internal: true }, null, 2));
+  } else {
+    io.err(`${message}; ${fix.charAt(0).toLowerCase()}${fix.slice(1)}`);
+  }
+
+  return INTERNAL_ERROR;
+}
+
 function commandNamed(name: string): Command {
-  const command = COMMANDS[name];
+  const command = ownEntry(COMMANDS, name);
 
   if (command !== undefined) {
     return command;

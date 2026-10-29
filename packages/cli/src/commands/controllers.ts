@@ -7,6 +7,7 @@ import { MigrationDraft } from '../refusals/migration-draft';
 import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { ownEntry } from '../config/values/own-entry';
 
 /**
  * Moves the function routes of a project to controller classes, context by context: each
@@ -19,7 +20,7 @@ export const controllersCommand: Command = (argv, io) => {
   const { config } = readConfig(args.projectRoot);
   const [asked] = args.positionals;
 
-  if (asked !== undefined && config.contexts[asked] === undefined) {
+  if (asked !== undefined && ownEntry(config.contexts, asked) === undefined) {
     throw new CliError(`Unknown context "${asked}".`, `Use one of: ${Object.keys(config.contexts).join(', ')}.`);
   }
 

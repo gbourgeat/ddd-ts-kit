@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:1996059bb9f5f423 -->
+<!-- translation-of: commands.md sha256:aef6d3a4c5878413 -->
 
 # Quelle commande, quand
 
@@ -237,7 +237,10 @@ des fichiers (`init`, `generate`, `docs`, `sdk`, un déplacement) n'a pas pu en 
 où elle tournait, comme les chemins que protège le bac à sable d'un agent. Avec `3`, le rapport les
 liste sous `unwritable` (et dans `skipped`), *dry run* compris ; tous les autres fichiers sont
 écrits et aucun n'est supprimé. Relancez la même commande là où ils peuvent être écrits, hors du
-bac à sable : `init` donne la commande dans une note.
+bac à sable : `init` donne la commande dans une note. `4` est une erreur interne du kit, jamais une
+erreur de l'appelant : une ligne avec la version du kit et où la signaler (sous `--json`, une
+`error` avec `"internal": true`) ; signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues
+avec la commande qu'elle donne.
 
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->

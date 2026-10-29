@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:61b6d6d34046d0f5 -->
+<!-- translation-of: README.md sha256:55ceb601846341e3 -->
 
 # ddd-ts-kit
 
@@ -51,7 +51,10 @@ répertoire et ses parents. Codes de sortie : `0` succès, `1` violations, docum
 ou, sous `--strict`, un *commit* au-delà de ses limites, `2` mauvais usage (le message dit quoi
 faire), `3` une commande qui écrit des fichiers n'a pas pu en écrire certains là où elle tournait
 (un chemin que protège le bac à sable d'un agent) : ils sont listés sous `unwritable`, tous les
-autres fichiers sont écrits et aucun n'est supprimé.
+autres fichiers sont écrits et aucun n'est supprimé ; `4` une erreur interne du kit, dite en une
+ligne avec sa version (`internal error of ddd-ts-kit <version>: ...`, sous `--json` une `error`
+avec `"internal": true`) : signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues avec la
+commande.
 
 ## init
 
@@ -675,7 +678,9 @@ l'ancien.
 glossaire du contexte à remplir. Tous deux refusent un contexte nommé `schema`, quel que soit
 l'ORM : sous Prisma les modèles d'un contexte vivent dans `prisma/schema/<context>.prisma`, et
 `prisma/schema/schema.prisma` est le fichier principal que tous les contextes partagent (un projet
-passe à Prisma par `init --force`).
+passe à Prisma par `init --force`). Ils refusent aussi les noms que tout objet JavaScript porte
+(`constructor`, `prototype`, `__proto__`, `toString`, `hasOwnProperty`, `valueOf`) : un contexte
+est une clé de la configuration et des objets construits à partir d'elle.
 
 ### Presets
 
