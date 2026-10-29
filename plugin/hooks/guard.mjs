@@ -2139,13 +2139,21 @@ function writtenTargets(command) {
       at(target, `the redirection \`${operator} ${target.replaceAll(shell.UNKNOWN, '$(...)')}\``),
     );
 
-  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))].filter(({ place }) =>
-    isProjectPath(place),
+  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))].filter(
+    ({ place }) => place === undefined || !isFreePlace(place),
   );
 }
 
-function isProjectPath(place) {
-  return place === undefined || findProject(place) !== undefined;
+// The only absolute places a worker writes outside its scope: the null and standard devices and
+// the system temporary directory (os.tmpdir() or $TMPDIR). Everything else is judged.
+function isFreePlace(place) {
+  if (['/dev/null', '/dev/stdout', '/dev/stderr'].includes(place)) {
+    return true;
+  }
+  return [tmpdir(), process.env.TMPDIR]
+    .filter((dir) => typeof dir === 'string' && dir !== '')
+    .map((dir) => resolve(dir))
+    .some((dir) => place === dir || place.startsWith(`${dir}/`));
 }
 
 function shellWriteReason(project, input, { place, by }) {
@@ -2153,6 +2161,9 @@ function shellWriteReason(project, input, { place, by }) {
     return `A worker writes with the shell only to a file it names: ${by} writes files only the shell knows. ${EDIT_WITH_TOOLS}`;
   }
   const owner = findProject(place);
+  if (owner === undefined) {
+    return `A worker writes only inside its worktree: ${by} writes ${place}, outside your worktree. ${FREE_OUTPUT}`;
+  }
   if (owner.root !== project.root) {
     return `A worker never changes a file outside its scope: ${by} writes ${place}, in another checkout. ${EDIT_WITH_TOOLS}`;
   }
@@ -2452,14 +2463,15 @@ function checkedOutPaths(tail, directory) {
   });
 }
 
-// A path of no project is free; a path only the shell knows, or of another checkout, is not.
+// A path only the shell knows, of another checkout, or anywhere outside every kit project but the
+// free devices and the temporary directory, is outside the worker's scope.
 function outsideScope(project, input, place) {
   if (place === undefined) {
     return true;
   }
   const owner = findProject(place);
   if (owner === undefined) {
-    return false;
+    return !isFreePlace(place);
   }
 
   return owner.root !== project.root || workerScopeReason(project, place, input) !== undefined;

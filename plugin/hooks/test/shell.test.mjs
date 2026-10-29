@@ -36,7 +36,7 @@ const TEXTS = [
   'bash scripts/check.sh',
   'find src/contexts/invoicing',
   'timeout --help',
-  'cd && echo x > notes.txt',
+  'cd && echo x > "$TMPDIR/notes.txt"',
 ];
 
 test('the shell is read as it splits a command line: quotes, comments, substitutions, continuations and wrappers', () => {

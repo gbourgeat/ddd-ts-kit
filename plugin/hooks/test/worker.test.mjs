@@ -477,6 +477,24 @@ test('a worker is refused the writers the tables do not know: redirections, sed,
   }
 });
 
+test('a worker writes only inside its worktree, the devices and the temp directory, nowhere else', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  const refused = [
+    ['echo x > ~/.ddd-ts-kit-test', /outside your worktree/],
+    ['echo x > /etc/ddd-ts-kit-test', /outside your worktree/],
+    ['cp src/contexts/invoicing/a.ts ~/x', /`cp` changes/],
+  ];
+  for (const [command, expected] of refused) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  for (const free of ['echo x > "$TMPDIR/n.txt"', 'echo x > /dev/null', 'echo x >> /dev/stderr']) {
+    assert.equal(run('pre-bash', bash(root, free, agent)).output, undefined, free);
+  }
+});
+
 test('inline code of a worker runs, and what it changed outside the scope stops the worker until put back', () => {
   const root = committed();
   const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-1' };
