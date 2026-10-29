@@ -4,6 +4,8 @@ import { commitAll } from './support/commit-all';
 import { git } from './support/git';
 import { initProject } from './support/init-project';
 import { NPM } from './support/npm';
+import { filesGitDoesNotHold } from '../src/workspace/files-git-does-not-hold';
+import { tempDir } from './helpers';
 
 const AGGREGATE = 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts';
 const COMMITTED = 'Commit or stash them first, then run again: git diff shows what the kit rewrote.';
@@ -129,5 +131,23 @@ describe('--force never destroys work that git does not hold', () => {
     );
 
     expect(read(root, 'biome.json')).toBe('{}\n');
+  });
+});
+
+describe.skipIf(process.platform === 'win32')('the files git is asked about', () => {
+  it('are read as they are written, never as patterns nor magic of git', () => {
+    const root = tempDir('pathspecs');
+
+    write(root, 'docs/[draft].md', 'One.\n');
+    write(root, 'docs/d.md', 'Two.\n');
+    write(root, ':notes.md', 'Three.\n');
+    commitAll(root);
+    write(root, 'docs/[draft].md', 'One, edited.\n');
+    write(root, ':notes.md', 'Three, edited.\n');
+
+    expect(filesGitDoesNotHold(root, ['docs/[draft].md', ':notes.md', 'docs/d.md'])).toEqual([
+      'docs/[draft].md',
+      ':notes.md',
+    ]);
   });
 });

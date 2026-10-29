@@ -14,7 +14,11 @@ export function filesGitDoesNotHold(root: string, files: readonly string[]): str
     return undefined;
   }
 
-  const status = runGit(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--', ...files]) ?? '';
+  // Each path as it is written: `[`, `*`, `?` and a leading `:` are no pattern nor magic of git here.
+  const status =
+    runGit(root, ['--literal-pathspecs', 'status', '--porcelain=v1', '-z', '--untracked-files=all', '--', ...files]) ??
+    '';
+
   const project = fs.realpathSync(root);
 
   // Each entry is `XY <path>`, relative to the top of the repository; a rename adds the old path as its own entry.
