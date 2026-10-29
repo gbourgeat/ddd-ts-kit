@@ -2,6 +2,7 @@ import { specifierOf } from '../../../alias';
 import type { RenderContext } from '../../../templating';
 import type { Scope } from '../../scope';
 import { contextWorld, type ReadWorld } from './context-world';
+import { WORLD_COMMENTS } from './world-comments';
 
 /** What a generated spec asks of the world of its context. */
 export interface WorldNeeds {
@@ -71,17 +72,17 @@ function said(context: string, command: string, why: WithoutWorld): readonly [co
   switch (why.kind) {
     case 'absent':
       return [
-        `\`${command}\` shortens this: the specs generated after it arrange through the world.`,
+        WORLD_COMMENTS.absent(command),
         `\`${command}\` shortens the specs of ${context}: those generated after it arrange through it.`,
       ];
     case 'unread': {
-      const unread = `The world of ${context} could not be read by the generator (it looks for ${why.looksFor}): this spec arranges itself.`;
+      const unread = WORLD_COMMENTS.unread(context, why.looksFor);
 
       return [unread, unread];
     }
     case 'lacking':
       return [
-        `The world of ${context} ${why.missing}: \`${command} --force\` writes it again.`,
+        WORLD_COMMENTS.lacking(context, why.missing, command),
         `The world of ${context} ${why.missing}: the spec arranges without it. \`${command} --force\` writes it again, for the specs generated after.`,
       ];
   }

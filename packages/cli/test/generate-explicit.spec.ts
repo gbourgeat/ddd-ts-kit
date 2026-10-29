@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { scan } from '../src/check/scan/scan';
+import { isWorldComment } from '../src/generate/kinds/world/is-world-comment';
 import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir, walk, type CliResult } from './helpers';
 import { report } from './reports';
 
@@ -26,9 +27,9 @@ describe('generated code, in the explicit style', () => {
       expect(scanned.blockComments, file).toEqual([]);
 
       for (const comment of scanned.comments) {
-        expect(comment.text, `${file}:${comment.line}`).toMatch(
-          /^(TODO\((?:domain|platform)\): |\/?ddd-ts-kit:[\w-]+$|`[a-z ]*ddd-ts-kit generate test-world [a-z-]+` shortens this: )/,
-        );
+        const marked = /^(TODO\((?:domain|platform)\): |\/?ddd-ts-kit:[\w-]+$)/.test(comment.text);
+
+        expect(marked || isWorldComment(comment.text), `${file}:${comment.line}: ${comment.text}`).toBe(true);
       }
     }
   });
