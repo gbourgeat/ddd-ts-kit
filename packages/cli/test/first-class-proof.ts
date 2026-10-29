@@ -12,6 +12,18 @@ const DECLARED_READER =
 const EXPLICIT_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-search-invoices.reader.ts';
 const LINES = "[{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }]";
 
+/** The test of what shipping does when billing issues an invoice, in the place of its pending entry. */
+const PREPARES_A_PARCEL = `  it('prepares a parcel when billing issues an invoice', async () => {
+    const commands = new RecordingCommandBus();
+    const issued = invoiceIssuedV2.create({ invoiceId: 'invoice-1' }, meta);
+
+    await new BillingInvoiceIssuedIntegrationHandler(commands).handle(issued);
+
+    expect(commands.executed).toEqual([new PrepareParcelCommand()]);
+  });
+
+`;
+
 /**
  * What a team writes after `init` and `generate` in the project of the first-class stack, kept
  * to the minimum the proof needs: the aggregate records its birth fact, the list reads three
@@ -46,15 +58,15 @@ export function writeBusinessDecisions(root: string): void {
     ],
   ]);
 
-  // The generated spec hands the handler an event: now that the handler sends a command, the bus of the spec knows it.
+  // The command the handler executes is decided: the pending entry of its spec becomes the test of it.
   edit(root, SHIPPING_HANDLER_SPEC, [
     [
       /(import \{ BillingInvoiceIssuedIntegrationHandler \} from '([^']*)contexts\/shipping\/[^\n]*\n)/,
       "$1import { PrepareParcelCommand } from '$2contexts/shipping/application/commands/prepare-parcel/prepare-parcel.command';\n",
     ],
     [
-      /const handler = new (\w+)\(new InMemoryCommandBus\(\)\);\n(\s+const meta)/,
-      'const commands = new InMemoryCommandBus().register(PrepareParcelCommand, { execute: async () => undefined });\n    const handler = new $1(commands);\n$2',
+      / {2}\/\/ TODO\(domain\): replace this test by the entries below[^\n]*\n {2}it\('receives the event[\s\S]*?\n {2}\}\);\n\n {2}it\.todo\('executes the command that follows the upstream fact'\);\n/,
+      PREPARES_A_PARCEL,
     ],
   ]);
 

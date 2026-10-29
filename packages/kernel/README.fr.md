@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1a8e41caf665b63c -->
+<!-- translation-of: README.md sha256:54d43e72b9776af4 -->
 
 # @ddd-ts-kit/kernel
 
@@ -12,9 +12,10 @@ politiques.
 npm i @ddd-ts-kit/kernel
 ```
 
-Deux points d'entrée : `@ddd-ts-kit/kernel` (les blocs de base, les ports, les interfaces
-standard et leurs doubles) et `@ddd-ts-kit/kernel/declarations` (les décorateurs par lesquels une
-classe dit ce qu'elle est, voir « Déclarations »).
+Trois points d'entrée : `@ddd-ts-kit/kernel` (les blocs de base, les ports, les interfaces
+standard et leurs doubles), `@ddd-ts-kit/kernel/declarations` (les décorateurs par lesquels une
+classe dit ce qu'elle est, voir « Déclarations ») et `@ddd-ts-kit/kernel/testing` (les bus
+enregistreurs d'une *spec*, voir « La *spec* d'une réaction »).
 
 ![Le domaine et l'application d'un contexte délimité importent le noyau ; le noyau déclare les ports sous forme de classes abstraites ; ses propres doubles, les packages d'adaptateurs du kit et l'infrastructure du contexte les implémentent ; la plateforme lie une implémentation à chaque port au démarrage](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/kernel-ports-and-implementations.fr.svg)
 
@@ -50,6 +51,7 @@ avec une bibliothèque.
 | Aides à la persistance | `optimisticUpdate`, `expectVersion` (la version qu'un appelant a lue, `If-Match` en HTTP, est toujours la version courante, sinon `PreconditionFailedError` : 412), `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Remontée des erreurs | `ErrorReporter`, `ErrorReport`, `errorReportOf`, `reportOnce`, `isUnexpectedError`, `errorReportingMiddleware`, `DeadLetterReports`, `reportProcessFailures`, `NoopErrorReporter` |
 | Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryErrorReporter`, `InMemoryCache`, `InMemoryCacheInvalidation`, `InMemoryCachePurger`, `InMemoryLock`, `InMemoryRateLimiter` |
+| Tests (`@ddd-ts-kit/kernel/testing`) | `RecordingCommandBus`, `RecordingQueryBus` : des bus qui gardent chaque message qu'on leur confie, dans l'ordre (`executed`), et répondent ce que la *spec* leur a dit (`answering(type, answer)`), rien sinon (voir « La *spec* d'une réaction ») |
 | Déclarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Background`, `Projection`, `On`, `applyingProjection`, `Repository`, `Gateway`, `Adapter`, `Policy`, `Edge` (pour les décorateurs d'un *package* de transport, comme `@Controller`), `injected`, `injectedDependencies`, `declarationOf`, `listDeclarations`, `DeclarationError`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
 
 Les règles que servent ces blocs sont dans `docs/ARCHITECTURE.md`.
@@ -594,6 +596,48 @@ Un gestionnaire `after-commit` qui confie un agrégat à un *repository* envelop
 l'unité de travail est terminée. Il envoie une commande par le `CommandBus`, qui ouvre sa propre
 unité de travail. `unitOfWorkStage()` répond `'outside'`, `'open'`, `'before-commit'` ou
 `'after-commit'`.
+
+### La *spec* d'une réaction
+
+Qu'un gestionnaire `before-commit` s'exécute dans la transaction et qu'un gestionnaire
+`after-commit` s'exécute une fois celle-ci validée est une garantie du noyau, prouvée une fois
+par sa propre suite : la *spec* d'une réaction ne la prouve pas de nouveau. Elle donne le fait à
+la réaction et vérifie ce que la réaction a envoyé. Un gestionnaire d'événement de domaine, un
+gestionnaire d'événement d'intégration et un contrôleur envoient des commandes par le
+`CommandBus` qu'ils reçoivent : `RecordingCommandBus` de `@ddd-ts-kit/kernel/testing` garde
+chacune de celles qu'on lui confie, dans l'ordre, dans `executed`, et répond ce que la *spec* lui
+a dit avec `answering(type, answer)` (un identifiant, ou un refus que la fonction lève), pour les
+commandes de `type` et de ses sous-classes, rien sinon. Aucun gestionnaire ne s'exécute : ce que fait la commande est la *spec* de son propre
+gestionnaire. `RecordingQueryBus` fait de même pour les requêtes. Les *specs* que
+`ddd-ts-kit generate` écrit pour ces rôles partent de là :
+
+<!-- checked sample -->
+```ts
+import { Command, type CommandBus, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { RecordingCommandBus } from '@ddd-ts-kit/kernel/testing';
+
+class ScheduleReminderCommand extends Command {
+  constructor(readonly invoiceId: string) {
+    super();
+  }
+}
+
+/** Quand une facture est émise, un rappel est planifié pour elle. */
+class InvoiceIssuedEventHandler {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle(event: DomainEvent): Promise<void> {
+    await this.commands.execute(new ScheduleReminderCommand(event.aggregateId));
+  }
+}
+
+const issued: DomainEvent = { name: 'billing.invoice.issued', aggregateId: 'invoice-1', occurredAt: new Date(0) };
+const commands = new RecordingCommandBus();
+
+await new InvoiceIssuedEventHandler(commands).handle(issued);
+
+export const sent = commands.executed; // [new ScheduleReminderCommand('invoice-1')]
+```
 
 ### Une unité de travail à vous
 

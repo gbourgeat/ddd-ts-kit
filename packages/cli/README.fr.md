@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7ec70bdfe24584cb -->
+<!-- translation-of: README.md sha256:33e79f8ed887c7cd -->
 
 # ddd-ts-kit
 
@@ -1122,7 +1122,8 @@ Fait passer les routes en fonctions d'un projet, ou d'un contexte, à des classe
 - les fichiers de schéma nommés d'après la route la suivent (`<name>-body.dto.ts` devient
   `<name>.body.ts`), les autres vont dans `shared/` sous leur nom, et chaque import d'un fichier
   déplacé est réécrit ;
-- la *spec* devient `<name>.controller.spec.ts` et exécute le contrôleur sans ses gardes ;
+- la *spec* devient `<name>.controller.spec.ts` : envoyé par `routeOf`, le contrôleur se tient
+  derrière les gardes de son groupe ; une *spec* qui appelle `executeRoute` l'exécute sans elles ;
 - dans un projet déclaré, la liste `<context>.routes.ts`, sa *spec* et sa ligne dans la racine
   de composition sont supprimées ; dans un projet explicite, la liste construit chaque contrôleur
   à la main ;

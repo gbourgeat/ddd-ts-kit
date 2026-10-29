@@ -9,6 +9,24 @@ const HTTP = 'src/contexts/billing/presentation/http';
 const FUNCTIONS = ['--routes', 'functions'];
 const ROUTES_OF = 'src/platform/composition/routes-of.ts';
 
+const EXECUTED_SPEC = [
+  "import { describe, expect, it } from 'vitest';",
+  "import { executeRoute } from '@ddd-ts-kit/http';",
+  "import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';",
+  "import { CancelInvoiceCommand } from '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.command';",
+  "import { cancelInvoiceRoute } from '@/contexts/billing/presentation/http/cancel-invoice.route';",
+  '',
+  "describe('DELETE /invoices/:invoiceId', () => {",
+  "  it('answers 204', async () => {",
+  '    const commands = new InMemoryCommandBus().register(CancelInvoiceCommand, { execute: async () => undefined });',
+  "    const request = { params: { invoiceId: 'invoice-1' }, query: {}, headers: {}, body: {}, raw: undefined };",
+  '',
+  '    expect((await executeRoute(cancelInvoiceRoute(commands), request)).status).toBe(204);',
+  '  });',
+  '});',
+  '',
+].join('\n');
+
 describe('controllers, on a declared project of function routes', () => {
   let root: string;
   let outcome: CliResult;
@@ -16,6 +34,18 @@ describe('controllers, on a declared project of function routes', () => {
   beforeAll(() => {
     root = tempDir('codemod');
     scaffoldEverything(root, { ...EXPLICIT_STACK, style: 'declared', validation: 'class-validator' }, FUNCTIONS);
+
+    // A spec sent through routeOf that names its route factory again, in a comment of the team.
+    const spec = 'src/contexts/billing/test/unit/issue-invoice.route.spec.ts';
+
+    write(
+      root,
+      spec,
+      read(root, spec).replace("describe('", "// issueInvoiceRoute(commands) answers the identifier.\ndescribe('"),
+    );
+
+    // A spec written before routeOf: it calls executeRoute with the route.
+    write(root, 'src/contexts/billing/test/unit/cancel-invoice.route.spec.ts', EXECUTED_SPEC);
     outcome = cli(root, 'controllers', '--json');
   });
 
@@ -73,8 +103,19 @@ describe('controllers, on a declared project of function routes', () => {
     expect(exists(root, `${HTTP}/issue-invoice.route.ts`)).toBe(false);
     expect(exists(root, `${HTTP}/billing.routes.ts`)).toBe(false);
 
-    expect(read(root, 'src/contexts/billing/test/unit/issue-invoice.controller.spec.ts')).toContain(
-      "controllerRoute(new IssueInvoiceController(commands), { guards: 'skip' })",
+    const moved = read(root, 'src/contexts/billing/test/unit/issue-invoice.controller.spec.ts');
+
+    expect(moved).toContain('routeOf(new IssueInvoiceController(commands))');
+    // What else names the factory is left to the team: a spec sent through routeOf needs no controllerRoute.
+    expect(moved).toContain('// issueInvoiceRoute(commands) answers the identifier.');
+    expect(moved).not.toContain('controllerRoute');
+
+    expect(read(root, 'src/contexts/billing/test/unit/cancel-invoice.controller.spec.ts')).toContain(
+      "import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';",
+    );
+
+    expect(read(root, 'src/contexts/billing/test/unit/cancel-invoice.controller.spec.ts')).toContain(
+      "executeRoute(controllerRoute(new CancelInvoiceController(commands), { guards: 'skip' }), request)",
     );
 
     expect(read(root, 'src/platform/composition/compose-application.ts')).not.toContain('billingRoutes');

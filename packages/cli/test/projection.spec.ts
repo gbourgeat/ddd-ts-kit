@@ -31,7 +31,7 @@ describe('generate projection', () => {
       "import { invoiceIssuedV2, type InvoiceIssuedV2 } from '@/contexts/billing/published-language';",
     );
 
-    expect(read(root, SPEC)).toContain('await expect(projection.issued(event)).resolves.toBeUndefined();');
+    expect(read(root, SPEC)).toContain('await expect(projection.issued(fact)).resolves.toBeUndefined();');
 
     expect(read(root, `${SHIPPING}/application/application.declarations.ts`)).toContain(
       "export * from '@/contexts/shipping/application/projections/invoices-to-ship.projection';",
@@ -111,7 +111,7 @@ describe('generate projection', () => {
     );
 
     expect(module).toContain('builder.include(InvoicesToShipProjection);');
-    expect(read(explicit, SPEC)).toContain('await expect(projection.issued(event)).resolves.toBeUndefined();');
+    expect(read(explicit, SPEC)).toContain('await expect(projection.issued(fact)).resolves.toBeUndefined();');
 
     expect(
       checkJsonOf(cli(explicit, 'check', '--json')).violations.filter(({ file }) => file.includes('projection')),

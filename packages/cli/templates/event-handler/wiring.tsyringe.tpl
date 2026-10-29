@@ -1,9 +1,9 @@
 @@imports
-import { DomainEventDispatcher } from '@ddd-ts-kit/kernel';
+import { {{#unless handler.afterCommit}}CommandBus, {{/unless}}DomainEventDispatcher } from '@ddd-ts-kit/kernel';
 import { {{handler.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{handler.kebab}}.event-handler{{alias.ext}}';
 import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 @@registrations
-builder.bind({{handler.pascal}}EventHandler).toClass({{handler.pascal}}EventHandler).as('domain-event-handler');
+builder.bind({{handler.pascal}}EventHandler).toClass({{handler.pascal}}EventHandler{{#unless handler.afterCommit}}, [CommandBus]{{/unless}}).as('domain-event-handler');
 @@start
 {{#if handler.afterCommit}}
 resolve(DomainEventDispatcher).on(

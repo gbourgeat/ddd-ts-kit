@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:f18c9bf513a3dce7 -->
+<!-- translation-of: testing-strategy.md sha256:429096142ba3f3de -->
 
 # Stratégie de test
 
@@ -516,6 +516,9 @@ le changement, a laissé passer cette version précise ; jamais rendu plus facil
 | 401 sans justificatif d'identité, 403 sans la permission, le statut documenté avec elle | de bout en bout | toute la chaîne : HTTP, authentification, bus |
 | « Une réservation entraîne la planification d'un rappel », à travers deux contextes | de bout en bout | traverse le bus d'événements ; à terme, si bien que le test attend le résultat |
 | Code de statut et corps du document *problem* pour une entrée de mauvaise forme | *spec* de route | validation à la frontière |
+| Ce qu'un contrôleur confie à son cas d'usage, le statut qu'il répond | *spec* du contrôleur ou de la route, envoyée par `routeOf` de `@ddd-ts-kit/http/testing` à un bus enregistreur | la traduction de la frontière, gardes comprises |
+| « Quand le patient annule, le suivi des présences le note » (une réaction) | *spec* de la réaction : le fait donné, la commande qu'un `RecordingCommandBus` de `@ddd-ts-kit/kernel/testing` a gardée vérifiée | la décision de la réaction, pas ce que la commande fait ensuite |
+| Une réaction `before-commit` s'exécute dans la transaction, une réaction `after-commit` une fois celle-ci validée | la suite du noyau, une fois | une garantie du kit, jamais prouvée de nouveau par un projet |
 
 Deux principes découlent du tableau. Poussez chaque règle au niveau le plus bas qui peut la
 prouver : dix cas d'un délai d'annulation font dix tests d'une milliseconde sur l'agrégat, pas dix

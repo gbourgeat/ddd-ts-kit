@@ -157,6 +157,7 @@ It answers 201 with `{ id }`, documents `OUT_OF_STOCK` (its own), `FORBIDDEN` (i
 | `HttpRequest<{ params, query, headers, body }>` | the request as `handle`, a mapper or a guard names it, with `actor` and `context` |
 | `controllerRoutes(controllers, { resolve, security, guards })` | the `Route` of each controller, given as a class (built by `resolve`) or as an instance; `security` names the schemes of the application (`['bearer']` by default); `guards: 'skip'` is for the spec of a controller alone |
 | `controllerRoute(controller, options)` | the one route of one controller, for a spec |
+| `routeOf(controller or route, options)` | (`@ddd-ts-kit/http/testing`) the route of a spec and `send(request)`, through the whole pipeline as an authenticated `caller`, guards included unless `guards: 'skip'` says otherwise, answers checked: see [The spec of a route](#the-spec-of-a-route-routeof) |
 
 A controller with no group and no guard is refused when its class is defined. Guards run in
 order, after validation and before `handle`, inside the execution scope of the request, and
@@ -232,6 +233,62 @@ export const invalid = await executeRoute(getOrder, request('x')); // 422, VALID
 Pass the options of the application as the third argument (`validateResponses: true` in
 tests, `resolvePrincipal` to call as a given actor): the answer is the one the server would
 send, headers included.
+
+### The spec of a route: `routeOf`
+
+`routeOf` of `@ddd-ts-kit/http/testing` is that call, set once for a whole spec: it takes a
+controller (an instance, or its class with `resolve`) or a route already built (`defineRoute`,
+`nestControllerRoute`), and `send` hands it one request, each part left out empty. Every request
+goes through the whole pipeline, guards included, as `caller`, an authenticated user (`user-1`,
+no role) unless the spec names another one, and its answer is checked against the declaration
+(`validateResponses: true`). The other options of `executeRoute` (`errorMapper` for one) are
+given once, beside it; `guards: 'skip'` leaves the guards of a controller out, for the spec that
+says so. The generated spec of every route and controller is written with it, and with a
+recording bus of `@ddd-ts-kit/kernel/testing`, so that it asserts what the use case was handed:
+
+<!-- checked sample -->
+```ts
+import { z } from 'zod';
+import { AuthorizedCommand, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
+import { RecordingCommandBus } from '@ddd-ts-kit/kernel/testing';
+import { defineRoute } from '@ddd-ts-kit/http';
+import { routeOf } from '@ddd-ts-kit/http/testing';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+class CancelOrderCommand extends AuthorizedCommand {
+  constructor(
+    actor: Actor,
+    readonly orderId: string,
+  ) {
+    super(actor);
+  }
+}
+
+const cancelOrderRoute = (commands: CommandBus) =>
+  defineRoute(
+    {
+      method: 'POST',
+      path: '/orders/:orderId/cancellation',
+      operationId: 'cancelOrder',
+      summary: 'Cancel an order',
+      request: { params: zodSchema(z.object({ orderId: z.string().min(1) })) },
+      responses: { 204: { description: 'Done.' } },
+      security: ['bearer'],
+    },
+    async ({ params, context }) => {
+      await commands.execute(new CancelOrderCommand(context.execution.actor, params.orderId));
+
+      return { status: 204 };
+    },
+  );
+
+const commands = new RecordingCommandBus();
+const { caller, send } = routeOf(cancelOrderRoute(commands));
+
+export const response = await send({ params: { orderId: 'order-1' } }); // 204
+export const handed = commands.executed; // [new CancelOrderCommand(caller, 'order-1')]
+export const sentBy = caller;
+```
 
 ## HTTP caching
 

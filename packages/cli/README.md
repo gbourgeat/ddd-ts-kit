@@ -1062,7 +1062,8 @@ Moves the function routes of a project, or of one context, to controller classes
 - the schema files named after the route follow it (`<name>-body.dto.ts` becomes
   `<name>.body.ts`), the others go to `shared/` under their name, and every import of a moved
   file is rewritten;
-- the spec becomes `<name>.controller.spec.ts` and runs the controller without its guards;
+- the spec becomes `<name>.controller.spec.ts`: sent through `routeOf`, the controller stands
+  behind the guards of its group; a spec that calls `executeRoute` runs it without them;
 - in a declared project the list `<context>.routes.ts`, its spec and its line in the
   composition root are removed; in an explicit one the list builds each controller by hand;
 - the config says `controllers` once no function route is left in the contexts.

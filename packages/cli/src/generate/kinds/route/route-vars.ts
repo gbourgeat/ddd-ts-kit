@@ -4,6 +4,8 @@ import type { RenderContext } from '../../../templating';
 import type { Scope } from '../../scope';
 import { dtoClasses } from './dto-classes';
 import { sharesSchemas } from './shares-schemas';
+import { sampleParams } from './sample-params';
+import { specVars } from './spec-vars';
 import { successStatus } from './success-status';
 import type { Endpoint } from './endpoint';
 import type { UseCase } from './use-case';
@@ -19,6 +21,7 @@ export interface RouteParts {
 
 /** What the templates of a route read: its endpoint, the use case it calls and how the stack validates. */
 export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts): RenderContext {
+  const status = successStatus(endpoint, useCase);
   const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
   const { config, context } = scope;
   const shared = sharesSchemas(config);
@@ -27,9 +30,8 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
   return {
     method: endpoint.method,
     path: endpoint.path,
-    status: successStatus(endpoint, useCase),
+    status,
     isQuery: useCase.isQuery,
-    isPlainQuery: useCase.isQuery && !useCase.isSearch,
     isSearch: useCase.isSearch,
     returnsId: useCase.returnsId,
     ...acceptedVars(useCase, shared),
@@ -47,6 +49,7 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
     ...busVars(useCase, inContext(`${useCase.messageFile}.ts`)),
     ...securityVars(scope, useCase),
     ...parameterVars(endpoint.parameters),
+    ...specVars({ name, endpoint, useCase, status }),
   };
 }
 
@@ -77,7 +80,6 @@ function busVars(useCase: UseCase, messageFile: string): RenderContext {
     input: useCase.message,
     bus: useCase.isQuery ? 'queries' : 'commands',
     busType: useCase.isQuery ? 'QueryBus' : 'CommandBus',
-    busClass: useCase.isQuery ? 'InMemoryQueryBus' : 'InMemoryCommandBus',
     useCaseImport: message,
     messageImport: message,
   };
@@ -96,12 +98,10 @@ function securityVars(scope: Scope, useCase: UseCase): RenderContext {
 }
 
 function parameterVars(parameters: readonly string[]): RenderContext {
-  const sample = parameters.map((parameter) => `${parameter}: '${toName(parameter).kebab}-1'`).join(', ');
-
   return {
     zodParams: parameters.map((parameter) => `${parameter}: z.string().min(1)`).join(', '),
     typeboxParams: parameters.map((parameter) => `${parameter}: Type.String({ minLength: 1 })`).join(', '),
     dtoParams: parameters.map((parameter) => `@IsString()\n  ${parameter} = '';`).join('\n\n  '),
-    sampleParams: parameters.length > 0 ? `{ ${sample} }` : '{}',
+    sampleParams: sampleParams(parameters),
   };
 }

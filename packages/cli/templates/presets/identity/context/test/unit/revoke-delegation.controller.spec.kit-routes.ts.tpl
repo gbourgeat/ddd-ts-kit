@@ -1,6 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
-import { InMemoryCommandBus, type Actor } from '@ddd-ts-kit/kernel';
+import { routeOf } from '@ddd-ts-kit/http/testing';
+import type { Actor } from '@ddd-ts-kit/kernel';
+import { RecordingCommandBus } from '@ddd-ts-kit/kernel/testing';
 import { RevokeDelegationCommand } from '{{alias.context}}/application/commands/revoke-delegation/revoke-delegation.command{{alias.ext}}';
 import { RevokeDelegationController } from '{{alias.context}}/presentation/http/organisations/revoke-delegation/revoke-delegation.controller{{alias.ext}}';
 
@@ -14,31 +15,19 @@ const caller: Actor = {
 
 describe('DELETE /organisations/:organisationId/delegations/:delegationId', () => {
   it('answers 200 with what the use case answered, and sends it what the request says', async () => {
-    const { route, sent } = arrange();
+    const { route, send, commands } = arrange();
 
-    const response = await executeRoute(
-      route,
-      { params: { organisationId: 'acme', delegationId: 'delegation-1' }, query: {}, headers: {}, body: {}, raw: undefined },
-      { validateResponses: true, resolvePrincipal: () => caller },
-    );
+    const response = await send({ params: { organisationId: 'acme', delegationId: 'delegation-1' }, body: {} });
 
     expect(route.path).toBe('/organisations/:organisationId/delegations/:delegationId');
     expect([response.status, response.body]).toEqual([200, { id: 'delegation-1' }]);
-    expect(sent).toMatchObject([{ organisationId: 'acme', delegationId: 'delegation-1' }]);
+    expect(commands.executed).toMatchObject([{ organisationId: 'acme', delegationId: 'delegation-1' }]);
   });
 });
 
-/** The route, on a bus that keeps what it was sent and answers as the use case would. */
-function arrange() {
-  const sent: RevokeDelegationCommand[] = [];
+/** The route, sent as `caller` unless a test names another, on a bus that keeps what it was sent and answers as the use case would. */
+function arrange(as: Actor = caller) {
+  const commands = new RecordingCommandBus().answering(RevokeDelegationCommand, () => 'delegation-1');
 
-  const commands = new InMemoryCommandBus().register(RevokeDelegationCommand, {
-    execute: async (command) => {
-      sent.push(command);
-
-      return 'delegation-1';
-    },
-  });
-
-  return { route: controllerRoute(new RevokeDelegationController(commands)), sent };
+  return { ...routeOf(new RevokeDelegationController(commands), { caller: as }), commands };
 }

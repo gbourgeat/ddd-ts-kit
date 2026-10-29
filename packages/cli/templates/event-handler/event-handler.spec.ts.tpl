@@ -1,38 +1,32 @@
 import { describe, expect, it } from '{{tests.module}}';
-import {
-  InMemoryDomainEventDispatcher,
-  InMemoryUnitOfWork,
-  announceDomainEvents,
-  unitOfWorkStage,
-} from '@ddd-ts-kit/kernel';
+{{#unless handler.afterCommit}}
+import { RecordingCommandBus } from '@ddd-ts-kit/kernel/testing';
+{{/unless}}
 import { {{handler.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{handler.kebab}}.event-handler{{alias.ext}}';
 import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 
+const fact = new {{event.pascal}}('{{aggregate.kebab}}-1', new Date('2026-01-01T00:00:00.000Z'));
+
 describe('When {{event.words}}', () => {
 {{#unless handler.afterCommit}}
-  it('reacts at the end of the unit of work, before the commit, without failing', async () => {
-{{/unless}}
-{{#if handler.afterCommit}}
-  it('reacts once the unit of work has committed, without failing', async () => {
-{{/if}}
-    const handler = new {{handler.pascal}}EventHandler();
-    const event = new {{event.pascal}}('{{aggregate.kebab}}-1', new Date('2026-01-01T00:00:00.000Z'));
-    const domainEvents = new InMemoryDomainEventDispatcher();
-    const reactedAt: string[] = [];
+  // TODO(domain): replace this test by the entries below once the policy is written: each named after the policy, of the same shape, the fact given and the command recorded asserted, `expect(commands.executed).toEqual([new ...Command(...)])`.
+  it('handles the fact and sends no command until the policy is written', async () => {
+    const commands = new RecordingCommandBus();
 
-    const asSubscribed = async (): Promise<void> => {
-      await handler.handle(event);
-      reactedAt.push(unitOfWorkStage());
-    };
+    await new {{handler.pascal}}EventHandler(commands).handle(fact);
 
-    domainEvents.on({{event.reference}}, asSubscribed, { phase: '{{handler.phase}}' });
-    await new InMemoryUnitOfWork().run(() => announceDomainEvents([event], domainEvents));
-
-    expect(reactedAt).toEqual(['{{handler.phase}}']);
-    expect(domainEvents.afterCommitFailures).toEqual([]);
+    expect(commands.executed).toEqual([]);
   });
 
-  // TODO(domain): replace each entry below by a test named after the policy this reaction implements.
   it.todo('carries out the policy that follows the fact');
+{{/unless}}
+{{#if handler.afterCommit}}
+  // TODO(domain): replace this test by the entries below once the effect is written: each named after the effect, the handler given the fake of its port and the fact, what the fake kept asserted.
+  it('handles the fact and has no effect until the effect is written', async () => {
+    await expect(new {{handler.pascal}}EventHandler().handle(fact)).resolves.toBeUndefined();
+  });
+
+  it.todo('carries out the effect that follows the commit of the fact');
+{{/if}}
   it.todo('does nothing when the policy does not apply');
 });

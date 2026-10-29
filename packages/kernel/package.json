@@ -37,6 +37,10 @@
     "./declarations": {
       "types": "./dist/declarations.d.ts",
       "default": "./dist/declarations.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "files": [

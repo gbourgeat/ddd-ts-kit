@@ -492,6 +492,9 @@ left (`ddd-ts-kit acceptance <story> --gate passing`).
 | 401 without a credential, 403 without the permission, the documented status with it | end to end | the whole chain: HTTP, authentication, bus |
 | "Booking leads to a reminder being scheduled" across two contexts | end to end | crosses the event bus; eventual, so the test waits for the outcome |
 | Status code and problem body for an input of the wrong shape | route spec | boundary validation |
+| What a controller hands its use case, the status it answers | controller or route spec, sent through `routeOf` of `@ddd-ts-kit/http/testing` to a recording bus | the translation of the boundary, guards included |
+| "When the patient cancels, the attendance notes it" (a reaction) | reaction spec: the fact given, the command a `RecordingCommandBus` of `@ddd-ts-kit/kernel/testing` recorded asserted | the decision of the reaction, not what the command then does |
+| A `before-commit` reaction runs inside the transaction, an `after-commit` one once it committed | the suite of the kernel, once | a guarantee of the kit, never proven again by a project |
 
 Two guidelines follow from the table. Push each rule to the lowest level that can prove it:
 ten cases of a cancellation window are ten millisecond tests on the aggregate, not ten HTTP

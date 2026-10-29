@@ -167,7 +167,11 @@ describe('the other generators of a route, on a Nest controller', () => {
     expect(controller).toContain('upload: { field: ');
     expect(controller).toContain('async attachInvoiceScan(@Upload() file: IncomingFile, @CurrentActor() actor: Actor)');
     expect(controller).toContain('new AttachInvoiceScanCommand(actor, file)');
-    expect(read(root, `${BILLING}/test/unit/attach-invoice-scan.controller.spec.ts`)).toContain('nestControllerRoute(');
+    const spec = read(root, `${BILLING}/test/unit/attach-invoice-scan.controller.spec.ts`);
+
+    expect(spec).toContain('nestControllerRoute(');
+    expect(spec).toContain('routeOf(served, { uploads });');
+    expect(spec).not.toContain('executeRoute');
     expect(read(root, `${BILLING}/billing.controllers.ts`)).toContain('withSignatures(AttachInvoiceScanController, {');
   });
 
