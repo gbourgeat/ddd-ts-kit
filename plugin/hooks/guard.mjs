@@ -3149,8 +3149,11 @@ function runCli(project, args, timeout) {
     timedOut.set(args[0], Math.round(limit / 1000));
     briefingCut = briefingEnds !== undefined;
   }
+  // A report is an object of JSON: no output (a run that could not start, whose null parses as null),
+  // `null` or a bare value is none.
   try {
-    return JSON.parse(run.stdout);
+    const report = JSON.parse(run.stdout);
+    return isRecord(report) ? report : undefined;
   } catch {
     return undefined;
   }

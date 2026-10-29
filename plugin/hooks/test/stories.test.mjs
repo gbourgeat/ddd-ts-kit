@@ -14,6 +14,7 @@ import {
   edit,
   git,
   launcher,
+  patch,
   patchConfig,
   project,
   put,
@@ -303,6 +304,15 @@ test('in the worktree of a story, the refusals that start no process come before
   assert.match(reason(barrel), /holds generated declarations/);
   const code = run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts')));
   assert.match(reason(code), /waits for its build gate/);
+});
+
+test('a CLI that answers no report to the build gate leaves the rest of the call judged', () => {
+  const root = storyWorktree();
+  cliAnswering(root, { story: null });
+  const code = '*** Add File: src/contexts/ordering/domain/order-number.ts\n+export const next = 1;';
+  const rules = '*** Add File: biome.json\n+{}';
+  const said = run('pre-write', patch(root, code, rules)).output;
+  assert.match(said.systemMessage, /^ddd-ts-kit: biome\.json holds the rules or the pipeline/);
 });
 
 function briefingOf(root) {
