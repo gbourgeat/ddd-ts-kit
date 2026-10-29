@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:d1537f4bdaf8bae3 -->
+<!-- translation-of: ARCHITECTURE.md sha256:cb7c79fa4007d099 -->
 
 # Référence de l'architecture
 
@@ -1705,7 +1705,8 @@ une page par contexte et une pour l'application, d'après les titres des *specs*
 d'usage (ses *specs* de *handler*, de *policy*, de route, de bout en bout et d'acceptation
 ensemble), puis un par partie du modèle et un par réaction, les *specs* qui n'entrent dans aucun
 sous leur répertoire ; sous chacun, les titres qu'un *template* du kit a écrits à part des règles
-écrites pour le projet, une règle planifiée (`it.todo`) en dernier et dite comme telle. Le titre d'un test énonce une
+écrites pour le projet, une règle planifiée (`it.todo`) en dernier et dite comme telle, la ligne
+qu'un titre cite (`#US5.02 AC1`) avant lui, et les lignes citées comptées à la fin. Le titre d'un test énonce une
 règle (`test/title-states-a-rule`), donc la page se lit comme le métier l'écrirait ; le *hook* de
 pre-commit la régénère quand une *spec* est commitée et `docs --check` la tient à jour : le test est
 la preuve, la page sa lecture, et aucune seconde langue n'est tenue en phase avec le code.

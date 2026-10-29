@@ -1633,7 +1633,8 @@ page per context and one for the application, from the titles of the specs: one 
 case (its handler, policy, route, end-to-end and acceptance specs together), then one per part of
 the model and one per reaction, the specs that fit none under their directory; under each, the
 titles a template of the kit wrote apart from the rules written for the project, a planned rule
-(`it.todo`) last and said so. The title of a test states a rule
+(`it.todo`) last and said so, the row a title cites (`#US5.02 AC1`) before it, and the rows cited
+counted at the end. The title of a test states a rule
 (`test/title-states-a-rule`), so the page reads as the business would write it; the pre-commit hook
 regenerates it when a spec is committed and `docs --check` holds it current: the test is the proof,
 the page its reading, and no second language is kept in step with the code.

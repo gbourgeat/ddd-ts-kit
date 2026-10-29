@@ -34,7 +34,7 @@ describe('The page of a context, one heading per use case', () => {
         '`unit/cancel-invoice.handler.spec.ts`, `unit/late-cancellation.policy.spec.ts`, `unit/withdraw-invoice.route.spec.ts`, `test/e2e/cancel-invoice.e2e.spec.ts`, `test/acceptance/US1.acceptance.spec.ts`',
         '',
         '- **Cancel invoice**',
-        '  - refuses an invoice already paid',
+        '  - `#US1.02` refuses an invoice already paid',
         '- **Who may cancel an invoice**',
         '  - lets the accountant cancel',
         '- **DELETE /invoices/:id**',
@@ -42,7 +42,7 @@ describe('The page of a context, one heading per use case', () => {
         '- **Cancel invoice, end to end**',
         '  - answers 204 to its issuer',
         '- **Invoice a customer, acceptance**',
-        '  - a customer cancels an unpaid invoice',
+        '  - `#US1.02 AC1` a customer cancels an unpaid invoice',
         '',
         '## Model',
       ].join('\n'),
@@ -67,8 +67,13 @@ describe('The page of a context, one heading per use case', () => {
     );
 
     expect(page('application')).toContain('### journey-billing (end to end), in e2e');
-    expect(page('application')).toContain('- a customer reads the invoice');
+    expect(page('application')).toContain('- `#US1.09 AC2` a customer reads the invoice');
     expect(page('application')).not.toContain('cancel-invoice');
     expect(page('application')).not.toContain('a customer cancels an unpaid invoice');
+  });
+
+  it('counts, at the end of each page, the titles that cite each row: the scenario of a use case on the page of its context', () => {
+    expect(page('billing')).toContain('| Row | Titles |\n|---|---|\n| `#US1.02` | 2 |\n');
+    expect(page('application')).toContain('| Row | Titles |\n|---|---|\n| `#US1.09` | 1 |\n');
   });
 });

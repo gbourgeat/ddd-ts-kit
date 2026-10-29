@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:11efbd44647a8033 -->
+<!-- translation-of: testing-strategy.md sha256:aa838b28397ea0e1 -->
 
 # Stratégie de test
 
@@ -658,7 +658,11 @@ par partie du modèle (`Slot (value object), in calendars`) et par réaction ; l
 n'entrent dans aucun sous leur répertoire. Sous chaque titre viennent d'abord les règles écrites
 pour le projet, puis les titres qu'un *template* de *spec* du kit a écrits, mot pour mot (`Generated
 by the kit`), pour qu'un relecteur lise ce que le projet a ajouté ; une règle planifiée (`it.todo`)
-vient en dernier, et elle comme une *spec* mise de côté sont dites comme telles. `docs/behaviour/application.md` garde les *specs* hors des contextes qui
+vient en dernier, et elle comme une *spec* mise de côté sont dites comme telles. Un titre qui cite la
+ligne du plan qu'il sert (`#US5.02 AC1 a customer places an order`) montre la ligne avant la règle,
+et la page finit par `Rows of the plan`, chaque ligne citée et le nombre de titres qui la citent : un
+relecteur vérifie que chaque ligne de règle de la ligne dans `docs/architecture/slices.md` a son
+titre. `docs/behaviour/application.md` garde les *specs* hors des contextes qui
 ne servent aucun cas d'usage (parcours, architecture). `npm run docs:generate` les écrit, le *hook* de pre-commit les régénère et
 les ajoute quand une *spec* est indexée (un worker confiné à son contexte les laisse au tronc),
 `docs --check` les tient à jour, et elles sont commitées avec les *specs* : le test est la preuve,
