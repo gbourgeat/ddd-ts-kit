@@ -101,7 +101,7 @@ function generatedUseCase(scope: Scope, name: Name, kind: string): Generated | u
     : {
         folder,
         kind: 'query',
-        contextOf: (asksPolicy) => queryContext(scope, name, asksPolicy),
+        contextOf: (asksPolicy) => queryContext(scope, name, { asksPolicy }),
         outputs: queryOutputs(scope, name, ''),
       };
 }

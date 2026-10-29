@@ -15,7 +15,7 @@ beforeAll(() => {
 });
 
 describe('generated code, in the explicit style', () => {
-  it('carries no comment but the TODO(domain) and TODO(platform) ones and the marker regions', () => {
+  it('carries no comment but the TODO(domain) and TODO(platform) ones, the marker regions and the world a spec would arrange through', () => {
     const sources = walk(root, 'src/contexts').filter((file) => file.endsWith('.ts'));
 
     expect(sources.length).toBeGreaterThan(40);
@@ -27,7 +27,7 @@ describe('generated code, in the explicit style', () => {
 
       for (const comment of scanned.comments) {
         expect(comment.text, `${file}:${comment.line}`).toMatch(
-          /^(TODO\((?:domain|platform)\): |\/?ddd-ts-kit:[\w-]+$)/,
+          /^(TODO\((?:domain|platform)\): |\/?ddd-ts-kit:[\w-]+$|`[a-z ]*ddd-ts-kit generate test-world [a-z-]+` shortens this: )/,
         );
       }
     }
@@ -69,7 +69,7 @@ describe('generated code, in the explicit style', () => {
 
       expect(text.match(/^\s*it\('/gm)?.length, spec).toBe(2);
       expect(text, spec).toContain("rejects.toMatchObject({ code: 'FORBIDDEN' })");
-      expect(text, spec).toContain('new RoleBasedAuthorizer({\n    roles: { holder: [billingPermissions[');
+      expect(text, spec).toContain("const { holder, authorizer } = holdersOf(billingPermissions['");
       expect(text.match(/^\s*it\.todo\('/gm)?.length, spec).toBeGreaterThanOrEqual(2);
       expect(text, spec).toContain('modules: [platformTestModule, billingModule, holders]');
       expect(text, spec).toMatch(/application\.(commandBus|queryBus)\.execute\(/);

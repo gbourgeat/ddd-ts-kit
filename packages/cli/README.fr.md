@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c8dada5cb96e5e96 -->
+<!-- translation-of: README.md sha256:3175e1a1fbde7375 -->
 
 # ddd-ts-kit
 
@@ -793,7 +793,7 @@ Next, in this order: the language of the context first, then the business decisi
 | `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]... [--preset identity]` | `CONTEXT.md` avec son glossaire, `published-language/index.ts`, l'entrée de configuration, l'enregistrement dans `platform/composition/compose-application.ts` et dans `test/architecture/extractable.spec.ts` ; sur tsyringe, avec HTTP, `presentation/http/<name>.routes.ts` (une fonction des deux bus, dans les deux styles) ; déclaré : le barrel `<name>.declarations.ts` ; explicite et câblage manuel : `<name>.module.ts`. `<name>.permissions.ts`, à la racine du contexte, naît avec la première permission, ou tout de suite quand `platform/auth/authorization/permissions.ts` liste les ensembles de permissions (rebac, custom). Avec `--preset`, le contexte est ensuite écrit en entier depuis ce *preset*, sa classification et son objet étant ceux du *preset* sauf si les options disent autre chose ([Presets](#presets)) |
 | `aggregate` | `<context> <Name> [--event-sourced [--birth <Event>]]` | agrégat, *builder*, *spec* sur le modèle étant donné / quand / alors ; avec `--event-sourced`, un agrégat sur `EventSourcedAggregate` dont l'état est le rejeu de ses événements, né avec son événement du domaine `Created` (ou le fait que nomme `--birth <Event>`, vérifié contre le glossaire), le codec de ses événements stockés dans `infrastructure/persistence/<name>-events.mapper.ts`, un *builder* qui rejoue un historique et une *spec* à partir d'événements donnés, et une note qui nomme le `EventSourcedRepository` auquel délègue son adaptateur de *repository* ; refusé tant que `stack.eventSourcing` est `off`, avec le `init --force --event-sourcing on` à lancer |
 | `builder` | `<context> <Aggregate>` | `test/builders/<name>.builder.ts`, une classe qui étend `Builder` |
-| `test-world` | `<context> [Name]` | `test/worlds/<name>.world.ts` (le nom est par défaut celui du contexte) : `a<Name>World({ now, idPrefix, given })`, la mise en place que partagent plusieurs *specs* du contexte. Il lit les *fakes* de `test/fakes/` et le port que chacun implémente, les construit, les passe à `given` pour que la *spec* enregistre ce dont elle part, puis à l'application de test (avec `modules`, l'autorisation de la *spec*) ou, câblé à la main, enveloppe les *repositories* des bus de `createTestBuses` par `dispatching` ; il rend chaque *fake* sous le nom de son port. Un *fake* qui attend des arguments de constructeur, ou, avec un conteneur, celui d'un port que rien ne lie ni n'utilise encore, est laissé de côté avec une note |
+| `test-world` | `<context> [Name]` | `test/worlds/<name>.world.ts` (le nom est par défaut celui du contexte) : `a<Name>World({ now, idPrefix, given })`, la mise en place que partagent plusieurs *specs* du contexte. Il lit les *fakes* de `test/fakes/` et le port que chacun implémente, les construit, les passe à `given` pour que la *spec* enregistre ce dont elle part, puis à l'application de test (avec `modules`, l'autorisation de la *spec*) ou, câblé à la main, enveloppe les *repositories* des bus de `createTestBuses` par `dispatching` ; il rend chaque *fake* sous le nom de son port. Un *fake* qui attend des arguments de constructeur, ou, avec un conteneur, celui d'un port que rien ne lie ni n'utilise encore, est laissé de côté avec une note. Avec un conteneur, il prend aussi `fakes`, le *fake* d'un port qu'il ne sait pas construire (un lecteur qui répond ce que la *spec* lui donne), et, avec la multi-location, `tenants`. Le monde nommé d'après le contexte est celui par lequel passent les *specs* de `command`, `query` et `job` générées après lui |
 | `entity` | `<context> <Name>` | entité, *spec* |
 | `value-object` (`vo`) | `<context> <Name>` | objet-valeur, *spec* |
 | `vocabulary` | `<context> <Name> --value <value> [--value <value>]...` | `domain/vocabularies/<name>.vocabulary.ts` : un objet `as const` des valeurs, indexé par chaque valeur en PascalCase, et le type union du même nom ; relancé, ajoute les valeurs que le fichier ne contient pas |
@@ -961,7 +961,11 @@ Next, in this order: the language of the context first, then the business decisi
   par `application.domainEvents.on('<name>', ...)` ; en câblage manuel, elle passe par
   `createTestBuses()` de `@ddd-ts-kit/testing`, dont `dispatching(fake)` fait que la sauvegarde
   d'un *fake* annonce ses événements à `domainEvents`. La mise en place que partagent plusieurs
-  *specs* d'un contexte se génère une fois, `generate test-world`, dans `test/worlds/`.
+  *specs* d'un contexte se génère une fois, `generate test-world`, dans `test/worlds/` : les
+  *specs* de gestionnaires, de requêtes et de tâches planifiées générées après lui passent par lui,
+  en un appel, et celles générées avant le disent dans un commentaire. Dans les deux cas,
+  `holdersOf(permission)` de `@ddd-ts-kit/auth/testing` donne l'acteur qui détient la permission
+  et l'autorisateur qui l'accorde.
 - `--json` affiche `{ dryRun, created, updated, deleted, skipped, unwritable, todos, notes }`.
   `todos` liste les endroits `TODO(domain)`, le glossaire d'abord, chacun en `{ file, line, gist }` :
   `gist` donne les premiers mots du marqueur (jusqu'à son premier `:` ou `;`, douze mots au plus),

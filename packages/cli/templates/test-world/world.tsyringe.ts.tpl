@@ -20,6 +20,10 @@ export interface {{world.pascal}}WorldOptions {
   readonly now?: Date;
   readonly idPrefix?: string;
   readonly modules?: readonly ContextModule[];
+  readonly fakes?: readonly Override[];
+{{#if world.tenanted}}
+  readonly tenants?: readonly string[];
+{{/if}}
 {{#if world.hasFakes}}
   readonly given?: (fakes: {{world.pascal}}WorldFakes) => Promise<void>;
 {{/if}}

@@ -1,23 +1,42 @@
 import { describe, expect, it } from '{{tests.module}}';
+{{#unless world.through}}
+{{#unless job.protected}}
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
+{{/unless}}
+{{/unless}}
+{{#if job.protected}}
+import { authorizationModule } from '@ddd-ts-kit/auth/di';
+import { holdersOf } from '@ddd-ts-kit/auth/testing';
+{{/if}}
+{{#unless world.through}}
 {{spec.diPlain}}
 {{spec.contextImports}}
+{{/unless}}
 import type { Message } from '@ddd-ts-kit/kernel';
+{{#unless world.through}}
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
+{{/unless}}
 {{job.permissionsImport}}
 import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
+{{#if world.through}}
+{{world.import}}
+{{/if}}
+{{#if job.protected}}
 
-const authorization = authorizationModule({
-  authorizer: new RoleBasedAuthorizer({
-    roles: { scheduler: [{{job.granted}}] },
-    systemRole: 'scheduler',
-  }),
-});
+const { authorizer } = holdersOf({{job.granted}});
+const authorization = authorizationModule({ authorizer });
+{{/if}}
+{{#unless world.through}}
+{{#unless job.protected}}
+
+const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: {} }) });
+{{/unless}}
+{{/unless}}
 
 describe('{{name.title}}, when its time comes', () => {
   it('sends {{job.commandWords}}{{job.asActor}}', async () => {
-    const { application, sent } = {{spec.await}}arrange();
+    const { application, sent } = {{world.await}}arrange();
 
     await application.jobs.runNow('{{job.name}}');
 
@@ -35,7 +54,7 @@ describe('{{name.title}}, when its time comes', () => {
 {{#if job.perTenant}}
 
   it('runs once for each tenant, in the scope of that tenant', async () => {
-    const { application, tenants } = {{spec.await}}arrange();
+    const { application, tenants } = {{world.await}}arrange();
 
     await application.jobs.runNow('{{job.name}}');
 
@@ -52,7 +71,14 @@ describe('{{name.title}}, when its time comes', () => {
 {{/if}}
 });
 
-{{spec.async}}function arrange() {
+{{#unless world.through}}
+{{world.comment}}
+{{/unless}}
+{{world.async}}function arrange() {
+{{#if world.through}}
+  const { application } = await {{world.builder}}({{world.options}});
+{{/if}}
+{{#unless world.through}}
 {{#if spec.assembles}}
   const context = {{spec.context}};
 
@@ -63,6 +89,7 @@ describe('{{name.title}}, when its time comes', () => {
     tenants: ['tenant-a', 'tenant-b'],
 {{/if}}
   });
+{{/unless}}
 
   const sent: Message[] = [];
 {{#if job.perTenant}}

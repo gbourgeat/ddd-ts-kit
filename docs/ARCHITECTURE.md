@@ -1390,10 +1390,13 @@ fakes of `test/fakes/` and the port each one implements, and writes `a<Name>Worl
 which builds the fakes, hands them to `given` so that the spec stores what it starts from, then
 returns the application and every fake under the name of its port. Its options pass `now` and
 `idPrefix` through, and, with an injection container, the modules a spec adds (its
-authorization). Without one, it returns the buses and the fakes, each repository wrapped by
-`dispatching`, and the spec registers the handler it tests. A world imports fakes and builders;
-no production file imports a world, as none imports a test file (`not-to-test` of the import
-graph). A helper written in `test/unit/` or `test/integration/` instead is reported
+authorization), the fakes of the ports it cannot build (a reader that answers what the spec
+gives it) and, under tenancy, the tenants of a per-tenant job. Without one, it returns the buses
+and the fakes, each repository wrapped by `dispatching`, and the spec registers the handler it
+tests. The world named after the context is the one the specs of a command, a query or a job
+generated after it arrange through; a spec generated before it, or needing a fake it lacks,
+arranges without it and says so. A world imports fakes and builders; no production file imports
+a world, as none imports a test file (`not-to-test` of the import graph). A helper written in `test/unit/` or `test/integration/` instead is reported
 (`test/helper-placed`).
 
 <!-- checked sample -->

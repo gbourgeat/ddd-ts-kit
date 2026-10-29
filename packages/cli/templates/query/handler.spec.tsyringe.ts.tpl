@@ -1,12 +1,22 @@
 import { describe, expect, it } from '{{tests.module}}';
+{{#unless world.through}}
+{{#if access.public}}
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-{{#if access.protected}}
-import { anActor } from '@ddd-ts-kit/auth/testing';
 {{/if}}
+{{/unless}}
+{{#if access.protected}}
+import { authorizationModule } from '@ddd-ts-kit/auth/di';
+import { anActor, holdersOf } from '@ddd-ts-kit/auth/testing';
+{{/if}}
+{{#if world.through}}
+import { fake } from '@ddd-ts-kit/di';
+{{/if}}
+{{#unless world.through}}
 {{spec.diWithFake}}
 {{spec.contextImports}}
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
+{{/unless}}
 {{#if access.protected}}
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 {{/if}}
@@ -14,25 +24,25 @@ import { {{name.pascal}}Reader } from '{{alias.context}}/application/ports/{{nam
 import { {{name.pascal}}Query } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.query{{alias.ext}}';
 import type { {{name.pascal}}Result } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result{{alias.ext}}';
 import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.kebab}}-reader.fake{{alias.ext}}';
+{{#if world.through}}
+{{world.import}}
+{{/if}}
 {{#if access.protected}}
 
-const holders = authorizationModule({
-  authorizer: new RoleBasedAuthorizer({
-    roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },
-  }),
-});
-
-const holder = anActor().withRole('holder').build();
+const { holder, authorizer } = holdersOf({{context.camel}}Permissions['{{access.permission}}']);
+const holders = authorizationModule({ authorizer });
 {{/if}}
+{{#unless world.through}}
 {{#if access.public}}
 
 const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: {} }) });
 {{/if}}
+{{/unless}}
 
 describe('{{name.title}}', () => {
   it('answers what the read model holds', async () => {
     const answer: {{name.pascal}}Result = {};
-    const application = {{spec.await}}arrange(answer);
+    const application = {{world.await}}arrange(answer);
     const query = new {{name.pascal}}Query({{access.holder}});
 
     expect(await application.queryBus.execute(query)).toEqual(answer);
@@ -40,7 +50,7 @@ describe('{{name.title}}', () => {
 {{#if access.protected}}
 
   it('is refused to an actor who does not hold the permission {{access.permission}}', async () => {
-    const application = {{spec.await}}arrange({});
+    const application = {{world.await}}arrange({});
     const query = new {{name.pascal}}Query(anActor().build());
 
     await expect(application.queryBus.execute(query)).rejects.toMatchObject({ code: 'FORBIDDEN' });
@@ -52,6 +62,15 @@ describe('{{name.title}}', () => {
   it.todo('applies each criterion of the query');
 });
 
+{{#if world.through}}
+async function arrange(answer: {{name.pascal}}Result) {
+  const { application } = await {{world.builder}}({{world.options}});
+
+  return application;
+}
+{{/if}}
+{{#unless world.through}}
+{{world.comment}}
 {{spec.async}}function arrange(answer: {{name.pascal}}Result) {
 {{#if spec.assembles}}
   const context = {{spec.context}};
@@ -62,3 +81,4 @@ describe('{{name.title}}', () => {
     fakes: [fake({{name.pascal}}Reader, new Fake{{name.pascal}}Reader(answer))],
   });
 }
+{{/unless}}

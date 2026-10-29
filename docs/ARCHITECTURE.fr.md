@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:7f4b930046f413ec -->
+<!-- translation-of: ARCHITECTURE.md sha256:50ab22c02032b5c7 -->
 
 # Référence de l'architecture
 
@@ -1450,9 +1450,14 @@ test n'énonce que ce qui compte pour la règle qu'il vérifie.
 *fakes* de `test/fakes/` et le port que chacun implémente, et écrit `a<Name>World(options)`, qui
 construit les *fakes*, les passe à `given` pour que la *spec* enregistre ce dont elle part, puis
 rend l'application et chaque *fake* sous le nom de son port. Ses options transmettent `now` et
-`idPrefix` et, avec un conteneur d'injection, les modules qu'une *spec* ajoute (son autorisation).
+`idPrefix` et, avec un conteneur d'injection, les modules qu'une *spec* ajoute (son autorisation),
+les *fakes* des ports qu'il ne sait pas construire (un lecteur qui répond ce que la *spec* lui
+donne) et, avec la multi-location, les locataires d'une tâche planifiée par locataire.
 Sans conteneur, il rend les bus et les *fakes*, chaque *repository* enveloppé par `dispatching`,
-et la *spec* enregistre le *handler* qu'elle teste. Un monde importe des *fakes* et des
+et la *spec* enregistre le *handler* qu'elle teste. Le monde nommé d'après le contexte est celui
+par lequel passent les *specs* d'une commande, d'une requête ou d'une tâche planifiée générées
+après lui ; une *spec* générée avant lui, ou qui a besoin d'un *fake* qu'il n'a pas, s'en passe et
+le dit. Un monde importe des *fakes* et des
 *builders* ; aucun fichier de production n'importe un monde, pas plus qu'un fichier de test
 (`not-to-test` du graphe des imports). Une aide écrite dans `test/unit/` ou `test/integration/` à
 la place est signalée (`test/helper-placed`).

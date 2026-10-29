@@ -12,6 +12,7 @@ import { existingAggregate } from './existing-aggregate';
 import { generateRepository } from './generate-repository';
 import { repositoryLine } from './repository-line';
 import { wireRepositoryOnFirstUse } from './wire-repository-on-first-use';
+import { noteWorldArrangement } from './world/note-world-arrangement';
 
 export const commandKind: Kind = {
   name: 'command',
@@ -56,6 +57,7 @@ export const commandKind: Kind = {
     }
 
     emit(scope, context, commandOutputs(scope, name));
+    noteWorldArrangement(scope, context);
 
     if (aggregate !== undefined) {
       wireRepositoryOnFirstUse(scope, aggregate);

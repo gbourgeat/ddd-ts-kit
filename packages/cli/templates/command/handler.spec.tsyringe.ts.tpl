@@ -1,9 +1,15 @@
 import { describe, expect, it } from '{{tests.module}}';
+{{#unless world.through}}
+{{#if access.public}}
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-{{#if access.protected}}
-import { anActor } from '@ddd-ts-kit/auth/testing';
 {{/if}}
+{{/unless}}
+{{#if access.protected}}
+import { authorizationModule } from '@ddd-ts-kit/auth/di';
+import { anActor, holdersOf } from '@ddd-ts-kit/auth/testing';
+{{/if}}
+{{#unless world.through}}
 {{#if command.hasAggregate}}
 {{spec.diWithFake}}
 {{/if}}
@@ -12,33 +18,36 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 {{/unless}}
 {{spec.contextImports}}
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
+{{/unless}}
 {{#if access.protected}}
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 {{/if}}
 import { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.command{{alias.ext}}';
+{{#unless world.through}}
 {{#if command.hasAggregate}}
 import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository{{alias.ext}}';
 import { Fake{{aggregate.pascal}}Repository } from '{{alias.context}}/test/fakes/{{aggregate.kebab}}.repository.fake{{alias.ext}}';
 {{/if}}
+{{/unless}}
+{{#if world.through}}
+{{world.import}}
+{{/if}}
 {{#if access.protected}}
 
-const holders = authorizationModule({
-  authorizer: new RoleBasedAuthorizer({
-    roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },
-  }),
-});
-
-const holder = anActor().withRole('holder').build();
+const { holder, authorizer } = holdersOf({{context.camel}}Permissions['{{access.permission}}']);
+const holders = authorizationModule({ authorizer });
 {{/if}}
+{{#unless world.through}}
 {{#if access.public}}
 
 const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: {} }) });
 {{/if}}
+{{/unless}}
 
 describe('{{name.title}}', () => {
 {{#if command.births}}
   it('saves the {{aggregate.words}} and answers its identifier', async () => {
-    const { application, {{aggregate.camel}}Repository } = {{spec.await}}arrange();
+    const { application, {{aggregate.camel}}Repository } = {{world.await}}arrange();
 
     const id = await application.commandBus.execute(new {{name.pascal}}Command({{access.holder}}));
 
@@ -48,7 +57,7 @@ describe('{{name.title}}', () => {
 {{/if}}
 {{#unless command.births}}
   it('completes without answering anything', async () => {
-    const { application } = {{spec.await}}arrange();
+    const { application } = {{world.await}}arrange();
     const command = new {{name.pascal}}Command({{access.holder}});
 
     await expect(application.commandBus.execute(command)).resolves.toBeUndefined();
@@ -57,7 +66,7 @@ describe('{{name.title}}', () => {
 {{#if access.protected}}
 
   it('is refused to an actor who does not hold the permission {{access.permission}}', async () => {
-    const { application } = {{spec.await}}arrange();
+    const { application } = {{world.await}}arrange();
     const command = new {{name.pascal}}Command(anActor().build());
 
     await expect(application.commandBus.execute(command)).rejects.toMatchObject({ code: 'FORBIDDEN' });
@@ -65,17 +74,24 @@ describe('{{name.title}}', () => {
 {{/if}}
 
 {{#if command.hasAggregate}}
-  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with the builders of test/builders and the fakes, execute through the bus, assert the stored {{aggregate.words}}, the facts announced with the save (`application.domainEvents.on('<name>', ...)` before executing), `application.eventBus.published` and the answer; when several specs of {{context.kebab}} share this arrangement, `npx ddd-ts-kit generate test-world {{context.kebab}}` writes it once in test/worlds/.
+  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with the builders of test/builders and the fakes, execute through the bus, assert the stored {{aggregate.words}}, the facts announced with the save (`application.domainEvents.on('<name>', ...)` before executing), `application.eventBus.published` and the answer.
   it.todo('applies the business decision to the {{aggregate.words}}');
 {{/if}}
 {{#unless command.hasAggregate}}
-  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with builders and fakes of its ports (`fakes: [fake(Port, aFake)]`), execute through the bus, assert the outcome; when several specs of {{context.kebab}} share this arrangement, `npx ddd-ts-kit generate test-world {{context.kebab}}` writes it once in test/worlds/.
+  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with builders and fakes of its ports (`fakes: [fake(Port, aFake)]`), execute through the bus, assert the outcome.
   it.todo('applies the business decision to the aggregate');
 {{/unless}}
   it.todo('refuses the command when a business rule is violated, with the expected error code');
   it.todo('saves and publishes nothing when the command is refused');
 });
 
+{{#if world.through}}
+async function arrange() {
+  return {{world.builder}}({{world.options}});
+}
+{{/if}}
+{{#unless world.through}}
+{{world.comment}}
 {{spec.async}}function arrange() {
 {{#if spec.assembles}}
   const context = {{spec.context}};
@@ -100,3 +116,4 @@ describe('{{name.title}}', () => {
   return { application };
 {{/unless}}
 }
+{{/unless}}

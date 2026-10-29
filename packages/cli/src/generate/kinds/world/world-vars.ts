@@ -20,6 +20,7 @@ export function worldVars(scope: Scope, name: Name, fakes: readonly ContextFake[
     ...name,
     hasFakes: fakes.length > 0,
     given: fakes.length > 0 ? 'given, ' : '',
+    tenanted: scope.config.stack.tenancy !== 'none',
     diImport: diImport(scope, fakes.length > 0),
     contextImport: contextImports(scope),
     assembles: isDeclared(scope.config),
@@ -35,7 +36,7 @@ export function worldVars(scope: Scope, name: Name, fakes: readonly ContextFake[
     ),
     overrides: laidOut(
       '    fakes: [',
-      fakes.map((fake) => `fake(${fake.port.name}, fakes.${fake.key})`),
+      [...fakes.map((fake) => `fake(${fake.port.name}, fakes.${fake.key})`), '...(settings.fakes ?? [])'],
       '],',
     ),
     returnedBuses: laidOut('  return { ', ['...buses', ...returnedFakes(fakes)], ' };'),
@@ -59,6 +60,7 @@ function diImport(scope: Scope, withFakes: boolean): string {
     'createTestApplication',
     ...(withFakes ? ['fake'] : []),
     'type ContextModule',
+    'type Override',
   ];
 
   return `import { ${names.join(', ')} } from '@ddd-ts-kit/di';`;
