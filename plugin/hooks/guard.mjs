@@ -256,6 +256,8 @@ const FREE_OUTPUT = 'Output to /dev/null or to the system temp directory stays f
 const EDIT_WITH_TOOLS = `Inside your scope, the editor tools and the shell may both write; outside it, nothing may. ${FREE_OUTPUT}`;
 // The clean install of each package manager: what installs the lockfile as it is.
 const CLEAN_INSTALL = { npm: 'npm ci', pnpm: 'pnpm install --frozen-lockfile' };
+// The subcommands of a package manager that install the lockfile as it is, its aliases included.
+const CLEAN_INSTALLS = ['ci', 'clean-install', 'cin', 'ic', 'install-clean', 'isntall-clean'];
 
 // The subcommands of each package manager that change package.json or the lockfile; an install
 // changes them when it names a package.
@@ -3189,10 +3191,15 @@ function startsTrunkMerge(command) {
   );
 }
 
+// An install of the lockfile, in any spelling the guard knows (`npm ci`, `npm clean-install`, a bare
+// `yarn`, `bun install --frozen-lockfile`): a worker's install of what the lockfile says is free.
 function installsPackages({ words }) {
   const manager = shell.commandName(words);
   const [subcommand] = shell.operands(words.slice(1), VALUED_MANAGER_OPTIONS);
-  return manager in DEPENDENCY_CHANGES && ['ci', ...INSTALLS].includes(subcommand);
+  return (
+    manager in DEPENDENCY_CHANGES &&
+    (CLEAN_INSTALLS.includes(subcommand) || INSTALLS.includes(subcommand) || (manager === 'yarn' && !subcommand))
+  );
 }
 
 // The checkout of the session, when it is not the worker's: every file of it is outside the scope.

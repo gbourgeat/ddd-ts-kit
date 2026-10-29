@@ -940,6 +940,18 @@ test('what the sanctioned scripts of the project rewrite outside the scope is sa
   assert.match(reason(run('pre-bash', bash(root, 'git status', agent))), /outside your scope: src\/main\.ts\./);
 });
 
+test('every clean install the guard knows leaves the packages out of the note around it', () => {
+  const root = committed();
+  const manifest = join(root, 'node_modules/ddd-ts-kit/package.json');
+  const installs = ['yarn', 'npm clean-install', 'npm cin', 'npm ic', 'bun install --frozen-lockfile', 'pnpm i'];
+  installs.forEach((command, index) => {
+    const agent = { ...worker(root, 'ordering'), session_id: 'installs', agent_id: `builder-${index}` };
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+    writeFileSync(manifest, `${readFileSync(manifest, 'utf8')} `);
+    assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined, command);
+  });
+});
+
 test('the first commit of a worker in a repository without one is compared by the files git shows', () => {
   const root = project();
   git(root, 'init', '--quiet');
