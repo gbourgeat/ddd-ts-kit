@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c6115740f30ca20f -->
+<!-- translation-of: README.md sha256:7f679c7a0d4ece1c -->
 
 # ddd-ts-kit
 
@@ -1379,7 +1379,8 @@ route, le *handler* d'événement ou le *job* qui lance le cas d'usage d'une spe
 ligne qu'elle n'attend pas, directement ou non, est une `missing-dependency`, même si le rejeu,
 une ligne après l'autre dans une seule copie, a trouvé le fichier : le worker de cette ligne, sur
 une branche à lui, serait refusé (`#US5.02 ... builds on <file>, which #US5.01 generates: add
-US5.01 to its Depends on`). Une commande refusée pour ce sur quoi elle s'appuie est rejouée une
+US5.01 to its Depends on`). Une commande que le générateur refuse nomme plutôt ces lignes avec son
+refus, dans son `prerequisite` et ses `rows` : un problème par commande. Une commande refusée pour ce sur quoi elle s'appuie est rejouée une
 fois tout le plan rejoué, avec `--dry-run` pour que la copie reste telle que le plan l'a laissée et
 qu'aucun rejeu ne passe sur ce qu'un autre a écrit, et les fichiers qu'elle trouve alors disent
 quelle ligne génère ce qu'il lui fallait, chaque fichier en une passe : une ligne suivante qu'elle n'attend pas (`add <id>

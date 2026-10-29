@@ -13,8 +13,9 @@ type Again = (replay: Replay) => Replay;
  * that the rows after it find what it generates, but its refusals are only said: its commands may
  * have run already, and the generator refuses a second run of some of them (a port already bound
  * to an adapter, a decision record whose number is taken). A command refused for what it builds
- * on is run again once the whole plan has: the files it then finds say which row generates them,
- * and what it is refused then, for another reason, is said too.
+ * on is run again once the whole plan has: the files it then finds say which rows generate them,
+ * and what it is refused then, for another reason or another file, is said too. The rows it does
+ * not wait for whose files it found before it was refused are named with it: one problem per command.
  */
 export function refusedCommand(plan: ReplayedPlan, at: number, again: Again): RefusedCommand[] {
   const replay = plan.replays[at];
@@ -25,7 +26,8 @@ export function refusedCommand(plan: ReplayedPlan, at: number, again: Again): Re
 
   const { row, command, refusal } = replay;
   const rerun = refusal.missing ? again(replay) : undefined;
-  const found = rerun === undefined ? [] : rowsGenerating(plan, at, rerun);
+  // What it found before it was refused counts too: a row it does not wait for may have generated it.
+  const found = rowsGenerating(plan, at, rerun ?? replay);
   const { lacking, nextRefusal } = refusedAgain(refusal, rerun);
   const prerequisites = [...found.map(({ sentence }) => sentence), ...lacking];
 
@@ -97,34 +99,45 @@ interface BuiltOn {
 }
 
 /**
- * The rows that generate what the command found when run again, `rerun`, each once: a later
- * command of the same row, a later row that does not wait for it, or one that does, whose command
- * has to move.
+ * The rows that generate what the command found, `run` being its replay or its rerun, each once,
+ * those it waits for left out: a later command of the same row, a row that does not wait for it,
+ * or a later row that does, whose command has to move.
  */
-function rowsGenerating(plan: ReplayedPlan, at: number, rerun: Replay): BuiltOn[] {
+function rowsGenerating(plan: ReplayedPlan, at: number, run: Replay): BuiltOn[] {
   const said = new Set<Slice>();
 
-  return rerun.builtOn.flatMap((file) => {
+  return run.builtOn.flatMap((file) => {
     const by = plan.creatorOf(file);
-    const creator = by === undefined || by <= at ? undefined : plan.replays[by];
+    const creator = by === undefined ? undefined : plan.replays[by];
 
-    if (creator === undefined || said.has(creator.row)) {
+    if (by === undefined || creator === undefined || said.has(creator.row)) {
       return [];
     }
 
-    said.add(creator.row);
+    const found = generatedBy(plan, run.row, { file, creator, later: by > at });
 
-    return [generatedLater(plan, rerun.row, { file, creator })];
+    if (found !== undefined) {
+      said.add(creator.row);
+    }
+
+    return found === undefined ? [] : [found];
   });
 }
 
 interface Generated {
   readonly file: string;
   readonly creator: Replay;
+  /** True when the plan runs it after the refused command. */
+  readonly later: boolean;
 }
 
-function generatedLater(plan: ReplayedPlan, row: Slice, { file, creator }: Generated): BuiltOn {
+/** Nothing to say of an earlier command of the row or of a row it waits for: the worker has what they generate. */
+function generatedBy(plan: ReplayedPlan, row: Slice, { file, creator, later }: Generated): BuiltOn | undefined {
   const by = creator.row;
+
+  if (by === row ? !later : plan.waitsFor(row, by)) {
+    return undefined;
+  }
 
   if (by === row) {
     return {

@@ -6,13 +6,14 @@ import type { MissingDependency } from './wave-plan';
  * The files the command replayed at `at` builds on that a row it does not wait for generates:
  * the replay runs every row in one copy, one after the other, and found them; the worker of the
  * row, on a branch of its own, would be refused. One problem for each row that generates one;
- * none for a row in progress.
+ * none for a row in progress, nor for a command refused, whose refusal names those rows.
  */
 export function missingDependencies(plan: ReplayedPlan, at: number): MissingDependency[] {
   const replay = plan.replays[at];
 
-  // A row in progress has run its commands already: it no longer needs what it built on.
-  if (replay === undefined || isStarted(replay.row)) {
+  // A row in progress has run its commands already: it no longer needs what it built on. A refused
+  // command says what it found with its refusal.
+  if (replay === undefined || isStarted(replay.row) || replay.refusal !== undefined) {
     return [];
   }
 

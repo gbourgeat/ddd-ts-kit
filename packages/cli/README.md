@@ -1305,7 +1305,9 @@ each upstream it declares, the declaration of an event) and which files it creat
 that builds on a file a row it does not wait for generates, directly or not, is a
 `missing-dependency`, even though the replay, one row after the other in one copy, found the file:
 the worker of that row, on a branch of its own, would be refused (`#US5.02 ... builds on
-<file>, which #US5.01 generates: add US5.01 to its Depends on`). A command refused for what it
+<file>, which #US5.01 generates: add US5.01 to its Depends on`). A command the generator refuses
+names those rows with its refusal instead, in its `prerequisite` and its `rows`: one problem per
+command. A command refused for what it
 builds on is run again once the whole plan has run, with `--dry-run` so that the copy stays as the
 plan left it and no rerun passes on what another wrote, and the files it then finds say which row
 generates what it needed, each file in one pass: a later row it does not wait for (`add <id> to its Depends on`, and

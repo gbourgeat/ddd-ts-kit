@@ -236,4 +236,32 @@ describe('plan-waves, a planned command refused on a project of relationships', 
       }),
     ]);
   });
+
+  it('folds into the refusal of a row the row it does not wait for whose aggregate it found before it was refused, one problem for the command', () => {
+    const rebac = initProject('--context', 'billing:core', '--authz', 'rebac');
+
+    cli(rebac, 'generate', 'aggregate', 'billing', 'Invoice', '--term', 'Invoice=What a customer owes');
+
+    const credit = '`generate aggregate billing Credit --term "Credit=What billing owes a customer"`';
+
+    const pay =
+      '`generate command billing PayInvoice --aggregate Credit --permission invoice.pay --term "Pay=Settle an invoice" --grant user`';
+
+    const refused = planOf(
+      rebac,
+      `| US8.02 | billing | skeleton | Credit | ${credit} | | conductor | todo |\n| US8.01 | billing | slice | Pay invoice | ${pay} | | billing | todo |\n`,
+      '--json',
+    );
+
+    expect(jsonAt(refused.json(), 'problems')).toEqual([
+      expect.objectContaining({
+        kind: 'refused-command',
+        rows: ['US8.01', 'US8.02'],
+        refusal: expect.stringContaining('stack.authz is "rebac"'),
+        prerequisite:
+          '#US8.02 generates `src/contexts/billing/domain/aggregates/credit.aggregate.ts`, but #US8.01 does not wait for it: add US8.02 to its Depends on.',
+        nextRefusal: null,
+      }),
+    ]);
+  });
 });
