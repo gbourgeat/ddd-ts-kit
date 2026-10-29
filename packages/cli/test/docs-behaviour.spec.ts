@@ -104,6 +104,28 @@ describe('behaviourPage, the rows of the plan a rule serves', () => {
   });
 });
 
+describe('behaviourPage, the title of a table of cases', () => {
+  const source = `describe.each(['a', 'b'])('AppointmentExportGateway, %s', () => {
+  it('lists the rows', () => {});
+  it.each(['x'])('refuses %s with 422', () => {});
+});
+describe.each(['a'])('%s, by cause', () => {
+  it('keeps the oldest', () => {});
+});
+`;
+
+  const page = behaviourPage('Analytics', 'intro', [
+    { title: 'unit', entries: [{ heading: 'a', specs: [specOfPage('a.spec.ts', rulesIn(source))] }] },
+  ]);
+
+  it('shows no placeholder: for each case after the text before it, trimmed of its comma, each case inside a title', () => {
+    expect(page).toContain('- **AppointmentExportGateway for each case**\n');
+    expect(page).toContain('  - refuses each case with 422\n');
+    expect(page).toContain('- **each case, by cause**\n');
+    expect(page).not.toMatch(/%s/);
+  });
+});
+
 describe('docs, the pages of what the tests state', () => {
   let root: string;
 
