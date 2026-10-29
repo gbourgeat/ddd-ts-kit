@@ -20,6 +20,7 @@ import { limitOf } from '../builder-runs.mjs';
 import {
   bash,
   committed,
+  conductorWithWorker,
   decision,
   directory,
   git,
@@ -27,7 +28,9 @@ import {
   here,
   project,
   put,
+  reason,
   run,
+  runFrom,
   worker,
   write,
 } from './support.mjs';
@@ -390,7 +393,7 @@ test('a new run of a builder drops the note its last run left before inline code
   worker(root);
   const agent = builder('resumed');
   run('pre-bash', bash(root, 'git status', agent));
-  const [note, outside] = ['before-inline', 'outside'].map((kind) =>
+  const [note, outside] = ['before-run', 'outside'].map((kind) =>
     join(root, `.ddd-ts-kit/guard/${kind}-${stateKey(agent)}.json`),
   );
   put(root, relative(root, note), '{}');
@@ -406,7 +409,7 @@ test('a new run of a builder removes no note through a folder of the guard its w
   const agent = builder('linked-worktree');
   put(root, runState(agent), JSON.stringify({ run: 1, calls: 3, notices: [], worker: worktree }));
   const shared = directory('shared');
-  const note = `before-inline-${stateKey(agent)}.json`;
+  const note = `before-run-${stateKey(agent)}.json`;
   put(shared, note, '{}');
   mkdirSync(join(worktree, '.ddd-ts-kit'), { recursive: true });
   symlinkSync(shared, join(worktree, '.ddd-ts-kit/guard'));
@@ -439,4 +442,172 @@ test('a count that fails never drops a refusal: a builder whose run state cannot
   const odd = builder('odd');
   put(root, runState(odd), '"not a run"');
   assert.equal(decision(run('pre-bash', bash(root, 'rm src/main.ts', odd))), 'deny');
+});
+
+test('the scope of a worker is pinned at its first call: a scope file its code removes stops it (removeScope)', () => {
+  const root = committed();
+  worker(root, 'ordering');
+  const agent = builder('pinned', { cwd: root });
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  rmSync(join(root, '.ddd-ts-kit/worker.json'));
+  const refused = run('pre-bash', bash(root, 'echo x > src/main.ts', agent));
+  assert.equal(decision(refused), 'deny');
+  assert.match(
+    reason(refused),
+    /^ddd-ts-kit: The scope file changed: \.ddd-ts-kit\/worker\.json of your worktree named the context "ordering" at your first call and now is gone/,
+  );
+  const inside = run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent));
+  assert.match(reason(inside), /The scope file changed: .* report to the conductor, who restores it/);
+  // Another context in its place is no scope either; the conductor's own file puts the worker back.
+  worker(root, 'billing');
+  assert.match(reason(run('pre-bash', bash(root, 'git status', agent))), /now names the context "billing"/);
+  worker(root, 'ordering');
+  assert.equal(run('pre-bash', bash(root, 'git status', agent)).output, undefined);
+  assert.equal(decision(run('pre-bash', bash(root, 'echo x > src/main.ts', agent))), 'deny');
+});
+
+test('a worker pinned to its worktree does not work in the worktree of another worker', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const other = join(conductor, '.worktrees', 'shipping');
+  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/shipping', other);
+  put(other, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'shipping' }));
+  const agent = builder('billing-worker', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent)).output, undefined);
+  const strayed = run('pre-bash', bash(conductor, `cd ${other} && git status`, agent));
+  assert.equal(decision(strayed), 'deny');
+  assert.match(reason(strayed), new RegExp(`context "billing" in the worktree ${worktree}, pinned at your first call`));
+});
+
+test('code of a worker that writes into the checkout of the session is said to it once, for the conductor (otherCheckout)', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = builder('other-checkout', { cwd: conductor });
+  // Its own guard state in the conductor's checkout, and a run that changed nothing there, say nothing.
+  for (let call = 0; call < 2; call += 1) {
+    assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  }
+  put(conductor, 'src/platform/evil.ts', 'export const evil = 1;\n');
+  const told = run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent));
+  assert.equal(decision(told), 'deny');
+  assert.match(
+    reason(told),
+    new RegExp(`checkout of the session, ${conductor}, changed while your last command ran: src/platform/evil\\.ts\\.`),
+  );
+  assert.match(reason(told), /put nothing back there yourself; stop and report them to the conductor/);
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent)).output, undefined);
+  // From the conductor's checkout, outside every worktree, code is refused rather than run unnoted.
+  for (const command of [`node ${worktree}/src/contexts/billing/tool.mjs`, 'python3 x.py', 'bash x.sh', 'npm test']) {
+    const stray = run('pre-bash', bash(conductor, command, agent));
+    assert.match(reason(stray), /Run it as `cd <worktree> && \.\.\.`/, command);
+  }
+  assert.equal(run('pre-bash', bash(conductor, `cat ${worktree}/README.md`, agent)).output, undefined);
+});
+
+test('a commit or a merge of the conductor in its own checkout while a worker command runs is not charged to the worker', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = builder('conductor-commits', { cwd: conductor });
+  // A file the conductor left changed before the command, and that stays so, is not the worker's.
+  put(conductor, 'docs/notes.md', 'Notes of the conductor.\n');
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  put(conductor, 'docs/architecture/plan.md', '# Plan\n\nNext: billing.\n');
+  git(conductor, 'add', 'docs/architecture/plan.md');
+  git(conductor, 'commit', '--quiet', '--no-verify', '--message', 'docs: plan');
+  git(conductor, 'checkout', '--quiet', '-b', 'side');
+  put(conductor, 'README.md', 'From a side branch.\n');
+  git(conductor, 'commit', '--quiet', '--no-verify', '--all', '--message', 'docs: readme');
+  git(conductor, 'checkout', '--quiet', 'main');
+  git(conductor, 'merge', '--quiet', '--no-ff', '--no-edit', 'side');
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  // A file of its working tree changed and not committed is still said.
+  put(conductor, 'src/platform/evil.ts', 'export const evil = 1;\n');
+  assert.match(
+    reason(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent))),
+    /src\/platform\/evil\.ts/,
+  );
+});
+
+test('the worktree of a pinned worker reached through a link is the same worktree, not another worker', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const link = join(directory('link'), 'billing');
+  symlinkSync(worktree, link);
+  const agent = builder('linked', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent)).output, undefined);
+  assert.equal(run('pre-bash', bash(conductor, `cd ${link} && git status`, agent)).output, undefined);
+  assert.match(
+    reason(run('pre-bash', bash(conductor, `cd ${link} && echo x > src/main.ts`, agent))),
+    /context "billing"/,
+  );
+});
+
+test('the scope pin of a builder is pruned at the session start of the conductor and released at its stop', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const pinOf = (agent) => join(conductor, '.ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`);
+  const stopped = builder('stopped', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, stopped)).output, undefined);
+  assert.equal(existsSync(pinOf(stopped)), true);
+  run('subagent-stop', { cwd: conductor, ...stopped });
+  assert.equal(existsSync(pinOf(stopped)), false);
+  // A pin whose scope file changed stays at the stop, for the conductor to see; a week later it goes.
+  const changed = builder('changed', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, changed)).output, undefined);
+  rmSync(join(worktree, '.ddd-ts-kit/worker.json'));
+  run('subagent-stop', { cwd: conductor, ...changed });
+  assert.equal(existsSync(pinOf(changed)), true);
+  const old = new Date(Date.now() - 8 * 24 * 3600 * 1000);
+  utimesSync(pinOf(changed), old, old);
+  run('session', { cwd: conductor, source: 'startup' });
+  assert.equal(existsSync(pinOf(changed)), false);
+});
+
+test('a builder runs no test runner or script from the conductor checkout: a path to a program is code too', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = builder('runners', { cwd: conductor });
+  for (const command of [
+    './node_modules/.bin/vitest run',
+    './scripts/seed.sh',
+    '../seed.sh',
+    `${worktree}/scripts/seed.sh`,
+    'node_modules/.bin/tsx x.ts',
+    'vitest run',
+    'jest',
+    'mocha',
+  ]) {
+    assert.match(
+      reason(run('pre-bash', bash(conductor, command, agent))),
+      /Run it as `cd <worktree> && \.\.\.`/,
+      command,
+    );
+  }
+  assert.equal(run('pre-bash', bash(conductor, `/bin/cat ${worktree}/README.md`, agent)).output, undefined);
+});
+
+test("a sub-agent never deletes, moves or resets the branch of another worker's worktree", () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const other = join(conductor, '.worktrees', 'shipping');
+  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/shipping', other);
+  git(conductor, 'branch', 'scratch');
+  const agent = builder('branches', { cwd: conductor });
+  for (const command of [
+    'git branch -D work/shipping',
+    'git branch --delete --force main',
+    'git branch -m work/shipping shipping-old',
+    'git branch -M scratch work/shipping',
+    'git branch -f work/shipping HEAD',
+    'cd . ; git branch -D work/shipping',
+  ]) {
+    const refused = run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent));
+    assert.match(reason(refused), /never deletes, moves or resets the branch of another worktree/, command);
+  }
+  for (const command of [
+    'git branch -D scratch',
+    'git branch -m work/billing work/billing-2',
+    'git branch -f scratch HEAD',
+  ]) {
+    assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent)).output, undefined, command);
+  }
+  // A host that sends no working directory: the guard reads the one it starts in.
+  const { cwd, ...sent } = bash(worktree, 'git branch -D work/shipping', agent);
+  assert.match(reason(runFrom(cwd, 'pre-bash', sent)), /branch of another worktree/);
+  // Outside a git repository, there is no branch to hold.
+  const loose = project();
+  assert.equal(run('pre-bash', bash(loose, 'git branch -D main', builder('loose', { cwd: loose }))).output, undefined);
 });

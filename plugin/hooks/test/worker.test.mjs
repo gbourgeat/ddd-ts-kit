@@ -1,12 +1,15 @@
 // A context worker: what it writes and what its commands change, inside its bounded context only.
 
 import assert from 'node:assert/strict';
-import { rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
   bash,
   committed,
+  conductorWithWorker,
   decision,
   directory,
   git,
@@ -76,14 +79,19 @@ test('a context worker never writes a shared file', () => {
 test('the worker scope comes from the scope file or the environment, and binds the worker agent only', () => {
   const root = project();
   const shared = join(root, 'src/platform/composition/compose-application.ts');
-  const agent = { agent_type: 'ddd-ts-kit:context-builder' };
+  const agent = { agent_type: 'ddd-ts-kit:context-builder', agent_id: 'unscoped' };
   assert.equal(run('pre-write', write(shared, agent)).output, undefined);
-  assert.equal(decision(run('pre-write', write(shared, agent), { DDD_TS_KIT_WORKER_CONTEXT: 'billing' })), 'deny');
+  const fromEnvironment = { ...agent, agent_id: 'from-environment' };
+  assert.equal(
+    decision(run('pre-write', write(shared, fromEnvironment), { DDD_TS_KIT_WORKER_CONTEXT: 'billing' })),
+    'deny',
+  );
   worker(root);
   assert.equal(run('pre-write', write(shared)).output, undefined);
   assert.equal(run('pre-write', write(shared, { agent_type: 'ddd-ts-kit:architecture-reviewer' })).output, undefined);
+  // A scope file that is no scope at a worker's first call leaves it unscoped: the guard fails open.
   put(root, '.ddd-ts-kit/worker.json', 'not json');
-  assert.equal(run('pre-write', write(shared, agent)).output, undefined);
+  assert.equal(run('pre-write', write(shared, { ...agent, agent_id: 'broken' })).output, undefined);
 });
 
 test('in advise mode the worker scope asks, and off silences it', () => {
@@ -570,7 +578,7 @@ test('inline code of a worker runs, and what it changed outside the scope stops 
   const stopped = run('pre-bash', bash(root, 'npm test', agent));
   assert.equal(decision(stopped), 'deny');
   assert.match(reason(stopped), /changed files outside your scope: package\.json, src\/platform\/extra\.ts/);
-  assert.match(reason(stopped), /`git restore -- package\.json`, then `rm src\/platform\/extra\.ts`/);
+  assert.match(reason(stopped), /`git checkout HEAD -- package\.json`, then `rm src\/platform\/extra\.ts`/);
   assert.equal(decision(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent))), 'deny');
 
   // Putting back exactly those files is allowed; anything else stays refused until it is done.
@@ -637,24 +645,365 @@ test('a shared file already changed before the inline code ran must get back the
   const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-3' };
   writeFileSync(join(root, 'README.md'), 'Changed by the conductor.\n');
   assert.equal(run('pre-bash', bash(root, INLINE_CODE, agent)).output, undefined);
-  rmSync(join(root, 'README.md'));
-  assert.match(
-    reason(run('pre-bash', bash(root, 'npm test', agent))),
-    /changed files outside your scope: README\.md\./,
-  );
-  writeFileSync(join(root, 'README.md'), 'Changed by the conductor.\n');
+  writeFileSync(join(root, 'README.md'), 'Rewritten by the worker.\n');
+  const stopped = reason(run('pre-bash', bash(root, 'npm test', agent)));
+  assert.match(stopped, /changed files outside your scope: README\.md\./);
+  // `git restore` would bring back the trunk's text: the file is held to its content before the command.
+  const [, restore] = /`(cp \.ddd-ts-kit\/guard\/held\/[0-9a-f]{64} README\.md)`/.exec(stopped);
+  assert.match(stopped, /already changed before that command is held to its content then/);
+  assert.equal(run('pre-bash', bash(root, restore, agent)).output, undefined);
+  spawnSync('sh', ['-c', restore], { cwd: root });
+  assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), 'Changed by the conductor.\n');
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
 });
 
-test('a file the inline code of a worker renamed outside its scope stops it under its new name', () => {
+test('the content of a shared file already changed is kept once, not rewritten at every noted command', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'kept', agent_id: 'builder-1' };
+  writeFileSync(join(root, 'README.md'), 'Changed by the conductor.\n');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  const held = join(
+    root,
+    '.ddd-ts-kit/guard/held',
+    createHash('sha256').update('Changed by the conductor.\n').digest('hex'),
+  );
+  const old = new Date(Date.now() - 3600 * 1000);
+  utimesSync(held, old, old);
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  assert.equal(statSync(held).mtimeMs, old.getTime());
+});
+
+test('a shared file deleted before the code of a worker ran, and made again by it, is to be removed again', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-5' };
+  rmSync(join(root, 'README.md'));
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  writeFileSync(join(root, 'README.md'), 'Made again.\n');
+  assert.match(reason(run('pre-bash', bash(root, 'npm test', agent))), /\(`rm README\.md`: allowed for these files\)/);
+  rmSync(join(root, 'README.md'));
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test('a deletion is a change: code of a worker that deletes a shared file, or one it changed, stays held', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'deleted', agent_id: 'builder-1' };
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  rmSync(join(root, 'README.md'));
+  writeFileSync(join(root, 'package.json'), '{}\n');
+  put(root, 'src/platform/added.ts', 'export const added = 1;\n');
+  git(root, 'add', 'src/platform/added.ts');
+  const stopped = reason(run('pre-bash', bash(root, 'npm test', agent)));
+  assert.match(stopped, /changed files outside your scope: README\.md, package\.json, src\/platform\/added\.ts\./);
+  assert.match(
+    stopped,
+    /`git checkout HEAD -- README\.md`, then `git checkout HEAD -- package\.json`, then `git rm -f -- src\/platform\/added\.ts`/,
+  );
+  // Deleting a file its code changed is no putting back: the file is held to its committed content.
+  assert.equal(run('pre-bash', bash(root, `cd ${root} && rm package.json`, agent)).output, undefined);
+  rmSync(join(root, 'package.json'));
+  git(root, 'checkout', 'HEAD', '--', 'README.md');
+  git(root, 'rm', '--quiet', '-f', '--', 'src/platform/added.ts');
+  const held = reason(run('pre-bash', bash(root, 'npm test', agent)));
+  assert.match(
+    held,
+    /outside your scope: package\.json\. Put them back before anything else \(`git checkout HEAD -- package\.json`/,
+  );
+});
+
+test('a file the inline code of a worker renamed outside its scope stops it under both names, until moved back', () => {
   const root = committed();
   const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-4' };
   assert.equal(run('pre-bash', bash(root, INLINE_CODE, agent)).output, undefined);
   git(root, 'mv', 'README.md', 'README.old.md');
+  const stopped = reason(run('pre-bash', bash(root, 'npm test', agent)));
+  assert.match(stopped, /changed files outside your scope: README\.old\.md, README\.md\./);
+  assert.match(stopped, /\(`git mv README\.old\.md README\.md`: allowed for these files\)/);
+  assert.equal(run('pre-bash', bash(root, 'git mv README.old.md README.md', agent)).output, undefined);
+  git(root, 'mv', 'README.old.md', 'README.md');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test('a script the worker wrote inside its scope, run by node, is checked after it ran (scriptFile)', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'script', agent_id: 'builder-1' };
+  git(root, 'checkout', '--quiet', '-b', 'work/ordering');
+  const tool = join(root, 'src/contexts/ordering/tool.mjs');
+  const source = "import { writeFileSync } from 'node:fs';\nwriteFileSync('src/main.ts', 'pwned');\n";
+  assert.equal(run('pre-write', write(tool, agent)).output, undefined);
+  writeFileSync(tool, source);
+  assert.equal(run('pre-bash', bash(root, 'node src/contexts/ordering/tool.mjs', agent)).output, undefined);
+  spawnSync('node', [tool], { cwd: root });
+  const stopped = run('pre-bash', bash(root, 'npm test', agent));
+  assert.equal(decision(stopped), 'deny');
+  assert.match(reason(stopped), /changed files outside your scope: src\/main\.ts\./);
+  assert.equal(decision(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent))), 'deny');
+});
+
+// Code the guard cannot read, whatever its arguments: each is let run and noted, then checked.
+const CODE_THE_GUARD_CANNOT_READ = [
+  'sh <<EOF\nrm src/main.ts\nEOF',
+  "cat <<'EOF' | sh\nrm src/main.ts\nEOF",
+  "echo 'rm src/main.ts' | bash",
+  "bash <<< 'rm src/main.ts'",
+  "bash <(echo 'rm src/main.ts')",
+  'bash "$TMPDIR/x.sh"',
+  'sh src/contexts/ordering/x.sh',
+  'source "$TMPDIR/x.sh"',
+  '. "$TMPDIR/x.sh"',
+  'bash -l',
+  'fish "$TMPDIR/x.fish"',
+  "tsx -e 'console.log(1)'",
+  "ts-node -e 'console.log(1)'",
+  "npx tsx -e 'console.log(1)'",
+  'node -r "$TMPDIR/evil.cjs" -v',
+  'NODE_OPTIONS="--require $TMPDIR/evil.cjs" npm test',
+  'python3 "$TMPDIR/x.py"',
+  'deno run x.ts',
+  'make',
+  'npm run some-script',
+  'npm test',
+  'pnpm test',
+  'yarn build',
+  'bunx vitest',
+  'npx vitest run',
+  'vitest run',
+  'git commit -m "feat(ordering): place an order"',
+  'git log --output=notes.txt',
+  'rg --pre ./x.sh Order src',
+  'sort -o notes.txt notes.txt',
+  'git branch scratch',
+  'git branch -m scratch scratch-2',
+  'git branch -D scratch-2',
+  'git branch --unset-upstream',
+];
+
+test('every command of a worker that runs code the guard cannot read is noted, and what it deleted stops the worker', () => {
+  const root = committed();
+  const agent = worker(root, 'ordering');
+  CODE_THE_GUARD_CANNOT_READ.forEach((command, index) => {
+    const input = { ...agent, session_id: 'unread', agent_id: `builder-${index}` };
+    assert.equal(run('pre-bash', bash(root, command, input)).output, undefined, command);
+    assert.equal(noted(root, input), true, command);
+  });
+  // The shell fed on its input ran `rm src/main.ts`: the next call of that worker is refused.
+  const fed = { ...agent, session_id: 'unread', agent_id: 'builder-0' };
+  rmSync(join(root, 'src/main.ts'));
+  const stopped = reason(run('pre-bash', bash(root, 'git status', fed)));
+  assert.match(
+    stopped,
+    /changed files outside your scope: src\/main\.ts\. Put them back before anything else \(`git checkout HEAD -- src\/main\.ts`/,
+  );
+});
+
+test('a worker command made of pure readers only is not noted; a legitimate npm test is allowed and noted', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'readers', agent_id: 'builder-1' };
+  for (const command of [
+    'cat README.md',
+    'ls src/contexts | wc -l',
+    'git log --oneline -5',
+    'git -C src status --porcelain',
+    'grep -rn Order src/contexts | head',
+    'find src/contexts/ordering -name "*.ts"',
+    'echo "notes" > "$TMPDIR/notes.txt"',
+    'cd src && pwd',
+    'git branch',
+    'git branch --list "work/*"',
+    'git branch -a',
+    'git branch -r',
+    'git branch --show-current',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+    assert.equal(noted(root, agent), false, command);
+  }
+  assert.equal(run('pre-bash', bash(root, 'npm test -- ordering', agent)).output, undefined);
+  assert.equal(noted(root, agent), true);
+  put(root, 'src/contexts/ordering/domain/order.spec.ts', 'export {};\n');
+  assert.equal(run('pre-bash', bash(root, 'cat README.md', agent)).output, undefined);
+  assert.equal(noted(root, agent), false);
+});
+
+test('a combined short flag of a shell is read as -c: the commands it runs are judged before they run', () => {
+  const root = project();
+  const agent = worker(root, 'ordering');
+  for (const command of [
+    "bash -lc 'rm src/main.ts'",
+    "bash -ec 'rm src/main.ts'",
+    "zsh --norc -c 'rm src/main.ts'",
+    "bash -o errexit -lc 'rm src/main.ts'",
+    "bash -c -- 'rm src/main.ts'",
+  ]) {
+    assert.match(reason(run('pre-bash', bash(root, command, agent))), /`rm` changes src\/main\.ts/, command);
+  }
+  assert.equal(run('pre-bash', bash(root, "bash -l -- 'src/contexts/ordering/x.sh'", agent)).output, undefined);
+});
+
+test('code of a worker that commits its own change outside the scope is caught by the move of HEAD (commitInside)', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'commit', agent_id: 'builder-1' };
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
+  assert.equal(run('pre-bash', bash(root, INLINE_CODE, agent)).output, undefined);
+  writeFileSync(join(root, 'src/main.ts'), 'pwned\n');
+  put(root, 'src/platform/evil.ts', 'export const evil = 1;\n');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'x');
+  const stopped = reason(run('pre-bash', bash(root, 'npm test', agent)));
+  assert.match(stopped, /changed files outside your scope: src\/main\.ts, src\/platform\/evil\.ts\./);
+  const back = `git checkout ${head.slice(0, 12)} -- src/main.ts`;
+  assert.ok(
+    stopped.includes(`(\`${back}\`, then \`git rm -- src/platform/evil.ts\`, then \`git commit\` to record it`),
+  );
+  for (const command of [back, 'git rm -- src/platform/evil.ts']) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  // The commit records the restoration once it is staged, not before.
+  const commit = 'git commit -m "revert: put the platform back"';
+  assert.equal(decision(run('pre-bash', bash(root, commit, agent))), 'deny');
+  git(root, 'checkout', head, '--', 'src/main.ts');
+  git(root, 'rm', '--quiet', '--', 'src/platform/evil.ts');
   assert.match(
     reason(run('pre-bash', bash(root, 'npm test', agent))),
-    /changed files outside your scope: README\.old\.md\./,
+    /outside your scope: src\/main\.ts, src\/platform\/evil\.ts/,
   );
+  assert.equal(run('pre-bash', bash(root, commit, agent)).output, undefined);
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'revert');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test('code of a worker that commits a shared file already changed before it ran is caught by the move of HEAD', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'commit-changed', agent_id: 'builder-1' };
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
+  writeFileSync(join(root, 'README.md'), 'Changed by the conductor.\n');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  git(root, 'commit', '--quiet', '--no-verify', '--all', '--message', 'x');
+  const stopped = reason(run('pre-bash', bash(root, 'npm test', agent)));
+  assert.match(stopped, /changed files outside your scope: README\.md\./);
+  const [, keep] =
+    /then `git commit` to record it, then `(cp \.ddd-ts-kit\/guard\/held\/[0-9a-f]{64} README\.md)`/.exec(stopped);
+  assert.ok(stopped.includes(`\`git checkout ${head.slice(0, 12)} -- README.md\``));
+  git(root, 'checkout', head, '--', 'README.md');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'revert');
+  assert.match(reason(run('pre-bash', bash(root, 'npm test', agent))), /outside your scope: README\.md\./);
+  spawnSync('sh', ['-c', keep], { cwd: root });
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test('a commit puts back held files only when it records their restoration, and the checks of a command still apply', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'restoring', agent_id: 'builder-1' };
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
+  assert.equal(run('pre-bash', bash(root, INLINE_CODE, agent)).output, undefined);
+  writeFileSync(join(root, 'src/main.ts'), 'pwned\n');
+  git(root, 'commit', '--quiet', '--no-verify', '--all', '--message', 'x');
+  const back = `git checkout ${head.slice(0, 12)} -- src/main.ts`;
+  for (const command of [
+    'git commit --amend -m x',
+    'git commit --no-verify -m x',
+    `${back} && npx prettier --write src/main.ts`,
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, agent))), 'deny', command);
+  }
+  git(root, 'checkout', head, '--', 'src/main.ts');
+  put(root, 'src/platform/extra.ts', 'export const extra = 1;\n');
+  git(root, 'add', 'src/platform/extra.ts');
+  assert.match(reason(run('pre-bash', bash(root, 'git commit -m revert', agent))), /outside your scope: src\/main\.ts/);
+  git(root, 'rm', '--quiet', '--cached', 'src/platform/extra.ts');
+  rmSync(join(root, 'src/platform/extra.ts'));
+  assert.equal(run('pre-bash', bash(root, 'git commit -m revert', agent)).output, undefined);
+  assert.equal(
+    run('pre-bash', bash(root, 'git commit -m "revert" -- src/main.ts', agent)).output?.hookSpecificOutput
+      .permissionDecision,
+    'deny',
+  );
+});
+
+test("a worker's own commit, a decision record of its slice included, and the trunk a merge brings in do not stop it", () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'own', agent_id: 'builder-1' };
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  put(root, 'src/contexts/ordering/domain/order.ts', 'export class Order {}\n');
+  put(root, 'docs/adr/0042-orders-are-numbered.md', '# Orders are numbered\n');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'feat(ordering): order');
+  // The trunk changed a shared file meanwhile: the merge in progress holds it, and its commit is noted.
+  git(root, 'checkout', '--quiet', '-b', 'trunk', 'HEAD~1');
+  writeFileSync(join(root, 'README.md'), 'The trunk moved.\n');
+  git(root, 'commit', '--quiet', '--no-verify', '--all', '--message', 'docs: readme');
+  git(root, 'checkout', '--quiet', '-');
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit merge-trunk --trunk trunk', agent)).output, undefined);
+  assert.equal(noted(root, agent), false);
+  git(root, 'merge', '--quiet', '--no-commit', '--no-ff', 'trunk');
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit merge-trunk --continue', agent)).output, undefined);
+  assert.equal(noted(root, agent), true);
+  git(root, 'commit', '--quiet', '--no-verify', '--no-edit');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test('what the sanctioned scripts of the project rewrite outside the scope is said, not held, with the script', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'format', agent_id: 'builder-1' };
+  for (const script of ['npm run format', 'pnpm run lint:fix', 'npm run regenerate', 'npm run docs:generate']) {
+    assert.equal(run('pre-bash', bash(root, script, agent)).output, undefined, script);
+    // Biome lays out a shared file the trunk left unformatted.
+    writeFileSync(join(root, 'src/main.ts'), `${readFileSync(join(root, 'src/main.ts'), 'utf8')}\n`);
+    const said = run('pre-bash', bash(root, 'git status', agent));
+    assert.equal(decision(said), undefined, script);
+    const notice = said.output.hookSpecificOutput.additionalContext;
+    assert.match(notice, new RegExp(`\`${script}\` rewrote files outside your scope: src/main\\.ts\\.`), script);
+    assert.match(notice, /not held: the project's own tool rewrote them/);
+    git(root, 'checkout', 'HEAD', '--', 'src/main.ts');
+  }
+  // A file those tools do not rewrite still holds the worker, and so does any other code on the line.
+  assert.equal(run('pre-bash', bash(root, 'npm run format', agent)).output, undefined);
+  writeFileSync(join(root, 'README.md'), 'Rewritten.\n');
+  assert.match(reason(run('pre-bash', bash(root, 'git status', agent))), /outside your scope: README\.md\./);
+  git(root, 'checkout', 'HEAD', '--', 'README.md');
+  assert.equal(run('pre-bash', bash(root, 'git status', agent)).output, undefined);
+  assert.equal(run('pre-bash', bash(root, 'npm run format && node x.mjs', agent)).output, undefined);
+  writeFileSync(join(root, 'src/main.ts'), 'pwned\n');
+  assert.match(reason(run('pre-bash', bash(root, 'git status', agent))), /outside your scope: src\/main\.ts\./);
+});
+
+test('every clean install the guard knows leaves the packages out of the note around it', () => {
+  const root = committed();
+  const manifest = join(root, 'node_modules/ddd-ts-kit/package.json');
+  const installs = ['yarn', 'npm clean-install', 'npm cin', 'npm ic', 'bun install --frozen-lockfile', 'pnpm i'];
+  installs.forEach((command, index) => {
+    const agent = { ...worker(root, 'ordering'), session_id: 'installs', agent_id: `builder-${index}` };
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+    writeFileSync(manifest, `${readFileSync(manifest, 'utf8')} `);
+    assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined, command);
+  });
+});
+
+test('the first commit of a worker in a repository without one is compared by the files git shows', () => {
+  const root = project();
+  git(root, 'init', '--quiet');
+  const agent = { ...worker(root, 'ordering'), session_id: 'first', agent_id: 'builder-1' };
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  git(root, 'add', 'src/contexts');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'feat(ordering): first');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test('code of a worker that rewrites the packages the guard runs, ignored by git, stops it once (ignoredOutside)', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'ignored', agent_id: 'builder-1' };
+  const manifest = join(root, 'node_modules/ddd-ts-kit/package.json');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  writeFileSync(manifest, `${readFileSync(manifest, 'utf8')} `);
+  const stopped = run('pre-bash', bash(root, 'npm test', agent));
+  assert.equal(decision(stopped), 'deny');
+  assert.match(
+    reason(stopped),
+    new RegExp(`packages the guard runs changed while your last command ran: ${manifest}\\.`),
+  );
+  assert.match(reason(stopped), /report it to the conductor, who installs them again/);
+  // Said once: the conductor knows; and an install of the lockfile rewrites them freely.
+  assert.equal(run('pre-bash', bash(root, 'npm ci', agent)).output, undefined);
+  writeFileSync(manifest, `${readFileSync(manifest, 'utf8')} `);
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
 });
 
 test('a context worker never changes a file of another checkout, by a redirection or a copy', () => {
@@ -766,17 +1115,11 @@ test('a builder that runs a generator from the conductor, under advised worktree
   assert.equal(run('pre-bash', dry).output, undefined);
 });
 
-// A conductor's checkout on the trunk, a real git worktree under .worktrees/ with a worker scope,
-// its own install so Node does not borrow the trunk's packages.
-function conductorWithWorker() {
-  const conductor = project();
-  writeFileSync(join(conductor, '.gitignore'), 'node_modules\n.worktrees/\n');
-  git(conductor, 'init', '--quiet', '--initial-branch', 'main');
-  git(conductor, 'add', '--all');
-  git(conductor, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
-  const worktree = join(conductor, '.worktrees', 'billing');
-  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/billing', worktree);
-  launcher(worktree);
-  put(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing' }));
-  return { conductor, worktree };
+// The note a worker's command leaves before it runs, in the guard's folder of its worktree.
+function noted(root, input) {
+  const key = createHash('sha256')
+    .update(`${input.session_id ?? ''}\0${input.agent_id ?? ''}`)
+    .digest('hex')
+    .slice(0, 16);
+  return existsSync(join(root, '.ddd-ts-kit/guard', `before-run-${key}.json`));
 }

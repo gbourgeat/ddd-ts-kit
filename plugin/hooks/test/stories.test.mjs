@@ -540,6 +540,18 @@ test('a glob that names a locked regression spec only once the shell expands it 
   assert.match(reason(held), /is a regression spec of fix FIX-412, locked/);
 });
 
+// The writes of a locked regression spec by the shell, each refused to a sub-agent.
+const LOCKED_SPEC_WRITES = [
+  `sed -i s/refused/cancelled/ ${FIX_SPEC}`,
+  `echo "" > ${FIX_SPEC}`,
+  `rm ${FIX_SPEC}`,
+  `cp /tmp/order.aggregate.spec.ts ${FIX_SPEC}`,
+  `node -e "require('fs').writeFileSync('${FIX_SPEC}', '')"`,
+  `node - <<'EOF'\nrequire('fs').writeFileSync('${FIX_SPEC}', '')\nEOF`,
+  `node <<'EOF'\nrequire('fs').writeFileSync('${FIX_SPEC}', '')\nEOF`,
+  `npm test -- ${FIX_SPEC} > ${FIX_SPEC}`,
+];
+
 test('the shell runs and versions a locked regression spec of a fix, and a sub-agent never rewrites it', () => {
   const root = fixWorktree();
   lockTheFix(root);
@@ -553,14 +565,7 @@ test('the shell runs and versions a locked regression spec of a fix, and a sub-a
   ]) {
     assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
   }
-  for (const command of [
-    `sed -i s/refused/cancelled/ ${FIX_SPEC}`,
-    `echo "" > ${FIX_SPEC}`,
-    `rm ${FIX_SPEC}`,
-    `cp /tmp/order.aggregate.spec.ts ${FIX_SPEC}`,
-    `node -e "require('fs').writeFileSync('${FIX_SPEC}', '')"`,
-    `npm test -- ${FIX_SPEC} > ${FIX_SPEC}`,
-  ]) {
+  for (const command of LOCKED_SPEC_WRITES) {
     const held = run('pre-bash', bash(root, command, { agent_type: 'ddd-ts-kit:context-builder' }));
     assert.equal(decision(held), 'deny', command);
     assert.match(reason(held), /A command may read it, version it or run it/);
@@ -577,6 +582,9 @@ function assertSessionFormatsTheLockedSpec(root) {
   for (const command of [`npx biome format --write ${FIX_SPEC}`, `npx eslint --fix ${FIX_SPEC}`]) {
     assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
   }
+  // A sub-agent runs the spec too, its errors sent nowhere.
+  const tests = `node node_modules/.bin/vitest run ${FIX_SPEC} 2> /dev/null`;
+  assert.equal(run('pre-bash', bash(root, tests, { agent_type: 'ddd-ts-kit:context-builder' })).output, undefined);
 }
 
 test('a sub-agent that names the locked spec of a fix by its file name alone is held all the same', () => {
