@@ -1,10 +1,9 @@
 ---
 name: quality-gate
 description: >-
-  Use before closing a slice or opening a pull or merge request, when the user asks whether
-  the work is clean, done or ready, when a check, the guard or the pipeline reports a
-  violation, or to write or settle a TODO(review). Runs the checks at the right scope and
-  fixes the root cause.
+  Use before closing a slice or opening a pull or merge request, to merge the trunk into a
+  branch, when asked whether the work is clean, done or ready, when a check, the guard or
+  the pipeline reports a violation, or for a TODO(review).
 allowed-tools:
   - Read
   - Edit
@@ -46,7 +45,7 @@ The size and message of the commit are skill `ddd-ts-kit:commit-discipline`.
 | after each write | nothing: the guard runs `check-file` and returns the violations | none |
 | while iterating | `npx ddd-ts-kit verify-slice <context> --since <base>`: regenerate, the rules on the changed files, the specs of the context, the files near the size limit and the paths of the slice to stage (the pages of `docs/behaviour/` and the schema of the ORM the generator changed for the context included), in one run; a path it leaves out is never staged with the slice | seconds |
 | before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left but `TODO(review)`), `npx ddd-ts-kit check --commit-size` | under a minute |
-| to bring the trunk into the branch | `npx ddd-ts-kit merge-trunk`: one merge commit from the branch's own diff, derived files settled, `verify-merge` on the result before its commit; on a stop, resolve each hunk keeping both sides, `git add`, `merge-trunk --continue` (skill `ddd-ts-kit:parallel-work`, "Bring the trunk in") | seconds |
+| to bring the trunk into the branch | `npx ddd-ts-kit merge-trunk`: one merge commit from the branch's own diff, derived files settled, `verify-merge` on the result before its commit; on a stop, resolve each hunk keeping both sides, `git add`, `merge-trunk --continue` ("Bring the trunk in" below) | seconds |
 | after a merge made otherwise | `npx ddd-ts-kit verify-merge`: each line, row done or test the merge lost, to restore from its side; it exits 1 on one (the pre-push hook and `verify-slice` run it too, and only warn in this version) | a second |
 | before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in; each non-blocking remark of the review written as a `TODO(review)` or settled | everything |
 | before the code of a story | `npx ddd-ts-kit acceptance <story> --gate written`: every slice row and criterion has a scenario, wrapped in `pending(...)`, locked and committed | seconds |
@@ -76,6 +75,26 @@ the whole tree, after merging the trunk. `npm run verify` chains types, lint, fo
 `npx ddd-ts-kit status` counts the `TODO(domain)`, `TODO(platform)`, `it.todo` and
 `TODO(review)` left in each context: a gate is not passed while the slice still has one of the
 first three.
+
+## Bring the trunk in
+
+When the rows of a branch are committed, before its review and its merge: bring the trunk into
+the branch with `npx ddd-ts-kit merge-trunk` (`--cwd <worktree>` from outside it), never
+`git merge` alone. It computes the
+merge from the newest commit of the branch the trunk holds (a first row already squash-merged, a
+branch it was stacked on), settles the derived files (the `package.json` of a client at the higher
+of both versions), generated regions and registries, the rows
+of `slices.md`, the drizzle-kit journal and the lockfile itself, and leaves each source or test
+hunk in a merge in progress with what each side did there (exit 1). Resolve each hunk keeping
+both sides, never by taking one side of a source file or a test (`-X theirs`, `-X ours`,
+`checkout --theirs` erase the other side without a conflict, and the guard refuses them to a
+sub-agent), `git add` it, then `npx ddd-ts-kit merge-trunk --continue`: it replays the
+migrations, regenerates, runs `verify-merge` on the result and commits only once no line, row
+or test is lost (a removal decided on purpose: `--continue --accept-lost`; `--abort` undoes, and restores the derived files the kit regenerated). On Prisma it also runs `npm run db:client` when the merge changed a schema, so the test database is current. When the trunk moved since the merge started, `--continue` says so: it concludes the commit of the first run, so run `merge-trunk` again after it.
+Under the sandbox, a trunk that changes the settings of the project (`.claude/settings.json`) or
+another path the session cannot write is the owner's merge: `merge-trunk` stops with nothing
+changed and exit 3, naming the paths; hand the owner the same command to run from a terminal
+outside the sandbox, and do not merge by hand or reset the worktree.
 
 ## Review remarks
 

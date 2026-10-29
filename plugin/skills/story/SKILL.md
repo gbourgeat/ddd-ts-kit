@@ -1,10 +1,9 @@
 ---
 name: story
 description: >-
-  Takes one user story to a green pull request in its own worktree: the owner's questions
-  first, then the story file, its rows, a design review, acceptance tests locked before
-  code, one context-builder per row, review, verification. Run by the user with
-  /ddd-ts-kit:story.
+  Takes one user story to a green pull request in its own worktree: questions first, then
+  the story file, its rows, a design review, acceptance tests locked before code, one
+  context-builder per row, review, verification. Run by the user with /ddd-ts-kit:story.
 argument-hint: "<story code> [--headless] [the story in plain words, a file, an intent, or a tracker key]"
 disable-model-invocation: true
 allowed-tools:
@@ -158,7 +157,7 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
 ## 7. Close
 
 1. Bring the trunk in: commit, `git fetch`, then `npx ddd-ts-kit merge-trunk --trunk <base>`,
-   resolve what it stops on keeping both sides, `--continue` (skill `ddd-ts-kit:parallel-work`,
+   resolve what it stops on keeping both sides, `--continue` (skill `ddd-ts-kit:quality-gate`,
    "Bring the trunk in"); on exit 3, hand the owner the command it prints and wait.
    A migration to generate (Prisma, TypeORM) or a spec against a real database exits 3 under the sandbox too (no setting reaches the database): the owner or the CI runs it.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
