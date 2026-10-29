@@ -19,7 +19,7 @@ npm i jose            # only for @ddd-ts-kit/auth/jwt
 | `@ddd-ts-kit/auth/jwt` | `JwtAuthenticator`, `keycloakAuthenticator` | `jose` (optional peer), the only file that does |
 | `@ddd-ts-kit/auth/passport` | `passportPrincipal`: a strategy of Passport as the `resolvePrincipal` of the HTTP boundary | nothing: it runs the strategy it is given |
 | `@ddd-ts-kit/auth/di` | `authorizationModule`, `authorizationMapOf`, and again the classes the module binds: `Authorizer`, `Authenticator`, `Access`, `AuthorizationMap` | `@ddd-ts-kit/di` (optional peer) |
-| `@ddd-ts-kit/auth/testing` | `anActor()` and its `ActorBuilder`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, the two contract suites | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
+| `@ddd-ts-kit/auth/testing` | `anActor()` and its `ActorBuilder`, `holdersOf()`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, the two contract suites | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
 
 The actor model lives in `@ddd-ts-kit/kernel`: `Actor`, `anonymousActor()`, `systemActor(name)`,
 `AuthorizedCommand`, `AuthorizedQuery`, the `ActorContext` port and its two implementations.
@@ -1183,6 +1183,12 @@ const accountant = anActor().named('ada').ofTenant('acme').withRole('accountant'
   handler spec is not about rights. `actor` sets who infrastructure sees through
   `ActorContext` (default: the user `test-user`); `app.actorContext.actAs(actor)` changes it.
   The actor of a use case is the one the test puts in the command.
+- **The permission of a use case.** `holdersOf(permission, ...more)` gives `holder`, a user
+  of the role `holder`, and `authorizer`, which grants the permissions to that role and to every
+  system actor (a job, a reaction) and refuses everybody else, an actor of `anActor()` alone
+  among them: `const { holder, authorizer } = holdersOf(billingPermissions['invoice.issue'])`,
+  then `authorizationModule({ authorizer })` or `authorizationMiddleware({ authorizer, map })`.
+  The generated handler, query and job specs arrange their rights with it.
 - **Rights of a context.** List `authorizationModule({ authorizer })` with the real model, or
   with a `RecordingAuthorizer` to assert what was asked as data (`authorizer.checks`); replace
   the authorizer of a composed application with `fake(Authorizer, new AllowAll())`. Add
