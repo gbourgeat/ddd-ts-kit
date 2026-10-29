@@ -1,5 +1,4 @@
 import { allRules } from './all-rules';
-import { isGeneratedTitle } from './is-generated-title';
 import type { PageSection } from './page-section';
 
 /** What a page counts: the rules stated, planned and put aside, those of them the kit generated, and the specs they come from. */
@@ -19,7 +18,7 @@ export function countsOf(sections: readonly PageSection[]): PageCounts {
   for (const spec of specs) {
     for (const rule of allRules(spec.rules)) {
       counts[rule.state] += 1;
-      counts.generated += isGeneratedTitle(spec.file, rule.title) ? 1 : 0;
+      counts.generated += spec.generated.has(rule) ? 1 : 0;
     }
   }
 

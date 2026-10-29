@@ -5,7 +5,6 @@ import { isEmptyRules } from './is-empty-rules';
 import { kebabOfUseCase } from './kebab-of-use-case';
 import type { SpecOfPage } from './page-section';
 import { rulesWhere } from './rules-where';
-import { specSubject } from './spec-subject';
 import { useCaseOfSpec } from './use-case-of-spec';
 import type { UseCasesOfContext } from './use-cases-of-context';
 
@@ -40,8 +39,8 @@ export function joinedSpecs(contexts: readonly UseCasesAndSpecs[], application: 
   const byContext: ByContext = new Map();
   const left: SpecOfPage[] = [];
 
-  for (const spec of application.filter((candidate) => specSubject(candidate.file).role === 'e2e')) {
-    const owner = ownerByName(contexts, specSubject(spec.file).subject);
+  for (const spec of application.filter((candidate) => candidate.subject.role === 'e2e')) {
+    const owner = ownerByName(contexts, spec.subject.subject);
 
     if (owner === undefined) {
       left.push(spec);
@@ -52,7 +51,7 @@ export function joinedSpecs(contexts: readonly UseCasesAndSpecs[], application: 
 
   const rows = rowsByOwner(contexts, byContext);
 
-  for (const spec of application.filter((candidate) => specSubject(candidate.file).role !== 'e2e')) {
+  for (const spec of application.filter((candidate) => candidate.subject.role !== 'e2e')) {
     left.push(...shareScenarios(byContext, spec, rows));
   }
 
@@ -73,7 +72,7 @@ function shareScenarios(
   spec: SpecOfPage,
   rows: readonly (readonly [ReadonlySet<string>, Owner])[],
 ): SpecOfPage[] {
-  if (specSubject(spec.file).role !== 'acceptance') {
+  if (spec.subject.role !== 'acceptance') {
     return [spec];
   }
 
@@ -127,13 +126,22 @@ function namesOf({ routes }: UseCasesOfContext, useCase: UseCaseFact): string[] 
 
 /** The rows the titles of each use case cite, its own specs and its end-to-end specs, in the order of the contexts. */
 function rowsByOwner(contexts: readonly UseCasesAndSpecs[], joined: ByContext): [ReadonlySet<string>, Owner][] {
-  return contexts.flatMap(({ context, known, specs }) =>
-    known.useCases.map((useCase): [ReadonlySet<string>, Owner] => {
-      const own = specs.filter((spec) => useCaseOfSpec(known, specSubject(spec.file)) === useCase);
-      const theirs = [...own, ...(joined.get(context)?.get(useCase.name) ?? [])];
+  return contexts.flatMap(({ context, known, specs }) => {
+    const own = new Map<UseCaseFact, SpecOfPage[]>();
+
+    for (const spec of specs) {
+      const useCase = useCaseOfSpec(known, spec.subject);
+
+      if (useCase !== undefined) {
+        own.set(useCase, [...(own.get(useCase) ?? []), spec]);
+      }
+    }
+
+    return known.useCases.map((useCase): [ReadonlySet<string>, Owner] => {
+      const theirs = [...(own.get(useCase) ?? []), ...(joined.get(context)?.get(useCase.name) ?? [])];
       const titles = theirs.flatMap((spec) => allRules(spec.rules)).map((rule) => rule.title);
 
       return [new Set(titles.flatMap((title) => citedRows(title).rows)), { context, useCase }];
-    }),
-  );
+    });
+  });
 }

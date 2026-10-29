@@ -3,6 +3,7 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { behaviourPage } from '../src/docs/behaviour-page';
 import { rulesIn } from '../src/docs/rules-in';
+import { specOfPage } from '../src/docs/spec-of-page';
 import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
 
 describe('rulesIn, the rules a spec states', () => {
@@ -73,7 +74,7 @@ describe('behaviourPage, the rows of the plan a rule serves', () => {
   const source = titles.map((title) => `it('${title}', () => {});`).join('\n');
 
   const page = behaviourPage('Billing', 'intro', [
-    { title: 'unit', entries: [{ heading: 'a', specs: [{ file: 'a.spec.ts', rules: rulesIn(source) }] }] },
+    { title: 'unit', entries: [{ heading: 'a', specs: [specOfPage('a.spec.ts', rulesIn(source))] }] },
   ]);
 
   it('shows the rows and the criteria a title opens with before the rule, and keeps the rest of the title as it is', () => {
@@ -95,7 +96,7 @@ describe('behaviourPage, the rows of the plan a rule serves', () => {
     const uncited = behaviourPage('Billing', 'intro', [
       {
         title: 'unit',
-        entries: [{ heading: 'a', specs: [{ file: 'a.spec.ts', rules: rulesIn("it('is due', () => {});") }] }],
+        entries: [{ heading: 'a', specs: [specOfPage('a.spec.ts', rulesIn("it('is due', () => {});"))] }],
       },
     ]);
 

@@ -2,7 +2,6 @@ import type { UseCaseFact } from '../describe/context-description';
 import { toName } from '../naming';
 import type { PageEntry, PageSection, SpecOfPage } from './page-section';
 import { MODEL_ROLES, REACTION_ROLES, SPEC_ROLES, USE_CASE_ROLES } from './spec-roles';
-import { specSubject } from './spec-subject';
 import { useCaseOfSpec } from './use-case-of-spec';
 import type { UseCasesOfContext } from './use-cases-of-context';
 import { specsByDirectory } from './specs-by-directory';
@@ -53,9 +52,8 @@ function sharedOut(known: UseCasesOfContext, specs: readonly SpecOfPage[]): Shar
   const shared: SharedOut = { useCases: new Map(), model: new Map(), reactions: new Map(), others: [] };
 
   for (const spec of specs) {
-    const subject = specSubject(spec.file);
-    const useCase = useCaseOfSpec(known, subject);
-    const role = subject.role ?? '';
+    const useCase = useCaseOfSpec(known, spec.subject);
+    const role = spec.subject.role ?? '';
 
     const parts = MODEL_ROLES.includes(role)
       ? shared.model
@@ -83,7 +81,7 @@ interface Placed {
 
 /** A part of the model or a reaction, its specs under one heading: `Slot (value object), in calendars`. */
 function placeIn(parts: Map<string, Placed>, spec: SpecOfPage, word: string): void {
-  const { subject, role = '', folder } = specSubject(spec.file);
+  const { subject, role = '', folder } = spec.subject;
   const heading = `${toName(subject).title} (${word})${inModule(folder)}`;
   const placed = parts.get(heading) ?? { role, heading, specs: [] };
 
@@ -115,7 +113,7 @@ function useCaseEntries(context: string, useCases: ReadonlyMap<UseCaseFact, read
 }
 
 function byRole(left: SpecOfPage, right: SpecOfPage): number {
-  const rank = (spec: SpecOfPage): number => USE_CASE_ROLES.indexOf(specSubject(spec.file).role ?? '');
+  const rank = (spec: SpecOfPage): number => USE_CASE_ROLES.indexOf(spec.subject.role ?? '');
 
   return rank(left) - rank(right) || left.file.localeCompare(right.file);
 }

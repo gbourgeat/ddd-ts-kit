@@ -2,7 +2,6 @@ import { listTemplates, readTemplate } from '../templating';
 import { rulesIn } from './rules-in';
 import { allRules } from './all-rules';
 import { SPEC_ROLES } from './spec-roles';
-import { specSubject } from './spec-subject';
 
 /** The role of a spec template whose name says it in other words than the spec it writes: `value-object.spec.ts.tpl` writes `<name>.vo.spec.ts`. */
 const TEMPLATE_ROLES: Readonly<Record<string, string>> = {
@@ -59,13 +58,11 @@ interface TemplateTitle {
 let titles: readonly TemplateTitle[] | undefined;
 
 /**
- * Whether a title of a spec is one a template of the kit writes, word for word once its names are
+ * Whether a title of a spec of that role is one a template of the kit writes, word for word once its names are
  * substituted: `saves the invoice and answers its identifier` in a handler spec. Read from the spec
  * templates of the package, once, and only for the specs of the role each template writes.
  */
-export function isGeneratedTitle(file: string, title: string): boolean {
-  const { role } = specSubject(file);
-
+export function isGeneratedTitle(role: string | undefined, title: string): boolean {
   titles ??= templateTitles();
 
   return titles.some(

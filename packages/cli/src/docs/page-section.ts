@@ -1,4 +1,5 @@
-import type { SpecRules } from './rules-in';
+import type { SpecRules, StatedRule } from './rules-in';
+import type { SpecSubject } from './spec-subject';
 
 /** A part of a page under a heading of its own: the use cases, the model, the reactions, a directory of specs. */
 export interface PageSection {
@@ -12,8 +13,14 @@ export interface PageEntry {
   readonly specs: readonly SpecOfPage[];
 }
 
-/** One spec of a page: where it is, from the directory the page reads (`test/e2e/...` for a spec of the application), and what it states. */
+/**
+ * One spec of a page: where it is, from the directory the page reads (`test/e2e/...` for a spec of
+ * the application), what it states, what it is about and which of its rules a template of the kit
+ * wrote, read once when the spec is read.
+ */
 export interface SpecOfPage {
   readonly file: string;
   readonly rules: SpecRules;
+  readonly subject: SpecSubject;
+  readonly generated: ReadonlySet<StatedRule>;
 }

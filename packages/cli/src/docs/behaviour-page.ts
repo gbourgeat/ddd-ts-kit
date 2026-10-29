@@ -1,7 +1,6 @@
 import { allRules } from './all-rules';
 import { citedRows } from './cited-rows';
 import { countsOf, type PageCounts } from './counts-of';
-import { isGeneratedTitle } from './is-generated-title';
 import type { PageEntry, PageSection } from './page-section';
 import type { RuleGroup, SpecRules, StatedRule } from './rules-in';
 import { rulesWhere } from './rules-where';
@@ -52,9 +51,7 @@ function sectionLines(section: PageSection): string[] {
 }
 
 function entryLines({ heading, specs }: PageEntry): string[] {
-  const generated = specs.flatMap((spec) =>
-    allRules(spec.rules).filter((rule) => isGeneratedTitle(spec.file, rule.title)),
-  );
+  const generated = specs.flatMap((spec) => allRules(spec.rules).filter((rule) => spec.generated.has(rule)));
 
   return [
     '',

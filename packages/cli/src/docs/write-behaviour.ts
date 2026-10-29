@@ -8,6 +8,7 @@ import { countsOf, type PageCounts } from './counts-of';
 import { joinedSpecs, type UseCasesAndSpecs } from './joined-specs';
 import type { SpecOfPage } from './page-section';
 import { rulesIn } from './rules-in';
+import { specOfPage } from './spec-of-page';
 import { specsByDirectory } from './specs-by-directory';
 
 /** Where the pages of what the tests state live: one per context, one for the application, and their index. */
@@ -80,10 +81,9 @@ function intro(of: string): string {
 
 /** Every spec under the directory of tests, deepest included, sorted by path, named from that directory. */
 function specsOf(ws: Workspace, testDir: string): SpecOfPage[] {
-  return specsUnder(ws, testDir).map((file) => ({
-    file: file.slice(testDir.length + 1),
-    rules: rulesIn(ws.read(file) ?? ''),
-  }));
+  return specsUnder(ws, testDir).map((file) =>
+    specOfPage(file.slice(testDir.length + 1), rulesIn(ws.read(file) ?? '')),
+  );
 }
 
 function specsUnder(ws: Workspace, directory: string): string[] {
