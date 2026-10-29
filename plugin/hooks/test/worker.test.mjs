@@ -716,6 +716,18 @@ test('a generator after cd <dir>; is judged where the session stands, not in the
   assert.match(reason(strayed), /main checkout of the trunk/);
 });
 
+test('a command that first moves out of every project is still judged, against the session', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const builder = { agent_type: 'ddd-ts-kit:context-builder' };
+  for (const command of [`cd /tmp && rm -rf ${worktree}/src`, `cd / && git -C ${conductor} stash`]) {
+    assert.equal(decision(run('pre-bash', bash(conductor, command, builder))), 'deny', command);
+  }
+  const root = project();
+  const agent = worker(root);
+  const away = run('pre-bash', bash(root, `cd / && rm ${root}/src/main.ts`, agent));
+  assert.match(reason(away), /`rm` changes src\/main\.ts/);
+});
+
 // A conductor's checkout on the trunk, a real git worktree under .worktrees/ with a worker scope,
 // its own install so Node does not borrow the trunk's packages.
 function conductorWithWorker() {

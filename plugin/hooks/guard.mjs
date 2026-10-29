@@ -467,7 +467,8 @@ async function preBash(input) {
   if (hostOf(input) === 'codex' && /^\s*\*\*\* Begin Patch/m.test(command)) {
     return codexShellPatch(input, command, cwd);
   }
-  const project = findProject(commandDirectory(command, cwd));
+  // A leading `cd` out of every project leaves the command to be judged against the session's project.
+  const project = findProject(commandDirectory(command, cwd)) ?? findProject(cwd);
   await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
     return;
