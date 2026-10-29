@@ -41,10 +41,14 @@ anything is generated, with no context, with one and with several: the end-to-en
 it for real and runs it, on both package managers and on every proven stack. After the install the
 CLI is the one the project pins: `pnpm exec ddd-ts-kit <command>`, or `npx ddd-ts-kit <command>`.
 
-Every command accepts `--json` (machine-readable output, errors included) and `--cwd <dir>`.
+Every command accepts `--json` (machine-readable output, errors included, printed on one line
+without indentation; the JSON files the CLI writes keep the layout of the formatter) and
+`--cwd <dir>`.
 Commands other than `init` look for `ddd-ts-kit.config.json` in the directory and its parents.
-Exit codes: `0` success, `1` violations, stale documentation or, under `--strict`, a commit over
-its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
+`ddd-ts-kit --help` prints the whole reference, `ddd-ts-kit <command> --help` (or `help <command>`)
+the usage and the notes of that command alone (with `--json`, `{ command, usage, notes }`), and an option a command does not know is refused
+with its usage line as the fix. Exit codes: `0` success, `1` violations, stale documentation or,
+under `--strict`, a commit over its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
 not write some of them where it ran (a path the sandbox of an agent protects): they are listed
 under `unwritable`, every other file is written and none is deleted.
 
@@ -645,7 +649,7 @@ pipelines call, `test:coverage` (every spec once, each context and layer held to
 and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck` call by path
 (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` would run the older one.
 
-`init` and `generate context` start with the language: the first entry of `next` is the glossary
+`init` and `generate context` start with the language: the first entry of `todos` is the glossary
 of the context to fill in. Both refuse a context named `schema`, on every ORM: on Prisma the models
 of a context live in `prisma/schema/<context>.prisma`, and `prisma/schema/schema.prisma` is the
 main file every context shares (`init --force` moves a project to Prisma).
@@ -682,7 +686,7 @@ written from the same preset. Why, and which other contexts deserve one:
 
 ```
 ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]
-ddd-ts-kit generate --help --json
+ddd-ts-kit generate [<kind>] --help [--json]
 ```
 
 One run of `generate` does five things, in this order, and writes nothing when the first one
@@ -712,9 +716,9 @@ would update src/contexts/notification/notification.permissions.ts
 would update src/contexts/notification/application/application.declarations.ts
 
 Next, in this order: the language of the context first, then the business decisions only you can make
-  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor first, ...
-  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  decide what "archive notification" does to a Notification: ...
-  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour of "archive notification": ...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  "archive notification" changes Notifications that exist and writes nothing until you decide...
+  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour...
 ```
 
 | Kind | Arguments | Writes |
@@ -801,7 +805,7 @@ Next, in this order: the language of the context first, then the business decisi
   handler finds what to act on. Parameters that are optional or have a default are left out of the call.
 - **The grant of a job.** A job whose command is protected sends it as `system:<context>.<name>`,
   which has no right unless the model gives it one. `generate job` writes the grant where the model
-  makes it one line, in a `system-grants` marker region, and `next` points at that line:
+  makes it one line, in a `system-grants` marker region, and `todos` points at that line:
   `--authz rbac`, the id of the permission under the role `system` of `platform/auth/roles/roles.ts`,
   the role `createAuthorizer` gives every system actor (`systemRole`) and no other: a user token
   that names `system` among its roles does not hold it; `--authz abac`, a
@@ -835,7 +839,7 @@ Next, in this order: the language of the context first, then the business decisi
   other name. With `--authz rebac` the requirement names the context as its resource, a starting
   point to replace by the element the right bears on. With `--authz rbac`, `--grant <role>` gives
   the permission to the role in `platform/auth/roles/roles.ts` (the role joins `role.ts` when it is
-  new); without it, a `next` step says the grant is left to do (`authz/granted`).
+  new); without it, a step of `todos` says the grant is left to do (`authz/granted`).
 - `route` hands `actorOf(context.principal)` to a protected use case and sets `security` (the scheme
   of `--authn`, or `false` for a public one). `integration-handler` carries `systemActor('<context>.<name>')`
   for the command it builds; behind a broker it listens on the subscriber of its context
@@ -878,9 +882,12 @@ Next, in this order: the language of the context first, then the business decisi
   goes through `createTestBuses()` of `@ddd-ts-kit/testing`, whose `dispatching(fake)` makes the
   save of a fake announce its events to `domainEvents`. The arrangement several specs of a
   context share is generated once, `generate test-world`, in `test/worlds/`.
-- `--json` prints `{ dryRun, created, updated, skipped, next, todos, notes }`. `next` lists the
-  `TODO(domain)` places as `file:line`, the glossary first, then the lines a command wrote for the
-  team to check (the grant of a job); `todos` adds their text.
+- `--json` prints `{ dryRun, created, updated, deleted, skipped, unwritable, todos, notes }`.
+  `todos` lists the `TODO(domain)` places, the glossary first, each as `{ file, line, gist }`:
+  `gist` is the first words of the marker (up to its first `:` or `;`, twelve words at most), whose
+  whole sentence is in the file at that line. Then come the lines a command wrote for the team to
+  check (the grant of a job), which no file explains: those also carry their whole `text`. The text
+  output prints each place on one line, `file:line  gist` (the whole `text` of a step).
 - A kind that needs something else to compile either creates it (a missing repository or
   domain event) or stops with the command that creates it (a missing aggregate, use case or
   route).
@@ -891,7 +898,8 @@ Next, in this order: the language of the context first, then the business decisi
 - `--local-only` refuses, naming the files and writing nothing, when the run would write outside
   `<contextsDir>/<context>/` and `test/e2e/*.e2e.spec.ts`. `generate --help --json` prints every
   kind with its `usage`, `aliases`, `summary` and `writesShared`, plus `shared` and `sharedWhen`:
-  what it writes outside its context, and when. Both serve a build split between workers (see
+  what it writes outside its context, and when; `generate <kind> --help --json` prints that kind
+  alone, as one object, and `generate <kind> --help` the same as text. Both serve a build split between workers (see
   `worker-scope`).
 - A fake is an entry point for knip and may have no importer for dependency-cruiser: a port
   and its fake generated before a use case needs them fail neither analyzer. A domain service
@@ -1160,6 +1168,8 @@ handlers, the policies, the gateways and the adapters are read from the decorato
 query shows what it requires (or `public`), a handler its consumer name and its event, a policy its
 permission, an adapter its port; `--json` adds them under `declarations`. In the explicit style the
 jobs are read from the `builder.job(...)` and `platform.jobs.register(...)` lines of the module file.
+The text leaves out the kinds a context holds none of, and the end-to-end specs when there is none;
+`--json` keeps every key, an empty list included.
 
 ## describe
 
@@ -1195,7 +1205,7 @@ each `CONTEXT.md`.
 
 ```
 ddd-ts-kit status [--workers]
-ddd-ts-kit todo [<context>]
+ddd-ts-kit todo [<context>] [--brief]
 ```
 
 `status` prints the `Next:` line of `docs/architecture/plan.md`, the rows of
@@ -1246,7 +1256,9 @@ current }, agent, phase, next }`, `phase` being `not started`, `mid-row`, `betwe
 and did not stop since).
 
 `todo` lists those markers as `file:line` with their kind and their text, in the project or in one
-context; `--json` prints `{ count, remaining: [{ kind, context, file, line, text }] }`.
+context; `--brief` prints each as `file:line` and its first words (up to its first `:` or `;`,
+twelve words at most), the file holding the rest, a quarter of the size mid-slice; `--json` prints
+`{ count, remaining: [{ kind, context, file, line, text }] }`, every text whole.
 
 ## plan-waves
 

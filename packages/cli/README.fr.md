@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3f0860d953cfc511 -->
+<!-- translation-of: README.md sha256:d5140cb54bda60af -->
 
 # ddd-ts-kit
 
@@ -45,9 +45,14 @@ l'installe pour de vrai et l'exécute, avec les deux gestionnaires de paquets et
 éprouvée. Après l'installation, la CLI est celle que le projet épingle :
 `pnpm exec ddd-ts-kit <command>`, ou `npx ddd-ts-kit <command>`.
 
-Chaque commande accepte `--json` (sortie lisible par une machine, erreurs comprises) et
-`--cwd <dir>`. Les commandes autres que `init` cherchent `ddd-ts-kit.config.json` dans le
-répertoire et ses parents. Codes de sortie : `0` succès, `1` violations, documentation périmée
+Chaque commande accepte `--json` (sortie lisible par une machine, erreurs comprises, affichée
+sur une ligne sans indentation ; les fichiers JSON que la CLI écrit gardent la mise en page du
+formateur) et `--cwd <dir>`. Les commandes autres que `init` cherchent `ddd-ts-kit.config.json` dans le
+répertoire et ses parents. `ddd-ts-kit --help` affiche toute la référence,
+`ddd-ts-kit <command> --help` (ou `help <command>`) l'usage et les notes de cette seule commande
+(avec `--json`, `{ command, usage, notes }`),
+et une option qu'une commande ne connaît pas est refusée avec sa ligne d'usage pour correction.
+Codes de sortie : `0` succès, `1` violations, documentation périmée
 ou, sous `--strict`, un *commit* au-delà de ses limites, `2` mauvais usage (le message dit quoi
 faire), `3` une commande qui écrit des fichiers n'a pas pu en écrire certains là où elle tournait
 (un chemin que protège le bac à sable d'un agent) : ils sont listés sous `unwritable`, tous les
@@ -671,7 +676,7 @@ bibliothèque, et `@typescript/native` (`npm:typescript@~7.0.2`), que `build` et
 appellent par son chemin (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` lancerait
 l'ancien.
 
-`init` et `generate context` commencent par le langage : la première entrée de `next` est le
+`init` et `generate context` commencent par le langage : la première entrée de `todos` est le
 glossaire du contexte à remplir. Tous deux refusent un contexte nommé `schema`, quel que soit
 l'ORM : sous Prisma les modèles d'un contexte vivent dans `prisma/schema/<context>.prisma`, et
 `prisma/schema/schema.prisma` est le fichier principal que tous les contextes partagent (un projet
@@ -711,7 +716,7 @@ le même *preset*. Pourquoi, et quels autres contextes en méritent un :
 
 ```
 ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]
-ddd-ts-kit generate --help --json
+ddd-ts-kit generate [<kind>] --help [--json]
 ```
 
 Un passage de `generate` fait cinq choses, dans cet ordre, et n'écrit rien quand la première
@@ -741,9 +746,9 @@ would update src/contexts/notification/notification.permissions.ts
 would update src/contexts/notification/application/application.declarations.ts
 
 Next, in this order: the language of the context first, then the business decisions only you can make
-  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor first, ...
-  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  decide what "archive notification" does to a Notification: ...
-  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour of "archive notification": ...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  "archive notification" changes Notifications that exist and writes nothing until you decide...
+  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour...
 ```
 
 | Genre | Arguments | Écrit |
@@ -834,7 +839,7 @@ Next, in this order: the language of the context first, then the business decisi
 - **L'autorisation d'un *job*.** Un *job* dont la commande est protégée l'envoie en tant que
   `system:<context>.<name>`, qui n'a aucun droit tant que le modèle ne lui en donne pas.
   `generate job` écrit l'autorisation là où le modèle en fait une ligne, dans une région marquée
-  `system-grants`, et `next` pointe vers cette ligne : `--authz rbac`, l'identifiant de la
+  `system-grants`, et `todos` pointe vers cette ligne : `--authz rbac`, l'identifiant de la
   permission sous le rôle `system` de `platform/auth/roles/roles.ts`, le rôle que `createAuthorizer`
   donne à chaque acteur système (`systemRole`) et à nul autre : un jeton d'utilisateur qui nomme
   `system` parmi ses rôles ne le détient pas ; `--authz abac`, une règle
@@ -869,7 +874,7 @@ Next, in this order: the language of the context first, then the business decisi
   glossaire comme tout autre nom. Avec `--authz rebac`, l'exigence nomme le contexte comme sa
   ressource, un point de départ à remplacer par l'élément sur lequel porte le droit. Avec
   `--authz rbac`, `--grant <role>` accorde la permission au rôle dans `platform/auth/roles/roles.ts`
-  (le rôle rejoint `role.ts` s'il est nouveau) ; sans lui, une étape `next` dit que
+  (le rôle rejoint `role.ts` s'il est nouveau) ; sans lui, une étape de `todos` dit que
   l'attribution reste à faire (`authz/granted`).
 - `route` remet `actorOf(context.principal)` à un cas d'usage protégé et pose `security` (le
   schéma de `--authn`, ou `false` pour un cas d'usage public). `integration-handler` porte
@@ -920,9 +925,13 @@ Next, in this order: the language of the context first, then the business decisi
   `createTestBuses()` de `@ddd-ts-kit/testing`, dont `dispatching(fake)` fait que la sauvegarde
   d'un *fake* annonce ses événements à `domainEvents`. La mise en place que partagent plusieurs
   *specs* d'un contexte se génère une fois, `generate test-world`, dans `test/worlds/`.
-- `--json` affiche `{ dryRun, created, updated, skipped, next, todos, notes }`. `next` liste les
-  endroits `TODO(domain)` en `file:line`, le glossaire d'abord, puis les lignes qu'une commande a
-  écrites pour que l'équipe les vérifie (l'autorisation d'un *job*) ; `todos` ajoute leur texte.
+- `--json` affiche `{ dryRun, created, updated, deleted, skipped, unwritable, todos, notes }`.
+  `todos` liste les endroits `TODO(domain)`, le glossaire d'abord, chacun en `{ file, line, gist }` :
+  `gist` donne les premiers mots du marqueur (jusqu'à son premier `:` ou `;`, douze mots au plus),
+  dont la phrase entière est dans le fichier à cette ligne. Viennent ensuite les lignes qu'une
+  commande a écrites pour que l'équipe les vérifie (l'autorisation d'un *job*), qu'aucun fichier
+  n'explique : celles-là portent aussi leur `text` entier. La sortie texte affiche chaque endroit
+  sur une ligne, `file:line  gist` (le `text` entier d'une étape).
 - Un genre qui a besoin d'autre chose pour compiler soit le crée (un *repository* ou un événement
   du domaine manquant), soit s'arrête avec la commande qui le crée (un agrégat, un cas d'usage ou
   une route manquant).
@@ -934,7 +943,9 @@ Next, in this order: the language of the context first, then the business decisi
 - `--local-only` refuse, en nommant les fichiers et sans rien écrire, quand le passage écrirait
   hors de `<contextsDir>/<context>/` et de `test/e2e/*.e2e.spec.ts`. `generate --help --json`
   affiche chaque genre avec son `usage`, ses `aliases`, son `summary` et son `writesShared`, plus
-  `shared` et `sharedWhen` : ce qu'il écrit hors de son contexte, et quand. Les deux servent un
+  `shared` et `sharedWhen` : ce qu'il écrit hors de son contexte, et quand ; `generate <kind>
+  --help --json` affiche ce seul genre, en un objet, et `generate <kind> --help` la même chose en
+  texte. Les deux servent un
   build réparti entre des *workers* (voir `worker-scope`).
 - Un *fake* est un point d'entrée pour knip et peut n'avoir aucun importateur pour
   dependency-cruiser : un port et son *fake* générés avant qu'un cas d'usage en ait besoin ne font
@@ -1221,7 +1232,9 @@ d'usage, les gestionnaires, les politiques, les *gateways* et les adaptateurs so
 décorateurs : une commande ou une requête montre ce qu'elle exige (ou `public`), un gestionnaire
 son nom de consommateur et son événement, une politique sa permission, un adaptateur son port ;
 `--json` les ajoute sous `declarations`. Dans le style explicite, les *jobs* sont lus dans les
-lignes `builder.job(...)` et `platform.jobs.register(...)` du fichier de module.
+lignes `builder.job(...)` et `platform.jobs.register(...)` du fichier de module. Le texte omet les
+genres dont un contexte n'a aucun élément, et les *specs* de bout en bout quand il n'y en a pas ;
+`--json` garde chaque clé, liste vide comprise.
 
 ## describe
 
@@ -1259,7 +1272,7 @@ dans chaque `CONTEXT.md`.
 
 ```
 ddd-ts-kit status [--workers]
-ddd-ts-kit todo [<context>]
+ddd-ts-kit todo [<context>] [--brief]
 ```
 
 `status` affiche la ligne `Next:` de `docs/architecture/plan.md`, les lignes de
@@ -1313,7 +1326,10 @@ report: { modified, current }, agent, phase, next }`, `phase` valant `not starte
 un outil dans les trois dernières minutes sans s'arrêter depuis).
 
 `todo` liste ces marqueurs en `file:line` avec leur genre et leur texte, dans le projet ou dans
-un contexte ; `--json` affiche `{ count, remaining: [{ kind, context, file, line, text }] }`.
+un contexte ; `--brief` affiche chacun en `file:line` et ses premiers mots (jusqu'à son premier
+`:` ou `;`, douze mots au plus), le fichier gardant le reste, un quart de la taille en cours de
+tranche ; `--json` affiche `{ count, remaining: [{ kind, context, file, line, text }] }`, chaque
+texte entier.
 
 ## plan-waves
 

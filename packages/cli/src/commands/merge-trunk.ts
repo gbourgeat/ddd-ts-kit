@@ -6,6 +6,7 @@ import type { MergeReport } from '../merge/merge-report';
 import { resumeMerge } from '../merge/resume-merge';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /** The options that start a merge, refused with `--continue` or `--abort`. */
 const STARTING = ['trunk', 'since', 'to-land', 'dry-run'];
@@ -32,7 +33,7 @@ export const mergeTrunkCommand: Command = (argv, io) => {
   if (args.flag('abort')) {
     const said = abortMerge(args.projectRoot);
 
-    io.out(args.json ? JSON.stringify({ status: 'aborted', message: said }, null, 2) : said);
+    io.out(args.json ? stdoutJson({ status: 'aborted', message: said }) : said);
 
     return 0;
   }
@@ -46,7 +47,7 @@ export const mergeTrunkCommand: Command = (argv, io) => {
         ...args.texts(['trunk', 'since']),
       });
 
-  io.out(args.json ? JSON.stringify(report, null, 2) : formatMergeReport(report));
+  io.out(args.json ? stdoutJson(report) : formatMergeReport(report));
 
   return exitCodeOf(report);
 };

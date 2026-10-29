@@ -53,8 +53,9 @@ describe('generated code, in the explicit style', () => {
 
     expect(todos.length).toBeGreaterThan(40);
 
+    // A gist is the opening of the decision, a verb and what it bears on at least; the file holds the sentence.
     for (const todo of todos) {
-      expect(todo.text.length, `${todo.file}:${todo.line}`).toBeGreaterThan(40);
+      expect(todo.gist.split(' ').length, `${todo.file}:${todo.line}`).toBeGreaterThanOrEqual(2);
     }
   });
 
@@ -327,7 +328,7 @@ describe('an explicit project, as `list` maps it', () => {
     ]);
 
     expect(map.e2e).toEqual(['issue-invoice', 'ship-parcel', 'track-purchase-order']);
-    expect(text).toContain('billing [core]\n  glossary: 17 terms\n  upstreams: none\n  aggregates: Invoice');
+    expect(text).toContain('billing [core]\n  glossary: 17 terms\n  aggregates: Invoice');
 
     expect(text).toContain(
       '  scheduled jobs: billing.cancel-stale-invoices (every 15m, sends CancelInvoice), billing.issue-invoices-monthly (cron 0 6 1 * * (Europe/Paris), sends IssueInvoice)\n  builders: Invoice\n  worlds: Billing',

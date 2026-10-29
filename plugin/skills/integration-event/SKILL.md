@@ -38,7 +38,7 @@ writes the declaration `published-language/<fact>.v1.integration-event.ts`
 (`defineIntegrationEvent({ type, version, payload })`), its export, the publisher in
 `application/integration/publishers/` (a reaction to the domain event, which it creates when
 missing; always in the default `before-commit` phase, so the outbox row commits with the state
-change) and the specs. Fill the `next` places:
+change) and the specs. Fill the `todos` places:
 
 - **Name**: `<context>.<aggregate>.<fact>`, past tense (`events/name-format`).
 - **Payload**: what a consumer needs to act without calling back, and nothing internal:

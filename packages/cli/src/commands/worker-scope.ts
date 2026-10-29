@@ -7,6 +7,7 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import { knownContext } from './known-context';
 import { rowsOption } from './rows-option';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * Prepares the place of one worker of a parallel build (worktree, branch, dependencies, scope file) and prints its briefing.
@@ -32,7 +33,7 @@ export const workerScopeCommand: Command = (argv, io) => {
   if (args.flag('resume')) {
     const resume = resumeWorker(root, { context, ...args.texts(['worktree', 'branch']), fresh: args.flag('fresh') });
 
-    io.out(args.json ? JSON.stringify(resume, null, 2) : formatResume(resume));
+    io.out(args.json ? stdoutJson(resume) : formatResume(resume));
 
     return 0;
   }
@@ -46,7 +47,7 @@ export const workerScopeCommand: Command = (argv, io) => {
     here: args.flag('here'),
   });
 
-  io.out(args.json ? JSON.stringify(scope, null, 2) : formatScope(scope));
+  io.out(args.json ? stdoutJson(scope) : formatScope(scope));
 
   return 0;
 };

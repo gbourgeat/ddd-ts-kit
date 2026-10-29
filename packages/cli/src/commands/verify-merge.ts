@@ -2,6 +2,7 @@ import { formatMergeVerification } from '../merge/lost/format-merge-verification
 import { verifyMerges } from '../merge/lost/verify-merges';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /** What `--warn` adds under the findings, while the check reaches projects as a warning first. */
 const WARN_ONLY_NOTE =
@@ -30,7 +31,7 @@ export const verifyMergeCommand: Command = (argv, io) => {
   });
 
   const warnOnly = args.flag('warn');
-  const report = args.json ? JSON.stringify(verification, null, 2) : formatMergeVerification(verification);
+  const report = args.json ? stdoutJson(verification) : formatMergeVerification(verification);
   const note = warnOnly && !args.json && !verification.ok ? `\n${WARN_ONLY_NOTE}` : '';
 
   if (report !== '') {

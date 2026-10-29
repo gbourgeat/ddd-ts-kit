@@ -11,6 +11,7 @@ import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * The acceptance scenarios of each story against its rows in slices.md and the criteria of its
@@ -46,11 +47,7 @@ export const acceptanceCommand: Command = (argv, io) => {
 
   const failing = stories.some((story) => story.problems.some((problem) => countsFor(problem, gate)));
 
-  io.out(
-    args.json
-      ? JSON.stringify({ gate: gate ?? null, met: !failing, stories }, null, 2)
-      : formatAcceptance(stories, gate),
-  );
+  io.out(args.json ? stdoutJson({ gate: gate ?? null, met: !failing, stories }) : formatAcceptance(stories, gate));
 
   return failing ? 1 : 0;
 };
@@ -80,7 +77,7 @@ function lock(ws: Workspace, { asked, story, json }: LockRequest, io: Io): numbe
 
   io.out(
     json
-      ? JSON.stringify({ story: story.story, ...locked }, null, 2)
+      ? stdoutJson({ story: story.story, ...locked })
       : [
           `Locked ${lockedWhat(locked)} of ${story.story} in ${locked.file}: commit it with them.`,
           ...locked.amendments.map(
