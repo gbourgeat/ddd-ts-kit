@@ -17,7 +17,7 @@ allowed-tools:
 
 Under discussion: `$ARGUMENTS`
 
-Input: `docs/architecture/discovery.md` for a new system, `npx ddd-ts-kit list --json` for an
+Input: `docs/architecture/discovery.md` for a new system, `npx ddd-ts-kit list` for an
 existing one. Boundaries are the owner's decision: propose, argue, wait.
 
 The terms of one context are skill `ddd-ts-kit:glossary`; the relationships between contexts,

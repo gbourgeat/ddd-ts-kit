@@ -15,10 +15,11 @@ losing correctness; the generators and the checker do the rest.
 
 ## Read less
 
-4. **The map, not the tree.** `npx ddd-ts-kit describe <context> --json` gives one context
-   as facts: use cases, routes, events, ports with their adapters, policies, gateways,
-   dependencies; `npx ddd-ts-kit list --json` gives every context in less detail. Do not
-   `ls`, `find` or glob `src/` to learn what exists.
+4. **The map, not the tree.** `npx ddd-ts-kit describe <context>` gives one context as
+   facts: use cases, routes, events, ports with their adapters, policies, gateways,
+   dependencies; `npx ddd-ts-kit list` gives every context in less detail. Read their text:
+   `--json` says the same in three times the size, for a script. Do not `ls`, `find` or glob
+   `src/` to learn what exists.
 5. **One `CONTEXT.md`.** It holds the purpose, the glossary and the generated lists of one
    context. Read the one you work in, and of a neighbour only its `published-language/`.
 6. **Open only named files.** The `next` list of a generator (`file:line`), the lines of

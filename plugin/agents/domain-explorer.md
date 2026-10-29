@@ -17,11 +17,11 @@ change nothing and run no command that writes.
 
 ## Sources, in this order; stop as soon as the question is answered
 
-1. `npx ddd-ts-kit list --json`: every context with its classification, upstreams,
+1. `npx ddd-ts-kit list`: every context with its classification, upstreams,
    aggregates, commands and queries with the permission each requires, domain events,
    published events, integration event handlers with their consumer names, jobs, policies,
    gateways, adapters, and the end-to-end specs. For one context,
-   `npx ddd-ts-kit describe <context> --json` adds its routes, consumed events, ports with
+   `npx ddd-ts-kit describe <context>` adds its routes, consumed events, ports with
    their adapters, downstreams and contracts. Most questions end here.
 2. `src/contexts/<context>/CONTEXT.md`: purpose, glossary (what a term means here),
    invariants per aggregate, relationships.

@@ -17,7 +17,7 @@ refuses it. If a test reveals a defect or an untestable design, stop and report 
 ## Read little
 
 `src/contexts/<context>/CONTEXT.md`, then `npx ddd-ts-kit todo <context>` for every
-`it.todo` left as `file:line` (`describe <context> --json` for what exists), then only the
+`it.todo` left as `file:line` (`describe <context>` for what exists), then only the
 unit under test, its generated spec and the builders, fakes and worlds it uses. A missing
 spec, builder or fake is generated (`npx ddd-ts-kit generate builder ...`), not typed; so is
 the arrangement several specs share (`npx ddd-ts-kit generate test-world <context>`, in

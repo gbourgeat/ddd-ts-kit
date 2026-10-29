@@ -48,7 +48,7 @@ judgement reads: write it before anything else.
 
 ## 1. Reproduce
 
-Find the layer of the defect before writing a line: `npx ddd-ts-kit describe <context> --json`
+Find the layer of the defect before writing a line: `npx ddd-ts-kit describe <context>`
 for the use case and its aggregate; the audit trail (`audit.<context>` entries, by the subject
 of the request) or the trace (by its id) when the report names one; `git log -S` on the rule
 that broke. Then write the failing spec at that level, with the patterns of skill

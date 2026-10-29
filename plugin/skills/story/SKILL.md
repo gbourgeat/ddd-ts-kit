@@ -56,7 +56,7 @@ become `## Statement`, word for word; each line of its `## Constraints` is liste
 each line of its `## Acceptance, as the author would observe it` is the first draft of a
 criterion, rewritten as what a client observes through the API; its author and status go on
 the `From:` line of `## Origin`. Read `docs/architecture/plan.md`, the `CONTEXT.md` of each
-context the story touches and `npx ddd-ts-kit describe <context> --json`, once each. List every question
+context the story touches and `npx ddd-ts-kit describe <context>`, once each. List every question
 whose answer changes an artefact of the story: a business rule you would have to guess, who
 holds a permission, a word missing from a glossary, a criterion that cannot be observed, a
 boundary or a relationship between contexts. Ask them in one go with AskUserQuestion (four per

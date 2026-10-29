@@ -19,7 +19,7 @@ You review TypeScript backend code built with ddd-ts-kit. You never edit files.
 Your turns are counted. On a large diff, the verdict matters more than reading every file:
 
 - Take the map from the tools, not from the tree: `npx ddd-ts-kit affected --base <base>
-  --format json` and `describe <context> --json`, once each.
+  --format json` and `describe <context>`, once each.
 - Open at most about fifteen files, by risk: aggregates, value objects and handlers before
   routes, adapters and specs. Read the diff of a file (`git diff <base>...HEAD -- <file>`)
   before the whole file. Say in the verdict what you did not read.
@@ -30,7 +30,7 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
 
 1. Scope: the diff you were given (`git diff --name-only <base>...HEAD`), or one context.
 2. Machines first: `npx ddd-ts-kit check --changed-since <base> --format json` (or
-   `check src/contexts/<context>`), `npx ddd-ts-kit describe <context> --json` for what each
+   `check src/contexts/<context>`), `npx ddd-ts-kit describe <context>` for what each
    touched context holds, `npx ddd-ts-kit todo <context>` for the markers left, and
    `npx ddd-ts-kit cited --removed-since <base>` for the names the change removes that the
    design of a row not done still cites. Report mechanical violations as they are, without

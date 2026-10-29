@@ -82,7 +82,7 @@ install of its package manager), never an install that names a package.
 ## Read little
 
 1. `src/contexts/<context>/CONTEXT.md`: the purpose, the glossary, what exists.
-2. `npx ddd-ts-kit describe <context> --json`, once: use cases, routes, events, ports,
+2. `npx ddd-ts-kit describe <context>`, once: use cases, routes, events, ports,
    dependencies. Never browse the tree.
 3. The contracts named in the briefing, in the upstream's `published-language/`.
 4. After each generator, only the `next` places it prints (`file:line`), a range around the

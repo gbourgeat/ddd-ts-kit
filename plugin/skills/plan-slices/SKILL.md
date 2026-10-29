@@ -22,7 +22,7 @@ allowed-tools:
 
 Scope: `$ARGUMENTS`
 
-Inputs: `docs/architecture/discovery.md` (the timeline) and `npx ddd-ts-kit list --json`
+Inputs: `docs/architecture/discovery.md` (the timeline) and `npx ddd-ts-kit list`
 (what exists). Output: `docs/architecture/slices.md`. The order is the owner's decision.
 
 ## 1. Cut

@@ -28,7 +28,7 @@ is built with skill `ddd-ts-kit:integration-event`.
 ## 1. List the collaborations
 
 From the policies and read models of the discovery ("whenever X happened, then Y"; "needs to
-see Z"), or from `npx ddd-ts-kit list --json`. For each: who knows a fact first (the
+see Z"), or from `npx ddd-ts-kit list`. For each: who knows a fact first (the
 **upstream**), who needs it (the **downstream**), and what crosses.
 
 | Need of the downstream | What crosses | Built later with |
