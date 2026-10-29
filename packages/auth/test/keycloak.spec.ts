@@ -247,6 +247,17 @@ describe('keycloakAuthenticator at the boundary', () => {
     });
   });
 
+  it('refuses a token without exp, unless told that the expiry is not required', async () => {
+    const { exp: _exp, ...withoutExpiry } = userClaims();
+    const credential = await signed(withoutExpiry);
+
+    const refusal = authenticator().authenticate(credential);
+    const lenient = authenticator({ requireExpiry: false }).authenticate(credential);
+
+    await expect(refusal).rejects.toMatchObject({ reason: 'NO_EXPIRY' });
+    await expect(lenient).resolves.toMatchObject({ id: 'f:1b2c3d4e:ada' });
+  });
+
   it('plugs into the HTTP boundary as it is', async () => {
     const resolve = principalResolver(authenticator({ clientId: 'shop-api' }));
 

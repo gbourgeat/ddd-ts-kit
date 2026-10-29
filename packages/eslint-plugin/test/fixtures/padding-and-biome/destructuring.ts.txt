@@ -1,0 +1,16 @@
+import { describe, expect, it } from 'vitest';
+
+const arrange = () => ({ application: { run: () => 1 }, repository: { count: () => 0 } });
+
+describe('a handler', () => {
+  it('runs', () => {
+    const { application, repository } = arrange();
+    const [first, second] = [1, 2];
+    const {
+      application: { run },
+    } = arrange();
+    expect(application.run()).toBe(first);
+    expect(repository.count()).toBe(0);
+    expect(run()).toBe(second - 1);
+  });
+});

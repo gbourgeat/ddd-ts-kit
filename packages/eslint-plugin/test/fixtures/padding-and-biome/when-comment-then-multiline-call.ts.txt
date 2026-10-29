@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest';
+
+const handle = (input: { id: string; name: string }): string => input.id + input.name;
+
+describe('a handler', () => {
+  it('handles a command', () => {
+    // given
+    const input = { id: '1', name: 'a' };
+
+    // when
+    const result = handle({
+      id: input.id,
+      name: input.name,
+    });
+
+    // then
+    expect(result).toBe('1a');
+  });
+
+  it('handles a command without blank lines', () => {
+    // given
+    const input = { id: '1', name: 'a' };
+    // when
+    handle({
+      id: input.id,
+      name: input.name,
+    });
+    // then
+    expect(input.id).toBe('1');
+  });
+});

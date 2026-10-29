@@ -11,7 +11,9 @@ const DEFAULT_TIMEOUT_MS = 10_000;
  * The `resolvePrincipal` option of @ddd-ts-kit/http, from a strategy of Passport: the strategy
  * authenticates the request at the boundary, and the pipeline of the kit, its guards and the
  * permissions of the use cases decide what the caller may do, as with any authenticator. It fails
- * closed: a credential the strategy refuses is a 401, an error of the strategy or a strategy that
+ * closed: a credential the strategy refuses is a 401, whose reason is the code the strategy failed
+ * with (`fail({ message: 'NO_EXPIRY' })`, a code in upper snake case), else `refused-by-strategy`,
+ * since the message of a library is not a code; an error of the strategy or a strategy that
  * redirects (a sign-in flow, not the authentication of a call) refuses the request, and only a
  * request without credential, or one the strategy passes, goes on anonymous.
  *
@@ -32,7 +34,7 @@ export function passportPrincipal(
         return sessionOf(await actorOf(outcome.user, outcome.info));
       case 'fail':
         if (presented(raw)) {
-          throw new InvalidCredentialError('refused-by-strategy');
+          throw new InvalidCredentialError(reasonOf(outcome.challenge));
         }
 
         return anonymousSession();
@@ -46,6 +48,16 @@ export function passportPrincipal(
         );
     }
   };
+}
+
+const REASON_CODE = /^[A-Z][A-Z0-9_]*$/;
+
+/** The code the strategy failed with, when its info carries one as its message; a message of a library is not a code. */
+function reasonOf(challenge: unknown): string {
+  const message: unknown =
+    typeof challenge === 'object' && challenge !== null ? Reflect.get(challenge, 'message') : undefined;
+
+  return typeof message === 'string' && REASON_CODE.test(message) ? message : 'refused-by-strategy';
 }
 
 function hasAuthorization(raw: unknown): boolean {

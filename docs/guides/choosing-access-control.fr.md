@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:314296017814ca0f -->
+<!-- translation-of: choosing-access-control.md sha256:704628229005d17b -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
@@ -196,7 +196,7 @@ export const authorizer = new RoleBasedAuthorizer({
   inherits: { accountant: ['clerk'] }, // un comptable a tout ce qu'a un employé
   tenantOf: tenantOfContext, // active la vérification du tenant
   crossTenantRoles: ['admin'], // peut agir dans tous les tenants
-  systemRole: 'system', // le rôle de systemActor(...), aucun par défaut
+  systemRole: 'system', // le rôle de systemActor(...) et d'aucun autre acteur, aucun par défaut
 });
 ```
 

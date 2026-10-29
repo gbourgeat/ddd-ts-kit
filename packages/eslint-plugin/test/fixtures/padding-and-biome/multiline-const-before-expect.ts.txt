@@ -1,0 +1,17 @@
+import { describe, expect, it } from 'vitest';
+
+describe('a quote', () => {
+  it('prices every line', () => {
+    const quote = {
+      lines: [
+        { sku: 'a', price: 10 },
+        { sku: 'b', price: 20 },
+      ],
+    };
+    expect(quote.lines).toHaveLength(2);
+    const total = quote.lines
+      .map((line) => line.price)
+      .reduce((sum, price) => sum + price, 0);
+    expect(total).toBe(30);
+  });
+});

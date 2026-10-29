@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:44f00605c25ae7d4 -->
+<!-- translation-of: parallel-work.md sha256:7ab01bb4ae4e0ad9 -->
 
 # Travailler en parallèle sans collisions
 
@@ -780,6 +780,25 @@ une fois fusionnées les lignes dont elle dépend.
 Ce qui fait fonctionner le plan, c'est que les phases 0 et 1 ne sont délibérément pas parallèles.
 Elles prennent une petite fraction du temps total et retirent presque toutes les collisions du
 reste.
+
+## Faire tourner le conducteur sans personne
+
+Un conducteur lancé par `claude -p` (tâche planifiée, script) n'a personne pour répondre. Le
+brief le dit, nomme la vague à construire et indique si le projet a un dépôt distant ; Claude Code
+n'expose rien d'autre. Le [skill](../../plugin/skills/parallel-work/SKILL.md) tient alors le
+conducteur à cinq règles :
+
+- garder le tour tant qu'un worker tourne. `claude -p` n'attend les agents en arrière-plan que
+  10 minutes d'inactivité au plus (`CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS`), et pas du tout avec
+  `--bare` ; le reste s'arrête, son travail non commité dans le worktree ;
+- ne jamais reprendre un worker par `SendMessage` : fusionner le tronc dans sa branche et lancer un
+  nouveau `context-builder` sur le même worktree avec les lignes restantes
+  (`worker-scope --resume --fresh`) ;
+- après deux arrêts sur une même ligne sans nouveau commit, finir la ligne soi-même ;
+- quand le propriétaire l'autorise à pousser, pousser la branche d'intégration (`work/<plan>`) après
+  chaque fusion d'un worker, jamais la branche principale : un redémarrage perd un worker, pas toute
+  l'exécution ;
+- s'arrêter à la fin de la vague de `plan-waves` reçue, avec un rapport.
 
 ## Limites et quand ne pas s'en servir
 
