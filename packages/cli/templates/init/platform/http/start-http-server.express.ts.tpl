@@ -82,11 +82,11 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 
 /** Whether the Redis protocol server answers, for the load balancer; never limited, since it is polled. */
 function answerReadiness(app: express.Express, served: Served): void {
-  app.get(
-    '/health/ready',
-    (_request, response) =>
-      void served.ready().then((ready) => response.status(ready ? 200 : 503).json({ status: ready ? 'up' : 'down' })),
-  );
+  app.get('/health/ready', (_request, response, next) => {
+    void served.ready().then((ready) => {
+      response.status(ready ? 200 : 503).json({ status: ready ? 'up' : 'down' });
+    }, next);
+  });
 }
 
 /** One sliding window per caller address, before authentication costs anything. */

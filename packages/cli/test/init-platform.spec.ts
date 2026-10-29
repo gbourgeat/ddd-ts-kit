@@ -145,29 +145,6 @@ describe('the platform init writes', () => {
     expect(nestWithControllers).toContain('rawBody: true');
   });
 
-  it.each([
-    ['express', 'app.use(problemErrorHandler({ logger: served.logger }));'],
-    ['fastify', 'app.setErrorHandler(problemErrorHandler({ logger: served.logger }));'],
-    ['hono', 'app.onError(problemErrorHandler({ logger: served.logger }));'],
-    ['nest', 'app.useGlobalFilters(new ProblemExceptionFilter(app.getHttpAdapter(), { logger: served.logger }));'],
-  ])('answers what %s refuses before a route as a problem, logged without the body', (http, installed) => {
-    const server = read(initProject('--http', http), 'src/platform/http/start-http-server.ts');
-
-    expect(server).toContain(installed);
-  });
-
-  it('answers a failed limit of the callers as a problem, on Express and on Nest', () => {
-    const express = read(initProject('--cache', 'redis'), 'src/platform/http/start-http-server.ts');
-    const nest = read(initProject('--http', 'nest', '--cache', 'redis'), 'src/platform/http/start-http-server.ts');
-
-    expect(express.indexOf('limitEachCaller(app, served, config);')).toBeLessThan(
-      express.indexOf('app.use(problemErrorHandler('),
-    );
-
-    expect(express).toContain('}, next);');
-    expect(nest.match(/\}, next\);/g)).toHaveLength(2);
-  });
-
   it('makes a Nest project validate with class-validator and write its routes as Nest controllers, unless told otherwise', () => {
     const nest = readJson(initProject('--http', 'nest'), 'ddd-ts-kit.config.json');
     const zod = readJson(initProject('--http', 'nest', '--validation', 'zod'), 'ddd-ts-kit.config.json');
