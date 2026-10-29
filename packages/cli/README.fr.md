@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:55ceb601846341e3 -->
+<!-- translation-of: README.md sha256:7caebcb6919996aa -->
 
 # ddd-ts-kit
 
@@ -680,7 +680,11 @@ l'ORM : sous Prisma les modèles d'un contexte vivent dans `prisma/schema/<conte
 `prisma/schema/schema.prisma` est le fichier principal que tous les contextes partagent (un projet
 passe à Prisma par `init --force`). Ils refusent aussi les noms que tout objet JavaScript porte
 (`constructor`, `prototype`, `__proto__`, `toString`, `hasOwnProperty`, `valueOf`) : un contexte
-est une clé de la configuration et des objets construits à partir d'elle.
+est une clé de la configuration et des objets construits à partir d'elle. Un contexte ou un
+module se nomme en lettres, chiffres et tirets, lu dans n'importe quelle casse et avec `-`, `_` ou
+des espaces entre ses mots (`OrderFulfilment`, `order_fulfilment`) ; chaque commande refuse un nom
+dont elle devrait laisser tomber une partie pour le lire, comme `../billing` ou `Évil`, et dit ce
+qu'elle aurait lu (`billing`, `vil`).
 
 ### Presets
 

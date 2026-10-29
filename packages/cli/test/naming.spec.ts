@@ -45,6 +45,26 @@ describe('names', () => {
     expect(() => parseContextName('9lives')).toThrow(CliError);
   });
 
+  it('reads a context name in any case and with any separator', () => {
+    for (const input of ['OrderFulfilment', 'order_fulfilment', 'Order Fulfilment', 'order-fulfilment']) {
+      expect(parseContextName(input).kebab, input).toBe('order-fulfilment');
+    }
+  });
+
+  it.each([
+    ['../evil', '`evil`'],
+    ['Évil', '`vil`'],
+    ['billing.x', '`billing-x`'],
+    ['...', 'nothing'],
+  ])(
+    'refuses the context name %s, which it would have to drop part of, and says what it would have read',
+    (input, read) => {
+      expect(() => parseContextName(input)).toThrow(
+        `\`${input}\` is not a name: a context is named in letters, digits and dashes, and the kit would have read ${read} in it.`,
+      );
+    },
+  );
+
   it.each(['Issued', 'Paid', 'MarkedAsOverdue', 'Sent', 'Withdrawn', 'PaymentReceived'])(
     'accepts the fact %s',
     (fact) => {

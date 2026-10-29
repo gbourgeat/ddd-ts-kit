@@ -9,7 +9,7 @@ import { refreshDocs } from '../generate/refresh-docs';
 import { refuseSharedWrites } from '../generate/refuse-shared-writes';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
 import { MODULE_OPTION, usageOf } from '../generate/usage-of';
-import { toName } from '../naming';
+import { contextArgument } from '../generate/context-argument';
 import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Io } from './io';
@@ -35,7 +35,7 @@ export function generate(argv: readonly string[], io: Io, language?: LanguagePro
 
   refuseModuleOf(kind, flags);
 
-  const context = kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined;
+  const context = kind.positionals[0] === 'context' ? contextArgument(config, rest[0] ?? '').kebab : undefined;
 
   const stopPlacing = placeGeneratedFiles(ws, config, {
     context,
@@ -49,7 +49,7 @@ export function generate(argv: readonly string[], io: Io, language?: LanguagePro
   refreshDocs(ws, args.flag('local-only') ? 'keep' : 'move', args.flag('local-only') ? 'context' : 'whole');
 
   if (args.flag('local-only')) {
-    refuseSharedWrites(ws, config, kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined, argv);
+    refuseSharedWrites(ws, config, context, argv);
   } else {
     // A worker confined to its context leaves knip.json alone: the next command on the trunk, or `docs`, does this.
     stopIgnoringValidation(ws, config);

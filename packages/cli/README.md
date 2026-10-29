@@ -654,6 +654,10 @@ of a context live in `prisma/schema/<context>.prisma`, and `prisma/schema/schema
 main file every context shares (`init --force` moves a project to Prisma). They refuse too the
 names every JavaScript object has (`constructor`, `prototype`, `__proto__`, `toString`,
 `hasOwnProperty`, `valueOf`): a context is a key of the config and of the objects built from it.
+A context or a module is named in letters, digits and dashes, read in any case and with `-`, `_`
+or spaces between its words (`OrderFulfilment`, `order_fulfilment`); every command refuses a name
+it would have to drop part of to read it, such as `../billing` or `Évil`, and says what it would
+have read (`billing`, `vil`).
 
 ### Presets
 

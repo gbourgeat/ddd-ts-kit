@@ -4,12 +4,15 @@ import { refuseEarlierLayout } from '../generate/refuse-earlier-layout';
 import { refreshDocs } from '../generate/refresh-docs';
 import { declaredModule } from '../model-modules';
 import { type ModuleMoves, moveToModule } from '../move-to-module';
-import { toName } from '../naming';
+import { contextArgument } from '../generate/context-argument';
+import { readName } from '../naming';
 import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
 import { ownEntry } from '../config/values/own-entry';
+
+const MODULE_FIX = 'Name the module as the config of its context declares it, in kebab-case.';
 
 /** Takes files of the model and of the use cases of a context into a module of its model, their imports with them. */
 export const moveToModuleCommand: Command = (argv, io) => {
@@ -17,8 +20,8 @@ export const moveToModuleCommand: Command = (argv, io) => {
   const [contextName = '', moduleName = '', ...paths] = args.positionals;
   const ws = new Workspace(args.projectRoot, false);
   const { config } = readConfig(args.projectRoot);
-  const context = toName(contextName).kebab;
-  const module = toName(moduleName).kebab;
+  const context = contextArgument(config, contextName).kebab;
+  const module = readName(moduleName, 'module', MODULE_FIX).kebab;
 
   assertDeclared(config, context, module);
   refuseEarlierLayout(ws, config, context);
