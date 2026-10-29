@@ -16,11 +16,11 @@ keep the lines of the team and gain the lines of the kit they lack. A last note 
 `--force` rewrote and kept.
 
 A file a generator leaves as it is reads `skipped <file> (exists, kept; --force replaces it once it
-is committed)`, and the `.claude/settings.json` that `init` writes asks before `generate * --force*`,
-`init --force*` and `init * --force*`, the allow rule of `generate` notwithstanding (`init` run
-again adds the three rules to a project). It also asks before `check --baseline=write` and before
-`--baseline write` or `--baseline=write` after other flags (`check --cwd . --baseline write`),
-which the allow rule of `check` let through.
+is committed)`, and the `.claude/settings.json` that `init` writes asks before `generate --force*`,
+`generate * --force*`, `init --force*` and `init * --force*`, the allow rule of `generate`
+notwithstanding (`init` run again adds the four rules to a project). It also asks before
+`check --baseline=write` and before `--baseline write` or `--baseline=write` after other flags
+(`check --cwd . --baseline write`), which the allow rule of `check` let through.
 
 Every file `init` and `generate` write stays inside the project: a file that is a symbolic link,
 or a path that leads out of the project through one (a linked `docs/adr`, a `.claude/settings.json`

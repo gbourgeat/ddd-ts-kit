@@ -96,6 +96,7 @@ const ASK: readonly string[] = [
   'Bash(npx ddd-ts-kit check --baseline=write*)',
   'Bash(npx ddd-ts-kit check * --baseline write*)',
   'Bash(npx ddd-ts-kit check * --baseline=write*)',
+  'Bash(npx ddd-ts-kit generate --force*)',
   'Bash(npx ddd-ts-kit generate * --force*)',
   'Bash(npx ddd-ts-kit init --force*)',
   'Bash(npx ddd-ts-kit init * --force*)',

@@ -63,6 +63,7 @@ const ASKED = [
   'Bash(npx ddd-ts-kit check --baseline=write*)',
   'Bash(npx ddd-ts-kit check * --baseline write*)',
   'Bash(npx ddd-ts-kit check * --baseline=write*)',
+  'Bash(npx ddd-ts-kit generate --force*)',
   'Bash(npx ddd-ts-kit generate * --force*)',
   'Bash(npx ddd-ts-kit init --force*)',
   'Bash(npx ddd-ts-kit init * --force*)',
@@ -130,6 +131,24 @@ describe('agent settings', () => {
       'Read(./.env.development)',
       'Read(./.env.test)',
     ]);
+  });
+});
+
+describe('agent settings on --force', () => {
+  const root = initProject(...NPM);
+  const ask = permissions(root, 'ask');
+
+  it.each([
+    'npx ddd-ts-kit generate aggregate billing Order --force',
+    'npx ddd-ts-kit generate --force aggregate billing Order',
+    'npx ddd-ts-kit init --force',
+    'npx ddd-ts-kit init --logger pino --force',
+  ])('asks before `%s`, wherever the flag stands', (command) => {
+    expect(askedFor(ask, command)).not.toEqual([]);
+  });
+
+  it('asks nothing of a generate without it', () => {
+    expect(askedFor(ask, 'npx ddd-ts-kit generate aggregate billing Order')).toEqual([]);
   });
 });
 
@@ -241,7 +260,7 @@ describe('agent settings of the files that reach production', () => {
     expect(permissions(root, 'ask')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 65 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 66 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);
