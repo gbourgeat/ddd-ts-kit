@@ -44,11 +44,6 @@ test('in the worktree of a story, the code waits for each row designed and the a
     'deny',
   );
   assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate acceptance US5')).output, undefined);
-  // A shell write into the code of a context waits for the gate too, not only the editor tools.
-  assert.match(
-    reason(run('pre-bash', bash(root, 'printf x > src/contexts/ordering/domain/order-number.ts'))),
-    /waits for its build gate/,
-  );
   assert.equal(
     decision(
       run('pre-bash', bash(root, 'npx ddd-ts-kit story-scope US6', { agent_type: 'ddd-ts-kit:context-builder' })),
@@ -62,6 +57,12 @@ test('in the worktree of a story, the code waits for each row designed and the a
     undefined,
   );
   assert.ok(existsSync(join(root, '.ddd-ts-kit/guard/story-gate.json')));
+});
+
+test('in the worktree of a story, a shell write into the code of a context waits for the gate too', () => {
+  const root = storyWorktree();
+  const written = run('pre-bash', bash(root, 'printf x > src/contexts/ordering/domain/order-number.ts'));
+  assert.match(reason(written), /waits for its build gate/);
 });
 
 // Each row designed, the acceptance written and locked: what opens the code of a story.
@@ -428,14 +429,24 @@ function lockTheFix(root) {
   assert.equal(locked.status, 0, locked.stderr);
 }
 
+test('in the worktree of a fix, a sub-agent command that names no held spec nor a lock passes', () => {
+  const root = fixWorktree();
+  lockTheFix(root);
+  const reading = bash(root, 'cat README.md', { agent_type: 'ddd-ts-kit:context-builder' });
+  assert.equal(run('pre-bash', reading).output, undefined);
+});
+
+test('a glob that names a locked regression spec only once the shell expands it is refused to a sub-agent', () => {
+  const root = fixWorktree();
+  lockTheFix(root);
+  const glob = 'sed -i s/refused/cancelled/ src/contexts/ordering/test/unit/*.aggregate.spec.ts';
+  const held = run('pre-bash', bash(root, glob, { agent_type: 'ddd-ts-kit:context-builder' }));
+  assert.match(reason(held), /is a regression spec of fix FIX-412, locked/);
+});
+
 test('the shell runs and versions a locked regression spec of a fix, and a sub-agent never rewrites it', () => {
   const root = fixWorktree();
   lockTheFix(root);
-  // A sub-agent command that names no held spec nor a lock passes, even in a fix worktree.
-  assert.equal(
-    run('pre-bash', bash(root, 'cat README.md', { agent_type: 'ddd-ts-kit:context-builder' })).output,
-    undefined,
-  );
   for (const command of [
     `npm test -- ${FIX_SPEC}`,
     `npx vitest run ${FIX_SPEC}`,
@@ -448,8 +459,6 @@ test('the shell runs and versions a locked regression spec of a fix, and a sub-a
   }
   for (const command of [
     `sed -i s/refused/cancelled/ ${FIX_SPEC}`,
-    // A glob that names the spec only after the shell expands it, which the text of the command never spells out.
-    'sed -i s/refused/cancelled/ src/contexts/ordering/test/unit/*.aggregate.spec.ts',
     `echo "" > ${FIX_SPEC}`,
     `rm ${FIX_SPEC}`,
     `cp /tmp/order.aggregate.spec.ts ${FIX_SPEC}`,
