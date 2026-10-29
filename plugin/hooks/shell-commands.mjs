@@ -69,10 +69,12 @@ export function simpleCommands(text, directory, depth = 0) {
   const found = substitutions.flatMap((inner) => simpleCommands(inner, directory, depth + 1));
   let current = directory;
   const stack = [];
+  let blocks = 0;
   for (const command of commands) {
+    blocks += blockChange(command.words);
     const words = unwrapped(command.words);
     found.push({ ...command, words, directory: current });
-    current = movedTo(command, words, { current, stack });
+    current = movedTo(command, words, { current, stack, blocks });
     found.push(...nestedCommands(words, current, depth));
     const wrapped = wrappedTextOf(command.words);
     if (wrapped !== undefined) {
@@ -90,7 +92,7 @@ function movedTo(command, words, place) {
     return place.current;
   }
   const next = movedBy(name, words, place);
-  if (!isCertain(command)) {
+  if (!isCertain(command, place.blocks)) {
     return undefined;
   }
   // A `cd` that cannot be seen to land on an existing directory leaves the place to the shell.
@@ -116,9 +118,28 @@ function movedBy(name, words, { current, stack }) {
 }
 
 // A directory change holds only when the command ended on `&&` at the top level: after `;`, `||`,
-// `|`, `&`, a newline, or inside a subshell, what the next command runs in only the shell knows.
-function isCertain(command) {
-  return command.ender === '&&' && command.depth === 0;
+// `|`, `&`, a newline, inside a subshell, or inside a block (a brace group, the body of a function,
+// an `if` or a loop, which may run once, never or later), what the next command runs in only the shell knows.
+function isCertain(command, blocks) {
+  return command.ender === '&&' && command.depth === 0 && blocks === 0;
+}
+
+const OPENING = new Set(['{', 'then', 'do']);
+const CLOSING = new Set(['}', 'fi', 'done']);
+
+/** How many blocks the leading keywords of a command open (`{`, `then`, `do`) or close (`}`, `fi`, `done`). */
+function blockChange(words) {
+  let change = 0;
+  for (const word of words) {
+    if (OPENING.has(word)) {
+      change += 1;
+    } else if (CLOSING.has(word)) {
+      change -= 1;
+    } else if (!KEYWORDS.has(word)) {
+      break;
+    }
+  }
+  return change;
 }
 
 /** The name of the program a simple command runs: `/usr/bin/sed` is `sed`. */

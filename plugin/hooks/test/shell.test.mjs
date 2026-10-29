@@ -71,6 +71,10 @@ const UNCERTAIN_CD = [
   'cd /tmp | cat; rm src/main.ts',
   'cd /tmp & echo x > src/main.ts',
   'cd src && cd /nonexistent && echo x > main.ts',
+  // A cd inside a function body, a brace group or the body of an if is not certain either.
+  'f() { cd /tmp && echo; }; rm src/main.ts',
+  '{ cd /tmp && true; }; rm src/main.ts',
+  'if true; then cd /tmp && true; fi; rm src/main.ts',
 ];
 
 test('a cd that is not certain does not move the reader, and a relative write after it is refused', () => {
