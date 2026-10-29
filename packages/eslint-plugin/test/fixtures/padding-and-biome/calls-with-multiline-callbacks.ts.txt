@@ -1,0 +1,18 @@
+import { describe, expect, it } from 'vitest';
+
+describe('a call with a callback', () => {
+  it('spans lines', () => {
+    const seen: number[] = [];
+    [1, 2, 3].forEach((value) => {
+      seen.push(value);
+    });
+    expect(seen).toEqual([1, 2, 3]);
+    [4, 5].forEach((value) => seen.push(value));
+    [6].forEach((value) => {
+      seen.push(value);
+    });
+    [7].forEach((value) => {
+      seen.push(value);
+    }); expect(seen).toHaveLength(7);
+  });
+});

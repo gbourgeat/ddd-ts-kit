@@ -148,6 +148,40 @@ describe('generate test-world, in the declared style', () => {
   });
 });
 
+describe('generate test-world, and the reader of a query', () => {
+  it('reads the fake of the reader of a query as standing for its port, and leaves it to the spec that gives its answer', () => {
+    const project = billingProject('world-reader');
+
+    expect(
+      cli(project, 'generate', 'query', 'billing', 'GetInvoice', '--public', '--term', 'Get=To read one invoice').code,
+    ).toBe(0);
+
+    const fake = read(project, `${BILLING}/test/fakes/get-invoice-reader.fake.ts`);
+
+    expect(fake).toContain('export class FakeGetInvoiceReader implements GetInvoiceReader {');
+    expect(fake).not.toContain('InMemory');
+
+    expect(report(cli(project, 'generate', 'test-world', 'billing', '--json')).notes).toContain(
+      'Not in the world: FakeGetInvoiceReader needs constructor arguments: a spec builds it with what it should answer.',
+    );
+  });
+
+  it('finds the port of a fake through the in-memory adapter it extends, the fake of a search', () => {
+    const project = billingProject('world-search-reader');
+    const search = ['--search', '--permission', 'invoice.search', '--term', 'Search=To look for invoices'];
+
+    expect(cli(project, 'generate', 'query', 'billing', 'SearchInvoices', ...search).code).toBe(0);
+
+    expect(read(project, `${BILLING}/test/fakes/search-invoices-reader.fake.ts`)).toContain(
+      'export class FakeSearchInvoicesReader extends InMemorySearchInvoicesReader {',
+    );
+
+    expect(report(cli(project, 'generate', 'test-world', 'billing', '--json')).notes).toContain(
+      'Not in the world: FakeSearchInvoicesReader needs constructor arguments: a spec builds it with what it should answer.',
+    );
+  });
+});
+
 describe('generate test-world, on other stacks', () => {
   it('gives the test application alone to a context without a fake, and says so', () => {
     const root = tempDir('world-empty');

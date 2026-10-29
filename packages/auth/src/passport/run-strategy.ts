@@ -19,7 +19,7 @@ export function runStrategy(strategy: PassportStrategyLike, raw: unknown, timeou
 
     const actions = {
       success: (user: unknown, info: unknown) => settle({ kind: 'success', user, info }),
-      fail: () => settle({ kind: 'fail' }),
+      fail: (challenge: unknown) => settle({ kind: 'fail', challenge }),
       pass: () => settle({ kind: 'pass' }),
       error: (error: unknown) => settle({ kind: 'error', error }),
       redirect: (url: unknown) => settle({ kind: 'redirect', url }),

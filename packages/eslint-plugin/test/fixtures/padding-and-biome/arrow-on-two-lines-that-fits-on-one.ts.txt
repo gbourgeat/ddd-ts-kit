@@ -1,0 +1,14 @@
+export const double = (value: number): number =>
+  value * 2;
+
+export const triple = (value: number) =>
+  value * 3;
+export const quadruple = (value: number) =>
+  value * 4;
+
+export function run(): number {
+  const a = (value: number) =>
+    value + 1;
+  const b = a(1);
+  return b;
+}

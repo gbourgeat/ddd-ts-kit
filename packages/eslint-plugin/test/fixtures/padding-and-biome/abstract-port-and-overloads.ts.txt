@@ -1,0 +1,14 @@
+export abstract class OrderRepository {
+  abstract find(id: string): Promise<string | undefined>;
+  abstract save(id: string): Promise<void>;
+  abstract readonly name: string;
+}
+
+export class Parser {
+  parse(value: string): string;
+  parse(value: number): number;
+  parse(value: unknown): unknown {
+    return value;
+  }
+  other(): void {}
+}

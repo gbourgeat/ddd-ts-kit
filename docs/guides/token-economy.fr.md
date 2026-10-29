@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:18a95d128f1437e6 -->
+<!-- translation-of: token-economy.md sha256:2764dda90d355bd5 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -175,7 +175,7 @@ routes avec leurs gardes, leurs réponses et leurs codes d'erreur, les événeme
 consommés, les politiques, les *jobs* et les contrats. `todo` répond une ligne par marqueur :
 
 ```text
-src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to a Order: ...
+src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to an Order: ...
 src/contexts/ordering/test/unit/place-order.handler.spec.ts:39  it.todo  applies the business decision to the order
 ```
 

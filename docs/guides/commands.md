@@ -257,7 +257,7 @@ Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate <kind> ... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
@@ -611,7 +611,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --sdk            init records "sdk" in the config and generates the clients with the project
   --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
                    a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being
-                   the one character a cell of the table cannot hold
+                   the one character a cell of the table cannot hold; taken by the kinds whose usage below
+                   shows it, refused by the others, as is any flag the usage of a kind does not show
   --reason         generate context writes it under ## Classification, the sentence of why the context is
                    of its classification; generate adr --deviation records it as the reason of the deviation
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
@@ -647,7 +648,7 @@ Kinds
   port <context> <Name> [--module <module>]
   route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]
   controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]
-  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>] [--module <module>]
+  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
   representation <context> <UseCase> <xml|csv|media/type>[,...] [--module <module>]
@@ -664,7 +665,7 @@ Kinds
   acl <context> <upstreamOrSystemName> [--module <module>]
   e2e <context> <UseCaseName> [--event <eventType>]
   acceptance <story> ["<title>"]
-  policy <context> <Name> --permission <aggregate>.<action> [--module <module>]
+  policy <context> <Name> --permission <aggregate>.<action> [--term "<Term>=<meaning>"]... [--module <module>]
   gateway <context> <upstreamContext> <Name> [--module <module>]
   adapter <context> <Port> [--kind external|gateway|simulated] [--decorators] [--module <module>]
   service <context>

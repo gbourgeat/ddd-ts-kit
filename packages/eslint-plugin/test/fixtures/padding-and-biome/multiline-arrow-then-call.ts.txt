@@ -1,0 +1,16 @@
+import { describe, expect, it } from 'vitest';
+
+describe('an arrow function', () => {
+  it('is followed by a call', () => {
+    const add = (a: number, b: number): number => {
+      const sum = a + b;
+      return sum;
+    };
+    expect(add(1, 2)).toBe(3);
+    const multiply = (
+      a: number,
+      b: number,
+    ): number => a * b;
+    expect(multiply(2, 3)).toBe(6);
+  });
+});

@@ -149,9 +149,9 @@ Facts about third-party products were checked on 2026-10-10 against the sources 
 | | Keycloak with the preset | Any OIDC provider with `JwtAuthenticator` | `--authn none` |
 |---|---|---|---|
 | What it is | open-source identity provider, Apache-2.0, a CNCF incubating project; latest release 26.8.0 (2026-10-01) | any issuer of signed JWTs with a JWKS endpoint: a hosted identity service, another self-hosted server, an internal token service | a development authenticator reading a header; it throws in production |
-| Configuration in the kit | base URL, realm, audience, optional client id and tenant claim | key set URL or a key, issuer, audience, allowed algorithms, optional `toActor` | none |
+| Configuration in the kit | base URL, realm, audience, optional client id and tenant claim, `requireExpiry` (default `true`) | key set URL or a key, issuer, audience, allowed algorithms, `requireExpiry` (default `true`), optional `toActor` | none |
 | Issuer and key set | derived from the base URL and the realm | given explicitly | not applicable |
-| Roles | realm roles, plus the client roles of one client when it is named | the first claim present among `realm_access.roles`, `roles`, `scope`, never merged; or your `toActor` | whatever the header says |
+| Roles | realm roles, plus the client roles of one client when it is named | `realm_access.roles`, else `roles`, never merged and never `scope`; or your `toActor` | whatever the header says |
 | Tenant | a text claim; a list or the `organization` claim: one names the tenant, several are the `tenants` attribute, among which a request names one | the same, from the tenant claim (`tenant_id` by default) | whatever the header says |
 | Service accounts | recognised (`preferred_username` starting with `service-account-`) | mapped by your `toActor` | not applicable |
 | Local development | `init --authn keycloak` adds a compose service and a realm file with demo users | you bring the provider, or sign test tokens yourself | immediate |
@@ -180,10 +180,11 @@ All of it is in [`@ddd-ts-kit/auth`](../../packages/auth/README.md), entry
 `@ddd-ts-kit/auth/jwt`, the only file that imports the `jose` library (an optional peer).
 
 **The generic authenticator** verifies the signature, the issuer, the audience, the expiry and
-the algorithm. Asymmetric algorithm families only unless told otherwise, and `alg: none` is
-always refused. A refused token raises one error with a reason code (`TOKEN_EXPIRED`,
-`CLAIM_MISMATCH`, `BAD_SIGNATURE`, `ALGORITHM_NOT_ALLOWED`, `UNKNOWN_KEY`, `MALFORMED_TOKEN`,
-`UNSUPPORTED_TOKEN`, `NO_SUBJECT`). A key set that cannot be fetched is not a refusal: it is
+the algorithm. A token without `exp` is refused unless `requireExpiry: false` says that the
+issuer's tokens never expire. Asymmetric algorithm families only unless told otherwise
+(`DEFAULT_JWT_ALGORITHMS`), and `alg: none` is always refused. A refused token raises one error
+with a reason code (`TOKEN_EXPIRED`, `NO_EXPIRY`, `CLAIM_MISMATCH`, `BAD_SIGNATURE`,
+`ALGORITHM_NOT_ALLOWED`, `UNKNOWN_KEY`, `MALFORMED_TOKEN`, `UNSUPPORTED_TOKEN`, `NO_SUBJECT`). A key set that cannot be fetched is not a refusal: it is
 answered as a 5xx. Nothing of the token is kept in the actor or the session, and the
 verification key is not a property of the object, so logging the authenticator shows no key.
 
@@ -305,8 +306,9 @@ against a local server, not run against a real Keycloak by the pipeline of the k
 - **Several organizations per user give no default tenant** with the `organization` claim: they
   are the `tenants` of the actor, and each request names the one it works in (`x-tenant-id`);
   one without it works in no tenant.
-- **A scope is not a role.** The default mapping never merges `scope` with roles; do not work
-  around it, write a `toActor`.
+- **A scope is not a role.** The default mapping never reads `scope` as roles: a token that
+  carries only scopes gives an actor with no role. A provider whose tokens carry no role claim
+  needs a `toActor` that maps them.
 - **The generated realm and the development header authenticator are for local use.** The
   second throws in production by design.
 - **Authentication is not authorization.** The preset fills `actor.roles`; what a role may do

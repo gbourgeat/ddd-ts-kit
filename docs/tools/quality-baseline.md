@@ -109,7 +109,7 @@ first and on what changed; the wider ones run later, on every file:
 | format | kit `ci:format`; example and project `format:check` | `ci:format`, in the lint job | staged files, before a commit |
 | dead code | kit `ci:deadcode`; example and project `deadcode` | `ci:deadcode` | no |
 | dependency graph | kit `depcruise` (in `ci:arch`); example and project `depcruise` | kit `ci:arch`; example and project `ci:arch:graph` | no |
-| architecture | kit `check:self`, the fixtures of every rule, and the guard tests (in `ci:arch`); example and project `check:arch` | kit `ci:arch`; example and project `ci:arch:check` | project and example: staged files, before a commit; at every write through the editor hook |
+| architecture | kit `check:self`, the fixtures of every rule, and the tests of the hooks of the plugin, held to 100 percent of their lines, branches and functions (`test:plugin`, in `ci:arch`); example and project `check:arch` | kit `ci:arch`; example and project `ci:arch:check` | project and example: staged files, before a commit; at every write through the editor hook |
 | families at parity | kit `check:parity`: the four ORM, the brokers and the loggers offer the same options and run their contracts with the same capabilities, or `pipeline/monorepo/families.mjs` says why not (in `ci:arch`) | kit `ci:arch` | no |
 | first migration on a real PostgreSQL | kit `ci:test:migrations`: a project with an audit trail on Drizzle, Prisma and TypeORM, installed for real, generates its first migration with the tool of its ORM (the audit guard added), applies it to a new database and passes every gate | the `migrations` job at night, on demand and on the pull request of a release, and the release | no |
 | pairs of capability values | kit `ci:test:pairwise`: stacks chosen to meet each value of a capability flag with each value of every other one that `init` accepts (`test/support/pairwise.ts`), generated whole and type-checked; the unit run proves that the pairs are all met | the `pairwise` job at night and on the pull request of a release, and the release | no |
@@ -227,7 +227,9 @@ possible, so a very long name can still leave one line for `npm run format` to w
 ESLint and the formatter never fight, because they decide different things. The presets of the
 plugin enable no rule about where a token goes; they keep the two things a formatter does not
 decide: the blank lines between statements (`clean/blank-lines`) and the braces of a branch
-(`clean/braces`). Run in either order, the second tool finds nothing to change.
+(`clean/braces`). Run in either order, the second tool finds nothing to change once the first round is
+over. `packages/eslint-plugin/test/presets/padding-and-biome.spec.ts` holds that agreement on a corpus of
+spec-shaped files.
 
 ```ts
 // instead of: the formatter keeps both lines as they are, since neither breaks its layout

@@ -1,0 +1,3 @@
+**The end-to-end suite of a generated Jest project keeps a bounded memory.** Jest kept the modules of every spec file in the one process of `maxWorkers: 1` (about 15 MB of heap per file), so a suite of about 200 files aborted with `JavaScript heap out of memory`. `jest.e2e.config.js` now runs two workers, each replaced by a fresh one past 800 MB (`workerIdleMemoryLimit`). With `DATABASE_URL` set, the files still run one at a time in band, and a long suite there needs `NODE_OPTIONS=--max-old-space-size=<MB>`.
+
+To move: copy the new `jest.e2e.config.js` of `ddd-ts-kit init --tests jest`, and drop a `--max-old-space-size` set only for this.

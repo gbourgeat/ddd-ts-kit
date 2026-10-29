@@ -199,7 +199,9 @@ sub-agent, and a spec that is wrong is rewritten by the session of the fix and j
 
 Held by `npm run lint`, on every test file of the project:
 
-- `describe` names the unit, `it` states the rule, in lower case, after the rows and the
+- `describe` names the unit in the words of the glossary, as the generators write it: `Invoice line`,
+  `Issue invoice`, `POST /invoices`, `When invoice issued`, a policy by its question (`Who may cancel
+  an invoice`); `it` states the rule, in lower case, after the rows and the
   criterion it cites: `refuses to pay an order twice`, `#US5.02 AC1 a customer places an order`;
   never `should`, `test`, `works`, nor a method or a class (`test/title-states-a-rule`).
 - Arrange, act, assert separated by blank lines; no `if`, no loop, no `try` (`test/no-logic`):

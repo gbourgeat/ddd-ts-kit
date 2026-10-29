@@ -1,0 +1,30 @@
+export function braced(kind: string): number {
+  switch (kind) {
+    case 'a': {
+      const value = 1;
+      return value;
+    }
+    case 'b': {
+      return 2;
+    }
+    default: {
+      return 0;
+    }
+  }
+}
+
+export function unbraced(kind: string): number {
+  let result = 0;
+  switch (kind) {
+    case 'a':
+    case 'b':
+      result = 1;
+      break;
+    case 'c':
+      result = 2;
+      break;
+    default:
+      result = 3;
+  }
+  return result;
+}

@@ -124,6 +124,29 @@ describe('RoleBasedAuthorizer.explain, with the tenant check', () => {
     );
   });
 
+  it('says that the system role named among the roles of a user is held by a system actor only', async () => {
+    const impostor: Actor = { ...bob, roles: ['clerk', 'automation'] };
+
+    const { trace } = await tenanted.explain({ actor: impostor, permission: voiding, context: { tenantId: 'acme' } });
+
+    expect(traceText(trace)).toBe(
+      [
+        '  billing:invoice.void asked of the roles clerk (automation is the role of the system, held by a system actor only)',
+        'x   clerk grants billing:invoice.read',
+      ].join('\n'),
+    );
+  });
+
+  it('says that a user whose only role is the system role holds none', async () => {
+    const impostor: Actor = { ...bob, roles: ['automation'] };
+
+    const { trace } = await tenanted.explain({ actor: impostor, permission: read, context: { tenantId: 'acme' } });
+
+    expect(traceText(trace)).toBe(
+      'x billing:invoice.read asked of no role: the actor holds none (automation is the role of the system, held by a system actor only)',
+    );
+  });
+
   it('says that a system without a role was refused before any role was asked', async () => {
     const roleless = new RoleBasedAuthorizer({ roles: { clerk: [read] } });
 
