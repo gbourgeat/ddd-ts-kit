@@ -1,4 +1,5 @@
 import { CliError } from '../cli-error';
+import { readConfig } from '../config';
 import { formatPlan } from '../plan/format-plan';
 import { planWaves } from '../plan/plan-waves';
 import { replayPlan } from '../plan/replay-plan';
@@ -15,7 +16,7 @@ import { stdoutJson } from '../json/stdout-json';
 /**
  * Orders the rows of the slices file not done, of the project or of one context, in waves cut
  * into batches of one or two rows, with the command that briefs each batch and the order of the
- * merges. Exits 1, without waves, while a cycle, an unknown dependency or a row without owner
+ * merges. Exits 1, without waves, while a cycle, an unknown dependency, a row without owner or a row whose id or context is not one a command can carry
  * keeps the rows from being ordered, or while a planned command, replayed in a copy of the
  * project, introduces a name the glossary of its context does not hold or is refused by the
  * generator for any other reason.
@@ -33,7 +34,12 @@ export const planWavesCommand: Command = (argv, io) => {
   }
 
   const context = contextOf(rows, args.positionals[0]);
-  const plan = withReplay(root, rows, planWaves(rows, { context }));
+
+  const plan = withReplay(
+    root,
+    rows,
+    planWaves(rows, { context, contexts: Object.keys(readConfig(root).config.contexts) }),
+  );
 
   io.out(args.json ? stdoutJson(plan) : formatPlan(plan));
 

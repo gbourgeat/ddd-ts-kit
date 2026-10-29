@@ -1324,8 +1324,11 @@ batch that holds them (or the `plan-waves <context>` that shows them) and the ro
 before launching a wave, the conductor sees that it waits on the work of another story, and whether
 anyone carries it.
 
-A cycle in `Depends on`, a dependency on an id no row carries, a row without owner and an id two
-rows carry make the rows impossible to order: they are reported alone, without waves, and the
+A cycle in `Depends on`, a dependency on an id no row carries, a row without owner, an id two
+rows carry, an id that is not a code and a number (`US1.02`, never `US1.02;id`) and a context the
+config does not declare make the rows impossible to order or to brief (a brief is a command the
+conductor runs, and only the context and the ids of declared, well-formed rows are written in it):
+they are reported alone, without waves, and the
 command exits 1. A file without a slices table, or a context no row names, is refused.
 
 Once the rows can be ordered, the generator commands of their `Start with` cells (between
