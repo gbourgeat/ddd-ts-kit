@@ -644,6 +644,12 @@ pipelines call, `test:coverage` (every spec once, each context and layer held to
 `format:check`, `test:coverage`, end-to-end tests, `check:arch`, `depcruise`, `deadcode`,
 `docs:check`.
 
+`db:generate` takes what the migration does, in letters, digits, dashes and underscores, starting
+with a letter or a digit (`npm run db:generate add-invoices`, on TypeORM
+`migrations/add-invoices`): `drizzle-generate`, `prisma-generate` and `typeorm-generate` refuse
+any other name before the ORM reads it, since a value that starts with a dash would be one of its
+options; `typeorm-generate` also refuses a folder outside the project.
+
 `package.json` carries two compilers: `typescript ~6.0.3`, which the tools load as a library,
 and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck` call by path
 (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` would run the older one.

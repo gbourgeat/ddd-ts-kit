@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7caebcb6919996aa -->
+<!-- translation-of: README.md sha256:c606a6a93953ad5d -->
 
 # ddd-ts-kit
 
@@ -668,6 +668,12 @@ les scripts `ci:*` qu'appellent les *pipelines*, `test:coverage` (chaque *spec* 
 contexte et chaque couche tenus aux seuils de `ddd-ts-kit.config.json`) et `verify`, qui enchaîne
 toute la base : typecheck, lint, `format:check`, `test:coverage`, tests de bout en bout,
 `check:arch`, `depcruise`, `deadcode`, `docs:check`.
+
+`db:generate` prend ce que fait la migration, en lettres, chiffres, tirets et tirets bas,
+commençant par une lettre ou un chiffre (`npm run db:generate add-invoices`, sous TypeORM
+`migrations/add-invoices`) : `drizzle-generate`, `prisma-generate` et `typeorm-generate` refusent
+tout autre nom avant que l'ORM ne le lise, puisqu'une valeur qui commence par un tiret serait l'une
+de ses options ; `typeorm-generate` refuse aussi un dossier hors du projet.
 
 `package.json` porte deux compilateurs : `typescript ~6.0.3`, que les outils chargent comme une
 bibliothèque, et `@typescript/native` (`npm:typescript@~7.0.2`), que `build` et `typecheck`

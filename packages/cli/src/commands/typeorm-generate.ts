@@ -7,6 +7,7 @@ import {
   formatAsTheProject,
   generateGuarded,
   hasDatabaseUrl,
+  migrationName,
   runOnInProcessDatabase,
   runOrmTool,
   schemasFirst,
@@ -32,14 +33,7 @@ const IN_PROCESS_ENV = { DATABASE_URL: '{url}', DATABASE_POOL_SIZE: '1' };
 export const typeormGenerateCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {});
   const root = args.projectRoot;
-  const [target] = args.positionals;
-
-  if (target === undefined || target.trim() === '') {
-    throw new CliError(
-      'A migration is named by where it goes and what it does.',
-      'Run `npm run db:generate migrations/<what-it-does>`, for example `npm run db:generate migrations/add-invoices`.',
-    );
-  }
+  const target = migrationTarget(args.positionals[0]);
 
   ensureDatabaseReachable();
 
@@ -67,6 +61,33 @@ export const typeormGenerateCommand: Command = (argv, io) => {
     io,
   );
 };
+
+const TARGET_FIX =
+  'Run `npm run db:generate migrations/<what-it-does>`, for example `npm run db:generate migrations/add-invoices`.';
+
+/**
+ * The path of the new migration, as `typeorm migration:generate` takes it: a folder of the project
+ * and a name of letters, digits, dashes and underscores. A path that starts with a dash would be
+ * read as an option of TypeORM, one that leaves the project would write there.
+ */
+function migrationTarget(target: string | undefined): string {
+  if (target === undefined || target.trim() === '') {
+    throw new CliError('A migration is named by where it goes and what it does.', TARGET_FIX);
+  }
+
+  const folder = path.posix.dirname(path.posix.normalize(target));
+
+  if (path.posix.isAbsolute(folder) || folder === '..' || folder.startsWith('../') || folder.startsWith('-')) {
+    throw new CliError(
+      `"${target}" cannot be the path of a migration: its folder is not one of the project.`,
+      TARGET_FIX,
+    );
+  }
+
+  migrationName(path.posix.basename(target), TARGET_FIX);
+
+  return target;
+}
 
 interface MigrationRun {
   readonly root: string;
