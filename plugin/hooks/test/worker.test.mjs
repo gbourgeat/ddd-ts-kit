@@ -11,6 +11,7 @@ import {
   directory,
   git,
   launcher,
+  patchConfig,
   project,
   put,
   reason,
@@ -726,6 +727,17 @@ test('a command that first moves out of every project is still judged, against t
   const agent = worker(root);
   const away = run('pre-bash', bash(root, `cd / && rm ${root}/src/main.ts`, agent));
   assert.match(reason(away), /`rm` changes src\/main\.ts/);
+});
+
+test('a builder that runs a generator from the conductor, under advised worktrees, is told to cd into its worktree', () => {
+  const { conductor } = conductorWithWorker();
+  patchConfig(conductor, { worktrees: 'advised' });
+  const builder = { agent_type: 'ddd-ts-kit:context-builder' };
+  const generated = run('pre-bash', bash(conductor, 'npx ddd-ts-kit generate value-object billing Money', builder));
+  assert.equal(decision(generated), 'deny');
+  assert.match(reason(generated), /cd <worktree> && /);
+  const dry = bash(conductor, 'npx ddd-ts-kit generate value-object billing Money --dry-run', builder);
+  assert.equal(run('pre-bash', dry).output, undefined);
 });
 
 // A conductor's checkout on the trunk, a real git worktree under .worktrees/ with a worker scope,

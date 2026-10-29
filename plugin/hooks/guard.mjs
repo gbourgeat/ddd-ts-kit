@@ -538,10 +538,14 @@ function builderStrayReason(project, input, commands) {
   return 'A worker runs every command as `cd <worktree> && ...` so that the guard reads it against the scope of that worktree; this command writes without moving into a worktree of your project. Run it as `cd <worktree> && ...`.';
 }
 
+// A redirection, a writer of the tables, inline code, or a generator of the kit, which writes files too.
 function builderWrites(commands) {
-  return commands.some(
-    (command) =>
-      writtenTargets(command).length > 0 || changedPaths(command).length > 0 || inlineCode(command) !== undefined,
+  return (
+    generates(commands, []) ||
+    commands.some(
+      (command) =>
+        writtenTargets(command).length > 0 || changedPaths(command).length > 0 || inlineCode(command) !== undefined,
+    )
   );
 }
 
@@ -1583,7 +1587,12 @@ async function writesCode(input, command, aside) {
     return false;
   }
   shell = await import('./shell-commands.mjs');
-  return kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  return generates(shell.simpleCommands(command, input.cwd ?? process.cwd()), aside);
+}
+
+// A run of a generator of the kit among `commands`, any kind but those given, its help and its dry run aside.
+function generates(commands, aside) {
+  return kitInvocations(commands).some(
     ({ subcommand, args }) =>
       ['generate', 'g'].includes(subcommand) &&
       args[0] !== undefined &&
