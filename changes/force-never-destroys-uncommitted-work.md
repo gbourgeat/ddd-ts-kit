@@ -10,7 +10,8 @@ delete.
 
 `init --force` no longer rewrites the files a team owns once written: `README.md`, `AGENTS.md`,
 `CLAUDE.md`, `src/main.ts` and the pipeline definitions (`.github/workflows/`, `.gitlab-ci.yml`)
-stay as they are, listed as `kept (yours since the first init)`. `.gitignore` and `.dockerignore`
+stay as they are, listed as `kept (yours since the first init)`; the jobs and includes of the
+pipeline are the team's to edit, those of `--ci-extras` too. `.gitignore` and `.dockerignore`
 keep the lines of the team and gain the lines of the kit they lack. A last note says how many files
 `--force` rewrote and kept.
 

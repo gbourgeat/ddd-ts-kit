@@ -1,4 +1,5 @@
 import type { Config } from '../config';
+import { isPipelineDefinition } from './is-pipeline-definition';
 
 /**
  * Whether `init` writes this file once and leaves it to the team from then on, `--force` included:
@@ -8,8 +9,7 @@ import type { Config } from '../config';
  */
 export function isTeamFile(config: Pick<Config, 'sourceRoot'>, target: string): boolean {
   return (
-    ['README.md', 'AGENTS.md', 'CLAUDE.md', `${config.sourceRoot}/main.ts`, '.gitlab-ci.yml'].includes(target) ||
-    target.startsWith('.github/workflows/') ||
-    (target.startsWith('.gitlab/') && target.endsWith('.gitlab-ci.yml'))
+    ['README.md', 'AGENTS.md', 'CLAUDE.md', `${config.sourceRoot}/main.ts`].includes(target) ||
+    isPipelineDefinition(target)
   );
 }

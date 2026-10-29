@@ -88,6 +88,11 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
 
     expect(removed.code).toBe(0);
     expect(removed.stdout).toContain('kept         .gitlab-ci.yml (yours since the first init)');
+
+    expect(removed.stdout).toContain(
+      ' .gitlab-ci.yml: its jobs and includes are yours to edit, those of --ci-extras too.',
+    );
+
     expect(read(root, '.gitlab-ci.yml')).toContain(MARKS.sast);
     expect(readJson(root, 'ddd-ts-kit.config.json')).not.toHaveProperty('ci');
     expect(read(initProject('--ci', 'gitlab'), '.gitlab-ci.yml')).not.toContain(MARKS.sast);

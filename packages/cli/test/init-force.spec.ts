@@ -258,7 +258,7 @@ describe('init --force and the files of the team', () => {
     expect(forced.stdout).toContain('updated      biome.json');
 
     expect(forced.stdout).toMatch(
-      /note: --force rewrote \d+ file\(s\) from the templates of this version \(listed as updated; git diff shows each change; \.gitignore and \.dockerignore only gain the lines of the kit they lack\), and kept \d+ file\(s\) yours since the first init \(listed as kept\): to take what this version writes in one of them, run init in an empty folder and compare\./,
+      /note: --force rewrote \d+ file\(s\) from the templates of this version \(listed as updated; git diff shows each change; \.gitignore and \.dockerignore only gain the lines of the kit they lack\), and kept \d+ file\(s\) yours since the first init \(listed as kept\): to take what this version writes in one of them, run init in an empty folder and compare\. \.github\/workflows\/ci\.yml, [^\n]*: their jobs and includes are yours to edit, those of --ci-extras too\./,
     );
   });
 

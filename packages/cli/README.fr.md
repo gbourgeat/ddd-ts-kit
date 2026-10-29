@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ab25ea099c40bbe4 -->
+<!-- translation-of: README.md sha256:8a80ac9e5a91a128 -->
 
 # ddd-ts-kit
 
@@ -119,7 +119,8 @@ nouveau dans les copies du dossier *privacy* ; ce qu'un autre générateur avait
 réglages d'un *job*) ne l'est pas, et une note le dit. Une configuration illisible est remplacée.
 Les fichiers qu'une équipe possède une fois écrits restent tels quels, listés comme `kept` :
 `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` et les définitions du *pipeline*
-(`.github/workflows/`, `.gitlab-ci.yml`) ; pour reprendre ce qu'une nouvelle version y écrit,
+(`.github/workflows/`, `.gitlab-ci.yml`), dont les *jobs* et les *includes* sont à l'équipe, ceux
+de `--ci-extras` compris ; pour reprendre ce qu'une nouvelle version y écrit,
 lancez `init` dans un dossier vide et comparez. `.gitignore` et `.dockerignore` gardent les lignes
 de l'équipe et gagnent celles du kit qui leur manquent. Une dernière note dit ce que `--force` a
 réécrit et ce qu'il a gardé.

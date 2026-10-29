@@ -112,7 +112,8 @@ privacy folder; what another generator had added to a file of the platform (the 
 gateway, the settings of a job) is not, and a note says so. A config that cannot be
 read is replaced. The files a team owns once written stay as they are, listed as `kept`:
 `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` and the pipeline definitions
-(`.github/workflows/`, `.gitlab-ci.yml`); to take what a new version writes in one of them, run
+(`.github/workflows/`, `.gitlab-ci.yml`), whose jobs and includes are the team's to edit, those of
+`--ci-extras` too; to take what a new version writes in one of them, run
 `init` in an empty folder and compare. `.gitignore` and `.dockerignore` keep the lines of the team
 and gain the lines of the kit they lack. A last note says what `--force` rewrote and what it kept.
 
