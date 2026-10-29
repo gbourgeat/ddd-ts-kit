@@ -35,7 +35,8 @@ type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if cache.rate
  * as tRPC procedures under /trpc, for the typed client of the contract.{{/if}}
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
-  const app = Fastify();
+  // TRUST_PROXY: which proxies name the caller in X-Forwarded-For, for `request.ip`; none by default.
+  const app = Fastify({ trustProxy: trustedProxies(config.trustProxy) });
 
   // Before any route: a body Fastify refuses and a failed hook are answered as problems, not with their message.
   app.setErrorHandler(problemErrorHandler({ logger: served.logger }));
@@ -64,6 +65,15 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   const [address] = app.addresses();
 
   return { port: address?.port ?? 0, close: () => app.close() };
+}
+
+/** TRUST_PROXY as Fastify takes it: a number of hops as the test of each hop. */
+function trustedProxies(trustProxy: AppConfig['trustProxy']): boolean | string[] | ((address: string, hop: number) => boolean) {
+  if (typeof trustProxy === 'number') {
+    return (_address, hop) => hop < trustProxy;
+  }
+
+  return trustProxy === false ? false : [...trustProxy];
 }
 {{#if cache.rateLimit}}
 

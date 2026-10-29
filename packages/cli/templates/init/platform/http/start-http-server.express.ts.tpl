@@ -42,6 +42,8 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   const app = express();
 
   app.disable('x-powered-by');
+  // TRUST_PROXY: which proxies name the caller in X-Forwarded-For, for `request.ip`; none by default.
+  app.set('trust proxy', config.trustProxy);
 {{#if cache.rateLimit}}
   answerReadiness(app, served);
   limitEachCaller(app, served, config);

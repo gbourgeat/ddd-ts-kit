@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { {{#if rpc.orpc}}type IncomingMessage, {{/if}}{{#if rpc.trpc}}type RequestListener, {{/if}}Server{{#if rpc.orpc}}, type ServerResponse{{/if}} } from 'node:http';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ProblemExceptionFilter } from '@ddd-ts-kit/http/nest';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
@@ -34,7 +35,8 @@ type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if routes.nes
 /** The part of the incoming request and of its response the limiter and the probe need, whatever Nest runs on. */
 interface Incoming {
   readonly url?: string;
-  readonly socket: { readonly remoteAddress?: string };
+  /** The caller as Express reads it, through the proxies TRUST_PROXY trusts. */
+  readonly ip?: string;
 }
 
 interface Outgoing {
@@ -72,19 +74,25 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{/unless}}
 
 {{#if routes.nest}}
-  const app = await NestFactory.create(createAppModule(routes, served.boundary, served.controllers), {
+  const appModule = createAppModule(routes, served.boundary, served.controllers);
+
+  const app = await NestFactory.create<NestExpressApplication>(appModule, {
     logger: ['error', 'warn'],
     // Keeps the bytes of the body for a controller that declares `rawBody` (a signed webhook).
     rawBody: true,
   });
 {{/if}}
 {{#unless routes.nest}}
-  const app = await NestFactory.create(createAppModule(routes, served.boundary), {
+  const appModule = createAppModule(routes, served.boundary);
+
+  const app = await NestFactory.create<NestExpressApplication>(appModule, {
     logger: ['error', 'warn'],
     rawBody: true,
   });
 {{/unless}}
 
+  // TRUST_PROXY: which proxies name the caller in X-Forwarded-For, for `request.ip`; none by default.
+  app.set('trust proxy', config.trustProxy);
   // A body Nest refuses, a path no route serves and a failed middleware are answered as problems, not with a message.
   app.useGlobalFilters(new ProblemExceptionFilter(app.getHttpAdapter(), { logger: served.logger }));
 
@@ -127,7 +135,7 @@ function answeringReadiness(served: Served): Middleware {
 /** One sliding window per caller address, before authentication costs anything. */
 function limitingEachCaller(served: Served, config: AppConfig): Middleware {
   return (request, response, next) => {
-    void tooManyRequestsFor(served.rateLimiter, config.rateLimit, request.socket.remoteAddress).then((tooMany) => {
+    void tooManyRequestsFor(served.rateLimiter, config.rateLimit, request.ip).then((tooMany) => {
       if (tooMany === undefined) {
         next();
       } else {

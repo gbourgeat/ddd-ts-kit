@@ -1,3 +1,8 @@
+{{#if http.any}}
+{{#unless http.hono}}
+import { isIP } from 'node:net';
+{{/unless}}
+{{/if}}
 {{#if tenancy.any}}
 import { LOG_LEVELS, isTenantId } from '@ddd-ts-kit/kernel';
 {{/if}}
@@ -12,6 +17,13 @@ import { readFiles } from '{{alias.platform}}/config/read-files{{alias.ext}}';
 import { readTracing } from '{{alias.platform}}/config/read-tracing{{alias.ext}}';
 
 const environments = ['development', 'test', 'production'] as const;
+{{#if http.any}}
+{{#unless http.hono}}
+
+/** What Express and Fastify name the private ranges, besides the addresses and the subnets. */
+const PROXY_RANGES = ['loopback', 'linklocal', 'uniquelocal'];
+{{/unless}}
+{{/if}}
 
 /** Whether a process runs the scheduled jobs when `RUN_JOBS` does not say. `ddd-ts-kit generate worker` turns it off: the worker then runs them. */
 // ddd-ts-kit:run-jobs
@@ -71,6 +83,16 @@ export function loadConfig(variables: Variables): AppConfig {
     {{/if}}
     {{#if cache.rateLimit}}
     rateLimit: readRateLimit(env),
+    {{/if}}
+    {{#if http.any}}
+    {{#unless http.hono}}
+    trustProxy: readTrustProxy(env),
+    {{/unless}}
+    {{#if http.hono}}
+    {{#if cache.rateLimit}}
+    trustProxy: env.integer('TRUST_PROXY', { fallback: 0, min: 0, max: 32 }),
+    {{/if}}
+    {{/if}}
     {{/if}}
     {{#if errors.sentry}}
     errorReporting: readErrorReporting(env, environment),
@@ -143,6 +165,50 @@ function readRateLimit(env: Environment): AppConfig['rateLimit'] {
     windowMs: env.integer('RATE_LIMIT_WINDOW_MS', { fallback: 60000, min: 100, max: 3600000 }),
   };
 }
+{{/if}}
+{{#if http.any}}
+{{#unless http.hono}}
+
+/**
+ * `TRUST_PROXY=1`: the nearest proxy, a load balancer, is believed when it names the caller in
+ * `X-Forwarded-For`; `TRUST_PROXY=10.0.0.0/8,loopback`: the proxies at those addresses. Left out,
+ * none is: behind a proxy every caller would then have its address, and share one window of the
+ * rate limit.
+ */
+function readTrustProxy(env: Environment): AppConfig['trustProxy'] {
+  const written = env.optional('TRUST_PROXY');
+
+  if (written === undefined) {
+    return false;
+  }
+
+  if (/^\d+$/.test(written)) {
+    return env.integer('TRUST_PROXY', { fallback: 0, min: 0, max: 32 });
+  }
+
+  const proxies = written.split(',').map((proxy) => proxy.trim());
+
+  if (!proxies.every(isProxy)) {
+    env.problem('TRUST_PROXY must be a number of proxies, or their addresses, subnets or ranges, comma separated');
+  }
+
+  return proxies;
+}
+
+/** `10.0.0.1`, `10.0.0.0/8`, `fd00::/8`, or the name of a range. */
+function isProxy(proxy: string): boolean {
+  const [address = '', bits, ...rest] = proxy.split('/');
+  const version = isIP(address);
+
+  if (version === 0) {
+    return PROXY_RANGES.includes(proxy);
+  }
+
+  const widest = version === 4 ? 32 : 128;
+
+  return rest.length === 0 && (bits === undefined || (/^\d+$/.test(bits) && Number(bits) <= widest));
+}
+{{/unless}}
 {{/if}}
 {{#if errors.sentry}}
 

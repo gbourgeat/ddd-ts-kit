@@ -80,7 +80,8 @@ function answerReadiness(app: Hono, served: Served): void {
 /** One sliding window per caller address, before authentication costs anything. */
 function limitEachCaller(app: Hono, served: Served, config: AppConfig): void {
   app.use(async (context, next) => {
-    const address = getConnInfo(context).remote.address;
+    const forwardedFor = context.req.header('x-forwarded-for');
+    const address = callerAddress(getConnInfo(context).remote.address, forwardedFor, config.trustProxy);
     const tooMany = await tooManyRequestsFor(served.rateLimiter, config.rateLimit, address);
 
     if (tooMany === undefined) {
@@ -91,6 +92,21 @@ function limitEachCaller(app: Hono, served: Served, config: AppConfig): void {
 
     return new Response(tooMany.body, { status: tooMany.status, headers: tooMany.headers });
   });
+}
+
+/**
+ * The address of the socket, or, behind `hops` trusted proxies (TRUST_PROXY), the one the farthest
+ * of them saw: X-Forwarded-For is read from the right, each proxy having added the one before it.
+ */
+function callerAddress(socket: string | undefined, forwardedFor: string | undefined, hops: number): string | undefined {
+  const forwarded = (forwardedFor ?? '')
+    .split(',')
+    .map((address) => address.trim())
+    .filter((address) => address !== '');
+
+  const chain = [socket, ...forwarded.reverse()];
+
+  return chain[Math.min(hops, chain.length - 1)];
 }
 {{/if}}
 {{#if rpc.orpc}}
