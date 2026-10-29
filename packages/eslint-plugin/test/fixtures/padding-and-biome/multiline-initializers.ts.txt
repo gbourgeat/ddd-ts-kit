@@ -1,0 +1,19 @@
+export function run(): number {
+  const a = {
+    one: 1,
+    two: 2,
+  };
+  const b = [
+    1,
+    2,
+  ];
+  const c = `
+    text
+  `;
+  const d = a.one
+    + b[0]
+    + c.length;
+  let e = 0;
+  e += d;
+  return e;
+}

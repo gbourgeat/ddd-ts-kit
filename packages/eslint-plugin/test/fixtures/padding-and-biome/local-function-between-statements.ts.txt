@@ -1,0 +1,14 @@
+import { describe, expect, it } from 'vitest';
+
+describe('a local function', () => {
+  it('sits between two statements', () => {
+    const base = 1;
+    function add(value: number): number {
+      return base + value;
+    }
+    const result = add(2);
+    expect(result).toBe(3);
+    const double = (value: number): number => value * 2;
+    expect(double(result)).toBe(6);
+  });
+});

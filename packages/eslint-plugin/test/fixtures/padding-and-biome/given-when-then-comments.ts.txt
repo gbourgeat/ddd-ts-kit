@@ -1,0 +1,26 @@
+import { describe, expect, it } from 'vitest';
+
+describe('an order', () => {
+  describe('when it is paid', () => {
+    it('records the payment date', () => {
+      // given
+      const clock = { now: () => new Date('2026-01-01T00:00:00Z') };
+      const order = { paidAt: null as Date | null };
+
+      // when
+      order.paidAt = clock.now();
+
+      // then
+      expect(order.paidAt).toEqual(new Date('2026-01-01T00:00:00Z'));
+    });
+
+    it('keeps comments glued to the statement they describe', () => {
+      // given
+      const lines = [1, 2, 3];
+      // when
+      const total = lines.reduce((sum, line) => sum + line, 0);
+      // then
+      expect(total).toBe(6);
+    });
+  });
+});

@@ -1,0 +1,16 @@
+export function outer(value: number): number {
+  function inner(other: number): number {
+    function innermost(last: number): number {
+      return last + 1;
+    }
+    return innermost(other) + 1;
+  }
+  return inner(value);
+}
+
+export function sibling(value: number): number {
+  const helper = (other: number): number => {
+    return other + 1;
+  };
+  return helper(value);
+}

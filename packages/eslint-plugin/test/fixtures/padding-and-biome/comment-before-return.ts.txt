@@ -1,0 +1,18 @@
+export function total(values: number[]): number {
+  const sum = values.reduce((acc, value) => acc + value, 0);
+  // the total is never negative
+  return Math.max(sum, 0);
+}
+
+export function other(values: number[]): number {
+  const sum = values.length;
+
+  // the comment is already padded
+  return sum;
+}
+
+export function third(values: number[]): number {
+  console.log(values);
+  /* block comment */
+  return values.length;
+}

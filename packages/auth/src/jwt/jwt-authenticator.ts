@@ -9,15 +9,22 @@ import { createRemoteJWKSet, errors, jwtVerify, type JWTPayload, type JWTVerifyG
 import type { SessionAuthenticator } from '../authentication/session-authenticator';
 import { InvalidCredentialError } from '../errors/invalid-credential-error';
 import { actorOfClaims } from './actor-of-claims';
+import { DEFAULT_JWT_ALGORITHMS } from './default-jwt-algorithms';
 import { sessionOfClaims } from './session-of-claims';
 
 interface CommonOptions {
   readonly issuer: string;
   readonly audience: string | readonly string[];
-  /** Default: the asymmetric families RS256, PS256, ES256 and EdDSA. A shared secret needs HS256 said. */
+  /** Default `DEFAULT_JWT_ALGORITHMS`: RS256, PS256, ES256 and EdDSA. A shared secret needs HS256 said. */
   readonly algorithms?: readonly string[];
   /** Seconds of clock difference tolerated on `exp` and `nbf`. Default 0. */
   readonly clockTolerance?: number;
+  /**
+   * Whether a token must carry `exp`. Default `true`: a token without it is refused (`NO_EXPIRY`).
+   * `false` is a conscious choice, for an issuer whose tokens never expire: a stolen one then
+   * works until its key is revoked.
+   */
+  readonly requireExpiry?: boolean;
   /** The claim holding the tenant of the default mapping. Default `tenant_id`; a list names the tenants of an actor of several. */
   readonly tenantClaim?: string;
   /** Replaces the default mapping. Must not keep the token: an actor is plain, loggable data. */
@@ -42,8 +49,9 @@ export type JwtAuthenticatorOptions = CommonOptions &
 type SessionReader = (token: string) => Promise<Session>;
 
 /**
- * Verifies a signed JWT (signature, issuer, audience, expiry, algorithm allow-list) and maps
- * its claims to an actor and to its session. An unsigned token (`alg: none`) is always refused.
+ * Verifies a signed JWT (signature, issuer, audience, expiry, algorithm allow-list) and maps its
+ * claims to an actor and to its session. A token without `exp` is refused unless `requireExpiry`
+ * is `false`; an unsigned token (`alg: none`) is always refused.
  *
  * The session reads registered claims: id from `sid`, else `jti`, else the subject and issue
  * instant; `issuedAt` and `expiresAt` from `iat` and `exp`; the method and strength from `amr`
@@ -83,14 +91,12 @@ function sessionReaderOf(options: JwtAuthenticatorOptions): SessionReader {
   };
 }
 
-const DEFAULT_ALGORITHMS = ['RS256', 'PS256', 'ES256', 'EdDSA'];
-
 async function verifiedClaims(
   token: string,
   key: KeyInput | JWTVerifyGetKey,
   options: JwtAuthenticatorOptions,
 ): Promise<JWTPayload> {
-  const { issuer, audience, algorithms = DEFAULT_ALGORITHMS, clockTolerance = 0 } = options;
+  const { issuer, audience, algorithms = DEFAULT_JWT_ALGORITHMS, clockTolerance = 0, requireExpiry = true } = options;
 
   try {
     const { payload } = await jwtVerify(token, key, {
@@ -98,6 +104,7 @@ async function verifiedClaims(
       audience: [...[audience].flat()],
       algorithms: [...algorithms],
       clockTolerance,
+      requiredClaims: requireExpiry ? ['exp'] : [],
     });
 
     return payload;
@@ -125,6 +132,10 @@ const REASONS: Readonly<Record<string, string>> = {
 function refusalOf(error: unknown): unknown {
   if (!(error instanceof errors.JOSEError)) {
     return error;
+  }
+
+  if (error instanceof errors.JWTClaimValidationFailed && error.claim === 'exp' && error.reason === 'missing') {
+    return new InvalidCredentialError('NO_EXPIRY');
   }
 
   const reason = REASONS[error.code];

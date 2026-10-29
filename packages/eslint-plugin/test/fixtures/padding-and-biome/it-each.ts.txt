@@ -1,0 +1,25 @@
+import { describe, expect, it } from 'vitest';
+
+const isPositive = (value: number): boolean => value > 0;
+
+describe('a quantity', () => {
+  it.each([
+    ['one', 1, true],
+    ['zero', 0, false],
+    ['minus one', -1, false],
+  ])('is positive for %s: %s', (_, value, expected) => {
+    expect(isPositive(value)).toBe(expected);
+  });
+
+  it.each([
+    {
+      name: 'a very long name that makes the table wrap onto several lines',
+      value: 100000000000000000,
+      expected: true,
+    },
+    { name: 'zero', value: 0, expected: false },
+  ])('is positive for $name', ({ value, expected }) => {
+    const actual = isPositive(value);
+    expect(actual).toBe(expected);
+  });
+});

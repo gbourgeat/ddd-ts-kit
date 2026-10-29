@@ -191,7 +191,7 @@ export const authorizer = new RoleBasedAuthorizer({
   inherits: { accountant: ['clerk'] }, // an accountant has all a clerk has
   tenantOf: tenantOfContext, // turns the tenant check on
   crossTenantRoles: ['admin'], // may act in every tenant
-  systemRole: 'system', // the role of systemActor(...), none by default
+  systemRole: 'system', // the role of systemActor(...) and of no other actor, none by default
 });
 ```
 
