@@ -31,14 +31,14 @@ export function worldVars(scope: Scope, name: Name, fakes: readonly ContextFake[
     fakeImports: fakes.map((fake) => imported(fake.name, fake.file)).join('\n'),
     members: fakes.map((fake) => `  readonly ${fake.key}: ${fake.name};`).join('\n'),
     built: laidOut(
-      '  const fakes = { ',
+      '  return { ',
       fakes.map((fake) => `${fake.key}: new ${fake.name}()`),
       ' };',
     ),
     overrides: laidOut(
-      '  const built = [',
+      '    fakes: overridden(settings.fakes, [',
       fakes.map((fake) => `fake(${fake.port.name}, fakes.${fake.key})`),
-      '];',
+      ']),',
     ),
     replacing: `// ${WORLD_COMMENTS.replacing()}`,
     returnedBuses: laidOut('  return { ', ['...buses', ...returnedFakes(fakes)], ' };'),

@@ -64,8 +64,11 @@ describe('generate test-world, in the declared style', () => {
     expect(world).toContain('  readonly fakes?: readonly Override[];');
     expect(world).not.toContain('tenants');
 
+    expect(world).toContain('  const fakes = buildFakes();\n\n  await given?.(fakes);');
+
+    // Built apart, so that the world stays a list of steps however many fakes the context has.
     expect(world).toContain(
-      '  const fakes = { invoiceRepository: new FakeInvoiceRepository(), paymentGateway: new FakePaymentGateway() };\n\n  await given?.(fakes);',
+      'function buildFakes(): BillingWorldFakes {\n  return { invoiceRepository: new FakeInvoiceRepository(), paymentGateway: new FakePaymentGateway() };\n}',
     );
 
     expect(world).toContain(
@@ -74,10 +77,12 @@ describe('generate test-world, in the declared style', () => {
 
     // A fake the spec hands replaces the one the world builds for the same port: one override per port.
     expect(world).toContain(
-      '  const handed = settings.fakes ?? [];\n  const replaced = new Set(handed.map(([port]) => port));\n  const built = [fake(InvoiceRepository, fakes.invoiceRepository), fake(PaymentGateway, fakes.paymentGateway)];',
+      '    fakes: overridden(settings.fakes, [\n      fake(InvoiceRepository, fakes.invoiceRepository),\n      fake(PaymentGateway, fakes.paymentGateway),\n    ]),',
     );
 
-    expect(world).toContain('    fakes: [...built.filter(([port]) => !replaced.has(port)), ...handed],');
+    expect(world).toContain(
+      '// The fakes a spec hands replace those the world builds for the same port.\nfunction overridden(handed: readonly Override[] | undefined, built: readonly Override[]): Override[] {',
+    );
 
     expect(world).toContain('  return { application, ...fakes };');
     expect(generated.todos).toEqual([]);

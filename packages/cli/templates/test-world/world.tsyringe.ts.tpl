@@ -35,14 +35,9 @@ export async function {{world.article}}{{world.pascal}}World({ modules = [nobody
 
 {{/if}}
 {{#if world.hasFakes}}
-{{world.built}}
+  const fakes = buildFakes();
 
   await given?.(fakes);
-
-  {{world.replacing}}
-  const handed = settings.fakes ?? [];
-  const replaced = new Set(handed.map(([port]) => port));
-{{world.overrides}}
 
 {{/if}}
   const application = createTestApplication({
@@ -50,7 +45,7 @@ export async function {{world.article}}{{world.pascal}}World({ modules = [nobody
     eventBusFailures: 'as-thrown',
     modules: [platformTestModule, {{world.contextModule}}, ...modules],
 {{#if world.hasFakes}}
-    fakes: [...built.filter(([port]) => !replaced.has(port)), ...handed],
+{{world.overrides}}
 {{/if}}
   });
 
@@ -61,3 +56,18 @@ export async function {{world.article}}{{world.pascal}}World({ modules = [nobody
   return { application };
 {{/unless}}
 }
+{{#if world.hasFakes}}
+
+{{world.replacing}}
+function overridden(handed: readonly Override[] | undefined, built: readonly Override[]): Override[] {
+  const replaced = new Set((handed ?? []).map(([port]) => port));
+
+  return [...built.filter(([port]) => !replaced.has(port)), ...(handed ?? [])];
+}
+{{/if}}
+{{#if world.hasFakes}}
+
+function buildFakes(): {{world.pascal}}WorldFakes {
+{{world.built}}
+}
+{{/if}}
