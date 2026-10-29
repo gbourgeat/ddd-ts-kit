@@ -97,12 +97,13 @@ type WithoutWorld =
 
 /**
  * The arrangement without the world, a comment and a hint saying why; `--force` only on a world
- * the generator could read.
+ * the generator could read; nothing about a world that does not exist on the buses, where it
+ * would change one line.
  */
 function withoutWorld(scope: Scope, spec: RenderContext, why: WithoutWorld): WorldArrangement {
   const context = scope.context.kebab;
   const command = `npx ddd-ts-kit generate test-world ${context}`;
-  const [comment, hint] = said(context, command, why);
+  const [comment, hint] = why.kind === 'absent' && !isContainer(scope) ? ['', undefined] : said(context, command, why);
 
   const vars = {
     through: false,
@@ -111,7 +112,7 @@ function withoutWorld(scope: Scope, spec: RenderContext, why: WithoutWorld): Wor
     options: '',
     async: spec['async'] ?? '',
     await: spec['await'] ?? '',
-    comment: `// ${comment}`,
+    comment: comment === '' ? '' : `// ${comment}`,
   };
 
   return { vars, hint };

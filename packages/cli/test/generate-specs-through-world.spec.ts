@@ -196,13 +196,16 @@ describe('the specs of billing, wired by hand, after its world', () => {
   it('builds the handler on the buses and the fakes of the world, guarded in the spec', () => {
     const { root, run } = billingProject('specs-world-buses', '--di', 'manual');
 
-    run(...CANCEL);
+    // The world changes a line there: no hint, no comment, until a world exists.
+    expect(hint(run(...CANCEL).notes)).toEqual([]);
     run('generate', 'test-world', 'billing');
     run(...ISSUE);
     run(...SEARCH);
     run(...REMIND);
 
     const before = read(root, `${UNIT}/cancel-invoice.handler.spec.ts`);
+
+    expect(before).not.toContain('test-world');
     const command = read(root, `${UNIT}/issue-invoice.handler.spec.ts`);
 
     expect(before).toContain("createTestBuses({ idPrefix: 'invoice' })");
