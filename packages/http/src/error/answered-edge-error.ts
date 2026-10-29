@@ -25,12 +25,8 @@ export interface EdgeError {
   readonly refusal?: EdgeRefusal;
 }
 
-/** What `express.json()` (body-parser) and the parsers of Fastify name a body that is not JSON. */
-const MALFORMED_KINDS = new Set([
-  'entity.parse.failed',
-  'FST_ERR_CTP_INVALID_JSON_BODY',
-  'FST_ERR_CTP_EMPTY_JSON_BODY',
-]);
+/** What `express.json()` (body-parser) and the parser of Fastify name a body that is not JSON; an empty body is not one. */
+const MALFORMED_KINDS = new Set(['entity.parse.failed', 'FST_ERR_CTP_INVALID_JSON_BODY']);
 
 const KIND = /^[A-Za-z0-9_.]{1,64}$/;
 

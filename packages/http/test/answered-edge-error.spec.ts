@@ -126,3 +126,12 @@ describe('the headers of a refusal at the edge', () => {
     expect(answered(raised({ headers: { 'Retry-After': '30' } })).headers).not.toHaveProperty('retry-after');
   });
 });
+
+describe('an empty body in JSON that Fastify refuses out of the routes of the kit', () => {
+  it('is a bad request, not a body that is not JSON: an empty body is absent', () => {
+    const error = raised({ code: 'FST_ERR_CTP_EMPTY_JSON_BODY', statusCode: 400 });
+
+    expect(answered(error).problem).toMatchObject({ status: 400, code: 'BAD_REQUEST' });
+    expect(answered(error).problem).not.toHaveProperty('detail');
+  });
+});
