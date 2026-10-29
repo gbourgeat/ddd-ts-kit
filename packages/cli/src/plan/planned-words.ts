@@ -108,7 +108,7 @@ function rowTerms(rows: readonly Slice[]): (row: Slice) => ReadonlyMap<string, r
       seen.add(next.id);
       queue.push(...next.dependsOn.flatMap((id) => byId.get(id) ?? []));
 
-      for (const read of own.get(next) ?? termsOfCommands(next)) {
+      for (const read of own.get(next) ?? []) {
         terms.set(read.context, [...(terms.get(read.context) ?? []), ...read.terms]);
       }
     }
