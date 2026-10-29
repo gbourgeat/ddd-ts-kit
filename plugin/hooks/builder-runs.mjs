@@ -10,7 +10,6 @@ import { fileURLToPath } from 'node:url';
 const AGENT_FILE = '.ddd-ts-kit/agent.json';
 const REPORT_FILE = '.ddd-ts-kit/report.md';
 const VERIFICATION_FILE = '.ddd-ts-kit/verification.json';
-const DEFAULT_LIMIT = 150;
 
 // Calibration. The guard sees the shell and the writes (Bash, Write, Edit, MultiEdit), never the
 // reads (Read, Grep, Glob): its count is below the turns taken. Two real context-builder runs,
@@ -164,12 +163,12 @@ function thresholdsOf(limit) {
   };
 }
 
-// The turn limit of the agent, from its own definition next to the hooks: `maxTurns` of its front matter.
-function limitOf() {
+// The turn limit of the agent, from its own definition next to the hooks: `maxTurns` of its front matter,
+// which the plugin ships with it (its tests read it too).
+export function limitOf() {
   const definition = join(dirname(fileURLToPath(import.meta.url)), '..', 'agents', 'context-builder.md');
-  const front = /^---\n([\s\S]*?)\n---/.exec(readText(definition) ?? '')?.[1] ?? '';
-  const limit = Number(/^maxTurns:\s*(\d+)\s*$/m.exec(front)?.[1]);
-  return Number.isInteger(limit) && limit > 0 ? limit : DEFAULT_LIMIT;
+  const [, front] = /^---\n([\s\S]*?)\n---/.exec(readFileSync(definition, 'utf8'));
+  return Number(/^maxTurns:\s*(\d+)\s*$/m.exec(front)[1]);
 }
 
 // What the conductor reads of the agent: its id, its run, when it was last seen, its counted
