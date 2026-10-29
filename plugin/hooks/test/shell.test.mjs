@@ -52,15 +52,14 @@ test('the shell is read as it splits a command line: quotes, comments, substitut
   }
 });
 
-test('commands nested five deep are read', () => {
+test('commands nested five deep are read, and a deeper one is refused rather than let through unread', () => {
   const root = project();
   const agent = worker(root);
   assert.equal(decision(run('pre-bash', bash(root, `${'eval '.repeat(5)}rm src/main.ts`, agent))), 'deny');
-  // Deeper than the reader follows: the guard still answers without failing (what it decides there is not pinned).
-  assert.equal(run('pre-bash', bash(root, `${'eval '.repeat(6)}rm src/main.ts`, agent)).status, 0);
+  const deeper = run('pre-bash', bash(root, `${'eval '.repeat(6)}rm src/main.ts`, agent));
+  assert.equal(decision(deeper), 'deny');
+  assert.match(reason(deeper), /nested deeper than the guard reads/);
 });
-
-test.todo('a command nested deeper than the reader follows is refused');
 
 // A `cd` that is not certain leaves the place to the shell: the reader follows it only after `&&`,
 // at the top level, into a directory that exists. A relative write after it names nothing it can

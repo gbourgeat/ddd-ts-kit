@@ -528,6 +528,7 @@ function workerCommandReason(project, input, { context, command, commands }) {
     return pending.reason;
   }
   const refusal =
+    deeplyNestedReason(commands) ??
     sharedGeneratorReason(project, context, commands) ??
     dependencyChangeReason(commands) ??
     workingMigrationReason(command) ??
@@ -538,6 +539,14 @@ function workerCommandReason(project, input, { context, command, commands }) {
     noteBeforeInlineCode(project, input, commands);
   }
   return refusal;
+}
+
+// A command nested in more shells or evals than the reader follows is let through unread today;
+// for a worker it is refused instead, since the guard cannot see what it writes.
+function deeplyNestedReason(commands) {
+  return commands.some((command) => command.truncated)
+    ? `A command nested deeper than the guard reads is refused to a worker: write it as separate, flatter commands. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
 }
 
 // A command whose program word holds a variable or a substitution runs a name only the shell

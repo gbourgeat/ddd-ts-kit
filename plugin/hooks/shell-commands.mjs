@@ -60,7 +60,10 @@ const WRAPPERS = {
 /** Every simple command of `text`, the ones it nests included, each with the directory it runs in. */
 export function simpleCommands(text, directory, depth = 0) {
   if (depth > DEPTH) {
-    return [];
+    // Deeper than the reader follows: a marker so the guard refuses it rather than read nothing.
+    return [
+      { words: [], redirects: [], heredoc: false, piped: false, directory, depth, ender: undefined, truncated: true },
+    ];
   }
   const { commands, substitutions } = parseShell(text);
   const found = substitutions.flatMap((inner) => simpleCommands(inner, directory, depth + 1));
