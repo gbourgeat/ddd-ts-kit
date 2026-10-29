@@ -17,7 +17,7 @@ export const cli = join(here, '..', '..', 'packages', 'cli', 'dist', 'bin.js');
 export const cliModule = pathToFileURL(cli).href;
 
 // Everything these tests write lives under one directory, removed when they end, passed or failed:
-// the projects, and the temporary directory the guard is given for its commit reminder markers.
+// the projects, and the temporary directory the guard is given (a worker's free place for its output).
 export const workspace = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-guard-'));
 export const guardTemp = join(workspace, 'tmp');
 
@@ -178,9 +178,10 @@ export function edit(file, { from, to }, extra = {}) {
   };
 }
 
+// A project committed in a repository of its own, ignoring what init's .gitignore ignores of the kit.
 export function committed(config = {}) {
   const root = project(config);
-  writeFileSync(join(root, '.gitignore'), 'node_modules\n');
+  writeFileSync(join(root, '.gitignore'), 'node_modules\n.ddd-ts-kit/\n');
   git(root, 'init', '--quiet');
   git(root, 'add', '--all');
   git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');

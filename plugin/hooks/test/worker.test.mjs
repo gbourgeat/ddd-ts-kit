@@ -583,6 +583,18 @@ test('inline code of a worker runs, and what it changed outside the scope stops 
   assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent)).output, undefined);
 });
 
+test('the files of the kit in a worktree that git does not ignore are never charged to the inline code of a worker', () => {
+  const root = project();
+  writeFileSync(join(root, '.gitignore'), 'node_modules\n');
+  git(root, 'init', '--quiet');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  const agent = { ...worker(root, 'ordering'), session_id: 'kit-files', agent_id: 'builder-1' };
+  assert.equal(run('pre-bash', bash(root, "python3 - <<'EOF'\nprint(1)\nEOF", agent)).output, undefined);
+  put(root, '.ddd-ts-kit/notes.md', 'a note of the kit\n');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
 test('what regenerate rewrites outside the scope, run by verify-slice inside inline code, does not stop the worker', () => {
   const root = committed();
   const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-2' };

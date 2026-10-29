@@ -14,7 +14,7 @@ import {
   utimesSync,
   writeFileSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { test } from 'node:test';
 import { limitOf } from '../builder-runs.mjs';
 import {
@@ -383,6 +383,21 @@ test('an agent of the project named context-builder without the prefix of the pl
   run('subagent-start', { cwd: root, ...agent });
   assert.equal(existsSync(join(root, runState(agent))), false);
   assert.equal(existsSync(join(root, '.ddd-ts-kit', 'agent.json')), false);
+});
+
+test('a new run of a builder drops the note its last run left before inline code, and keeps what that code changed', () => {
+  const root = committed();
+  worker(root);
+  const agent = builder('resumed');
+  run('pre-bash', bash(root, 'git status', agent));
+  const [note, outside] = ['before-inline', 'outside'].map((kind) =>
+    join(root, `.ddd-ts-kit/guard/${kind}-${stateKey(agent)}.json`),
+  );
+  put(root, relative(root, note), '{}');
+  put(root, relative(root, outside), '{}');
+  run('subagent-start', { cwd: root, ...agent });
+  assert.equal(existsSync(note), false);
+  assert.equal(existsSync(outside), true);
 });
 
 test('malformed input to the runs of a builder never blocks', () => {

@@ -1,10 +1,10 @@
 // The end of a turn: refused while architecture errors remain, then the commit reminder.
 
 import assert from 'node:assert/strict';
-import { mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { cliAnswering, committed, git, project, put, run, SHORT_TIMES } from './support.mjs';
+import { cliAnswering, committed, directory, git, guardTemp, project, put, run, SHORT_TIMES } from './support.mjs';
 
 test('stop is blocked while errors remain, and never twice in a row', () => {
   const root = project();
@@ -73,14 +73,16 @@ test('the reminder comes back after a commit when the tree grows again', () => {
 test('changed lines count against their own limit, deletions and edits included', () => {
   const root = committed({ commit: { maxFiles: 50, maxLines: 5 } });
   put(root, 'docs/old.md', 'one\ntwo\n');
-  git(root, 'add', 'docs/old.md');
+  put(root, 'docs/kept.md', 'one\n');
+  git(root, 'add', 'docs');
   git(root, 'commit', '--quiet', '--no-verify', '--message', 'docs: an old note');
   writeFileSync(join(root, 'README.md'), 'one\ntwo\nthree\nfour\nfive\nsix\n');
   rmSync(join(root, 'docs/old.md'));
+  writeFileSync(join(root, 'docs/kept.md'), 'one\ntwo\n');
   const { output } = run('stop', { cwd: root, session_id: `lines-${root}` });
-  assert.match(output.systemMessage, /2 changed files and \d+ changed lines/);
+  assert.match(output.systemMessage, /3 changed files and \d+ changed lines/);
   assert.match(output.systemMessage, /project root \(1 files\)/);
-  assert.match(output.systemMessage, /docs \(1 files\)/);
+  assert.match(output.systemMessage, /docs \(2 files\)/);
 });
 
 test('a new file above a megabyte, or one that cannot be opened, counts as a file without lines', () => {
@@ -217,4 +219,45 @@ test('a check that times out lets the stop through and says how to run it', () =
   const stopped = run('stop', { cwd: root, stop_hook_active: false }, SHORT_TIMES).output;
   assert.equal(stopped.decision, undefined);
   assert.equal(stopped.systemMessage, 'architecture check timed out after 1 s: run `npx ddd-ts-kit check`');
+});
+
+const WEEK_AGO = new Date(Date.now() - 8 * 24 * 3600 * 1000);
+
+test('the markers of the guard live in the project, and those a week old go at session start', () => {
+  const root = committed({ commit: { maxFiles: 1, maxLines: 1000 } });
+  put(root, 'docs/a.md', 'a\n');
+  put(root, 'docs/b.md', 'b\n');
+  assert.match(run('stop', { cwd: root, session_id: `markers-${root}` }).output.systemMessage, /uncommitted/);
+  const markers = join(root, '.ddd-ts-kit/guard/markers');
+  const [left] = readdirSync(markers);
+  assert.match(left, /^commit-reminder-[0-9a-f]{24}$/);
+  assert.deepEqual(
+    readdirSync(guardTemp).filter((name) => /^ddd-ts-kit-(?!before-write-)/.test(name)),
+    [],
+  );
+  const old = ['markers/stop-0123', 'turns-0123456789abcdef.json', 'outside-0123456789abcdef.json'];
+  for (const file of old) {
+    put(root, join('.ddd-ts-kit/guard', file), '{}');
+    utimesSync(join(root, '.ddd-ts-kit/guard', file), WEEK_AGO, WEEK_AGO);
+  }
+  put(root, '.ddd-ts-kit/guard/stories.json', '{}');
+  utimesSync(join(root, '.ddd-ts-kit/guard/stories.json'), WEEK_AGO, WEEK_AGO);
+  run('session', { cwd: root, session_id: `markers-${root}` });
+  assert.deepEqual(readdirSync(markers), [left]);
+  assert.deepEqual(readdirSync(join(root, '.ddd-ts-kit/guard')).sort(), ['markers', 'stories.json']);
+});
+
+test('a folder of markers a repository links elsewhere is neither written nor pruned', () => {
+  const root = committed({ commit: { maxFiles: 1, maxLines: 1000 } });
+  const elsewhere = directory('elsewhere');
+  put(elsewhere, 'commit-reminder-0123', '');
+  utimesSync(join(elsewhere, 'commit-reminder-0123'), WEEK_AGO, WEEK_AGO);
+  mkdirSync(join(root, '.ddd-ts-kit/guard'), { recursive: true });
+  symlinkSync(elsewhere, join(root, '.ddd-ts-kit/guard/markers'));
+  put(root, 'docs/a.md', 'a\n');
+  put(root, 'docs/b.md', 'b\n');
+  const session = { cwd: root, session_id: `linked-${root}` };
+  assert.equal(run('stop', session).output, undefined);
+  run('session', session);
+  assert.deepEqual(readdirSync(elsewhere), ['commit-reminder-0123']);
 });

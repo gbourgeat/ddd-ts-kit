@@ -20,7 +20,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { writeKitFile } from './kit-files.mjs';
+import { linkedFolder, writeKitFile } from './kit-files.mjs';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 // The most of the config the guard reads: a larger one is not read, and the guard judges nothing there.
@@ -242,6 +242,11 @@ const PRISMA_CONTEXT_SCHEMA = /^prisma\/schema\/([a-z][a-z0-9-]*)\.prisma$/;
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
 // Where the guard keeps the state of a worker between two of its calls: the kit's ignored folder.
 const GUARD_STATE = '.ddd-ts-kit/guard';
+// The markers of what was said or refused once, in the guard's folder of the project, kept a week.
+const GUARD_MARKERS = `${GUARD_STATE}/markers`;
+const MARKER_TTL = 7 * 24 * 3600 * 1000;
+// The state of the runs of a builder, by session and agent: kept a week too.
+const BUILDER_STATE = /^(?:turns|before-inline|outside)-[0-9a-f]{16}\.json$/;
 const FREE_OUTPUT = 'Output to /dev/null or to the system temp directory stays free.';
 const EDIT_WITH_TOOLS = `Inside your scope, the editor tools and the shell may both write; outside it, nothing may. ${FREE_OUTPUT}`;
 // The clean install of each package manager: what installs the lockfile as it is.
@@ -412,6 +417,9 @@ function session(input) {
   briefingEnds = Date.now() + BRIEFING_BUDGET * TIME_SCALE;
   const directory = input.cwd ?? process.cwd();
   const project = findProject(directory);
+  if (project) {
+    pruneGuardState(project.root);
+  }
   const lines = project ? projectBriefing(project, input) : planPointer(directory);
   if (lines.length === 0) {
     return;
@@ -743,11 +751,20 @@ function builderPlaces(input, project) {
   return { state: stateFile('turns', home, input), worker };
 }
 
+// A new run of a builder: the note its last run left before inline code is dropped, since what
+// changed outside its scope since then is the conductor's as much as its own; what that code changed
+// and was not put back stays recorded.
 async function subagentStart(input) {
   const places = isBuilder(input) ? builderPlaces(input, undefined) : undefined;
-  if (places) {
-    (await import('./builder-runs.mjs')).startRun(input, places);
+  if (!places) {
+    return;
   }
+  const worker = readJson(places.state)?.worker;
+  if (typeof worker === 'string') {
+    rmSync(stateFile('before-inline', { root: worker }, input), { force: true });
+    pruneGuardState(worker);
+  }
+  (await import('./builder-runs.mjs')).startRun(input, places);
 }
 
 async function subagentStop(input) {
@@ -810,7 +827,7 @@ function designReminder(project, input) {
     )
     .digest('hex')
     .slice(0, 24);
-  if (alreadyRemembered(join(tmpdir(), `ddd-ts-kit-design-${key}`))) {
+  if (alreadyRemembered(markerOf(project, 'design', key))) {
     return undefined;
   }
   const named = design
@@ -836,7 +853,7 @@ function unfinishedStoryReason(project, input) {
     .update(`${project.root}\n${sessionOf(input)}\n${phases.next}`)
     .digest('hex')
     .slice(0, 24);
-  if (typeof input.stop_hook_active !== 'boolean' && alreadyRemembered(join(tmpdir(), `ddd-ts-kit-story-${key}`))) {
+  if (typeof input.stop_hook_active !== 'boolean' && alreadyRemembered(markerOf(project, 'story', key))) {
     return undefined;
   }
   return `ddd-ts-kit: story ${story} is not finished. Next: ${quoted(phases.next)} Go on without asking: a question now is a provisional decision, recorded in docs/architecture/stories/${story}.md. If something truly blocks the story, write its \`## Report\` there with what blocks it and every decision taken so far, then stop.`;
@@ -861,7 +878,7 @@ function stopAlreadyRefused(project, input, errors) {
     .digest('hex')
     .slice(0, 24);
 
-  return alreadyRemembered(join(tmpdir(), `ddd-ts-kit-stop-${key}`));
+  return alreadyRemembered(markerOf(project, 'stop', key));
 }
 
 function blockStop(errors) {
@@ -1895,7 +1912,7 @@ function crossingMarker(project, input, subject) {
     .update(`${project.root}\n${sessionOf(input)}\n${subject}`)
     .digest('hex')
     .slice(0, 24);
-  return join(tmpdir(), `ddd-ts-kit-crossing-${key}`);
+  return markerOf(project, 'crossing', key);
 }
 
 // What `stories --json` says, read again once its copy in the guard's folder is a minute old,
@@ -3259,25 +3276,57 @@ function reminderMarker(project, input) {
     .update(`${project.root}\n${sessionOf(input)}`)
     .digest('hex')
     .slice(0, 24);
-  return join(tmpdir(), `ddd-ts-kit-commit-reminder-${key}`);
+  return markerOf(project, 'commit-reminder', key);
 }
 
-// Leaves the marker and says whether it was there, in one exclusive creation: the temp dir is shared,
-// so the marker is private and never follows nor rewrites a file put under its name.
-function alreadyRemembered(marker) {
-  try {
-    writeFileSync(marker, '', { flag: 'wx', mode: 0o600 });
+function markerOf(project, kind, key) {
+  return join(project.root, GUARD_MARKERS, `${kind}-${key}`);
+}
 
+// Leaves the marker and says whether it was there, in one exclusive creation that never follows nor
+// rewrites a file put under its name, in a folder that is no link. A marker that cannot be left counts
+// as there: what it would say or refuse again is not, and the guard fails open.
+function alreadyRemembered(marker) {
+  if (linkedFolder(marker)) {
+    return true;
+  }
+  try {
+    mkdirSync(dirname(marker), { recursive: true });
+    writeFileSync(marker, '', { flag: 'wx', mode: 0o600 });
     return false;
-  } catch (error) {
-    // Without a marker the reminder is only said more often.
-    return error?.code === 'EEXIST';
+  } catch {
+    return true;
   }
 }
 
 function forget(marker) {
-  rmSync(marker, { force: true });
+  if (!linkedFolder(marker)) {
+    rmSync(marker, { force: true });
+  }
   return undefined;
+}
+
+// The markers and the runs of builders a week old, left by sessions and agents that ended, never
+// through a folder that is a link.
+function pruneGuardState(root) {
+  const state = join(root, GUARD_STATE);
+  const markers = join(root, GUARD_MARKERS);
+  const files = [
+    ...filesIn(state).filter((file) => BUILDER_STATE.test(relative(state, file))),
+    ...(linkedFolder(join(markers, 'any')) ? [] : filesIn(markers)),
+  ];
+  const before = Date.now() - MARKER_TTL;
+  for (const file of files.filter((path) => statSync(path, { throwIfNoEntry: false })?.mtimeMs < before)) {
+    rmSync(file, { force: true });
+  }
+}
+
+function filesIn(folder) {
+  try {
+    return readdirSync(folder).map((name) => join(folder, name));
+  } catch {
+    return [];
+  }
 }
 
 function emit(output) {
