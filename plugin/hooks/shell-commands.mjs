@@ -284,15 +284,27 @@ function envSplit(words) {
 
 const RUNNERS = new Set(['npx', 'pnpx', 'bunx']);
 
-// The command a package runner runs: after its options and the leading `--`, the rest of the line.
-// `npx <cmd>` and `bunx <cmd>` run their first operand; `npm|pnpm|yarn exec -- <cmd>` run theirs.
+// The command a package runner runs: `npx <cmd>`, `bunx <cmd>`, `npm|pnpm|yarn exec|dlx <cmd>`, after their
+// options and a leading `--`; for `npx` and `npm exec`, the string of `-c`/`--call` is the command itself.
 function runnerCommand(words) {
   const name = commandName(words);
-  if (RUNNERS.has(name)) {
-    return innerCommand(words.slice(1), ['-p', '--package', '-c', '--call']);
+  const sub = ['npm', 'pnpm', 'yarn'].includes(name) && ['exec', 'dlx'].includes(words[1]);
+  if (!RUNNERS.has(name) && !sub) {
+    return undefined;
   }
-  if (['npm', 'pnpm', 'yarn'].includes(name) && words[1] === 'exec') {
-    return innerCommand(words.slice(2), ['-c', '--call', '--package']);
+  const args = words.slice(sub ? 2 : 1);
+  const call = name === 'npx' || name === 'npm' ? leadingCall(args) : undefined;
+  return call === undefined ? innerCommand(args, ['-p', '--package']) : [call];
+}
+
+// The string of `-c`/`--call` among the runner's own options, before the command it runs: a `-c`
+// after the command belongs to that command (`npx eslint -c eslint.config.js`).
+function leadingCall(args) {
+  for (let index = 0; index < args.length && args[index].startsWith('-') && args[index] !== '--'; index += 1) {
+    if (args[index] === '-c' || args[index] === '--call') {
+      return args[index + 1];
+    }
+    index += ['-p', '--package'].includes(args[index]) ? 1 : 0;
   }
   return undefined;
 }
