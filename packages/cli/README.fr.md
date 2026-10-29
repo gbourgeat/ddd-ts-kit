@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c46a7b77d9bb885a -->
+<!-- translation-of: README.md sha256:cbccc77d0d600765 -->
 
 # ddd-ts-kit
 
@@ -1388,9 +1388,10 @@ même ligne (mettez-la en premier), ou aucune telles que les lignes sont écrite
 commande que nomme la correction, ou corrigez la ligne refusée qui la générerait) ; ce pour quoi
 elle est alors refusée, pour une autre raison (un `--grant` une fois l'agrégat trouvé), est dit
 aussi (`then:`, `nextRefusal`), pour que corriger l'ordre ne soit pas suivi d'un autre refus. Une
-ligne `in progress` est rejouée, pour que les lignes d'après trouvent ce qu'elle génère, et ses
-noms sont jugés, mais ni ses refus ni ce sur quoi elle s'appuie ne sont des problèmes : ses commandes ont pu déjà tourner dans
-le projet, et le générateur refuse une seconde exécution de certaines (un port déjà lié à un
+ligne `in progress` est rejouée, pour que les lignes d'après trouvent ce qu'elle génère, mais ni
+ses noms, ni ses refus, ni ce sur quoi elle s'appuie ne sont des problèmes : son worker a pu
+ajouter sur sa branche le terme qu'il faut à un nom, ses commandes ont pu déjà tourner dans le
+projet, et le générateur refuse une seconde exécution de certaines (un port déjà lié à un
 adaptateur, un enregistrement de décision dont le numéro est pris) ; ils sont listés à part, avec
 leur correction, sous `Refused in rows in progress, not counted`. Une commande dont les fichiers
 existent est sinon sautée par le générateur, pas refusée. Le rejeu exécute chaque commande pour de

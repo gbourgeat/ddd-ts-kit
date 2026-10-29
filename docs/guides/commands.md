@@ -442,8 +442,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    each command the generator refuses for another reason (refused-command), its
                    refusal and fix under the row, with the row that generates what it builds on,
                    and each command that builds on a file a row it does not wait for generates
-                   (missing-dependency); a row in progress, whose commands may have run, counts for
-                   neither, its refusals listed apart
+                   (missing-dependency); a row in progress, whose commands may have run and whose
+                   worker may have added a term, counts for none, its refusals listed apart
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left

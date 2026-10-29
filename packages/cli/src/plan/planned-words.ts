@@ -9,6 +9,7 @@ import { findKind } from '../generate/find-kind';
 import type { HeardName } from '../generate/language-probe';
 import { toName } from '../naming';
 import type { Slice } from '../progress/slice';
+import { isStarted } from './is-started';
 import { plannedCommands } from './planned-commands';
 import { transitiveDependencies } from './transitive-dependencies';
 import type { Replay } from './replay';
@@ -21,11 +22,17 @@ export type Judged = RowProblem & { readonly words: readonly string[] };
  * The names a replayed command introduced that a worker following its row would have refused for
  * a word: each judged against the glossary of its context as it stands, with the `--term` of its
  * row and of the rows it waits for, transitively, what that worker would have when they run it.
+ * None for a row in progress.
  */
 export function plannedWords(root: string, rows: readonly Slice[]): (replay: Replay) => Judged[] {
   const termsOf = rowTerms(rows);
 
   return (replay) => {
+    // A row in progress is spared, as its refusals are: its worker may have added the term on their branch.
+    if (isStarted(replay.row)) {
+      return [];
+    }
+
     const terms = termsOf(replay.row);
 
     return replay.heard.flatMap((heard) => judged({ ...replay, heard }, glossaryFor(root, heard, terms)));

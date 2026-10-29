@@ -1314,8 +1314,9 @@ none as the rows are written (add the command the fix names, or fix the refused 
 generate it); what it is refused for then, for another reason (a `--grant` once the aggregate is
 found), is said too (`then:`, `nextRefusal`), so that fixing the order is not followed by another
 refusal. A row `in progress` is replayed, so that the rows after it
-find what it generates, and its names are judged, but neither its refusals nor what it builds on are problems: its commands
-may have run in the project already, and the generator refuses a second run of some of them (a
+find what it generates, but neither its names, nor its refusals, nor what it builds on are problems:
+its worker may have added the term a name needs on their branch, its commands may have run in the
+project already, and the generator refuses a second run of some of them (a
 port already bound to an adapter, a decision record whose number is taken); they are listed apart,
 with their fix, under `Refused in rows in progress, not counted`. A command whose files exist is
 otherwise skipped by the generator, not refused. The replay runs each command for real in the

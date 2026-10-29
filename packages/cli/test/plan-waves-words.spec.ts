@@ -77,4 +77,15 @@ describe('plan-waves, the names of the planned commands', () => {
     expect(unrelated.code).toBe(1);
     expect(jsonAt(unrelated.json(), 'problems')).toEqual([expect.objectContaining({ rows: ['US4.02'] })]);
   });
+
+  it('does not judge the names of a row in progress: its worker may have added the term on their branch', () => {
+    const refund = (status: string): string =>
+      `| US4.01 | billing | slice | Refund invoice | \`generate command billing RefundInvoice --aggregate Invoice --permission invoice.refund\` | | billing | ${status} |\n`;
+
+    const started = plan(refund('in progress'));
+
+    expect(jsonAt(started.json(), 'problems')).toEqual([]);
+    expect(started.code).toBe(0);
+    expect(plan(refund('todo')).code).toBe(1);
+  });
 });
