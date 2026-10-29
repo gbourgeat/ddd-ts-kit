@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:15ff09ae367f3e24 -->
+<!-- translation-of: testing-strategy.md sha256:22943c7df401c8fa -->
 
 # Stratégie de test
 
@@ -651,10 +651,13 @@ demander une revue ; le plancher reste l'affaire de la nuit.
 Le métier demande aux tests ce que Gherkin promet : une lecture des règles dans ses propres mots. Le
 kit la donne sans seconde langue : le titre d'un test énonce une règle (`test/title-states-a-rule`),
 et `ddd-ts-kit docs` écrit `docs/behaviour/<context>.md` d'après les titres des *specs* de chaque
-contexte, groupés comme les *specs* les groupent, avec le rôle de chaque *spec* (`slot (value
-object), in calendars`), une règle planifiée (`it.todo`) et une *spec* mise de côté dites comme
-telles, et `docs/behaviour/application.md` pour les *specs* hors des contextes (bout en bout,
-acceptation, architecture). `npm run docs:generate` les écrit, le *hook* de pre-commit les régénère et
+contexte, lus comme une spécification : un titre par cas d'usage, dans les mots de la *spec* de son
+*handler* (`Cancel invoice (command)`), qui réunit les règles de son *handler*, de sa *policy*, de son
+contrôleur ou de sa route, de sa *spec* de bout en bout et de ses scénarios d'acceptation ; un titre
+par partie du modèle (`Slot (value object), in calendars`) et par réaction ; les *specs* qui
+n'entrent dans aucun sous leur répertoire ; une règle planifiée (`it.todo`) et une *spec* mise de
+côté dites comme telles. `docs/behaviour/application.md` garde les *specs* hors des contextes qui
+ne servent aucun cas d'usage (parcours, architecture). `npm run docs:generate` les écrit, le *hook* de pre-commit les régénère et
 les ajoute quand une *spec* est indexée (un worker confiné à son contexte les laisse au tronc),
 `docs --check` les tient à jour, et elles sont commitées avec les *specs* : le test est la preuve,
 la page sa lecture. Sur l'exemple,

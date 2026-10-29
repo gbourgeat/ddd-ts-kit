@@ -623,9 +623,12 @@ business of the night.
 The business asks of tests what Gherkin promises: a reading of the rules in its own words. The kit
 gives it without a second language: the title of a test states a rule (`test/title-states-a-rule`),
 and `ddd-ts-kit docs` writes `docs/behaviour/<context>.md` from the titles of the specs of each
-context, grouped as the specs group them, with the role of each spec (`slot (value object), in
-calendars`), a planned rule (`it.todo`) and a spec put aside said so, and `docs/behaviour/application.md`
-for the specs outside the contexts (end to end, acceptance, architecture). `npm run docs:generate`
+context, read as a specification: one heading per use case, in the words of its handler spec
+(`Cancel invoice (command)`), holding the rules of its handler, policy, controller or route,
+end-to-end spec and acceptance scenarios together; one heading per part of the model (`Slot (value
+object), in calendars`) and per reaction; the specs that fit none under their directory; a planned
+rule (`it.todo`) and a spec put aside said so. `docs/behaviour/application.md` keeps the specs
+outside the contexts that serve no use case (journeys, architecture). `npm run docs:generate`
 writes them, the pre-commit hook regenerates and adds them when a spec is staged (a worker confined
 to its context leaves them to the trunk), `docs --check` holds them current, and they are committed
 with the specs: the test is the proof, the page its reading. On the example, `scheduling` lists 593 rules from 165 specs, a

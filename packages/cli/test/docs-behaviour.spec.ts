@@ -74,7 +74,7 @@ describe('behaviourPage, a rule without the codes of the change that brought it'
     const source = titles.map((title) => `it('${title}', () => {});`).join('\n');
 
     const page = behaviourPage('Billing', 'intro', [
-      { title: 'unit', specs: [{ file: 'a.spec.ts', rules: rulesIn(source) }] },
+      { title: 'unit', entries: [{ heading: 'a', specs: [{ file: 'a.spec.ts', rules: rulesIn(source) }] }] },
     ]);
 
     expect(page).toContain('- escalates to the next person, #FIX2 included\n');
@@ -101,7 +101,7 @@ describe('docs, the pages of what the tests state', () => {
     const page = read(root, 'docs/behaviour/billing.md');
 
     expect(page).toContain('# billing: what its tests state');
-    expect(page).toContain('## Unit specs');
+    expect(page).toContain('## Use cases');
     expect(page).toMatch(/\d+ rules? stated/);
     expect(page).toContain('(planned)');
     expect(read(root, 'docs/behaviour/README.md')).toContain('| [billing](billing.md) |');
@@ -122,7 +122,7 @@ describe('docs, the pages of what the tests state', () => {
 
     const page = read(root, 'docs/behaviour/billing.md');
 
-    expect(page).toContain('### invoice-total (value object)');
+    expect(page).toContain('### Invoice total (value object)');
     expect(page).toContain('`unit/invoice-total.vo.spec.ts`');
     expect(page).toContain('- **InvoiceTotal**\n  - adds the lines of the invoice, taxes included');
     expect(cli(root, 'docs', '--check').code).toBe(0);
