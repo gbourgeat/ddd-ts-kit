@@ -54,11 +54,15 @@ locked acceptance test, independently of the session that made it, and writes it
 the application as the end-to-end tests do, exercises the routes of the story and the two nearest
 flows, and reports what does not match the design or a decision).
 
-The description of each skill and agent says when to use it, in at most 400 characters, and
-the 26 skills take at most 8,000 together: Claude Code loads the descriptions into every session
-within 1% of the context window (about 8,000 characters on a 200k window) and, past it, drops
-those of the skills invoked least, which then stop triggering on their keywords. A test of the
-plugin (`node --test plugin/skills/descriptions.test.mjs`) holds both limits.
+The description of each skill says when to use it in at most 320 characters, and the 26 take
+at most 6,500 together; an agent's, at most 400. Claude Code loads the listing of the skills into
+every session within 1% of the context window, about 2,000 tokens on a 200k window, and past it
+drops the descriptions of the skills invoked least, which then stop triggering on their keywords.
+The listing also carries `ddd-ts-kit:<name>` for each entry (about 660 characters for the 26),
+and this technical text runs at about 3.5 characters per token: (6,500 + 660) / 3.5 is about
+2,050 tokens if all 26 were listed, but the six skills run by the user only
+(`disable-model-invocation`) are not, which leaves the 20 others at about 1,600 tokens. A test of
+the plugin (`node --test plugin/skills/descriptions.test.mjs`) holds the limits.
 
 The hook is the part that makes the rest binding. In a project that has a
 `ddd-ts-kit.config.json` it reminds the workflow and the context map at session start, says

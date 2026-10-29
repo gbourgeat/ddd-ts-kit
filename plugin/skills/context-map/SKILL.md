@@ -1,11 +1,10 @@
 ---
 name: context-map
 description: >-
-  Use when two contexts start depending on each other, when a context needs data or a
-  reaction from another, when choosing upstream, downstream, pattern (customer-supplier,
-  conformist, anti-corruption layer, open-host service, shared kernel, published language),
-  when context/no-cycle or context/declared-relationship is reported, or for the context
-  map.
+  Use when two contexts depend on each other, a context needs data or a reaction from
+  another, when choosing upstream, downstream and pattern (customer-supplier, conformist,
+  anti-corruption layer, open-host service, shared kernel, published language), or on
+  context/* rules.
 argument-hint: "[downstream upstream]"
 allowed-tools:
   - Read

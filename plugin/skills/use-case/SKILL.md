@@ -3,8 +3,7 @@ name: use-case
 description: >-
   Use when the user asks for a feature, an endpoint, a business rule or "add the ability to
   ...", or to build the next row of docs/architecture/slices.md. One vertical slice in one
-  bounded context, test first: aggregate behaviour, command or query with its permission,
-  handler, route, specs.
+  context, test first: aggregate, command or query, permission, handler, route.
 argument-hint: "<context> <use case in plain words, or the slice number>"
 allowed-tools:
   - Read

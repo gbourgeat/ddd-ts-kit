@@ -1,10 +1,9 @@
 ---
 name: commit-discipline
 description: >-
-  Use when about to commit, when the user asks to commit, to write a commit message or to
-  split a change, or when the guard reports too many uncommitted changes. One use case or
-  one concept per commit, generated files with their cause, conventional messages scoped by
-  context.
+  Use when about to commit, when asked to commit, to write a commit message or to split a
+  change, or when the guard reports too many uncommitted changes. One use case or concept
+  per commit, messages scoped by context.
 allowed-tools:
   - Bash(git status *)
   - Bash(git diff *)

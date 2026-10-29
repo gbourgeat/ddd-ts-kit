@@ -3,26 +3,33 @@
 // descriptions are cut short") says: "The budget scales at 1% of the model's context window.
 // When the listing overflows, Claude Code drops descriptions starting with the skills you invoke
 // least", and caps each entry at 1,536 characters. On a 200k window that budget is about 2,000
-// tokens, roughly 8,000 characters: past it, the least-invoked skills of the kit lose their
-// description and stop triggering on their keywords. The agents' descriptions are listed the same
-// way in the Agent tool. So each description holds its trigger and the words a user says, at most
-// 400 characters, and the 26 skills at most 8,000 together. Run with `node --test`.
+// tokens. The listing holds more than the descriptions: each entry carries `ddd-ts-kit:<name>`
+// and its formatting, about 660 characters for the 26 skills, and this technical text (`authz/*`,
+// `it.todo`, `/ddd-ts-kit:story`) runs at about 3.5 characters per token, not 4. So 6,500
+// characters of descriptions are about (6,500 + 660) / 3.5 = 2,050 tokens if all 26 were listed;
+// the six skills with `disable-model-invocation: true` are not ("Description not in context"),
+// which leaves the 20 others at about 5,000 + 550 characters, some 1,600 tokens, under the budget
+// with room for another plugin. Past it, the least-invoked skills lose their description and stop
+// triggering on their keywords. The agents' descriptions are listed the same way in the Agent
+// tool, with no budget stated: 400 characters each. Run with `node --test`.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
+import YAML from 'yaml';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const SKILLS = path.join(ROOT, 'plugin/skills');
 const AGENTS = path.join(ROOT, 'plugin/agents');
-const MAX_ONE = 400;
-const MAX_SKILLS = 8000;
+const MAX_SKILL = 320;
+const MAX_AGENT = 400;
+const MAX_SKILLS = 6500;
 
-test('every skill description is at most 400 characters', () => {
-  assert.deepEqual(tooLong(skillDescriptions()), [], `skill descriptions over ${MAX_ONE} characters`);
+test('every skill description is at most 320 characters', () => {
+  assert.deepEqual(tooLong(skillDescriptions(), MAX_SKILL), [], `skill descriptions over ${MAX_SKILL} characters`);
 });
 
-test('the skill descriptions total at most 8,000 characters', () => {
+test('the skill descriptions total at most 6,500 characters', () => {
   const descriptions = skillDescriptions();
   const total = descriptions.reduce((sum, { description }) => sum + description.length, 0);
   const longest = [...descriptions]
@@ -41,13 +48,13 @@ test('every agent description is at most 400 characters', () => {
   const descriptions = agentDescriptions();
 
   assert.ok(descriptions.length > 0, 'no agent read: plugin/agents/ moved');
-  assert.deepEqual(tooLong(descriptions), [], `agent descriptions over ${MAX_ONE} characters`);
+  assert.deepEqual(tooLong(descriptions, MAX_AGENT), [], `agent descriptions over ${MAX_AGENT} characters`);
 });
 
 /** The name and length of each description over the limit. */
-function tooLong(descriptions) {
+function tooLong(descriptions, limit) {
   return descriptions
-    .filter(({ description }) => description.length > MAX_ONE)
+    .filter(({ description }) => description.length > limit)
     .map(({ name, description }) => `${name} (${description.length})`);
 }
 
@@ -68,38 +75,16 @@ function agentDescriptions() {
     .map((file) => ({ name: file.replace(/\.md$/, ''), description: descriptionOf(path.join(AGENTS, file)) }));
 }
 
-/**
- * The `description` of the front matter as YAML reads it: a folded block (`>-` or `>`, its lines
- * joined by spaces) or a scalar on one line, quoted or not.
- */
+/** The `description` of the front matter, as YAML reads it, whatever the line endings of the checkout. */
 function descriptionOf(file) {
-  const text = fs.readFileSync(file, 'utf8');
-  const frontMatter = /^---\n([\s\S]*?)\n---/.exec(text)?.[1];
+  const text = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  const frontMatter = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(text)?.[1];
 
-  assert.ok(frontMatter !== undefined, `${file} has no front matter`);
+  assert.ok(frontMatter !== undefined, `${file} does not open with a front matter between two --- lines`);
 
-  const lines = frontMatter.split('\n');
-  const at = lines.findIndex((line) => line.startsWith('description:'));
+  const description = YAML.parse(frontMatter)?.description;
 
-  assert.notEqual(at, -1, `${file} has no description`);
+  assert.equal(typeof description, 'string', `${file} has no description in its front matter`);
 
-  const value = lines[at].slice('description:'.length).trim();
-
-  if (value === '>-' || value === '>') {
-    const block = [];
-
-    for (const line of lines.slice(at + 1)) {
-      if (!/^\s+\S/.test(line)) {
-        break;
-      }
-
-      block.push(line.trim());
-    }
-
-    return block.join(' ');
-  }
-
-  assert.ok(!['|', '|-'].includes(value), `${file}: write the description folded (>-) or on one line`);
-
-  return /^(["']).*\1$/.test(value) ? value.slice(1, -1) : value;
+  return description;
 }

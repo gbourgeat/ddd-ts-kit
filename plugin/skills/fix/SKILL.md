@@ -1,10 +1,9 @@
 ---
 name: fix
 description: >-
-  Repairs one defect in its own worktree, proof first: a spec that reproduces it at its
-  layer, seen failing, locked with `ddd-ts-kit acceptance <code> --lock` and committed
-  before any code; then the fix and its pull request. Run by the user with /ddd-ts-kit:fix,
-  once per defect.
+  Repairs one defect in its own worktree, proof first: a spec reproducing it at its layer,
+  locked (`ddd-ts-kit acceptance <code> --lock`) and committed before any code, then the fix
+  and its pull request. Run by the user with /ddd-ts-kit:fix.
 argument-hint: "<fix code> [the defect in plain words, an issue key, an incident record]"
 disable-model-invocation: true
 allowed-tools:

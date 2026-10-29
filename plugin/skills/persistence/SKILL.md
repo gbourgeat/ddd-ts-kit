@@ -1,10 +1,10 @@
 ---
 name: persistence
 description: >-
-  Use when adding a table, a repository, a lookup, a read model or a migration, when
-  replacing the in-memory adapter by a real one, when choosing an ORM, or when persistence
-  types leak out of infrastructure. Mapper, fake, contract suite, unit of work, optimistic
-  concurrency, on Drizzle, Knex, Prisma or TypeORM.
+  Use when adding a table, a repository, a lookup, a read model or a migration, replacing
+  the in-memory adapter by a real one, choosing an ORM, or when persistence types leak out
+  of infrastructure. Mapper, unit of work, optimistic concurrency, Drizzle, Knex, Prisma,
+  TypeORM.
 argument-hint: "<context> <Aggregate>"
 allowed-tools:
   - Read

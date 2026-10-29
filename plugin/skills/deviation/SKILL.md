@@ -1,10 +1,9 @@
 ---
 name: deviation
 description: >-
-  Use when the user asks to skip a rule, do it quick and dirty, disable a check, add an
+  Use when asked to skip a rule, do it quick and dirty, disable a check, add an
   eslint-disable or ts-ignore, put logic where it does not belong "just this once", skip
-  tests or the glossary, or when the guard asks to confirm a suppression or a change of the
-  rules.
+  tests or the glossary, or when the guard asks to confirm a suppression or a rules change.
 allowed-tools:
   - Read
   - Bash(npx ddd-ts-kit explain *)

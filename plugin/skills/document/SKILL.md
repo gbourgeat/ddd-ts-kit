@@ -1,10 +1,9 @@
 ---
 name: document
 description: >-
-  Use when a route, a schema, an error code or an integration event changes, when the user
-  asks for the API contract, OpenAPI, Swagger, client generation, AsyncAPI, the event
-  catalog, an ADR or the integration documentation, or when the pipeline reports
-  documentation or contract drift.
+  Use when a route, a schema, an error code or an integration event changes, when asked for
+  the API contract, OpenAPI, Swagger, client generation, AsyncAPI, the event catalog, an ADR
+  or integration docs, or when the pipeline reports documentation or contract drift.
 argument-hint: "[openapi|events|adr <title>]"
 allowed-tools:
   - Read

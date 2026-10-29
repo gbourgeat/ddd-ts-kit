@@ -1,10 +1,10 @@
 ---
 name: cross-cutting
 description: >-
-  Use when adding logs, metrics, traces, an error tracker, an audit log, retry, timeout, a
-  circuit breaker, a cache or rate limiting, when code needs a correlation id, the tenant or
-  the session, before declaring a home-made Logger, UserContext or paginated result, or on
-  aspects/* or standard/*.
+  Use for logs, metrics, traces, error tracking, audit log, retry, timeout, circuit breaker,
+  cache, rate limit, choosing a logger, correlation id, tenant or session, a home-made
+  Logger, UserContext or paginated result, on aspects/*, standard/*, a tracing or audit
+  import in domain or application.
 allowed-tools:
   - Read
   - Edit

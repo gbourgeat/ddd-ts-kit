@@ -1,10 +1,10 @@
 ---
 name: bounded-contexts
 description: >-
-  Use when cutting a system into bounded contexts, when a concept has no obvious home, a
-  context grows two vocabularies or too large, two contexts need each other, or the user
-  asks about boundaries, subdomains, sub-contexts, modules, splitting or merging contexts.
-  Classifies each core, supporting or generic.
+  Use when cutting a system into bounded contexts, when a concept has no home, a context
+  grows two vocabularies or too large, two contexts need each other, or on boundaries,
+  subdomains, sub-contexts, modules, splitting or merging contexts. Core, supporting or
+  generic.
 argument-hint: "[context or concept under discussion]"
 allowed-tools:
   - Read

@@ -1,10 +1,9 @@
 ---
 name: clean-code
 description: >-
-  Use when a clean/*, purity/* or language/* rule is reported, or when the user asks to
-  clean, simplify, rename or make code more readable. Business names from the ubiquitous
-  language, small functions, stepdown order, comments only for what code cannot say, no
-  escape hatches, Clock and IdGenerator.
+  Use when a clean/*, purity/* or language/* rule is reported, or when asked to clean,
+  simplify, rename or make code more readable: business names, small functions, stepdown
+  order, comments only for what code cannot say, no escape hatches, Clock, IdGenerator.
 allowed-tools:
   - Read
   - Edit

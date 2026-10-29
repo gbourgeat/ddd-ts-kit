@@ -1,10 +1,9 @@
 ---
 name: integration-event
 description: >-
-  Use when a context must react to another, when building a contract row of the slices, or
-  when the user mentions events between contexts, messaging, outbox, consumers, RabbitMQ,
-  Kafka, NATS, Redis Streams or eventual consistency. Versioned, published through the
-  outbox, handled idempotently.
+  Use when a context must react to another, for a contract row of the slices, or on events
+  between contexts, messaging, outbox, consumers, RabbitMQ, Kafka, NATS, Redis Streams or
+  eventual consistency. Versioned, idempotent consumers.
 argument-hint: "<producer-context> <Aggregate> <Fact>"
 allowed-tools:
   - Read

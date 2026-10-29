@@ -2,9 +2,8 @@
 name: intent
 description: >-
   Captures an idea as an intent before any story: brainstorms with whoever has it until it
-  is concrete (problem, outcome, who and what it touches, constraints), then writes
-  docs/architecture/intents/<slug>.md as a draft for the product owner. Run with
-  /ddd-ts-kit:intent.
+  is concrete (problem, outcome, constraints), then writes
+  docs/architecture/intents/<slug>.md for the product owner. Run with /ddd-ts-kit:intent.
 argument-hint: "[the idea in plain words, or nothing to be asked]"
 disable-model-invocation: true
 allowed-tools:

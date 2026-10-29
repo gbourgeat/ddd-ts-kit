@@ -1,10 +1,9 @@
 ---
 name: glossary
 description: >-
-  Use when a business term is missing, ambiguous or used with two meanings, when the
-  generator or language/glossary-term refuses a name, when a CONTEXT.md is empty or stale,
-  or for the glossary step of a new project. The ubiquitous language of a bounded context,
-  one row per term.
+  Use when a business term is missing, ambiguous or has two meanings, when the generator or
+  language/glossary-term refuses a name, when a CONTEXT.md is empty or stale, or for the
+  glossary step of a new project. Ubiquitous language, one row per term.
 argument-hint: "[context]"
 allowed-tools:
   - Read

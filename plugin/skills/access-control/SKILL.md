@@ -2,9 +2,8 @@
 name: access-control
 description: >-
   Use when adding a permission, a role or an ownership rule, when code needs the connected
-  user or the tenant, when filtering a list by rights, or when an authz/* rule is reported.
-  Authentication, authorization, the actor, access scopes, policies, roles, attributes,
-  relationships (ReBAC).
+  user or the tenant, when filtering a list by rights, or on an authz/* rule.
+  Authentication, authorization, access scopes, policies, RBAC, ABAC, ReBAC.
 allowed-tools:
   - Read
   - Bash(npx ddd-ts-kit generate *)

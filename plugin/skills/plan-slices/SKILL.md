@@ -1,10 +1,9 @@
 ---
 name: plan-slices
 description: >-
-  Use after the bootstrap, when the user asks what to build first, to order or size the
-  work, or before splitting it between several agents or people. Plans vertical slices per
-  bounded context, with their generator commands, dependency order and owner, in
-  docs/architecture/slices.md.
+  Use after the bootstrap, when asked what to build first, to order or size the work, or
+  before splitting it between agents or people. Vertical slices per bounded context ordered,
+  with owners, in docs/architecture/slices.md.
 argument-hint: "[context, or nothing for all]"
 allowed-tools:
   - Read

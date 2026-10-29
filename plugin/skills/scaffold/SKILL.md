@@ -3,8 +3,8 @@ name: scaffold
 description: >-
   Use when one aggregate, entity, value object, domain event, error, service, port,
   repository, adapter, gateway, policy, job, background job, state machine, process manager,
-  event handler, builder, end-to-end spec or context is needed, or when the guard refuses a
-  hand-written file. Runs `ddd-ts-kit generate`.
+  event handler, builder, end-to-end spec or context is needed, or the guard refuses a
+  hand-written file.
 argument-hint: "<kind> <context> <Name> [options]"
 allowed-tools:
   - Read

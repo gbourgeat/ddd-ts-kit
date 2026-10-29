@@ -2,9 +2,8 @@
 name: wiring
 description: >-
   Use when binding an adapter to a port, adding a dependency to a handler, replacing an
-  adapter by a fake, composing main.ts, or when a WiringError, DeclarationError, ports/*,
-  declarations/* or composition/only-in-module is reported. How classes reach the
-  composition root (dependency injection).
+  adapter by a fake, composing main.ts, or on a WiringError, DeclarationError, ports/*,
+  declarations/* or composition/only-in-module. Dependency injection, the composition root.
 allowed-tools:
   - Read
   - Bash(npx ddd-ts-kit generate *)

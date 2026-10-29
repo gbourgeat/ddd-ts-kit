@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:e2f4cb939f09a8d8 -->
+<!-- translation-of: coding-agents.md sha256:307550ff672de2e1 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -56,12 +56,16 @@ un contexte neuf : il démarre l'application comme le font les tests de bout en 
 routes de la *story* et les deux flux les plus proches, et rend compte de ce qui ne correspond pas
 à la conception ou à une décision).
 
-La description de chaque skill et de chaque agent dit quand s'en servir, en 400 caractères au
-plus, et les vingt-six skills en prennent 8 000 au plus ensemble : Claude Code charge les
-descriptions dans chaque session dans la limite de 1 % de la fenêtre de contexte (environ 8 000
-caractères sur une fenêtre de 200k) et, au-delà, retire celles des skills les moins invoquées,
-qui ne se déclenchent alors plus sur leurs mots-clés. Un test du plugin
-(`node --test plugin/skills/descriptions.test.mjs`) tient les deux limites.
+La description de chaque skill dit quand s'en servir en 320 caractères au plus, et les
+vingt-six en prennent 6 500 au plus ensemble ; celle d'un agent, 400 au plus. Claude Code charge
+la liste des skills dans chaque session dans la limite de 1 % de la fenêtre de contexte, environ
+2 000 tokens sur une fenêtre de 200k, et au-delà retire les descriptions des skills les moins
+invoquées, qui ne se déclenchent alors plus sur leurs mots-clés. La liste porte aussi
+`ddd-ts-kit:<nom>` pour chaque entrée (environ 660 caractères pour les vingt-six), et ce texte
+technique compte environ 3,5 caractères par token : (6 500 + 660) / 3,5 font environ 2 050
+tokens si les vingt-six étaient listées, mais les six skills lancées par l'utilisateur seul
+(`disable-model-invocation`) ne le sont pas, ce qui laisse les vingt autres à environ 1 600
+tokens. Un test du plugin (`node --test plugin/skills/descriptions.test.mjs`) tient ces limites.
 
 Le hook est la partie qui rend le reste contraignant. Dans un projet qui a un
 `ddd-ts-kit.config.json`, il rappelle la démarche et la carte des contextes au début de la

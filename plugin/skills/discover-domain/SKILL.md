@@ -1,10 +1,9 @@
 ---
 name: discover-domain
 description: >-
-  Use as the first step of a new project or a new area of a product, before any boundary or
-  code, or when the user describes a business process to build. A light event storming in
-  writing: actors, commands, domain events, policies, read models, external systems, on a
-  timeline.
+  Use as the first step of a new project or area of a product, before any boundary or code,
+  or when the user describes a business process to build. A light event storming in writing:
+  actors, commands, domain events, policies, read models, external systems.
 argument-hint: "[the needs, or the process to explore]"
 allowed-tools:
   - Read

@@ -2,9 +2,8 @@
 name: extract-service
 description: >-
   Use when the user mentions microservices, splitting the monolith, deploying or scaling one
-  context alone, when a context needs data or a synchronous answer from another, or when
-  context/extractable is reported. Keeps each bounded context extractable, and extracts it
-  when asked.
+  context alone, when a context needs data or a synchronous answer from another, or on
+  context/extractable.
 argument-hint: "<context>"
 allowed-tools:
   - Bash(npx ddd-ts-kit check *)

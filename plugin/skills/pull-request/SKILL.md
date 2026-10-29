@@ -1,9 +1,9 @@
 ---
 name: pull-request
 description: >-
-  Takes the pull request of a story to green from its worktree: failing checks, then each
-  unresolved review comment under the rules of the story, never force-pushed, until only the
-  code owner is waited on. Run by the user with /ddd-ts-kit:pull-request <number>.
+  Takes the pull request of a story to green: failing checks, then each unresolved review
+  comment under the rules of the story, never force-pushed, until only the code owner is
+  waited on. Run by the user with /ddd-ts-kit:pull-request <number>.
 argument-hint: "<number>"
 disable-model-invocation: true
 allowed-tools:
