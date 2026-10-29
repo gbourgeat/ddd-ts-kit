@@ -47,14 +47,15 @@ const WRAPPERS = {
   builtin: { valued: [] },
   ionice: { valued: ['-c', '-n', '-p', '-P', '-u'] },
   setsid: { valued: [] },
-  taskset: { valued: ['-c', '--cpu-list'] },
+  // `taskset <mask> cmd`, `taskset -c <list> cmd`: one positional word before the command either way.
+  taskset: { valued: [], skip: 'operand' },
   chrt: { valued: ['-T', '-P'], skip: 'operand' },
   flock: { valued: ['-w', '--timeout', '-E', '--conflict-exit-code'], skip: 'operand' },
   doas: { valued: ['-u', '-C', '-a'] },
   watch: { valued: ['-n', '--interval'] },
   busybox: { valued: [] },
   toybox: { valued: [] },
-  parallel: { valued: [] },
+  parallel: { valued: ['-j', '--jobs', '-S', '--sshlogin', '--results', '--joblog'] },
 };
 
 /** Every simple command of `text`, the ones it nests included, each with the directory it runs in. */
@@ -250,13 +251,13 @@ function nestedCommands(words, directory, depth) {
   return name === 'find' ? findExecutions(words, directory) : [];
 }
 
-// A command another computes from a text the shell alone splits: `su`/`doas`/`script` from their
-// `-c` string, `env -S` from its value, and a package runner (`npx`, `bunx`, `npm exec`, ...) from
+// A command another computes from a text the shell alone splits: `su`/`doas`/`script`/`flock` from
+// their `-c` or `--command` string, `env -S` from its value, and a package runner (`npx`, `bunx`, `npm exec`, ...) from
 // the command it runs. The text is read as its own command line.
 function wrappedText(words) {
   const name = commandName(words);
-  if (['su', 'doas', 'script'].includes(name)) {
-    return valueOfFlag(words, '-c');
+  if (['su', 'doas', 'script', 'flock'].includes(name)) {
+    return valueOfFlag(words, '-c') ?? valueOfFlag(words, '--command');
   }
   if (name === 'env') {
     return envSplit(words);
