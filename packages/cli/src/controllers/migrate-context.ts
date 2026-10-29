@@ -91,8 +91,9 @@ function moveSchemas({ ws, draft, renamed }: Migration, plan: ContextPlan): void
 
 /**
  * The spec of the route becomes the spec of the controller. Sent through `routeOf`, the controller
- * stands behind the guards of its group, which the authenticated caller of `routeOf` passes; a
- * spec written before `routeOf` runs it alone, its guards having their own specs.
+ * stands behind the guards of its group, which the authenticated caller of `routeOf` passes, and
+ * nothing else of the spec is rewritten; a spec written before `routeOf` runs it alone, its guards
+ * having their own specs.
  */
 function moveSpec({ ws, draft }: Migration, { route, unit }: PlannedController): void {
   const source = ws.read(`${unit}/${route.kebab}.route.spec.ts`);
@@ -109,19 +110,23 @@ function moveSpec({ ws, draft }: Migration, { route, unit }: PlannedController):
     )
     .replace(new RegExp(String.raw`import \{ ${factory} \}`), `import { ${route.pascal}Controller }`);
 
-  const executed = sent.replaceAll(
-    new RegExp(String.raw`\b${factory}\(([^()]*)\)`, 'g'),
-    `controllerRoute(new ${route.pascal}Controller($1), { guards: 'skip' })`,
-  );
-
-  const rewritten =
-    executed === sent
-      ? sent
-      : executed.replace(
-          /import \{([^}]*)\} from '@ddd-ts-kit\/http';/,
-          (_all, names: string) => `import { controllerRoute,${names}} from '@ddd-ts-kit/http';`,
-        );
+  const rewritten = /\brouteOf\(/.test(source) ? sent : executedAlone(sent, factory, route.pascal);
 
   draft.write(`${unit}/${route.kebab}.controller.spec.ts`, rewritten);
   draft.remove(`${unit}/${route.kebab}.route.spec.ts`);
+}
+
+/** A spec written before `routeOf` calls `executeRoute` with the route: it runs the controller without its guards. */
+function executedAlone(source: string, factory: string, pascal: string): string {
+  const executed = source.replaceAll(
+    new RegExp(String.raw`\b${factory}\(([^()]*)\)`, 'g'),
+    `controllerRoute(new ${pascal}Controller($1), { guards: 'skip' })`,
+  );
+
+  return executed === source
+    ? source
+    : executed.replace(
+        /import \{([^}]*)\} from '@ddd-ts-kit\/http';/,
+        (_all, names: string) => `import { controllerRoute,${names}} from '@ddd-ts-kit/http';`,
+      );
 }

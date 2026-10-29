@@ -70,13 +70,18 @@ function dropList({ config, draft }: Migration, context: string): void {
   );
 }
 
+/**
+ * Every import of a moved file, followed. A route listed by hand becomes its controller, except in
+ * a spec sent through `routeOf`: the factory it still names is the team's, in a helper or a comment.
+ */
 function followed({ config, renamed }: Migration, source: string): string {
+  const sendsThroughRouteOf = /\brouteOf\(/.test(source);
   let text = source;
 
   for (const [from, to] of renamed) {
     text = text.replaceAll(`'${specifierOf(config, from)}'`, `'${specifierOf(config, to)}'`);
 
-    if (from.endsWith('.route.ts')) {
+    if (from.endsWith('.route.ts') && !sendsThroughRouteOf) {
       text = listedByHand(text, from.slice(from.lastIndexOf('/') + 1).replace(/\.route\.ts$/, ''));
     }
   }
