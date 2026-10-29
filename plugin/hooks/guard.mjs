@@ -456,25 +456,32 @@ function verdictOn({ file, written, replaced }, input) {
   return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
 
+// A refusal of the patch Codex applies through its shell wins; else the command line is read, and a
+// question about the patch is put only when the rest of the line passes.
 async function preBash(input) {
   const command = toolInput(input).command;
   if (typeof command !== 'string') {
     return;
   }
   const cwd = input.cwd ?? process.cwd();
-  if (hostOf(input) === 'codex' && /^\s*\*\*\* Begin Patch/m.test(command)) {
-    return codexShellPatch(input, command, cwd);
+  const patched = await codexPatchVerdict(input, command, cwd);
+  const verdict = patched?.decision === 'deny' ? patched : ((await shellVerdict(input, command, cwd)) ?? patched);
+  if (verdict) {
+    decide(input, verdict.decision, verdict.reason);
   }
+}
+
+async function shellVerdict(input, command, cwd) {
   // A leading `cd` out of every project leaves the command to be judged against the session's project.
   const project = findProject(commandDirectory(command, cwd)) ?? findProject(cwd);
   await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
-    return;
+    return undefined;
   }
+  const decision = project.mode === 'advise' ? 'ask' : 'deny';
   const preparing = await preparingReason(project, input, command);
   if (preparing) {
-    decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
-    return;
+    return { decision, reason: preparing };
   }
   const context = workerContext(project, input);
   shell = await import('./shell-commands.mjs');
@@ -482,9 +489,7 @@ async function preBash(input) {
   const refusal = context
     ? workerCommandReason(project, input, { context, command, commands })
     : (builderStrayReason(project, input, commands) ?? sessionShellReason(project, input, commands));
-  if (refusal) {
-    decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
-  }
+  return refusal ? { decision, reason: refusal } : undefined;
 }
 
 // What the shell writes of a session that is not a context worker meet: the story build gate and
@@ -512,17 +517,22 @@ function sessionPlaceReason(project, input, place) {
   return storyCodeReason(project, place) ?? generatedFileReason(project, place) ?? baselineFileReason(project, place);
 }
 
-// Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: the
-// patch in the command is judged the same way a write through the editor tool is.
-function codexShellPatch(input, command, cwd) {
-  const patch = command.slice(command.indexOf('*** Begin Patch'));
-  const verdicts = patchWrites(patch, cwd)
+// Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: the patch
+// fed to that command is judged the same way a write through the editor tool is. A here-document that
+// only holds the text of a patch for another command (`cat <<EOF > notes.md`) is no patch.
+async function codexPatchVerdict(input, command, cwd) {
+  if (hostOf(input) !== 'codex' || !/^\s*\*\*\* Begin Patch/m.test(command)) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  if (!shell.simpleCommands(command, cwd).some(({ words }) => shell.commandName(words) === 'apply_patch')) {
+    return undefined;
+  }
+  const start = command.indexOf('*** Begin Patch');
+  const verdicts = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd)
     .map((written) => verdictOn(written, input))
     .filter(Boolean);
-  const verdict = verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
-  if (verdict) {
-    decide(input, verdict.decision, verdict.reason);
-  }
+  return verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
 }
 
 // A context-builder keeps the working directory of its session, so the scope of a worker is found
