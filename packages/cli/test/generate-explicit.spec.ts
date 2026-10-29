@@ -71,12 +71,22 @@ describe('generated code, in the explicit style', () => {
       expect(text, spec).toContain("rejects.toMatchObject({ code: 'FORBIDDEN' })");
       expect(text, spec).toContain("const { holder, authorizer } = holdersOf(billingPermissions['");
       expect(text.match(/^\s*it\.todo\('/gm)?.length, spec).toBeGreaterThanOrEqual(2);
-      expect(text, spec).toContain('modules: [platformTestModule, billingModule, holders]');
       expect(text, spec).toMatch(/application\.(commandBus|queryBus)\.execute\(/);
     }
 
-    expect(read(root, `${BILLING}/test/unit/issue-invoice.handler.spec.ts`)).toContain(
-      'fakes: [fake(InvoiceRepository, invoiceRepository)],',
+    // Generated before the world of billing: the test application, built in the spec.
+    const before = read(root, `${BILLING}/test/unit/issue-invoice.handler.spec.ts`);
+
+    expect(before).toContain('modules: [platformTestModule, billingModule, holders]');
+    expect(before).toContain('fakes: [fake(InvoiceRepository, invoiceRepository)],');
+
+    // Generated after it: one call of the world.
+    expect(read(root, `${BILLING}/test/unit/cancel-invoice.handler.spec.ts`)).toContain(
+      'return aBillingWorld({ modules: [holders] });',
+    );
+
+    expect(read(root, `${BILLING}/test/unit/search-invoices.handler.spec.ts`)).toContain(
+      'const { application } = await aBillingWorld({',
     );
   });
 
