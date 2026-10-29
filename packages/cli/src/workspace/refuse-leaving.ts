@@ -1,6 +1,7 @@
 import { CliError } from '../cli-error';
 import { CONFIG_FILE } from '../config';
 import { leavingProject } from './leaving-project';
+import { realRootOf } from './real-root-of';
 
 /**
  * Every write and removal of a command stays inside the project: a path that leads out of it,
@@ -8,8 +9,10 @@ import { leavingProject } from './leaving-project';
  * is written, the paths named.
  */
 export function refuseLeaving(root: string, files: readonly string[], absolute: (file: string) => string): void {
+  const project = realRootOf(root);
+
   const leaving = files.flatMap((file) => {
-    const way = leavingProject(root, absolute(file));
+    const way = leavingProject(project, absolute(file));
 
     if (way === undefined) {
       return [];

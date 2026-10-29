@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cli, exists, read, tempDir, walk, write } from './helpers';
 import { initProject } from './support/init-project';
 import { NPM } from './support/npm';
+import { leavingProject } from '../src/workspace/leaving-project';
+import { realRootOf } from '../src/workspace/real-root-of';
 import { commitAll } from './support/commit-all';
 
 /** A folder next to the project, where nothing of the project may land. */
@@ -148,5 +150,23 @@ describe('init runs in the directory of a project only', () => {
 
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('init does not run in the root of the file system');
+  });
+});
+
+describe.skipIf(process.platform === 'win32')('the root of the project, resolved once for every file of a plan', () => {
+  it('judges the files of a project reached through a link to it against its real path', () => {
+    const real = tempDir('real-root');
+    const reached = path.join(tempDir('linked-root'), 'project');
+
+    fs.symlinkSync(real, reached);
+
+    const root = realRootOf(reached);
+
+    expect(root).toBe(fs.realpathSync(real));
+    expect(leavingProject(root, path.join(reached, 'src/main.ts'))).toBeUndefined();
+
+    expect(leavingProject(root, path.join(reached, '../elsewhere.ts'))).toEqual({
+      to: path.join(path.dirname(reached), 'elsewhere.ts'),
+    });
   });
 });
