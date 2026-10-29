@@ -12,13 +12,18 @@ export interface ReadField extends MessageField {
   readonly from: 'params' | 'body';
 }
 
+/** A field of the message the route leaves to a `TODO(domain)`, and where the request carries it. */
+export interface UnreadField extends MessageField {
+  readonly from: 'params' | 'body' | 'request';
+}
+
 /**
  * How a route builds its message from the request: the fields it reads, in the order of the
  * constructor, up to the first it cannot read, and those it leaves to a `TODO(domain)`.
  */
 export interface MessagePlan {
   readonly read: readonly ReadField[];
-  readonly unread: readonly MessageField[];
+  readonly unread: readonly UnreadField[];
 }
 
 const KINDS: readonly string[] = ['string', 'number', 'boolean'];
@@ -44,7 +49,7 @@ export function messagePlan(validation: string, endpoint: Endpoint, useCase: Use
     const readField = readFieldOf(field, endpoint);
 
     if (readField === undefined) {
-      return { read, unread: useCase.fields.slice(index) };
+      return { read, unread: useCase.fields.slice(index).map((unread) => unreadFieldOf(unread, endpoint)) };
     }
 
     read.push(readField);
@@ -65,6 +70,15 @@ function readFieldOf(field: MessageField, endpoint: Endpoint): ReadField | undef
   }
 
   return carriesBody(endpoint.method) ? { ...field, kind, from: 'body' } : undefined;
+}
+
+/** A field named after a path parameter is in the path, whatever its type; the others in the body, when there is one. */
+function unreadFieldOf(field: MessageField, endpoint: Endpoint): UnreadField {
+  if (endpoint.parameters.includes(field.name)) {
+    return { ...field, from: 'params' };
+  }
+
+  return { ...field, from: carriesBody(endpoint.method) ? 'body' : 'request' };
 }
 
 function isKind(type: string): type is FieldKind {

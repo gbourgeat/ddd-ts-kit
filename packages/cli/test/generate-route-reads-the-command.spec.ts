@@ -114,11 +114,50 @@ describe('generate route after a command whose fields it cannot all read', () =>
       '    reason: z.string(),\n    // TODO(domain): declare what the client sends for `period` (BillingPeriod), `note` (string, optional)',
     );
 
-    expect(controller).toContain(
-      'new RefundInvoiceCommand(request.actor, request.params.invoiceId, request.body.reason)',
+    // The call keeps the arity of the constructor: the type checker stops at the field to fill, which the TODO names.
+    const period =
+      '/* TODO(domain): read `period` (BillingPeriod) from the body where its schema declares it */ undefined';
+
+    const note =
+      '/* TODO(domain): read `note` (string, optional) from the body where its schema declares it */ undefined';
+
+    const spec = read(root, SPEC);
+
+    expect(controller).toContain('request.body.reason,');
+    expect(controller).toContain(`${period},`);
+    expect(controller).toContain(`${note},`);
+    expect(controller).toContain('TODO(domain): build the command from `request` (body, params)');
+    expect(spec).toContain(period);
+    expect(spec).toContain(note);
+  });
+
+  it('says that a path parameter of another type than a string is read from the path, never sent in the body', () => {
+    const root = refundIn(
+      ['--validation', 'zod'],
+      ['actor: Actor', 'readonly invoiceId: string', 'readonly version: number'],
     );
 
-    expect(controller).toContain('TODO(domain): build the command from `request` (body, params)');
+    const result = cli(
+      root,
+      'generate',
+      'route',
+      'billing',
+      'RefundInvoice',
+      '--method',
+      'POST',
+      '--path',
+      '/invoices/:invoiceId/versions/:version/refund',
+    );
+
+    expect(result.code, result.stderr).toBe(0);
+
+    const controller = read(root, CONTROLLER);
+
+    expect(controller).toContain(
+      '/* TODO(domain): read `version` (number) from the path parameter converted from its text */ undefined',
+    );
+
+    expect(controller).not.toContain('declare what the client sends for `version`');
   });
 
   it('leaves the message to the request mapper when the route has one', () => {

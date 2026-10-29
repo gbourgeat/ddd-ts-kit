@@ -1,6 +1,6 @@
 import type { RenderContext } from '../../../templating';
 import type { Scope } from '../../scope';
-import type { MessageField } from './message-fields-of';
+import { describedField } from './described-field';
 import type { FieldKind, MessagePlan, ReadField } from './message-plan';
 import type { Routed } from './plan-of';
 import { standardSchemaOf } from './standard-schema-of';
@@ -94,17 +94,15 @@ function dtoFieldOf(field: ReadField, index: number): string {
   return `${index === 0 ? '' : '\n'}  @${DECORATORS[field.kind]}()\n  ${field.name} = ${INITIAL[field.kind]};`;
 }
 
-/** What the generator could not read, said where the client sends it: the fields past the first it cannot read. */
+/** What the generator could not read in the body, said in its schema: the path and the request say theirs at the call. */
 function unreadTodo({ unread }: MessagePlan): string {
-  if (unread.length === 0) {
+  const sent = unread.filter((field) => field.from === 'body');
+
+  if (sent.length === 0) {
     return '';
   }
 
-  return `TODO(domain): declare what the client sends for ${unread.map(describedField).join(', ')}, with shape constraints only (types, formats, lengths), and pass it to the message; business rules stay in the domain.`;
-}
-
-function describedField({ name, type, optional }: MessageField): string {
-  return `\`${name}\` (${type ?? 'untyped'}${optional ? ', optional' : ''})`;
+  return `TODO(domain): declare what the client sends for ${sent.map(describedField).join(', ')}, with shape constraints only (types, formats, lengths), and pass it to the message; business rules stay in the domain.`;
 }
 
 function todoLines(todo: string, indent: string): string[] {
