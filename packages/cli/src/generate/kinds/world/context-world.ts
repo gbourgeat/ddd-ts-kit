@@ -4,12 +4,12 @@ import type { Scope } from '../../scope';
 export type ContextWorld = AbsentWorld | UnreadWorld | ReadWorld;
 
 /** No file: `generate test-world` writes one. */
-export interface AbsentWorld {
+interface AbsentWorld {
   readonly kind: 'absent';
 }
 
 /** A file the generator could not read: written or rewritten by hand, never replaced on its advice. */
-export interface UnreadWorld {
+interface UnreadWorld {
   readonly kind: 'unread';
   /** What it looked for and did not find: `` `export function aBillingWorld` ``. */
   readonly looksFor: string;
