@@ -4,7 +4,7 @@ import type { Glossary } from '../check/language/parse-glossary';
 import { parseGlossary } from '../check/language/parse-glossary';
 import { technicalWordsOf } from '../check/language/technical-words-of';
 import { unknownWords } from '../check/language/unknown-words';
-import { generateArguments } from '../commands/generate';
+import { generateArguments } from '../generate/generate-arguments';
 import { findKind } from '../generate/find-kind';
 import type { HeardName } from '../generate/language-probe';
 import { toName } from '../naming';
