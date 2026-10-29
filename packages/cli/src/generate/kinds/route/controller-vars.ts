@@ -3,6 +3,8 @@ import type { Scope } from '../../scope';
 import { controllerImports, type ControllerImports } from './controller-imports';
 import type { ControllerPlan } from './controller-plan';
 import { controllerTypes, type ControllerTypes } from './controller-types';
+import type { MessagePlan } from './message-plan';
+import { planOf } from './plan-of';
 import { routeVars } from './route-vars';
 import { sharesSchemas } from './shares-schemas';
 
@@ -11,13 +13,14 @@ export function controllerVars(scope: Scope, plan: ControllerPlan): RenderContex
   const types = controllerTypes(scope, plan);
   const imports = controllerImports(scope, plan);
   const { useCase, withMapper, withSerializer } = plan;
-  const readsRequest = useCase.isProtected || withMapper;
+  const reading = planOf(scope, plan, withMapper);
+  const readsRequest = useCase.isProtected || withMapper || reading.read.length > 0;
 
   return {
-    ...routeVars(scope, plan),
+    ...routeVars(scope, plan, reading),
     ...declarationVars(scope, plan, readsRequest),
     ...neighbourVars(scope, plan),
-    ...handleVars(plan, types, readsRequest),
+    ...handleVars(plan, { types, reading }, readsRequest),
     mapper: withMapper,
     serializer: withSerializer,
     imports: lines(controllerFileImports(plan, imports)),
@@ -29,10 +32,11 @@ export function controllerVars(scope: Scope, plan: ControllerPlan): RenderContex
 /** What `handle` reads, sends and answers. */
 function handleVars(
   { useCase, withMapper }: ControllerPlan,
-  types: ControllerTypes,
+  { types, reading }: { readonly types: ControllerTypes; readonly reading: MessagePlan },
   readsRequest: boolean,
 ): RenderContext {
-  const message = `new ${useCase.message}(${useCase.isProtected ? 'request.actor' : ''})`;
+  const passed = reading.read.map((field) => `request.${field.from}.${field.name}`);
+  const message = `new ${useCase.message}(${[...(useCase.isProtected ? ['request.actor'] : []), ...passed].join(', ')})`;
   const answers = declaresAnswer(useCase, types);
 
   return {

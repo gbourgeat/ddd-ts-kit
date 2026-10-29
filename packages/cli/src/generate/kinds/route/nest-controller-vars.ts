@@ -88,7 +88,6 @@ function methodVars({ name, useCase }: ControllerPlan, types: ControllerTypes): 
       ...(useCase.isProtected ? ['@CurrentActor() actor: Actor'] : []),
     ].join(', '),
     nestConstructor: `@Inject(${busType}) private readonly ${useCase.isQuery ? 'queries' : 'commands'}: ${busType}`,
-    nestMessage: `new ${useCase.message}(${useCase.isProtected ? 'actor' : ''})`,
   };
 }
 

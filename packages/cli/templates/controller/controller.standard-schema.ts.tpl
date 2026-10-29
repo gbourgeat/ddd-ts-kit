@@ -21,10 +21,20 @@ const anyObject: StandardSchemaV1<unknown, Record<string, unknown>> = {
 };
 
 {{/if}}
+{{#if route.writesParams}}
+{{route.paramsDeclaration}}
+
+{{/if}}
 {{#if route.hasBody}}
+{{#if route.writesBody}}
+{{route.bodyDeclaration}}
+
+{{/if}}
+{{#unless route.writesBody}}
 // TODO(domain): replace `anyObject` by the schema of "{{name.words}}" written with your Standard Schema library (shape constraints only; business rules stay in the domain) and describe it in the JSON Schema next to it.
 const body = standardSchema(anyObject, { type: 'object' });
 
+{{/unless}}
 {{/if}}
 {{#if route.ownAccepted}}
 const acceptedShape: StandardSchemaV1<unknown, { readonly id: string }> = {
@@ -82,7 +92,9 @@ export class {{name.pascal}}Controller {
   {{#if route.isQuery}}
   async handle({{route.requestParam}}): Promise<{{route.answerType}}> {
     {{#unless route.mapper}}
+    {{#unless route.readsMessage}}
     // TODO(domain): build the query from `request` (params, query string); the actor is already there.
+    {{/unless}}
     {{/unless}}
     {{#if route.serializer}}
     return this.serializer.serialize(await this.{{route.bus}}.execute({{route.message}}));
@@ -98,7 +110,9 @@ export class {{name.pascal}}Controller {
   {{#if route.returnsId}}
   async handle({{route.requestParam}}): Promise<{{route.acceptedType}}> {
     {{#unless route.mapper}}
+    {{#unless route.readsMessage}}
     // TODO(domain): build the command from `request` (body, params); the actor is already there.
+    {{/unless}}
     {{/unless}}
     const id = await this.{{route.bus}}.execute({{route.message}});
 
@@ -108,7 +122,9 @@ export class {{name.pascal}}Controller {
   {{#if route.returnsNothing}}
   async handle({{route.requestParam}}): Promise<void> {
     {{#unless route.mapper}}
+    {{#unless route.readsMessage}}
     // TODO(domain): build the command from `request` (body, params); the actor is already there.
+    {{/unless}}
     {{/unless}}
     await this.{{route.bus}}.execute({{route.message}});
   }

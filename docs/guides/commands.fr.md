@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:01a94c2753b469cf -->
+<!-- translation-of: commands.md sha256:9889898a9f5b8011 -->
 
 # Quelle commande, quand
 
@@ -61,6 +61,13 @@ src/contexts/ordering/test/unit/order.aggregate.spec.ts:33  it.todo  records the
 ```
 
 La tranche est finie quand `todo ordering` n'en liste plus rien.
+
+La route lit la commande qu'elle appelle : remplissez le constructeur de `PlaceOrderCommand` avant
+`generate route`, et la route écrit son schéma de corps, l'appel
+`new PlaceOrderCommand(request.actor, request.body.customerId, ...)` et une *spec* qui envoie un
+corps valide à partir de ces champs, une chaîne, un nombre ou un booléen chacun (un paramètre du
+chemin est lu dans le chemin). Un champ d'un autre type, le `readonly string[]` des produits par
+exemple, reste un `TODO(domain)` du schéma et de l'appel.
 
 ## Démarrer un projet
 

@@ -52,7 +52,8 @@ export const fileUploadKind: Kind = {
 
     const flags = { ...request.flags, method: request.flags.method ?? 'POST', command: true, query: false };
     const endpoint = parseEndpoint(flags);
-    const useCase = findUseCase(scope, name, flags);
+    // The text fields of an upload are read by its own templates: the route does not read the message from them.
+    const useCase = { ...findUseCase(scope, name, flags), fields: [] };
 
     const plan = planController(scope, { name, endpoint, useCase });
 

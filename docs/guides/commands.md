@@ -59,6 +59,13 @@ src/contexts/ordering/test/unit/order.aggregate.spec.ts:33  it.todo  records the
 
 The slice is finished when `todo ordering` no longer lists anything of it.
 
+The route reads the command it calls: fill the constructor of `PlaceOrderCommand` before
+`generate route`, and the route writes its body schema, the call
+`new PlaceOrderCommand(request.actor, request.body.customerId, ...)` and a spec that sends a valid
+body from those fields, a string, a number or a boolean each (a path parameter is read from the
+path). A field of another type, the `readonly string[]` of the products for one, stays a
+`TODO(domain)` of the schema and of the call.
+
 ## Start a project
 
 | Command or skill | Does | When | Produces | Then |

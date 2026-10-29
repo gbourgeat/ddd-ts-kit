@@ -5,6 +5,11 @@ import type { Scope } from '../../scope';
 import { dtoClasses } from './dto-classes';
 import { sharesSchemas } from './shares-schemas';
 import { sampleParams } from './sample-params';
+import type { MessagePlan } from './message-plan';
+import { messageVars } from './message-vars';
+import { planOf } from './plan-of';
+import { writesBodyOf } from './writes-body-of';
+import { writesParamsOf } from './writes-params-of';
 import { specVars } from './spec-vars';
 import { successStatus } from './success-status';
 import type { Endpoint } from './endpoint';
@@ -19,8 +24,12 @@ export interface RouteParts {
   readonly useCase: UseCase;
 }
 
-/** What the templates of a route read: its endpoint, the use case it calls and how the stack validates. */
-export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts): RenderContext {
+/**
+ * What the templates of a route read: its endpoint, the use case it calls, how the stack validates
+ * and the fields of the message it reads, unless a request mapper builds the message.
+ */
+export function routeVars(scope: Scope, parts: RouteParts, reading = planOf(scope, parts, false)): RenderContext {
+  const { name, endpoint, useCase } = parts;
   const status = successStatus(endpoint, useCase);
   const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
   const { config, context } = scope;
@@ -37,19 +46,19 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
     ...acceptedVars(useCase, shared),
     returnsNothing: !useCase.isQuery && !useCase.returnsId,
     hasBody,
-    usesAnyObject: hasBody || useCase.isQuery,
-    usesSchema: hasBody || useCase.isQuery || (useCase.returnsId && !shared),
+    ...schemaVars(scope, parts, reading),
     dtoImports: dtoClasses(endpoint, useCase, shared)
       .map(
         (role) =>
           `import { ${name.pascal}${toName(role).pascal} } from '${inContext(`presentation/http/${name.kebab}-${role}.dto.ts`)}';`,
       )
       .join('\n'),
-    ...requestVars(scope, endpoint, hasBody),
+    ...requestVars(scope, endpoint, reading),
     ...busVars(useCase, inContext(`${useCase.messageFile}.ts`)),
     ...securityVars(scope, useCase),
     ...parameterVars(endpoint.parameters),
-    ...specVars({ name, endpoint, useCase, status }),
+    ...messageVars(scope, parts, reading),
+    ...specVars({ name, endpoint, useCase, status }, reading),
   };
 }
 
@@ -62,9 +71,27 @@ function acceptedVars(useCase: UseCase, shared: boolean): RenderContext {
   };
 }
 
-function requestVars(scope: Scope, { parameters }: Endpoint, hasBody: boolean): RenderContext {
+/** Whether the route declares schemas, and an object of any shape for the parts whose schema the generator leaves to the team. */
+function schemaVars(scope: Scope, { endpoint, useCase }: RouteParts, reading: MessagePlan): RenderContext {
+  const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
+  const shared = sharesSchemas(scope.config);
+
+  return {
+    usesAnyObject: (hasBody && !writesBodyOf(reading)) || useCase.isQuery,
+    usesSchema:
+      hasBody ||
+      useCase.isQuery ||
+      (useCase.returnsId && !shared) ||
+      writesParamsOf(scope.config.stack.validation, reading),
+  };
+}
+
+function requestVars(scope: Scope, { parameters, method }: Endpoint, reading: MessagePlan): RenderContext {
   const { validation } = scope.config.stack;
-  const typedParameters = parameters.length > 0 && TYPES_PARAMETERS.includes(validation);
+  const hasBody = ['POST', 'PUT', 'PATCH'].includes(method);
+
+  const typedParameters =
+    (parameters.length > 0 && TYPES_PARAMETERS.includes(validation)) || writesParamsOf(validation, reading);
 
   return {
     hasParams: parameters.length > 0,

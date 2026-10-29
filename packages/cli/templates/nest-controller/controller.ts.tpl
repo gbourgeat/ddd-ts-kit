@@ -25,7 +25,9 @@ export class {{name.pascal}}Controller {
   })
   {{#if route.isQuery}}
   async {{name.camel}}({{route.nestParameters}}): Promise<{{route.answerType}}> {
+    {{#unless route.readsMessage}}
     // TODO(domain): build the query from the parameters; the caller is already there.
+    {{/unless}}
     // TODO(domain): map the answer of the query to the public fields.
     await this.{{route.bus}}.execute({{route.nestMessage}});
 
@@ -34,7 +36,9 @@ export class {{name.pascal}}Controller {
   {{/if}}
   {{#if route.returnsId}}
   async {{name.camel}}({{route.nestParameters}}): Promise<{{route.acceptedType}}> {
+    {{#unless route.readsMessage}}
     // TODO(domain): build the command from the parameters (body, params); the caller is already there.
+    {{/unless}}
     const id = await this.{{route.bus}}.execute({{route.nestMessage}});
 
     return { id };
@@ -42,7 +46,9 @@ export class {{name.pascal}}Controller {
   {{/if}}
   {{#if route.returnsNothing}}
   async {{name.camel}}({{route.nestParameters}}): Promise<void> {
+    {{#unless route.readsMessage}}
     // TODO(domain): build the command from the parameters (body, params); the caller is already there.
+    {{/unless}}
     await this.{{route.bus}}.execute({{route.nestMessage}});
   }
   {{/if}}

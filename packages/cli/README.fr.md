@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:33e79f8ed887c7cd -->
+<!-- translation-of: README.md sha256:2029de335ff3ebde -->
 
 # ddd-ts-kit
 
@@ -913,6 +913,16 @@ Next, in this order: the language of the context first, then the business decisi
   `--authz rbac`, `--grant <role>` accorde la permission au rôle dans `platform/auth/roles/roles.ts`
   (le rôle rejoint `role.ts` s'il est nouveau) ; sans lui, une étape de `todos` dit que
   l'attribution reste à faire (`authz/granted`).
+- `route` lit le constructeur de sa commande ou de sa requête quand il déclare déjà ses champs,
+  après l'acteur : une chaîne, un nombre ou un booléen est lu dans le chemin quand la route nomme
+  un paramètre d'après lui (une chaîne), dans le corps sinon, et la route écrit le schéma du corps
+  dans la bibliothèque de la pile (`zod`, `class-validator`, `typebox`, un Standard Schema écrit à
+  la main pour le corps et les paramètres du chemin sous `standard-schema`), l'appel
+  `new CancelInvoiceCommand(request.actor, request.params.invoiceId, request.body.reason)` et une
+  *spec* qui envoie un corps valide et vérifie cette commande. La lecture s'arrête au premier champ
+  d'un autre type (un *value object*, une date, un objet imbriqué, un champ facultatif), qui reste
+  un `TODO(domain)` du schéma et de l'appel ; un *mapper* de requête (`--mapper`) construit le
+  message lui-même. Générez la commande, remplissez son constructeur, puis générez la route.
 - `route` remet `actorOf(context.principal)` à un cas d'usage protégé et pose `security` (le
   schéma de `--authn`, ou `false` pour un cas d'usage public). `integration-handler` porte
   `systemActor('<context>.<name>')` pour la commande qu'il construit ; derrière un *broker*, il
