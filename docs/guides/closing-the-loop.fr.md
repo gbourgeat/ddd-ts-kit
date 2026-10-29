@@ -1,5 +1,5 @@
 [English](closing-the-loop.md) · **Français**
-<!-- translation-of: closing-the-loop.md sha256:027b1aeaae6f7c54 -->
+<!-- translation-of: closing-the-loop.md sha256:62e99f04a46296c1 -->
 
 # Boucler la boucle : d'une métrique sortie de sa bande à la prochaine story
 
@@ -76,7 +76,7 @@ metrics:
 
 - **log** écrit la rupture là où l'équipe la lit, rien d'autre.
 - **diagnose** lance l'agent en lecture seule, avec les outils nommés et aucun autre : le dépôt
-  au *commit* déployé, `npx ddd-ts-kit describe <context> --json` pour ce que tient le
+  au *commit* déployé, `npx ddd-ts-kit describe <context>` pour ce que tient le
   contexte, le journal d'audit de la fenêtre par la route de recherche que la plateforme expose
   sous sa propre permission ([journal d'audit](../concepts/audit-trail.fr.md), appelée avec un
   jeton en lecture seule que l'exécution reçoit pour cela), les traces par identifiant de

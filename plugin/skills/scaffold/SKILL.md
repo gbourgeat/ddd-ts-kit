@@ -1,12 +1,10 @@
 ---
 name: scaffold
 description: >-
-  Creates ONE file of a ddd-ts-kit role from a template with `ddd-ts-kit generate`, with its
-  spec, fake and registration, then lists the places where business logic is expected. Use
-  whenever a single aggregate, entity, value object, domain event, error or service, port,
+  Use when one aggregate, entity, value object, domain event, error, service, port,
   repository, adapter, gateway, policy, job, background job, state machine, process manager,
-  event handler, builder, end-to-end spec or context is needed, instead of writing it by hand, or when the guard refuses a hand-written
-  file. For a whole feature use use-case; for events between contexts use integration-event.
+  event handler, builder, end-to-end spec or context is needed, or the guard refuses a
+  hand-written file.
 argument-hint: "<kind> <context> <Name> [options]"
 allowed-tools:
   - Read
@@ -22,7 +20,8 @@ allowed-tools:
 Requested: `$ARGUMENTS`
 
 Boilerplate is generated, never typed: the generator and the checker share one definition of
-the tree, so a generated file conforms by construction and costs no tokens.
+the tree, so a generated file conforms by construction and costs no tokens. A whole feature is
+skill `ddd-ts-kit:use-case`; events between contexts, skill `ddd-ts-kit:integration-event`.
 
 ## Procedure
 

@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:b376584f29433f34 -->
+<!-- translation-of: coding-agents.md sha256:6f7f06206378c231 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -55,6 +55,17 @@ son verdict) et `story-verifier` (vérification en lecture seule d'une *story* �
 un contexte neuf : il démarre l'application comme le font les tests de bout en bout, exerce les
 routes de la *story* et les deux flux les plus proches, et rend compte de ce qui ne correspond pas
 à la conception ou à une décision).
+
+La description de chaque skill dit quand s'en servir en 320 caractères au plus, et les
+vingt-six en prennent 6 500 au plus ensemble ; celle d'un agent, 400 au plus. Claude Code charge
+la liste des skills dans chaque session dans la limite de 1 % de la fenêtre de contexte, environ
+2 000 tokens sur une fenêtre de 200k, et au-delà retire les descriptions des skills les moins
+invoquées, qui ne se déclenchent alors plus sur leurs mots-clés. La liste porte aussi
+`ddd-ts-kit:<nom>` pour chaque entrée (environ 660 caractères pour les vingt-six), et ce texte
+technique compte environ 3,5 caractères par token : (6 500 + 660) / 3,5 font environ 2 050
+tokens si les vingt-six étaient listées, mais `bootstrap`, `fix`, `intent`, `pull-request`,
+`start` et `story`, lancées par l'utilisateur seul (`disable-model-invocation`), ne le sont pas, ce qui laisse les vingt autres à environ 1 600
+tokens. Un test du plugin (`node --test plugin/skills/descriptions.test.mjs`) tient ces limites.
 
 Le hook est la partie qui rend le reste contraignant. Dans un projet qui a un
 `ddd-ts-kit.config.json`, il rappelle la démarche et la carte des contextes au début de la
@@ -162,7 +173,7 @@ ligne.
 | `glossary` | le générateur refuse un nom que le glossaire ne tient pas ; `language/glossary-term`, `language/declared-vocabulary`, `language/no-technical-name` | |
 | `context-map` | `context/no-cycle`, `context/declared-relationship`, `context/published-language-only`, `context/published-language-is-a-contract`, la carte des contextes régénérée et comparée par `docs --check` | |
 | `bootstrap` | `init` écrit un projet vert sous `npm run verify` ; `config/valid` ; `doctor --strict` | |
-| `plan-slices` | `status`, `story-check` et `worker-scope --rows` lisent les lignes de `slices.md` et refusent une ligne inconnue ; `plan-waves` rejoue les commandes de génération des lignes et refuse un nom dont le glossaire ne définit pas les mots ; `verify-slice` | l'ordre des lignes est conseillé (`plan-waves`), jamais refusé |
+| `plan-slices` | `status`, `story-check` et `worker-scope --rows` lisent les lignes de `slices.md` et refusent une ligne inconnue ; `plan-waves` rejoue les commandes de génération des lignes et refuse un nom dont le glossaire ne définit pas les mots, toute commande que le générateur refuse, avec son refus sous la ligne, et une ligne qui s'appuie sur ce que génère une ligne qu'elle n'attend pas ; `verify-slice` | l'ordre des lignes est conseillé (`plan-waves`), jamais refusé |
 | `parallel-work` | la garde du *worker* (`.ddd-ts-kit/worker.json` : une écriture hors du contexte est refusée, par les outils d'édition et par le *shell*), `verify-merge`, `merge-trunk`, `status --workers` | |
 | `intent` | `story-scope --from` refuse une intention dont le statut n'est pas `accepted` ; le bloc `## Origin` de la *story*, que `story --gate close` exige | le contenu d'une intention est lu par des personnes, pas vérifié |
 | `story` | `story --gate build` et `--gate close`, la garde dans le *worktree* d'une *story* (pas de code avant la revue de conception et le verrou), `acceptance --lock`, `test/acceptance-black-box`, l'agent `acceptance-judge` | la passe de conception de `story-check` tient les noms, pas le comportement |

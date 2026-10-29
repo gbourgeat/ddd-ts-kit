@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:954683acce5992c4 -->
+<!-- translation-of: commands.md sha256:53dbfb01a768a00b -->
 
 # Quelle commande, quand
 
@@ -448,10 +448,15 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    stories the planned rows wait for, not done, in a section of their own, the merge order
                    and what runs before each merge (merge-trunk --to-land); a cycle, a dependency on an
                    unknown id or a row without owner is reported alone, and exits 1. Then replays the
-                   generator commands of the rows in a copy of the project, in the order of the waves,
-                   and reports without waves, exiting 1, each name whose words the glossary of its
-                   context does not define with the --term of its row and of the rows it waits for;
-                   the commands refused for another reason are listed, without failing
+                   generator commands of every open row in a copy of the project, in the order of the
+                   waves, those of other contexts too, and reports for the rows planned, without
+                   waves, exiting 1, each name whose words the glossary of its context does not define
+                   with the --term of its row and of the rows it waits for, each command the generator
+                   refuses for another reason (refused-command), its refusal and fix under the row, with
+                   the rows that generate what it builds on, and each command that builds on a file a
+                   row it does not wait for generates (missing-dependency); a row in progress, whose
+                   commands may have run and whose worker may have added a term, counts for none, its
+                   refusals listed apart
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left

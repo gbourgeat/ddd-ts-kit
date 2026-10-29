@@ -1,13 +1,10 @@
 ---
 name: testing
 description: >-
-  Writes readable, refactoring-proof tests for a ddd-ts-kit project. Given / when / then
-  for aggregates, real handlers through the test application with fakes, builders for test
-  data, worlds for the arrangement several specs share, contract suites shared by fakes and
-  adapters, end-to-end specs, the acceptance scenarios of a story written before its code.
-  Use when writing or reviewing a test, turning it.todo entries into tests, when a test needs
-  data setup or a shared arrangement, when tempted by vi.mock, vi.fn or a spy, when writing
-  or changing an acceptance scenario, or when a test/* rule is reported.
+  Use when writing or reviewing a test, turning it.todo into tests, when a test needs data
+  setup or a shared arrangement, when tempted by vi.mock, vi.fn or a spy, for an acceptance
+  scenario, or on a test/* rule. Given / when / then, fakes, builders, worlds, contract
+  suites, end-to-end.
 allowed-tools:
   - Read
   - Edit

@@ -1,11 +1,9 @@
 ---
 name: bootstrap
 description: >-
-  Chooses the stack by criteria and creates the project with the ddd-ts-kit CLI: config,
-  composition root, platform, database, Docker Compose, pipeline, agent rules, then one
-  bounded context per row of the strategic artefacts, with its glossary and its
-  relationships. Works in an empty directory or adopts an existing backend. Run by the user
-  only, with /ddd-ts-kit:bootstrap, usually as step 5 of /ddd-ts-kit:start.
+  Chooses the stack and creates the project with the ddd-ts-kit CLI: config, platform,
+  database, pipeline, contexts, in an empty directory or an existing backend. Run by the
+  user with /ddd-ts-kit:bootstrap.
 argument-hint: "[stack hints, for example: fastify prisma keycloak]"
 disable-model-invocation: true
 allowed-tools:

@@ -54,6 +54,17 @@ locked acceptance test, independently of the session that made it, and writes it
 the application as the end-to-end tests do, exercises the routes of the story and the two nearest
 flows, and reports what does not match the design or a decision).
 
+The description of each skill says when to use it in at most 320 characters, and the 26 take
+at most 6,500 together; an agent's, at most 400. Claude Code loads the listing of the skills into
+every session within 1% of the context window, about 2,000 tokens on a 200k window, and past it
+drops the descriptions of the skills invoked least, which then stop triggering on their keywords.
+The listing also carries `ddd-ts-kit:<name>` for each entry (about 660 characters for the 26),
+and this technical text runs at about 3.5 characters per token: (6,500 + 660) / 3.5 is about
+2,050 tokens if all 26 were listed, but `bootstrap`, `fix`, `intent`, `pull-request`, `start`
+and `story`, run by the user only (`disable-model-invocation`), are not, which leaves the 20
+others at about 1,600 tokens. A test of the plugin
+(`node --test plugin/skills/descriptions.test.mjs`) holds the limits.
+
 The hook is the part that makes the rest binding. In a project that has a
 `ddd-ts-kit.config.json` it reminds the workflow and the context map at session start, says
 when the installed packages are not the version the skills describe, refuses
@@ -147,7 +158,7 @@ rule id named here is unknown to the CLI, or when a skill has no row.
 | `glossary` | the generator refuses a name the glossary does not hold; `language/glossary-term`, `language/declared-vocabulary`, `language/no-technical-name` | |
 | `context-map` | `context/no-cycle`, `context/declared-relationship`, `context/published-language-only`, `context/published-language-is-a-contract`, the context map regenerated and compared by `docs --check` | |
 | `bootstrap` | `init` writes a project green under `npm run verify`; `config/valid`; `doctor --strict` | |
-| `plan-slices` | `status`, `story-check` and `worker-scope --rows` read the rows of `slices.md` and refuse an unknown one; `plan-waves` replays the generator commands of the rows and refuses a name whose words the glossary does not define; `verify-slice` | the order of the rows is advised (`plan-waves`), never refused |
+| `plan-slices` | `status`, `story-check` and `worker-scope --rows` read the rows of `slices.md` and refuse an unknown one; `plan-waves` replays the generator commands of the rows and refuses a name whose words the glossary does not define, any command the generator refuses, with its refusal under the row, and a row that builds on what a row it does not wait for generates; `verify-slice` | the order of the rows is advised (`plan-waves`), never refused |
 | `parallel-work` | the worker guard (`.ddd-ts-kit/worker.json`: a write outside the context is refused, by the editor tools and by the shell), `verify-merge`, `merge-trunk`, `status --workers` | |
 | `intent` | `story-scope --from` refuses an intent whose status is not `accepted`; the `## Origin` block of the story, which `story --gate close` requires | the content of an intent is read by people, not checked |
 | `story` | `story --gate build` and `--gate close`, the guard in the worktree of a story (no code before the design review and the lock), `acceptance --lock`, `test/acceptance-black-box`, the `acceptance-judge` agent | the design pass of `story-check` holds names, not behaviour |

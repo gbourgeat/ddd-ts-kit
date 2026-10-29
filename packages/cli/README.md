@@ -1305,15 +1305,47 @@ context as it stands plus the `--term` of the row and of the rows it waits for, 
 term a row it does not wait for adds is not counted, since that row may not be merged when this
 one is built. Each word it does not define (`undefined-word`) and each technical word no term
 holds (`technical-word`) is reported once per row, with the `--term` to add, without waves, and
-the command exits 1: a worker following that row as written would be refused. The commands the
-generator refused for another reason (a missing `--module`, an aggregate no row generates, an
-upstream not declared, a handler written by hand that an end-to-end spec needs) are listed after
-the waves under `Refused for another reason than a word when the plan was replayed`, without
-failing: the names they would introduce after that refusal are not judged. The replay costs about
-a tenth of a second per command. `--json` prints
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], notReplayed: [{ row, command, refusal }] }`,
+the command exits 1: a worker following that row as written would be refused. So is each command
+the generator refuses for another reason (`refused-command`: a missing `--module` in a context
+divided into modules, `--grant` on a project whose rights are not roles, an aggregate no row
+generates, an upstream not declared, an unknown flag), without waves and with exit 1, the refusal
+of the generator and its fix printed under the row: fix the row. The generator also says, while it
+replays a command, which files it builds on (the aggregate of `--aggregate`, the port of an
+adapter, the use case of a route, a route group, the route, the event handler or the job that
+starts the use case of an end-to-end spec, the `CONTEXT.md` of the context it writes in and of
+each upstream it declares, the declaration of an event) and which files it creates. A command
+that builds on a file a row it does not wait for generates, directly or not, is a
+`missing-dependency`, even though the replay, one row after the other in one copy, found the file:
+the worker of that row, on a branch of its own, would be refused (`#US5.02 ... builds on
+<file>, which #US5.01 generates: add US5.01 to its Depends on`). A command the generator refuses
+names those rows with its refusal instead, in its `prerequisite` and its `rows`: one problem per
+command. A command refused for what it
+builds on is run again once the whole plan has run, with `--dry-run` so that the copy stays as the
+plan left it and no rerun passes on what another wrote, and the files it then finds say which row
+generates what it needed, each file in one pass: a later row it does not wait for (`add <id> to its Depends on`, and
+that id in `rows`, as many ids as rows), a later row that waits for it (move the command that generates it to this row or
+to a row before it, rather than make a cycle), a later command of the same row (put it first), or
+none as the rows are written (add the command the fix names, or fix the refused row that would
+generate it); what it is refused for then, for another reason (a `--grant` once the aggregate is
+found) or for another file no row generates, is said too (`then:`, `nextRefusal`), so that fixing
+the order is not followed by another refusal. A row `in progress` is replayed, so that the rows after it
+find what it generates, but neither its names, nor its refusals, nor what it builds on are problems:
+its worker may have added the term a name needs on their branch, its commands may have run in the
+project already, and the generator refuses a second run of some of them (a
+port already bound to an adapter, a decision record whose number is taken); they are listed apart,
+with their fix, under `Refused in rows in progress, not counted`. A command whose files exist is
+otherwise skipped by the generator, not refused. The replay runs each command for real in the
+copy, never with `--dry-run`, so that the next command finds its files. With a context, the open
+rows of the other contexts are replayed too, in their waves (when the whole file can be ordered),
+so that a row finds what a row of another context it does not wait for generates and is told to
+wait for it; only the rows of its plan, its own and those they wait for, are judged and listed
+under `Refused in rows in progress`. A plan whose rows run no generator command makes no copy. The
+replay costs about a tenth of a second per command. `--json` prints
+`{ file, context, problems: [{ kind, rows, message, command?, refusal?, fix?, prerequisite?, nextRefusal?, builtOn? }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], started: [{ row, command, refusal, fix }] }`,
 `story` being `null` for a row whose id names none and `batch` `null` for a row the context asked
-for does not show.
+for does not show; `command`, `refusal`, `fix` and `prerequisite` are those of a `refused-command`,
+`fix`, `prerequisite` and `nextRefusal` (`{ refusal, fix, prerequisite }`, its `prerequisite` saying that no row generates the file it then lacks) `null` when there is none, `command` and `builtOn` those of a
+`missing-dependency`; `message` holds a problem on one line.
 
 ## acceptance
 

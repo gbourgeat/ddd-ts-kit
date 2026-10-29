@@ -1,5 +1,6 @@
 import type { Config } from '../config';
 import type { Workspace } from '../workspace';
+import type { PrerequisiteProbe } from './generator-probe';
 import type { LanguageProbe } from './language-probe';
 
 export interface KindFlags {
@@ -85,6 +86,8 @@ export interface KindFlags {
   readonly module?: string;
   /** No flag of the command line: hears the names to judge against the glossary instead of judging them (`plan-waves`). */
   readonly language?: LanguageProbe;
+  /** No flag of the command line: hears each file the command builds on, where it was found (`plan-waves`). */
+  readonly builtOn?: PrerequisiteProbe;
 }
 
 export interface KindRequest {

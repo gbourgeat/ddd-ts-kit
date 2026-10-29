@@ -1,4 +1,5 @@
-import { CliError } from '../cli-error';
+import { foundPrerequisite } from './found-prerequisite';
+import { MissingPrerequisite } from './missing-prerequisite';
 import type { Scope } from './scope';
 
 export interface Prerequisite {
@@ -12,11 +13,11 @@ export interface Prerequisite {
 export function requireFile(scope: Scope, prerequisite: Prerequisite): void {
   const target = `${scope.dir}/${prerequisite.file}`;
 
-  if (scope.ws.exists(target)) {
+  if (foundPrerequisite(scope, target)) {
     return;
   }
 
-  throw new CliError(
+  throw new MissingPrerequisite(
     `${prerequisite.what} does not exist in "${scope.context.kebab}" (${target}).`,
     `Create it first with \`${prerequisite.createdBy}\`.`,
   );

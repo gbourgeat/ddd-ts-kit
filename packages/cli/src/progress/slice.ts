@@ -12,6 +12,9 @@ export interface Slice {
   readonly dependsOn: readonly string[];
   /** `conductor`, the name of a context, or a person. */
   readonly owner: string;
-  /** `todo`, `in progress` or `done`. */
+  /** `todo`, `in progress` or `done`, the words of `SLICE_STATUS`. */
   readonly status: string;
 }
+
+/** The statuses of a row, as the plan-slices skill writes them. */
+export const SLICE_STATUS = { todo: 'todo', inProgress: 'in progress', done: 'done' } as const;

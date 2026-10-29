@@ -1,6 +1,7 @@
 import type { Progress, RemainingCount, SlicesProgress, StatusRow, UnclosedStory } from './progress';
+import { SLICE_STATUS } from './slice';
 
-const STATUS_ORDER = ['in progress', 'todo', 'done'];
+const STATUS_ORDER: readonly string[] = [SLICE_STATUS.inProgress, SLICE_STATUS.todo, SLICE_STATUS.done];
 
 /** Said when the project keeps no plan: where the recommended path starts. */
 const NO_PLAN =
@@ -30,7 +31,7 @@ function sliceLines(slices: SlicesProgress): string[] {
   ];
 
   const open = statuses
-    .filter((status) => status !== 'done')
+    .filter((status) => status !== SLICE_STATUS.done)
     .flatMap((status) => [`  ${status}`, ...slices.rows.filter((row) => row.status === status).map(rowLine)]);
 
   const owners = Object.entries(slices.byOwner).map(

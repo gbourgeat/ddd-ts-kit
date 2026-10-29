@@ -1,13 +1,9 @@
 ---
 name: parallel-work
 description: >-
-  Splits the planned slices between several agents or people so that they cannot collide.
-  One worker per bounded context, contracts and skeleton committed first, a git worktree per
-  worker, shared files touched by the conductor only and regenerated instead of merged, a
-  fixed merge order, and a short briefing per worker. Use when the user wants several
-  agents or developers to build at the same time, asks how to parallelise or share the
-  work, or before launching more than one context-builder agent. To order the work first
-  use plan-slices.
+  Use when the user wants several agents or developers to build at the same time, asks how
+  to parallelise or share the work, or before launching more than one context-builder agent.
+  One worker per bounded context, a git worktree each, contracts first.
 argument-hint: "[contexts to build in parallel]"
 allowed-tools:
   - Read
@@ -42,8 +38,8 @@ allowed-tools:
 Contexts asked for: `$ARGUMENTS`
 
 You are the conductor: you own the trunk, the shared files and the merges. Workers own one
-bounded context each. Input: `docs/architecture/slices.md`. Launch nothing before the owner
-approved the split.
+bounded context each. Input: `docs/architecture/slices.md` (skill `ddd-ts-kit:plan-slices` orders
+it). Launch nothing before the owner approved the split.
 
 ## 1. Decide whether it pays
 
@@ -76,8 +72,8 @@ puts the rows not done in waves (wave 1: every dependency done; wave n: after ea
 cuts each wave into batches of one owner and one or two rows on one aggregate, prints the
 `worker-scope` command of each batch, marks two batches of a wave likely to touch the same files
 (same aggregate: run them one after the other) or unknown (no aggregate named: read their rows
-before running them side by side), and gives the merge order. It refuses a cycle, an unknown id or a row without owner: fix
-`slices.md` first. Launch a wave's batches side by side, the next wave once they merged.
+before running them side by side), and gives the merge order. It refuses a cycle, an unknown id or a row without owner,
+a name the glossary does not define and a command the generator refuses: fix `slices.md` first. Launch a wave's batches side by side, the next wave once they merged.
 Before a wave, read `Rows another story waits for, not done`: a row of another story that no
 batch you launch and no open story (`npx ddd-ts-kit stories`) carries leaves its waiting rows
 blocked; plan it, or hold those rows back.
@@ -207,30 +203,21 @@ A report sorts its needs. A **blocking** one stops that row: do it in your workt
 worker bring the trunk in (`npx ddd-ts-kit merge-trunk`), then launch the next agent. A **note** waits for the merge of the
 branch (step 6): the run goes on.
 
-Each agent commits its rows. When the rows of a branch are committed: bring the trunk into the
-branch, `npx ddd-ts-kit merge-trunk --cwd <worktree>`, never `git merge` alone. It computes the
-merge from the newest commit of the branch the trunk holds (a first row already squash-merged, a
-branch it was stacked on), settles the derived files (the `package.json` of a client at the higher
-of both versions), generated regions and registries, the rows
-of `slices.md`, the drizzle-kit journal and the lockfile itself, and leaves each source or test
-hunk in a merge in progress with what each side did there (exit 1). Resolve each hunk keeping
-both sides, never by taking one side of a source file or a test (`-X theirs`, `-X ours`,
-`checkout --theirs` erase the other side without a conflict, and the guard refuses them to a
-sub-agent), `git add` it, then `npx ddd-ts-kit merge-trunk --continue`: it replays the
-migrations, regenerates, runs `verify-merge` on the result and commits only once no line, row
-or test is lost (a removal decided on purpose: `--continue --accept-lost`; `--abort` undoes, and restores the derived files the kit regenerated). On Prisma it also runs `npm run db:client` when the merge changed a schema, so the test database is current. When the trunk moved since the merge started, `--continue` says so: it concludes the commit of the first run, so run `merge-trunk` again after it.
-Under the sandbox, a trunk that changes the settings of the project (`.claude/settings.json`) or
-another path the session cannot write is the owner's merge: `merge-trunk` stops with nothing
-changed and exit 3, naming the paths; hand the owner the same command to run from a terminal
-outside the sandbox, and do not merge by hand or reset the worktree.
-A worker under the sandbox of the regulated profile cannot reach the database either: `db:migrate` and a spec that names a `DATABASE_URL` are run by the owner or the CI, not by the worker. Its working migration it generates itself: with `DATABASE_URL` unset, `db:generate` of Prisma and TypeORM runs on PostgreSQL in process (it exits 3 only when `DATABASE_URL` names a server that does not answer).
-Then one
-review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
-merged branch, then the branch merges or opens its pull request. The blocking findings of the
-review are fixed on the branch; each non-blocking one is settled at once or written, before the
-merge, as the `TODO(review): #<row id> <remark>` line the review gives, at its `file:line`, by you or the
-agent that fixes the branch, never left in the body of a pull request. `check --changed-since` sees
-the files of the branch only: a cycle, an unused export or a rule broken by what the trunk
+### Bring the trunk in
+
+Each agent commits its rows. Then bring the trunk into the branch: `npx ddd-ts-kit merge-trunk
+--cwd <worktree>`, resolve what it stops on keeping both sides, `--continue` (skill
+`ddd-ts-kit:quality-gate`, "Bring the trunk in").
+A worker under the sandbox of the regulated profile cannot reach the database: `db:migrate` and a spec that names a `DATABASE_URL` are run by the owner or the CI, not by the worker. Its working migration it generates itself: with `DATABASE_URL` unset, `db:generate` of Prisma and TypeORM runs on PostgreSQL in process (it exits 3 only when `DATABASE_URL` names a server that does not answer).
+
+### Review the batch
+
+Then one review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run
+verify` on the merged branch, then the branch merges or opens its pull request. The blocking
+findings of the review are fixed on the branch; each non-blocking one is settled at once or
+written, before the merge, as the `TODO(review)` line the review gives (skill
+`ddd-ts-kit:quality-gate`, "Review remarks"). `check --changed-since` sees the files of the
+branch only: a cycle, an unused export or a rule broken by what the trunk
 gained meanwhile shows only in `verify` on the whole tree. A host without the
 agents of the plugin (Codex) runs one session per worktree, its briefing as the first prompt:
 the guard does not hold that session to its context, the briefing and the review do. A person
@@ -255,15 +242,9 @@ second merge can conflict. For each branch:
    `--to-land`: the guard refuses it to a sub-agent;
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;
 3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
-   a slice merges with `TODO(review)` markers, but a story or a milestone is closed only when
-   `npx ddd-ts-kit story-check <code>` exits 0 (`status` names a story whose rows are all done
-   while markers of its own keep it open): each marker it says is the story's handled in a slice,
-   or dismissed by a decision record (`npx ddd-ts-kit generate adr "<title>"`, quoting the remark
-   without its marker), the marker deleted in the same commit. A marker belongs to the story of
-   the row its text names, else of the row the commit that wrote it names (its `Slice:` trailer);
-   one that belongs to no row blocks only when no other open story works in its context, and is
-   listed otherwise: settle it or name its row in it; `--strict` blocks on every marker of the
-   story's contexts;
+   a slice merges with `TODO(review)` markers, a story or a milestone closes once
+   `npx ddd-ts-kit story-check <code>` exits 0 (skill `ddd-ts-kit:quality-gate`, "Review
+   remarks");
 4. the other workers bring the trunk into their branch with `merge-trunk` before their next
    slice; a branch reused for its next row does the same, from where its first row landed.
 
