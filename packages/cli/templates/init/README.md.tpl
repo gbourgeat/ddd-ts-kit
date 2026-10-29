@@ -31,6 +31,11 @@ npm run db:migrate
 npm run dev
 ```
 
+`docker-compose.yml` publishes every port on `127.0.0.1` only: its accounts and passwords are
+for this machine, and a port published on every interface is open to the network, past the
+firewall of the host. To reach a service from another machine on purpose, write the address to
+listen on in its `ports` entry (`"0.0.0.0:5432:5432"`), with credentials of its own.
+
 {{#if persistence.hasDatabase}}
 Every migration is named `<timestamp>_<what-it-does>`: `npm run db:generate` refuses to run
 without a name, so two branches never write the same file, and `npm run check:arch` reports

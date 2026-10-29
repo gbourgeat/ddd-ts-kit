@@ -1,5 +1,7 @@
 # Local infrastructure. `npm run infra:up` starts it and waits until it is healthy;
 # add `--profile observability` to also get Jaeger{{#if authn.keycloak}}, `--profile identity` to get Keycloak{{/if}}{{#if errors.sentry}}, `--profile errors` to get GlitchTip{{/if}}. Ports come from .env (see .env.example).
+# Every port is published on 127.0.0.1 only: the credentials below are for this machine. To reach a service from another
+# machine on purpose, write the address to listen on in its entry ("0.0.0.0:5432:5432"), never with these credentials.
 name: {{project.name}}
 
 services:
@@ -11,7 +13,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
       POSTGRES_DB: ${POSTGRES_DB:-app}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:
@@ -30,7 +32,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-app}
       MYSQL_RANDOM_ROOT_PASSWORD: "yes"
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -47,8 +49,8 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-app}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-app}
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+      - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
       interval: 5s
@@ -74,7 +76,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     ports:
-      - "${KAFKA_PORT:-9092}:9092"
+      - "127.0.0.1:${KAFKA_PORT:-9092}:9092"
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 5s
@@ -88,7 +90,7 @@ services:
     image: nats:2.15.0-alpine
     command: ["-js", "-sd", "/data", "-m", "8222"]
     ports:
-      - "${NATS_PORT:-4222}:4222"
+      - "127.0.0.1:${NATS_PORT:-4222}:4222"
     volumes:
       - nats-data:/data
     healthcheck:
@@ -109,7 +111,7 @@ services:
       memlock: -1
     command: ["--maxmemory=512mb", "--proactor_threads=2"]
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - {{redis.service}}-data:/data
     healthcheck:
@@ -173,7 +175,7 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_HEALTH_ENABLED: "true"
     ports:
-      - "${KEYCLOAK_PORT:-8080}:8080"
+      - "127.0.0.1:${KEYCLOAK_PORT:-8080}:8080"
     volumes:
       - ./docker/keycloak:/opt/keycloak/data/import:ro
     healthcheck:
