@@ -41,7 +41,12 @@ export function messageVars(scope: Scope, routed: Routed, plan: MessagePlan): Re
   const { name, useCase } = routed;
   const { validation } = scope.config.stack;
   const body = plan.read.filter((field) => field.from === 'body');
-  const params = plan.read.filter((field) => field.from === 'params');
+
+  // Every path parameter of the route, each a string as the path gives it: none is dropped from the request.
+  const params = routed.endpoint.parameters.map(
+    (parameter): ReadField => ({ name: parameter, type: 'string', optional: false, kind: 'string', from: 'params' }),
+  );
+
   const todo = unreadTodo(plan);
 
   const pass = (from: (field: ReadField) => string, actor: string): string =>

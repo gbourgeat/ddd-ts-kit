@@ -194,6 +194,34 @@ describe('generate route after a command whose constructor declares its fields, 
   });
 });
 
+describe('generate route on Standard Schema, for a route of more path parameters than its command reads', () => {
+  it('declares every path parameter of the route in its schema, so that none is dropped from the request', () => {
+    const root = refundIn(['--validation', 'standard-schema']);
+
+    const result = cli(
+      root,
+      'generate',
+      'route',
+      'billing',
+      'RefundInvoice',
+      '--method',
+      'POST',
+      '--path',
+      '/ledgers/:ledgerId/invoices/:invoiceId/refund',
+    );
+
+    expect(result.code, result.stderr).toBe(0);
+
+    const controller = read(root, `${BILLING}/presentation/http/ledgers/refund-invoice/refund-invoice.controller.ts`);
+
+    expect(controller).toContain(
+      'interface RefundInvoiceParams {\n  readonly ledgerId: string;\n  readonly invoiceId: string;\n}',
+    );
+
+    expect(controller).toContain("  required: ['ledgerId', 'invoiceId'],");
+  });
+});
+
 describe('generate route after a command or a query whose constructor declares its fields, written as functions', () => {
   it('hands each field of the input over, and a query reads its fields from the path', () => {
     const root = refundIn(['--validation', 'zod', '--routes', 'functions']);
