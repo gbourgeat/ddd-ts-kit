@@ -84,6 +84,12 @@ describe('generate <kind> --help', () => {
     expect(help).not.toContain('aggregate <context> <Name>');
   });
 
+  it('reads the kind past the value of a flag placed before it', () => {
+    const help = cli(tempDir('help-kind-after-flag'), 'generate', '--module', 'pricing', 'aggregate', '--help').stdout;
+
+    expect(help.split('\n')[1]).toMatch(/^ {2}ddd-ts-kit generate aggregate <context> <Name>/);
+  });
+
   it('says when a kind writes inside its context only and refuses --module', () => {
     const help = cli(tempDir('help-kind-inside'), 'generate', 'test-world', '--help').stdout;
 
@@ -117,6 +123,27 @@ describe('a refused option', () => {
 
     expect(refused.stderr).toContain('  fix: ddd-ts-kit check [paths...]');
     expect(refused.stderr).toContain('\n       ddd-ts-kit check --baseline write|prune');
+  });
+
+  it('is answered with the usage line of the kind under g, the kind read past the value of a flag', () => {
+    const refused = cli(
+      tempDir('refused-alias-option'),
+      'g',
+      '--module',
+      'pricing',
+      'vo',
+      'billing',
+      'Money',
+      '--modul',
+    );
+
+    expect(refused.stderr).toContain('  fix: ddd-ts-kit generate value-object <context|shared-kernel> <Name>');
+  });
+
+  it('names the alias g among the commands when the command is unknown', () => {
+    expect(cli(tempDir('unknown-command'), 'nothing-of-the-kind').stderr).toMatch(
+      /fix: Use one of: affected, init, generate, .*explain\. g is generate\./,
+    );
   });
 
   it('is answered with the usage line of the kind under generate, in JSON too', () => {

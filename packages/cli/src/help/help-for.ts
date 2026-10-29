@@ -9,18 +9,12 @@ import { referenceText } from './reference-text';
 import { stdoutJson } from '../json/stdout-json';
 
 /**
- * What `--help` answers, `g` read as `generate`: the command it follows alone, the kind alone after
+ * What `--help` answers, the alias of the command already resolved: the command it follows alone, the kind alone after
  * `generate <kind>`, the kinds as data for `generate --help --json`, and the whole reference without
- * a command, after `help`, or for a command the usage does not name. `help <command> ...` is
- * `<command> ... --help`.
+ * a command, after `help`, or for a command the usage does not name.
  */
-export function helpFor(asked: readonly string[]): string {
-  const argv = asked[0] === 'g' ? ['generate', ...asked.slice(1)] : asked;
-  const [command, ...rest] = argv;
-
-  if (command === 'help' && rest.length > 0) {
-    return helpFor(rest);
-  }
+export function helpFor(argv: readonly string[]): string {
+  const [command] = argv;
 
   const kind = kindAsked(argv);
   const json = argv.includes('--json');

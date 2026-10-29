@@ -13,7 +13,7 @@ export function usageFor(argv: readonly string[]): string | undefined {
     return `ddd-ts-kit generate ${usageOf(kind)}`;
   }
 
-  const lines = usageLinesOf(argv[0] === 'g' ? 'generate' : (argv[0] ?? '')).map((line) => line.trim());
+  const lines = usageLinesOf(argv[0] ?? '').map((line) => line.trim());
 
   return lines.length > 0 ? lines.join('\n') : undefined;
 }

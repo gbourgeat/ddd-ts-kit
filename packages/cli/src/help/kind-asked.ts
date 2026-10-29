@@ -1,9 +1,7 @@
-import { findKind } from '../generate/find-kind';
+import { kindIn } from '../commands/kind-in';
 import type { Kind } from '../generate/kind';
 
-/** The kind named after `generate` (or `g`): its first argument that is not a flag. */
+/** The kind a command line of `generate` names, read past the values of its flags; none for another command. */
 export function kindAsked([command, ...rest]: readonly string[]): Kind | undefined {
-  const name = rest.find((argument) => !argument.startsWith('-'));
-
-  return (command === 'generate' || command === 'g') && name !== undefined ? findKind(name) : undefined;
+  return command === 'generate' ? kindIn(rest) : undefined;
 }

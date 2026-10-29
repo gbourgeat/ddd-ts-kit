@@ -12,6 +12,8 @@ import { MODULE_OPTION, usageOf } from '../generate/usage-of';
 import { toName } from '../naming';
 import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
+import { GENERATE_OPTIONS as OPTIONS, TEXT, type GenerateOption } from './generate-options';
+import { kindIn } from './kind-in';
 import type { Io } from './io';
 import type { Command } from './command';
 import { printReport } from './print-report';
@@ -21,7 +23,7 @@ export const generateCommand: Command = (argv, io) => generate(argv, io);
 
 /** `generate`, and with a probe of the language, the same command hearing its names instead of judging them. */
 export function generate(argv: readonly string[], io: Io, language?: LanguageProbe): number {
-  const asked = findKind(argv.find((argument) => !argument.startsWith('-')) ?? '');
+  const asked = kindIn(argv);
   const args = Arguments.parse(argv, optionsOf(asked));
   const [kindName, ...rest] = args.positionals;
   const kind = requestedKind(kindName, rest);
@@ -58,65 +60,8 @@ export function generate(argv: readonly string[], io: Io, language?: LanguagePro
   return printReport(io, args, ws.commit(args.flag('dry-run')));
 }
 
-const TEXT = { type: 'string' } as const;
-const SWITCH = { type: 'boolean', default: false } as const;
-const TEXTS = { type: 'string', multiple: true } as const;
-
-/** Every flag a kind may take; each kind reads the ones it knows. */
-const OPTIONS = {
-  classification: TEXT,
-  purpose: TEXT,
-  preset: TEXT,
-  upstream: TEXTS,
-  term: TEXTS,
-  value: TEXTS,
-  transition: TEXTS,
-  code: TEXT,
-  aggregate: TEXT,
-  method: TEXT,
-  path: TEXT,
-  command: SWITCH,
-  query: SWITCH,
-  version: TEXT,
-  'allow-name': SWITCH,
-  permission: TEXT,
-  grant: TEXT,
-  public: SWITCH,
-  'tenant-scoped': SWITCH,
-  personal: TEXT,
-  subject: TEXT,
-  erasure: TEXT,
-  retention: TEXT,
-  search: SWITCH,
-  kind: TEXT,
-  decorators: SWITCH,
-  global: SWITCH,
-  deviation: TEXT,
-  phase: TEXT,
-  event: TEXT,
-  group: TEXT,
-  prefix: TEXT,
-  role: TEXT,
-  mapper: SWITCH,
-  serializer: SWITCH,
-  cache: TEXT,
-  module: TEXT,
-  'event-sourced': SWITCH,
-  creates: SWITCH,
-  birth: TEXT,
-  reason: TEXT,
-  number: TEXT,
-  name: TEXT,
-  every: TEXT,
-  cron: TEXT,
-  'time-zone': TEXT,
-  'dry-run': SWITCH,
-  force: SWITCH,
-  'local-only': SWITCH,
-};
-
 /** One flag may be a switch for a kind and a text for another: `--command` of a route, `--command <UseCase>` of a job. */
-function optionsOf(kind: Kind | undefined): Record<string, typeof TEXT | typeof SWITCH | typeof TEXTS> {
+function optionsOf(kind: Kind | undefined): Record<string, GenerateOption> {
   return { ...OPTIONS, ...Object.fromEntries((kind?.textFlags ?? []).map((flag) => [flag, TEXT])) };
 }
 

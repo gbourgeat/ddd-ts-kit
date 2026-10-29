@@ -49,7 +49,6 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   affected: affectedCommand,
   init: initCommand,
   generate: generateCommand,
-  g: generateCommand,
   list: listCommand,
   describe: describeCommand,
   status: statusCommand,
@@ -94,7 +93,11 @@ const processIo: Io = {
   err: (text) => void process.stderr.write(`${text}\n`),
 };
 
-export function run(argv: readonly string[], io: Io = processIo): number {
+/** The other names of a command, resolved once: the help, the refusals and the command read the canonical one. */
+const ALIASES: Readonly<Record<string, string>> = { g: 'generate' };
+
+export function run(asked: readonly string[], io: Io = processIo): number {
+  const argv = canonical(asked);
   const [command, ...rest] = argv;
 
   try {
@@ -137,6 +140,13 @@ function refused(error: CliError, argv: readonly string[], io: Io): number {
   return error.exitCode;
 }
 
+/** The command line with its command under its canonical name; `help <command> ...` read as `<command> ... --help`. */
+function canonical(asked: readonly string[]): string[] {
+  const [first, ...rest] = asked[0] === 'help' && asked.length > 1 ? [...asked.slice(1), '--help'] : asked;
+
+  return first === undefined ? [] : [ALIASES[first] ?? first, ...rest];
+}
+
 function commandNamed(name: string): Command {
   const command = COMMANDS[name];
 
@@ -144,5 +154,10 @@ function commandNamed(name: string): Command {
     return command;
   }
 
-  throw new CliError(`Unknown command "${name}".`, `Use one of: ${Object.keys(COMMANDS).join(', ')}.`);
+  const aliases = Object.entries(ALIASES).map(([alias, of]) => ` ${alias} is ${of}.`);
+
+  throw new CliError(
+    `Unknown command "${name}".`,
+    `Use one of: ${Object.keys(COMMANDS).join(', ')}.${aliases.join('')}`,
+  );
 }
