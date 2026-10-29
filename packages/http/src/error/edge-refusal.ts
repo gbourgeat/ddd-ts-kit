@@ -1,3 +1,4 @@
+import { codeOfStatus } from './code-of-status';
 import { statusTitle } from './status-title';
 
 /**
@@ -29,7 +30,7 @@ export function bodyTooLarge(limit: number | undefined): EdgeRefusal {
   return {
     status: CONTENT_TOO_LARGE,
     title: statusTitle(CONTENT_TOO_LARGE),
-    code: 'BODY_TOO_LARGE',
+    code: codeOfStatus(CONTENT_TOO_LARGE),
     detail: `The body is larger than ${beyond}.`,
   };
 }

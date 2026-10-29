@@ -1,5 +1,6 @@
 import { identifyError, type Logger } from '@ddd-ts-kit/kernel';
 import type { RawHeaders } from '../route/raw-headers';
+import { codeOfStatus } from './code-of-status';
 import { type EdgeAnswer, edgeAnswer } from './edge-answer';
 import { bodyTooLarge, type EdgeRefusal, MALFORMED_BODY } from './edge-refusal';
 import { INTERNAL_ERROR_CODE } from './internal-error-code';
@@ -32,8 +33,8 @@ const INTERNAL: EdgeRefusal = { status: 500, title: statusTitle(500), code: INTE
  * The answer to an error the framework raised before a route of the kit ran, or a middleware
  * passed on: a body refused by its parser, the failure of a middleware. A body that is not JSON
  * is `MALFORMED_BODY` (400), an error with the status 413 `BODY_TOO_LARGE`, another error that
- * carries a client status (`status` or `statusCode`, 4xx) that status, its code read from its
- * title (`NOT_FOUND`), anything else `INTERNAL_ERROR` (500). The message of the error is never
+ * carries a client status (`status` or `statusCode`, 4xx) that status, its code the one the kit
+ * gives it (`NOT_FOUND`, `VALIDATION_FAILED` for 422), anything else `INTERNAL_ERROR` (500). The message of the error is never
  * answered: a parser quotes the body in it.
  */
 export function answeredEdgeError(
@@ -70,7 +71,7 @@ function refusalOf(error: unknown): EdgeRefusal {
     return bodyTooLarge(numberAt(error, 'limit'));
   }
 
-  return { status, title: statusTitle(status), code: codeOfTitle(statusTitle(status)) };
+  return { status, title: statusTitle(status), code: codeOfStatus(status) };
 }
 
 /** The `type` body-parser gives its errors, else the `code` of a Fastify error. */
@@ -98,9 +99,4 @@ function numberAt(error: unknown, key: string): number | undefined {
 
 function valueAt(error: unknown, key: string): unknown {
   return typeof error === 'object' && error !== null ? Reflect.get(error, key) : undefined;
-}
-
-/** `Not Found` as `NOT_FOUND`, `Unsupported Media Type` as `UNSUPPORTED_MEDIA_TYPE`: the code of the pipeline for that status. */
-function codeOfTitle(title: string): string {
-  return title.toUpperCase().replaceAll(' ', '_');
 }

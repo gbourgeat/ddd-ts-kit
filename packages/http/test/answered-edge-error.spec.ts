@@ -1,0 +1,53 @@
+import { describe, expect, it } from 'vitest';
+import { answeredEdgeError } from '../src/error/answered-edge-error';
+import { codeOfStatus } from '../src/error/code-of-status';
+import { DEFAULT_ERROR_MAPPING } from '../src/error/default-error-mapping';
+import { STATUSES } from '../src/error/statuses';
+
+/** An error a middleware raises with a status of its own, as http-errors and the frameworks build them. */
+function raised(fields: Readonly<Record<string, unknown>>): Error {
+  return Object.assign(new Error('a message that never reaches the answer'), fields);
+}
+
+const answered = (error: unknown) => answeredEdgeError(error, { 'x-request-id': 'req-1' }, {});
+
+describe('the code of a refusal at the edge', () => {
+  it.each([
+    [401, 'Unauthorized', 'UNAUTHORIZED'],
+    [404, 'Not Found', 'NOT_FOUND'],
+    [405, 'Method Not Allowed', 'METHOD_NOT_ALLOWED'],
+    [415, 'Unsupported Media Type', 'UNSUPPORTED_MEDIA_TYPE'],
+    [422, 'Unprocessable Content', 'VALIDATION_FAILED'],
+    [429, 'Too Many Requests', 'RATE_LIMITED'],
+  ])('is the code of the kit for %i, as the pipeline answers it', (status, title, code) => {
+    expect(answered(raised({ status })).problem).toEqual({
+      type: 'about:blank',
+      title,
+      status,
+      code,
+      requestId: 'req-1',
+    });
+  });
+
+  it('is the fallback of the table for a client status the table does not name', () => {
+    expect(answered(raised({ statusCode: 418 })).problem).toMatchObject({
+      status: 418,
+      title: 'Client Error',
+      code: 'BAD_REQUEST',
+    });
+  });
+});
+
+describe('the table of the statuses', () => {
+  it('gives each status the code the default mapping answers with that status', () => {
+    for (const [status, { code }] of Object.entries(STATUSES)) {
+      const mapped = DEFAULT_ERROR_MAPPING[code];
+
+      expect(mapped === undefined || mapped === Number(status), `${status} ${code}`).toBe(true);
+    }
+  });
+
+  it('falls back on a bad request below 500 and an internal error from 500', () => {
+    expect([codeOfStatus(499), codeOfStatus(599)]).toEqual(['BAD_REQUEST', 'INTERNAL_ERROR']);
+  });
+});
