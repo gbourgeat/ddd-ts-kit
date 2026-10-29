@@ -6,7 +6,7 @@ import { jsonAt } from './support/json-at';
 const HEADER =
   '| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |\n|---|---|---|---|---|---|---|---|\n';
 
-/** Two stories building in billing at once, and a shipping row waiting for the second wave of billing. */
+/** Two stories building in billing at once, and a shipping row waiting for the event of the second wave of billing. */
 const TWO_STORIES = `# Slices
 
 ## US1 Issue and settle invoices
@@ -14,7 +14,7 @@ const TWO_STORIES = `# Slices
 ${HEADER}| US1.01 | billing | skeleton | Invoice | \`generate aggregate billing Invoice\` then \`generate repository billing Invoice\` | | conductor | done |
 | US1.02 | billing | slice | Issue invoice | \`generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue\` | US1.01 | billing | todo |
 | US1.03 | billing | slice | Cancel invoice | \`generate command billing CancelInvoice --aggregate Invoice --permission invoice.cancel\` | US1.01 | billing | todo |
-| US1.04 | billing | slice | Pay invoice | \`generate command billing PayInvoice --aggregate Invoice --permission invoice.pay\` | US1.02 | billing | todo |
+| US1.04 | billing | slice | Pay invoice | \`generate command billing PayInvoice --aggregate Invoice --permission invoice.pay\` then \`generate integration-event billing Invoice Paid\` | US1.02 | billing | todo |
 
 ## US2 Know the customers
 
@@ -42,8 +42,12 @@ const TERMS = [
 let root: string;
 
 beforeAll(() => {
-  root = initProject('--context', 'billing:core', '--context', 'shipping:supporting');
+  root = initProject('--context', 'billing:core');
   cli(root, 'generate', 'aggregate', 'billing', 'Invoice', ...TERMS);
+
+  const upstream = ['--upstream', 'billing:published-language', '--term', 'Parcel=A package handed to a carrier'];
+
+  cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting', ...upstream);
   write(root, 'docs/architecture/slices.md', TWO_STORIES);
 });
 

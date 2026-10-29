@@ -48,6 +48,8 @@ function declaredUpstream(scope: Scope, upstream: string): string {
   if (
     scope.config.contexts[scope.context.kebab]?.upstreams.some((candidate) => candidate.context === upstream) === true
   ) {
+    scope.flags.builtOn?.(`${scope.config.contextsDir}/${upstream}/CONTEXT.md`);
+
     return upstream;
   }
 

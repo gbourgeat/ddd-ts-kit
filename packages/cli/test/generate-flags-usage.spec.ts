@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { COMMON_FLAGS } from '../src/commands/generate-options';
+import { COMMON_FLAGS } from '../src/generate/generate-options';
 import { KINDS } from '../src/generate/kinds';
 import { usageOf } from '../src/generate/usage-of';
 import { REPO_ROOT } from './helpers';
@@ -10,6 +10,9 @@ const SOURCES = path.join(REPO_ROOT, 'packages/cli/src');
 const KINDS_DIRECTORY = path.join(SOURCES, 'generate/kinds');
 const KIND_FLAGS = fs.readFileSync(path.join(SOURCES, 'generate/kind.ts'), 'utf8');
 
+/** The fields of `KindFlags` the probe of `plan-waves` gives in place of a flag: the names it hears, the files built on. */
+const PROBED = new Set(['language', 'builtOn']);
+
 /** The fields of `KindFlags`, each the reading of one flag of the command line, but the probe of `plan-waves`. */
 const FIELDS = new Set(
   [
@@ -17,7 +20,7 @@ const FIELDS = new Set(
       KIND_FLAGS.indexOf('export interface KindFlags'),
       KIND_FLAGS.indexOf('export interface KindRequest'),
     ).matchAll(/^\s+readonly (\w+)\??:/gm),
-  ].flatMap((match) => (match[1] === undefined || match[1] === 'language' ? [] : [match[1]])),
+  ].flatMap((match) => (match[1] === undefined || PROBED.has(match[1]) ? [] : [match[1]])),
 );
 
 /** The flag a field reads: `tenantScoped` is `--tenant-scoped`, `commandName` the `--command <UseCase>` of a job. */

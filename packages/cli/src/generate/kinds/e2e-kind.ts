@@ -112,8 +112,13 @@ function endpointOf(
   name: Name,
   file: string,
 ): (RenderContext & { readonly method: string; readonly path: string }) | undefined {
-  const { method, path, status, isProtected } =
-    functionRoute(scope.ws.read(file) ?? '') ?? controllerOf(scope, name) ?? {};
+  const route = functionRoute(scope.ws.read(file) ?? '');
+
+  if (route !== undefined) {
+    scope.flags.builtOn?.(scope.ws.placed(file));
+  }
+
+  const { method, path, status, isProtected } = route ?? controllerOf(scope, name) ?? {};
 
   if (method === undefined || path === undefined || status === undefined) {
     return undefined;
@@ -163,6 +168,8 @@ function controllerOf(scope: Scope, name: Name): Declared | undefined {
   if (route === undefined || response === undefined) {
     return undefined;
   }
+
+  scope.flags.builtOn?.(route.file);
 
   return {
     method: route.method,

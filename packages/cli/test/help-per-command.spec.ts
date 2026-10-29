@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMMON_FLAGS } from '../src/commands/generate-options';
+import { COMMON_FLAGS } from '../src/generate/generate-options';
 import { findKind } from '../src/generate/find-kind';
 import { KINDS } from '../src/generate/kinds';
 import { commandHelp } from '../src/help/command-help';

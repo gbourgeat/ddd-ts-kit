@@ -1,5 +1,6 @@
 import { CONFIG_FILE } from '../../config';
 import { CliError } from '../../cli-error';
+import { MissingPrerequisite } from '../missing-prerequisite';
 import { parseContextName, toName, type Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
@@ -84,10 +85,10 @@ function publisherOf(scope: Scope, eventType: string): Name {
   );
 }
 
-function undeclaredEvent(publisher: Name, eventType: string): CliError {
+function undeclaredEvent(publisher: Name, eventType: string): MissingPrerequisite {
   const [, aggregate = '', fact = ''] = eventType.split('.');
 
-  return new CliError(
+  return new MissingPrerequisite(
     `${publisher.kebab} declares no ${eventType} in its published language.`,
     `A projection applies an event through its declaration, @On(<definition>): create it first with \`ddd-ts-kit generate integration-event ${publisher.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}\`, then run the command again.`,
   );
