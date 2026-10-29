@@ -24,6 +24,33 @@ describe('what keeps a plan from being ordered', () => {
     ]);
   });
 
+  it('names a row whose id a command could not carry or whose context the config does not declare', () => {
+    const rows = [
+      { ...row('US1.02;id'), owner: 'billing' },
+      { ...row('US1.03'), context: 'billing$(touch /tmp/pwned)', owner: 'billing$(touch /tmp/pwned)' },
+      row('US1.04'),
+    ];
+
+    expect(planProblems(rows, rows, ['billing']).map(({ kind, rows: ids }) => [kind, ids])).toEqual([
+      ['bad-row', ['US1.02;id']],
+      ['bad-row', ['US1.03']],
+    ]);
+
+    expect(planProblems(rows, rows, ['billing'])[0]?.message).toContain('US1.02;id');
+  });
+
+  it('accepts the rows of a context that another row creates', () => {
+    const rows = [
+      { ...row('US1.01'), context: 'shipping', startWith: '`generate context shipping --classification supporting`' },
+      { ...row('US1.02', ['US1.01']), context: 'shipping' },
+    ];
+
+    expect(planProblems(rows, rows, ['billing'])).toEqual([]);
+    const alone = [{ ...row('US1.02'), context: 'shipping' }];
+
+    expect(planProblems(alone, alone, ['billing']).map(({ kind }) => kind)).toEqual(['bad-row']);
+  });
+
   it('names a cycle with every row of it, and nothing for a plan that can be ordered', () => {
     const cycle = [row('US1.01', ['US1.02']), row('US1.02', ['US1.01'])];
     const ordered = [row('US1.01'), row('US1.02', ['US1.01'])];

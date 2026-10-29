@@ -124,6 +124,8 @@ locked scenario changes only with its criterion. A criterion changed after the l
 scenario that did not match its criterion, is judged before it is locked again, by the
 `acceptance-judge` agent, which did not make the change: it compares the locked version, the
 new one, the criterion and the owner's answers, and writes a verdict for that very version.
+Deleting the lock does not get round it: with no lock file, `--lock` compares with the last one a
+commit holds and refuses a change that has no verdict.
 Each verdict is an amendment the report lists for the owner to validate. No agent makes a test
 pass by rewriting it: the guard lets a sub-agent only remove `pending(...)`, and only the judge
 writes a verdict. See [testing strategy](../concepts/testing-strategy.md) and
