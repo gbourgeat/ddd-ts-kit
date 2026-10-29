@@ -1,7 +1,7 @@
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
-import { mountExpress } from '@ddd-ts-kit/http/express';
+import { mountExpress, problemErrorHandler } from '@ddd-ts-kit/http/express';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/node';
@@ -27,12 +27,14 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), the signed file links before any body parser (with a storage the application serves),
- * the routes of the contexts, then the pages of the contract (with documentation on).{{#if rpc.orpc}} The same
+ * the routes of the contexts, then the pages of the contract (with documentation on), and last the
+ * problem of a request refused before its route: a body that is not JSON or too large, a failed
+ * middleware.{{#if rpc.orpc}} The same
  * routes are served as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}{{#if rpc.trpc}} The same
  * routes are served as tRPC procedures under /trpc, for the typed client of the contract.{{/if}}
  */
@@ -67,6 +69,8 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{#unless docs.any}}
   mountExpress(app, served.routes, served.boundary);
 {{/unless}}
+  // Instead of the final handler of Express, which answers HTML and writes the error, body included, to stderr.
+  app.use(problemErrorHandler({ logger: served.logger }));
 
   const server = await listen(app, config.port);
 

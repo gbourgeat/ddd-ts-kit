@@ -43,7 +43,7 @@ describe('a body Hono cannot read as JSON', () => {
     });
 
     expect(response.status).toBe(400);
-    expect(response.headers.get('content-type')).toBe('application/problem+json');
+    expect(response.headers.get('content-type')).toBe('application/problem+json; charset=utf-8');
     expect(await response.json()).toMatchObject({ status: 400, code: 'MALFORMED_BODY', requestId: 'req-1' });
   });
 
@@ -74,7 +74,7 @@ describe('a body larger than Hono reads', () => {
     const response = await post(app, JSON.stringify({ sku: 'x'.repeat(64) }), { 'x-request-id': 'req-2' });
 
     expect(response.status).toBe(413);
-    expect(response.headers.get('content-type')).toBe('application/problem+json');
+    expect(response.headers.get('content-type')).toBe('application/problem+json; charset=utf-8');
     expect(await response.json()).toMatchObject({ status: 413, code: 'BODY_TOO_LARGE', requestId: 'req-2' });
   });
 

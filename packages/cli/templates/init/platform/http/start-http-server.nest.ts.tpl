@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { {{#if rpc.orpc}}type IncomingMessage, {{/if}}{{#if rpc.trpc}}type RequestListener, {{/if}}Server{{#if rpc.orpc}}, type ServerResponse{{/if}} } from 'node:http';
 import { NestFactory } from '@nestjs/core';
+import { ProblemExceptionFilter } from '@ddd-ts-kit/http/nest';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/node';
@@ -27,7 +28,7 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if routes.nest}} | 'controllers'{{/if}}{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if routes.nest}} | 'controllers'{{/if}}{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 {{#if cache.rateLimit}}
 
 /** The part of the incoming request and of its response the limiter and the probe need, whatever Nest runs on. */
@@ -42,7 +43,7 @@ interface Outgoing {
   end(body: string): void;
 }
 
-type Middleware = (request: Incoming, response: Outgoing, next: () => void) => void;
+type Middleware = (request: Incoming, response: Outgoing, next: (error?: unknown) => void) => void;
 {{/if}}
 
 /**
@@ -84,6 +85,9 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   });
 {{/unless}}
 
+  // A body Nest refuses, a path no route serves and a failed middleware are answered as problems, not with a message.
+  app.useGlobalFilters(new ProblemExceptionFilter(app.getHttpAdapter(), { logger: served.logger }));
+
 {{#if cache.rateLimit}}
   app.use(answeringReadiness(served));
   app.use(limitingEachCaller(served, config));
@@ -116,7 +120,7 @@ function answeringReadiness(served: Served): Middleware {
       response
         .writeHead(ready ? 200 : 503, { 'content-type': 'application/json' })
         .end(JSON.stringify({ status: ready ? 'up' : 'down' }));
-    });
+    }, next);
   };
 }
 
@@ -129,7 +133,7 @@ function limitingEachCaller(served: Served, config: AppConfig): Middleware {
       } else {
         response.writeHead(tooMany.status, tooMany.headers).end(tooMany.body);
       }
-    });
+    }, next);
   };
 }
 {{/if}}

@@ -4,7 +4,7 @@ import { serve, type ServerType } from '@hono/node-server';
 import { getConnInfo } from '@hono/node-server/conninfo';
 {{/if}}
 import { Hono } from 'hono';
-import { mountHono } from '@ddd-ts-kit/http/hono';
+import { mountHono, problemErrorHandler } from '@ddd-ts-kit/http/hono';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/fetch';
@@ -30,7 +30,7 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
@@ -41,6 +41,9 @@ type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | '
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = new Hono();
+
+  // A failed middleware is answered as a problem, not as a text with the error written to stderr.
+  app.onError(problemErrorHandler({ logger: served.logger }));
 
 {{#if cache.rateLimit}}
   answerReadiness(app, served);

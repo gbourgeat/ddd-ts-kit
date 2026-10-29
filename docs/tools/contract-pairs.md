@@ -228,17 +228,18 @@ pays for its container, is the one framework difference the runs agree on.
 ## Limits of each pair
 
 - **Express + zod.** `express.json()` must be installed; a body Express refuses (malformed JSON)
-  is answered by Express's own error handler, not as a problem. zod describes the input side by
-  default: a schema with defaults used as a response gets a second component (`Slot_2`) unless
-  it has its own id.
+  is answered as a problem only with `problemErrorHandler` of `@ddd-ts-kit/http/express` mounted
+  last, as the generated server does; without it, by Express's own error handler. zod
+  describes the input side by default: a schema with defaults used as a response gets a second
+  component (`Slot_2`) unless it has its own id.
 - **Fastify + TypeBox.** Fastify's own validation and serialization are not used: the routes
   carry no Fastify schema, TypeBox validates in the pipeline. TypeBox 1 (`typebox`) is recent and
   ESM only; `@sinclair/typebox` 0.34 is its predecessor and is not supported by the adapter.
   `Type.Ref` is not resolved: share a schema by nesting the schema built with an `$id`.
 - **Hono + zod.** Proven on Node only. The adapter reads the body as JSON itself, up to
   `bodyLimit` (1 MiB by default, Fastify's bound; Express stops at 100 kB): it answers a larger
-  body 413 (`BODY_TOO_LARGE`) and a malformed one 400 (`MALFORMED_BODY`), both as problems, where
-  Express and Fastify answer them with their own error handler. The raw request is `HonoRaw`, so
+  body 413 (`BODY_TOO_LARGE`) and a malformed one 400 (`MALFORMED_BODY`), both as problems, the
+  answers `problemErrorHandler` gives on Express and Fastify. The raw request is `HonoRaw`, so
   code that read `request.ip` of Express reads `getConnInfo(context)` of
   `@hono/node-server/conninfo`.
 - **NestJS + class-validator.** The legacy decorator mode, two containers' worth of concepts,

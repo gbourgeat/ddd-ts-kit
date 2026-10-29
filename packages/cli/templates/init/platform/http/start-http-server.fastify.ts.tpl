@@ -1,5 +1,5 @@
 import Fastify{{#if cache.rateLimit}}, { type FastifyInstance }{{/if}}{{#unless cache.rateLimit}}{{#unless rpc.none}}, { type FastifyInstance }{{/unless}}{{/unless}} from 'fastify';
-import { mountFastify } from '@ddd-ts-kit/http/fastify';
+import { mountFastify, problemErrorHandler } from '@ddd-ts-kit/http/fastify';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/fastify';
@@ -25,7 +25,7 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
@@ -36,6 +36,9 @@ type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | '
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = Fastify();
+
+  // Before any route: a body Fastify refuses and a failed hook are answered as problems, not with their message.
+  app.setErrorHandler(problemErrorHandler({ logger: served.logger }));
 
 {{#if cache.rateLimit}}
   answerReadiness(app, served);
