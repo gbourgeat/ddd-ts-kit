@@ -51,5 +51,5 @@ function fileLines(report: WorkspaceReport, dryRun: boolean): string[] {
 function skippedBecause(report: WorkspaceReport, file: string): string {
   return report.unwritable.includes(file)
     ? 'cannot be written here: a sandbox or the permissions protect the path'
-    : 'exists; pass --force to replace it';
+    : 'exists, kept; --force replaces it once it is committed';
 }

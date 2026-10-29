@@ -87,11 +87,15 @@ export const GENERATED_FILES: readonly string[] = [
 // which takes the allow and deny rules only, and the guard of the plugin refuses a hand edit of
 // one outright. Then the files that hold the rules and the pipeline: changing one is a decision of
 // the project owner, the same list as the editor hook of the plugin asks about. The review policy
-// holds a rule of the project too.
+// holds a rule of the project too. Before them, --force, which replaces files of the project with
+// the templates of the kit: the person decides, the allow rule of generate notwithstanding.
 const ASK: readonly string[] = [
   'Bash(git push *)',
   'Bash(npm publish *)',
   'Bash(npx ddd-ts-kit check --baseline write*)',
+  'Bash(npx ddd-ts-kit generate * --force*)',
+  'Bash(npx ddd-ts-kit init --force*)',
+  'Bash(npx ddd-ts-kit init * --force*)',
   ...GENERATED_FILES,
   'Edit(./ddd-ts-kit.config.json)',
   'Edit(./ddd-ts-kit-baseline.json)',

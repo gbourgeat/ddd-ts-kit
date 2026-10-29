@@ -22,6 +22,14 @@ function committedWithAnAggregate(): string {
 }
 
 describe('--force never destroys work that git does not hold', () => {
+  it('says of a file it leaves that it is kept, and that --force replaces it once committed', () => {
+    const root = committedWithAnAggregate();
+
+    expect(cli(root, 'generate', 'aggregate', 'billing', 'Invoice').stdout).toContain(
+      `skipped      ${AGGREGATE} (exists, kept; --force replaces it once it is committed)`,
+    );
+  });
+
   it('refuses generate --force over an edited file not committed, with exit code 2, the file named and kept', () => {
     const root = committedWithAnAggregate();
 
