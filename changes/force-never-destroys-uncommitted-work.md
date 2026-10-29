@@ -12,7 +12,9 @@ delete.
 `CLAUDE.md`, `src/main.ts` and the pipeline definitions (`.github/workflows/`, `.gitlab-ci.yml`)
 stay as they are, listed as `kept (yours since the first init)`; the jobs and includes of the
 pipeline are the team's to edit, those of `--ci-extras` too. `.gitignore` and `.dockerignore`
-keep the lines of the team and gain the lines of the kit they lack. A last note says how many files
+gain the lines of the kit they lack, first, under a comment, and keep the lines of the team after
+them, which have the last word as git reads them; a line of the kit on a path the team already
+writes rules for is left out, and `init` adds `.worktrees/` the same way. A last note says how many files
 `--force` rewrote and kept.
 
 A file a generator leaves as it is reads `skipped <file> (exists, kept; --force replaces it once it

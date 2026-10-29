@@ -114,8 +114,9 @@ read is replaced. The files a team owns once written stay as they are, listed as
 `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` and the pipeline definitions
 (`.github/workflows/`, `.gitlab-ci.yml`), whose jobs and includes are the team's to edit, those of
 `--ci-extras` too; to take what a new version writes in one of them, run
-`init` in an empty folder and compare. `.gitignore` and `.dockerignore` keep the lines of the team
-and gain the lines of the kit they lack. A last note says what `--force` rewrote and what it kept.
+`init` in an empty folder and compare. `.gitignore` and `.dockerignore` gain the lines of the kit
+they lack, first, under a comment, and keep the lines of the team after them, which have the last
+word; a line of the kit on a path the team already writes rules for is left out. A last note says what `--force` rewrote and what it kept.
 
 The pipeline uses free tools only. `--ci-extras` adds jobs that need a paid plan on a private
 repository, report into a merge request only in a paid tier, or spend API tokens on every run:

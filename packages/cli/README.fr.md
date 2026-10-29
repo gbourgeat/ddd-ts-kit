@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8a80ac9e5a91a128 -->
+<!-- translation-of: README.md sha256:aab3e1b8d0ae6d29 -->
 
 # ddd-ts-kit
 
@@ -121,8 +121,10 @@ Les fichiers qu'une équipe possède une fois écrits restent tels quels, listé
 `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` et les définitions du *pipeline*
 (`.github/workflows/`, `.gitlab-ci.yml`), dont les *jobs* et les *includes* sont à l'équipe, ceux
 de `--ci-extras` compris ; pour reprendre ce qu'une nouvelle version y écrit,
-lancez `init` dans un dossier vide et comparez. `.gitignore` et `.dockerignore` gardent les lignes
-de l'équipe et gagnent celles du kit qui leur manquent. Une dernière note dit ce que `--force` a
+lancez `init` dans un dossier vide et comparez. `.gitignore` et `.dockerignore` gagnent les lignes du kit
+qui leur manquent, en tête, sous un commentaire, et gardent après elles les lignes de l'équipe, qui
+ont le dernier mot ; une ligne du kit sur un chemin pour lequel l'équipe écrit déjà des règles est
+laissée de côté. Une dernière note dit ce que `--force` a
 réécrit et ce qu'il a gardé.
 
 Le *pipeline* n'utilise que des outils gratuits. `--ci-extras` ajoute des *jobs* qui demandent

@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -13,6 +14,11 @@ import { commitAll } from './support/commit-all';
 const CONFIG = 'ddd-ts-kit.config.json';
 const COMPOSITION = 'src/platform/composition/compose-application.ts';
 const config = (root: string, ...keys: string[]): unknown => jsonAt(readJson(root, CONFIG), ...keys);
+const KIT_LINES = '# Lines of ddd-ts-kit init: the lines of the team, below, have the last word.';
+
+/** Whether git ignores the path, as the project's .gitignore says. */
+const ignored = (root: string, file: string): boolean =>
+  spawnSync('git', ['check-ignore', '--quiet', '--no-index', file], { cwd: root }).status === 0;
 
 describe('init --force on a project that is already initialised', () => {
   it('rewrites the files and keeps what the team declared: the contexts and their upstreams, the rules, the limits, a key the kit does not know, the entry point', () => {
@@ -218,7 +224,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
 });
 
 describe('init --force and the files of the team', () => {
-  it('keeps the lines of the team in .gitignore and .dockerignore, and adds the lines of the kit they lack', () => {
+  it('keeps the lines of the team in .gitignore and .dockerignore, after the lines of the kit they lack: the team has the last word', () => {
     const root = initProject();
 
     write(root, '.gitignore', 'secret.env\n*.pem\n');
@@ -228,10 +234,33 @@ describe('init --force and the files of the team', () => {
     const forced = cli(root, 'init', '--force');
 
     expect(forced.code).toBe(0);
-    expect(read(root, '.gitignore')).toMatch(/^secret\.env\n\*\.pem\nnode_modules\ndist\n/);
+    expect(read(root, '.gitignore')).toMatch(new RegExp(`^${KIT_LINES}\\nnode_modules\\ndist\\n`));
     expect(read(root, '.gitignore')).toContain('\n.worktrees/\n');
-    expect(read(root, '.dockerignore')).toMatch(/^node_modules\nfixtures\ndist\n/);
+    expect(read(root, '.gitignore')).toMatch(/\nsecret\.env\n\*\.pem\n$/);
+    expect(read(root, '.dockerignore')).toMatch(new RegExp(`^${KIT_LINES}\\ndist\\n`));
+    expect(read(root, '.dockerignore')).toMatch(/\nnode_modules\nfixtures\n$/);
     expect(read(root, '.dockerignore').match(/^node_modules$/gm)).toHaveLength(1);
+  });
+
+  it('leaves a negation of the team its effect over a broader line of the kit', () => {
+    const root = initProject();
+
+    write(root, '.gitignore', 'dist/*\n!dist/.gitkeep\n');
+    write(root, 'dist/.gitkeep', '');
+    commitAll(root);
+
+    expect(cli(root, 'init', '--force').code).toBe(0);
+    expect(ignored(root, 'dist/.gitkeep')).toBe(false);
+    expect(ignored(root, 'dist/main.js')).toBe(true);
+  });
+
+  it('adds .worktrees/ before the lines of the team on a plain init too', () => {
+    const root = initProject();
+
+    write(root, '.gitignore', 'secret.env\n');
+
+    expect(cli(root, 'init').code).toBe(0);
+    expect(read(root, '.gitignore')).toBe(`${KIT_LINES}\n.worktrees/\nsecret.env\n`);
   });
 
   it('leaves the README, the guides of the agents, the entry point and the pipeline to the team, lists them as kept, and says what it rewrote', () => {
