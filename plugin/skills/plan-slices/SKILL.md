@@ -1,12 +1,9 @@
 ---
 name: plan-slices
 description: >-
-  Plans the work of a bootstrapped project as vertical slices per bounded context, each one
-  use case end to end, with the generator commands that start it, an explicit dependency
-  order and an owner. Produces docs/architecture/slices.md, the backlog every worker reads.
-  Use after the bootstrap, when the user asks what to build first, to order or size the
-  work, or before splitting it between several agents or people. To build one slice use
-  use-case; to hand slices to several workers use parallel-work.
+  Use after the bootstrap, when asked what to build first, to order or size the work, or
+  before splitting it between agents or people. Vertical slices per bounded context ordered,
+  with owners, in docs/architecture/slices.md.
 argument-hint: "[context, or nothing for all]"
 allowed-tools:
   - Read
@@ -24,7 +21,7 @@ allowed-tools:
 
 Scope: `$ARGUMENTS`
 
-Inputs: `docs/architecture/discovery.md` (the timeline) and `npx ddd-ts-kit list --json`
+Inputs: `docs/architecture/discovery.md` (the timeline) and `npx ddd-ts-kit list`
 (what exists). Output: `docs/architecture/slices.md`. The order is the owner's decision.
 
 ## 1. Cut
