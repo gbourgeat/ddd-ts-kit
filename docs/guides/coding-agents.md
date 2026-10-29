@@ -79,7 +79,7 @@ project owner before a suppression, a skipped test or a change of the rules is w
 every written file and returns the violations with their fix (with `"dependenciesBeforeWrite": true`, on trial,
 it refuses before the write a new import that breaks a dependency rule), and refuses to finish while
 architecture errors remain. With `"formatOnWrite": true` in the config (written by `init` for a new project), it first runs the Biome
-the project installed on the written file (`node_modules/.bin/biome format --write`, one file,
+the project installed on the written file (the bin of its `@biomejs/biome` package, `format --write`, one file,
 never another formatter), so that the layout is settled at the write and the lint findings
 that follow a wrapped line come back in the same output; a run that fails changes nothing. It reminds, without blocking, when the uncommitted changes exceed
 the advised size of a commit, and in a worker's worktree (`.ddd-ts-kit/worker.json`) it
@@ -125,7 +125,7 @@ refused: a command may move or check a path (`cd`, `pushd`, `popd`, `pwd`, `test
 `show`, `status`) or run the kit (`ddd-ts-kit`, `npx ddd-ts-kit`); any other program (a bare `npx`
 or `pnpm`, `git checkout`/`stash`), or a redirection to a file, is a write, which only the CLI and
 that agent make. No hook
-runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
+runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository), and does not enumerate the writes outside the worktree of code it cannot read; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
 Each agent gets what its host runs. The skills work in all three. The six agents are sub-agents

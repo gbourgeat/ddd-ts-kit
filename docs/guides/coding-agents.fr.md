@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:d61e96dcd756c29b -->
+<!-- translation-of: coding-agents.md sha256:0a920b8290018d5e -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -82,8 +82,8 @@ désactivation, un test sauté ou un changement des règles soit écrit, vérifi
 l'essai, il refuse avant l'écriture un nouvel import qui enfreint une règle de dépendance), et
 refuse de terminer tant que des
 erreurs d'architecture restent. Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
-d'abord le Biome que le projet a installé sur le fichier écrit (`node_modules/.bin/biome format
---write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
+d'abord le Biome que le projet a installé sur le fichier écrit (le *bin* de son paquet
+`@biomejs/biome`, `format --write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
 l'écriture et que les constats du lint qui suivent une ligne repliée reviennent dans la même
 sortie ; une exécution qui échoue ne change rien. Il rappelle, sans bloquer, quand les changements non commités
 dépassent la taille conseillée d'un commit, et dans le worktree d'un worker
@@ -137,7 +137,7 @@ chemin (`cd`, `pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `
 checkout`/`stash`), ou une redirection vers un
 fichier, est une écriture, que seuls la CLI et cet agent font. Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
-panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
+panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt), et n'énumère pas les écritures hors du *worktree* d'un code qu'il ne peut pas lire ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
 
 Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les six
