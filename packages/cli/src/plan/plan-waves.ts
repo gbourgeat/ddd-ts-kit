@@ -12,6 +12,8 @@ import { waveNumbers } from './wave-numbers';
 export interface PlanRequest {
   /** The context whose rows to plan; null for every row. */
   readonly context: string | null;
+  /** The contexts the config declares: a row of another one is a problem. Undefined: not checked. */
+  readonly contexts?: readonly string[];
 }
 
 /**
@@ -23,7 +25,7 @@ export interface PlanRequest {
 export function planWaves(rows: readonly Slice[], request: PlanRequest): WavePlan {
   const { context } = request;
   const planned = rowsToPlan(rows, context);
-  const problems = planProblems(rows, planned);
+  const problems = planProblems(rows, planned, request.contexts);
 
   if (problems.length > 0) {
     return { file: SLICES_FILE, context, problems, waves: [], mergeOrder: [], otherStories: [], started: [] };

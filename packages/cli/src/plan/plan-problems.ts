@@ -1,18 +1,56 @@
 import type { Slice } from '../progress/slice';
 import { cyclesOf } from './cycles-of';
+import { plannedCommands } from './planned-commands';
 import type { PlanProblem } from './wave-plan';
 
 /**
  * What keeps the planned rows from being ordered, among `rows`, every row of the file: an id
- * two rows carry, a dependency on an id no row carries, a row without owner, a cycle.
+ * two rows carry, a dependency on an id no row carries, a row without owner, a cycle, and a row
+ * whose id or context could not be written in a command: `contexts`, the declared ones, undefined
+ * when they are not known.
  */
-export function planProblems(rows: readonly Slice[], planned: readonly Slice[]): PlanProblem[] {
+export function planProblems(
+  rows: readonly Slice[],
+  planned: readonly Slice[],
+  contexts?: readonly string[],
+): PlanProblem[] {
   return [
+    ...badRows(planned, contexts === undefined ? undefined : [...contexts, ...createdContexts(rows)]),
     ...duplicated(rows, planned),
     ...unknownDependencies(rows, planned),
     ...ownerless(planned),
     ...cyclesOf(planned).map(cycleProblem),
   ];
+}
+
+/** What an id is: a code, then at most one number (`US1.02`, `M1.03`, `12`), nothing a shell reads. */
+const NAME = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
+
+/** The contexts a row creates (`generate context billing ...`): their rows are legitimate before the config declares them. */
+function createdContexts(rows: readonly Slice[]): string[] {
+  return rows
+    .flatMap((row) => plannedCommands(row.startWith))
+    .flatMap(({ argv }) => (argv[0] === 'context' && argv[1] !== undefined ? [argv[1]] : []));
+}
+
+const ID = /^[A-Za-z0-9][A-Za-z0-9_-]*(\.\d+)?$/;
+
+function badRows(planned: readonly Slice[], contexts: readonly string[] | undefined): PlanProblem[] {
+  return planned.flatMap((row) => {
+    const label = ID.test(row.id) ? `#${row.id}` : `the row numbered ${JSON.stringify(row.id)}`;
+
+    const reasons = [
+      ...(ID.test(row.id) ? [] : ['its number is not a code and a number such as US1.02']),
+      ...(NAME.test(row.context) ? [] : [`its context ${JSON.stringify(row.context)} is not a name`]),
+      ...(!NAME.test(row.context) || contexts === undefined || contexts.includes(row.context)
+        ? []
+        : [`its context ${JSON.stringify(row.context)} is neither declared in the config nor created by a row`]),
+    ];
+
+    return reasons.length === 0
+      ? []
+      : [{ kind: 'bad-row' as const, rows: [row.id], message: `${label} cannot be planned: ${reasons.join(' and ')}` }];
+  });
 }
 
 function duplicated(rows: readonly Slice[], planned: readonly Slice[]): PlanProblem[] {

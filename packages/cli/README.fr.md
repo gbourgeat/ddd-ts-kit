@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c535da8f03df62e5 -->
+<!-- translation-of: README.md sha256:599d6cfeea19aa07 -->
 
 # ddd-ts-kit
 
@@ -1404,8 +1404,10 @@ vague, le chef d'orchestre voit qu'elle attend le travail d'une autre story, et 
 porte.
 
 Un cycle dans `Depends on`, une dépendance vers un identifiant qu'aucune ligne ne porte, une ligne
-sans responsable et un identifiant que portent deux lignes rendent les lignes impossibles à
-ordonner : ils sont signalés seuls, sans vagues, et la commande sort avec 1. Un fichier sans table
+sans responsable, un identifiant que portent deux lignes, un identifiant qui n'est pas un code suivi
+d'un numéro (`US1.02`, jamais `US1.02;id`) et un contexte que la config ne déclare pas rendent les
+lignes impossibles à ordonner ou à briefer (un brief est une commande que le chef d'orchestre
+lance : seuls le contexte et les identifiants de lignes bien formées y sont écrits) : ils sont signalés seuls, sans vagues, et la commande sort avec 1. Un fichier sans table
 de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé.
 
 Une fois les lignes ordonnables, les commandes de génération de leurs cellules `Start with` (entre

@@ -18,8 +18,15 @@ export interface WavePlan {
 export type PlanProblem = RowProblem | RefusedCommand | MissingDependency;
 
 export interface RowProblem {
-  /** The first four keep the rows from being ordered; a word keeps a row from being run as written. */
-  readonly kind: 'cycle' | 'unknown-dependency' | 'no-owner' | 'duplicate-id' | 'undefined-word' | 'technical-word';
+  /** The first five keep the rows from being ordered; a word keeps a row from being run as written. */
+  readonly kind:
+    | 'cycle'
+    | 'bad-row'
+    | 'unknown-dependency'
+    | 'no-owner'
+    | 'duplicate-id'
+    | 'undefined-word'
+    | 'technical-word';
   /** The ids involved, in order: the rows of a cycle, a row then the id it names. */
   readonly rows: readonly string[];
   readonly message: string;
