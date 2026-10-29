@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:aa838b28397ea0e1 -->
+<!-- translation-of: testing-strategy.md sha256:c24aa7ae4ec66821 -->
 
 # Stratégie de test
 
@@ -667,7 +667,7 @@ ne servent aucun cas d'usage (parcours, architecture). `npm run docs:generate` l
 les ajoute quand une *spec* est indexée (un worker confiné à son contexte les laisse au tronc),
 `docs --check` les tient à jour, et elles sont commitées avec les *specs* : le test est la preuve,
 la page sa lecture. Sur l'exemple,
-`scheduling` liste 593 règles d'après 165 *specs*, une table de cas comptant pour une règle.
+`scheduling` liste 632 règles d'après 169 *specs*, 63 de ses 635 titres tels que le kit les a générés, une table de cas comptant pour une règle.
 
 Un fichier `.feature` promettrait la même lecture, au prix d'une glu de *step definitions*, d'une
 seconde grammaire à enseigner et d'une dérive que le *pipeline* ne voit pas. Gherkin ne paie que si

@@ -636,7 +636,7 @@ checks that each rule line of the row in `docs/architecture/slices.md` has its t
 outside the contexts that serve no use case (journeys, architecture). `npm run docs:generate`
 writes them, the pre-commit hook regenerates and adds them when a spec is staged (a worker confined
 to its context leaves them to the trunk), `docs --check` holds them current, and they are committed
-with the specs: the test is the proof, the page its reading. On the example, `scheduling` lists 593 rules from 165 specs, a
+with the specs: the test is the proof, the page its reading. On the example, `scheduling` lists 632 rules from 169 specs, 63 of its 635 titles as the kit generated them, a
 table of cases counting as one rule.
 
 A `.feature` file would promise the same reading, at the price of a glue of step definitions, a
