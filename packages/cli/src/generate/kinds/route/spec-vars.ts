@@ -5,6 +5,7 @@ import type { FieldKind, MessagePlan, ReadField } from './message-plan';
 import { sampleParams } from './sample-params';
 import type { UseCase } from './use-case';
 import { carriesBody } from './carries-body';
+import { messageCall } from './message-call';
 
 /** What a spec is written for: the route, the use case it calls and the status it answers when that succeeds. */
 interface Specified {
@@ -43,7 +44,7 @@ export function specVars({ name, endpoint, useCase, status }: Specified, reading
       : `expect(response.status).toBe(${status});`,
     messageExpectation: useCase.isSearch
       ? `expect(${bus}.executed).toMatchObject([{ actor: caller }]);`
-      : `expect(${bus}.executed).toEqual([new ${useCase.message}(${[...caller, ...reading.read.map(sampleOf)].join(', ')})]);`,
+      : `expect(${bus}.executed).toEqual([${messageCall(useCase, reading, { actor: 'caller', field: sampleOf })}]);`,
   };
 }
 

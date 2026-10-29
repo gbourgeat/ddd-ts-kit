@@ -6,6 +6,7 @@ import type { Routed } from './plan-of';
 import { standardSchemaOf } from './standard-schema-of';
 import { writesBodyOf } from './writes-body-of';
 import { writesParamsOf } from './writes-params-of';
+import { messageCall } from './message-call';
 
 /** How each library declares one field of a body. */
 const ZOD: Readonly<Record<FieldKind, string>> = { string: 'z.string()', number: 'z.number()', boolean: 'z.boolean()' };
@@ -49,15 +50,15 @@ export function messageVars(scope: Scope, routed: Routed, plan: MessagePlan): Re
 
   const todo = unreadTodo(plan);
 
-  const pass = (from: (field: ReadField) => string, actor: string): string =>
-    `new ${useCase.message}(${[...(useCase.isProtected ? [actor] : []), ...plan.read.map(from)].join(', ')})`;
-
   return {
     readsMessage: useCase.fields.length > 0 && plan.unread.length === 0 && plan.read.length > 0,
     writesBody: writesBodyOf(plan),
     writesParams: writesParamsOf(validation, plan),
-    routeMessage: pass((field) => `input.${field.from}.${field.name}`, 'actorOf(input.context.principal)'),
-    nestMessage: pass((field) => `${field.from}.${field.name}`, 'actor'),
+    routeMessage: messageCall(useCase, plan, {
+      actor: 'actorOf(input.context.principal)',
+      field: (field) => `input.${field.from}.${field.name}`,
+    }),
+    nestMessage: messageCall(useCase, plan, { actor: 'actor', field: (field) => `${field.from}.${field.name}` }),
     bodyDeclaration: body.length === 0 ? '' : bodyDeclarationOf({ scope, routed, body, todo }),
     paramsDeclaration: standardSchemaOf({
       name,

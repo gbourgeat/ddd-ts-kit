@@ -7,6 +7,8 @@ import type { MessagePlan } from './message-plan';
 import { planOf } from './plan-of';
 import { routeVars } from './route-vars';
 import { sharesSchemas } from './shares-schemas';
+import { messageCall } from './message-call';
+import { NOTHING_READ } from './message-plan';
 
 /** What the templates of a controller read, over what the templates of a route read: its group, its types and its neighbours. */
 export function controllerVars(scope: Scope, plan: ControllerPlan): RenderContext {
@@ -35,8 +37,11 @@ function handleVars(
   { types, reading }: { readonly types: ControllerTypes; readonly reading: MessagePlan },
   readsRequest: boolean,
 ): RenderContext {
-  const passed = reading.read.map((field) => `request.${field.from}.${field.name}`);
-  const message = `new ${useCase.message}(${[...(useCase.isProtected ? ['request.actor'] : []), ...passed].join(', ')})`;
+  const message = messageCall(useCase, reading, {
+    actor: 'request.actor',
+    field: (field) => `request.${field.from}.${field.name}`,
+  });
+
   const answers = declaresAnswer(useCase, types);
 
   return {
@@ -112,7 +117,7 @@ function mapperVars({ useCase }: ControllerPlan, { types, imports }: Written): R
     mapperImports: lines([imports.message, ...usedTypes]),
     messageKind: useCase.isQuery ? 'query' : 'command',
     actorNote: useCase.isProtected ? '; the actor is already there' : '',
-    mapperMessage: `new ${useCase.message}(${useCase.isProtected ? 'request.actor' : ''})`,
+    mapperMessage: messageCall(useCase, NOTHING_READ, { actor: 'request.actor', field: () => '' }),
   };
 }
 
