@@ -444,6 +444,8 @@ const UNKNOWN_WRITERS = [
   ['git read-tree -u --reset HEAD', /`git read-tree` changes the whole project/],
   ['git checkout-index -f -a', /`git checkout-index` changes the whole project/],
   ['git worktree add .worktrees/evil', /`git worktree` changes \.worktrees\/evil/],
+  ['git worktree add', /`git worktree` changes the whole project/],
+  ['git checkout-index --all', /`git checkout-index` changes the whole project/],
   ['git commit -am x', /`git commit` changes the whole project/],
   ['npx eslint --fix src/main.ts', /`eslint` changes src\/main\.ts/],
   ['npx --no -- biome format --write src/main.ts', /`biome` changes/],

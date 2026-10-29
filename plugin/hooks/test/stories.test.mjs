@@ -431,6 +431,11 @@ function lockTheFix(root) {
 test('the shell runs and versions a locked regression spec of a fix, and a sub-agent never rewrites it', () => {
   const root = fixWorktree();
   lockTheFix(root);
+  // A sub-agent command that names no held spec nor a lock passes, even in a fix worktree.
+  assert.equal(
+    run('pre-bash', bash(root, 'cat README.md', { agent_type: 'ddd-ts-kit:context-builder' })).output,
+    undefined,
+  );
   for (const command of [
     `npm test -- ${FIX_SPEC}`,
     `npx vitest run ${FIX_SPEC}`,

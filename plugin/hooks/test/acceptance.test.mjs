@@ -111,6 +111,8 @@ test('the shell only reads, versions or checks the lock and the verdicts of an a
   for (const command of [
     'git add test/acceptance/us5.acceptance.lock.json test/acceptance/verdicts/us5-1.md',
     'cat test/acceptance/verdicts/us5-1.md',
+    // A launcher of the kit reads the lock, where `npx` of anything else would be taken as a write.
+    'npx ddd-ts-kit check test/acceptance/us5.acceptance.lock.json',
   ]) {
     assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
   }

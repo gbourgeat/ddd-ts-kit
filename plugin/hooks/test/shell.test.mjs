@@ -150,11 +150,24 @@ test('a command whose name the shell computes, or a wrapper that hides it, is re
   }
 });
 
-test('a double quote inside a substitution does not hide the commands that follow it', () => {
+// Inside `$(...)` the reader skips a double-quoted string (with its `\"`), a backslash escape and a
+// nested backquote the same way it skips a single-quoted one, so a write after them is still found.
+const SUBSTITUTION_HIDES = [
+  'echo "$(echo ")")" ; rm src/main.ts',
+  'echo "$(echo `date` ; rm src/main.ts)"',
+  'echo "$(echo a\\\\b ; rm src/main.ts)"',
+  'echo "$(echo "a\\"b" ; rm src/main.ts)"',
+];
+
+test('a double quote, an escape or a backquote inside a substitution does not hide the commands after it', () => {
   const root = project({}, ['--package-manager', 'npm']);
   const agent = worker(root, 'invoicing');
-  const hidden = 'echo "$(echo ")")" ; rm src/main.ts';
-  assert.match(reason(run('pre-bash', bash(root, hidden, agent))), /`rm` changes src\/main\.ts/);
+  for (const command of SUBSTITUTION_HIDES) {
+    assert.match(reason(run('pre-bash', bash(root, command, agent))), /`rm` changes src\/main\.ts/, command);
+  }
+  // A double quote or a backquote left open inside the substitution runs to the end, no crash.
+  assert.equal(run('pre-bash', bash(root, 'echo "$(echo "unterminated', agent)).status, 0);
+  assert.equal(run('pre-bash', bash(root, 'echo "$(echo `unterminated)"', agent)).status, 0);
 });
 
 test('without TMPDIR in the environment, the system temp directory stays free to a worker', () => {

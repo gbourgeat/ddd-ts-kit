@@ -421,10 +421,11 @@ async function preBash(input) {
   if (typeof command !== 'string') {
     return;
   }
+  const cwd = input.cwd ?? process.cwd();
   if (hostOf(input) === 'codex' && /^\s*\*\*\* Begin Patch/m.test(command)) {
-    return codexShellPatch(input, command);
+    return codexShellPatch(input, command, cwd);
   }
-  const project = findProject(commandDirectory(command, input.cwd ?? process.cwd()));
+  const project = findProject(commandDirectory(command, cwd));
   await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
     return;
@@ -436,10 +437,10 @@ async function preBash(input) {
   }
   const context = workerContext(project, input);
   shell = await import('./shell-commands.mjs');
-  const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
+  const commands = shell.simpleCommands(command, cwd);
   const refusal = context
     ? workerCommandReason(project, input, { context, command, commands })
-    : (builderStrayReason(input, commands) ?? sessionShellReason(project, input, commands));
+    : (builderStrayReason(project, input, commands) ?? sessionShellReason(project, input, commands));
   if (refusal) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
   }
@@ -472,9 +473,9 @@ function sessionPlaceReason(project, input, place) {
 
 // Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: the
 // patch in the command is judged the same way a write through the editor tool is.
-function codexShellPatch(input, command) {
+function codexShellPatch(input, command, cwd) {
   const patch = command.slice(command.indexOf('*** Begin Patch'));
-  const verdicts = patchWrites(patch, input.cwd ?? process.cwd())
+  const verdicts = patchWrites(patch, cwd)
     .map((written) => verdictOn(written, input))
     .filter(Boolean);
   const verdict = verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
@@ -487,12 +488,8 @@ function codexShellPatch(input, command) {
 // only when the command moves into its worktree (`cd <worktree> && ...` or `--cwd`). When the
 // session has worker worktrees and a builder's command touches no scoped project, a write by that
 // command lands where the guard cannot judge it: it is refused, with the one shape it reads.
-function builderStrayReason(input, commands) {
-  if (!isBuilder(input)) {
-    return undefined;
-  }
-  const session = findProject(input.cwd ?? process.cwd());
-  if (!session || session.mode === 'off' || !hasWorkerWorktree(session.root) || !builderWrites(commands)) {
+function builderStrayReason(project, input, commands) {
+  if (!isBuilder(input) || !hasWorkerWorktree(project.root) || !builderWrites(commands)) {
     return undefined;
   }
   return 'A worker runs every command as `cd <worktree> && ...` so that the guard reads it against the scope of that worktree; this command writes without moving into a worktree of your project. Run it as `cd <worktree> && ...`.';
@@ -1353,15 +1350,8 @@ function writtenProjectPaths(project, commands) {
 }
 
 function expandGlob(place) {
-  if (!/[*?[]/.test(place)) {
-    return [place];
-  }
-  try {
-    const matches = globSync(place);
-    return matches.length > 0 ? matches : [place];
-  } catch {
-    return [place];
-  }
+  // A pattern matching nothing (globSync returns []) writes no file, so it protects nothing.
+  return /[*?[]/.test(place) ? globSync(place) : [place];
 }
 
 // A command that writes no file by itself, its redirections aside: a neutral one (`cd`, `test`), a reader,
