@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c8dada5cb96e5e96 -->
+<!-- translation-of: README.md sha256:c535da8f03df62e5 -->
 
 # ddd-ts-kit
 
@@ -1484,7 +1484,15 @@ scénario (`pending(...)`, mise en page et commentaires mis à part) ; ensuite u
 change qu'avec son critère, et un critère, ou un scénario dont les critères n'ont pas bougé,
 seulement avec un `Verdict: amend` de l'agent `acceptance-judge` sur cette version précise
 (`test/acceptance/verdicts/*.md`), que le verrou garde comme amendement à valider par le
-responsable du projet. Elle ne lance jamais de test. Sort en 1 tant qu'une porte n'est pas
+responsable du projet. Quand le fichier de verrou manque, est illisible ou ne contient rien, `--lock` et le rapport lisent
+le dernier verrou qu'un commit contient et comparent avec lui : un scénario ou un critère qui diffère
+sans verdict pour sa version est refusé (sortie 2, en le nommant, avec `git checkout <commit> -- <verrou>`
+pour restaurer le verrou), le rapport liste la même dérive, et les verdicts trouvés sont gardés comme
+amendements. Un verrou dont un commit contient la suppression est un retrait décidé : verrouillé de
+nouveau, avec une ligne qui le dit. Sans réponse de git (pas de dépôt, ou git non installé), elle
+verrouille, et ne dit que le verrou précédent n'a pas pu être vérifié que lorsqu'un retrait est
+plausible (un fichier de verrou qui ne contient rien, ou un verdict sur la story) : un premier
+verrou ne dit rien. Elle ne lance jamais de test. Sort en 1 tant qu'une porte n'est pas
 franchie, ou, sans porte, sur une incohérence ou une dérive depuis le verrou. `--json` affiche
 `{ gate, met, stories: [{ story, file?, specification?, rows, criteria, scenarios, regression?, lock?, amendments, problems }] }`.
 

@@ -1397,7 +1397,14 @@ its rows: every slice row and criterion has a written scenario, and the acceptan
 scenario (`pending(...)`, layout and comments aside); after it, a scenario changes only with its
 criterion, and a criterion, or a scenario whose criteria stayed, only with a `Verdict: amend` of
 the `acceptance-judge` agent on that very version (`test/acceptance/verdicts/*.md`), which the lock
-keeps as an amendment for the owner to validate. It never runs a test. Exits 1 while a gate is not
+keeps as an amendment for the owner to validate. When the lock file is missing, unreadable or holds nothing, `--lock` and the report read the last
+lock a commit holds and compare with it: a scenario or a criterion that differs without a verdict
+for its version is refused (exit 2, naming it, with `git checkout <commit> -- <lock>` to restore the
+lock), the report lists the same drift, and the verdicts it finds are kept as amendments. A lock whose
+deletion a commit holds is a removal decided: locked again, with one line saying so. Without an answer
+from git (no repository, or git not installed) it locks, and says the previous lock could not be
+checked only when a removal is plausible (a lock file that holds nothing, or a verdict on the story):
+a first lock says nothing. It never runs a test. Exits 1 while a gate is not
 met, or, without one, on an inconsistency or a drift from the lock. `--json` prints
 `{ gate, met, stories: [{ story, file?, specification?, rows, criteria, scenarios, regression?, lock?, amendments, problems }] }`.
 

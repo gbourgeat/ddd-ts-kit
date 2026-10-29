@@ -80,6 +80,7 @@ function lock(ws: Workspace, { asked, story, json }: LockRequest, io: Io): numbe
       ? stdoutJson({ story: story.story, ...locked })
       : [
           `Locked ${lockedWhat(locked)} of ${story.story} in ${locked.file}: commit it with them.`,
+          ...locked.notes,
           ...locked.amendments.map(
             (amendment) =>
               `Amended by ${amendment.verdict}, for the owner to validate: ${amendment.subject}: ${amendment.reason}`,
