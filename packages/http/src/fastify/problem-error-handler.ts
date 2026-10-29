@@ -12,7 +12,7 @@ type FastifyErrorHandler = (error: unknown, request: FastifyRequest, reply: Fast
  */
 export function problemErrorHandler(options: EdgeErrorOptions = {}): FastifyErrorHandler {
   return (error, request, reply) => {
-    const answer = answeredEdgeError(error, request.headers, options);
+    const answer = answeredEdgeError({ error, headers: request.headers }, options);
 
     return reply.code(answer.status).headers(answer.headers).send(JSON.stringify(answer.problem));
   };

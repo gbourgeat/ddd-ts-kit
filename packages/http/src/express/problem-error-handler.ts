@@ -12,7 +12,7 @@ import { answeredEdgeError, type EdgeErrorOptions } from '../error/answered-edge
 export function problemErrorHandler(options: EdgeErrorOptions = {}): ErrorRequestHandler {
   // eslint-disable-next-line ddd-ts-kit/clean-function-size -- Express tells an error middleware by its four parameters
   return (error: unknown, request, response, _next) => {
-    const answer = answeredEdgeError(error, request.headers, options);
+    const answer = answeredEdgeError({ error, headers: request.headers }, options);
 
     if (response.headersSent) {
       // Too late for a problem: the client gets a response cut short, as for a failed stream.

@@ -11,7 +11,7 @@ type HonoErrorHandler = (error: Error, context: Context) => Response;
  */
 export function problemErrorHandler(options: EdgeErrorOptions = {}): HonoErrorHandler {
   return (error, context) => {
-    const answer = answeredEdgeError(error, context.req.header(), options);
+    const answer = answeredEdgeError({ error, headers: context.req.header() }, options);
 
     return new Response(JSON.stringify(answer.problem), { status: answer.status, headers: answer.headers });
   };

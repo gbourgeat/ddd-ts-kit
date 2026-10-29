@@ -17,6 +17,14 @@ export interface EdgeErrorOptions {
   readonly logger?: Logger;
 }
 
+/** What reached the framework, and the request it came with. */
+export interface EdgeError {
+  readonly error: unknown;
+  readonly headers: Readonly<RawHeaders>;
+  /** What the error is, when the adapter knows better than the error says (Nest wraps the error of its parser). */
+  readonly refusal?: EdgeRefusal;
+}
+
 /** What `express.json()` (body-parser) and the parsers of Fastify name a body that is not JSON. */
 const MALFORMED_KINDS = new Set([
   'entity.parse.failed',
@@ -42,12 +50,8 @@ const INTERNAL: EdgeRefusal = { status: 500, title: statusTitle(500), code: INTE
  * message of the error is never answered: a parser quotes the body in it. The headers an error with
  * a status carries for its client (`WWW-Authenticate`, `Allow`, `Retry-After`) are kept.
  */
-export function answeredEdgeError(
-  error: unknown,
-  headers: Readonly<RawHeaders>,
-  options: EdgeErrorOptions,
-): EdgeAnswer {
-  const refused = edgeAnswer(headers, refusalOf(error));
+export function answeredEdgeError({ error, headers, refusal }: EdgeError, options: EdgeErrorOptions): EdgeAnswer {
+  const refused = edgeAnswer(headers, refusal ?? refusalOf(error));
   // The headers of the refusal under those of the problem: a challenge kept, the media type and the identifiers the problem's.
   const kept = statusOf(error) === undefined ? {} : refusalHeaders(error);
   const answer = { ...refused, headers: { ...kept, ...refused.headers } };

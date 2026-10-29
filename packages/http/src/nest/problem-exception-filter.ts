@@ -1,6 +1,8 @@
 import type { ArgumentsHost, ExceptionFilter, HttpServer } from '@nestjs/common';
 import { answeredEdgeError, type EdgeErrorOptions } from '../error/answered-edge-error';
+import { MALFORMED_BODY } from '../error/edge-refusal';
 import type { RawHeaders } from '../route/raw-headers';
+import { isUnreadJsonBody } from './is-unread-json-body';
 
 /** What the filter writes with: the HTTP adapter of the application, Express or Fastify (`app.getHttpAdapter()`). */
 export type ProblemWriter = Pick<HttpServer, 'reply' | 'setHeader' | 'isHeadersSent' | 'end'>;
@@ -23,7 +25,13 @@ export class ProblemExceptionFilter implements ExceptionFilter {
     const http = host.switchToHttp();
     const request: unknown = http.getRequest();
     const response: unknown = http.getResponse();
-    const answer = answeredEdgeError(exception, headersOf(request), this.options);
+    const headers = headersOf(request);
+
+    const edge = isUnreadJsonBody(exception, request)
+      ? { error: exception, headers, refusal: MALFORMED_BODY }
+      : { error: exception, headers };
+
+    const answer = answeredEdgeError(edge, this.options);
 
     if (this.writer.isHeadersSent(response)) {
       // Too late for a problem: the client gets a response cut short, as for a failed stream.

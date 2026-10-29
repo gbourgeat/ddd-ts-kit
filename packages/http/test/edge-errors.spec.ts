@@ -47,13 +47,13 @@ function written(logger: InMemoryLogger): string {
 }
 
 describe.each([
-  ['Express', startExpress, 'entity.parse.failed', 'MALFORMED_BODY', 'The body is not valid JSON.'],
-  ['Fastify', startFastify, 'FST_ERR_CTP_INVALID_JSON_BODY', 'MALFORMED_BODY', 'The body is not valid JSON.'],
-  // Nest turns the error of the parser into an HttpException of its own before any filter sees it.
-  ['Nest over Express', nestOver('express'), 'BadRequestException', 'BAD_REQUEST', undefined],
-  ['Nest over Fastify', nestOver('fastify'), 'HttpException', 'BAD_REQUEST', undefined],
-] as const)('a body %s cannot read as JSON', (_name, start, errorType, code, detail) => {
-  it('is answered 400 as a problem, with the identifiers of the request', async () => {
+  ['Express', startExpress],
+  ['Fastify', startFastify],
+  ['Hono', startHono],
+  ['Nest over Express', nestOver('express')],
+  ['Nest over Fastify', nestOver('fastify')],
+] as const)('a body %s cannot read as JSON', (_name, start) => {
+  it('is answered 400 MALFORMED_BODY as a problem, with the identifiers of the request', async () => {
     const response = await postOrder(await started(start, new InMemoryLogger()), MALFORMED);
 
     expect(response.status).toBe(400);
@@ -65,12 +65,21 @@ describe.each([
       type: 'about:blank',
       title: 'Bad Request',
       status: 400,
-      code,
-      ...(detail === undefined ? {} : { detail }),
+      code: 'MALFORMED_BODY',
+      detail: 'The body is not valid JSON.',
       requestId: 'req-1',
     });
   });
+});
 
+// Hono reads the body in the route of the kit, which answers it: nothing reaches the error handler to log.
+describe.each([
+  ['Express', startExpress, 'entity.parse.failed'],
+  ['Fastify', startFastify, 'FST_ERR_CTP_INVALID_JSON_BODY'],
+  // Nest turns the error of the parser into an HttpException of its own before any filter sees it.
+  ['Nest over Express', nestOver('express'), 'BadRequestException'],
+  ['Nest over Fastify', nestOver('fastify'), 'HttpException'],
+] as const)('a body %s refuses before its route', (_name, start, errorType) => {
   it('is logged by its type and its status, never by what the body holds', async () => {
     const logger = new InMemoryLogger();
     const response = await postOrder(await started(start, logger), MALFORMED);

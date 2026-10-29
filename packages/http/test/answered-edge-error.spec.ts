@@ -9,7 +9,7 @@ function raised(fields: Readonly<Record<string, unknown>>): Error {
   return Object.assign(new Error('a message that never reaches the answer'), fields);
 }
 
-const answered = (error: unknown) => answeredEdgeError(error, { 'x-request-id': 'req-1' }, {});
+const answered = (error: unknown) => answeredEdgeError({ error, headers: { 'x-request-id': 'req-1' } }, {});
 
 describe('the code of a refusal at the edge', () => {
   it.each([
