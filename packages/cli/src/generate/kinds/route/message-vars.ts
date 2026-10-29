@@ -39,19 +39,13 @@ interface Declared {
  * written field by field from the constructor of the command or the query.
  */
 export function messageVars(scope: Scope, routed: Routed, plan: MessagePlan): RenderContext {
-  const { name, useCase } = routed;
+  const { useCase } = routed;
   const { validation } = scope.config.stack;
   const body = plan.read.filter((field) => field.from === 'body');
-
-  // Every path parameter of the route, each a string as the path gives it: none is dropped from the request.
-  const params = routed.endpoint.parameters.map(
-    (parameter): ReadField => ({ name: parameter, type: 'string', optional: false, kind: 'string', from: 'params' }),
-  );
-
   const todo = unreadTodo(plan);
 
   return {
-    readsMessage: useCase.fields.length > 0 && plan.unread.length === 0 && plan.read.length > 0,
+    readsMessage: plan.unread.length === 0 && plan.read.length > 0,
     writesBody: writesBodyOf(plan),
     writesParams: writesParamsOf(validation, plan),
     routeMessage: messageCall(useCase, plan, {
@@ -60,13 +54,29 @@ export function messageVars(scope: Scope, routed: Routed, plan: MessagePlan): Re
     }),
     nestMessage: messageCall(useCase, plan, { actor: 'actor', field: (field) => `${field.from}.${field.name}` }),
     bodyDeclaration: body.length === 0 ? '' : bodyDeclarationOf({ scope, routed, body, todo }),
-    paramsDeclaration: standardSchemaOf({
-      name,
-      vendor: scope.context.kebab,
-      part: 'params',
-      fields: params,
-      todo: '',
-    }),
+    paramsDeclaration: writesParamsOf(validation, plan) ? paramsDeclarationOf(scope, routed) : '',
+    ...dtoBodyVars(scope, body, todo),
+  };
+}
+
+/** Every path parameter of the route, each a string as the path gives it: none is dropped from the request. */
+function paramsDeclarationOf(scope: Scope, { name, endpoint }: Routed): string {
+  const fields = endpoint.parameters.map(
+    (parameter): ReadField => ({ name: parameter, type: 'string', optional: false, kind: 'string', from: 'params' }),
+  );
+
+  return standardSchemaOf({ name, vendor: scope.context.kebab, part: 'params', fields, todo: '' });
+}
+
+/** The decorated fields of the body class, written where the route has one: class-validator, and Nest whatever it validates with. */
+function dtoBodyVars(scope: Scope, body: readonly ReadField[], todo: string): RenderContext {
+  const { validation, routes } = scope.config.stack;
+
+  if (body.length === 0 || (validation !== 'class-validator' && routes !== 'nest')) {
+    return { dtoBodyImports: '', dtoBodyFields: '' };
+  }
+
+  return {
     dtoBodyImports: `import { ${[...new Set(body.map((field) => DECORATORS[field.kind]))].sort().join(', ')} } from 'class-validator';`,
     dtoBodyFields: [...body.map(dtoFieldOf), ...todoLines(todo, '  ')].join('\n'),
   };

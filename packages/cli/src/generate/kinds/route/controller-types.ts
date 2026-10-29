@@ -1,6 +1,6 @@
 import type { Scope } from '../../scope';
 import type { ControllerPlan } from './controller-plan';
-import { planOf } from './plan-of';
+import type { MessagePlan } from './message-plan';
 import { writesParamsOf } from './writes-params-of';
 import { sharesSchemas } from './shares-schemas';
 import { carriesBody } from './carries-body';
@@ -20,8 +20,12 @@ export interface ControllerTypes {
   readonly hasBody: boolean;
 }
 
-export function controllerTypes(scope: Scope, plan: ControllerPlan): ControllerTypes {
-  const { name, endpoint } = plan;
+/** `reading` is how the controller builds its message: under Standard Schema, a field read from the path gives it a schema of its parameters. */
+export function controllerTypes(
+  scope: Scope,
+  { name, endpoint }: ControllerPlan,
+  reading: MessagePlan,
+): ControllerTypes {
   const { validation } = scope.config.stack;
   const shared = sharesSchemas(scope.config);
   const usesClasses = validation === 'class-validator';
@@ -29,7 +33,7 @@ export function controllerTypes(scope: Scope, plan: ControllerPlan): ControllerT
 
   const hasTypedParams =
     (endpoint.parameters.length > 0 && (validation === 'zod' || validation === 'typebox' || usesClasses)) ||
-    writesParamsOf(validation, planOf(scope, plan, plan.withMapper));
+    writesParamsOf(validation, reading);
 
   const typeOf = (part: string, role: string): string =>
     usesClasses ? `${name.pascal}${role}` : `Infer<typeof ${part}>`;

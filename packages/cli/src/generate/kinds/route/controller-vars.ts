@@ -12,10 +12,10 @@ import { NOTHING_READ } from './message-plan';
 
 /** What the templates of a controller read, over what the templates of a route read: its group, its types and its neighbours. */
 export function controllerVars(scope: Scope, plan: ControllerPlan): RenderContext {
-  const types = controllerTypes(scope, plan);
-  const imports = controllerImports(scope, plan);
   const { useCase, withMapper, withSerializer } = plan;
   const reading = planOf(scope, plan, withMapper);
+  const types = controllerTypes(scope, plan, reading);
+  const imports = controllerImports(scope, plan);
   const readsRequest = useCase.isProtected || withMapper || reading.read.length > 0;
 
   return {

@@ -3,6 +3,7 @@ import type { Scope } from '../../scope';
 import type { ControllerPlan } from './controller-plan';
 import { controllerTypes, type ControllerTypes } from './controller-types';
 import { controllerVars } from './controller-vars';
+import { planOf } from './plan-of';
 import { sharesSchemas } from './shares-schemas';
 import { successStatus } from './success-status';
 
@@ -13,7 +14,7 @@ import { successStatus } from './success-status';
  * the `<context>.controllers.ts` of its context.
  */
 export function nestControllerVars(scope: Scope, plan: ControllerPlan): RenderContext {
-  const types = controllerTypes(scope, plan);
+  const types = controllerTypes(scope, plan, planOf(scope, plan, plan.withMapper));
   const httpCode = httpCodeOf(plan);
 
   return {
