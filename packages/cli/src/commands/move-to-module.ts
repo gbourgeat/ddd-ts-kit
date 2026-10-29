@@ -9,6 +9,7 @@ import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { stdoutJson } from '../json/stdout-json';
 
 /** Takes files of the model and of the use cases of a context into a module of its model, their imports with them. */
 export const moveToModuleCommand: Command = (argv, io) => {
@@ -78,7 +79,7 @@ interface Outcome extends ModuleMoves {
 
 function print(io: Io, json: boolean, outcome: Outcome): void {
   if (json) {
-    io.out(JSON.stringify({ ...outcome, manual: outcome.moved.length > 0 ? LEFT : [] }, null, 2));
+    io.out(stdoutJson({ ...outcome, manual: outcome.moved.length > 0 ? LEFT : [] }));
 
     return;
   }

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { RuleExplanation } from '../model/rule-explanation';
 import type { Violation } from '../model/violation';
 import type { CheckResult } from './check-result';
+import { stdoutJson } from '../../json/stdout-json';
 
 export type CheckFormat = 'text' | 'json' | 'github' | 'gitlab';
 
@@ -22,11 +23,11 @@ export function formatCheck(
   const reasons: Reasons = new Map(explanations?.map((explanation) => [explanation.id, explanation.why]));
 
   if (format === 'gitlab') {
-    return JSON.stringify(codeQualityReport(result.violations, reasons), null, 2);
+    return stdoutJson(codeQualityReport(result.violations, reasons));
   }
 
   if (format === 'json') {
-    return JSON.stringify(jsonOf(result, explanations), null, 2);
+    return stdoutJson(jsonOf(result, explanations));
   }
 
   if (format === 'github') {

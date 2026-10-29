@@ -10,6 +10,7 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import { generate } from './generate';
 import type { Io } from './io';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * Orders the rows of the slices file not done, of the project or of one context, in waves cut
@@ -34,7 +35,7 @@ export const planWavesCommand: Command = (argv, io) => {
   const context = contextOf(rows, args.positionals[0]);
   const plan = withReplay(root, rows, planWaves(rows, { context }));
 
-  io.out(args.json ? JSON.stringify(plan, null, 2) : formatPlan(plan));
+  io.out(args.json ? stdoutJson(plan) : formatPlan(plan));
 
   return plan.problems.length === 0 ? 0 : 1;
 };

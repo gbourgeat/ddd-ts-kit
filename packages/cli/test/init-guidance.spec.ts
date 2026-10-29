@@ -54,8 +54,8 @@ describe('the guidance init writes', () => {
     const commands = [
       'npm run verify',
       'npx ddd-ts-kit check --changed-since <ref>',
-      'npx ddd-ts-kit list --json',
-      'npx ddd-ts-kit describe <context> --json',
+      'npx ddd-ts-kit list`',
+      'npx ddd-ts-kit describe <context>`',
       'npx ddd-ts-kit status',
       'npx ddd-ts-kit todo [<context>]',
       'npx ddd-ts-kit docs',
@@ -83,8 +83,11 @@ describe('the guidance init writes', () => {
     }
 
     expect(guide).toMatch(
-      /1\. `describe <context> --json` and the `CONTEXT\.md`[^\n]*\n2\. Open only what the `next` list[^\n]*\n3\. `check --changed-since <ref>`/,
+      /1\. `npx ddd-ts-kit describe <context>` and the `CONTEXT\.md`[^\n]*\n2\. Open only the places a generator lists under `todos`[^\n]*\n3\. `check --changed-since <ref>`/,
     );
+
+    // The map an agent reads is the text form; --json is for a script.
+    expect(guide).not.toMatch(/`npx ddd-ts-kit (?:list|describe <context>) --json`/);
 
     // Skills that no longer exist.
     expect(guide).not.toMatch(/model-context|openapi-contract/);
@@ -117,6 +120,21 @@ describe('the guidance init writes', () => {
 
     expect(read(root, '.claude/rules/platform.md')).toContain('`RUN_JOBS` says whether a process runs the jobs');
     expect(read(root, '.claude/rules/platform.md')).toContain('npx ddd-ts-kit generate worker');
+  });
+
+  it('gives the imports and the layout one line each, leaving to lint:fix and the formatter what they rewrite', () => {
+    const guide = read(initProject(...NPM), 'AGENTS.md').split('\n');
+    const imports = guide.filter((line) => line.startsWith('Imports: '));
+    const everywhere = guide.filter((line) => line.startsWith('Everywhere: '));
+
+    expect(imports).toHaveLength(1);
+    expect(imports[0]).toContain('`npm run lint:fix` rewrites them');
+    expect(imports[0]).toContain('`imports/alias-declared`');
+    expect(imports[0]).toContain('compile with `npm run build` only');
+    expect(everywhere).toHaveLength(1);
+    expect(everywhere[0]).toContain('at most 350 lines a file, 30 lines and 3 parameters a function');
+    expect(everywhere[0]).toContain('`npm run format`, then `npm run lint:fix`');
+    expect(guide.join('\n')).not.toContain('a blank line before a `return`');
   });
 
   it('teaches that events leave with the save and that tracing stays in the platform, in the layers concerned', () => {

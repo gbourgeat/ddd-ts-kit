@@ -1,6 +1,6 @@
-import type { TodoLocation } from './todo-location';
+import type { TodoPlace } from './todo-place';
 
-/** The step that defines the language of a context: the first thing to do, before the code. */
-export function isLanguageStep(todo: TodoLocation): boolean {
-  return todo.text.startsWith('define the ubiquitous language first');
+/** Whether a place asks for the definition of the language, which comes before any decision of the code. */
+export function isLanguageStep(place: TodoPlace): boolean {
+  return place.gist.startsWith('define the ubiquitous language first');
 }

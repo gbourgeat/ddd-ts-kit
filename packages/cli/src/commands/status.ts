@@ -8,6 +8,7 @@ import { rowsOnBranches } from '../worker/rows-on-branches';
 import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * Prints where the work stands: the next step of the plan, the slices by status and by owner, the markers left in each context.
@@ -21,7 +22,7 @@ export const statusCommand: Command = (argv, io) => {
   const workers = readWorkers(root);
 
   if (args.flag('workers')) {
-    io.out(args.json ? JSON.stringify(workers, null, 2) : formatWorkers(workers));
+    io.out(args.json ? stdoutJson(workers) : formatWorkers(workers));
 
     return 0;
   }
@@ -29,7 +30,7 @@ export const statusCommand: Command = (argv, io) => {
   const rows = { onBranches: rowsOnBranches(workers), landed: landedRows(workers) };
   const progress = readProgress(new Workspace(root, false), readConfig(root).config, rows);
 
-  io.out(args.json ? JSON.stringify(progress, null, 2) : formatProgress(progress));
+  io.out(args.json ? stdoutJson(progress) : formatProgress(progress));
 
   return 0;
 };

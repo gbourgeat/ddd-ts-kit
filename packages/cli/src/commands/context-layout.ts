@@ -6,6 +6,7 @@ import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { stdoutJson } from '../json/stdout-json';
 
 const MANUAL =
   'Run the formatter, then the checks and the tests: an import the command could not read still names the old path.';
@@ -54,7 +55,7 @@ interface Outcome extends ContextLayout {
 
 function print(io: Io, json: boolean, outcome: Outcome): void {
   if (json) {
-    io.out(JSON.stringify(outcome, null, 2));
+    io.out(stdoutJson(outcome));
 
     return;
   }

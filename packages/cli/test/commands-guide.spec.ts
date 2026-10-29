@@ -13,7 +13,7 @@ const GUIDES = ['docs/guides/commands.md', 'docs/guides/commands.fr.md']
 const SOURCES = ['packages/cli/src/commands', 'packages/cli/src/check/commands'];
 
 /** The flags of `generate`, which the generator reads beside its kinds. */
-const GENERATE_ARGUMENTS = 'packages/cli/src/generate/generate-arguments.ts';
+const GENERATE_OPTIONS = 'packages/cli/src/generate/generate-options.ts';
 
 /** The options a command declares to its parser: `name: { type: ... }`, `name: TEXT`, and the flag lists of `init`. */
 function declaredOptions(): string[] {
@@ -23,7 +23,7 @@ function declaredOptions(): string[] {
         .readdirSync(path.join(REPO_ROOT, directory))
         .map((file) => fs.readFileSync(path.join(REPO_ROOT, directory, file), 'utf8')),
     ),
-    fs.readFileSync(path.join(REPO_ROOT, GENERATE_ARGUMENTS), 'utf8'),
+    fs.readFileSync(path.join(REPO_ROOT, GENERATE_OPTIONS), 'utf8'),
   ];
 
   const options = texts.flatMap((text) => [

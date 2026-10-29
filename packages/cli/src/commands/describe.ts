@@ -6,6 +6,7 @@ import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import { knownContext } from './known-context';
+import { stdoutJson } from '../json/stdout-json';
 
 /** Prints what one context holds, read from the config and the source text: the facts an agent needs before it opens a file. */
 export const describeCommand: Command = (argv, io) => {
@@ -15,7 +16,7 @@ export const describeCommand: Command = (argv, io) => {
   const ws = new Workspace(root, false);
   const description = describeContext(ws, config, readContext(ws, config, knownContext(config, args.positionals[0])));
 
-  io.out(args.json ? JSON.stringify(description, null, 2) : formatDescription(description));
+  io.out(args.json ? stdoutJson(description) : formatDescription(description));
 
   return 0;
 };

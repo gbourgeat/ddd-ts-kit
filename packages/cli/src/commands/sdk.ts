@@ -6,6 +6,7 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
 import { printReport } from './print-report';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * Generates the typed client of each document of the contract under `clients/<document>`, and
@@ -70,9 +71,7 @@ function enable(ws: Workspace): Config {
 function check(io: Io, args: Arguments, { ws, config }: Run): number {
   if (config.sdk === undefined) {
     io.out(
-      args.json
-        ? JSON.stringify({ ok: true, stale: [], unlocked: [] }, null, 2)
-        : `${CONFIG_FILE} asks for no client ("sdk").`,
+      args.json ? stdoutJson({ ok: true, stale: [], unlocked: [] }) : `${CONFIG_FILE} asks for no client ("sdk").`,
     );
 
     return 0;
@@ -84,7 +83,7 @@ function check(io: Io, args: Arguments, { ws, config }: Run): number {
   const ok = stale.length === 0 && unlocked.length === 0;
 
   if (args.json) {
-    io.out(JSON.stringify({ ok, stale, unlocked }, null, 2));
+    io.out(stdoutJson({ ok, stale, unlocked }));
   } else if (ok) {
     io.out('The clients are up to date with the contract.');
   } else {

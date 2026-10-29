@@ -1,7 +1,8 @@
 import { readConfig } from '../config';
 import { CliError } from '../cli-error';
 import { findKind } from '../generate/find-kind';
-import { COMMON_FLAGS, GENERATE_FLAGS, generateArguments } from '../generate/generate-arguments';
+import { generateArguments } from '../generate/generate-arguments';
+import { COMMON_FLAGS, GENERATE_FLAGS } from '../generate/generate-options';
 import type { Kind, KindFlags } from '../generate/kind';
 import type { GeneratorProbe } from '../generate/generator-probe';
 import { KINDS } from '../generate/kinds';
