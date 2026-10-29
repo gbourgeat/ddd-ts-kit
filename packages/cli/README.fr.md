@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:cbccc77d0d600765 -->
+<!-- translation-of: README.md sha256:d2f0b6464f68d1de -->
 
 # ddd-ts-kit
 
@@ -1372,7 +1372,8 @@ contexte divisé en modules, `--grant` sur un projet dont les droits ne sont pas
 agrégat qu'aucune ligne ne génère, un amont non déclaré, une option inconnue), sans vagues et avec
 la sortie 1, le refus du générateur et sa correction affichés sous la ligne : corrigez la ligne.
 Le générateur dit aussi, quand il rejoue une commande, sur quels fichiers elle s'appuie (l'agrégat
-de `--aggregate`, le port d'un adaptateur, le cas d'usage d'une route, un groupe de routes, le
+de `--aggregate`, le port d'un adaptateur, le cas d'usage d'une route, un groupe de routes, la
+route, le *handler* d'événement ou le *job* qui lance le cas d'usage d'une spec de bout en bout, le
 `CONTEXT.md` du contexte où elle écrit et de chaque amont qu'elle déclare, la déclaration d'un
 événement) et quels fichiers elle crée. Une commande qui s'appuie sur un fichier que génère une
 ligne qu'elle n'attend pas, directement ou non, est une `missing-dependency`, même si le rejeu,

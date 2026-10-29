@@ -227,3 +227,50 @@ describe('plan-waves, a row in progress that builds on another row', () => {
     expect(planOf(root, row('US5.01', CREDIT), started).code).toBe(0);
   });
 });
+
+describe('plan-waves, an end-to-end spec on the job of another row', () => {
+  const pay =
+    'generate command billing PayInvoice --aggregate Invoice --permission invoice.pay --term "Pay=Settle an invoice"';
+
+  const job = 'generate job billing PayInvoices --every 15m --command PayInvoice';
+  const jobFile = 'src/contexts/billing/application/scheduling/pay-invoices.job.ts';
+
+  it('refuses an end-to-end spec written after the row of its job when it does not wait for it', () => {
+    const unordered = planOf(
+      root,
+      row('US6.01', pay),
+      row('US6.02', job, 'US6.01'),
+      row('US6.03', 'generate e2e billing PayInvoice', 'US6.01'),
+    );
+
+    expect(jsonAt(unordered.json(), 'problems')).toEqual([
+      expect.objectContaining({ kind: 'missing-dependency', rows: ['US6.03', 'US6.02'], builtOn: jobFile }),
+    ]);
+
+    expect(
+      planOf(
+        root,
+        row('US6.01', pay),
+        row('US6.02', job, 'US6.01'),
+        row('US6.03', 'generate e2e billing PayInvoice', 'US6.02'),
+      ).code,
+    ).toBe(0);
+  });
+
+  it('names the row of its job for an end-to-end spec written before it', () => {
+    const unordered = planOf(
+      root,
+      row('US6.01', pay),
+      row('US6.03', 'generate e2e billing PayInvoice', 'US6.01'),
+      row('US6.02', job, 'US6.01'),
+    );
+
+    expect(jsonAt(unordered.json(), 'problems')).toEqual([
+      expect.objectContaining({
+        kind: 'refused-command',
+        rows: ['US6.03', 'US6.02'],
+        prerequisite: `#US6.02 generates \`${jobFile}\`, but #US6.03 does not wait for it: add US6.02 to its Depends on.`,
+      }),
+    ]);
+  });
+});

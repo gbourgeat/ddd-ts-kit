@@ -1299,8 +1299,9 @@ divided into modules, `--grant` on a project whose rights are not roles, an aggr
 generates, an upstream not declared, an unknown flag), without waves and with exit 1, the refusal
 of the generator and its fix printed under the row: fix the row. The generator also says, while it
 replays a command, which files it builds on (the aggregate of `--aggregate`, the port of an
-adapter, the use case of a route, a route group, the `CONTEXT.md` of the context it writes in and
-of each upstream it declares, the declaration of an event) and which files it creates. A command
+adapter, the use case of a route, a route group, the route, the event handler or the job that
+starts the use case of an end-to-end spec, the `CONTEXT.md` of the context it writes in and of
+each upstream it declares, the declaration of an event) and which files it creates. A command
 that builds on a file a row it does not wait for generates, directly or not, is a
 `missing-dependency`, even though the replay, one row after the other in one copy, found the file:
 the worker of that row, on a branch of its own, would be refused (`#US5.02 ... builds on

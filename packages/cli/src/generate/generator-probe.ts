@@ -2,8 +2,9 @@ import type { LanguageProbe } from './language-probe';
 
 /**
  * Hears each file a command builds on, where the generator found it: the aggregate of
- * `--aggregate`, the port of an adapter, the use case of a route, a route group, the context it
- * writes in and the upstreams it declares (their CONTEXT.md), the declaration of an event.
+ * `--aggregate`, the port of an adapter, the use case of a route, a route group, the route, the
+ * event handler or the job an end-to-end spec starts its use case with, the context it writes in
+ * and the upstreams it declares (their CONTEXT.md), the declaration of an event.
  */
 export type PrerequisiteProbe = (file: string) => void;
 
