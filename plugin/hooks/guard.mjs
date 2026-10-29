@@ -260,10 +260,8 @@ const INLINE_CODE = {
   php: /^-r$/,
 };
 const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>', '>&']);
-// Editors that rewrite the files they open in place, and archive tools that write places only the
-// shell resolves (the current directory, a -C or -d target).
+// Editors that rewrite the files they open in place.
 const IN_PLACE_EDITORS = new Set(['vim', 'vi', 'ex', 'ed']);
-const EXTRACTORS = new Set(['tar', 'unzip']);
 // Linters and test runners that write the paths they are given, behind a flag.
 // For a writer of its operands, `subcommands` are the words that name an action, not a path, and
 // `valued` the options whose value is no path it writes.
@@ -2492,8 +2490,8 @@ function programWrites(name, words, directory) {
   if (name === 'curl' || name === 'wget') {
     return downloadWrites(name, args, at);
   }
-  if (EXTRACTORS.has(name)) {
-    return extracts(name, args) ? [{ place: undefined, by: name }] : [];
+  if (name === 'tar' || name === 'unzip') {
+    return archiveWrites(name, args, at);
   }
   if (AWK_PROGRAMS.has(name)) {
     return awkWrites(args) ? [{ place: undefined, by: 'an awk program that writes a file' }] : [];
@@ -2522,12 +2520,43 @@ function downloadWrites(name, args, at) {
   return writes;
 }
 
-// tar extracts with `-x`/`--extract`; unzip extracts unless it only lists or tests the archive.
-function extracts(name, args) {
+// An extraction writes places only the shell resolves (the current directory, a -C or -d target);
+// tar creating an archive writes the file of `-f`/`--file`. unzip extracts unless it lists or tests.
+function archiveWrites(name, args, at) {
   if (name === 'unzip') {
-    return !args.some((word) => word === '-l' || word === '-t');
+    return args.some((word) => word === '-l' || word === '-t') ? [] : [{ place: undefined, by: name }];
   }
-  return args.some((word) => /^-?-?x/.test(word) || word === '--extract');
+  const letters = tarLetters(args);
+  if (letters.includes('x') || args.includes('--extract') || args.includes('--get')) {
+    return [{ place: undefined, by: name }];
+  }
+  const file = letters.includes('c') || args.includes('--create') ? tarFile(args) : undefined;
+  return file === undefined ? [] : [at(file, name)];
+}
+
+// The mode and option letters of tar: its first word in the old form (`tar czf ...`), else its short
+// options (`-czf`, `-c -f`); never the name of an archive.
+function tarLetters(args) {
+  if (/^[A-Za-z]+$/.test(args[0] ?? '')) {
+    return args[0];
+  }
+  return args
+    .filter((word) => /^-[A-Za-z]+$/.test(word))
+    .map((word) => word.slice(1))
+    .join('');
+}
+
+// The archive tar names: the value of `--file`, or the word after the letters that hold `f`.
+function tarFile(args) {
+  const long = args.find((word) => word.startsWith('--file='));
+  if (long !== undefined) {
+    return long.slice('--file='.length);
+  }
+  const at = args.findIndex(
+    (word, index) =>
+      word === '--file' || (/^-?[A-Za-z]*f[A-Za-z]*$/.test(word) && (index === 0 || word.startsWith('-'))),
+  );
+  return at === -1 ? undefined : (args[at + 1] ?? shell.UNKNOWN);
 }
 
 // An awk program writes when it edits in place (`-i inplace`), redirects, pipes, or calls `system`.
