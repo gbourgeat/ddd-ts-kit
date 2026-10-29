@@ -18,7 +18,8 @@ writes rules for is left out, and `init` adds `.worktrees/` the same way. A last
 `--force` rewrote and kept.
 
 A file a generator leaves as it is reads `skipped <file> (exists, kept; --force replaces it once it
-is committed)`, and the `.claude/settings.json` that `init` writes asks before `generate --force*`,
+is committed)`, a file of the team `init` leaves `skipped <file> (exists, kept (yours since the
+first init))`, and the `.claude/settings.json` that `init` writes asks before `generate --force*`,
 `generate * --force*`, `init --force*` and `init * --force*`, the allow rule of `generate`
 notwithstanding (`init` run again adds the four rules to a project). It also asks before
 `check --baseline=write` and before `--baseline write` or `--baseline=write` after other flags

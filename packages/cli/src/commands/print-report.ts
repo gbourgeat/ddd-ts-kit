@@ -42,14 +42,21 @@ function fileLines(report: WorkspaceReport, dryRun: boolean): string[] {
     ...report.updated.map((file) => `${verb('updated')}${file}`),
     ...report.deleted.map((file) => `${verb('deleted')}${file}`),
     ...report.skipped.map((file) => `${'skipped'.padEnd(13)}${file} (${skippedBecause(report, file)})`),
-    ...report.kept.map((file) => `${'kept'.padEnd(13)}${file} (yours since the first init)`),
+    ...report.kept
+      .filter((file) => !report.skipped.includes(file))
+      .map((file) => `${'kept'.padEnd(13)}${file} (yours since the first init)`),
   ];
 
   return lines.length > 0 ? lines : ['Nothing to do.'];
 }
 
 function skippedBecause(report: WorkspaceReport, file: string): string {
-  return report.unwritable.includes(file)
-    ? 'cannot be written here: a sandbox or the permissions protect the path'
+  if (report.unwritable.includes(file)) {
+    return 'cannot be written here: a sandbox or the permissions protect the path';
+  }
+
+  // A file of the team: --force does not replace it either.
+  return report.kept.includes(file)
+    ? 'exists, kept (yours since the first init)'
     : 'exists, kept; --force replaces it once it is committed';
 }

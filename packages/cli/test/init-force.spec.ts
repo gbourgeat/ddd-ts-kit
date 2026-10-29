@@ -291,6 +291,16 @@ describe('init --force and the files of the team', () => {
     );
   });
 
+  it('says of a file of the team that init leaves that it is yours, with no advice of --force', () => {
+    const root = initProject();
+    const again = cli(root, 'init').stdout;
+
+    expect(again).toContain('skipped      README.md (exists, kept (yours since the first init))');
+    expect(again).toContain('skipped      src/main.ts (exists, kept (yours since the first init))');
+    expect(again).toContain('skipped      biome.json (exists, kept; --force replaces it once it is committed)');
+    expect(again).not.toContain('kept         README.md');
+  });
+
   it('writes a file of the team again when it is gone', () => {
     const root = initProject();
 

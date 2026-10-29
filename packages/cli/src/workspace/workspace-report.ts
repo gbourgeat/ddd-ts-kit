@@ -8,7 +8,7 @@ export interface WorkspaceReport {
   readonly deleted: string[];
   /** Files left as they are: the ones that exist (unless --force) and the unwritable ones. */
   readonly skipped: string[];
-  /** Files that exist and are the team's once written: left as they are, --force included. */
+  /** Files that exist and are the team's once written: left as they are, --force included; also in `skipped` without --force. */
   readonly kept: string[];
   /** Files this command could not write where it ran, such as paths the sandbox of an agent protects; also in `skipped`. */
   readonly unwritable: string[];
