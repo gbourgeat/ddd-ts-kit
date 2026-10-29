@@ -253,7 +253,7 @@ describe('the files of an explicit context', () => {
     );
 
     expect(read(root, `${BILLING}/test/fakes/search-invoices-reader.fake.ts`)).toContain(
-      'export class FakeSearchInvoicesReader extends InMemorySearchInvoicesReader implements SearchInvoicesReader {',
+      'export class FakeSearchInvoicesReader extends InMemorySearchInvoicesReader {',
     );
   });
 
