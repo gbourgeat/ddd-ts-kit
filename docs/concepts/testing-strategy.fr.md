@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:a5d4a1b976ce0c22 -->
+<!-- translation-of: testing-strategy.md sha256:f18c9bf513a3dce7 -->
 
 # Stratégie de test
 
@@ -334,7 +334,11 @@ const { application, appointmentRepository } = await aSchedulingWorld({
   générée une fois `test/worlds/<context>.world.ts` présent écrit son `arrange()` comme un seul
   appel du monde ; générée avant, ou quand le monde n'a pas le *fake* dont sa *spec* a besoin,
   elle construit elle-même l'application de test, et un commentaire et la sortie du générateur
-  disent ce que le monde changerait. Aucun générateur n'écrit le monde sans qu'on le demande.
+  disent ce que le monde changerait (avec un conteneur, où le monde remplace toute la mise en
+  place). Un monde que le générateur ne sait pas lire, son constructeur `a<Context>World` ou ses
+  options introuvables, est dit tel et jamais proposé à `--force`. Un *fake* qu'une *spec* passe
+  au monde remplace celui qu'il construit pour le même port. Aucun générateur n'écrit le monde
+  sans qu'on le demande.
 - **Sans conteneur d'injection** (`createTestBuses`), le monde rend les bus et les *fakes*,
   chaque *repository* enveloppé par `dispatching`, et la *spec* enregistre le *handler* qu'elle
   teste.

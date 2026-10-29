@@ -322,7 +322,10 @@ const { application, appointmentRepository } = await aSchedulingWorld({
   `test/worlds/<context>.world.ts` exists writes its `arrange()` as one call of the world;
   generated before, or when the world lacks the fake its spec needs, it builds the test
   application itself, and a comment and the output of the generator say what the world would
-  change. No generator writes the world unasked.
+  change (under a container, where the world replaces the whole arrangement). A world the
+  generator cannot read, its builder `a<Context>World` or its options not found, is said so and
+  never offered to `--force`. A fake a spec hands the world replaces the one it builds for the
+  same port. No generator writes the world unasked.
 - **Without an injection container** (`createTestBuses`), the world returns the buses and the
   fakes, each repository wrapped by `dispatching`, and the spec registers the handler it tests.
 - **What it leaves out, and says so.** A fake whose constructor needs an argument (a reader that
