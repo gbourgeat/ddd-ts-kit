@@ -169,6 +169,16 @@ const CONFIG_SET = [
   'git -c core.pager=less-and-run log',
   'git -c alias.evil="!rm src/main.ts" evil',
   'git -c diff.odd.command=run diff',
+  // Each changes the config by its verb or its flag, whatever the number of its operands.
+  'git config set user.name builder',
+  'git config edit',
+  'git config --unset user.name',
+  'git config --unset-all user.name',
+  'git config --remove-section user',
+  'git config --rename-section user person',
+  'git config --edit',
+  'git config --replace-all user.name x',
+  'git config --add user.name x',
 ];
 
 // Each only reads the config, or sets a value the sub-agent is allowed to leave alone.
@@ -176,6 +186,8 @@ const CONFIG_READ = [
   'git config --get user.name',
   'git config user.name',
   'git config --list',
+  'git config get user.name',
+  'git config list',
   'git -c user.name=guard commit --allow-empty -m x',
   'git log --oneline',
 ];

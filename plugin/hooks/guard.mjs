@@ -1915,6 +1915,28 @@ const DANGEROUS_CONFIG = [
   /^gpg\.program$/i,
 ];
 const CONFIG_READS = new Set(['--get', '--get-all', '--get-regexp', '--get-urlmatch', '-l', '--list', '--list-all']);
+const CONFIG_WRITES = new Set([
+  '--unset',
+  '--unset-all',
+  '--remove-section',
+  '--rename-section',
+  '-e',
+  '--edit',
+  '--replace-all',
+  '--add',
+]);
+// The verbs of `git config` (git 2.46), each with whether it changes the configuration.
+const CONFIG_VERBS = new Map([
+  ['get', false],
+  ['list', false],
+  ['get-color', false],
+  ['get-colorbool', false],
+  ['set', true],
+  ['unset', true],
+  ['edit', true],
+  ['rename-section', true],
+  ['remove-section', true],
+]);
 
 // A sub-agent never sets the git configuration (shared by every checkout of the repository) nor
 // passes a dangerous `-c key=value`; it reads the config with `--get` or `--list`.
@@ -1951,11 +1973,20 @@ function isDangerousConfig(key) {
   return DANGEROUS_CONFIG.some((pattern) => pattern.test(key));
 }
 
+// Decided by the verb (`git config get|list|set|unset|edit ...`, git 2.46) or the flag of the older
+// form (`--get`, `--list`; `--unset`, `--add`, `--edit`, ...); without either, `<key> <value>` sets.
 function setsConfig(tail) {
+  if (tail.some((word) => CONFIG_WRITES.has(word))) {
+    return true;
+  }
   if (tail.some((word) => CONFIG_READS.has(word))) {
     return false;
   }
-  return shell.operands(tail, ['--type', '-t', '--file', '-f', '--default']).length >= 2;
+  const operands = shell.operands(tail, ['--type', '-t', '--file', '-f', '--default']);
+  if (CONFIG_VERBS.has(operands[0])) {
+    return CONFIG_VERBS.get(operands[0]);
+  }
+  return operands.length >= 2;
 }
 
 function baselineWriteReason(command) {
