@@ -12,7 +12,7 @@ import {
   defineRoute,
   type HttpRequest,
 } from '../src';
-import { routeOf } from '../src/testing';
+import { routeOf, type RouteOfOptions } from '../src/testing';
 
 const params = zodSchema(z.object({ invoiceId: z.string().min(1) }));
 const body = zodSchema(z.object({ reason: z.string().min(1) }));
@@ -127,12 +127,17 @@ describe('routeOf', () => {
     const checked = await routeOf(new CancelInvoiceController('')).send(request);
     const unchecked = await routeOf(new CancelInvoiceController(''), { validateResponses: false }).send(request);
 
+    // What a caller in JavaScript, or an options object spread from a partial one, may hand over.
+    const unsaid: RouteOfOptions = Object.fromEntries([['validateResponses', undefined]]);
+    const stillChecked = await routeOf(new CancelInvoiceController(''), unsaid).send(request);
+
     const mapped = await routeOf(new CancelInvoiceController(), {
       caller: anonymousActor(),
       errorMapper: createErrorMapper({ UNAUTHORIZED: 403 }),
     }).send(request);
 
     expect(checked.status).toBe(500);
+    expect(stillChecked.status).toBe(500);
     expect(unchecked).toMatchObject({ status: 201, body: { id: '' } });
     expect(mapped.status).toBe(403);
   });

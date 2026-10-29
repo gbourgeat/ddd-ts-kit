@@ -45,8 +45,8 @@ export function routeOf(
     caller,
     send: (request = {}) =>
       executeRoute(route, rawRequestOf(request), {
-        validateResponses: true,
         ...execution,
+        validateResponses: execution.validateResponses ?? true,
         resolvePrincipal: () => caller,
       }),
   };
