@@ -41,6 +41,12 @@ describe('init --preset identity', () => {
     );
 
     expect(fs.existsSync(path.join(root, 'docs/adr'))).toBe(false);
+
+    // Its controller specs take the one arrangement of a generated controller spec.
+    const spec = read(root, `${CONTEXT}/test/unit/invite-member.controller.spec.ts`);
+
+    expect(spec).toContain('return { ...routeOf(new InviteMemberController(commands), { caller: as }), commands };');
+    expect(spec).not.toContain('executeRoute');
   });
 
   it('declares the context of its name when no --context does, with its purpose, its design, its glossary and its analyzer rules', () => {

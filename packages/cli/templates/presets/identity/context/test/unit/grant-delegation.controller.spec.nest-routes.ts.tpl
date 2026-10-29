@@ -1,7 +1,8 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { executeRoute } from '@ddd-ts-kit/http';
 import { nestControllerRoute } from '@ddd-ts-kit/http/nest';
-import { InMemoryCommandBus, type Actor } from '@ddd-ts-kit/kernel';
+import { routeOf } from '@ddd-ts-kit/http/testing';
+import type { Actor } from '@ddd-ts-kit/kernel';
+import { RecordingCommandBus } from '@ddd-ts-kit/kernel/testing';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { GrantDelegationCommand } from '{{alias.context}}/application/commands/grant-delegation/grant-delegation.command{{alias.ext}}';
 import { GrantDelegationController } from '{{alias.context}}/presentation/http/organisations/grant-delegation/grant-delegation.controller{{alias.ext}}';
@@ -17,30 +18,22 @@ const caller: Actor = {
 
 describe('POST /organisations/:organisationId/delegations', () => {
   it('answers 201 with what the use case answered, and sends it what the request says', async () => {
-    const { route, sent } = arrange();
+    const { route, send, commands } = arrange();
 
-    const response = await executeRoute(
-      route,
-      { params: { organisationId: 'acme' }, query: {}, headers: {}, body: { delegateId: 'subject-grace', rights: ['invite-members'], startsAt: '2026-01-01T00:00:00.000Z', endsAt: '2026-01-15T00:00:00.000Z' }, raw: undefined },
-      { validateResponses: true, resolvePrincipal: () => caller },
-    );
+    const response = await send({ params: { organisationId: 'acme' }, body: { delegateId: 'subject-grace', rights: ['invite-members'], startsAt: '2026-01-01T00:00:00.000Z', endsAt: '2026-01-15T00:00:00.000Z' } });
 
     expect(route.path).toBe('/organisations/:organisationId/delegations');
     expect([response.status, response.body]).toEqual([201, { id: 'delegation-1' }]);
-    expect(sent).toMatchObject([{ organisationId: 'acme', terms: { delegateId: 'subject-grace', rights: ['invite-members'], startsAt: new Date('2026-01-01T00:00:00.000Z'), endsAt: new Date('2026-01-15T00:00:00.000Z') } }]);
+    expect(commands.executed).toMatchObject([{ organisationId: 'acme', terms: { delegateId: 'subject-grace', rights: ['invite-members'], startsAt: new Date('2026-01-01T00:00:00.000Z'), endsAt: new Date('2026-01-15T00:00:00.000Z') } }]);
   });
 
   it('refuses with 422 a request its contract does not describe, and sends nothing', async () => {
-    const { route, sent } = arrange();
+    const { send, commands } = arrange();
 
-    const response = await executeRoute(
-      route,
-      { params: { organisationId: 'acme' }, query: {}, headers: {}, body: { delegateId: 'subject-grace', rights: ['rule-the-world'], startsAt: '2026-01-01T00:00:00.000Z', endsAt: '2026-01-15T00:00:00.000Z' }, raw: undefined },
-      { resolvePrincipal: () => caller },
-    );
+    const response = await send({ params: { organisationId: 'acme' }, body: { delegateId: 'subject-grace', rights: ['rule-the-world'], startsAt: '2026-01-01T00:00:00.000Z', endsAt: '2026-01-15T00:00:00.000Z' } });
 
     expect(response.status).toBe(422);
-    expect(sent).toEqual([]);
+    expect(commands.executed).toEqual([]);
   });
 
   it('is listed in the Nest controllers of the context, which say what its signature takes and answers', () => {
@@ -48,17 +41,9 @@ describe('POST /organisations/:organisationId/delegations', () => {
   });
 });
 
-/** The route, on a bus that keeps what it was sent and answers as the use case would. */
-function arrange() {
-  const sent: GrantDelegationCommand[] = [];
-
-  const commands = new InMemoryCommandBus().register(GrantDelegationCommand, {
-    execute: async (command) => {
-      sent.push(command);
-
-      return 'delegation-1';
-    },
-  });
+/** The route, sent as `caller` unless a test names another, on a bus that keeps what it was sent and answers as the use case would. */
+function arrange(as: Actor = caller) {
+  const commands = new RecordingCommandBus().answering(GrantDelegationCommand, () => 'delegation-1');
 
   const route = nestControllerRoute(GrantDelegationController, {
     instanceOf: () => new GrantDelegationController(commands),
@@ -66,5 +51,5 @@ function arrange() {
     schemaOfClass: (dto) => classSchema(dto, { validator: { forbidUnknownValues: false } }),
   });
 
-  return { route, sent };
+  return { ...routeOf(route, { caller: as }), commands };
 }

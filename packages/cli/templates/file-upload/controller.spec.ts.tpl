@@ -1,46 +1,24 @@
 import { Readable } from 'node:stream';
 import { describe, expect, it } from '{{tests.module}}';
-import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
-import { InMemoryCommandBus{{#if route.protected}}, type Actor{{/if}} } from '@ddd-ts-kit/kernel';
+import { routeOf } from '@ddd-ts-kit/http/testing';
+import { RecordingCommandBus } from '@ddd-ts-kit/kernel/testing';
 {{route.messageImport}}
 {{route.specImports}}
 
-{{#if route.protected}}
-const caller: Actor = { id: 'user-1', type: 'user', roles: [], attributes: {} };
-
-{{/if}}
 describe('{{route.method}} {{route.path}}', () => {
   it('declares the file it receives, and hands it to the command as it streams', async () => {
-    const received: string[] = [];
-
-    const commands = new InMemoryCommandBus().register({{route.input}}, {
-      execute: async ({ upload }) => {
-        received.push(upload.fileName);
-
-        return 'file-1';
-      },
-    });
-
-    const route = controllerRoute(new {{name.pascal}}Controller(commands));
+    const commands = new RecordingCommandBus().answering({{route.input}}, () => 'file-1');
     const file = { fileName: 'scan.pdf', mediaType: 'application/pdf', stream: Readable.from([Buffer.from('%PDF-')]) };
+    const uploads = async () => ({ fields: {}, file });
+    const { route{{#if route.protected}}, caller{{/if}}, send } = routeOf(new {{name.pascal}}Controller(commands), { uploads });
 
-    const response = await executeRoute(
-      route,
-      { params: {{route.sampleParams}}, query: {}, headers: {}, body: {}, raw: undefined },
-      {
-        validateResponses: true,
-        uploads: async () => ({ fields: {}, file }),
-{{#if route.protected}}
-        resolvePrincipal: () => caller,
-{{/if}}
-      },
-    );
+    const response = await send({{route.sentRequest}});
 
     expect(response.status).toBe(201);
-    expect(received).toEqual(['scan.pdf']);
+    expect(commands.executed).toMatchObject([{ {{#if route.protected}}actor: caller, {{/if}}upload: { area: '{{name.kebab}}', received: { fileName: 'scan.pdf' } } }]);
     expect(route.upload?.field).toBe('file');
   });
 
-  // TODO(domain): replace each entry below by a test of the contract a client relies on.
+  // TODO(domain): replace each entry below by a test of the same shape, through the same `routeOf` (`{ caller }` names another one, `anonymousActor()` of the kernel nobody).
   it.todo('answers the documented status for each error code of the use case');
 });

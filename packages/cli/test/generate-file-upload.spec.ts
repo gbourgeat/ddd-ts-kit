@@ -46,7 +46,16 @@ describe('generate file-upload', () => {
     );
 
     expect(exists(root, `${BILLING}/test/unit/attach-invoice-scan.handler.spec.ts`)).toBe(true);
-    expect(exists(root, `${BILLING}/test/unit/attach-invoice-scan.controller.spec.ts`)).toBe(true);
+    const spec = read(root, `${BILLING}/test/unit/attach-invoice-scan.controller.spec.ts`);
+
+    // The one arrangement of a controller spec: a recording bus, and routeOf given the upload reader once.
+    expect(spec).toContain(
+      "const commands = new RecordingCommandBus().answering(AttachInvoiceScanCommand, () => 'file-1');",
+    );
+
+    expect(spec).toContain('routeOf(new AttachInvoiceScanController(commands), { uploads });');
+    expect(spec).toContain("upload: { area: 'attach-invoice-scan', received: { fileName: 'scan.pdf' } }");
+    expect(spec).not.toContain('executeRoute');
   });
 
   it('registers the handler on the files of the platform, in a project wired by hand', () => {

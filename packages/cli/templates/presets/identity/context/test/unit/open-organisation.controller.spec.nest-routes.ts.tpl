@@ -1,7 +1,8 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { executeRoute } from '@ddd-ts-kit/http';
 import { nestControllerRoute } from '@ddd-ts-kit/http/nest';
-import { InMemoryCommandBus, type Actor } from '@ddd-ts-kit/kernel';
+import { routeOf } from '@ddd-ts-kit/http/testing';
+import type { Actor } from '@ddd-ts-kit/kernel';
+import { RecordingCommandBus } from '@ddd-ts-kit/kernel/testing';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { OpenOrganisationCommand } from '{{alias.context}}/application/commands/open-organisation/open-organisation.command{{alias.ext}}';
 import { OpenOrganisationController } from '{{alias.context}}/presentation/http/organisations/open-organisation/open-organisation.controller{{alias.ext}}';
@@ -17,30 +18,22 @@ const caller: Actor = {
 
 describe('POST /organisations', () => {
   it('answers 201 with what the use case answered, and sends it what the request says', async () => {
-    const { route, sent } = arrange();
+    const { route, send, commands } = arrange();
 
-    const response = await executeRoute(
-      route,
-      { params: {}, query: {}, headers: {}, body: { slug: 'acme', name: 'Acme' }, raw: undefined },
-      { validateResponses: true, resolvePrincipal: () => caller },
-    );
+    const response = await send({ body: { slug: 'acme', name: 'Acme' } });
 
     expect(route.path).toBe('/organisations');
     expect([response.status, response.body]).toEqual([201, { id: 'acme' }]);
-    expect(sent).toMatchObject([{ organisation: { slug: 'acme', name: 'Acme' } }]);
+    expect(commands.executed).toMatchObject([{ organisation: { slug: 'acme', name: 'Acme' } }]);
   });
 
   it('refuses with 422 a request its contract does not describe, and sends nothing', async () => {
-    const { route, sent } = arrange();
+    const { send, commands } = arrange();
 
-    const response = await executeRoute(
-      route,
-      { params: {}, query: {}, headers: {}, body: { slug: 'acme' }, raw: undefined },
-      { resolvePrincipal: () => caller },
-    );
+    const response = await send({ body: { slug: 'acme' } });
 
     expect(response.status).toBe(422);
-    expect(sent).toEqual([]);
+    expect(commands.executed).toEqual([]);
   });
 
   it('is listed in the Nest controllers of the context, which say what its signature takes and answers', () => {
@@ -48,17 +41,9 @@ describe('POST /organisations', () => {
   });
 });
 
-/** The route, on a bus that keeps what it was sent and answers as the use case would. */
-function arrange() {
-  const sent: OpenOrganisationCommand[] = [];
-
-  const commands = new InMemoryCommandBus().register(OpenOrganisationCommand, {
-    execute: async (command) => {
-      sent.push(command);
-
-      return 'acme';
-    },
-  });
+/** The route, sent as `caller` unless a test names another, on a bus that keeps what it was sent and answers as the use case would. */
+function arrange(as: Actor = caller) {
+  const commands = new RecordingCommandBus().answering(OpenOrganisationCommand, () => 'acme');
 
   const route = nestControllerRoute(OpenOrganisationController, {
     instanceOf: () => new OpenOrganisationController(commands),
@@ -66,5 +51,5 @@ function arrange() {
     schemaOfClass: (dto) => classSchema(dto, { validator: { forbidUnknownValues: false } }),
   });
 
-  return { route, sent };
+  return { ...routeOf(route, { caller: as }), commands };
 }
