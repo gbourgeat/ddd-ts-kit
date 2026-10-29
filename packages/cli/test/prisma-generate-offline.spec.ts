@@ -28,7 +28,7 @@ describe.runIf(INSTALLED)('db:generate of a Prisma project with no database reac
 
     fs.symlinkSync(MODULES, path.join(root, 'node_modules'), 'dir');
 
-    const first = cli(root, 'prisma-generate', '--name', 'Init tables');
+    const first = cli(root, 'prisma-generate', '--name', 'Init_Tables');
     const folder = path.join(root, 'prisma/migrations');
     const [migration] = fs.readdirSync(folder).filter((entry) => entry.endsWith('_init_tables'));
 

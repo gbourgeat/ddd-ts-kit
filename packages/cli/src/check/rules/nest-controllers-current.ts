@@ -9,6 +9,7 @@ import type { Project } from '../model/project';
 import type { Rule } from '../model/rule';
 import type { Violation } from '../model/violation';
 import { reporter } from '../support/reporter';
+import { ownEntry } from '../../config/values/own-entry';
 
 const EXAMPLES: Readonly<Record<NestRequestPart['source'], string>> = {
   params: '@Param() params: InvoiceDetailsParams',
@@ -33,7 +34,7 @@ export const nestControllersCurrent: Rule = {
     const files = projectFiles(project);
 
     return project.contextsOnDisk
-      .filter((context) => project.config.contexts[context] !== undefined)
+      .filter((context) => ownEntry(project.config.contexts, context) !== undefined)
       .flatMap((context) => judged(project, files, context));
   },
 };

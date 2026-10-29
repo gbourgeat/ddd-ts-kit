@@ -122,11 +122,25 @@ describe('worker-scope --base', () => {
     expect(String(jsonAt(scope.json(), 'briefing'))).toContain('`npx ddd-ts-kit verify-slice billing --since release`');
   });
 
+  it('reads a base whose name starts with a dash as the commit it names, never as an option of git', () => {
+    git(root, 'update-ref', 'refs/heads/-x', 'HEAD');
+    git(root, 'branch', 'build/shipping', 'HEAD');
+
+    const scope = cli(root, 'worker-scope', 'shipping', '--base=-x', '--dry-run', '--json');
+
+    git(root, 'branch', '--delete', 'build/shipping');
+    git(root, 'update-ref', '-d', 'refs/heads/-x');
+
+    expect(scope.stderr).toBe('');
+    expect(scope.code).toBe(0);
+    expect(scope.json()).toMatchObject({ trunk: '-x' });
+  });
+
   it('refuses a base that names no commit', () => {
     const refused = cli(root, 'worker-scope', 'shipping', '--base', 'origin/nowhere', '--dry-run');
 
     expect(refused.code).toBe(2);
-    expect(refused.stderr).toContain('The base origin/nowhere is not a commit of this repository.');
+    expect(refused.stderr).toContain('error: origin/nowhere is not a commit of this repository.');
   });
 
   it('refuses a worktree that exists and does not contain the base, and keeps one that does', () => {

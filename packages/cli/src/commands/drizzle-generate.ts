@@ -6,6 +6,7 @@ import {
   appendAuditGuard,
   auditGuardStatementsOf,
   generateAndRead,
+  migrationName,
   replayDrizzleMigrations,
   schemasIfMissing,
   tidyWrittenMigration,
@@ -105,5 +106,5 @@ function namedMigration(args: Arguments): string {
     );
   }
 
-  return name;
+  return migrationName(name, 'Name it by what it does, in kebab-case: `npm run db:generate add-invoices`.');
 }

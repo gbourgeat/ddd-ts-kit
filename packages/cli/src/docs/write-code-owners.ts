@@ -3,6 +3,7 @@ import type { Workspace } from '../workspace';
 import { codeOwnersLines, type OwnedContext } from './code-owners-lines';
 import type { ContextFacts } from './context-facts';
 import { sharedKernelImporters } from './shared-kernel-importers';
+import { ownEntry } from '../config/values/own-entry';
 
 /** At the root, where GitHub and GitLab both read it. */
 const CODE_OWNERS = 'CODEOWNERS';
@@ -48,10 +49,10 @@ export function writeCodeOwners(ws: Workspace, config: Config, contexts: readonl
 
 function ownedContexts(config: Config, contexts: readonly ContextFacts[]): OwnedContext[] {
   return contexts
-    .filter((context) => (config.contexts[context.name]?.owners ?? []).length > 0)
+    .filter((context) => (ownEntry(config.contexts, context.name)?.owners ?? []).length > 0)
     .map((context) => ({
       name: context.name,
-      owners: config.contexts[context.name]?.owners ?? [],
+      owners: ownEntry(config.contexts, context.name)?.owners ?? [],
       consumers: context.downstreams.map((downstream) => downstream.context),
     }));
 }

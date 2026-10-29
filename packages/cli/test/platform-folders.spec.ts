@@ -261,4 +261,36 @@ describe('platform-folders, on the files of the team', () => {
       'which does not exist',
     );
   });
+
+  it('refuses a --place whose file leaves the platform, which it would report moved and could not move', () => {
+    const root = initProject();
+    const main = read(root, 'src/main.ts');
+
+    write(root, 'outside-file.ts', 'export const outside = 1;\n');
+
+    for (const file of ['../main.ts', '../../outside-file.ts', 'auth/../../main.ts', '/etc/hosts']) {
+      const refused = cli(root, 'platform-folders', '--place', `${file}=composition`, '--json');
+
+      expect(refused.code).toBe(2);
+
+      expect(refused.json()).toEqual({
+        error: {
+          message: `--place ${file}=composition names ${file}, which is outside src/platform/: the command moves the files of the platform only.`,
+          fix: 'Name a file by its path from src/platform/, as the command listed it: --place auth/role-grants.ts=auth/roles.',
+        },
+      });
+    }
+
+    const backslash = cli(root, 'platform-folders', '--place', '..\\main.ts=composition');
+
+    expect(backslash.code).toBe(2);
+
+    expect(backslash.stderr).toContain(
+      'error: --place ..\\main.ts=composition names ..\\main.ts, written with a backslash: the kit reads paths with `/` only (on Windows, through WSL 2).',
+    );
+
+    expect(read(root, 'src/main.ts')).toBe(main);
+    expect(exists(root, 'outside-file.ts')).toBe(true);
+    expect(exists(root, 'src/platform/composition/main.ts')).toBe(false);
+  });
 });

@@ -7,6 +7,7 @@ export type { Name } from './name';
 export { parseConceptName } from './parse-concept-name';
 export { parseContextName } from './parse-context-name';
 export { plural } from './plural';
+export { readName } from './read-name';
 export { singular } from './singular';
 export { splitWords } from './split-words';
 export { toName } from './to-name';

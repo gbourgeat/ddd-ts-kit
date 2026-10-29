@@ -44,6 +44,7 @@ import {
   singlePrismaSchemaFound,
   singlePrismaSchemaSteps,
 } from '../prisma-schema';
+import { ownEntry } from '../config/values/own-entry';
 
 const KNIP_FILE = 'knip.json';
 
@@ -204,7 +205,7 @@ function presetContexts(config: Config, options: InitOptions): string[] {
   const named = new Set(options.contexts.map((entry) => entry.split(':')[0]));
 
   return (options.presets ?? [])
-    .filter((name) => !named.has(name) && config.contexts[name] === undefined)
+    .filter((name) => !named.has(name) && ownEntry(config.contexts, name) === undefined)
     .map((name) => `${name}:${presetNamed(name).classification}`);
 }
 

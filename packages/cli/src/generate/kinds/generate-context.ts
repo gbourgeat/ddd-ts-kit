@@ -8,18 +8,20 @@ import type { Workspace } from '../../workspace';
 import type { ContextRequest } from './context-request';
 import { declareContextEntries } from './declare-context-entries';
 import { writeContextFiles } from './write-context-files';
+import { ownEntry } from '../../config/values/own-entry';
 
 /** Shared by `generate context` and `init`, so both create exactly the same context. */
 export function generateContext(ws: Workspace, config: Config, request: ContextRequest): Config {
   const context = parseContextName(request.name);
 
+  refuseObjectName(request.name, context);
   refuseReservedName(context);
 
   const classification = knownClassification(context, request.classification);
 
   assertUpstreamsExist(config, context, request);
 
-  const existing = config.contexts[context.kebab];
+  const existing = ownEntry(config.contexts, context.kebab);
 
   const entry = existing ?? {
     classification,
@@ -47,6 +49,27 @@ export function generateContext(ws: Workspace, config: Config, request: ContextR
   refreshContextDoc(ws, next, context.kebab);
 
   return next;
+}
+
+/** The names every object of JavaScript answers to, whatever it holds. */
+const OBJECT_NAMES = ['constructor', 'prototype', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'];
+
+/**
+ * A context is a key of the config, of the context map and of the objects the generated code
+ * builds from them, where `constructor` or `toString` names what every object has: a lookup
+ * would answer the prototype of the object instead of the context.
+ */
+function refuseObjectName(input: string, context: Name): void {
+  const taken = OBJECT_NAMES.find((name) => [input, context.kebab, context.camel].includes(name));
+
+  if (taken === undefined) {
+    return;
+  }
+
+  throw new CliError(
+    `"${input}" cannot name a bounded context: ${taken} is a name every JavaScript object has, and a context is a key of the config and of the objects built from it.`,
+    'Name the context after the business capability it serves, for example billing or order-fulfilment.',
+  );
 }
 
 /**
@@ -88,7 +111,7 @@ function assertUpstreamsExist(config: Config, context: Name, { upstreams, builtO
       );
     }
 
-    if (config.contexts[upstream.context] === undefined) {
+    if (ownEntry(config.contexts, upstream.context) === undefined) {
       throw new MissingPrerequisite(
         `The upstream context "${upstream.context}" is not declared.`,
         `Create it first with \`ddd-ts-kit generate context ${upstream.context} --classification <core|supporting|generic>\`.`,

@@ -27,7 +27,7 @@ const SCHEMAS = /^\s*schemas\s*=\s*\[([^\]]*)\]/;
  * context, or of the platform, stays left out: a person decides about it.
  */
 export function storageOfSlice(
-  { root, config, context }: Omit<SliceToVerify, 'since'>,
+  { root, config, context }: Omit<SliceToVerify, 'since' | 'sinceCommit'>,
   entries: readonly ChangedEntry[],
 ): Set<string> {
   const index = `${config.platformDir}/database/schema.ts`;

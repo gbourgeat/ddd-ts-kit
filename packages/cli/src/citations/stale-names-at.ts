@@ -1,3 +1,4 @@
+import { commitOf } from '../commit/commit-of';
 import { runGit } from '../commit/run-git';
 import type { Config } from '../config';
 import { readSlices } from '../progress/read-slices';
@@ -24,29 +25,40 @@ export interface CitationsAtRef {
 
 /** The rows whose design is checked, and the ref it is checked against. */
 export interface RowsAtRef {
+  /** The ref by its name, which the report prints. */
   readonly ref: string;
+  /** The commit it names, which git is given: resolved here when the caller has not. */
+  readonly commit?: string;
   readonly rows: readonly string[];
 }
 
 /**
  * Checks the design of rows against the code of a ref, before they are built: the names it cites
  * that the history of the ref removed, the places the canonical tree refuses, and the names
- * close to one the ref gained since. Reads git only when the design cites a name.
+ * close to one the ref gained since. Reads git only when the design cites a name, and gives it the
+ * commit, never the name, which may start with a dash; a ref that names no commit is judged
+ * against nothing, and said.
  */
 export function staleNamesAt(root: string, config: Config, asked: RowsAtRef): CitationsAtRef {
   const { ref } = asked;
   const slices = readSlices(new Workspace(root, false)) ?? [];
   const parts = selectParts(rowDocuments(root, slices), { rows: new Set(asked.rows), unlinked: false });
   const citations = citationsOf(citedParts(parts, slices, { root, config }));
-  const commit = runGit(root, ['rev-parse', '--short', ref])?.trim() ?? ref;
+  const full = asked.commit ?? commitOf(root, ref);
+  const commit = full === undefined ? ref : (runGit(root, ['rev-parse', '--short', full])?.trim() ?? full);
+  const none = { base: ref, commit, counts: { present: 0, planned: 0 }, citations: [] };
 
-  if (citations.length === 0) {
-    return { base: ref, commit, counts: { present: 0, planned: 0 }, citations: [], notes: [] };
+  if (full === undefined) {
+    return { ...none, notes: [`${ref} is not a commit of this repository: the design was not checked against it.`] };
   }
 
-  const index = indexAtRef(root, ref, config.sourceRoot);
-  const history = removalsAtRef(root, ref, config.sourceRoot);
-  const { stale, counts } = judgedCitations(citations, { root, config, index, history, ref });
+  if (citations.length === 0) {
+    return { ...none, notes: [] };
+  }
+
+  const index = indexAtRef(root, full, config.sourceRoot);
+  const history = removalsAtRef(root, full, config.sourceRoot);
+  const { stale, counts } = judgedCitations(citations, { root, config, index, history, ref: full });
 
   return { base: ref, commit, counts, citations: stale, notes: refNotes(root, ref) };
 }

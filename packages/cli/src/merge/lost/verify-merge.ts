@@ -1,7 +1,7 @@
 import { runGit } from '../../commit/run-git';
 import { SLICES_FILE } from '../../progress/read-slices';
 import { changedPaths } from './changed-paths';
-import { commitOf } from './commit-of';
+import { commitOf } from '../../commit/commit-of';
 import { conflictMarkers } from './conflict-markers';
 import { deletedSpecs } from './deleted-specs';
 import { isGeneratedText } from './is-generated-text';

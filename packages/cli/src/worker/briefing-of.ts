@@ -4,6 +4,7 @@ import { designLine } from './design-line';
 import { staleNamesBlock } from './stale-names-block';
 import type { WorkerPlace } from './worker-place';
 import { prismaSchemaOf } from '../prisma-schema';
+import { ownEntry } from '../config/values/own-entry';
 
 /**
  * A need marked blocking stops the row until the conductor does it; a note waits for the merge
@@ -123,7 +124,7 @@ function sliceLines(slices: readonly BriefedSlice[]): string[] {
 }
 
 function contractsOf({ config, context }: WorkerPlace): string {
-  const upstreams = config.contexts[context]?.upstreams ?? [];
+  const upstreams = ownEntry(config.contexts, context)?.upstreams ?? [];
 
   return upstreams.length > 0
     ? upstreams.map((upstream) => `${config.contextsDir}/${upstream.context}/published-language/`).join(', ')

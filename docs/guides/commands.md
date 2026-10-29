@@ -233,7 +233,10 @@ refusal (the message says what to do); `3` a command that writes files (`init`, 
 `docs`, `sdk`, a move) could not write some of them where it ran, such as the paths the sandbox of
 an agent protects. With `3` the report lists them under `unwritable` (and in `skipped`), a dry run
 included; every other file is written and none is deleted. Run the same command where they can be
-written, outside the sandbox: `init` gives the command in a note.
+written, outside the sandbox: `init` gives the command in a note. `4` is an internal error of the
+kit, never a mistake of the caller: one line with the version of the kit and where to report it
+(under `--json`, an `error` with `"internal": true`); report it at
+https://github.com/gbourgeat/ddd-ts-kit/issues with the command it gives.
 
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->
@@ -351,8 +354,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    audit/search-audit-entries/; every import of them under the source root, test/ and
                    scripts/ follows, and the scripts of package.json; a file the kit did not write at
                    the root of the platform or of auth/ stays where it is, named, unless --place
-                   <file>=<folder> (both from the platform) gives it its folder; the generators and
-                   init --force keep either layout until then
+                   <file>=<folder> (both from the platform, a file outside it refused) gives it its
+                   folder; the generators and init --force keep either layout until then
   move-to-module   takes files of a context into a module of its model, declared first with generate module,
                    each to <module>/<layer>/ and each spec to test/<unit|integration>/<module>/: each <path>
                    is a file or a folder of a role or a spec, relative to the context
