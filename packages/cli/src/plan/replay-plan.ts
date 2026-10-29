@@ -38,15 +38,19 @@ export function replayPlan(root: string, rows: readonly Slice[], request: Replay
   const planned = rowsToPlan(rows, request.context);
   const waves = waveNumbers(planned);
   const ordered = [...planned].sort((left, right) => (waves.get(left.id) ?? 0) - (waves.get(right.id) ?? 0));
+  const commands = ordered.flatMap((row) => plannedCommands(row.startWith).map((command) => ({ row, command })));
+
+  // Nothing to replay: no copy of the project to make.
+  if (commands.length === 0) {
+    return { problems: [], started: [] };
+  }
+
   const words = plannedWords(root, rows);
   const copy = copyOfProject(root);
 
   try {
     const inCopy: InCopy = { copy, generate: (argv, probe) => request.generate([...argv, '--cwd', copy], probe) };
-
-    const replays = ordered.flatMap((row) =>
-      plannedCommands(row.startWith).map((command) => replayed(row, command, inCopy)),
-    );
+    const replays = commands.map(({ row, command }) => replayed(row, command, inCopy));
 
     const plan = replayedPlan(rows, replays);
 
