@@ -1,7 +1,7 @@
 import { specifierOf } from '../../../alias';
 import type { RenderContext } from '../../../templating';
 import type { Scope } from '../../scope';
-import { contextWorld, type ContextWorld } from './context-world';
+import { contextWorld, type ReadWorld } from './context-world';
 
 /** What a generated spec asks of the world of its context. */
 export interface WorldNeeds {
@@ -19,27 +19,40 @@ export interface WorldNeeds {
  */
 export function worldArrangement(scope: Scope, spec: RenderContext, needs: WorldNeeds = {}): RenderContext {
   const world = contextWorld(scope);
-  const missing = world === undefined ? '' : missingFrom(world, needs);
 
-  if (world !== undefined && missing === '') {
-    return {
-      through: true,
-      builder: world.builder,
-      import: `import { ${world.builder} } from '${specifierOf(scope.config, world.file)}';`,
-      options: optionsOf(needs),
-      async: 'async ',
-      await: 'await ',
-      comment: '',
-      hint: '',
-    };
+  if (world.kind !== 'read') {
+    return withoutWorld(scope, spec, world);
   }
 
-  return withoutWorld(scope, spec, world === undefined ? undefined : missing);
+  const lack = lackOf(world, needs);
+
+  if (lack !== undefined) {
+    return withoutWorld(scope, spec, lack);
+  }
+
+  return {
+    through: true,
+    builder: world.builder,
+    import: `import { ${world.builder} } from '${specifierOf(scope.config, world.file)}';`,
+    options: optionsOf(needs),
+    async: 'async ',
+    await: 'await ',
+    comment: '',
+    hint: '',
+  };
 }
 
-/** The arrangement without the world, and what the world would change: written when it does not exist, or given what it lacks (`missing`). */
-function withoutWorld(scope: Scope, spec: RenderContext, missing: string | undefined): RenderContext {
-  const command = `npx ddd-ts-kit generate test-world ${scope.context.kebab}`;
+/** Why a spec arranges without the world: there is none, it could not be read, or it lacks what the spec needs. */
+type WithoutWorld =
+  | { readonly kind: 'absent' }
+  | { readonly kind: 'unread'; readonly looksFor: string }
+  | { readonly kind: 'lacking'; readonly missing: string };
+
+/** The arrangement without the world, a comment and a hint saying why; `--force` only on a world the generator could read. */
+function withoutWorld(scope: Scope, spec: RenderContext, why: WithoutWorld): RenderContext {
+  const context = scope.context.kebab;
+  const command = `npx ddd-ts-kit generate test-world ${context}`;
+  const [comment, hint] = said(context, command, why);
 
   return {
     through: false,
@@ -48,26 +61,52 @@ function withoutWorld(scope: Scope, spec: RenderContext, missing: string | undef
     options: '',
     async: spec['async'] ?? '',
     await: spec['await'] ?? '',
-    comment:
-      missing === undefined
-        ? `// \`${command}\` shortens this: the specs generated after it arrange through the world.`
-        : `// The world of ${scope.context.kebab} ${missing}: \`${command} --force\` writes it again.`,
-    hint:
-      missing === undefined
-        ? `\`${command}\` shortens the specs of ${scope.context.kebab}: those generated after it arrange through it.`
-        : `The world of ${scope.context.kebab} ${missing}: the spec arranges without it. \`${command} --force\` writes it again, for the specs generated after.`,
+    comment: `// ${comment}`,
+    hint,
   };
 }
 
-/** What the spec needs that the world does not give or does not take: `gives no invoiceRepository`, or nothing. */
-function missingFrom(world: ContextWorld, needs: WorldNeeds): string {
+/** The comment of the spec and the note of the generator, for each reason. */
+function said(context: string, command: string, why: WithoutWorld): readonly [comment: string, hint: string] {
+  switch (why.kind) {
+    case 'absent':
+      return [
+        `\`${command}\` shortens this: the specs generated after it arrange through the world.`,
+        `\`${command}\` shortens the specs of ${context}: those generated after it arrange through it.`,
+      ];
+    case 'unread': {
+      const unread = `The world of ${context} could not be read by the generator (it looks for ${why.looksFor}): this spec arranges itself.`;
+
+      return [unread, unread];
+    }
+    case 'lacking':
+      return [
+        `The world of ${context} ${why.missing}: \`${command} --force\` writes it again.`,
+        `The world of ${context} ${why.missing}: the spec arranges without it. \`${command} --force\` writes it again, for the specs generated after.`,
+      ];
+  }
+}
+
+/**
+ * What the spec needs that a world the generator read does not give or does not take: an option
+ * missing from options that extend another type may be declared there, which the generator does
+ * not follow, so the world is then not read rather than said to lack it.
+ */
+function lackOf(world: ReadWorld, needs: WorldNeeds): WithoutWorld | undefined {
   const fakes = (needs.fakes ?? []).filter((fake) => !world.fakes.has(fake));
   const options = (needs.options ?? []).map(([name]) => name).filter((name) => !world.options.has(name));
+  const [hidden] = options;
 
-  return [
+  if (world.optionsType.extended && hidden !== undefined) {
+    return { kind: 'unread', looksFor: `\`${hidden}\` in \`${world.optionsType.name}\`` };
+  }
+
+  const missing = [
     ...(fakes.length === 0 ? [] : [`gives no ${fakes.join(', ')}`]),
     ...(options.length === 0 ? [] : [`takes no ${options.join(', ')}`]),
   ].join(' and ');
+
+  return missing === '' ? undefined : { kind: 'lacking', missing };
 }
 
 /** `{ modules: [holders], idPrefix: 'invoice' }`, or nothing when the spec hands the world nothing. */

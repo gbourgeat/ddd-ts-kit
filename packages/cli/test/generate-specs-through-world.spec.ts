@@ -1,84 +1,17 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir, write } from './helpers';
-import { report } from './reports';
-
-const BILLING = 'src/contexts/billing';
-const UNIT = `${BILLING}/test/unit`;
-const WORLD = `${BILLING}/test/worlds/billing.world.ts`;
-const WORLD_IMPORT = "import { aBillingWorld } from '@/contexts/billing/test/worlds/billing.world';";
-
-const TERMS = [
-  'Invoice=A request for payment sent to a customer',
-  'Issue=To make an invoice final and send it',
-  'Cancel=To void an invoice before payment',
-  'Get=To read one invoice',
-  'View=To look at one invoice',
-  'Search=To look for invoices',
-  'Overdue=Not paid after its due date',
-  'Remind=To tell a customer an invoice is due',
-  'Refund=Money paid back to a customer',
-  'Approve=To accept a refund',
-].flatMap((row) => ['--term', row]);
-
-/** `init` with `flags`, then billing with the aggregate Invoice; `run` fails the spec on a refusal and answers the report. */
-function billingProject(label: string, ...flags: string[]) {
-  const root = tempDir(label);
-
-  const run = (...args: string[]) => {
-    const result = cli(root, ...args, '--json');
-
-    expect(result.code, `${args.join(' ')}\n${result.stdout}`).toBe(0);
-
-    return report(result);
-  };
-
-  run('init', '--authz', 'rbac', ...flags);
-  run('generate', 'context', 'billing', '--classification', 'core', ...TERMS);
-  run('generate', 'aggregate', 'billing', 'Invoice');
-
-  return { root, run };
-}
-
-const hint = (notes: readonly string[]): string[] =>
-  notes.filter((note) => note.includes('generate test-world billing'));
-
-const CANCEL = [
-  'generate',
-  'command',
-  'billing',
-  'CancelInvoice',
-  '--aggregate',
-  'Invoice',
-  '--permission',
-  'invoice.cancel',
-];
-
-const ISSUE = [
-  'generate',
-  'command',
-  'billing',
-  'IssueInvoice',
-  '--aggregate',
-  'Invoice',
-  '--creates',
-  '--permission',
-  'invoice.issue',
-];
-
-const SEARCH = ['generate', 'query', 'billing', 'SearchInvoices', '--search', '--permission', 'invoice.search'];
-
-const APPROVE = [
-  'generate',
-  'command',
-  'billing',
-  'ApproveRefund',
-  '--aggregate',
-  'Refund',
-  '--permission',
-  'refund.approve',
-];
-
-const REMIND = ['generate', 'job', 'billing', 'RemindOverdue', '--every', '1d', '--command', 'CancelInvoice'];
+import { exists, read, write } from './helpers';
+import {
+  APPROVE,
+  billingProject,
+  CANCEL,
+  hint,
+  ISSUE,
+  REMIND,
+  SEARCH,
+  UNIT,
+  WORLD,
+  WORLD_IMPORT,
+} from './support/billing-world-project';
 
 interface Generated {
   readonly root: string;
@@ -255,22 +188,6 @@ describe('a world that lacks what a spec needs', () => {
 
     expect(hint(generated.notes)).toEqual([
       expect.stringContaining('The world of billing takes no fakes: the spec arranges without it.'),
-    ]);
-  });
-});
-
-describe('a world as a team rewrote it', () => {
-  it('reads the world from its function and its interfaces, and is no world when it exports no function', () => {
-    const { root, run } = billingProject('specs-world-rewritten');
-
-    write(root, WORLD, 'export const edited = true;\n');
-
-    expect(hint(run(...CANCEL).notes)).toEqual([expect.stringContaining('shortens the specs of billing')]);
-
-    write(root, WORLD, 'export async function aBillingWorld() {\n  return {};\n}\n');
-
-    expect(hint(run(...ISSUE).notes)).toEqual([
-      expect.stringContaining('The world of billing gives no invoiceRepository and takes no modules, idPrefix:'),
     ]);
   });
 });
