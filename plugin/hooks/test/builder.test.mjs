@@ -554,3 +554,25 @@ test('the scope pin of a builder is pruned at the session start of the conductor
   run('session', { cwd: conductor, source: 'startup' });
   assert.equal(existsSync(pinOf(changed)), false);
 });
+
+test('a builder runs no test runner or script from the conductor checkout: a path to a program is code too', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = builder('runners', { cwd: conductor });
+  for (const command of [
+    './node_modules/.bin/vitest run',
+    './scripts/seed.sh',
+    '../seed.sh',
+    `${worktree}/scripts/seed.sh`,
+    'node_modules/.bin/tsx x.ts',
+    'vitest run',
+    'jest',
+    'mocha',
+  ]) {
+    assert.match(
+      reason(run('pre-bash', bash(conductor, command, agent))),
+      /Run it as `cd <worktree> && \.\.\.`/,
+      command,
+    );
+  }
+  assert.equal(run('pre-bash', bash(conductor, `/bin/cat ${worktree}/README.md`, agent)).output, undefined);
+});

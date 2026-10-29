@@ -318,6 +318,14 @@ const CODE_RUNNERS = new Set([
   'pnpm',
   'pnpx',
   'yarn',
+  'vitest',
+  'jest',
+  'mocha',
+  'ava',
+  'tap',
+  'playwright',
+  'cypress',
+  'stryker',
 ]);
 // The programs that only read, whatever their arguments (not `rg --pre`, `sort -o`, `tree -o`): a
 // worker's command made of them alone is not noted before it runs. Every other program may run code
@@ -736,14 +744,23 @@ function builderWrites(commands) {
   );
 }
 
-// An interpreter, a shell, `source`, `make`, a package script or runner: code the guard cannot
-// read. The kit's own CLI, behind a runner or not, is judged by what it is asked to do.
+// An interpreter, a shell, `source`, `make`, a package script or runner, a test runner, a program
+// named by its path: code the guard cannot read. The kit's own CLI, behind a runner or not, is
+// judged by what it is asked to do.
 function runsCode(command) {
   const name = shell.commandName(command.words);
   return (
-    (CODE_RUNNERS.has(name) || CODE_RUNNERS.has(name.replace(/[\d.]+$/, '')) || shell.SHELLS.has(name)) &&
+    (CODE_RUNNERS.has(name) ||
+      CODE_RUNNERS.has(name.replace(/[\d.]+$/, '')) ||
+      shell.SHELLS.has(name) ||
+      isProgramPath(command.words[0] ?? '', name)) &&
     kitInvocations([command]).length === 0
   );
+}
+
+// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`), but a pure reader's.
+function isProgramPath(word, name) {
+  return (/^\.{0,2}\//.test(word) || word.includes('node_modules/.bin/')) && !PURE_READERS.has(name);
 }
 
 // What no agent runs, then what waits for a place, a landing, a lock or a generator first.
