@@ -42,6 +42,7 @@ function fileLines(report: WorkspaceReport, dryRun: boolean): string[] {
     ...report.updated.map((file) => `${verb('updated')}${file}`),
     ...report.deleted.map((file) => `${verb('deleted')}${file}`),
     ...report.skipped.map((file) => `${'skipped'.padEnd(13)}${file} (${skippedBecause(report, file)})`),
+    ...report.kept.map((file) => `${'kept'.padEnd(13)}${file} (yours since the first init)`),
   ];
 
   return lines.length > 0 ? lines : ['Nothing to do.'];

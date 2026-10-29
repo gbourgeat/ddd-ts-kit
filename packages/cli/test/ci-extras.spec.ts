@@ -72,7 +72,7 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
     });
   });
 
-  it('adds one job alone, keeps it on init --force, and removes it with none', () => {
+  it('adds one job alone, and leaves .gitlab-ci.yml to the team on init --force, the config dropping the job with none', () => {
     const root = initProject('--ci', 'gitlab', '--ci-extras', 'gitlab-sast');
 
     expect(read(root, '.gitlab-ci.yml')).toContain(`include:\n  - ${MARKS.sast}\n\n`);
@@ -83,9 +83,14 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
     expect(read(root, '.gitlab-ci.yml')).toContain(MARKS.sast);
 
     commitAll(root);
-    expect(cli(root, 'init', '--force', '--ci-extras', 'none').code).toBe(0);
-    expect(read(root, '.gitlab-ci.yml')).not.toContain(MARKS.sast);
+
+    const removed = cli(root, 'init', '--force', '--ci-extras', 'none');
+
+    expect(removed.code).toBe(0);
+    expect(removed.stdout).toContain('kept         .gitlab-ci.yml (yours since the first init)');
+    expect(read(root, '.gitlab-ci.yml')).toContain(MARKS.sast);
     expect(readJson(root, 'ddd-ts-kit.config.json')).not.toHaveProperty('ci');
+    expect(read(initProject('--ci', 'gitlab'), '.gitlab-ci.yml')).not.toContain(MARKS.sast);
   });
 
   it('refuses an unknown job and a job of a platform the pipeline does not cover', () => {

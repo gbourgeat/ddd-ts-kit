@@ -303,7 +303,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    holds them: a file to replace that differs from the last commit (uncommitted, staged,
                    or untracked and not ignored) refuses the command, exit 2, the files named, nothing
                    written; outside a git repository, every file whose content would change does; commit
-                   or stash first, then git diff shows what the kit rewrote
+                   or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,
+                   AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed
+                   as kept) and merges .gitignore and .dockerignore, the lines of the team kept
   --sdk            init records "sdk" in the config and generates the clients with the project
   --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
                    a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being

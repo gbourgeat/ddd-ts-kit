@@ -23,6 +23,9 @@ import { initFiles } from './files/init-files';
 import { REVIEW_POLICY } from './files/guidance-files';
 import { keepFlatPlatform } from '../platform-folders';
 import { ignoreWorktrees } from './ignore-worktrees';
+import { mergedIgnoreLines } from './merged-ignore-lines';
+import { isTeamFile } from './is-team-file';
+import { MERGED_IGNORE_FILES } from './merged-ignore-files';
 import { writeManifest } from './manifest/write-manifest';
 import { dependenciesAgainstStack } from './manifest/dependencies-against-stack';
 import { writeOverrides } from './manifest/write-overrides';
@@ -110,6 +113,7 @@ function closingNotes(report: WorkspaceReport, options: InitOptions, config: Con
 
   return [
     ...unwritable,
+    ...(options.force ? [forcedNote(report, options.dryRun)] : []),
     ...(created
       ? [
           inDialect('Run `npm install`, then `npm run verify`.', config.stack.packageManager),
@@ -117,6 +121,15 @@ function closingNotes(report: WorkspaceReport, options: InitOptions, config: Con
         ]
       : []),
   ];
+}
+
+/** What --force rewrote and what it left to the team, said once the plan is known. */
+function forcedNote({ updated, kept }: WorkspaceReport, dryRun: boolean): string {
+  const rewrote = `--force ${dryRun ? 'would rewrite' : 'rewrote'} ${updated.length} file(s) from the templates of this version (listed as updated; git diff shows each change; .gitignore and .dockerignore only gain the lines of the kit they lack)`;
+
+  return kept.length === 0
+    ? `${rewrote}.`
+    : `${rewrote}, and kept ${kept.length} file(s) yours since the first init (listed as kept): to take what this version writes in one of them, run init in an empty folder and compare.`;
 }
 
 /**
@@ -230,7 +243,9 @@ function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }
     const content = template.endsWith('.tpl') ? renderTemplate(template, context) : readTemplate(template);
     const kept = flat.moved.get(target.replace(/\.ts$/, ''));
 
-    ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
+    if (!(force && keptOrMerged(ws, config, { target, content }))) {
+      ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
+    }
   }
 
   // After the files: under pnpm the overrides join the pnpm-workspace.yaml just written.
@@ -247,6 +262,36 @@ function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }
   }
 
   writeReviewPolicy(ws, context);
+}
+
+/**
+ * Under --force, a file of the team that exists is kept, and an ignore file that exists gains the
+ * lines of the kit it lacks; true when the file is settled so.
+ */
+function keptOrMerged(
+  ws: Workspace,
+  config: Config,
+  { target, content }: { target: string; content: string },
+): boolean {
+  const existing = ws.read(target);
+
+  if (existing === undefined) {
+    return false;
+  }
+
+  if (MERGED_IGNORE_FILES.includes(target)) {
+    ws.update(target, mergedIgnoreLines(existing, content));
+
+    return true;
+  }
+
+  if (isTeamFile(config, target)) {
+    ws.keep(target);
+
+    return true;
+  }
+
+  return false;
 }
 
 /** The review policy is the team's once written: created when missing, never replaced, not even with --force. */

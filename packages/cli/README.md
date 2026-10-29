@@ -110,7 +110,11 @@ and the registry of permissions are rewritten from their templates, then the dec
 are wired into them again, and the erasure of each context is listed again in the copies of the
 privacy folder; what another generator had added to a file of the platform (the value of a
 gateway, the settings of a job) is not, and a note says so. A config that cannot be
-read is replaced.
+read is replaced. The files a team owns once written stay as they are, listed as `kept`:
+`README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` and the pipeline definitions
+(`.github/workflows/`, `.gitlab-ci.yml`); to take what a new version writes in one of them, run
+`init` in an empty folder and compare. `.gitignore` and `.dockerignore` keep the lines of the team
+and gain the lines of the kit they lack. A last note says what `--force` rewrote and what it kept.
 
 The pipeline uses free tools only. `--ci-extras` adds jobs that need a paid plan on a private
 repository, report into a merge request only in a paid tier, or spend API tokens on every run:

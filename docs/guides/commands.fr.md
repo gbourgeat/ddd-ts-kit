@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:d1628951e22c2062 -->
+<!-- translation-of: commands.md sha256:522a07e5f893e21a -->
 
 # Quelle commande, quand
 
@@ -158,7 +158,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | Commande | Fait | Quand | Produit | Ensuite |
 |---|---|---|---|---|
 | lire [CHANGELOG.md](../../CHANGELOG.md), livré aussi en `node_modules/ddd-ts-kit/CHANGELOG.md` | ce qui a changé et ce qu'il faut faire | avant la mise à jour, ou quand le début de session dit que le *plugin* décrit une autre version | les étapes de la version | mettre à jour ensemble les versions de `@ddd-ts-kit/*` et de `ddd-ts-kit` |
-| *commit*, puis `npx ddd-ts-kit init --force` | réécrit les fichiers que possède `init`, garde la configuration, y inscrit sa version en `initVersion` et recâble les contextes ; refuse, code 2, tant qu'un fichier à remplacer diffère du dernier *commit* | après la mise à jour, sur un arbre de travail propre | les fichiers de plateforme et de *pipeline* de la nouvelle version, et des notes | `npm run verify` |
+| *commit*, puis `npx ddd-ts-kit init --force` | réécrit les fichiers que possède `init`, garde la configuration, y inscrit sa version en `initVersion` et recâble les contextes ; garde `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` et le *pipeline* comme ceux de l'équipe, fusionne `.gitignore` et `.dockerignore` ; refuse, code 2, tant qu'un fichier à remplacer diffère du dernier *commit* | après la mise à jour, sur un arbre de travail propre | les fichiers de plateforme de la nouvelle version, les fichiers gardés, et des notes | `git diff`, puis `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` puis `--apply`, `value-objects` | déplace les routes en fonctions vers des contrôleurs, les classes d'erreur vers des fabriques, les objets-valeurs d'un `Result` vers des fabriques qui lèvent une erreur | quand le projet adopte ces formes | les fichiers réécrits et la clé de configuration | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npx ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]` | déplace les fichiers de `src/platform/` qu'un projet a générés à plat vers leurs dossiers (`composition/`, `observability/`, `jobs/`, `auth/authentication/`, `auth/authorization/`, le dossier du modèle, `audit/search-audit-entries/`), avec chaque import qui les nomme et les scripts de package.json | quand `doctor` signale `folder src/platform: flat` ; les générateurs et `init --force` gardent le rangement à plat jusque-là | les fichiers déplacés, les imports réécrits, les fichiers de l'équipe laissés à plat | `npm run format`, `npm run verify` |
 | `npm run regenerate` | régénère ce qui découle de la configuration | après tout changement de la configuration | `.dependency-cruiser.cjs`, les documents générés | `npm run verify` |
@@ -618,7 +618,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    holds them: a file to replace that differs from the last commit (uncommitted, staged,
                    or untracked and not ignored) refuses the command, exit 2, the files named, nothing
                    written; outside a git repository, every file whose content would change does; commit
-                   or stash first, then git diff shows what the kit rewrote
+                   or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,
+                   AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed
+                   as kept) and merges .gitignore and .dockerignore, the lines of the team kept
   --sdk            init records "sdk" in the config and generates the clients with the project
   --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
                    a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being

@@ -155,7 +155,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command | Does | When | Produces | Then |
 |---|---|---|---|---|
 | read [CHANGELOG.md](../../CHANGELOG.md), also shipped as `node_modules/ddd-ts-kit/CHANGELOG.md` | what changed and what to do | before upgrading, or when the session start says the plugin describes another version | the steps of the version | update the `@ddd-ts-kit/*` and `ddd-ts-kit` versions together |
-| commit, then `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again; refuses, exit 2, while a file it would replace differs from the last commit | after the upgrade, on a clean working tree | the platform and pipeline files of the new version, and notes | `npm run verify` |
+| commit, then `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again; keeps `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` and the pipeline as the team's, merges `.gitignore` and `.dockerignore`; refuses, exit 2, while a file it would replace differs from the last commit | after the upgrade, on a clean working tree | the platform files of the new version, the files it kept, and notes | `git diff`, then `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply`, `value-objects` | moves function routes to controllers, error classes to factories, value objects from a `Result` to factories that throw | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npx ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]` | moves the files of `src/platform/` a project generated flat to their folders (`composition/`, `observability/`, `jobs/`, `auth/authentication/`, `auth/authorization/`, the folder of the model, `audit/search-audit-entries/`), with every import of them and the scripts of package.json | when `doctor` reports `folder src/platform: flat`; the generators and `init --force` keep the flat layout until then | the moved files, the rewritten imports, the files of the team it left flat | `npm run format`, `npm run verify` |
 | `npm run regenerate` | regenerate what derives from the config | after any change of the config | `.dependency-cruiser.cjs`, the generated documents | `npm run verify` |
@@ -612,7 +612,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    holds them: a file to replace that differs from the last commit (uncommitted, staged,
                    or untracked and not ignored) refuses the command, exit 2, the files named, nothing
                    written; outside a git repository, every file whose content would change does; commit
-                   or stash first, then git diff shows what the kit rewrote
+                   or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,
+                   AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed
+                   as kept) and merges .gitignore and .dockerignore, the lines of the team kept
   --sdk            init records "sdk" in the config and generates the clients with the project
   --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
                    a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being

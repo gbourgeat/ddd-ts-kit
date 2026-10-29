@@ -33,6 +33,9 @@ export class Workspace {
 
   private readonly skipped = new Set<string>();
 
+  /** Files the team owns once written, which --force leaves as they are: reported as kept. */
+  private readonly kept = new Set<string>();
+
   /** Files where a device stands, such as a path the sandbox of an agent masks: reported unwritable. */
   private readonly masked = new Set<string>();
 
@@ -65,7 +68,7 @@ export class Workspace {
   existsAsIs(file: string): boolean {
     return (
       this.pending.has(file) ||
-      this.plannedBelow(file) ||
+      [...this.pending.keys()].some((planned) => planned.startsWith(`${file}/`)) ||
       (!this.removed.has(file) && fs.existsSync(this.absolute(file)))
     );
   }
@@ -148,6 +151,11 @@ export class Workspace {
     this.pending.set(file, { content: this.spoken(this.withImports(file, content)), existed: onDisk });
 
     return true;
+  }
+
+  /** Leaves a file that exists as it is, even with --force: it is the team's once written. */
+  keep(asked: string): void {
+    this.kept.add(this.placed(asked));
   }
 
   /** A merge --force asked for writes over a value of the team in this file: git must hold it, as a file --force replaces. */
@@ -301,6 +309,7 @@ export class Workspace {
       updated: written.filter(({ existed }) => existed).map(({ file }) => file),
       deleted,
       skipped: [...new Set([...this.skipped, ...unwritable])].sort(),
+      kept: [...this.kept].sort(),
       unwritable,
       next: todos.map((todo) => `${todo.file}:${todo.line}`),
       todos,
@@ -320,16 +329,6 @@ export class Workspace {
     const at = (this.read(file) ?? '').split('\n').findIndex((line) => line.includes(anchor));
 
     return { file, line: Math.max(at, 0) + 1, text };
-  }
-
-  private plannedBelow(directory: string): boolean {
-    for (const planned of this.pending.keys()) {
-      if (planned.startsWith(`${directory}/`)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private absolute(file: string): string {

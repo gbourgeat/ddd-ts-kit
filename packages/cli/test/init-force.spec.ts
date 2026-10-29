@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { changeConfig, checkJsonOf } from './check-support';
 import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir, write } from './helpers';
@@ -13,7 +15,7 @@ const COMPOSITION = 'src/platform/composition/compose-application.ts';
 const config = (root: string, ...keys: string[]): unknown => jsonAt(readJson(root, CONFIG), ...keys);
 
 describe('init --force on a project that is already initialised', () => {
-  it('rewrites the files and keeps what the team declared: the contexts and their upstreams, the rules, the limits, a key the kit does not know', () => {
+  it('rewrites the files and keeps what the team declared: the contexts and their upstreams, the rules, the limits, a key the kit does not know, the entry point', () => {
     const root = workedOn();
     const before = readJson(root, CONFIG);
 
@@ -24,7 +26,8 @@ describe('init --force on a project that is already initialised', () => {
 
     expect(forced.stderr).toBe('');
     expect(forced.stdout).toContain('wired the declared contexts again (billing, shipping, order-fulfilment)');
-    expect(read(root, 'src/main.ts')).toContain('composeApplication');
+    expect(read(root, 'src/main.ts')).toBe('// mine\n');
+    expect(forced.stdout).toContain('kept         src/main.ts (yours since the first init)');
     expect(read(root, COMPOSITION)).toContain("contextModule('billing', billingDeclarations),");
 
     expect(read(root, COMPOSITION)).toContain(
@@ -166,14 +169,16 @@ describe('init --force and the spelling of the imports, the settings of the agen
 
     expect(config(root, 'importExtension')).toBe('none');
     expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'moduleResolution')).toBe('Bundler');
-    expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application';");
+    // The entry point is the team's once written: it keeps its imports, which the rule reports.
+    expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application.js';");
     expect(found.length).toBeGreaterThan(50);
     expect([...new Set(found.map(({ ruleId }) => ruleId))].sort()).toEqual(['authz/granted', 'imports/extension']);
 
-    // What init does not write keeps its imports: the contexts, the entry points and the specs generators wrote.
+    // What init does not write, or keeps, keeps its imports: the contexts, the entry points and the specs generators wrote.
     expect([...new Set(found.map(({ file }) => file.split('/').slice(0, 2).join('/')))].sort()).toEqual([
       'src/apps',
       'src/contexts',
+      'src/main.ts',
       'src/platform',
       'test/acceptance',
       'test/architecture',
@@ -209,6 +214,61 @@ describe('init --force and the spelling of the imports, the settings of the agen
     expect(cli(root, 'init', '--force').stderr).toBe('');
     expect(config(root, 'contexts')).toEqual({});
     expect(config(root, 'importExtension')).toBe('none');
+  });
+});
+
+describe('init --force and the files of the team', () => {
+  it('keeps the lines of the team in .gitignore and .dockerignore, and adds the lines of the kit they lack', () => {
+    const root = initProject();
+
+    write(root, '.gitignore', 'secret.env\n*.pem\n');
+    write(root, '.dockerignore', 'node_modules\nfixtures\n');
+    commitAll(root);
+
+    const forced = cli(root, 'init', '--force');
+
+    expect(forced.code).toBe(0);
+    expect(read(root, '.gitignore')).toMatch(/^secret\.env\n\*\.pem\nnode_modules\ndist\n/);
+    expect(read(root, '.gitignore')).toContain('\n.worktrees/\n');
+    expect(read(root, '.dockerignore')).toMatch(/^node_modules\nfixtures\ndist\n/);
+    expect(read(root, '.dockerignore').match(/^node_modules$/gm)).toHaveLength(1);
+  });
+
+  it('leaves the README, the guides of the agents, the entry point and the pipeline to the team, lists them as kept, and says what it rewrote', () => {
+    const root = initProject('--ci', 'github');
+    const kept = ['.github/workflows/ci.yml', 'AGENTS.md', 'CLAUDE.md', 'README.md', 'src/main.ts'];
+
+    for (const file of kept) {
+      write(root, file, `${read(root, file)}\n# the team wrote this\n`);
+    }
+
+    write(root, 'biome.json', '{}\n');
+    commitAll(root);
+
+    const forced = cli(root, 'init', '--force');
+
+    expect(forced.code).toBe(0);
+
+    for (const file of kept) {
+      expect(read(root, file)).toContain('# the team wrote this');
+      expect(forced.stdout).toContain(`kept         ${file} (yours since the first init)`);
+    }
+
+    expect(read(root, 'biome.json')).not.toBe('{}\n');
+    expect(forced.stdout).toContain('updated      biome.json');
+
+    expect(forced.stdout).toMatch(
+      /note: --force rewrote \d+ file\(s\) from the templates of this version \(listed as updated; git diff shows each change; \.gitignore and \.dockerignore only gain the lines of the kit they lack\), and kept \d+ file\(s\) yours since the first init \(listed as kept\): to take what this version writes in one of them, run init in an empty folder and compare\./,
+    );
+  });
+
+  it('writes a file of the team again when it is gone', () => {
+    const root = initProject();
+
+    fs.rmSync(path.join(root, 'README.md'));
+    commitAll(root);
+
+    expect(cli(root, 'init', '--force').stdout).toContain('created      README.md');
   });
 });
 

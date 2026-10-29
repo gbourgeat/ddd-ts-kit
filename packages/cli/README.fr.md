@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:44a10818b5b06f53 -->
+<!-- translation-of: README.md sha256:767cacb3c87782a6 -->
 
 # ddd-ts-kit
 
@@ -117,6 +117,12 @@ composition, la preuve que chaque contexte se câble seul et le registre des per
 réécrits depuis leurs *templates*, puis les contextes déclarés y sont câblés de nouveau, et l'effacement de chaque contexte est listé de
 nouveau dans les copies du dossier *privacy* ; ce qu'un autre générateur avait ajouté à un fichier de la plateforme (la valeur d'une *gateway*, les
 réglages d'un *job*) ne l'est pas, et une note le dit. Une configuration illisible est remplacée.
+Les fichiers qu'une équipe possède une fois écrits restent tels quels, listés comme `kept` :
+`README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` et les définitions du *pipeline*
+(`.github/workflows/`, `.gitlab-ci.yml`) ; pour reprendre ce qu'une nouvelle version y écrit,
+lancez `init` dans un dossier vide et comparez. `.gitignore` et `.dockerignore` gardent les lignes
+de l'équipe et gagnent celles du kit qui leur manquent. Une dernière note dit ce que `--force` a
+réécrit et ce qu'il a gardé.
 
 Le *pipeline* n'utilise que des outils gratuits. `--ci-extras` ajoute des *jobs* qui demandent
 une offre payante sur un dépôt privé, qui ne remontent dans une *merge request* qu'avec une
