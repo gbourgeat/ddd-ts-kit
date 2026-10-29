@@ -911,7 +911,7 @@ function builderPlaces(input, project) {
     return undefined;
   }
   const worker = project && existsSync(join(project.root, WORKER_SCOPE)) ? project.root : undefined;
-  return { state: stateFile('turns', home, input), worker };
+  return { state: stateFile('turns', home, input), worker, home };
 }
 
 // A new run of a builder: the note its last run left before inline code is dropped, since what
@@ -941,7 +941,7 @@ async function subagentStop(input) {
   if (reason) {
     emit({ decision: 'block', reason });
   } else {
-    releasePin(stateFile('scope', findProject(input.cwd ?? process.cwd()), input));
+    releasePin(stateFile('scope', places.home, input));
   }
 }
 
@@ -2397,7 +2397,7 @@ function rewrittenBranches(words) {
 function otherWorktreeBranches(directory) {
   const checkout = { root: directory };
   const own = git(checkout, ['rev-parse', '--show-toplevel'])?.trim();
-  const blocks = (git(checkout, ['worktree', 'list', '--porcelain']) ?? '').split('\n\n');
+  const blocks = gitFields(checkout, ['worktree', 'list', '--porcelain'], '\n\n');
   return new Set(
     blocks
       .filter((block) => block.split('\n')[0] !== `worktree ${own}`)
@@ -3339,8 +3339,7 @@ function packageStates(project, session) {
 // it is added to the index, and the path a rename (`git mv`) came from. With `keep`, the content of
 // each changed file is kept there under its hash, so that it can be put back.
 function snapshot(checkout, outside, keep) {
-  const status = git(checkout, ['status', '--porcelain=v2', '-z', '--branch', '--untracked-files=all']) ?? '';
-  const fields = status.split('\0');
+  const fields = gitFields(checkout, ['status', '--porcelain=v2', '-z', '--branch', '--untracked-files=all'], '\0');
   const state = { head: undefined, changes: {} };
   for (let index = 0; index < fields.length; index += 1) {
     const { head, path, from, ...flags } = statusEntry(fields[index], fields[index + 1]);
@@ -3445,9 +3444,11 @@ function differences(checkout, outside, { before, now }) {
 // (A added, M modified, D deleted); a path that HEAD holds as the other side of a merge since then
 // (the trunk `merge-trunk` brought in) is the trunk's, not a change of the worker.
 function committedSince(checkout, from, outside) {
-  const fields = (
-    git(checkout, ['diff', '--name-status', '--no-renames', '-z', '--end-of-options', from, 'HEAD']) ?? ''
-  ).split('\0');
+  const fields = gitFields(
+    checkout,
+    ['diff', '--name-status', '--no-renames', '-z', '--end-of-options', from, 'HEAD'],
+    '\0',
+  );
   const paths = new Map();
   for (let index = 0; index + 1 < fields.length; index += 2) {
     if (outside(fields[index + 1], fields[index])) {
@@ -3455,7 +3456,7 @@ function committedSince(checkout, from, outside) {
     }
   }
   for (const side of mergedSides(checkout, from)) {
-    const differing = new Set((git(checkout, ['diff', '--name-only', '-z', side, 'HEAD']) ?? '').split('\0'));
+    const differing = new Set(gitFields(checkout, ['diff', '--name-only', '-z', side, 'HEAD'], '\0'));
     for (const path of [...paths.keys()].filter((kept) => !differing.has(kept))) {
       paths.delete(path);
     }
@@ -3465,16 +3466,11 @@ function committedSince(checkout, from, outside) {
 
 // The other parents of the merges on the first-parent line from `from` to HEAD.
 function mergedSides(checkout, from) {
-  const merges = git(checkout, [
-    'rev-list',
-    '--first-parent',
-    '--merges',
-    '--parents',
-    '--end-of-options',
-    `${from}..HEAD`,
-  ]);
-  return (merges ?? '')
-    .split('\n')
+  return gitFields(
+    checkout,
+    ['rev-list', '--first-parent', '--merges', '--parents', '--end-of-options', `${from}..HEAD`],
+    '\n',
+  )
     .filter(Boolean)
     .flatMap((line) => line.split(' ').slice(2));
 }
@@ -3568,7 +3564,7 @@ function isGitCommit(command) {
 // A commit records the restoration of the held files a commit changed when each of them is staged
 // as the commit noted before holds it, and nothing else outside the scope is staged.
 function recordsRestoration(project, input, { now, since, left }) {
-  const staged = (git(project, ['diff', '--cached', '--name-only', '-z']) ?? '').split('\0').filter(Boolean);
+  const staged = gitFields(project, ['diff', '--cached', '--name-only', '-z'], '\0').filter(Boolean);
   const outside = worktreeOutside(project, input);
   const held = new Set(left.map(([path]) => path));
   const committed = left.filter(
@@ -3778,6 +3774,11 @@ function uncommittedChanges(project) {
     .map((path) => ({ path, lines: lineCount(join(project.root, path)) }));
 
   return [...tracked, ...fresh];
+}
+
+// The output of git split into its fields, none when git fails.
+function gitFields(checkout, args, separator) {
+  return (git(checkout, args) ?? '').split(separator);
 }
 
 function git(project, args) {

@@ -30,6 +30,7 @@ import {
   put,
   reason,
   run,
+  runFrom,
   worker,
   write,
 } from './support.mjs';
@@ -504,9 +505,11 @@ test('code of a worker that writes into the checkout of the session is said to i
 test('a commit or a merge of the conductor in its own checkout while a worker command runs is not charged to the worker', () => {
   const { conductor, worktree } = conductorWithWorker();
   const agent = builder('conductor-commits', { cwd: conductor });
+  // A file the conductor left changed before the command, and that stays so, is not the worker's.
+  put(conductor, 'docs/notes.md', 'Notes of the conductor.\n');
   assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
   put(conductor, 'docs/architecture/plan.md', '# Plan\n\nNext: billing.\n');
-  git(conductor, 'add', '--all');
+  git(conductor, 'add', 'docs/architecture/plan.md');
   git(conductor, 'commit', '--quiet', '--no-verify', '--message', 'docs: plan');
   git(conductor, 'checkout', '--quiet', '-b', 'side');
   put(conductor, 'README.md', 'From a side branch.\n');
@@ -589,6 +592,7 @@ test("a sub-agent never deletes, moves or resets the branch of another worker's 
     'git branch -m work/shipping shipping-old',
     'git branch -M scratch work/shipping',
     'git branch -f work/shipping HEAD',
+    'cd . ; git branch -D work/shipping',
   ]) {
     const refused = run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent));
     assert.match(reason(refused), /never deletes, moves or resets the branch of another worktree/, command);
@@ -600,4 +604,10 @@ test("a sub-agent never deletes, moves or resets the branch of another worker's 
   ]) {
     assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent)).output, undefined, command);
   }
+  // A host that sends no working directory: the guard reads the one it starts in.
+  const { cwd, ...sent } = bash(worktree, 'git branch -D work/shipping', agent);
+  assert.match(reason(runFrom(cwd, 'pre-bash', sent)), /branch of another worktree/);
+  // Outside a git repository, there is no branch to hold.
+  const loose = project();
+  assert.equal(run('pre-bash', bash(loose, 'git branch -D main', builder('loose', { cwd: loose }))).output, undefined);
 });
