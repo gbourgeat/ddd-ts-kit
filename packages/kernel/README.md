@@ -591,7 +591,8 @@ does not prove it again. It gives the reaction the fact and asserts what the rea
 event handler, an integration event handler and a controller send commands through the
 `CommandBus` they receive: `RecordingCommandBus` of `@ddd-ts-kit/kernel/testing` keeps each one
 it is handed, in order, in `executed`, and answers what the spec told it with
-`answering(type, answer)` (an identifier, or a refusal the function throws), nothing otherwise.
+`answering(type, answer)` (an identifier, or a refusal the function throws), for the commands of
+`type` and of its subclasses, nothing otherwise.
 No handler runs: what the command does is the spec of its own handler. `RecordingQueryBus` does
 the same for queries. The specs `ddd-ts-kit generate` writes for these roles start from them:
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7db99b2f345b002a -->
+<!-- translation-of: README.md sha256:54d43e72b9776af4 -->
 
 # @ddd-ts-kit/kernel
 
@@ -606,8 +606,8 @@ la réaction et vérifie ce que la réaction a envoyé. Un gestionnaire d'évén
 gestionnaire d'événement d'intégration et un contrôleur envoient des commandes par le
 `CommandBus` qu'ils reçoivent : `RecordingCommandBus` de `@ddd-ts-kit/kernel/testing` garde
 chacune de celles qu'on lui confie, dans l'ordre, dans `executed`, et répond ce que la *spec* lui
-a dit avec `answering(type, answer)` (un identifiant, ou un refus que la fonction lève), rien
-sinon. Aucun gestionnaire ne s'exécute : ce que fait la commande est la *spec* de son propre
+a dit avec `answering(type, answer)` (un identifiant, ou un refus que la fonction lève), pour les
+commandes de `type` et de ses sous-classes, rien sinon. Aucun gestionnaire ne s'exécute : ce que fait la commande est la *spec* de son propre
 gestionnaire. `RecordingQueryBus` fait de même pour les requêtes. Les *specs* que
 `ddd-ts-kit generate` écrit pour ces rôles partent de là :
 
