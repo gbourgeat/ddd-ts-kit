@@ -1,4 +1,4 @@
-# Copy to .env: `npm run dev` and docker compose both read it. Never commit .env.
+# Copy to .env: `npm run dev` and docker compose both read it. Never commit .env nor any .env.* but this one: git ignores them.
 NODE_ENV=development
 PORT=3000
 # debug, info, warn or error.
