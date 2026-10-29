@@ -7,6 +7,7 @@ import { contextImports } from '../../context-imports';
 import { isDeclared } from '../../is-declared';
 import type { Scope } from '../../scope';
 import type { ContextFake } from './context-fakes';
+import { WORLD_COMMENTS } from './world-comments';
 
 /**
  * What a world template reads: its name, the imports of the fakes and of the ports they stand
@@ -20,6 +21,7 @@ export function worldVars(scope: Scope, name: Name, fakes: readonly ContextFake[
     ...name,
     hasFakes: fakes.length > 0,
     given: fakes.length > 0 ? 'given, ' : '',
+    tenanted: scope.config.stack.tenancy !== 'none',
     diImport: diImport(scope, fakes.length > 0),
     contextImport: contextImports(scope),
     assembles: isDeclared(scope.config),
@@ -29,15 +31,16 @@ export function worldVars(scope: Scope, name: Name, fakes: readonly ContextFake[
     fakeImports: fakes.map((fake) => imported(fake.name, fake.file)).join('\n'),
     members: fakes.map((fake) => `  readonly ${fake.key}: ${fake.name};`).join('\n'),
     built: laidOut(
-      '  const fakes = { ',
+      '  return { ',
       fakes.map((fake) => `${fake.key}: new ${fake.name}()`),
       ' };',
     ),
     overrides: laidOut(
-      '    fakes: [',
+      '    fakes: overridden(settings.fakes, [',
       fakes.map((fake) => `fake(${fake.port.name}, fakes.${fake.key})`),
-      '],',
+      ']),',
     ),
+    replacing: `// ${WORLD_COMMENTS.replacing()}`,
     returnedBuses: laidOut('  return { ', ['...buses', ...returnedFakes(fakes)], ' };'),
   };
 }
@@ -59,6 +62,7 @@ function diImport(scope: Scope, withFakes: boolean): string {
     'createTestApplication',
     ...(withFakes ? ['fake'] : []),
     'type ContextModule',
+    'type Override',
   ];
 
   return `import { ${names.join(', ')} } from '@ddd-ts-kit/di';`;

@@ -106,8 +106,8 @@ export function writeBusinessDecisions(root: string): void {
   // The generated spec holds the permission of the scope too, with the role of its actor.
   edit(root, 'src/contexts/billing/test/unit/search-invoices.handler.spec.ts', [
     [
-      "roles: { holder: [billingPermissions['invoice.search']] }",
-      "roles: { holder: [billingPermissions['invoice.search'], billingPermissions['invoice.view']] }",
+      "holdersOf(billingPermissions['invoice.search'])",
+      "holdersOf(billingPermissions['invoice.search'], billingPermissions['invoice.view'])",
     ],
   ]);
 

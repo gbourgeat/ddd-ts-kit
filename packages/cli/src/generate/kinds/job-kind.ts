@@ -18,6 +18,7 @@ import { readSentCommand } from './job/read-sent-command';
 import { requestedSchedule } from './job/requested-schedule';
 import { writtenSchedule } from './job/written-schedule';
 import { platformPath } from '../platform-path';
+import { worldArrangement } from './world/world-arrangement';
 
 export const jobKind: Kind = {
   name: 'job',
@@ -39,13 +40,26 @@ export const jobKind: Kind = {
     const name = concept(scope, request.args[1] ?? '', { what: 'job', strip: ['job'] });
     const command = readSentCommand(scope, commandNamed(scope, name));
 
+    const tenancy = tenancyOf(scope, name);
+    const spec = specVars(scope, { protected: false });
+
+    const world = worldArrangement(scope, spec, {
+      permission: command.isProtected ? 'authorization' : undefined,
+      perTenant: tenancy === 'per-tenant',
+    });
+
     const context = vars(scope, {
       name: named(name),
-      spec: specVars(scope, { protected: false }),
-      job: jobVars(scope, { name, schedule, command, tenancy: tenancyOf(scope, name) }),
+      spec,
+      job: jobVars(scope, { name, schedule, command, tenancy }),
+      world: world.vars,
     });
 
     writeJob(scope, name, context);
+
+    if (world.hint !== undefined) {
+      scope.ws.note(world.hint);
+    }
   },
 };
 

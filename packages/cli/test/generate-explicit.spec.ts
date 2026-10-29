@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { scan } from '../src/check/scan/scan';
+import { isWorldComment } from '../src/generate/kinds/world/is-world-comment';
 import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir, walk, type CliResult } from './helpers';
 import { report } from './reports';
 
@@ -15,7 +16,7 @@ beforeAll(() => {
 });
 
 describe('generated code, in the explicit style', () => {
-  it('carries no comment but the TODO(domain) and TODO(platform) ones and the marker regions', () => {
+  it('carries no comment but the TODO(domain) and TODO(platform) ones, the marker regions and the world a spec would arrange through', () => {
     const sources = walk(root, 'src/contexts').filter((file) => file.endsWith('.ts'));
 
     expect(sources.length).toBeGreaterThan(40);
@@ -26,9 +27,9 @@ describe('generated code, in the explicit style', () => {
       expect(scanned.blockComments, file).toEqual([]);
 
       for (const comment of scanned.comments) {
-        expect(comment.text, `${file}:${comment.line}`).toMatch(
-          /^(TODO\((?:domain|platform)\): |\/?ddd-ts-kit:[\w-]+$)/,
-        );
+        const marked = /^(TODO\((?:domain|platform)\): |\/?ddd-ts-kit:[\w-]+$)/.test(comment.text);
+
+        expect(marked || isWorldComment(comment.text), `${file}:${comment.line}: ${comment.text}`).toBe(true);
       }
     }
   });
@@ -69,14 +70,24 @@ describe('generated code, in the explicit style', () => {
 
       expect(text.match(/^\s*it\('/gm)?.length, spec).toBe(2);
       expect(text, spec).toContain("rejects.toMatchObject({ code: 'FORBIDDEN' })");
-      expect(text, spec).toContain('new RoleBasedAuthorizer({\n    roles: { holder: [billingPermissions[');
+      expect(text, spec).toContain("const { holder, authorizer } = holdersOf(billingPermissions['");
       expect(text.match(/^\s*it\.todo\('/gm)?.length, spec).toBeGreaterThanOrEqual(2);
-      expect(text, spec).toContain('modules: [platformTestModule, billingModule, holders]');
       expect(text, spec).toMatch(/application\.(commandBus|queryBus)\.execute\(/);
     }
 
-    expect(read(root, `${BILLING}/test/unit/issue-invoice.handler.spec.ts`)).toContain(
-      'fakes: [fake(InvoiceRepository, invoiceRepository)],',
+    // Generated before the world of billing: the test application, built in the spec.
+    const before = read(root, `${BILLING}/test/unit/issue-invoice.handler.spec.ts`);
+
+    expect(before).toContain('modules: [platformTestModule, billingModule, holders]');
+    expect(before).toContain('fakes: [fake(InvoiceRepository, invoiceRepository)],');
+
+    // Generated after it: one call of the world.
+    expect(read(root, `${BILLING}/test/unit/cancel-invoice.handler.spec.ts`)).toContain(
+      'return aBillingWorld({ modules: [holders] });',
+    );
+
+    expect(read(root, `${BILLING}/test/unit/search-invoices.handler.spec.ts`)).toContain(
+      'const { application } = await aBillingWorld({',
     );
   });
 

@@ -1,48 +1,43 @@
 import { describe, expect, it } from '{{tests.module}}';
 {{#if access.protected}}
 {{#if access.policy}}
-import { AuthorizationMap, PolicyAccess, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
+import { AuthorizationMap, PolicyAccess, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
 {{/if}}
 {{#unless access.policy}}
-import { AuthorizationMap, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
+import { AuthorizationMap, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
 {{/unless}}
-import { anActor } from '@ddd-ts-kit/auth/testing';
+import { anActor, holdersOf } from '@ddd-ts-kit/auth/testing';
 {{/if}}
+{{#unless world.through}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
+{{/unless}}
 {{#if access.protected}}
 import { {{context.camel}}Permissions } from '{{alias.context}}/{{context.kebab}}.permissions{{alias.ext}}';
 {{/if}}
 import { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.command{{alias.ext}}';
 import { {{name.pascal}}Handler } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.handler{{alias.ext}}';
+{{#unless world.through}}
 {{#if command.hasAggregate}}
 import { Fake{{aggregate.pascal}}Repository } from '{{alias.context}}/test/fakes/{{aggregate.kebab}}.repository.fake{{alias.ext}}';
 {{/if}}
+{{/unless}}
+{{#if world.through}}
+{{world.import}}
+{{/if}}
 {{#if access.protected}}
 
-{{#if access.policy}}
-const authorizer = new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } });
+const { holder, authorizer } = holdersOf({{context.camel}}Permissions['{{access.permission}}']);
 
 const holders = authorizationMiddleware({
   authorizer,
   map: AuthorizationMap.of(requires({{name.pascal}}Command, {{context.camel}}Permissions['{{access.permission}}'])),
 });
 {{/if}}
-{{#unless access.policy}}
-const holders = authorizationMiddleware({
-  authorizer: new RoleBasedAuthorizer({
-    roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },
-  }),
-  map: AuthorizationMap.of(requires({{name.pascal}}Command, {{context.camel}}Permissions['{{access.permission}}'])),
-});
-{{/unless}}
-
-const holder = anActor().withRole('holder').build();
-{{/if}}
 
 describe('{{name.title}}', () => {
   {{#if command.births}}
   it('saves the {{aggregate.words}} and answers its identifier', async () => {
-    const { commandBus, {{aggregate.camel}}Repository } = arrange();
+    const { commandBus, {{aggregate.camel}}Repository } = {{world.await}}arrange();
 
     const id = await commandBus.execute(new {{name.pascal}}Command({{access.holder}}));
 
@@ -52,7 +47,7 @@ describe('{{name.title}}', () => {
   {{/if}}
   {{#unless command.births}}
   it('completes without answering anything', async () => {
-    const { commandBus } = arrange();
+    const { commandBus } = {{world.await}}arrange();
     const command = new {{name.pascal}}Command({{access.holder}});
 
     await expect(commandBus.execute(command)).resolves.toBeUndefined();
@@ -61,7 +56,7 @@ describe('{{name.title}}', () => {
   {{#if access.protected}}
 
   it('is refused to an actor who does not hold the permission {{access.permission}}', async () => {
-    const { commandBus } = arrange();
+    const { commandBus } = {{world.await}}arrange();
     const command = new {{name.pascal}}Command(anActor().build());
 
     await expect(commandBus.execute(command)).rejects.toMatchObject({ code: 'FORBIDDEN' });
@@ -69,23 +64,31 @@ describe('{{name.title}}', () => {
   {{/if}}
 
   {{#if command.hasAggregate}}
-  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with the builders of test/builders and the fakes, execute through the bus, assert the stored {{aggregate.words}}, the facts announced with the save (`domainEvents.on('<name>', ...)` registered in `arrange`) and the answer; when several specs of {{context.kebab}} share this arrangement, `npx ddd-ts-kit generate test-world {{context.kebab}}` writes it once in test/worlds/.
+  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with the builders of test/builders and the fakes, execute through the bus, assert the stored {{aggregate.words}}, the facts announced with the save (`domainEvents.on('<name>', ...)` registered in `arrange`) and the answer.
   it.todo('applies the business decision to the {{aggregate.words}}');
   {{/if}}
   {{#unless command.hasAggregate}}
-  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with builders and fakes of its ports, execute through the bus, assert the outcome; when several specs of {{context.kebab}} share this arrangement, `npx ddd-ts-kit generate test-world {{context.kebab}}` writes it once in test/worlds/.
+  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with builders and fakes of its ports, execute through the bus, assert the outcome.
   it.todo('applies the business decision to the aggregate');
   {{/unless}}
   it.todo('refuses the command when a business rule is violated, with the expected error code');
   it.todo('saves and publishes nothing when the command is refused');
 });
 
-function arrange() {
+{{#unless world.through}}
+{{world.comment}}
+{{/unless}}
+{{world.async}}function arrange() {
   {{#if command.hasAggregate}}
+  {{#if world.through}}
+  const { commandBus, {{#if command.births}}clock, ids, {{/if}}{{#unless command.births}}{{#if access.policy}}clock, {{/if}}{{/unless}}domainEvents, {{aggregate.camel}}Repository } = await {{world.builder}}({{world.options}});
+  {{/if}}
+  {{#unless world.through}}
   const { commandBus, {{#if command.births}}clock, ids, {{/if}}{{#unless command.births}}{{#if access.policy}}clock, {{/if}}{{/unless}}dispatching, domainEvents } = createTestBuses({ idPrefix: '{{aggregate.kebab}}' });
   // As the application hands it to the handler: the save announces the events of the {{aggregate.words}} to `domainEvents`.
   const {{aggregate.camel}}Repository = dispatching(new Fake{{aggregate.pascal}}Repository());
 
+  {{/unless}}
   const handler = new {{name.pascal}}Handler({{aggregate.camel}}Repository{{#if command.births}}, ids, clock{{/if}}{{#if access.policy}}, new PolicyAccess({ authorizer, clock }){{/if}});
 
   commandBus{{spec.guard}}.register({{name.pascal}}Command, handler);
@@ -94,13 +97,23 @@ function arrange() {
   {{/if}}
   {{#unless command.hasAggregate}}
 {{#if access.policy}}
+{{#if world.through}}
+  const { commandBus, clock } = await {{world.builder}}({{world.options}});
+{{/if}}
+{{#unless world.through}}
   const { commandBus, clock } = createTestBuses();
+{{/unless}}
   const handler = new {{name.pascal}}Handler(new PolicyAccess({ authorizer, clock }));
 
   commandBus{{spec.guard}}.register({{name.pascal}}Command, handler);
 {{/if}}
 {{#unless access.policy}}
+{{#if world.through}}
+  const { commandBus } = await {{world.builder}}({{world.options}});
+{{/if}}
+{{#unless world.through}}
   const { commandBus } = createTestBuses();
+{{/unless}}
 
   commandBus{{spec.guard}}.register({{name.pascal}}Command, new {{name.pascal}}Handler());
 {{/unless}}

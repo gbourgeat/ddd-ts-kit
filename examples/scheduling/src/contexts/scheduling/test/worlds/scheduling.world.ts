@@ -1,6 +1,6 @@
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { contextModule, createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';
+import { contextModule, createTestApplication, fake, type ContextModule, type Override } from '@ddd-ts-kit/di';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { Agenda } from '@/contexts/scheduling/calendars/application/ports/agenda.port';
@@ -10,6 +10,7 @@ import { AttendanceRecordRepository } from '@/contexts/scheduling/calendars/doma
 import { CalendarRepository } from '@/contexts/scheduling/calendars/domain/repositories/calendar.repository';
 import { PersonDirectoryGateway } from '@/contexts/scheduling/calendars/application/ports/person-directory-gateway.port';
 import { PractitionerDirectory } from '@/contexts/scheduling/calendars/application/ports/practitioner-directory.port';
+import { SchedulingPersonalDataErasure } from '@/contexts/scheduling/calendars/application/ports/scheduling-personal-data-erasure.port';
 import { SchedulingRelationships } from '@/contexts/scheduling/calendars/application/ports/scheduling-relationships.port';
 import { WaitlistRepository } from '@/contexts/scheduling/waitlist/domain/repositories/waitlist.repository';
 import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
@@ -19,6 +20,7 @@ import { FakeAttendanceRecordRepository } from '@/contexts/scheduling/test/fakes
 import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
 import { FakePersonDirectoryGateway } from '@/contexts/scheduling/test/fakes/person-directory-gateway.fake';
 import { FakePractitionerDirectory } from '@/contexts/scheduling/test/fakes/practitioner-directory.fake';
+import { FakeSchedulingPersonalDataErasure } from '@/contexts/scheduling/test/fakes/scheduling-personal-data-erasure.fake';
 import { FakeSchedulingRelationships } from '@/contexts/scheduling/test/fakes/scheduling-relationships.fake';
 import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake';
 
@@ -32,6 +34,7 @@ export interface SchedulingWorldFakes {
   readonly calendarRepository: FakeCalendarRepository;
   readonly personDirectoryGateway: FakePersonDirectoryGateway;
   readonly practitionerDirectory: FakePractitionerDirectory;
+  readonly schedulingPersonalDataErasure: FakeSchedulingPersonalDataErasure;
   readonly schedulingRelationships: FakeSchedulingRelationships;
   readonly waitlistRepository: FakeWaitlistRepository;
 }
@@ -40,23 +43,15 @@ export interface SchedulingWorldOptions {
   readonly now?: Date;
   readonly idPrefix?: string;
   readonly modules?: readonly ContextModule[];
+  readonly fakes?: readonly Override[];
+  readonly tenants?: readonly string[];
   readonly given?: (fakes: SchedulingWorldFakes) => Promise<void>;
 }
 
 export async function aSchedulingWorld({ modules = [nobody], given, ...settings }: SchedulingWorldOptions = {}) {
   const context = contextModule('scheduling', schedulingDeclarations);
 
-  const fakes = {
-    agenda: new FakeAgenda(),
-    appointmentRepository: new FakeAppointmentRepository(),
-    attendanceHistory: new FakeAttendanceHistory(),
-    attendanceRecordRepository: new FakeAttendanceRecordRepository(),
-    calendarRepository: new FakeCalendarRepository(),
-    personDirectoryGateway: new FakePersonDirectoryGateway(),
-    practitionerDirectory: new FakePractitionerDirectory(),
-    schedulingRelationships: new FakeSchedulingRelationships(),
-    waitlistRepository: new FakeWaitlistRepository(),
-  };
+  const fakes = buildFakes();
 
   await given?.(fakes);
 
@@ -64,7 +59,7 @@ export async function aSchedulingWorld({ modules = [nobody], given, ...settings 
     ...settings,
     eventBusFailures: 'as-thrown',
     modules: [platformTestModule, context, ...modules],
-    fakes: [
+    fakes: overridden(settings.fakes, [
       fake(Agenda, fakes.agenda),
       fake(AppointmentRepository, fakes.appointmentRepository),
       fake(AttendanceHistory, fakes.attendanceHistory),
@@ -72,10 +67,33 @@ export async function aSchedulingWorld({ modules = [nobody], given, ...settings 
       fake(CalendarRepository, fakes.calendarRepository),
       fake(PersonDirectoryGateway, fakes.personDirectoryGateway),
       fake(PractitionerDirectory, fakes.practitionerDirectory),
+      fake(SchedulingPersonalDataErasure, fakes.schedulingPersonalDataErasure),
       fake(SchedulingRelationships, fakes.schedulingRelationships),
       fake(WaitlistRepository, fakes.waitlistRepository),
-    ],
+    ]),
   });
 
   return { application, ...fakes };
+}
+
+// The fakes a spec hands replace those the world builds for the same port.
+function overridden(handed: readonly Override[] | undefined, built: readonly Override[]): Override[] {
+  const replaced = new Set((handed ?? []).map(([port]) => port));
+
+  return [...built.filter(([port]) => !replaced.has(port)), ...(handed ?? [])];
+}
+
+function buildFakes(): SchedulingWorldFakes {
+  return {
+    agenda: new FakeAgenda(),
+    appointmentRepository: new FakeAppointmentRepository(),
+    attendanceHistory: new FakeAttendanceHistory(),
+    attendanceRecordRepository: new FakeAttendanceRecordRepository(),
+    calendarRepository: new FakeCalendarRepository(),
+    personDirectoryGateway: new FakePersonDirectoryGateway(),
+    practitionerDirectory: new FakePractitionerDirectory(),
+    schedulingPersonalDataErasure: new FakeSchedulingPersonalDataErasure(),
+    schedulingRelationships: new FakeSchedulingRelationships(),
+    waitlistRepository: new FakeWaitlistRepository(),
+  };
 }

@@ -313,9 +313,19 @@ const { application, appointmentRepository } = await aSchedulingWorld({
 ```
 
 - **What it takes.** `now` and `idPrefix` go to the test application; `modules` adds what the
-  spec brings, its authorization module (by default no role holds a permission); `given`
-  receives the fakes before the application wires them, so the events recorded while building
-  the stored aggregates are not announced as if a command had just run.
+  spec brings, its authorization module (by default no role holds a permission); `fakes` adds
+  the fake of a port it cannot build alone, a reader that answers what the spec gives it;
+  `tenants`, under tenancy, the tenants a per-tenant job runs for; `given` receives the fakes
+  before the application wires them, so the events recorded while building the stored
+  aggregates are not announced as if a command had just run.
+- **The generated specs arrange through it.** A command, a query or a job generated once
+  `test/worlds/<context>.world.ts` exists writes its `arrange()` as one call of the world;
+  generated before, or when the world lacks the fake its spec needs, it builds the test
+  application itself, and a comment and the output of the generator say what the world would
+  change (under a container, where the world replaces the whole arrangement). A world the
+  generator cannot read, its builder `a<Context>World` or its options not found, is said so and
+  never offered to `--force`. A fake a spec hands the world replaces the one it builds for the
+  same port. No generator writes the world unasked.
 - **Without an injection container** (`createTestBuses`), the world returns the buses and the
   fakes, each repository wrapped by `dispatching`, and the spec registers the handler it tests.
 - **What it leaves out, and says so.** A fake whose constructor needs an argument (a reader that
@@ -323,7 +333,14 @@ const { application, appointmentRepository } = await aSchedulingWorld({
   or depends on yet: the test application would refuse it. Run the generator again with
   `--force` when the context gained a fake.
 - **What stays in the spec.** The permission it exercises, the data it starts from (built by the
-  builders) and the facts it listens to. A world holds no test data.
+  builders) and the facts it listens to. A world holds no test data. The permission is one line,
+  `holdersOf` of `@ddd-ts-kit/auth/testing`: an actor holding it and an authorizer that grants
+  it to that actor and to the system actors, refusing everybody else.
+
+```ts
+const { holder, authorizer } = holdersOf(schedulingPermissions['appointment.confirm']);
+const holders = authorizationModule({ authorizer });
+```
 
 A helper written among the specs instead, `test/unit/scheduling-application.ts`, is reported by
 [`test/helper-placed`](../ARCHITECTURE.md#3-dependency-rules), a warning: `test/unit/` and

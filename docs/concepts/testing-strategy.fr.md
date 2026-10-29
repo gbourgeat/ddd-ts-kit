@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:12950aace3a99130 -->
+<!-- translation-of: testing-strategy.md sha256:429096142ba3f3de -->
 
 # Stratégie de test
 
@@ -325,9 +325,20 @@ const { application, appointmentRepository } = await aSchedulingWorld({
 
 - **Ce qu'il prend.** `now` et `idPrefix` vont à l'application de test ; `modules` ajoute ce que
   la *spec* apporte, son module d'autorisation (par défaut aucun rôle ne détient de
-  permission) ; `given` reçoit les *fakes* avant que l'application ne les branche, si bien que
-  les événements enregistrés en construisant les agrégats stockés ne sont pas annoncés comme si
-  une commande venait de s'exécuter.
+  permission) ; `fakes` ajoute le *fake* d'un port qu'il ne sait pas construire seul, un lecteur
+  qui répond ce que la *spec* lui donne ; `tenants`, avec la multi-location, les locataires pour
+  lesquels tourne une tâche planifiée par locataire ; `given` reçoit les *fakes* avant que
+  l'application ne les branche, si bien que les événements enregistrés en construisant les
+  agrégats stockés ne sont pas annoncés comme si une commande venait de s'exécuter.
+- **Les *specs* générées passent par lui.** Une commande, une requête ou une tâche planifiée
+  générée une fois `test/worlds/<context>.world.ts` présent écrit son `arrange()` comme un seul
+  appel du monde ; générée avant, ou quand le monde n'a pas le *fake* dont sa *spec* a besoin,
+  elle construit elle-même l'application de test, et un commentaire et la sortie du générateur
+  disent ce que le monde changerait (avec un conteneur, où le monde remplace toute la mise en
+  place). Un monde que le générateur ne sait pas lire, son constructeur `a<Context>World` ou ses
+  options introuvables, est dit tel et jamais proposé à `--force`. Un *fake* qu'une *spec* passe
+  au monde remplace celui qu'il construit pour le même port. Aucun générateur n'écrit le monde
+  sans qu'on le demande.
 - **Sans conteneur d'injection** (`createTestBuses`), le monde rend les bus et les *fakes*,
   chaque *repository* enveloppé par `dispatching`, et la *spec* enregistre le *handler* qu'elle
   teste.
@@ -337,7 +348,14 @@ const { application, appointmentRepository } = await aSchedulingWorld({
   générateur avec `--force` quand le contexte a gagné un *fake*.
 - **Ce qui reste dans la *spec*.** La permission qu'elle exerce, les données dont elle part
   (construites par les *builders*) et les faits qu'elle écoute. Un monde ne contient aucune
-  donnée de test.
+  donnée de test. La permission tient en une ligne, `holdersOf` de `@ddd-ts-kit/auth/testing` :
+  un acteur qui la détient et un autorisateur qui l'accorde à cet acteur et aux acteurs système,
+  et refuse tous les autres.
+
+```ts
+const { holder, authorizer } = holdersOf(schedulingPermissions['appointment.confirm']);
+const holders = authorizationModule({ authorizer });
+```
 
 Une aide écrite parmi les *specs* à la place, `test/unit/scheduling-application.ts`, est
 signalée par [`test/helper-placed`](../ARCHITECTURE.fr.md#3-règles-de-dépendance), un
