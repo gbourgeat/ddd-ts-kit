@@ -1,6 +1,6 @@
-import { CliError } from '../../../cli-error';
+import type { CliError } from '../../../cli-error';
 import { toName } from '../../../naming';
-import { MissingPrerequisite } from '../../missing-prerequisite';
+import { prerequisiteRefusal } from '../../prerequisite-refusal';
 import type { Scope } from '../../scope';
 import { groupFile } from './group-file';
 
@@ -27,9 +27,8 @@ export function groupPrefix(scope: Scope, kebab: string, depth = 0): string {
 
 /** A group not written yet is one an earlier command creates; a file that is no group is a mistake. */
 function noGroup(file: string, missing: boolean): CliError {
-  const Refusal = missing ? MissingPrerequisite : CliError;
-
-  return new Refusal(
+  return prerequisiteRefusal(
+    missing,
     `${file} declares no route group.`,
     'A route group is an empty class carrying @RouteGroup of @ddd-ts-kit/http: create one with `ddd-ts-kit generate route-group <context> <Name> --prefix <path>` and pass --group <Name>.',
   );

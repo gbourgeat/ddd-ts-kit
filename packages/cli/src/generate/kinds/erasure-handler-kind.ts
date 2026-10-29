@@ -1,5 +1,5 @@
 import { CliError } from '../../cli-error';
-import { MissingPrerequisite } from '../missing-prerequisite';
+import { prerequisiteRefusal } from '../prerequisite-refusal';
 import type { Scope } from '../scope';
 import { emit } from '../emit';
 import { isDeclared } from '../is-declared';
@@ -59,9 +59,8 @@ function erasureAdapterOf(scope: Scope, names: PersonalNames): string {
 
   if (scope.config.stack.privacy !== 'on' || adapter === undefined) {
     // On a project that keeps personal data, the repository that declares it is written by an earlier command.
-    const Refusal = scope.config.stack.privacy === 'on' ? MissingPrerequisite : CliError;
-
-    throw new Refusal(
+    throw prerequisiteRefusal(
+      scope.config.stack.privacy === 'on',
       `${scope.context.kebab} has no erasure of personal data to run when the platform announces one.`,
       `Declare what a table of ${scope.context.kebab} keeps of a person first, with \`ddd-ts-kit generate repository ${scope.context.kebab} <Aggregate> --personal <column>,...\` (on a project with \`stack.privacy\` on: \`ddd-ts-kit init --force --privacy on\`), then run the command again.`,
     );
