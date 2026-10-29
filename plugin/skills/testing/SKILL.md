@@ -245,7 +245,9 @@ spec the generator writes ends with the planned rule that asks for one;
 and fast-check added when it is missing: replace the arbitrary by the real components first.
 
 The titles are read back as a document: `npm run docs:generate` writes `docs/behaviour/<context>.md`
-from them, grouped as the specs group them, the pre-commit hook regenerates it when a spec is staged,
+from them, one heading per use case (its handler, policy, route, end-to-end and acceptance specs), then
+the model and the reactions, the titles the kit generated listed apart, the row a title cites before
+the rule and the rows cited indexed at the end; the pre-commit hook regenerates it when a spec is staged,
 and `docs --check` holds it current, so a title is a sentence the business reads, and the page is
 committed with the spec.
 
