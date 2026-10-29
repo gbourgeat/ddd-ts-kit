@@ -10,9 +10,10 @@ logger, no dependency at all. It is the only package of the kit `domain/` may im
 npm i @ddd-ts-kit/kernel
 ```
 
-Two entries: `@ddd-ts-kit/kernel` (the building blocks, the ports, the standard interfaces and
-their doubles) and `@ddd-ts-kit/kernel/declarations` (the decorators with which a class says
-what it is, see "Declarations").
+Three entries: `@ddd-ts-kit/kernel` (the building blocks, the ports, the standard interfaces and
+their doubles), `@ddd-ts-kit/kernel/declarations` (the decorators with which a class says
+what it is, see "Declarations") and `@ddd-ts-kit/kernel/testing` (the recording buses of a
+spec, see "The spec of a reaction").
 
 ![The domain and the application of a bounded context import the kernel; the kernel declares the ports as abstract classes; its own doubles, the adapter packages of the kit and the infrastructure of the context implement them; the platform binds one implementation to each port at start-up](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/kernel-ports-and-implementations.svg)
 
@@ -47,6 +48,7 @@ starts, so a business rule never changes with a library.
 | Persistence helpers | `optimisticUpdate`, `expectVersion` (the version a caller read, `If-Match` over HTTP, still the current one, else `PreconditionFailedError`: 412), `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Error reporting | `ErrorReporter`, `ErrorReport`, `errorReportOf`, `reportOnce`, `isUnexpectedError`, `errorReportingMiddleware`, `DeadLetterReports`, `reportProcessFailures`, `NoopErrorReporter` |
 | Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryErrorReporter`, `InMemoryCache`, `InMemoryCacheInvalidation`, `InMemoryCachePurger`, `InMemoryLock`, `InMemoryRateLimiter` |
+| Testing (`@ddd-ts-kit/kernel/testing`) | `RecordingCommandBus`, `RecordingQueryBus`: buses that keep every message they are handed, in order (`executed`), and answer what the spec told them (`answering(type, answer)`), nothing otherwise (see "The spec of a reaction") |
 | Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Background`, `Projection`, `On`, `applyingProjection`, `Repository`, `Gateway`, `Adapter`, `Policy`, `Edge` (for the decorators of a transport package, such as `@Controller`), `injected`, `injectedDependencies`, `declarationOf`, `listDeclarations`, `DeclarationError`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
@@ -580,6 +582,46 @@ An `after-commit` handler that hands an aggregate to a wrapped repository (`save
 `remove(aggregate)`) is refused before the write with `SaveAfterCommitError`: the unit of work
 is over. It sends a command through the `CommandBus`, which opens a unit of work of its own.
 `unitOfWorkStage()` answers `'outside'`, `'open'`, `'before-commit'` or `'after-commit'`.
+
+### The spec of a reaction
+
+That a `before-commit` handler runs inside the transaction and an `after-commit` one once it has
+committed is a guarantee of the kernel, proven once by its own suite: the spec of a reaction
+does not prove it again. It gives the reaction the fact and asserts what the reaction sent. An
+event handler, an integration event handler and a controller send commands through the
+`CommandBus` they receive: `RecordingCommandBus` of `@ddd-ts-kit/kernel/testing` keeps each one
+it is handed, in order, in `executed`, and answers what the spec told it with
+`answering(type, answer)` (an identifier, or a refusal the function throws), nothing otherwise.
+No handler runs: what the command does is the spec of its own handler. `RecordingQueryBus` does
+the same for queries. The specs `ddd-ts-kit generate` writes for these roles start from them:
+
+<!-- checked sample -->
+```ts
+import { Command, type CommandBus, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { RecordingCommandBus } from '@ddd-ts-kit/kernel/testing';
+
+class ScheduleReminderCommand extends Command {
+  constructor(readonly invoiceId: string) {
+    super();
+  }
+}
+
+/** When an invoice is issued, a reminder is scheduled for it. */
+class InvoiceIssuedEventHandler {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle(event: DomainEvent): Promise<void> {
+    await this.commands.execute(new ScheduleReminderCommand(event.aggregateId));
+  }
+}
+
+const issued: DomainEvent = { name: 'billing.invoice.issued', aggregateId: 'invoice-1', occurredAt: new Date(0) };
+const commands = new RecordingCommandBus();
+
+await new InvoiceIssuedEventHandler(commands).handle(issued);
+
+export const sent = commands.executed; // [new ScheduleReminderCommand('invoice-1')]
+```
 
 ### A unit of work of your own
 
