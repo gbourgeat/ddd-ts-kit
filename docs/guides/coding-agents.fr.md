@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:0a920b8290018d5e -->
+<!-- translation-of: coding-agents.md sha256:d7de18abb6b40fcf -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -108,7 +108,9 @@ du *shell* tient le `domain-test-writer` aux chemins d'un test, le code d'une *s
 de construction, et toute écriture à la main d'un fichier généré ou de la *baseline* par n'importe
 quelle session, chacune par les endroits qu'une commande écrit plutôt que par son texte ; un
 `apply_patch` de Codex envoyé par le *shell* est lu comme un *patch*.
-Pour un `context-builder`, il compte les appels d'outils dans ces mêmes *hooks* et avertit
+Pour un `context-builder` (l'agent du *plugin*, `ddd-ts-kit:context-builder` : un agent du projet
+nommé `context-builder` sans ce préfixe est tenu à la portée de son *worktree*, mais ni compté ni
+enregistré), il compte les appels d'outils dans ces mêmes *hooks* et avertit
 l'agent deux fois avant sa limite de tours, enregistre ses exécutions dans son *worktree*
 (`.ddd-ts-kit/agent.json`), et écoute deux événements rares de Claude Code, filtrés sur cet agent :
 `SubagentStart` (un lancement ou une reprise démarre un nouveau compte) et `SubagentStop` (quand il

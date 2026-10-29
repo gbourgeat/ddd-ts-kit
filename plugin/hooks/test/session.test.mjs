@@ -52,6 +52,19 @@ test('session start says when the installed packages are not the version the ski
   assert.match(briefing(breaking(-1)), /npx ddd-ts-kit doctor/);
 });
 
+test('the version gap is read from the CLI the guard runs, hoisted to a parent inside the repository', () => {
+  const workspaceRoot = directory('workspaces');
+  git(workspaceRoot, 'init', '--quiet');
+  launcher(workspaceRoot);
+  installedVersion(workspaceRoot, '0.1.0');
+  const root = join(workspaceRoot, 'examples', 'shop');
+  mkdirSync(root, { recursive: true });
+  const init = spawnSync('node', [cli, 'init', '--orm', 'none', '--context', 'ordering:core'], { cwd: root });
+  assert.equal(init.status, 0, String(init.stderr));
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /^Version gap: this plugin describes ddd-ts-kit .*, the project has 0\.1\.0 installed/m);
+});
+
 test('session start stays short: one line per context, far below the host limit', () => {
   const root = project();
   const context = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;

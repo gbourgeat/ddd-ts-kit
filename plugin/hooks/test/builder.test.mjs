@@ -375,6 +375,16 @@ test('the hooks add no entry on every tool call: two rare events, filtered by th
   ]);
 });
 
+test('an agent of the project named context-builder without the prefix of the plugin is held to its scope, not counted', () => {
+  const root = committed();
+  worker(root);
+  const agent = builder('unprefixed', { agent_type: 'context-builder' });
+  assert.equal(decision(run('pre-bash', bash(root, 'rm src/main.ts', agent))), 'deny');
+  run('subagent-start', { cwd: root, ...agent });
+  assert.equal(existsSync(join(root, runState(agent))), false);
+  assert.equal(existsSync(join(root, '.ddd-ts-kit', 'agent.json')), false);
+});
+
 test('malformed input to the runs of a builder never blocks', () => {
   for (const mode of ['subagent-start', 'subagent-stop']) {
     const result = spawnSync('node', [guard, mode], { input: 'not json', encoding: 'utf8' });

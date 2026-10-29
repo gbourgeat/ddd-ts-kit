@@ -101,7 +101,9 @@ heredoc) changed a file outside it, and refuses a dependency change and another 
 code of a story to its build gate, and every session's hand-writing of a generated file or the
 baseline, each by the places a command writes rather than its text; a Codex `apply_patch` sent
 through the shell is read as a patch.
-For a `context-builder`, it counts the tool calls inside those same hooks and warns the agent
+For a `context-builder` (the agent of the plugin, `ddd-ts-kit:context-builder`: an agent of the project
+named `context-builder` without that prefix is held to the scope of its worktree, but neither counted nor
+recorded), it counts the tool calls inside those same hooks and warns the agent
 twice before its turn limit, records its runs in its worktree (`.ddd-ts-kit/agent.json`), and
 listens to two rare events of Claude Code, filtered by that agent: `SubagentStart` (a launch or a
 resume starts a new count) and `SubagentStop` (when it ends on its own, it is kept going once to

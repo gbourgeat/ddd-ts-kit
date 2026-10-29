@@ -49,6 +49,10 @@ const STORY_INPUTS = [
 // The report a worker keeps current after each commit and before it ends, ignored by git: what the conductor reads when it stops.
 const WORKER_REPORT = '.ddd-ts-kit/report.md';
 const WORKER_AGENT = 'context-builder';
+// The builder of the plugin, as its hooks of SubagentStart and SubagentStop match it: the one counted.
+const BUILDER_AGENT = `ddd-ts-kit:${WORKER_AGENT}`;
+// What the config may say of the guard; anything else is read as enforce.
+const GUARD_MODES = ['off', 'advise', 'enforce'];
 // The host caps SessionStart context at 10 000 characters; a session should start far below it.
 const SESSION_CONTEXT_LIMIT = 3000;
 // What the guard says of a text read from the repository, the plan line or a next step: at most this many characters.
@@ -669,9 +673,10 @@ function formatWrites(writes) {
   }
 }
 
-// A context-builder of Claude Code: its tool calls are counted, its runs and stops recorded.
+// The context-builder of the plugin in Claude Code: its tool calls are counted, its runs and stops recorded.
+// An agent of the project named otherwise is held to the scope of a worker (`workerContext`), not counted.
 function isBuilder(input) {
-  return hostOf(input) === 'claude' && String(input.agent_type ?? '').includes(WORKER_AGENT);
+  return hostOf(input) === 'claude' && input.agent_type === BUILDER_AGENT;
 }
 
 async function countBuilderCall(input, project, command) {
@@ -923,8 +928,8 @@ function describeProject(root) {
     platformDir: config.platformDir ?? 'src/platform',
     commit: commitLimits(config.commit),
     packageManager: config.stack?.packageManager === 'pnpm' ? 'pnpm' : 'npm',
-    // enforce: block; advise: ask the user; off: silent.
-    mode: process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce',
+    // enforce: block; advise: ask the user; off: silent; any other value, enforce, said at session start.
+    ...guardMode(process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce'),
     // required (what init writes in a new project): the code of a context is refused in the main checkout
     // of the trunk; advised (the key absent, a project started before): only said.
     worktrees: config.worktrees === 'required' ? 'required' : 'advised',
@@ -933,6 +938,10 @@ function describeProject(root) {
     // On trial: the dependency rules judge the text about to be written, before the write; absent, after it.
     dependenciesBeforeWrite: config.dependenciesBeforeWrite === true,
   };
+}
+
+function guardMode(asked) {
+  return GUARD_MODES.includes(asked) ? { mode: asked } : { mode: 'enforce', unknownMode: asked };
 }
 
 // The CLI the project installed, where Node would find it: in the project, or hoisted to a parent
@@ -987,6 +996,9 @@ function projectBriefing(project, input) {
     'Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.',
     'Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).',
     'Read `npx ddd-ts-kit list` (text; `--json` for a script) and the CONTEXT.md of one context instead of browsing the tree.',
+    ...(project.unknownMode === undefined
+      ? []
+      : [`guard: ${quoted(project.unknownMode)} is not a mode (${GUARD_MODES.join(', ')}): enforce applies.`]),
     ...(project.mode === 'off' ? [] : versionGap(project)),
     ...planPointer(project.root),
     ...workerNotice(project, input),
@@ -1018,7 +1030,7 @@ function installAdvice(project) {
 // The skills describe KIT_VERSION while the checks run the CLI the project installed, and the
 // plugin is updated apart from the lockfile. A gap is said at session start, never blocked.
 function versionGap(project) {
-  const installed = readJson(join(project.root, 'node_modules', 'ddd-ts-kit', 'package.json'))?.version;
+  const installed = project.cli?.version;
   if (typeof installed !== 'string' || compatible(installed, KIT_VERSION)) {
     return [];
   }

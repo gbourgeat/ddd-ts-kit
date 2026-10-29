@@ -195,3 +195,17 @@ test('with the guard off, and outside a git repository, nothing is said about co
   put(untracked, 'docs/a.md', 'a\n');
   assert.equal(run('stop', { cwd: untracked, session_id: 'no-git' }).output, undefined);
 });
+
+test('a guard mode out of the three is read as enforce: it refuses the stop too, and the session says so once', () => {
+  const root = project({ guard: 'enforced' });
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  assert.equal(run('stop', { cwd: root, stop_hook_active: false }).output.decision, 'block');
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  const said = briefing.split('\n').filter((line) => line.startsWith('guard:'));
+  assert.deepEqual(said, ['guard: "enforced" is not a mode (off, advise, enforce): enforce applies.']);
+  assert.doesNotMatch(run('session', { cwd: project() }).output.hookSpecificOutput.additionalContext, /not a mode/);
+});
