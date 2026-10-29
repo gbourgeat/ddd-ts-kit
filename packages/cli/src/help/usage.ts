@@ -73,4 +73,5 @@ export const USAGE = `Usage
   ddd-ts-kit explain <rule-id>
 
 ${EVERY_COMMAND}
-ddd-ts-kit <command> --help prints the usage and the notes of that command alone, generate <kind> --help one kind.`;
+ddd-ts-kit <command> --help prints the usage and the notes of that command alone, generate <kind> --help one kind;
+--json gives either as data.`;

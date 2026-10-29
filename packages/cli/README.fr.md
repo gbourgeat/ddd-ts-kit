@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6781339293142890 -->
+<!-- translation-of: README.md sha256:7d3c521b315e4786 -->
 
 # ddd-ts-kit
 
@@ -49,7 +49,8 @@ Chaque commande accepte `--json` (sortie lisible par une machine, erreurs compri
 sur une ligne sans indentation ; les fichiers JSON que la CLI écrit gardent la mise en page du
 formateur) et `--cwd <dir>`. Les commandes autres que `init` cherchent `ddd-ts-kit.config.json` dans le
 répertoire et ses parents. `ddd-ts-kit --help` affiche toute la référence,
-`ddd-ts-kit <command> --help` (ou `help <command>`) l'usage et les notes de cette seule commande,
+`ddd-ts-kit <command> --help` (ou `help <command>`) l'usage et les notes de cette seule commande
+(avec `--json`, `{ command, usage, notes }`),
 et une option qu'une commande ne connaît pas est refusée avec sa ligne d'usage pour correction.
 Codes de sortie : `0` succès, `1` violations, documentation périmée
 ou, sous `--strict`, un *commit* au-delà de ses limites, `2` mauvais usage (le message dit quoi

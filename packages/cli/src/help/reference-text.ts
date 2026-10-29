@@ -1,5 +1,6 @@
 import { KINDS } from '../generate/kinds';
 import { kindLine } from './kind-line';
+import { noteLines } from './note-lines';
 import { NOTES } from './notes';
 import { USAGE } from './usage';
 
@@ -7,7 +8,7 @@ import { USAGE } from './usage';
 export function referenceText(): string {
   return `${USAGE}
 
-${NOTES}
+${NOTES.flatMap(noteLines).join('\n')}
 
 Kinds
 ${KINDS.map((kind) => `  ${kindLine(kind)}`).join('\n')}`;

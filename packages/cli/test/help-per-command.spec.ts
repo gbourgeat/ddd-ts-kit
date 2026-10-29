@@ -52,7 +52,44 @@ describe('<command> --help', () => {
     const helps = COMMANDS.map((command) => commandHelp(command) ?? '').join('\n');
 
     expect(COMMANDS).toEqual(expect.arrayContaining(['init', 'generate', 'check', 'worker-scope', 'explain']));
-    expect(NOTES.split('\n').filter((line) => !helps.includes(line))).toEqual([]);
+    const lines = referenceText().split('\n\nKinds')[0]?.split('\n\n').at(-1)?.split('\n') ?? [];
+
+    expect(lines.length).toBeGreaterThan(300);
+    expect(lines.filter((line) => !helps.includes(line))).toEqual([]);
+  });
+
+  it('prints for each command exactly the notes that name it as theirs', () => {
+    for (const command of COMMANDS) {
+      const [, second = ''] = (commandHelp(command) ?? '').split('\n\n');
+
+      const printed = second.startsWith('  ')
+        ? second.split('\n').flatMap((line) => /^ {2}(\S+)/.exec(line)?.[1] ?? [])
+        : [];
+
+      expect(printed, command).toEqual(NOTES.filter((note) => note.command === command).map((note) => note.name));
+    }
+  });
+
+  it('gives the help of a command as data under --json, on one line', () => {
+    const root = tempDir('help-json');
+    const describeHelp = cli(root, 'describe', '--help', '--json').stdout;
+
+    expect(describeHelp.split('\n')).toHaveLength(1);
+
+    expect(JSON.parse(describeHelp)).toEqual({
+      command: 'describe',
+      usage: ['ddd-ts-kit describe <context>'],
+      notes: [{ name: 'describe', text: expect.stringMatching(/^one context as facts: use cases, routes/) }],
+    });
+
+    expect(cli(root, 'check', '--help', '--json').json()).toEqual({
+      command: 'check',
+      usage: expect.arrayContaining(['ddd-ts-kit check --baseline write|prune']),
+      notes: [
+        { name: '--commit-size', text: expect.stringContaining('600 lines by default, generated files not counted') },
+        { name: '--explain', text: expect.stringContaining('check follows the violations') },
+      ],
+    });
   });
 
   it('answers help <command> as <command> --help', () => {

@@ -198,7 +198,7 @@ src/contexts/ordering/test/unit/place-order.handler.spec.ts:37  applies the busi
 ```
 
 **Ask the help of one command.** `npx ddd-ts-kit <command> --help` prints the usage lines and
-the notes of that command alone, and `npx ddd-ts-kit generate <kind> --help --json` one kind as
+the notes of that command alone (`--json` gives them as data), and `npx ddd-ts-kit generate <kind> --help --json` one kind as
 one object; `npx ddd-ts-kit --help` prints the whole reference, about 40 KB. An option a command
 does not know is refused with the usage line of that command, or of the kind under `generate`.
 

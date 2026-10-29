@@ -3,6 +3,7 @@ import { kindHelp } from '../generate/kind-help';
 import { kindsHelp } from '../generate/kinds-help';
 import { VERSION } from '../version';
 import { commandHelp } from './command-help';
+import { commandHelpData } from './command-help-data';
 import { kindAsked } from './kind-asked';
 import { kindHelpText } from './kind-help-text';
 import { referenceText } from './reference-text';
@@ -27,7 +28,13 @@ export function helpFor(argv: readonly string[]): string {
     return stdoutJson({ kinds: kindsHelp(KINDS) });
   }
 
-  return (command === undefined ? undefined : commandHelp(command)) ?? wholeHelp();
+  if (command === undefined) {
+    return wholeHelp();
+  }
+
+  const data = json ? commandHelpData(command) : undefined;
+
+  return data === undefined ? (commandHelp(command) ?? wholeHelp()) : stdoutJson(data);
 }
 
 function wholeHelp(): string {

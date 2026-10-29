@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:540f630486d8157a -->
+<!-- translation-of: token-economy.md sha256:b4f54154bbfc2cb1 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -203,7 +203,7 @@ src/contexts/ordering/test/unit/place-order.handler.spec.ts:37  applies the busi
 ```
 
 **Demander l'aide d'une seule commande.** `npx ddd-ts-kit <command> --help` affiche les lignes
-d'usage et les notes de cette seule commande, et `npx ddd-ts-kit generate <kind> --help --json`
+d'usage et les notes de cette seule commande (`--json` les donne en données), et `npx ddd-ts-kit generate <kind> --help --json`
 un seul genre, en un objet ; `npx ddd-ts-kit --help` affiche toute la référence, environ 40 Ko.
 Une option qu'une commande ne connaît pas est refusée avec la ligne d'usage de cette commande, ou
 du genre sous `generate`.

@@ -46,7 +46,7 @@ without indentation; the JSON files the CLI writes keep the layout of the format
 `--cwd <dir>`.
 Commands other than `init` look for `ddd-ts-kit.config.json` in the directory and its parents.
 `ddd-ts-kit --help` prints the whole reference, `ddd-ts-kit <command> --help` (or `help <command>`)
-the usage and the notes of that command alone, and an option a command does not know is refused
+the usage and the notes of that command alone (with `--json`, `{ command, usage, notes }`), and an option a command does not know is refused
 with its usage line as the fix. Exit codes: `0` success, `1` violations, stale documentation or,
 under `--strict`, a commit over its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
 not write some of them where it ran (a path the sandbox of an agent protects): they are listed
