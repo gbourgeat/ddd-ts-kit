@@ -1,3 +1,5 @@
+import { COMMON_FLAGS } from '../commands/generate';
+
 /** Every command of the CLI and its flags, as `--help` prints them and docs/guides/commands.md shows them. */
 export const USAGE = `Usage
   ddd-ts-kit init [--http express|fastify|hono|nest|none]
@@ -19,7 +21,7 @@ export const USAGE = `Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate <kind> ... ${COMMON_FLAGS.map((flag) => `[--${flag}]`).join(' ')}     (alias: g)
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>

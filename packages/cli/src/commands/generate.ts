@@ -35,7 +35,7 @@ export function generate(argv: readonly string[], io: Io, language?: LanguagePro
   const flags = { ...flagsOf(args), ...(language === undefined ? {} : { language }) };
 
   refuseModuleOf(kind, flags);
-  refuseUndeclaredFlags(kind, passedFlags(args, asked));
+  refuseUndeclaredFlags(kind, passedFlags(args, asked), COMMON_FLAGS);
 
   const context = kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined;
 
@@ -64,8 +64,12 @@ const TEXT = { type: 'string' } as const;
 const SWITCH = { type: 'boolean', default: false } as const;
 const TEXTS = { type: 'string', multiple: true } as const;
 
-/** Every flag a kind may take; each kind reads the ones it knows. */
+/** The flags of `generate` every kind takes, whatever its usage shows: the `generate` line of the help states them. */
+export const COMMON_FLAGS = ['allow-name', 'local-only', 'dry-run', 'force'] as const;
+
+/** Every flag a kind may take; each kind reads the ones it knows, and refuses the others its usage does not show. */
 const OPTIONS = {
+  ...Object.fromEntries(COMMON_FLAGS.map((flag) => [flag, SWITCH])),
   classification: TEXT,
   purpose: TEXT,
   preset: TEXT,
@@ -80,7 +84,6 @@ const OPTIONS = {
   command: SWITCH,
   query: SWITCH,
   version: TEXT,
-  'allow-name': SWITCH,
   permission: TEXT,
   grant: TEXT,
   public: SWITCH,
@@ -112,9 +115,6 @@ const OPTIONS = {
   every: TEXT,
   cron: TEXT,
   'time-zone': TEXT,
-  'dry-run': SWITCH,
-  force: SWITCH,
-  'local-only': SWITCH,
 };
 
 /** One flag may be a switch for a kind and a text for another: `--command` of a route, `--command <UseCase>` of a job. */

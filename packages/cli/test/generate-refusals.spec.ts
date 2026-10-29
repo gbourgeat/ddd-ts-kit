@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { COMMON_FLAGS } from '../src/commands/generate';
 import { KINDS } from '../src/generate/kinds';
 import { cli, exists, read, write } from './helpers';
 import { failure, report } from './reports';
@@ -155,7 +156,8 @@ describe('generate, a flag the kind does not take', () => {
     ['route', ['--method', 'POST', '--path', '/invoices', '--command']],
     ['controller', ['--method', 'POST', '--path', '/invoices', '--command']],
     ['repository', []],
-  ])('refuses --term on a %s, which names nothing new, and says where the term goes', (kind, flags) => {
+    ['port', []],
+  ])('refuses --term on a %s, whose names the glossary does not judge, and says where the term goes', (kind, flags) => {
     const term = ['--term', 'Void=Cancel an issued invoice'];
     const result = cli(root, 'generate', kind, 'billing', 'Invoice', ...flags, ...term, '--json');
 
@@ -163,5 +165,23 @@ describe('generate, a flag the kind does not take', () => {
     expect(failure(result).fix).toContain('give --term to the kind that names the concept first');
     expect(failure(result).fix).toContain(`Usage: ddd-ts-kit generate ${kind} <context>`);
     expect(read(root, 'src/contexts/billing/CONTEXT.md')).not.toContain('| Void |');
+  });
+});
+
+describe('generate, the flags every kind takes', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = explicitProject('generate-common-flags');
+  });
+
+  it('states them once, on the generate line of the help', () => {
+    expect(cli(root, '--help').stdout).toContain(
+      `ddd-ts-kit generate <kind> ... ${COMMON_FLAGS.map((flag) => `[--${flag}]`).join(' ')}     (alias: g)`,
+    );
+  });
+
+  it.each(COMMON_FLAGS)('takes --%s on a kind whose usage does not show it', (flag) => {
+    expect(cli(root, 'generate', 'port', 'billing', 'Ledger', `--${flag}`, '--dry-run').code).toBe(0);
   });
 });

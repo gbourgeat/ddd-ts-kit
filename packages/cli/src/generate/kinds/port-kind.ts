@@ -3,7 +3,6 @@ import { toName } from '../../naming';
 import { isDeclared } from '../is-declared';
 import type { Kind } from '../kind';
 import { label } from '../label';
-import { learnTerms } from '../learn-terms';
 import { named } from '../named';
 import { openScope } from '../open-scope';
 import { vars } from '../vars';
@@ -11,16 +10,13 @@ import { vars } from '../vars';
 export const portKind: Kind = {
   name: 'port',
   aliases: [],
-  usage: 'port <context> <Name> [--term "<Term>=<meaning>"]...',
+  usage: 'port <context> <Name>',
   summary: 'A port of the application layer, an abstract class that is also its injection token, and its fake.',
   positionals: ['context', 'Name'],
   writesShared: false,
   writesInModules: true,
   run: (request) => {
     const scope = openScope(request);
-
-    learnTerms(scope);
-
     const name = label(scope, request.args[1] ?? '', { what: 'port', strip: ['port'] });
     const module = request.flags.module === undefined ? '' : ` --module ${toName(request.flags.module).kebab}`;
     const adapter = `\`ddd-ts-kit generate adapter ${scope.context.kebab} ${name.pascal}${module}\``;
