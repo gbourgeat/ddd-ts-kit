@@ -22,6 +22,7 @@ import {
   put,
   reason,
   run,
+  SHORT_TIMES,
   worker,
 } from './support.mjs';
 
@@ -63,6 +64,20 @@ test('the version gap is read from the CLI the guard runs, hoisted to a parent i
   assert.equal(init.status, 0, String(init.stderr));
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
   assert.match(briefing, /^Version gap: this plugin describes ddd-ts-kit .*, the project has 0\.1\.0 installed/m);
+});
+
+test('a briefing past its budget skips the CLI calls left, and says it was cut short', () => {
+  const root = committed();
+  workerWorktree(root);
+  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main' }));
+  cliAnswering(root, {}, { story: 2000, status: 2000, list: 2000 });
+  const briefing = run('session', { cwd: root }, SHORT_TIMES).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /^Story US5: run `npx ddd-ts-kit story US5` for where it stands\.$/m);
+  assert.match(
+    briefing,
+    /^Briefing cut short: the CLI did not answer in time; `npx ddd-ts-kit status` and `npx ddd-ts-kit list` say the rest\.$/m,
+  );
+  assert.doesNotMatch(run('session', { cwd: project() }).output.hookSpecificOutput.additionalContext, /cut short/);
 });
 
 test('session start stays short: one line per context, far below the host limit', () => {

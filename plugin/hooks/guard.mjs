@@ -71,6 +71,15 @@ const COUNTED_FILE_BYTES = 1_000_000;
 // The files Biome formats: with `formatOnWrite` in the config, the project's own Biome lays one out as it is written.
 const FORMATTED_FILE = /\.(?:[cm]?[jt]sx?|jsonc?)$/;
 const FORMAT_TIMEOUT = 5000;
+// The tests of the guard shrink its time limits with DDD_TS_KIT_GUARD_TIME_SCALE (a fiftieth) to reach
+// them with a CLI that sleeps; a user has no reason to set it.
+const TIME_SCALE = timeScale(process.env.DDD_TS_KIT_GUARD_TIME_SCALE);
+// What a session start gives the CLI in all, of the 15 s of its hook: past it, the calls left are skipped.
+const BRIEFING_BUDGET = 10_000;
+const BRIEFING_CUT =
+  'Briefing cut short: the CLI did not answer in time; `npx ddd-ts-kit status` and `npx ddd-ts-kit list` say the rest.';
+// The written files one call of post-write formats and checks, of the 15 s of its hook: a patch of Codex can hold many.
+const POST_WRITE_FILES = 5;
 
 // The contracts in YAML or JSON (openapi/<document>, the form of a route in openapi/forms/, the
 // AsyncAPI document), the event catalog and the split of the contract that `ddd-ts-kit docs`
@@ -365,6 +374,11 @@ const MODES = {
 
 // The projects this run of the guard has described: a hook finds the same one several times.
 const projects = new Map();
+// The end of the time of a session start for the CLI, and whether a call was skipped or stopped for it.
+let briefingEnds;
+let briefingCut = false;
+// The seconds after which a run of the CLI was stopped, by its command: the stop says it of `check`.
+const timedOut = new Map();
 // The reader of shell commands, loaded only when a worker runs one: every other call of the guard skips its cost.
 let shell;
 // The notice due to a context-builder near its turn limit, said with the decision of the call or alone.
@@ -395,6 +409,7 @@ function sayNotice() {
 }
 
 function session(input) {
+  briefingEnds = Date.now() + BRIEFING_BUDGET * TIME_SCALE;
   const directory = input.cwd ?? process.cwd();
   const project = findProject(directory);
   const lines = project ? projectBriefing(project, input) : planPointer(directory);
@@ -404,21 +419,12 @@ function session(input) {
   emit({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: lines.join('\n') } });
 }
 
-// A patch of Codex can touch several files: a refusal of any of them wins over a question.
 async function preWrite(input) {
   if (isBuilder(input)) {
     const [first] = writesOf(input);
     await countBuilderCall(input, first && findProject(dirname(first.file)));
   }
-  const pending = pendingOfWriter(input);
-  if (pending) {
-    decide(input, pending.mode === 'advise' ? 'ask' : 'deny', pending.reason);
-    return;
-  }
-  const verdicts = writesOf(input)
-    .map((written) => verdictOn(written, input))
-    .filter(Boolean);
-  const verdict = verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
+  const verdict = writesVerdict(judgedWrites(writesOf(input)), input, () => pendingOfWriter(input));
   if (verdict?.decision !== 'deny') {
     noteCrossings(input);
   }
@@ -450,27 +456,53 @@ function pendingOfWriter(input) {
     return undefined;
   }
   const pending = pendingChangeReason(project, input, []);
-  return pending?.reason ? { mode: project.mode, reason: pending.reason } : undefined;
+  return pending?.reason ? { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: pending.reason } : undefined;
 }
 
-function verdictOn({ file, written, replaced }, input) {
-  const project = findProject(dirname(file));
-  if (!project || project.mode === 'off') {
-    return undefined;
-  }
-  const refusal =
+// The writes of a call in a project the guard judges, each with its project.
+function judgedWrites(writes) {
+  return writes
+    .map((written) => ({ ...written, project: findProject(dirname(written.file)) }))
+    .filter(({ project }) => project && project.mode !== 'off');
+}
+
+// A patch of Codex can touch several files: a refusal of any of them wins over a question. The
+// refusals that start no process come first, so that they hold within the time of the hook; then
+// those the CLI decides; then what `pending` reads with git; then the questions.
+function writesVerdict(writes, input, pending) {
+  return (
+    refusalOf(writes, input, quickRefusal) ??
+    refusalOf(writes, input, cliRefusal) ??
+    pending() ??
+    writes.map(deviationOf).find(Boolean)
+  );
+}
+
+function refusalOf(writes, input, check) {
+  const refusals = writes.flatMap((written) => {
+    const reason = check(written, input);
+    return reason ? [{ decision: written.project.mode === 'advise' ? 'ask' : 'deny', reason }] : [];
+  });
+  return refusals.find(({ decision }) => decision === 'deny') ?? refusals[0];
+}
+
+function quickRefusal({ project, file, written, replaced }, input) {
+  return (
     baselineFileReason(project, file) ??
     acceptanceReason(project, input, { file, written, replaced }) ??
-    storyCodeReason(project, file) ??
-    worktreeCodeReason(project, file) ??
     generatedFileReason(project, file) ??
-    testWriterScopeReason(project, file, input) ??
     (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
-    handWrittenRoleReason(project, file) ??
-    dependencyReason(project, { file, written, replaced }, input);
-  if (refusal) {
-    return { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: refusal };
-  }
+    testWriterScopeReason(project, file, input) ??
+    worktreeCodeReason(project, file) ??
+    handWrittenRoleReason(project, file)
+  );
+}
+
+function cliRefusal({ project, file, written, replaced }, input) {
+  return storyCodeReason(project, file) ?? dependencyReason(project, { file, written, replaced }, input);
+}
+
+function deviationOf({ project, file, written, replaced }) {
   const deviation = governedFileReason(project, file) ?? escapeReason(written, replaced);
   return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
@@ -548,10 +580,8 @@ async function codexPatchVerdict(input, command, cwd) {
     return undefined;
   }
   const start = command.indexOf('*** Begin Patch');
-  const verdicts = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd)
-    .map((written) => verdictOn(written, input))
-    .filter(Boolean);
-  return verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
+  const writes = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd);
+  return writesVerdict(judgedWrites(writes), input, () => undefined);
 }
 
 // A context-builder keeps the working directory of its session, so the scope of a worker is found
@@ -634,26 +664,32 @@ function unknownProgramReason(commands) {
 }
 
 function postWrite(input) {
-  const writes = writesOf(input);
+  const all = writesOf(input);
+  const writes = all.slice(0, POST_WRITE_FILES);
   formatWrites(writes);
-  const errors = writes
-    .filter(({ file }) => isChecked(file))
-    .flatMap(({ file }) => {
-      const project = findProject(dirname(file));
-      return project?.cli && project.mode !== 'off'
-        ? errorsOf(runCli(project, ['check-file', file, '--json'], 12000))
-        : [];
-    });
+  const errors = writes.filter(({ file }) => isChecked(file)).flatMap(({ file }) => checkWritten(file));
+  const unchecked =
+    all.length > writes.length
+      ? `ddd-ts-kit: ${all.length - writes.length} more written file(s) not checked here: run \`npx ddd-ts-kit check\``
+      : undefined;
   if (errors.length === 0) {
-    return;
+    return unchecked ? emit({ systemMessage: unchecked }) : undefined;
   }
-  const feedback = `ddd-ts-kit: the file just written breaks ${errors.length} architecture rule(s). Fix them now, do not suppress.\n${describe(errors)}`;
+  const feedback = [
+    `ddd-ts-kit: the file just written breaks ${errors.length} architecture rule(s). Fix them now, do not suppress.\n${describe(errors)}`,
+    ...(unchecked ? [unchecked] : []),
+  ].join('\n');
   // Codex hands the reason of a block to the model in place of the result of the tool.
   if (hostOf(input) === 'codex') {
     return emit({ decision: 'block', reason: feedback });
   }
   process.stderr.write(`${feedback}\n`);
   process.exitCode = 2;
+}
+
+function checkWritten(file) {
+  const project = findProject(dirname(file));
+  return project?.cli && project.mode !== 'off' ? errorsOf(runCli(project, ['check-file', file, '--json'], 12000)) : [];
 }
 
 // With `formatOnWrite` in the config, the Biome the project installed lays out each written file
@@ -738,11 +774,23 @@ function stop(input) {
   if (unfinished) {
     return emit({ decision: 'block', reason: unfinished });
   }
-  const reminders = [commitReminder(project, input, { repeat: false }), designReminder(project, input)].filter(Boolean);
+  const reminders = [
+    timedOutCheck(),
+    commitReminder(project, input, { repeat: false }),
+    designReminder(project, input),
+  ].filter(Boolean);
   // Warnings shown to the user, never a block: the size of a commit and a design departed from are advice.
   if (reminders.length > 0) {
     emit({ systemMessage: reminders.join('\n') });
   }
+}
+
+// A check stopped at its time limit lets the stop through: the session is told it did not finish.
+function timedOutCheck() {
+  const seconds = timedOut.get('check');
+  return seconds === undefined
+    ? undefined
+    : `architecture check timed out after ${seconds} s: run \`npx ddd-ts-kit check\``;
 }
 
 // In the worktree of a story, a done row whose design review cites a name the code does not have,
@@ -1049,6 +1097,9 @@ function projectBriefing(project, input) {
     lines.push('Contexts:', contextMap(project));
   } else {
     lines.push(installAdvice(project));
+  }
+  if (briefingCut) {
+    lines.push(BRIEFING_CUT);
   }
   const reminder = project.mode === 'off' ? undefined : commitReminder(project, input, { repeat: true });
 
@@ -3043,13 +3094,34 @@ function isChecked(file) {
   return /\.(ts|mts|cts)$/.test(file) || file.endsWith('CONTEXT.md');
 }
 
+// A run of the CLI, stopped at its time limit, and within what is left of a session start: past
+// that, it is not started.
 function runCli(project, args, timeout) {
-  const run = spawnSync(process.execPath, [project.cli.bin, ...args], { cwd: project.root, encoding: 'utf8', timeout });
+  const left = briefingEnds === undefined ? Number.POSITIVE_INFINITY : briefingEnds - Date.now();
+  const limit = Math.min(Math.round(timeout * TIME_SCALE), left);
+  if (limit <= 0) {
+    briefingCut = true;
+    return undefined;
+  }
+  const run = spawnSync(process.execPath, [project.cli.bin, ...args], {
+    cwd: project.root,
+    encoding: 'utf8',
+    timeout: limit,
+  });
+  if (run.error?.code === 'ETIMEDOUT') {
+    timedOut.set(args[0], Math.round(limit / 1000));
+    briefingCut = briefingEnds !== undefined;
+  }
   try {
     return JSON.parse(run.stdout);
   } catch {
     return undefined;
   }
+}
+
+function timeScale(asked) {
+  const scale = Number(asked);
+  return scale > 0 && scale <= 1 ? scale : 1;
 }
 
 function errorsOf(report) {

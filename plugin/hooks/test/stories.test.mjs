@@ -292,6 +292,19 @@ test('the stories another story meets are named only by ids, names and refs that
   assert.match(notice, /^(?:Another open story changes docs\/notes\.md too\. ){3}Keep/);
 });
 
+test('in the worktree of a story, the refusals that start no process come before the build gate the CLI reads', () => {
+  const root = storyWorktree();
+  cliAnswering(root, { story: { phases: [], next: 'Write the statement.', met: false } });
+  const builder = { agent_type: 'ddd-ts-kit:context-builder' };
+  put(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'ordering' }));
+  const outside = run('pre-write', write(join(root, 'src/contexts/billing/domain/invoice.ts'), builder));
+  assert.match(reason(outside), /You build the context "ordering"/);
+  const barrel = run('pre-write', write(join(root, 'src/contexts/ordering/application/application.declarations.ts')));
+  assert.match(reason(barrel), /holds generated declarations/);
+  const code = run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts')));
+  assert.match(reason(code), /waits for its build gate/);
+});
+
 function briefingOf(root) {
   return run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
 }

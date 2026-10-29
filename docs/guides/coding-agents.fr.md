@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:d7de18abb6b40fcf -->
+<!-- translation-of: coding-agents.md sha256:b37bf26b36563836 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -78,10 +78,13 @@ pipeline) et, à un sous-agent, un `git config` qui fixe une valeur ou un `git -
 lance une commande dans chaque *checkout* (`core.fsmonitor`, `core.pager`, `core.editor`,
 `core.sshCommand`, un `alias.*`, un pilote *diff* ou *filter*), demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
-écrit et renvoie les violations avec leur correction (avec `"dependenciesBeforeWrite": true`, à
+écrit et renvoie les violations avec leur correction (les cinq premiers d'un *patch* de Codex,
+les autres nommés comme non vérifiés ; avec `"dependenciesBeforeWrite": true`, à
 l'essai, il refuse avant l'écriture un nouvel import qui enfreint une règle de dépendance), et
 refuse de terminer tant que des
-erreurs d'architecture restent. Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
+erreurs d'architecture restent (une vérification qui ne finit pas à temps laisse la session
+terminer et le dit ; un début de session qui passe dix secondes d'appels à la CLI saute ceux qui
+restent et dit qu'il a été écourté). Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
 d'abord le Biome que le projet a installé sur le fichier écrit (le *bin* de son paquet
 `@biomejs/biome`, `format --write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
 l'écriture et que les constats du lint qui suivent une ligne repliée reviennent dans la même

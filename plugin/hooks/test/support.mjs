@@ -70,23 +70,31 @@ export function installedVersion(root, version) {
 }
 
 // A CLI of the project that answers some of its commands with the report given, and hands every other
-// command to the built CLI.
-export function cliAnswering(root, answers) {
+// command to the built CLI; a command of `delays` first sleeps that many milliseconds.
+export function cliAnswering(root, answers, delays = {}) {
   const reports = join(root, 'node_modules', '.reports');
   mkdirSync(reports, { recursive: true });
   for (const [command, report] of Object.entries(answers)) {
     writeFileSync(join(reports, command), JSON.stringify(report));
+  }
+  for (const [command, ms] of Object.entries(delays)) {
+    writeFileSync(join(reports, `${command}.delay`), String(ms));
   }
   launcher(
     root,
     [
       "import { existsSync, readFileSync } from 'node:fs';",
       `const report = ${JSON.stringify(reports)} + '/' + process.argv[2];`,
+      "const delay = existsSync(`${report}.delay`) ? Number(readFileSync(`${report}.delay`, 'utf8')) : 0;",
+      'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delay);',
       `if (existsSync(report)) process.stdout.write(readFileSync(report, 'utf8')); else await import(${JSON.stringify(cliModule)});`,
       '',
     ].join('\n'),
   );
 }
+
+// The guard with its time limits shrunk to a fiftieth: a CLI that sleeps reaches them in a test.
+export const SHORT_TIMES = { DDD_TS_KIT_GUARD_TIME_SCALE: '0.02' };
 
 export function patchConfig(root, patch) {
   const path = join(root, 'ddd-ts-kit.config.json');

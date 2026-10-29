@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { committed, git, project, put, run } from './support.mjs';
+import { cliAnswering, committed, git, project, put, run, SHORT_TIMES } from './support.mjs';
 
 test('stop is blocked while errors remain, and never twice in a row', () => {
   const root = project();
@@ -208,4 +208,13 @@ test('a guard mode out of the three is read as enforce: it refuses the stop too,
   const said = briefing.split('\n').filter((line) => line.startsWith('guard:'));
   assert.deepEqual(said, ['guard: "enforced" is not a mode (off, advise, enforce): enforce applies.']);
   assert.doesNotMatch(run('session', { cwd: project() }).output.hookSpecificOutput.additionalContext, /not a mode/);
+});
+
+test('a check that times out lets the stop through and says how to run it', () => {
+  const root = project();
+  cliAnswering(root, { check: { violations: [] } }, { check: 5000 });
+  put(root, 'docs/notes.md', 'a change for the stop to check\n');
+  const stopped = run('stop', { cwd: root, stop_hook_active: false }, SHORT_TIMES).output;
+  assert.equal(stopped.decision, undefined);
+  assert.equal(stopped.systemMessage, 'architecture check timed out after 1 s: run `npx ddd-ts-kit check`');
 });

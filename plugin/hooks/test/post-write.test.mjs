@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { cli, cliAnswering, directory, git, installed, launcher, project, put, run, write } from './support.mjs';
+import { cli, cliAnswering, directory, git, installed, launcher, patch, project, put, run, write } from './support.mjs';
 
 test('a written file that breaks a rule is reported to the model with the fix', () => {
   const root = project();
@@ -129,4 +129,28 @@ test('a CLI the guard cannot start lets the written file through', () => {
   const result = run('post-write', write(file));
   assert.equal(result.status, 0);
   assert.equal(result.stderr, '');
+});
+
+test('a patch of many files has its first five checked, and says the others were not', () => {
+  const root = project();
+  cliAnswering(root, { 'check-file': { violations: [] } });
+  const files = Array.from(
+    { length: 7 },
+    (_, index) => `*** Add File: src/platform/note-${index}.ts\n+export const n = ${index};`,
+  );
+  const result = run('post-write', patch(root, ...files));
+  assert.equal(
+    result.output.systemMessage,
+    'ddd-ts-kit: 2 more written file(s) not checked here: run `npx ddd-ts-kit check`',
+  );
+  const one = run('post-write', patch(root, files[0]));
+  assert.equal(one.output, undefined);
+  const violation = { ruleId: 'clean/naming', severity: 'error', file: 'note-0.ts', message: 'A name.' };
+  cliAnswering(root, { 'check-file': { violations: [violation] } });
+  const blocked = run('post-write', patch(root, ...files)).output;
+  assert.equal(blocked.decision, 'block');
+  assert.match(
+    blocked.reason,
+    /breaks 5 architecture rule\(s\)[\s\S]*\nddd-ts-kit: 2 more written file\(s\) not checked here/,
+  );
 });

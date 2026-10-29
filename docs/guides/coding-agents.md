@@ -76,9 +76,11 @@ of the pipeline) and, to a sub-agent, a `git config` that sets a value or a `git
 runs a command in every checkout (`core.fsmonitor`, `core.pager`, `core.editor`, `core.sshCommand`,
 an `alias.*`, a diff or filter driver), asks the
 project owner before a suppression, a skipped test or a change of the rules is written, checks
-every written file and returns the violations with their fix (with `"dependenciesBeforeWrite": true`, on trial,
+every written file and returns the violations with their fix (the first five of a Codex patch, the
+others named as not checked; with `"dependenciesBeforeWrite": true`, on trial,
 it refuses before the write a new import that breaks a dependency rule), and refuses to finish while
-architecture errors remain. With `"formatOnWrite": true` in the config (written by `init` for a new project), it first runs the Biome
+architecture errors remain (a check that does not end in time lets the session finish and says so;
+a session start past ten seconds of CLI calls skips the ones left and says it was cut short). With `"formatOnWrite": true` in the config (written by `init` for a new project), it first runs the Biome
 the project installed on the written file (the bin of its `@biomejs/biome` package, `format --write`, one file,
 never another formatter), so that the layout is settled at the write and the lint findings
 that follow a wrapped line come back in the same output; a run that fails changes nothing. It reminds, without blocking, when the uncommitted changes exceed
