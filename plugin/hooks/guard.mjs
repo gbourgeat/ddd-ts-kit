@@ -381,6 +381,8 @@ const MODES = {
 
 // The projects this run of the guard has described: a hook finds the same one several times.
 const projects = new Map();
+// The scope files of the story worktrees this run has read, by project root.
+const storyScopes = new Map();
 // The end of the time of a session start for the CLI, and whether a call was skipped or stopped for it.
 let briefingEnds;
 let briefingCut = false;
@@ -1225,7 +1227,15 @@ function quoted(text) {
 
 // The story of the worktree, by an id the CLI would take.
 function storyOf(project) {
-  return named(readJson(join(project.root, STORY_SCOPE))?.story, STORY_ID);
+  return named(storyScope(project)?.story, STORY_ID);
+}
+
+// The scope file of a story worktree, read once a run like the config.
+function storyScope(project) {
+  if (!storyScopes.has(project.root)) {
+    storyScopes.set(project.root, readJson(join(project.root, STORY_SCOPE)));
+  }
+  return storyScopes.get(project.root);
 }
 
 // A name read from the repository, when it follows its grammar; else nothing, and it is not repeated.
@@ -1551,7 +1561,7 @@ function isJudge(input) {
 // its lock is written, and the regression specs the lock lists, relative to the project.
 function fixOf(project) {
   const story = storyOf(project);
-  if (story === undefined || readJson(join(project.root, STORY_SCOPE)).kind !== 'fix') {
+  if (story === undefined || storyScope(project).kind !== 'fix') {
     return undefined;
   }
   const lock = join(project.root, 'test/acceptance', `${story.toLowerCase()}.acceptance.lock.json`);

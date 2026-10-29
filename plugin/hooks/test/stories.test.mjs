@@ -10,6 +10,7 @@ import {
   bash,
   cli,
   cliAnswering,
+  cliModule,
   decision,
   edit,
   git,
@@ -313,6 +314,27 @@ test('a CLI that answers no report to the build gate leaves the rest of the call
   const rules = '*** Add File: biome.json\n+{}';
   const said = run('pre-write', patch(root, code, rules)).output;
   assert.match(said.systemMessage, /^ddd-ts-kit: biome\.json holds the rules or the pipeline/);
+});
+
+test('the scope of a story is read once a run: a stop that saw it keeps it to the end', () => {
+  const root = storyWorktree();
+  const scope = join(root, '.ddd-ts-kit/story.json');
+  const design = { design: [{ cited: 'PlaceOrderCommand', row: 'US5.01', document: 'reviews/US5.md', line: 5 }] };
+  const report = { phases: [{ id: 'report', title: 'report', met: true }], next: null };
+  launcher(
+    root,
+    [
+      "import { rmSync } from 'node:fs';",
+      `if (process.argv[2] === 'story') rmSync(${JSON.stringify(scope)});`,
+      `const answers = ${JSON.stringify({ story: report, 'story-check': design })};`,
+      'const answer = answers[process.argv[2]];',
+      `if (answer) console.log(JSON.stringify(answer)); else await import(${JSON.stringify(cliModule)});`,
+      '',
+    ].join('\n'),
+  );
+  put(root, 'docs/notes.md', 'a change for the stop to check\n');
+  const stopped = run('stop', { cwd: root, session_id: `scope-${root}`, stop_hook_active: false }).output;
+  assert.match(stopped.systemMessage, /a row departed from its design/);
 });
 
 function briefingOf(root) {
