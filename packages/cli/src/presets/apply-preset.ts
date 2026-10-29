@@ -19,6 +19,7 @@ import type { PresetFile } from './preset-file';
 import type { Preset } from './preset';
 import { outsideTheTenancy } from './outside-the-tenancy';
 import { presetDecision } from './preset-decision';
+import { withoutLanguageTodo } from '../generate/without-language-todo';
 
 /** The shared support of the end-to-end specs that `init` writes, where the fakes of outside systems are bound. */
 const E2E_SUPPORT = 'test/e2e/support/start-application.ts';
@@ -122,10 +123,9 @@ function describeContext(scope: Scope, preset: Preset, rendering: Rendering): vo
   const file = `${scope.dir}/CONTEXT.md`;
   const design = renderTemplate(`presets/${rendering.preset}/design.md.tpl`, rendering.context);
 
-  const text = (scope.ws.read(file) ?? '')
+  const text = withoutLanguageTodo(scope.ws.read(file) ?? '')
     .replace(/## Purpose\n\n[\s\S]*?\n\n## Classification/, `## Purpose\n\n${preset.purpose}\n\n## Classification`)
     .replace(/TODO\(domain\): say in one sentence why this context is [a-z]+\./, preset.classificationReason)
-    .replace(/TODO\(domain\): define the ubiquitous language first[^\n]*\n\n/, '')
     .replace('## Aggregates', `${design}## Aggregates`);
 
   scope.ws.update(file, text);

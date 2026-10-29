@@ -1,8 +1,9 @@
 import { toName } from '../../../naming';
 import type { Scope } from '../../scope';
+import { filesUnder } from '../../files-under';
 import { constructorParameters } from '../job/constructor-parameters';
 import { declaredPorts, type DeclaredPort } from './declared-ports';
-import { fakeClass } from './fake-class';
+import { fakeClass, type FakeClass } from './fake-class';
 import { portsInUse } from './ports-in-use';
 
 /** A fake of `test/fakes/` a world can build alone, and the port of the context it stands for. */
@@ -27,7 +28,8 @@ const FAKE_SUFFIX = '.fake.ts';
 /**
  * The fakes of a context, read from `test/fakes/*.fake.ts`: the class each file exports, and the
  * port of the context it implements or extends, declared in `domain/repositories/` or
- * `application/ports/`. Left out: a fake whose constructor needs an argument; one that stands for
+ * `application/ports/`, itself or through the class of the context it extends (the in-memory
+ * reader of a search). Left out: a fake whose constructor needs an argument; one that stands for
  * no port of the context, or, under a container, for a port nothing of the context binds or
  * depends on yet, which the test application refuses; a second fake of a port, the one named
  * after the port being kept.
@@ -38,10 +40,14 @@ export function contextFakes(scope: Scope): ContextFakes {
   const inUse = scope.config.stack.di === 'tsyringe' ? portsInUse(scope, [...ports.values()]) : new Set(ports.keys());
   const directory = `${scope.dir}/test/fakes`;
 
+  const classes = classesOf(scope);
+
   const judged = scope.ws
     .list(directory)
     .filter((name) => name.endsWith(FAKE_SUFFIX))
-    .map((name) => judge(`${directory}/${name}`, scope.ws.read(`${directory}/${name}`) ?? '', { ports, inUse }));
+    .map((name) =>
+      judge(`${directory}/${name}`, scope.ws.read(`${directory}/${name}`) ?? '', { ports, inUse, classes }),
+    );
 
   const found = judged.filter((fake): fake is ContextFake => typeof fake !== 'string');
   const fakes = found.filter((fake) => chosen(found, fake.key) === fake);
@@ -62,6 +68,21 @@ export function contextFakes(scope: Scope): ContextFakes {
 interface KnownPorts {
   readonly ports: ReadonlyMap<string, DeclaredPort>;
   readonly inUse: ReadonlySet<string>;
+  /** The classes the context exports outside its tests, by name: what a fake may extend. */
+  readonly classes: ReadonlyMap<string, FakeClass>;
+}
+
+/** The exported classes of the sources of the context, its tests aside, by name. */
+function classesOf(scope: Scope): ReadonlyMap<string, FakeClass> {
+  return new Map(
+    filesUnder(scope.ws, scope.dir)
+      .filter((file) => file.endsWith('.ts') && !file.startsWith('test/'))
+      .flatMap((file) => {
+        const found = fakeClass(scope.ws.read(`${scope.dir}/${file}`) ?? '');
+
+        return found === undefined ? [] : [[found.name, found] as const];
+      }),
+  );
 }
 
 /** The fake of a port: the one named after it (`FakeInvoiceRepository`), or the first found. */
@@ -72,14 +93,16 @@ function chosen(found: readonly ContextFake[], key: string): ContextFake | undef
 }
 
 /** The fake of a file, or why the world leaves it out. */
-function judge(file: string, source: string, { ports, inUse }: KnownPorts): ContextFake | string {
+function judge(file: string, source: string, { ports, inUse, classes }: KnownPorts): ContextFake | string {
   const found = fakeClass(source);
 
   if (found === undefined) {
     return `${file} exports no class.`;
   }
 
-  const port = found.candidates.map((candidate) => ports.get(candidate)).find((known) => known !== undefined);
+  const port = standsFor(found, classes)
+    .map((candidate) => ports.get(candidate))
+    .find((known) => known !== undefined);
 
   if (port === undefined) {
     return `${found.name} implements no port of the context (domain/repositories/ or application/ports/).`;
@@ -99,4 +122,13 @@ function judge(file: string, source: string, { ports, inUse }: KnownPorts): Cont
 /** A parameter with neither a default value nor a question mark. */
 function isRequired(parameter: string): boolean {
   return !parameter.includes('=') && !/^[\w\s]*\?\s*:/.test(parameter);
+}
+
+/** What a class stands for: the types it implements and the class it extends, then what that class stands for. */
+function standsFor(found: FakeClass, classes: ReadonlyMap<string, FakeClass>, seen = new Set<string>()): string[] {
+  const parent = found.extended === undefined || seen.has(found.name) ? undefined : classes.get(found.extended);
+
+  seen.add(found.name);
+
+  return [...found.candidates, ...(parent === undefined ? [] : standsFor(parent, classes, seen))];
 }

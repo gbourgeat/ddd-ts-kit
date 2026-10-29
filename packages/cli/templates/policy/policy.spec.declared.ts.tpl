@@ -4,7 +4,7 @@ import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { declarationOf } from '@ddd-ts-kit/kernel/declarations';
 import { {{name.pascal}}Policy } from '{{alias.context}}/application/authorization/{{name.kebab}}.policy{{alias.ext}}';
 
-describe('{{name.title}}', () => {
+describe('{{access.question}}', () => {
   it('bears on the permission {{access.permission}}, under a name of its own', () => {
     expect(declarationOf({{name.pascal}}Policy)).toMatchObject({
       role: 'policy',

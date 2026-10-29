@@ -60,6 +60,12 @@ describe('authorization and gateway kinds', () => {
     expect(walk(root, `${BILLING}/test/unit`)).toContain(`${BILLING}/test/unit/only-issuer-cancels.policy.spec.ts`);
   });
 
+  it('describes the spec of a policy by the question it answers, apart from the use case of its permission', () => {
+    expect(read(root, `${BILLING}/test/unit/only-issuer-cancels.policy.spec.ts`)).toContain(
+      "describe('Who may cancel an invoice', () => {",
+    );
+  });
+
   it('gives a gateway its port, its in-process adapter over the published contract of the upstream, a fake and one contract suite', () => {
     const adapter = read(root, `${SHIPPING}/infrastructure/external/in-process-invoice-status.gateway.ts`);
     const module = read(root, `${SHIPPING}/shipping.module.ts`);

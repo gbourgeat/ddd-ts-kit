@@ -5,7 +5,7 @@ import { DelegationPeriod } from '{{alias.context}}/domain/value-objects/delegat
 const start = new Date('2026-03-01T00:00:00.000Z');
 const end = new Date('2026-03-15T00:00:00.000Z');
 
-describe('DelegationPeriod', () => {
+describe('Delegation period', () => {
   it('holds from its start, included, to its end, excluded', () => {
     const period = DelegationPeriod.create(start, end);
 
