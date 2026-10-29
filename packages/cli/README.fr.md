@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7f679c7a0d4ece1c -->
+<!-- translation-of: README.md sha256:87f4f69a51f912e1 -->
 
 # ddd-ts-kit
 
@@ -1397,8 +1397,13 @@ projet, et le générateur refuse une seconde exécution de certaines (un port d
 adaptateur, un enregistrement de décision dont le numéro est pris) ; ils sont listés à part, avec
 leur correction, sous `Refused in rows in progress, not counted`. Une commande dont les fichiers
 existent est sinon sautée par le générateur, pas refusée. Le rejeu exécute chaque commande pour de
-vrai dans la copie, jamais avec `--dry-run`, pour que la commande suivante trouve ses fichiers. Le
-rejeu coûte environ un dixième de seconde par commande. `--json` affiche
+vrai dans la copie, jamais avec `--dry-run`, pour que la commande suivante trouve ses fichiers. Avec
+un contexte, les lignes ouvertes des autres contextes sont rejouées aussi, dans leurs vagues (quand
+tout le fichier peut être ordonné), pour qu'une ligne trouve ce que génère une ligne d'un autre
+contexte qu'elle n'attend pas et qu'on lui dise de l'attendre ; seules les lignes de son plan, les
+siennes et celles qu'elles attendent, sont jugées et listées sous `Refused in rows in progress`.
+Un plan dont les lignes ne lancent aucune commande de génération ne fait pas de copie. Le rejeu
+coûte environ un dixième de seconde par commande. `--json` affiche
 `{ file, context, problems: [{ kind, rows, message, command?, refusal?, fix?, prerequisite?, nextRefusal?, builtOn? }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], started: [{ row, command, refusal, fix }] }`,
 `story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
 une ligne que le contexte demandé ne montre pas ; `command`, `refusal`, `fix` et `prerequisite`

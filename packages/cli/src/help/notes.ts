@@ -127,8 +127,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    stories the planned rows wait for, not done, in a section of their own, the merge order
                    and what runs before each merge (merge-trunk --to-land); a cycle, a dependency on an
                    unknown id or a row without owner is reported alone, and exits 1. Then replays the
-                   generator commands of the rows in a copy of the project, in the order of the waves,
-                   and reports without waves, exiting 1, each name whose words the glossary of its
+                   generator commands of every open row in a copy of the project, in the order of the
+                   waves, those of other contexts too, and reports for the rows planned, without
+                   waves, exiting 1, each name whose words the glossary of its
                    context does not define with the --term of its row and of the rows it waits for,
                    each command the generator refuses for another reason (refused-command), its
                    refusal and fix under the row, with the rows that generate what it builds on,

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import type { Slice } from '../progress/slice';
 import { copyOfProject } from './copy-of-project';
+import { cyclesOf } from './cycles-of';
 import { missingDependencies } from './missing-dependencies';
 import { plannedCommands } from './planned-commands';
 import { type Judged, plannedWords } from './planned-words';
@@ -13,7 +14,7 @@ import type { PlanProblem, StartedRefusal } from './wave-plan';
 import { waveNumbers } from './wave-numbers';
 
 export interface ReplayRequest {
-  /** The context whose rows to replay, with the rows they wait for; null for every row. */
+  /** The context whose rows to judge, with the rows they wait for; null for every row. Every open row is replayed. */
   readonly context: string | null;
   readonly generate: Generate;
 }
@@ -32,16 +33,19 @@ export interface ReplayFindings {
  * worker following each row as written would be refused: a name whose words the glossary does not
  * define, the generator itself saying which names each command introduces; any command the
  * generator refuses for another reason; a file it builds on that a row it does not wait for
- * generates, the generator saying what each command builds on and creates.
+ * generates, the generator saying what each command builds on and creates. With a context, the
+ * rows of the other contexts are replayed too, so that a row finds what a row of another context
+ * it does not wait for generates, but only the rows of its plan are judged.
  */
 export function replayPlan(root: string, rows: readonly Slice[], request: ReplayRequest): ReplayFindings {
-  const planned = rowsToPlan(rows, request.context);
-  const waves = waveNumbers(planned);
-  const ordered = [...planned].sort((left, right) => (waves.get(left.id) ?? 0) - (waves.get(right.id) ?? 0));
+  const judged = new Set(rowsToPlan(rows, request.context));
+  const replayedRows = rowsToReplay(rows, judged);
+  const waves = waveNumbers(replayedRows);
+  const ordered = [...replayedRows].sort((left, right) => (waves.get(left.id) ?? 0) - (waves.get(right.id) ?? 0));
   const commands = ordered.flatMap((row) => plannedCommands(row.startWith).map((command) => ({ row, command })));
 
-  // Nothing to replay: no copy of the project to make.
-  if (commands.length === 0) {
+  // Nothing to judge: no copy of the project to make.
+  if (!commands.some(({ row }) => judged.has(row))) {
     return { problems: [], started: [] };
   }
 
@@ -58,16 +62,30 @@ export function replayPlan(root: string, rows: readonly Slice[], request: Replay
     const again = (replay: Replay): Replay =>
       replayed(replay.row, { text: replay.command, argv: replay.argv }, { ...inCopy, dryRun: true });
 
-    const problems = replays.flatMap((replay, at) => [
-      ...words(replay),
-      ...refusedCommand(plan, at, again),
-      ...missingDependencies(plan, at),
-    ]);
+    const problems = replays.flatMap((replay, at) =>
+      judged.has(replay.row)
+        ? [...words(replay), ...refusedCommand(plan, at, again), ...missingDependencies(plan, at)]
+        : [],
+    );
 
-    return { problems: onceEach(problems), started: replays.flatMap(startedRefusal) };
+    return {
+      problems: onceEach(problems),
+      started: replays.filter(({ row }) => judged.has(row)).flatMap(startedRefusal),
+    };
   } finally {
     fs.rmSync(copy, { recursive: true, force: true });
   }
+}
+
+/**
+ * Every open row of the file, those of other contexts too, when they can be ordered; else, a cycle
+ * or an id two of them carry, the rows judged alone, which the plan of their context ordered.
+ */
+function rowsToReplay(rows: readonly Slice[], judged: ReadonlySet<Slice>): readonly Slice[] {
+  const open = rowsToPlan(rows, null);
+  const orderable = new Set(open.map(({ id }) => id)).size === open.length && cyclesOf(open).length === 0;
+
+  return orderable ? open : [...judged];
 }
 
 function startedRefusal({ row, command, refusal }: Replay): StartedRefusal[] {

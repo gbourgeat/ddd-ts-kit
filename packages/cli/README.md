@@ -1323,8 +1323,12 @@ project already, and the generator refuses a second run of some of them (a
 port already bound to an adapter, a decision record whose number is taken); they are listed apart,
 with their fix, under `Refused in rows in progress, not counted`. A command whose files exist is
 otherwise skipped by the generator, not refused. The replay runs each command for real in the
-copy, never with `--dry-run`, so that the next command finds its files. The replay costs about a
-tenth of a second per command. `--json` prints
+copy, never with `--dry-run`, so that the next command finds its files. With a context, the open
+rows of the other contexts are replayed too, in their waves (when the whole file can be ordered),
+so that a row finds what a row of another context it does not wait for generates and is told to
+wait for it; only the rows of its plan, its own and those they wait for, are judged and listed
+under `Refused in rows in progress`. A plan whose rows run no generator command makes no copy. The
+replay costs about a tenth of a second per command. `--json` prints
 `{ file, context, problems: [{ kind, rows, message, command?, refusal?, fix?, prerequisite?, nextRefusal?, builtOn? }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], started: [{ row, command, refusal, fix }] }`,
 `story` being `null` for a row whose id names none and `batch` `null` for a row the context asked
 for does not show; `command`, `refusal`, `fix` and `prerequisite` are those of a `refused-command`,
