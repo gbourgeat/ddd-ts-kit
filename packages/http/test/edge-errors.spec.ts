@@ -1,130 +1,24 @@
 import 'reflect-metadata';
-import type { AddressInfo } from 'node:net';
-import { serve } from '@hono/node-server';
-import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter } from '@nestjs/platform-fastify';
-import express, { type NextFunction, type Request, type Response } from 'express';
-import Fastify from 'fastify';
-import { Hono } from 'hono';
+import express from 'express';
 import { afterEach, describe, expect, it } from 'vitest';
 import { InMemoryLogger } from '@ddd-ts-kit/kernel';
-import { mountExpress, problemErrorHandler as expressErrorHandler } from '../src/express';
-import { mountFastify, problemErrorHandler as fastifyErrorHandler } from '../src/fastify';
-import { mountHono, problemErrorHandler as honoErrorHandler } from '../src/hono';
-import { createRoutesModule, ProblemExceptionFilter } from '../src/nest';
-import { orderRoutes, SECRET } from './support/orders';
+import { problemErrorHandler as expressErrorHandler } from '../src/express';
+import {
+  CHALLENGE,
+  listening,
+  nestOver,
+  type Start,
+  startExpress,
+  startFastify,
+  startHono,
+} from './support/edge-servers';
+import { SECRET } from './support/orders';
 import type { RunningServer } from './support/running-server';
 
 /** A body that is not JSON and quotes an address: what must reach neither the answer nor the log. */
 const MALFORMED = '{"customerId":"jane@example.com",bad';
 const PERSONAL = 'jane@example.com';
 const PROBLEM = 'application/problem+json; charset=utf-8';
-
-type Start = (logger: InMemoryLogger | undefined) => Promise<RunningServer>;
-
-/** What the middlewares in front of the routes raise, by path: a failure, a store down on purpose. */
-const RAISED: Readonly<Record<string, () => Error>> = {
-  '/failing': () => new Error(SECRET),
-  '/unavailable': () => Object.assign(new Error(SECRET), { status: 503 }),
-};
-
-/** A middleware in front of the routes that fails, as the limit of each caller does when its store does. */
-function raising(path: string) {
-  return (_request: Request, _response: Response, next: NextFunction): void => {
-    next(RAISED[path]?.());
-  };
-}
-
-function raiseOn(app: { use(path: string, handler: ReturnType<typeof raising>): unknown }): void {
-  for (const path of Object.keys(RAISED)) {
-    app.use(path, raising(path));
-  }
-}
-
-const startExpress: Start = async (logger) => {
-  const app = express();
-
-  raiseOn(app);
-  app.use(express.json());
-  mountExpress(app, orderRoutes);
-  app.use(expressErrorHandler(logger === undefined ? {} : { logger }));
-
-  return listening(app.listen(0, '127.0.0.1'));
-};
-
-const startFastify: Start = async (logger) => {
-  const app = Fastify({ bodyLimit: 1024 });
-
-  app.setErrorHandler(fastifyErrorHandler(logger === undefined ? {} : { logger }));
-
-  app.addHook('onRequest', async (request) => {
-    const raised = RAISED[request.url];
-
-    if (raised !== undefined) {
-      throw raised();
-    }
-  });
-
-  mountFastify(app, orderRoutes);
-
-  const url = await app.listen({ port: 0, host: '127.0.0.1' });
-
-  return { url, close: () => app.close() };
-};
-
-const startHono: Start = async (logger) => {
-  const app = new Hono();
-
-  app.onError(honoErrorHandler(logger === undefined ? {} : { logger }));
-
-  for (const [path, raised] of Object.entries(RAISED)) {
-    app.use(path, () => {
-      throw raised();
-    });
-  }
-
-  mountHono(app, orderRoutes, { bodyLimit: 1024 });
-
-  return listening(serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' }));
-};
-
-function nestOver(platform: 'express' | 'fastify'): Start {
-  return async (logger) => {
-    const module = createRoutesModule(orderRoutes);
-
-    const app =
-      platform === 'express'
-        ? await NestFactory.create(module, { logger: false, abortOnError: false, rawBody: true })
-        : await NestFactory.create(module, new FastifyAdapter({ bodyLimit: 1024 }), {
-            logger: false,
-            abortOnError: false,
-          });
-
-    app.useGlobalFilters(new ProblemExceptionFilter(app.getHttpAdapter(), logger === undefined ? {} : { logger }));
-
-    raiseOn(app);
-    await app.listen(0, '127.0.0.1');
-
-    return { url: await app.getUrl(), close: () => app.close() };
-  };
-}
-
-interface Listening {
-  once(event: 'listening', listener: () => void): unknown;
-  address(): AddressInfo | string | null;
-  close(callback: () => void): unknown;
-}
-
-async function listening(server: Listening): Promise<RunningServer> {
-  await new Promise<void>((resolve) => server.once('listening', resolve));
-  const address = server.address();
-  const port = typeof address === 'object' && address !== null ? address.port : 0;
-
-  return {
-    url: `http://127.0.0.1:${String(port)}`,
-    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
-  };
-}
 
 let running: RunningServer | undefined;
 
@@ -303,6 +197,24 @@ describe.each([
         fields: { errorType: 'Error', status: 503, requestId: 'req-3' },
       },
     ]);
+  });
+});
+
+describe.each([
+  ['Express', startExpress],
+  ['Fastify', startFastify],
+  ['Hono', startHono],
+  ['Nest over Express', nestOver('express')],
+  ['Nest over Fastify', nestOver('fastify')],
+] as const)('a middleware in front of the routes of %s that refuses with headers of its own', (_name, start) => {
+  it('is answered as a problem that keeps them, a 401 with its challenge', async () => {
+    const response = await fetch(`${await started(start)}/unauthenticated`, { headers: { 'x-request-id': 'req-4' } });
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get('www-authenticate')).toBe(CHALLENGE);
+    expect(response.headers.get('content-type')).toBe(PROBLEM);
+    expect(response.headers.get('x-request-id')).toBe('req-4');
+    expect(await response.json()).toMatchObject({ title: 'Unauthorized', status: 401, code: 'UNAUTHORIZED' });
   });
 });
 

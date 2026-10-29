@@ -75,3 +75,54 @@ describe('a failure at the edge that carries a server status', () => {
     },
   );
 });
+
+describe('the headers of a refusal at the edge', () => {
+  const challenge = 'Bearer realm="orders"';
+
+  it('keep those the error carries, as http-errors and Fastify give them, under the headers of the problem', () => {
+    const error = raised({
+      status: 401,
+      headers: {
+        'WWW-Authenticate': challenge,
+        'Retry-After': 30,
+        'Content-Type': 'text/html',
+        'X-Request-Id': 'other',
+      },
+    });
+
+    expect(answered(error).headers).toEqual({
+      'www-authenticate': challenge,
+      'retry-after': '30',
+      'content-type': 'application/problem+json; charset=utf-8',
+      'x-request-id': 'req-1',
+      'x-correlation-id': 'req-1',
+    });
+  });
+
+  it('keep those of the response a Hono HTTPException carries, not its length nor its media type', () => {
+    const res = new Response('Unauthorized', {
+      status: 401,
+      headers: { 'WWW-Authenticate': challenge, 'Content-Length': '12' },
+    });
+
+    expect(answered(raised({ status: 401, res })).headers).toMatchObject({
+      'www-authenticate': challenge,
+      'content-type': 'application/problem+json; charset=utf-8',
+    });
+
+    expect(answered(raised({ status: 401, res })).headers).not.toHaveProperty('content-length');
+  });
+
+  it('leave out a header no response could write, and every header of an error without a status', () => {
+    const headers = { 'Bad Name': 'x', Allow: 'GET\r\nSet-Cookie: a=b', Vary: ['Accept'], Link: '</next>' };
+
+    expect(Object.keys(answered(raised({ status: 405, headers })).headers)).toEqual([
+      'link',
+      'content-type',
+      'x-request-id',
+      'x-correlation-id',
+    ]);
+
+    expect(answered(raised({ headers: { 'Retry-After': '30' } })).headers).not.toHaveProperty('retry-after');
+  });
+});

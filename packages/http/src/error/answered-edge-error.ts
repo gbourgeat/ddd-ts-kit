@@ -4,6 +4,7 @@ import { codeOfStatus } from './code-of-status';
 import { type EdgeAnswer, edgeAnswer } from './edge-answer';
 import { bodyTooLarge, type EdgeRefusal, MALFORMED_BODY } from './edge-refusal';
 import { INTERNAL_ERROR_CODE } from './internal-error-code';
+import { refusalHeaders } from './refusal-headers';
 import { statusTitle } from './status-title';
 
 export interface EdgeErrorOptions {
@@ -38,14 +39,18 @@ const INTERNAL: EdgeRefusal = { status: 500, title: statusTitle(500), code: INTE
  * carries a status of a refusal or of a failure (`status` or `statusCode`, 4xx or 5xx) that
  * status, its code the one the kit gives it (`NOT_FOUND`, `VALIDATION_FAILED` for 422,
  * `SERVICE_UNAVAILABLE` for the 503 of a store down), anything else `INTERNAL_ERROR` (500). The
- * message of the error is never answered: a parser quotes the body in it.
+ * message of the error is never answered: a parser quotes the body in it. The headers an error with
+ * a status carries for its client (`WWW-Authenticate`, `Allow`, `Retry-After`) are kept.
  */
 export function answeredEdgeError(
   error: unknown,
   headers: Readonly<RawHeaders>,
   options: EdgeErrorOptions,
 ): EdgeAnswer {
-  const answer = edgeAnswer(headers, refusalOf(error));
+  const refused = edgeAnswer(headers, refusalOf(error));
+  // The headers of the refusal under those of the problem: a challenge kept, the media type and the identifiers the problem's.
+  const kept = statusOf(error) === undefined ? {} : refusalHeaders(error);
+  const answer = { ...refused, headers: { ...kept, ...refused.headers } };
   const fields = { errorType: typeOf(error), status: answer.status, requestId: answer.problem.requestId };
 
   if (answer.status >= 500) {
