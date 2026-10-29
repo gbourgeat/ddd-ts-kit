@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import {
   bash,
   cli,
+  cliModule,
   decision,
   git,
   launcher,
@@ -464,6 +465,27 @@ test('on trial, a record that cannot be written leaves the write judged all the 
   const file = pricingService(root, 'export class Pricing {}\n');
   const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
   assert.equal(decision(run('pre-write', { tool_name: 'Edit', tool_input: edit })), 'deny');
+});
+
+test('on trial, a patch stops at its first refused file, and the CLI judges two files a call, naming the others', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  const calls = join(root, 'node_modules', 'calls.log');
+  launcher(
+    root,
+    `import { appendFileSync } from 'node:fs';\nappendFileSync(${JSON.stringify(calls)}, process.argv[2] + '\\n');\nawait import(${JSON.stringify(cliModule)});\n`,
+  );
+  const added = (index, line) => `*** Add File: src/contexts/ordering/domain/rules-${index}.ts\n+${line}`;
+  const refused = [0, 1, 2].map((index) => added(index, "import express from 'express';"));
+  assert.equal(decision(run('pre-write', patch(root, ...refused))), 'deny');
+  assert.equal(readFileSync(calls, 'utf8'), 'check-file\n');
+  writeFileSync(calls, '');
+  const allowed = [0, 1, 2].map((index) => added(index, "import { money } from './money';"));
+  const passed = run('pre-write', patch(root, ...allowed));
+  assert.equal(readFileSync(calls, 'utf8'), 'check-file\ncheck-file\n');
+  assert.equal(
+    passed.output.hookSpecificOutput.additionalContext,
+    'ddd-ts-kit: 1 more written file(s) not judged before the write here: the check after it reads them.',
+  );
 });
 
 // The judged writes of the trial, one entry each, as the git directory of the repository records them.

@@ -80,6 +80,8 @@ const BRIEFING_CUT =
   'Briefing cut short: the CLI did not answer in time; `npx ddd-ts-kit status` and `npx ddd-ts-kit list` say the rest.';
 // The written files one call of post-write formats and checks, of the 15 s of its hook: a patch of Codex can hold many.
 const POST_WRITE_FILES = 5;
+// The written files one call of pre-write has the CLI judge before they land, of the 5 s of its hook.
+const CLI_WRITE_FILES = 2;
 
 // The contracts in YAML or JSON (openapi/<document>, the form of a route in openapi/forms/, the
 // AsyncAPI document), the event catalog and the split of the contract that `ddd-ts-kit docs`
@@ -480,18 +482,36 @@ function judgedWrites(writes) {
 function writesVerdict(writes, input, pending) {
   return (
     refusalOf(writes, input, quickRefusal) ??
-    refusalOf(writes, input, cliRefusal) ??
+    cliVerdict(writes, input) ??
     pending() ??
     writes.map(deviationOf).find(Boolean)
   );
 }
 
+// The first refusal, read file by file until one denies; a question waits for a denial of a later file.
 function refusalOf(writes, input, check) {
-  const refusals = writes.flatMap((written) => {
+  let asked;
+  for (const written of writes) {
     const reason = check(written, input);
-    return reason ? [{ decision: written.project.mode === 'advise' ? 'ask' : 'deny', reason }] : [];
-  });
-  return refusals.find(({ decision }) => decision === 'deny') ?? refusals[0];
+    if (reason && written.project.mode !== 'advise') {
+      return { decision: 'deny', reason };
+    }
+    asked ??= reason ? { decision: 'ask', reason } : undefined;
+  }
+  return asked;
+}
+
+// The first files the CLI may judge (TypeScript, the code of a context: the build gate of a fix is
+// read without it) are judged before the write; the others are left to the check after it, and said.
+function cliVerdict(writes, input) {
+  const judged = writes.filter(
+    ({ project, file }) => /\.(ts|mts|cts)$/.test(file) || insideContexts(project, projectPath(project, file)),
+  );
+  const verdict = refusalOf(judged.slice(0, CLI_WRITE_FILES), input, cliRefusal);
+  if (!verdict && judged.length > CLI_WRITE_FILES) {
+    notice = `ddd-ts-kit: ${judged.length - CLI_WRITE_FILES} more written file(s) not judged before the write here: the check after it reads them.`;
+  }
+  return verdict;
 }
 
 function quickRefusal({ project, file, written, replaced }, input) {
