@@ -54,6 +54,12 @@ locked acceptance test, independently of the session that made it, and writes it
 the application as the end-to-end tests do, exercises the routes of the story and the two nearest
 flows, and reports what does not match the design or a decision).
 
+The description of each skill and agent says when to use it, in at most 400 characters, and
+the 26 skills take at most 8,000 together: Claude Code loads the descriptions into every session
+within 1% of the context window (about 8,000 characters on a 200k window) and, past it, drops
+those of the skills invoked least, which then stop triggering on their keywords. A test of the
+plugin (`node --test plugin/skills/descriptions.test.mjs`) holds both limits.
+
 The hook is the part that makes the rest binding. In a project that has a
 `ddd-ts-kit.config.json` it reminds the workflow and the context map at session start, says
 when the installed packages are not the version the skills describe, refuses
