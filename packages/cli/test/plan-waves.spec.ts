@@ -287,6 +287,36 @@ describe('plan-waves, a plan that cannot be ordered', () => {
   });
 });
 
+describe('plan-waves, a row a command could not carry', () => {
+  it('refuses a context the config does not declare and an id with shell syntax, and briefs nothing', () => {
+    write(
+      root,
+      'docs/architecture/slices.md',
+      `# Slices
+
+${HEADER}| US1.02;id | billing | slice | Issue invoice | | | billing | todo |
+| US1.03 | billing$(touch /tmp/pwned) | slice | Cancel invoice | | | billing$(touch /tmp/pwned) | todo |
+| US1.04 | billing | slice | Pay invoice | | | billing | todo |
+`,
+    );
+
+    const refused = cli(root, 'plan-waves', '--json');
+
+    expect(refused.code).toBe(1);
+
+    expect(refused.json()).toMatchObject({
+      problems: [
+        { kind: 'bad-row', rows: ['US1.02;id'] },
+        { kind: 'bad-row', rows: ['US1.03'] },
+      ],
+      waves: [],
+    });
+
+    expect(refused.stdout).not.toContain('worker-scope');
+    expect(cli(root, 'plan-waves').stdout).toContain('#US1.03 cannot be planned');
+  });
+});
+
 /** The array under a path of keys; empty when it holds none. */
 function listAt(value: unknown, ...keys: readonly string[]): unknown[] {
   const found = jsonAt(value, ...keys);
