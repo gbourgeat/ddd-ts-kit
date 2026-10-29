@@ -3318,7 +3318,10 @@ function sessionChangeReason(session, before) {
   if (!session || !isRecord(before)) {
     return undefined;
   }
-  const changed = differences(session, sessionOutside, { before, now: snapshot(session, sessionOutside) });
+  // What the conductor commits or merges there meanwhile is its own: only the files left changed in
+  // its working tree, and changed since the note, can be the worker's.
+  const now = snapshot(session, sessionOutside).changes;
+  const changed = Object.keys(now).filter((path) => before.changes[path]?.hash !== now[path].hash);
   return changed.length === 0
     ? undefined
     : `Files of the checkout of the session, ${session.root}, changed while your last command ran: ${changed.join(', ')}. A worker never changes another checkout: put nothing back there yourself; stop and report them to the conductor, who knows whether it changed them. ${REPORT_TO_CONDUCTOR}`;

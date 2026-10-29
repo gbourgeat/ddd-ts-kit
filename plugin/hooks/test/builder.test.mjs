@@ -500,3 +500,24 @@ test('code of a worker that writes into the checkout of the session is said to i
   }
   assert.equal(run('pre-bash', bash(conductor, `cat ${worktree}/README.md`, agent)).output, undefined);
 });
+
+test('a commit or a merge of the conductor in its own checkout while a worker command runs is not charged to the worker', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = builder('conductor-commits', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  put(conductor, 'docs/architecture/plan.md', '# Plan\n\nNext: billing.\n');
+  git(conductor, 'add', '--all');
+  git(conductor, 'commit', '--quiet', '--no-verify', '--message', 'docs: plan');
+  git(conductor, 'checkout', '--quiet', '-b', 'side');
+  put(conductor, 'README.md', 'From a side branch.\n');
+  git(conductor, 'commit', '--quiet', '--no-verify', '--all', '--message', 'docs: readme');
+  git(conductor, 'checkout', '--quiet', 'main');
+  git(conductor, 'merge', '--quiet', '--no-ff', '--no-edit', 'side');
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  // A file of its working tree changed and not committed is still said.
+  put(conductor, 'src/platform/evil.ts', 'export const evil = 1;\n');
+  assert.match(
+    reason(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent))),
+    /src\/platform\/evil\.ts/,
+  );
+});
