@@ -37,10 +37,6 @@ describe('the simulated adapter of a port', () => {
     expect(adapter).toContain('answer through its translator of infrastructure/anti-corruption');
     expect(adapter).not.toMatch(/ownPolicy|retry|transport|test\/fakes/);
 
-    expect(read(root, SPEC)).toContain(
-      'expect(new SimulatedPaymentGateway()).toBeInstanceOf(SimulatedPaymentGateway);',
-    );
-
     expect(exists(root, `${BILLING}/infrastructure/external/remote-payment-gateway.adapter.ts`)).toBe(false);
     expect(exists(root, 'src/platform/resilience/own-policy.ts')).toBe(false);
     expect(cli(root, 'check', '--json').json()).toMatchObject({ ok: true, violations: [] });
@@ -153,5 +149,15 @@ describe('the simulated adapter of a port', () => {
     expect(matches(rule?.from['path'], SIMULATED)).toBe(true);
     expect(matches(rule?.from['pathNot'], SIMULATED)).toBe(false);
     expect(matches(rule?.to['path'], FAKE)).toBe(true);
+  });
+});
+
+describe('the spec of a simulated adapter', () => {
+  it('holds it to needing nothing from the environment, without checking the class of what it built', () => {
+    const { root } = simulatedAdapter();
+    const spec = read(root, SPEC);
+
+    expect(spec).toContain('expect(() => new SimulatedPaymentGateway()).not.toThrow();');
+    expect(spec).not.toContain('toBeInstanceOf');
   });
 });

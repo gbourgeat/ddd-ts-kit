@@ -7,7 +7,7 @@ import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.e
 
 const now = new Date('2026-01-10T00:00:00.000Z');
 
-describe('RoleRightsService', () => {
+describe('Role rights', () => {
   it('grants every right to an owner, all but delegation to an admin, the reading of members to a member', () => {
     expect(new RoleRightsService().rightsOf(MemberRole.Owner)).toEqual(Object.values(MemberRight));
     expect(new RoleRightsService().rightsOf(MemberRole.Admin)).not.toContain(MemberRight.GrantDelegations);

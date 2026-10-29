@@ -29,13 +29,13 @@ export class {{name.pascal}}Handler implements CommandHandler<{{name.pascal}}Com
 
 {{/if}}
 {{#if refusals.named}}
-    // TODO(domain): decide what "{{name.words}}" does to a {{aggregate.pascal}}: either it gives birth to one (keep `create`, pass the facts of `command` as value objects), or it changes an existing one (load it with `findById`, throw its refusal when there is none, `Unknown{{aggregate.pascal}}.for{{aggregate.pascal}}(id)` (`ddd-ts-kit generate error {{context.kebab}} Unknown{{aggregate.pascal}} for{{aggregate.pascal}}`), call ONE intention method). The events it records leave with the save: nothing else to do here.
+    // TODO(domain): decide what "{{name.words}}" does to {{aggregate.article}} {{aggregate.pascal}}: either it gives birth to one (keep `create`, pass the facts of `command` as value objects), or it changes an existing one (load it with `findById`, throw its refusal when there is none, `Unknown{{aggregate.pascal}}.for{{aggregate.pascal}}(id)` (`ddd-ts-kit generate error {{context.kebab}} Unknown{{aggregate.pascal}} for{{aggregate.pascal}}`), call ONE intention method). The events it records leave with the save: nothing else to do here.
 {{/if}}
 {{#if refusals.factories}}
-    // TODO(domain): decide what "{{name.words}}" does to a {{aggregate.pascal}}: either it gives birth to one (keep `create`, pass the facts of `command` as value objects), or it changes an existing one (load it with `findById`, throw its not-found refusal, `{{aggregate.pascal}}Error.notFound(id)` (`ddd-ts-kit generate error {{context.kebab}} {{aggregate.pascal}} notFound`), call ONE intention method). The events it records leave with the save: nothing else to do here.
+    // TODO(domain): decide what "{{name.words}}" does to {{aggregate.article}} {{aggregate.pascal}}: either it gives birth to one (keep `create`, pass the facts of `command` as value objects), or it changes an existing one (load it with `findById`, throw its not-found refusal, `{{aggregate.pascal}}Error.notFound(id)` (`ddd-ts-kit generate error {{context.kebab}} {{aggregate.pascal}} notFound`), call ONE intention method). The events it records leave with the save: nothing else to do here.
 {{/if}}
 {{#if refusals.classes}}
-    // TODO(domain): decide what "{{name.words}}" does to a {{aggregate.pascal}}: either it gives birth to one (keep `create`, pass the facts of `command` as value objects), or it changes an existing one (load it with `findById`, throw a not-found DomainError, call ONE intention method). The events it records leave with the save: nothing else to do here.
+    // TODO(domain): decide what "{{name.words}}" does to {{aggregate.article}} {{aggregate.pascal}}: either it gives birth to one (keep `create`, pass the facts of `command` as value objects), or it changes an existing one (load it with `findById`, throw a not-found DomainError, call ONE intention method). The events it records leave with the save: nothing else to do here.
 {{/if}}
     const {{aggregate.camel}} = {{aggregate.pascal}}.create(this.ids.next(), this.clock.now());
 
@@ -58,12 +58,15 @@ import { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{
 
 @CommandHandler({{name.pascal}}Command)
 export class {{name.pascal}}Handler implements CommandHandler<{{name.pascal}}Command> {
+{{#if access.policy}}
   constructor(
     private readonly {{aggregate.camel}}Repository: {{aggregate.pascal}}Repository,
-{{#if access.policy}}
     private readonly access: Access,
-{{/if}}
   ) {}
+{{/if}}
+{{#unless access.policy}}
+  constructor(private readonly {{aggregate.camel}}Repository: {{aggregate.pascal}}Repository) {}
+{{/unless}}
 
   async execute(command: {{name.pascal}}Command): Promise<void> {
 {{#if access.policy}}

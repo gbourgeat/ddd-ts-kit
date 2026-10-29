@@ -3,6 +3,5 @@
 
     expect(error).toBeInstanceOf(DomainRefusal);
     expect(error.code).toBe('{{error.code}}');
-    expect(error.message).toBe('{{name.title}}.');
     expect(error.facts).toEqual({});
   });

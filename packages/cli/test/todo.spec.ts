@@ -37,6 +37,20 @@ describe('todo', () => {
     expect(todo.stdout).not.toContain('src/platform/');
   });
 
+  it('lists each marker as file:line and its first words under --brief, the file holding the rest', () => {
+    const brief = cli(root, 'todo', 'billing', '--brief').stdout.split('\n');
+    const whole = cli(root, 'todo', 'billing').stdout.split('\n');
+
+    expect(brief).toHaveLength(whole.length);
+
+    expect(brief).toContainEqual(
+      expect.stringMatching(/^src\/contexts\/billing\/CONTEXT\.md:\d+ {2}say in two sentences which/),
+    );
+
+    expect(brief.join('\n')).not.toContain('TODO(domain)');
+    expect(brief.join('\n').length).toBeLessThan(whole.join('\n').length);
+  });
+
   it('lists the it.todo entries with their title, and the end-to-end spec of a use case with its context', () => {
     const title = /\bit\.todo\('([^']+)'/.exec(read(root, HANDLER_SPEC))?.[1] ?? 'no it.todo in the generated spec';
     const remaining = jsonAt(cli(root, 'todo', 'billing', '--json').json(), 'remaining');

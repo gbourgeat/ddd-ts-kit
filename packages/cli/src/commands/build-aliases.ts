@@ -3,6 +3,7 @@ import { rewriteAliases } from '../build';
 import { readConfig } from '../config';
 import { Arguments } from './arguments';
 import { type Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 const BUILD_PROJECT = 'tsconfig.build.json';
 
@@ -17,7 +18,7 @@ export const buildAliasesCommand: Command = (argv, io) => {
 
   io.out(
     args.json
-      ? JSON.stringify(report, null, 2)
+      ? stdoutJson(report)
       : `rewritten  ${report.specifiers} alias specifier(s) in ${report.changed} of ${report.files} file(s) under ${report.outDir}/`,
   );
 

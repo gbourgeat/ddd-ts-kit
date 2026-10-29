@@ -5,6 +5,7 @@ import { DELEGATED_RULES } from '../catalogue/delegated-rules';
 import { KNOWN_RULE_IDS } from '../catalogue/known-rule-ids';
 import { type DocumentedRule, documentedRule } from '../explain/documented-rule';
 import { knownRules } from './known-rules';
+import { stdoutJson } from '../../json/stdout-json';
 
 export const explainCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {});
@@ -19,7 +20,7 @@ export const explainCommand: Command = (argv, io) => {
   if (delegated !== undefined) {
     io.out(
       args.json
-        ? JSON.stringify({ id, description: delegated.description, checkedBy: delegated.checkedBy }, null, 2)
+        ? stdoutJson({ id, description: delegated.description, checkedBy: delegated.checkedBy })
         : [id, '', delegated.description, '', delegated.where].join('\n'),
     );
 
@@ -28,7 +29,7 @@ export const explainCommand: Command = (argv, io) => {
 
   const explanation = explanationOf(id);
 
-  io.out(args.json ? JSON.stringify(explanation, null, 2) : formatExplanation(explanation));
+  io.out(args.json ? stdoutJson(explanation) : formatExplanation(explanation));
 
   return 0;
 };

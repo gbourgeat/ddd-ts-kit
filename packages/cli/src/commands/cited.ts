@@ -15,6 +15,7 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import { knownContext } from './known-context';
 import { rowsOption } from './rows-option';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * The names the design of rows not done cites that the code does not have: against a ref before
@@ -46,14 +47,14 @@ export const citedCommand: Command = (argv, io) => {
 
     const removed = staleNamesSince(loadProject(root), knownRef(root, since), selection);
 
-    io.out(args.json ? JSON.stringify({ since, citations: removed }, null, 2) : formatRemovals(removed, since));
+    io.out(args.json ? stdoutJson({ since, citations: removed }) : formatRemovals(removed, since));
 
     return 0;
   }
 
   const report = staleNamesAt(root, config, { ref: baseRef(root, args.text('base')), rows });
 
-  io.out(args.json ? JSON.stringify(report, null, 2) : formatCitations(report, rows));
+  io.out(args.json ? stdoutJson(report) : formatCitations(report, rows));
 
   return 0;
 };

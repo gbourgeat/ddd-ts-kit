@@ -162,20 +162,31 @@ describe('generate, a technical word the ubiquitous language defines', () => {
 });
 
 describe('generate, the next steps and the document of a new context', () => {
-  it('lists every TODO(domain) of the created files as file:line', () => {
+  it('lists every TODO(domain) of the created files as file:line with its first words, the sentence left in the file', () => {
     const result = report(
       cli(root, 'generate', 'entity', 'billing', 'InvoiceLine', '--term', 'Line=One billed item', '--json'),
     );
 
-    expect(result.next.length).toBeGreaterThan(0);
-    expect(result.next).toEqual(result.todos.map((todo) => `${todo.file}:${todo.line}`));
+    expect(result).not.toHaveProperty('next');
+    expect(result.todos.length).toBeGreaterThan(0);
 
     for (const todo of result.todos) {
       const line = read(root, todo.file).split('\n')[todo.line - 1] ?? '';
 
-      expect(line).toContain('TODO(domain):');
-      expect(line).toContain(todo.text.slice(0, 30));
+      expect(todo).not.toHaveProperty('text');
+      expect(line).toContain(`TODO(domain): ${todo.gist.replace(/\.\.\.$/, '')}`);
     }
+  });
+
+  it('prints each place on one line, as file:line and the first words of its marker', () => {
+    const printed = cli(root, 'generate', 'entity', 'billing', 'InvoiceItem', '--term', 'Item=One billed thing').stdout;
+    const places = printed.split('\n').filter((line) => line.startsWith('  src/'));
+
+    expect(places).toContain(
+      '  src/contexts/billing/domain/entities/invoice-item.entity.ts:4  declare the attributes of InvoiceItem with value objects, not primitives',
+    );
+
+    expect(places.every((line) => line.length < 200)).toBe(true);
   });
 
   it('puts the definition of the language first in the next steps of a new context', () => {
@@ -193,8 +204,11 @@ describe('generate, the next steps and the document of a new context', () => {
       ),
     );
 
-    expect(result.next[0]).toMatch(/^src\/contexts\/catalog\/CONTEXT\.md:\d+$/);
-    expect(result.todos[0]?.text).toContain('define the ubiquitous language first');
+    expect(result.todos[0]).toEqual({
+      file: 'src/contexts/catalog/CONTEXT.md',
+      line: expect.any(Number),
+      gist: 'define the ubiquitous language first',
+    });
 
     expect(result.updated).toEqual(
       expect.arrayContaining([
@@ -250,6 +264,52 @@ describe('generate, the next steps and the document of a new context', () => {
     expect(read(root, 'src/contexts/catalog/CONTEXT.md')).toContain(
       'TODO(domain): say in one sentence why this context is',
     );
+  });
+});
+
+describe('generate, the first term of a glossary', () => {
+  it('takes away the TODO that asked for the language once --term gives the glossary its first term', () => {
+    const doc = 'src/contexts/stock/CONTEXT.md';
+
+    expect(cli(root, 'generate', 'context', 'stock', '--classification', 'supporting').code).toBe(0);
+    expect(read(root, doc)).toContain('TODO(domain): define the ubiquitous language first');
+
+    const result = report(
+      cli(root, 'generate', 'value-object', 'stock', 'Shelf', '--term', 'Shelf=Where an item waits', '--json'),
+    );
+
+    expect(read(root, doc)).not.toContain('define the ubiquitous language first');
+    expect(read(root, doc)).toContain('## Ubiquitous language\n\n| Term | Meaning | Not to be confused with |');
+    expect(result.todos.map((todo) => todo.text)).not.toContainEqual(expect.stringContaining('ubiquitous language'));
+  });
+});
+
+describe('generate, the title of a spec of the model', () => {
+  it('names the unit in the words of the glossary, as the specs of the use cases do', () => {
+    const generated = (...args: string[]): void => {
+      expect(cli(root, 'generate', ...args, '--force').code).toBe(0);
+    };
+
+    generated('aggregate', 'billing', 'Invoice');
+    generated('entity', 'billing', 'InvoiceNote', '--term', 'Note=A remark written on an invoice');
+    generated('domain-event', 'billing', 'Invoice', 'Noted', '--term', 'Noted=Given a note');
+    generated('domain-service', 'billing', 'InvoiceNoting', '--term', 'Noting=Writing a note on an invoice');
+
+    const unit = (file: string): string => read(root, `src/contexts/billing/test/unit/${file}`);
+
+    expect(unit('invoice-note.entity.spec.ts')).toContain("describe('Invoice note', () => {");
+    expect(unit('invoice-noted.event.spec.ts')).toContain("describe('Invoice noted', () => {");
+    expect(unit('invoice-noting.service.spec.ts')).toContain("describe('Invoice noting', () => {");
+  });
+
+  it('builds the domain service it describes with nothing, a port or a store being no part of it', () => {
+    const spec = read(root, 'src/contexts/billing/test/unit/invoice-noting.service.spec.ts');
+
+    expect(spec).toContain(
+      "import { InvoiceNotingService } from '@/contexts/billing/domain/services/invoice-noting.service';",
+    );
+
+    expect(spec).toContain('expect(() => new InvoiceNotingService()).not.toThrow();');
   });
 });
 

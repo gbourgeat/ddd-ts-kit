@@ -6,14 +6,14 @@ A ddd-ts-kit project: one bounded context per directory of `{{config.contextsDir
 
 - `npm run verify`: types, lint, format, tests with the coverage thresholds of `ddd-ts-kit.config.json` (per context and layer), architecture rules, import graph, dead code, documentation drift. Once, before a commit that closes a slice. A layer under its threshold gets the missing test, never an exclusion.
 - `npx ddd-ts-kit check --changed-since <ref>`: the architecture rules on what changed; `npx ddd-ts-kit explain <rule-id>` gives the reason and an example.
-- `npx ddd-ts-kit list --json`: the map of the contexts. `npx ddd-ts-kit describe <context> --json`: one context as data (use cases, routes, events, ports, dependencies).
+- `npx ddd-ts-kit list`: the map of the contexts. `npx ddd-ts-kit describe <context>`: one context as facts (use cases, routes, events, ports, dependencies). Add `--json` for a script only.
 - `npx ddd-ts-kit status`: the next step of the plan, the slices by status, the markers left per context. `npx ddd-ts-kit todo [<context>]`: each remaining `TODO(domain)` and `it.todo` as `file:line`.
 - `npm run regenerate`: every derived file in one step, after a change of route, schema, event or config: `.dependency-cruiser.cjs`, then `npm run docs:generate`, which runs `npx ddd-ts-kit docs` (the context map, the barrels, the generated sections of each `CONTEXT.md`) and writes the OpenAPI contract, the forms and the event catalog.
 
 ## Read less
 
-1. `describe <context> --json` and the `CONTEXT.md` of the context before the tree: do not browse `{{config.sourceRoot}}/` to learn what exists.
-2. Open only what the `next` list of a generator (`file:line`) or a violation names.
+1. `npx ddd-ts-kit describe <context>` and the `CONTEXT.md` of the context before the tree: do not browse `{{config.sourceRoot}}/` to learn what exists.
+2. Open only the places a generator lists under `todos` (`file:line`, the sentence is in the file) or a violation names.
 3. `check --changed-since <ref>` and the tests of the context while iterating; `npm run verify` once at the end.
 
 ## Rules by layer
@@ -33,8 +33,8 @@ Never edit the contracts under `openapi/` (`openapi/openapi.yaml`, one file per 
 {{#if sdk.on}}
 {{sdk.instruction}}
 {{/if}}
-Imports: a file of the project is imported by its alias from the project root, never by a relative path, the same directory included: `{{alias.source}}/...` for `{{config.sourceRoot}}/`, `{{alias.test}}/...` for `test/`, `{{alias.scripts}}/...` for `scripts/`, {{#if alias.extensionless}}never ending in `.js` or `.ts`, and naming a file, never a directory{{/if}}{{#unless alias.extensionless}}always ending in `.js`{{/unless}} (`imports/alias-only`, `imports/extension`; `npm run lint:fix` rewrites a relative import and a wrong ending). The alias is declared once, under `paths` in `tsconfig.json`, from `importAlias` of `ddd-ts-kit.config.json`, and the ending follows `importExtension`: never add a second entry or mapping, never change `module` or `moduleResolution` in `tsconfig.json`, and never compile without `npm run build`, which rewrites the aliases of `dist/` into relative paths ending in `.js` for Node (`imports/alias-declared`).
-Everywhere: one exported class, interface or function per file, named after it in kebab-case; at most 350 lines a file, 30 lines and 3 parameters a function; `private` members, never `#name`; a blank line before a `return` and around `if`, `for`, `try` (`npm run lint:fix`); braces around the body of every `if`, `else`, `for`, `while` and `do`, on its own lines: a branch is visible at a glance, and a statement added to it later cannot silently fall outside it. `npm run format` (Biome, line width 120) lays out every file, then `npm run lint:fix` adds the blank lines a wrapped statement now needs: do not spend tokens on line breaks, and never run Prettier or a bare `npx biome`.
+Imports: by alias (`{{alias.source}}/...` for `{{config.sourceRoot}}/`), never by a relative path, {{#if alias.extensionless}}never ending in `.js` or `.ts`, and naming a file, never a directory{{/if}}{{#unless alias.extensionless}}always ending in `.js`{{/unless}}: `npm run lint:fix` rewrites them (`imports/alias-only`, `imports/extension`). Never add an alias mapping nor change `module` or `moduleResolution` in `tsconfig.json` (`imports/alias-declared`), and compile with `npm run build` only.
+Everywhere: one exported class, interface or function per file, named after it in kebab-case; at most 350 lines a file, 30 lines and 3 parameters a function; `private` members, never `#name`. The layout is Biome's, then `lint:fix`: `npm run format`, then `npm run lint:fix` (blank lines, braces); never Prettier nor a bare `npx biome`, and no token spent on line breaks.
 
 ## Verifying your work
 

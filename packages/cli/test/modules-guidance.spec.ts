@@ -62,14 +62,14 @@ describe('what guides the move into modules, and what refuses it', () => {
       '--json',
     );
 
-    const report = generated.json() as { next: string[] };
+    const places = (generated.json() as { todos: { file: string }[] }).todos.map((todo) => todo.file);
 
     expect(generated.code).toBe(0);
-    expect(report.next.filter((step) => step.includes('/application/'))).not.toEqual([]);
+    expect(places.filter((file) => file.includes('/application/'))).not.toEqual([]);
 
-    expect(
-      report.next.filter((step) => step.includes('/application/') && !step.includes('/invoices/application/')),
-    ).toEqual([]);
+    expect(places.filter((file) => file.includes('/application/') && !file.includes('/invoices/application/'))).toEqual(
+      [],
+    );
   });
 
   it('moves nothing when two files would land on one path, or when another module holds a twin', () => {

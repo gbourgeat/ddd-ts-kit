@@ -10,6 +10,7 @@ import { type MutationReport, readMutationReport } from '../mutation/read-mutati
 import { type Survivor, survivors } from '../mutation/survivors';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * Holds each layer of each context to the mutation floor of the config: reads the json report the
@@ -70,11 +71,7 @@ function changedSince(root: string, since: string): ReadonlySet<string> {
 }
 
 function asJson(config: Config, scores: readonly ContextScore[], listed: readonly Survivor[] | undefined): string {
-  return JSON.stringify(
-    { floor: config.mutation, scores, ...(listed === undefined ? {} : { survivors: listed }) },
-    null,
-    2,
-  );
+  return stdoutJson({ floor: config.mutation, scores, ...(listed === undefined ? {} : { survivors: listed }) });
 }
 
 function asText(

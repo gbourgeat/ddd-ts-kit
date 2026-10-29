@@ -269,10 +269,10 @@ describe('list in the declared style', () => {
     const undeclared = declaredProject({ ...SOURCES, [QUERY]: 'export class SearchInvoicesQuery {}\n' });
     const explicit = explicitProject(SOURCES);
 
-    expect(cli(undeclared, 'list').stdout).toContain('  queries: none\n');
+    expect(cli(undeclared, 'list').stdout).not.toContain('  queries:');
 
     expect(cli(explicit, 'list').stdout).toContain(
-      '  commands: IssueInvoice\n  queries: SearchInvoices\n  domain events: InvoiceIssued\n  published events: none\n  integration event handlers: ProductListed\n',
+      '  commands: IssueInvoice\n  queries: SearchInvoices\n  domain events: InvoiceIssued\n  integration event handlers: ProductListed\n',
     );
 
     expect(cli(explicit, 'list').stdout).not.toContain('adapters:');

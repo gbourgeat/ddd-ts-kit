@@ -11,6 +11,7 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
 import { ownEntry } from '../config/values/own-entry';
+import { stdoutJson } from '../json/stdout-json';
 
 const MODULE_FIX = 'Name the module as the config of its context declares it, in kebab-case.';
 
@@ -82,7 +83,7 @@ interface Outcome extends ModuleMoves {
 
 function print(io: Io, json: boolean, outcome: Outcome): void {
   if (json) {
-    io.out(JSON.stringify({ ...outcome, manual: outcome.moved.length > 0 ? LEFT : [] }, null, 2));
+    io.out(stdoutJson({ ...outcome, manual: outcome.moved.length > 0 ? LEFT : [] }));
 
     return;
   }
