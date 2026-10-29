@@ -3,7 +3,7 @@ import path from 'node:path';
 import { CliError } from '../cli-error';
 import type { Config } from './config';
 import { CONFIG_FILE } from './config-file';
-import { parseConfig } from './parse-config';
+import { parseConfig, type ParseOptions } from './parse-config';
 
 export interface LoadedConfig {
   readonly config: Config;
@@ -11,10 +11,10 @@ export interface LoadedConfig {
   readonly text: string;
 }
 
-export function readConfig(root: string): LoadedConfig {
+export function readConfig(root: string, options?: ParseOptions): LoadedConfig {
   const content = contentOf(root);
 
-  return { config: parseConfig(jsonOf(content)), text: content };
+  return { config: parseConfig(jsonOf(content), options), text: content };
 }
 
 function contentOf(root: string): string {

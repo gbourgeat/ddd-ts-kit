@@ -3,6 +3,7 @@ import { checkJsonOf } from './check-support';
 import { cli, read } from './helpers';
 import { billingWithPersonalInvoices } from './support/billing-with-personal-invoices';
 import { expectOk } from './support/expect-ok';
+import { commitAll } from './support/commit-all';
 
 const BILLING = 'src/contexts/billing';
 const PERSISTENCE = `${BILLING}/infrastructure/persistence`;
@@ -166,6 +167,8 @@ describe('the wiring of the export, in each family', () => {
       'exported = new KnexBillingPersonalDataExport(database.persistence.database, scope);',
     );
 
+    commitAll(tenants);
+    commitAll(tsyringe);
     expectOk(cli(tenants, 'init', '--force', '--orm', 'knex', '--di', 'manual', '--tenancy', 'shared-table'));
     expectOk(cli(tsyringe, 'init', '--force', '--orm', 'knex'));
 

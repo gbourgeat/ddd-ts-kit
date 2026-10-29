@@ -7,6 +7,7 @@ import { initProject } from './support/init-project';
 import { installKit } from './support/install-kit';
 import { NPM } from './support/npm';
 import { readJson } from './support/read-json';
+import { commitAll } from './support/commit-all';
 
 const SETTINGS = '.claude/settings.json';
 const GATE = '.claude/hooks/production-gate.mjs';
@@ -63,6 +64,7 @@ describe('the production gate of the regulated profile', () => {
 
     expect(read(root, GATE)).toBe('// ours\n');
 
+    commitAll(root);
     cli(root, 'init', '--force');
 
     expect(read(root, GATE)).toContain('production-gate');

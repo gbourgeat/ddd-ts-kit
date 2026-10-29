@@ -42,6 +42,29 @@ export const FLAG_NOTES: readonly Note[] = [
     ],
   },
   {
+    name: '--force',
+    command: 'init',
+    lines: [
+      'init and generate replace the files that exist with what the kit writes, only while git',
+      'holds them: a file to replace that differs from the last commit (uncommitted, staged,',
+      'or untracked and not ignored) refuses the command, exit 2, the files named, nothing',
+      'written; outside a git repository, every file whose content would change does; commit',
+      'or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,',
+      'AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed',
+      'as kept) and merges .gitignore and .dockerignore, the lines of the team kept',
+    ],
+  },
+  {
+    name: '--force',
+    command: 'generate',
+    lines: [
+      'generate replaces the files that exist with what the kit writes, only while git holds',
+      'them: a file to replace that differs from the last commit refuses the command, exit 2,',
+      'the files named, nothing written; outside a git repository, every file whose content',
+      'would change does; commit or stash first, then git diff shows what the kit rewrote',
+    ],
+  },
+  {
     name: '--sdk',
     command: 'init',
     lines: ['init records "sdk" in the config and generates the clients with the project'],

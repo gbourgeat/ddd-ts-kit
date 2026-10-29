@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c65a4d8409fa8e0f -->
+<!-- translation-of: README.md sha256:63e3124f35077263 -->
 
 # ddd-ts-kit
 
@@ -92,7 +92,12 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
 ```
 
 Fonctionne dans un répertoire vide comme dans un projet existant. Un fichier existant n'est
-jamais remplacé sans `--force` ; il est signalé comme ignoré. `init` écrit aussi les contrats
+jamais remplacé sans `--force` ; il est signalé comme ignoré. `--force` ne remplace que ce que git
+détient : un fichier à remplacer qui diffère du dernier *commit* (non commité, indexé, ou non suivi
+et non ignoré) fait refuser la commande avec le code de sortie 2, les fichiers nommés et rien
+d'écrit (`Commit or stash them first, then run again: git diff shows what the kit rewrote.`), et
+hors d'un dépôt git chaque fichier dont le contenu changerait le fait. Il en va de même pour
+`generate --force`. `init` écrit aussi les contrats
 générés tels que les scripts du projet les écrivent pour un projet qui n'a encore ni route ni
 événement d'intégration à lui (`openapi/openapi.yaml`, `docs/integration/asyncapi.yaml` et
 `event-catalog.md` ; en JSON sous `"openapi": { "format": "json" }` de la configuration), afin
@@ -105,6 +110,13 @@ project is written for --http express: pass --http fastify to keep it.`), en *dr
 lancez d'abord `init --dry-run` sur un projet existant. Relancé plus tard, `init` garde la
 *stack* enregistrée dans la configuration.
 
+Chaque fichier qu'écrivent `init` et `generate` reste dans le projet : un chemin qui en sort par
+un lien symbolique, à sa place ou au-dessus (un `docs/adr` ou un `.claude/settings.json` liés à un
+autre endroit), fait refuser la commande avec le code de sortie 2 et le chemin nommé, avant toute
+écriture ; un lien qui reste dans le projet est suivi. `init` refuse un répertoire personnel et la racine du système de
+fichiers, où son `.claude/settings.json` serait le réglage de toutes les sessions : lancez-le dans
+le répertoire du projet.
+
 `init --force` sur un projet déjà initialisé réécrit les fichiers qui appartiennent à `init` et
 garde la configuration : les contextes et leurs amonts, les règles, les limites, les dérogations
 et toute autre clé restent tels qu'ils sont écrits, et la *stack* ne change que là où une option
@@ -114,6 +126,15 @@ composition, la preuve que chaque contexte se câble seul et le registre des per
 réécrits depuis leurs *templates*, puis les contextes déclarés y sont câblés de nouveau, et l'effacement de chaque contexte est listé de
 nouveau dans les copies du dossier *privacy* ; ce qu'un autre générateur avait ajouté à un fichier de la plateforme (la valeur d'une *gateway*, les
 réglages d'un *job*) ne l'est pas, et une note le dit. Une configuration illisible est remplacée.
+Les fichiers qu'une équipe possède une fois écrits restent tels quels, listés comme `kept` :
+`README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` et les définitions du *pipeline*
+(`.github/workflows/`, `.gitlab-ci.yml`), dont les *jobs* et les *includes* sont à l'équipe, ceux
+de `--ci-extras` compris ; pour reprendre ce qu'une nouvelle version y écrit,
+lancez `init` dans un dossier vide et comparez. `.gitignore` et `.dockerignore` gagnent les lignes du kit
+qui leur manquent, en tête, sous un commentaire, et gardent après elles les lignes de l'équipe, qui
+ont le dernier mot ; une ligne du kit sur un chemin pour lequel l'équipe écrit déjà des règles est
+laissée de côté. Une dernière note dit ce que `--force` a
+réécrit et ce qu'il a gardé.
 
 Le *pipeline* n'utilise que des outils gratuits. `--ci-extras` ajoute des *jobs* qui demandent
 une offre payante sur un dépôt privé, qui ne remontent dans une *merge request* qu'avec une
@@ -625,7 +646,7 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `REVIEW.md` | la politique de revue du projet : les passes d'une revue (bugs, sécurité, conformité face à la revue de conception de la ligne, l'acceptation de la *story*, les enregistrements de `docs/adr/` et les règles), ce qu'Important veut dire, au plus cinq *nits* (un *nit* récurrent devient une ligne de `AGENTS.md` sous `## Mistakes seen here` ou une règle de la configuration), ce qui n'est pas signalé (les fichiers générés, ce que `npm run verify` refuse). Lu par l'agent `architecture-reviewer` par-dessus sa méthode, par un relecteur humain et par tout robot de revue. Écrit une fois, pour que l'équipe le modifie : `--force` le laisse tel quel, `doctor` dit quand il manque |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |
 | `.claude/hooks/production-gate.mjs`, `.claude/hooks/change-reference.mjs` | avec `--agent-profile regulated` : les deux *hooks* du profil, enregistrés sous `hooks.PreToolUse` de `.claude/settings.json`, écrits une fois pour que l'équipe les modifie (`--force` les réécrit). La porte bloque une commande qui nomme l'environnement de production avec une action de mise en production sauf si `RELEASE_APPROVAL` nomme un approbateur et un changement ; la référence demande avant une modification d'une migration ou des conteneurs, pour le *trailer* `Change: <id>` du *commit* ([Mettre les agents de code en bac à sable](../../docs/guides/agent-sandbox.fr.md#le-profil-réglementé)) |
-| `.claude/settings.json` | des permissions (et, avec `--agent-profile regulated`, le bloc de bac à sable ci-dessous) : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification des contrats générés et du verrou d'une acceptation (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json` : une règle `ask`, puisque le bac à sable de Claude Code mettrait un chemin refusé en lecture seule pour `docs:generate` et `acceptance --lock` aussi ; la garde du plugin en refuse la modification à la main) et de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
+| `.claude/settings.json` | des permissions (et, avec `--agent-profile regulated`, le bloc de bac à sable ci-dessous) : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), `generate` et `init` avec `--force`, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification des contrats générés et du verrou d'une acceptation (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json` : une règle `ask`, puisque le bac à sable de Claude Code mettrait un chemin refusé en lecture seule pour `docs:generate` et `acceptance --lock` aussi ; la garde du plugin en refuse la modification à la main) et de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, où écrit `worker-scope`, et `.worktrees/`, où vivent les *worktrees* |
 
 `--ci both` écrit les deux *pipelines*, `--ci none` aucun (et pas de `renovate.json`). Les
@@ -2357,7 +2378,7 @@ règle.
 | `imports/alias-only` | sous la racine des sources, `test/` et `scripts/` : un `import`, `export ... from` ou `import()` avec un spécificateur relatif, même répertoire compris (la correction nomme l'alias à écrire ; `eslint --fix` l'écrit) ; un spécificateur d'alias avec un segment `.` ou `..` |
 | `imports/extension` | sous la racine des sources, `test/` et `scripts/` : avec `importExtension` `none`, un spécificateur d'alias qui se termine par `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` ou `.cts` ; avec `js` (ou sans clé), un spécificateur d'alias qui ne se termine pas par `.js` (la correction nomme le spécificateur à écrire ; `eslint --fix` l'écrit). Un sous-chemin de *package* n'est jamais jugé |
 | `imports/alias-declared` | un `importAlias` qui n'est pas `@/` ou `$<name>/`, ou qui est `$test/`, `$scripts/`, `$generated/` ; une entrée `paths` de `tsconfig.json` manquante ou différente de ce que donne `importAlias` (la correction donne l'entrée) ; une autre entrée `paths` sous un alias ; un `baseUrl` ; un `tsconfig.build.json` dont les `paths` diffèrent ; des `paths` de `knip.json` qui associent un alias ; un script qui compile (`tsc` sans `--noEmit`) et ne lance pas `ddd-ts-kit build-aliases` ensuite ; un script qui lance `tsx --tsconfig` sur un autre fichier ; une configuration `vitest` à la racine sans `tsconfigPaths: true`, une configuration `jest` sans les entrées `moduleNameMapper` dérivées, ou `.dependency-cruiser.cjs` sans `tsConfig` ; un `module` et un `moduleResolution` de `tsconfig.json` (ou d'un `tsconfig.build.json` qui pose les siens) qui ne sont pas ce que donne `importExtension` : `ESNext`, `Bundler` et `customConditions` contenant `node` sous `none`, et sous `js` une valeur écrite qui n'est pas une résolution Node ; une association jest dont le motif ne se termine pas comme les imports. Un projet sans `package.json` n'est pas jugé |
-| `config/valid` | un amont, une classification, une relation, un identifiant de règle, un mode de `guard` ou un `importExtension` inconnu ; un contexte absent du disque ou de la configuration ; une limite de `commit` qui n'est pas un entier positif |
+| `config/valid` | un amont, une classification, une relation, un identifiant de règle, un mode de `guard` ou un `importExtension` inconnu ; un répertoire de la configuration qui sort du projet ; un contexte absent du disque ou de la configuration ; une limite de `commit` qui n'est pas un entier positif |
 | `config/suppression-needs-reason` | une désactivation sans identifiant de règle ou sans raison (gardée comme alias à côté de `governance/recorded-deviation`, qui juge la raison) |
 | `authz/declared` | dans un fichier de module, `builder.command(X)` ou `builder.query(X)` sans `.requires(` ni `.public(` dans sa chaîne, sauf si la classe du message porte `@Requires` ou `@Public` de `@ddd-ts-kit/kernel/declarations` ; en câblage manuel ou nest, une classe de commande ou de requête absente de tous les `requires(X, ...)` et `publicUseCase(X)` du fichier de module et de `application/authorization/` ; un `defineRoute` sans `security` (le type de la route le refuse déjà, et une liste vide aussi : c'est le filet au niveau du texte pour une définition construite de façon lâche) ; dans le style déclaré, la classe exportée d'un fichier `*.command.ts` ou `*.query.ts` qui ne porte ni `@Requires` ni `@Public` |
 | `authz/granted` | avec `stack.authz` `rbac`, une permission du `definePermissions` d'un contexte que ni `platform/auth/roles/roles.ts` ni `platform/auth/authorization/signed-in-grants.ts` n'accorde par son nom (par l'entrée de son ensemble, son identifiant ou `<contexte>:*`) ; le `*` du super-administrateur ne compte pas (un avertissement) ; avec `rebac`, une permission que le schéma laisse sur le contexte alors qu'aucune source hors des tests n'écrit de relation `operator` (d'une personne ou d'un acteur système) sur ce contexte et qu'aucun droit de toute personne connectée ne la tient, dans un projet qui fait déjà d'une personne l'opérateur d'un contexte ; muette avec un *authorizer* propre au projet (un avertissement) |

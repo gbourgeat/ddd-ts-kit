@@ -5,6 +5,7 @@ import { initFailure } from './support/init-failure';
 import { initProject } from './support/init-project';
 import { readJson } from './support/read-json';
 import { readYaml } from './support/read-yaml';
+import { commitAll } from './support/commit-all';
 
 const EVERY_EXTRA =
   'gitlab-sast,codeql,dependency-review,gitlab-secret-detection,gitlab-dependency-scanning,claude-review,claude-triage,intent-to-spec';
@@ -71,18 +72,30 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
     });
   });
 
-  it('adds one job alone, keeps it on init --force, and removes it with none', () => {
+  it('adds one job alone, and leaves .gitlab-ci.yml to the team on init --force, the config dropping the job with none', () => {
     const root = initProject('--ci', 'gitlab', '--ci-extras', 'gitlab-sast');
 
     expect(read(root, '.gitlab-ci.yml')).toContain(`include:\n  - ${MARKS.sast}\n\n`);
     expect(read(root, '.gitlab-ci.yml')).not.toContain(MARKS.secretDetection);
 
+    commitAll(root);
     expect(cli(root, 'init', '--force', '--logger', 'pino').code).toBe(0);
     expect(read(root, '.gitlab-ci.yml')).toContain(MARKS.sast);
 
-    expect(cli(root, 'init', '--force', '--ci-extras', 'none').code).toBe(0);
-    expect(read(root, '.gitlab-ci.yml')).not.toContain(MARKS.sast);
+    commitAll(root);
+
+    const removed = cli(root, 'init', '--force', '--ci-extras', 'none');
+
+    expect(removed.code).toBe(0);
+    expect(removed.stdout).toContain('kept         .gitlab-ci.yml (yours since the first init)');
+
+    expect(removed.stdout).toContain(
+      ' .gitlab-ci.yml: its jobs and includes are yours to edit, those of --ci-extras too.',
+    );
+
+    expect(read(root, '.gitlab-ci.yml')).toContain(MARKS.sast);
     expect(readJson(root, 'ddd-ts-kit.config.json')).not.toHaveProperty('ci');
+    expect(read(initProject('--ci', 'gitlab'), '.gitlab-ci.yml')).not.toContain(MARKS.sast);
   });
 
   it('refuses an unknown job and a job of a platform the pipeline does not cover', () => {

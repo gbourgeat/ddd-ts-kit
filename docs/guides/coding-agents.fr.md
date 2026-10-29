@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:0eac2d8608a2eca9 -->
+<!-- translation-of: coding-agents.md sha256:d61e96dcd756c29b -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -163,7 +163,7 @@ ciblées par `applyTo`, `REVIEW.md`, la politique de revue que lit chaque relect
 fois et possédée par l'équipe ([Travailler en équipe](team-workflow.fr.md#ce-que-la-revue-regarde-dans-chaque-couche)),
 `.claude/settings.json`, les permissions de Claude Code (les vérifications et les générateurs
 s'exécutent sans demander ; `.env` et les contrats générés ne sont jamais lus ni modifiés ;
-`git push`, `npm publish`, les fichiers qui portent les règles et le pipeline, les migrations de
+`generate` et `init` avec `--force`, `git push`, `npm publish`, les fichiers qui portent les règles et le pipeline, les migrations de
 l'ORM, `Dockerfile`, `docker-compose.yml` et `docker/` demandent d'abord : la liste est dans le
 [README de la CLI](../../packages/cli/README.fr.md#init), et `ddd-ts-kit doctor` dit ce qu'un
 projet en manque ; `init --agent-profile regulated` ajoute le bloc de bac à sable et les deux
