@@ -94,10 +94,10 @@ name each dependency the stack about to be written contradicts, and the flag tha
 fastify to keep it.`), a dry run included: run `init --dry-run` first on an existing project.
 Run again later, `init` keeps the stack recorded in the config.
 
-Every file `init` and `generate` write stays inside the project: a file that is a symbolic link,
-or a path that leads out of the project through one (a linked `docs/adr`, a linked
-`.claude/settings.json`), refuses the command with exit code 2 and the path named, before
-anything is written. `init` refuses a home directory and the root of the file system, where its
+Every file `init` and `generate` write stays inside the project: a path that leads out of it
+through a symbolic link, in its place or above it (a `docs/adr` or a `.claude/settings.json`
+linked to elsewhere), refuses the command with exit code 2 and the path named, before
+anything is written; a link that stays inside the project is written through. `init` refuses a home directory and the root of the file system, where its
 `.claude/settings.json` would be the settings of every session: run it in the directory of the
 project.
 

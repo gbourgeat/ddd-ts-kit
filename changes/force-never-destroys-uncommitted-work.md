@@ -24,10 +24,11 @@ notwithstanding (`init` run again adds the four rules to a project). It also ask
 `check --baseline=write` and before `--baseline write` or `--baseline=write` after other flags
 (`check --cwd . --baseline write`), which the allow rule of `check` let through.
 
-Every file `init` and `generate` write stays inside the project: a file that is a symbolic link,
-or a path that leads out of the project through one (a linked `docs/adr`, a `.claude/settings.json`
+Every file `init` and `generate` write stays inside the project: a path that leads out of it
+through a symbolic link, in its place or above it (a linked `docs/adr`, a `.claude/settings.json`
 linked to the settings of a home directory), refuses the command with exit code 2 and the path
-named, before anything is written. `init` refuses a home directory and the root of the file
+named, before anything is written; a link that stays inside the project is written through, and
+`--force` asks git about the file it points to. `init` refuses a home directory and the root of the file
 system: run it in the directory of the project.
 
 The directories of the config (`sourceRoot`, `contextsDir`, `sharedKernelDir`, `platformDir`)
@@ -39,5 +40,5 @@ To move: commit before `init --force` or `generate --force`, and a script that r
 edited files commits first. `README.md`, the pipeline, `AGENTS.md`, `CLAUDE.md` and `src/main.ts`
 are no longer rewritten by `init --force`: run `init` with the same flags in an empty folder and
 diff it with the project to pick up what changed in them. Put the file or the folder itself in
-place of a symbolic link a command of the kit writes through, and write each directory of the
+place of a symbolic link that leads out of the project where a command of the kit writes, and write each directory of the
 config inside the project.

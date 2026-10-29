@@ -1,24 +1,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-/** A folder above the target that is no folder: the write fails there, and is reported unwritable. */
+/** A folder above the target, or the target of a link, that is no folder nor file: the write fails there, and is reported unwritable. */
 const BLOCKED = Symbol('blocked');
 
-/** How a path of the project would lead out of it: a symbolic link in its place, or a folder above it that is elsewhere. */
-export type Leaving = { readonly kind: 'link' } | { readonly kind: 'outside'; readonly to: string };
+/** Where a path of the project would land out of it, every symbolic link on the way followed. */
+export interface Leaving {
+  readonly to: string;
+}
 
 /**
- * Whether writing `absolute` would land out of the project at `root`: the target is a symbolic
- * link to a file or a folder, or the real path of its deepest existing part (every link above it
- * followed) is not under the real path of the root. A device where a folder or a file goes, what
- * a sandbox mounts over a path it protects, is no way out: the write fails there and is reported
- * unwritable.
+ * Whether writing `absolute` would land out of the project at `root`: the real path of the target,
+ * a symbolic link in its place or above it followed to where it points, is not under the real path
+ * of the root. A link that stays inside is written through. A device where a folder or a file
+ * goes, what a sandbox mounts over a path it protects, is no way out: the write fails there and is
+ * reported unwritable.
  */
 export function leavingProject(root: string, absolute: string): Leaving | undefined {
-  if (isLinkOut(absolute)) {
-    return { kind: 'link' };
-  }
-
   const real = realPathOf(absolute);
   const project = realPathOf(root);
 
@@ -28,32 +26,47 @@ export function leavingProject(root: string, absolute: string): Leaving | undefi
 
   const inside = real === undefined || typeof project !== 'string' ? '..' : path.relative(project, real);
 
-  return inside.startsWith('..') || path.isAbsolute(inside) ? { kind: 'outside', to: real ?? absolute } : undefined;
-}
-
-function isLinkOut(absolute: string): boolean {
-  if (lstatOf(absolute)?.isSymbolicLink() !== true) {
-    return false;
-  }
-
-  try {
-    const target = fs.statSync(absolute);
-
-    return target.isFile() || target.isDirectory();
-  } catch {
-    // A link to nothing: the write would create its target, wherever it points.
-    return true;
-  }
+  return inside.startsWith('..') || path.isAbsolute(inside) ? { to: real ?? absolute } : undefined;
 }
 
 /**
- * The real path of the deepest part of `absolute` that exists, the parts below it appended as
- * they are; `BLOCKED` when that part is a folder above the target and no folder; undefined when
- * a link on the way leads to nothing.
+ * The real path `absolute` is written at: a link in its place followed to where it points, then
+ * the real path of the deepest part that exists, the parts below it appended as they are;
+ * `BLOCKED` when what stands there is no folder above the target, or no file nor folder at the
+ * end of a link; undefined when a link on the way cannot be read.
  */
-function realPathOf(absolute: string): string | typeof BLOCKED | undefined {
+function realPathOf(absolute: string, hops = 0): string | typeof BLOCKED | undefined {
+  const at = path.resolve(absolute);
+
+  if (lstatOf(at)?.isSymbolicLink() === true) {
+    return hops > 32 ? undefined : linkedPathOf(at, hops);
+  }
+
+  return existingRealPathOf(at);
+}
+
+function linkedPathOf(at: string, hops: number): string | typeof BLOCKED | undefined {
+  try {
+    const target = fs.statSync(at);
+
+    if (!target.isFile() && !target.isDirectory()) {
+      return BLOCKED;
+    }
+
+    return fs.realpathSync(at);
+  } catch {
+    // A link to nothing: the write creates its target, wherever it points.
+    try {
+      return realPathOf(path.resolve(path.dirname(at), fs.readlinkSync(at)), hops + 1);
+    } catch {
+      return undefined;
+    }
+  }
+}
+
+function existingRealPathOf(absolute: string): string | typeof BLOCKED | undefined {
   const missing: string[] = [];
-  let at = path.resolve(absolute);
+  let at = absolute;
 
   while (lstatOf(at) === undefined && path.dirname(at) !== at) {
     missing.unshift(path.basename(at));

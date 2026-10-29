@@ -15,13 +15,13 @@ export function refuseLeaving(root: string, files: readonly string[], absolute: 
       return [];
     }
 
-    return [way.kind === 'link' ? `${file} (a symbolic link)` : `${file} (which lands in ${way.to})`];
+    return [`${file} (which lands in ${way.to})`];
   });
 
   if (leaving.length > 0) {
     throw new CliError(
       `${leaving.length} file(s) of this command would be written out of the project: ${leaving.join(', ')}. Nothing was written.`,
-      `The kit writes only inside the project: put the file or the folder itself in place of each symbolic link (or write the directory of ${CONFIG_FILE} inside the project), then run again.`,
+      `The kit writes only inside the project: put the file or the folder itself in place of each symbolic link that leads out (or write the directory of ${CONFIG_FILE} inside the project), then run again.`,
     );
   }
 }

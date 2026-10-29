@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:aab3e1b8d0ae6d29 -->
+<!-- translation-of: README.md sha256:1cd71ba243bc6556 -->
 
 # ddd-ts-kit
 
@@ -101,10 +101,10 @@ project is written for --http express: pass --http fastify to keep it.`), en *dr
 lancez d'abord `init --dry-run` sur un projet existant. Relancé plus tard, `init` garde la
 *stack* enregistrée dans la configuration.
 
-Chaque fichier qu'écrivent `init` et `generate` reste dans le projet : un fichier qui est un lien
-symbolique, ou un chemin qui sort du projet par l'un d'eux (un `docs/adr` lié, un
-`.claude/settings.json` lié), fait refuser la commande avec le code de sortie 2 et le chemin
-nommé, avant toute écriture. `init` refuse un répertoire personnel et la racine du système de
+Chaque fichier qu'écrivent `init` et `generate` reste dans le projet : un chemin qui en sort par
+un lien symbolique, à sa place ou au-dessus (un `docs/adr` ou un `.claude/settings.json` liés à un
+autre endroit), fait refuser la commande avec le code de sortie 2 et le chemin nommé, avant toute
+écriture ; un lien qui reste dans le projet est suivi. `init` refuse un répertoire personnel et la racine du système de
 fichiers, où son `.claude/settings.json` serait le réglage de toutes les sessions : lancez-le dans
 le répertoire du projet.
 

@@ -28,20 +28,39 @@ export function refuseUnheld(
     return;
   }
 
-  const unheld = filesGitDoesNotHold(root, changed);
+  // A link of the project is written through: git is asked about the file it points to, as well as the link.
+  const written = new Map(changed.map((file) => [file, writtenAt(root, file)]));
+  const notHeld = filesGitDoesNotHold(root, [...new Set([...changed, ...written.values()])]);
 
-  if (unheld === undefined) {
+  const named =
+    notHeld === undefined
+      ? undefined
+      : changed.filter((file) => notHeld.includes(file) || notHeld.includes(written.get(file) ?? file));
+
+  if (named === undefined) {
     throw new CliError(
       `--force would replace ${changed.length} file(s) whose content differs from what the kit writes, outside a git repository, where nothing else holds them: ${changed.join(', ')}. Nothing was written.`,
       'Keep a copy of what you wrote in them and delete them first, then run again; in a git repository, commit them first, and git diff shows what the kit rewrote.',
     );
   }
 
-  if (unheld.length > 0) {
+  if (named.length > 0) {
     throw new CliError(
-      `--force would replace ${unheld.length} file(s) that differ from the last commit, uncommitted or untracked: ${unheld.join(', ')}. Nothing was written.`,
+      `--force would replace ${named.length} file(s) that differ from the last commit, uncommitted or untracked: ${named.join(', ')}. Nothing was written.`,
       'Commit or stash them first, then run again: git diff shows what the kit rewrote.',
     );
+  }
+}
+
+/** The path of the project a write of `file` lands at: the file a link of the project points to, or the file itself. */
+function writtenAt(root: string, file: string): string {
+  try {
+    return path
+      .relative(fs.realpathSync(root), fs.realpathSync(path.join(root, file)))
+      .split(path.sep)
+      .join('/');
+  } catch {
+    return file;
   }
 }
 

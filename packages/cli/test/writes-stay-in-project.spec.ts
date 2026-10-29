@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cli, exists, read, tempDir, walk, write } from './helpers';
 import { initProject } from './support/init-project';
 import { NPM } from './support/npm';
+import { commitAll } from './support/commit-all';
 
 /** A folder next to the project, where nothing of the project may land. */
 function outside(): string {
@@ -32,10 +33,10 @@ describe.skipIf(process.platform === 'win32')('a write of the CLI stays inside t
     expect(refused.code).toBe(2);
 
     expect(refused.stderr).toContain(
-      'file(s) of this command would be written out of the project: .claude/settings.json (a symbolic link). Nothing was written.',
+      `file(s) of this command would be written out of the project: .claude/settings.json (which lands in ${path.join(fs.realpathSync(elsewhere), 'settings.json')}). Nothing was written.`,
     );
 
-    expect(refused.stderr).toContain('put the file or the folder itself in place of each symbolic link');
+    expect(refused.stderr).toContain('put the file or the folder itself in place of each symbolic link that leads out');
     expect(read(elsewhere, 'settings.json')).toBe('{}\n');
     expect(exists(root, 'package.json')).toBe(false);
   });
@@ -67,8 +68,44 @@ describe.skipIf(process.platform === 'win32')('a write of the CLI stays inside t
     const refused = cli(root, 'init', '--force');
 
     expect(refused.code).toBe(2);
-    expect(refused.stderr).toContain('biome.json (a symbolic link)');
+
+    expect(refused.stderr).toContain(
+      `biome.json (which lands in ${path.join(fs.realpathSync(elsewhere), 'victim.md')})`,
+    );
+
     expect(read(elsewhere, 'victim.md')).toBe('Mine.\n');
+  });
+
+  it('writes through a link to a file of the project, and keeps the link', () => {
+    const root = initProject(...NPM);
+
+    write(root, 'tools/biome.json', '{}\n');
+    fs.rmSync(path.join(root, 'biome.json'));
+    link(root, 'biome.json', 'tools/biome.json');
+    commitAll(root);
+
+    const forced = cli(root, 'init', '--force');
+
+    expect(forced.stderr).toBe('');
+    expect(forced.code).toBe(0);
+    expect(fs.lstatSync(path.join(root, 'biome.json')).isSymbolicLink()).toBe(true);
+    expect(read(root, 'tools/biome.json')).toContain('"$schema"');
+  });
+
+  it('refuses --force through a link to a file of the project whose edit git does not hold', () => {
+    const root = initProject(...NPM);
+
+    write(root, 'tools/biome.json', '{}\n');
+    fs.rmSync(path.join(root, 'biome.json'));
+    link(root, 'biome.json', 'tools/biome.json');
+    commitAll(root);
+    write(root, 'tools/biome.json', '{ "edited": true }\n');
+
+    const refused = cli(root, 'init', '--force');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('uncommitted or untracked: biome.json.');
+    expect(read(root, 'tools/biome.json')).toBe('{ "edited": true }\n');
   });
 
   it('writes through a link that stays inside the project', () => {
