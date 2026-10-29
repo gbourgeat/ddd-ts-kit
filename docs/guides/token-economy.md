@@ -66,7 +66,7 @@ ddd-ts-kit project (DDD, Clean Architecture). The rules are checked: `npx ddd-ts
 Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.
 Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).
 Read `npx ddd-ts-kit list` (text; `--json` for a script) and the CONTEXT.md of one context instead of browsing the tree.
-Plan: docs/architecture/plan.md (resume with /ddd-ts-kit:start). Next: done
+Plan (docs/architecture/plan.md): "done". Resume with /ddd-ts-kit:start.
 Contexts:
 analytics [supporting] upstreams: scheduling; glossary: 9 terms; 0 aggregates, 0 commands, 1 queries, 0 published events
 identity [supporting] upstreams: none; glossary: 21 terms; 3 aggregates, 7 commands, 0 queries, 6 published events

@@ -50,6 +50,15 @@ const WORKER_REPORT = '.ddd-ts-kit/report.md';
 const WORKER_AGENT = 'context-builder';
 // The host caps SessionStart context at 10 000 characters; a session should start far below it.
 const SESSION_CONTEXT_LIMIT = 3000;
+// What the guard says of a text read from the repository, the plan line or a next step: at most this many characters.
+const QUOTED_LIMIT = 300;
+// The grammars of the names read from the repository that the guard repeats: anything else is not repeated.
+const STORY_ID = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
+const CONTEXT_NAME = /^[a-z][a-z0-9-]*$/;
+const GIT_REF = /^(?!-)[\w./-]+$/;
+const ABSOLUTE_PATH = /^\/[\p{L}\p{N}_@%+=:,./-]*$/u;
+const LABEL = /^[a-z][a-z -]*$/;
+const AGENT_ID = /^[\w-]+$/;
 const COMMIT_DEFAULTS = { maxFiles: 20, maxLines: 600 };
 const COUNTED_FILE_BYTES = 1_000_000;
 // The files Biome formats: with `formatOnWrite` in the config, the project's own Biome lays one out as it is written.
@@ -729,8 +738,8 @@ function stop(input) {
 // In the worktree of a story, a done row whose design review cites a name the code does not have,
 // with no compromise listed in the report: said once per session for the same names, never blocking.
 function designReminder(project, input) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || !project.cli || fixOf(project) !== undefined) {
+  const story = storyOf(project);
+  if (story === undefined || !project.cli || fixOf(project) !== undefined) {
     return undefined;
   }
   const design = runCli(project, ['story-check', story, '--json'], 20000)?.design ?? [];
@@ -756,8 +765,8 @@ function designReminder(project, input) {
 // The session of a story ends on its report: written once the pull request is open, or with what
 // blocks the story. Refused once for the same step, so that a session that cannot go on still stops.
 function unfinishedStoryReason(project, input) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || !project.cli) {
+  const story = storyOf(project);
+  if (story === undefined || !project.cli) {
     return undefined;
   }
   const phases = runCli(project, ['story', story, '--json'], 8000);
@@ -772,7 +781,7 @@ function unfinishedStoryReason(project, input) {
   if (typeof input.stop_hook_active !== 'boolean' && alreadyRemembered(join(tmpdir(), `ddd-ts-kit-story-${key}`))) {
     return undefined;
   }
-  return `ddd-ts-kit: story ${story} is not finished. Next: ${phases.next} Go on without asking: a question now is a provisional decision, recorded in docs/architecture/stories/${story}.md. If something truly blocks the story, write its \`## Report\` there with what blocks it and every decision taken so far, then stop.`;
+  return `ddd-ts-kit: story ${story} is not finished. Next: ${quoted(phases.next)} Go on without asking: a question now is a provisional decision, recorded in docs/architecture/stories/${story}.md. If something truly blocks the story, write its \`## Report\` there with what blocks it and every decision taken so far, then stop.`;
 }
 
 function remainingErrors(project) {
@@ -1042,17 +1051,38 @@ function planPointer(root) {
   if (plan === undefined) {
     return [];
   }
-  const next = /^Next:\s*(.+)$/m.exec(plan)?.[1]?.trim();
-
+  const next = /^Next:\s*(.+)$/m.exec(plan)?.[1];
   return [
-    `Plan: ${PLAN} (resume with /ddd-ts-kit:start). Next: ${(next ?? 'not stated, read the plan').slice(0, 300)}`,
+    `Plan (${PLAN}): ${next ? quoted(next) : 'no next step stated, read the plan'}. Resume with /ddd-ts-kit:start.`,
   ];
+}
+
+// A text read from the repository (the plan, the files of a story through the CLI) said as data,
+// never as a word of the guard: on one line, without backquote nor double quote, cut, never opening
+// with the prefix of the guard's own decisions, between double quotes.
+function quoted(text) {
+  const flat = String(text)
+    .replace(/[\p{Cf}`"]/gu, '')
+    .replace(/[\s\p{Cc}]+/gu, ' ')
+    .replace(/^(?:\s*ddd-ts-kit\s*:)+/i, '')
+    .trim();
+  return `"${flat.slice(0, QUOTED_LIMIT)}"`;
+}
+
+// The story of the worktree, by an id the CLI would take.
+function storyOf(project) {
+  return named(readJson(join(project.root, STORY_SCOPE))?.story, STORY_ID);
+}
+
+// A name read from the repository, when it follows its grammar; else nothing, and it is not repeated.
+function named(value, grammar) {
+  return typeof value === 'string' && grammar.test(value) ? value : undefined;
 }
 
 // In the worktree of a story: the story, its phase and its next step, so that a session resumes it.
 function storyNotice(project) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || project.mode === 'off' || !project.cli) {
+  const story = storyOf(project);
+  if (story === undefined || project.mode === 'off' || !project.cli) {
     return [];
   }
   const phases = runCli(project, ['story', story, '--json'], 6000);
@@ -1062,7 +1092,7 @@ function storyNotice(project) {
   const done = phases.phases.filter(({ met }) => met).map(({ title }) => title);
   const kind = fixOf(project) === undefined ? ['Story', 'story'] : ['Fix', 'fix'];
   return [
-    `${kind[0]} ${story} (skill ddd-ts-kit:${kind[1]}): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ?? 'its pull request'}`,
+    `${kind[0]} ${story} (skill ddd-ts-kit:${kind[1]}): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ? quoted(phases.next) : 'its pull request'}`,
     ...meetingNotice(project),
   ];
 }
@@ -1075,21 +1105,23 @@ function meetingNotice(project) {
     return [];
   }
   const meetings = view.crossings.map(({ stories: [, other], contexts, files, merge }) => {
+    const shown = contexts.filter((name) => named(name, CONTEXT_NAME));
     const parts = [
-      ...(contexts.length === 0 ? [] : [`contexts ${contexts.join(', ')}`]),
+      ...(shown.length === 0 ? [] : [`contexts ${shown.join(', ')}`]),
       ...(files.length === 0 ? [] : [`${files.length} file(s) both change`]),
       ...((merge?.byHand.length ?? 0) === 0 ? [] : [`${merge.byHand.length} conflict(s) to settle by hand`]),
     ];
-    return `It meets story ${other}: ${parts.length === 0 ? 'conflicts merge-trunk settles' : parts.join(', ')}.`;
+    const story = named(other, STORY_ID);
+    return `It meets ${story ? `story ${story}` : 'another open story'}: ${parts.length === 0 ? 'conflicts merge-trunk settles' : parts.join(', ')}.`;
   });
   const trunk = own.trunk?.behind
     ? [
-        `The trunk moved: ${own.trunk.behind} commit(s) of ${own.trunk.ref} to merge in${own.trunk.byHand.length === 0 ? '' : `, ${own.trunk.byHand.length} conflict(s) to settle by hand`}.`,
+        `The trunk moved: ${own.trunk.behind} commit(s) of ${named(own.trunk.ref, GIT_REF) ?? 'the trunk'} to merge in${own.trunk.byHand.length === 0 ? '' : `, ${own.trunk.byHand.length} conflict(s) to settle by hand`}.`,
       ]
     : [];
   const fetched = view.fetched ? Date.parse(view.fetched) : undefined;
   if (fetched !== undefined && Date.now() - fetched > STALE_FETCH) {
-    trunk.push(`The trunk is read as the fetch of ${view.fetched} left it: \`git fetch\` first.`);
+    trunk.push(`The trunk is read as the fetch of ${new Date(fetched).toISOString()} left it: \`git fetch\` first.`);
   }
   return meetings.length + trunk.length === 0
     ? []
@@ -1121,10 +1153,18 @@ function workersToResume(project) {
       ['send-message', 'new-agent'].includes(progress?.next?.action) &&
       (progress.agent || progress.phase !== 'not started'),
   );
-  return stopped.map(
-    ({ branch, context, worktree, progress }) =>
-      `Worker to resume: ${branch ?? worktree} (${progress.phase}${progress.agent ? `, agent ${progress.agent.agentId}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${workers.filter((other) => other.context === context).length > 1 ? ` --worktree ${worktree}` : ''}\`, then send what it prints.`,
-  );
+  return stopped.map((stoppedWorker) => resumeLine(stoppedWorker, workers));
+}
+
+// The line of a worker to resume, when each name it repeats follows its grammar.
+function resumeLine({ branch, context, worktree, progress }, workers) {
+  const agent = progress.agent ? named(progress.agent.agentId, AGENT_ID) : '';
+  const names = [named(context, CONTEXT_NAME), named(worktree, ABSOLUTE_PATH), named(progress.phase, LABEL), agent];
+  if (names.includes(undefined) || (branch !== undefined && named(branch, GIT_REF) === undefined)) {
+    return 'Worker to resume: one whose names the guard does not repeat: `npx ddd-ts-kit status --workers` lists it.';
+  }
+  const where = workers.filter((other) => other.context === context).length > 1 ? ` --worktree ${worktree}` : '';
+  return `Worker to resume: ${branch ?? worktree} (${progress.phase}${agent ? `, agent ${agent}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${where}\`, then send what it prints.`;
 }
 
 // Read from git's own files, without running git: the worktrees of the repository listed under
@@ -1182,7 +1222,10 @@ function readText(path, otherwise) {
 
 function contextMap(project) {
   const listing = runCli(project, ['list', '--json'], 8000);
-  const text = (listing?.contexts ?? []).map(contextLine).join('\n');
+  const text = (listing?.contexts ?? [])
+    .filter((context) => named(context.name, CONTEXT_NAME))
+    .map(contextLine)
+    .join('\n');
   return text.length > SESSION_CONTEXT_LIMIT
     ? `${text.slice(0, SESSION_CONTEXT_LIMIT)}\n(truncated: run \`npx ddd-ts-kit list\` for the rest)`
     : text;
@@ -1190,9 +1233,14 @@ function contextMap(project) {
 
 function contextLine(context) {
   const size = (key) => (context[key] ?? []).length;
-  const upstreams = (context.upstreams ?? []).map((upstream) => upstream.context ?? upstream).join(', ') || 'none';
+  const upstreams =
+    (context.upstreams ?? [])
+      .map((upstream) => upstream.context ?? upstream)
+      .filter((name) => named(name, CONTEXT_NAME))
+      .join(', ') || 'none';
+  const classification = named(context.classification, CONTEXT_NAME) ?? 'unclassified';
 
-  return `${context.name} [${context.classification}] upstreams: ${upstreams}; glossary: ${context.glossary ?? 0} terms; ${size('aggregates')} aggregates, ${size('commands')} commands, ${size('queries')} queries, ${size('publishedEvents')} published events`;
+  return `${context.name} [${classification}] upstreams: ${upstreams}; glossary: ${context.glossary ?? 0} terms; ${size('aggregates')} aggregates, ${size('commands')} commands, ${size('queries')} queries, ${size('publishedEvents')} published events`;
 }
 
 function generatedFileReason(project, file) {
@@ -1347,13 +1395,13 @@ function isJudge(input) {
 // The fix of the worktree, when its story.json says `kind: 'fix'` (absent, a story): its code, whether
 // its lock is written, and the regression specs the lock lists, relative to the project.
 function fixOf(project) {
-  const scope = readJson(join(project.root, STORY_SCOPE));
-  if (typeof scope?.story !== 'string' || scope.kind !== 'fix') {
+  const story = storyOf(project);
+  if (story === undefined || readJson(join(project.root, STORY_SCOPE)).kind !== 'fix') {
     return undefined;
   }
-  const lock = join(project.root, 'test/acceptance', `${scope.story.toLowerCase()}.acceptance.lock.json`);
+  const lock = join(project.root, 'test/acceptance', `${story.toLowerCase()}.acceptance.lock.json`);
   const files = (readJson(lock)?.regression ?? []).map((test) => test?.file).filter((file) => typeof file === 'string');
-  return { story: scope.story, locked: existsSync(lock), files: [...new Set(files)] };
+  return { story, locked: existsSync(lock), files: [...new Set(files)] };
 }
 
 // The regression spec of a fix, once locked, is the proof of the fix: a sub-agent never rewrites it. The
@@ -1715,7 +1763,12 @@ function forYouWith(view, own, other) {
 }
 
 function crossingLine(other, forYou, path) {
-  const where = `${other.story} (${other.branch ?? 'detached'}, ${other.worktree})`;
+  const names = [
+    named(other.story, STORY_ID),
+    named(other.branch ?? 'detached', GIT_REF),
+    named(other.worktree, ABSOLUTE_PATH),
+  ];
+  const where = names.includes(undefined) ? 'Another open story' : `${names[0]} (${names[1]}, ${names[2]})`;
   return forYou.includes(path)
     ? `${where} changes ${path} too, and merging its branch into this one now leaves that file to settle by hand.`
     : `${where} changes ${path} too.`;
@@ -1754,8 +1807,8 @@ function storiesOf(project) {
 }
 
 function storyBuildReason(project) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string') {
+  const story = storyOf(project);
+  if (story === undefined) {
     return undefined;
   }
   const fix = fixOf(project);
@@ -1777,7 +1830,7 @@ function storyBuildReason(project) {
     }
     return undefined;
   }
-  return `The code of story ${story} waits for its build gate: a design review section per row and the acceptance written and locked, before any code. Next: ${gate.next} (\`npx ddd-ts-kit story ${story}\` shows every phase).`;
+  return `The code of story ${story} waits for its build gate: a design review section per row and the acceptance written and locked, before any code. Next: ${quoted(gate.next)} (\`npx ddd-ts-kit story ${story}\` shows every phase).`;
 }
 
 // The build gate of a fix is its proof: the regression spec written, listed and locked; no row, no review.
