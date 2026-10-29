@@ -50,8 +50,14 @@ function sectionLines(section: PageSection): string[] {
   return ['', `## ${section.title}`, ...section.entries.flatMap(entryLines)];
 }
 
+/** The rules written for the project, spec after spec, then those a template wrote, under the `describe` of their spec still. */
 function entryLines({ heading, specs }: PageEntry): string[] {
-  const generated = specs.flatMap((spec) => allRules(spec.rules).filter((rule) => spec.generated.has(rule)));
+  const generated = specs.flatMap((spec) =>
+    rulesLines(
+      rulesWhere(spec.rules, (rule) => spec.generated.has(rule)),
+      1,
+    ),
+  );
 
   return [
     '',
@@ -61,11 +67,11 @@ function entryLines({ heading, specs }: PageEntry): string[] {
     '',
     ...specs.flatMap((spec) =>
       rulesLines(
-        rulesWhere(spec.rules, (rule) => !generated.includes(rule)),
+        rulesWhere(spec.rules, (rule) => !spec.generated.has(rule)),
         0,
       ),
     ),
-    ...(generated.length === 0 ? [] : [`- ${GENERATED}`, ...plannedLast(generated).map((rule) => ruleLine(rule, 1))]),
+    ...(generated.length === 0 ? [] : [`- ${GENERATED}`, ...generated]),
   ];
 }
 
