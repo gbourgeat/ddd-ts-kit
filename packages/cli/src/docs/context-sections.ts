@@ -1,3 +1,4 @@
+import { ownEntry } from '../config/values/own-entry';
 import type { UseCaseFact } from '../describe/context-description';
 import { toName } from '../naming';
 import type { PageEntry, PageSection, SpecOfPage } from './page-section';
@@ -67,7 +68,7 @@ function sharedOut(known: UseCasesOfContext, specs: readonly SpecOfPage[]): Shar
     } else if (parts === undefined) {
       shared.others.push(spec);
     } else {
-      placeIn(parts, spec, SPEC_ROLES[role] ?? role);
+      placeIn(parts, spec, ownEntry(SPEC_ROLES, role) ?? role);
     }
   }
 

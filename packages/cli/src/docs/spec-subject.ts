@@ -1,3 +1,4 @@
+import { ownEntry } from '../config/values/own-entry';
 import { SPEC_ROLES } from './spec-roles';
 
 /** What a spec file is about, read from its path: `unit/calendars/slot.vo.spec.ts` is the value object `slot`, in `unit/calendars`. */
@@ -23,7 +24,7 @@ export function specSubject(file: string): SpecSubject {
     .replace(/\.spec\.ts$/, '')
     .split('.');
 
-  const at = segments.findLastIndex((segment, index) => index > 0 && SPEC_ROLES[segment] !== undefined);
+  const at = segments.findLastIndex((segment, index) => index > 0 && ownEntry(SPEC_ROLES, segment) !== undefined);
 
   return at === -1
     ? { subject: segments.join('.'), role: undefined, folder }

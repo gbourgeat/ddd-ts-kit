@@ -1,3 +1,4 @@
+import { ownEntry } from '../config/values/own-entry';
 import { listTemplates, readTemplate } from '../templating';
 import { rulesIn } from './rules-in';
 import { allRules } from './all-rules';
@@ -71,7 +72,8 @@ export function isGeneratedTitle(role: string | undefined, title: string): boole
 
   return titles.some(
     (candidate) =>
-      (candidate.role === role || (role !== undefined && ALSO[candidate.role ?? '']?.includes(role) === true)) &&
+      (candidate.role === role ||
+        (role !== undefined && ownEntry(ALSO, candidate.role ?? '')?.includes(role) === true)) &&
       candidate.pattern.test(title),
   );
 }
@@ -93,7 +95,10 @@ function templateRole(template: string): string | undefined {
   const segments = name.slice(0, name.lastIndexOf('spec')).split('.');
 
   return segments
-    .map((segment) => TEMPLATE_ROLES[segment] ?? (SPEC_ROLES[segment] === undefined ? undefined : segment))
+    .map(
+      (segment) =>
+        ownEntry(TEMPLATE_ROLES, segment) ?? (ownEntry(SPEC_ROLES, segment) === undefined ? undefined : segment),
+    )
     .findLast((candidate) => candidate !== undefined);
 }
 
@@ -116,7 +121,7 @@ function patternOf(title: string): RegExp {
         return ')?';
       }
 
-      return inner === 'else' ? '|' : (PLACEHOLDERS[inner.slice(inner.lastIndexOf('.') + 1)] ?? '.+?');
+      return inner === 'else' ? '|' : (ownEntry(PLACEHOLDERS, inner.slice(inner.lastIndexOf('.') + 1)) ?? '.+?');
     })
     .join('');
 

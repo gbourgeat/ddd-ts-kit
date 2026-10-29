@@ -154,3 +154,17 @@ describe('The pages of a context, current at every commit the hook lets through'
     expect(pipelineAsset('source', 'lefthook.yml')).toBe(hook);
   });
 });
+
+describe('The page of a context, a spec whose name holds a word of every object', () => {
+  it('reads no role in it and no template title for it: `constructor` and `toString` are no roles', () => {
+    const root = behaviourProject({
+      [`${UNIT}/invoice.constructor.spec.ts`]: specOf('Invoice constructor', ['builds an invoice']),
+      [`${UNIT}/invoice.toString.spec.ts`]: specOf('Invoice text', ['writes its number']),
+    });
+
+    const page = behaviourPages(root)('billing');
+
+    expect(page).toContain('### invoice.constructor, in unit\n');
+    expect(page).toContain('### invoice.toString, in unit\n');
+  });
+});
