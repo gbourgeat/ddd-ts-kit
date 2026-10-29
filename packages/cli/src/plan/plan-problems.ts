@@ -1,5 +1,6 @@
 import type { Slice } from '../progress/slice';
 import { cyclesOf } from './cycles-of';
+import { plannedCommands } from './planned-commands';
 import type { PlanProblem } from './wave-plan';
 
 /**
@@ -14,7 +15,7 @@ export function planProblems(
   contexts?: readonly string[],
 ): PlanProblem[] {
   return [
-    ...badRows(planned, contexts),
+    ...badRows(planned, contexts === undefined ? undefined : [...contexts, ...createdContexts(rows)]),
     ...duplicated(rows, planned),
     ...unknownDependencies(rows, planned),
     ...ownerless(planned),
@@ -23,6 +24,15 @@ export function planProblems(
 }
 
 /** What an id is: a code, then at most one number (`US1.02`, `M1.03`, `12`), nothing a shell reads. */
+const NAME = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
+
+/** The contexts a row creates (`generate context billing ...`): their rows are legitimate before the config declares them. */
+function createdContexts(rows: readonly Slice[]): string[] {
+  return rows
+    .flatMap((row) => plannedCommands(row.startWith))
+    .flatMap(({ argv }) => (argv[0] === 'context' && argv[1] !== undefined ? [argv[1]] : []));
+}
+
 const ID = /^[A-Za-z0-9][A-Za-z0-9_-]*(\.\d+)?$/;
 
 function badRows(planned: readonly Slice[], contexts: readonly string[] | undefined): PlanProblem[] {
@@ -31,9 +41,10 @@ function badRows(planned: readonly Slice[], contexts: readonly string[] | undefi
 
     const reasons = [
       ...(ID.test(row.id) ? [] : ['its number is not a code and a number such as US1.02']),
-      ...(contexts === undefined || contexts.includes(row.context)
+      ...(NAME.test(row.context) ? [] : [`its context ${JSON.stringify(row.context)} is not a name`]),
+      ...(!NAME.test(row.context) || contexts === undefined || contexts.includes(row.context)
         ? []
-        : [`its context ${JSON.stringify(row.context)} is not declared in the config`]),
+        : [`its context ${JSON.stringify(row.context)} is neither declared in the config nor created by a row`]),
     ];
 
     return reasons.length === 0
