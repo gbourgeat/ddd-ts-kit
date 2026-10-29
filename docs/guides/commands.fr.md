@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:e5c11d0d05162f5f -->
+<!-- translation-of: commands.md sha256:01a94c2753b469cf -->
 
 # Quelle commande, quand
 
@@ -620,8 +620,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
                    annotation carries the reason of its rule, a pull request showing an annotation on its own
   --behaviour      docs writes the pages of what the tests state (docs/behaviour/) alone, every other generated
-                   document left as it is: what the pre-commit hook runs when a spec is staged; with --check,
-                   those pages alone are compared
+                   document left as it is: what the pre-commit hook runs when a spec, a source under src/ or the
+                   config is staged; with --check, those pages alone are compared
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one but one recorded by 0.82.0 or earlier, recorded again as
                    the kit reads it now: run it once the shape of a version is the one to store; docs --check

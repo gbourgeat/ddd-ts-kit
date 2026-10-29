@@ -3,6 +3,7 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { behaviourPage } from '../src/docs/behaviour-page';
 import { rulesIn } from '../src/docs/rules-in';
+import { specOfPage } from '../src/docs/spec-of-page';
 import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
 
 describe('rulesIn, the rules a spec states', () => {
@@ -60,30 +61,46 @@ it('stands alone', () => {});
   });
 });
 
-describe('behaviourPage, a rule without the codes of the change that brought it', () => {
-  it('drops the row ids and the criterion a title opens with, and keeps the rest of the title as it is', () => {
-    const titles = [
-      '#FIX1 escalates to the next person, #FIX2 included',
-      '#US1.04 AC1 a member declares an incident and gets 201',
-      '#US1.04 #US1.05 AC2, AC3: lists them',
-      'AC4 keeps AC4 inside',
-      'is never issued twice',
-      '#FIX1',
-    ];
+describe('behaviourPage, the rows of the plan a rule serves', () => {
+  const titles = [
+    '#FIX1 escalates to the next person, #FIX2 included',
+    '#US1.04 AC1 a member declares an incident and gets 201',
+    '#US1.04 #US1.05 AC2, AC3: lists them',
+    'AC4 keeps AC4 inside',
+    'is never issued twice',
+    '#FIX1',
+  ];
 
-    const source = titles.map((title) => `it('${title}', () => {});`).join('\n');
+  const source = titles.map((title) => `it('${title}', () => {});`).join('\n');
 
-    const page = behaviourPage('Billing', 'intro', [
-      { title: 'unit', specs: [{ file: 'a.spec.ts', rules: rulesIn(source) }] },
-    ]);
+  const page = behaviourPage('Billing', 'intro', [
+    { title: 'unit', entries: [{ heading: 'a', specs: [specOfPage('a.spec.ts', rulesIn(source))] }] },
+  ]);
 
-    expect(page).toContain('- escalates to the next person, #FIX2 included\n');
-    expect(page).toContain('- a member declares an incident and gets 201\n');
-    expect(page).toContain('- lists them\n');
-    expect(page).toContain('- keeps AC4 inside\n');
+  it('shows the rows and the criteria a title opens with before the rule, and keeps the rest of the title as it is', () => {
+    expect(page).toContain('- `#FIX1` escalates to the next person, #FIX2 included\n');
+    expect(page).toContain('- `#US1.04 AC1` a member declares an incident and gets 201\n');
+    expect(page).toContain('- `#US1.04 #US1.05 AC2, AC3` lists them\n');
+    expect(page).toContain('- `AC4` keeps AC4 inside\n');
     expect(page).toContain('- is never issued twice\n');
     expect(page).toContain('- #FIX1\n');
-    expect(page).not.toMatch(/^\s*- #(?!FIX1$)/m);
+  });
+
+  it('ends with each row the titles open with and how many titles cite it, in the order of the plan', () => {
+    expect(page).toMatch(
+      /## Rows of the plan\n\n.*\n\n\| Row \| Titles \|\n\|---\|---\|\n\| `#FIX1` \| 2 \|\n\| `#US1.04` \| 2 \|\n\| `#US1.05` \| 1 \|\n$/,
+    );
+  });
+
+  it('says so when no title cites a row yet', () => {
+    const uncited = behaviourPage('Billing', 'intro', [
+      {
+        title: 'unit',
+        entries: [{ heading: 'a', specs: [specOfPage('a.spec.ts', rulesIn("it('is due', () => {});"))] }],
+      },
+    ]);
+
+    expect(uncited).toContain('## Rows of the plan\n\nNo title cites a row of `docs/architecture/slices.md` yet');
   });
 });
 
@@ -101,7 +118,7 @@ describe('docs, the pages of what the tests state', () => {
     const page = read(root, 'docs/behaviour/billing.md');
 
     expect(page).toContain('# billing: what its tests state');
-    expect(page).toContain('## Unit specs');
+    expect(page).toContain('## Use cases');
     expect(page).toMatch(/\d+ rules? stated/);
     expect(page).toContain('(planned)');
     expect(read(root, 'docs/behaviour/README.md')).toContain('| [billing](billing.md) |');
@@ -122,7 +139,7 @@ describe('docs, the pages of what the tests state', () => {
 
     const page = read(root, 'docs/behaviour/billing.md');
 
-    expect(page).toContain('### invoice-total (value object)');
+    expect(page).toContain('### Invoice total (value object)');
     expect(page).toContain('`unit/invoice-total.vo.spec.ts`');
     expect(page).toContain('- **InvoiceTotal**\n  - adds the lines of the invoice, taxes included');
     expect(cli(root, 'docs', '--check').code).toBe(0);

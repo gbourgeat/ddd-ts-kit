@@ -16,10 +16,15 @@ pre-commit:
       glob: 'src/**/*.{ts,mts,cts}'
       run: npx --no -- ddd-ts-kit check {staged_files}
     - name: behaviour pages
-      glob: '**/*.spec.ts'
-      # A spec in the commit changes what the tests state: the pages of docs/behaviour/, and nothing else, are
-      # regenerated and join the commit, so that docs --check has nothing to say. A worker confined to its context (.ddd-ts-kit/worker.json)
-      # leaves them to the trunk, as every shared file.
+      glob:
+        - '**/*.spec.ts'
+        - 'src/**/*.{ts,mts,cts}'
+        - 'ddd-ts-kit.config.json'
+      # A spec in the commit changes what the tests state, and a source or the config of the kit can change the heading a
+      # spec goes under (its use case, its route, the permission of its policy): the pages of docs/behaviour/, and nothing
+      # else, are regenerated and join the commit, so that docs --check has nothing to say. The cost is about a second for
+      # a commit of sources (the specs read again, each context described once). A worker confined to its context
+      # (.ddd-ts-kit/worker.json) leaves them to the trunk, as every shared file.
       run: 'if [ -f .ddd-ts-kit/worker.json ]; then echo "behaviour pages: left to the trunk, as every shared file of a worker."; else npx --no -- ddd-ts-kit docs --behaviour && git add docs/behaviour; fi'
     - name: commit size
       run: npx --no -- ddd-ts-kit check --commit-size --staged

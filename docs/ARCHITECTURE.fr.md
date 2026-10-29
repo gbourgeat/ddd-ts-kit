@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:902455d482392932 -->
+<!-- translation-of: ARCHITECTURE.md sha256:7f4b930046f413ec -->
 
 # Référence de l'architecture
 
@@ -1701,8 +1701,12 @@ a touchés, d'après une passe incrémentale qui réutilise le rapport de la nui
 un but, et la mesure ne se rétrécit jamais à la main (`test/mutation-governed`).
 
 Ce qu'énoncent les tests se relit comme un document : `ddd-ts-kit docs` écrit `docs/behaviour/`,
-une page par contexte et une pour l'application, d'après les titres des *specs*, groupés comme les
-*specs* les groupent, une règle planifiée (`it.todo`) dite comme telle. Le titre d'un test énonce une
+une page par contexte et une pour l'application, d'après les titres des *specs* : un titre par cas
+d'usage (ses *specs* de *handler*, de *policy*, de route, de bout en bout et d'acceptation
+ensemble), puis un par partie du modèle et un par réaction, les *specs* qui n'entrent dans aucun
+sous leur répertoire ; sous chacun, les titres qu'un *template* du kit a écrits à part des règles
+écrites pour le projet, une règle planifiée (`it.todo`) en dernier et dite comme telle, la ligne
+qu'un titre cite (`#US5.02 AC1`) avant lui, et les lignes citées comptées à la fin. Le titre d'un test énonce une
 règle (`test/title-states-a-rule`), donc la page se lit comme le métier l'écrirait ; le *hook* de
 pre-commit la régénère quand une *spec* est commitée et `docs --check` la tient à jour : le test est
 la preuve, la page sa lecture, et aucune seconde langue n'est tenue en phase avec le code.

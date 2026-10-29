@@ -141,6 +141,11 @@ to open.
 
 ## 3. Fill, inside out, test first
 
+Each `it.todo` turned into a test is named after the rule of the slice row it serves and cites
+the row: `- #US1.03: refuses an order without lines` in `slices.md` gives
+`it('#US1.03 refuses an order without lines', ...)`, `#<id> AC<n> ...` when a criterion of the
+story states it.
+
 1. **Domain.** In the aggregate spec, replace an `it.todo` by given / when / then for the
    rule, see it fail, then write the intention method: guard the invariant, change the
    state, record the event. No double exists at this level; needing one means logic is in
@@ -195,6 +200,8 @@ starts. A warning of `authz/granted` left on purpose (the grant comes with a lat
 in the report and the row stays `in progress`.
 
 Then one commit for the slice (skill `ddd-ts-kit:commit-discipline`), and its row marked in
-`slices.md` when you are the conductor. Report in a few lines: the rules encoded and where,
+`slices.md` when you are the conductor. Before the pull request, read `docs/behaviour/<ctx>.md`
+as the reviewer will: under the heading of the use case, each rule line of the row has its title,
+apart from what the kit generated, and `Rows of the plan` counts them. Report in a few lines: the rules encoded and where,
 test results, contract changes. A marker `todo` still lists in the slice means not done:
 report it as an open question. No file contents in the report.
