@@ -3,6 +3,7 @@ import path from 'node:path';
 import { readConfig, type Config } from '../config';
 import { barrelFile, earlierLayoutNotice, generatedDrift } from '../declared';
 import { readContexts } from '../docs/read-contexts';
+import { describeOnDisk } from '../docs/describe-on-disk';
 import { writeBehaviour } from '../docs/write-behaviour';
 import { writeDocs } from '../docs/write-docs';
 import type { KeptContext } from '../generate/refresh-barrels';
@@ -64,7 +65,7 @@ interface DocsRun {
  * spec is staged, every other generated document left as it is; with `--check`, those pages alone.
  */
 function behaviourOnly(io: Io, args: Arguments, run: DocsRun): number {
-  writeBehaviour(run.ws, run.config, readContexts(run.ws, run.config));
+  writeBehaviour(run.ws, run.config, describeOnDisk(run.ws, run.config, readContexts(run.ws, run.config)));
 
   if (!args.flag('check')) {
     return printReport(io, args, run.ws.commit(args.flag('dry-run')));

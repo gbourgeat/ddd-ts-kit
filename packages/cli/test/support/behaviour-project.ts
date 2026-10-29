@@ -1,4 +1,5 @@
 import { parseConfig } from '../../src/config';
+import { describeOnDisk } from '../../src/docs/describe-on-disk';
 import { readContexts } from '../../src/docs/read-contexts';
 import { writeBehaviour } from '../../src/docs/write-behaviour';
 import { Workspace } from '../../src/workspace';
@@ -58,7 +59,7 @@ export function behaviourPages(root: string): (page: string) => string {
   const config = parseConfig(JSON.parse(`{ "contexts": { "billing": { "classification": "core" } } }`));
   const ws = new Workspace(root, false);
 
-  writeBehaviour(ws, config, readContexts(ws, config));
+  writeBehaviour(ws, config, describeOnDisk(ws, config, readContexts(ws, config)));
 
   return (page) => ws.read(`docs/behaviour/${page}.md`) ?? '';
 }

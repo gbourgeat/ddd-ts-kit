@@ -1,8 +1,7 @@
 import type { Config } from '../config';
-import { describeContext } from '../describe/describe-context';
+import type { ContextDescription } from '../describe/context-description';
 import type { Workspace } from '../workspace';
 import { behaviourPage } from './behaviour-page';
-import type { ContextFacts } from './context-facts';
 import { contextSections } from './context-sections';
 import { countsOf, type PageCounts } from './counts-of';
 import { joinedSpecs, type UseCasesAndSpecs } from './joined-specs';
@@ -22,19 +21,17 @@ interface WrittenPage {
 }
 
 /**
- * Writes the pages of what the tests state: one per context on disk, from the specs of its `test/`
+ * Writes the pages of what the tests state: one per context on disk, as `describe` read it, from the specs of its `test/`
  * directory and the end-to-end and acceptance specs of its use cases; one for the application,
  * from the other specs of the `test/` directory of the project (journeys, architecture); and the
  * index. A page of a context that is gone is deleted.
  */
-export function writeBehaviour(ws: Workspace, config: Config, contexts: readonly ContextFacts[]): void {
-  const onDisk: UseCasesAndSpecs[] = contexts
-    .filter((candidate) => candidate.onDisk)
-    .map((context) => ({
-      context: context.name,
-      known: describeContext(ws, config, context),
-      specs: specsOf(ws, `${config.contextsDir}/${context.name}/test`),
-    }));
+export function writeBehaviour(ws: Workspace, config: Config, described: readonly ContextDescription[]): void {
+  const onDisk: UseCasesAndSpecs[] = described.map((known) => ({
+    context: known.name,
+    known,
+    specs: specsOf(ws, `${config.contextsDir}/${known.name}/test`),
+  }));
 
   const joined = joinedSpecs(onDisk, specsOf(ws, 'test'));
   const pages: WrittenPage[] = [];
