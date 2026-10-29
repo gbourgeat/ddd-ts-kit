@@ -2,6 +2,7 @@
 // commands it holds, nested ones included (`bash -c`, `eval`, `$(...)`, `find -exec`, `xargs`),
 // each with its words, its redirections and the directory it runs in. What only the shell knows
 // (a variable, the output of a substitution) is the marker UNKNOWN.
+import { existsSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { basename, resolve } from 'node:path';
 
@@ -9,20 +10,51 @@ export const UNKNOWN = '\u0000';
 
 const DEPTH = 5;
 const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh']);
-// Words that open or close a compound command: the command, if any, comes after them.
-const KEYWORDS = new Set(['if', 'then', 'else', 'elif', 'do', 'while', 'until', '!', '{', '}', 'time', 'fi', 'done']);
-// Commands that run the command written after them, with the options each takes a value for.
+// Words that open or close a compound command: the command, if any, comes after them. `coproc`
+// starts a command in the background, its name after it.
+const KEYWORDS = new Set([
+  'if',
+  'then',
+  'else',
+  'elif',
+  'do',
+  'while',
+  'until',
+  '!',
+  '{',
+  '}',
+  'time',
+  'fi',
+  'done',
+  'coproc',
+]);
+// Commands that run the command written after them: `valued` are the options that take a value,
+// `skip` consumes one leading operand after the options (`number`, only a duration; `operand`,
+// any one word), and `tail` marks what `xargs` builds from standard input.
 const WRAPPERS = {
-  sudo: ['-u', '-g', '-C', '-D', '-h', '-p', '-r', '-t', '-U'],
-  env: ['-u', '-C', '-S', '--unset', '--chdir'],
-  nice: ['-n', '--adjustment'],
-  timeout: ['-s', '-k', '--signal', '--kill-after'],
-  stdbuf: ['-i', '-o', '-e'],
-  xargs: ['-I', '-n', '-P', '-d', '-L', '-s', '-E', '-a', '--arg-file', '--delimiter', '--max-args', '--max-procs'],
-  command: [],
-  exec: ['-a'],
-  nohup: [],
-  builtin: [],
+  sudo: { valued: ['-u', '-g', '-C', '-D', '-h', '-p', '-r', '-t', '-U'] },
+  env: { valued: ['-u', '-C', '--unset', '--chdir'] },
+  nice: { valued: ['-n', '--adjustment'] },
+  timeout: { valued: ['-s', '-k', '--signal', '--kill-after'], skip: 'number' },
+  stdbuf: { valued: ['-i', '-o', '-e'] },
+  xargs: {
+    valued: ['-I', '-n', '-P', '-d', '-L', '-s', '-E', '-a', '--arg-file', '--delimiter', '--max-args', '--max-procs'],
+    tail: 'unknown',
+  },
+  command: { valued: [] },
+  exec: { valued: ['-a'] },
+  nohup: { valued: [] },
+  builtin: { valued: [] },
+  ionice: { valued: ['-c', '-n', '-p', '-P', '-u'] },
+  setsid: { valued: [] },
+  taskset: { valued: ['-c', '--cpu-list'] },
+  chrt: { valued: ['-T', '-P'], skip: 'operand' },
+  flock: { valued: ['-w', '--timeout', '-E', '--conflict-exit-code'], skip: 'operand' },
+  doas: { valued: ['-u', '-C', '-a'] },
+  watch: { valued: ['-n', '--interval'] },
+  busybox: { valued: [] },
+  toybox: { valued: [] },
+  parallel: { valued: [] },
 };
 
 /** Every simple command of `text`, the ones it nests included, each with the directory it runs in. */
@@ -37,34 +69,53 @@ export function simpleCommands(text, directory, depth = 0) {
   for (const command of commands) {
     const words = unwrapped(command.words);
     found.push({ ...command, words, directory: current });
-    current = movedTo(words, current, stack);
+    current = movedTo(command, words, { current, stack });
     found.push(...nestedCommands(words, current, depth));
+    const wrapped = wrappedText(command.words);
+    if (wrapped !== undefined) {
+      found.push(...simpleCommands(wrapped, current, depth + 1));
+    }
   }
 
   return found;
 }
 
-/** Where `cd`, `pushd` and `popd` leave the commands after them, `stack` being the one `pushd` fills. */
-function movedTo(words, current, stack) {
+/** Where `cd`, `pushd` and `popd` leave the commands after them, `place` holding the directory and the `pushd` stack. */
+function movedTo(command, words, place) {
   const name = commandName(words);
-  if (name === 'cd') {
-    return changedDirectory(words[1], current);
+  if (!['cd', 'pushd', 'popd'].includes(name)) {
+    return place.current;
   }
+  const next = movedBy(name, words, place);
+  if (!isCertain(command)) {
+    return undefined;
+  }
+  // A `cd` that cannot be seen to land on an existing directory leaves the place to the shell.
+  return name === 'cd' && (next === undefined || !existsSync(next)) ? undefined : next;
+}
+
+function movedBy(name, words, { current, stack }) {
   const target = words[1];
+  if (name === 'cd') {
+    return changedDirectory(target, current);
+  }
   if (name === 'pushd') {
     stack.push(current);
     // Without a directory, `pushd` swaps or rotates the stack: where it lands only the shell knows.
     return target === undefined || /^[+-]\d+$/.test(target) ? undefined : placeOf(target, current);
   }
-  if (name === 'popd') {
-    // `popd +N` takes an entry off the stack and stays: which one only the shell knows.
-    if (target !== undefined && /^[+-]\d+$/.test(target)) {
-      stack.length = 0;
-      return current;
-    }
-    return stack.pop();
+  // `popd +N` takes an entry off the stack and stays: which one only the shell knows.
+  if (target !== undefined && /^[+-]\d+$/.test(target)) {
+    stack.length = 0;
+    return current;
   }
-  return current;
+  return stack.pop();
+}
+
+// A directory change holds only when the command ended on `&&` at the top level: after `;`, `||`,
+// `|`, `&`, a newline, or inside a subshell, what the next command runs in only the shell knows.
+function isCertain(command) {
+  return command.ender === '&&' && command.depth === 0;
 }
 
 /** The name of the program a simple command runs: `/usr/bin/sed` is `sed`. */
@@ -97,6 +148,10 @@ export function placeOf(word, directory) {
 }
 
 function expandWord(word, directory) {
+  // A brace list or range (`{a,b}`, `{1..3}`) stands for several places only the shell computes.
+  if (/\{[^{}]*(?:,|\.\.)[^{}]*\}/.test(word)) {
+    return undefined;
+  }
   const known = word
     .replace(/^~(?=\/|$)/, homedir())
     .replace(/\$\{?HOME\}?(?![\w])/g, homedir())
@@ -121,21 +176,24 @@ function unwrapped(words) {
     if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
       rest = rest.slice(1);
     } else if (name in WRAPPERS) {
-      const inner = afterOptions(rest.slice(1), WRAPPERS[name], name === 'timeout');
-      rest = name === 'xargs' && inner.length > 0 ? [...inner, UNKNOWN] : inner;
+      const inner = afterOptions(rest.slice(1), WRAPPERS[name]);
+      rest = WRAPPERS[name].tail === 'unknown' && inner.length > 0 ? [...inner, UNKNOWN] : inner;
     } else {
       return rest;
     }
   }
 }
 
-/** The words after the options of a wrapper and its assignments (`env`), and after its duration (`timeout`). */
-function afterOptions(words, valued, skipsOne) {
+/** The words after the options of a wrapper, its assignments (`env`), and its leading operand. */
+function afterOptions(words, { valued, skip }) {
   let index = 0;
   while (index < words.length && (words[index].startsWith('-') || /^[A-Za-z_][A-Za-z0-9_]*=/.test(words[index]))) {
     index += valued.includes(words[index]) ? 2 : 1;
   }
-  return skipsOne && /^\d/.test(words[index] ?? '') ? words.slice(index + 1) : words.slice(index);
+  if (skip === 'number') {
+    return /^\d/.test(words[index] ?? '') ? words.slice(index + 1) : words.slice(index);
+  }
+  return skip === 'operand' ? words.slice(index + 1) : words.slice(index);
 }
 
 /** The commands a command runs itself: a shell given `-c`, `eval`, the `-exec` of `find`. */
@@ -150,6 +208,60 @@ function nestedCommands(words, directory, depth) {
   }
 
   return name === 'find' ? findExecutions(words, directory) : [];
+}
+
+// A command another computes from a text the shell alone splits: `su`/`doas`/`script` from their
+// `-c` string, `env -S` from its value, and a package runner (`npx`, `bunx`, `npm exec`, ...) from
+// the command it runs. The text is read as its own command line.
+function wrappedText(words) {
+  const name = commandName(words);
+  if (['su', 'doas', 'script'].includes(name)) {
+    return valueOfFlag(words, '-c');
+  }
+  if (name === 'env') {
+    return envSplit(words);
+  }
+  const inner = runnerCommand(words);
+  return inner && inner.length > 0 ? inner.join(' ') : undefined;
+}
+
+function valueOfFlag(words, flag) {
+  const at = words.indexOf(flag);
+  return at === -1 ? undefined : words[at + 1];
+}
+
+// `env -S "cmd ..."`, `env --split-string cmd ...` and `env --split-string=cmd ...` hand the whole
+// line, split by the shell, as the command to run.
+function envSplit(words) {
+  const spaced = valueOfFlag(words, '-S') ?? valueOfFlag(words, '--split-string');
+  const joined = words.find((word) => /^(?:-S.|--split-string=)/.test(word));
+  if (joined !== undefined) {
+    return joined.replace(/^(?:-S|--split-string=)/, '');
+  }
+  return spaced;
+}
+
+const RUNNERS = new Set(['npx', 'pnpx', 'bunx']);
+
+// The command a package runner runs: after its options and the leading `--`, the rest of the line.
+// `npx <cmd>` and `bunx <cmd>` run their first operand; `npm|pnpm|yarn exec -- <cmd>` run theirs.
+function runnerCommand(words) {
+  const name = commandName(words);
+  if (RUNNERS.has(name)) {
+    return innerCommand(words.slice(1), ['-p', '--package', '-c', '--call']);
+  }
+  if (['npm', 'pnpm', 'yarn'].includes(name) && words[1] === 'exec') {
+    return innerCommand(words.slice(2), ['-c', '--call', '--package']);
+  }
+  return undefined;
+}
+
+function innerCommand(args, valued) {
+  let index = 0;
+  while (index < args.length && args[index].startsWith('-') && args[index] !== '--') {
+    index += valued.includes(args[index]) ? 2 : 1;
+  }
+  return args[index] === '--' ? args.slice(index + 1) : args.slice(index);
 }
 
 /** `find <roots> ... -exec <command> {} ;`: `{}` stands for a file under each root. */
@@ -181,12 +293,21 @@ export function firstExpression(words) {
  * kept for their own reading. The body of a here-document is data, never read as commands.
  */
 function parseShell(text) {
-  const state = { text, index: 0, commands: [], substitutions: [], heredocs: [], word: undefined, redirect: undefined };
-  state.command = newCommand(false);
+  const state = {
+    text,
+    index: 0,
+    depth: 0,
+    commands: [],
+    substitutions: [],
+    heredocs: [],
+    word: undefined,
+    redirect: undefined,
+  };
+  state.command = newCommand(false, 0);
   while (state.index < text.length) {
     readNext(state);
   }
-  endCommand(state, false);
+  endCommand(state, false, undefined);
 
   return {
     commands: state.commands.filter((command) => command.words.length > 0 || command.redirects.length > 0),
@@ -194,8 +315,8 @@ function parseShell(text) {
   };
 }
 
-function newCommand(piped) {
-  return { words: [], redirects: [], heredoc: false, piped };
+function newCommand(piped, depth) {
+  return { words: [], redirects: [], heredoc: false, piped, depth, ender: undefined };
 }
 
 function readNext(state) {
@@ -222,7 +343,7 @@ function readNext(state) {
 
 function readOperator(state, char, next) {
   if (char === '\n') {
-    endCommand(state, false);
+    endCommand(state, false, '\n');
     return skipHeredocBodies(state);
   }
   if (char === ' ' || char === '\t') {
@@ -238,12 +359,29 @@ function readOperator(state, char, next) {
     return readRedirect(state);
   }
   if (char === ';' || char === '&' || char === '|' || char === '(' || char === ')') {
-    const double = (char === '&' || char === '|' || char === ';') && (next === char || (char === '|' && next === '&'));
-    state.index += double ? 2 : 1;
-    return endCommand(state, char === '|' && next !== '|');
+    return readSeparator(state, char, next);
   }
   state.index += 1;
   return append(state, char);
+}
+
+// An operator between commands: its text becomes the ender of the command it closes, and a
+// subshell parenthesis raises or lowers the depth the next command starts at.
+function readSeparator(state, char, next) {
+  const double = (char === '&' || char === '|' || char === ';') && (next === char || (char === '|' && next === '&'));
+  const ender = state.text.slice(state.index, state.index + (double ? 2 : 1));
+  state.index += double ? 2 : 1;
+  if (char === '(') {
+    state.depth += 1;
+    return endCommand(state, false, ender);
+  }
+  if (char === ')') {
+    endCommand(state, false, ender);
+    state.depth -= 1;
+    state.command.depth = state.depth;
+    return undefined;
+  }
+  return endCommand(state, char === '|' && next !== '|', ender);
 }
 
 function append(state, text) {
@@ -294,15 +432,40 @@ function substitutionEnd(text, index) {
   }
   let depth = 0;
   for (let at = index + 1; at < text.length; at += 1) {
-    if (text[at] === "'") {
+    const char = text[at];
+    if (char === '\\') {
+      at += 1;
+    } else if (char === "'") {
       at = closingQuote(text, at);
-    } else if (text[at] === '(') {
+    } else if (char === '"') {
+      at = closingDoubleQuote(text, at);
+    } else if (char === '`') {
+      at = closingBackquote(text, at);
+    } else if (char === '(') {
       depth += 1;
-    } else if (text[at] === ')' && --depth === 0) {
+    } else if (char === ')' && --depth === 0) {
       return at;
     }
   }
   return text.length;
+}
+
+// The index of the `"` that closes the one at `index`, a `\"` inside it passed over.
+function closingDoubleQuote(text, index) {
+  for (let at = index + 1; at < text.length; at += 1) {
+    if (text[at] === '\\') {
+      at += 1;
+    } else if (text[at] === '"') {
+      return at;
+    }
+  }
+  return text.length;
+}
+
+// The index of the backquote that closes the one at `index`.
+function closingBackquote(text, index) {
+  const end = text.indexOf('`', index + 1);
+  return end === -1 ? text.length : end;
 }
 
 function substitutionBody(text, index, end) {
@@ -344,10 +507,11 @@ function endWord(state) {
   }
 }
 
-function endCommand(state, piped) {
+function endCommand(state, piped, ender) {
   endWord(state);
+  state.command.ender = ender;
   state.commands.push(state.command);
-  state.command = newCommand(piped);
+  state.command = newCommand(piped, state.depth);
 }
 
 /** After the newline that ends a line, the bodies of its here-documents, each up to its delimiter line. */

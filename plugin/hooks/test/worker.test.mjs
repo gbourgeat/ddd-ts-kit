@@ -573,6 +573,24 @@ test('a context-builder is held to run every command as cd <worktree> && ..., no
   assert.equal(run('pre-bash', read).output, undefined);
 });
 
+test('a generator after cd <dir>; is judged where the session stands, not in the worktree', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = { agent_type: 'ddd-ts-kit:context-builder' };
+  // `cd <worktree> && ...` reaches the scope of the worktree, which allows a generator of its context.
+  const moved = run(
+    'pre-bash',
+    bash(conductor, `cd ${worktree} && npx ddd-ts-kit generate value-object billing Money`, agent),
+  );
+  assert.equal(moved.output, undefined);
+  // `cd <worktree>;` does not move the reader: the generator is judged from the conductor's checkout.
+  const strayed = run(
+    'pre-bash',
+    bash(conductor, `cd ${worktree}; npx ddd-ts-kit generate value-object billing Money`, agent),
+  );
+  assert.equal(decision(strayed), 'deny');
+  assert.match(reason(strayed), /main checkout of the trunk/);
+});
+
 // A conductor's checkout on the trunk, a real git worktree under .worktrees/ with a worker scope,
 // its own install so Node does not borrow the trunk's packages.
 function conductorWithWorker() {

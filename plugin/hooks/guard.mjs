@@ -482,11 +482,25 @@ function workerCommandReason(project, input, { context, command, commands }) {
     dependencyChangeReason(commands) ??
     workingMigrationReason(command) ??
     formatterReason(project, commands) ??
+    unknownProgramReason(commands) ??
     fileChangeReason(project, input, commands);
   if (!refusal) {
     noteBeforeInlineCode(project, input, commands);
   }
   return refusal;
+}
+
+// A command whose program word holds a variable or a substitution runs a name only the shell
+// computes, which the guard cannot judge; `eval` of such a text leaves the same unreadable word.
+function unknownProgramReason(commands) {
+  for (const { words } of commands) {
+    const program = words[0];
+    if (program !== undefined && (program.includes(shell.UNKNOWN) || program.includes('$'))) {
+      const shown = program.replaceAll(shell.UNKNOWN, '$(...)');
+      return `A worker runs no command whose name only the shell knows: \`${shown}\` is computed when the command runs. ${EDIT_WITH_TOOLS}`;
+    }
+  }
+  return undefined;
 }
 
 function postWrite(input) {
@@ -1847,7 +1861,7 @@ function count(text, pattern) {
 function commandDirectory(command, cwd) {
   const named =
     /--cwd[= ]\s*("[^"]+"|'[^']+'|\S+)/.exec(command) ??
-    /^\s*(?:cd|pushd)\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*(?:&&|;)/.exec(command);
+    /^\s*(?:cd|pushd)\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*&&/.exec(command);
   const directory = named?.[1]?.replace(/^["']|["']$/g, '');
   if (!directory) {
     return cwd;

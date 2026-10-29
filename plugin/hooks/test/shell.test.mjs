@@ -62,6 +62,102 @@ test('commands nested five deep are read', () => {
 
 test.todo('a command nested deeper than the reader follows is refused');
 
+// A `cd` that is not certain leaves the place to the shell: the reader follows it only after `&&`,
+// at the top level, into a directory that exists. A relative write after it names nothing it can
+// place, so it is refused.
+const UNCERTAIN_CD = [
+  'cd /nonexistent 2>/dev/null; echo x > src/main.ts',
+  'false && cd /tmp; echo x > src/main.ts',
+  '(cd /tmp); echo x > src/main.ts',
+  'cd /tmp | cat; rm src/main.ts',
+  'cd /tmp & echo x > src/main.ts',
+  'cd src && cd /nonexistent && echo x > main.ts',
+];
+
+test('a cd that is not certain does not move the reader, and a relative write after it is refused', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const command of UNCERTAIN_CD) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), /files only the shell knows/, command);
+  }
+  // A certain first cd is followed, an uncertain second one is not.
+  const chained = run('pre-bash', bash(root, 'cd src && cd /nonexistent 2>/dev/null; echo x > main.ts', agent));
+  assert.equal(decision(chained), 'deny');
+  assert.match(reason(chained), /files only the shell knows/);
+});
+
+// Each word holds a brace list or range: the place it stands for only the shell knows.
+const BRACE_WRITES = [
+  'rm src/contexts/invoicing/{x,../../main.ts}',
+  'touch src/contexts/invoicing/{x,../../platform/evil.ts}',
+  'echo x | tee src/contexts/invoicing/{x,../../main.ts}',
+];
+
+test('a word holding a brace list or range is a place only the shell knows', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const command of BRACE_WRITES) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), /files only the shell knows/, command);
+  }
+});
+
+// Each runs a write the tables know, behind a name the shell computes, a keyword, a wrapper that
+// takes a leading operand, a package runner, `su -c`, or `env -S`.
+const COMPUTED_AND_WRAPPED = [
+  ['$CMD src/main.ts', /only the shell knows/],
+  ['${RM:-rm} src/main.ts', /only the shell knows/],
+  ['$(which rm) src/main.ts', /only the shell knows/],
+  ['eval "$CMD"', /only the shell knows/],
+  ['eval $(echo rm src/main.ts)', /only the shell knows/],
+  ['coproc rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['ionice -c3 rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['setsid rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['taskset -c 0 rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['chrt 0 rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['flock /tmp/lock rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['doas rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['watch rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['parallel rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['toybox rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['busybox cp a src/main.ts', /`cp` changes src\/main\.ts/],
+  ['npx rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npx -y rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npx -p shx rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['bunx rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npm exec -- rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['su -c "rm src/main.ts" builder', /`rm` changes src\/main\.ts/],
+  ['script -c "rm src/main.ts" /tmp/typescript', /`rm` changes src\/main\.ts/],
+  ["env -S 'cp a src/main.ts'", /`cp` changes src\/main\.ts/],
+  ["env -S'cp a src/main.ts'", /`cp` changes src\/main\.ts/],
+  ["env --split-string 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
+  ["env --split-string='rm src/main.ts'", /`rm` changes src\/main\.ts/],
+];
+
+test('a command whose name the shell computes, or a wrapper that hides it, is read for what it runs', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const [command, expected] of COMPUTED_AND_WRAPPED) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  // A package runner with no command, and env without -S around a reader, run as they read.
+  for (const command of ['npx --version', 'env -i node --version']) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
+test('a double quote inside a substitution does not hide the commands that follow it', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  const hidden = 'echo "$(echo ")")" ; rm src/main.ts';
+  assert.match(reason(run('pre-bash', bash(root, hidden, agent))), /`rm` changes src\/main\.ts/);
+});
+
 test('without TMPDIR in the environment, the system temp directory stays free to a worker', () => {
   const root = project();
   const agent = worker(root);
