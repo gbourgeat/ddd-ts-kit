@@ -47,6 +47,13 @@ function placement(value: string, ws: Workspace, config: Config): [string, strin
  * `../main.ts` say, which the command would report moved and could not move.
  */
 function insidePlatform(value: string, written: string, config: Config): string {
+  if (written.includes('\\')) {
+    throw new CliError(
+      `--place ${value} names ${written}, written with a backslash: the kit reads paths with \`/\` only (on Windows, through WSL 2).`,
+      'Write the path with `/`, from the platform: --place auth/role-grants.ts=auth/roles.',
+    );
+  }
+
   const file = path.posix.normalize(written);
 
   if (path.posix.isAbsolute(file) || file === '..' || file.startsWith('../')) {

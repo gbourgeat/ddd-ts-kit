@@ -49,6 +49,10 @@ describe('ddd-ts-kit typeorm-generate <folder>/<name>', () => {
       '/tmp/add-invoices',
       '"/tmp/add-invoices" cannot be the path of a migration: its folder is not one of the project.',
     ],
+    [
+      '..\\outside\\add-invoices',
+      '"..\\outside\\add-invoices" cannot be the path of a migration: it is written with a backslash, and the kit reads paths with `/` only (on Windows, through WSL 2).',
+    ],
   ])('refuses %s before TypeORM reads it, as an option or a place outside the project', (target, message) => {
     const root = projectWithTool('node_modules/typeorm/cli.js');
 

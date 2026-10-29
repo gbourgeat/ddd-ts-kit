@@ -75,6 +75,13 @@ function migrationTarget(target: string | undefined): string {
     throw new CliError('A migration is named by where it goes and what it does.', TARGET_FIX);
   }
 
+  if (target.includes('\\')) {
+    throw new CliError(
+      `"${target}" cannot be the path of a migration: it is written with a backslash, and the kit reads paths with \`/\` only (on Windows, through WSL 2).`,
+      TARGET_FIX,
+    );
+  }
+
   const folder = path.posix.dirname(path.posix.normalize(target));
 
   if (path.posix.isAbsolute(folder) || folder === '..' || folder.startsWith('../') || folder.startsWith('-')) {

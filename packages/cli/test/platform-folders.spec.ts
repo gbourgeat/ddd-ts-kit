@@ -281,6 +281,14 @@ describe('platform-folders, on the files of the team', () => {
       });
     }
 
+    const backslash = cli(root, 'platform-folders', '--place', '..\\main.ts=composition');
+
+    expect(backslash.code).toBe(2);
+
+    expect(backslash.stderr).toContain(
+      'error: --place ..\\main.ts=composition names ..\\main.ts, written with a backslash: the kit reads paths with `/` only (on Windows, through WSL 2).',
+    );
+
     expect(read(root, 'src/main.ts')).toBe(main);
     expect(exists(root, 'outside-file.ts')).toBe(true);
     expect(exists(root, 'src/platform/composition/main.ts')).toBe(false);
