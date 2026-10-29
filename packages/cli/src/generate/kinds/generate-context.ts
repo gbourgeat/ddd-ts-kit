@@ -1,13 +1,7 @@
-import {
-  addContextToConfigText,
-  CLASSIFICATIONS,
-  CONFIG_FILE,
-  isOneOf,
-  type Config,
-  type Upstream,
-} from '../../config';
+import { addContextToConfigText, CLASSIFICATIONS, CONFIG_FILE, isOneOf, type Config } from '../../config';
 import { refreshContextDoc } from '../../docs/refresh-context-doc';
 import { CliError } from '../../cli-error';
+import { MissingPrerequisite } from '../missing-prerequisite';
 import { parseContextName, type Name } from '../../naming';
 import { PRISMA_MAIN_SCHEMA, prismaSchemaOf } from '../../prisma-schema';
 import type { Workspace } from '../../workspace';
@@ -25,7 +19,7 @@ export function generateContext(ws: Workspace, config: Config, request: ContextR
 
   const classification = knownClassification(context, request.classification);
 
-  assertUpstreamsExist(config, context, request.upstreams);
+  assertUpstreamsExist(config, context, request);
 
   const existing = ownEntry(config.contexts, context.kebab);
 
@@ -108,7 +102,7 @@ function knownClassification(context: Name, classification: string | undefined):
   );
 }
 
-function assertUpstreamsExist(config: Config, context: Name, upstreams: readonly Upstream[]): void {
+function assertUpstreamsExist(config: Config, context: Name, { upstreams, builtOn }: ContextRequest): void {
   for (const upstream of upstreams) {
     if (upstream.context === context.kebab) {
       throw new CliError(
@@ -118,11 +112,13 @@ function assertUpstreamsExist(config: Config, context: Name, upstreams: readonly
     }
 
     if (ownEntry(config.contexts, upstream.context) === undefined) {
-      throw new CliError(
+      throw new MissingPrerequisite(
         `The upstream context "${upstream.context}" is not declared.`,
         `Create it first with \`ddd-ts-kit generate context ${upstream.context} --classification <core|supporting|generic>\`.`,
       );
     }
+
+    builtOn?.(`${config.contextsDir}/${upstream.context}/CONTEXT.md`);
   }
 }
 

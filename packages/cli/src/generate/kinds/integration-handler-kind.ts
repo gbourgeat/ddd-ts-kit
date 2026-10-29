@@ -1,5 +1,6 @@
 import { CONFIG_FILE } from '../../config';
 import { CliError } from '../../cli-error';
+import { MissingPrerequisite } from '../missing-prerequisite';
 import { parseContextName, toName, type Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
@@ -70,10 +71,10 @@ export const integrationHandlerKind: Kind = {
 };
 
 /** A handler declares itself against the declaration of its event: without one there is nothing to handle. */
-function undeclaredEvent(upstream: Name, eventType: string): CliError {
+function undeclaredEvent(upstream: Name, eventType: string): MissingPrerequisite {
   const [, aggregate = '', fact = ''] = eventType.split('.');
 
-  return new CliError(
+  return new MissingPrerequisite(
     `${upstream.kebab} declares no ${eventType} in its published language.`,
     `An integration event handler declares itself with @IntegrationEventHandler(<definition>, ...), which needs the declaration of the event: create it first with \`ddd-ts-kit generate integration-event ${upstream.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}\`, then run the command again.`,
   );

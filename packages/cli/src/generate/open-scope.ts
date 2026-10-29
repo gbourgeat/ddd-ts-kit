@@ -2,6 +2,7 @@ import type { Config } from '../config';
 import { CliError } from '../cli-error';
 import type { Name } from '../naming';
 import { contextArgument } from './context-argument';
+import { MissingPrerequisite } from './missing-prerequisite';
 import type { KindRequest } from './kind';
 import type { Scope } from './scope';
 import { SHARED_KERNEL, sharedKernelScope } from './shared-kernel-scope';
@@ -31,14 +32,18 @@ export function openScope(request: KindRequest, options: ScopeOptions = {}): Sco
     throw unknownContext(config, context);
   }
 
-  return { ws, config, context, dir: `${config.contextsDir}/${context.kebab}`, flags };
+  const dir = `${config.contextsDir}/${context.kebab}`;
+
+  flags.builtOn?.(`${dir}/CONTEXT.md`);
+
+  return { ws, config, context, dir, flags };
 }
 
-function unknownContext(config: Config, context: Name): CliError {
+function unknownContext(config: Config, context: Name): MissingPrerequisite {
   const known = Object.keys(config.contexts);
   const create = `\`ddd-ts-kit generate context ${context.kebab} --classification <core|supporting|generic>\``;
 
-  return new CliError(
+  return new MissingPrerequisite(
     `Unknown context "${context.kebab}".`,
     known.length > 0
       ? `Use one of: ${known.join(', ')}; or create it with ${create}.`

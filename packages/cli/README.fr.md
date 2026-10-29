@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fc4d8446b32ae133 -->
+<!-- translation-of: README.md sha256:c65a4d8409fa8e0f -->
 
 # ddd-ts-kit
 
@@ -1398,15 +1398,51 @@ attend, directement ou non : un terme qu'ajoute une ligne qu'elle n'attend pas n
 cette ligne peut ne pas être fusionnée quand celle-ci se construit. Chaque mot que le glossaire ne
 définit pas (`undefined-word`) et chaque mot technique qu'aucun terme ne porte (`technical-word`)
 est signalé une fois par ligne, avec le `--term` à ajouter, sans vagues, et la commande sort avec
-1 : un worker qui suivrait cette ligne telle qu'écrite serait refusé. Les commandes que le
-générateur a refusées pour une autre raison (un `--module` manquant, un agrégat qu'aucune ligne ne
-génère, un amont non déclaré, un handler écrit à la main dont un spec de bout en bout a besoin)
-sont listées après les vagues sous `Refused for another reason than a word when the plan was
-replayed`, sans échec : les noms qu'elles introduiraient après ce refus ne sont pas jugés. Le rejeu
+1 : un worker qui suivrait cette ligne telle qu'écrite serait refusé. De même pour chaque commande
+que le générateur refuse pour une autre raison (`refused-command` : un `--module` manquant dans un
+contexte divisé en modules, `--grant` sur un projet dont les droits ne sont pas des rôles, un
+agrégat qu'aucune ligne ne génère, un amont non déclaré, une option inconnue), sans vagues et avec
+la sortie 1, le refus du générateur et sa correction affichés sous la ligne : corrigez la ligne.
+Le générateur dit aussi, quand il rejoue une commande, sur quels fichiers elle s'appuie (l'agrégat
+de `--aggregate`, le port d'un adaptateur, le cas d'usage d'une route, un groupe de routes, la
+route, le *handler* d'événement ou le *job* qui lance le cas d'usage d'une spec de bout en bout, le
+`CONTEXT.md` du contexte où elle écrit et de chaque amont qu'elle déclare, la déclaration d'un
+événement) et quels fichiers elle crée. Une commande qui s'appuie sur un fichier que génère une
+ligne qu'elle n'attend pas, directement ou non, est une `missing-dependency`, même si le rejeu,
+une ligne après l'autre dans une seule copie, a trouvé le fichier : le worker de cette ligne, sur
+une branche à lui, serait refusé (`#US5.02 ... builds on <file>, which #US5.01 generates: add
+US5.01 to its Depends on`). Une commande que le générateur refuse nomme plutôt ces lignes avec son
+refus, dans son `prerequisite` et ses `rows` : un problème par commande. Une commande refusée pour ce sur quoi elle s'appuie est rejouée une
+fois tout le plan rejoué, avec `--dry-run` pour que la copie reste telle que le plan l'a laissée et
+qu'aucun rejeu ne passe sur ce qu'un autre a écrit, et les fichiers qu'elle trouve alors disent
+quelle ligne génère ce qu'il lui fallait, chaque fichier en une passe : une ligne suivante qu'elle n'attend pas (`add <id>
+to its Depends on`, et cet identifiant dans `rows`, autant d'identifiants que de lignes), une ligne suivante qui l'attend (déplacez la commande qui le génère dans
+cette ligne ou dans une ligne d'avant, plutôt que de faire un cycle), une commande suivante de la
+même ligne (mettez-la en premier), ou aucune telles que les lignes sont écrites (ajoutez la
+commande que nomme la correction, ou corrigez la ligne refusée qui la générerait) ; ce pour quoi
+elle est alors refusée, pour une autre raison (un `--grant` une fois l'agrégat trouvé) ou pour un
+autre fichier qu'aucune ligne ne génère, est dit aussi (`then:`, `nextRefusal`), pour que corriger l'ordre ne soit pas suivi d'un autre refus. Une
+ligne `in progress` est rejouée, pour que les lignes d'après trouvent ce qu'elle génère, mais ni
+ses noms, ni ses refus, ni ce sur quoi elle s'appuie ne sont des problèmes : son worker a pu
+ajouter sur sa branche le terme qu'il faut à un nom, ses commandes ont pu déjà tourner dans le
+projet, et le générateur refuse une seconde exécution de certaines (un port déjà lié à un
+adaptateur, un enregistrement de décision dont le numéro est pris) ; ils sont listés à part, avec
+leur correction, sous `Refused in rows in progress, not counted`. Une commande dont les fichiers
+existent est sinon sautée par le générateur, pas refusée. Le rejeu exécute chaque commande pour de
+vrai dans la copie, jamais avec `--dry-run`, pour que la commande suivante trouve ses fichiers. Avec
+un contexte, les lignes ouvertes des autres contextes sont rejouées aussi, dans leurs vagues (quand
+tout le fichier peut être ordonné), pour qu'une ligne trouve ce que génère une ligne d'un autre
+contexte qu'elle n'attend pas et qu'on lui dise de l'attendre ; seules les lignes de son plan, les
+siennes et celles qu'elles attendent, sont jugées et listées sous `Refused in rows in progress`.
+Un plan dont les lignes ne lancent aucune commande de génération ne fait pas de copie. Le rejeu
 coûte environ un dixième de seconde par commande. `--json` affiche
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], notReplayed: [{ row, command, refusal }] }`,
+`{ file, context, problems: [{ kind, rows, message, command?, refusal?, fix?, prerequisite?, nextRefusal?, builtOn? }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], started: [{ row, command, refusal, fix }] }`,
 `story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
-une ligne que le contexte demandé ne montre pas.
+une ligne que le contexte demandé ne montre pas ; `command`, `refusal`, `fix` et `prerequisite`
+sont ceux d'un `refused-command`, `fix`, `prerequisite` et `nextRefusal` (`{ refusal, fix, prerequisite }`, son
+`prerequisite` disant qu'aucune ligne ne génère le fichier qui lui manque alors) valant `null` quand
+il n'y en a pas, `command` et `builtOn` ceux d'une `missing-dependency` ; `message` tient un problème
+sur une ligne.
 
 ## acceptance
 

@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:b376584f29433f34 -->
+<!-- translation-of: coding-agents.md sha256:de4c2d0a9121cc9f -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -162,7 +162,7 @@ ligne.
 | `glossary` | le générateur refuse un nom que le glossaire ne tient pas ; `language/glossary-term`, `language/declared-vocabulary`, `language/no-technical-name` | |
 | `context-map` | `context/no-cycle`, `context/declared-relationship`, `context/published-language-only`, `context/published-language-is-a-contract`, la carte des contextes régénérée et comparée par `docs --check` | |
 | `bootstrap` | `init` écrit un projet vert sous `npm run verify` ; `config/valid` ; `doctor --strict` | |
-| `plan-slices` | `status`, `story-check` et `worker-scope --rows` lisent les lignes de `slices.md` et refusent une ligne inconnue ; `plan-waves` rejoue les commandes de génération des lignes et refuse un nom dont le glossaire ne définit pas les mots ; `verify-slice` | l'ordre des lignes est conseillé (`plan-waves`), jamais refusé |
+| `plan-slices` | `status`, `story-check` et `worker-scope --rows` lisent les lignes de `slices.md` et refusent une ligne inconnue ; `plan-waves` rejoue les commandes de génération des lignes et refuse un nom dont le glossaire ne définit pas les mots, toute commande que le générateur refuse, avec son refus sous la ligne, et une ligne qui s'appuie sur ce que génère une ligne qu'elle n'attend pas ; `verify-slice` | l'ordre des lignes est conseillé (`plan-waves`), jamais refusé |
 | `parallel-work` | la garde du *worker* (`.ddd-ts-kit/worker.json` : une écriture hors du contexte est refusée, par les outils d'édition et par le *shell*), `verify-merge`, `merge-trunk`, `status --workers` | |
 | `intent` | `story-scope --from` refuse une intention dont le statut n'est pas `accepted` ; le bloc `## Origin` de la *story*, que `story --gate close` exige | le contenu d'une intention est lu par des personnes, pas vérifié |
 | `story` | `story --gate build` et `--gate close`, la garde dans le *worktree* d'une *story* (pas de code avant la revue de conception et le verrou), `acceptance --lock`, `test/acceptance-black-box`, l'agent `acceptance-judge` | la passe de conception de `story-check` tient les noms, pas le comportement |

@@ -50,7 +50,6 @@ describe('plan-waves, the names of the planned commands', () => {
         },
       ],
       waves: [],
-      notReplayed: [],
     });
 
     expect(fs.existsSync(path.join(root, 'src/contexts/billing/application/commands/refund-invoice'))).toBe(false);
@@ -79,19 +78,14 @@ describe('plan-waves, the names of the planned commands', () => {
     expect(jsonAt(unrelated.json(), 'problems')).toEqual([expect.objectContaining({ rows: ['US4.02'] })]);
   });
 
-  it('lists without failing a command the generator refuses for another reason, its later names not judged', () => {
-    const replayed = plan(
-      '| US4.01 | billing | slice | Pay order | `generate command billing PayInvoice --aggregate Order --permission invoice.pay` | | billing | todo |\n',
-    );
+  it('does not judge the names of a row in progress: its worker may have added the term on their branch', () => {
+    const refund = (status: string): string =>
+      `| US4.01 | billing | slice | Refund invoice | \`generate command billing RefundInvoice --aggregate Invoice --permission invoice.refund\` | | billing | ${status} |\n`;
 
-    expect(replayed.code).toBe(0);
+    const started = plan(refund('in progress'));
 
-    expect(jsonAt(replayed.json(), 'notReplayed')).toEqual([
-      {
-        row: 'US4.01',
-        command: 'generate command billing PayInvoice --aggregate Order --permission invoice.pay',
-        refusal: expect.stringContaining('Order'),
-      },
-    ]);
+    expect(jsonAt(started.json(), 'problems')).toEqual([]);
+    expect(started.code).toBe(0);
+    expect(plan(refund('todo')).code).toBe(1);
   });
 });

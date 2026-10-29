@@ -6,6 +6,8 @@ import { readEventDefinitions } from '../../../describe/read-event-definitions';
 import { readRoutes } from '../../../describe/read-routes';
 import { toName, type Name } from '../../../naming';
 import type { RenderContext } from '../../../templating';
+import { foundPrerequisite } from '../../found-prerequisite';
+import { MissingPrerequisite } from '../../missing-prerequisite';
 import type { Scope } from '../../scope';
 import { jobsSending } from './jobs-sending';
 import { declaredModules, wiringTextOf } from '../../../model-modules';
@@ -38,6 +40,10 @@ export function reactionOf(scope: Scope, name: Name, routeFile: string): Reactio
 
   if (event === undefined && jobs.length === 0) {
     throw noTrigger(useCase, routeFile);
+  }
+
+  if (event !== undefined) {
+    scope.flags.builtOn?.(event.file);
   }
 
   const reads = readRoutes(sources, [])
@@ -97,10 +103,10 @@ function sentFor(useCase: UseCaseOf): ConsumedEventFact | undefined {
   return sender;
 }
 
-function noTrigger({ scope, name, consumed }: UseCaseOf, routeFile: string): CliError {
+function noTrigger({ scope, name, consumed }: UseCaseOf, routeFile: string): MissingPrerequisite {
   const handled = consumed.length === 0 ? '' : ` (handled here: ${typesOf(consumed).join(', ')})`;
 
-  return new CliError(
+  return new MissingPrerequisite(
     `The use case ${name.pascal} has no route in "${scope.context.kebab}" (${routeFile}), no integration event handler of it sends ${name.pascal}Command, and no job of it does (application/scheduling/*.job.ts).`,
     `An end-to-end spec drives the application through HTTP, through the integration event that starts the use case, or through the job that runs it: create the route first with \`ddd-ts-kit generate route ${scope.context.kebab} ${name.pascal} --method <M> --path <path>\`, create the job with \`ddd-ts-kit generate job ${scope.context.kebab} <JobName> --every <duration> --command ${name.pascal}\`, or name the event its handler receives with --event <context>.<aggregate>.<fact>${handled}.`,
   );
@@ -110,8 +116,8 @@ function noTrigger({ scope, name, consumed }: UseCaseOf, routeFile: string): Cli
 function handledOf({ scope, name, consumed }: UseCaseOf, asked: string): ConsumedEventFact {
   const command = `${scope.dir}/application/commands/${name.kebab}/${name.kebab}.command.ts`;
 
-  if (!scope.ws.exists(command)) {
-    throw new CliError(
+  if (!foundPrerequisite(scope, command)) {
+    throw new MissingPrerequisite(
       `The use case ${name.pascal} has no command in "${scope.context.kebab}" (${command}).`,
       `An integration event handler starts a command of its context: create it first with \`ddd-ts-kit generate command ${scope.context.kebab} ${name.pascal} --permission <aggregate>.<action>\`.`,
     );
@@ -126,7 +132,7 @@ function handledOf({ scope, name, consumed }: UseCaseOf, asked: string): Consume
   const [upstream = '<upstreamContext>'] = asked.split('.');
   const create = `\`ddd-ts-kit generate integration-handler ${scope.context.kebab} ${upstream} ${asked}\``;
 
-  throw new CliError(
+  throw new MissingPrerequisite(
     `No integration event handler of "${scope.context.kebab}" receives ${asked}.`,
     consumed.length === 0
       ? `Create the handler first with ${create}.`

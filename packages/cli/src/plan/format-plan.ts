@@ -1,4 +1,15 @@
-import type { Batch, NotReplayed, OtherStoryRow, PlannedRow, WaitedRow, Wave, WavePlan } from './wave-plan';
+import { SLICE_STATUS } from '../progress/slice';
+import type {
+  Batch,
+  OtherStoryRow,
+  PlannedRow,
+  PlanProblem,
+  RefusedCommand,
+  StartedRefusal,
+  WaitedRow,
+  Wave,
+  WavePlan,
+} from './wave-plan';
 
 /** Before the squash merge of each branch, its migrations get their real names and the trunk comes in from what already landed. */
 const BEFORE_EACH_MERGE =
@@ -7,30 +18,30 @@ const BEFORE_EACH_MERGE =
 /** The problems of a word: the rows can be ordered, but a worker following one as written is refused. */
 const WORD_PROBLEMS: readonly string[] = ['undefined-word', 'technical-word'];
 
+/** The problems that keep a worker following a row as written from building it, besides a word. */
+const FOLLOWING_PROBLEMS: readonly string[] = ['refused-command', 'missing-dependency'];
+
 /**
- * `plan-waves` for a reader: the problems alone when there are some, else each wave and its
- * batches, the rows another story waits for, then the merge order and what to run before each
- * merge; in both cases, the planned commands the generator refused for another reason than a word.
+ * `plan-waves` for a reader: the problems alone when there are some, a refused command with what
+ * the generator says under it; else each wave and its batches, the rows another story waits for,
+ * then the merge order and what to run before each merge; in both cases, what the generator
+ * refused in rows in progress, said apart and not counted.
  */
 export function formatPlan(plan: WavePlan): string {
   const scope = plan.context === null ? plan.file : `${plan.file}, context ${plan.context}`;
 
   if (plan.problems.length > 0) {
-    const words = plan.problems.every((problem) => WORD_PROBLEMS.includes(problem.kind));
-
     return [
-      words
-        ? `Waves (${scope}): none, the generator refuses names of these rows: add their terms first`
-        : `Waves (${scope}): none, the plan cannot be ordered until these rows are fixed`,
-      ...plan.problems.map((problem) => `  ${problem.message}`),
-      ...notReplayedLines(plan.notReplayed),
+      `Waves (${scope}): none, ${problemsHeading(plan.problems)}`,
+      ...plan.problems.flatMap(problemLines),
+      ...startedLines(plan.started),
     ].join('\n');
   }
 
   const batches = plan.waves.flatMap((wave) => wave.batches);
 
   if (batches.length === 0) {
-    return `Waves (${scope}): none, every row is done`;
+    return [`Waves (${scope}): none, every row is done`, ...startedLines(plan.started)].join('\n');
   }
 
   const rows = batches.reduce((count, batch) => count + batch.rows.length, 0);
@@ -41,20 +52,55 @@ export function formatPlan(plan: WavePlan): string {
     ...otherStoriesLines(plan),
     `Merge order: ${plan.mergeOrder.join(', ')}`,
     BEFORE_EACH_MERGE,
-    ...notReplayedLines(plan.notReplayed),
+    ...startedLines(plan.started),
   ].join('\n');
 }
 
-/** The commands the replay could not run to their end: the names they introduce after the refusal were not judged. */
-function notReplayedLines(commands: readonly NotReplayed[]): string[] {
-  if (commands.length === 0) {
+function problemsHeading(problems: readonly PlanProblem[]): string {
+  if (problems.some((problem) => FOLLOWING_PROBLEMS.includes(problem.kind))) {
+    return 'a worker following these rows as written would be refused: fix the rows first';
+  }
+
+  return problems.every((problem) => WORD_PROBLEMS.includes(problem.kind))
+    ? 'the generator refuses names of these rows: add their terms first'
+    : 'the plan cannot be ordered until these rows are fixed';
+}
+
+/** A problem on its line; a refused command, then what the generator says and where the plan stands on what it builds on. */
+function problemLines(problem: PlanProblem): string[] {
+  return problem.kind === 'refused-command' ? refusedLines(problem) : [`  ${problem.message}`];
+}
+
+function refusedLines({ rows, command, refusal, fix, prerequisite, nextRefusal }: RefusedCommand): string[] {
+  return [
+    `  #${rows[0] ?? ''} \`${command}\` is refused by the generator:`,
+    ...under(refusal),
+    ...(fix === null ? [] : under(`fix: ${fix}`)),
+    ...(prerequisite === null ? [] : under(prerequisite)),
+    ...(nextRefusal === null ? [] : under(`then: ${nextRefusal.refusal}`)),
+    ...(nextRefusal === null || nextRefusal.fix === null ? [] : under(`fix: ${nextRefusal.fix}`)),
+    ...(nextRefusal === null || nextRefusal.prerequisite === null ? [] : under(nextRefusal.prerequisite)),
+  ];
+}
+
+/** What the generator refused in rows in progress, said so that the fix shows, under a heading that says it is not counted. */
+function startedLines(started: readonly StartedRefusal[]): string[] {
+  if (started.length === 0) {
     return [];
   }
 
   return [
-    'Refused for another reason than a word when the plan was replayed (the names after the refusal not judged):',
-    ...commands.map((command) => `  #${command.row} \`${command.command}\`: ${command.refusal}`),
+    'Refused in rows in progress, not counted: their commands may have run already',
+    ...started.flatMap(({ row, command, refusal, fix }) => [
+      `  #${row} \`${command}\`:`,
+      ...under(refusal),
+      ...(fix === null ? [] : under(`fix: ${fix}`)),
+    ]),
   ];
+}
+
+function under(text: string): string[] {
+  return text.split('\n').map((line) => `    ${line}`);
 }
 
 function plural(count: number, one: string, many: string): string {
@@ -81,7 +127,7 @@ function batchLines(batch: Batch, context: string | null): string[] {
 }
 
 function rowLine(row: PlannedRow, context: string | null): string {
-  const status = row.status === 'todo' ? '' : ` (${row.status})`;
+  const status = row.status === SLICE_STATUS.todo ? '' : ` (${row.status})`;
   const after = row.waitingForRows.map((waited) => waitedText(waited, row, context));
   const waits = after.length === 0 ? '' : `, after ${after.join(', ')}`;
 
