@@ -32,7 +32,8 @@ type ByContext = Map<string, Map<string, SpecOfPage[]>>;
  * Shares out the specs of the application (`test/`, files relative to it) under the use cases of
  * the contexts: an end-to-end spec named after a use case or its route (`<use-case>`,
  * `<use-case>-<behaviour>`, `<context>-<use-case>`), the longest name winning and a tie leaving it
- * where it is; an acceptance scenario under the use case whose titles cite the first row it cites.
+ * where it is; an acceptance scenario under the one use case whose titles cite the first row it
+ * cites, two of them leaving it where it is.
  * Every other spec and scenario stays on the page of the application.
  */
 export function joinedSpecs(contexts: readonly UseCasesAndSpecs[], application: readonly SpecOfPage[]): JoinedSpecs {
@@ -66,7 +67,10 @@ function add(byContext: ByContext, { context, useCase }: Owner, spec: SpecOfPage
   byContext.set(context, ofContext);
 }
 
-/** The scenarios of an acceptance spec under the use case of the first row each one cites; what is left of the spec, any other spec whole. */
+/**
+ * The scenarios of an acceptance spec under the use case whose titles cite the first row each one
+ * cites, when one use case alone cites it; what is left of the spec, any other spec whole.
+ */
 function shareScenarios(
   byContext: ByContext,
   spec: SpecOfPage,
@@ -78,8 +82,9 @@ function shareScenarios(
 
   const ownerOf = (title: string): Owner | undefined => {
     const [first = ''] = citedRows(title).rows;
+    const owners = rows.filter(([cited]) => cited.has(first));
 
-    return rows.find(([cited]) => cited.has(first))?.[1];
+    return owners.length === 1 ? owners[0]?.[1] : undefined;
   };
 
   for (const owner of new Set(allRules(spec.rules).flatMap((rule) => ownerOf(rule.title) ?? []))) {

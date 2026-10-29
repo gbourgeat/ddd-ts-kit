@@ -77,3 +77,21 @@ describe('The page of a context, one heading per use case', () => {
     expect(page('application')).toContain('| Row | Titles |\n|---|---|\n| `#US1.09` | 1 |\n');
   });
 });
+
+describe('The page of a context, a scenario whose row two use cases cite', () => {
+  const root = behaviourProject({
+    'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts': 'export class X {}\n',
+    [`${UNIT}/cancel-invoice.handler.spec.ts`]: specOf('Cancel invoice', ['#US1.04 refuses an invoice already paid']),
+    [`${UNIT}/issue-invoice.handler.spec.ts`]: specOf('Issue invoice', ['#US1.04 numbers the invoice']),
+    'test/acceptance/US1.acceptance.spec.ts': specOf('Invoice a customer, acceptance', [
+      '#US1.04 AC1 a customer is invoiced, then cancels',
+    ]),
+  });
+
+  const page = behaviourPages(root);
+
+  it('leaves it on the page of the application, as an end-to-end spec two use cases could claim', () => {
+    expect(page('billing')).not.toContain('a customer is invoiced, then cancels');
+    expect(page('application')).toContain('- `#US1.04 AC1` a customer is invoiced, then cancels');
+  });
+});
