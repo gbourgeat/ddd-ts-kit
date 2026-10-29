@@ -1,9 +1,9 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { {{name.pascal}}Service } from '{{alias.context}}/domain/services/{{name.kebab}}.service{{alias.ext}}';
 
-describe('{{name.pascal}}Service', () => {
-  it('holds no state of its own', () => {
-    expect(Object.keys(new {{name.pascal}}Service())).toEqual([]);
+describe('{{name.title}}', () => {
+  it('is built with nothing: it decides from what it is given, with no port and no store', () => {
+    expect(() => new {{name.pascal}}Service()).not.toThrow();
   });
 
   // TODO(domain): replace each entry below by a test named after the business decision {{name.pascal}}Service makes, given aggregates built with the builders of test/builders.

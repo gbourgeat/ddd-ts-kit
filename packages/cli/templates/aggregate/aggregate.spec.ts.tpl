@@ -3,7 +3,7 @@ import { given } from '@ddd-ts-kit/testing';
 import { {{name.pascal}} } from '{{alias.context}}/domain/aggregates/{{name.kebab}}.aggregate{{alias.ext}}';
 import { {{name.article}}{{name.pascal}} } from '{{alias.context}}/test/builders/{{name.kebab}}.builder{{alias.ext}}';
 
-describe('{{name.pascal}}', () => {
+describe('{{name.title}}', () => {
   it('is born with its identity', () => {
     const bornAt = new Date('2026-03-01T00:00:00.000Z');
 

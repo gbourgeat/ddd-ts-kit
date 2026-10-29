@@ -307,7 +307,8 @@ export const NOTES = `  affected         what a pull request has to run: the con
   --sdk            init records "sdk" in the config and generates the clients with the project
   --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
                    a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being
-                   the one character a cell of the table cannot hold
+                   the one character a cell of the table cannot hold; taken by the kinds whose usage below
+                   shows it, refused by the others, as is any flag the usage of a kind does not show
   --reason         generate context writes it under ## Classification, the sentence of why the context is
                    of its classification; generate adr --deviation records it as the reason of the deviation
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;

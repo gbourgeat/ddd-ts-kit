@@ -63,7 +63,7 @@ function scaffold(root: string, flags: readonly string[]): void {
     ['generate', 'query', 'ordering', 'TrackOrder', '--public', ...TERMS],
     ['generate', 'route', 'ordering', 'TrackOrder', '--method', 'GET', '--path', '/orders/:orderId'],
     // An adapter that states its own policy: without one, nothing of a declared project reads `ownPolicy` and knip says so.
-    ['generate', 'port', 'ordering', 'CarrierTracking', '--term', 'Carrier=Who moves an order'],
+    ['generate', 'port', 'ordering', 'CarrierTracking'],
     ['generate', 'adapter', 'ordering', 'CarrierTracking', '--decorators'],
     ['generate', 'worker'],
     ['generate', 'service', 'ordering'],

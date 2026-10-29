@@ -7,8 +7,12 @@ const TEXT = { type: 'string' } as const;
 const SWITCH = { type: 'boolean', default: false } as const;
 const TEXTS = { type: 'string', multiple: true } as const;
 
-/** Every flag a kind may take; each kind reads the ones it knows. */
+/** The flags of `generate` every kind takes, whatever its usage shows: the `generate` line of the help states them. */
+export const COMMON_FLAGS = ['allow-name', 'local-only', 'dry-run', 'force'] as const;
+
+/** Every flag a kind may take; each kind reads the ones it knows, and refuses the others its usage does not show. */
 const OPTIONS = {
+  ...Object.fromEntries(COMMON_FLAGS.map((flag) => [flag, SWITCH])),
   classification: TEXT,
   purpose: TEXT,
   preset: TEXT,
@@ -23,7 +27,6 @@ const OPTIONS = {
   command: SWITCH,
   query: SWITCH,
   version: TEXT,
-  'allow-name': SWITCH,
   permission: TEXT,
   grant: TEXT,
   public: SWITCH,
@@ -55,10 +58,10 @@ const OPTIONS = {
   every: TEXT,
   cron: TEXT,
   'time-zone': TEXT,
-  'dry-run': SWITCH,
-  force: SWITCH,
-  'local-only': SWITCH,
 };
+
+/** Every flag of `generate`, by its name: a kind that does not show one in its usage refuses it. */
+export const GENERATE_FLAGS: readonly string[] = Object.keys(OPTIONS);
 
 /** The arguments of `generate` as it reads them: the positionals wherever the flags stand, the value of each flag. */
 export function generateArguments(argv: readonly string[]): Arguments {

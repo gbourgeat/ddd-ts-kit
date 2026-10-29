@@ -1,13 +1,14 @@
 import { readConfig } from '../config';
 import { CliError } from '../cli-error';
 import { findKind } from '../generate/find-kind';
-import { generateArguments } from '../generate/generate-arguments';
+import { COMMON_FLAGS, GENERATE_FLAGS, generateArguments } from '../generate/generate-arguments';
 import type { Kind, KindFlags } from '../generate/kind';
 import type { GeneratorProbe } from '../generate/generator-probe';
 import { KINDS } from '../generate/kinds';
 import { placeGeneratedFiles } from '../generate/place-generated-files';
 import { refreshDocs } from '../generate/refresh-docs';
 import { refuseSharedWrites } from '../generate/refuse-shared-writes';
+import { refuseUndeclaredFlags } from '../generate/refuse-undeclared-flags';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
 import { MODULE_OPTION, usageOf } from '../generate/usage-of';
 import { toName } from '../naming';
@@ -37,6 +38,7 @@ export function generate(argv: readonly string[], io: Io, probe?: GeneratorProbe
   const flags = probedFlags(flagsOf(args), probe);
 
   refuseModuleOf(kind, flags);
+  refuseUndeclaredFlags(kind, passedFlags(args), COMMON_FLAGS);
 
   const context = kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined;
 
@@ -68,6 +70,11 @@ export function generate(argv: readonly string[], io: Io, probe?: GeneratorProbe
 /** The flags, with what a probe hears in place of a flag: the names to judge and the files built on. */
 function probedFlags(flags: KindFlags, probe: GeneratorProbe | undefined): KindFlags {
   return probe === undefined ? flags : { ...flags, language: probe.language, builtOn: probe.builtOn };
+}
+
+/** The flags of `generate` given on the command line, by their name. */
+function passedFlags(args: Arguments): string[] {
+  return GENERATE_FLAGS.filter((key) => args.text(key) !== undefined || args.flag(key) || args.many(key).length > 0);
 }
 
 function requestedKind(name: string | undefined, rest: readonly string[]): Kind {

@@ -5,7 +5,7 @@ import { unwrap } from '@ddd-ts-kit/kernel';
 {{/if}}
 import { {{name.pascal}} } from '{{alias.context}}/domain/value-objects/{{name.kebab}}.vo{{alias.ext}}';
 
-describe('{{name.pascal}}, for any value', () => {
+describe('{{name.title}}, for any value', () => {
   it('is equal to the {{name.words}} created again from its own value', () => {
     fc.assert(
       fc.property(any{{name.pascal}}(), (value) => {

@@ -7,9 +7,6 @@ import { {{name.pascal}}IntegrationHandler } from '{{alias.context}}/application
 
 describe('When {{upstream.kebab}} publishes {{upstream.eventName}}', () => {
   it('listens to the type {{upstream.kebab}} publishes', () => {
-    const handler = new {{name.pascal}}IntegrationHandler(new InMemoryCommandBus());
-
-    expect(handler).toBeInstanceOf({{name.pascal}}IntegrationHandler);
     expect({{name.pascal}}IntegrationHandler.eventType).toBe('{{upstream.eventName}}');
   });
 

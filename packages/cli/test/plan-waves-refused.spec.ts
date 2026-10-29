@@ -35,7 +35,7 @@ beforeAll(() => {
 
   cli(root, 'generate', 'aggregate', 'catalog', 'Product', '--term', 'Product=An item offered for sale');
   cli(root, 'generate', 'module', 'catalog', 'pricing', '--term', 'Pricing=The setting of the price of products');
-  cli(root, 'generate', 'port', 'billing', 'PaymentProvider', '--term', 'Payment provider=Who moves the money');
+  cli(root, 'generate', 'port', 'billing', 'PaymentProvider');
   cli(root, 'generate', 'adapter', 'billing', 'PaymentProvider');
 });
 
