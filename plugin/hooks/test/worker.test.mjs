@@ -841,6 +841,25 @@ test('code of a worker that commits its own change outside the scope is caught b
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
 });
 
+test('code of a worker that commits a shared file already changed before it ran is caught by the move of HEAD', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'commit-changed', agent_id: 'builder-1' };
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
+  writeFileSync(join(root, 'README.md'), 'Changed by the conductor.\n');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  git(root, 'commit', '--quiet', '--no-verify', '--all', '--message', 'x');
+  const stopped = reason(run('pre-bash', bash(root, 'npm test', agent)));
+  assert.match(stopped, /changed files outside your scope: README\.md\./);
+  const [, keep] =
+    /then `git commit` to record it, then `(cp \.ddd-ts-kit\/guard\/held\/[0-9a-f]{64} README\.md)`/.exec(stopped);
+  assert.ok(stopped.includes(`\`git checkout ${head.slice(0, 12)} -- README.md\``));
+  git(root, 'checkout', head, '--', 'README.md');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'revert');
+  assert.match(reason(run('pre-bash', bash(root, 'npm test', agent))), /outside your scope: README\.md\./);
+  spawnSync('sh', ['-c', keep], { cwd: root });
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
 test("a worker's own commit, a decision record of its slice included, and the trunk a merge brings in do not stop it", () => {
   const root = committed();
   const agent = { ...worker(root, 'ordering'), session_id: 'own', agent_id: 'builder-1' };

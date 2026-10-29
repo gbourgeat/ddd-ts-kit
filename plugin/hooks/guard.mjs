@@ -3310,7 +3310,7 @@ function holdChanges(project, input, { worktree: before, script }) {
     const file = stateFile('outside', project, input);
     const held = readJson(file) ?? {};
     for (const path of changed) {
-      held[path] ??= before.changes[path] ?? { clean: before.head };
+      held[path] ??= { ...(before.changes[path] ?? { clean: true }), head: before.head };
     }
     writeState(file, held);
   }
@@ -3333,14 +3333,16 @@ function differences(checkout, outside, { before, now }) {
   const paths = new Set([...Object.keys(before.changes), ...Object.keys(now.changes), ...committed.keys()]);
   return [...paths].filter((path) => {
     const was = before.changes[path];
-    return was
+    const content = was
       ? was.hash !== (now.changes[path]?.hash ?? contentHash(join(checkout.root, path)))
-      : path in now.changes || committed.has(path);
+      : path in now.changes;
+    return committed.has(path) || content;
   });
 }
 
 // The paths `outside` keeps that differ between the commit `from` and HEAD, each with its letter
-// (A added, M modified, D deleted).
+// (A added, M modified, D deleted); a path that HEAD holds as the other side of a merge since then
+// (the trunk `merge-trunk` brought in) is the trunk's, not a change of the worker.
 function committedSince(checkout, from, outside) {
   const fields = (
     git(checkout, ['diff', '--name-status', '--no-renames', '-z', '--end-of-options', from, 'HEAD']) ?? ''
@@ -3351,7 +3353,29 @@ function committedSince(checkout, from, outside) {
       paths.set(fields[index + 1], fields[index]);
     }
   }
+  for (const side of mergedSides(checkout, from)) {
+    const differing = new Set((git(checkout, ['diff', '--name-only', '-z', side, 'HEAD']) ?? '').split('\0'));
+    for (const path of [...paths.keys()].filter((kept) => !differing.has(kept))) {
+      paths.delete(path);
+    }
+  }
   return paths;
+}
+
+// The other parents of the merges on the first-parent line from `from` to HEAD.
+function mergedSides(checkout, from) {
+  const merges = git(checkout, [
+    'rev-list',
+    '--first-parent',
+    '--merges',
+    '--parents',
+    '--end-of-options',
+    `${from}..HEAD`,
+  ]);
+  return (merges ?? '')
+    .split('\n')
+    .filter(Boolean)
+    .flatMap((line) => line.split(' ').slice(2));
 }
 
 function sessionChangeReason(session, before) {
@@ -3403,10 +3427,8 @@ function heldChangeReason(project, input, commands) {
 // A file held to its content (null: deleted) is back once it has it; a file held to a commit is
 // back once git shows it unchanged and no commit since changed it.
 function isPutBack(project, { now, since }, [path, target]) {
-  if (!('clean' in target)) {
-    return contentHash(join(project.root, path)) === target.hash;
-  }
-  return !(path in now.changes) && !(target.clean !== now.head && commitsOf(project, since, target.clean).has(path));
+  const content = 'clean' in target ? !(path in now.changes) : contentHash(join(project.root, path)) === target.hash;
+  return content && !(target.head !== now.head && commitsOf(project, since, target.head).has(path));
 }
 
 function commitsOf(project, since, from) {
@@ -3436,7 +3458,10 @@ function isGitCommit({ words }) {
 
 function putBackReason(project, state, left) {
   const steps = left.map((held) => putBackStep(project, state, held)).filter((step) => step.command);
-  const commit = steps.some((step) => step.commit) ? ', then `git commit` to record it' : '';
+  const afterwards = steps.flatMap((step) => (step.after ? [`, then \`${step.after}\``] : [])).join('');
+  const commit = steps.some((step) => step.after !== undefined)
+    ? `, then \`git commit\` to record it${afterwards}`
+    : '';
   const kept = left.some(([, target]) => target.hash)
     ? ` A file already changed before that command is held to its content then, kept in ${GUARD_HELD}/.`
     : '';
@@ -3447,13 +3472,14 @@ function putBackReason(project, state, left) {
 // The command that brings one held file back to the state it is held to: its content before the
 // command (kept by the guard, or deleted), its committed content, its old name, or no file at all.
 function putBackStep(project, { now, since }, [path, target]) {
-  if (!('clean' in target)) {
-    return { command: target.hash ? `cp ${GUARD_HELD}/${target.hash} ${path}` : `rm ${path}` };
-  }
-  const letter = target.clean === now.head ? undefined : commitsOf(project, since, target.clean).get(path);
+  const kept = 'clean' in target ? '' : target.hash ? `cp ${GUARD_HELD}/${target.hash} ${path}` : `rm ${path}`;
+  const letter = target.head === now.head ? undefined : commitsOf(project, since, target.head).get(path);
   if (letter) {
-    const restore = letter === 'A' ? 'git rm --' : `git checkout ${target.clean.slice(0, 12)} --`;
-    return { command: `${restore} ${path}`, commit: true };
+    const restore = letter === 'A' ? 'git rm --' : `git checkout ${target.head.slice(0, 12)} --`;
+    return { command: `${restore} ${path}`, after: kept };
+  }
+  if (kept) {
+    return { command: kept };
   }
   const entry = now.changes[path];
   if (Object.values(now.changes).some((other) => other.from === path)) {
