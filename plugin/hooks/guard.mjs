@@ -78,7 +78,7 @@ const TIME_SCALE = timeScale(process.env.DDD_TS_KIT_GUARD_TIME_SCALE);
 const BRIEFING_BUDGET = 10_000;
 const BRIEFING_CUT =
   'Briefing cut short: the CLI did not answer in time; `npx ddd-ts-kit status` and `npx ddd-ts-kit list` say the rest.';
-// The written files one call of post-write formats and checks, of the 15 s of its hook: a patch of Codex can hold many.
+// The written files one call of post-write checks, of the 15 s of its hook: a patch of Codex can hold many.
 const POST_WRITE_FILES = 5;
 // The written files one call of pre-write has the CLI judge before they land, of the 5 s of its hook.
 const CLI_WRITE_FILES = 2;
@@ -694,8 +694,9 @@ function unknownProgramReason(commands) {
 
 function postWrite(input) {
   const all = writesOf(input);
+  // Biome lays out every written file, which is quick; the check, which is not, reads the first ones.
+  formatWrites(all);
   const writes = all.slice(0, POST_WRITE_FILES);
-  formatWrites(writes);
   const errors = writes.filter(({ file }) => isChecked(file)).flatMap(({ file }) => checkWritten(file));
   const unchecked =
     all.length > writes.length

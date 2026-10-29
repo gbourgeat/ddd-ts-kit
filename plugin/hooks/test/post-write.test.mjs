@@ -154,3 +154,15 @@ test('a patch of many files has its first five checked, and says the others were
     /breaks 5 architecture rule\(s\)[\s\S]*\nddd-ts-kit: 2 more written file\(s\) not checked here/,
   );
 });
+
+test('with formatOnWrite, every file of a patch is laid out, the first five only checked', () => {
+  const root = project({ formatOnWrite: true });
+  const calls = fakeBiome(root);
+  cliAnswering(root, { 'check-file': { violations: [] } });
+  const files = Array.from({ length: 7 }, (_, index) => `src/platform/note-${index}.ts`);
+  for (const file of files) {
+    put(root, file, 'const a=1\n');
+  }
+  run('post-write', patch(root, ...files.map((file) => `*** Update File: ${file}\n+const a=1`)));
+  assert.equal(calls().length, 7);
+});
