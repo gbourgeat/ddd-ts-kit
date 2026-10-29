@@ -7,6 +7,7 @@ import { contextImports } from '../../context-imports';
 import { isDeclared } from '../../is-declared';
 import type { Scope } from '../../scope';
 import type { ContextFake } from './context-fakes';
+import { WORLD_COMMENTS } from './world-comments';
 
 /**
  * What a world template reads: its name, the imports of the fakes and of the ports they stand
@@ -35,10 +36,11 @@ export function worldVars(scope: Scope, name: Name, fakes: readonly ContextFake[
       ' };',
     ),
     overrides: laidOut(
-      '    fakes: [',
-      [...fakes.map((fake) => `fake(${fake.port.name}, fakes.${fake.key})`), '...(settings.fakes ?? [])'],
-      '],',
+      '  const built = [',
+      fakes.map((fake) => `fake(${fake.port.name}, fakes.${fake.key})`),
+      '];',
     ),
+    replacing: `// ${WORLD_COMMENTS.replacing()}`,
     returnedBuses: laidOut('  return { ', ['...buses', ...returnedFakes(fakes)], ' };'),
   };
 }

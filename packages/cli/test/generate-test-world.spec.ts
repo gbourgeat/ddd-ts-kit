@@ -72,9 +72,12 @@ describe('generate test-world, in the declared style', () => {
       "    ...settings,\n    eventBusFailures: 'as-thrown',\n    modules: [platformTestModule, context, ...modules],",
     );
 
+    // A fake the spec hands replaces the one the world builds for the same port: one override per port.
     expect(world).toContain(
-      '    fakes: [\n      fake(InvoiceRepository, fakes.invoiceRepository),\n      fake(PaymentGateway, fakes.paymentGateway),\n      ...(settings.fakes ?? []),\n    ],',
+      '  const handed = settings.fakes ?? [];\n  const replaced = new Set(handed.map(([port]) => port));\n  const built = [fake(InvoiceRepository, fakes.invoiceRepository), fake(PaymentGateway, fakes.paymentGateway)];',
     );
+
+    expect(world).toContain('    fakes: [...built.filter(([port]) => !replaced.has(port)), ...handed],');
 
     expect(world).toContain('  return { application, ...fakes };');
     expect(generated.todos).toEqual([]);

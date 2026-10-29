@@ -39,13 +39,18 @@ export async function {{world.article}}{{world.pascal}}World({ modules = [nobody
 
   await given?.(fakes);
 
+  {{world.replacing}}
+  const handed = settings.fakes ?? [];
+  const replaced = new Set(handed.map(([port]) => port));
+{{world.overrides}}
+
 {{/if}}
   const application = createTestApplication({
     ...settings,
     eventBusFailures: 'as-thrown',
     modules: [platformTestModule, {{world.contextModule}}, ...modules],
 {{#if world.hasFakes}}
-{{world.overrides}}
+    fakes: [...built.filter(([port]) => !replaced.has(port)), ...handed],
 {{/if}}
   });
 

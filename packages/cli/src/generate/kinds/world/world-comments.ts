@@ -1,6 +1,6 @@
 /**
  * The comments the generator writes about the arrangement of a spec or of a world, beside its
- * `TODO` markers: written from here, and recognised from here by `isWorldComment`.
+ * markers of the decisions to take: written from here, and recognised from here by `isWorldComment`.
  */
 export const WORLD_COMMENTS = {
   absent: (command: string): string =>
