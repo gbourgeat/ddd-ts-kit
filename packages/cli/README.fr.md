@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3f0860d953cfc511 -->
+<!-- translation-of: README.md sha256:61b6d6d34046d0f5 -->
 
 # ddd-ts-kit
 
@@ -2077,9 +2077,11 @@ est utilisée quand le clone l'a). Chaque chemin modifié atteint quelque chose 
 
 Sans `--base`, ou quand git ne sait pas dire ce qui a changé (une référence inconnue, un clone
 superficiel sans la base), tout est retenu : c'est ce qu'obtiennent la branche par défaut et
-l'exécution nocturne. La sélection n'est jamais plus étroite que les relations déclarées, parce
-que `context/declared-relationship` garde chaque import entre contextes à l'intérieur d'elles, et
-que cette règle tourne sur le projet entier dans chaque *pipeline*.
+l'exécution nocturne. Un `--base` ou un `--head` qui commence par un tiret est refusé (code de
+sortie 2) : aucune référence ne commence ainsi, et git la lirait comme l'une de ses options. La
+sélection n'est jamais plus étroite que les relations déclarées, parce que
+`context/declared-relationship` garde chaque import entre contextes à l'intérieur d'elles, et que
+cette règle tourne sur le projet entier dans chaque *pipeline*.
 
 ![Un changement dans le contexte scheduling de l'application d'exemple : scheduling est retenu, et avec lui notification et analytics, qui sont en aval de lui dans la carte des contextes ; identity, en amont, est laissé à la branche par défaut](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-affected-selection.fr.svg)
 
@@ -2195,7 +2197,9 @@ règle.
   échoue jusqu'à ce que le propriétaire réécrive la *baseline*. Une
   *baseline* fait taire les anciennes erreurs ; elle ne rend pas vérifiable une arborescence hors
   de l'arborescence canonique.
-  `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet.
+  `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet, sur le
+  *commit* que nomme la référence : une référence qui ne nomme aucun *commit* est refusée (code de
+  sortie 2, `<ref> is not a commit of this repository`), comme par chaque commande qui en prend une.
 - `--format github` affiche des annotations `::error file=...,line=...::`.
 - `--explain` fait suivre les violations de chaque règle qu'elles signalent, une fois, avec sa
   description et la raison de son existence (comme `explain` l'affiche, sans les exemples), et

@@ -1,4 +1,5 @@
 import { CliError } from '../cli-error';
+import { knownCommit } from '../commit/known-commit';
 import { readConfig } from '../config';
 import { formatSliceVerification } from '../slice/format-slice-verification';
 import { verifySlice } from '../slice/verify-slice';
@@ -20,6 +21,12 @@ export const verifySliceCommand: Command = (argv, io) => {
       `Name it: \`ddd-ts-kit verify-slice ${context} --since origin/main\` (the trunk of your briefing).`,
     );
   }
+
+  knownCommit(
+    root,
+    since,
+    'Fetch it first (`git fetch origin`), or name the trunk of your briefing: `--since origin/main`.',
+  );
 
   const verification = verifySlice({ root, config, context, since });
 

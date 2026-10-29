@@ -1,6 +1,6 @@
 import { CliError } from '../cli-error';
 import { runGit } from '../commit/run-git';
-import { commitOf } from './lost/commit-of';
+import { commitOf } from '../commit/commit-of';
 
 const TRUNKS = ['origin/HEAD', 'origin/main'];
 

@@ -1952,10 +1952,11 @@ Each changed path reaches something:
   lockfile, the pipeline, a directory of `src/contexts/` the config does not declare.
 
 Without `--base`, or when git cannot tell what changed (an unknown ref, a shallow clone without
-the base), everything is selected: that is what the default branch and the nightly run get. The
-selection is never narrower than the declared relationships, because `context/declared-relationship`
-keeps every import between contexts inside them, and that rule runs on the whole project in every
-pipeline.
+the base), everything is selected: that is what the default branch and the nightly run get. A
+`--base` or `--head` that starts with a dash is refused (exit 2): no ref does, and git would read
+it as one of its own options. The selection is never narrower than the declared relationships,
+because `context/declared-relationship` keeps every import between contexts inside them, and that
+rule runs on the whole project in every pipeline.
 
 ![A change in the scheduling context of the example application: scheduling is selected, and so are notification and analytics, which are downstream of it in the context map; identity, upstream, is left to the default branch](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-affected-selection.svg)
 
@@ -2066,7 +2067,9 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
   baseline was committed (a `git mv`); a file moved otherwise reports its errors at its new path,
   and its old entry fails until the owner writes the baseline again. A baseline makes old errors quiet; it does
   not make a tree outside the canonical one checkable.
-  `--changed-since` runs `git diff --name-only --relative <ref>...` in the project.
+  `--changed-since` runs `git diff --name-only --relative <ref>...` in the project, on the commit
+  the ref names: a ref that names no commit is refused (exit 2, `<ref> is not a commit of this
+  repository`), as it is by every command that takes one.
 - `--format github` prints `::error file=...,line=...::` annotations.
 - `--explain` follows the violations with each rule they report, once, with its description and
   the reason it exists (as `explain` prints it, without the examples), and in JSON adds an

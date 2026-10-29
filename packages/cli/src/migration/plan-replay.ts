@@ -4,6 +4,7 @@ import { drizzleHistoryFindings } from '../check/migrations/drizzle-history-find
 import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder';
 import { readDrizzleMigrations } from '../check/migrations/read-drizzle-migrations';
 import { CliError } from '../cli-error';
+import { commitOf } from '../commit/commit-of';
 import { runGit } from '../commit/run-git';
 import type { BranchMigration } from './branch-migration';
 import { branchMigrations } from './branch-migrations';
@@ -68,7 +69,7 @@ function refuseConflictMarkers(root: string, journal: string, base: string): voi
 }
 
 function refuseUnknownBase(root: string, base: string): void {
-  if (runGit(root, ['rev-parse', '--verify', '--quiet', `${base}^{commit}`]) === undefined) {
+  if (commitOf(root, base) === undefined) {
     throw new CliError(
       `${base} is not a commit of this repository.`,
       'Fetch it (`git fetch origin`), or name the trunk the branch merged with `--base <ref>`.',

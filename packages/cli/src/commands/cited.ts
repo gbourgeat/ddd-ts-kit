@@ -5,6 +5,7 @@ import { openRows } from '../citations/open-rows';
 import { staleNamesAt } from '../citations/stale-names-at';
 import { staleNamesSince } from '../citations/stale-names-since';
 import { CliError } from '../cli-error';
+import { knownCommit } from '../commit/known-commit';
 import { runGit } from '../commit/run-git';
 import { readConfig } from '../config';
 import { readSlices, SLICES_FILE } from '../progress/read-slices';
@@ -88,13 +89,13 @@ function baseRef(root: string, base: string | undefined): string {
   return base === undefined ? runGit(root, ['branch', '--show-current'])?.trim() || 'HEAD' : knownRef(root, base);
 }
 
+/** A ref the user gave, once it names a commit: kept by its name, which the report prints. */
 function knownRef(root: string, ref: string): string {
-  if (runGit(root, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]) === undefined) {
-    throw new CliError(
-      `${ref} is not a commit of this repository.`,
-      'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.',
-    );
-  }
+  knownCommit(
+    root,
+    ref,
+    'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.',
+  );
 
   return ref;
 }

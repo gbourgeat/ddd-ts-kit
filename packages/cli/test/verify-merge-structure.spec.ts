@@ -243,4 +243,22 @@ describe('verify-merge, refusals', () => {
       expect(result.stderr).toContain(message);
     }
   });
+
+  it('refuses a ref that starts with a dash as a commit it does not name, before git reads it as an option', () => {
+    const root = mergeRepository(PAY_AND_CANCEL);
+    const output = path.join(tempDir('verify-merge-output'), 'log.txt');
+
+    const dashed = `--output=${output}`;
+
+    for (const refused of [
+      cli(root, 'verify-merge', `--since=${dashed}`),
+      cli(root, 'verify-merge', 'main', `--theirs=${dashed}`),
+      cli(root, 'verify-merge', 'HEAD', '--theirs', 'main', `--base=${dashed}`),
+    ]) {
+      expect(refused.code).toBe(2);
+      expect(refused.stderr).toContain(`--output=${output} is not a commit of this repository.`);
+    }
+
+    expect(fs.existsSync(output)).toBe(false);
+  });
 });

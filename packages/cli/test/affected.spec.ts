@@ -154,6 +154,27 @@ describe('ddd-ts-kit affected', () => {
     });
   });
 
+  it('refuses a ref that starts with a dash, which git would read as its own option, and writes no file', () => {
+    const precious = path.join(tempDir('affected-output'), 'precious.txt');
+
+    fs.writeFileSync(precious, 'kept\n');
+    const written = path.join(path.dirname(precious), 'head-out.txt');
+
+    const base = cli(root, 'affected', `--base=--output=${precious}`, '--run', 'test');
+    const head = cli(root, 'affected', '--base', 'base', `--head=--output=${written}`);
+
+    expect(base.code).toBe(2);
+
+    expect(base.stderr).toContain(
+      `--output=${precious} is not a commit of this repository: no ref starts with a dash.`,
+    );
+
+    expect(fs.readFileSync(precious, 'utf8')).toBe('kept\n');
+    expect(head.code).toBe(2);
+    expect(head.stderr).toContain('fix: Name a branch, a tag or a commit: `--head origin/main`.');
+    expect(fs.existsSync(written)).toBe(false);
+  });
+
   it('reads the difference with the base: a changed upstream brings its downstream, as outputs of a GitHub step and as a GitLab dotenv report', () => {
     commit('src/contexts/billing/domain/note.ts', 'export const note = 1;\n');
 

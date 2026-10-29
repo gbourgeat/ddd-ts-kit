@@ -44,6 +44,22 @@ describe('verify-slice', () => {
     expect(result.stdout).toContain('next: fix the causes above, then run verify-slice again');
   });
 
+  it('refuses a --since that names no commit before any step runs', () => {
+    const marker = path.join(root, 'regenerated.txt');
+
+    withScripts('node -e ""');
+    const manifest: { scripts: Record<string, string> } = JSON.parse(read(root, 'package.json'));
+
+    manifest.scripts['regenerate'] = `node -e "require('node:fs').writeFileSync('regenerated.txt', '')"`;
+    write(root, 'package.json', `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const refused = cli(root, 'verify-slice', 'billing', '--since', 'origin/nowhere');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('error: origin/nowhere is not a commit of this repository.');
+    expect(fs.existsSync(marker)).toBe(false);
+  });
+
   it('names the paths to stage and the files near the size limit when every step passes', () => {
     withScripts('node -e ""');
     git(root, 'switch', '--quiet', '--create', 'build/billing');

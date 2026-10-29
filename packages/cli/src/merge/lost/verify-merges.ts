@@ -1,4 +1,5 @@
 import { CliError } from '../../cli-error';
+import { knownCommit } from '../../commit/known-commit';
 import { inProgressMerge } from './in-progress-merge';
 import type { MergeCheck } from './merge-check';
 import { mergeOfRecord } from './merge-of-record';
@@ -38,13 +39,11 @@ export function verifyMerges(request: MergesToVerify): MergeVerification {
 }
 
 function named(repo: MergeRepository, commit: string, request: MergesToVerify): MergeToVerify {
-  const [record] = mergeRecords(repo.top, ['-1', commit, '--']);
+  const fix = 'Pass a merge commit, or a squash commit with --theirs <branch head>.';
+  const [record] = mergeRecords(repo.top, ['-1', knownCommit(repo.top, commit, fix), '--']);
 
   if (record === undefined) {
-    throw new CliError(
-      `${commit} is not a commit of this repository.`,
-      'Pass a merge commit, or a squash commit with --theirs <branch head>.',
-    );
+    throw new CliError(`${commit} is not a commit of this repository.`, fix);
   }
 
   return mergeOfRecord(repo.top, record, request);

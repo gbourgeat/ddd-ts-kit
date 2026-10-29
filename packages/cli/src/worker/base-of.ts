@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { CliError } from '../cli-error';
+import { commitOf } from '../commit/commit-of';
 import { runGit } from '../commit/run-git';
 import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
 import type { Config } from '../config';
@@ -29,7 +30,7 @@ export function baseOf(root: string, config: Config, base: string | undefined): 
 }
 
 function knownRef(root: string, base: string): string {
-  if (runGit(root, ['rev-parse', '--verify', '--quiet', `${base}^{commit}`]) === undefined) {
+  if (commitOf(root, base) === undefined) {
     throw new CliError(
       `The base ${base} is not a commit of this repository.`,
       'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.',

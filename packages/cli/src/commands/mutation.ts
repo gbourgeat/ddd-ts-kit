@@ -1,4 +1,5 @@
 import { CliError } from '../cli-error';
+import { knownCommit } from '../commit/known-commit';
 import { type Config, readConfig } from '../config';
 import { changedFiles } from '../mutation/changed-files';
 import { formatMutation } from '../mutation/format-mutation';
@@ -55,7 +56,8 @@ function reportOf(root: string, file: string): MutationReport {
 }
 
 function changedSince(root: string, since: string): ReadonlySet<string> {
-  const changed = changedFiles(root, since);
+  const commit = knownCommit(root, since, 'Name a branch, a tag or a commit git knows: `--changed origin/main`.');
+  const changed = changedFiles(root, commit);
 
   if (changed === undefined) {
     throw new CliError(

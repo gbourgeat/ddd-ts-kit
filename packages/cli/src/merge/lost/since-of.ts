@@ -1,8 +1,8 @@
 import path from 'node:path';
-import { CliError } from '../../cli-error';
 import { WORKER_SCOPE_FILE } from '../../commit/worker-scope-file';
 import { readWorkerFile } from '../../worker/read-worker-file';
-import { commitOf } from './commit-of';
+import { commitOf } from '../../commit/commit-of';
+import { knownCommit } from '../../commit/known-commit';
 
 const TRUNKS = ['origin/HEAD', 'origin/main'];
 
@@ -13,12 +13,7 @@ const TRUNKS = ['origin/HEAD', 'origin/main'];
  */
 export function sinceOf(root: string, top: string, explicit: string | undefined): string | undefined {
   if (explicit !== undefined) {
-    if (commitOf(top, explicit) === undefined) {
-      throw new CliError(
-        `${explicit} is not a commit of this repository.`,
-        'Fetch it first, or pass the trunk: `--since origin/main`.',
-      );
-    }
+    knownCommit(top, explicit, 'Fetch it first, or pass the trunk: `--since origin/main`.');
 
     return explicit;
   }

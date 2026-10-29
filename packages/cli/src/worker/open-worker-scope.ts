@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { staleNamesAt } from '../citations/stale-names-at';
 import { CliError } from '../cli-error';
+import { commitOf } from '../commit/commit-of';
 import { runGit } from '../commit/run-git';
 import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
 import type { Config } from '../config';
@@ -196,7 +197,7 @@ function herePlace(root: string, request: WorkerRequest): Place {
  */
 function writeScope(root: string, inside: string, scope: WorkerFile & { readonly base: string }): void {
   const file = path.join(inside, WORKER_SCOPE_FILE);
-  const baseCommit = runGit(root, ['rev-parse', '--verify', '--quiet', `${scope.base}^{commit}`])?.trim();
+  const baseCommit = commitOf(root, scope.base);
   const { branch, ...recorded } = scope;
 
   const written: WorkerFile = {

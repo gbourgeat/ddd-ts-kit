@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { CliError } from '../cli-error';
+import { commitOf } from '../commit/commit-of';
 import { runGit } from '../commit/run-git';
 import type { Config } from '../config';
 import { addWorktree } from '../worker/add-worktree';
@@ -176,7 +177,7 @@ function prepare(root: string, place: PreparedStory): ReturnType<typeof installD
     addWorktree(root, { worktree, branch, base });
   }
 
-  const baseCommit = runGit(root, ['rev-parse', '--verify', '--quiet', `${base}^{commit}`])?.trim();
+  const baseCommit = commitOf(root, base);
 
   const written: StoryPlace = {
     story,
