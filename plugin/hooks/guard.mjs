@@ -482,6 +482,7 @@ async function preparingReason(project, input, command) {
   return (
     baselineWriteReason(command) ??
     (await hooksSkippedReason(input, command)) ??
+    (await gitConfigReason(input, command)) ??
     (await workerPlaceReason(input, command)) ??
     (await landingReason(input, command)) ??
     oneSideMergeReason(project, input, command) ??
@@ -1590,7 +1591,10 @@ function storiesOf(project) {
     return cached;
   }
   const view = runCli(project, ['stories', '--json'], 3000);
-  const prefix = spawnSync('git', ['rev-parse', '--show-prefix'], { cwd: project.root, encoding: 'utf8' });
+  const prefix = spawnSync('git', ['-c', 'core.fsmonitor=false', 'rev-parse', '--show-prefix'], {
+    cwd: project.root,
+    encoding: 'utf8',
+  });
   if (!view || prefix.status !== 0) {
     return undefined;
   }
@@ -1740,15 +1744,20 @@ async function hooksSkippedReason(input, command) {
 function hooksSkippedBy(words) {
   let index = 1;
   while (index < words.length && words[index].startsWith('-')) {
-    const word = words[index];
-    const configured = word === '-c' ? words[index + 1] : /^--config-env=(.*)$/.exec(word)?.[1];
-    if (configured !== undefined && /^core\.hookspath\b/i.test(configured)) {
+    if (optionPointsAtHooks(words[index], words[index + 1])) {
       return '`git -c core.hooksPath` points git at other hooks';
     }
-    index += GIT_VALUED_OPTIONS.has(word) ? 2 : 1;
+    index += GIT_VALUED_OPTIONS.has(words[index]) ? 2 : 1;
   }
-  const subcommand = words[index];
-  const rest = words.slice(index + 1);
+  return hooksSkippedBySubcommand(words[index], words.slice(index + 1));
+}
+
+function optionPointsAtHooks(word, next) {
+  const configured = word === '-c' ? next : /^--config-env=(.*)$/.exec(word)?.[1];
+  return configured !== undefined && /^core\.hookspath\b/i.test(configured);
+}
+
+function hooksSkippedBySubcommand(subcommand, rest) {
   if (subcommand === 'config' && rest.some((word) => /^core\.hookspath$/i.test(word))) {
     return '`git config core.hooksPath` points git at other hooks';
   }
@@ -1770,6 +1779,63 @@ function hooksSkippedBy(words) {
     }
   }
   return undefined;
+}
+
+// Config keys a sub-agent must not set: each runs a command in every checkout of the repository
+// (fsmonitor, pager, editor, sshCommand, hooksPath, an alias, a diff or filter driver, gpg).
+const DANGEROUS_CONFIG = [
+  /^core\.fsmonitor$/i,
+  /^core\.pager$/i,
+  /^core\.editor$/i,
+  /^core\.sshcommand$/i,
+  /^core\.hookspath$/i,
+  /^alias\./i,
+  /^diff\..+\.command$/i,
+  /^filter\./i,
+  /^gpg\.program$/i,
+];
+const CONFIG_READS = new Set(['--get', '--get-all', '--get-regexp', '--get-urlmatch', '-l', '--list', '--list-all']);
+
+// A sub-agent never sets the git configuration (shared by every checkout of the repository) nor
+// passes a dangerous `-c key=value`; it reads the config with `--get` or `--list`.
+async function gitConfigReason(input, command) {
+  if (!input.agent_type || !/\bgit\b/.test(command)) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const gits = shell
+    .simpleCommands(command, input.cwd ?? process.cwd())
+    .filter(({ words }) => shell.commandName(words) === 'git');
+  for (const { words } of gits) {
+    const reason = gitConfigKeyReason(words);
+    if (reason) {
+      return reason;
+    }
+  }
+  return undefined;
+}
+
+function gitConfigKeyReason(words) {
+  const inline = words.find((word, index) => words[index - 1] === '-c' && isDangerousConfig(word.split('=')[0]));
+  if (inline) {
+    const key = inline.split('=')[0];
+    return `\`git -c ${key}\` runs a command in every checkout of the repository. ${REPORT_TO_CONDUCTOR}`;
+  }
+  const { subcommand, tail } = gitInvocation(words.slice(1), undefined);
+  return subcommand === 'config' && setsConfig(tail)
+    ? `\`git config\` changes the git configuration, shared by every checkout; a sub-agent reads it (\`--get\`, \`--list\`) but never sets it. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
+}
+
+function isDangerousConfig(key) {
+  return DANGEROUS_CONFIG.some((pattern) => pattern.test(key));
+}
+
+function setsConfig(tail) {
+  if (tail.some((word) => CONFIG_READS.has(word))) {
+    return false;
+  }
+  return shell.operands(tail, ['--type', '-t', '--file', '-f', '--default']).length >= 2;
 }
 
 function baselineWriteReason(command) {
@@ -1817,7 +1883,10 @@ function dependencyReason(project, { file, written, replaced }, input) {
 // is skipped.
 function recordTrial(project, { file, ...outcome }) {
   try {
-    const common = spawnSync('git', ['rev-parse', '--git-common-dir'], { cwd: project.root, encoding: 'utf8' });
+    const common = spawnSync('git', ['-c', 'core.fsmonitor=false', 'rev-parse', '--git-common-dir'], {
+      cwd: project.root,
+      encoding: 'utf8',
+    });
     if (common.status !== 0) {
       return;
     }
@@ -2659,7 +2728,11 @@ function errorsOf(report) {
 }
 
 function hasPendingChanges(project) {
-  const status = spawnSync('git', ['status', '--porcelain'], { cwd: project.root, encoding: 'utf8', timeout: 5000 });
+  const status = spawnSync('git', ['-c', 'core.fsmonitor=false', 'status', '--porcelain'], {
+    cwd: project.root,
+    encoding: 'utf8',
+    timeout: 5000,
+  });
   return status.status !== 0 || status.stdout.trim().length > 0;
 }
 
@@ -2705,7 +2778,12 @@ function uncommittedChanges(project) {
 }
 
 function git(project, args) {
-  const run = spawnSync('git', args, { cwd: project.root, encoding: 'utf8', timeout: 5000 });
+  // `-c core.fsmonitor=false`: a core.fsmonitor planted in the config never runs on the guard's own git.
+  const run = spawnSync('git', ['-c', 'core.fsmonitor=false', ...args], {
+    cwd: project.root,
+    encoding: 'utf8',
+    timeout: 5000,
+  });
   return run.status === 0 ? run.stdout : undefined;
 }
 
