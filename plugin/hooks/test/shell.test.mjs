@@ -159,6 +159,24 @@ const SUBSTITUTION_HIDES = [
   'echo "$(echo "a\\"b" ; rm src/main.ts)"',
 ];
 
+// A package runner, `su -c` or `env -S` behind another wrapper is read through each layer.
+const BEHIND_A_WRAPPER = [
+  ['nice -n 10 npx eslint --fix src/main.ts', /`eslint` changes src\/main\.ts/],
+  ['timeout 60 npx vitest run --outputFile=src/main.ts', /`vitest` changes src\/main\.ts/],
+  ["sudo su -c 'rm src/main.ts' root", /`rm` changes src\/main\.ts/],
+  ["nice env -S 'cp a src/main.ts'", /`cp` changes src\/main\.ts/],
+];
+
+test('a runner or a command string behind a wrapper is read for what it runs', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const [command, expected] of BEHIND_A_WRAPPER) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+});
+
 test('a double quote, an escape or a backquote inside a substitution does not hide the commands after it', () => {
   const root = project({}, ['--package-manager', 'npm']);
   const agent = worker(root, 'invoicing');

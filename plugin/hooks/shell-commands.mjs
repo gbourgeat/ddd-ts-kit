@@ -74,7 +74,7 @@ export function simpleCommands(text, directory, depth = 0) {
     found.push({ ...command, words, directory: current });
     current = movedTo(command, words, { current, stack });
     found.push(...nestedCommands(words, current, depth));
-    const wrapped = wrappedText(command.words);
+    const wrapped = wrappedTextOf(command.words);
     if (wrapped !== undefined) {
       found.push(...simpleCommands(wrapped, current, depth + 1));
     }
@@ -174,15 +174,31 @@ function changedDirectory(word, directory) {
 /** Leading assignments, keywords and wrappers taken off: what is left starts with the program run. */
 function unwrapped(words) {
   let rest = words;
-  for (;;) {
-    const name = commandName(rest);
-    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
-      rest = rest.slice(1);
-    } else if (name in WRAPPERS) {
-      const inner = afterOptions(rest.slice(1), WRAPPERS[name]);
-      rest = WRAPPERS[name].tail === 'unknown' && inner.length > 0 ? [...inner, UNKNOWN] : inner;
-    } else {
-      return rest;
+  for (let next = unwrapOnce(rest); next !== rest; next = unwrapOnce(rest)) {
+    rest = next;
+  }
+  return rest;
+}
+
+/** One leading assignment, keyword or wrapper taken off, or the words themselves when there is none. */
+function unwrapOnce(rest) {
+  if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
+    return rest.slice(1);
+  }
+  const name = commandName(rest);
+  if (!(name in WRAPPERS)) {
+    return rest;
+  }
+  const inner = afterOptions(rest.slice(1), WRAPPERS[name]);
+  return WRAPPERS[name].tail === 'unknown' && inner.length > 0 ? [...inner, UNKNOWN] : inner;
+}
+
+/** The text a command hands to another to split, read at each layer of its wrappers (`nice npx ...`). */
+function wrappedTextOf(words) {
+  for (let rest = words; ; rest = unwrapOnce(rest)) {
+    const text = wrappedText(rest);
+    if (text !== undefined || unwrapOnce(rest) === rest) {
+      return text;
     }
   }
 }
