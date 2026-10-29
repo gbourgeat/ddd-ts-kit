@@ -3,6 +3,7 @@ import { openWorktree } from '../worktree/open-worktree';
 import type { WorktreeScope } from '../worktree/worktree-scope';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * The worktree of one piece of work, `.worktrees/<name>` on `work/<name>`: where a session writes
@@ -26,7 +27,7 @@ export const worktreeCommand: Command = (argv, io) => {
     install: !args.flag('no-install'),
   });
 
-  io.out(args.json ? JSON.stringify(scope, null, 2) : formatWorktree(scope));
+  io.out(args.json ? stdoutJson(scope) : formatWorktree(scope));
 
   return 0;
 };

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { COMMON_FLAGS } from '../src/commands/generate';
+import { COMMON_FLAGS } from '../src/commands/generate-options';
 import { KINDS } from '../src/generate/kinds';
 import { usageOf } from '../src/generate/usage-of';
 import { REPO_ROOT } from './helpers';

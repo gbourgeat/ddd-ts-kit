@@ -5,6 +5,7 @@ import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import { type Command } from './command';
 import type { Io } from './io';
+import { stdoutJson } from '../json/stdout-json';
 
 /** Prints the dependency-cruiser configuration of the project, writes it, or checks that the file on disk is current. */
 export const depcruiseConfigCommand: Command = (argv, io) => {
@@ -30,7 +31,7 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
   const current = ws.read(DEPCRUISE_FILE) === expected;
 
   if (args.json) {
-    io.out(JSON.stringify({ ok: current, file: DEPCRUISE_FILE }, null, 2));
+    io.out(stdoutJson({ ok: current, file: DEPCRUISE_FILE }));
   } else {
     io.out(
       current

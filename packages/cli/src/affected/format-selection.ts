@@ -1,4 +1,5 @@
 import type { Selection } from './selection';
+import { stdoutJson } from '../json/stdout-json';
 
 /** Lets a partial run pass when a selected context has no spec of one kind. */
 export const PARTIAL_RUN = '--passWithNoTests';
@@ -13,7 +14,7 @@ const ENV_PREFIX = 'AFFECTED_';
  */
 export function formatSelection(selection: Selection, format: string): string {
   if (format === 'json') {
-    return JSON.stringify(selection, null, 2);
+    return stdoutJson(selection);
   }
 
   if (format === 'text') {

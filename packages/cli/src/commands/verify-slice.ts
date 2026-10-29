@@ -5,6 +5,7 @@ import { verifySlice } from '../slice/verify-slice';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import { knownContext } from './known-context';
+import { stdoutJson } from '../json/stdout-json';
 
 /** Closes a slice before its commit in one command: regenerate, check the changed files, test the context. */
 export const verifySliceCommand: Command = (argv, io) => {
@@ -23,7 +24,7 @@ export const verifySliceCommand: Command = (argv, io) => {
 
   const verification = verifySlice({ root, config, context, since });
 
-  io.out(args.json ? JSON.stringify(verification, null, 2) : formatSliceVerification(verification));
+  io.out(args.json ? stdoutJson(verification) : formatSliceVerification(verification));
 
   return verification.ok ? 0 : 1;
 };

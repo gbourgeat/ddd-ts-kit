@@ -7,6 +7,7 @@ import { STORY_GATES, type StoryGate } from '../stories/story-gate';
 import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * Where a story stands, phase by phase: specification, rows, design review, acceptance written and
@@ -24,11 +25,7 @@ export const storyCommand: Command = (argv, io) => {
 
   io.out(
     args.json
-      ? JSON.stringify(
-          { story, gate: gate ?? null, met, next: phases.find((phase) => !phase.met)?.next ?? null, phases },
-          null,
-          2,
-        )
+      ? stdoutJson({ story, gate: gate ?? null, met, next: phases.find((phase) => !phase.met)?.next ?? null, phases })
       : formatStoryPhases(story, phases, gate),
   );
 

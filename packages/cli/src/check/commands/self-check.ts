@@ -1,6 +1,7 @@
 import type { Arguments } from '../../commands/arguments';
 import type { Io } from '../../commands/io';
 import { runSelfCheck } from '../fixtures/run-self-check';
+import { stdoutJson } from '../../json/stdout-json';
 
 /** `check --self`: replays the rule fixtures shipped with the CLI and exits 0 when every rule behaves as expected. */
 export function selfCheck(args: Arguments, io: Io): number {
@@ -15,7 +16,7 @@ export function selfCheck(args: Arguments, io: Io): number {
       detail,
     }));
 
-    io.out(JSON.stringify({ ok: failed.length === 0, fixtures }, null, 2));
+    io.out(stdoutJson({ ok: failed.length === 0, fixtures }));
   } else {
     for (const { fixture, ok, detail } of outcomes) {
       io.out(`${ok ? 'ok  ' : 'FAIL'}  ${fixture.ruleId}: ${fixture.name}${ok ? '' : `\n      ${detail}`}`);

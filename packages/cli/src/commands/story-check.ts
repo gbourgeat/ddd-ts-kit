@@ -3,6 +3,7 @@ import { formatStoryClosing } from '../story/format-story-closing';
 import { readStoryClosing } from '../story/read-story-closing';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * Says whether a story or a milestone can close: every row of it done in the slices file, no
@@ -24,7 +25,7 @@ export const storyCheckCommand: Command = (argv, io) => {
 
   const closing = readStoryClosing(args.projectRoot, story, args.flag('strict'));
 
-  io.out(args.json ? JSON.stringify(closing, null, 2) : formatStoryClosing(closing));
+  io.out(args.json ? stdoutJson(closing) : formatStoryClosing(closing));
 
   return closing.canClose ? 0 : 1;
 };

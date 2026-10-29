@@ -2,9 +2,11 @@ import { readConfig } from '../config';
 import { readRemaining } from '../progress/read-remaining';
 import type { Remaining } from '../progress/remaining';
 import { Workspace } from '../workspace';
+import { gistOf } from '../workspace/gist-of';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import { knownContext } from './known-context';
+import { stdoutJson } from '../json/stdout-json';
 
 const MARKS: Readonly<Record<Remaining['kind'], string>> = {
   domain: 'TODO(domain)',
@@ -13,9 +15,12 @@ const MARKS: Readonly<Record<Remaining['kind'], string>> = {
   review: 'TODO(review)',
 };
 
-/** Lists what the generators left to fill and the remarks of a review left to settle, as `file:line`, in the whole project or in one context. */
+/**
+ * Lists what the generators left to fill and the remarks of a review left to settle, as `file:line`,
+ * in the whole project or in one context; `--brief` gives each its first words, the file holding the rest.
+ */
 export const todoCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, {});
+  const args = Arguments.parse(argv, { brief: { type: 'boolean', default: false } });
   const root = args.projectRoot;
   const { config } = readConfig(root);
   const [asked] = args.positionals;
@@ -27,13 +32,13 @@ export const todoCommand: Command = (argv, io) => {
   );
 
   if (args.json) {
-    io.out(JSON.stringify({ count: remaining.length, remaining }, null, 2));
+    io.out(stdoutJson({ count: remaining.length, remaining }));
   } else {
-    io.out(
-      remaining.length === 0
-        ? 'Nothing is left to fill.'
-        : remaining.map((left) => `${left.file}:${left.line}  ${MARKS[left.kind]}  ${left.text}`).join('\n'),
-    );
+    const line = args.flag('brief')
+      ? (left: Remaining): string => `${left.file}:${left.line}  ${gistOf(left.text)}`
+      : (left: Remaining): string => `${left.file}:${left.line}  ${MARKS[left.kind]}  ${left.text}`;
+
+    io.out(remaining.length === 0 ? 'Nothing is left to fill.' : remaining.map(line).join('\n'));
   }
 
   return 0;

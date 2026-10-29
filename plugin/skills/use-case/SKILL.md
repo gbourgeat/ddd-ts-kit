@@ -136,7 +136,7 @@ events and deadlines is `generate process`, its steps run by event handlers thro
 | outside the database, and may be lost (a cache, a best-effort call) | `generate event-handler ... --phase after-commit`. Runs once committed, at most once; never saves an aggregate, it sends a command through `CommandBus` |
 | outside the database, and must not be lost | an integration event through the outbox (skill `ddd-ts-kit:integration-event`) |
 
-Each output lists `next`: the `file:line` of every `TODO(domain)`. Those are the only places
+Each output lists `todos`: the `file:line` of every `TODO(domain)`, the sentence is in the file. Those are the only places
 to open.
 
 ## 3. Fill, inside out, test first

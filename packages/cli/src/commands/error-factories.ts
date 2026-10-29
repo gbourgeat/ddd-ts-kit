@@ -18,6 +18,7 @@ import { Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { stdoutJson } from '../json/stdout-json';
 
 type Target = (typeof MIGRATION_TARGETS)[number];
 
@@ -171,7 +172,7 @@ interface Outcome {
 
 function print(io: Io, json: boolean, outcome: Outcome): void {
   if (json) {
-    io.out(JSON.stringify(outcome, null, 2));
+    io.out(stdoutJson(outcome));
 
     return;
   }

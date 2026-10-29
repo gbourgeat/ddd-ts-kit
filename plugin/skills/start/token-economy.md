@@ -22,7 +22,7 @@ losing correctness; the generators and the checker do the rest.
    `src/` to learn what exists.
 5. **One `CONTEXT.md`.** It holds the purpose, the glossary and the generated lists of one
    context. Read the one you work in, and of a neighbour only its `published-language/`.
-6. **Open only named files.** The `next` list of a generator (`file:line`), the lines of
+6. **Open only named files.** The `todos` places of a generator (`file:line`, the sentence is in the file), the lines of
    `npx ddd-ts-kit todo <context>`, the file of a violation, the file of a failing test.
    Read a range around the line, not the file.
 7. **The rule, not the reference.** `npx ddd-ts-kit explain <rule-id>` instead of the whole
@@ -56,5 +56,5 @@ losing correctness; the generators and the checker do the rest.
 | Activity | Reads | Writes |
 |---|---|---|
 | a strategic step | the previous artefact only (1 file, under 150 lines) | one artefact |
-| a use case | `CONTEXT.md` of the context, then the 5 to 8 `next` places | the bodies behind the markers, 3 to 6 tests |
+| a use case | `CONTEXT.md` of the context, then the 5 to 8 `todos` places | the bodies behind the markers, 3 to 6 tests |
 | a review | the diff and the `CONTEXT.md` of touched contexts | findings |

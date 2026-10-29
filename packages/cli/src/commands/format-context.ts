@@ -8,36 +8,36 @@ export interface ContextSummary
   readonly publishedEvents: readonly string[];
 }
 
-/** One context as `list` prints it: a heading, then one line per kind of element. */
+/** One context as `list` prints it: a heading, then one line per kind of element it holds, none for a kind it lacks. */
 export function formatContext(context: ContextSummary): string {
-  const list = (label: string, values: readonly string[]): string =>
-    `  ${label}: ${values.length > 0 ? values.join(', ') : 'none'}`;
+  const list = (label: string, values: readonly string[]): string[] =>
+    values.length > 0 ? [`  ${label}: ${values.join(', ')}`] : [];
 
   const lists = context.declarations === undefined ? context : declaredLists(context.declarations);
 
   return [
     heading(context),
     `  glossary: ${context.glossary === 0 ? 'empty (define the ubiquitous language first)' : `${context.glossary} term${context.glossary === 1 ? '' : 's'}`}`,
-    list('upstreams', upstreamsOf(context)),
-    list(
+    ...list('upstreams', upstreamsOf(context)),
+    ...list(
       'aggregates',
       context.aggregates.map((name) => (context.eventSourced.includes(name) ? `${name} (event-sourced)` : name)),
     ),
-    list('commands', lists.commands),
-    list('queries', lists.queries),
-    list('domain events', context.domainEvents),
-    list('published events', context.publishedEvents),
-    list('integration event handlers', lists.integrationEventHandlers),
-    list(
+    ...list('commands', lists.commands),
+    ...list('queries', lists.queries),
+    ...list('domain events', context.domainEvents),
+    ...list('published events', context.publishedEvents),
+    ...list('integration event handlers', lists.integrationEventHandlers),
+    ...list(
       'scheduled jobs',
       context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`),
     ),
-    list('builders', context.builders),
-    list('worlds', context.worlds),
-    list('permissions', context.permissions),
-    list('policies', lists.policies),
-    list('gateways', lists.gateways),
-    ...('adapters' in lists ? [list('adapters', lists.adapters)] : []),
+    ...list('builders', context.builders),
+    ...list('worlds', context.worlds),
+    ...list('permissions', context.permissions),
+    ...list('policies', lists.policies),
+    ...list('gateways', lists.gateways),
+    ...('adapters' in lists ? list('adapters', lists.adapters) : []),
     `  deployable alone: ${context.deployable ? 'yes' : 'no'}`,
   ].join('\n');
 }

@@ -5,6 +5,7 @@ import { STORY_KINDS, type StoryKind } from '../stories/story-kind';
 import type { StoryScope } from '../stories/story-scope';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /** Opens the worktree of one story, or finds it again, and names the other stories open in the repository. */
 export const storyScopeCommand: Command = (argv, io) => {
@@ -30,7 +31,7 @@ export const storyScopeCommand: Command = (argv, io) => {
     install: !args.flag('no-install'),
   });
 
-  io.out(args.json ? JSON.stringify(scope, null, 2) : formatScope(scope));
+  io.out(args.json ? stdoutJson(scope) : formatScope(scope));
 
   return 0;
 };

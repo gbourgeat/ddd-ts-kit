@@ -85,7 +85,7 @@ install of its package manager), never an install that names a package.
 2. `npx ddd-ts-kit describe <context>`, once: use cases, routes, events, ports,
    dependencies. Never browse the tree.
 3. The contracts named in the briefing, in the upstream's `published-language/`.
-4. After each generator, only the `next` places it prints (`file:line`), a range around the
+4. After each generator, only the `todos` places it prints (`file:line`), a range around the
    line. After a violation or a failing test, only the file it names.
 
 ## For each slice, in the order of the briefing

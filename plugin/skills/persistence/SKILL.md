@@ -26,7 +26,7 @@ npx ddd-ts-kit generate repository <ctx> <Aggregate> [--tenant-scoped] [--person
 writes the port (an abstract class extending the kernel `Repository<Aggregate>` in
 `domain/repositories/`), the adapter of the project's ORM with its mapper and table in
 `infrastructure/persistence/`, the fake, and one `repositoryContract` spec that both must
-pass. `generate command --aggregate` creates it when missing. Fill the `next` places: the
+pass. `generate command --aggregate` creates it when missing. Fill the `todos` places: the
 lookups of the port, the columns, the mapper.
 
 ## Rules, whatever the technology
