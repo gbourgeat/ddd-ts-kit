@@ -97,7 +97,7 @@ function specsUnder(ws: Workspace, directory: string): string[] {
 function indexPage(pages: readonly WrittenPage[]): string {
   const rows = pages.map(
     ({ name, title, counts }) =>
-      `| [${title}](${name}.md) | ${counts.stated} | ${counts.generated} | ${counts.planned} | ${counts.specs} |`,
+      `| [${title}](${name}.md) | ${counts.stated} | ${counts.planned} | ${counts.generated} of ${counts.stated + counts.planned + counts.aside} | ${counts.specs} |`,
   );
 
   return [
@@ -107,7 +107,7 @@ function indexPage(pages: readonly WrittenPage[]): string {
     '',
     'Each page lists, in the words of the test titles, the rules a context holds, one heading per use case (its handler, policy, route, end-to-end and acceptance specs together), then per part of the model and per reaction: the rules written for the project first, the titles a template of the kit wrote apart after them (Generated), a planned rule (an `it.todo` still to write) last. A rule to change is changed in its spec; the test is the proof, the page its reading.',
     '',
-    '| Page | Rules stated | Generated | Planned | Specs |',
+    '| Page | Rules stated | Planned | Generated, of the titles | Specs |',
     '|---|---|---|---|---|',
     ...rows,
     '',

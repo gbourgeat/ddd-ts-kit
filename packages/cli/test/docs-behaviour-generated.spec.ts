@@ -59,9 +59,9 @@ describe('The page of a context, the titles the kit generated listed apart', () 
     );
 
     expect(page('billing')).toContain(
-      '7 rules stated, 2 planned, in 3 specs. Of these titles, 5 are as the kit generated them, listed apart under each heading.',
+      '7 rules stated, 2 planned, in 3 specs. Of the 9 titles, 5 are as the kit generated them, listed apart under each heading.',
     );
 
-    expect(page('README')).toContain('| [billing](billing.md) | 7 | 5 | 2 | 3 |');
+    expect(page('README')).toContain('| [billing](billing.md) | 7 | 2 | 5 of 9 | 3 |');
   });
 });

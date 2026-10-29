@@ -41,7 +41,7 @@ function summary({ stated, planned, aside, generated, specs }: PageCounts): stri
   const apart =
     generated === 0
       ? ''
-      : ` Of these titles, ${generated} are as the kit generated them, listed apart under each heading.`;
+      : ` Of the ${stated + planned + aside} titles, ${generated} are as the kit generated them, listed apart under each heading.`;
 
   return `${parts.join(', ')}, in ${specs} ${specs === 1 ? 'spec' : 'specs'}.${apart}`;
 }
