@@ -863,6 +863,31 @@ test("a worker's own commit, a decision record of its slice included, and the tr
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
 });
 
+test('what the sanctioned scripts of the project rewrite outside the scope is said, not held, with the script', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'format', agent_id: 'builder-1' };
+  for (const script of ['npm run format', 'pnpm run lint:fix', 'npm run regenerate', 'npm run docs:generate']) {
+    assert.equal(run('pre-bash', bash(root, script, agent)).output, undefined, script);
+    // Biome lays out a shared file the trunk left unformatted.
+    writeFileSync(join(root, 'src/main.ts'), `${readFileSync(join(root, 'src/main.ts'), 'utf8')}\n`);
+    const said = run('pre-bash', bash(root, 'git status', agent));
+    assert.equal(decision(said), undefined, script);
+    const notice = said.output.hookSpecificOutput.additionalContext;
+    assert.match(notice, new RegExp(`\`${script}\` rewrote files outside your scope: src/main\\.ts\\.`), script);
+    assert.match(notice, /not held: the project's own tool rewrote them/);
+    git(root, 'checkout', 'HEAD', '--', 'src/main.ts');
+  }
+  // A file those tools do not rewrite still holds the worker, and so does any other code on the line.
+  assert.equal(run('pre-bash', bash(root, 'npm run format', agent)).output, undefined);
+  writeFileSync(join(root, 'README.md'), 'Rewritten.\n');
+  assert.match(reason(run('pre-bash', bash(root, 'git status', agent))), /outside your scope: README\.md\./);
+  git(root, 'checkout', 'HEAD', '--', 'README.md');
+  assert.equal(run('pre-bash', bash(root, 'git status', agent)).output, undefined);
+  assert.equal(run('pre-bash', bash(root, 'npm run format && node x.mjs', agent)).output, undefined);
+  writeFileSync(join(root, 'src/main.ts'), 'pwned\n');
+  assert.match(reason(run('pre-bash', bash(root, 'git status', agent))), /outside your scope: src\/main\.ts\./);
+});
+
 test('the first commit of a worker in a repository without one is compared by the files git shows', () => {
   const root = project();
   git(root, 'init', '--quiet');

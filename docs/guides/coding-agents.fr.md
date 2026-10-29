@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:4f38a4c9cc628bcf -->
+<!-- translation-of: coding-agents.md sha256:d0ff77ea4a0df60c -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -117,7 +117,11 @@ qu'il soit remis en état par la commande que la garde nomme : son contenu commi
 commande quand il était déjà modifié (gardé sous `.ddd-ts-kit/guard/held/`), `git mv` en retour
 pour un renommage, `rm` pour un nouveau fichier. Un fichier laissé modifié dans l'arbre de travail
 du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) ou
-un changement de ces paquets est dit une fois, pour le chef d'orchestre, qui seul sait s'il l'a fait. Le
+un changement de ces paquets est dit une fois, pour le chef d'orchestre, qui seul sait s'il l'a fait.
+Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerate`, `docs:generate`,
+`openapi:generate`, `events:generate`), seuls sur la ligne, réécrivent hors du périmètre parmi les
+fichiers que leurs outils réécrivent (code, JSON, `docs/`) est dit avec le script qui l'a réécrit,
+sans retenir le *worker* : il le laisse hors de ses commits. Le
 périmètre est fixé au premier appel du *worker* : un fichier de périmètre supprimé ou changé
 l'arrête jusqu'à ce que le chef d'orchestre le rétablisse. Le `merge-trunk` du kit n'est pas noté,
 et une installation du *lockfile* laisse les paquets hors de la note. Il refuse un changement de

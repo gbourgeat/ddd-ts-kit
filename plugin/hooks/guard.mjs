@@ -371,6 +371,16 @@ const GIT_READ_ONLY = new Set([
   'shortlog',
   'branch',
 ]);
+// The scripts of a project that rewrite files by its own tools, which `init` writes and the skills name.
+const SANCTIONED_SCRIPTS = new Set([
+  'format',
+  'lint:fix',
+  'regenerate',
+  'docs:generate',
+  'openapi:generate',
+  'events:generate',
+]);
+const SCRIPT_MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'];
 // The packages whose bin the guard runs, by name and command.
 const GUARD_RUNS = [
   ['ddd-ts-kit', 'ddd-ts-kit'],
@@ -3141,7 +3151,23 @@ function noteBeforeCode(project, input, commands) {
     worktree: snapshot(project, worktreeOutside(project, input), join(project.root, GUARD_HELD)),
     session: session && snapshot(session, sessionOutside),
     packages: commands.some(installsPackages) ? undefined : packageStates(project, session),
+    script: sanctionedScripts(commands),
   });
+}
+
+// The scripts of the project its own tools run in (Biome, ESLint, the generators of the kit), when
+// they are all the code of the line: what they rewrite outside the scope is said, not held.
+function sanctionedScripts(commands) {
+  const scripts = commands.filter((command) => !isPureReader(command)).map(scriptRun);
+  return scripts.every(Boolean) ? scripts.join('`, `') : undefined;
+}
+
+// `npm run <script>`, `pnpm <script>`, `yarn run <script>`... of a sanctioned script, as `<manager> run <script>`.
+function scriptRun({ words }) {
+  const manager = shell.commandName(words);
+  const [first, second] = shell.operands(words.slice(1), VALUED_MANAGER_OPTIONS);
+  const script = ['run', 'run-script'].includes(first) ? second : manager === 'npm' ? undefined : first;
+  return SCRIPT_MANAGERS.includes(manager) && SANCTIONED_SCRIPTS.has(script) ? `${manager} run ${script}` : undefined;
 }
 
 // A program that only reads, whatever its arguments, and git that only reads (without `--output`,
@@ -3268,13 +3294,18 @@ function settleNote(project, input) {
   }
   removeKitFile(noted);
   const session = sessionCheckout(project, input);
-  holdChanges(project, input, before.worktree);
+  holdChanges(project, input, before);
   return sessionChangeReason(session, before.session) ?? packagesChangeReason(before.packages, project, session);
 }
 
-function holdChanges(project, input, before) {
+function holdChanges(project, input, { worktree: before, script }) {
   const outside = worktreeOutside(project, input);
-  const changed = differences(project, outside, { before, now: snapshot(project, outside) });
+  const all = differences(project, outside, { before, now: snapshot(project, outside) });
+  const rewritten = script ? all.filter(isRewrittenByTools) : [];
+  const changed = all.filter((path) => !rewritten.includes(path));
+  if (rewritten.length > 0) {
+    notice = [notice, rewrittenNotice(script, rewritten)].filter(Boolean).join('\n');
+  }
   if (changed.length > 0) {
     const file = stateFile('outside', project, input);
     const held = readJson(file) ?? {};
@@ -3283,6 +3314,15 @@ function holdChanges(project, input, before) {
     }
     writeState(file, held);
   }
+}
+
+// What Biome, ESLint and the generators of the kit rewrite: code, JSON and the documents.
+function isRewrittenByTools(path) {
+  return FORMATTED_FILE.test(path) || path.startsWith('docs/');
+}
+
+function rewrittenNotice(script, paths) {
+  return `ddd-ts-kit: \`${script}\` rewrote files outside your scope: ${paths.join(', ')}. They are not held: the project's own tool rewrote them. Leave them out of your commits and name them in your report, for the conductor.`;
 }
 
 // The paths whose content differs between two snapshots: changed in either, or, when HEAD moved,
