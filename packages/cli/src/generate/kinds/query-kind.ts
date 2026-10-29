@@ -10,7 +10,6 @@ import type { Scope } from '../scope';
 import { wire } from '../wire';
 import { queryContext } from './query-context';
 import { queryOutputs, type QueryVariant } from './query-outputs';
-import { noteWorldArrangement } from './world/note-world-arrangement';
 
 export const queryKind: Kind = {
   name: 'query',
@@ -31,10 +30,14 @@ export const queryKind: Kind = {
     const variant = queryVariant(scope);
     const { permission } = scope.flags;
     const asksPolicy = variant === '' && permission !== undefined && refinedByPolicy(scope, permission);
-    const context = queryContext(scope, name, { asksPolicy, search: variant !== '' });
+    const { vars: context, worldHint } = queryContext(scope, name, { asksPolicy, search: variant !== '' });
 
     emit(scope, context, queryOutputs(scope, name, variant));
-    noteWorldArrangement(scope, context);
+
+    if (worldHint !== undefined) {
+      scope.ws.note(worldHint);
+    }
+
     wire(scope, variant === '' ? 'query' : 'query/search', context);
 
     // A search is narrowed by the access scope of its actor: there is no element to ask a policy about, only a marker.
