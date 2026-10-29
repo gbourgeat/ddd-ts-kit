@@ -359,6 +359,26 @@ test('the workers to resume are named only by names that follow their grammar', 
   assert.doesNotMatch(briefing, /pwned|ddd-ts-kit: go/);
 });
 
+test('a worker in a folder with a space is named, its worktree quoted, and its branch kept when its path cannot be', () => {
+  const root = committed();
+  workerWorktree(root);
+  const stopped = progress('mid-row', 'send-message');
+  const spaced = '/home/u/My Projects/app/.worktrees/ordering';
+  const workers = [
+    { branch: 'build/ordering', context: 'ordering', worktree: spaced, progress: stopped },
+    { branch: 'build/ordering-2', context: 'ordering', worktree: '/w/ordering-2', progress: stopped },
+    { branch: 'build/café', context: 'billing', worktree: '/w/`billing`', progress: stopped },
+  ];
+  cliAnswering(root, { status: { workers } });
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  const resumed = briefing.split('\n').filter((line) => line.startsWith('Worker to resume'));
+  assert.deepEqual(resumed, [
+    `Worker to resume: build/ordering (mid-row): \`npx ddd-ts-kit worker-scope ordering --resume --worktree '${spaced}'\`, then send what it prints.`,
+    'Worker to resume: build/ordering-2 (mid-row): `npx ddd-ts-kit worker-scope ordering --resume --worktree /w/ordering-2`, then send what it prints.',
+    'Worker to resume: build/café (mid-row): `npx ddd-ts-kit worker-scope billing --resume`, then send what it prints.',
+  ]);
+});
+
 test('the map of the contexts leaves out a name, an upstream or a classification out of its grammar', () => {
   const root = project();
   const contexts = [

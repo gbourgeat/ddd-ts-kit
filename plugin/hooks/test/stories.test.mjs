@@ -283,6 +283,12 @@ test('the stories another story meets are named only by ids, names and refs that
       { story: 'US6 `x`', branch: 'story/us6', worktree: '/w/us6', files: ['docs/notes.md'] },
       { story: 'US7', branch: 'a`b', worktree: '/w/us7', files: ['docs/notes.md'] },
       { story: 'US8', worktree: 'relative/us8', files: ['docs/notes.md'] },
+      {
+        story: 'US9',
+        branch: 'story/café',
+        worktree: '/home/u/My Projects/app/.worktrees/us9',
+        files: ['docs/notes.md'],
+      },
     ],
     crossings: [{ stories: ['US5', 'US6 `x`'], contexts: ['ordering', 'Bad Name'], files: [] }],
   });
@@ -291,7 +297,13 @@ test('the stories another story meets are named only by ids, names and refs that
   assert.match(briefing, /^The trunk moved: 1 commit\(s\) of the trunk to merge in\.$/m);
   const said = run('pre-write', write(join(root, 'docs/notes.md'), { session_id: `grammar-${root}` }));
   const notice = said.output.hookSpecificOutput.additionalContext;
-  assert.match(notice, /^(?:Another open story changes docs\/notes\.md too\. ){3}Keep/);
+  const lines = [
+    'Another open story changes docs/notes.md too.',
+    'Another open story changes docs/notes.md too.',
+    'US8 (detached) changes docs/notes.md too.',
+    'US9 (story/café, /home/u/My Projects/app/.worktrees/us9) changes docs/notes.md too.',
+  ];
+  assert.ok(notice.startsWith(`${lines.join(' ')} Keep`), notice);
 });
 
 test('in the worktree of a story, the refusals that start no process come before the build gate the CLI reads', () => {

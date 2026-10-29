@@ -62,8 +62,9 @@ const QUOTED_LIMIT = 300;
 // The grammars of the names read from the repository that the guard repeats: anything else is not repeated.
 const STORY_ID = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
 const CONTEXT_NAME = /^[a-z][a-z0-9-]*$/;
-const GIT_REF = /^(?!-)[\w./-]+$/;
-const ABSOLUTE_PATH = /^\/[\p{L}\p{N}_@%+=:,./-]*$/u;
+const GIT_REF = /^(?!-)[\p{L}\p{N}_./-]+$/u;
+// A space is allowed (a project under "My Projects"); a quote, a backquote, a dollar or a backslash is not.
+const ABSOLUTE_PATH = /^\/[\p{L}\p{N} _@%+=:,./-]*$/u;
 const LABEL = /^[a-z][a-z -]*$/;
 const AGENT_ID = /^[\w-]+$/;
 const COMMIT_DEFAULTS = { maxFiles: 20, maxLines: 600 };
@@ -1320,15 +1321,19 @@ function workersToResume(project) {
   return stopped.map((stoppedWorker) => resumeLine(stoppedWorker, workers));
 }
 
-// The line of a worker to resume, when each name it repeats follows its grammar.
+// The line of a worker to resume, when each name it repeats follows its grammar: its worktree is
+// needed only when it names the worker (no branch) or tells two workers of one context apart.
 function resumeLine({ branch, context, worktree, progress }, workers) {
   const agent = progress.agent ? named(progress.agent.agentId, AGENT_ID) : '';
-  const names = [named(context, CONTEXT_NAME), named(worktree, ABSOLUTE_PATH), named(progress.phase, LABEL), agent];
-  if (names.includes(undefined) || (branch !== undefined && named(branch, GIT_REF) === undefined)) {
+  const path = named(worktree, ABSOLUTE_PATH);
+  const shown = branch === undefined ? path : named(branch, GIT_REF);
+  const shared = workers.filter((other) => other.context === context).length > 1;
+  const names = [named(context, CONTEXT_NAME), named(progress.phase, LABEL), agent, shown, shared ? path : ''];
+  if (names.includes(undefined)) {
     return 'Worker to resume: one whose names the guard does not repeat: `npx ddd-ts-kit status --workers` lists it.';
   }
-  const where = workers.filter((other) => other.context === context).length > 1 ? ` --worktree ${worktree}` : '';
-  return `Worker to resume: ${branch ?? worktree} (${progress.phase}${agent ? `, agent ${agent}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${where}\`, then send what it prints.`;
+  const where = shared ? ` --worktree ${path.includes(' ') ? `'${path}'` : path}` : '';
+  return `Worker to resume: ${shown} (${progress.phase}${agent ? `, agent ${agent}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${where}\`, then send what it prints.`;
 }
 
 // Read from git's own files, without running git: the worktrees of the repository listed under
@@ -1928,12 +1933,12 @@ function forYouWith(view, own, other) {
 }
 
 function crossingLine(other, forYou, path) {
-  const names = [
-    named(other.story, STORY_ID),
-    named(other.branch ?? 'detached', GIT_REF),
-    named(other.worktree, ABSOLUTE_PATH),
-  ];
-  const where = names.includes(undefined) ? 'Another open story' : `${names[0]} (${names[1]}, ${names[2]})`;
+  const [story, branch] = [named(other.story, STORY_ID), named(other.branch ?? 'detached', GIT_REF)];
+  const worktree = named(other.worktree, ABSOLUTE_PATH);
+  const where =
+    story === undefined || branch === undefined
+      ? 'Another open story'
+      : `${story} (${worktree === undefined ? branch : `${branch}, ${worktree}`})`;
   return forYou.includes(path)
     ? `${where} changes ${path} too, and merging its branch into this one now leaves that file to settle by hand.`
     : `${where} changes ${path} too.`;
