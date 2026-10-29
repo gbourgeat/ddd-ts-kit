@@ -108,6 +108,7 @@ describe('behaviourPage, the title of a table of cases', () => {
   const source = `describe.each(['a', 'b'])('AppointmentExportGateway, %s', () => {
   it('lists the rows', () => {});
   it.each(['x'])('refuses %s with 422', () => {});
+  it.each(['x'])('accepts the kind %s', () => {});
 });
 describe.each(['a'])('%s, by cause', () => {
   it('keeps the oldest', () => {});
@@ -118,9 +119,10 @@ describe.each(['a'])('%s, by cause', () => {
     { title: 'unit', entries: [{ heading: 'a', specs: [specOfPage('a.spec.ts', rulesIn(source))] }] },
   ]);
 
-  it('shows no placeholder: for each case after the text before it, each case inside a title or opening it', () => {
-    expect(page).toContain('- **AppointmentExportGateway, for each case**\n');
+  it('shows no placeholder: (each case) at the end, each case inside a title or opening it', () => {
+    expect(page).toContain('- **AppointmentExportGateway (each case)**\n');
     expect(page).toContain('  - refuses each case with 422\n');
+    expect(page).toContain('  - accepts the kind (each case)\n');
     expect(page).toContain('- **each case, by cause**\n');
     expect(page).not.toMatch(/%s/);
   });
