@@ -37,6 +37,13 @@ describe('generate error, in a project of one error class per concept', () => {
     expect(read(root, SPEC)).toContain("expect(error.code).toBe('ALREADY_ISSUED');");
   });
 
+  it('states the refusal of its spec case by its code and its facts, never by its message', () => {
+    const spec = read(root, SPEC);
+
+    expect(spec).toContain("expect(error.code).toBe('ALREADY_ISSUED');\n    expect(error.facts).toEqual({});");
+    expect(spec).not.toContain('error.message');
+  });
+
   it('adds a factory after the last one, and its case to the spec', () => {
     const added = report(generate(root, 'InvoiceError', 'not-found'));
     const source = read(root, ERROR);

@@ -7,19 +7,24 @@ import {
   closeSync,
   existsSync,
   fstatSync,
+  globSync,
   mkdirSync,
   mkdtempSync,
   openSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { linkedFolder, removeKitFile, writeKitFile } from './kit-files.mjs';
 
 const CONFIG = 'ddd-ts-kit.config.json';
+// The most of the config the guard reads: a larger one is not read, and the guard judges nothing there.
+const CONFIG_BYTES = 256 * 1024;
 // The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
 // the version of the kit: setting a new version of the packages rewrites it.
 const KIT_VERSION = '0.99.0';
@@ -46,13 +51,38 @@ const STORY_INPUTS = [
 // The report a worker keeps current after each commit and before it ends, ignored by git: what the conductor reads when it stops.
 const WORKER_REPORT = '.ddd-ts-kit/report.md';
 const WORKER_AGENT = 'context-builder';
+// The builder of the plugin, as its hooks of SubagentStart and SubagentStop match it: the one counted.
+const BUILDER_AGENT = `ddd-ts-kit:${WORKER_AGENT}`;
+// What the config may say of the guard; anything else is read as enforce.
+const GUARD_MODES = ['off', 'advise', 'enforce'];
 // The host caps SessionStart context at 10 000 characters; a session should start far below it.
 const SESSION_CONTEXT_LIMIT = 3000;
+// What the guard says of a text read from the repository, the plan line or a next step: at most this many characters.
+const QUOTED_LIMIT = 300;
+// The grammars of the names read from the repository that the guard repeats: anything else is not repeated.
+const STORY_ID = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
+const CONTEXT_NAME = /^[a-z][a-z0-9-]*$/;
+const GIT_REF = /^(?!-)[\p{L}\p{N}_./-]+$/u;
+// A space is allowed (a project under "My Projects"); a quote, a backquote, a dollar or a backslash is not.
+const ABSOLUTE_PATH = /^\/[\p{L}\p{N} _@%+=:,./-]*$/u;
+const LABEL = /^[a-z][a-z -]*$/;
+const AGENT_ID = /^[\w-]+$/;
 const COMMIT_DEFAULTS = { maxFiles: 20, maxLines: 600 };
 const COUNTED_FILE_BYTES = 1_000_000;
 // The files Biome formats: with `formatOnWrite` in the config, the project's own Biome lays one out as it is written.
 const FORMATTED_FILE = /\.(?:[cm]?[jt]sx?|jsonc?)$/;
 const FORMAT_TIMEOUT = 5000;
+// The tests of the guard shrink its time limits with DDD_TS_KIT_GUARD_TIME_SCALE (a fiftieth) to reach
+// them with a CLI that sleeps; a user has no reason to set it.
+const TIME_SCALE = timeScale(process.env.DDD_TS_KIT_GUARD_TIME_SCALE);
+// What a session start gives the CLI in all, of the 15 s of its hook: past it, the calls left are skipped.
+const BRIEFING_BUDGET = 10_000;
+const BRIEFING_CUT =
+  'Briefing cut short: the CLI did not answer in time; `npx ddd-ts-kit status` and `npx ddd-ts-kit list` say the rest.';
+// The written files one call of post-write checks, of the 15 s of its hook: a patch of Codex can hold many.
+const POST_WRITE_FILES = 5;
+// The written files one call of pre-write has the CLI judge before they land, of the 5 s of its hook.
+const CLI_WRITE_FILES = 2;
 
 // The contracts in YAML or JSON (openapi/<document>, the form of a route in openapi/forms/, the
 // AsyncAPI document), the event catalog and the split of the contract that `ddd-ts-kit docs`
@@ -119,22 +149,11 @@ const ACCEPTANCE_LOCK = /^test\/acceptance\/[^/]+\.acceptance\.lock\.json$/;
 // The verdicts that let a locked acceptance change: written by the acceptance-judge agent alone.
 const ACCEPTANCE_VERDICT = /^test\/acceptance\/verdicts\/[^/]+\.md$/;
 const JUDGE_AGENT = 'acceptance-judge';
-// What a command may do with the lock or a verdict outside the judge: read it, version it, run the kit.
-const READING_PROGRAMS = new Set([
-  'git',
-  'cat',
-  'ls',
-  'head',
-  'tail',
-  'grep',
-  'rg',
-  'wc',
-  'diff',
-  'jq',
-  'npx',
-  'pnpm',
-  'ddd-ts-kit',
-]);
+// What a command may do with the lock or a verdict outside the judge: read it, or run the kit
+// (`ddd-ts-kit` directly, or `npx ddd-ts-kit` seen through kitInvocations); `npx`/`pnpm` of anything
+// else can write, and `git` reads only through the subcommands of GIT_READS.
+const READING_PROGRAMS = new Set(['cat', 'ls', 'head', 'tail', 'grep', 'rg', 'wc', 'diff', 'jq', 'ddd-ts-kit']);
+const GIT_READS = new Set(['log', 'show', 'diff', 'status', 'add', 'commit', 'ls-files']);
 // What touches no file: a command line moves to a worktree or checks a path before it reads or versions one.
 const NEUTRAL_PROGRAMS = new Set(['cd', 'pushd', 'popd', 'pwd', 'true', 'test', '[']);
 // awk reads, unless its program comes from a file or may write (`print > "f"`, a pipe, `system`, `@include`).
@@ -226,10 +245,19 @@ const PRISMA_CONTEXT_SCHEMA = /^prisma\/schema\/([a-z][a-z0-9-]*)\.prisma$/;
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
 // Where the guard keeps the state of a worker between two of its calls: the kit's ignored folder.
 const GUARD_STATE = '.ddd-ts-kit/guard';
+// The markers of what was said or refused once, in the guard's folder of the project, kept a week.
+const GUARD_MARKERS = `${GUARD_STATE}/markers`;
+const MARKER_TTL = 7 * 24 * 3600 * 1000;
+// The state of the runs of a builder, by session and agent: kept a week too.
+const BUILDER_STATE = /^(?:turns|before-run|outside|scope)-[0-9a-f]{16}\.json$/;
+// The content a worker's command found already changed outside its scope, kept so it can be put back.
+const GUARD_HELD = `${GUARD_STATE}/held`;
 const FREE_OUTPUT = 'Output to /dev/null or to the system temp directory stays free.';
 const EDIT_WITH_TOOLS = `Inside your scope, the editor tools and the shell may both write; outside it, nothing may. ${FREE_OUTPUT}`;
 // The clean install of each package manager: what installs the lockfile as it is.
 const CLEAN_INSTALL = { npm: 'npm ci', pnpm: 'pnpm install --frozen-lockfile' };
+// The subcommands of a package manager that install the lockfile as it is, its aliases included.
+const CLEAN_INSTALLS = ['ci', 'clean-install', 'cin', 'ic', 'install-clean', 'isntall-clean'];
 
 // The subcommands of each package manager that change package.json or the lockfile; an install
 // changes them when it names a package.
@@ -259,8 +287,8 @@ const VALUED_MANAGER_OPTIONS = [
   '--cwd',
 ];
 
-// How a worker's command can write files without the editor tools: the code an interpreter is
-// given inline (from its option, from `-` or from its standard input).
+// How a command that runs tests can run other code: the code an interpreter is given inline (from
+// its option, from `-` or from its standard input).
 const INLINE_CODE = {
   python: /^-[a-zA-Z]*c$/,
   node: /^(?:-[a-zA-Z]*[ep][a-zA-Z]*|--eval(?:=.*)?|--print(?:=.*)?)$/,
@@ -269,7 +297,175 @@ const INLINE_CODE = {
   perl: /^-[a-zA-Z]*[eE][a-zA-Z]*$/,
   php: /^-r$/,
 };
-const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>']);
+// The programs that run code the guard cannot read, whatever their arguments; a shell is one too.
+const CODE_RUNNERS = new Set([
+  'node',
+  'nodejs',
+  'python',
+  'perl',
+  'ruby',
+  'php',
+  'bun',
+  'bunx',
+  'deno',
+  'tsx',
+  'ts-node',
+  'source',
+  '.',
+  'make',
+  'npm',
+  'npx',
+  'pnpm',
+  'pnpx',
+  'yarn',
+  'vitest',
+  'jest',
+  'mocha',
+  'ava',
+  'tap',
+  'playwright',
+  'cypress',
+  'stryker',
+]);
+// The programs that only read, whatever their arguments (not `rg --pre`, `sort -o`, `tree -o`): a
+// worker's command made of them alone is not noted before it runs. Every other program may run code
+// of the project (`noteBeforeCode`).
+const PURE_READERS = new Set([
+  '',
+  'cat',
+  'ls',
+  'head',
+  'tail',
+  'grep',
+  'wc',
+  'diff',
+  'jq',
+  'echo',
+  'printf',
+  'pwd',
+  'cd',
+  'pushd',
+  'popd',
+  'true',
+  'false',
+  'test',
+  '[',
+  'cut',
+  'tr',
+  'basename',
+  'dirname',
+  'realpath',
+  'readlink',
+  'stat',
+  'file',
+  'which',
+  'find',
+  'du',
+  'date',
+]);
+// The subcommands of git that only read.
+const GIT_READ_ONLY = new Set([
+  'status',
+  'log',
+  'show',
+  'diff',
+  'ls-files',
+  'ls-tree',
+  'rev-parse',
+  'blame',
+  'grep',
+  'describe',
+  'cat-file',
+  'merge-base',
+  'rev-list',
+  'shortlog',
+]);
+// The options of `git branch` that delete, move, copy or reset a branch, and those that change its settings.
+const BRANCH_DELETES = ['-d', '-D', '--delete'];
+const BRANCH_MOVES = ['-m', '-M', '--move', '-c', '-C', '--copy'];
+const BRANCH_RESETS = ['-f', '--force'];
+const BRANCH_SETTINGS = ['-u', '--set-upstream-to', '--unset-upstream', '--edit-description'];
+// The options of `git branch` that list branches, an operand then being a pattern or a commit.
+const BRANCH_LISTS = ['--list', '-l', '-a', '--all', '-r', '--remotes', '--show-current', '--contains', '--merged'];
+// The scripts of a project that rewrite files by its own tools, which `init` writes and the skills name.
+const SANCTIONED_SCRIPTS = new Set([
+  'format',
+  'lint:fix',
+  'regenerate',
+  'docs:generate',
+  'openapi:generate',
+  'events:generate',
+]);
+const SCRIPT_MANAGERS = ['npm', 'pnpm', 'yarn', 'bun'];
+// The packages whose bin the guard runs, by name and command.
+const GUARD_RUNS = [
+  ['ddd-ts-kit', 'ddd-ts-kit'],
+  ['@biomejs/biome', 'biome'],
+];
+// The fields before the path in an entry of `git status --porcelain=v2`, by its kind.
+const STATUS_FIELDS = { 1: 8, 2: 9, u: 10, '?': 1 };
+const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>', '>&']);
+// Editors that rewrite the files they open in place.
+const IN_PLACE_EDITORS = new Set(['vim', 'vi', 'ex', 'ed']);
+// Linters and test runners that write the paths they are given, behind a flag.
+// For a writer of its operands, `subcommands` are the words that name an action, not a path, and
+// `valued` the options whose value is no path it writes.
+const TOOL_WRITES = {
+  eslint: {
+    kind: 'operands',
+    flags: ['--fix', '--fix-dry-run'],
+    subcommands: [],
+    valued: [
+      '-c',
+      '--config',
+      '--ext',
+      '--parser',
+      '--parser-options',
+      '--plugin',
+      '--rule',
+      '--rulesdir',
+      '--env',
+      '--global',
+      '--ignore-path',
+      '--ignore-pattern',
+      '-f',
+      '--format',
+      '-o',
+      '--output-file',
+      '--max-warnings',
+      '--cache-location',
+      '--resolve-plugins-relative-to',
+    ],
+  },
+  biome: {
+    kind: 'operands',
+    flags: ['--write', '--fix'],
+    subcommands: ['format', 'check', 'lint', 'ci'],
+    valued: [
+      '--config-path',
+      '--max-diagnostics',
+      '--diagnostic-level',
+      '--log-level',
+      '--log-kind',
+      '--reporter',
+      '--stdin-file-path',
+      '--vcs-root',
+      '--files-max-size',
+    ],
+  },
+  vitest: { kind: 'valued', valued: ['--outputFile', '--outputJson'] },
+};
+const DOWNLOAD_FLAGS = {
+  curl: ['-o', '--output'],
+  wget: ['-O', '--output-document', '-P', '--directory-prefix'],
+};
+// git subcommands that rewrite tracked files the command does not name, by one of their flags.
+const GIT_FORCE_WRITERS = {
+  reset: ['--hard', '--merge', '--keep'],
+  switch: ['-f', '--force', '--discard-changes'],
+  checkout: ['-f', '--force'],
+  'read-tree': ['-u'],
+};
 // The commands that change the paths they are given, with the options that take a value, and which
 // operands they change: all of them, or the destination only.
 const PATH_COMMANDS = {
@@ -295,6 +491,17 @@ const MODES = {
   'subagent-stop': subagentStop,
 };
 
+// The projects this run of the guard has described: a hook finds the same one several times.
+const projects = new Map();
+// The scope of a worker in each worktree, read once per call of the guard (`workerScope`).
+const scopes = new Map();
+// The scope files of the story worktrees this run has read, by project root.
+const storyScopes = new Map();
+// The end of the time of a session start for the CLI, and whether a call was skipped or stopped for it.
+let briefingEnds;
+let briefingCut = false;
+// The seconds after which a run of the CLI was stopped, by its command: the stop says it of `check`.
+const timedOut = new Map();
 // The reader of shell commands, loaded only when a worker runs one: every other call of the guard skips its cost.
 let shell;
 // The notice due to a context-builder near its turn limit, said with the decision of the call or alone.
@@ -325,8 +532,13 @@ function sayNotice() {
 }
 
 function session(input) {
+  // A whole number of milliseconds: a time limit of spawnSync is an integer.
+  briefingEnds = Date.now() + Math.round(BRIEFING_BUDGET * TIME_SCALE);
   const directory = input.cwd ?? process.cwd();
   const project = findProject(directory);
+  if (project) {
+    pruneGuardState(project.root);
+  }
   const lines = project ? projectBriefing(project, input) : planPointer(directory);
   if (lines.length === 0) {
     return;
@@ -334,21 +546,12 @@ function session(input) {
   emit({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: lines.join('\n') } });
 }
 
-// A patch of Codex can touch several files: a refusal of any of them wins over a question.
 async function preWrite(input) {
   if (isBuilder(input)) {
     const [first] = writesOf(input);
     await countBuilderCall(input, first && findProject(dirname(first.file)));
   }
-  const pending = pendingOfWriter(input);
-  if (pending) {
-    decide(input, pending.mode === 'advise' ? 'ask' : 'deny', pending.reason);
-    return;
-  }
-  const verdicts = writesOf(input)
-    .map((written) => verdictOn(written, input))
-    .filter(Boolean);
-  const verdict = verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
+  const verdict = writesVerdict(judgedWrites(writesOf(input)), input, () => pendingOfWriter(input));
   if (verdict?.decision !== 'deny') {
     noteCrossings(input);
   }
@@ -380,56 +583,190 @@ function pendingOfWriter(input) {
     return undefined;
   }
   const pending = pendingChangeReason(project, input, []);
-  return pending?.reason ? { mode: project.mode, reason: pending.reason } : undefined;
+  return pending?.reason ? { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: pending.reason } : undefined;
 }
 
-function verdictOn({ file, written, replaced }, input) {
-  const project = findProject(dirname(file));
-  if (!project || project.mode === 'off') {
-    return undefined;
+// The writes of a call in a project the guard judges, each with its project.
+function judgedWrites(writes) {
+  return writes
+    .map((written) => ({ ...written, project: findProject(dirname(written.file)) }))
+    .filter(({ project }) => project && project.mode !== 'off');
+}
+
+// A patch of Codex can touch several files: a refusal of any of them wins over a question. The
+// refusals that start no process come first, so that they hold within the time of the hook; then
+// those the CLI decides; then what `pending` reads with git; then the questions.
+function writesVerdict(writes, input, pending) {
+  return (
+    refusalOf(writes, input, quickRefusal) ??
+    cliVerdict(writes, input) ??
+    pending() ??
+    writes.map(deviationOf).find(Boolean)
+  );
+}
+
+// The first refusal, read file by file until one denies; a question waits for a denial of a later file.
+function refusalOf(writes, input, check) {
+  let asked;
+  for (const written of writes) {
+    const reason = check(written, input);
+    if (reason && written.project.mode !== 'advise') {
+      return { decision: 'deny', reason };
+    }
+    asked ??= reason ? { decision: 'ask', reason } : undefined;
   }
-  const refusal =
+  return asked;
+}
+
+// The first files the CLI may judge (TypeScript, the code of a context: the build gate of a fix is
+// read without it) are judged before the write; the others are left to the check after it, and said.
+function cliVerdict(writes, input) {
+  const judged = writes.filter(
+    ({ project, file }) => /\.(ts|mts|cts)$/.test(file) || insideContexts(project, projectPath(project, file)),
+  );
+  const verdict = refusalOf(judged.slice(0, CLI_WRITE_FILES), input, cliRefusal);
+  if (!verdict && judged.length > CLI_WRITE_FILES) {
+    notice = `ddd-ts-kit: ${judged.length - CLI_WRITE_FILES} more written file(s) not judged before the write here: the check after it reads them.`;
+  }
+  return verdict;
+}
+
+function quickRefusal({ project, file, written, replaced }, input) {
+  return (
     baselineFileReason(project, file) ??
     acceptanceReason(project, input, { file, written, replaced }) ??
-    storyCodeReason(project, file) ??
-    worktreeCodeReason(project, file) ??
     generatedFileReason(project, file) ??
-    testWriterScopeReason(project, file, input) ??
     (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
-    handWrittenRoleReason(project, file) ??
-    dependencyReason(project, { file, written, replaced }, input);
-  if (refusal) {
-    return { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: refusal };
-  }
+    testWriterScopeReason(project, file, input) ??
+    worktreeCodeReason(project, file) ??
+    handWrittenRoleReason(project, file)
+  );
+}
+
+function cliRefusal({ project, file, written, replaced }, input) {
+  return storyCodeReason(project, file) ?? dependencyReason(project, { file, written, replaced }, input);
+}
+
+function deviationOf({ project, file, written, replaced }) {
   const deviation = governedFileReason(project, file) ?? escapeReason(written, replaced);
   return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
 
+// A refusal of the patch Codex applies through its shell wins; else the command line is read, and a
+// question about the patch is put only when the rest of the line passes.
 async function preBash(input) {
   const command = toolInput(input).command;
   if (typeof command !== 'string') {
     return;
   }
-  const project = findProject(commandDirectory(command, input.cwd ?? process.cwd()));
+  const cwd = input.cwd ?? process.cwd();
+  const patched = await codexPatchVerdict(input, command, cwd);
+  const verdict = patched?.decision === 'deny' ? patched : ((await shellVerdict(input, command, cwd)) ?? patched);
+  if (verdict) {
+    decide(input, verdict.decision, verdict.reason);
+  }
+}
+
+async function shellVerdict(input, command, cwd) {
+  // A leading `cd` out of every project leaves the command to be judged against the session's project.
+  const project = findProject(commandDirectory(command, cwd)) ?? findProject(cwd);
   await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
-    return;
+    return undefined;
   }
+  const decision = project.mode === 'advise' ? 'ask' : 'deny';
   const preparing = await preparingReason(project, input, command);
   if (preparing) {
-    decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
-    return;
+    return { decision, reason: preparing };
   }
   const context = workerContext(project, input);
-  if (!context) {
-    return;
+  shell = await import('./shell-commands.mjs');
+  const commands = shell.simpleCommands(command, cwd);
+  const refusal = context
+    ? workerCommandReason(project, input, { context, command, commands })
+    : (builderStrayReason(project, input, commands) ?? sessionShellReason(project, input, commands));
+  return refusal ? { decision, reason: refusal } : undefined;
+}
+
+// What the shell writes of a session that is not a context worker meet: the story build gate and
+// the generated or baseline files for everyone, and the test-writer held to the paths of a test.
+function sessionShellReason(project, input, commands) {
+  for (const command of commands) {
+    for (const { place, by } of [...writtenTargets(command), ...changedPaths(command)]) {
+      const refusal = sessionPlaceReason(project, input, place);
+      if (refusal) {
+        return `${by}: ${refusal}`;
+      }
+    }
+  }
+  return undefined;
+}
+
+function sessionPlaceReason(project, input, place) {
+  const owner = place === undefined ? undefined : findProject(place);
+  if (!owner || owner.root !== project.root) {
+    return undefined;
+  }
+  if (String(input.agent_type ?? '').includes('domain-test-writer')) {
+    return testWriterScopeReason(project, place, input);
+  }
+  return storyCodeReason(project, place) ?? generatedFileReason(project, place) ?? baselineFileReason(project, place);
+}
+
+// Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: the patch
+// fed to that command is judged the same way a write through the editor tool is. A here-document that
+// only holds the text of a patch for another command (`cat <<EOF > notes.md`) is no patch.
+async function codexPatchVerdict(input, command, cwd) {
+  if (hostOf(input) !== 'codex' || !/^\s*\*\*\* Begin Patch/m.test(command)) {
+    return undefined;
   }
   shell = await import('./shell-commands.mjs');
-  const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
-  const refusal = workerCommandReason(project, input, { context, command, commands });
-  if (refusal) {
-    decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
+  if (!shell.simpleCommands(command, cwd).some(({ words }) => shell.commandName(words) === 'apply_patch')) {
+    return undefined;
   }
+  const start = command.indexOf('*** Begin Patch');
+  const writes = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd);
+  return writesVerdict(judgedWrites(writes), input, () => undefined);
+}
+
+// A context-builder keeps the working directory of its session, so the scope of a worker is found
+// only when the command moves into its worktree (`cd <worktree> && ...` or `--cwd`). When the
+// session has worker worktrees and a builder's command touches no scoped project, a write by that
+// command lands where the guard cannot judge it: it is refused, with the one shape it reads.
+function builderStrayReason(project, input, commands) {
+  if (!isBuilder(input) || !hasWorkerWorktree(project.root) || !builderWrites(commands)) {
+    return undefined;
+  }
+  return 'A worker runs every command as `cd <worktree> && ...` so that the guard reads it against the scope of that worktree; this command writes without moving into a worktree of your project. Run it as `cd <worktree> && ...`.';
+}
+
+// A redirection, a writer of the tables, code the guard cannot read, or a generator of the kit, which writes files too.
+function builderWrites(commands) {
+  return (
+    generates(commands, []) ||
+    commands.some(
+      (command) => writtenTargets(command).length > 0 || changedPaths(command).length > 0 || runsCode(command),
+    )
+  );
+}
+
+// An interpreter, a shell, `source`, `make`, a package script or runner, a test runner, a program
+// named by its path: code the guard cannot read. The kit's own CLI, behind a runner or not, is
+// judged by what it is asked to do.
+function runsCode(command) {
+  const name = shell.commandName(command.words);
+  return (
+    (CODE_RUNNERS.has(name) ||
+      CODE_RUNNERS.has(name.replace(/[\d.]+$/, '')) ||
+      shell.SHELLS.has(name) ||
+      isProgramPath(command.words[0] ?? '', name)) &&
+    kitInvocations([command]).length === 0
+  );
+}
+
+// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`), but a pure reader's.
+function isProgramPath(word, name) {
+  return (/^\.{0,2}\//.test(word) || word.includes('node_modules/.bin/')) && !PURE_READERS.has(name);
 }
 
 // What no agent runs, then what waits for a place, a landing, a lock or a generator first.
@@ -437,6 +774,8 @@ async function preparingReason(project, input, command) {
   return (
     baselineWriteReason(command) ??
     (await hooksSkippedReason(input, command)) ??
+    (await gitConfigReason(input, command)) ??
+    (await otherBranchReason(input, command)) ??
     (await workerPlaceReason(input, command)) ??
     (await landingReason(input, command)) ??
     oneSideMergeReason(project, input, command) ??
@@ -446,40 +785,71 @@ async function preparingReason(project, input, command) {
   );
 }
 
-// What a worker may not run: a file it must put back first, then what the command itself would do;
-// a command allowed to run inline code has the files outside the scope noted before it.
+// What a worker may not run: anything once its scope file changed, a file it must put back first,
+// then what the command itself would do; a command allowed to run code the guard cannot read has
+// the state outside the scope noted before it.
 function workerCommandReason(project, input, { context, command, commands }) {
+  const { changed } = workerScope(project, input);
+  if (changed) {
+    return changed;
+  }
   const pending = pendingChangeReason(project, input, commands);
-  if (pending) {
+  if (pending?.reason) {
     return pending.reason;
   }
+  // A command that puts back held files changes them outside the scope: only that check is lifted.
   const refusal =
+    deeplyNestedReason(commands) ??
     sharedGeneratorReason(project, context, commands) ??
     dependencyChangeReason(commands) ??
     workingMigrationReason(command) ??
     formatterReason(project, commands) ??
-    fileChangeReason(project, input, commands);
-  if (!refusal) {
-    noteBeforeInlineCode(project, input, commands);
+    unknownProgramReason(commands) ??
+    (pending ? undefined : fileChangeReason(project, input, commands));
+  if (!refusal && !pending) {
+    noteBeforeCode(project, input, commands);
   }
   return refusal;
 }
 
-function postWrite(input) {
-  const writes = writesOf(input);
-  formatWrites(writes);
-  const errors = writes
-    .filter(({ file }) => isChecked(file))
-    .flatMap(({ file }) => {
-      const project = findProject(dirname(file));
-      return project?.cli && project.mode !== 'off'
-        ? errorsOf(runCli(project, ['check-file', file, '--json'], 12000))
-        : [];
-    });
-  if (errors.length === 0) {
-    return;
+// A command nested in more shells or evals than the reader follows is let through unread today;
+// for a worker it is refused instead, since the guard cannot see what it writes.
+function deeplyNestedReason(commands) {
+  return commands.some((command) => command.truncated)
+    ? `A command nested deeper than the guard reads is refused to a worker: write it as separate, flatter commands. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
+}
+
+// A command whose program word holds a variable or a substitution runs a name only the shell
+// computes, which the guard cannot judge; `eval` of such a text leaves the same unreadable word.
+function unknownProgramReason(commands) {
+  for (const { words } of commands) {
+    const program = words[0];
+    if (program !== undefined && (program.includes(shell.UNKNOWN) || program.includes('$'))) {
+      const shown = program.replaceAll(shell.UNKNOWN, '$(...)');
+      return `A worker runs no command whose name only the shell knows: \`${shown}\` is computed when the command runs. ${EDIT_WITH_TOOLS}`;
+    }
   }
-  const feedback = `ddd-ts-kit: the file just written breaks ${errors.length} architecture rule(s). Fix them now, do not suppress.\n${describe(errors)}`;
+  return undefined;
+}
+
+function postWrite(input) {
+  const all = writesOf(input);
+  // Biome lays out every written file, which is quick; the check, which is not, reads the first ones.
+  formatWrites(all);
+  const writes = all.slice(0, POST_WRITE_FILES);
+  const errors = writes.filter(({ file }) => isChecked(file)).flatMap(({ file }) => checkWritten(file));
+  const unchecked =
+    all.length > writes.length
+      ? `ddd-ts-kit: ${all.length - writes.length} more written file(s) not checked here: run \`npx ddd-ts-kit check\``
+      : undefined;
+  if (errors.length === 0) {
+    return unchecked ? emit({ systemMessage: unchecked }) : undefined;
+  }
+  const feedback = [
+    `ddd-ts-kit: the file just written breaks ${errors.length} architecture rule(s). Fix them now, do not suppress.\n${describe(errors)}`,
+    ...(unchecked ? [unchecked] : []),
+  ].join('\n');
   // Codex hands the reason of a block to the model in place of the result of the tool.
   if (hostOf(input) === 'codex') {
     return emit({ decision: 'block', reason: feedback });
@@ -488,32 +858,47 @@ function postWrite(input) {
   process.exitCode = 2;
 }
 
+function checkWritten(file) {
+  const project = findProject(dirname(file));
+  return project?.cli && project.mode !== 'off' ? errorsOf(runCli(project, ['check-file', file, '--json'], 12000)) : [];
+}
+
 // With `formatOnWrite` in the config, the Biome the project installed lays out each written file
 // before it is checked, so that the layout is settled at the write and the lint findings that follow
-// a wrapped line come back in the same output. One file, the project's binary only, never `npx biome`.
+// a wrapped line come back in the same output. One file, the bin of the package the project installed
+// only, never `npx biome`.
 function formatWrites(writes) {
   for (const { file } of writes) {
     const project = findProject(dirname(file));
     if (!project?.formatOnWrite || project.mode === 'off' || !FORMATTED_FILE.test(file) || !existsSync(file)) {
       continue;
     }
-    const biome = join(project.root, 'node_modules', '.bin', 'biome');
-    if (existsSync(biome)) {
-      spawnSync(biome, ['format', '--write', file], { cwd: project.root, encoding: 'utf8', timeout: FORMAT_TIMEOUT });
+    const biome = installedBin(join(project.root, 'node_modules', '@biomejs', 'biome'), '@biomejs/biome', 'biome');
+    if (biome) {
+      spawnSync(process.execPath, [biome.bin, 'format', '--write', file], {
+        cwd: project.root,
+        encoding: 'utf8',
+        timeout: FORMAT_TIMEOUT,
+      });
     }
   }
 }
 
-// A context-builder of Claude Code: its tool calls are counted, its runs and stops recorded.
+// The context-builder of the plugin in Claude Code: its tool calls are counted, its runs and stops recorded.
+// An agent of the project named otherwise is held to the scope of a worker (`workerContext`), not counted.
 function isBuilder(input) {
-  return hostOf(input) === 'claude' && String(input.agent_type ?? '').includes(WORKER_AGENT);
+  return hostOf(input) === 'claude' && input.agent_type === BUILDER_AGENT;
 }
 
 async function countBuilderCall(input, project, command) {
   const places = isBuilder(input) && project?.mode !== 'off' ? builderPlaces(input, project) : undefined;
   if (places) {
     const runs = await import('./builder-runs.mjs');
-    notice = runs.countCall(input, places, command);
+    try {
+      notice = runs.countCall(input, places, command);
+    } catch {
+      // a count that fails never drops the decision of the call
+    }
   }
 }
 
@@ -526,21 +911,44 @@ function builderPlaces(input, project) {
     return undefined;
   }
   const worker = project && existsSync(join(project.root, WORKER_SCOPE)) ? project.root : undefined;
-  return { state: stateFile('turns', home, input), worker };
+  return { state: stateFile('turns', home, input), worker, home };
 }
 
+// A new run of a builder: the note its last run left before inline code is dropped, since what
+// changed outside its scope since then is the conductor's as much as its own; what that code changed
+// and was not put back stays recorded.
 async function subagentStart(input) {
   const places = isBuilder(input) ? builderPlaces(input, undefined) : undefined;
-  if (places) {
-    (await import('./builder-runs.mjs')).startRun(input, places);
+  if (!places) {
+    return;
+  }
+  const worker = readJson(places.state)?.worker;
+  if (typeof worker === 'string') {
+    removeKitFile(stateFile('before-run', { root: worker }, input));
+    pruneGuardState(worker);
+  }
+  (await import('./builder-runs.mjs')).startRun(input, places);
+}
+
+// A builder that ends, unless kept going once, releases the pin of its scope when its scope file is
+// still the one pinned; a pin whose scope file changed stays, for the conductor to see, a week at most.
+async function subagentStop(input) {
+  const places = isBuilder(input) ? builderPlaces(input, undefined) : undefined;
+  if (!places) {
+    return;
+  }
+  const reason = (await import('./builder-runs.mjs')).stopRun(input, places);
+  if (reason) {
+    emit({ decision: 'block', reason });
+  } else {
+    releasePin(stateFile('scope', places.home, input));
   }
 }
 
-async function subagentStop(input) {
-  const places = isBuilder(input) ? builderPlaces(input, undefined) : undefined;
-  const reason = places ? (await import('./builder-runs.mjs')).stopRun(input, places) : undefined;
-  if (reason) {
-    emit({ decision: 'block', reason });
+function releasePin(pin) {
+  const pinned = readJson(pin);
+  if (isPin(pinned) && named(readJson(join(pinned.worktree, WORKER_SCOPE))?.context, CONTEXT_NAME) === pinned.context) {
+    removeKitFile(pin);
   }
 }
 
@@ -560,18 +968,30 @@ function stop(input) {
   if (unfinished) {
     return emit({ decision: 'block', reason: unfinished });
   }
-  const reminders = [commitReminder(project, input, { repeat: false }), designReminder(project, input)].filter(Boolean);
+  const reminders = [
+    timedOutCheck(),
+    commitReminder(project, input, { repeat: false }),
+    designReminder(project, input),
+  ].filter(Boolean);
   // Warnings shown to the user, never a block: the size of a commit and a design departed from are advice.
   if (reminders.length > 0) {
     emit({ systemMessage: reminders.join('\n') });
   }
 }
 
+// A check stopped at its time limit lets the stop through: the session is told it did not finish.
+function timedOutCheck() {
+  const seconds = timedOut.get('check');
+  return seconds === undefined
+    ? undefined
+    : `architecture check timed out after ${seconds} s: run \`npx ddd-ts-kit check\``;
+}
+
 // In the worktree of a story, a done row whose design review cites a name the code does not have,
 // with no compromise listed in the report: said once per session for the same names, never blocking.
 function designReminder(project, input) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || !project.cli || fixOf(project) !== undefined) {
+  const story = storyOf(project);
+  if (story === undefined || !project.cli || fixOf(project) !== undefined) {
     return undefined;
   }
   const design = runCli(project, ['story-check', story, '--json'], 20000)?.design ?? [];
@@ -584,7 +1004,7 @@ function designReminder(project, input) {
     )
     .digest('hex')
     .slice(0, 24);
-  if (alreadyRemembered(join(tmpdir(), `ddd-ts-kit-design-${key}`))) {
+  if (alreadyRemembered(markerOf(project, 'design', key))) {
     return undefined;
   }
   const named = design
@@ -597,8 +1017,8 @@ function designReminder(project, input) {
 // The session of a story ends on its report: written once the pull request is open, or with what
 // blocks the story. Refused once for the same step, so that a session that cannot go on still stops.
 function unfinishedStoryReason(project, input) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || !project.cli) {
+  const story = storyOf(project);
+  if (story === undefined || !project.cli) {
     return undefined;
   }
   const phases = runCli(project, ['story', story, '--json'], 8000);
@@ -610,10 +1030,10 @@ function unfinishedStoryReason(project, input) {
     .update(`${project.root}\n${sessionOf(input)}\n${phases.next}`)
     .digest('hex')
     .slice(0, 24);
-  if (typeof input.stop_hook_active !== 'boolean' && alreadyRemembered(join(tmpdir(), `ddd-ts-kit-story-${key}`))) {
+  if (typeof input.stop_hook_active !== 'boolean' && alreadyRemembered(markerOf(project, 'story', key))) {
     return undefined;
   }
-  return `ddd-ts-kit: story ${story} is not finished. Next: ${phases.next} Go on without asking: a question now is a provisional decision, recorded in docs/architecture/stories/${story}.md. If something truly blocks the story, write its \`## Report\` there with what blocks it and every decision taken so far, then stop.`;
+  return `ddd-ts-kit: story ${story} is not finished. Next: ${quoted(phases.next)} Go on without asking: a question now is a provisional decision, recorded in docs/architecture/stories/${story}.md. If something truly blocks the story, write its \`## Report\` there with what blocks it and every decision taken so far, then stop.`;
 }
 
 function remainingErrors(project) {
@@ -635,7 +1055,7 @@ function stopAlreadyRefused(project, input, errors) {
     .digest('hex')
     .slice(0, 24);
 
-  return alreadyRemembered(join(tmpdir(), `ddd-ts-kit-stop-${key}`));
+  return alreadyRemembered(markerOf(project, 'stop', key));
 }
 
 function blockStop(errors) {
@@ -742,20 +1162,33 @@ function findProject(from) {
 }
 
 function describeProject(root) {
-  const config = readJson(join(root, CONFIG)) ?? {};
+  if (!projects.has(root)) {
+    projects.set(root, readProject(root));
+  }
+  return projects.get(root);
+}
+
+// What the guard reads of a project, its config read once: a field of the wrong type is its default.
+function readProject(root) {
+  const { config, tooLarge } = readConfig(join(root, CONFIG));
+  const text = (key, otherwise) =>
+    Object.hasOwn(config, key) && typeof config[key] === 'string' && config[key] !== '' ? config[key] : otherwise;
   return {
     root,
     cli: installedCli(root),
-    sourceRoot: config.sourceRoot ?? 'src',
-    contextsDir: config.contextsDir ?? 'src/contexts',
-    sharedKernelDir: config.sharedKernelDir ?? `${config.sourceRoot ?? 'src'}/shared-kernel`,
+    sourceRoot: text('sourceRoot', 'src'),
+    contextsDir: text('contextsDir', 'src/contexts'),
+    sharedKernelDir: text('sharedKernelDir', `${text('sourceRoot', 'src')}/shared-kernel`),
     // The modules of the model each context declares: one folder of the context holding its layers.
     modules: modulesByContext(config.contexts),
-    platformDir: config.platformDir ?? 'src/platform',
+    platformDir: text('platformDir', 'src/platform'),
     commit: commitLimits(config.commit),
     packageManager: config.stack?.packageManager === 'pnpm' ? 'pnpm' : 'npm',
-    // enforce: block; advise: ask the user; off: silent.
-    mode: process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce',
+    // enforce: block; advise: ask the user; off: silent; any other value, enforce, said at session start.
+    // A config too large to read leaves the guard off there, said at session start too.
+    ...(tooLarge === undefined
+      ? guardMode(process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce')
+      : { mode: 'off', tooLarge }),
     // required (what init writes in a new project): the code of a context is refused in the main checkout
     // of the trunk; advised (the key absent, a project started before): only said.
     worktrees: config.worktrees === 'required' ? 'required' : 'advised',
@@ -766,17 +1199,63 @@ function describeProject(root) {
   };
 }
 
+// The config as an object of JSON, read through one descriptor and never above CONFIG_BYTES; one
+// that cannot be read or parsed is the defaults.
+function readConfig(path) {
+  try {
+    const descriptor = openSync(path, 'r');
+    try {
+      const size = fstatSync(descriptor).size;
+      if (size > CONFIG_BYTES) {
+        return { config: {}, tooLarge: size };
+      }
+      const config = JSON.parse(readFileSync(descriptor, 'utf8'));
+      return { config: isRecord(config) ? config : {} };
+    } finally {
+      closeSync(descriptor);
+    }
+  } catch {
+    return { config: {} };
+  }
+}
+
+function isRecord(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function guardMode(asked) {
+  return GUARD_MODES.includes(asked) ? { mode: asked } : { mode: 'enforce', unknownMode: asked };
+}
+
 // The CLI the project installed, where Node would find it: in the project, or hoisted to a parent
-// by the workspaces of npm or pnpm (a project of a monorepo, the example of this repository).
+// by the workspaces of npm or pnpm (a project of a monorepo, the example of this repository), never
+// above the top of its repository, where a folder another user writes (the temp dir) could hold one.
 function installedCli(root) {
-  for (let directory = root; ; directory = dirname(directory)) {
-    const cli = join(directory, 'node_modules', '.bin', 'ddd-ts-kit');
-    if (existsSync(cli)) {
+  const top = repositoryTop(root) ?? root;
+  let directory = root;
+  for (;;) {
+    const cli = installedBin(join(directory, 'node_modules', 'ddd-ts-kit'), 'ddd-ts-kit', 'ddd-ts-kit');
+    if (cli || directory === top) {
       return cli;
     }
-    if (dirname(directory) === directory) {
-      return undefined;
-    }
+    directory = dirname(directory);
+  }
+}
+
+// The bin `command` of the package `name` installed in `home`, and its version: the file its manifest
+// names, inside the package once links are followed. The guard runs it with Node, never through
+// node_modules/.bin, whose entry may be any file a repository commits (and is a shell shim on pnpm).
+function installedBin(home, name, command) {
+  const manifest = readJson(join(home, 'package.json'));
+  if (manifest?.name !== name) {
+    return undefined;
+  }
+  try {
+    const bin = realpathSync(resolve(home, manifest.bin[command]));
+    return bin.startsWith(`${realpathSync(home)}${sep}`) ? { bin, version: manifest.version } : undefined;
+  } catch {
+    // No bin of that name, or a file that is not there.
+    return undefined;
   }
 }
 
@@ -799,7 +1278,8 @@ function projectBriefing(project, input) {
     'ddd-ts-kit project (DDD, Clean Architecture). The rules are checked: `npx ddd-ts-kit explain <rule-id>`.',
     'Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.',
     'Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).',
-    'Read `npx ddd-ts-kit list --json` and the CONTEXT.md of one context instead of browsing the tree.',
+    'Read `npx ddd-ts-kit list` (text; `--json` for a script) and the CONTEXT.md of one context instead of browsing the tree.',
+    ...configNotice(project),
     ...(project.mode === 'off' ? [] : versionGap(project)),
     ...planPointer(project.root),
     ...workerNotice(project, input),
@@ -812,9 +1292,24 @@ function projectBriefing(project, input) {
   } else {
     lines.push(installAdvice(project));
   }
+  if (briefingCut) {
+    lines.push(BRIEFING_CUT);
+  }
   const reminder = project.mode === 'off' ? undefined : commitReminder(project, input, { repeat: true });
 
   return reminder ? [...lines, reminder] : lines;
+}
+
+// What the guard could not take of the config as written: a mode it does not know, a file too large.
+function configNotice(project) {
+  if (project.tooLarge !== undefined) {
+    return [
+      `${CONFIG} holds ${Math.round(project.tooLarge / 1024)} KB, more than the ${CONFIG_BYTES / 1024} KB the guard reads: it judges nothing in this project until the config is smaller.`,
+    ];
+  }
+  return project.unknownMode === undefined
+    ? []
+    : [`guard: ${quoted(project.unknownMode)} is not a mode (${GUARD_MODES.join(', ')}): enforce applies.`];
 }
 
 // A worktree of a project that already depends on the kit lacks its install, not the kit.
@@ -831,7 +1326,7 @@ function installAdvice(project) {
 // The skills describe KIT_VERSION while the checks run the CLI the project installed, and the
 // plugin is updated apart from the lockfile. A gap is said at session start, never blocked.
 function versionGap(project) {
-  const installed = readJson(join(project.root, 'node_modules', 'ddd-ts-kit', 'package.json'))?.version;
+  const installed = project.cli?.version;
   if (typeof installed !== 'string' || compatible(installed, KIT_VERSION)) {
     return [];
   }
@@ -865,17 +1360,46 @@ function planPointer(root) {
   if (plan === undefined) {
     return [];
   }
-  const next = /^Next:\s*(.+)$/m.exec(plan)?.[1]?.trim();
-
+  const next = /^Next:\s*(.+)$/m.exec(plan)?.[1];
   return [
-    `Plan: ${PLAN} (resume with /ddd-ts-kit:start). Next: ${(next ?? 'not stated, read the plan').slice(0, 300)}`,
+    `Plan (${PLAN}): ${next ? quoted(next) : 'no next step stated, read the plan'}. Resume with /ddd-ts-kit:start.`,
   ];
+}
+
+// A text read from the repository (the plan, the files of a story through the CLI) said as data,
+// never as a word of the guard: on one line, without backquote nor double quote, cut, never opening
+// with the prefix of the guard's own decisions, between double quotes.
+function quoted(text) {
+  const flat = String(text)
+    .replace(/[\p{Cf}`"]/gu, '')
+    .replace(/[\s\p{Cc}]+/gu, ' ')
+    .replace(/^(?:\s*ddd-ts-kit\s*:)+/i, '')
+    .trim();
+  return `"${flat.slice(0, QUOTED_LIMIT)}"`;
+}
+
+// The story of the worktree, by an id the CLI would take.
+function storyOf(project) {
+  return named(storyScope(project)?.story, STORY_ID);
+}
+
+// The scope file of a story worktree, read once a run like the config.
+function storyScope(project) {
+  if (!storyScopes.has(project.root)) {
+    storyScopes.set(project.root, readJson(join(project.root, STORY_SCOPE)));
+  }
+  return storyScopes.get(project.root);
+}
+
+// A name read from the repository, when it follows its grammar; else nothing, and it is not repeated.
+function named(value, grammar) {
+  return typeof value === 'string' && grammar.test(value) ? value : undefined;
 }
 
 // In the worktree of a story: the story, its phase and its next step, so that a session resumes it.
 function storyNotice(project) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string' || project.mode === 'off' || !project.cli) {
+  const story = storyOf(project);
+  if (story === undefined || project.mode === 'off' || !project.cli) {
     return [];
   }
   const phases = runCli(project, ['story', story, '--json'], 6000);
@@ -885,7 +1409,7 @@ function storyNotice(project) {
   const done = phases.phases.filter(({ met }) => met).map(({ title }) => title);
   const kind = fixOf(project) === undefined ? ['Story', 'story'] : ['Fix', 'fix'];
   return [
-    `${kind[0]} ${story} (skill ddd-ts-kit:${kind[1]}): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ?? 'its pull request'}`,
+    `${kind[0]} ${story} (skill ddd-ts-kit:${kind[1]}): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ? quoted(phases.next) : 'its pull request'}`,
     ...meetingNotice(project),
   ];
 }
@@ -898,21 +1422,23 @@ function meetingNotice(project) {
     return [];
   }
   const meetings = view.crossings.map(({ stories: [, other], contexts, files, merge }) => {
+    const shown = contexts.filter((name) => named(name, CONTEXT_NAME));
     const parts = [
-      ...(contexts.length === 0 ? [] : [`contexts ${contexts.join(', ')}`]),
+      ...(shown.length === 0 ? [] : [`contexts ${shown.join(', ')}`]),
       ...(files.length === 0 ? [] : [`${files.length} file(s) both change`]),
       ...((merge?.byHand.length ?? 0) === 0 ? [] : [`${merge.byHand.length} conflict(s) to settle by hand`]),
     ];
-    return `It meets story ${other}: ${parts.length === 0 ? 'conflicts merge-trunk settles' : parts.join(', ')}.`;
+    const story = named(other, STORY_ID);
+    return `It meets ${story ? `story ${story}` : 'another open story'}: ${parts.length === 0 ? 'conflicts merge-trunk settles' : parts.join(', ')}.`;
   });
   const trunk = own.trunk?.behind
     ? [
-        `The trunk moved: ${own.trunk.behind} commit(s) of ${own.trunk.ref} to merge in${own.trunk.byHand.length === 0 ? '' : `, ${own.trunk.byHand.length} conflict(s) to settle by hand`}.`,
+        `The trunk moved: ${own.trunk.behind} commit(s) of ${named(own.trunk.ref, GIT_REF) ?? 'the trunk'} to merge in${own.trunk.byHand.length === 0 ? '' : `, ${own.trunk.byHand.length} conflict(s) to settle by hand`}.`,
       ]
     : [];
   const fetched = view.fetched ? Date.parse(view.fetched) : undefined;
   if (fetched !== undefined && Date.now() - fetched > STALE_FETCH) {
-    trunk.push(`The trunk is read as the fetch of ${view.fetched} left it: \`git fetch\` first.`);
+    trunk.push(`The trunk is read as the fetch of ${new Date(fetched).toISOString()} left it: \`git fetch\` first.`);
   }
   return meetings.length + trunk.length === 0
     ? []
@@ -944,10 +1470,22 @@ function workersToResume(project) {
       ['send-message', 'new-agent'].includes(progress?.next?.action) &&
       (progress.agent || progress.phase !== 'not started'),
   );
-  return stopped.map(
-    ({ branch, context, worktree, progress }) =>
-      `Worker to resume: ${branch ?? worktree} (${progress.phase}${progress.agent ? `, agent ${progress.agent.agentId}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${workers.filter((other) => other.context === context).length > 1 ? ` --worktree ${worktree}` : ''}\`, then send what it prints.`,
-  );
+  return stopped.map((stoppedWorker) => resumeLine(stoppedWorker, workers));
+}
+
+// The line of a worker to resume, when each name it repeats follows its grammar: its worktree is
+// needed only when it names the worker (no branch) or tells two workers of one context apart.
+function resumeLine({ branch, context, worktree, progress }, workers) {
+  const agent = progress.agent ? named(progress.agent.agentId, AGENT_ID) : '';
+  const path = named(worktree, ABSOLUTE_PATH);
+  const shown = branch === undefined ? path : named(branch, GIT_REF);
+  const shared = workers.filter((other) => other.context === context).length > 1;
+  const names = [named(context, CONTEXT_NAME), named(progress.phase, LABEL), agent, shown, shared ? path : ''];
+  if (names.includes(undefined)) {
+    return 'Worker to resume: one whose names the guard does not repeat: `npx ddd-ts-kit status --workers` lists it.';
+  }
+  const where = shared ? ` --worktree ${path.includes(' ') ? `'${path}'` : path}` : '';
+  return `Worker to resume: ${shown} (${progress.phase}${agent ? `, agent ${agent}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${where}\`, then send what it prints.`;
 }
 
 // Read from git's own files, without running git: the worktrees of the repository listed under
@@ -958,10 +1496,8 @@ function hasWorkerWorktree(root) {
     return false;
   }
   const dotGit = join(top, '.git');
-  const gitDir = isDirectory(dotGit)
-    ? dotGit
-    : resolve(top, /^gitdir:\s*(.+)$/m.exec(readText(dotGit) ?? '')?.[1] ?? '');
-  const common = resolve(gitDir, (readText(join(gitDir, 'commondir')) ?? '.').trim());
+  const gitDir = isDirectory(dotGit) ? dotGit : resolve(top, /^gitdir:\s*(.+)$/m.exec(readText(dotGit, ''))?.[1] ?? '');
+  const common = resolve(gitDir, readText(join(gitDir, 'commondir'), '.').trim());
   const prefix = relative(top, root);
   let names;
   try {
@@ -970,19 +1506,21 @@ function hasWorkerWorktree(root) {
     return false;
   }
   return names.some((name) => {
-    const checkout = dirname((readText(join(common, 'worktrees', name, 'gitdir')) ?? '').trim());
+    const checkout = dirname(readText(join(common, 'worktrees', name, 'gitdir'), '').trim());
     return checkout !== '.' && existsSync(join(checkout, prefix, WORKER_SCOPE));
   });
 }
 
 function repositoryTop(from) {
-  for (let directory = resolve(from); ; directory = dirname(directory)) {
+  let directory = resolve(from);
+  for (;;) {
     if (existsSync(join(directory, '.git'))) {
       return directory;
     }
     if (dirname(directory) === directory) {
       return undefined;
     }
+    directory = dirname(directory);
   }
 }
 
@@ -994,17 +1532,21 @@ function isDirectory(path) {
   }
 }
 
-function readText(path) {
+// The text of a file, or `otherwise` when it cannot be read: missing, a folder, or not readable by this user.
+function readText(path, otherwise) {
   try {
     return readFileSync(path, 'utf8');
   } catch {
-    return undefined;
+    return otherwise;
   }
 }
 
 function contextMap(project) {
   const listing = runCli(project, ['list', '--json'], 8000);
-  const text = (listing?.contexts ?? []).map(contextLine).join('\n');
+  const text = (listing?.contexts ?? [])
+    .filter((context) => named(context.name, CONTEXT_NAME))
+    .map(contextLine)
+    .join('\n');
   return text.length > SESSION_CONTEXT_LIMIT
     ? `${text.slice(0, SESSION_CONTEXT_LIMIT)}\n(truncated: run \`npx ddd-ts-kit list\` for the rest)`
     : text;
@@ -1012,9 +1554,14 @@ function contextMap(project) {
 
 function contextLine(context) {
   const size = (key) => (context[key] ?? []).length;
-  const upstreams = (context.upstreams ?? []).map((upstream) => upstream.context ?? upstream).join(', ') || 'none';
+  const upstreams =
+    (context.upstreams ?? [])
+      .map((upstream) => upstream.context ?? upstream)
+      .filter((name) => named(name, CONTEXT_NAME))
+      .join(', ') || 'none';
+  const classification = named(context.classification, CONTEXT_NAME) ?? 'unclassified';
 
-  return `${context.name} [${context.classification}] upstreams: ${upstreams}; glossary: ${context.glossary ?? 0} terms; ${size('aggregates')} aggregates, ${size('commands')} commands, ${size('queries')} queries, ${size('publishedEvents')} published events`;
+  return `${context.name} [${classification}] upstreams: ${upstreams}; glossary: ${context.glossary ?? 0} terms; ${size('aggregates')} aggregates, ${size('commands')} commands, ${size('queries')} queries, ${size('publishedEvents')} published events`;
 }
 
 function generatedFileReason(project, file) {
@@ -1056,7 +1603,7 @@ function isBarrel(project, path) {
  * (test/unit/<module>/...); 0.86 and 0.87 put it under domain/ and application/ (application/<module>/...).
  */
 function outsideItsModule(project, context, parts) {
-  const modules = project.modules?.[context] ?? [];
+  const modules = project.modules[context] ?? [];
   const [first, second, ...rest] = parts;
   if (modules.includes(first) && ['domain', 'application', 'infrastructure', 'presentation'].includes(second)) {
     return [second, ...rest];
@@ -1067,12 +1614,13 @@ function outsideItsModule(project, context, parts) {
   return (first === 'domain' || first === 'application') && modules.includes(second) ? [first, ...rest] : parts;
 }
 
+// By context name, in a map without prototype: a context named `constructor` or `__proto__` is a name.
 function modulesByContext(contexts) {
-  const named = (context) => {
-    const modules = context?.modules;
-    return modules && typeof modules === 'object' && !Array.isArray(modules) ? Object.keys(modules) : [];
-  };
-  return Object.fromEntries(Object.entries(contexts ?? {}).map(([name, context]) => [name, named(context)]));
+  const modules = Object.create(null);
+  for (const [name, context] of Object.entries(isRecord(contexts) ? contexts : {})) {
+    modules[name] = isRecord(context?.modules) ? Object.keys(context.modules) : [];
+  }
+  return modules;
 }
 
 function insideContexts(project, path) {
@@ -1090,11 +1638,12 @@ function testWriterScopeReason(project, file, input) {
 }
 
 function workerScopeReason(project, file, input) {
-  const context = workerContext(project, input);
-  if (!context) {
-    return undefined;
-  }
-  const path = projectPath(project, file);
+  const scope = workerScope(project, input);
+  return scope && (scope.changed ?? contextScopeReason(project, projectPath(project, file), scope.context));
+}
+
+// Why `path` of the project is outside the scope of a worker of `context`, if it is.
+function contextScopeReason(project, path, context) {
   if (
     path.startsWith(`${project.contextsDir}/${context}/`) ||
     E2E_SPEC.test(path) ||
@@ -1130,11 +1679,63 @@ function isWorkingMigration(project, path) {
 }
 
 function workerContext(project, input) {
+  return workerScope(project, input)?.context;
+}
+
+// The scope of a worker is pinned at its first call: its context and its worktree are recorded in
+// the guard's folder of the session's checkout (the conductor's, which a worker does not write),
+// keyed by session and agent, and every later call is judged against that record, read once per
+// call of the guard. A scope file that disappeared or names another context, or the scope file of
+// another worktree, makes `changed` the refusal of every call of the worker there.
+function workerScope(project, input) {
   if (!String(input.agent_type ?? '').includes(WORKER_AGENT)) {
     return undefined;
   }
-  const context = process.env.DDD_TS_KIT_WORKER_CONTEXT ?? readJson(join(project.root, WORKER_SCOPE))?.context;
-  return typeof context === 'string' && /^[a-z][a-z0-9-]*$/.test(context) ? context : undefined;
+  if (!scopes.has(project.root)) {
+    scopes.set(project.root, pinnedScope(project, input));
+  }
+  return scopes.get(project.root);
+}
+
+// The worktree is recorded and compared by its real path: a link to it, or another spelling of it, is the same.
+function pinnedScope(project, input) {
+  const current = namedContext(project);
+  const pin = stateFile('scope', findProject(input.cwd ?? process.cwd()) ?? project, input);
+  const pinned = readJson(pin);
+  const worktree = realpathSync(project.root);
+  if (!isPin(pinned)) {
+    if (current) {
+      writeState(pin, { context: current, worktree });
+    }
+    return current && { context: current };
+  }
+  if (pinned.worktree !== worktree) {
+    return current && { context: current, changed: otherWorktreeReason(pinned, project) };
+  }
+  return current === pinned.context
+    ? { context: current }
+    : { context: pinned.context, changed: scopeChangedReason(pinned, current) };
+}
+
+// The context the scope file of the worktree names, or the environment of the guard.
+function namedContext(project) {
+  return named(
+    process.env.DDD_TS_KIT_WORKER_CONTEXT ?? readJson(join(project.root, WORKER_SCOPE))?.context,
+    CONTEXT_NAME,
+  );
+}
+
+function isPin(value) {
+  return isRecord(value) && typeof value.worktree === 'string' && named(value.context, CONTEXT_NAME) !== undefined;
+}
+
+function scopeChangedReason(pinned, current) {
+  const now = current ? `names the context "${current}"` : 'is gone or names no context';
+  return `The scope file changed: ${WORKER_SCOPE} of your worktree named the context "${pinned.context}" at your first call and now ${now}. Change nothing until it is back: report to the conductor, who restores it.`;
+}
+
+function otherWorktreeReason(pinned, project) {
+  return `Your scope is the context "${pinned.context}" in the worktree ${pinned.worktree}, pinned at your first call: ${project.root} is the worktree of another worker. Report to the conductor.`;
 }
 
 // The acceptance of a story is the contract its code is built against: its lock is written by the
@@ -1169,13 +1770,13 @@ function isJudge(input) {
 // The fix of the worktree, when its story.json says `kind: 'fix'` (absent, a story): its code, whether
 // its lock is written, and the regression specs the lock lists, relative to the project.
 function fixOf(project) {
-  const scope = readJson(join(project.root, STORY_SCOPE));
-  if (typeof scope?.story !== 'string' || scope.kind !== 'fix') {
+  const story = storyOf(project);
+  if (story === undefined || storyScope(project).kind !== 'fix') {
     return undefined;
   }
-  const lock = join(project.root, 'test/acceptance', `${scope.story.toLowerCase()}.acceptance.lock.json`);
+  const lock = join(project.root, 'test/acceptance', `${story.toLowerCase()}.acceptance.lock.json`);
   const files = (readJson(lock)?.regression ?? []).map((test) => test?.file).filter((file) => typeof file === 'string');
-  return { story: scope.story, locked: existsSync(lock), files: [...new Set(files)] };
+  return { story, locked: existsSync(lock), files: [...new Set(files)] };
 }
 
 // The regression spec of a fix, once locked, is the proof of the fix: a sub-agent never rewrites it. The
@@ -1201,20 +1802,25 @@ function verdictReason(judging, path) {
 // regression spec of a fix may also run it, with a test runner; a sub-agent never rewrites it (the main session may).
 async function acceptanceFilesShellReason(project, input, command) {
   const judging = isJudge(input);
-  const held = (input.agent_type ? (fixOf(project)?.files ?? []) : []).filter(
-    (file) => command.includes(file) || command.includes(file.split('/').pop()),
+  shell = await import('./shell-commands.mjs');
+  const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
+  const written = writtenProjectPaths(project, commands);
+  const fixFiles = input.agent_type ? (fixOf(project)?.files ?? []) : [];
+  // A command touches a held file by the place it writes (a glob expanded) or by naming it in text.
+  const held = fixFiles.filter(
+    (file) => written.includes(file) || command.includes(file) || command.includes(file.split('/').pop()),
   );
-  if (!judging && held.length === 0 && !/acceptance\/verdicts|\.acceptance\.lock\.json/.test(command)) {
+  const governed =
+    written.some((path) => ACCEPTANCE_LOCK.test(path) || path.startsWith('test/acceptance/verdicts/')) ||
+    /acceptance\/verdicts|\.acceptance\.lock\.json/.test(command);
+  if (!judging && held.length === 0 && !governed) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const writing = shell
-    .simpleCommands(command, input.cwd ?? process.cwd())
-    .some(
-      (simple) =>
-        !(readsOnly(simple.words) || (held.length > 0 && runsTests(simple))) ||
-        simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
-    );
+  const writing = commands.some(
+    (simple) =>
+      !(readsOnly(simple.words) || (held.length > 0 && runsTests(simple))) ||
+      simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
+  );
   if (!writing) {
     return undefined;
   }
@@ -1227,12 +1833,41 @@ async function acceptanceFilesShellReason(project, input, command) {
     : `${lockedRegressionReason(project, spec, input)} A command may read it, version it or run it (\`npm test -- ${spec}\`).`;
 }
 
+// The project paths a command writes, each glob expanded against the tree so a pattern that names a
+// lock, a verdict or a held regression spec is seen, not only a path spelled out in the command.
+function writtenProjectPaths(project, commands) {
+  const places = commands
+    .flatMap((command) => [...writtenTargets(command), ...changedPaths(command)])
+    .map(({ place }) => place)
+    .filter((place) => place !== undefined);
+  const paths = new Set();
+  for (const place of places) {
+    for (const file of expandGlob(place)) {
+      paths.add(projectPath(project, file));
+    }
+  }
+  return [...paths];
+}
+
+function expandGlob(place) {
+  // A pattern matching nothing (globSync returns []) writes no file, so it protects nothing.
+  return /[*?[]/.test(place) ? globSync(place) : [place];
+}
+
 // A command that writes no file by itself, its redirections aside: a neutral one (`cd`, `test`), a reader,
 // `sed` without an in-place edit nor a script that writes, `awk` whose program writes nothing, `less` without a log.
 function readsOnly(words) {
   const name = shell.commandName(words);
   const args = words.slice(1);
   if (NEUTRAL_PROGRAMS.has(name) || READING_PROGRAMS.has(name)) {
+    return true;
+  }
+  if (name === 'git') {
+    return GIT_READS.has(gitInvocation(args, undefined).subcommand);
+  }
+  // `npx ddd-ts-kit ...`, `pnpm exec ddd-ts-kit ...`: a launcher of the kit reads the lock; `npx`
+  // of anything else can write it.
+  if (kitInvocations([{ words }]).length > 0) {
     return true;
   }
   if (name === 'sed') {
@@ -1282,7 +1917,7 @@ function sedScriptWrites(script) {
 // `s/pattern/text/flags`: the flags `w` and `e` write a file or run a command.
 function substitutionWrites(scan) {
   skipDelimited(scan, 2);
-  const flags = /^[^;}\n]*/.exec(scan.script.slice(scan.at))?.[0] ?? '';
+  const [flags] = /^[^;}\n]*/.exec(scan.script.slice(scan.at));
   scan.at += flags.length;
   return /[we]/.test(flags);
 }
@@ -1326,7 +1961,7 @@ function inPlaceFlag(args) {
 
 // A test runner, however it is launched, as long as it runs no inline code of its own.
 function runsTests(simple) {
-  return RUNNING_PROGRAMS.has(shell.commandName(simple.words)) && inlineCode(simple) === undefined;
+  return RUNNING_PROGRAMS.has(shell.commandName(simple.words)) && !runsInlineCode(simple);
 }
 
 // What a scenario asserts, the wrapper `pending(...)`, white space, parentheses and commas aside.
@@ -1405,7 +2040,12 @@ async function writesCode(input, command, aside) {
     return false;
   }
   shell = await import('./shell-commands.mjs');
-  return kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  return generates(shell.simpleCommands(command, input.cwd ?? process.cwd()), aside);
+}
+
+// A run of a generator of the kit among `commands`, any kind but those given, its help and its dry run aside.
+function generates(commands, aside) {
+  return kitInvocations(commands).some(
     ({ subcommand, args }) =>
       ['generate', 'g'].includes(subcommand) &&
       args[0] !== undefined &&
@@ -1459,12 +2099,12 @@ function trunkCheckoutBranch(project) {
   if (!git || !isDirectory(git)) {
     return undefined;
   }
-  const branch = /^ref: refs\/heads\/(.+)$/m.exec(readText(join(git, 'HEAD')) ?? '')?.[1];
-  const remote = /^ref: refs\/remotes\/origin\/(.+)$/m.exec(readText(join(git, 'refs/remotes/origin/HEAD')) ?? '')?.[1];
+  const branch = /^ref: refs\/heads\/(.+)$/m.exec(readText(join(git, 'HEAD'), ''))?.[1];
+  const remote = /^ref: refs\/remotes\/origin\/(.+)$/m.exec(readText(join(git, 'refs/remotes/origin/HEAD'), ''))?.[1];
   const trunk = remote ? branch === remote : ['main', 'master'].includes(branch);
   const born =
     existsSync(join(git, 'refs/heads', branch ?? '')) ||
-    (readText(join(git, 'packed-refs')) ?? '').includes(` refs/heads/${branch}\n`);
+    readText(join(git, 'packed-refs'), '').includes(` refs/heads/${branch}\n`);
   return trunk && born ? branch : undefined;
 }
 
@@ -1498,7 +2138,12 @@ function forYouWith(view, own, other) {
 }
 
 function crossingLine(other, forYou, path) {
-  const where = `${other.story} (${other.branch ?? 'detached'}, ${other.worktree})`;
+  const [story, branch] = [named(other.story, STORY_ID), named(other.branch ?? 'detached', GIT_REF)];
+  const worktree = named(other.worktree, ABSOLUTE_PATH);
+  const where =
+    story === undefined || branch === undefined
+      ? 'Another open story'
+      : `${story} (${worktree === undefined ? branch : `${branch}, ${worktree}`})`;
   return forYou.includes(path)
     ? `${where} changes ${path} too, and merging its branch into this one now leaves that file to settle by hand.`
     : `${where} changes ${path} too.`;
@@ -1509,7 +2154,7 @@ function crossingMarker(project, input, subject) {
     .update(`${project.root}\n${sessionOf(input)}\n${subject}`)
     .digest('hex')
     .slice(0, 24);
-  return join(tmpdir(), `ddd-ts-kit-crossing-${key}`);
+  return markerOf(project, 'crossing', key);
 }
 
 // What `stories --json` says, read again once its copy in the guard's folder is a minute old,
@@ -1524,7 +2169,10 @@ function storiesOf(project) {
     return cached;
   }
   const view = runCli(project, ['stories', '--json'], 3000);
-  const prefix = spawnSync('git', ['rev-parse', '--show-prefix'], { cwd: project.root, encoding: 'utf8' });
+  const prefix = spawnSync('git', ['-c', 'core.fsmonitor=false', 'rev-parse', '--show-prefix'], {
+    cwd: project.root,
+    encoding: 'utf8',
+  });
   if (!view || prefix.status !== 0) {
     return undefined;
   }
@@ -1534,8 +2182,8 @@ function storiesOf(project) {
 }
 
 function storyBuildReason(project) {
-  const story = readJson(join(project.root, STORY_SCOPE))?.story;
-  if (typeof story !== 'string') {
+  const story = storyOf(project);
+  if (story === undefined) {
     return undefined;
   }
   const fix = fixOf(project);
@@ -1557,7 +2205,7 @@ function storyBuildReason(project) {
     }
     return undefined;
   }
-  return `The code of story ${story} waits for its build gate: a design review section per row and the acceptance written and locked, before any code. Next: ${gate.next} (\`npx ddd-ts-kit story ${story}\` shows every phase).`;
+  return `The code of story ${story} waits for its build gate: a design review section per row and the acceptance written and locked, before any code. Next: ${quoted(gate.next)} (\`npx ddd-ts-kit story ${story}\` shows every phase).`;
 }
 
 // The build gate of a fix is its proof: the regression spec written, listed and locked; no row, no review.
@@ -1570,11 +2218,13 @@ function fixBuildReason({ story, locked }) {
 // The size and the time of change of every file the build gate of a story reads.
 function storyInputsKey(project) {
   const hash = createHash('sha256');
-  for (const input of STORY_INPUTS) {
-    for (const file of filesBelow(join(project.root, input))) {
-      const stat = statSync(file, { throwIfNoEntry: false });
-      hash.update(`${file}\0${stat?.size ?? ''}\0${stat?.mtimeMs ?? ''}\n`);
-    }
+  const entries = STORY_INPUTS.flatMap((input) => filesBelow(join(project.root, input))).map((file) => ({
+    file,
+    stat: statSync(file, { throwIfNoEntry: false }),
+  }));
+  // A file that vanished between the listing and the stat is left out.
+  for (const { file, stat } of entries.filter((entry) => entry.stat !== undefined)) {
+    hash.update(`${file}\0${stat.size}\0${stat.mtimeMs}\n`);
   }
   return hash.digest('hex');
 }
@@ -1672,15 +2322,20 @@ async function hooksSkippedReason(input, command) {
 function hooksSkippedBy(words) {
   let index = 1;
   while (index < words.length && words[index].startsWith('-')) {
-    const word = words[index];
-    const configured = word === '-c' ? words[index + 1] : /^--config-env=(.*)$/.exec(word)?.[1];
-    if (configured !== undefined && /^core\.hookspath\b/i.test(configured)) {
+    if (optionPointsAtHooks(words[index], words[index + 1])) {
       return '`git -c core.hooksPath` points git at other hooks';
     }
-    index += GIT_VALUED_OPTIONS.has(word) ? 2 : 1;
+    index += GIT_VALUED_OPTIONS.has(words[index]) ? 2 : 1;
   }
-  const subcommand = words[index];
-  const rest = words.slice(index + 1);
+  return hooksSkippedBySubcommand(words[index], words.slice(index + 1));
+}
+
+function optionPointsAtHooks(word, next) {
+  const configured = word === '-c' ? next : /^--config-env=(.*)$/.exec(word)?.[1];
+  return configured !== undefined && /^core\.hookspath\b/i.test(configured);
+}
+
+function hooksSkippedBySubcommand(subcommand, rest) {
   if (subcommand === 'config' && rest.some((word) => /^core\.hookspath$/i.test(word))) {
     return '`git config core.hooksPath` points git at other hooks';
   }
@@ -1702,6 +2357,138 @@ function hooksSkippedBy(words) {
     }
   }
   return undefined;
+}
+
+// Config keys a sub-agent must not set: each runs a command in every checkout of the repository
+// (fsmonitor, pager, editor, sshCommand, hooksPath, an alias, a diff or filter driver, gpg).
+// A sub-agent never deletes, moves or resets a branch checked out in another worktree of the
+// repository: the branch of another worker, or the trunk of the conductor.
+async function otherBranchReason(input, command) {
+  if (!input.agent_type || !/\bbranch\b/.test(command)) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const cwd = input.cwd ?? process.cwd();
+  for (const simple of shell.simpleCommands(command, cwd)) {
+    const names = rewrittenBranches(simple.words);
+    const taken =
+      names.length > 0 ? names.find((name) => otherWorktreeBranches(simple.directory ?? cwd).has(name)) : undefined;
+    if (taken) {
+      return `A sub-agent never deletes, moves or resets the branch of another worktree: \`${taken}\` is checked out in another worktree of the repository. ${REPORT_TO_CONDUCTOR}`;
+    }
+  }
+  return undefined;
+}
+
+// The branches `git branch` deletes, moves, copies (both names) or resets (the first operand).
+function rewrittenBranches(words) {
+  const { subcommand, tail } = gitInvocation(words.slice(1));
+  if (shell.commandName(words) !== 'git' || subcommand !== 'branch') {
+    return [];
+  }
+  const names = shell.operands(tail);
+  if (tail.some((word) => BRANCH_DELETES.includes(word) || BRANCH_MOVES.includes(word))) {
+    return names;
+  }
+  return tail.some((word) => BRANCH_RESETS.includes(word)) ? names.slice(0, 1) : [];
+}
+
+// The branches checked out in the worktrees of the repository of `directory`, but its own.
+function otherWorktreeBranches(directory) {
+  const checkout = { root: directory };
+  const own = git(checkout, ['rev-parse', '--show-toplevel'])?.trim();
+  const blocks = gitFields(checkout, ['worktree', 'list', '--porcelain'], '\n\n');
+  return new Set(
+    blocks
+      .filter((block) => block.split('\n')[0] !== `worktree ${own}`)
+      .flatMap((block) => /^branch refs\/heads\/(.+)$/m.exec(block)?.slice(1) ?? []),
+  );
+}
+
+const DANGEROUS_CONFIG = [
+  /^core\.fsmonitor$/i,
+  /^core\.pager$/i,
+  /^core\.editor$/i,
+  /^core\.sshcommand$/i,
+  /^core\.hookspath$/i,
+  /^alias\./i,
+  /^diff\..+\.command$/i,
+  /^filter\./i,
+  /^gpg\.program$/i,
+];
+const CONFIG_READS = new Set(['--get', '--get-all', '--get-regexp', '--get-urlmatch', '-l', '--list', '--list-all']);
+const CONFIG_WRITES = new Set([
+  '--unset',
+  '--unset-all',
+  '--remove-section',
+  '--rename-section',
+  '-e',
+  '--edit',
+  '--replace-all',
+  '--add',
+]);
+// The verbs of `git config` (git 2.46), each with whether it changes the configuration.
+const CONFIG_VERBS = new Map([
+  ['get', false],
+  ['list', false],
+  ['get-color', false],
+  ['get-colorbool', false],
+  ['set', true],
+  ['unset', true],
+  ['edit', true],
+  ['rename-section', true],
+  ['remove-section', true],
+]);
+
+// A sub-agent never sets the git configuration (shared by every checkout of the repository) nor
+// passes a dangerous `-c key=value`; it reads the config with `--get` or `--list`.
+async function gitConfigReason(input, command) {
+  if (!input.agent_type || !/\bgit\b/.test(command)) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const gits = shell
+    .simpleCommands(command, input.cwd ?? process.cwd())
+    .filter(({ words }) => shell.commandName(words) === 'git');
+  for (const { words } of gits) {
+    const reason = gitConfigKeyReason(words);
+    if (reason) {
+      return reason;
+    }
+  }
+  return undefined;
+}
+
+function gitConfigKeyReason(words) {
+  const inline = words.find((word, index) => words[index - 1] === '-c' && isDangerousConfig(word.split('=')[0]));
+  if (inline) {
+    const key = inline.split('=')[0];
+    return `\`git -c ${key}\` runs a command in every checkout of the repository. ${REPORT_TO_CONDUCTOR}`;
+  }
+  const { subcommand, tail } = gitInvocation(words.slice(1), undefined);
+  return subcommand === 'config' && setsConfig(tail)
+    ? `\`git config\` changes the git configuration, shared by every checkout; a sub-agent reads it (\`--get\`, \`--list\`) but never sets it. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
+}
+
+function isDangerousConfig(key) {
+  return DANGEROUS_CONFIG.some((pattern) => pattern.test(key));
+}
+
+// Decided by the verb (`git config get|list|set|unset|edit ...`, git 2.46) or the flag of the older
+// form (`--get`, `--list`; `--unset`, `--add`, `--edit`, ...); without either, `<key> <value>` sets.
+function setsConfig(tail) {
+  if (tail.some((word) => CONFIG_WRITES.has(word))) {
+    return true;
+  }
+  if (tail.some((word) => CONFIG_READS.has(word))) {
+    return false;
+  }
+  const operands = shell.operands(tail, ['--type', '-t', '--file', '-f', '--default']);
+  if (CONFIG_VERBS.has(operands[0])) {
+    return CONFIG_VERBS.get(operands[0]);
+  }
+  return operands.length >= 2;
 }
 
 function baselineWriteReason(command) {
@@ -1749,7 +2536,10 @@ function dependencyReason(project, { file, written, replaced }, input) {
 // is skipped.
 function recordTrial(project, { file, ...outcome }) {
   try {
-    const common = spawnSync('git', ['rev-parse', '--git-common-dir'], { cwd: project.root, encoding: 'utf8' });
+    const common = spawnSync('git', ['-c', 'core.fsmonitor=false', 'rev-parse', '--git-common-dir'], {
+      cwd: project.root,
+      encoding: 'utf8',
+    });
     if (common.status !== 0) {
       return;
     }
@@ -1814,7 +2604,7 @@ function count(text, pattern) {
 function commandDirectory(command, cwd) {
   const named =
     /--cwd[= ]\s*("[^"]+"|'[^']+'|\S+)/.exec(command) ??
-    /^\s*(?:cd|pushd)\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*(?:&&|;)/.exec(command);
+    /^\s*(?:cd|pushd)\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*&&/.exec(command);
   const directory = named?.[1]?.replace(/^["']|["']$/g, '');
   if (!directory) {
     return cwd;
@@ -1872,7 +2662,7 @@ function kitInvocations(commands) {
 }
 
 function isKitLauncher(word) {
-  const name = word.split('/').pop() ?? '';
+  const name = word.split('/').pop();
   return (
     /^ddd-ts-kit(?:@\S+)?$/.test(name) ||
     /(?:^|\/)(?:cli|ddd-ts-kit)\/dist\/bin\.[cm]?js$/.test(word) ||
@@ -1935,6 +2725,20 @@ function sharedGeneratorReason(project, context, commands) {
       return `\`generate command --aggregate ${aggregate}\` would also create the repository of ${aggregate}, which registers in shared files. ${REPORT_TO_CONDUCTOR}`;
     }
   }
+  return sharedKitWriteReason(commands);
+}
+
+// Other kit commands that write files of every context: `init --force` rewrites the whole project,
+// `depcruise-config --write` rewrites the generated dependency rules.
+function sharedKitWriteReason(commands) {
+  for (const { subcommand, args } of kitInvocations(commands)) {
+    if (subcommand === 'init' && args.includes('--force')) {
+      return `\`init --force\` rewrites the project from the kit, including files of every context. ${REPORT_TO_CONDUCTOR}`;
+    }
+    if (subcommand === 'depcruise-config' && args.includes('--write')) {
+      return `\`depcruise-config --write\` rewrites the generated .dependency-cruiser.cjs from ${CONFIG}, which is shared. ${REPORT_TO_CONDUCTOR}`;
+    }
+  }
   return undefined;
 }
 
@@ -1946,7 +2750,7 @@ function aggregateOption(args) {
 // The repository port of an aggregate, at the level of the context or in a module of its model.
 function hasRepository(project, context, aggregate) {
   const name = aggregate.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-  return ['', ...(project.modules?.[context] ?? [])].some((module) =>
+  return ['', ...(project.modules[context] ?? [])].some((module) =>
     existsSync(
       join(project.root, project.contextsDir, context, module, 'domain', 'repositories', `${name}.repository.ts`),
     ),
@@ -2057,13 +2861,21 @@ function writtenTargets(command) {
       at(target, `the redirection \`${operator} ${target.replaceAll(shell.UNKNOWN, '$(...)')}\``),
     );
 
-  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))].filter(({ place }) =>
-    isProjectPath(place),
+  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))].filter(
+    ({ place }) => place === undefined || !isFreePlace(place),
   );
 }
 
-function isProjectPath(place) {
-  return place === undefined || findProject(place) !== undefined;
+// The only absolute places a worker writes outside its scope: the null and standard devices and
+// the system temporary directory (os.tmpdir() or $TMPDIR). Everything else is judged.
+function isFreePlace(place) {
+  if (['/dev/null', '/dev/stdout', '/dev/stderr'].includes(place)) {
+    return true;
+  }
+  return [tmpdir(), process.env.TMPDIR]
+    .filter((dir) => typeof dir === 'string' && dir !== '')
+    .map((dir) => resolve(dir))
+    .some((dir) => place === dir || place.startsWith(`${dir}/`));
 }
 
 function shellWriteReason(project, input, { place, by }) {
@@ -2071,6 +2883,9 @@ function shellWriteReason(project, input, { place, by }) {
     return `A worker writes with the shell only to a file it names: ${by} writes files only the shell knows. ${EDIT_WITH_TOOLS}`;
   }
   const owner = findProject(place);
+  if (owner === undefined) {
+    return `A worker writes only inside its worktree: ${by} writes ${place}, outside your worktree. ${FREE_OUTPUT}`;
+  }
   if (owner.root !== project.root) {
     return `A worker never changes a file outside its scope: ${by} writes ${place}, in another checkout. ${EDIT_WITH_TOOLS}`;
   }
@@ -2085,10 +2900,15 @@ function shellWriteReason(project, input, { place, by }) {
 // `sed -i`, `perl -i` and `tee` write the files they are given.
 function inPlaceTargets({ words }) {
   const name = shell.commandName(words);
+  const args = words.slice(1);
   if (name === 'tee') {
-    return shell.operands(words.slice(1)).map((word) => ({ word, by: `\`tee\` writing ${word}` }));
+    return shell.operands(args).map((word) => ({ word, by: `\`tee\` writing ${word}` }));
   }
-  const files = name === 'sed' || name === 'perl' ? inPlaceFiles(words.slice(1)) : [];
+  // A sed script writes a file by `w file`, `W file` or an `s///w` flag, whose target the script hides.
+  if (name === 'sed' && !inPlaceFlag(args) && sedWrites(args)) {
+    return [{ word: shell.UNKNOWN, by: 'a sed script that writes a file' }];
+  }
+  const files = ['sed', 'perl', 'ruby'].includes(name) ? inPlaceFiles(args) : [];
 
   return files.map((word) => ({ word, by: `\`${name} -i\` editing ${word}` }));
 }
@@ -2114,29 +2934,28 @@ function inPlaceFiles(args) {
   return scripted ? files : files.slice(1);
 }
 
-function inlineCode({ words, heredoc, piped, redirects }) {
+function runsInlineCode({ words, heredoc, piped, redirects }) {
   const name = shell.commandName(words);
   const language = name.replace(/[\d.]+$/, '');
   const args = words.slice(1);
-  if (name === 'deno' && args[0] === 'eval') {
-    return '`deno eval` runs inline code, which can write any file';
-  }
   if (!(language in INLINE_CODE)) {
-    return undefined;
+    return false;
   }
-  const flag = args.find((word) => INLINE_CODE[language].test(word));
+  const flag = args.some((word) => INLINE_CODE[language].test(word));
   const script = args.find((word) => !word.startsWith('-') || word === '-');
   const fed = heredoc || piped || redirects.some(({ operator }) => operator === '<' || operator === '<<<');
-  const fromInput = script === '-' || (script === undefined && fed && !args.includes('-m'));
 
-  return flag || fromInput
-    ? `\`${name}${flag ? ` ${flag}` : ''}\` runs inline code, which can write any file`
-    : undefined;
+  return flag || script === '-' || (script === undefined && fed && !args.includes('-m'));
 }
 
 // The paths a command changes, each with what changes it.
 function changedPaths({ words, directory }) {
   const name = shell.commandName(words);
+  return tableWrites(name, words, directory) ?? programWrites(name, words, directory) ?? [];
+}
+
+// cp, mv, rm, dd, find -delete, patch and git: the writers whose targets the tables already read.
+function tableWrites(name, words, directory) {
   const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
   if (name in PATH_COMMANDS) {
     return pathOperands(name, words.slice(1)).map((word) => at(word, name));
@@ -2151,8 +2970,133 @@ function changedPaths({ words, directory }) {
   if (name === 'patch' && !words.includes('--dry-run')) {
     return [{ place: undefined, by: 'patch' }];
   }
+  return name === 'git' ? gitChangedPaths(words.slice(1), directory) : undefined;
+}
 
-  return name === 'git' ? gitChangedPaths(words.slice(1), directory) : [];
+// The writers the cp and mv tables miss: an editor that rewrites in place, a downloader, an archive
+// tool, an awk program, a linter or runner given a path, or find writing a listing to a file.
+function programWrites(name, words, directory) {
+  const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
+  const args = words.slice(1);
+  if (IN_PLACE_EDITORS.has(name)) {
+    return shell.operands(args).map((word) => at(word, name));
+  }
+  if (name === 'rsync') {
+    const operands = shell.operands(args, RSYNC_VALUED);
+    return operands.length > 1 ? [at(operands.at(-1), 'rsync')] : [];
+  }
+  if (name === 'curl' || name === 'wget') {
+    return downloadWrites(name, args, at);
+  }
+  if (name === 'tar' || name === 'unzip') {
+    return archiveWrites(name, args, at);
+  }
+  if (AWK_PROGRAMS.has(name)) {
+    return awkWrites(args) ? [{ place: undefined, by: 'an awk program that writes a file' }] : [];
+  }
+  if (name === 'find') {
+    return findListings(words, at);
+  }
+  return name in TOOL_WRITES ? toolWrites(name, args, at) : undefined;
+}
+
+const RSYNC_VALUED = ['-e', '--rsh', '--exclude', '--include', '--files-from', '-f', '--filter', '--compare-dest'];
+
+// curl writes `-o file`/`--output file` and the basename of the URL with `-O`; wget writes `-O file`
+// and under the directory of `-P`/`--directory-prefix`.
+function downloadWrites(name, args, at) {
+  const flags = DOWNLOAD_FLAGS[name];
+  const writes = [];
+  for (let index = 0; index < args.length; index += 1) {
+    if (flags.includes(args[index])) {
+      writes.push(at(args[index + 1] ?? shell.UNKNOWN, name));
+    }
+  }
+  if (name === 'curl' && args.some((word) => /^-[A-Za-z]*O[A-Za-z]*$/.test(word) && !word.startsWith('--'))) {
+    writes.push({ place: undefined, by: 'curl -O' });
+  }
+  return writes;
+}
+
+// An extraction writes places only the shell resolves (the current directory, a -C or -d target);
+// tar creating an archive writes the file of `-f`/`--file`. unzip extracts unless it lists or tests.
+function archiveWrites(name, args, at) {
+  if (name === 'unzip') {
+    return args.some((word) => word === '-l' || word === '-t') ? [] : [{ place: undefined, by: name }];
+  }
+  const letters = tarLetters(args);
+  if (letters.includes('x') || args.includes('--extract') || args.includes('--get')) {
+    return [{ place: undefined, by: name }];
+  }
+  const file = letters.includes('c') || args.includes('--create') ? tarFile(args) : undefined;
+  return file === undefined ? [] : [at(file, name)];
+}
+
+// The mode and option letters of tar: its first word in the old form (`tar czf ...`), else its short
+// options (`-czf`, `-c -f`); never the name of an archive.
+function tarLetters(args) {
+  if (/^[A-Za-z]+$/.test(args[0] ?? '')) {
+    return args[0];
+  }
+  return args
+    .filter((word) => /^-[A-Za-z]+$/.test(word))
+    .map((word) => word.slice(1))
+    .join('');
+}
+
+// The archive tar names: the value of `--file`, or the word after the letters that hold `f`.
+function tarFile(args) {
+  const long = args.find((word) => word.startsWith('--file='));
+  if (long !== undefined) {
+    return long.slice('--file='.length);
+  }
+  const at = args.findIndex(
+    (word, index) =>
+      word === '--file' || (/^-?[A-Za-z]*f[A-Za-z]*$/.test(word) && (index === 0 || word.startsWith('-'))),
+  );
+  return at === -1 ? undefined : (args[at + 1] ?? shell.UNKNOWN);
+}
+
+// An awk program writes when it edits in place (`-i inplace`), redirects, pipes, or calls `system`.
+function awkWrites(args) {
+  const inPlace = args.some((word) => /^-i(nplace)?$/.test(word)) && args.includes('inplace');
+  return inPlace || args.some((word) => /[>|]|\bsystem\b/.test(word));
+}
+
+// `find ... -fprint file`, `-fprintf file ...`, `-fls file`: the file after the action is written.
+function findListings(words, at) {
+  const writes = [];
+  words.forEach((word, index) => {
+    if (['-fprint', '-fprintf', '-fls'].includes(word)) {
+      writes.push(at(words[index + 1] ?? shell.UNKNOWN, `find ${word.slice(1)}`));
+    }
+  });
+  return writes;
+}
+
+function toolWrites(name, args, at) {
+  const spec = TOOL_WRITES[name];
+  const targets =
+    spec.kind === 'valued'
+      ? valuedTargets(args, spec.valued)
+      : spec.flags.some((flag) => args.includes(flag))
+        ? shell.operands(args, spec.valued).filter((word) => !spec.subcommands.includes(word))
+        : [];
+  return targets.map((word) => at(word, name));
+}
+
+// The values of `--outputFile file` and `--outputFile=file`, whatever the flag the runner takes.
+function valuedTargets(args, valued) {
+  const targets = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const joined = valued.find((flag) => args[index].startsWith(`${flag}=`));
+    if (valued.includes(args[index])) {
+      targets.push(args[index + 1] ?? shell.UNKNOWN);
+    } else if (joined) {
+      targets.push(args[index].slice(joined.length + 1));
+    }
+  }
+  return targets;
 }
 
 function pathOperands(name, args) {
@@ -2175,6 +3119,10 @@ function pathOperands(name, args) {
 function gitChangedPaths(args, directory) {
   const { subcommand, tail, moved } = gitInvocation(args, directory);
   const at = (word) => ({ place: shell.placeOf(word, moved), by: `git ${subcommand}` });
+  const forced = forcedGitWrite(subcommand, tail, at);
+  if (forced) {
+    return forced;
+  }
   if (subcommand === 'checkout') {
     return checkedOutPaths(tail, moved).map(at);
   }
@@ -2193,6 +3141,46 @@ function gitChangedPaths(args, directory) {
   const checking = tail.some((word) => /^--(check|stat|numstat|summary|cached)$/.test(word));
 
   return subcommand === 'apply' && !checking ? [{ place: undefined, by: 'git apply' }] : [];
+}
+
+// git writers that rewrite the work tree a worker does not name: a forced checkout, switch, reset
+// or read-tree; a stash or checkout-index; a new worktree; a commit of every tracked change; a
+// patch or report written out; or paths read from a file.
+function forcedGitWrite(subcommand, tail, at) {
+  if ((GIT_FORCE_WRITERS[subcommand] ?? []).some((flag) => tail.includes(flag))) {
+    return [at('.')];
+  }
+  if (tail.some((word) => word.startsWith('--pathspec-from-file'))) {
+    return [{ place: undefined, by: `git ${subcommand}` }];
+  }
+  if (touchesWorktree(subcommand, tail)) {
+    return [at('.')];
+  }
+  if (subcommand === 'worktree' && tail[0] === 'add') {
+    return [at(shell.operands(tail.slice(1), ['-b', '-B']).at(-1) ?? '.')];
+  }
+  if (subcommand === 'commit' && tail.some((word) => /^-[^-]*a/.test(word) || word === '--all')) {
+    return [at('.')];
+  }
+  const out = gitOutputFile(subcommand, tail);
+  return out === undefined ? undefined : [at(out)];
+}
+
+// stash writes the work tree unless it only reads it (list, show), and checkout-index with -a or -f.
+function touchesWorktree(subcommand, tail) {
+  if (subcommand === 'checkout-index') {
+    return tail.some((word) => /^-[a-zA-Z]*[af]/.test(word) || word === '--all');
+  }
+  const action = tail.find((word) => !word.startsWith('-')) ?? '';
+  return subcommand === 'stash' && !['list', 'show', 'drop', 'clear', 'branch'].includes(action);
+}
+
+// The file `git diff --output` and `git format-patch -o` write to, given spaced or joined.
+function gitOutputFile(subcommand, tail) {
+  if (subcommand === 'diff') {
+    return valuedTargets(tail, ['--output', '-o'])[0];
+  }
+  return subcommand === 'format-patch' ? valuedTargets(tail, ['-o', '--output-directory'])[0] : undefined;
 }
 
 // The options before the subcommand of git; `-C <directory>` moves where its paths are read from.
@@ -2222,127 +3210,426 @@ function checkedOutPaths(tail, directory) {
   });
 }
 
-// A path of no project is free; a path only the shell knows, or of another checkout, is not.
+// A path only the shell knows, of another checkout, or anywhere outside every kit project but the
+// free devices and the temporary directory, is outside the worker's scope.
 function outsideScope(project, input, place) {
   if (place === undefined) {
     return true;
   }
   const owner = findProject(place);
   if (owner === undefined) {
-    return false;
+    return !isFreePlace(place);
   }
 
   return owner.root !== project.root || workerScopeReason(project, place, input) !== undefined;
 }
 
-// Inline code of a worker (`python3 - <<EOF`, `node -e`) runs, but its writes cannot be read in
-// advance: the files outside the scope are noted before it, and compared at the next call of the
-// guard by that worker. A file it changed there stops the worker until it is put back; the
-// commands that put back exactly those files stay allowed.
-function noteBeforeInlineCode(project, input, commands) {
-  if (commands.some((command) => inlineCode(command) !== undefined)) {
-    const before = Object.fromEntries(outsideChanges(project, input));
-    writeState(stateFile('before-inline', project, input), before);
+// The code a worker's command runs (inline code, a script, a shell fed on its input, a test or a
+// package script) cannot be read in advance: unless every command of the line is a pure reader, the
+// state outside the scope is noted before it, and compared at the next call of the guard by that
+// worker (`settleNote`). The kit's own merge of the trunk, which brings the trunk's files in, is not
+// noted; nor are the packages around an install, which rewrites them.
+function noteBeforeCode(project, input, commands) {
+  if (commands.every((command) => isPureReader(command) || startsTrunkMerge(command))) {
+    return;
+  }
+  const session = sessionCheckout(project, input);
+  writeState(stateFile('before-run', project, input), {
+    worktree: snapshot(project, worktreeOutside(project, input), join(project.root, GUARD_HELD)),
+    session: session && snapshot(session, sessionOutside),
+    packages: commands.some(installsPackages) ? undefined : packageStates(project, session),
+    script: sanctionedScripts(commands),
+  });
+}
+
+// The scripts of the project its own tools run in (Biome, ESLint, the generators of the kit), when
+// they are all the code of the line: what they rewrite outside the scope is said, not held.
+function sanctionedScripts(commands) {
+  const scripts = commands.filter((command) => !isPureReader(command)).map(scriptRun);
+  return scripts.every(Boolean) ? scripts.join('`, `') : undefined;
+}
+
+// `npm run <script>`, `pnpm <script>`, `yarn run <script>`... of a sanctioned script, as `<manager> run <script>`.
+function scriptRun({ words }) {
+  const manager = shell.commandName(words);
+  const [first, second] = shell.operands(words.slice(1), VALUED_MANAGER_OPTIONS);
+  const script = ['run', 'run-script'].includes(first) ? second : manager === 'npm' ? undefined : first;
+  return SCRIPT_MANAGERS.includes(manager) && SANCTIONED_SCRIPTS.has(script) ? `${manager} run ${script}` : undefined;
+}
+
+// A program that only reads, whatever its arguments, and git that only reads (without `--output`,
+// which writes a file): it runs no code of the project.
+function isPureReader({ words }) {
+  const name = shell.commandName(words);
+  if (name !== 'git') {
+    return PURE_READERS.has(name);
+  }
+  const { subcommand, tail } = gitInvocation(words.slice(1));
+  const reads = subcommand === 'branch' ? listsBranches(tail) : GIT_READ_ONLY.has(subcommand);
+  return reads && !words.some((word) => word.startsWith('--output'));
+}
+
+// `git branch` reads with no operand or when it lists, and with none of the options that write.
+function listsBranches(tail) {
+  const writes = [...BRANCH_DELETES, ...BRANCH_MOVES, ...BRANCH_RESETS, ...BRANCH_SETTINGS];
+  return (
+    !tail.some((word) => writes.includes(word)) &&
+    (shell.operands(tail).length === 0 || tail.some((word) => BRANCH_LISTS.includes(word)))
+  );
+}
+
+function startsTrunkMerge(command) {
+  return kitInvocations([command]).some(
+    ({ subcommand, args }) => subcommand === 'merge-trunk' && !args.includes('--continue'),
+  );
+}
+
+// An install of the lockfile, in any spelling the guard knows (`npm ci`, `npm clean-install`, a bare
+// `yarn`, `bun install --frozen-lockfile`): a worker's install of what the lockfile says is free.
+function installsPackages({ words }) {
+  const manager = shell.commandName(words);
+  const [subcommand] = shell.operands(words.slice(1), VALUED_MANAGER_OPTIONS);
+  return (
+    manager in DEPENDENCY_CHANGES &&
+    (CLEAN_INSTALLS.includes(subcommand) || INSTALLS.includes(subcommand) || (manager === 'yarn' && !subcommand))
+  );
+}
+
+// The checkout of the session, when it is not the worker's: every file of it is outside the scope.
+function sessionCheckout(project, input) {
+  const home = findProject(input.cwd ?? process.cwd());
+  return home?.root === project.root ? undefined : home;
+}
+
+function sessionOutside(path) {
+  return !/^\.(?:ddd-ts-kit|worktrees)\//.test(path);
+}
+
+// The paths of the worktree outside the scope; generated files are left out: a generator rewrites
+// them, and so does `regenerate`, which `verify-slice` runs in the worktree of a worker. A decision
+// record a commit adds (`letter` A) is the worker's own.
+function worktreeOutside(project, input) {
+  const { context } = workerScope(project, input);
+  return (path, letter) =>
+    !path.startsWith('.ddd-ts-kit/') &&
+    !(letter === 'A' && DECISION_RECORD.test(path)) &&
+    contextScopeReason(project, path, context) !== undefined &&
+    !generatedFileReason(project, join(project.root, path)) &&
+    !REGENERATED_FILES.test(path);
+}
+
+// The files the guard itself runs, in the worktree and the session's checkout: the manifest and the
+// bin of the kit's CLI and of Biome, each by its time and size ('absent' when missing).
+function packageStates(project, session) {
+  const states = {};
+  for (const root of [project.root, session?.root].filter(Boolean)) {
+    for (const [name, command] of GUARD_RUNS) {
+      const home = join(root, 'node_modules', name);
+      for (const file of [join(home, 'package.json'), installedBin(home, name, command)?.bin].filter(Boolean)) {
+        const stat = statSync(file, { throwIfNoEntry: false });
+        states[file] = stat ? `${stat.mtimeMs}:${stat.size}` : 'absent';
+      }
+    }
+  }
+  return states;
+}
+
+// The state outside the scope in a checkout: its HEAD, and each file git shows changed from it that
+// `outside` keeps, with the hash of its content (null once deleted), whether git tracks it, whether
+// it is added to the index, and the path a rename (`git mv`) came from. With `keep`, the content of
+// each changed file is kept there under its hash, so that it can be put back.
+function snapshot(checkout, outside, keep) {
+  const fields = gitFields(checkout, ['status', '--porcelain=v2', '-z', '--branch', '--untracked-files=all'], '\0');
+  const state = { head: undefined, changes: {} };
+  for (let index = 0; index < fields.length; index += 1) {
+    const { head, path, from, ...flags } = statusEntry(fields[index], fields[index + 1]);
+    index += from === undefined ? 0 : 1;
+    state.head ??= head;
+    for (const [changed, entry] of [
+      [path, { ...flags, from }],
+      [from, {}],
+    ]) {
+      if (changed !== undefined && outside(changed)) {
+        state.changes[changed] = { hash: contentHash(join(checkout.root, changed), keep), ...entry };
+      }
+    }
+  }
+  return state;
+}
+
+// One entry of `git status --porcelain=v2 -z`: the HEAD of its header, else a path (after a fixed
+// number of fields by kind), and for a rename the path it came from, the next field.
+function statusEntry(field, next) {
+  if (field.startsWith('# branch.oid ')) {
+    return { head: field.slice('# branch.oid '.length) };
+  }
+  const skipped = STATUS_FIELDS[field[0]];
+  if (skipped === undefined) {
+    return {};
+  }
+  const parts = field.split(' ');
+  return {
+    path: parts.slice(skipped).join(' '),
+    untracked: field[0] === '?',
+    added: field[0] === '1' && parts[1][0] === 'A',
+    from: field[0] === '2' ? next : undefined,
+  };
+}
+
+// What changed outside the scope stops the worker until it is put back; the commands that put back
+// exactly those files (and a commit that records it) stay allowed. A refusal said once comes first.
+function pendingChangeReason(project, input, commands) {
+  const told = settleNote(project, input);
+  return told ? { reason: told } : heldChangeReason(project, input, commands);
+}
+
+// The note before the last command, compared now: what changed outside the scope in the worktree is
+// held until it is put back (`heldChangeReason`); what changed in the session's checkout or in the
+// packages the guard runs is said once, for the conductor, who alone knows whether it changed them.
+function settleNote(project, input) {
+  const noted = stateFile('before-run', project, input);
+  const before = readJson(noted);
+  if (!isRecord(before?.worktree)) {
+    return undefined;
+  }
+  removeKitFile(noted);
+  const session = sessionCheckout(project, input);
+  holdChanges(project, input, before);
+  return sessionChangeReason(session, before.session) ?? packagesChangeReason(before.packages, project, session);
+}
+
+function holdChanges(project, input, { worktree: before, script }) {
+  const outside = worktreeOutside(project, input);
+  const all = differences(project, outside, { before, now: snapshot(project, outside) });
+  const rewritten = script ? all.filter(isRewrittenByTools) : [];
+  const changed = all.filter((path) => !rewritten.includes(path));
+  if (rewritten.length > 0) {
+    notice = [notice, rewrittenNotice(script, rewritten)].filter(Boolean).join('\n');
+  }
+  if (changed.length > 0) {
+    const file = stateFile('outside', project, input);
+    const held = readJson(file) ?? {};
+    for (const path of changed) {
+      held[path] ??= { ...(before.changes[path] ?? { clean: true }), head: before.head };
+    }
+    writeState(file, held);
   }
 }
 
-function pendingChangeReason(project, input, commands) {
-  settleInlineCode(project, input);
-  const recorded = stateFile('outside', project, input);
-  const changed = readJson(recorded);
-  if (!changed) {
+// What Biome, ESLint and the generators of the kit rewrite: code, JSON and the documents.
+function isRewrittenByTools(path) {
+  return FORMATTED_FILE.test(path) || path.startsWith('docs/');
+}
+
+function rewrittenNotice(script, paths) {
+  return `ddd-ts-kit: \`${script}\` rewrote files outside your scope: ${paths.join(', ')}. They are not held: the project's own tool rewrote them. Leave them out of your commits and name them in your report, for the conductor.`;
+}
+
+// The paths whose content differs between two snapshots: changed in either, or, when HEAD moved,
+// changed by the commits between them (a commit, an amend, a reset), the files of the trunk a merge
+// brings in compared by their content.
+function differences(checkout, outside, { before, now }) {
+  const committed = now.head === before.head ? new Map() : committedSince(checkout, before.head, outside);
+  const paths = new Set([...Object.keys(before.changes), ...Object.keys(now.changes), ...committed.keys()]);
+  return [...paths].filter((path) => {
+    const was = before.changes[path];
+    const content = was
+      ? was.hash !== (now.changes[path]?.hash ?? contentHash(join(checkout.root, path)))
+      : path in now.changes;
+    return committed.has(path) || content;
+  });
+}
+
+// The paths `outside` keeps that differ between the commit `from` and HEAD, each with its letter
+// (A added, M modified, D deleted); a path that HEAD holds as the other side of a merge since then
+// (the trunk `merge-trunk` brought in) is the trunk's, not a change of the worker.
+function committedSince(checkout, from, outside) {
+  const fields = gitFields(
+    checkout,
+    ['diff', '--name-status', '--no-renames', '-z', '--end-of-options', from, 'HEAD'],
+    '\0',
+  );
+  const paths = new Map();
+  for (let index = 0; index + 1 < fields.length; index += 2) {
+    if (outside(fields[index + 1], fields[index])) {
+      paths.set(fields[index + 1], fields[index]);
+    }
+  }
+  for (const side of mergedSides(checkout, from)) {
+    const differing = new Set(gitFields(checkout, ['diff', '--name-only', '-z', side, 'HEAD'], '\0'));
+    for (const path of [...paths.keys()].filter((kept) => !differing.has(kept))) {
+      paths.delete(path);
+    }
+  }
+  return paths;
+}
+
+// The other parents of the merges on the first-parent line from `from` to HEAD.
+function mergedSides(checkout, from) {
+  return gitFields(
+    checkout,
+    ['rev-list', '--first-parent', '--merges', '--parents', '--end-of-options', `${from}..HEAD`],
+    '\n',
+  )
+    .filter(Boolean)
+    .flatMap((line) => line.split(' ').slice(2));
+}
+
+function sessionChangeReason(session, before) {
+  if (!session || !isRecord(before)) {
     return undefined;
   }
-  const now = outsideChanges(project, input);
-  const left = Object.entries(changed).filter(([path, was]) => (now.get(path)?.hash ?? null) !== (was?.hash ?? null));
+  // What the conductor commits or merges there meanwhile is its own: only the files left changed in
+  // its working tree, and changed since the note, can be the worker's.
+  const now = snapshot(session, sessionOutside).changes;
+  const changed = Object.keys(now).filter((path) => before.changes[path]?.hash !== now[path].hash);
+  return changed.length === 0
+    ? undefined
+    : `Files of the checkout of the session, ${session.root}, changed while your last command ran: ${changed.join(', ')}. A worker never changes another checkout: put nothing back there yourself; stop and report them to the conductor, who knows whether it changed them. ${REPORT_TO_CONDUCTOR}`;
+}
+
+function packagesChangeReason(before, project, session) {
+  if (!isRecord(before)) {
+    return undefined;
+  }
+  const now = packageStates(project, session);
+  const changed = Object.keys({ ...before, ...now }).filter((file) => before[file] !== now[file]);
+  return changed.length === 0
+    ? undefined
+    : `The packages the guard runs changed while your last command ran: ${changed.join(', ')}. A worker never changes node_modules: report it to the conductor, who installs them again. ${REPORT_TO_CONDUCTOR}`;
+}
+
+function heldChangeReason(project, input, commands) {
+  const recorded = stateFile('outside', project, input);
+  const held = readJson(recorded);
+  if (!isRecord(held)) {
+    return undefined;
+  }
+  const now = snapshot(project, worktreeOutside(project, input));
+  const since = new Map();
+  const left = Object.entries(held).filter((entry) => !isPutBack(project, { now, since }, entry));
   if (left.length === 0) {
-    rmSync(recorded, { force: true });
+    removeKitFile(recorded);
     return undefined;
   }
   const paths = new Set(left.map(([path]) => path));
-  if (commands.length > 0 && commands.every((command) => putsBack(project, command, paths))) {
+  const acting = commands.filter(({ words }) => !NEUTRAL_PROGRAMS.has(shell.commandName(words)));
+  const restoring = (command) => isGitCommit(command) && recordsRestoration(project, input, { now, since, left });
+  if (acting.length > 0 && acting.every((command) => putsBack(project, command, paths) || restoring(command))) {
     return { undoing: true };
   }
 
-  return { reason: putBackReason(left, now) };
+  return { reason: putBackReason(project, { now, since }, left) };
 }
 
-function settleInlineCode(project, input) {
-  const noted = stateFile('before-inline', project, input);
-  const before = readJson(noted);
-  if (!before) {
-    return;
-  }
-  rmSync(noted, { force: true });
-  const now = outsideChanges(project, input);
-  const changed = [...new Set([...Object.keys(before), ...now.keys()])].filter(
-    (path) => (before[path]?.hash ?? null) !== (now.get(path)?.hash ?? null),
-  );
-  if (changed.length > 0) {
-    const recorded = readJson(stateFile('outside', project, input)) ?? {};
-    for (const path of changed) {
-      recorded[path] ??= before[path] ?? null;
-    }
-    writeState(stateFile('outside', project, input), recorded);
-  }
+// A file held to its content (null: deleted) is back once it has it; a file held to a commit is
+// back once git shows it unchanged and no commit since changed it.
+function isPutBack(project, { now, since }, [path, target]) {
+  const content = 'clean' in target ? !(path in now.changes) : contentHash(join(project.root, path)) === target.hash;
+  return content && !(target.head !== now.head && commitsOf(project, since, target.head).has(path));
 }
 
-// A command that only puts back some of `paths`: `git restore`, `git checkout --`, `rm` of a new file.
+function commitsOf(project, since, from) {
+  if (!since.has(from)) {
+    since.set(
+      from,
+      committedSince(project, from, () => true),
+    );
+  }
+  return since.get(from);
+}
+
+// A command that only puts back some of `paths` (`git checkout HEAD --`, `git mv` back, `cp` of the
+// held content, `rm` of a new file), or the commit that records it.
 function putsBack(project, command, paths) {
   const touched = [...changedPaths(command), ...writtenTargets(command)];
   return (
-    touched.length > 0 &&
     touched.every(({ place }) => place !== undefined && paths.has(projectPath(project, place))) &&
-    inlineCode(command) === undefined
+    !runsCode(command) &&
+    touched.length > 0
   );
 }
 
-function putBackReason(left, now) {
-  const restore = left.filter(([path, was]) => was !== null || !now.get(path)?.untracked).map(([path]) => path);
-  const remove = left.filter(([path, was]) => was === null && now.get(path)?.untracked).map(([path]) => path);
-  const steps = [
-    ...(restore.length > 0 ? [`\`git restore -- ${restore.join(' ')}\``] : []),
-    ...(remove.length > 0 ? [`\`rm ${remove.join(' ')}\``] : []),
-  ];
-
-  return `Your inline code changed files outside your scope: ${left.map(([path]) => path).join(', ')}. Put them back before anything else (${steps.join(', then ')}: allowed for these files), then change only files of your scope. ${REPORT_TO_CONDUCTOR}`;
+// A plain `git commit`: no `-a`, no paths of its own, so that it records the index alone.
+function isGitCommit(command) {
+  const { subcommand, tail } = gitInvocation(command.words.slice(1));
+  return (
+    shell.commandName(command.words) === 'git' &&
+    subcommand === 'commit' &&
+    changedPaths(command).length === 0 &&
+    shell.operands(tail, [...COMMIT_VALUED_OPTIONS]).length === 0
+  );
 }
 
-// The files outside the scope that differ from HEAD, each with the hash of its content (null when
-// deleted) and whether git tracks it; generated files are left out: a generator rewrites them, and
-// so does `regenerate`, which `verify-slice` runs in the worktree of a worker.
-function outsideChanges(project, input) {
-  const status = git(project, ['status', '--porcelain=v1', '-z', '--untracked-files=all']) ?? '';
-  const entries = status.split('\0');
-  const changes = new Map();
-  for (let index = 0; index < entries.length; index += 1) {
-    const entry = entries[index];
-    if (entry.length < 4) {
-      continue;
-    }
-    const path = entry.slice(3);
-    index += /^[RC]/.test(entry) ? 1 : 0;
-    if (path.startsWith('.ddd-ts-kit/')) {
-      continue;
-    }
-    const file = join(project.root, path);
-    if (
-      workerScopeReason(project, file, input) &&
-      !generatedFileReason(project, file) &&
-      !REGENERATED_FILES.test(path)
-    ) {
-      changes.set(path, { hash: contentHash(file), untracked: entry.startsWith('??') });
-    }
+// A commit records the restoration of the held files a commit changed when each of them is staged
+// as the commit noted before holds it, and nothing else outside the scope is staged.
+function recordsRestoration(project, input, { now, since, left }) {
+  const staged = gitFields(project, ['diff', '--cached', '--name-only', '-z'], '\0').filter(Boolean);
+  const outside = worktreeOutside(project, input);
+  const held = new Set(left.map(([path]) => path));
+  const committed = left.filter(
+    ([path, target]) => target.head !== now.head && commitsOf(project, since, target.head).has(path),
+  );
+  return (
+    committed.length > 0 &&
+    staged.every((path) => held.has(path) || !outside(path)) &&
+    committed.every(
+      ([path, target]) =>
+        staged.includes(path) && git(project, ['diff', '--cached', '--quiet', target.head, '--', path]) !== undefined,
+    )
+  );
+}
+
+function putBackReason(project, state, left) {
+  const steps = left.map((held) => putBackStep(project, state, held)).filter((step) => step.command);
+  const afterwards = steps.flatMap((step) => (step.after ? [`, then \`${step.after}\``] : [])).join('');
+  const commit = steps.some((step) => step.after !== undefined)
+    ? `, then \`git commit\` to record it${afterwards}`
+    : '';
+  const kept = left.some(([, target]) => target.hash)
+    ? ` A file already changed before that command is held to its content then, kept in ${GUARD_HELD}/.`
+    : '';
+
+  return `Code your commands ran changed files outside your scope: ${left.map(([path]) => path).join(', ')}. Put them back before anything else (${steps.map((step) => `\`${step.command}\``).join(', then ')}${commit}: allowed for these files), then change only files of your scope.${kept} ${REPORT_TO_CONDUCTOR}`;
+}
+
+// The command that brings one held file back to the state it is held to: its content before the
+// command (kept by the guard, or deleted), its committed content, its old name, or no file at all.
+function putBackStep(project, { now, since }, [path, target]) {
+  const kept = 'clean' in target ? '' : target.hash ? `cp ${GUARD_HELD}/${target.hash} ${path}` : `rm ${path}`;
+  const letter = target.head === now.head ? undefined : commitsOf(project, since, target.head).get(path);
+  if (letter) {
+    const restore = letter === 'A' ? 'git rm --' : `git checkout ${target.head.slice(0, 12)} --`;
+    return { command: `${restore} ${path}`, after: kept };
   }
-  return changes;
+  if (kept) {
+    return { command: kept };
+  }
+  const entry = now.changes[path];
+  if (Object.values(now.changes).some((other) => other.from === path)) {
+    return {};
+  }
+  if (entry.from) {
+    return { command: `git mv ${path} ${entry.from}` };
+  }
+  if (entry.untracked) {
+    return { command: `rm ${path}` };
+  }
+  return { command: entry.added ? `git rm -f -- ${path}` : `git checkout HEAD -- ${path}` };
 }
 
-function contentHash(file) {
+function contentHash(file, keep) {
+  let content;
   try {
-    return createHash('sha256').update(readFileSync(file)).digest('hex');
+    content = readFileSync(file);
   } catch {
     return null;
   }
+  const hash = createHash('sha256').update(content).digest('hex');
+  if (keep && !existsSync(join(keep, hash))) {
+    writeKitFile(join(keep, hash), content);
+  }
+  return hash;
 }
 
 // The state of a worker kept between two calls of the guard, in the kit's ignored folder of its
@@ -2356,8 +3643,7 @@ function stateFile(kind, project, input) {
 }
 
 function writeState(file, state) {
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, JSON.stringify(state), { mode: 0o600 });
+  writeKitFile(file, JSON.stringify(state));
 }
 
 function describePlace(project, place) {
@@ -2403,13 +3689,37 @@ function isChecked(file) {
   return /\.(ts|mts|cts)$/.test(file) || file.endsWith('CONTEXT.md');
 }
 
+// A run of the CLI, stopped at its time limit, and within what is left of a session start: past
+// that, it is not started.
 function runCli(project, args, timeout) {
-  const run = spawnSync(project.cli, args, { cwd: project.root, encoding: 'utf8', timeout });
+  const left = briefingEnds === undefined ? Number.POSITIVE_INFINITY : briefingEnds - Date.now();
+  const limit = Math.min(Math.round(timeout * TIME_SCALE), left);
+  if (limit <= 0) {
+    briefingCut = true;
+    return undefined;
+  }
+  const run = spawnSync(process.execPath, [project.cli.bin, ...args], {
+    cwd: project.root,
+    encoding: 'utf8',
+    timeout: limit,
+  });
+  if (run.error?.code === 'ETIMEDOUT') {
+    timedOut.set(args[0], Math.round(limit / 1000));
+    briefingCut = briefingEnds !== undefined;
+  }
+  // A report is an object of JSON: no output (a run that could not start, whose null parses as null),
+  // `null` or a bare value is none.
   try {
-    return JSON.parse(run.stdout ?? '');
+    const report = JSON.parse(run.stdout);
+    return isRecord(report) ? report : undefined;
   } catch {
     return undefined;
   }
+}
+
+function timeScale(asked) {
+  const scale = Number(asked);
+  return scale > 0 && scale <= 1 ? scale : 1;
 }
 
 function errorsOf(report) {
@@ -2417,7 +3727,11 @@ function errorsOf(report) {
 }
 
 function hasPendingChanges(project) {
-  const status = spawnSync('git', ['status', '--porcelain'], { cwd: project.root, encoding: 'utf8', timeout: 5000 });
+  const status = spawnSync('git', ['-c', 'core.fsmonitor=false', 'status', '--porcelain'], {
+    cwd: project.root,
+    encoding: 'utf8',
+    timeout: 5000,
+  });
   return status.status !== 0 || status.stdout.trim().length > 0;
 }
 
@@ -2462,8 +3776,18 @@ function uncommittedChanges(project) {
   return [...tracked, ...fresh];
 }
 
+// The output of git split into its fields, none when git fails.
+function gitFields(checkout, args, separator) {
+  return (git(checkout, args) ?? '').split(separator);
+}
+
 function git(project, args) {
-  const run = spawnSync('git', args, { cwd: project.root, encoding: 'utf8', timeout: 5000 });
+  // `-c core.fsmonitor=false`: a core.fsmonitor planted in the config never runs on the guard's own git.
+  const run = spawnSync('git', ['-c', 'core.fsmonitor=false', ...args], {
+    cwd: project.root,
+    encoding: 'utf8',
+    timeout: 5000,
+  });
   return run.status === 0 ? run.stdout : undefined;
 }
 
@@ -2472,7 +3796,8 @@ function numstatChange(entry) {
   return { path: path.join('\t'), lines: (Number(added) || 0) + (Number(deleted) || 0) };
 }
 
-// Sized and read through one descriptor: the file measured is the file counted.
+// Sized and read through one descriptor: the file measured is the file counted. A file that cannot be
+// opened, a broken link among them, counts no line.
 function lineCount(file) {
   let descriptor;
   try {
@@ -2484,12 +3809,13 @@ function lineCount(file) {
           .split('\n')
           .filter((line, index, all) => index < all.length - 1 || line !== '').length;
   } catch {
-    return 0;
+    // Counted below, as no line.
   } finally {
     if (descriptor !== undefined) {
       closeSync(descriptor);
     }
   }
+  return 0;
 }
 
 function isDerived(project, path) {
@@ -2536,25 +3862,61 @@ function reminderMarker(project, input) {
     .update(`${project.root}\n${sessionOf(input)}`)
     .digest('hex')
     .slice(0, 24);
-  return join(tmpdir(), `ddd-ts-kit-commit-reminder-${key}`);
+  return markerOf(project, 'commit-reminder', key);
 }
 
-// Leaves the marker and says whether it was there, in one exclusive creation: the temp dir is shared,
-// so the marker is private and never follows nor rewrites a file put under its name.
+function markerOf(project, kind, key) {
+  return join(project.root, GUARD_MARKERS, `${kind}-${key}`);
+}
+
+// Leaves the marker and says whether it was there, in one exclusive creation that never follows nor
+// rewrites a file put under its name, in a folder that is no link. Only the marker found there counts
+// as remembered: one that cannot be left (a folder that is a link, a checkout that cannot be written)
+// leaves what it guards said, or refused, again.
 function alreadyRemembered(marker) {
+  if (linkedFolder(marker)) {
+    return false;
+  }
+  try {
+    mkdirSync(dirname(marker), { recursive: true });
+  } catch {
+    return false;
+  }
   try {
     writeFileSync(marker, '', { flag: 'wx', mode: 0o600 });
-
     return false;
   } catch (error) {
-    // Without a marker the reminder is only said more often.
     return error?.code === 'EEXIST';
   }
 }
 
 function forget(marker) {
-  rmSync(marker, { force: true });
+  removeKitFile(marker);
   return undefined;
+}
+
+// The markers and the runs of builders a week old, left by sessions and agents that ended, never
+// through a folder that is a link.
+function pruneGuardState(root) {
+  const state = join(root, GUARD_STATE);
+  const markers = join(root, GUARD_MARKERS);
+  const files = [
+    ...filesIn(state).filter((file) => BUILDER_STATE.test(relative(state, file))),
+    ...filesIn(markers),
+    ...filesIn(join(root, GUARD_HELD)),
+  ];
+  const before = Date.now() - MARKER_TTL;
+  for (const file of files.filter((path) => statSync(path, { throwIfNoEntry: false })?.mtimeMs < before)) {
+    removeKitFile(file);
+  }
+}
+
+function filesIn(folder) {
+  try {
+    return readdirSync(folder).map((name) => join(folder, name));
+  } catch {
+    return [];
+  }
 }
 
 function emit(output) {

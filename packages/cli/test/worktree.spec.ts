@@ -87,7 +87,7 @@ describe('worktree', () => {
     const again = cli(root, 'init', '--json').json();
 
     expect(String(jsonAt(again, 'notes'))).toContain('.gitignore now ignores .worktrees/');
-    expect(read(root, '.gitignore')).toMatch(/\n\.worktrees\/\n$/);
+    expect(read(root, '.gitignore')).toMatch(/^# Lines of ddd-ts-kit init: [^\n]*\n\.worktrees\/\n/);
 
     expect(jsonAt(cli(root, 'worktree', 'review', '--no-install', '--json').json(), 'worktree')).toBe(
       path.join(root, '.worktrees', 'review'),

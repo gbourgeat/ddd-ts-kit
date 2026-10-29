@@ -4,6 +4,7 @@ import { cli, exists, read, type CliResult } from './helpers';
 import { billingWithPersonalInvoices } from './support/billing-with-personal-invoices';
 import { expectOk } from './support/expect-ok';
 import { initProject } from './support/init-project';
+import { commitAll } from './support/commit-all';
 
 const BILLING = 'src/contexts/billing';
 const PERSISTENCE = `${BILLING}/infrastructure/persistence`;
@@ -48,6 +49,8 @@ describe('init --force keeps the erasure of each context among the copies the pl
     const tsyringe = billingWithPersonalInvoices(['--orm', 'knex']);
     const byHand = billingWithPersonalInvoices(['--orm', 'knex', '--di', 'manual', '--tenancy', 'shared-table']);
 
+    commitAll(tsyringe);
+    commitAll(byHand);
     expectOk(cli(tsyringe, 'init', '--force', '--orm', 'knex'));
     expectOk(cli(byHand, 'init', '--force', '--orm', 'knex', '--di', 'manual', '--tenancy', 'shared-table'));
 

@@ -1,10 +1,12 @@
 import { CliError } from '../cli-error';
+import { knownCommit } from '../commit/known-commit';
 import { readConfig } from '../config';
 import { formatSliceVerification } from '../slice/format-slice-verification';
 import { verifySlice } from '../slice/verify-slice';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import { knownContext } from './known-context';
+import { stdoutJson } from '../json/stdout-json';
 
 /** Closes a slice before its commit in one command: regenerate, check the changed files, test the context. */
 export const verifySliceCommand: Command = (argv, io) => {
@@ -21,9 +23,15 @@ export const verifySliceCommand: Command = (argv, io) => {
     );
   }
 
-  const verification = verifySlice({ root, config, context, since });
+  const sinceCommit = knownCommit(
+    root,
+    since,
+    'Fetch it first (`git fetch origin`), or name the trunk of your briefing: `--since origin/main`.',
+  );
 
-  io.out(args.json ? JSON.stringify(verification, null, 2) : formatSliceVerification(verification));
+  const verification = verifySlice({ root, config, context, since, sinceCommit });
+
+  io.out(args.json ? stdoutJson(verification) : formatSliceVerification(verification));
 
   return verification.ok ? 0 : 1;
 };

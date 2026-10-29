@@ -41,12 +41,20 @@ anything is generated, with no context, with one and with several: the end-to-en
 it for real and runs it, on both package managers and on every proven stack. After the install the
 CLI is the one the project pins: `pnpm exec ddd-ts-kit <command>`, or `npx ddd-ts-kit <command>`.
 
-Every command accepts `--json` (machine-readable output, errors included) and `--cwd <dir>`.
+Every command accepts `--json` (machine-readable output, errors included, printed on one line
+without indentation; the JSON files the CLI writes keep the layout of the formatter) and
+`--cwd <dir>`.
 Commands other than `init` look for `ddd-ts-kit.config.json` in the directory and its parents.
-Exit codes: `0` success, `1` violations, stale documentation or, under `--strict`, a commit over
-its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
+`ddd-ts-kit --help` prints the whole reference, `ddd-ts-kit <command> --help` (or `help <command>`)
+the usage and the notes of that command alone (with `--json`, `{ command, usage, notes }`), and an option a command does not know is refused
+with its usage line as the fix. Exit codes: `0` success, `1` violations, stale documentation or,
+under `--strict`, a commit over its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
 not write some of them where it ran (a path the sandbox of an agent protects): they are listed
-under `unwritable`, every other file is written and none is deleted.
+under `unwritable`, every other file is written and none is deleted; `4` an internal error of the
+kit, said in one line with its version (`internal error of ddd-ts-kit <version>: ...`, its stack
+trace after it when `DDD_TS_KIT_DEBUG` is set; under `--json` an `error` with its `stack` and
+`"internal": true`): report it at https://github.com/gbourgeat/ddd-ts-kit/issues with the command
+and the stack trace.
 
 ## init
 
@@ -78,7 +86,11 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
 ```
 
 Works in an empty directory or an existing project. An existing file is never replaced without
-`--force`; it is reported as skipped. `init` also writes the generated contracts as the scripts
+`--force`; it is reported as skipped. `--force` replaces only what git holds: a file it would
+replace that differs from the last commit (uncommitted, staged, or untracked and not ignored)
+refuses the command with exit code 2, the files named and nothing written (`Commit or stash them
+first, then run again: git diff shows what the kit rewrote.`), and outside a git repository every
+file whose content would change does. The same holds for `generate --force`. `init` also writes the generated contracts as the scripts
 of the project write them for a project without a route or an integration event of its own
 (`openapi/openapi.yaml`, `docs/integration/asyncapi.yaml` and `event-catalog.md`; JSON under
 `"openapi": { "format": "json" }` of the config), so that the first commit holds them and
@@ -90,6 +102,13 @@ name each dependency the stack about to be written contradicts, and the flag tha
 fastify to keep it.`), a dry run included: run `init --dry-run` first on an existing project.
 Run again later, `init` keeps the stack recorded in the config.
 
+Every file `init` and `generate` write stays inside the project: a path that leads out of it
+through a symbolic link, in its place or above it (a `docs/adr` or a `.claude/settings.json`
+linked to elsewhere), refuses the command with exit code 2 and the path named, before
+anything is written; a link that stays inside the project is written through. `init` refuses a home directory and the root of the file system, where its
+`.claude/settings.json` would be the settings of every session: run it in the directory of the
+project.
+
 `init --force` on a project that is already initialised rewrites the files `init` owns and keeps
 the config: the contexts and their upstreams, the rules, the limits, the deviations and every
 other key stay as written, and the stack changes only where a flag names a choice
@@ -99,7 +118,13 @@ and the registry of permissions are rewritten from their templates, then the dec
 are wired into them again, and the erasure of each context is listed again in the copies of the
 privacy folder; what another generator had added to a file of the platform (the value of a
 gateway, the settings of a job) is not, and a note says so. A config that cannot be
-read is replaced.
+read is replaced. The files a team owns once written stay as they are, listed as `kept`:
+`README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` and the pipeline definitions
+(`.github/workflows/`, `.gitlab-ci.yml`), whose jobs and includes are the team's to edit, those of
+`--ci-extras` too; to take what a new version writes in one of them, run
+`init` in an empty folder and compare. `.gitignore` and `.dockerignore` gain the lines of the kit
+they lack, first, under a comment, and keep the lines of the team after them, which have the last
+word; a line of the kit on a path the team already writes rules for is left out. A last note says what `--force` rewrote and what it kept.
 
 The pipeline uses free tools only. `--ci-extras` adds jobs that need a paid plan on a private
 repository, report into a merge request only in a paid tier, or spend API tokens on every run:
@@ -594,7 +619,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `REVIEW.md` | the review policy of the project: the passes of a review (bugs, security, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` under `## Mistakes seen here` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Read by the `architecture-reviewer` agent on top of its method, by a human reviewer and by any review bot. Written once, for the team to edit: `--force` leaves it alone, `doctor` says when it is missing |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
 | `.claude/hooks/production-gate.mjs`, `.claude/hooks/change-reference.mjs` | with `--agent-profile regulated`: the two hooks of the profile, registered under `hooks.PreToolUse` of `.claude/settings.json`, written once for the team to edit (`--force` writes them again). The gate blocks a command that names the production environment with a release action unless `RELEASE_APPROVAL` names an approver and a change; the reference asks before an edit of a migration or of the containers, for the `Change: <id>` trailer of the commit ([Sandboxing coding agents](../../docs/guides/agent-sandbox.md#the-regulated-profile)) |
-| `.claude/settings.json` | permissions (and, with `--agent-profile regulated`, the sandbox block below): the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first, and so does an edit of the generated contracts and of the lock of an acceptance (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json`: an ask rule, since the sandbox of Claude Code would make a denied path read-only to `docs:generate` and `acceptance --lock` too; the guard of the plugin refuses a hand edit of them) and of what reaches production otherwise than through the code: the migrations of the ORM (`migrations/**` with drizzle, knex and typeorm, `prisma/migrations/**` with prisma, nothing with a custom persistence or none), `Dockerfile`, `docker-compose.yml` and `docker/**`. The compose file reads `.env` at the root, which the deny list already covers; nothing under `docker/` holds a secret |
+| `.claude/settings.json` | permissions (and, with `--agent-profile regulated`, the sandbox block below): the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), `generate` and `init` with `--force`, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first, and so does an edit of the generated contracts and of the lock of an acceptance (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json`: an ask rule, since the sandbox of Claude Code would make a denied path read-only to `docs:generate` and `acceptance --lock` too; the guard of the plugin refuses a hand edit of them) and of what reaches production otherwise than through the code: the migrations of the ORM (`migrations/**` with drizzle, knex and typeorm, `prisma/migrations/**` with prisma, nothing with a custom persistence or none), `Dockerfile`, `docker-compose.yml` and `docker/**`. The compose file reads `.env` at the root, which the deny list already covers; nothing under `docker/` holds a secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env` and every `.env.*` but `.env.example` (the same in `.dockerignore`), `*.tsbuildinfo`, `.ddd-ts-kit/`, where `worker-scope` writes, and `.worktrees/`, where the worktrees live |
 
 `--ci both` writes the two pipelines, `--ci none` neither (and no `renovate.json`). The pipeline
@@ -641,14 +666,26 @@ pipelines call, `test:coverage` (every spec once, each context and layer held to
 `format:check`, `test:coverage`, end-to-end tests, `check:arch`, `depcruise`, `deadcode`,
 `docs:check`.
 
+`db:generate` takes what the migration does, in letters, digits, dashes and underscores, starting
+with a letter or a digit (`npm run db:generate add-invoices`, on TypeORM
+`migrations/add-invoices`): `drizzle-generate`, `prisma-generate` and `typeorm-generate` refuse
+any other name before the ORM reads it, since a value that starts with a dash would be one of its
+options; `typeorm-generate` also refuses a folder outside the project.
+
 `package.json` carries two compilers: `typescript ~6.0.3`, which the tools load as a library,
 and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck` call by path
 (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` would run the older one.
 
-`init` and `generate context` start with the language: the first entry of `next` is the glossary
+`init` and `generate context` start with the language: the first entry of `todos` is the glossary
 of the context to fill in. Both refuse a context named `schema`, on every ORM: on Prisma the models
 of a context live in `prisma/schema/<context>.prisma`, and `prisma/schema/schema.prisma` is the
-main file every context shares (`init --force` moves a project to Prisma).
+main file every context shares (`init --force` moves a project to Prisma). They refuse too the
+names every JavaScript object has (`constructor`, `prototype`, `__proto__`, `toString`,
+`hasOwnProperty`, `valueOf`): a context is a key of the config and of the objects built from it.
+A context or a module is named in letters, digits and dashes, read in any case and with `-`, `_`
+or spaces between its words (`OrderFulfilment`, `order_fulfilment`); every command refuses a name
+it would have to drop part of to read it, such as `../billing` or `Évil`, and says what it would
+have read (`billing`, `vil`).
 
 ### Presets
 
@@ -682,7 +719,7 @@ written from the same preset. Why, and which other contexts deserve one:
 
 ```
 ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]
-ddd-ts-kit generate --help --json
+ddd-ts-kit generate [<kind>] --help [--json]
 ```
 
 One run of `generate` does five things, in this order, and writes nothing when the first one
@@ -712,9 +749,9 @@ would update src/contexts/notification/notification.permissions.ts
 would update src/contexts/notification/application/application.declarations.ts
 
 Next, in this order: the language of the context first, then the business decisions only you can make
-  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor first, ...
-  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  decide what "archive notification" does to a Notification: ...
-  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour of "archive notification": ...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  "archive notification" changes Notifications that exist and writes nothing until you decide...
+  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour...
 ```
 
 | Kind | Arguments | Writes |
@@ -801,7 +838,7 @@ Next, in this order: the language of the context first, then the business decisi
   handler finds what to act on. Parameters that are optional or have a default are left out of the call.
 - **The grant of a job.** A job whose command is protected sends it as `system:<context>.<name>`,
   which has no right unless the model gives it one. `generate job` writes the grant where the model
-  makes it one line, in a `system-grants` marker region, and `next` points at that line:
+  makes it one line, in a `system-grants` marker region, and `todos` points at that line:
   `--authz rbac`, the id of the permission under the role `system` of `platform/auth/roles/roles.ts`,
   the role `createAuthorizer` gives every system actor (`systemRole`) and no other: a user token
   that names `system` among its roles does not hold it; `--authz abac`, a
@@ -835,7 +872,7 @@ Next, in this order: the language of the context first, then the business decisi
   other name. With `--authz rebac` the requirement names the context as its resource, a starting
   point to replace by the element the right bears on. With `--authz rbac`, `--grant <role>` gives
   the permission to the role in `platform/auth/roles/roles.ts` (the role joins `role.ts` when it is
-  new); without it, a `next` step says the grant is left to do (`authz/granted`).
+  new); without it, a step of `todos` says the grant is left to do (`authz/granted`).
 - `route` hands `actorOf(context.principal)` to a protected use case and sets `security` (the scheme
   of `--authn`, or `false` for a public one). `integration-handler` carries `systemActor('<context>.<name>')`
   for the command it builds; behind a broker it listens on the subscriber of its context
@@ -878,9 +915,12 @@ Next, in this order: the language of the context first, then the business decisi
   goes through `createTestBuses()` of `@ddd-ts-kit/testing`, whose `dispatching(fake)` makes the
   save of a fake announce its events to `domainEvents`. The arrangement several specs of a
   context share is generated once, `generate test-world`, in `test/worlds/`.
-- `--json` prints `{ dryRun, created, updated, skipped, next, todos, notes }`. `next` lists the
-  `TODO(domain)` places as `file:line`, the glossary first, then the lines a command wrote for the
-  team to check (the grant of a job); `todos` adds their text.
+- `--json` prints `{ dryRun, created, updated, deleted, skipped, unwritable, todos, notes }`.
+  `todos` lists the `TODO(domain)` places, the glossary first, each as `{ file, line, gist }`:
+  `gist` is the first words of the marker (up to its first `:` or `;`, twelve words at most), whose
+  whole sentence is in the file at that line. Then come the lines a command wrote for the team to
+  check (the grant of a job), which no file explains: those also carry their whole `text`. The text
+  output prints each place on one line, `file:line  gist` (the whole `text` of a step).
 - A kind that needs something else to compile either creates it (a missing repository or
   domain event) or stops with the command that creates it (a missing aggregate, use case or
   route).
@@ -891,7 +931,8 @@ Next, in this order: the language of the context first, then the business decisi
 - `--local-only` refuses, naming the files and writing nothing, when the run would write outside
   `<contextsDir>/<context>/` and `test/e2e/*.e2e.spec.ts`. `generate --help --json` prints every
   kind with its `usage`, `aliases`, `summary` and `writesShared`, plus `shared` and `sharedWhen`:
-  what it writes outside its context, and when. Both serve a build split between workers (see
+  what it writes outside its context, and when; `generate <kind> --help --json` prints that kind
+  alone, as one object, and `generate <kind> --help` the same as text. Both serve a build split between workers (see
   `worker-scope`).
 - A fake is an entry point for knip and may have no importer for dependency-cruiser: a port
   and its fake generated before a use case needs them fail neither analyzer. A domain service
@@ -946,7 +987,7 @@ Regenerates what is derived from the config and the code, and nothing else:
   platform owners. A file the team wrote keeps its lines, the block appended after them; without
   any owner nothing is written.
 
-`--behaviour` writes the pages of `docs/behaviour/` alone, every other generated document left as it is: what the pre-commit hook runs when a spec is staged; with `--check`, those pages alone are compared. A rule is written as its title without the row ids and criteria it opens with (`#FIX1 `, `#US1.04 AC1 `), which date it to the change that brought it and mean nothing to a reader of the business.
+`--behaviour` writes the pages of `docs/behaviour/` alone, every other generated document left as it is: what the pre-commit hook runs when a spec, a source under `src/` or `ddd-ts-kit.config.json` is staged, since a source can move a spec to another heading (the use case its route sends, the permission its policy decides) while no spec changes; with `--check`, those pages alone are compared. A page reads as a specification. It opens with one heading per use case of the context, the command or query in the words its handler spec is described with (`Cancel invoice (command)`), which holds the rules of its handler, of its policy (named after it, or deciding the permission it requires; a policy several use cases share states its rules under the first of them, `shared with ...`, and is named under the others), of its controller or route, of its reader, of its end-to-end spec (`test/e2e/<use-case>.e2e.spec.ts`, `<use-case>-<behaviour>`, or named after its route) and of the acceptance scenarios that cite a row its titles alone cite (a row two use cases cite leaves the scenario on the application page). One heading per part of the model follows (aggregate, entity, value object, state machine, domain service, domain event, error), then one per reaction (event and integration handlers, publishers, projections, process managers, jobs), then each spec that fits none, under its directory. Under each heading come the rules written for the project, then, in a sub-list `Generated by the kit`, each under the `describe` of its spec, the titles that match word for word a title a spec template of the kit writes for a spec of that role, its names substituted (`saves the invoice and answers its identifier`, `is refused to an actor who does not hold the permission invoice.cancel`), so that the eye goes to what the project added; a planned rule (`it.todo`) comes last in each list, the generic ones a generator planted included. `docs/behaviour/application.md` keeps the specs of `test/` that serve no use case: the journeys, the architecture, the scenarios that cite no row of a use case. The rows of the plan and the criterion a title opens with, as `test/title-states-a-rule` asks them written (`#US5.02 AC1 ...`), are shown before the rule (`` `#US5.02 AC1` a customer places an order ``), and each page ends with `Rows of the plan`: each row its titles cite and how many titles cite it, so that a reviewer checks that each rule line of a row of `docs/architecture/slices.md` has its title.
 
 `--stored-events` also records in `stored-events.lock.json` the shape of each version of a stored
 event declared in the codecs of `infrastructure/persistence/`, never rewriting a recorded version:
@@ -1160,6 +1201,8 @@ handlers, the policies, the gateways and the adapters are read from the decorato
 query shows what it requires (or `public`), a handler its consumer name and its event, a policy its
 permission, an adapter its port; `--json` adds them under `declarations`. In the explicit style the
 jobs are read from the `builder.job(...)` and `platform.jobs.register(...)` lines of the module file.
+The text leaves out the kinds a context holds none of, and the end-to-end specs when there is none;
+`--json` keeps every key, an empty list included.
 
 ## describe
 
@@ -1195,7 +1238,7 @@ each `CONTEXT.md`.
 
 ```
 ddd-ts-kit status [--workers]
-ddd-ts-kit todo [<context>]
+ddd-ts-kit todo [<context>] [--brief]
 ```
 
 `status` prints the `Next:` line of `docs/architecture/plan.md`, the rows of
@@ -1246,7 +1289,9 @@ current }, agent, phase, next }`, `phase` being `not started`, `mid-row`, `betwe
 and did not stop since).
 
 `todo` lists those markers as `file:line` with their kind and their text, in the project or in one
-context; `--json` prints `{ count, remaining: [{ kind, context, file, line, text }] }`.
+context; `--brief` prints each as `file:line` and its first words (up to its first `:` or `;`,
+twelve words at most), the file holding the rest, a quarter of the size mid-slice; `--json` prints
+`{ count, remaining: [{ kind, context, file, line, text }] }`, every text whole.
 
 ## plan-waves
 
@@ -1293,15 +1338,47 @@ context as it stands plus the `--term` of the row and of the rows it waits for, 
 term a row it does not wait for adds is not counted, since that row may not be merged when this
 one is built. Each word it does not define (`undefined-word`) and each technical word no term
 holds (`technical-word`) is reported once per row, with the `--term` to add, without waves, and
-the command exits 1: a worker following that row as written would be refused. The commands the
-generator refused for another reason (a missing `--module`, an aggregate no row generates, an
-upstream not declared, a handler written by hand that an end-to-end spec needs) are listed after
-the waves under `Refused for another reason than a word when the plan was replayed`, without
-failing: the names they would introduce after that refusal are not judged. The replay costs about
-a tenth of a second per command. `--json` prints
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], notReplayed: [{ row, command, refusal }] }`,
+the command exits 1: a worker following that row as written would be refused. So is each command
+the generator refuses for another reason (`refused-command`: a missing `--module` in a context
+divided into modules, `--grant` on a project whose rights are not roles, an aggregate no row
+generates, an upstream not declared, an unknown flag), without waves and with exit 1, the refusal
+of the generator and its fix printed under the row: fix the row. The generator also says, while it
+replays a command, which files it builds on (the aggregate of `--aggregate`, the port of an
+adapter, the use case of a route, a route group, the route, the event handler or the job that
+starts the use case of an end-to-end spec, the `CONTEXT.md` of the context it writes in and of
+each upstream it declares, the declaration of an event) and which files it creates. A command
+that builds on a file a row it does not wait for generates, directly or not, is a
+`missing-dependency`, even though the replay, one row after the other in one copy, found the file:
+the worker of that row, on a branch of its own, would be refused (`#US5.02 ... builds on
+<file>, which #US5.01 generates: add US5.01 to its Depends on`). A command the generator refuses
+names those rows with its refusal instead, in its `prerequisite` and its `rows`: one problem per
+command. A command refused for what it
+builds on is run again once the whole plan has run, with `--dry-run` so that the copy stays as the
+plan left it and no rerun passes on what another wrote, and the files it then finds say which row
+generates what it needed, each file in one pass: a later row it does not wait for (`add <id> to its Depends on`, and
+that id in `rows`, as many ids as rows), a later row that waits for it (move the command that generates it to this row or
+to a row before it, rather than make a cycle), a later command of the same row (put it first), or
+none as the rows are written (add the command the fix names, or fix the refused row that would
+generate it); what it is refused for then, for another reason (a `--grant` once the aggregate is
+found) or for another file no row generates, is said too (`then:`, `nextRefusal`), so that fixing
+the order is not followed by another refusal. A row `in progress` is replayed, so that the rows after it
+find what it generates, but neither its names, nor its refusals, nor what it builds on are problems:
+its worker may have added the term a name needs on their branch, its commands may have run in the
+project already, and the generator refuses a second run of some of them (a
+port already bound to an adapter, a decision record whose number is taken); they are listed apart,
+with their fix, under `Refused in rows in progress, not counted`. A command whose files exist is
+otherwise skipped by the generator, not refused. The replay runs each command for real in the
+copy, never with `--dry-run`, so that the next command finds its files. With a context, the open
+rows of the other contexts are replayed too, in their waves (when the whole file can be ordered),
+so that a row finds what a row of another context it does not wait for generates and is told to
+wait for it; only the rows of its plan, its own and those they wait for, are judged and listed
+under `Refused in rows in progress`. A plan whose rows run no generator command makes no copy. The
+replay costs about a tenth of a second per command. `--json` prints
+`{ file, context, problems: [{ kind, rows, message, command?, refusal?, fix?, prerequisite?, nextRefusal?, builtOn? }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], started: [{ row, command, refusal, fix }] }`,
 `story` being `null` for a row whose id names none and `batch` `null` for a row the context asked
-for does not show.
+for does not show; `command`, `refusal`, `fix` and `prerequisite` are those of a `refused-command`,
+`fix`, `prerequisite` and `nextRefusal` (`{ refusal, fix, prerequisite }`, its `prerequisite` saying that no row generates the file it then lacks) `null` when there is none, `command` and `builtOn` those of a
+`missing-dependency`; `message` holds a problem on one line.
 
 ## acceptance
 
@@ -1952,10 +2029,11 @@ Each changed path reaches something:
   lockfile, the pipeline, a directory of `src/contexts/` the config does not declare.
 
 Without `--base`, or when git cannot tell what changed (an unknown ref, a shallow clone without
-the base), everything is selected: that is what the default branch and the nightly run get. The
-selection is never narrower than the declared relationships, because `context/declared-relationship`
-keeps every import between contexts inside them, and that rule runs on the whole project in every
-pipeline.
+the base), everything is selected: that is what the default branch and the nightly run get. A
+`--base` or `--head` that starts with a dash is refused (exit 2): no ref does, and git would read
+it as one of its own options. The selection is never narrower than the declared relationships,
+because `context/declared-relationship` keeps every import between contexts inside them, and that
+rule runs on the whole project in every pipeline.
 
 ![A change in the scheduling context of the example application: scheduling is selected, and so are notification and analytics, which are downstream of it in the context map; identity, upstream, is left to the default branch](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-affected-selection.svg)
 
@@ -2066,7 +2144,9 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
   baseline was committed (a `git mv`); a file moved otherwise reports its errors at its new path,
   and its old entry fails until the owner writes the baseline again. A baseline makes old errors quiet; it does
   not make a tree outside the canonical one checkable.
-  `--changed-since` runs `git diff --name-only --relative <ref>...` in the project.
+  `--changed-since` runs `git diff --name-only --relative <ref>...` in the project, on the commit
+  the ref names: a ref that names no commit is refused (exit 2, `<ref> is not a commit of this
+  repository`), as it is by every command that takes one.
 - `--format github` prints `::error file=...,line=...::` annotations.
 - `--explain` follows the violations with each rule they report, once, with its description and
   the reason it exists (as `explain` prints it, without the examples), and in JSON adds an
@@ -2149,7 +2229,7 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 | `imports/alias-only` | under the source root, `test/` and `scripts/`: an `import`, `export ... from` or `import()` with a relative specifier, the same directory included (the fix names the alias to write; `eslint --fix` writes it); an alias specifier with a `.` or `..` segment |
 | `imports/extension` | under the source root, `test/` and `scripts/`: with `importExtension` `none`, an alias specifier that ends with `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` or `.cts`; with `js` (or no key), an alias specifier that does not end with `.js` (the fix names the specifier to write; `eslint --fix` writes it). A package subpath is never judged |
 | `imports/alias-declared` | an `importAlias` that is not `@/` or `$<name>/`, or that is `$test/`, `$scripts/`, `$generated/`; a `paths` entry of `tsconfig.json` missing or different from what `importAlias` gives (the fix gives the entry); another `paths` entry under an alias; a `baseUrl`; a `tsconfig.build.json` whose `paths` differ; `paths` of `knip.json` mapping an alias; a script that compiles (`tsc` without `--noEmit`) and does not run `ddd-ts-kit build-aliases` afterwards; a script running `tsx --tsconfig` on another file; a `vitest` config at the root without `tsconfigPaths: true`, a `jest` config without the derived `moduleNameMapper` entries, or `.dependency-cruiser.cjs` without `tsConfig`; `module` and `moduleResolution` of `tsconfig.json` (or of a `tsconfig.build.json` that sets its own) that are not what `importExtension` gives: `ESNext`, `Bundler` and `customConditions` holding `node` under `none`, and under `js` a written value that is not a Node resolution; a jest mapping whose pattern does not end as the imports do. A project without `package.json` is not judged |
-| `config/valid` | unknown upstream, classification, relationship, rule id, `guard` mode or `importExtension`; a context missing on disk or in the config; a `commit` limit that is not a positive integer |
+| `config/valid` | unknown upstream, classification, relationship, rule id, `guard` mode or `importExtension`; a directory of the config that leads out of the project; a context missing on disk or in the config; a `commit` limit that is not a positive integer |
 | `config/suppression-needs-reason` | a suppression without a rule id or a reason (kept as an alias next to `governance/recorded-deviation`, which judges the reason) |
 | `authz/declared` | in a module file, `builder.command(X)` or `builder.query(X)` without `.requires(` or `.public(` in its chain, unless the message class carries `@Requires` or `@Public` of `@ddd-ts-kit/kernel/declarations`; with manual or nest wiring, a command or query class absent from every `requires(X, ...)` and `publicUseCase(X)` of the module file and of `application/authorization/`; a `defineRoute` without `security` (the route type refuses it already, and an empty list too: this is the text-level net for a definition built loosely); in the declared style, the exported class of a `*.command.ts` or `*.query.ts` file carrying neither `@Requires` nor `@Public` |
 | `authz/granted` | with `stack.authz` `rbac`, a permission of a context's `definePermissions` that neither `platform/auth/roles/roles.ts` nor `platform/auth/authorization/signed-in-grants.ts` grants by name (by the entry of its set, its id or `<context>:*`); the super-admin `*` does not count (a warning); with `rebac`, a permission the schema leaves on the context while no source outside the tests writes an `operator` relationship (of a person or a system actor) on that context and no signed-in grant holds it, in a project that already makes a person operator of some context; silent with an authorizer of the project's own (a warning) |

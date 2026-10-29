@@ -29,8 +29,9 @@ describe('generate in the shared kernel', () => {
   it('writes a value object at its root, its spec beside it, and its term in the glossary of the shared kernel', () => {
     const written = report(generate(root, 'value-object', 'Money', ...MONEY));
 
-    expect(written.created).toEqual([`${KERNEL}/money.vo.ts`, `${KERNEL}/money.vo.spec.ts`]);
-    expect(written.updated).toEqual([GLOSSARY]);
+    // The glossary of the shared kernel did not exist: the term creates it.
+    expect(written.created).toEqual([GLOSSARY, `${KERNEL}/money.vo.ts`, `${KERNEL}/money.vo.spec.ts`]);
+    expect(written.updated).toEqual([]);
     expect(read(root, `${KERNEL}/money.vo.ts`)).toContain('export class Money extends ValueObject<MoneyProps> {');
 
     expect(read(root, `${KERNEL}/money.vo.ts`)).toContain(
@@ -134,7 +135,7 @@ describe.each([
     const [kind = '', ...rest] = args;
     const written = report(generate(root, kind, ...rest, ...MONEY));
 
-    expect(written.created).toEqual(files.map((file) => `${KERNEL}/${file}`));
-    expect(written.updated).toEqual([GLOSSARY]);
+    expect(written.created).toEqual([GLOSSARY, ...files.map((file) => `${KERNEL}/${file}`)]);
+    expect(written.updated).toEqual([]);
   });
 });

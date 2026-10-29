@@ -48,34 +48,14 @@ beforeAll(() => {
     ...ISSUE,
   );
 
-  step(
-    'generate',
-    'route',
-    'billing',
-    'IssueInvoice',
-    '--method',
-    'POST',
-    '--path',
-    '/invoices/:invoiceId/issue',
-    ...ISSUE,
-  );
+  step('generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices/:invoiceId/issue');
 
   step('generate', 'query', 'billing', 'InvoiceDetails', '--permission', 'invoice.read', ...DETAILS);
 
-  step(
-    'generate',
-    'route',
-    'billing',
-    'InvoiceDetails',
-    '--method',
-    'GET',
-    '--path',
-    '/invoices/:invoiceId',
-    ...DETAILS,
-  );
+  step('generate', 'route', 'billing', 'InvoiceDetails', '--method', 'GET', '--path', '/invoices/:invoiceId');
 
   step('generate', 'query', 'billing', 'SearchInvoices', '--search', '--permission', 'invoice.search', ...SEARCH);
-  step('generate', 'route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/invoices', ...SEARCH);
+  step('generate', 'route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/invoices');
 
   step(
     'generate',
@@ -163,7 +143,6 @@ describe('generate route under "stack.routes": "nest"', () => {
       '--path',
       '/x',
       '--mapper',
-      ...ISSUE,
     );
 
     expect(search.stdout + search.stderr).toContain('--mapper and --serializer are left out');

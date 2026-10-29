@@ -97,7 +97,7 @@ function fixesOf(findings: readonly DoctorFinding[]): string[] {
 
   if (ofTheProject.some((finding) => finding.area === 'script' && finding.problem === 'written otherwise')) {
     fixes.push(
-      "note: a script written otherwise may be yours on purpose; `npx ddd-ts-kit init --force` writes the kit's version over it.",
+      "note: a script written otherwise may be yours on purpose; `npx ddd-ts-kit init --force` writes the kit's version over it once package.json is committed, and git diff then shows what it rewrote.",
     );
   }
 

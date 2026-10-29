@@ -5,6 +5,7 @@ import { openRows } from '../citations/open-rows';
 import { staleNamesAt } from '../citations/stale-names-at';
 import { staleNamesSince } from '../citations/stale-names-since';
 import { CliError } from '../cli-error';
+import { knownCommit } from '../commit/known-commit';
 import { runGit } from '../commit/run-git';
 import { readConfig } from '../config';
 import { readSlices, SLICES_FILE } from '../progress/read-slices';
@@ -14,6 +15,7 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import { knownContext } from './known-context';
 import { rowsOption } from './rows-option';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * The names the design of rows not done cites that the code does not have: against a ref before
@@ -45,14 +47,15 @@ export const citedCommand: Command = (argv, io) => {
 
     const removed = staleNamesSince(loadProject(root), knownRef(root, since), selection);
 
-    io.out(args.json ? JSON.stringify({ since, citations: removed }, null, 2) : formatRemovals(removed, since));
+    io.out(args.json ? stdoutJson({ since, citations: removed }) : formatRemovals(removed, since));
 
     return 0;
   }
 
-  const report = staleNamesAt(root, config, { ref: baseRef(root, args.text('base')), rows });
+  const ref = args.text('base') ?? (runGit(root, ['branch', '--show-current'])?.trim() || 'HEAD');
+  const report = staleNamesAt(root, config, { ref, commit: knownRef(root, ref), rows });
 
-  io.out(args.json ? JSON.stringify(report, null, 2) : formatCitations(report, rows));
+  io.out(args.json ? stdoutJson(report) : formatCitations(report, rows));
 
   return 0;
 };
@@ -83,18 +86,11 @@ function chosenRows(
   return [...ids];
 }
 
-/** `--base` when given, which must name a commit; the current branch otherwise. */
-function baseRef(root: string, base: string | undefined): string {
-  return base === undefined ? runGit(root, ['branch', '--show-current'])?.trim() || 'HEAD' : knownRef(root, base);
-}
-
+/** The commit a ref names, which git is given; the ref stays by its name in the report. Refused when it names none. */
 function knownRef(root: string, ref: string): string {
-  if (runGit(root, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]) === undefined) {
-    throw new CliError(
-      `${ref} is not a commit of this repository.`,
-      'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.',
-    );
-  }
-
-  return ref;
+  return knownCommit(
+    root,
+    ref,
+    'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.',
+  );
 }

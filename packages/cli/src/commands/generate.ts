@@ -1,17 +1,20 @@
 import { readConfig } from '../config';
 import { CliError } from '../cli-error';
 import { findKind } from '../generate/find-kind';
+import { generateArguments } from '../generate/generate-arguments';
+import { COMMON_FLAGS, GENERATE_FLAGS } from '../generate/generate-options';
 import type { Kind, KindFlags } from '../generate/kind';
-import type { LanguageProbe } from '../generate/language-probe';
+import type { GeneratorProbe } from '../generate/generator-probe';
 import { KINDS } from '../generate/kinds';
 import { placeGeneratedFiles } from '../generate/place-generated-files';
 import { refreshDocs } from '../generate/refresh-docs';
 import { refuseSharedWrites } from '../generate/refuse-shared-writes';
+import { refuseUndeclaredFlags } from '../generate/refuse-undeclared-flags';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
 import { MODULE_OPTION, usageOf } from '../generate/usage-of';
-import { toName } from '../naming';
+import { contextArgument } from '../generate/context-argument';
 import { Workspace } from '../workspace';
-import { Arguments } from './arguments';
+import type { Arguments } from './arguments';
 import type { Io } from './io';
 import type { Command } from './command';
 import { printReport } from './print-report';
@@ -19,10 +22,12 @@ import { keepFlatPlatform } from '../platform-folders';
 
 export const generateCommand: Command = (argv, io) => generate(argv, io);
 
-/** `generate`, and with a probe of the language, the same command hearing its names instead of judging them. */
-export function generate(argv: readonly string[], io: Io, language?: LanguageProbe): number {
-  const asked = findKind(argv.find((argument) => !argument.startsWith('-')) ?? '');
-  const args = Arguments.parse(argv, optionsOf(asked));
+/**
+ * `generate`, and with a probe, the same command hearing its names instead of judging them, and
+ * telling the files it builds on and the files it created.
+ */
+export function generate(argv: readonly string[], io: Io, probe?: GeneratorProbe): number {
+  const args = generateArguments(argv);
   const [kindName, ...rest] = args.positionals;
   const kind = requestedKind(kindName, rest);
   const root = args.projectRoot;
@@ -31,11 +36,12 @@ export function generate(argv: readonly string[], io: Io, language?: LanguagePro
 
   keepFlatPlatform(ws, config);
 
-  const flags = { ...flagsOf(args), ...(language === undefined ? {} : { language }) };
+  const flags = probedFlags(flagsOf(args), probe);
 
   refuseModuleOf(kind, flags);
+  refuseUndeclaredFlags(kind, passedFlags(args), COMMON_FLAGS);
 
-  const context = kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined;
+  const context = kind.positionals[0] === 'context' ? contextArgument(config, rest[0] ?? '').kebab : undefined;
 
   const stopPlacing = placeGeneratedFiles(ws, config, {
     context,
@@ -49,75 +55,27 @@ export function generate(argv: readonly string[], io: Io, language?: LanguagePro
   refreshDocs(ws, args.flag('local-only') ? 'keep' : 'move', args.flag('local-only') ? 'context' : 'whole');
 
   if (args.flag('local-only')) {
-    refuseSharedWrites(ws, config, kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined, argv);
+    refuseSharedWrites(ws, config, context, argv);
   } else {
     // A worker confined to its context leaves knip.json alone: the next command on the trunk, or `docs`, does this.
     stopIgnoringValidation(ws, config);
   }
 
-  return printReport(io, args, ws.commit(args.flag('dry-run')));
+  const report = ws.commit(args.flag('dry-run'));
+
+  probe?.created(report.created);
+
+  return printReport(io, args, report);
 }
 
-const TEXT = { type: 'string' } as const;
-const SWITCH = { type: 'boolean', default: false } as const;
-const TEXTS = { type: 'string', multiple: true } as const;
+/** The flags, with what a probe hears in place of a flag: the names to judge and the files built on. */
+function probedFlags(flags: KindFlags, probe: GeneratorProbe | undefined): KindFlags {
+  return probe === undefined ? flags : { ...flags, language: probe.language, builtOn: probe.builtOn };
+}
 
-/** Every flag a kind may take; each kind reads the ones it knows. */
-const OPTIONS = {
-  classification: TEXT,
-  purpose: TEXT,
-  preset: TEXT,
-  upstream: TEXTS,
-  term: TEXTS,
-  value: TEXTS,
-  transition: TEXTS,
-  code: TEXT,
-  aggregate: TEXT,
-  method: TEXT,
-  path: TEXT,
-  command: SWITCH,
-  query: SWITCH,
-  version: TEXT,
-  'allow-name': SWITCH,
-  permission: TEXT,
-  grant: TEXT,
-  public: SWITCH,
-  'tenant-scoped': SWITCH,
-  personal: TEXT,
-  subject: TEXT,
-  erasure: TEXT,
-  retention: TEXT,
-  search: SWITCH,
-  kind: TEXT,
-  decorators: SWITCH,
-  global: SWITCH,
-  deviation: TEXT,
-  phase: TEXT,
-  event: TEXT,
-  group: TEXT,
-  prefix: TEXT,
-  role: TEXT,
-  mapper: SWITCH,
-  serializer: SWITCH,
-  cache: TEXT,
-  module: TEXT,
-  'event-sourced': SWITCH,
-  creates: SWITCH,
-  birth: TEXT,
-  reason: TEXT,
-  number: TEXT,
-  name: TEXT,
-  every: TEXT,
-  cron: TEXT,
-  'time-zone': TEXT,
-  'dry-run': SWITCH,
-  force: SWITCH,
-  'local-only': SWITCH,
-};
-
-/** One flag may be a switch for a kind and a text for another: `--command` of a route, `--command <UseCase>` of a job. */
-function optionsOf(kind: Kind | undefined): Record<string, typeof TEXT | typeof SWITCH | typeof TEXTS> {
-  return { ...OPTIONS, ...Object.fromEntries((kind?.textFlags ?? []).map((flag) => [flag, TEXT])) };
+/** The flags of `generate` given on the command line, by their name. */
+function passedFlags(args: Arguments): string[] {
+  return GENERATE_FLAGS.filter((key) => args.text(key) !== undefined || args.flag(key) || args.many(key).length > 0);
 }
 
 function requestedKind(name: string | undefined, rest: readonly string[]): Kind {

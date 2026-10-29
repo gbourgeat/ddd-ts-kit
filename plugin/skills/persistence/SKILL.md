@@ -1,12 +1,10 @@
 ---
 name: persistence
 description: >-
-  Implements or reviews the persistence of a bounded context behind repository ports.
-  Repository port, ORM adapter, mapper, fake and contract suite, unit of work, optimistic
-  concurrency, audit and tenant columns, read models, migrations, on Drizzle, Knex, Prisma,
-  TypeORM or a custom store. Use when adding a table, a repository, a lookup, a read model
-  or a migration, when replacing the in-memory adapter by a real one, when choosing an ORM,
-  or when persistence types leak out of infrastructure.
+  Use when adding a table, a repository, a lookup, a read model or a migration, replacing
+  the in-memory adapter by a real one, choosing an ORM, or when persistence types leak out
+  of infrastructure. Mapper, unit of work, optimistic concurrency, Drizzle, Knex, Prisma,
+  TypeORM.
 argument-hint: "<context> <Aggregate>"
 allowed-tools:
   - Read
@@ -28,7 +26,7 @@ npx ddd-ts-kit generate repository <ctx> <Aggregate> [--tenant-scoped] [--person
 writes the port (an abstract class extending the kernel `Repository<Aggregate>` in
 `domain/repositories/`), the adapter of the project's ORM with its mapper and table in
 `infrastructure/persistence/`, the fake, and one `repositoryContract` spec that both must
-pass. `generate command --aggregate` creates it when missing. Fill the `next` places: the
+pass. `generate command --aggregate` creates it when missing. Fill the `todos` places: the
 lookups of the port, the columns, the mapper.
 
 ## Rules, whatever the technology

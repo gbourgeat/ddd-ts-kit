@@ -1,4 +1,6 @@
 import { CliError } from '../../cli-error';
+import { foundPrerequisite } from '../found-prerequisite';
+import { MissingPrerequisite } from '../missing-prerequisite';
 import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
@@ -46,11 +48,11 @@ export function generateEventSourcedRepository(scope: Scope, aggregate: Name): R
 function assertCodec(scope: Scope, aggregate: Name): void {
   const codec = `${scope.dir}/infrastructure/persistence/${aggregate.kebab}-events.mapper.ts`;
 
-  if (scope.ws.exists(codec)) {
+  if (foundPrerequisite(scope, codec)) {
     return;
   }
 
-  throw new CliError(
+  throw new MissingPrerequisite(
     `${aggregate.pascal} is event-sourced but the codec of its stored events is missing (${codec}).`,
     `Write it (it exports \`${aggregate.camel}Events\`, a StoredEventTypes with one defineStoredEvent per event, as \`ddd-ts-kit generate aggregate ${scope.context.kebab} ${aggregate.pascal} --event-sourced\` writes it), then generate the repository again.`,
   );

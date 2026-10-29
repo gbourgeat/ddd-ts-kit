@@ -2,7 +2,7 @@ import { runGit } from '../commit/run-git';
 import type { LandedAs } from '../merge/base-point';
 import { gitVersion } from '../merge/git-version';
 import { landedPoint } from '../merge/landed-point';
-import { commitOf } from '../merge/lost/commit-of';
+import { commitOf } from '../commit/commit-of';
 import { mergeRepositoryOf } from '../merge/lost/merge-repository-of';
 import { previewMerge } from '../merge/preview-merge';
 

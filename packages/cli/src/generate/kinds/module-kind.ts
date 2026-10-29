@@ -4,7 +4,7 @@ import { withModuleRow } from '../../check/modules/with-module-row';
 import { CliError } from '../../cli-error';
 import { moduleFileOf, moduleNameFlaw } from '../../model-modules';
 import { renderTemplate } from '../../templating';
-import { toName, type Name } from '../../naming';
+import { readName, type Name } from '../../naming';
 import type { Kind } from '../kind';
 import { learnTerms } from '../learn-terms';
 import { named } from '../named';
@@ -67,7 +67,12 @@ function writeModuleFile(scope: Scope, module: Name): void {
 
 /** A part of the model, named in the language of its context: never a role folder, never a technical grouping. */
 function moduleName(scope: Scope, input: string): Name {
-  const name = toName(input);
+  const name = readName(
+    input,
+    'module',
+    'Name the module after the cluster of concepts it holds, in kebab-case, for example payments or payment-terms.',
+  );
+
   const flaw = moduleNameFlaw(name.kebab);
 
   if (flaw?.reason === 'format' || flaw?.reason === 'role-folder') {

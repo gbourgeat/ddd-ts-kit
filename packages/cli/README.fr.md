@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c13f5e6303764739 -->
+<!-- translation-of: README.md sha256:c8dada5cb96e5e96 -->
 
 # ddd-ts-kit
 
@@ -45,13 +45,22 @@ l'installe pour de vrai et l'exécute, avec les deux gestionnaires de paquets et
 éprouvée. Après l'installation, la CLI est celle que le projet épingle :
 `pnpm exec ddd-ts-kit <command>`, ou `npx ddd-ts-kit <command>`.
 
-Chaque commande accepte `--json` (sortie lisible par une machine, erreurs comprises) et
-`--cwd <dir>`. Les commandes autres que `init` cherchent `ddd-ts-kit.config.json` dans le
-répertoire et ses parents. Codes de sortie : `0` succès, `1` violations, documentation périmée
+Chaque commande accepte `--json` (sortie lisible par une machine, erreurs comprises, affichée
+sur une ligne sans indentation ; les fichiers JSON que la CLI écrit gardent la mise en page du
+formateur) et `--cwd <dir>`. Les commandes autres que `init` cherchent `ddd-ts-kit.config.json` dans le
+répertoire et ses parents. `ddd-ts-kit --help` affiche toute la référence,
+`ddd-ts-kit <command> --help` (ou `help <command>`) l'usage et les notes de cette seule commande
+(avec `--json`, `{ command, usage, notes }`),
+et une option qu'une commande ne connaît pas est refusée avec sa ligne d'usage pour correction.
+Codes de sortie : `0` succès, `1` violations, documentation périmée
 ou, sous `--strict`, un *commit* au-delà de ses limites, `2` mauvais usage (le message dit quoi
 faire), `3` une commande qui écrit des fichiers n'a pas pu en écrire certains là où elle tournait
 (un chemin que protège le bac à sable d'un agent) : ils sont listés sous `unwritable`, tous les
-autres fichiers sont écrits et aucun n'est supprimé.
+autres fichiers sont écrits et aucun n'est supprimé ; `4` une erreur interne du kit, dite en une
+ligne avec sa version (`internal error of ddd-ts-kit <version>: ...`, sa pile d'appels à la suite
+quand `DDD_TS_KIT_DEBUG` est défini ; sous `--json` une `error` avec sa `stack` et
+`"internal": true`) : signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues avec la
+commande et la pile d'appels.
 
 ## init
 
@@ -83,7 +92,12 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
 ```
 
 Fonctionne dans un répertoire vide comme dans un projet existant. Un fichier existant n'est
-jamais remplacé sans `--force` ; il est signalé comme ignoré. `init` écrit aussi les contrats
+jamais remplacé sans `--force` ; il est signalé comme ignoré. `--force` ne remplace que ce que git
+détient : un fichier à remplacer qui diffère du dernier *commit* (non commité, indexé, ou non suivi
+et non ignoré) fait refuser la commande avec le code de sortie 2, les fichiers nommés et rien
+d'écrit (`Commit or stash them first, then run again: git diff shows what the kit rewrote.`), et
+hors d'un dépôt git chaque fichier dont le contenu changerait le fait. Il en va de même pour
+`generate --force`. `init` écrit aussi les contrats
 générés tels que les scripts du projet les écrivent pour un projet qui n'a encore ni route ni
 événement d'intégration à lui (`openapi/openapi.yaml`, `docs/integration/asyncapi.yaml` et
 `event-catalog.md` ; en JSON sous `"openapi": { "format": "json" }` de la configuration), afin
@@ -96,6 +110,13 @@ project is written for --http express: pass --http fastify to keep it.`), en *dr
 lancez d'abord `init --dry-run` sur un projet existant. Relancé plus tard, `init` garde la
 *stack* enregistrée dans la configuration.
 
+Chaque fichier qu'écrivent `init` et `generate` reste dans le projet : un chemin qui en sort par
+un lien symbolique, à sa place ou au-dessus (un `docs/adr` ou un `.claude/settings.json` liés à un
+autre endroit), fait refuser la commande avec le code de sortie 2 et le chemin nommé, avant toute
+écriture ; un lien qui reste dans le projet est suivi. `init` refuse un répertoire personnel et la racine du système de
+fichiers, où son `.claude/settings.json` serait le réglage de toutes les sessions : lancez-le dans
+le répertoire du projet.
+
 `init --force` sur un projet déjà initialisé réécrit les fichiers qui appartiennent à `init` et
 garde la configuration : les contextes et leurs amonts, les règles, les limites, les dérogations
 et toute autre clé restent tels qu'ils sont écrits, et la *stack* ne change que là où une option
@@ -105,6 +126,15 @@ composition, la preuve que chaque contexte se câble seul et le registre des per
 réécrits depuis leurs *templates*, puis les contextes déclarés y sont câblés de nouveau, et l'effacement de chaque contexte est listé de
 nouveau dans les copies du dossier *privacy* ; ce qu'un autre générateur avait ajouté à un fichier de la plateforme (la valeur d'une *gateway*, les
 réglages d'un *job*) ne l'est pas, et une note le dit. Une configuration illisible est remplacée.
+Les fichiers qu'une équipe possède une fois écrits restent tels quels, listés comme `kept` :
+`README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` et les définitions du *pipeline*
+(`.github/workflows/`, `.gitlab-ci.yml`), dont les *jobs* et les *includes* sont à l'équipe, ceux
+de `--ci-extras` compris ; pour reprendre ce qu'une nouvelle version y écrit,
+lancez `init` dans un dossier vide et comparez. `.gitignore` et `.dockerignore` gagnent les lignes du kit
+qui leur manquent, en tête, sous un commentaire, et gardent après elles les lignes de l'équipe, qui
+ont le dernier mot ; une ligne du kit sur un chemin pour lequel l'équipe écrit déjà des règles est
+laissée de côté. Une dernière note dit ce que `--force` a
+réécrit et ce qu'il a gardé.
 
 Le *pipeline* n'utilise que des outils gratuits. `--ci-extras` ajoute des *jobs* qui demandent
 une offre payante sur un dépôt privé, qui ne remontent dans une *merge request* qu'avec une
@@ -616,7 +646,7 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `REVIEW.md` | la politique de revue du projet : les passes d'une revue (bugs, sécurité, conformité face à la revue de conception de la ligne, l'acceptation de la *story*, les enregistrements de `docs/adr/` et les règles), ce qu'Important veut dire, au plus cinq *nits* (un *nit* récurrent devient une ligne de `AGENTS.md` sous `## Mistakes seen here` ou une règle de la configuration), ce qui n'est pas signalé (les fichiers générés, ce que `npm run verify` refuse). Lu par l'agent `architecture-reviewer` par-dessus sa méthode, par un relecteur humain et par tout robot de revue. Écrit une fois, pour que l'équipe le modifie : `--force` le laisse tel quel, `doctor` dit quand il manque |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |
 | `.claude/hooks/production-gate.mjs`, `.claude/hooks/change-reference.mjs` | avec `--agent-profile regulated` : les deux *hooks* du profil, enregistrés sous `hooks.PreToolUse` de `.claude/settings.json`, écrits une fois pour que l'équipe les modifie (`--force` les réécrit). La porte bloque une commande qui nomme l'environnement de production avec une action de mise en production sauf si `RELEASE_APPROVAL` nomme un approbateur et un changement ; la référence demande avant une modification d'une migration ou des conteneurs, pour le *trailer* `Change: <id>` du *commit* ([Mettre les agents de code en bac à sable](../../docs/guides/agent-sandbox.fr.md#le-profil-réglementé)) |
-| `.claude/settings.json` | des permissions (et, avec `--agent-profile regulated`, le bloc de bac à sable ci-dessous) : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification des contrats générés et du verrou d'une acceptation (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json` : une règle `ask`, puisque le bac à sable de Claude Code mettrait un chemin refusé en lecture seule pour `docs:generate` et `acceptance --lock` aussi ; la garde du plugin en refuse la modification à la main) et de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
+| `.claude/settings.json` | des permissions (et, avec `--agent-profile regulated`, le bloc de bac à sable ci-dessous) : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), `generate` et `init` avec `--force`, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord, comme une modification des contrats générés et du verrou d'une acceptation (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json` : une règle `ask`, puisque le bac à sable de Claude Code mettrait un chemin refusé en lecture seule pour `docs:generate` et `acceptance --lock` aussi ; la garde du plugin en refuse la modification à la main) et de ce qui atteint la production autrement que par le code : les migrations de l'ORM (`migrations/**` avec drizzle, knex et typeorm, `prisma/migrations/**` avec prisma, rien avec une persistance *custom* ou sans ORM), `Dockerfile`, `docker-compose.yml` et `docker/**`. Le fichier compose lit `.env` à la racine, que la liste de refus couvre déjà ; rien sous `docker/` ne porte de secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env` et chaque `.env.*` sauf `.env.example` (de même dans `.dockerignore`), `*.tsbuildinfo`, `.ddd-ts-kit/`, où écrit `worker-scope`, et `.worktrees/`, où vivent les *worktrees* |
 
 `--ci both` écrit les deux *pipelines*, `--ci none` aucun (et pas de `renovate.json`). Les
@@ -666,16 +696,28 @@ contexte et chaque couche tenus aux seuils de `ddd-ts-kit.config.json`) et `veri
 toute la base : typecheck, lint, `format:check`, `test:coverage`, tests de bout en bout,
 `check:arch`, `depcruise`, `deadcode`, `docs:check`.
 
+`db:generate` prend ce que fait la migration, en lettres, chiffres, tirets et tirets bas,
+commençant par une lettre ou un chiffre (`npm run db:generate add-invoices`, sous TypeORM
+`migrations/add-invoices`) : `drizzle-generate`, `prisma-generate` et `typeorm-generate` refusent
+tout autre nom avant que l'ORM ne le lise, puisqu'une valeur qui commence par un tiret serait l'une
+de ses options ; `typeorm-generate` refuse aussi un dossier hors du projet.
+
 `package.json` porte deux compilateurs : `typescript ~6.0.3`, que les outils chargent comme une
 bibliothèque, et `@typescript/native` (`npm:typescript@~7.0.2`), que `build` et `typecheck`
 appellent par son chemin (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` lancerait
 l'ancien.
 
-`init` et `generate context` commencent par le langage : la première entrée de `next` est le
+`init` et `generate context` commencent par le langage : la première entrée de `todos` est le
 glossaire du contexte à remplir. Tous deux refusent un contexte nommé `schema`, quel que soit
 l'ORM : sous Prisma les modèles d'un contexte vivent dans `prisma/schema/<context>.prisma`, et
 `prisma/schema/schema.prisma` est le fichier principal que tous les contextes partagent (un projet
-passe à Prisma par `init --force`).
+passe à Prisma par `init --force`). Ils refusent aussi les noms que tout objet JavaScript porte
+(`constructor`, `prototype`, `__proto__`, `toString`, `hasOwnProperty`, `valueOf`) : un contexte
+est une clé de la configuration et des objets construits à partir d'elle. Un contexte ou un
+module se nomme en lettres, chiffres et tirets, lu dans n'importe quelle casse et avec `-`, `_` ou
+des espaces entre ses mots (`OrderFulfilment`, `order_fulfilment`) ; chaque commande refuse un nom
+dont elle devrait laisser tomber une partie pour le lire, comme `../billing` ou `Évil`, et dit ce
+qu'elle aurait lu (`billing`, `vil`).
 
 ### Presets
 
@@ -711,7 +753,7 @@ le même *preset*. Pourquoi, et quels autres contextes en méritent un :
 
 ```
 ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]
-ddd-ts-kit generate --help --json
+ddd-ts-kit generate [<kind>] --help [--json]
 ```
 
 Un passage de `generate` fait cinq choses, dans cet ordre, et n'écrit rien quand la première
@@ -741,9 +783,9 @@ would update src/contexts/notification/notification.permissions.ts
 would update src/contexts/notification/application/application.declarations.ts
 
 Next, in this order: the language of the context first, then the business decisions only you can make
-  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor first, ...
-  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  decide what "archive notification" does to a Notification: ...
-  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour of "archive notification": ...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  "archive notification" changes Notifications that exist and writes nothing until you decide...
+  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour...
 ```
 
 | Genre | Arguments | Écrit |
@@ -834,7 +876,7 @@ Next, in this order: the language of the context first, then the business decisi
 - **L'autorisation d'un *job*.** Un *job* dont la commande est protégée l'envoie en tant que
   `system:<context>.<name>`, qui n'a aucun droit tant que le modèle ne lui en donne pas.
   `generate job` écrit l'autorisation là où le modèle en fait une ligne, dans une région marquée
-  `system-grants`, et `next` pointe vers cette ligne : `--authz rbac`, l'identifiant de la
+  `system-grants`, et `todos` pointe vers cette ligne : `--authz rbac`, l'identifiant de la
   permission sous le rôle `system` de `platform/auth/roles/roles.ts`, le rôle que `createAuthorizer`
   donne à chaque acteur système (`systemRole`) et à nul autre : un jeton d'utilisateur qui nomme
   `system` parmi ses rôles ne le détient pas ; `--authz abac`, une règle
@@ -869,7 +911,7 @@ Next, in this order: the language of the context first, then the business decisi
   glossaire comme tout autre nom. Avec `--authz rebac`, l'exigence nomme le contexte comme sa
   ressource, un point de départ à remplacer par l'élément sur lequel porte le droit. Avec
   `--authz rbac`, `--grant <role>` accorde la permission au rôle dans `platform/auth/roles/roles.ts`
-  (le rôle rejoint `role.ts` s'il est nouveau) ; sans lui, une étape `next` dit que
+  (le rôle rejoint `role.ts` s'il est nouveau) ; sans lui, une étape de `todos` dit que
   l'attribution reste à faire (`authz/granted`).
 - `route` remet `actorOf(context.principal)` à un cas d'usage protégé et pose `security` (le
   schéma de `--authn`, ou `false` pour un cas d'usage public). `integration-handler` porte
@@ -920,9 +962,13 @@ Next, in this order: the language of the context first, then the business decisi
   `createTestBuses()` de `@ddd-ts-kit/testing`, dont `dispatching(fake)` fait que la sauvegarde
   d'un *fake* annonce ses événements à `domainEvents`. La mise en place que partagent plusieurs
   *specs* d'un contexte se génère une fois, `generate test-world`, dans `test/worlds/`.
-- `--json` affiche `{ dryRun, created, updated, skipped, next, todos, notes }`. `next` liste les
-  endroits `TODO(domain)` en `file:line`, le glossaire d'abord, puis les lignes qu'une commande a
-  écrites pour que l'équipe les vérifie (l'autorisation d'un *job*) ; `todos` ajoute leur texte.
+- `--json` affiche `{ dryRun, created, updated, deleted, skipped, unwritable, todos, notes }`.
+  `todos` liste les endroits `TODO(domain)`, le glossaire d'abord, chacun en `{ file, line, gist }` :
+  `gist` donne les premiers mots du marqueur (jusqu'à son premier `:` ou `;`, douze mots au plus),
+  dont la phrase entière est dans le fichier à cette ligne. Viennent ensuite les lignes qu'une
+  commande a écrites pour que l'équipe les vérifie (l'autorisation d'un *job*), qu'aucun fichier
+  n'explique : celles-là portent aussi leur `text` entier. La sortie texte affiche chaque endroit
+  sur une ligne, `file:line  gist` (le `text` entier d'une étape).
 - Un genre qui a besoin d'autre chose pour compiler soit le crée (un *repository* ou un événement
   du domaine manquant), soit s'arrête avec la commande qui le crée (un agrégat, un cas d'usage ou
   une route manquant).
@@ -934,7 +980,9 @@ Next, in this order: the language of the context first, then the business decisi
 - `--local-only` refuse, en nommant les fichiers et sans rien écrire, quand le passage écrirait
   hors de `<contextsDir>/<context>/` et de `test/e2e/*.e2e.spec.ts`. `generate --help --json`
   affiche chaque genre avec son `usage`, ses `aliases`, son `summary` et son `writesShared`, plus
-  `shared` et `sharedWhen` : ce qu'il écrit hors de son contexte, et quand. Les deux servent un
+  `shared` et `sharedWhen` : ce qu'il écrit hors de son contexte, et quand ; `generate <kind>
+  --help --json` affiche ce seul genre, en un objet, et `generate <kind> --help` la même chose en
+  texte. Les deux servent un
   build réparti entre des *workers* (voir `worker-scope`).
 - Un *fake* est un point d'entrée pour knip et peut n'avoir aucun importateur pour
   dependency-cruiser : un port et son *fake* générés avant qu'un cas d'usage en ait besoin ne font
@@ -995,7 +1043,7 @@ Régénère ce qui dérive de la configuration et du code, et rien d'autre :
   par l'équipe garde ses lignes, le bloc ajouté à leur suite ; sans aucun propriétaire, rien
   n'est écrit.
 
-`--behaviour` n'écrit que les pages de `docs/behaviour/`, tout autre document généré laissé tel quel : c'est ce que lance le *hook* de pre-commit quand une *spec* est indexée ; avec `--check`, seules ces pages sont comparées. Une règle est écrite comme son titre sans les identifiants de ligne et les critères qui l'ouvrent (`#FIX1 `, `#US1.04 AC1 `), qui la datent du changement qui l'a apportée et ne disent rien à un lecteur métier.
+`--behaviour` n'écrit que les pages de `docs/behaviour/`, tout autre document généré laissé tel quel : c'est ce que lance le *hook* de pre-commit quand une *spec*, une source sous `src/` ou `ddd-ts-kit.config.json` est indexée, car une source peut faire passer une *spec* sous un autre titre (le cas d'usage qu'envoie sa route, la permission que décide sa *policy*) sans qu'aucune *spec* ne change ; avec `--check`, seules ces pages sont comparées. Une page se lit comme une spécification. Elle s'ouvre sur un titre par cas d'usage du contexte, la commande ou la requête dans les mots qui décrivent la *spec* de son *handler* (`Cancel invoice (command)`), qui réunit les règles de son *handler*, de sa *policy* (nommée d'après lui, ou qui décide la permission qu'il exige ; une *policy* que plusieurs cas d'usage partagent énonce ses règles sous le premier, `shared with ...`, et est nommée sous les autres), de son contrôleur ou de sa route, de son lecteur, de sa *spec* de bout en bout (`test/e2e/<use-case>.e2e.spec.ts`, `<use-case>-<behaviour>`, ou nommée d'après sa route) et des scénarios d'acceptation qui citent une ligne que ses titres sont seuls à citer (une ligne que deux cas d'usage citent laisse le scénario sur la page de l'application). Suit un titre par partie du modèle (agrégat, entité, *value object*, machine à états, service du domaine, événement du domaine, erreur), puis un par réaction (*handlers* d'événements et d'intégration, *publishers*, projections, *process managers*, *jobs*), puis chaque *spec* qui n'entre dans aucun, sous son répertoire. Sous chaque titre viennent les règles écrites pour le projet, puis, dans une sous-liste `Generated by the kit`, chacun sous le `describe` de sa *spec*, les titres identiques mot pour mot à un titre qu'un *template* de *spec* du kit écrit pour une *spec* de ce rôle, ses noms substitués (`saves the invoice and answers its identifier`, `is refused to an actor who does not hold the permission invoice.cancel`), pour que l'œil aille à ce que le projet a ajouté ; une règle planifiée (`it.todo`) vient en dernier dans chaque liste, y compris les génériques qu'un générateur a plantées. `docs/behaviour/application.md` garde les *specs* de `test/` qui ne servent aucun cas d'usage : les parcours, l'architecture, les scénarios qui ne citent aucune ligne d'un cas d'usage. Les lignes du plan et le critère qui ouvrent un titre, tels que `test/title-states-a-rule` demande de les écrire (`#US5.02 AC1 ...`), sont montrés avant la règle (`` `#US5.02 AC1` a customer places an order ``), et chaque page finit par `Rows of the plan` : chaque ligne que ses titres citent et le nombre de titres qui la citent, pour qu'un relecteur vérifie que chaque ligne de règle d'une ligne de `docs/architecture/slices.md` a son titre.
 
 `--stored-events` enregistre aussi dans `stored-events.lock.json` la forme de chaque version d'un
 événement stocké déclarée dans les codecs de `infrastructure/persistence/`, sans jamais réécrire
@@ -1221,7 +1269,9 @@ d'usage, les gestionnaires, les politiques, les *gateways* et les adaptateurs so
 décorateurs : une commande ou une requête montre ce qu'elle exige (ou `public`), un gestionnaire
 son nom de consommateur et son événement, une politique sa permission, un adaptateur son port ;
 `--json` les ajoute sous `declarations`. Dans le style explicite, les *jobs* sont lus dans les
-lignes `builder.job(...)` et `platform.jobs.register(...)` du fichier de module.
+lignes `builder.job(...)` et `platform.jobs.register(...)` du fichier de module. Le texte omet les
+genres dont un contexte n'a aucun élément, et les *specs* de bout en bout quand il n'y en a pas ;
+`--json` garde chaque clé, liste vide comprise.
 
 ## describe
 
@@ -1259,7 +1309,7 @@ dans chaque `CONTEXT.md`.
 
 ```
 ddd-ts-kit status [--workers]
-ddd-ts-kit todo [<context>]
+ddd-ts-kit todo [<context>] [--brief]
 ```
 
 `status` affiche la ligne `Next:` de `docs/architecture/plan.md`, les lignes de
@@ -1313,7 +1363,10 @@ report: { modified, current }, agent, phase, next }`, `phase` valant `not starte
 un outil dans les trois dernières minutes sans s'arrêter depuis).
 
 `todo` liste ces marqueurs en `file:line` avec leur genre et leur texte, dans le projet ou dans
-un contexte ; `--json` affiche `{ count, remaining: [{ kind, context, file, line, text }] }`.
+un contexte ; `--brief` affiche chacun en `file:line` et ses premiers mots (jusqu'à son premier
+`:` ou `;`, douze mots au plus), le fichier gardant le reste, un quart de la taille en cours de
+tranche ; `--json` affiche `{ count, remaining: [{ kind, context, file, line, text }] }`, chaque
+texte entier.
 
 ## plan-waves
 
@@ -1366,15 +1419,51 @@ attend, directement ou non : un terme qu'ajoute une ligne qu'elle n'attend pas n
 cette ligne peut ne pas être fusionnée quand celle-ci se construit. Chaque mot que le glossaire ne
 définit pas (`undefined-word`) et chaque mot technique qu'aucun terme ne porte (`technical-word`)
 est signalé une fois par ligne, avec le `--term` à ajouter, sans vagues, et la commande sort avec
-1 : un worker qui suivrait cette ligne telle qu'écrite serait refusé. Les commandes que le
-générateur a refusées pour une autre raison (un `--module` manquant, un agrégat qu'aucune ligne ne
-génère, un amont non déclaré, un handler écrit à la main dont un spec de bout en bout a besoin)
-sont listées après les vagues sous `Refused for another reason than a word when the plan was
-replayed`, sans échec : les noms qu'elles introduiraient après ce refus ne sont pas jugés. Le rejeu
+1 : un worker qui suivrait cette ligne telle qu'écrite serait refusé. De même pour chaque commande
+que le générateur refuse pour une autre raison (`refused-command` : un `--module` manquant dans un
+contexte divisé en modules, `--grant` sur un projet dont les droits ne sont pas des rôles, un
+agrégat qu'aucune ligne ne génère, un amont non déclaré, une option inconnue), sans vagues et avec
+la sortie 1, le refus du générateur et sa correction affichés sous la ligne : corrigez la ligne.
+Le générateur dit aussi, quand il rejoue une commande, sur quels fichiers elle s'appuie (l'agrégat
+de `--aggregate`, le port d'un adaptateur, le cas d'usage d'une route, un groupe de routes, la
+route, le *handler* d'événement ou le *job* qui lance le cas d'usage d'une spec de bout en bout, le
+`CONTEXT.md` du contexte où elle écrit et de chaque amont qu'elle déclare, la déclaration d'un
+événement) et quels fichiers elle crée. Une commande qui s'appuie sur un fichier que génère une
+ligne qu'elle n'attend pas, directement ou non, est une `missing-dependency`, même si le rejeu,
+une ligne après l'autre dans une seule copie, a trouvé le fichier : le worker de cette ligne, sur
+une branche à lui, serait refusé (`#US5.02 ... builds on <file>, which #US5.01 generates: add
+US5.01 to its Depends on`). Une commande que le générateur refuse nomme plutôt ces lignes avec son
+refus, dans son `prerequisite` et ses `rows` : un problème par commande. Une commande refusée pour ce sur quoi elle s'appuie est rejouée une
+fois tout le plan rejoué, avec `--dry-run` pour que la copie reste telle que le plan l'a laissée et
+qu'aucun rejeu ne passe sur ce qu'un autre a écrit, et les fichiers qu'elle trouve alors disent
+quelle ligne génère ce qu'il lui fallait, chaque fichier en une passe : une ligne suivante qu'elle n'attend pas (`add <id>
+to its Depends on`, et cet identifiant dans `rows`, autant d'identifiants que de lignes), une ligne suivante qui l'attend (déplacez la commande qui le génère dans
+cette ligne ou dans une ligne d'avant, plutôt que de faire un cycle), une commande suivante de la
+même ligne (mettez-la en premier), ou aucune telles que les lignes sont écrites (ajoutez la
+commande que nomme la correction, ou corrigez la ligne refusée qui la générerait) ; ce pour quoi
+elle est alors refusée, pour une autre raison (un `--grant` une fois l'agrégat trouvé) ou pour un
+autre fichier qu'aucune ligne ne génère, est dit aussi (`then:`, `nextRefusal`), pour que corriger l'ordre ne soit pas suivi d'un autre refus. Une
+ligne `in progress` est rejouée, pour que les lignes d'après trouvent ce qu'elle génère, mais ni
+ses noms, ni ses refus, ni ce sur quoi elle s'appuie ne sont des problèmes : son worker a pu
+ajouter sur sa branche le terme qu'il faut à un nom, ses commandes ont pu déjà tourner dans le
+projet, et le générateur refuse une seconde exécution de certaines (un port déjà lié à un
+adaptateur, un enregistrement de décision dont le numéro est pris) ; ils sont listés à part, avec
+leur correction, sous `Refused in rows in progress, not counted`. Une commande dont les fichiers
+existent est sinon sautée par le générateur, pas refusée. Le rejeu exécute chaque commande pour de
+vrai dans la copie, jamais avec `--dry-run`, pour que la commande suivante trouve ses fichiers. Avec
+un contexte, les lignes ouvertes des autres contextes sont rejouées aussi, dans leurs vagues (quand
+tout le fichier peut être ordonné), pour qu'une ligne trouve ce que génère une ligne d'un autre
+contexte qu'elle n'attend pas et qu'on lui dise de l'attendre ; seules les lignes de son plan, les
+siennes et celles qu'elles attendent, sont jugées et listées sous `Refused in rows in progress`.
+Un plan dont les lignes ne lancent aucune commande de génération ne fait pas de copie. Le rejeu
 coûte environ un dixième de seconde par commande. `--json` affiche
-`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], notReplayed: [{ row, command, refusal }] }`,
+`{ file, context, problems: [{ kind, rows, message, command?, refusal?, fix?, prerequisite?, nextRefusal?, builtOn? }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, story, waitingFor, waitingForRows: [{ id, context, story, status }] }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder, otherStories: [{ id, context, story, kind, slice, owner, status, batch, waitedForBy }], started: [{ row, command, refusal, fix }] }`,
 `story` valant `null` pour une ligne dont l'identifiant n'en nomme aucune, et `batch` `null` pour
-une ligne que le contexte demandé ne montre pas.
+une ligne que le contexte demandé ne montre pas ; `command`, `refusal`, `fix` et `prerequisite`
+sont ceux d'un `refused-command`, `fix`, `prerequisite` et `nextRefusal` (`{ refusal, fix, prerequisite }`, son
+`prerequisite` disant qu'aucune ligne ne génère le fichier qui lui manque alors) valant `null` quand
+il n'y en a pas, `command` et `builtOn` ceux d'une `missing-dependency` ; `message` tient un problème
+sur une ligne.
 
 ## acceptance
 
@@ -2077,9 +2166,11 @@ est utilisée quand le clone l'a). Chaque chemin modifié atteint quelque chose 
 
 Sans `--base`, ou quand git ne sait pas dire ce qui a changé (une référence inconnue, un clone
 superficiel sans la base), tout est retenu : c'est ce qu'obtiennent la branche par défaut et
-l'exécution nocturne. La sélection n'est jamais plus étroite que les relations déclarées, parce
-que `context/declared-relationship` garde chaque import entre contextes à l'intérieur d'elles, et
-que cette règle tourne sur le projet entier dans chaque *pipeline*.
+l'exécution nocturne. Un `--base` ou un `--head` qui commence par un tiret est refusé (code de
+sortie 2) : aucune référence ne commence ainsi, et git la lirait comme l'une de ses options. La
+sélection n'est jamais plus étroite que les relations déclarées, parce que
+`context/declared-relationship` garde chaque import entre contextes à l'intérieur d'elles, et que
+cette règle tourne sur le projet entier dans chaque *pipeline*.
 
 ![Un changement dans le contexte scheduling de l'application d'exemple : scheduling est retenu, et avec lui notification et analytics, qui sont en aval de lui dans la carte des contextes ; identity, en amont, est laissé à la branche par défaut](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-affected-selection.fr.svg)
 
@@ -2195,7 +2286,9 @@ règle.
   échoue jusqu'à ce que le propriétaire réécrive la *baseline*. Une
   *baseline* fait taire les anciennes erreurs ; elle ne rend pas vérifiable une arborescence hors
   de l'arborescence canonique.
-  `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet.
+  `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet, sur le
+  *commit* que nomme la référence : une référence qui ne nomme aucun *commit* est refusée (code de
+  sortie 2, `<ref> is not a commit of this repository`), comme par chaque commande qui en prend une.
 - `--format github` affiche des annotations `::error file=...,line=...::`.
 - `--explain` fait suivre les violations de chaque règle qu'elles signalent, une fois, avec sa
   description et la raison de son existence (comme `explain` l'affiche, sans les exemples), et
@@ -2285,7 +2378,7 @@ règle.
 | `imports/alias-only` | sous la racine des sources, `test/` et `scripts/` : un `import`, `export ... from` ou `import()` avec un spécificateur relatif, même répertoire compris (la correction nomme l'alias à écrire ; `eslint --fix` l'écrit) ; un spécificateur d'alias avec un segment `.` ou `..` |
 | `imports/extension` | sous la racine des sources, `test/` et `scripts/` : avec `importExtension` `none`, un spécificateur d'alias qui se termine par `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` ou `.cts` ; avec `js` (ou sans clé), un spécificateur d'alias qui ne se termine pas par `.js` (la correction nomme le spécificateur à écrire ; `eslint --fix` l'écrit). Un sous-chemin de *package* n'est jamais jugé |
 | `imports/alias-declared` | un `importAlias` qui n'est pas `@/` ou `$<name>/`, ou qui est `$test/`, `$scripts/`, `$generated/` ; une entrée `paths` de `tsconfig.json` manquante ou différente de ce que donne `importAlias` (la correction donne l'entrée) ; une autre entrée `paths` sous un alias ; un `baseUrl` ; un `tsconfig.build.json` dont les `paths` diffèrent ; des `paths` de `knip.json` qui associent un alias ; un script qui compile (`tsc` sans `--noEmit`) et ne lance pas `ddd-ts-kit build-aliases` ensuite ; un script qui lance `tsx --tsconfig` sur un autre fichier ; une configuration `vitest` à la racine sans `tsconfigPaths: true`, une configuration `jest` sans les entrées `moduleNameMapper` dérivées, ou `.dependency-cruiser.cjs` sans `tsConfig` ; un `module` et un `moduleResolution` de `tsconfig.json` (ou d'un `tsconfig.build.json` qui pose les siens) qui ne sont pas ce que donne `importExtension` : `ESNext`, `Bundler` et `customConditions` contenant `node` sous `none`, et sous `js` une valeur écrite qui n'est pas une résolution Node ; une association jest dont le motif ne se termine pas comme les imports. Un projet sans `package.json` n'est pas jugé |
-| `config/valid` | un amont, une classification, une relation, un identifiant de règle, un mode de `guard` ou un `importExtension` inconnu ; un contexte absent du disque ou de la configuration ; une limite de `commit` qui n'est pas un entier positif |
+| `config/valid` | un amont, une classification, une relation, un identifiant de règle, un mode de `guard` ou un `importExtension` inconnu ; un répertoire de la configuration qui sort du projet ; un contexte absent du disque ou de la configuration ; une limite de `commit` qui n'est pas un entier positif |
 | `config/suppression-needs-reason` | une désactivation sans identifiant de règle ou sans raison (gardée comme alias à côté de `governance/recorded-deviation`, qui juge la raison) |
 | `authz/declared` | dans un fichier de module, `builder.command(X)` ou `builder.query(X)` sans `.requires(` ni `.public(` dans sa chaîne, sauf si la classe du message porte `@Requires` ou `@Public` de `@ddd-ts-kit/kernel/declarations` ; en câblage manuel ou nest, une classe de commande ou de requête absente de tous les `requires(X, ...)` et `publicUseCase(X)` du fichier de module et de `application/authorization/` ; un `defineRoute` sans `security` (le type de la route le refuse déjà, et une liste vide aussi : c'est le filet au niveau du texte pour une définition construite de façon lâche) ; dans le style déclaré, la classe exportée d'un fichier `*.command.ts` ou `*.query.ts` qui ne porte ni `@Requires` ni `@Public` |
 | `authz/granted` | avec `stack.authz` `rbac`, une permission du `definePermissions` d'un contexte que ni `platform/auth/roles/roles.ts` ni `platform/auth/authorization/signed-in-grants.ts` n'accorde par son nom (par l'entrée de son ensemble, son identifiant ou `<contexte>:*`) ; le `*` du super-administrateur ne compte pas (un avertissement) ; avec `rebac`, une permission que le schéma laisse sur le contexte alors qu'aucune source hors des tests n'écrit de relation `operator` (d'une personne ou d'un acteur système) sur ce contexte et qu'aucun droit de toute personne connectée ne la tient, dans un projet qui fait déjà d'une personne l'opérateur d'un contexte ; muette avec un *authorizer* propre au projet (un avertissement) |

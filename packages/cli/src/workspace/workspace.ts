@@ -4,12 +4,16 @@ import { CONFIG_FILE } from '../config';
 import { inDialect } from '../package-manager/in-dialect';
 import { packageManagerOf } from '../package-manager/package-manager-of';
 import type { NextStep } from './next-step';
-import type { TodoLocation } from './todo-location';
+import { gistOf } from './gist-of';
+import { isLanguageStep } from './is-language-step';
+import type { TodoPlace } from './todo-place';
 import { todosIn } from './todos-in';
-import { cannotWrite } from './cannot-write';
 import { isFileOrAbsent } from './is-file-or-absent';
+import { namesOnDisk } from './names-on-disk';
 import { pruneEmptied } from './prune-emptied';
-import { writeIfAllowed } from './write-if-allowed';
+import { refuseLeaving } from './refuse-leaving';
+import { refuseUnheld } from './refuse-unheld';
+import { writtenOf } from './written-of';
 import type { WorkspaceReport } from './workspace-report';
 
 interface Pending {
@@ -30,8 +34,14 @@ export class Workspace {
 
   private readonly skipped = new Set<string>();
 
+  /** Files the team owns once written, which --force leaves as they are: reported as kept. */
+  private readonly kept = new Set<string>();
+
   /** Files where a device stands, such as a path the sandbox of an agent masks: reported unwritable. */
   private readonly masked = new Set<string>();
+
+  /** Files on disk --force replaces, or whose values of the team it writes over: git must hold them. */
+  private readonly replaced = new Set<string>();
 
   /** Files on disk this command removes: no longer derived from anything. */
   private readonly removed = new Set<string>();
@@ -59,7 +69,7 @@ export class Workspace {
   existsAsIs(file: string): boolean {
     return (
       this.pending.has(file) ||
-      this.plannedBelow(file) ||
+      [...this.pending.keys()].some((planned) => planned.startsWith(`${file}/`)) ||
       (!this.removed.has(file) && fs.existsSync(this.absolute(file)))
     );
   }
@@ -90,7 +100,7 @@ export class Workspace {
       .filter((file) => path.posix.dirname(file) === directory)
       .map((file) => path.posix.basename(file));
 
-    const onDisk = this.onDisk(directory, (entry) => entry.isFile()).filter(
+    const onDisk = namesOnDisk(this.absolute(directory), (entry) => entry.isFile()).filter(
       (name) => !this.removed.has(`${directory}/${name}`),
     );
 
@@ -111,9 +121,14 @@ export class Workspace {
       return child !== undefined && rest.length > 0 ? [child] : [];
     });
 
-    return [...new Set([...this.onDisk(directory, (entry) => entry.isDirectory()), ...planned])]
+    return [...new Set([...namesOnDisk(this.absolute(directory), (entry) => entry.isDirectory()), ...planned])]
       .filter((name) => !name.startsWith('.'))
       .sort();
+  }
+
+  /** Where a read (with `writing`, a write) of the file goes: in the module of the model that holds it. */
+  placed(file: string, writing = false): string {
+    return this.placement === undefined ? file : this.placement(file, writing);
   }
 
   /** True when this command already wrote the file, whether it is on disk or not. */
@@ -134,10 +149,24 @@ export class Workspace {
       return false;
     }
 
+    if (onDisk && this.force) {
+      this.replaced.add(file);
+    }
+
     this.removed.delete(file);
     this.pending.set(file, { content: this.spoken(this.withImports(file, content)), existed: onDisk });
 
     return true;
+  }
+
+  /** Leaves a file that exists as it is, even with --force: it is the team's once written. */
+  keep(asked: string): void {
+    this.kept.add(this.placed(asked));
+  }
+
+  /** A merge --force asked for writes over a value of the team in this file: git must hold it, as a file --force replaces. */
+  replacing(asked: string): void {
+    this.replaced.add(this.placed(asked));
   }
 
   update(asked: string, written: string): void {
@@ -157,7 +186,8 @@ export class Workspace {
       return;
     }
 
-    this.pending.set(file, { content, existed: true });
+    // A file not on disk yet is created, a derived one included.
+    this.pending.set(file, { content, existed: fs.existsSync(this.absolute(file)) });
   }
 
   /**
@@ -252,11 +282,19 @@ export class Workspace {
   /**
    * Writes the plan, or (dry run) only says it. A file it cannot write here (a path the sandbox of an
    * agent protects) is reported as unwritable, in `skipped` too, and every other file is written;
-   * then no file is deleted, so that a move loses nothing.
+   * then no file is deleted, so that a move loses nothing. A path that leads out of the project,
+   * or a file --force would replace that git does not hold, refuses the whole plan first.
    */
   commit(dryRun: boolean): WorkspaceReport {
+    refuseLeaving(this.root, [...new Set([...this.pending.keys(), ...this.removed])].sort(), (file) =>
+      this.absolute(file),
+    );
+
+    refuseUnheld(this.root, this.replaced, this.pending);
+
     const unwritten: string[] = [];
-    const written = this.writtenOf(dryRun, unwritten);
+    const planned = [...this.pending].map(([file, { content, existed }]) => ({ file, content, existed }));
+    const written = writtenOf(planned, { dryRun, absolute: (file) => this.absolute(file) }, unwritten);
     const unwritable = [...new Set([...this.masked, ...unwritten])].sort();
     const deleted = unwritable.length === 0 ? [...this.removed].sort() : [];
 
@@ -264,7 +302,8 @@ export class Workspace {
       .filter(({ existed }) => !existed || this.force)
       .flatMap(({ file, content }) => todosIn(file, content));
 
-    const todos = [...left, ...this.steps.map((step) => this.located(step))];
+    const markers = left.map(({ file, line, text }): TodoPlace => ({ file, line, gist: gistOf(text) }));
+    const todos = [...markers, ...this.steps.map((step) => this.located(step))];
 
     if (!dryRun) {
       deleted.forEach((file) => this.remove(file));
@@ -278,26 +317,11 @@ export class Workspace {
       updated: written.filter(({ existed }) => existed).map(({ file }) => file),
       deleted,
       skipped: [...new Set([...this.skipped, ...unwritable])].sort(),
+      kept: [...this.kept].sort(),
       unwritable,
-      next: todos.map((todo) => `${todo.file}:${todo.line}`),
       todos,
       notes: this.notes.map((note) => this.spoken(note)),
     };
-  }
-
-  /** The planned files written, or (dry run) that could be: the others go to `unwritten`. */
-  private writtenOf(dryRun: boolean, unwritten: string[]): { file: string; content: string; existed: boolean }[] {
-    const planned = [...this.pending].map(([file, { content, existed }]) => ({ file, content, existed }));
-
-    return planned.filter(({ file, content }) => {
-      const writable = dryRun ? !cannotWrite(this.absolute(file)) : writeIfAllowed(this.absolute(file), content);
-
-      if (!writable) {
-        unwritten.push(file);
-      }
-
-      return writable;
-    });
   }
 
   private remove(file: string): void {
@@ -308,43 +332,14 @@ export class Workspace {
     }
   }
 
-  private located({ file, anchor, text }: NextStep): TodoLocation {
+  /** A step, with its whole sentence: it is written in no file. */
+  private located({ file, anchor, text }: NextStep): TodoPlace {
     const at = (this.read(file) ?? '').split('\n').findIndex((line) => line.includes(anchor));
 
-    return { file, line: Math.max(at, 0) + 1, text };
-  }
-
-  private onDisk(directory: string, wanted: (entry: fs.Dirent) => boolean): string[] {
-    try {
-      return fs
-        .readdirSync(this.absolute(directory), { withFileTypes: true })
-        .filter(wanted)
-        .map((entry) => entry.name);
-    } catch {
-      // A directory that does not exist yet simply holds nothing on disk.
-      return [];
-    }
-  }
-
-  private plannedBelow(directory: string): boolean {
-    for (const planned of this.pending.keys()) {
-      if (planned.startsWith(`${directory}/`)) {
-        return true;
-      }
-    }
-
-    return false;
+    return { file, line: Math.max(at, 0) + 1, gist: gistOf(text), text };
   }
 
   private absolute(file: string): string {
     return path.join(this.root, file);
   }
-
-  private placed(file: string, writing = false): string {
-    return this.placement === undefined ? file : this.placement(file, writing);
-  }
-}
-
-function isLanguageStep(todo: TodoLocation): boolean {
-  return todo.text.startsWith('define the ubiquitous language first');
 }

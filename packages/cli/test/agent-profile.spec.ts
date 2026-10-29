@@ -8,6 +8,7 @@ import { jsonAt } from './support/json-at';
 import { NPM } from './support/npm';
 import { readJson } from './support/read-json';
 import { stringsAt } from './support/strings-at';
+import { commitAll } from './support/commit-all';
 
 const SETTINGS = '.claude/settings.json';
 const CONFIG = 'ddd-ts-kit.config.json';
@@ -228,6 +229,7 @@ describe('init --agent-profile, in the config and under doctor', () => {
 
     expect(read(root, CONFIG)).not.toContain('"agents"');
 
+    commitAll(root);
     cli(root, 'init', '--force', '--agent-profile', 'regulated');
 
     expect(readJson(root, CONFIG)).toMatchObject({ agents: { profile: 'regulated' } });

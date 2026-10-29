@@ -20,7 +20,8 @@ export interface ProjectOptions {
 type Tree = Pick<Project, 'files' | 'contextEntries' | 'contextsOnDisk'>;
 
 export function loadProject(root: string, options: ProjectOptions = {}): Project {
-  const { config, text: configText } = readConfig(root);
+  // A directory of the config out of the project is read as its default here, and reported by config/valid.
+  const { config, text: configText } = readConfig(root, { leaving: 'default' });
 
   const tree =
     options.onlyFile === undefined

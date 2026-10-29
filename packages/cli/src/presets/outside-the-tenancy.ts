@@ -1,6 +1,7 @@
 import { CONFIG_FILE, editConfigText, parseConfig, type Config } from '../config';
 import type { Scope } from '../generate/scope';
 import { isRecord } from '../config/values/is-record';
+import { ownEntry } from '../config/values/own-entry';
 
 /**
  * Declares the context of a preset the control plane of the tenants, `contexts.<name>.tenancy`,
@@ -24,7 +25,8 @@ export function outsideTheTenancy(scope: Scope, adr: string): Config {
 
   const edited = editConfigText(text, (raw) => {
     const contexts = isRecord(raw['contexts']) ? raw['contexts'] : {};
-    const context = isRecord(contexts[name]) ? contexts[name] : {};
+    const entry = ownEntry(contexts, name);
+    const context = isRecord(entry) ? entry : {};
     const present: unknown[] = Array.isArray(raw['deviations']) ? raw['deviations'] : [];
     const recorded = present.some((entry) => isRecord(entry) && entry['what'] === deviation.what);
 

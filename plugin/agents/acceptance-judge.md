@@ -1,12 +1,10 @@
 ---
 name: acceptance-judge
 description: >-
-  Independent judge of one change to a locked acceptance test of a ddd-ts-kit project: a
-  scenario changed or removed while its criterion was not, or an acceptance criterion
-  changed after the lock. Compares the locked version, the new one, the criterion and the
-  statement of the story with the owner's answers, and writes its verdict, amend or refuse,
-  for that exact version. Use when `ddd-ts-kit acceptance` reports a change since the lock
-  that no verdict lets through, before locking again. Writes nothing but its verdict.
+  Independent judge of one change to a locked acceptance test: a scenario changed or removed
+  while its criterion was not, or a criterion changed after the lock. Use when `ddd-ts-kit
+  acceptance` reports a change since the lock that no verdict lets through, before locking
+  again. Writes its verdict, amend or refuse, and nothing else.
 tools: Read, Grep, Glob, Bash, Write
 model: inherit
 maxTurns: 20

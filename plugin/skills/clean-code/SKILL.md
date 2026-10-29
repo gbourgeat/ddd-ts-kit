@@ -1,12 +1,9 @@
 ---
 name: clean-code
 description: >-
-  Clean Code rules of a ddd-ts-kit project for TypeScript under src/contexts. Business
-  naming from the ubiquitous language, small single-purpose functions, stepdown ordering of
-  a file, comments only for what code cannot say, no escape hatches, testability by
-  construction (Clock, IdGenerator, ports). Use when a clean/*, purity/* or language/* rule
-  is reported, or when the user asks to clean, simplify, rename or make code more readable.
-  To define a missing business term use glossary.
+  Use when a clean/*, purity/* or language/* rule is reported, or when asked to clean,
+  simplify, rename or make code more readable: business names, small functions, stepdown
+  order, comments only for what code cannot say, no escape hatches, Clock, IdGenerator.
 allowed-tools:
   - Read
   - Edit
@@ -23,7 +20,7 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
 ## Names
 
 - Take the word from the context's glossary (`CONTEXT.md`). If it is not there, the concept
-  is not understood yet: add the term with its meaning first, or ask.
+  is not understood yet: add the term with its meaning first (skill `ddd-ts-kit:glossary`), or ask.
 - Class: a noun of the domain. Method: what the business says happens (`order.cancel(reason)`),
   never `setStatus`, `update`, `process`, `handle`, `manage`, `doX`.
 - No `Manager`, `Helper`, `Util`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`,

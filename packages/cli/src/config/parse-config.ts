@@ -17,32 +17,41 @@ import { parseOpenApi } from './parse-open-api';
 import { parseRuleSetting } from './parse-rule-setting';
 import { parseSdk } from './parse-sdk';
 import { parseStack } from './parse-stack';
+import { directoriesOf } from './directories-of';
+import { insideDefaultsOf } from './inside-defaults-of';
+import { leavesProject } from './leaves-project';
+import { leavingDirectoryProblem } from './leaving-directory-problem';
+import { normalizedDirectory } from './normalized-directory';
+import { PROJECT_DIRECTORIES, type ProjectDirectory } from './project-directories';
 import { isRecord } from './values/is-record';
 import { mapEntries } from './values/map-entries';
-import { posix } from './values/posix';
 import { strings } from './values/strings';
 import { text } from './values/text';
 import { UNWRITTEN_IMPORT_EXTENSION } from './unwritten-import-extension';
 
+/** What a command does with a directory of the config that leads out of the project. */
+export interface ParseOptions {
+  /** `refuse` (every command that writes) stops the command; `default` (check) reads the default and lets `config/valid` report it. */
+  readonly leaving: 'refuse' | 'default';
+}
+
 /**
  * Tolerant on purpose: a wrong classification or an unknown upstream is reported by
- * `check` as `config/valid`, with a line number, instead of stopping every command.
+ * `check` as `config/valid`, with a line number, instead of stopping every command. A directory
+ * that leads out of the project is not: the generators would write there.
  */
-export function parseConfig(raw: unknown): Config {
+export function parseConfig(raw: unknown, options: ParseOptions = { leaving: 'refuse' }): Config {
   if (!isRecord(raw)) {
     throw new CliError(`${CONFIG_FILE} must hold a JSON object.`, 'Recreate it with `ddd-ts-kit init`.');
   }
 
-  const sourceRoot = posix(text(raw['sourceRoot'], 'src'));
+  const directories = confinedDirectories(raw, options);
   const stack = parseStack(isRecord(raw['stack']) ? raw['stack'] : {});
   const initVersion = raw['initVersion'];
 
   return {
     initVersion: typeof initVersion === 'string' ? initVersion : undefined,
-    sourceRoot,
-    contextsDir: posix(text(raw['contextsDir'], `${sourceRoot}/contexts`)),
-    sharedKernelDir: posix(text(raw['sharedKernelDir'], `${sourceRoot}/shared-kernel`)),
-    platformDir: posix(text(raw['platformDir'], `${sourceRoot}/platform`)),
+    ...directories,
     importAlias: text(raw['importAlias'], DEFAULT_IMPORT_ALIAS),
     importExtension: text(raw['importExtension'], UNWRITTEN_IMPORT_EXTENSION),
     stack,
@@ -50,6 +59,33 @@ export function parseConfig(raw: unknown): Config {
     rules: mapEntries(raw['rules'], parseRuleSetting),
     ...parseAllowedPackages(raw, stack.validation),
     ...parseGovernance(raw),
+  };
+}
+
+/** The directories of the config, normalised; one that leads out of the project refused, or read as its default. */
+function confinedDirectories(
+  raw: Record<string, unknown>,
+  { leaving }: ParseOptions,
+): Record<ProjectDirectory, string> {
+  const written = directoriesOf(raw);
+  const defaults = insideDefaultsOf(raw);
+  const out = PROJECT_DIRECTORIES.filter((key) => leavesProject(written[key]));
+  const [first] = out;
+
+  if (first !== undefined && leaving === 'refuse') {
+    const { message, fix } = leavingDirectoryProblem(first, written[first], normalizedDirectory(defaults[first]));
+
+    throw new CliError(`${CONFIG_FILE}: ${message}`, `${fix} \`ddd-ts-kit check --rule config/valid\` reports it too.`);
+  }
+
+  const confined = (key: ProjectDirectory): string =>
+    normalizedDirectory((out.includes(key) ? defaults : written)[key]);
+
+  return {
+    sourceRoot: confined('sourceRoot'),
+    contextsDir: confined('contextsDir'),
+    sharedKernelDir: confined('sharedKernelDir'),
+    platformDir: confined('platformDir'),
   };
 }
 

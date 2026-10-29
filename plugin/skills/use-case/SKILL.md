@@ -1,12 +1,9 @@
 ---
 name: use-case
 description: >-
-  Builds one vertical slice inside one bounded context, test first: the behaviour of the
-  aggregate, the command or query with its permission, the handler, the route and their
-  specs, generated then filled. Use when the user asks for a feature, an endpoint, a
-  business rule or "add the ability to ...", or to build the next row of
-  docs/architecture/slices.md. For a single file use scaffold; for a reaction to another
-  context use integration-event.
+  Use when the user asks for a feature, an endpoint, a business rule or "add the ability to
+  ...", or to build the next row of docs/architecture/slices.md. One vertical slice in one
+  context, test first: aggregate, command or query, permission, handler, route.
 argument-hint: "<context> <use case in plain words, or the slice number>"
 allowed-tools:
   - Read
@@ -32,7 +29,8 @@ Context: `$0`. Use case: `$ARGUMENTS`
 
 One use case, one context, one commit. Read `src/contexts/$0/CONTEXT.md` and the row of
 `docs/architecture/slices.md` when there is one; do not browse the tree
-(`npx ddd-ts-kit describe $0 --json` says what exists: use cases, routes, events, ports).
+(`npx ddd-ts-kit describe $0` says what exists: use cases, routes, events, ports).
+A single file is skill `ddd-ts-kit:scaffold`.
 
 Write it in a worktree, not in the main checkout of the trunk (the guard refuses it there in a
 project whose config says `"worktrees": "required"`): `npx ddd-ts-kit worktree <use-case>` opens
@@ -138,10 +136,15 @@ events and deadlines is `generate process`, its steps run by event handlers thro
 | outside the database, and may be lost (a cache, a best-effort call) | `generate event-handler ... --phase after-commit`. Runs once committed, at most once; never saves an aggregate, it sends a command through `CommandBus` |
 | outside the database, and must not be lost | an integration event through the outbox (skill `ddd-ts-kit:integration-event`) |
 
-Each output lists `next`: the `file:line` of every `TODO(domain)`. Those are the only places
+Each output lists `todos`: the `file:line` of every `TODO(domain)`, the sentence is in the file. Those are the only places
 to open.
 
 ## 3. Fill, inside out, test first
+
+Each `it.todo` turned into a test is named after the rule of the slice row it serves and cites
+the row: `- #US1.03: refuses an order without lines` in `slices.md` gives
+`it('#US1.03 refuses an order without lines', ...)`, `#<id> AC<n> ...` when a criterion of the
+story states it.
 
 1. **Domain.** In the aggregate spec, replace an `it.todo` by given / when / then for the
    rule, see it fail, then write the intention method: guard the invariant, change the
@@ -197,6 +200,8 @@ starts. A warning of `authz/granted` left on purpose (the grant comes with a lat
 in the report and the row stays `in progress`.
 
 Then one commit for the slice (skill `ddd-ts-kit:commit-discipline`), and its row marked in
-`slices.md` when you are the conductor. Report in a few lines: the rules encoded and where,
+`slices.md` when you are the conductor. Before the pull request, read `docs/behaviour/<ctx>.md`
+as the reviewer will: under the heading of the use case, each rule line of the row has its title,
+apart from what the kit generated, and `Rows of the plan` counts them. Report in a few lines: the rules encoded and where,
 test results, contract changes. A marker `todo` still lists in the slice means not done:
 report it as an open question. No file contents in the report.

@@ -4,11 +4,16 @@ import { refuseEarlierLayout } from '../generate/refuse-earlier-layout';
 import { refreshDocs } from '../generate/refresh-docs';
 import { declaredModule } from '../model-modules';
 import { type ModuleMoves, moveToModule } from '../move-to-module';
-import { toName } from '../naming';
+import { contextArgument } from '../generate/context-argument';
+import { readName } from '../naming';
 import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { ownEntry } from '../config/values/own-entry';
+import { stdoutJson } from '../json/stdout-json';
+
+const MODULE_FIX = 'Name the module as the config of its context declares it, in kebab-case.';
 
 /** Takes files of the model and of the use cases of a context into a module of its model, their imports with them. */
 export const moveToModuleCommand: Command = (argv, io) => {
@@ -16,8 +21,8 @@ export const moveToModuleCommand: Command = (argv, io) => {
   const [contextName = '', moduleName = '', ...paths] = args.positionals;
   const ws = new Workspace(args.projectRoot, false);
   const { config } = readConfig(args.projectRoot);
-  const context = toName(contextName).kebab;
-  const module = toName(moduleName).kebab;
+  const context = contextArgument(config, contextName).kebab;
+  const module = readName(moduleName, 'module', MODULE_FIX).kebab;
 
   assertDeclared(config, context, module);
   refuseEarlierLayout(ws, config, context);
@@ -57,7 +62,7 @@ export const moveToModuleCommand: Command = (argv, io) => {
 };
 
 function assertDeclared(config: Config, context: string, module: string): void {
-  if (config.contexts[context] === undefined) {
+  if (ownEntry(config.contexts, context) === undefined) {
     throw new CliError(`Unknown context "${context}".`, `Use one of: ${Object.keys(config.contexts).join(', ')}.`);
   }
 
@@ -78,7 +83,7 @@ interface Outcome extends ModuleMoves {
 
 function print(io: Io, json: boolean, outcome: Outcome): void {
   if (json) {
-    io.out(JSON.stringify({ ...outcome, manual: outcome.moved.length > 0 ? LEFT : [] }, null, 2));
+    io.out(stdoutJson({ ...outcome, manual: outcome.moved.length > 0 ? LEFT : [] }));
 
     return;
   }

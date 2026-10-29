@@ -23,7 +23,7 @@ Scope
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:
-  a write outside it is refused, and inline code (`node -e`, a heredoc) that changed one stops you. A slice that changes the stored state generates a
+  a write outside it is refused, and the code you run that the guard cannot read (inline code, a script, your tests) is checked after it ran: a shared file it changed stops you until you put it back as the guard says. A slice that changes the stored state generates a
   working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
   recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
@@ -42,7 +42,7 @@ and put each line in your report as a note for the conductor, who corrects the d
 Contracts you consume (read-only): src/contexts/<upstream>/published-language/
 
 Read first, and only: src/contexts/<context>/CONTEXT.md, then
-`npx ddd-ts-kit describe <context> --json`. Then the `next` places each generator prints.
+`npx ddd-ts-kit describe <context>`. Then the `todos` places each generator prints.
 
 For each slice: generate with --local-only --json, fill the TODO(domain) markers, replace every it.todo
 by a test, then `npx ddd-ts-kit verify-slice <context> --since <main>` (regenerate, the rules on your changed

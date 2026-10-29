@@ -9,12 +9,13 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import { formatContext, type ContextSummary } from './format-context';
 import { knownContext } from './known-context';
+import { stdoutJson } from '../json/stdout-json';
 
 export const listCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, { context: { type: 'string' } });
   const map = mapProject(args.projectRoot, args.text('context'));
 
-  io.out(args.json ? JSON.stringify(map, null, 2) : formatProjectMap(map));
+  io.out(args.json ? stdoutJson(map) : formatProjectMap(map));
 
   return 0;
 };
@@ -55,7 +56,7 @@ function formatProjectMap(map: ProjectMap): string {
     return 'No bounded context yet. Create one with `ddd-ts-kit generate context <name> --classification <core|supporting|generic>`.';
   }
 
-  const e2e = `end-to-end specs: ${map.e2e.length > 0 ? map.e2e.join(', ') : 'none'}`;
+  const e2e = map.e2e.length > 0 ? [`end-to-end specs: ${map.e2e.join(', ')}`] : [];
 
-  return [...map.contexts.map(formatContext), e2e].join('\n\n');
+  return [...map.contexts.map(formatContext), ...e2e].join('\n\n');
 }

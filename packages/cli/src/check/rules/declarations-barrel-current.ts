@@ -21,6 +21,7 @@ import type { Rule } from '../model/rule';
 import { sourceAt } from '../project/source-at';
 import { isDeclaredStyle } from '../support/is-declared-style';
 import { reporter } from '../support/reporter';
+import { ownEntry } from '../../config/values/own-entry';
 
 const REGENERATE =
   'Run `ddd-ts-kit docs`, or `ddd-ts-kit generate` again, which rewrite it: the file is derived from the role files of the context and from their constructor signatures, and never edited by hand.';
@@ -45,7 +46,7 @@ export const declarationsBarrelCurrent: Rule = {
     const report = reporter(project, this.id);
 
     return project.contextsOnDisk
-      .filter((context) => project.config.contexts[context] !== undefined)
+      .filter((context) => ownEntry(project.config.contexts, context) !== undefined)
       .flatMap((context) => judge(project, context))
       .flatMap(({ file, flaw, severity }) => {
         if (flaw === undefined) {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { {{name.pascal}} } from '{{alias.context}}/domain/entities/{{name.kebab}}.entity{{alias.ext}}';
 
-describe('{{name.pascal}}', () => {
+describe('{{name.title}}', () => {
   it('is identified by its id, not by its attributes', () => {
     const first = {{name.pascal}}.create('{{name.kebab}}-1', {});
     const same = {{name.pascal}}.rehydrate('{{name.kebab}}-1', {});

@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:b376584f29433f34 -->
+<!-- translation-of: coding-agents.md sha256:423ca368f4e82e83 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -56,6 +56,17 @@ un contexte neuf : il démarre l'application comme le font les tests de bout en 
 routes de la *story* et les deux flux les plus proches, et rend compte de ce qui ne correspond pas
 à la conception ou à une décision).
 
+La description de chaque skill dit quand s'en servir en 320 caractères au plus, et les
+vingt-six en prennent 6 500 au plus ensemble ; celle d'un agent, 400 au plus. Claude Code charge
+la liste des skills dans chaque session dans la limite de 1 % de la fenêtre de contexte, environ
+2 000 tokens sur une fenêtre de 200k, et au-delà retire les descriptions des skills les moins
+invoquées, qui ne se déclenchent alors plus sur leurs mots-clés. La liste porte aussi
+`ddd-ts-kit:<nom>` pour chaque entrée (environ 660 caractères pour les vingt-six), et ce texte
+technique compte environ 3,5 caractères par token : (6 500 + 660) / 3,5 font environ 2 050
+tokens si les vingt-six étaient listées, mais `bootstrap`, `fix`, `intent`, `pull-request`,
+`start` et `story`, lancées par l'utilisateur seul (`disable-model-invocation`), ne le sont pas, ce qui laisse les vingt autres à environ 1 600
+tokens. Un test du plugin (`node --test plugin/skills/descriptions.test.mjs`) tient ces limites.
+
 Le hook est la partie qui rend le reste contraignant. Dans un projet qui a un
 `ddd-ts-kit.config.json`, il rappelle la démarche et la carte des contextes au début de la
 session, signale quand les packages installés ne sont pas la version que décrivent les skills, refuse un fichier écrit à la main là où un générateur existe, toute
@@ -63,22 +74,67 @@ modification d'un contrat généré et l'écriture de la *baseline* des erreurs 
 write`, ou une modification de `ddd-ts-kit-baseline.json` : le propriétaire du projet l'écrit,
 dans un terminal), refuse une commande git qui saute les hooks du projet (`--no-verify`, `-n` sur un
 commit, `-c core.hooksPath=...`, `LEFTHOOK=0` ou `HUSKY=0` : les hooks sont la barrière locale du
-pipeline), demande l'avis du propriétaire du projet avant qu'une
+pipeline) et, à un sous-agent, un `git config` qui fixe une valeur ou un `git -c` d'une clé qui
+lance une commande dans chaque *checkout* (`core.fsmonitor`, `core.pager`, `core.editor`,
+`core.sshCommand`, un `alias.*`, un pilote *diff* ou *filter*), demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
-écrit et renvoie les violations avec leur correction (avec `"dependenciesBeforeWrite": true`, à
+écrit et renvoie les violations avec leur correction (les cinq premiers d'un *patch* de Codex,
+les autres nommés comme non vérifiés ; avec `"dependenciesBeforeWrite": true`, à
 l'essai, il refuse avant l'écriture un nouvel import qui enfreint une règle de dépendance), et
 refuse de terminer tant que des
-erreurs d'architecture restent. Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
-d'abord le Biome que le projet a installé sur le fichier écrit (`node_modules/.bin/biome format
---write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
+erreurs d'architecture restent (une vérification qui ne finit pas à temps laisse la session
+terminer et le dit ; un début de session qui passe dix secondes d'appels à la CLI saute ceux qui
+restent et dit qu'il a été écourté). Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
+d'abord le Biome que le projet a installé sur le fichier écrit (le *bin* de son paquet
+`@biomejs/biome`, `format --write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
 l'écriture et que les constats du lint qui suivent une ligne repliée reviennent dans la même
 sortie ; une exécution qui échoue ne change rien. Il rappelle, sans bloquer, quand les changements non commités
 dépassent la taille conseillée d'un commit, et dans le worktree d'un worker
 (`.ddd-ts-kit/worker.json`), il refuse une écriture hors du contexte du worker, par les outils
-d'édition ou par le *shell* (`sed -i`, une redirection, `tee`, `cp`, `mv`, `rm`), arrête le
-worker quand son code en ligne (`node -e`, un *heredoc*) a changé un fichier hors de ce contexte,
-et refuse un changement de dépendance et un autre formateur que `npm run format`.
-Pour un `context-builder`, il compte les appels d'outils dans ces mêmes *hooks* et avertit
+d'édition ou par le *shell*. Il lit toute la ligne de commande, chacune de ses commandes, pas
+seulement celle qui commence par `cd <worktree> &&` : un worker lance chaque commande ainsi, et
+celle qui écrit sans entrer dans son worktree est refusée avec cette consigne. Il ne suit un `cd`
+que lorsqu'il est certain (après `&&`, vers un répertoire qui existe), de sorte qu'une écriture
+après `cd dir;` ou un `cd` qui échoue est refusée plutôt que mal placée ; il lit un nom que le
+*shell* calcule (une variable, une substitution, une liste d'accolades), un lanceur (`nice`,
+`ionice`, `setsid`, `flock`, `busybox`, `su -c`, `env -S`), un exécuteur de paquet (`npx`,
+`npm exec`) et la commande qu'il lance ; et il connaît les écritures que les tables de fichiers
+manquent (`>&`, un script `sed` ou `awk` qui écrit, `vim`/`ed`, `rsync`, `curl -o`, `wget -O`,
+`tar -x`, `git stash`/`reset --hard`/`worktree add`/`checkout -f`, `eslint --fix`, `biome
+--write`). Les seuls endroits libres d'un worker hors de son périmètre sont `/dev/null`, les
+périphériques standard et le répertoire temporaire (`$TMPDIR`) ; tout autre chemin absolu est
+refusé. Une commande imbriquée plus profond que le lecteur ne suit (plus de cinq *shells* ou
+`eval`) est refusée plutôt que laissée passer sans lecture. Le code qu'il ne peut pas lire (du code
+en ligne comme `node -e`, un script, un *shell* nourri par son entrée, `make`, un script ou un
+exécuteur de paquet comme `npm test` ou `npx`) s'exécute, mais avant chaque commande d'un *worker*
+qui en lance (toute commande sauf les pures lectures : `cat`, `ls`, `grep`, `git log`,
+`git status`...), la garde note l'état hors du périmètre (le `git status` et le `HEAD` du
+*worktree*, du *checkout* de la session quand c'en est un autre, et le manifeste et le *bin* de la
+CLI du kit et de Biome dans `node_modules`), et le compare à l'appel suivant du *worker*. Un fichier
+du *worktree* changé hors du périmètre, supprimé ou commité compris, arrête le *worker* jusqu'à ce
+qu'il soit remis en état par la commande que la garde nomme : son contenu commité (`git checkout
+<commit> -- <path>`, puis `git commit` quand un commit l'a changé), le contenu qu'il avait avant la
+commande quand il était déjà modifié (gardé sous `.ddd-ts-kit/guard/held/`), `git mv` en retour
+pour un renommage, `rm` pour un nouveau fichier. Un fichier laissé modifié dans l'arbre de travail
+du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) ou
+un changement de ces paquets est dit une fois, pour le chef d'orchestre, qui seul sait s'il l'a fait.
+Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerate`, `docs:generate`,
+`openapi:generate`, `events:generate`), seuls sur la ligne, réécrivent hors du périmètre parmi les
+fichiers que leurs outils réécrivent (code, JSON, `docs/`) est dit avec le script qui l'a réécrit,
+sans retenir le *worker* : il le laisse hors de ses commits. Le
+périmètre est fixé au premier appel du *worker* : un fichier de périmètre supprimé ou changé
+l'arrête jusqu'à ce que le chef d'orchestre le rétablisse. Le `merge-trunk` du kit n'est pas noté,
+et une installation du *lockfile* laisse les paquets hors de la note. Il refuse un changement de
+dépendance et un autre formateur que `npm run format`. Un sous-agent ne peut ni supprimer, ni
+déplacer, ni réinitialiser une branche extraite dans un autre *worktree* (celle d'un autre
+*worker*, ou le tronc). La même lecture
+du *shell* tient le `domain-test-writer` aux chemins d'un test, le code d'une *story* à sa barrière
+de construction, et toute écriture à la main d'un fichier généré ou de la *baseline* par n'importe
+quelle session, chacune par les endroits qu'une commande écrit plutôt que par son texte ; un
+`apply_patch` de Codex envoyé par le *shell* est lu comme un *patch*.
+Pour un `context-builder` (l'agent du *plugin*, `ddd-ts-kit:context-builder` : un agent du projet
+nommé `context-builder` sans ce préfixe est tenu à la portée de son *worktree*, mais ni compté ni
+enregistré), il compte les appels d'outils dans ces mêmes *hooks* et avertit
 l'agent deux fois avant sa limite de tours, enregistre ses exécutions dans son *worktree*
 (`.ddd-ts-kit/agent.json`), et écoute deux événements rares de Claude Code, filtrés sur cet agent :
 `SubagentStart` (un lancement ou une reprise démarre un nouveau compte) et `SubagentStop` (quand il
@@ -98,13 +154,16 @@ refuse une fois de finir la session avant son rapport
 (`"kind": "fix"` dans ce fichier), il ouvre le code dès que la *spec* de régression est
 verrouillée, et refuse toute modification d'une *spec* verrouillée, par les outils d'édition
 comme par le *shell*, à ses sous-agents ; la session elle-même peut en écrire une nouvelle version,
-que `acceptance` signale et sur laquelle l'agent `acceptance-judge` se prononce. Une commande qui nomme
-le verrou d'une acceptation ou un verdict peut changer de répertoire ou tester un chemin (`cd`,
-`pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `sed` sans `-i`, `awk`, `less`,
-`jq`), le versionner (`git`) ou lancer le kit ; tout autre programme, ou une redirection vers un
+que `acceptance` signale et sur laquelle l'agent `acceptance-judge` se prononce. Une commande qui
+écrit le verrou d'une acceptation ou un verdict (jugée par les endroits qu'elle écrit, un *glob*
+étendu, et non par son texte) est refusée : une commande peut changer de répertoire ou tester un
+chemin (`cd`, `pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `sed` sans `-i`,
+`awk`, `less`, `jq`), le versionner (`git add`, `commit`, `log`, `show`, `status`) ou lancer le kit
+(`ddd-ts-kit`, `npx ddd-ts-kit`) ; tout autre programme (un `npx` ou `pnpm` nu, `git
+checkout`/`stash`), ou une redirection vers un
 fichier, est une écriture, que seuls la CLI et cet agent font. Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
-panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
+panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt), et de ce qu'écrit un code qu'il ne peut pas lire, il ne compare que ce qui est noté plus haut : les autres fichiers ignorés par git et les endroits hors de ces *checkouts* ne sont pas énumérés ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
 
 Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les six
@@ -130,7 +189,7 @@ ciblées par `applyTo`, `REVIEW.md`, la politique de revue que lit chaque relect
 fois et possédée par l'équipe ([Travailler en équipe](team-workflow.fr.md#ce-que-la-revue-regarde-dans-chaque-couche)),
 `.claude/settings.json`, les permissions de Claude Code (les vérifications et les générateurs
 s'exécutent sans demander ; `.env` et les contrats générés ne sont jamais lus ni modifiés ;
-`git push`, `npm publish`, les fichiers qui portent les règles et le pipeline, les migrations de
+`generate` et `init` avec `--force`, `git push`, `npm publish`, les fichiers qui portent les règles et le pipeline, les migrations de
 l'ORM, `Dockerfile`, `docker-compose.yml` et `docker/` demandent d'abord : la liste est dans le
 [README de la CLI](../../packages/cli/README.fr.md#init), et `ddd-ts-kit doctor` dit ce qu'un
 projet en manque ; `init --agent-profile regulated` ajoute le bloc de bac à sable et les deux
@@ -162,7 +221,7 @@ ligne.
 | `glossary` | le générateur refuse un nom que le glossaire ne tient pas ; `language/glossary-term`, `language/declared-vocabulary`, `language/no-technical-name` | |
 | `context-map` | `context/no-cycle`, `context/declared-relationship`, `context/published-language-only`, `context/published-language-is-a-contract`, la carte des contextes régénérée et comparée par `docs --check` | |
 | `bootstrap` | `init` écrit un projet vert sous `npm run verify` ; `config/valid` ; `doctor --strict` | |
-| `plan-slices` | `status`, `story-check` et `worker-scope --rows` lisent les lignes de `slices.md` et refusent une ligne inconnue ; `plan-waves` rejoue les commandes de génération des lignes et refuse un nom dont le glossaire ne définit pas les mots ; `verify-slice` | l'ordre des lignes est conseillé (`plan-waves`), jamais refusé |
+| `plan-slices` | `status`, `story-check` et `worker-scope --rows` lisent les lignes de `slices.md` et refusent une ligne inconnue ; `plan-waves` rejoue les commandes de génération des lignes et refuse un nom dont le glossaire ne définit pas les mots, toute commande que le générateur refuse, avec son refus sous la ligne, et une ligne qui s'appuie sur ce que génère une ligne qu'elle n'attend pas ; `verify-slice` | l'ordre des lignes est conseillé (`plan-waves`), jamais refusé |
 | `parallel-work` | la garde du *worker* (`.ddd-ts-kit/worker.json` : une écriture hors du contexte est refusée, par les outils d'édition et par le *shell*), `verify-merge`, `merge-trunk`, `status --workers` | |
 | `intent` | `story-scope --from` refuse une intention dont le statut n'est pas `accepted` ; le bloc `## Origin` de la *story*, que `story --gate close` exige | le contenu d'une intention est lu par des personnes, pas vérifié |
 | `story` | `story --gate build` et `--gate close`, la garde dans le *worktree* d'une *story* (pas de code avant la revue de conception et le verrou), `acceptance --lock`, `test/acceptance-black-box`, l'agent `acceptance-judge` | la passe de conception de `story-check` tient les noms, pas le comportement |

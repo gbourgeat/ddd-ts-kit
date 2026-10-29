@@ -2,11 +2,8 @@
 name: start
 description: >-
   Conducts a project from a statement of needs to working bounded contexts, strategic design
-  first. Drives the steps in order (discover the domain, find the bounded contexts, write the
-  glossaries, draw the context map, choose the stack and bootstrap, plan the slices, build),
-  keeps the state in docs/architecture/plan.md so any later session resumes from one file,
-  and stops for the owner's decision at each strategic choice. Run by the user only, with
-  /ddd-ts-kit:start, to begin a project or to resume one.
+  first (discovery, contexts, glossaries, context map, bootstrap, slices, build), its state
+  in plan.md. Run by the user with /ddd-ts-kit:start.
 argument-hint: "[the needs in plain words | nothing to resume]"
 disable-model-invocation: true
 allowed-tools:
@@ -44,7 +41,7 @@ the slices by status and by owner (at step 7 the next step is derived from the r
 - The directory already holds a `ddd-ts-kit.config.json` and no plan: the project was
   bootstrapped without the method. Say so plainly: steps 1 to 4 were skipped, so the
   boundaries and the glossaries were never argued. Offer to run them now on what exists
-  (`npx ddd-ts-kit list --json` as the input); on a no, create the plan with steps 1 to 5
+  (`npx ddd-ts-kit list` as the input); on a no, create the plan with steps 1 to 5
   marked `skipped`, the owner's reason under `## Decisions`, and resume at step 6.
 
 ## 2. Run the next step, one at a time

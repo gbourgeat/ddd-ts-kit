@@ -8,6 +8,7 @@ import type { Workspace } from '../workspace';
 import { brokerStrategy } from './broker-strategy';
 import { CONTEXT_MAP } from './context-map-file';
 import { contextMapLines } from './context-map-lines';
+import { describeOnDisk } from './describe-on-disk';
 import { readContexts } from './read-contexts';
 import { refreshContextDoc } from './refresh-context-doc';
 import { writeBehaviour } from './write-behaviour';
@@ -40,10 +41,11 @@ export function writeDocs(
   { earlier = 'move', scope = 'whole' }: DocsWriting = {},
 ): KeptContext[] {
   const contexts = readContexts(ws, config);
+  const described = describeOnDisk(ws, config, contexts);
 
   for (const context of contexts) {
     if (context.declared && context.onDisk) {
-      refreshContextDoc(ws, config, context.name);
+      refreshContextDoc(ws, config, described.find((description) => description.name === context.name) ?? context.name);
     }
   }
 
@@ -58,7 +60,7 @@ export function writeDocs(
   writeCodeOwners(ws, config, contexts);
 
   if (scope === 'whole') {
-    writeBehaviour(ws, config, contexts);
+    writeBehaviour(ws, config, described);
   }
 
   // Written by people from here on: never replaced, not even with --force.

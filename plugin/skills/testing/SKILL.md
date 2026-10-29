@@ -1,13 +1,10 @@
 ---
 name: testing
 description: >-
-  Writes readable, refactoring-proof tests for a ddd-ts-kit project. Given / when / then
-  for aggregates, real handlers through the test application with fakes, builders for test
-  data, worlds for the arrangement several specs share, contract suites shared by fakes and
-  adapters, end-to-end specs, the acceptance scenarios of a story written before its code.
-  Use when writing or reviewing a test, turning it.todo entries into tests, when a test needs
-  data setup or a shared arrangement, when tempted by vi.mock, vi.fn or a spy, when writing
-  or changing an acceptance scenario, or when a test/* rule is reported.
+  Use when writing or reviewing a test, turning it.todo into tests, when a test needs data
+  setup or a shared arrangement, when tempted by vi.mock, vi.fn or a spy, for an acceptance
+  scenario, or on a test/* rule. Given / when / then, fakes, builders, worlds, contract
+  suites, end-to-end.
 allowed-tools:
   - Read
   - Edit
@@ -202,7 +199,9 @@ sub-agent, and a spec that is wrong is rewritten by the session of the fix and j
 
 Held by `npm run lint`, on every test file of the project:
 
-- `describe` names the unit, `it` states the rule, in lower case, after the rows and the
+- `describe` names the unit in the words of the glossary, as the generators write it: `Invoice line`,
+  `Issue invoice`, `POST /invoices`, `When invoice issued`, a policy by its question (`Who may cancel
+  an invoice`); `it` states the rule, in lower case, after the rows and the
   criterion it cites: `refuses to pay an order twice`, `#US5.02 AC1 a customer places an order`;
   never `should`, `test`, `works`, nor a method or a class (`test/title-states-a-rule`).
 - Arrange, act, assert separated by blank lines; no `if`, no loop, no `try` (`test/no-logic`):
@@ -246,7 +245,9 @@ spec the generator writes ends with the planned rule that asks for one;
 and fast-check added when it is missing: replace the arbitrary by the real components first.
 
 The titles are read back as a document: `npm run docs:generate` writes `docs/behaviour/<context>.md`
-from them, grouped as the specs group them, the pre-commit hook regenerates it when a spec is staged,
+from them, one heading per use case (its handler, policy, route, end-to-end and acceptance specs), then
+the model and the reactions, the titles the kit generated listed apart, the row a title cites before
+the rule and the rows cited indexed at the end; the pre-commit hook regenerates it when a spec, a source or the config is staged,
 and `docs --check` holds it current, so a title is a sentence the business reads, and the page is
 committed with the spec.
 

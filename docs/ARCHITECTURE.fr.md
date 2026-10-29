@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:eaad5f0320f8df43 -->
+<!-- translation-of: ARCHITECTURE.md sha256:7f4b930046f413ec -->
 
 # Référence de l'architecture
 
@@ -457,7 +457,7 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `imports/alias-only` | Un fichier du projet s'importe par son alias (`@/...`, `$test/...`, `$scripts/...`), jamais par un chemin relatif, même dans le même répertoire : `import`, `export ... from` et `import()`, sous la racine des sources, `test/` et `scripts/`. Un chemin d'alias ne contient aucun segment `.` ou `..`. ESLint le corrige. |
 | `imports/extension` | Un import d'un fichier du projet se termine comme le dit `importExtension` de la config : sans extension sous `none` (la valeur par défaut d'un nouveau projet), un répertoire s'écrivant tel quel (`.../published-language`) ; avec `.js` sous `js` (ce que signifie une config sans la clé). Un *package* n'est jamais jugé, quelle que soit la fin de son sous-chemin. ESLint le corrige. |
 | `imports/alias-declared` | L'alias a une seule source et chaque outil la suit : `importAlias` vaut `@/` ou `$<name>/`, deux formes qu'aucun *package* ne peut porter comme nom ; `paths` dans `tsconfig.json` est exactement ce qu'il donne, sans autre entrée sous un alias et sans `baseUrl`, et `tsconfig.build.json` n'en diffère pas ; vitest et dependency-cruiser sont configurés pour lire tsconfig, jest répète la même correspondance, knip n'en ajoute aucune ; un script qui compile lance `ddd-ts-kit build-aliases` ensuite, et tsx tourne sous `tsconfig.json`. La terminaison d'un import a une seule source elle aussi, `importExtension`, et ce qui en dérive la suit : `module` et `moduleResolution` de `tsconfig.json` (`ESNext` et `Bundler` avec la condition `node` sous `none`, une résolution Node sous `js`), le motif de chaque correspondance jest, et l'étape de build, qui écrit les `.js` dont Node a besoin. |
-| `config/valid` | `ddd-ts-kit.config.json` est cohérent : contextes, classifications, relations, identifiants et sévérités de règles (une règle réglée pour certains fichiers les nomme dans `files`), mode de la garde et extension d'import connus, les mêmes contextes que sur le disque, une limite de fonction sous le plafond, des entrées `onePerFile.allow` complètes, des limites de *commit* positives, des seuils de couverture qui sont des pourcentages, des jobs supplémentaires du *pipeline* connus (`ci.extras`), un format de contrat connu et des documents de contrat qui ont chacun un nom propre, utilisable comme nom de fichier, et nomment ce qu'ils contiennent, contextes connus compris (`openapi`). |
+| `config/valid` | `ddd-ts-kit.config.json` est cohérent : contextes, classifications, relations, identifiants et sévérités de règles (une règle réglée pour certains fichiers les nomme dans `files`), mode de la garde et extension d'import connus, des répertoires (`sourceRoot`, `contextsDir`, `sharedKernelDir`, `platformDir`) dans le projet, les mêmes contextes que sur le disque, une limite de fonction sous le plafond, des entrées `onePerFile.allow` complètes, des limites de *commit* positives, des seuils de couverture qui sont des pourcentages, des jobs supplémentaires du *pipeline* connus (`ci.extras`), un format de contrat connu et des documents de contrat qui ont chacun un nom propre, utilisable comme nom de fichier, et nomment ce qu'ils contiennent, contextes connus compris (`openapi`). |
 | `config/rule-off-everywhere` | Une règle désactivée l'est pour les fichiers qu'elle vise : `"<id>": { "severity": "off", "files": ["<glob>"] }`, qui laisse tous les autres fichiers jugés. Un `"off"` seul est signalé, même quand une dérogation l'enregistre ; `"files": ["**"]` dit que tout le projet est visé. Sévérité par défaut `warn`. |
 | `config/suppression-needs-reason` | Une désactivation en ligne nomme sa règle et donne une raison après `--`. |
 
@@ -1701,8 +1701,12 @@ a touchés, d'après une passe incrémentale qui réutilise le rapport de la nui
 un but, et la mesure ne se rétrécit jamais à la main (`test/mutation-governed`).
 
 Ce qu'énoncent les tests se relit comme un document : `ddd-ts-kit docs` écrit `docs/behaviour/`,
-une page par contexte et une pour l'application, d'après les titres des *specs*, groupés comme les
-*specs* les groupent, une règle planifiée (`it.todo`) dite comme telle. Le titre d'un test énonce une
+une page par contexte et une pour l'application, d'après les titres des *specs* : un titre par cas
+d'usage (ses *specs* de *handler*, de *policy*, de route, de bout en bout et d'acceptation
+ensemble), puis un par partie du modèle et un par réaction, les *specs* qui n'entrent dans aucun
+sous leur répertoire ; sous chacun, les titres qu'un *template* du kit a écrits à part des règles
+écrites pour le projet, une règle planifiée (`it.todo`) en dernier et dite comme telle, la ligne
+qu'un titre cite (`#US5.02 AC1`) avant lui, et les lignes citées comptées à la fin. Le titre d'un test énonce une
 règle (`test/title-states-a-rule`), donc la page se lit comme le métier l'écrirait ; le *hook* de
 pre-commit la régénère quand une *spec* est commitée et `docs --check` la tient à jour : le test est
 la preuve, la page sa lecture, et aucune seconde langue n'est tenue en phase avec le code.

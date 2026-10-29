@@ -5,6 +5,7 @@ import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
 import { stringsAt } from './support/strings-at';
 import { textsAt } from './support/texts-at';
+import { commitAll } from './support/commit-all';
 
 const WORKER = 'src/apps/worker/main.ts';
 
@@ -126,9 +127,11 @@ describe('generate worker, run again and refused', () => {
     ).toEqual(before);
   });
 
-  it('survives a new init --force: the script, the knip entry and the default of RUN_JOBS follow the config', () => {
+  it("survives a new init --force: the script, the knip entry and the default of RUN_JOBS follow the config, the README stays the team's", () => {
     const root = withWorker();
+    const readme = read(root, 'README.md');
 
+    commitAll(root);
     expect(cli(root, 'init', '--force').code).toBe(0);
 
     expect(textsAt(readJson(root, 'package.json'), 'scripts')['start:worker']).toBe(
@@ -139,7 +142,7 @@ describe('generate worker, run again and refused', () => {
     expect(read(root, 'src/platform/config/load-config.ts')).toContain('const runJobsByDefault = false;');
     expect(read(root, '.env.example')).toContain('# RUN_JOBS=false');
     expect(read(root, 'docker-compose.yml')).toContain('\n  worker:\n    build:');
-    expect(read(root, 'README.md')).toContain('`false` by default: the worker runs them');
+    expect(read(root, 'README.md')).toBe(readme);
   });
 
   it('refuses to share its entry point with a context named worker, and takes no argument', () => {

@@ -1,13 +1,9 @@
 ---
 name: integration-event
 description: >-
-  Makes two bounded contexts collaborate through a versioned integration event: declaring it
-  in the producer's published language, publishing through the outbox, handling it
-  idempotently in the consumer, evolving its payload, choosing a broker. Use when a context
-  must react to another, when building a contract row of the slices, or when the user
-  mentions events between contexts, messaging, outbox, consumers, RabbitMQ, Kafka, NATS,
-  Redis Streams or eventual consistency. To decide who is upstream and which pattern, use
-  context-map first.
+  Use when a context must react to another, for a contract row of the slices, or on events
+  between contexts, messaging, outbox, consumers, RabbitMQ, Kafka, NATS, Redis Streams or
+  eventual consistency. Versioned, idempotent consumers.
 argument-hint: "<producer-context> <Aggregate> <Fact>"
 allowed-tools:
   - Read
@@ -38,7 +34,7 @@ writes the declaration `published-language/<fact>.v1.integration-event.ts`
 (`defineIntegrationEvent({ type, version, payload })`), its export, the publisher in
 `application/integration/publishers/` (a reaction to the domain event, which it creates when
 missing; always in the default `before-commit` phase, so the outbox row commits with the state
-change) and the specs. Fill the `next` places:
+change) and the specs. Fill the `todos` places:
 
 - **Name**: `<context>.<aggregate>.<fact>`, past tense (`events/name-format`).
 - **Payload**: what a consumer needs to act without calling back, and nothing internal:

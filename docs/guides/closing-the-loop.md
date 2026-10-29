@@ -73,7 +73,7 @@ metrics:
 
 - **log** writes the breach where the team reads it, nothing else.
 - **diagnose** runs the agent read-only, with the tools named and no other: the repository at
-  the commit deployed, `npx ddd-ts-kit describe <context> --json` for what the context holds,
+  the commit deployed, `npx ddd-ts-kit describe <context>` for what the context holds,
   the audit trail of the window through the search route the platform exposes under its own
   permission ([audit trail](../concepts/audit-trail.md), called with a read-only token the run
   receives for that purpose), the traces by correlation id, the last deploy in the window.

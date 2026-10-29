@@ -1,13 +1,9 @@
 ---
 name: document
 description: >-
-  Keeps the generated documents and contracts of a ddd-ts-kit project current: the OpenAPI
-  contract from the routes, the event catalog and the AsyncAPI document from the integration
-  events, the generated lists and diagram, plus the written integration notes and decision
-  records. Use when a route, a schema, an error code or an integration event changes, when
-  the user asks for the API contract, Swagger, client generation, an ADR or the integration
-  documentation, or when the pipeline reports documentation or contract drift. The glossary
-  and CONTEXT.md belong to glossary; relationships and the map to context-map.
+  Use when a route, a schema, an error code or an integration event changes, when asked for
+  the API contract, OpenAPI, Swagger, client generation, AsyncAPI, the event catalog, an ADR
+  or integration docs, or when the pipeline reports documentation or contract drift.
 argument-hint: "[openapi|events|adr <title>]"
 allowed-tools:
   - Read
@@ -31,13 +27,15 @@ Scope requested: `$ARGUMENTS` (everything when empty)
 
 Two kinds of content, never mixed: **generated** (derived from code and config, rewritten by
 a command, checked for drift in the pipeline, never edited by hand: the guard refuses) and
-**written** (decisions and meaning no tool can derive, short).
+**written** (decisions and meaning no tool can derive, short). The glossary and `CONTEXT.md`
+belong to skill `ddd-ts-kit:glossary`; the relationships and the map to skill
+`ddd-ts-kit:context-map`.
 
 | File | Kind | Rewritten by |
 |---|---|---|
 | `openapi/openapi.yaml` (one file per document of `openapi.documents`), `<platform>/http/openapi-documents.ts` | generated from the route definitions and the config | `npm run docs:generate` |
 | `docs/integration/event-catalog.md`, `asyncapi.yaml` | generated from `defineIntegrationEvent` declarations and their handlers | `npm run events:generate` |
-| `docs/behaviour/<context>.md`, `application.md`, `README.md` | generated from the titles of the specs: what the tests state, grouped as the specs group it, a planned rule (`it.todo`) said so | `npm run docs:generate`, and the pre-commit hook when a spec is staged |
+| `docs/behaviour/<context>.md`, `application.md`, `README.md` | generated from the titles of the specs: what the tests state, one heading per use case (its handler, policy, route, end-to-end and acceptance specs), then the model and the reactions; the titles the kit generated listed apart, a planned rule (`it.todo`) last, the row a title cites (`#US5.02 AC1`) before it and the rows cited indexed at the end | `npm run docs:generate`, and the pre-commit hook when a spec is staged |
 | `docs/context-map.md` between its markers, lists of each `CONTEXT.md` between theirs, `<context>.declarations.ts` and the `<layer>.declarations.ts` of each layer | generated from the config and the tree | `npx ddd-ts-kit docs` (every `generate` runs it) |
 | `docs/privacy/register.md` between its markers (with `--privacy on`) | generated from the `personalFields` declarations and the `personal` option of the integration events; the purposes, the lawful basis and the recipients outside the system around them are written by the controller | `npx ddd-ts-kit docs` (every `generate` runs it) |
 | `.dependency-cruiser.cjs` | generated from the config | `npx ddd-ts-kit depcruise-config --write` |

@@ -66,7 +66,8 @@ function withBaseline(root: string, result: CheckResult): CheckResult {
 
 /** Files outside the source root, or that are not sources, have no per-file rule: a hook stays silent on them. */
 function isProjectSource(root: string, file: string, given: boolean): boolean {
-  const { config } = readConfig(root);
+  // Read as check reads it: a directory of the config out of the project is config/valid's to report.
+  const { config } = readConfig(root, { leaving: 'default' });
 
   return isSource(file) && file.startsWith(`${config.sourceRoot}/`) && (given || fs.existsSync(path.join(root, file)));
 }

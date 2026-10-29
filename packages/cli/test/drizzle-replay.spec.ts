@@ -233,6 +233,13 @@ describe('ddd-ts-kit drizzle-generate --replay with nothing forked, or refused',
     expect(behind.stderr).toContain('git merge main');
     expect(unknown.code).toBe(2);
     expect(unknown.stderr).toContain('origin/trunk is not a commit of this repository');
+
+    git(root, 'update-ref', 'refs/heads/-x', 'main');
+
+    const dashed = cli(root, 'drizzle-generate', '--replay', '--base=-x');
+
+    expect(dashed.code).toBe(2);
+    expect(dashed.stderr).toContain('-x has migrations this branch does not have');
   });
 
   it('has nothing to replay where the branch added no migration', () => {

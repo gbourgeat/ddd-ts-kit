@@ -161,8 +161,8 @@ itself; the second one runs `npx ddd-ts-kit merge-trunk`, which takes the trunk'
 derived file, regenerates and commits the result. The guard knows it: `verify-slice` runs
 `regenerate` in the worktree, which rewrites the derived files outside the worker's context
 (`clients/`, `docs/behaviour/`, `docs/context-map.md`, `openapi/`, `docs/integration/`,
-`.dependency-cruiser.cjs`), and a worker whose inline code ran meanwhile (`verify-slice --json |
-node -e ...`) is not stopped for them; any other file outside its scope still is.
+`.dependency-cruiser.cjs`), and a worker whose code ran meanwhile (`verify-slice` itself, or its
+output piped to `node -e ...`) is not stopped for them; any other file outside its scope still is.
 
 ### Migrations
 
@@ -318,7 +318,7 @@ Scope
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:
-  a write outside it is refused, and inline code (`node -e`, a heredoc) that changed one stops you. A slice that changes the stored state generates a
+  a write outside it is refused, and the code you run that the guard cannot read (inline code, a script, your tests) is checked after it ran: a shared file it changed stops you until you put it back as the guard says. A slice that changes the stored state generates a
   working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
   recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
@@ -425,10 +425,13 @@ writes shared files and a dependency change, wherever its flags stand (`npm i -D
 clean install stays free. The same scope holds for the shell: an in-place edit such as
 `sed -i`, a redirection or `tee`, and `cp`, `mv`, `rm`, `touch`, `git checkout -- <path>` or
 `git restore` pass inside the scope and are refused outside it, or on a path only the shell
-knows (`"$FILE"`). Inline code given to an interpreter (`node -e`, a heredoc) cannot be read in
-advance: it runs, the guard notes the files outside the scope before it and compares them at
-the worker's next command, and a file it changed there stops the worker until it is put back
-(`git restore`, or `rm` of a new file, allowed for those files). `npx prettier` in a project
+knows (`"$FILE"`). Code the guard cannot read (inline code given to an interpreter, a script, a
+shell fed on its input, a test or package script) cannot be read in advance: it runs, the guard
+notes the state outside the scope before each such command (its files and `HEAD`) and compares it
+at the worker's next command, and a file it changed there, deleted or committed included, stops
+the worker until it is put back with the command the guard names (`git checkout HEAD -- <path>`,
+the held content of a file already changed, `git mv` back, or `rm` of a new file, allowed for those
+files). The scope is pinned at the worker's first call: a scope file removed or changed stops it. `npx prettier` in a project
 that `format` runs Biome on and a bare `npx biome` are refused. Output to `/dev/null` or the system temp directory stays free, and the conductor
 is not held to any of this. A worker passes `--local-only` to `generate`:
 the command then refuses, and writes nothing, when the kind would write outside its context:

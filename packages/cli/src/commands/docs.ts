@@ -3,6 +3,7 @@ import path from 'node:path';
 import { readConfig, type Config } from '../config';
 import { barrelFile, earlierLayoutNotice, generatedDrift } from '../declared';
 import { readContexts } from '../docs/read-contexts';
+import { describeOnDisk } from '../docs/describe-on-disk';
 import { writeBehaviour } from '../docs/write-behaviour';
 import { writeDocs } from '../docs/write-docs';
 import type { KeptContext } from '../generate/refresh-barrels';
@@ -17,6 +18,7 @@ import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
 import { printReport } from './print-report';
+import { stdoutJson } from '../json/stdout-json';
 
 export const docsCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
@@ -63,7 +65,7 @@ interface DocsRun {
  * spec is staged, every other generated document left as it is; with `--check`, those pages alone.
  */
 function behaviourOnly(io: Io, args: Arguments, run: DocsRun): number {
-  writeBehaviour(run.ws, run.config, readContexts(run.ws, run.config));
+  writeBehaviour(run.ws, run.config, describeOnDisk(run.ws, run.config, readContexts(run.ws, run.config)));
 
   if (!args.flag('check')) {
     return printReport(io, args, run.ws.commit(args.flag('dry-run')));
@@ -97,7 +99,7 @@ function reportCheck(io: Io, args: Arguments, { ws, config, kept }: DocsRun): nu
   const warnings = kept.map((context) => earlierLayoutWarning(config, context));
 
   if (args.json) {
-    io.out(JSON.stringify({ ok, stale, drift, unrecorded, formerlyRecorded, emptilyRecorded, warnings }, null, 2));
+    io.out(stdoutJson({ ok, stale, drift, unrecorded, formerlyRecorded, emptilyRecorded, warnings }));
   } else if (ok) {
     io.out(['The generated documentation is up to date.', ...warningLines(warnings)].join('\n'));
   } else {

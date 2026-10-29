@@ -1,11 +1,13 @@
 import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import { contextLayout, type ContextLayout } from '../context-layout';
-import { toName } from '../naming';
+import { contextArgument } from '../generate/context-argument';
 import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { ownEntry } from '../config/values/own-entry';
+import { stdoutJson } from '../json/stdout-json';
 
 const MANUAL =
   'Run the formatter, then the checks and the tests: an import the command could not read still names the old path.';
@@ -15,8 +17,8 @@ export const contextLayoutCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, { 'dry-run': { type: 'boolean', default: false } });
   const ws = new Workspace(args.projectRoot, false);
   const { config } = readConfig(args.projectRoot);
-  const asked = args.positionals.map((name) => toName(name).kebab);
-  const unknown = asked.filter((context) => config.contexts[context] === undefined);
+  const asked = args.positionals.map((name) => contextArgument(config, name).kebab);
+  const unknown = asked.filter((context) => ownEntry(config.contexts, context) === undefined);
 
   if (unknown.length > 0) {
     throw new CliError(
@@ -54,7 +56,7 @@ interface Outcome extends ContextLayout {
 
 function print(io: Io, json: boolean, outcome: Outcome): void {
   if (json) {
-    io.out(JSON.stringify(outcome, null, 2));
+    io.out(stdoutJson(outcome));
 
     return;
   }

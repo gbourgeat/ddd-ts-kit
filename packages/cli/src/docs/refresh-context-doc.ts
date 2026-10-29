@@ -1,4 +1,5 @@
 import type { Config } from '../config';
+import type { ContextDescription } from '../describe/context-description';
 import { describeContext } from '../describe/describe-context';
 import { referenceLines } from '../describe/reference-lines';
 import { replaceRegion } from '../markers';
@@ -23,9 +24,11 @@ const LATER_REGIONS: Readonly<Record<string, (facts: ContextFacts) => number>> =
  * Rewrites the generated lists of a CONTEXT.md (aggregates, published events, permissions,
  * scheduled jobs, background jobs, state machines, process managers, relationships) and its reference (use cases, routes, events, ports, policies,
  * gateways) from what is on disk and in the config. The generator and
- * `docs` both go through here, so `docs --check` is clean right after a `generate`.
+ * `docs` both go through here, so `docs --check` is clean right after a `generate`. The context is
+ * named, and described here, or handed over as `docs` described it once for every document.
  */
-export function refreshContextDoc(ws: Workspace, config: Config, context: string): void {
+export function refreshContextDoc(ws: Workspace, config: Config, named: string | ContextDescription): void {
+  const context = nameOf(named);
   const file = `${config.contextsDir}/${context}/CONTEXT.md`;
   const original = ws.read(file);
 
@@ -46,11 +49,16 @@ export function refreshContextDoc(ws: Workspace, config: Config, context: string
     }
   }
 
-  ws.update(
-    file,
-    replaceRegion(ensureReferenceRegion(content), 'reference', referenceLines(describeContext(ws, config, facts))) ??
-      content,
-  );
+  ws.update(file, withReference(content, typeof named === 'string' ? describeContext(ws, config, facts) : named));
+}
+
+function nameOf(named: string | ContextDescription): string {
+  return typeof named === 'string' ? named : named.name;
+}
+
+/** The CONTEXT.md with its reference written from what `describe` says of the context. */
+function withReference(content: string, description: ContextDescription): string {
+  return replaceRegion(ensureReferenceRegion(content), 'reference', referenceLines(description)) ?? content;
 }
 
 /** A table or a published event of the context says it holds personal data. */

@@ -1,4 +1,5 @@
 import { CliError } from '../cli-error';
+import { knownCommit } from '../commit/known-commit';
 import { type Config, readConfig } from '../config';
 import { changedFiles } from '../mutation/changed-files';
 import { formatMutation } from '../mutation/format-mutation';
@@ -9,6 +10,7 @@ import { type MutationReport, readMutationReport } from '../mutation/read-mutati
 import { type Survivor, survivors } from '../mutation/survivors';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * Holds each layer of each context to the mutation floor of the config: reads the json report the
@@ -55,7 +57,8 @@ function reportOf(root: string, file: string): MutationReport {
 }
 
 function changedSince(root: string, since: string): ReadonlySet<string> {
-  const changed = changedFiles(root, since);
+  const commit = knownCommit(root, since, 'Name a branch, a tag or a commit git knows: `--changed origin/main`.');
+  const changed = changedFiles(root, commit);
 
   if (changed === undefined) {
     throw new CliError(
@@ -68,11 +71,7 @@ function changedSince(root: string, since: string): ReadonlySet<string> {
 }
 
 function asJson(config: Config, scores: readonly ContextScore[], listed: readonly Survivor[] | undefined): string {
-  return JSON.stringify(
-    { floor: config.mutation, scores, ...(listed === undefined ? {} : { survivors: listed }) },
-    null,
-    2,
-  );
+  return stdoutJson({ floor: config.mutation, scores, ...(listed === undefined ? {} : { survivors: listed }) });
 }
 
 function asText(

@@ -3,6 +3,7 @@ import { formatMeasures } from '../measures/format-measures';
 import { readMeasures } from '../measures/read-measures';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import { stdoutJson } from '../json/stdout-json';
 
 /**
  * The measures of the stories of the project, from the git history of the current branch and
@@ -31,7 +32,7 @@ export const measuresCommand: Command = (argv, io) => {
     byAuthor: args.flag('by-author'),
   });
 
-  io.out(format === 'json' ? JSON.stringify(view, null, 2) : formatMeasures(view));
+  io.out(format === 'json' ? stdoutJson(view) : formatMeasures(view));
 
   return 0;
 };

@@ -5,6 +5,7 @@ import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import { type Command } from './command';
 import type { Io } from './io';
+import { stdoutJson } from '../json/stdout-json';
 
 /** Prints the dependency-cruiser configuration of the project, writes it, or checks that the file on disk is current. */
 export const depcruiseConfigCommand: Command = (argv, io) => {
@@ -15,7 +16,7 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
 
   const root = args.projectRoot;
   const expected = renderCruiseFile(readConfig(root).config);
-  const ws = new Workspace(root, true);
+  const ws = new Workspace(root, false);
 
   if (args.flag('write')) {
     return writeCruiseFile(ws, expected, io);
@@ -30,7 +31,7 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
   const current = ws.read(DEPCRUISE_FILE) === expected;
 
   if (args.json) {
-    io.out(JSON.stringify({ ok: current, file: DEPCRUISE_FILE }, null, 2));
+    io.out(stdoutJson({ ok: current, file: DEPCRUISE_FILE }));
   } else {
     io.out(
       current
@@ -43,7 +44,8 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
 };
 
 function writeCruiseFile(ws: Workspace, expected: string, io: Io): number {
-  ws.create(DEPCRUISE_FILE, expected);
+  // A derived file, written again whatever it holds: not a replacement --force decides on.
+  ws.update(DEPCRUISE_FILE, expected);
 
   const report = ws.commit(false);
 

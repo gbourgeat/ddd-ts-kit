@@ -1,5 +1,5 @@
 import { CliError } from '../../cli-error';
-import { commitOf } from './commit-of';
+import { knownCommit } from '../../commit/known-commit';
 import { mergeBaseOf } from './merge-base-of';
 import type { MergeRecord } from './merge-records';
 import type { MergeToVerify } from './merge-to-verify';
@@ -17,7 +17,12 @@ export interface MergeOptions {
  */
 export function mergeOfRecord(top: string, record: MergeRecord, options: MergeOptions): MergeToVerify {
   const [ours, second] = record.parents;
-  const theirs = options.theirs === undefined ? second : theirsOf(top, options.theirs);
+
+  const theirs =
+    options.theirs === undefined
+      ? second
+      : knownCommit(top, options.theirs, 'Fetch it first, or pass the head of the branch: `--theirs <ref>`.');
+
   const short = record.commit.slice(0, 7);
 
   if (ours === undefined || theirs === undefined) {
@@ -40,17 +45,4 @@ export function mergeOfRecord(top: string, record: MergeRecord, options: MergeOp
     theirs,
     accepted: record.accepted,
   };
-}
-
-function theirsOf(top: string, ref: string): string {
-  const commit = commitOf(top, ref);
-
-  if (commit === undefined) {
-    throw new CliError(
-      `${ref} is not a commit of this repository.`,
-      'Fetch it first, or pass the head of the branch: `--theirs <ref>`.',
-    );
-  }
-
-  return commit;
 }

@@ -1,12 +1,10 @@
 ---
 name: scaffold
 description: >-
-  Creates ONE file of a ddd-ts-kit role from a template with `ddd-ts-kit generate`, with its
-  spec, fake and registration, then lists the places where business logic is expected. Use
-  whenever a single aggregate, entity, value object, domain event, error or service, port,
+  Use when one aggregate, entity, value object, domain event, error, service, port,
   repository, adapter, gateway, policy, job, background job, state machine, process manager,
-  event handler, builder, end-to-end spec or context is needed, instead of writing it by hand, or when the guard refuses a hand-written
-  file. For a whole feature use use-case; for events between contexts use integration-event.
+  event handler, builder, end-to-end spec or context is needed, or the guard refuses a
+  hand-written file.
 argument-hint: "<kind> <context> <Name> [options]"
 allowed-tools:
   - Read
@@ -22,7 +20,8 @@ allowed-tools:
 Requested: `$ARGUMENTS`
 
 Boilerplate is generated, never typed: the generator and the checker share one definition of
-the tree, so a generated file conforms by construction and costs no tokens.
+the tree, so a generated file conforms by construction and costs no tokens. A whole feature is
+skill `ddd-ts-kit:use-case`; events between contexts, skill `ddd-ts-kit:integration-event`.
 
 ## Procedure
 
@@ -42,10 +41,10 @@ the tree, so a generated file conforms by construction and costs no tokens.
    ```bash
    npx ddd-ts-kit generate <kind> ... --json
    ```
-   Exact arguments of every kind: [kinds.md](kinds.md), or `npx ddd-ts-kit --help`. A
+   Exact arguments of every kind: [kinds.md](kinds.md), or `npx ddd-ts-kit generate <kind> --help` for one. A
    worker confined to one context adds `--local-only`: the command refuses, and writes
    nothing, when it would write a shared file.
-3. **Open only the `next` places**, each a `file:line` holding a `TODO(domain)` that states
+3. **Open only the `todos` places**, each a `file:line` holding a `TODO(domain)` that states
    the decision expected. Decide, write, delete the marker. A marker you cannot resolve is a
    question for the user, not a guess. `notes` says what the generator could not do.
 4. **Replace each `it.todo`** of the generated spec by a real test (skill

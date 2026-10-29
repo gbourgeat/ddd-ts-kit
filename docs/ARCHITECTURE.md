@@ -443,7 +443,7 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `imports/alias-only` | A file of the project is imported by its alias (`@/...`, `$test/...`, `$scripts/...`), never by a relative path, the same directory included: `import`, `export ... from` and `import()`, under the source root, `test/` and `scripts/`. An alias path holds no `.` or `..` segment. ESLint fixes it. |
 | `imports/extension` | An import of a file of the project ends as `importExtension` of the config says: with no extension under `none` (the default of a new project), a directory being written as itself (`.../published-language`); with `.js` under `js` (what a config without the key means). A package is never judged, whatever its subpath ends with. ESLint fixes it. |
 | `imports/alias-declared` | The alias has one source and every tool follows it: `importAlias` is `@/` or `$<name>/`, two forms no package can be named by; `paths` in `tsconfig.json` is exactly what it gives, with no other entry under an alias and no `baseUrl`, and `tsconfig.build.json` does not differ; vitest and dependency-cruiser are told to read tsconfig, jest repeats the same mapping, knip adds none; a script that compiles runs `ddd-ts-kit build-aliases` afterwards, and tsx runs under `tsconfig.json`. The ending of an import has one source too, `importExtension`, and what derives from it follows: `module` and `moduleResolution` of `tsconfig.json` (`ESNext` and `Bundler` with the `node` condition under `none`, a Node resolution under `js`), the pattern of each jest mapping, and the build step, which writes the `.js` Node needs. |
-| `config/valid` | `ddd-ts-kit.config.json` is consistent: known contexts, classifications, relationships, rule ids and severities (a rule set for some files names them in `files`), guard mode and import extension, the same contexts as on disk, a function limit within the ceiling, complete `onePerFile.allow` entries, positive commit limits, coverage thresholds that are percentages, known extra pipeline jobs (`ci.extras`), a known contract format and contract documents that each have a file-safe name of their own and name what they hold, known contexts included (`openapi`). |
+| `config/valid` | `ddd-ts-kit.config.json` is consistent: known contexts, classifications, relationships, rule ids and severities (a rule set for some files names them in `files`), guard mode and import extension, directories (`sourceRoot`, `contextsDir`, `sharedKernelDir`, `platformDir`) inside the project, the same contexts as on disk, a function limit within the ceiling, complete `onePerFile.allow` entries, positive commit limits, coverage thresholds that are percentages, known extra pipeline jobs (`ci.extras`), a known contract format and contract documents that each have a file-safe name of their own and name what they hold, known contexts included (`openapi`). |
 | `config/rule-off-everywhere` | A rule turned `off` is turned off for the files it is meant for: `"<id>": { "severity": "off", "files": ["<glob>"] }`, which leaves every other file judged. A bare `"off"` is reported, even when a deviation records it; `"files": ["**"]` says that the whole project is meant. Default severity `warn`. |
 | `config/suppression-needs-reason` | An inline suppression names its rule and gives a reason after `--`. |
 
@@ -1629,8 +1629,12 @@ survivors of the files it touched, from an incremental run that reuses the repor
 floor is not a goal, and the measure is never narrowed by hand (`test/mutation-governed`).
 
 What the tests state is read back as a document: `ddd-ts-kit docs` writes `docs/behaviour/`, one
-page per context and one for the application, from the titles of the specs, grouped as the specs
-group them, a planned rule (`it.todo`) said so. The title of a test states a rule
+page per context and one for the application, from the titles of the specs: one heading per use
+case (its handler, policy, route, end-to-end and acceptance specs together), then one per part of
+the model and one per reaction, the specs that fit none under their directory; under each, the
+titles a template of the kit wrote apart from the rules written for the project, a planned rule
+(`it.todo`) last and said so, the row a title cites (`#US5.02 AC1`) before it, and the rows cited
+counted at the end. The title of a test states a rule
 (`test/title-states-a-rule`), so the page reads as the business would write it; the pre-commit hook
 regenerates it when a spec is committed and `docs --check` holds it current: the test is the proof,
 the page its reading, and no second language is kept in step with the code.

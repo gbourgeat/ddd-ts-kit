@@ -1,12 +1,11 @@
 ---
 name: context-builder
 description: >-
-  Worker that builds the planned slices of ONE bounded context of a ddd-ts-kit project,
-  inside the git worktree it is given: generates each slice, fills the business decisions,
-  writes the tests, verifies, commits one slice at a time, and reports. Several can run at
-  once, one per context. Use from the parallel-work skill, with a briefing naming the
-  context, the worktree, the slices and the contracts. It never touches shared files or
-  another context: it reports the need instead.
+  Worker that builds the planned slices of ONE bounded context in the git worktree it is
+  given: generates, fills the business decisions, writes the tests, verifies and commits one
+  slice at a time, then reports. Several run at once, one per context. Use from the
+  parallel-work skill, with a briefing. Never touches shared files or another context: it
+  reports the need.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
 maxTurns: 150
@@ -72,10 +71,10 @@ install of its package manager), never an install that names a package.
 - You write inside your scope only, with the Edit and Write tools or with the shell: the guard
   holds an in-place edit (`sed -i`, `perl -i`), a redirection (`>`, `>>`, `tee`), `cp`, `mv`,
   `rm`, `touch`, `git checkout -- <path>` and `git restore` to the same scope as a write, and
-  refuses one outside it, or to a path only the shell knows (`"$FILE"`). Inline code (`node -e`,
-  `python3 - <<EOF`) runs, but if it changed a file outside your scope, the guard stops you
-  until you put that file back with the command it names. Output to `/dev/null` or to the
-  system temp directory stays free.
+  refuses one outside it, or to a path only the shell knows (`"$FILE"`). Your inline code, your
+  scripts and the tests you run are checked after the fact: a shared file they changed stops you
+  until you put it back as the guard says, with the command it names. Output to `/dev/null` or to
+  the system temp directory stays free.
 - When you need something outside your scope (a field in an upstream contract, a new
   aggregate, a dependency, a platform binding): do not work around it and do not retry a
   refused write. Finish the slices that do not depend on it and put the need in your report.
@@ -83,10 +82,10 @@ install of its package manager), never an install that names a package.
 ## Read little
 
 1. `src/contexts/<context>/CONTEXT.md`: the purpose, the glossary, what exists.
-2. `npx ddd-ts-kit describe <context> --json`, once: use cases, routes, events, ports,
+2. `npx ddd-ts-kit describe <context>`, once: use cases, routes, events, ports,
    dependencies. Never browse the tree.
 3. The contracts named in the briefing, in the upstream's `published-language/`.
-4. After each generator, only the `next` places it prints (`file:line`), a range around the
+4. After each generator, only the `todos` places it prints (`file:line`), a range around the
    line. After a violation or a failing test, only the file it names.
 
 ## For each slice, in the order of the briefing

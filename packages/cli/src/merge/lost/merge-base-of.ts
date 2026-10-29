@@ -1,6 +1,7 @@
 import { CliError } from '../../cli-error';
 import { runGit } from '../../commit/run-git';
-import { commitOf } from './commit-of';
+import { commitOf } from '../../commit/commit-of';
+import { knownCommit } from '../../commit/known-commit';
 import type { MergeToVerify } from './merge-to-verify';
 
 /** The two sides of a merge, and what names its base when git should not compute it. */
@@ -22,7 +23,10 @@ export function mergeBaseOf(top: string, candidates: BaseCandidates): Pick<Merge
   const { ours, theirs, option, trailer } = candidates;
 
   if (option !== undefined) {
-    return { base: known(top, option), baseFrom: 'option' };
+    return {
+      base: knownCommit(top, option, 'Pass a commit, a branch or a tag: `--base <commit>`.'),
+      baseFrom: 'option',
+    };
   }
 
   const recorded = trailer === undefined ? undefined : commitOf(top, trailer);
@@ -41,17 +45,4 @@ export function mergeBaseOf(top: string, candidates: BaseCandidates): Pick<Merge
   }
 
   return { base, baseFrom: 'merge-base' };
-}
-
-function known(top: string, ref: string): string {
-  const commit = commitOf(top, ref);
-
-  if (commit === undefined) {
-    throw new CliError(
-      `${ref} is not a commit of this repository.`,
-      'Pass a commit, a branch or a tag: `--base <commit>`.',
-    );
-  }
-
-  return commit;
 }

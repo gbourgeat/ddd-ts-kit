@@ -97,7 +97,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `npx ddd-ts-kit acceptance [<story>] [--gate written\|passing]` | the scenarios of each story against its rows and criteria: left to write, pending, drifted from the lock, inconsistent, and the amendments to validate | before the code of a story (`written`), before closing it (`passing`) | a short text, `--json` for data; exits 1 while the gate is not met | write, lock, build, or report the amendments |
 | `/ddd-ts-kit:use-case <UseCase>` | one slice end to end, test first | for each row of the slices | domain, handler, route and specs, filled | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below); `--module <module>` writes into a module of the model, and is required in a context that declares modules | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
-| `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left, in the code, the pages, the files of `prisma/schema/` (under the context of the file or of the model), the migrations and the configuration at the root | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
+| `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left, in the code, the pages, the files of `prisma/schema/` (under the context of the file or of the model), the migrations and the configuration at the root | before closing a slice, a story or a milestone | `file:line` entries, with their first words only under `--brief` | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
 | `npx ddd-ts-kit story-check <code> [--strict]` | whether a story or a milestone (`M1` for the rows `M1.*`) can close: every row `done`, no marker of its own left, a marker being its own when its text, the commit that wrote it or the worker holding it names one of its rows, or when it belongs to no row in a context no other open story works in | before a story or a milestone is declared closed; `status` names one whose rows are done while markers keep it open | one line when it can close; else each blocker with why it is the story's, its `file:line` and its fix, then the unattributed markers it lists without blocking; exits 0, 1, or 2 on an unknown code | handle each blocker or dismiss it with `generate adr`, then delete the marker; name the row in an unattributed one (`TODO(review): #M1.03 ...`) |
 | `npx ddd-ts-kit measures [--since <date>] [--story <code>]` | what the loop of each story cost and left, from git and `docs/architecture/`: design, build and lead time, the requirements changed after the build started, the provisional decisions, the compromises, the review markers settled and the findings repeated across stories, the verification, the stories built at the same time, the origin, the incidents repeated; then the medians of the period; `--by-author` only when the team agreed on it | once a month, by whoever tunes the setup; before a retrospective | one line per story and the medians, `--json` for a dashboard; exits 0 | a repeated remark becomes a line of `AGENTS.md` or a rule of the config; a long design time, a question asked earlier |
 | `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees, with the documents of each row's design and the names they cite the trunk does not have | each worker's `use-case` |
@@ -155,7 +155,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command | Does | When | Produces | Then |
 |---|---|---|---|---|
 | read [CHANGELOG.md](../../CHANGELOG.md), also shipped as `node_modules/ddd-ts-kit/CHANGELOG.md` | what changed and what to do | before upgrading, or when the session start says the plugin describes another version | the steps of the version | update the `@ddd-ts-kit/*` and `ddd-ts-kit` versions together |
-| `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again | after the upgrade | the platform and pipeline files of the new version, and notes | `npm run verify` |
+| commit, then `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again; keeps `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` and the pipeline as the team's, merges `.gitignore` and `.dockerignore`; refuses, exit 2, while a file it would replace differs from the last commit | after the upgrade, on a clean working tree | the platform files of the new version, the files it kept, and notes | `git diff`, then `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply`, `value-objects` | moves function routes to controllers, error classes to factories, value objects from a `Result` to factories that throw | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npx ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]` | moves the files of `src/platform/` a project generated flat to their folders (`composition/`, `observability/`, `jobs/`, `auth/authentication/`, `auth/authorization/`, the folder of the model, `audit/search-audit-entries/`), with every import of them and the scripts of package.json | when `doctor` reports `folder src/platform: flat`; the generators and `init --force` keep the flat layout until then | the moved files, the rewritten imports, the files of the team it left flat | `npm run format`, `npm run verify` |
 | `npm run regenerate` | regenerate what derives from the config | after any change of the config | `.dependency-cruiser.cjs`, the generated documents | `npm run verify` |
@@ -224,14 +224,19 @@ owner's agreement and a decision record (the last row of the table above).
 ## Reference
 
 Every command and flag, as `npx ddd-ts-kit --help` prints them. A test of the CLI fails when a
-command or a flag is added without this part being regenerated.
+command or a flag is added without this part being regenerated. `npx ddd-ts-kit <command> --help`
+prints the part of one command (its usage lines, its note and the notes of its flags), and
+`npx ddd-ts-kit generate <kind> --help` one kind.
 
 Exit codes: `0` success; `1` violations, a gate not met, stale documentation; `2` wrong usage or a
 refusal (the message says what to do); `3` a command that writes files (`init`, `generate`,
 `docs`, `sdk`, a move) could not write some of them where it ran, such as the paths the sandbox of
 an agent protects. With `3` the report lists them under `unwritable` (and in `skipped`), a dry run
 included; every other file is written and none is deleted. Run the same command where they can be
-written, outside the sandbox: `init` gives the command in a note.
+written, outside the sandbox: `init` gives the command in a note. `4` is an internal error of the
+kit, never a mistake of the caller: one line with the version of the kit and where to report it
+(under `--json`, an `error` with `"internal": true`); report it at
+https://github.com/gbourgeat/ddd-ts-kit/issues with the command it gives.
 
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->
@@ -257,13 +262,13 @@ Usage
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk] [--agent-profile regulated|none]
                   [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
-  ddd-ts-kit generate --help --json
+  ddd-ts-kit generate <kind> ... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
+  ddd-ts-kit generate [<kind>] --help [--json]
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
   ddd-ts-kit status [--workers]
   ddd-ts-kit doctor [--strict]
-  ddd-ts-kit todo [<context>]
+  ddd-ts-kit todo [<context>] [--brief]
   ddd-ts-kit plan-waves [<context>]
   ddd-ts-kit story-check <code> [--strict]
   ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
@@ -306,7 +311,9 @@ Usage
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 
-Every command accepts --json (machine-readable output) and --cwd <dir> (project root).
+Every command accepts --json (machine-readable output, on one line) and --cwd <dir> (project root).
+ddd-ts-kit <command> --help prints the usage and the notes of that command alone, generate <kind> --help one kind;
+--json gives either as data.
 
   affected         what a pull request has to run: the contexts a change set reaches through the context
                    map (a changed context and the contexts downstream of it), as filters for the test
@@ -347,8 +354,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    audit/search-audit-entries/; every import of them under the source root, test/ and
                    scripts/ follows, and the scripts of package.json; a file the kit did not write at
                    the root of the platform or of auth/ stays where it is, named, unless --place
-                   <file>=<folder> (both from the platform) gives it its folder; the generators and
-                   init --force keep either layout until then
+                   <file>=<folder> (both from the platform, a file outside it refused) gives it its
+                   folder; the generators and init --force keep either layout until then
   move-to-module   takes files of a context into a module of its model, declared first with generate module,
                    each to <module>/<layer>/ and each spec to test/<unit|integration>/<module>/: each <path>
                    is a file or a folder of a role or a spec, relative to the context
@@ -413,7 +420,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   todo             those markers as file:line, in the project or in one context, read in every kind of file
                    they are written into: the code, the pages, the files of prisma/schema/ (a marker of
                    prisma/schema/<context>.prisma is of that context, another of the context whose
-                   database schema holds its model), the migrations, the configuration at the root
+                   database schema holds its model), the migrations, the configuration at the root;
+                   --brief prints each as file:line and its first words (up to its first : or ;), the
+                   file holding the rest; --json keeps every text
   mutation         the mutation score of the domain and application layers of each context, read from the
                    json report the last stryker run wrote (reports/mutation/mutation.json, or --report
                    <file>), each held to its "mutation" floor of the config (80 and 75 by default): detected over detected and
@@ -436,10 +445,15 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    stories the planned rows wait for, not done, in a section of their own, the merge order
                    and what runs before each merge (merge-trunk --to-land); a cycle, a dependency on an
                    unknown id or a row without owner is reported alone, and exits 1. Then replays the
-                   generator commands of the rows in a copy of the project, in the order of the waves,
-                   and reports without waves, exiting 1, each name whose words the glossary of its
-                   context does not define with the --term of its row and of the rows it waits for;
-                   the commands refused for another reason are listed, without failing
+                   generator commands of every open row in a copy of the project, in the order of the
+                   waves, those of other contexts too, and reports for the rows planned, without
+                   waves, exiting 1, each name whose words the glossary of its context does not define
+                   with the --term of its row and of the rows it waits for, each command the generator
+                   refuses for another reason (refused-command), its refusal and fix under the row, with
+                   the rows that generate what it builds on, and each command that builds on a file a
+                   row it does not wait for generates (missing-dependency); a row in progress, whose
+                   commands may have run and whose worker may have added a term, counts for none, its
+                   refusals listed apart
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left
@@ -600,18 +614,30 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
                    annotation carries the reason of its rule, a pull request showing an annotation on its own
   --behaviour      docs writes the pages of what the tests state (docs/behaviour/) alone, every other generated
-                   document left as it is: what the pre-commit hook runs when a spec is staged; with --check,
-                   those pages alone are compared
+                   document left as it is: what the pre-commit hook runs when a spec, a source under src/ or the
+                   config is staged; with --check, those pages alone are compared
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one but one recorded by 0.82.0 or earlier, recorded again as
                    the kit reads it now: run it once the shape of a version is the one to store; docs --check
                    fails while a declared version is not recorded, or recorded by 0.82.0 or earlier, or
                    recorded as the hash of nothing; the codecs of each module of a context are read too, and a
                    codec whose data type is not found or declares no member is refused, nothing recorded
+  --force          init and generate replace the files that exist with what the kit writes, only while git
+                   holds them: a file to replace that differs from the last commit (uncommitted, staged,
+                   or untracked and not ignored) refuses the command, exit 2, the files named, nothing
+                   written; outside a git repository, every file whose content would change does; commit
+                   or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,
+                   AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed
+                   as kept) and merges .gitignore and .dockerignore, the lines of the team kept
+  --force          generate replaces the files that exist with what the kit writes, only while git holds
+                   them: a file to replace that differs from the last commit refuses the command, exit 2,
+                   the files named, nothing written; outside a git repository, every file whose content
+                   would change does; commit or stash first, then git diff shows what the kit rewrote
   --sdk            init records "sdk" in the config and generates the clients with the project
   --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
                    a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being
-                   the one character a cell of the table cannot hold
+                   the one character a cell of the table cannot hold; taken by the kinds whose usage below
+                   shows it, refused by the others, as is any flag the usage of a kind does not show
   --reason         generate context writes it under ## Classification, the sentence of why the context is
                    of its classification; generate adr --deviation records it as the reason of the deviation
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
@@ -647,7 +673,7 @@ Kinds
   port <context> <Name> [--module <module>]
   route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]
   controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store] [--module <module>]
-  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>] [--module <module>]
+  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
   representation <context> <UseCase> <xml|csv|media/type>[,...] [--module <module>]
@@ -664,7 +690,7 @@ Kinds
   acl <context> <upstreamOrSystemName> [--module <module>]
   e2e <context> <UseCaseName> [--event <eventType>]
   acceptance <story> ["<title>"]
-  policy <context> <Name> --permission <aggregate>.<action> [--module <module>]
+  policy <context> <Name> --permission <aggregate>.<action> [--term "<Term>=<meaning>"]... [--module <module>]
   gateway <context> <upstreamContext> <Name> [--module <module>]
   adapter <context> <Port> [--kind external|gateway|simulated] [--decorators] [--module <module>]
   service <context>

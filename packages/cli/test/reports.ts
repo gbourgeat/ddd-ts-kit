@@ -6,8 +6,8 @@ export interface Report {
   readonly created: string[];
   readonly updated: string[];
   readonly skipped: string[];
-  readonly next: string[];
-  readonly todos: { file: string; line: number; text: string }[];
+  /** Each place to decide at: the first words of its marker, and the whole sentence of a step no file holds. */
+  readonly todos: { file: string; line: number; gist: string; text?: string }[];
   readonly notes: string[];
 }
 

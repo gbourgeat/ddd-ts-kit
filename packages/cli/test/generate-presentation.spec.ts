@@ -3,6 +3,7 @@ import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
+import { commitAll } from './support/commit-all';
 
 const HTTP = 'src/contexts/billing/presentation/http';
 const ISSUE = `${HTTP}/invoices/issue-invoice/issue-invoice.controller.ts`;
@@ -119,6 +120,7 @@ describe('a project initialised before representations and forms', () => {
     const { representations: _representations, forms: _forms, ...before } = stack as Record<string, unknown>;
 
     write(root, 'ddd-ts-kit.config.json', `${JSON.stringify({ ...(config as object), stack: before }, null, 2)}\n`);
+    commitAll(root);
 
     expect(cli(root, 'init', '--force').code).toBe(0);
     expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack', 'representations')).toBe('json');
