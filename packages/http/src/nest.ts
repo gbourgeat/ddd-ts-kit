@@ -19,5 +19,7 @@ export type { NestSignature } from './nest/controllers/nest-signature';
 export { Upload } from './nest/controllers/upload';
 export { withSignatures } from './nest/controllers/with-signatures';
 export { createRoutesModule, type RoutesModuleOptions } from './nest/create-routes-module';
+export type { EdgeErrorOptions } from './error/answered-edge-error';
+export { ProblemExceptionFilter, type ProblemWriter } from './nest/problem-exception-filter';
 export type { RoutesFactory } from './nest/routes-factory';
 export { RoutesMounter } from './nest/routes-mounter';

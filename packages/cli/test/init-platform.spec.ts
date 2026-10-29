@@ -185,6 +185,55 @@ describe('the platform init writes', () => {
   });
 });
 
+describe('the proxies the HTTP server init writes trusts', () => {
+  it.each([
+    ['express', "app.set('trust proxy', config.trustProxy);"],
+    ['fastify', 'const app = Fastify({ trustProxy: trustedProxies(config.trustProxy) });'],
+    ['nest', "app.set('trust proxy', config.trustProxy);"],
+  ])('trusts no proxy on %s unless TRUST_PROXY names them, by hops or by address', (http, applied) => {
+    const root = initProject('--http', http, '--cache', 'redis');
+
+    expect(read(root, 'src/platform/config/app-config.ts')).toContain(
+      'readonly trustProxy: false | number | readonly string[];',
+    );
+
+    const loadConfig = read(root, 'src/platform/config/load-config.ts');
+
+    expect(loadConfig).toContain('trustProxy: readTrustProxy(env),');
+
+    expect(loadConfig).toContain(
+      "const written = env.optional('TRUST_PROXY');\n\n  if (written === undefined) {\n    return false;",
+    );
+
+    expect(read(root, 'src/platform/http/start-http-server.ts')).toContain(applied);
+    expect(read(root, '.env.example')).toContain('\n# TRUST_PROXY=1\n');
+    expect(read(root, 'README.md')).toContain('set `TRUST_PROXY`');
+  });
+
+  it('counts the proxies on Hono, for the rate limit, which alone reads the caller', () => {
+    const limited = initProject('--http', 'hono', '--cache', 'redis');
+    const unlimited = initProject('--http', 'hono');
+
+    expect(read(limited, 'src/platform/config/load-config.ts')).toContain(
+      "trustProxy: env.integer('TRUST_PROXY', { fallback: 0, min: 0, max: 32 }),",
+    );
+
+    expect(read(limited, 'src/platform/http/start-http-server.ts')).toContain(
+      'callerAddress(getConnInfo(context).remote.address, forwardedFor, config.trustProxy)',
+    );
+
+    expect(read(unlimited, 'src/platform/config/app-config.ts')).not.toContain('trustProxy');
+    expect(read(unlimited, '.env.example')).not.toContain('TRUST_PROXY');
+  });
+
+  it('reads no TRUST_PROXY without an HTTP server', () => {
+    const root = initProject('--http', 'none');
+
+    expect(read(root, 'src/platform/config/load-config.ts')).not.toContain('TRUST_PROXY');
+    expect(read(root, '.env.example')).not.toContain('TRUST_PROXY');
+  });
+});
+
 const STACKS: readonly (readonly string[])[] = [
   [],
   ['--style', 'explicit'],

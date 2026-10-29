@@ -1,5 +1,5 @@
 import Fastify{{#if cache.rateLimit}}, { type FastifyInstance }{{/if}}{{#unless cache.rateLimit}}{{#unless rpc.none}}, { type FastifyInstance }{{/unless}}{{/unless}} from 'fastify';
-import { mountFastify } from '@ddd-ts-kit/http/fastify';
+import { mountFastify, problemErrorHandler } from '@ddd-ts-kit/http/fastify';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/fastify';
@@ -25,7 +25,7 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
@@ -35,7 +35,11 @@ type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | '
  * as tRPC procedures under /trpc, for the typed client of the contract.{{/if}}
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
-  const app = Fastify();
+  // TRUST_PROXY: which proxies name the caller in X-Forwarded-For, for `request.ip`; none by default.
+  const app = Fastify({ trustProxy: trustedProxies(config.trustProxy) });
+
+  // Before any route: a body Fastify refuses and a failed hook are answered as problems, not with their message.
+  app.setErrorHandler(problemErrorHandler({ logger: served.logger }));
 
 {{#if cache.rateLimit}}
   answerReadiness(app, served);
@@ -61,6 +65,15 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   const [address] = app.addresses();
 
   return { port: address?.port ?? 0, close: () => app.close() };
+}
+
+/** TRUST_PROXY as Fastify takes it: a number of hops as the test of each hop. */
+function trustedProxies(trustProxy: AppConfig['trustProxy']): boolean | string[] | ((address: string, hop: number) => boolean) {
+  if (typeof trustProxy === 'number') {
+    return (_address, hop) => hop < trustProxy;
+  }
+
+  return trustProxy === false ? false : [...trustProxy];
 }
 {{#if cache.rateLimit}}
 

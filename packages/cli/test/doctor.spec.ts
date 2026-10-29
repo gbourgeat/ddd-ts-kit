@@ -148,4 +148,20 @@ describe('doctor, on the git hooks', () => {
 
     expect(cli(pnpm, 'doctor').stdout).toContain('fix: `pnpm run hooks:install` installs the hooks');
   });
+
+  it('speaks the package manager of the project in the fix of what the project lacks', () => {
+    const pnpm = path.join(tempDir('doctor-pnpm'), 'shop');
+
+    cli(pnpm, 'init', '--context', 'billing:core', '--package-manager', 'pnpm');
+
+    const manifest: Record<string, Record<string, string>> = JSON.parse(read(pnpm, 'package.json'));
+
+    delete manifest['scripts']?.['regenerate'];
+    write(pnpm, 'package.json', JSON.stringify(manifest, null, 2));
+
+    const { stdout } = cli(pnpm, 'doctor');
+
+    expect(stdout).toContain('fix: `pnpm exec ddd-ts-kit init` adds what is missing');
+    expect(stdout).not.toContain('npx ');
+  });
 });

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6f250d2a07b22cea -->
+<!-- translation-of: README.md sha256:6b9aa1874d4df52f -->
 
 # @ddd-ts-kit/http
 
@@ -1207,16 +1207,32 @@ généré par la CLI les écrit dans `openapi/forms/<operationId>.json` à côt�
 ```ts
 import express from 'express';
 import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
-import { mountExpress } from '@ddd-ts-kit/http/express';
+import type { Logger } from '@ddd-ts-kit/kernel';
+import { mountExpress, problemErrorHandler } from '@ddd-ts-kit/http/express';
 
 declare const routes: readonly Route[]; // defineRoutes(...), controllerRoutes(...)
 declare const options: ExecuteOptions;
+declare const logger: Logger;
 
 const app = express();
 app.use(express.json()); // obligatoire : l'adaptateur n'analyse pas les corps
 mountExpress(app, routes, options); // un express.Router() convient aussi
+app.use(problemErrorHandler({ logger })); // en dernier : ce qu'Express refuse avant une route
 app.listen(3000);
 ```
+
+`problemErrorHandler` répond sous forme de *problem* à ce qui atteint Express avant une route du
+kit : un corps que `express.json()` ne sait pas analyser reçoit un 400 `MALFORMED_BODY`, un corps
+au-delà de sa limite (100 ko par défaut) un 413 `BODY_TOO_LARGE`, une autre erreur porteuse d'un
+statut (`status` ou `statusCode`, 4xx ou 5xx) ce statut, avec le code que le kit lui donne
+(`UNAUTHORIZED`, `VALIDATION_FAILED` pour 422, `SERVICE_UNAVAILABLE` pour le 503 d'un stockage
+en panne) et les en-têtes qu'elle porte pour son client (`WWW-Authenticate`, `Allow`,
+`Retry-After`), et toute autre erreur qu'un middleware passe à `next` un 500 `INTERNAL_ERROR`,
+sans rien de son message. Un corps vide atteint la route comme absent (`undefined`), comme sur
+chaque framework, pour que sa validation décide. Sans lui, le gestionnaire final d'Express répond une page HTML, avec la pile
+hors production, et écrit l'erreur sur stderr, corps cité compris. Le gestionnaire écrit dans
+`logger` le type de l'erreur (`entity.parse.failed`), le statut et l'identifiant de la requête,
+jamais le message ni le corps : un refus comme avertissement, une panne comme erreur.
 
 ## Fastify 5
 
@@ -1224,16 +1240,30 @@ app.listen(3000);
 ```ts
 import Fastify from 'fastify';
 import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
-import { fastifyRoutes, mountFastify } from '@ddd-ts-kit/http/fastify';
+import type { Logger } from '@ddd-ts-kit/kernel';
+import { fastifyRoutes, mountFastify, problemErrorHandler } from '@ddd-ts-kit/http/fastify';
 
 declare const routes: readonly Route[];
 declare const options: ExecuteOptions;
+declare const logger: Logger;
 
 const app = Fastify();
+app.setErrorHandler(problemErrorHandler({ logger })); // en premier : ce que Fastify refuse avant une route
 mountFastify(app, routes, options);
 // ou, comme plugin :
 await app.register(fastifyRoutes(routes, options), { prefix: '/api' });
 ```
+
+`problemErrorHandler` de `@ddd-ts-kit/http/fastify` fait sur Fastify ce que fait celui
+d'Express : un corps que son analyseur refuse reçoit un 400 `MALFORMED_BODY`, un corps au-delà de
+`bodyLimit` (1 Mio par défaut) un 413 `BODY_TOO_LARGE`, un type de média qu'aucun analyseur ne
+lit un 415 `UNSUPPORTED_MEDIA_TYPE`, un hook qui lève une erreur le statut qu'elle porte ou un
+500 `INTERNAL_ERROR`, ses en-têtes gardés comme sur Express, au lieu
+de `{ statusCode, code, error, message }`, qui porte au client le message d'une erreur
+inattendue. Installez-le avant de monter les routes. L'analyseur de Fastify refuse un corps JSON
+vide, qu'Express et Hono transmettent comme absent : `mountFastify` enregistre les routes dans un
+contexte à elles où un corps vide les atteint comme absent, tout autre corps lu par l'analyseur
+JSON de Fastify.
 
 ## Hono 4
 
@@ -1242,12 +1272,15 @@ await app.register(fastifyRoutes(routes, options), { prefix: '/api' });
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
-import { mountHono } from '@ddd-ts-kit/http/hono';
+import type { Logger } from '@ddd-ts-kit/kernel';
+import { mountHono, problemErrorHandler } from '@ddd-ts-kit/http/hono';
 
 declare const routes: readonly Route[];
 declare const options: ExecuteOptions;
+declare const logger: Logger;
 
 const app = new Hono();
+app.onError(problemErrorHandler({ logger })); // un middleware qui lève une erreur, répondu en problem
 mountHono(app, routes, { ...options, bodyLimit: 2 * 1024 * 1024 }); // bodyLimit : 1 Mio par défaut
 serve({ fetch: app.fetch, port: 3000 });
 ```
@@ -1260,7 +1293,10 @@ un type de média que la route consomme (`consumes`) est lu comme du texte sous 
 pour sa représentation ; un autre type de média n'est pas lu, et le pipeline répond 415 quand des
 représentations sont montées. Un téléversement et un corps brut sont lus depuis le flux de la
 requête HTTP, avec les limites que déclare leur route, et une réponse en flux ou une liste en flux
-est envoyée en flux. Une requête HTTP porte `HonoRaw`
+est envoyée en flux. Un middleware placé devant les routes qui lève une erreur reçoit sa réponse
+sous forme de *problem* de `problemErrorHandler`, un 500 `INTERNAL_ERROR` ou le statut d'une
+`HTTPException` avec les en-têtes de sa réponse, journalisé comme sur Express, au lieu d'un texte
+avec l'erreur écrite sur stderr. Une requête HTTP porte `HonoRaw`
 comme requête brute (ses en-têtes sous forme d'objet, que lisent les authentificateurs du kit,
 et le `Context` de Hono), et un paramètre de chaîne de requête répété est une liste, comme sur
 Express et Fastify. L'adaptateur n'importe rien de Hono à l'exécution, et `node:stream` pour les
@@ -1300,6 +1336,17 @@ Un simple tableau convient aussi : `createRoutesModule(routes, options)`. Ces ro
 contournent les pipes, les guards, les intercepteurs, les filtres d'exceptions et le préfixe
 global de Nest : la validation et la correspondance des erreurs sont celles décrites plus haut.
 Utilisez `prefixRoutes` pour un préfixe.
+
+Ce qui atteint Nest avant une route du kit, un corps que son analyseur refuse, un chemin
+qu'aucune route ne sert, un middleware en échec, reçoit sa réponse du filtre d'exceptions de
+Nest, `{ statusCode, message }`, un message qui peut citer le corps, et est journalisé en entier.
+`ProblemExceptionFilter` y répond plutôt sous forme de *problem*, sur Express comme sur Fastify,
+et le journalise comme `problemErrorHandler` :
+`app.useGlobalFilters(new ProblemExceptionFilter(app.getHttpAdapter(), { logger }))`. Un corps
+trop grand reçoit un 413 `BODY_TOO_LARGE`, un chemin qu'aucune route ne sert un 404 `NOT_FOUND`,
+un corps qui n'est pas du JSON un 400 `MALFORMED_BODY` comme sur les autres frameworks : Nest
+enveloppe l'erreur de son analyseur dans une exception à lui avant tout filtre, que le filtre
+reconnaît à son statut, à son message et à une requête JSON dont le corps n'a jamais été lu.
 
 ### Contrôleurs Nest servis par le kit
 
@@ -1773,9 +1820,10 @@ schéma de corps n'est jamais refusée par un 406.
 ## Limites
 
 - Sur Express, Fastify et NestJS, un corps que le framework refuse lui-même (JSON mal formé,
-  charge trop grande) reçoit sa réponse du gestionnaire d'erreurs du framework, avant que le
-  pipeline s'exécute. L'adaptateur Hono lit lui-même le corps et répond aux deux cas par des
-  *problems* (voir « Hono 4 »).
+  charge trop grande) est refusé avant que le pipeline s'exécute : il reçoit un *problem* une fois
+  `problemErrorHandler` ou `ProblemExceptionFilter` installé, la réponse du gestionnaire
+  d'erreurs du framework sinon. L'adaptateur Hono lit lui-même le corps et répond aux deux cas
+  par des *problems* (voir « Hono 4 »).
 - Les routes sont d'abord JSON. Un gestionnaire peut répondre un texte, des octets ou un flux en
   fixant son propre en-tête `content-type`, auquel aucune représentation ne touche. Un corps de
   requête HTTP n'est reçu en flux que comme téléversement déclaré ou comme corps brut

@@ -31,6 +31,7 @@ import { expectedVersionOf } from './expected-version-of';
 import { iteratedWithin, type Within } from './iterated-within';
 import { negotiatedVary } from './negotiated-vary';
 import { negotiation, type Negotiation } from './negotiation';
+import { PROBLEM_CONTENT_TYPE } from './problem-content-type';
 import type { RawRequest } from './raw-request';
 import { readBody } from './read-body';
 import { receiveUpload } from './receive-upload';
@@ -57,7 +58,6 @@ interface Call {
 
 const defaultErrorMapper = createErrorMapper();
 const JSON_CONTENT_TYPE = 'application/json; charset=utf-8';
-const PROBLEM_CONTENT_TYPE = 'application/problem+json; charset=utf-8';
 
 export async function executeRoute(
   route: Route,

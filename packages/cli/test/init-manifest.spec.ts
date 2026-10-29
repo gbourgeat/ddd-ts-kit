@@ -256,7 +256,7 @@ describe('the local infrastructure init writes', () => {
     const dockerfile = read(root, 'Dockerfile');
 
     expect(compose).toContain('image: postgres:18');
-    expect(compose).toContain('- "${POSTGRES_PORT:-5432}:5432"');
+    expect(compose).toContain('- "127.0.0.1:${POSTGRES_PORT:-5432}:5432"');
     expect(compose).toContain('healthcheck:');
     expect(compose).toContain('postgres-data:/var/lib/postgresql');
     expect(compose).toMatch(/jaeger:\n\s+image: jaegertracing\/jaeger:\d+\.\d+\.\d+\n\s+profiles: \[observability\]/);
@@ -264,5 +264,40 @@ describe('the local infrastructure init writes', () => {
     expect(dockerfile).toContain('RUN npm ci --omit=dev');
     expect(dockerfile).toContain('USER node');
     expect(dockerfile.match(/^FROM /gm)).toHaveLength(3);
+  });
+});
+
+/** Every entry under a `ports:` key of a compose file, as written. */
+function publishedPorts(compose: string): string[] {
+  const entries: string[] = [];
+  let listing = false;
+
+  for (const line of compose.split('\n')) {
+    const entry = /^\s+- (.+)$/.exec(line);
+
+    if (/^\s+ports:$/.test(line)) {
+      listing = true;
+    } else if (listing && entry?.[1] !== undefined) {
+      entries.push(entry[1]);
+    } else {
+      listing = false;
+    }
+  }
+
+  return entries;
+}
+
+describe('the local infrastructure init writes', () => {
+  it.each([
+    [['--broker', 'rabbitmq', '--cache', 'redis', '--authn', 'keycloak', '--errors', 'sentry', '--storage', 's3']],
+    [['--broker', 'kafka', '--http-cache', 'varnish']],
+    [['--broker', 'nats']],
+  ])('publishes every port on 127.0.0.1 only, its default credentials kept off the network (%j)', (flags) => {
+    const root = initProject(...flags);
+    const ports = publishedPorts(read(root, 'docker-compose.yml'));
+
+    expect(ports.length).toBeGreaterThan(2);
+    expect(ports.filter((port) => !port.startsWith('"127.0.0.1:'))).toEqual([]);
+    expect(read(root, 'README.md')).toContain('publishes every port on `127.0.0.1` only');
   });
 });

@@ -31,6 +31,11 @@ npm run db:migrate
 npm run dev
 ```
 
+`docker-compose.yml` publishes every port on `127.0.0.1` only: its accounts and passwords are
+for this machine, and a port published on every interface is open to the network, past the
+firewall of the host. To reach a service from another machine on purpose, write the address to
+listen on in its `ports` entry (`"0.0.0.0:5432:5432"`), with credentials of its own.
+
 {{#if persistence.hasDatabase}}
 Every migration is named `<timestamp>_<what-it-does>`: `npm run db:generate` refuses to run
 without a name, so two branches never write the same file, and `npm run check:arch` reports
@@ -44,6 +49,23 @@ when the file is there, and `--import` loads `{{config.platformDir}}/observabili
 everything else so that instrumentation is installed first.
 `{{config.platformDir}}/config/load-config.ts` validates the variables and refuses to start when
 one is wrong.
+{{#if http.any}}
+{{#unless http.hono}}
+
+Behind a load balancer or a reverse proxy, set `TRUST_PROXY` (see `.env.example`): a number of
+hops, or the addresses of the proxies, believed when they name the caller in `X-Forwarded-For`.
+Left out, no proxy is trusted: `request.ip` is the address of the socket{{#if cache.rateLimit}}, and behind a proxy
+every caller shares one window of the rate limit{{/if}}.
+{{/unless}}
+{{#if http.hono}}
+{{#if cache.rateLimit}}
+
+Behind a load balancer or a reverse proxy, set `TRUST_PROXY` (see `.env.example`) to the number of
+proxies that add the caller to `X-Forwarded-For`: left out, no proxy is trusted and every caller
+behind one shares one window of the rate limit.
+{{/if}}
+{{/if}}
+{{/if}}
 {{#if docs.any}}
 
 The API documentation is served at `/docs` and the contract at `/openapi.json`, outside

@@ -59,7 +59,8 @@ function registrarOf(target: IRouter): Registrar {
 function handlerOf(route: Route, options: ExpressMountOptions): ExpressHandler {
   return async (request, response) => {
     const { params, query, headers } = request;
-    const body: unknown = request.body;
+    // A parser reads an empty body as `{}`: a request that declares no bytes has no body, as on the other frameworks.
+    const body: unknown = headers['content-length'] === '0' ? undefined : request.body;
 
     const result = await executeRoute(
       route,

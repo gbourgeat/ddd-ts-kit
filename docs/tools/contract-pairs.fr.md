@@ -1,5 +1,5 @@
 [English](contract-pairs.md) · **Français**
-<!-- translation-of: contract-pairs.md sha256:f4ddd820da5b1233 -->
+<!-- translation-of: contract-pairs.md sha256:3c9a237443f2e86d -->
 
 # Paires de contrat : un framework HTTP et une bibliothèque de validation
 
@@ -236,7 +236,9 @@ laquelle les exécutions s'accordent.
 ## Limites de chaque paire
 
 - **Express + zod.** `express.json()` doit être installé ; un corps qu'Express refuse (JSON mal
-  formé) reçoit la réponse du gestionnaire d'erreurs propre à Express, pas un *problem*. zod
+  formé) reçoit un *problem* seulement avec `problemErrorHandler` de `@ddd-ts-kit/http/express`
+  monté en dernier, comme le fait le serveur généré ; sans lui, la réponse du gestionnaire
+  d'erreurs propre à Express. zod
   décrit le côté entrée par défaut : un schéma avec des valeurs par défaut utilisé comme réponse
   reçoit un second composant (`Slot_2`) sauf s'il a son propre id.
 - **Fastify + TypeBox.** La validation et la sérialisation propres à Fastify ne sont pas
@@ -247,7 +249,7 @@ laquelle les exécutions s'accordent.
 - **Hono + zod.** Éprouvé sur Node seulement. L'adaptateur lit lui-même le corps en JSON, jusqu'à
   `bodyLimit` (1 Mio par défaut, la borne de Fastify ; Express s'arrête à 100 ko) : il répond 413
   (`BODY_TOO_LARGE`) à un corps plus grand et 400 (`MALFORMED_BODY`) à un corps mal formé, les deux
-  en *problems*, là où Express et Fastify y répondent avec leur propre gestionnaire d'erreurs. La
+  en *problems*, les réponses que donne `problemErrorHandler` sur Express et Fastify. La
   requête brute est `HonoRaw`, si bien qu'un code qui lisait `request.ip` d'Express lit
   `getConnInfo(context)` de `@hono/node-server/conninfo`.
 - **NestJS + class-validator.** Le mode historique des décorateurs, l'équivalent en concepts de

@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:fd0f72e0c6c501e5 -->
+<!-- translation-of: http-frameworks.md sha256:de1dca36a0fe257e -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 
@@ -292,13 +292,16 @@ D'après [`packages/http/README.md`](../../packages/http/README.fr.md) et
 
 ## Limites, et quand ne pas l'utiliser
 
-- Un corps que le framework refuse lui-même (JSON mal formé, contenu trop volumineux) reçoit
-  pour réponse celle du gestionnaire d'erreurs propre au framework sur Express
-  (`express.json()`, 100 kB par défaut), Fastify (1 MiB) et NestJS, avant le *pipeline* : son
-  format n'est pas le format *problem*, sauf si vous le configurez. Sur Hono, l'adaptateur lit le
-  corps : un corps au-delà de `bodyLimit` (1 MiB par défaut) reçoit une réponse 413
-  `BODY_TOO_LARGE` et un JSON mal formé une réponse 400 `MALFORMED_BODY`, tous deux sous forme de
-  problèmes.
+- Un corps que le framework refuse lui-même (JSON mal formé, contenu trop volumineux) est refusé
+  avant le *pipeline* sur Express (`express.json()`, 100 kB par défaut), Fastify (1 MiB) et
+  NestJS. Il reçoit un *problem*, 400 `MALFORMED_BODY` ou 413 `BODY_TOO_LARGE`, de
+  `problemErrorHandler` de `@ddd-ts-kit/http/express` et `@ddd-ts-kit/http/fastify` et de
+  `ProblemExceptionFilter` de `@ddd-ts-kit/http/nest`, que le `start-http-server.ts` généré installe, et qui journalisent le type de
+  l'erreur et son statut, jamais le corps ; sans eux, la réponse du gestionnaire d'erreurs propre
+  au framework, qui peut écrire le corps sur stderr. Sur Hono, l'adaptateur lit le corps : un
+  corps au-delà de `bodyLimit` (1 MiB par défaut) reçoit une réponse 413 `BODY_TOO_LARGE` et un
+  JSON mal formé une réponse 400 `MALFORMED_BODY`, tous deux sous forme de problèmes, et
+  `problemErrorHandler` de `@ddd-ts-kit/http/hono` répond à un middleware en échec.
 - Les routes sont d'abord JSON. Un gestionnaire peut renvoyer une chaîne, des octets ou un flux
   avec son propre `content-type`. Un téléversement est déclaré sur son contrôleur et arrive en
   flux au gestionnaire (`multipart/form-data`, taille et types de médias dans le contrat) ; un

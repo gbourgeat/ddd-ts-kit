@@ -4,7 +4,7 @@ import { serve, type ServerType } from '@hono/node-server';
 import { getConnInfo } from '@hono/node-server/conninfo';
 {{/if}}
 import { Hono } from 'hono';
-import { mountHono } from '@ddd-ts-kit/http/hono';
+import { mountHono, problemErrorHandler } from '@ddd-ts-kit/http/hono';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/fetch';
@@ -30,7 +30,7 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
@@ -41,6 +41,9 @@ type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | '
  */
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = new Hono();
+
+  // A failed middleware is answered as a problem, not as a text with the error written to stderr.
+  app.onError(problemErrorHandler({ logger: served.logger }));
 
 {{#if cache.rateLimit}}
   answerReadiness(app, served);
@@ -77,7 +80,8 @@ function answerReadiness(app: Hono, served: Served): void {
 /** One sliding window per caller address, before authentication costs anything. */
 function limitEachCaller(app: Hono, served: Served, config: AppConfig): void {
   app.use(async (context, next) => {
-    const address = getConnInfo(context).remote.address;
+    const forwardedFor = context.req.header('x-forwarded-for');
+    const address = callerAddress(getConnInfo(context).remote.address, forwardedFor, config.trustProxy);
     const tooMany = await tooManyRequestsFor(served.rateLimiter, config.rateLimit, address);
 
     if (tooMany === undefined) {
@@ -88,6 +92,21 @@ function limitEachCaller(app: Hono, served: Served, config: AppConfig): void {
 
     return new Response(tooMany.body, { status: tooMany.status, headers: tooMany.headers });
   });
+}
+
+/**
+ * The address of the socket, or, behind `hops` trusted proxies (TRUST_PROXY), the one the farthest
+ * of them saw: X-Forwarded-For is read from the right, each proxy having added the one before it.
+ */
+function callerAddress(socket: string | undefined, forwardedFor: string | undefined, hops: number): string | undefined {
+  const forwarded = (forwardedFor ?? '')
+    .split(',')
+    .map((address) => address.trim())
+    .filter((address) => address !== '');
+
+  const chain = [socket, ...forwarded.reverse()];
+
+  return chain[Math.min(hops, chain.length - 1)];
 }
 {{/if}}
 {{#if rpc.orpc}}

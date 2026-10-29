@@ -1,4 +1,4 @@
-# Copy to .env: `npm run dev` and docker compose both read it. Never commit .env.
+# Copy to .env: `npm run dev` and docker compose both read it. Never commit .env nor any .env.* but this one: git ignores them.
 NODE_ENV=development
 PORT=3000
 # debug, info, warn or error.
@@ -104,6 +104,21 @@ VARNISH_PURGE_KEY=local-purge-key
 # Requests one caller address may send per window before the HTTP layer answers 429.
 # RATE_LIMIT_MAX=120
 # RATE_LIMIT_WINDOW_MS=60000
+{{/if}}
+{{#if http.any}}
+{{#unless http.hono}}
+# Behind a load balancer or a reverse proxy: the proxies believed when they name the caller in X-Forwarded-For (request.ip{{#if cache.rateLimit}}, the address
+# the rate limit counts{{/if}}). A number of hops (1: the nearest proxy), or their addresses, subnets or ranges (10.0.0.0/8,loopback).
+# Left out, none is: behind a proxy every caller then has the address of the proxy.
+# TRUST_PROXY=1
+{{/unless}}
+{{#if http.hono}}
+{{#if cache.rateLimit}}
+# Behind a load balancer or a reverse proxy: how many proxies add the caller to X-Forwarded-For, for the address the rate limit counts.
+# Left out (0), none is believed: behind a proxy every caller then shares the window of the proxy.
+# TRUST_PROXY=1
+{{/if}}
+{{/if}}
 {{/if}}
 {{#if authn.keycloak}}
 

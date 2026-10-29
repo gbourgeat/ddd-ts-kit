@@ -1,19 +1,12 @@
 import type { Context } from 'hono';
 import { mediaTypeOf } from '../representation/media-type-of';
-import type { EdgeRefusal } from './edge-problem';
+import { bodyTooLarge, type EdgeRefusal, MALFORMED_BODY } from '../error/edge-refusal';
 
 export type ReadBody =
   | { readonly read: true; readonly value: unknown }
   | { readonly read: false; readonly refusal: EdgeRefusal };
 
 const JSON_MEDIA = /[/+]json\b/;
-
-const MALFORMED: EdgeRefusal = {
-  status: 400,
-  title: 'Bad Request',
-  code: 'MALFORMED_BODY',
-  detail: 'The body is not valid JSON.',
-};
 
 /**
  * The JSON body of the request, `undefined` when there is none; a body in a media type the route
@@ -31,7 +24,7 @@ export async function readBody(context: Context, limit: number, consumed: readon
   const text = await boundedText(context.req.raw, limit);
 
   if (text === undefined) {
-    return { read: false, refusal: tooLarge(limit) };
+    return { read: false, refusal: bodyTooLarge(limit) };
   }
 
   if (text === '') {
@@ -73,15 +66,6 @@ function parsed(text: string): ReadBody {
 
     return { read: true, value };
   } catch {
-    return { read: false, refusal: MALFORMED };
+    return { read: false, refusal: MALFORMED_BODY };
   }
-}
-
-function tooLarge(limit: number): EdgeRefusal {
-  return {
-    status: 413,
-    title: 'Payload Too Large',
-    code: 'BODY_TOO_LARGE',
-    detail: `The body is larger than ${String(limit)} bytes.`,
-  };
 }

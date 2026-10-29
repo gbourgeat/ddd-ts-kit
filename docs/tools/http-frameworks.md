@@ -278,11 +278,16 @@ From [`packages/http/README.md`](../../packages/http/README.md) and
 
 ## Limits and when not to use it
 
-- A body the framework itself refuses (malformed JSON, payload too large) is answered by the
-  framework's own error handler on Express (`express.json()`, 100 kB by default), Fastify (1 MiB)
-  and NestJS, before the pipeline: its format is not the problem format unless you configure it.
-  On Hono the adapter reads the body: a body beyond `bodyLimit` (1 MiB by default) is answered 413
-  `BODY_TOO_LARGE` and malformed JSON 400 `MALFORMED_BODY`, both as problems.
+- A body the framework itself refuses (malformed JSON, payload too large) is refused before the
+  pipeline on Express (`express.json()`, 100 kB by default), Fastify (1 MiB) and NestJS. It is
+  answered as a problem, 400 `MALFORMED_BODY` or 413 `BODY_TOO_LARGE`, by `problemErrorHandler`
+  of `@ddd-ts-kit/http/express` and `@ddd-ts-kit/http/fastify` and by `ProblemExceptionFilter` of
+  `@ddd-ts-kit/http/nest`, which the
+  generated `start-http-server.ts` installs, and which log the type of the error and its status,
+  never the body; without them, by the framework's own error handler, which may write the body
+  to stderr. On Hono the adapter reads the body: a body beyond `bodyLimit` (1 MiB by default) is
+  answered 413 `BODY_TOO_LARGE` and malformed JSON 400 `MALFORMED_BODY`, both as problems, and
+  `problemErrorHandler` of `@ddd-ts-kit/http/hono` answers a failed middleware.
 - Routes are JSON first. A handler may answer a string, bytes or a stream with its own
   `content-type`. An upload is declared on its controller and streams to the handler
   (`multipart/form-data`, size and media types in the contract); a large download goes through a

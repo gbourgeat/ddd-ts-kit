@@ -11,8 +11,8 @@ export interface TooManyRequests {
 
 /**
  * Asked for every request before authentication costs anything: one sliding window per caller
- * address. Answers nothing when the request may pass. Behind a proxy, make the HTTP server
- * trust it, or every caller shares the address of the proxy.
+ * address. Answers nothing when the request may pass. Behind a proxy, set `TRUST_PROXY`, or
+ * every caller shares the address of the proxy.
  */
 export async function tooManyRequestsFor(
   limiter: RateLimiter,

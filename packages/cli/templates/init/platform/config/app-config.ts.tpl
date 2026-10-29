@@ -61,6 +61,21 @@ export interface AppConfig {
   /** How many requests one caller address may send in a sliding window, before the HTTP layer answers 429. */
   readonly rateLimit: RateLimit;
   {{/if}}
+  {{#if http.any}}
+  {{#unless http.hono}}
+  /**
+   * The proxies in front of the server believed when they name the caller in `X-Forwarded-For` (`TRUST_PROXY`): a
+   * number of hops, or their addresses and subnets. `false` by default: the caller is the address of the socket.
+   */
+  readonly trustProxy: false | number | readonly string[];
+  {{/unless}}
+  {{#if http.hono}}
+  {{#if cache.rateLimit}}
+  /** How many proxies in front of the server add the caller to `X-Forwarded-For` (`TRUST_PROXY`); 0 by default, none. */
+  readonly trustProxy: number;
+  {{/if}}
+  {{/if}}
+  {{/if}}
   {{#if errors.sentry}}
   /** Where unexpected failures are reported: a Sentry or a GlitchTip project. Without a DSN nothing is reported. */
   readonly errorReporting: ErrorReportingConfig;
