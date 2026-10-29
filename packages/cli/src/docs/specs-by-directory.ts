@@ -1,3 +1,4 @@
+import { ownEntry } from '../config/values/own-entry';
 import type { PageSection, SpecOfPage } from './page-section';
 import { specHeading } from './spec-heading';
 
@@ -27,7 +28,7 @@ export function specsByDirectory(specs: readonly SpecOfPage[]): PageSection[] {
     ...named.filter((directory) => !FIRST.includes(directory)),
     ...(byDirectory.has('') ? [''] : []),
   ].map((directory) => ({
-    title: directory === '' ? 'Specs' : (TITLES[directory] ?? `${capitalised(directory)} specs`),
+    title: directory === '' ? 'Specs' : (ownEntry(TITLES, directory) ?? `${capitalised(directory)} specs`),
     entries: (byDirectory.get(directory) ?? []).map((spec) => ({ heading: specHeading(spec.file), specs: [spec] })),
   }));
 }

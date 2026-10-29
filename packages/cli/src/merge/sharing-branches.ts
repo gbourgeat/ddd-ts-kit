@@ -1,5 +1,5 @@
 import { runGit } from '../commit/run-git';
-import { commitOf } from './lost/commit-of';
+import { commitOf } from '../commit/commit-of';
 
 /** A branch that holds commits of this one the trunk does not have: the branch it was stacked on, or one cut from it. */
 export interface SharingBranch {

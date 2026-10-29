@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:cf0b0a7691ea27bf -->
+<!-- translation-of: commands.md sha256:01a94c2753b469cf -->
 
 # Quelle commande, quand
 
@@ -158,7 +158,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | Commande | Fait | Quand | Produit | Ensuite |
 |---|---|---|---|---|
 | lire [CHANGELOG.md](../../CHANGELOG.md), livré aussi en `node_modules/ddd-ts-kit/CHANGELOG.md` | ce qui a changé et ce qu'il faut faire | avant la mise à jour, ou quand le début de session dit que le *plugin* décrit une autre version | les étapes de la version | mettre à jour ensemble les versions de `@ddd-ts-kit/*` et de `ddd-ts-kit` |
-| `npx ddd-ts-kit init --force` | réécrit les fichiers que possède `init`, garde la configuration, y inscrit sa version en `initVersion` et recâble les contextes | après la mise à jour | les fichiers de plateforme et de *pipeline* de la nouvelle version, et des notes | `npm run verify` |
+| *commit*, puis `npx ddd-ts-kit init --force` | réécrit les fichiers que possède `init`, garde la configuration, y inscrit sa version en `initVersion` et recâble les contextes ; garde `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` et le *pipeline* comme ceux de l'équipe, fusionne `.gitignore` et `.dockerignore` ; refuse, code 2, tant qu'un fichier à remplacer diffère du dernier *commit* | après la mise à jour, sur un arbre de travail propre | les fichiers de plateforme de la nouvelle version, les fichiers gardés, et des notes | `git diff`, puis `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` puis `--apply`, `value-objects` | déplace les routes en fonctions vers des contrôleurs, les classes d'erreur vers des fabriques, les objets-valeurs d'un `Result` vers des fabriques qui lèvent une erreur | quand le projet adopte ces formes | les fichiers réécrits et la clé de configuration | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npx ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]` | déplace les fichiers de `src/platform/` qu'un projet a générés à plat vers leurs dossiers (`composition/`, `observability/`, `jobs/`, `auth/authentication/`, `auth/authorization/`, le dossier du modèle, `audit/search-audit-entries/`), avec chaque import qui les nomme et les scripts de package.json | quand `doctor` signale `folder src/platform: flat` ; les générateurs et `init --force` gardent le rangement à plat jusque-là | les fichiers déplacés, les imports réécrits, les fichiers de l'équipe laissés à plat | `npm run format`, `npm run verify` |
 | `npm run regenerate` | régénère ce qui découle de la configuration | après tout changement de la configuration | `.dependency-cruiser.cjs`, les documents générés | `npm run verify` |
@@ -239,7 +239,10 @@ des fichiers (`init`, `generate`, `docs`, `sdk`, un déplacement) n'a pas pu en 
 où elle tournait, comme les chemins que protège le bac à sable d'un agent. Avec `3`, le rapport les
 liste sous `unwritable` (et dans `skipped`), *dry run* compris ; tous les autres fichiers sont
 écrits et aucun n'est supprimé. Relancez la même commande là où ils peuvent être écrits, hors du
-bac à sable : `init` donne la commande dans une note.
+bac à sable : `init` donne la commande dans une note. `4` est une erreur interne du kit, jamais une
+erreur de l'appelant : une ligne avec la version du kit et où la signaler (sous `--json`, une
+`error` avec `"internal": true`) ; signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues
+avec la commande qu'elle donne.
 
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->
@@ -357,8 +360,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    audit/search-audit-entries/; every import of them under the source root, test/ and
                    scripts/ follows, and the scripts of package.json; a file the kit did not write at
                    the root of the platform or of auth/ stays where it is, named, unless --place
-                   <file>=<folder> (both from the platform) gives it its folder; the generators and
-                   init --force keep either layout until then
+                   <file>=<folder> (both from the platform, a file outside it refused) gives it its
+                   folder; the generators and init --force keep either layout until then
   move-to-module   takes files of a context into a module of its model, declared first with generate module,
                    each to <module>/<layer>/ and each spec to test/<unit|integration>/<module>/: each <path>
                    is a file or a folder of a role or a spec, relative to the context
@@ -625,6 +628,17 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    fails while a declared version is not recorded, or recorded by 0.82.0 or earlier, or
                    recorded as the hash of nothing; the codecs of each module of a context are read too, and a
                    codec whose data type is not found or declares no member is refused, nothing recorded
+  --force          init and generate replace the files that exist with what the kit writes, only while git
+                   holds them: a file to replace that differs from the last commit (uncommitted, staged,
+                   or untracked and not ignored) refuses the command, exit 2, the files named, nothing
+                   written; outside a git repository, every file whose content would change does; commit
+                   or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,
+                   AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed
+                   as kept) and merges .gitignore and .dockerignore, the lines of the team kept
+  --force          generate replaces the files that exist with what the kit writes, only while git holds
+                   them: a file to replace that differs from the last commit refuses the command, exit 2,
+                   the files named, nothing written; outside a git repository, every file whose content
+                   would change does; commit or stash first, then git diff shows what the kit rewrote
   --sdk            init records "sdk" in the config and generates the clients with the project
   --term           generate adds the row "<Term>=<meaning>" to the glossary of the CONTEXT.md before it judges
                    a name; "<Term>=<meaning>|<not to be confused with>" fills the third cell too, a pipe being

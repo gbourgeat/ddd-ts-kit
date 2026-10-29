@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { runGit } from '../../commit/run-git';
-import { commitOf } from './commit-of';
+import { commitOf } from '../../commit/commit-of';
 import { mergeBaseOf } from './merge-base-of';
 import type { MergeToVerify } from './merge-to-verify';
 

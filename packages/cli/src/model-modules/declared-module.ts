@@ -1,6 +1,6 @@
 import { CliError } from '../cli-error';
 import type { Config } from '../config';
-import { toName } from '../naming';
+import { readName } from '../naming';
 import { declaredModules } from './declared-modules';
 
 /**
@@ -8,8 +8,13 @@ import { declaredModules } from './declared-modules';
  * with the command that declares it, when the context does not declare it.
  */
 export function declaredModule(config: Config, context: string, asked: string): string {
-  const module = toName(asked).kebab;
   const declared = declaredModules(config, context);
+
+  const module = readName(
+    asked,
+    'module',
+    `Name a module of ${context} as the config declares it: ${declared.join(', ') || 'none is declared yet'}.`,
+  ).kebab;
 
   if (!declared.includes(module)) {
     throw new CliError(

@@ -16,7 +16,7 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
 
   const root = args.projectRoot;
   const expected = renderCruiseFile(readConfig(root).config);
-  const ws = new Workspace(root, true);
+  const ws = new Workspace(root, false);
 
   if (args.flag('write')) {
     return writeCruiseFile(ws, expected, io);
@@ -44,7 +44,8 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
 };
 
 function writeCruiseFile(ws: Workspace, expected: string, io: Io): number {
-  ws.create(DEPCRUISE_FILE, expected);
+  // A derived file, written again whatever it holds: not a replacement --force decides on.
+  ws.update(DEPCRUISE_FILE, expected);
 
   const report = ws.commit(false);
 

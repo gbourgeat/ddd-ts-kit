@@ -1,10 +1,12 @@
 import type { Config } from '../config';
 import { CliError } from '../cli-error';
+import type { Name } from '../naming';
+import { contextArgument } from './context-argument';
 import { MissingPrerequisite } from './missing-prerequisite';
-import { toName, type Name } from '../naming';
 import type { KindRequest } from './kind';
 import type { Scope } from './scope';
 import { SHARED_KERNEL, sharedKernelScope } from './shared-kernel-scope';
+import { ownEntry } from '../config/values/own-entry';
 
 /** What a kind accepts as its first argument besides a context. */
 export interface ScopeOptions {
@@ -15,7 +17,6 @@ export interface ScopeOptions {
 /** Opens the context named by the first positional argument of a request, or the shared kernel for the kinds that write there. */
 export function openScope(request: KindRequest, options: ScopeOptions = {}): Scope {
   const { ws, config, flags } = request;
-  const context = toName(request.args[0] ?? '');
 
   if (request.args[0] === SHARED_KERNEL) {
     if (options.sharedKernel === true) {
@@ -25,7 +26,9 @@ export function openScope(request: KindRequest, options: ScopeOptions = {}): Sco
     throw notInSharedKernel(config);
   }
 
-  if (config.contexts[context.kebab] === undefined) {
+  const context = contextArgument(config, request.args[0] ?? '');
+
+  if (ownEntry(config.contexts, context.kebab) === undefined) {
     throw unknownContext(config, context);
   }
 

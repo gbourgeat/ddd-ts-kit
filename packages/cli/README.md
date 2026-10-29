@@ -50,7 +50,11 @@ the usage and the notes of that command alone (with `--json`, `{ command, usage,
 with its usage line as the fix. Exit codes: `0` success, `1` violations, stale documentation or,
 under `--strict`, a commit over its limits, `2` wrong usage (the message says what to do), `3` a command that writes files could
 not write some of them where it ran (a path the sandbox of an agent protects): they are listed
-under `unwritable`, every other file is written and none is deleted.
+under `unwritable`, every other file is written and none is deleted; `4` an internal error of the
+kit, said in one line with its version (`internal error of ddd-ts-kit <version>: ...`, its stack
+trace after it when `DDD_TS_KIT_DEBUG` is set; under `--json` an `error` with its `stack` and
+`"internal": true`): report it at https://github.com/gbourgeat/ddd-ts-kit/issues with the command
+and the stack trace.
 
 ## init
 
@@ -82,7 +86,11 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
 ```
 
 Works in an empty directory or an existing project. An existing file is never replaced without
-`--force`; it is reported as skipped. `init` also writes the generated contracts as the scripts
+`--force`; it is reported as skipped. `--force` replaces only what git holds: a file it would
+replace that differs from the last commit (uncommitted, staged, or untracked and not ignored)
+refuses the command with exit code 2, the files named and nothing written (`Commit or stash them
+first, then run again: git diff shows what the kit rewrote.`), and outside a git repository every
+file whose content would change does. The same holds for `generate --force`. `init` also writes the generated contracts as the scripts
 of the project write them for a project without a route or an integration event of its own
 (`openapi/openapi.yaml`, `docs/integration/asyncapi.yaml` and `event-catalog.md`; JSON under
 `"openapi": { "format": "json" }` of the config), so that the first commit holds them and
@@ -94,6 +102,13 @@ name each dependency the stack about to be written contradicts, and the flag tha
 fastify to keep it.`), a dry run included: run `init --dry-run` first on an existing project.
 Run again later, `init` keeps the stack recorded in the config.
 
+Every file `init` and `generate` write stays inside the project: a path that leads out of it
+through a symbolic link, in its place or above it (a `docs/adr` or a `.claude/settings.json`
+linked to elsewhere), refuses the command with exit code 2 and the path named, before
+anything is written; a link that stays inside the project is written through. `init` refuses a home directory and the root of the file system, where its
+`.claude/settings.json` would be the settings of every session: run it in the directory of the
+project.
+
 `init --force` on a project that is already initialised rewrites the files `init` owns and keeps
 the config: the contexts and their upstreams, the rules, the limits, the deviations and every
 other key stay as written, and the stack changes only where a flag names a choice
@@ -103,7 +118,13 @@ and the registry of permissions are rewritten from their templates, then the dec
 are wired into them again, and the erasure of each context is listed again in the copies of the
 privacy folder; what another generator had added to a file of the platform (the value of a
 gateway, the settings of a job) is not, and a note says so. A config that cannot be
-read is replaced.
+read is replaced. The files a team owns once written stay as they are, listed as `kept`:
+`README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` and the pipeline definitions
+(`.github/workflows/`, `.gitlab-ci.yml`), whose jobs and includes are the team's to edit, those of
+`--ci-extras` too; to take what a new version writes in one of them, run
+`init` in an empty folder and compare. `.gitignore` and `.dockerignore` gain the lines of the kit
+they lack, first, under a comment, and keep the lines of the team after them, which have the last
+word; a line of the kit on a path the team already writes rules for is left out. A last note says what `--force` rewrote and what it kept.
 
 The pipeline uses free tools only. `--ci-extras` adds jobs that need a paid plan on a private
 repository, report into a merge request only in a paid tier, or spend API tokens on every run:
@@ -598,7 +619,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `REVIEW.md` | the review policy of the project: the passes of a review (bugs, security, compliance against the design review of the row, the acceptance of the story, the records of `docs/adr/` and the rules), what Important means, at most five nits (a recurring one becomes a line of `AGENTS.md` under `## Mistakes seen here` or a rule of the config), what is not reported (generated files, what `npm run verify` refuses). Read by the `architecture-reviewer` agent on top of its method, by a human reviewer and by any review bot. Written once, for the team to edit: `--force` leaves it alone, `doctor` says when it is missing |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
 | `.claude/hooks/production-gate.mjs`, `.claude/hooks/change-reference.mjs` | with `--agent-profile regulated`: the two hooks of the profile, registered under `hooks.PreToolUse` of `.claude/settings.json`, written once for the team to edit (`--force` writes them again). The gate blocks a command that names the production environment with a release action unless `RELEASE_APPROVAL` names an approver and a change; the reference asks before an edit of a migration or of the containers, for the `Change: <id>` trailer of the commit ([Sandboxing coding agents](../../docs/guides/agent-sandbox.md#the-regulated-profile)) |
-| `.claude/settings.json` | permissions (and, with `--agent-profile regulated`, the sandbox block below): the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first, and so does an edit of the generated contracts and of the lock of an acceptance (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json`: an ask rule, since the sandbox of Claude Code would make a denied path read-only to `docs:generate` and `acceptance --lock` too; the guard of the plugin refuses a hand edit of them) and of what reaches production otherwise than through the code: the migrations of the ORM (`migrations/**` with drizzle, knex and typeorm, `prisma/migrations/**` with prisma, nothing with a custom persistence or none), `Dockerfile`, `docker-compose.yml` and `docker/**`. The compose file reads `.env` at the root, which the deny list already covers; nothing under `docker/` holds a secret |
+| `.claude/settings.json` | permissions (and, with `--agent-profile regulated`, the sandbox block below): the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), `generate` and `init` with `--force`, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `REVIEW.md`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first, and so does an edit of the generated contracts and of the lock of an acceptance (`openapi/**`, `docs/integration/asyncapi.*`, `docs/integration/event-catalog.md`, `test/acceptance/*.acceptance.lock.json`: an ask rule, since the sandbox of Claude Code would make a denied path read-only to `docs:generate` and `acceptance --lock` too; the guard of the plugin refuses a hand edit of them) and of what reaches production otherwise than through the code: the migrations of the ORM (`migrations/**` with drizzle, knex and typeorm, `prisma/migrations/**` with prisma, nothing with a custom persistence or none), `Dockerfile`, `docker-compose.yml` and `docker/**`. The compose file reads `.env` at the root, which the deny list already covers; nothing under `docker/` holds a secret |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, where `worker-scope` writes, and `.worktrees/`, where the worktrees live |
 
 `--ci both` writes the two pipelines, `--ci none` neither (and no `renovate.json`). The pipeline
@@ -645,6 +666,12 @@ pipelines call, `test:coverage` (every spec once, each context and layer held to
 `format:check`, `test:coverage`, end-to-end tests, `check:arch`, `depcruise`, `deadcode`,
 `docs:check`.
 
+`db:generate` takes what the migration does, in letters, digits, dashes and underscores, starting
+with a letter or a digit (`npm run db:generate add-invoices`, on TypeORM
+`migrations/add-invoices`): `drizzle-generate`, `prisma-generate` and `typeorm-generate` refuse
+any other name before the ORM reads it, since a value that starts with a dash would be one of its
+options; `typeorm-generate` also refuses a folder outside the project.
+
 `package.json` carries two compilers: `typescript ~6.0.3`, which the tools load as a library,
 and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck` call by path
 (`node node_modules/@typescript/native/bin/tsc`). `npx tsc` would run the older one.
@@ -652,7 +679,13 @@ and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck
 `init` and `generate context` start with the language: the first entry of `todos` is the glossary
 of the context to fill in. Both refuse a context named `schema`, on every ORM: on Prisma the models
 of a context live in `prisma/schema/<context>.prisma`, and `prisma/schema/schema.prisma` is the
-main file every context shares (`init --force` moves a project to Prisma).
+main file every context shares (`init --force` moves a project to Prisma). They refuse too the
+names every JavaScript object has (`constructor`, `prototype`, `__proto__`, `toString`,
+`hasOwnProperty`, `valueOf`): a context is a key of the config and of the objects built from it.
+A context or a module is named in letters, digits and dashes, read in any case and with `-`, `_`
+or spaces between its words (`OrderFulfilment`, `order_fulfilment`); every command refuses a name
+it would have to drop part of to read it, such as `../billing` or `Évil`, and says what it would
+have read (`billing`, `vil`).
 
 ### Presets
 
@@ -1996,10 +2029,11 @@ Each changed path reaches something:
   lockfile, the pipeline, a directory of `src/contexts/` the config does not declare.
 
 Without `--base`, or when git cannot tell what changed (an unknown ref, a shallow clone without
-the base), everything is selected: that is what the default branch and the nightly run get. The
-selection is never narrower than the declared relationships, because `context/declared-relationship`
-keeps every import between contexts inside them, and that rule runs on the whole project in every
-pipeline.
+the base), everything is selected: that is what the default branch and the nightly run get. A
+`--base` or `--head` that starts with a dash is refused (exit 2): no ref does, and git would read
+it as one of its own options. The selection is never narrower than the declared relationships,
+because `context/declared-relationship` keeps every import between contexts inside them, and that
+rule runs on the whole project in every pipeline.
 
 ![A change in the scheduling context of the example application: scheduling is selected, and so are notification and analytics, which are downstream of it in the context map; identity, upstream, is left to the default branch](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-affected-selection.svg)
 
@@ -2110,7 +2144,9 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
   baseline was committed (a `git mv`); a file moved otherwise reports its errors at its new path,
   and its old entry fails until the owner writes the baseline again. A baseline makes old errors quiet; it does
   not make a tree outside the canonical one checkable.
-  `--changed-since` runs `git diff --name-only --relative <ref>...` in the project.
+  `--changed-since` runs `git diff --name-only --relative <ref>...` in the project, on the commit
+  the ref names: a ref that names no commit is refused (exit 2, `<ref> is not a commit of this
+  repository`), as it is by every command that takes one.
 - `--format github` prints `::error file=...,line=...::` annotations.
 - `--explain` follows the violations with each rule they report, once, with its description and
   the reason it exists (as `explain` prints it, without the examples), and in JSON adds an
@@ -2193,7 +2229,7 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 | `imports/alias-only` | under the source root, `test/` and `scripts/`: an `import`, `export ... from` or `import()` with a relative specifier, the same directory included (the fix names the alias to write; `eslint --fix` writes it); an alias specifier with a `.` or `..` segment |
 | `imports/extension` | under the source root, `test/` and `scripts/`: with `importExtension` `none`, an alias specifier that ends with `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` or `.cts`; with `js` (or no key), an alias specifier that does not end with `.js` (the fix names the specifier to write; `eslint --fix` writes it). A package subpath is never judged |
 | `imports/alias-declared` | an `importAlias` that is not `@/` or `$<name>/`, or that is `$test/`, `$scripts/`, `$generated/`; a `paths` entry of `tsconfig.json` missing or different from what `importAlias` gives (the fix gives the entry); another `paths` entry under an alias; a `baseUrl`; a `tsconfig.build.json` whose `paths` differ; `paths` of `knip.json` mapping an alias; a script that compiles (`tsc` without `--noEmit`) and does not run `ddd-ts-kit build-aliases` afterwards; a script running `tsx --tsconfig` on another file; a `vitest` config at the root without `tsconfigPaths: true`, a `jest` config without the derived `moduleNameMapper` entries, or `.dependency-cruiser.cjs` without `tsConfig`; `module` and `moduleResolution` of `tsconfig.json` (or of a `tsconfig.build.json` that sets its own) that are not what `importExtension` gives: `ESNext`, `Bundler` and `customConditions` holding `node` under `none`, and under `js` a written value that is not a Node resolution; a jest mapping whose pattern does not end as the imports do. A project without `package.json` is not judged |
-| `config/valid` | unknown upstream, classification, relationship, rule id, `guard` mode or `importExtension`; a context missing on disk or in the config; a `commit` limit that is not a positive integer |
+| `config/valid` | unknown upstream, classification, relationship, rule id, `guard` mode or `importExtension`; a directory of the config that leads out of the project; a context missing on disk or in the config; a `commit` limit that is not a positive integer |
 | `config/suppression-needs-reason` | a suppression without a rule id or a reason (kept as an alias next to `governance/recorded-deviation`, which judges the reason) |
 | `authz/declared` | in a module file, `builder.command(X)` or `builder.query(X)` without `.requires(` or `.public(` in its chain, unless the message class carries `@Requires` or `@Public` of `@ddd-ts-kit/kernel/declarations`; with manual or nest wiring, a command or query class absent from every `requires(X, ...)` and `publicUseCase(X)` of the module file and of `application/authorization/`; a `defineRoute` without `security` (the route type refuses it already, and an empty list too: this is the text-level net for a definition built loosely); in the declared style, the exported class of a `*.command.ts` or `*.query.ts` file carrying neither `@Requires` nor `@Public` |
 | `authz/granted` | with `stack.authz` `rbac`, a permission of a context's `definePermissions` that neither `platform/auth/roles/roles.ts` nor `platform/auth/authorization/signed-in-grants.ts` grants by name (by the entry of its set, its id or `<context>:*`); the super-admin `*` does not count (a warning); with `rebac`, a permission the schema leaves on the context while no source outside the tests writes an `operator` relationship (of a person or a system actor) on that context and no signed-in grant holds it, in a project that already makes a person operator of some context; silent with an authorizer of the project's own (a warning) |

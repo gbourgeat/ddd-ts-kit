@@ -205,6 +205,19 @@ describe('cited --removed-since, after a change', () => {
     });
   });
 
+  it('reads a ref whose name starts with a dash as the commit it names, never as an option of git', () => {
+    git(root, 'update-ref', 'refs/heads/-x', 'main');
+    fs.rmSync(path.join(root, PORT));
+
+    const removed = cli(root, 'cited', '--removed-since=-x', '--json');
+
+    git(root, 'checkout', '--', PORT);
+    git(root, 'update-ref', '-d', 'refs/heads/-x');
+
+    expect(removed.code).toBe(0);
+    expect(removed.json()).toMatchObject({ since: '-x', citations: [{ cited: 'RefundBasisReader' }] });
+  });
+
   it('says so when the change removes nothing the design cites', () => {
     expect(cli(root, 'cited', 'billing', '--removed-since', 'main').stdout).toBe(
       'No name removed since main is cited by the design of a row not done.',

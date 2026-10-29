@@ -47,6 +47,8 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) and wheth
 | `worker` | | `src/apps/worker/main.ts`: a process for the scheduled jobs and the queues, a start script, a compose service |
 | `adr` | `"<title>" [--deviation <what>] [--reason "<why>"]` | `docs/adr/NNNN-<slug>.md` |
 
-Output of every kind: `{ dryRun, created, updated, deleted, skipped, unwritable, todos, notes }`.
+Output of every kind: `{ dryRun, created, updated, deleted, skipped, kept, unwritable, todos, notes }`.
+`skipped` files exist and were left as they are; `kept` ones are the team's once written (README.md,
+AGENTS.md, CLAUDE.md, the entry point, the pipeline): `--force` never replaces them.
 `todos` is the list of `TODO(domain)` places, the glossary first, each `{ file, line, gist }`:
 the sentence is in the file at that line; a step on a line the command changed keeps its `text`.

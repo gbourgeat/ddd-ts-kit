@@ -4,6 +4,7 @@ import { KINDS } from '../src/generate/kinds';
 import { cli, exists, read, write } from './helpers';
 import { failure, report } from './reports';
 import { explicitProject } from './support/explicit-project';
+import { commitAll } from './support/commit-all';
 
 describe('generate, plans and refusals', () => {
   let root: string;
@@ -29,6 +30,8 @@ describe('generate, plans and refusals', () => {
 
     expect(kept.skipped).toContain(target);
     expect(read(root, target)).toBe('export const edited = true;\n');
+
+    commitAll(root);
 
     const forced = report(cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--force', '--json'));
 

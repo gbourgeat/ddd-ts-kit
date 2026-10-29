@@ -44,10 +44,29 @@ const pathOf = (rule: string): RegExp | undefined => {
 const matching = (rules: readonly string[], file: string): string[] =>
   rules.filter((rule) => pathOf(rule)?.test(file) === true);
 
+/** The command a permission rule on the shell names, as a pattern: `*` stands for anything, nothing included. */
+const commandOf = (rule: string): RegExp | undefined => {
+  const glob = /^Bash\((.+)\)$/.exec(rule)?.[1];
+
+  return glob === undefined
+    ? undefined
+    : new RegExp(`^${glob.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replaceAll('*', '.*')}$`);
+};
+
+const askedFor = (rules: readonly string[], command: string): string[] =>
+  rules.filter((rule) => commandOf(rule)?.test(command) === true);
+
 const ASKED = [
   'Bash(git push *)',
   'Bash(npm publish *)',
   'Bash(npx ddd-ts-kit check --baseline write*)',
+  'Bash(npx ddd-ts-kit check --baseline=write*)',
+  'Bash(npx ddd-ts-kit check * --baseline write*)',
+  'Bash(npx ddd-ts-kit check * --baseline=write*)',
+  'Bash(npx ddd-ts-kit generate --force*)',
+  'Bash(npx ddd-ts-kit generate * --force*)',
+  'Bash(npx ddd-ts-kit init --force*)',
+  'Bash(npx ddd-ts-kit init * --force*)',
   ...GENERATED,
   'Edit(./ddd-ts-kit.config.json)',
   'Edit(./ddd-ts-kit-baseline.json)',
@@ -112,6 +131,44 @@ describe('agent settings', () => {
       'Read(./.env.development)',
       'Read(./.env.test)',
     ]);
+  });
+});
+
+describe('agent settings on --force', () => {
+  const root = initProject(...NPM);
+  const ask = permissions(root, 'ask');
+
+  it.each([
+    'npx ddd-ts-kit generate aggregate billing Order --force',
+    'npx ddd-ts-kit generate --force aggregate billing Order',
+    'npx ddd-ts-kit init --force',
+    'npx ddd-ts-kit init --logger pino --force',
+  ])('asks before `%s`, wherever the flag stands', (command) => {
+    expect(askedFor(ask, command)).not.toEqual([]);
+  });
+
+  it('asks nothing of a generate without it', () => {
+    expect(askedFor(ask, 'npx ddd-ts-kit generate aggregate billing Order')).toEqual([]);
+  });
+});
+
+describe('agent settings on the baseline of the errors', () => {
+  const root = initProject(...NPM);
+  const ask = permissions(root, 'ask');
+
+  it.each([
+    'npx ddd-ts-kit check --baseline write',
+    'npx ddd-ts-kit check --baseline=write',
+    'npx ddd-ts-kit check --cwd . --baseline write',
+    'npx ddd-ts-kit check --cwd . --baseline=write',
+  ])('asks before `%s`, which the allow rule of check would let through', (command) => {
+    expect(askedFor(ask, command)).not.toEqual([]);
+    expect(askedFor(permissions(root, 'allow'), command)).toEqual(['Bash(npx ddd-ts-kit check *)']);
+  });
+
+  it('asks nothing of a check that writes no baseline', () => {
+    expect(askedFor(ask, 'npx ddd-ts-kit check --rule config/valid')).toEqual([]);
+    expect(askedFor(ask, 'npx ddd-ts-kit check --baseline prune')).toEqual([]);
   });
 });
 
@@ -203,7 +260,7 @@ describe('agent settings of the files that reach production', () => {
     expect(permissions(root, 'ask')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 59 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 66 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);

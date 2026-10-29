@@ -5,6 +5,7 @@ import type { Workspace } from '../workspace';
 import { controllersFile } from './controllers-file';
 import { readNestControllers } from './read-nest-controllers';
 import { renderControllersFile } from './render-controllers-file';
+import { ownEntry } from '../config/values/own-entry';
 
 /**
  * Rewrites `<context>.controllers.ts` of every context of a project whose routes are Nest
@@ -21,7 +22,9 @@ export function refreshNestControllers(ws: Workspace, config: Config): void {
     under: (directory: string) => filesUnder(ws, directory).map((file) => `${directory}/${file}`),
   };
 
-  for (const context of ws.directories(config.contextsDir).filter((name) => config.contexts[name] !== undefined)) {
+  for (const context of ws
+    .directories(config.contextsDir)
+    .filter((name) => ownEntry(config.contexts, name) !== undefined)) {
     const file = `${config.contextsDir}/${context}/${controllersFile(context)}`;
 
     const content = renderControllersFile(

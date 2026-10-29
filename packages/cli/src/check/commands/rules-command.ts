@@ -29,7 +29,9 @@ export const rulesCommand: Command = (argv, io) => {
 };
 
 function listedRules(root: string): ListedRule[] {
-  const configured = fs.existsSync(path.join(root, CONFIG_FILE)) ? readConfig(root).config.rules : {};
+  const configured = fs.existsSync(path.join(root, CONFIG_FILE))
+    ? readConfig(root, { leaving: 'default' }).config.rules
+    : {};
 
   const severityOf = (id: string): string => {
     const severity = projectSeverity(configured[id]);

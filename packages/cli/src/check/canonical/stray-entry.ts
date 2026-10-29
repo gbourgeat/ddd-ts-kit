@@ -8,6 +8,7 @@ import type { Flaw } from '../model/flaw';
 import { isCanonicalDirectory } from './is-canonical-directory';
 import { OPEN_DIRECTORIES } from './open-directories';
 import { roleOf } from './role-of';
+import { ownEntry } from '../../config/values/own-entry';
 
 interface Placed {
   readonly context: string;
@@ -71,7 +72,7 @@ function place(entry: string, config: Config): Placed | undefined {
     inside,
     modules,
     ...(module === undefined ? {} : { module }),
-    extras: contexts[context]?.extraDirectories ?? [],
+    extras: ownEntry(contexts, context)?.extraDirectories ?? [],
   };
 }
 

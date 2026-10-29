@@ -8,6 +8,7 @@ import type { Workspace } from '../workspace';
 import { filesUnder } from './files-under';
 import { refuseEarlierLayout } from './refuse-earlier-layout';
 import { sharedKernelPlacement } from './shared-kernel-placement';
+import { ownEntry } from '../config/values/own-entry';
 
 /** What `generate` was asked: the context its kind writes in, the `--module` given, and the command as typed. */
 export interface ModuleRequest {
@@ -112,7 +113,7 @@ function askedModule(
   }
 
   // An unknown context is refused by the kind, with the contexts the project has.
-  if (config.contexts[context] === undefined) {
+  if (ownEntry(config.contexts, context) === undefined) {
     return undefined;
   }
 

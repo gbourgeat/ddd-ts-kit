@@ -1,6 +1,6 @@
 import { specifierOf } from '../../alias';
 import { CliError } from '../../cli-error';
-import { toName } from '../../naming';
+import { readName, toName } from '../../naming';
 import { emit } from '../emit';
 import type { Kind } from '../kind';
 import { label } from '../label';
@@ -57,6 +57,12 @@ function accessOf(scope: Scope): Pick<GroupDeclaration, 'access' | 'parent'> {
   if (asked === undefined) {
     return { access: scope.flags.public ? 'public' : 'authenticated' };
   }
+
+  readName(
+    asked,
+    'route group',
+    'Name the parent group as its class is named, `--group BillingRoutes`, or in kebab-case, `--group billing`.',
+  );
 
   const parent = toName(asked.replace(/Routes$/, ''));
 

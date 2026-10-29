@@ -4,6 +4,7 @@ import { label } from '../label';
 import { named } from '../named';
 import { openScope } from '../open-scope';
 import { vars } from '../vars';
+import { ownEntry } from '../../config/values/own-entry';
 
 export const aclKind: Kind = {
   name: 'acl',
@@ -17,7 +18,7 @@ export const aclKind: Kind = {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'upstream', strip: ['translator'] });
 
-    const relationship = scope.config.contexts[scope.context.kebab]?.upstreams.find(
+    const relationship = ownEntry(scope.config.contexts, scope.context.kebab)?.upstreams.find(
       (candidate) => candidate.context === name.kebab,
     )?.relationship;
 
@@ -26,7 +27,7 @@ export const aclKind: Kind = {
       ['acl/translator.spec.ts.tpl', `test/integration/${name.kebab}.translator.spec.ts`],
     ]);
 
-    if (scope.config.contexts[name.kebab] !== undefined && relationship !== 'anti-corruption-layer') {
+    if (ownEntry(scope.config.contexts, name.kebab) !== undefined && relationship !== 'anti-corruption-layer') {
       scope.ws.note(
         `"${name.kebab}" is a context of this project: declare it in contexts.${scope.context.kebab}.upstreams with the relationship "anti-corruption-layer".`,
       );

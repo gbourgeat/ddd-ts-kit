@@ -1,11 +1,12 @@
 import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import { contextLayout, type ContextLayout } from '../context-layout';
-import { toName } from '../naming';
+import { contextArgument } from '../generate/context-argument';
 import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { ownEntry } from '../config/values/own-entry';
 import { stdoutJson } from '../json/stdout-json';
 
 const MANUAL =
@@ -16,8 +17,8 @@ export const contextLayoutCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, { 'dry-run': { type: 'boolean', default: false } });
   const ws = new Workspace(args.projectRoot, false);
   const { config } = readConfig(args.projectRoot);
-  const asked = args.positionals.map((name) => toName(name).kebab);
-  const unknown = asked.filter((context) => config.contexts[context] === undefined);
+  const asked = args.positionals.map((name) => contextArgument(config, name).kebab);
+  const unknown = asked.filter((context) => ownEntry(config.contexts, context) === undefined);
 
   if (unknown.length > 0) {
     throw new CliError(

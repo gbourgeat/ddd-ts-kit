@@ -3,7 +3,7 @@ import { runGit } from '../commit/run-git';
 import type { BasePoint } from './base-point';
 import type { BaseQuery } from './base-query';
 import { landedCommit } from './landed-commit';
-import { commitOf } from './lost/commit-of';
+import { commitOf } from '../commit/commit-of';
 import { mergeExclusions } from './merge-exclusions';
 import { patchIdsOf } from './patch-ids-of';
 import { recordedBase } from './recorded-base';

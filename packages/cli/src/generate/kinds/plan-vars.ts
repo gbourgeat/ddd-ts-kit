@@ -3,6 +3,7 @@ import { assembledContext } from '../assembled-context';
 import { contextVars } from '../context-vars';
 import { relativeTo } from '../relative-to';
 import type { ContextPlan } from './context-plan';
+import { ownEntry } from '../../config/values/own-entry';
 
 const GLOSSARY_TODO =
   'TODO(domain): define the ubiquitous language first: one row per term the domain experts use here, with the meaning it has in this context only. Every class, method and event is then named after these terms.';
@@ -20,7 +21,7 @@ export function planVars(
   composition = `${config.platformDir}/composition`,
 ): RenderContext {
   const terms = request.terms ?? [];
-  const classification = config.contexts[context.kebab]?.classification ?? '';
+  const classification = ownEntry(config.contexts, context.kebab)?.classification ?? '';
   const toContext = (from: string): string => `${relativeTo(from, config.contextsDir)}/${context.kebab}/`;
 
   return {
