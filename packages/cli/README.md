@@ -1397,7 +1397,11 @@ its rows: every slice row and criterion has a written scenario, and the acceptan
 scenario (`pending(...)`, layout and comments aside); after it, a scenario changes only with its
 criterion, and a criterion, or a scenario whose criteria stayed, only with a `Verdict: amend` of
 the `acceptance-judge` agent on that very version (`test/acceptance/verdicts/*.md`), which the lock
-keeps as an amendment for the owner to validate. It never runs a test. Exits 1 while a gate is not
+keeps as an amendment for the owner to validate. When the lock file is gone from the disk, `--lock`
+reads the last lock a commit holds and compares with it: a scenario or a criterion that differs
+without a verdict for its version is refused (exit 2, naming it, with `git checkout -- <lock>` to
+restore the lock), and the verdicts it finds are kept as amendments; outside a git repository it locks
+and says the previous lock could not be checked. It never runs a test. Exits 1 while a gate is not
 met, or, without one, on an inconsistency or a drift from the lock. `--json` prints
 `{ gate, met, stories: [{ story, file?, specification?, rows, criteria, scenarios, regression?, lock?, amendments, problems }] }`.
 

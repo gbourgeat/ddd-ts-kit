@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c8dada5cb96e5e96 -->
+<!-- translation-of: README.md sha256:bc7ec37ab2bdf98e -->
 
 # ddd-ts-kit
 
@@ -1484,7 +1484,11 @@ scénario (`pending(...)`, mise en page et commentaires mis à part) ; ensuite u
 change qu'avec son critère, et un critère, ou un scénario dont les critères n'ont pas bougé,
 seulement avec un `Verdict: amend` de l'agent `acceptance-judge` sur cette version précise
 (`test/acceptance/verdicts/*.md`), que le verrou garde comme amendement à valider par le
-responsable du projet. Elle ne lance jamais de test. Sort en 1 tant qu'une porte n'est pas
+responsable du projet. Quand le fichier de verrou a disparu du disque, `--lock` lit le dernier
+verrou qu'un commit contient et compare avec lui : un scénario ou un critère qui diffère sans verdict
+pour sa version est refusé (sortie 2, en le nommant, avec `git checkout -- <verrou>` pour restaurer
+le verrou), et les verdicts trouvés sont gardés comme amendements ; hors d'un dépôt git, elle
+verrouille et dit que le verrou précédent n'a pas pu être vérifié. Elle ne lance jamais de test. Sort en 1 tant qu'une porte n'est pas
 franchie, ou, sans porte, sur une incohérence ou une dérive depuis le verrou. `--json` affiche
 `{ gate, met, stories: [{ story, file?, specification?, rows, criteria, scenarios, regression?, lock?, amendments, problems }] }`.
 

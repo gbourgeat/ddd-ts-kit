@@ -4,8 +4,9 @@ import type { Workspace } from '../workspace';
 import type { AcceptanceLock, Amendment, LockedTest } from './acceptance-lock';
 import type { AcceptanceProblem } from './acceptance-problem';
 import { countsFor } from './counts-for';
-import { driftOf } from './drift';
+import { driftOf, type Judged } from './drift';
 import { lockFileOf } from './lock-file-of';
+import { readCommittedLock } from './read-committed-lock';
 import { readLock } from './read-lock';
 import { readVerdicts } from './read-verdicts';
 import { regressionDriftOf } from './regression-drift-of';
@@ -28,6 +29,8 @@ export interface Locked {
   readonly scenarios: number;
   readonly tests: number;
   readonly amendments: readonly Amendment[];
+  /** What the lock could not check, said once. */
+  readonly notes: readonly string[];
 }
 
 /**
@@ -44,8 +47,10 @@ export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
 
   requireWritten(story);
 
-  const previous = readLock(ws, story.story);
-  const amendments = amendmentsOf(ws, previous, request);
+  const onDisk = readLock(ws, story.story);
+  const committed = ws.exists(lockFileOf(story.story)) ? undefined : readCommittedLock(ws, story.story);
+  const previous = onDisk ?? (committed?.kind === 'found' ? committed.lock : undefined);
+  const amendments = amendmentsOf(ws, { lock: previous, removed: committed?.kind === 'found' }, request);
   const written = story.scenarios.filter(({ state }) => state === 'pending' || state === 'active');
   const tests = lockedTests(story);
 
@@ -61,7 +66,12 @@ export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
 
   ws.update(file, formatJson(lock));
 
-  return { file, scenarios: written.length, tests: tests.length, amendments };
+  const notes =
+    committed?.kind === 'unchecked'
+      ? [`The previous lock of ${story.story} could not be checked: this is not a git repository.`]
+      : [];
+
+  return { file, scenarios: written.length, tests: tests.length, amendments, notes };
 }
 
 /** The regression tests of a fix as the lock records them: each written test of each listed spec. */
@@ -110,17 +120,23 @@ function requireRegression(story: StoryAcceptance, blocking: readonly Acceptance
 }
 
 /** The changes since the previous lock with their `amend` verdicts; refused while one has none. */
-function amendmentsOf(ws: Workspace, previous: AcceptanceLock | undefined, { story, on }: LockRequest): Amendment[] {
+function amendmentsOf(ws: Workspace, previous: Previous, { story, on }: LockRequest): Amendment[] {
+  const { lock } = previous;
+
   const changes =
-    previous === undefined
+    lock === undefined
       ? []
       : [
-          ...driftOf(previous, story.scenarios, story.criteria).toJudge,
-          ...regressionDriftOf(previous.regression, story.regression ?? []).toJudge,
+          ...driftOf(lock, story.scenarios, story.criteria).toJudge,
+          ...regressionDriftOf(lock.regression, story.regression ?? []).toJudge,
         ];
 
   const verdicts = readVerdicts(ws, story.story);
   const unjudged = changes.filter((change) => verdictOn(change, verdicts)?.verdict !== 'amend');
+
+  if (unjudged.length > 0 && previous.removed) {
+    throw removedLockRefusal(story.story, unjudged);
+  }
 
   if (unjudged.length > 0) {
     throw new CliError(
@@ -140,4 +156,17 @@ function amendmentsOf(ws: Workspace, previous: AcceptanceLock | undefined, { sto
       on,
     };
   });
+}
+
+/** The lock to compare with, and whether it was read from a commit because the file was removed. */
+interface Previous {
+  readonly lock: AcceptanceLock | undefined;
+  readonly removed: boolean;
+}
+
+function removedLockRefusal(story: string, unjudged: readonly Judged[]): CliError {
+  return new CliError(
+    `The lock of ${story} was removed, and changed since the last commit of it without a verdict that lets it through: ${unjudged.map((change) => `${change.subject} (fingerprint ${change.fingerprint})`).join(', ')}.`,
+    `Restore it (\`git checkout -- ${lockFileOf(story)}\`), then let the acceptance-judge agent rule on each change with its subject and fingerprint, and lock again once it wrote \`Verdict: amend\`.`,
+  );
 }
