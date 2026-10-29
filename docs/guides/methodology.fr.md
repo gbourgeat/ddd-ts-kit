@@ -1,5 +1,5 @@
 [English](methodology.md) · **Français**
-<!-- translation-of: methodology.md sha256:bdf50c3f63f8f615 -->
+<!-- translation-of: methodology.md sha256:a89f61bb2596e892 -->
 
 # Méthodologie : d'une expression des besoins au code qui tourne
 
@@ -236,7 +236,7 @@ prouve le résultat avec `npm run verify` (`pnpm install` et `pnpm run verify` s
 gestionnaire par défaut : `init` affiche les deux commandes dans les termes du gestionnaire de
 paquets choisi, et le projet nu passe toute la porte avant son premier contexte). Un projet
 existant est adopté : les fichiers existants sont laissés de côté, sauf si `--force` est donné,
-et les notes de son premier `init --dry-run` nomment chaque dépendance de son `package.json` que
+qui ne remplace que ce que git détient (*commitez* d'abord), et les notes de son premier `init --dry-run` nomment chaque dépendance de son `package.json` que
 les options choisies contredisent, avec l'option qui la garde.
 
 Un contexte `generic` pour lequel le kit a un *preset* est écrit en entier à cette étape plutôt

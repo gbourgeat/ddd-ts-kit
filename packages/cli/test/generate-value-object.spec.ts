@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from './helpers';
+import { commitAll } from './support/commit-all';
 
 const VO = 'src/contexts/billing/domain/value-objects/money.vo.ts';
 const SPEC = 'src/contexts/billing/test/unit/money.vo.spec.ts';
@@ -51,6 +52,7 @@ describe('generate value-object, by the form the config says', () => {
 
       config.stack['valueObjects'] = valueObjects;
       write(root, 'ddd-ts-kit.config.json', JSON.stringify(config, null, 2));
+      commitAll(root);
       expect(cli(root, 'generate', 'value-object', 'billing', 'Currency', '--force').code).toBe(0);
 
       const vo = read(root, 'src/contexts/billing/domain/value-objects/currency.vo.ts');
@@ -65,6 +67,7 @@ describe('generate value-object, by the form the config says', () => {
   });
 
   it('keeps a recorded project without the key on Result through init --force, and refuses an unknown form', () => {
+    commitAll(root);
     expect(cli(root, 'init', '--force').code).toBe(0);
     expect(JSON.parse(read(root, 'ddd-ts-kit.config.json'))).toMatchObject({ stack: { valueObjects: 'result' } });
     expect(read(root, '.claude/rules/domain.md')).toContain('ddd-ts-kit value-objects` moves the project');

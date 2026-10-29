@@ -4,6 +4,7 @@ import { SHARED_WRITES } from '../src/generate/shared-writes';
 import { cli, exists, EXPLICIT_STACK, scaffoldEverything, tempDir, type StackFlags } from './helpers';
 import { jsonAt } from './support/json-at';
 import { stringsAt } from './support/strings-at';
+import { commitAll } from './support/commit-all';
 
 const SHARED_KINDS = [
   'adapter',
@@ -260,10 +261,11 @@ function runsOf(style: string): readonly (readonly string[])[] {
   );
 }
 
-/** Everything, a port, and a table that keeps a person: the context has an erasure for its erasure handler to call. */
+/** Everything, a port, and a table that keeps a person (the context has an erasure for its erasure handler to call), committed. */
 function scaffoldWithAPerson(root: string, stack: StackFlags | undefined): void {
   scaffoldEverything(root, stack);
   cli(root, 'generate', 'port', 'billing', 'PriceList');
   cli(root, 'generate', 'aggregate', 'billing', 'Payer', '--term', 'Payer=A person who settles an invoice');
   cli(root, 'generate', 'repository', 'billing', 'Payer', '--personal', 'email');
+  commitAll(root);
 }

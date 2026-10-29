@@ -223,7 +223,7 @@ with `--dry-run`, runs `ddd-ts-kit init` with the chosen flags, installs, and pr
 result with `npm run verify` (`pnpm install` and `pnpm run verify` on pnpm, the default: `init`
 prints the two commands in the words of the package manager chosen, and the bare project passes
 the whole gate before its first context). An existing project is adopted: existing files are skipped
-unless `--force` is given, and the notes of its first `init --dry-run` name each dependency of
+unless `--force` is given, which replaces only what git holds (commit first), and the notes of its first `init --dry-run` name each dependency of
 its `package.json` the chosen flags contradict, with the flag that keeps it.
 
 A `generic` context the kit has a preset for is written whole at this step rather than built

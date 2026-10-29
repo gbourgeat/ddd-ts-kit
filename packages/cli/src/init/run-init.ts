@@ -23,12 +23,16 @@ import { initFiles } from './files/init-files';
 import { REVIEW_POLICY } from './files/guidance-files';
 import { keepFlatPlatform } from '../platform-folders';
 import { ignoreWorktrees } from './ignore-worktrees';
+import { isTeamFile } from './is-team-file';
+import { forcedNote } from './forced-note';
+import { keptOrMerged } from './kept-or-merged';
 import { writeManifest } from './manifest/write-manifest';
 import { dependenciesAgainstStack } from './manifest/dependencies-against-stack';
 import { writeOverrides } from './manifest/write-overrides';
 import { writeInstallScripts } from './manifest/write-install-scripts';
 import { recordAgentProfile } from './record-agent-profile';
 import { recordNoOutbox } from './record-no-outbox';
+import { refuseUnprojectedRoot } from './refuse-unprojected-root';
 import { resolveStack, type StackOptions } from './stack/resolve-stack';
 import { templateVars } from './template-vars';
 import { writeAgentSettings } from './write-agent-settings';
@@ -63,6 +67,8 @@ export interface InitOptions extends StackOptions {
 }
 
 export function runInit(root: string, options: InitOptions): WorkspaceReport {
+  refuseUnprojectedRoot(root);
+
   const ws = new Workspace(root, options.force);
   const config = { ...recordNoOutbox(ws, resolveStack(root, options), options.allowNoOutbox), initVersion: VERSION };
 
@@ -108,6 +114,7 @@ function closingNotes(report: WorkspaceReport, options: InitOptions, config: Con
 
   return [
     ...unwritable,
+    ...(options.force ? [forcedNote(report, options.dryRun)] : []),
     ...(created
       ? [
           inDialect('Run `npm install`, then `npm run verify`.', config.stack.packageManager),
@@ -228,7 +235,14 @@ function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }
     const content = template.endsWith('.tpl') ? renderTemplate(template, context) : readTemplate(template);
     const kept = flat.moved.get(target.replace(/\.ts$/, ''));
 
-    ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
+    if (!(force && keptOrMerged(ws, config, { target, content }))) {
+      // Without --force, a file of the team that exists is skipped as any other, and said to be the team's.
+      if (isTeamFile(config, target) && ws.exists(target)) {
+        ws.keep(target);
+      }
+
+      ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
+    }
   }
 
   // After the files: under pnpm the overrides join the pnpm-workspace.yaml just written.

@@ -137,6 +137,11 @@ below. The exact rules of the parser are in [Limits](#limits).
 | `importAlias` | the prefix that names `sourceRoot` in imports: `@/`, or `$`, one name in lower case (letters, digits, hyphens) and `/`. Every file of the project is imported by it (`imports/alias-only`) | `@/` |
 | `importExtension` | what an import of a file of the project ends with: `none`, nothing (`@/contexts/billing/domain/aggregates/invoice.aggregate`), or `js`, the extension of the file the compiler emits (`.../invoice.aggregate.js`). Held by `imports/extension` | `none` in what `init` writes; `js` when the key is absent |
 
+The four directories are read with `.` and `..` resolved (`./src//contexts/` is `src/contexts`)
+and stay inside the project: one that is absolute or leads above the root once resolved
+(`src/../../elsewhere`) stops every command that writes, exit code 2, and `check` reports it as
+`config/valid`.
+
 `importAlias` is the one place a person writes the alias. `init` (flag `--import-alias`)
 derives the `paths` of `tsconfig.json` from it, and `ddd-ts-kit build-aliases` reads it when it
 rewrites the compiled output; `ddd-ts-kit check` compares them and everything that has to

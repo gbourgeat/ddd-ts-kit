@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from './helpers';
 import { failure, report } from './reports';
+import { commitAll } from './support/commit-all';
 
 const BILLING = 'src/contexts/billing';
 const WORLD = `${BILLING}/test/worlds/billing.world.ts`;
@@ -86,6 +87,7 @@ describe('generate test-world, in the declared style', () => {
 
     expect(report(cli(root, 'generate', 'test-world', 'billing', '--json')).skipped).toEqual([WORLD]);
     expect(read(root, WORLD)).toBe('export const edited = true;\n');
+    commitAll(root);
     expect(report(cli(root, 'generate', 'test-world', 'billing', '--force', '--json')).updated).toEqual([WORLD]);
     expect(read(root, WORLD)).toContain('aBillingWorld');
   });

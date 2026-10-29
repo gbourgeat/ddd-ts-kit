@@ -3,6 +3,7 @@ import { cli, exists, read, write } from './helpers';
 import { LOCK, SLICES, SPEC, SPECIFICATION, STORY, WRITTEN, BUILT } from './support/acceptance-story';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
+import { commitAll } from './support/commit-all';
 
 // One project for the whole file: each block takes the story where the previous one left it.
 let root: string;
@@ -42,6 +43,7 @@ describe('generate acceptance', () => {
 
   it('writes an it.todo per acceptance criterion once the story states them', () => {
     write(root, STORY, SPECIFICATION);
+    commitAll(root);
 
     expect(cli(root, 'generate', 'acceptance', 'US5', '--force').code).toBe(0);
 

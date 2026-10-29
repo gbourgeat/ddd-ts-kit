@@ -3,6 +3,7 @@ import { cli, tempDir, write } from './helpers';
 import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
 import { stringsAt } from './support/strings-at';
+import { commitAll } from './support/commit-all';
 
 describe('init in a project whose package.json says otherwise', () => {
   it('keeps a manifest that is not an ES module and a release of pnpm of its own, and says so', () => {
@@ -22,6 +23,7 @@ describe('init in a project whose package.json says otherwise', () => {
     expect(jsonAt(readJson(root, 'package.json'), 'type')).toBe('commonjs');
     expect(jsonAt(readJson(root, 'package.json'), 'packageManager')).toBe('pnpm@9.0.0');
 
+    commitAll(root);
     cli(root, 'init', '--package-manager', 'pnpm', '--force');
 
     expect(jsonAt(readJson(root, 'package.json'), 'packageManager')).not.toBe('pnpm@9.0.0');
