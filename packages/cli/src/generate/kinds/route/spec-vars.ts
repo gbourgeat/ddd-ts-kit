@@ -1,17 +1,24 @@
-import { toName, type Name } from '../../../naming';
+import type { Name } from '../../../naming';
 import type { RenderContext } from '../../../templating';
 import type { Endpoint } from './endpoint';
-import { successStatus } from './success-status';
+import { sampleParams } from './sample-params';
 import type { UseCase } from './use-case';
+
+/** What a spec is written for: the route, the use case it calls and the status it answers when that succeeds. */
+interface Specified {
+  readonly name: Name;
+  readonly endpoint: Endpoint;
+  readonly useCase: UseCase;
+  readonly status: number;
+}
 
 /**
  * What the spec of a route or a controller reads: one arrangement for all of them, a recording bus
  * that answers for the use case and `routeOf` of `@ddd-ts-kit/http/testing`, then the request sent,
  * the answer and the message handed to the use case asserted.
  */
-export function specVars(name: Name, endpoint: Endpoint, useCase: UseCase): RenderContext {
+export function specVars({ name, endpoint, useCase, status }: Specified): RenderContext {
   const bus = useCase.isQuery ? 'queries' : 'commands';
-  const status = successStatus(endpoint, useCase);
   const usesCaller = useCase.isProtected || useCase.isSearch;
   const caller = usesCaller ? ['caller'] : [];
 
@@ -46,10 +53,8 @@ function answerOf(name: Name, useCase: UseCase): string {
 
 /** The request the spec sends: a sample of each path parameter, an empty body to a route that reads one. */
 function sentRequestOf({ method, parameters }: Endpoint): string {
-  const sample = parameters.map((parameter) => `${parameter}: '${toName(parameter).kebab}-1'`).join(', ');
-
   const parts = [
-    ...(parameters.length > 0 ? [`params: { ${sample} }`] : []),
+    ...(parameters.length > 0 ? [`params: ${sampleParams(parameters)}`] : []),
     ...(['POST', 'PUT', 'PATCH'].includes(method) ? ['body: {}'] : []),
   ];
 
