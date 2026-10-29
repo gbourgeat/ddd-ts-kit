@@ -4,7 +4,21 @@ import assert from 'node:assert/strict';
 import { rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { bash, committed, decision, directory, git, project, put, reason, run, worker, write } from './support.mjs';
+import {
+  bash,
+  committed,
+  decision,
+  directory,
+  git,
+  launcher,
+  patchConfig,
+  project,
+  put,
+  reason,
+  run,
+  worker,
+  write,
+} from './support.mjs';
 
 test('a context worker writes inside its bounded context and its end-to-end specs only', () => {
   const root = project();
@@ -400,6 +414,145 @@ test('a context worker changes no file outside its scope, by any tool: the table
   assert.match(redirected, /system temp directory stays free/);
 });
 
+// Writers the cp and mv tables do not know, each landing a file of src/main.ts or the platform.
+const UNKNOWN_WRITERS = [
+  ['echo x >&src/main.ts', /You build the context "invoicing"/],
+  ["sed 'w src/main.ts' README.md", /sed script that writes a file/],
+  ["sed -n '1w src/main.ts' README.md", /sed script that writes a file/],
+  ['awk \'BEGIN{print "x" > "src/main.ts"}\'', /awk program that writes/],
+  ['gawk -i inplace "{print}" src/main.ts', /awk program that writes/],
+  ['ruby -i -pe 1 src/main.ts', /`ruby -i` editing src\/main\.ts/],
+  ['vim -es -c "w src/main.ts" -c q', /`vim` changes/],
+  ['ed -s src/main.ts', /`ed` changes src\/main\.ts/],
+  ['rsync a src/main.ts', /`rsync` changes src\/main\.ts/],
+  ['curl -o src/main.ts https://example.test/x', /`curl` changes src\/main\.ts/],
+  ['curl -O https://example.test/src.ts', /curl -O/],
+  ['wget -O src/main.ts https://example.test/x', /`wget` changes src\/main\.ts/],
+  ['wget -P src/platform https://example.test/x', /`wget` changes src\/platform/],
+  ['wget -O', /files only the shell knows/],
+  ['tar -xf /tmp/x.tar', /`tar` changes files only the shell knows/],
+  ['unzip -o /tmp/x.zip', /`unzip` changes files only the shell knows/],
+  ['tar xf /tmp/x.tar', /`tar` changes files only the shell knows/],
+  ['tar --extract --file /tmp/x.tar', /`tar` changes files only the shell knows/],
+  ['tar --get -f /tmp/x.tar', /`tar` changes files only the shell knows/],
+  ['tar -czf src/main.ts src/contexts/invoicing', /`tar` changes src\/main\.ts/],
+  ['tar czf src/platform/a.tgz src/contexts/invoicing', /`tar` changes src\/platform\/a\.tgz/],
+  ['tar --create --file=src/main.ts src/contexts/invoicing', /`tar` changes src\/main\.ts/],
+  ['tar -c --file src/main.ts src/contexts/invoicing', /`tar` changes src\/main\.ts/],
+  ['tar -czf', /`tar` changes files only the shell knows/],
+  ['tar -c leaf -f src/main.ts', /`tar` changes src\/main\.ts/],
+  ['find src -fprint src/main.ts', /`find fprint` changes src\/main\.ts/],
+  ['git diff --output=src/main.ts', /`git diff` changes src\/main\.ts/],
+  ['git diff -o', /`git diff` changes files only the shell knows/],
+  ['git format-patch -o src/platform HEAD~1', /`git format-patch` changes src\/platform/],
+  ['git stash', /`git stash` changes the whole project/],
+  ['git stash -u', /`git stash` changes the whole project/],
+  ['git checkout -f', /`git checkout` changes the whole project/],
+  ['git checkout --pathspec-from-file=list HEAD~1', /`git checkout` changes files only the shell knows/],
+  ['git reset --hard HEAD~1', /`git reset` changes the whole project/],
+  ['git switch -f main', /`git switch` changes the whole project/],
+  ['git read-tree -u --reset HEAD', /`git read-tree` changes the whole project/],
+  ['git checkout-index -f -a', /`git checkout-index` changes the whole project/],
+  ['git worktree add .worktrees/evil', /`git worktree` changes \.worktrees\/evil/],
+  ['git worktree add', /`git worktree` changes the whole project/],
+  ['git checkout-index --all', /`git checkout-index` changes the whole project/],
+  ['git commit -am x', /`git commit` changes the whole project/],
+  ['npx eslint --fix src/main.ts', /`eslint` changes src\/main\.ts/],
+  ['npx --no -- biome format --write src/main.ts', /`biome` changes src\/main\.ts/],
+  ['npx vitest run --outputFile=src/main.ts', /`vitest` changes src\/main\.ts/],
+  ['npx vitest run --outputFile', /`vitest` changes files only the shell knows/],
+  ['npx ddd-ts-kit init --force', /init --force/],
+  ['npx ddd-ts-kit depcruise-config --write', /depcruise-config --write/],
+];
+
+const UNKNOWN_WRITERS_ALLOWED = [
+  'npx eslint src/contexts/invoicing/domain',
+  'npx eslint --fix src/contexts/invoicing/domain',
+  'awk "NR == 1" README.md',
+  'tar -tf /tmp/x.tar',
+  // An archive whose name starts with x is listed, not extracted; an archive created in the temp directory is free.
+  'tar -tf xyz.tar',
+  'tar -czf "$TMPDIR/a.tgz" src/contexts/invoicing',
+  'tar -c src/contexts/invoicing',
+  'tar',
+  'unzip -l /tmp/x.zip',
+  'rsync src/contexts/invoicing/a.ts',
+  'git stash list',
+  'git diff --stat main',
+];
+
+// A formatter or a linter that writes inside the scope: its subcommand and the values of its options are not paths.
+const IN_SCOPE_FORMATS = [
+  'npx --no -- biome format --write src/contexts/invoicing/x.ts',
+  'npx --no -- biome check --write --config-path biome.json src/contexts/invoicing/domain',
+  'npx eslint --fix --ext .ts -c eslint.config.js src/contexts/invoicing/domain',
+];
+
+test('a worker formats and lints its own files: only the paths a formatter is given are judged', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const command of IN_SCOPE_FORMATS) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  const outside = run('pre-bash', bash(root, 'npx eslint --fix -c eslint.config.js src/main.ts', agent));
+  assert.match(reason(outside), /`eslint` changes src\/main\.ts/);
+});
+
+test('a worker is refused the writers the tables do not know: redirections, sed, awk, editors, downloads, git, runners', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const [command, expected] of UNKNOWN_WRITERS) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  for (const command of UNKNOWN_WRITERS_ALLOWED) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
+test('a domain-test-writer is held to test paths by the shell, as it is by the editor tools', () => {
+  const root = project();
+  const agent = { agent_type: 'ddd-ts-kit:domain-test-writer' };
+  const refused = run('pre-bash', bash(root, 'echo x > src/contexts/ordering/domain/order.ts', agent));
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /test writer changes tests only/);
+  const spec = 'echo x > src/contexts/ordering/test/unit/order.spec.ts';
+  assert.equal(run('pre-bash', bash(root, spec, agent)).output, undefined);
+});
+
+test('the main session does not hand-write a generated file or the baseline through the shell', () => {
+  const root = project();
+  for (const [command, expected] of [
+    ['cat > openapi/openapi.yaml', /openapi\/openapi\.yaml is generated/],
+    ['printf x > ddd-ts-kit-baseline.json', /ddd-ts-kit-baseline\.json/],
+  ]) {
+    const result = run('pre-bash', bash(root, command));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  // Writing a context file by hand from the main session, outside any story, stays allowed.
+  assert.equal(run('pre-bash', bash(root, 'echo x > src/contexts/ordering/domain/order.ts')).output, undefined);
+});
+
+test('a worker writes only inside its worktree, the devices and the temp directory, nowhere else', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  const refused = [
+    ['echo x > ~/.ddd-ts-kit-test', /outside your worktree/],
+    ['echo x > /etc/ddd-ts-kit-test', /outside your worktree/],
+    ['cp src/contexts/invoicing/a.ts ~/x', /`cp` changes/],
+  ];
+  for (const [command, expected] of refused) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  for (const free of ['echo x > "$TMPDIR/n.txt"', 'echo x > /dev/null', 'echo x >> /dev/stderr']) {
+    assert.equal(run('pre-bash', bash(root, free, agent)).output, undefined, free);
+  }
+});
+
 test('inline code of a worker runs, and what it changed outside the scope stops the worker until put back', () => {
   const root = committed();
   const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-1' };
@@ -535,3 +688,83 @@ test('the worktree of a worker is found in its command, and other agents run any
   assert.equal(run('pre-bash', bash(root, command)).output, undefined);
   assert.equal(run('pre-bash', { cwd: root, tool_name: 'Bash', tool_input: {}, ...agent }).output, undefined);
 });
+
+test('a context-builder is held to run every command as cd <worktree> && ..., not from the conductor', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = { agent_type: 'ddd-ts-kit:context-builder' };
+  const stray = [
+    `echo x > ${worktree}/src/main.ts`,
+    `echo x > ${worktree}/src/contexts/ordering/x.ts`,
+    `true && cd ${worktree} && echo x > src/main.ts`,
+    `cd ${worktree} || exit 1; echo x > src/main.ts`,
+    `git -C ${worktree} checkout -- src/main.ts`,
+    `(cd ${worktree} && npx ddd-ts-kit generate aggregate ordering Order)`,
+  ];
+  for (const command of stray) {
+    assert.equal(decision(run('pre-bash', bash(conductor, command, agent))), 'deny', command);
+  }
+  assert.match(reason(run('pre-bash', bash(conductor, stray[0], agent))), /cd <worktree> && /);
+  // The reference shape reaches the scope of the worktree, which refuses the write by its context.
+  const reference = run('pre-bash', bash(conductor, `cd ${worktree} && echo x > src/main.ts`, agent));
+  assert.equal(decision(reference), 'deny');
+  assert.match(reason(reference), /You build the context "billing"/);
+  // A read from the conductor, moving into no worktree, is left alone.
+  const read = bash(conductor, `cat ${worktree}/src/contexts/billing/CONTEXT.md`, agent);
+  assert.equal(run('pre-bash', read).output, undefined);
+});
+
+test('a generator after cd <dir>; is judged where the session stands, not in the worktree', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = { agent_type: 'ddd-ts-kit:context-builder' };
+  // `cd <worktree> && ...` reaches the scope of the worktree, which allows a generator of its context.
+  const moved = run(
+    'pre-bash',
+    bash(conductor, `cd ${worktree} && npx ddd-ts-kit generate value-object billing Money`, agent),
+  );
+  assert.equal(moved.output, undefined);
+  // `cd <worktree>;` does not move the reader: the generator is judged from the conductor's checkout.
+  const strayed = run(
+    'pre-bash',
+    bash(conductor, `cd ${worktree}; npx ddd-ts-kit generate value-object billing Money`, agent),
+  );
+  assert.equal(decision(strayed), 'deny');
+  assert.match(reason(strayed), /main checkout of the trunk/);
+});
+
+test('a command that first moves out of every project is still judged, against the session', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const builder = { agent_type: 'ddd-ts-kit:context-builder' };
+  for (const command of [`cd /tmp && rm -rf ${worktree}/src`, `cd / && git -C ${conductor} stash`]) {
+    assert.equal(decision(run('pre-bash', bash(conductor, command, builder))), 'deny', command);
+  }
+  const root = project();
+  const agent = worker(root);
+  const away = run('pre-bash', bash(root, `cd / && rm ${root}/src/main.ts`, agent));
+  assert.match(reason(away), /`rm` changes src\/main\.ts/);
+});
+
+test('a builder that runs a generator from the conductor, under advised worktrees, is told to cd into its worktree', () => {
+  const { conductor } = conductorWithWorker();
+  patchConfig(conductor, { worktrees: 'advised' });
+  const builder = { agent_type: 'ddd-ts-kit:context-builder' };
+  const generated = run('pre-bash', bash(conductor, 'npx ddd-ts-kit generate value-object billing Money', builder));
+  assert.equal(decision(generated), 'deny');
+  assert.match(reason(generated), /cd <worktree> && /);
+  const dry = bash(conductor, 'npx ddd-ts-kit generate value-object billing Money --dry-run', builder);
+  assert.equal(run('pre-bash', dry).output, undefined);
+});
+
+// A conductor's checkout on the trunk, a real git worktree under .worktrees/ with a worker scope,
+// its own install so Node does not borrow the trunk's packages.
+function conductorWithWorker() {
+  const conductor = project();
+  writeFileSync(join(conductor, '.gitignore'), 'node_modules\n.worktrees/\n');
+  git(conductor, 'init', '--quiet', '--initial-branch', 'main');
+  git(conductor, 'add', '--all');
+  git(conductor, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  const worktree = join(conductor, '.worktrees', 'billing');
+  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/billing', worktree);
+  launcher(worktree);
+  put(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing' }));
+  return { conductor, worktree };
+}

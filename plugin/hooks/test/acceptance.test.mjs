@@ -102,12 +102,17 @@ test('the shell only reads, versions or checks the lock and the verdicts of an a
     'echo "Verdict: amend" > test/acceptance/verdicts/us5-1.md',
     "node -e \"require('fs').writeFileSync('test/acceptance/verdicts/us5-1.md', '')\"",
     'cp /tmp/forged.json test/acceptance/us5.acceptance.lock.json',
+    // A rollback of the lock through git, and a cd into the folder then a copy by its short name.
+    'git checkout HEAD~1 -- test/acceptance/us5.acceptance.lock.json',
+    'cd test/acceptance && cp /tmp/forged.json us5.acceptance.lock.json',
   ]) {
     assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
   }
   for (const command of [
     'git add test/acceptance/us5.acceptance.lock.json test/acceptance/verdicts/us5-1.md',
     'cat test/acceptance/verdicts/us5-1.md',
+    // A launcher of the kit reads the lock, where `npx` of anything else would be taken as a write.
+    'npx ddd-ts-kit check test/acceptance/us5.acceptance.lock.json',
   ]) {
     assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
   }
@@ -121,6 +126,10 @@ test('the shell only reads, versions or checks the lock and the verdicts of an a
     'deny',
   );
   assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit acceptance US5 --lock', judge))), 'deny');
+  // The judge writes its verdict with the editor tool only: not through npx of a script, nor git stash.
+  const forge = "npx tsx -e \"require('fs').writeFileSync('test/acceptance/verdicts/us5-1.md', '')\"";
+  assert.equal(decision(run('pre-bash', bash(root, forge, judge))), 'deny');
+  assert.equal(decision(run('pre-bash', bash(root, 'git stash pop', judge))), 'deny');
 });
 
 test('a command that moves to a worktree or checks a path before it reads or versions a verdict is not a write', () => {

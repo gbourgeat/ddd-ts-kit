@@ -7,6 +7,7 @@ import {
   closeSync,
   existsSync,
   fstatSync,
+  globSync,
   mkdirSync,
   mkdtempSync,
   openSync,
@@ -119,22 +120,11 @@ const ACCEPTANCE_LOCK = /^test\/acceptance\/[^/]+\.acceptance\.lock\.json$/;
 // The verdicts that let a locked acceptance change: written by the acceptance-judge agent alone.
 const ACCEPTANCE_VERDICT = /^test\/acceptance\/verdicts\/[^/]+\.md$/;
 const JUDGE_AGENT = 'acceptance-judge';
-// What a command may do with the lock or a verdict outside the judge: read it, version it, run the kit.
-const READING_PROGRAMS = new Set([
-  'git',
-  'cat',
-  'ls',
-  'head',
-  'tail',
-  'grep',
-  'rg',
-  'wc',
-  'diff',
-  'jq',
-  'npx',
-  'pnpm',
-  'ddd-ts-kit',
-]);
+// What a command may do with the lock or a verdict outside the judge: read it, or run the kit
+// (`ddd-ts-kit` directly, or `npx ddd-ts-kit` seen through kitInvocations); `npx`/`pnpm` of anything
+// else can write, and `git` reads only through the subcommands of GIT_READS.
+const READING_PROGRAMS = new Set(['cat', 'ls', 'head', 'tail', 'grep', 'rg', 'wc', 'diff', 'jq', 'ddd-ts-kit']);
+const GIT_READS = new Set(['log', 'show', 'diff', 'status', 'add', 'commit', 'ls-files']);
 // What touches no file: a command line moves to a worktree or checks a path before it reads or versions one.
 const NEUTRAL_PROGRAMS = new Set(['cd', 'pushd', 'popd', 'pwd', 'true', 'test', '[']);
 // awk reads, unless its program comes from a file or may write (`print > "f"`, a pipe, `system`, `@include`).
@@ -269,7 +259,68 @@ const INLINE_CODE = {
   perl: /^-[a-zA-Z]*[eE][a-zA-Z]*$/,
   php: /^-r$/,
 };
-const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>']);
+const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>', '>&']);
+// Editors that rewrite the files they open in place.
+const IN_PLACE_EDITORS = new Set(['vim', 'vi', 'ex', 'ed']);
+// Linters and test runners that write the paths they are given, behind a flag.
+// For a writer of its operands, `subcommands` are the words that name an action, not a path, and
+// `valued` the options whose value is no path it writes.
+const TOOL_WRITES = {
+  eslint: {
+    kind: 'operands',
+    flags: ['--fix', '--fix-dry-run'],
+    subcommands: [],
+    valued: [
+      '-c',
+      '--config',
+      '--ext',
+      '--parser',
+      '--parser-options',
+      '--plugin',
+      '--rule',
+      '--rulesdir',
+      '--env',
+      '--global',
+      '--ignore-path',
+      '--ignore-pattern',
+      '-f',
+      '--format',
+      '-o',
+      '--output-file',
+      '--max-warnings',
+      '--cache-location',
+      '--resolve-plugins-relative-to',
+    ],
+  },
+  biome: {
+    kind: 'operands',
+    flags: ['--write', '--fix'],
+    subcommands: ['format', 'check', 'lint', 'ci'],
+    valued: [
+      '--config-path',
+      '--max-diagnostics',
+      '--diagnostic-level',
+      '--log-level',
+      '--log-kind',
+      '--reporter',
+      '--stdin-file-path',
+      '--vcs-root',
+      '--files-max-size',
+    ],
+  },
+  vitest: { kind: 'valued', valued: ['--outputFile', '--outputJson'] },
+};
+const DOWNLOAD_FLAGS = {
+  curl: ['-o', '--output'],
+  wget: ['-O', '--output-document', '-P', '--directory-prefix'],
+};
+// git subcommands that rewrite tracked files the command does not name, by one of their flags.
+const GIT_FORCE_WRITERS = {
+  reset: ['--hard', '--merge', '--keep'],
+  switch: ['-f', '--force', '--discard-changes'],
+  checkout: ['-f', '--force'],
+  'read-tree': ['-u'],
+};
 // The commands that change the paths they are given, with the options that take a value, and which
 // operands they change: all of them, or the destination only.
 const PATH_COMMANDS = {
@@ -405,31 +456,105 @@ function verdictOn({ file, written, replaced }, input) {
   return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
 
+// A refusal of the patch Codex applies through its shell wins; else the command line is read, and a
+// question about the patch is put only when the rest of the line passes.
 async function preBash(input) {
   const command = toolInput(input).command;
   if (typeof command !== 'string') {
     return;
   }
-  const project = findProject(commandDirectory(command, input.cwd ?? process.cwd()));
+  const cwd = input.cwd ?? process.cwd();
+  const patched = await codexPatchVerdict(input, command, cwd);
+  const verdict = patched?.decision === 'deny' ? patched : ((await shellVerdict(input, command, cwd)) ?? patched);
+  if (verdict) {
+    decide(input, verdict.decision, verdict.reason);
+  }
+}
+
+async function shellVerdict(input, command, cwd) {
+  // A leading `cd` out of every project leaves the command to be judged against the session's project.
+  const project = findProject(commandDirectory(command, cwd)) ?? findProject(cwd);
   await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
-    return;
+    return undefined;
   }
+  const decision = project.mode === 'advise' ? 'ask' : 'deny';
   const preparing = await preparingReason(project, input, command);
   if (preparing) {
-    decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
-    return;
+    return { decision, reason: preparing };
   }
   const context = workerContext(project, input);
-  if (!context) {
-    return;
+  shell = await import('./shell-commands.mjs');
+  const commands = shell.simpleCommands(command, cwd);
+  const refusal = context
+    ? workerCommandReason(project, input, { context, command, commands })
+    : (builderStrayReason(project, input, commands) ?? sessionShellReason(project, input, commands));
+  return refusal ? { decision, reason: refusal } : undefined;
+}
+
+// What the shell writes of a session that is not a context worker meet: the story build gate and
+// the generated or baseline files for everyone, and the test-writer held to the paths of a test.
+function sessionShellReason(project, input, commands) {
+  for (const command of commands) {
+    for (const { place, by } of [...writtenTargets(command), ...changedPaths(command)]) {
+      const refusal = sessionPlaceReason(project, input, place);
+      if (refusal) {
+        return `${by}: ${refusal}`;
+      }
+    }
+  }
+  return undefined;
+}
+
+function sessionPlaceReason(project, input, place) {
+  const owner = place === undefined ? undefined : findProject(place);
+  if (!owner || owner.root !== project.root) {
+    return undefined;
+  }
+  if (String(input.agent_type ?? '').includes('domain-test-writer')) {
+    return testWriterScopeReason(project, place, input);
+  }
+  return storyCodeReason(project, place) ?? generatedFileReason(project, place) ?? baselineFileReason(project, place);
+}
+
+// Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: the patch
+// fed to that command is judged the same way a write through the editor tool is. A here-document that
+// only holds the text of a patch for another command (`cat <<EOF > notes.md`) is no patch.
+async function codexPatchVerdict(input, command, cwd) {
+  if (hostOf(input) !== 'codex' || !/^\s*\*\*\* Begin Patch/m.test(command)) {
+    return undefined;
   }
   shell = await import('./shell-commands.mjs');
-  const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
-  const refusal = workerCommandReason(project, input, { context, command, commands });
-  if (refusal) {
-    decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
+  if (!shell.simpleCommands(command, cwd).some(({ words }) => shell.commandName(words) === 'apply_patch')) {
+    return undefined;
   }
+  const start = command.indexOf('*** Begin Patch');
+  const verdicts = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd)
+    .map((written) => verdictOn(written, input))
+    .filter(Boolean);
+  return verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
+}
+
+// A context-builder keeps the working directory of its session, so the scope of a worker is found
+// only when the command moves into its worktree (`cd <worktree> && ...` or `--cwd`). When the
+// session has worker worktrees and a builder's command touches no scoped project, a write by that
+// command lands where the guard cannot judge it: it is refused, with the one shape it reads.
+function builderStrayReason(project, input, commands) {
+  if (!isBuilder(input) || !hasWorkerWorktree(project.root) || !builderWrites(commands)) {
+    return undefined;
+  }
+  return 'A worker runs every command as `cd <worktree> && ...` so that the guard reads it against the scope of that worktree; this command writes without moving into a worktree of your project. Run it as `cd <worktree> && ...`.';
+}
+
+// A redirection, a writer of the tables, inline code, or a generator of the kit, which writes files too.
+function builderWrites(commands) {
+  return (
+    generates(commands, []) ||
+    commands.some(
+      (command) =>
+        writtenTargets(command).length > 0 || changedPaths(command).length > 0 || inlineCode(command) !== undefined,
+    )
+  );
 }
 
 // What no agent runs, then what waits for a place, a landing, a lock or a generator first.
@@ -437,6 +562,7 @@ async function preparingReason(project, input, command) {
   return (
     baselineWriteReason(command) ??
     (await hooksSkippedReason(input, command)) ??
+    (await gitConfigReason(input, command)) ??
     (await workerPlaceReason(input, command)) ??
     (await landingReason(input, command)) ??
     oneSideMergeReason(project, input, command) ??
@@ -454,15 +580,38 @@ function workerCommandReason(project, input, { context, command, commands }) {
     return pending.reason;
   }
   const refusal =
+    deeplyNestedReason(commands) ??
     sharedGeneratorReason(project, context, commands) ??
     dependencyChangeReason(commands) ??
     workingMigrationReason(command) ??
     formatterReason(project, commands) ??
+    unknownProgramReason(commands) ??
     fileChangeReason(project, input, commands);
   if (!refusal) {
     noteBeforeInlineCode(project, input, commands);
   }
   return refusal;
+}
+
+// A command nested in more shells or evals than the reader follows is let through unread today;
+// for a worker it is refused instead, since the guard cannot see what it writes.
+function deeplyNestedReason(commands) {
+  return commands.some((command) => command.truncated)
+    ? `A command nested deeper than the guard reads is refused to a worker: write it as separate, flatter commands. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
+}
+
+// A command whose program word holds a variable or a substitution runs a name only the shell
+// computes, which the guard cannot judge; `eval` of such a text leaves the same unreadable word.
+function unknownProgramReason(commands) {
+  for (const { words } of commands) {
+    const program = words[0];
+    if (program !== undefined && (program.includes(shell.UNKNOWN) || program.includes('$'))) {
+      const shown = program.replaceAll(shell.UNKNOWN, '$(...)');
+      return `A worker runs no command whose name only the shell knows: \`${shown}\` is computed when the command runs. ${EDIT_WITH_TOOLS}`;
+    }
+  }
+  return undefined;
 }
 
 function postWrite(input) {
@@ -1208,20 +1357,25 @@ function verdictReason(judging, path) {
 // regression spec of a fix may also run it, with a test runner; a sub-agent never rewrites it (the main session may).
 async function acceptanceFilesShellReason(project, input, command) {
   const judging = isJudge(input);
-  const held = (input.agent_type ? (fixOf(project)?.files ?? []) : []).filter(
-    (file) => command.includes(file) || command.includes(file.split('/').pop()),
+  shell = await import('./shell-commands.mjs');
+  const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
+  const written = writtenProjectPaths(project, commands);
+  const fixFiles = input.agent_type ? (fixOf(project)?.files ?? []) : [];
+  // A command touches a held file by the place it writes (a glob expanded) or by naming it in text.
+  const held = fixFiles.filter(
+    (file) => written.includes(file) || command.includes(file) || command.includes(file.split('/').pop()),
   );
-  if (!judging && held.length === 0 && !/acceptance\/verdicts|\.acceptance\.lock\.json/.test(command)) {
+  const governed =
+    written.some((path) => ACCEPTANCE_LOCK.test(path) || path.startsWith('test/acceptance/verdicts/')) ||
+    /acceptance\/verdicts|\.acceptance\.lock\.json/.test(command);
+  if (!judging && held.length === 0 && !governed) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const writing = shell
-    .simpleCommands(command, input.cwd ?? process.cwd())
-    .some(
-      (simple) =>
-        !(readsOnly(simple.words) || (held.length > 0 && runsTests(simple))) ||
-        simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
-    );
+  const writing = commands.some(
+    (simple) =>
+      !(readsOnly(simple.words) || (held.length > 0 && runsTests(simple))) ||
+      simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
+  );
   if (!writing) {
     return undefined;
   }
@@ -1234,12 +1388,41 @@ async function acceptanceFilesShellReason(project, input, command) {
     : `${lockedRegressionReason(project, spec, input)} A command may read it, version it or run it (\`npm test -- ${spec}\`).`;
 }
 
+// The project paths a command writes, each glob expanded against the tree so a pattern that names a
+// lock, a verdict or a held regression spec is seen, not only a path spelled out in the command.
+function writtenProjectPaths(project, commands) {
+  const places = commands
+    .flatMap((command) => [...writtenTargets(command), ...changedPaths(command)])
+    .map(({ place }) => place)
+    .filter((place) => place !== undefined);
+  const paths = new Set();
+  for (const place of places) {
+    for (const file of expandGlob(place)) {
+      paths.add(projectPath(project, file));
+    }
+  }
+  return [...paths];
+}
+
+function expandGlob(place) {
+  // A pattern matching nothing (globSync returns []) writes no file, so it protects nothing.
+  return /[*?[]/.test(place) ? globSync(place) : [place];
+}
+
 // A command that writes no file by itself, its redirections aside: a neutral one (`cd`, `test`), a reader,
 // `sed` without an in-place edit nor a script that writes, `awk` whose program writes nothing, `less` without a log.
 function readsOnly(words) {
   const name = shell.commandName(words);
   const args = words.slice(1);
   if (NEUTRAL_PROGRAMS.has(name) || READING_PROGRAMS.has(name)) {
+    return true;
+  }
+  if (name === 'git') {
+    return GIT_READS.has(gitInvocation(args, undefined).subcommand);
+  }
+  // `npx ddd-ts-kit ...`, `pnpm exec ddd-ts-kit ...`: a launcher of the kit reads the lock; `npx`
+  // of anything else can write it.
+  if (kitInvocations([{ words }]).length > 0) {
     return true;
   }
   if (name === 'sed') {
@@ -1412,7 +1595,12 @@ async function writesCode(input, command, aside) {
     return false;
   }
   shell = await import('./shell-commands.mjs');
-  return kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  return generates(shell.simpleCommands(command, input.cwd ?? process.cwd()), aside);
+}
+
+// A run of a generator of the kit among `commands`, any kind but those given, its help and its dry run aside.
+function generates(commands, aside) {
+  return kitInvocations(commands).some(
     ({ subcommand, args }) =>
       ['generate', 'g'].includes(subcommand) &&
       args[0] !== undefined &&
@@ -1531,7 +1719,10 @@ function storiesOf(project) {
     return cached;
   }
   const view = runCli(project, ['stories', '--json'], 3000);
-  const prefix = spawnSync('git', ['rev-parse', '--show-prefix'], { cwd: project.root, encoding: 'utf8' });
+  const prefix = spawnSync('git', ['-c', 'core.fsmonitor=false', 'rev-parse', '--show-prefix'], {
+    cwd: project.root,
+    encoding: 'utf8',
+  });
   if (!view || prefix.status !== 0) {
     return undefined;
   }
@@ -1681,15 +1872,20 @@ async function hooksSkippedReason(input, command) {
 function hooksSkippedBy(words) {
   let index = 1;
   while (index < words.length && words[index].startsWith('-')) {
-    const word = words[index];
-    const configured = word === '-c' ? words[index + 1] : /^--config-env=(.*)$/.exec(word)?.[1];
-    if (configured !== undefined && /^core\.hookspath\b/i.test(configured)) {
+    if (optionPointsAtHooks(words[index], words[index + 1])) {
       return '`git -c core.hooksPath` points git at other hooks';
     }
-    index += GIT_VALUED_OPTIONS.has(word) ? 2 : 1;
+    index += GIT_VALUED_OPTIONS.has(words[index]) ? 2 : 1;
   }
-  const subcommand = words[index];
-  const rest = words.slice(index + 1);
+  return hooksSkippedBySubcommand(words[index], words.slice(index + 1));
+}
+
+function optionPointsAtHooks(word, next) {
+  const configured = word === '-c' ? next : /^--config-env=(.*)$/.exec(word)?.[1];
+  return configured !== undefined && /^core\.hookspath\b/i.test(configured);
+}
+
+function hooksSkippedBySubcommand(subcommand, rest) {
   if (subcommand === 'config' && rest.some((word) => /^core\.hookspath$/i.test(word))) {
     return '`git config core.hooksPath` points git at other hooks';
   }
@@ -1711,6 +1907,94 @@ function hooksSkippedBy(words) {
     }
   }
   return undefined;
+}
+
+// Config keys a sub-agent must not set: each runs a command in every checkout of the repository
+// (fsmonitor, pager, editor, sshCommand, hooksPath, an alias, a diff or filter driver, gpg).
+const DANGEROUS_CONFIG = [
+  /^core\.fsmonitor$/i,
+  /^core\.pager$/i,
+  /^core\.editor$/i,
+  /^core\.sshcommand$/i,
+  /^core\.hookspath$/i,
+  /^alias\./i,
+  /^diff\..+\.command$/i,
+  /^filter\./i,
+  /^gpg\.program$/i,
+];
+const CONFIG_READS = new Set(['--get', '--get-all', '--get-regexp', '--get-urlmatch', '-l', '--list', '--list-all']);
+const CONFIG_WRITES = new Set([
+  '--unset',
+  '--unset-all',
+  '--remove-section',
+  '--rename-section',
+  '-e',
+  '--edit',
+  '--replace-all',
+  '--add',
+]);
+// The verbs of `git config` (git 2.46), each with whether it changes the configuration.
+const CONFIG_VERBS = new Map([
+  ['get', false],
+  ['list', false],
+  ['get-color', false],
+  ['get-colorbool', false],
+  ['set', true],
+  ['unset', true],
+  ['edit', true],
+  ['rename-section', true],
+  ['remove-section', true],
+]);
+
+// A sub-agent never sets the git configuration (shared by every checkout of the repository) nor
+// passes a dangerous `-c key=value`; it reads the config with `--get` or `--list`.
+async function gitConfigReason(input, command) {
+  if (!input.agent_type || !/\bgit\b/.test(command)) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const gits = shell
+    .simpleCommands(command, input.cwd ?? process.cwd())
+    .filter(({ words }) => shell.commandName(words) === 'git');
+  for (const { words } of gits) {
+    const reason = gitConfigKeyReason(words);
+    if (reason) {
+      return reason;
+    }
+  }
+  return undefined;
+}
+
+function gitConfigKeyReason(words) {
+  const inline = words.find((word, index) => words[index - 1] === '-c' && isDangerousConfig(word.split('=')[0]));
+  if (inline) {
+    const key = inline.split('=')[0];
+    return `\`git -c ${key}\` runs a command in every checkout of the repository. ${REPORT_TO_CONDUCTOR}`;
+  }
+  const { subcommand, tail } = gitInvocation(words.slice(1), undefined);
+  return subcommand === 'config' && setsConfig(tail)
+    ? `\`git config\` changes the git configuration, shared by every checkout; a sub-agent reads it (\`--get\`, \`--list\`) but never sets it. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
+}
+
+function isDangerousConfig(key) {
+  return DANGEROUS_CONFIG.some((pattern) => pattern.test(key));
+}
+
+// Decided by the verb (`git config get|list|set|unset|edit ...`, git 2.46) or the flag of the older
+// form (`--get`, `--list`; `--unset`, `--add`, `--edit`, ...); without either, `<key> <value>` sets.
+function setsConfig(tail) {
+  if (tail.some((word) => CONFIG_WRITES.has(word))) {
+    return true;
+  }
+  if (tail.some((word) => CONFIG_READS.has(word))) {
+    return false;
+  }
+  const operands = shell.operands(tail, ['--type', '-t', '--file', '-f', '--default']);
+  if (CONFIG_VERBS.has(operands[0])) {
+    return CONFIG_VERBS.get(operands[0]);
+  }
+  return operands.length >= 2;
 }
 
 function baselineWriteReason(command) {
@@ -1758,7 +2042,10 @@ function dependencyReason(project, { file, written, replaced }, input) {
 // is skipped.
 function recordTrial(project, { file, ...outcome }) {
   try {
-    const common = spawnSync('git', ['rev-parse', '--git-common-dir'], { cwd: project.root, encoding: 'utf8' });
+    const common = spawnSync('git', ['-c', 'core.fsmonitor=false', 'rev-parse', '--git-common-dir'], {
+      cwd: project.root,
+      encoding: 'utf8',
+    });
     if (common.status !== 0) {
       return;
     }
@@ -1823,7 +2110,7 @@ function count(text, pattern) {
 function commandDirectory(command, cwd) {
   const named =
     /--cwd[= ]\s*("[^"]+"|'[^']+'|\S+)/.exec(command) ??
-    /^\s*(?:cd|pushd)\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*(?:&&|;)/.exec(command);
+    /^\s*(?:cd|pushd)\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*&&/.exec(command);
   const directory = named?.[1]?.replace(/^["']|["']$/g, '');
   if (!directory) {
     return cwd;
@@ -1942,6 +2229,20 @@ function sharedGeneratorReason(project, context, commands) {
     const aggregate = kind === 'command' ? aggregateOption(args) : undefined;
     if (aggregate && !hasRepository(project, context, aggregate)) {
       return `\`generate command --aggregate ${aggregate}\` would also create the repository of ${aggregate}, which registers in shared files. ${REPORT_TO_CONDUCTOR}`;
+    }
+  }
+  return sharedKitWriteReason(commands);
+}
+
+// Other kit commands that write files of every context: `init --force` rewrites the whole project,
+// `depcruise-config --write` rewrites the generated dependency rules.
+function sharedKitWriteReason(commands) {
+  for (const { subcommand, args } of kitInvocations(commands)) {
+    if (subcommand === 'init' && args.includes('--force')) {
+      return `\`init --force\` rewrites the project from the kit, including files of every context. ${REPORT_TO_CONDUCTOR}`;
+    }
+    if (subcommand === 'depcruise-config' && args.includes('--write')) {
+      return `\`depcruise-config --write\` rewrites the generated .dependency-cruiser.cjs from ${CONFIG}, which is shared. ${REPORT_TO_CONDUCTOR}`;
     }
   }
   return undefined;
@@ -2066,13 +2367,21 @@ function writtenTargets(command) {
       at(target, `the redirection \`${operator} ${target.replaceAll(shell.UNKNOWN, '$(...)')}\``),
     );
 
-  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))].filter(({ place }) =>
-    isProjectPath(place),
+  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))].filter(
+    ({ place }) => place === undefined || !isFreePlace(place),
   );
 }
 
-function isProjectPath(place) {
-  return place === undefined || findProject(place) !== undefined;
+// The only absolute places a worker writes outside its scope: the null and standard devices and
+// the system temporary directory (os.tmpdir() or $TMPDIR). Everything else is judged.
+function isFreePlace(place) {
+  if (['/dev/null', '/dev/stdout', '/dev/stderr'].includes(place)) {
+    return true;
+  }
+  return [tmpdir(), process.env.TMPDIR]
+    .filter((dir) => typeof dir === 'string' && dir !== '')
+    .map((dir) => resolve(dir))
+    .some((dir) => place === dir || place.startsWith(`${dir}/`));
 }
 
 function shellWriteReason(project, input, { place, by }) {
@@ -2080,6 +2389,9 @@ function shellWriteReason(project, input, { place, by }) {
     return `A worker writes with the shell only to a file it names: ${by} writes files only the shell knows. ${EDIT_WITH_TOOLS}`;
   }
   const owner = findProject(place);
+  if (owner === undefined) {
+    return `A worker writes only inside its worktree: ${by} writes ${place}, outside your worktree. ${FREE_OUTPUT}`;
+  }
   if (owner.root !== project.root) {
     return `A worker never changes a file outside its scope: ${by} writes ${place}, in another checkout. ${EDIT_WITH_TOOLS}`;
   }
@@ -2094,10 +2406,15 @@ function shellWriteReason(project, input, { place, by }) {
 // `sed -i`, `perl -i` and `tee` write the files they are given.
 function inPlaceTargets({ words }) {
   const name = shell.commandName(words);
+  const args = words.slice(1);
   if (name === 'tee') {
-    return shell.operands(words.slice(1)).map((word) => ({ word, by: `\`tee\` writing ${word}` }));
+    return shell.operands(args).map((word) => ({ word, by: `\`tee\` writing ${word}` }));
   }
-  const files = name === 'sed' || name === 'perl' ? inPlaceFiles(words.slice(1)) : [];
+  // A sed script writes a file by `w file`, `W file` or an `s///w` flag, whose target the script hides.
+  if (name === 'sed' && !inPlaceFlag(args) && sedWrites(args)) {
+    return [{ word: shell.UNKNOWN, by: 'a sed script that writes a file' }];
+  }
+  const files = ['sed', 'perl', 'ruby'].includes(name) ? inPlaceFiles(args) : [];
 
   return files.map((word) => ({ word, by: `\`${name} -i\` editing ${word}` }));
 }
@@ -2146,6 +2463,11 @@ function inlineCode({ words, heredoc, piped, redirects }) {
 // The paths a command changes, each with what changes it.
 function changedPaths({ words, directory }) {
   const name = shell.commandName(words);
+  return tableWrites(name, words, directory) ?? programWrites(name, words, directory) ?? [];
+}
+
+// cp, mv, rm, dd, find -delete, patch and git: the writers whose targets the tables already read.
+function tableWrites(name, words, directory) {
   const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
   if (name in PATH_COMMANDS) {
     return pathOperands(name, words.slice(1)).map((word) => at(word, name));
@@ -2160,8 +2482,133 @@ function changedPaths({ words, directory }) {
   if (name === 'patch' && !words.includes('--dry-run')) {
     return [{ place: undefined, by: 'patch' }];
   }
+  return name === 'git' ? gitChangedPaths(words.slice(1), directory) : undefined;
+}
 
-  return name === 'git' ? gitChangedPaths(words.slice(1), directory) : [];
+// The writers the cp and mv tables miss: an editor that rewrites in place, a downloader, an archive
+// tool, an awk program, a linter or runner given a path, or find writing a listing to a file.
+function programWrites(name, words, directory) {
+  const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
+  const args = words.slice(1);
+  if (IN_PLACE_EDITORS.has(name)) {
+    return shell.operands(args).map((word) => at(word, name));
+  }
+  if (name === 'rsync') {
+    const operands = shell.operands(args, RSYNC_VALUED);
+    return operands.length > 1 ? [at(operands.at(-1), 'rsync')] : [];
+  }
+  if (name === 'curl' || name === 'wget') {
+    return downloadWrites(name, args, at);
+  }
+  if (name === 'tar' || name === 'unzip') {
+    return archiveWrites(name, args, at);
+  }
+  if (AWK_PROGRAMS.has(name)) {
+    return awkWrites(args) ? [{ place: undefined, by: 'an awk program that writes a file' }] : [];
+  }
+  if (name === 'find') {
+    return findListings(words, at);
+  }
+  return name in TOOL_WRITES ? toolWrites(name, args, at) : undefined;
+}
+
+const RSYNC_VALUED = ['-e', '--rsh', '--exclude', '--include', '--files-from', '-f', '--filter', '--compare-dest'];
+
+// curl writes `-o file`/`--output file` and the basename of the URL with `-O`; wget writes `-O file`
+// and under the directory of `-P`/`--directory-prefix`.
+function downloadWrites(name, args, at) {
+  const flags = DOWNLOAD_FLAGS[name];
+  const writes = [];
+  for (let index = 0; index < args.length; index += 1) {
+    if (flags.includes(args[index])) {
+      writes.push(at(args[index + 1] ?? shell.UNKNOWN, name));
+    }
+  }
+  if (name === 'curl' && args.some((word) => /^-[A-Za-z]*O[A-Za-z]*$/.test(word) && !word.startsWith('--'))) {
+    writes.push({ place: undefined, by: 'curl -O' });
+  }
+  return writes;
+}
+
+// An extraction writes places only the shell resolves (the current directory, a -C or -d target);
+// tar creating an archive writes the file of `-f`/`--file`. unzip extracts unless it lists or tests.
+function archiveWrites(name, args, at) {
+  if (name === 'unzip') {
+    return args.some((word) => word === '-l' || word === '-t') ? [] : [{ place: undefined, by: name }];
+  }
+  const letters = tarLetters(args);
+  if (letters.includes('x') || args.includes('--extract') || args.includes('--get')) {
+    return [{ place: undefined, by: name }];
+  }
+  const file = letters.includes('c') || args.includes('--create') ? tarFile(args) : undefined;
+  return file === undefined ? [] : [at(file, name)];
+}
+
+// The mode and option letters of tar: its first word in the old form (`tar czf ...`), else its short
+// options (`-czf`, `-c -f`); never the name of an archive.
+function tarLetters(args) {
+  if (/^[A-Za-z]+$/.test(args[0] ?? '')) {
+    return args[0];
+  }
+  return args
+    .filter((word) => /^-[A-Za-z]+$/.test(word))
+    .map((word) => word.slice(1))
+    .join('');
+}
+
+// The archive tar names: the value of `--file`, or the word after the letters that hold `f`.
+function tarFile(args) {
+  const long = args.find((word) => word.startsWith('--file='));
+  if (long !== undefined) {
+    return long.slice('--file='.length);
+  }
+  const at = args.findIndex(
+    (word, index) =>
+      word === '--file' || (/^-?[A-Za-z]*f[A-Za-z]*$/.test(word) && (index === 0 || word.startsWith('-'))),
+  );
+  return at === -1 ? undefined : (args[at + 1] ?? shell.UNKNOWN);
+}
+
+// An awk program writes when it edits in place (`-i inplace`), redirects, pipes, or calls `system`.
+function awkWrites(args) {
+  const inPlace = args.some((word) => /^-i(nplace)?$/.test(word)) && args.includes('inplace');
+  return inPlace || args.some((word) => /[>|]|\bsystem\b/.test(word));
+}
+
+// `find ... -fprint file`, `-fprintf file ...`, `-fls file`: the file after the action is written.
+function findListings(words, at) {
+  const writes = [];
+  words.forEach((word, index) => {
+    if (['-fprint', '-fprintf', '-fls'].includes(word)) {
+      writes.push(at(words[index + 1] ?? shell.UNKNOWN, `find ${word.slice(1)}`));
+    }
+  });
+  return writes;
+}
+
+function toolWrites(name, args, at) {
+  const spec = TOOL_WRITES[name];
+  const targets =
+    spec.kind === 'valued'
+      ? valuedTargets(args, spec.valued)
+      : spec.flags.some((flag) => args.includes(flag))
+        ? shell.operands(args, spec.valued).filter((word) => !spec.subcommands.includes(word))
+        : [];
+  return targets.map((word) => at(word, name));
+}
+
+// The values of `--outputFile file` and `--outputFile=file`, whatever the flag the runner takes.
+function valuedTargets(args, valued) {
+  const targets = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const joined = valued.find((flag) => args[index].startsWith(`${flag}=`));
+    if (valued.includes(args[index])) {
+      targets.push(args[index + 1] ?? shell.UNKNOWN);
+    } else if (joined) {
+      targets.push(args[index].slice(joined.length + 1));
+    }
+  }
+  return targets;
 }
 
 function pathOperands(name, args) {
@@ -2184,6 +2631,10 @@ function pathOperands(name, args) {
 function gitChangedPaths(args, directory) {
   const { subcommand, tail, moved } = gitInvocation(args, directory);
   const at = (word) => ({ place: shell.placeOf(word, moved), by: `git ${subcommand}` });
+  const forced = forcedGitWrite(subcommand, tail, at);
+  if (forced) {
+    return forced;
+  }
   if (subcommand === 'checkout') {
     return checkedOutPaths(tail, moved).map(at);
   }
@@ -2202,6 +2653,46 @@ function gitChangedPaths(args, directory) {
   const checking = tail.some((word) => /^--(check|stat|numstat|summary|cached)$/.test(word));
 
   return subcommand === 'apply' && !checking ? [{ place: undefined, by: 'git apply' }] : [];
+}
+
+// git writers that rewrite the work tree a worker does not name: a forced checkout, switch, reset
+// or read-tree; a stash or checkout-index; a new worktree; a commit of every tracked change; a
+// patch or report written out; or paths read from a file.
+function forcedGitWrite(subcommand, tail, at) {
+  if ((GIT_FORCE_WRITERS[subcommand] ?? []).some((flag) => tail.includes(flag))) {
+    return [at('.')];
+  }
+  if (tail.some((word) => word.startsWith('--pathspec-from-file'))) {
+    return [{ place: undefined, by: `git ${subcommand}` }];
+  }
+  if (touchesWorktree(subcommand, tail)) {
+    return [at('.')];
+  }
+  if (subcommand === 'worktree' && tail[0] === 'add') {
+    return [at(shell.operands(tail.slice(1), ['-b', '-B']).at(-1) ?? '.')];
+  }
+  if (subcommand === 'commit' && tail.some((word) => /^-[^-]*a/.test(word) || word === '--all')) {
+    return [at('.')];
+  }
+  const out = gitOutputFile(subcommand, tail);
+  return out === undefined ? undefined : [at(out)];
+}
+
+// stash writes the work tree unless it only reads it (list, show), and checkout-index with -a or -f.
+function touchesWorktree(subcommand, tail) {
+  if (subcommand === 'checkout-index') {
+    return tail.some((word) => /^-[a-zA-Z]*[af]/.test(word) || word === '--all');
+  }
+  const action = tail.find((word) => !word.startsWith('-')) ?? '';
+  return subcommand === 'stash' && !['list', 'show', 'drop', 'clear', 'branch'].includes(action);
+}
+
+// The file `git diff --output` and `git format-patch -o` write to, given spaced or joined.
+function gitOutputFile(subcommand, tail) {
+  if (subcommand === 'diff') {
+    return valuedTargets(tail, ['--output', '-o'])[0];
+  }
+  return subcommand === 'format-patch' ? valuedTargets(tail, ['-o', '--output-directory'])[0] : undefined;
 }
 
 // The options before the subcommand of git; `-C <directory>` moves where its paths are read from.
@@ -2231,14 +2722,15 @@ function checkedOutPaths(tail, directory) {
   });
 }
 
-// A path of no project is free; a path only the shell knows, or of another checkout, is not.
+// A path only the shell knows, of another checkout, or anywhere outside every kit project but the
+// free devices and the temporary directory, is outside the worker's scope.
 function outsideScope(project, input, place) {
   if (place === undefined) {
     return true;
   }
   const owner = findProject(place);
   if (owner === undefined) {
-    return false;
+    return !isFreePlace(place);
   }
 
   return owner.root !== project.root || workerScopeReason(project, place, input) !== undefined;
@@ -2426,7 +2918,11 @@ function errorsOf(report) {
 }
 
 function hasPendingChanges(project) {
-  const status = spawnSync('git', ['status', '--porcelain'], { cwd: project.root, encoding: 'utf8', timeout: 5000 });
+  const status = spawnSync('git', ['-c', 'core.fsmonitor=false', 'status', '--porcelain'], {
+    cwd: project.root,
+    encoding: 'utf8',
+    timeout: 5000,
+  });
   return status.status !== 0 || status.stdout.trim().length > 0;
 }
 
@@ -2472,7 +2968,12 @@ function uncommittedChanges(project) {
 }
 
 function git(project, args) {
-  const run = spawnSync('git', args, { cwd: project.root, encoding: 'utf8', timeout: 5000 });
+  // `-c core.fsmonitor=false`: a core.fsmonitor planted in the config never runs on the guard's own git.
+  const run = spawnSync('git', ['-c', 'core.fsmonitor=false', ...args], {
+    cwd: project.root,
+    encoding: 'utf8',
+    timeout: 5000,
+  });
   return run.status === 0 ? run.stdout : undefined;
 }
 

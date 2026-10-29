@@ -72,7 +72,9 @@ a hand-written file where a generator exists, any edit of a generated contract a
 of the baseline of the errors (`check --baseline write`, or an edit of `ddd-ts-kit-baseline.json`:
 the project owner writes it, in a terminal), refuses a git command that skips the hooks of the
 project (`--no-verify`, `-n` on a commit, `-c core.hooksPath=...`, `LEFTHOOK=0` or `HUSKY=0`: the hooks are the local gate
-of the pipeline), asks the
+of the pipeline) and, to a sub-agent, a `git config` that sets a value or a `git -c` of a key that
+runs a command in every checkout (`core.fsmonitor`, `core.pager`, `core.editor`, `core.sshCommand`,
+an `alias.*`, a diff or filter driver), asks the
 project owner before a suppression, a skipped test or a change of the rules is written, checks
 every written file and returns the violations with their fix (with `"dependenciesBeforeWrite": true`, on trial,
 it refuses before the write a new import that breaks a dependency rule), and refuses to finish while
@@ -81,9 +83,24 @@ the project installed on the written file (`node_modules/.bin/biome format --wri
 never another formatter), so that the layout is settled at the write and the lint findings
 that follow a wrapped line come back in the same output; a run that fails changes nothing. It reminds, without blocking, when the uncommitted changes exceed
 the advised size of a commit, and in a worker's worktree (`.ddd-ts-kit/worker.json`) it
-refuses a write outside the worker's context, by the editor tools or by the shell (`sed -i`, a
-redirection, `tee`, `cp`, `mv`, `rm`), stops the worker when its inline code (`node -e`, a heredoc)
-changed a file outside it, and refuses a dependency change and another formatter than `npm run format`.
+refuses a write outside the worker's context, by the editor tools or by the shell. It reads the
+whole command line, every command of it, not only one that starts with `cd <worktree> &&`: a worker
+runs every command that way, and one that writes without moving into its worktree is refused with
+that instruction. It follows a `cd` only when it is certain (after `&&`, into a directory that
+exists), so a write after `cd dir;` or a failed `cd` is refused rather than placed wrong; it reads a
+name the shell computes (a variable, a substitution, a brace list), a wrapper (`nice`, `ionice`,
+`setsid`, `flock`, `busybox`, `su -c`, `env -S`), a package runner (`npx`, `npm exec`) and the
+command it runs; and it knows the writers the file tables miss (`>&`, a `sed` or `awk` script that
+writes, `vim`/`ed`, `rsync`, `curl -o`, `wget -O`, `tar -x`, `git stash`/`reset --hard`/`worktree
+add`/`checkout -f`, `eslint --fix`, `biome --write`). A worker's only free places outside its scope
+are `/dev/null`, the standard devices and the temporary directory (`$TMPDIR`); any other absolute
+place is refused. A command nested deeper than the reader follows (more than five shells or `eval`s)
+is refused rather than let through unread. It stops the worker when its inline code (`node -e`, a
+heredoc) changed a file outside it, and refuses a dependency change and another formatter than
+`npm run format`. The same shell reading holds the `domain-test-writer` to the paths of a test, the
+code of a story to its build gate, and every session's hand-writing of a generated file or the
+baseline, each by the places a command writes rather than its text; a Codex `apply_patch` sent
+through the shell is read as a patch.
 For a `context-builder`, it counts the tool calls inside those same hooks and warns the agent
 twice before its turn limit, records its runs in its worktree (`.ddd-ts-kit/agent.json`), and
 listens to two rare events of Claude Code, filtered by that agent: `SubagentStart` (a launch or a
@@ -101,10 +118,13 @@ writes a file another open story changes, and refuses once to end the session be
 ([story workflow](story-workflow.md)). In the worktree of a fix (`"kind": "fix"` in that file),
 it opens the code once the regression spec is locked, and refuses every edit of a locked spec,
 by the editor tools and by the shell, to its sub-agents; the session itself may write a new version,
-which `acceptance` reports and the `acceptance-judge` agent rules on. A command that names the lock
-of an acceptance or a verdict may move or check a path (`cd`, `pushd`, `popd`, `pwd`, `test`), read
-the file (`cat`, `grep`, `sed` without `-i`, `awk`, `less`, `jq`), version it (`git`) or run the kit;
-any other program, or a redirection to a file, is a write, which only the CLI and that agent make. No hook
+which `acceptance` reports and the `acceptance-judge` agent rules on. A command that writes the lock
+of an acceptance or a verdict (judged by the places it writes, a glob expanded, not by its text) is
+refused: a command may move or check a path (`cd`, `pushd`, `popd`, `pwd`, `test`), read the file
+(`cat`, `grep`, `sed` without `-i`, `awk`, `less`, `jq`), version it (`git add`, `commit`, `log`,
+`show`, `status`) or run the kit (`ddd-ts-kit`, `npx ddd-ts-kit`); any other program (a bare `npx`
+or `pnpm`, `git checkout`/`stash`), or a redirection to a file, is a write, which only the CLI and
+that agent make. No hook
 runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 

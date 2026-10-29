@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:2c4e64e94dcc2c65 -->
+<!-- translation-of: coding-agents.md sha256:d61e96dcd756c29b -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -74,7 +74,9 @@ modification d'un contrat généré et l'écriture de la *baseline* des erreurs 
 write`, ou une modification de `ddd-ts-kit-baseline.json` : le propriétaire du projet l'écrit,
 dans un terminal), refuse une commande git qui saute les hooks du projet (`--no-verify`, `-n` sur un
 commit, `-c core.hooksPath=...`, `LEFTHOOK=0` ou `HUSKY=0` : les hooks sont la barrière locale du
-pipeline), demande l'avis du propriétaire du projet avant qu'une
+pipeline) et, à un sous-agent, un `git config` qui fixe une valeur ou un `git -c` d'une clé qui
+lance une commande dans chaque *checkout* (`core.fsmonitor`, `core.pager`, `core.editor`,
+`core.sshCommand`, un `alias.*`, un pilote *diff* ou *filter*), demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
 écrit et renvoie les violations avec leur correction (avec `"dependenciesBeforeWrite": true`, à
 l'essai, il refuse avant l'écriture un nouvel import qui enfreint une règle de dépendance), et
@@ -86,9 +88,26 @@ l'écriture et que les constats du lint qui suivent une ligne repliée reviennen
 sortie ; une exécution qui échoue ne change rien. Il rappelle, sans bloquer, quand les changements non commités
 dépassent la taille conseillée d'un commit, et dans le worktree d'un worker
 (`.ddd-ts-kit/worker.json`), il refuse une écriture hors du contexte du worker, par les outils
-d'édition ou par le *shell* (`sed -i`, une redirection, `tee`, `cp`, `mv`, `rm`), arrête le
+d'édition ou par le *shell*. Il lit toute la ligne de commande, chacune de ses commandes, pas
+seulement celle qui commence par `cd <worktree> &&` : un worker lance chaque commande ainsi, et
+celle qui écrit sans entrer dans son worktree est refusée avec cette consigne. Il ne suit un `cd`
+que lorsqu'il est certain (après `&&`, vers un répertoire qui existe), de sorte qu'une écriture
+après `cd dir;` ou un `cd` qui échoue est refusée plutôt que mal placée ; il lit un nom que le
+*shell* calcule (une variable, une substitution, une liste d'accolades), un lanceur (`nice`,
+`ionice`, `setsid`, `flock`, `busybox`, `su -c`, `env -S`), un exécuteur de paquet (`npx`,
+`npm exec`) et la commande qu'il lance ; et il connaît les écritures que les tables de fichiers
+manquent (`>&`, un script `sed` ou `awk` qui écrit, `vim`/`ed`, `rsync`, `curl -o`, `wget -O`,
+`tar -x`, `git stash`/`reset --hard`/`worktree add`/`checkout -f`, `eslint --fix`, `biome
+--write`). Les seuls endroits libres d'un worker hors de son périmètre sont `/dev/null`, les
+périphériques standard et le répertoire temporaire (`$TMPDIR`) ; tout autre chemin absolu est
+refusé. Une commande imbriquée plus profond que le lecteur ne suit (plus de cinq *shells* ou
+`eval`) est refusée plutôt que laissée passer sans lecture. Il arrête le
 worker quand son code en ligne (`node -e`, un *heredoc*) a changé un fichier hors de ce contexte,
-et refuse un changement de dépendance et un autre formateur que `npm run format`.
+et refuse un changement de dépendance et un autre formateur que `npm run format`. La même lecture
+du *shell* tient le `domain-test-writer` aux chemins d'un test, le code d'une *story* à sa barrière
+de construction, et toute écriture à la main d'un fichier généré ou de la *baseline* par n'importe
+quelle session, chacune par les endroits qu'une commande écrit plutôt que par son texte ; un
+`apply_patch` de Codex envoyé par le *shell* est lu comme un *patch*.
 Pour un `context-builder`, il compte les appels d'outils dans ces mêmes *hooks* et avertit
 l'agent deux fois avant sa limite de tours, enregistre ses exécutions dans son *worktree*
 (`.ddd-ts-kit/agent.json`), et écoute deux événements rares de Claude Code, filtrés sur cet agent :
@@ -109,10 +128,13 @@ refuse une fois de finir la session avant son rapport
 (`"kind": "fix"` dans ce fichier), il ouvre le code dès que la *spec* de régression est
 verrouillée, et refuse toute modification d'une *spec* verrouillée, par les outils d'édition
 comme par le *shell*, à ses sous-agents ; la session elle-même peut en écrire une nouvelle version,
-que `acceptance` signale et sur laquelle l'agent `acceptance-judge` se prononce. Une commande qui nomme
-le verrou d'une acceptation ou un verdict peut changer de répertoire ou tester un chemin (`cd`,
-`pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `sed` sans `-i`, `awk`, `less`,
-`jq`), le versionner (`git`) ou lancer le kit ; tout autre programme, ou une redirection vers un
+que `acceptance` signale et sur laquelle l'agent `acceptance-judge` se prononce. Une commande qui
+écrit le verrou d'une acceptation ou un verdict (jugée par les endroits qu'elle écrit, un *glob*
+étendu, et non par son texte) est refusée : une commande peut changer de répertoire ou tester un
+chemin (`cd`, `pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `sed` sans `-i`,
+`awk`, `less`, `jq`), le versionner (`git add`, `commit`, `log`, `show`, `status`) ou lancer le kit
+(`ddd-ts-kit`, `npx ddd-ts-kit`) ; tout autre programme (un `npx` ou `pnpm` nu, `git
+checkout`/`stash`), ou une redirection vers un
 fichier, est une écriture, que seuls la CLI et cet agent font. Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la

@@ -62,6 +62,65 @@ test('Codex: what Claude Code asks the owner is said to the user, never a questi
   );
 });
 
+test('Codex: an apply_patch run through the shell tool is read as a patch, held to the scope', () => {
+  const root = project();
+  const agent = worker(root);
+  const out = ['*** Begin Patch', '*** Add File: src/contexts/billing/x.ts', '+export const x = 1;', '*** End Patch'];
+  const stray = {
+    cwd: root,
+    turn_id: 'turn-1',
+    tool_name: 'shell',
+    tool_input: { command: `apply_patch <<'EOF'\n${out.join('\n')}\nEOF` },
+    ...agent,
+  };
+  const result = run('pre-bash', stray);
+  assert.equal(decision(result), 'deny');
+  assert.match(reason(result), /another bounded context/);
+  const inside = [
+    '*** Begin Patch',
+    '*** Add File: src/contexts/ordering/y.ts',
+    '+export const y = 1;',
+    '*** End Patch',
+  ];
+  const allowed = { ...stray, tool_input: { command: `apply_patch <<'EOF'\n${inside.join('\n')}\nEOF` } };
+  assert.equal(run('pre-bash', allowed).output, undefined);
+});
+
+test('Codex: the rest of a command line around an apply_patch is read as any other shell command', () => {
+  const root = project();
+  const inside = [
+    '*** Begin Patch',
+    '*** Add File: src/contexts/ordering/y.ts',
+    '+export const y = 1;',
+    '*** End Patch',
+  ];
+  const around = `git commit --no-verify -m x && apply_patch <<'EOF'\n${inside.join('\n')}\nEOF`;
+  assert.match(reason(run('pre-bash', codexShell(root, around))), /local gate of the pipeline/);
+  assert.match(reason(run('pre-bash', codexShell(root, 'git commit --no-verify -m x'))), /local gate/);
+});
+
+test('Codex: a here-document that only holds the text of a patch is a write of its file, not a patch', () => {
+  const root = project();
+  const agent = worker(root);
+  const text = ['*** Begin Patch', '*** Add File: src/contexts/billing/x.ts', '+x', '*** End Patch'];
+  const noted = run('pre-bash', codexShell(root, `cat <<'EOF' > notes.md\n${text.join('\n')}\nEOF`, agent));
+  assert.equal(decision(noted), 'deny');
+  assert.match(reason(noted), /notes\.md/);
+  assert.doesNotMatch(reason(noted), /another bounded context/);
+});
+
+test('Codex: a patch through the shell that touches the rules is said to the user, the rest of the line passing', () => {
+  const root = project();
+  const rules = ['*** Begin Patch', '*** Update File: eslint.config.js', '+// a rule', '*** End Patch'];
+  const result = run('pre-bash', codexShell(root, `apply_patch <<'EOF'\n${rules.join('\n')}\nEOF`));
+  assert.match(result.output.systemMessage, /holds the rules or the pipeline/);
+});
+
+// A shell call of Codex, its command given.
+function codexShell(root, command, extra = {}) {
+  return { cwd: root, turn_id: 'turn-1', tool_name: 'shell', tool_input: { command }, ...extra };
+}
+
 test('Codex: a patched file that breaks a rule blocks the result of the tool with the fix', () => {
   const root = project();
   put(

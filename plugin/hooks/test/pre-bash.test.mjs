@@ -2,8 +2,10 @@
 // worker, a landing.
 
 import assert from 'node:assert/strict';
+import { existsSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { test } from 'node:test';
-import { bash, decision, project, reason, run, worker } from './support.mjs';
+import { bash, committed, decision, git, project, reason, run, worker } from './support.mjs';
 
 test('a sub-agent reads a briefing of worker-scope, and only the conductor prepares a worktree', () => {
   const root = project();
@@ -159,4 +161,60 @@ test('a git command that skips the hooks of the project is refused, with the hoo
   assert.equal(decision(run('pre-bash', bash(advised, 'git commit --no-verify -m x'))), 'ask');
   const off = project({ guard: 'off' });
   assert.equal(run('pre-bash', bash(off, 'git commit --no-verify -m x')).output, undefined);
+});
+
+// Each sets a value in the git config, or runs a command through `-c`, which a sub-agent never does.
+const CONFIG_SET = [
+  'git config core.fsmonitor "touch planted; false"',
+  'git -c core.pager=less-and-run log',
+  'git -c alias.evil="!rm src/main.ts" evil',
+  'git -c diff.odd.command=run diff',
+  // Each changes the config by its verb or its flag, whatever the number of its operands.
+  'git config set user.name builder',
+  'git config edit',
+  'git config --unset user.name',
+  'git config --unset-all user.name',
+  'git config --remove-section user',
+  'git config --rename-section user person',
+  'git config --edit',
+  'git config --replace-all user.name x',
+  'git config --add user.name x',
+];
+
+// Each only reads the config, or sets a value the sub-agent is allowed to leave alone.
+const CONFIG_READ = [
+  'git config --get user.name',
+  'git config user.name',
+  'git config --list',
+  'git config get user.name',
+  'git config list',
+  'git -c user.name=guard commit --allow-empty -m x',
+  'git log --oneline',
+];
+
+test('a sub-agent never sets the git config nor passes a dangerous -c, but reads it freely', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const command of CONFIG_SET) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), /every checkout/, command);
+  }
+  for (const command of CONFIG_READ) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  // The main session sets its own config.
+  assert.equal(run('pre-bash', bash(root, 'git config core.fsmonitor x')).output, undefined);
+});
+
+test('a core.fsmonitor planted in the config never runs on the git calls of the guard', () => {
+  const root = committed();
+  // The hook and its marker live under the git-ignored node_modules, so the work tree stays clean
+  // and the guard reaches its own `git status` rather than running the project CLI first.
+  const marker = join(root, 'node_modules', 'fsmonitor-ran');
+  const hook = join(root, 'node_modules', 'fsmonitor.sh');
+  writeFileSync(hook, `#!/bin/sh\ntouch "${marker}"\nexit 1\n`, { mode: 0o755 });
+  git(root, 'config', 'core.fsmonitor', hook);
+  run('stop', { cwd: root });
+  assert.equal(existsSync(marker), false);
 });

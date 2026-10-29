@@ -59,6 +59,12 @@ test('in the worktree of a story, the code waits for each row designed and the a
   assert.ok(existsSync(join(root, '.ddd-ts-kit/guard/story-gate.json')));
 });
 
+test('in the worktree of a story, a shell write into the code of a context waits for the gate too', () => {
+  const root = storyWorktree();
+  const written = run('pre-bash', bash(root, 'printf x > src/contexts/ordering/domain/order-number.ts'));
+  assert.match(reason(written), /waits for its build gate/);
+});
+
 // Each row designed, the acceptance written and locked: what opens the code of a story.
 function openTheBuildGate(root) {
   put(
@@ -422,6 +428,21 @@ function lockTheFix(root) {
   const locked = spawnSync('node', [cli, 'acceptance', 'FIX-412', '--lock'], { cwd: root, encoding: 'utf8' });
   assert.equal(locked.status, 0, locked.stderr);
 }
+
+test('in the worktree of a fix, a sub-agent command that names no held spec nor a lock passes', () => {
+  const root = fixWorktree();
+  lockTheFix(root);
+  const reading = bash(root, 'cat README.md', { agent_type: 'ddd-ts-kit:context-builder' });
+  assert.equal(run('pre-bash', reading).output, undefined);
+});
+
+test('a glob that names a locked regression spec only once the shell expands it is refused to a sub-agent', () => {
+  const root = fixWorktree();
+  lockTheFix(root);
+  const glob = 'sed -i s/refused/cancelled/ src/contexts/ordering/test/unit/*.aggregate.spec.ts';
+  const held = run('pre-bash', bash(root, glob, { agent_type: 'ddd-ts-kit:context-builder' }));
+  assert.match(reason(held), /is a regression spec of fix FIX-412, locked/);
+});
 
 test('the shell runs and versions a locked regression spec of a fix, and a sub-agent never rewrites it', () => {
   const root = fixWorktree();
