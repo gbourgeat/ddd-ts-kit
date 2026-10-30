@@ -121,7 +121,7 @@ function withGrant(content: string, key: string, entry: string): string | undefi
   }
 
   const open = found.index + found[0].length - 1;
-  const close = matchingBracket(content, open);
+  const close = matchingBracket(scan(content).code, open);
   const at = content.indexOf(key, open);
 
   if (at !== -1 && at < close) {
@@ -140,7 +140,7 @@ function withGrant(content: string, key: string, entry: string): string | undefi
 
 /** The list with the entry last: on a line of its own when the list already takes several, else on its line, laid out again when it no longer fits. */
 function inList(content: string, open: number, entry: string): string {
-  const close = matchingBracket(content, open);
+  const close = matchingBracket(scan(content).code, open);
   const inside = content.slice(open + 1, close);
 
   if (inside.includes(entry)) {

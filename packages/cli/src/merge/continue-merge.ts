@@ -49,6 +49,8 @@ export function continueMerge(context: MergeContext, state: MergeState, options:
     if (outcome.stop !== undefined) {
       return stopped(context, current, outcome.stop);
     }
+
+    mergeState.write(context.root, current);
   }
 
   return checkedAndCommitted(context, current, options);

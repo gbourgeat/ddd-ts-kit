@@ -91,6 +91,7 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
       'package.json',
       'ddd-ts-kit.config.json',
       'docker-compose.yml',
+      '.env.example',
       '<platformDir>/config/load-config.ts',
     ],
   },
