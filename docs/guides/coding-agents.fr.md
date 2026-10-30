@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:4f102fac67a7fbda -->
+<!-- translation-of: coding-agents.md sha256:245a0f0692880d71 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -160,7 +160,10 @@ Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerat
 fichiers que leurs outils réécrivent (code, JSON, `docs/`) est dit avec le script qui l'a réécrit,
 sans retenir le *worker* : il le laisse hors de ses commits. Le
 périmètre est fixé au premier appel du *worker* : un fichier de périmètre supprimé ou changé
-l'arrête jusqu'à ce que le chef d'orchestre le rétablisse. Le `merge-trunk` du kit n'est pas noté,
+l'arrête jusqu'à ce que le chef d'orchestre le rétablisse, et le mode de la garde est fixé avec lui :
+une config du *worktree* qui éteint la garde, ou qui dépasse ce que la garde lit, ne libère pas un
+*worker*, son changement étant comparé comme tout autre. Une branche que le *worker* fusionne dans la
+sienne est son travail : seul ce que le tronc contient est au tronc. Le `merge-trunk` du kit n'est pas noté,
 et une installation du *lockfile* laisse les paquets hors de la note. Il refuse un changement de
 dépendance et un autre formateur que `npm run format`. Un sous-agent ne peut ni supprimer, ni
 déplacer, ni réinitialiser une branche extraite dans un autre *worktree* (celle d'un autre
@@ -216,7 +219,7 @@ chemin (`cd`, `pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `
 checkout`/`stash`), ou une redirection vers un
 fichier, est une écriture, que seuls la CLI et cet agent font. Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
-panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt), et de ce qu'écrit un code qu'il ne peut pas lire, il ne compare que ce qui est noté plus haut : les autres fichiers ignorés par git et les endroits hors de ces *checkouts* ne sont pas énumérés ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
+panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt), et de ce qu'écrit un code qu'il ne peut pas lire, il ne compare que ce qui est noté plus haut : les autres fichiers ignorés par git et les endroits hors de ces *checkouts* ne sont pas énumérés, et l'état qu'il garde entre deux appels se trouve dans le projet, à portée d'un code qui vise la garde ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
 
 Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les six

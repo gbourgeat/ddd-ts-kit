@@ -622,7 +622,7 @@ async function preWrite(input) {
     await countBuilderCall(input, first && findProject(dirname(first.file)));
   }
   const verdict =
-    strayFileVerdict(input) ?? writesVerdict(judgedWrites(writesOf(input)), input, () => pendingOfWriter(input));
+    strayFileVerdict(input) ?? writesVerdict(judgedWrites(writesOf(input), input), input, () => pendingOfWriter(input));
   if (verdict?.decision !== 'deny') {
     noteCrossings(input);
   }
@@ -677,9 +677,9 @@ function pendingOfWriter(input) {
 }
 
 // The writes of a call in a project the guard judges, each with its project.
-function judgedWrites(writes) {
+function judgedWrites(writes, input) {
   return writes
-    .map((written) => ({ ...written, project: findProject(dirname(written.file)) }))
+    .map((written) => ({ ...written, project: withPinnedMode(findProject(dirname(written.file)), input) }))
     .filter(({ project }) => project && project.mode !== 'off');
 }
 
@@ -764,7 +764,10 @@ async function shellVerdict(input, command, cwd) {
   shell = await import('./shell-commands.mjs');
   // A leading `cd` out of every project leaves the command to be judged against the session's project;
   // a worker whose session stands in no project is judged in the project its command names.
-  const project = findProject(commandDirectory(command, cwd)) ?? findProject(cwd) ?? namedProject(input, command, cwd);
+  const project = withPinnedMode(
+    findProject(commandDirectory(command, cwd)) ?? findProject(cwd) ?? namedProject(input, command, cwd),
+    input,
+  );
   await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
     return undefined;
@@ -871,7 +874,7 @@ async function codexPatchVerdict(input, command, cwd) {
   }
   const start = command.indexOf('*** Begin Patch');
   const writes = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd);
-  return writesVerdict(judgedWrites(writes), input, () => undefined);
+  return writesVerdict(judgedWrites(writes, input), input, () => undefined);
 }
 
 // A context-builder keeps the working directory of its session, so the scope of a worker is found
@@ -1915,7 +1918,7 @@ function pinnedScope(project, input) {
     if (!own) {
       return undefined;
     }
-    pinned = { context: namedContext(own), worktree: realpathSync(own.root) };
+    pinned = { context: namedContext(own), worktree: realpathSync(own.root), mode: own.mode };
     writeState(pin, pinned);
   }
   if (pinned.worktree !== worktree) {
@@ -1926,6 +1929,20 @@ function pinnedScope(project, input) {
   return current === pinned.context
     ? { context: current }
     : { context: pinned.context, changed: scopeChangedReason(pinned, current) };
+}
+
+// A worker's guard keeps the mode of its first call in its worktree: a config there that turns the
+// guard off, or grows past what the guard reads, does not lift it, and its change is compared as any
+// other change outside the scope.
+function withPinnedMode(project, input) {
+  if (project?.mode !== 'off' || !isWorkerAgent(input)) {
+    return project;
+  }
+  const pinned = readJson(stateFile('scope', findProject(input.cwd ?? process.cwd()) ?? project, input));
+  if (isPin(pinned) && pinned.worktree === realOf(project.root) && ['advise', 'enforce'].includes(pinned.mode)) {
+    project.mode = pinned.mode;
+  }
+  return project;
 }
 
 // The context the scope file of the worktree names, or the environment of the guard.
@@ -3951,8 +3968,26 @@ function committedSince(checkout, from, outside) {
   return paths;
 }
 
-// The other parents of the merges on the first-parent line from `from` to HEAD.
+// The other parents of the merges on the first-parent line from `from` to HEAD that the trunk holds:
+// a branch of the worker merged back is the worker's own work. Without a trunk apart from the branch
+// checked out, every side is taken as the trunk's.
 function mergedSides(checkout, from) {
+  const trunk = trunkOf(checkout);
+  return allMergedSides(checkout, from).filter(
+    (side) => trunk === undefined || gitRun(checkout, ['merge-base', '--is-ancestor', side, trunk]).status === 0,
+  );
+}
+
+// The trunk of the repository, the one origin/HEAD names, else main or master, when it is not the
+// branch checked out.
+function trunkOf(checkout) {
+  const current = git(checkout, ['symbolic-ref', '--quiet', 'HEAD'])?.trim();
+  return ['refs/remotes/origin/HEAD', 'refs/heads/main', 'refs/heads/master'].find(
+    (ref) => ref !== current && git(checkout, ['rev-parse', '--verify', '--quiet', ref]) !== undefined,
+  );
+}
+
+function allMergedSides(checkout, from) {
   return gitFields(
     checkout,
     ['rev-list', '--first-parent', '--merges', '--parents', '--end-of-options', `${from}..HEAD`],

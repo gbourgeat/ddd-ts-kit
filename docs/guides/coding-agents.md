@@ -147,7 +147,10 @@ conductor, who alone knows whether it made it. What the project's own scripts (`
 `lint:fix`, `regenerate`, `docs:generate`, `openapi:generate`, `events:generate`), alone on the
 line, rewrite outside the scope among the files their tools rewrite (code, JSON, `docs/`) is said
 with the script that rewrote it, not held: the worker leaves it out of its commits. The scope is pinned at the worker's first
-call: a scope file removed or changed stops it until the conductor restores it. The kit's own
+call: a scope file removed or changed stops it until the conductor restores it, and the mode of the
+guard is pinned with it, so a config of the worktree that turns the guard off, or grows past what
+the guard reads, does not lift a worker, its change being compared as any other. A branch the worker
+merges into its own is its work: only what the trunk holds is the trunk's. The kit's own
 `merge-trunk` is not noted, and an install of the lockfile leaves the packages out of the note. It
 refuses a dependency change and another formatter than `npm run format`. A sub-agent is refused
 deleting, moving or resetting a branch checked out in another worktree (another worker's, or the
@@ -194,7 +197,7 @@ refused: a command may move or check a path (`cd`, `pushd`, `popd`, `pwd`, `test
 `show`, `status`) or run the kit (`ddd-ts-kit`, `npx ddd-ts-kit`); any other program (a bare `npx`
 or `pnpm`, `git checkout`/`stash`), or a redirection to a file, is a write, which only the CLI and
 that agent make. No hook
-runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository), and of what code it cannot read writes, it compares only what is noted above: other git-ignored files and the places outside those checkouts are not enumerated; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
+runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository), and of what code it cannot read writes, it compares only what is noted above: other git-ignored files and the places outside those checkouts are not enumerated, and the state it keeps between two calls lies in the project, within reach of code that aims at the guard; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
 Each agent gets what its host runs. The skills work in all three. The six agents are sub-agents
