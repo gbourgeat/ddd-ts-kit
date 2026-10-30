@@ -21,6 +21,7 @@ import { presetNamed } from '../presets/preset-named';
 import { addContext } from './add-context';
 import { existingName } from './existing-name';
 import { initFiles } from './files/init-files';
+import { writeLocalEnvironment } from './write-local-environment';
 import { REVIEW_POLICY } from './files/guidance-files';
 import { keepFlatPlatform } from '../platform-folders';
 import { ignoreWorktrees } from './ignore-worktrees';
@@ -85,6 +86,7 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
   writeFiles(ws, { config, projectName, flat, force: options.force, earlier });
+  writeLocalEnvironment(ws);
   ignoreWorktrees(ws);
   writeCopilotInstructions(ws);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));

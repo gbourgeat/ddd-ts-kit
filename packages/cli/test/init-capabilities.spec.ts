@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { exists, read } from './helpers';
+import fs from 'node:fs';
+import path from 'node:path';
+import { cli, exists, read } from './helpers';
 import { initFailure } from './support/init-failure';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
@@ -160,6 +162,19 @@ describe('authentication and authorization', () => {
     );
 
     expect(platform(initProject(), 'config/load-config.ts')).not.toContain('development header');
+  });
+
+  it('writes the .env a new project starts from, NODE_ENV=development in it, and keeps the one of the team', () => {
+    const root = initProject('--authn', 'none');
+
+    expect(read(root, '.env')).toMatch(/^NODE_ENV=development$/m);
+    expect(read(root, '.env').split('\n').slice(1)).toEqual(read(root, '.env.example').split('\n').slice(1));
+    expect(read(root, 'package.json')).toContain('--env-file-if-exists=.env');
+
+    fs.writeFileSync(path.join(root, '.env'), 'NODE_ENV=test\nSECRET=kept\n');
+    cli(root, 'init', '--force', '--authn', 'none');
+
+    expect(read(root, '.env')).toBe('NODE_ENV=test\nSECRET=kept\n');
 
     expect(platform(root, 'auth/authentication/security-schemes.ts')).toContain('developmentActor');
 
