@@ -33,9 +33,9 @@ export interface AuthorizationModuleOptions {
   /** The audit hook, called for every decision of the buses and of `Access`. */
   readonly onDecision?: OnDecision;
   /**
-   * Whether a handler whose permission a policy refines has to ask `Access` about it before it
-   * returns; otherwise its result is refused with `PolicyNotAskedError` and its change rolled
-   * back. On by default; turn it off only for an `Access` of the project other than `PolicyAccess`.
+   * Whether a handler whose permission a policy refines has to ask `Access` about it, and be
+   * allowed, before it returns; otherwise its result is refused with `PolicyNotAskedError` (or
+   * `PolicyDenialIgnoredError` after a denial) and its change rolled back. On by default; turn it off only for an `Access` of the project other than `PolicyAccess`.
    */
   readonly policiesAsked?: boolean;
 }

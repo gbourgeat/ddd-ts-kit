@@ -12,6 +12,7 @@ import { callArguments } from '../text/call-arguments';
 import { escapeRegExp } from '../text/escape-reg-exp';
 import { exportedClass } from '../text/exported-class';
 import type { ListPart } from '../text/list-part';
+import { matchingBracket } from '../text/matching-bracket';
 import { statementEnd } from '../text/statement-end';
 
 const PERMISSION_REF = /^([A-Za-z_$][\w$]*)\s*(?:\[\s*(['"`])([^'"`]+)\2\s*\]|\.\s*([A-Za-z_$][\w$]*))$/;
@@ -21,12 +22,16 @@ const REGISTRATION = /\.\s*(?:command|query)\s*\(\s*([A-Z][\w$]*)\s*\)/g;
 const CHAINED_REQUIRES = /\.\s*requires\s*\(/;
 const MAP_REQUIRES = /(?<![\w$.])requires\s*\(/g;
 const ASKS_ACCESS = /\.\s*(?:authorize|decide|decideOn)\s*\(/;
+/** A question whose answer is the value of the call: dropped when the call is a statement of its own. */
+const DECIDES = /\.\s*(?:decide|decideOn)\s*\(/g;
+/** What a decision dropped as a statement may be written behind, read backwards from the call: its receiver, `await`, `void`. */
+const RECEIVER_BEFORE = /(?:(?:\bawait|\bvoid)\s+)*(?:[A-Za-z_$][\w$]*\s*\??\.\s*)*[A-Za-z_$][\w$]*\s*$/;
 const LEFT_TO_DO = /\bTODO\((?:domain|review)\)/;
 
 export const authzPolicyAsked: Rule = {
   id: 'authz/policy-asked',
   description:
-    'A use case whose permission has a policy has a handler that asks it through Access, with that permission.',
+    'A use case whose permission has a policy has a handler that asks it through Access, with that permission, and keeps the decision.',
   scope: 'project',
   run(project) {
     const refined = refinedPermissions(project);
@@ -246,11 +251,16 @@ function unasked(
   { message, permission, declaredIn }: Requirement,
   policies: readonly string[],
 ): Finding[] {
-  if (asks(handler, permission)) {
-    return [];
-  }
-
   const handlerClass = exportedClass(handler);
+
+  if (asks(handler, permission)) {
+    return droppedDecisions(handler, permission).map((line) => ({
+      line,
+      message: `${handlerClass?.name ?? 'The handler'} asks Access about ${permission.written}, which ${message} requires and a policy refines, and drops the decision: a denied one does not stop the change.`,
+      fix: `Call \`await this.access.authorize(${/Query$/.test(message) ? 'query' : 'command'}.actor, ${permission.written}, <aggregate>)\`, which refuses a denial, or keep the decision and stop when \`decision.allowed\` is false.`,
+      subjects: [...new Set([declaredIn.path, ...policies])].filter((path) => path !== handler.path),
+    }));
+  }
 
   return [
     {
@@ -270,9 +280,7 @@ function unasked(
  */
 function asks(handler: SourceFile, permission: PermissionRef): boolean {
   const { code, comments } = handler.scan;
-  const set = escapeRegExp(permission.set);
-  const id = escapeRegExp(permission.id);
-  const named = new RegExp(`(?<![\\w$.])${set}\\s*(?:\\[\\s*(['"\`])${id}\\1\\s*\\]|\\.\\s*${id}(?![\\w$]))`, 'g');
+  const named = new RegExp(namedPermission(permission).source, 'g');
 
   if (comments.some(({ text }) => LEFT_TO_DO.test(text) && new RegExp(named.source).test(text))) {
     return true;
@@ -284,4 +292,36 @@ function asks(handler: SourceFile, permission: PermissionRef): boolean {
       (match) => code.slice(match.index, match.index + permission.set.length) === permission.set,
     )
   );
+}
+
+/**
+ * The lines of each `decide` or `decideOn` that names the permission and is a statement of its own
+ * (`await this.access.decide(...);`): its answer is read by no one, so a denial changes nothing.
+ */
+function droppedDecisions(handler: SourceFile, permission: PermissionRef): number[] {
+  const { code } = handler.scan;
+  const named = namedPermission(permission);
+
+  return [...code.matchAll(DECIDES)].flatMap((match) => {
+    const open = match.index + match[0].length - 1;
+    const close = matchingBracket(code, open);
+    const asked = handler.text.slice(open, close);
+    const start = match.index - (RECEIVER_BEFORE.exec(code.slice(0, match.index))?.[0].length ?? 0);
+    const before = code.slice(0, start).trimEnd().at(-1) ?? ';';
+    const rest = code.slice(close + 1).trimStart();
+    const alone = ';{}'.includes(before) && ';}'.includes(rest.at(0) ?? ';');
+
+    return alone && named.test(asked) ? [lineAt(code, match.index)] : [];
+  });
+}
+
+function namedPermission(permission: PermissionRef): RegExp {
+  const set = escapeRegExp(permission.set);
+  const id = escapeRegExp(permission.id);
+
+  return new RegExp(`(?<![\\w$.])${set}\\s*(?:\\[\\s*(['"\`])${id}\\1\\s*\\]|\\.\\s*${id}(?![\\w$]))`);
+}
+
+function lineAt(code: string, index: number): number {
+  return code.slice(0, index).split('\n').length;
 }

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bb30072fb47eb5e2 -->
+<!-- translation-of: README.md sha256:b09d8a4325f5a686 -->
 
 # @ddd-ts-kit/auth
 
@@ -369,7 +369,8 @@ Quand une politique affine la permission d'un cas d'usage, la garde enveloppe au
 gestionnaire, en dernier sur le bus et à l'intérieur de l'unité de travail : un gestionnaire qui
 rend la main sans interroger `Access` sur cette permission voit son résultat refusé par
 `PolicyNotAskedError` et sa modification annulée, puisque la règle de la politique n'a jamais été
-appliquée. Un bus à vous exécute cette partie autour de son gestionnaire, avec
+appliquée ; celui dont la dernière question sur elle n'a pas été accordée, et qui poursuit
+quand même, par `PolicyDenialIgnoredError`. Un bus à vous exécute cette partie autour de son gestionnaire, avec
 `.aroundHandler((message, next, info) => resolve(UseCaseGuard).within?.(message, next, info) ?? next())`.
 Sans le conteneur, `policiesAskedMiddleware({ map, refined })` fait la même vérification. Seules
 les questions posées à `PolicyAccess` sont vues : un projet qui lie son propre `Access` passe

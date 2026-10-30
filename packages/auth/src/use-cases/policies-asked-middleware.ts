@@ -1,5 +1,6 @@
 import type { BusMiddleware } from '@ddd-ts-kit/kernel';
 import { recordingAskedPermissions } from '../authorization/asked-permissions';
+import { PolicyDenialIgnoredError } from '../errors/policy-denial-ignored-error';
 import { PolicyNotAskedError } from '../errors/policy-not-asked-error';
 import type { Permission } from '../permissions/permission';
 import type { AuthorizationMap } from './authorization-map';
@@ -13,7 +14,8 @@ export interface PoliciesAskedMiddlewareOptions {
 /**
  * Refuses the result of a handler that never asked `Access` about the permission of its use case
  * when a policy refines it: the bus checked the permission without the element, and the rule of
- * the policy would be skipped. Install it with `aroundHandler` of the bus, inside the unit of
+ * the policy would be skipped. Refuses as well the result of a handler whose last question on that
+ * permission was not allowed (denied, or failed and caught): the handler went on without the right. Install it with `aroundHandler` of the bus, inside the unit of
  * work, so that the refusal rolls the change back and a middleware that answers in place of the
  * handler is not judged. Only the questions put to `PolicyAccess` are seen.
  */
@@ -31,6 +33,10 @@ export function policiesAskedMiddleware({ map, refined }: PoliciesAskedMiddlewar
 
     if (!asked.has(declaration.permission.id)) {
       throw new PolicyNotAskedError(info, declaration.permission.id);
+    }
+
+    if (asked.get(declaration.permission.id) !== true) {
+      throw new PolicyDenialIgnoredError(info, declaration.permission.id);
     }
 
     return result;

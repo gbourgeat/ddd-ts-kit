@@ -4,6 +4,7 @@ export { InvalidCredentialError } from './errors/invalid-credential-error';
 export { ListingNotSupportedError } from './errors/listing-not-supported-error';
 export { MissingActorError } from './errors/missing-actor-error';
 export { UNAUTHORIZED, UnauthenticatedError } from './errors/unauthenticated-error';
+export { PolicyDenialIgnoredError } from './errors/policy-denial-ignored-error';
 export { PolicyNotAskedError } from './errors/policy-not-asked-error';
 export { UndeclaredUseCaseError } from './errors/undeclared-use-case-error';
 export { definePermissions, type PermissionDeclaration, type PermissionSet } from './permissions/define-permissions';

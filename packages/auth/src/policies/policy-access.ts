@@ -2,7 +2,7 @@ import { isAnonymous, type Actor, type Clock, type ExecutionScope } from '@ddd-t
 import type { Access } from '../authorization/access';
 import type { AccessQuestion } from '../authorization/access-question';
 import type { AccessScope } from '../authorization/access-scope';
-import { recordAsked } from '../authorization/asked-permissions';
+import { recordAsked, recordDecided } from '../authorization/asked-permissions';
 import type { Authorizer } from '../authorization/authorizer';
 import type { CheckRequest } from '../authorization/check-request';
 import { ALLOWED, deny, type Decision } from '../authorization/decision';
@@ -75,6 +75,8 @@ export class PolicyAccess implements Access {
     };
 
     const decision = isAnonymous(actor) ? deny(DenialReason.anonymous) : await this.evaluate(request, subject);
+
+    recordDecided(permission, decision.allowed);
 
     if (recorded !== false) {
       await this.options.onDecision?.(decisionRecordOf(request, decision));

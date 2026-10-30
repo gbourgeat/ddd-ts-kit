@@ -4,6 +4,7 @@ import {
   AuthorizationMap,
   ForbiddenError,
   PolicyAccess,
+  PolicyDenialIgnoredError,
   PolicyNotAskedError,
   authorizationMiddleware,
   definePolicy,
@@ -101,6 +102,35 @@ describe('policiesAskedMiddleware', () => {
 
     expect(unitOfWork.committed).toEqual([]);
     expect(unitOfWork.rolledBack).toEqual(['work', 'work']);
+  });
+
+  it('refuses the result of a handler that goes on after Access denied the permission of its use case, and rolls its change back', async () => {
+    const { commands, unitOfWork } = application(async (command, access) => {
+      await access.decide(command.actor, billingPermissions['invoice.void'], invoice);
+    });
+
+    await expect(commands.execute(new VoidInvoice(bob, 'inv-1'))).rejects.toBeInstanceOf(PolicyDenialIgnoredError);
+
+    await expect(commands.execute(new VoidInvoice(bob, 'inv-1'))).rejects.toThrow(
+      'The command VoidInvoice requires billing:invoice.void, which a policy refines, and its handler returned after Access denied it',
+    );
+
+    expect(unitOfWork.committed).toEqual([]);
+  });
+
+  it('judges the last decision on the permission of the use case: a denial followed by an allowed element lets the handler through', async () => {
+    const ownInvoice: Invoice = { id: 'inv-2', issuedBy: 'bob' };
+
+    const { commands, unitOfWork } = application(async (command, access) => {
+      const other = await access.decide(command.actor, billingPermissions['invoice.void'], invoice);
+      const own = await access.decide(command.actor, billingPermissions['invoice.void'], ownInvoice);
+
+      expect([other.allowed, own.allowed]).toEqual([false, true]);
+    });
+
+    await commands.execute(new VoidInvoice(bob, 'inv-2'));
+
+    expect(unitOfWork.committed).toEqual(['work']);
   });
 
   it('counts only the permission of the use case, not another one asked on the way', async () => {
