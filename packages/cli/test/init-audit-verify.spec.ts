@@ -45,7 +45,7 @@ describe('init: the nightly verification of the audit trail', () => {
     }
   });
 
-  it('writes the script that verifies it by hand with the trail in a database, and nothing of it otherwise', () => {
+  it('writes the job and the script with the trail in a database, and neither for a trail in memory or no trail', () => {
     const database = initProject();
     const memory = initProject('--orm', 'none', '--audit', 'on');
     const off = initProject('--audit', 'off');
@@ -64,8 +64,11 @@ describe('init: the nightly verification of the audit trail', () => {
     for (const root of [memory, off]) {
       expect(exists(root, 'scripts/audit-verify.ts')).toBe(false);
       expect(read(root, 'package.json')).not.toContain('audit:verify');
+      expect(platform(root, 'jobs/job-settings.ts')).not.toContain('audit.verify');
     }
 
-    expect(platform(off, 'jobs/job-settings.ts')).not.toContain('audit.verify');
+    expect(platform(memory, 'audit/audit.module.ts')).not.toContain('VerifyAuditTrail');
+    expect(platform(memory, 'composition/compose-application.ts')).toContain('      auditModule(foundations.audit),');
+    expect(read(memory, 'README.md')).toContain('nothing verifies them by night');
   });
 });

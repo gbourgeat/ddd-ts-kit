@@ -19,7 +19,7 @@ const extracted: readonly string[] = [
  */
 export function jobSettings(environment: Environment, context?: string): Readonly<Record<string, JobSettings>> {
   const settings: Readonly<Record<string, JobSettings>> = {
-{{#if audit.on}}
+{{#if audit.sql}}
     'audit.verify': { enabled: environment['JOB_AUDIT_VERIFY_ENABLED'] !== 'false' },
 {{/if}}
 {{#if audit.archiveByDefault}}

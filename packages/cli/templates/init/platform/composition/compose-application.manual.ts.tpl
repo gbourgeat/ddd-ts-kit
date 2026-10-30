@@ -21,7 +21,7 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { ArchiveAuditEntries, VerifyAuditTrail } from '@ddd-ts-kit/audit';
 {{/if}}
 {{#unless audit.archive}}
-{{#if audit.on}}
+{{#if audit.sql}}
 import { VerifyAuditTrail } from '@ddd-ts-kit/audit';
 {{/if}}
 {{/unless}}
@@ -327,7 +327,7 @@ function registerPlatformJobs(platform: Platform, options: ApplicationOptions): 
 {{#if files.any}}
   purgeStagedFiles(platform);
 {{/if}}
-{{#if audit.on}}
+{{#if audit.sql}}
   auditJobs(platform);
 {{/if}}
 {{#if privacy.on}}
@@ -350,7 +350,7 @@ function purgeStagedFiles(platform: Platform): void {
   platform.jobs.register({ name: 'files.purge-staged', schedule: { every: '1h' }, run: () => purge.run() });
 }
 {{/if}}
-{{#if audit.on}}
+{{#if audit.sql}}
 
 /**
  * Every chain of the audit trail verified every night at 04:30 UTC, from its last archive{{#if audit.archive}}, proved against its file,{{/if}} to its head{{#if audit.archive}}; and the entries

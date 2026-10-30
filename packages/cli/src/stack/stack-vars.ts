@@ -64,11 +64,15 @@ function platformVars(config: Config): RenderContext {
   };
 }
 
-/** The platform registers jobs of its own: the purge of staged files, the verification and the archive of the audit trail, the purge of what outlived its retention, of what was published and of what finished. */
+/**
+ * The platform registers jobs of its own: the purge of staged files, the verification and the
+ * archive of an audit trail kept in a database, the purge of what outlived its retention, of what
+ * was published and of what finished.
+ */
 function platformJobsOf(config: Config): boolean {
-  const { storage, privacy, audit } = config.stack;
+  const { storage, privacy } = config.stack;
 
-  return storage !== 'none' || privacy === 'on' || audit === 'on' || keepsItsWork(config);
+  return storage !== 'none' || privacy === 'on' || auditVars(config)['sql'] === true || keepsItsWork(config);
 }
 
 /** The platform keeps rows of its own work beyond the process: the records of the outbox, the jobs of a stored queue. */
