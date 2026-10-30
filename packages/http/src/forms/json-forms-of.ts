@@ -71,6 +71,7 @@ function objectSchema(blocks: readonly FormBlock[], node: SchemaNode): JsonSchem
 }
 
 function propertySchema(field: FieldBlock<FormBlock>, node: SchemaNode | undefined): JsonSchema {
+  /* v8 ignore next 3 -- ADR-0001: a field is named after a property of this schema, and assertHints refuses a dot in a name */
   if (node === undefined) {
     return {};
   }
