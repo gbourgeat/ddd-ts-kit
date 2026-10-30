@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:98d51374b26216f7 -->
+<!-- translation-of: coding-agents.md sha256:820bc7f3ef1737a5 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -86,8 +86,9 @@ modification d'un contrat généré et l'écriture de la *baseline* des erreurs 
 write`, quelle que soit la façon de lancer le kit, script de paquet compris, ou une modification
 de `ddd-ts-kit-baseline.json` : le propriétaire du projet l'écrit,
 dans un terminal), refuse une commande git qui saute les hooks du projet (`--no-verify`, `-n` sur un
-commit, `-c core.hooksPath=...`, `LEFTHOOK=0` ou `HUSKY=0` : les hooks sont la barrière locale du
-pipeline) et, à un sous-agent, un `git config` qui fixe une valeur ou un `git -c` d'une clé qui
+commit, `-c` ou `--config-env` de `core.hooksPath` ou son réglage dans l'environnement,
+`LEFTHOOK=0`, `HUSKY=0`, `LEFTHOOK_EXCLUDE`, `git commit-tree` : les hooks sont la barrière locale du
+pipeline ; les mots d'une commande sont lus tels que le *shell* les donne, guillemets ôtés) et, à un sous-agent, un `git config` qui fixe une valeur ou un `git -c` d'une clé qui
 lance une commande dans chaque *checkout* (`core.fsmonitor`, `core.pager`, `core.editor`,
 `core.sshCommand`, un `alias.*`, un pilote *diff*, *merge* ou *filter*, `diff.external`, un
 `include.path`, un assistant d'identifiants, un *pager*, un outil de `mergetool` ou `difftool`, un

@@ -84,8 +84,9 @@ a hand-written file where a generator exists, any edit of a generated contract a
 of the baseline of the errors (`check --baseline write` however the kit is launched, a package
 script included, or an edit of `ddd-ts-kit-baseline.json`:
 the project owner writes it, in a terminal), refuses a git command that skips the hooks of the
-project (`--no-verify`, `-n` on a commit, `-c core.hooksPath=...`, `LEFTHOOK=0` or `HUSKY=0`: the hooks are the local gate
-of the pipeline) and, to a sub-agent, a `git config` that sets a value or a `git -c` of a key that
+project (`--no-verify`, `-n` on a commit, `-c` or `--config-env` of `core.hooksPath` or its setting
+in the environment, `LEFTHOOK=0`, `HUSKY=0`, `LEFTHOOK_EXCLUDE`, `git commit-tree`: the hooks are the local gate
+of the pipeline; the words of a command are read as the shell gives them, quotes removed) and, to a sub-agent, a `git config` that sets a value or a `git -c` of a key that
 runs a command in every checkout (`core.fsmonitor`, `core.pager`, `core.editor`, `core.sshCommand`,
 an `alias.*`, a diff, merge or filter driver, `diff.external`, an `include.path`, a credential
 helper, a pager, a tool of `mergetool` or `difftool`, a `gpg` program, a `protocol.*`), given by

@@ -550,6 +550,8 @@ const LAUNCHER_VALUED = [
 // The folders of the programs of the system: a reader named by its path there is that reader.
 const SYSTEM_PROGRAMS = ['/bin', '/usr/bin', '/sbin', '/usr/sbin'];
 const WINDOWS = process.platform === 'win32';
+// The variables of lefthook that leave hooks or their commands out.
+const HOOK_SELECTION = /^LEFTHOOK_(?:EXCLUDE|SKIP)=/;
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -934,16 +936,16 @@ function kitReads({ subcommand, args }) {
 async function preparingReason(project, input, { command, commands }) {
   return (
     baselineWriteReason(project, commands) ??
-    (await hooksSkippedReason(input, command)) ??
-    (await gitConfigReason(input, command)) ??
-    (await otherBranchReason(input, command)) ??
-    (await workerPlaceReason(input, command)) ??
-    (await landingReason(input, command)) ??
+    hooksSkippedReason(commands) ??
+    gitConfigReason(input, commands) ??
+    otherBranchReason(input, commands) ??
+    workerPlaceReason(input, commands) ??
+    landingReason(input, commands) ??
     workerGitReason(project, input, commands) ??
-    oneSideMergeReason(project, input, command) ??
-    (await acceptanceLockingReason(input, command)) ??
+    oneSideMergeReason(project, input, commands) ??
+    acceptanceLockingReason(input, commands) ??
     acceptanceFilesShellReason(project, input, { command, commands }) ??
-    (await generatorPlaceReason(project, input, command))
+    generatorPlaceReason(project, commands)
   );
 }
 
@@ -2295,12 +2297,11 @@ function isUnwrapping(project, file, input) {
   );
 }
 
-async function acceptanceLockingReason(input, command) {
-  if (!input.agent_type || !command.includes('acceptance')) {
+function acceptanceLockingReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const locking = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  const locking = kitInvocations(commands).some(
     ({ subcommand, args }) => subcommand === 'acceptance' && args.includes('--lock'),
   );
   return locking
@@ -2341,27 +2342,15 @@ function worktreeCodeReason(project, file) {
 
 // A generator of code run where the code may not be written yet: before the build gate of a
 // story, in the main checkout of the trunk, in a worktree without its own install.
-async function generatorPlaceReason(project, input, command) {
-  return (
-    (await storyGeneratorReason(project, input, command)) ?? (await worktreeGeneratorReason(project, input, command))
-  );
+function generatorPlaceReason(project, commands) {
+  return storyGeneratorReason(project, commands) ?? worktreeGeneratorReason(project, commands);
 }
 
 // A fix writes its spec first: the generators of test files stay open before its lock.
-async function storyGeneratorReason(project, input, command) {
+function storyGeneratorReason(project, commands) {
   const aside =
     fixOf(project) === undefined ? ['acceptance', 'adr'] : ['acceptance', 'adr', 'builder', 'test-world', 'e2e'];
-  return (await writesCode(input, command, aside)) ? storyBuildReason(project) : undefined;
-}
-
-// A command that runs a generator of the kit writing the code of a context: any kind but those
-// given, its help and its dry run aside.
-async function writesCode(input, command, aside) {
-  if (!command.includes('generate') && !/\bg\b/.test(command)) {
-    return false;
-  }
-  shell = await import('./shell-commands.mjs');
-  return generates(shell.simpleCommands(command, input.cwd ?? process.cwd()), aside);
+  return generates(commands, aside) ? storyBuildReason(project) : undefined;
 }
 
 // A run of a generator of the kit among `commands`, any kind but those given, its help and its dry run aside.
@@ -2376,10 +2365,8 @@ function generates(commands, aside) {
   );
 }
 
-async function worktreeGeneratorReason(project, input, command) {
-  return (await writesCode(input, command, ['acceptance', 'adr', 'context', 'module']))
-    ? worktreePlaceReason(project)
-    : undefined;
+function worktreeGeneratorReason(project, commands) {
+  return generates(commands, ['acceptance', 'adr', 'context', 'module']) ? worktreePlaceReason(project) : undefined;
 }
 
 function worktreePlaceReason(project) {
@@ -2606,27 +2593,28 @@ function baselineFileReason(project, file) {
 
 const HOOKS_LOCAL_GATE =
   'the hooks of the project (pre-commit, commit-msg, pre-push) are the local gate of the pipeline: they run the checks before a change leaves the machine. An agent never skips them; fix what the hook reports instead. If the hook itself is broken, report it to the project owner, who can skip it in a terminal.';
-const HOOK_ENVIRONMENT = /(?:^|[\s;&|(])(?:LEFTHOOK|HUSKY)=(?:0|false)(?![\w])/;
-const HOOK_SKIPPING_COMMANDS = new Set(['commit', 'push', 'merge', 'pull', 'rebase']);
+const HOOK_ENVIRONMENT = /^(?:LEFTHOOK|HUSKY)=(?:0|false)$/;
+const HOOK_SKIPPING_COMMANDS = new Set(['commit', 'push', 'merge', 'pull', 'rebase', 'am', 'cherry-pick', 'revert']);
 // Options of `git` that take their value as the next word, and those of `git commit` that do.
 const GIT_VALUED_OPTIONS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--config-env']);
 const COMMIT_VALUED_OPTIONS = new Set(['-m', '-F', '-C', '-c', '-t', '--message', '--file', '--author', '--date']);
 
 // A git command that skips the hooks of the project: `--no-verify` (and `-n` on a commit),
 // `-c core.hooksPath=...`, or `LEFTHOOK=0` / `HUSKY=0` set for the command.
-async function hooksSkippedReason(input, command) {
-  if (!/\bgit\b/.test(command)) {
-    return undefined;
-  }
-  shell = await import('./shell-commands.mjs');
-  const gits = shell
-    .simpleCommands(command, input.cwd ?? process.cwd())
-    .filter(({ words }) => shell.commandName(words) === 'git');
+function hooksSkippedReason(commands) {
+  const gits = commands.filter(({ words }) => shell.commandName(words) === 'git');
   if (gits.length === 0) {
     return undefined;
   }
-  if (HOOK_ENVIRONMENT.test(command)) {
+  const variables = commands.flatMap(exportedVariables);
+  if (variables.some((word) => HOOK_ENVIRONMENT.test(word))) {
     return `LEFTHOOK=0 or HUSKY=0 turns the hooks off for a git command: ${HOOKS_LOCAL_GATE}`;
+  }
+  if (variables.some((word) => HOOK_SELECTION.test(word))) {
+    return `${variables.find((word) => HOOK_SELECTION.test(word)).split('=')[0]} skips hooks of the project: ${HOOKS_LOCAL_GATE}`;
+  }
+  if (variables.some((word) => /^GIT_CONFIG_(?:KEY_\d+|PARAMETERS)=.*core\.hookspath/i.test(word))) {
+    return `a setting of core.hooksPath in the environment points git at other hooks: ${HOOKS_LOCAL_GATE}`;
   }
   for (const { words } of gits) {
     const skipped = hooksSkippedBy(words);
@@ -2649,13 +2637,16 @@ function hooksSkippedBy(words) {
 }
 
 function optionPointsAtHooks(word, next) {
-  const configured = word === '-c' ? next : /^--config-env=(.*)$/.exec(word)?.[1];
+  const configured = word === '-c' || word === '--config-env' ? next : /^--config-env=(.*)$/.exec(word)?.[1];
   return configured !== undefined && /^core\.hookspath\b/i.test(configured);
 }
 
 function hooksSkippedBySubcommand(subcommand, rest) {
   if (subcommand === 'config' && rest.some((word) => /^core\.hookspath$/i.test(word))) {
     return '`git config core.hooksPath` points git at other hooks';
+  }
+  if (subcommand === 'commit-tree') {
+    return '`git commit-tree` makes a commit without the hooks';
   }
   if (!HOOK_SKIPPING_COMMANDS.has(subcommand)) {
     return undefined;
@@ -2681,13 +2672,12 @@ function hooksSkippedBySubcommand(subcommand, rest) {
 // (fsmonitor, pager, editor, sshCommand, hooksPath, an alias, a diff or filter driver, gpg).
 // A sub-agent never deletes, moves or resets a branch checked out in another worktree of the
 // repository: the branch of another worker, or the trunk of the conductor.
-async function otherBranchReason(input, command) {
-  if (!input.agent_type || !/\bbranch\b/.test(command)) {
+function otherBranchReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
   const cwd = input.cwd ?? process.cwd();
-  for (const simple of shell.simpleCommands(command, cwd)) {
+  for (const simple of commands) {
     const names = rewrittenBranches(simple.words);
     const taken =
       names.length > 0 ? names.find((name) => otherWorktreeBranches(simple.directory ?? cwd).has(name)) : undefined;
@@ -2779,12 +2769,10 @@ const CONFIG_VERBS = new Map([
 
 // A sub-agent never sets the git configuration (shared by every checkout of the repository) nor
 // passes a dangerous `-c key=value`; it reads the config with `--get` or `--list`.
-async function gitConfigReason(input, command) {
-  if (!input.agent_type || !/\bgit\b/.test(command)) {
+function gitConfigReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
   const variable = commands.flatMap(exportedVariables).find((word) => GIT_PROGRAM_VARIABLES.test(word));
   if (variable) {
     return `\`${variable.split('=')[0]}\` hands git a program or settings to run it: a sub-agent sets none. ${REPORT_TO_CONDUCTOR}`;
@@ -2980,12 +2968,11 @@ function commandDirectory(command, cwd) {
 
 // `worker-scope` adds a worktree and a branch: the conductor's to place, from the trunk. A sub-agent
 // reads a briefing (`--dry-run`) or where a worker stands (`--resume`): both create nothing.
-async function workerPlaceReason(input, command) {
-  if (!input.agent_type || !/(?:worker|story)-scope/.test(command)) {
+function workerPlaceReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const preparing = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  const preparing = kitInvocations(commands).some(
     ({ subcommand, args }) =>
       (subcommand === 'worker-scope' && !args.some((arg) => /^--(?:dry-run|resume)\b/.test(arg))) ||
       (subcommand === 'story-scope' && !args.includes('--dry-run')),
@@ -2998,12 +2985,11 @@ async function workerPlaceReason(input, command) {
 // `merge-trunk --to-land` gives the working migrations of a branch their real names just before its
 // squash merge: the conductor's step. A sub-agent brings the trunk in with `merge-trunk` alone,
 // however it launches the CLI.
-async function landingReason(input, command) {
-  if (!input.agent_type || !command.includes('--to-land')) {
+function landingReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const landing = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  const landing = kitInvocations(commands).some(
     ({ subcommand, args }) => subcommand === 'merge-trunk' && args.includes('--to-land'),
   );
   return landing
@@ -3130,28 +3116,48 @@ function isKitLauncher(word) {
 // Taking one side of a merge erases what the other side added without a conflict: a sub-agent
 // resolves each hunk instead. A derived file outside the sources (openapi/, the context map) is
 // taken from either side and regenerated, so only the sources and the tests are held.
-function oneSideMergeReason(project, input, command) {
+function oneSideMergeReason(project, input, commands) {
   if (!input.agent_type) {
     return undefined;
   }
-  const merging = [...command.matchAll(/\bgit\s+(?:-[Cc]\s+\S+\s+)*(?:merge|pull)\b([^;&|]*)/g)].some(([, args]) =>
-    /(?:^|\s)(?:-X\s*|--strategy-option[= ]\s*)(?:ours|theirs)\b|(?:^|\s)(?:-s\s*|--strategy[= ]\s*)ours\b/.test(args),
-  );
-  const directory = commandDirectory(command, input.cwd ?? process.cwd());
-  const takingASide = [...command.matchAll(/\bgit\s+(?:-[Cc]\s+\S+\s+)*(?:checkout|restore)\b([^;&|]*)/g)].some(
-    ([, args]) => /(?:^|\s)--(?:ours|theirs)\b/.test(args) && heldPaths(project, directory, args),
-  );
-  return merging || takingASide
+  const taken = commands.some(({ words, directory }) => {
+    const { subcommand, tail, moved } = gitInvocation(words.slice(1), directory);
+    if (shell.commandName(words) !== 'git') {
+      return false;
+    }
+    if (['merge', 'pull', 'rebase', 'cherry-pick', 'revert'].includes(subcommand)) {
+      return takesOneSide(tail);
+    }
+    return (
+      ['checkout', 'restore'].includes(subcommand) &&
+      tail.some((word) => /^--(?:ours|theirs)$/.test(word)) &&
+      heldPaths(project, moved, tail)
+    );
+  });
+  return taken
     ? 'Taking one side of a merge (`-X theirs`, `-X ours`, `-s ours`, `checkout` or `restore --theirs/--ours` on a source or a test) erases what the other side added, without a conflict to show it. Bring the trunk in with `npx ddd-ts-kit merge-trunk`: it settles the derived files itself; resolve each hunk it leaves keeping the intent of both sides, `git add` the file, then `npx ddd-ts-kit merge-trunk --continue`, which commits only once no line, row or test is lost.'
     : undefined;
 }
 
-// A path under the source root or the tests, or the whole tree.
+// `-X ours|theirs`, `-Xtheirs`, `--strategy-option[=]theirs`, `-s ours`, `--strategy[=]ours`.
+function takesOneSide(tail) {
+  return tail.some((word, index) => {
+    const next = tail[index + 1];
+    const option = /^(?:-X|--strategy-option=?)(.*)$/.exec(word);
+    const strategy = /^(?:-s|--strategy=?)(.*)$/.exec(word);
+    return (
+      (option !== null && /^(?:ours|theirs)$/.test(option[1] || next)) ||
+      (strategy !== null && (strategy[1] || next) === 'ours')
+    );
+  });
+}
+
+// A path under the source root or the tests, or the whole tree; a place only the shell knows may be either.
 function heldPaths(project, directory, args) {
-  return args
-    .split(/\s+/)
-    .filter((token) => token !== '' && !token.startsWith('-'))
-    .map((token) => projectPath(project, resolve(directory, token.replace(/^["']|["']$/g, ''))))
+  return shell
+    .operands(args)
+    .map((word) => shell.placeOf(word, directory))
+    .map((place) => (place === undefined ? '' : projectPath(project, place)))
     .some(
       (path) =>
         path === '' ||
