@@ -231,4 +231,20 @@ describe('the workflows init writes for the Claude jobs, on the default package 
       expect(scripts, file).toEqual([]);
     }
   });
+
+  it('keep no token in the checkout, and the Claude jobs ask for no identity token', () => {
+    const root = initProject('--ci', 'github', '--ci-extras', EVERYTHING);
+
+    for (const file of ['ci.yml', 'codeql.yml', 'pr-title.yml', 'claude-review.yml', 'claude-triage.yml']) {
+      const text = read(root, `.github/workflows/${file}`);
+      const checkouts = text.split('actions/checkout@').length - 1;
+
+      expect(checkouts, file).toBeGreaterThan(0);
+      expect(text.split('persist-credentials: false').length - 1, file).toBe(checkouts);
+    }
+
+    for (const file of ['claude-review.yml', 'claude-triage.yml']) {
+      expect(read(root, `.github/workflows/${file}`), file).not.toMatch(/^\s+id-token: write$/m);
+    }
+  });
 });
