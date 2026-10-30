@@ -10,4 +10,4 @@ Each page lists, in the words of the test titles, the rules a context holds, one
 | [identity](identity.md) | 227 | 0 | 45 of 227 | 68 |
 | [notification](notification.md) | 143 | 0 | 17 of 143 | 31 |
 | [scheduling](scheduling.md) | 633 | 3 | 63 of 636 | 169 |
-| [the application](application.md) | 32 | 0 | 2 of 32 | 8 |
+| [the application](application.md) | 34 | 0 | 2 of 34 | 9 |
