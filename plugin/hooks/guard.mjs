@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import {
   appendFileSync,
   closeSync,
+  constants,
   existsSync,
   fstatSync,
   globSync,
@@ -552,6 +553,8 @@ const SYSTEM_PROGRAMS = ['/bin', '/usr/bin', '/sbin', '/usr/sbin'];
 const WINDOWS = process.platform === 'win32';
 // The variables of lefthook that leave hooks or their commands out.
 const HOOK_SELECTION = /^LEFTHOOK_(?:EXCLUDE|SKIP)=/;
+// The most of a file of state, a scope file or a plan the guard reads: past it, it is not read.
+const STATE_BYTES = 16 * 1024 * 1024;
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -1397,23 +1400,35 @@ function readProject(root) {
   };
 }
 
-// The config as an object of JSON, read through one descriptor and never above CONFIG_BYTES; one
-// that cannot be read or parsed is the defaults.
+// The config as an object of JSON, never read above CONFIG_BYTES; one that cannot be read or parsed
+// is the defaults.
 function readConfig(path) {
+  const { content, tooLarge } = readBounded(path, CONFIG_BYTES);
+  if (tooLarge !== undefined) {
+    return { config: {}, tooLarge };
+  }
+  const config = parseJson(content ?? '');
+  return { config: isRecord(config) ? config : {} };
+}
+
+// The content of a regular file, read through one descriptor that never waits (a FIFO opens at
+// once) and never past `limit` bytes: the file measured is the file read. A device, a FIFO, a folder
+// or a file that cannot be opened has no content.
+function readBounded(path, limit, encoding = 'utf8') {
+  let descriptor;
   try {
-    const descriptor = openSync(path, 'r');
-    try {
-      const size = fstatSync(descriptor).size;
-      if (size > CONFIG_BYTES) {
-        return { config: {}, tooLarge: size };
-      }
-      const config = JSON.parse(readFileSync(descriptor, 'utf8'));
-      return { config: isRecord(config) ? config : {} };
-    } finally {
+    descriptor = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
+    const stat = fstatSync(descriptor);
+    if (!stat.isFile()) {
+      return {};
+    }
+    return stat.size > limit ? { tooLarge: stat.size } : { content: readFileSync(descriptor, encoding) };
+  } catch {
+    return {};
+  } finally {
+    if (descriptor !== undefined) {
       closeSync(descriptor);
     }
-  } catch {
-    return { config: {} };
   }
 }
 
@@ -1464,11 +1479,8 @@ function commitLimits(configured) {
 }
 
 function readJson(path) {
-  try {
-    return JSON.parse(readFileSync(path, 'utf8'));
-  } catch {
-    return undefined;
-  }
+  const { content } = readBounded(path, STATE_BYTES);
+  return content === undefined ? undefined : parseJson(content);
 }
 
 function projectBriefing(project, input) {
@@ -1742,13 +1754,10 @@ function isDirectory(path) {
   }
 }
 
-// The text of a file, or `otherwise` when it cannot be read: missing, a folder, or not readable by this user.
+// The text of a file, or `otherwise` when it cannot be read: missing, a folder, a device, larger than
+// the guard reads, or not readable by this user.
 function readText(path, otherwise) {
-  try {
-    return readFileSync(path, 'utf8');
-  } catch {
-    return otherwise;
-  }
+  return readBounded(path, STATE_BYTES).content ?? otherwise;
 }
 
 function contextMap(project) {
@@ -4214,12 +4223,15 @@ function putBackStep(project, { now, since }, [path, target]) {
   return { command: entry.added ? `git rm -f -- ${path}` : `git checkout HEAD -- ${path}` };
 }
 
+// A file that is not a regular one (a link to a device, a FIFO) has a hash of its kind, never read.
 function contentHash(file, keep) {
-  let content;
-  try {
-    content = readFileSync(file);
-  } catch {
+  const stat = statSync(file, { throwIfNoEntry: false });
+  if (stat === undefined) {
     return null;
+  }
+  const content = stat.isFile() ? readBounded(file, Number.POSITIVE_INFINITY, null).content : undefined;
+  if (content === undefined) {
+    return createHash('sha256').update(`not a file: ${stat.mode}`).digest('hex');
   }
   const hash = createHash('sha256').update(content).digest('hex');
   if (keep && !existsSync(join(keep, hash))) {
@@ -4402,26 +4414,12 @@ function numstatChange(entry) {
   return { path: path.join('\t'), lines: (Number(added) || 0) + (Number(deleted) || 0) };
 }
 
-// Sized and read through one descriptor: the file measured is the file counted. A file that cannot be
-// opened, a broken link among them, counts no line.
+// Read within its bound: a file larger, or that cannot be opened (a broken link, a device), counts no line.
 function lineCount(file) {
-  let descriptor;
-  try {
-    descriptor = openSync(file, 'r');
-
-    return fstatSync(descriptor).size > COUNTED_FILE_BYTES
-      ? 0
-      : readFileSync(descriptor, 'utf8')
-          .split('\n')
-          .filter((line, index, all) => index < all.length - 1 || line !== '').length;
-  } catch {
-    // Counted below, as no line.
-  } finally {
-    if (descriptor !== undefined) {
-      closeSync(descriptor);
-    }
-  }
-  return 0;
+  const { content } = readBounded(file, COUNTED_FILE_BYTES);
+  return content === undefined
+    ? 0
+    : content.split('\n').filter((line, index, all) => index < all.length - 1 || line !== '').length;
 }
 
 function isDerived(project, path) {
