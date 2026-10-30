@@ -94,7 +94,8 @@ export const INIT_REFUSALS: readonly DeclaredRefusal[] = [
     why: 'integration events reach a broker through the outbox, which needs a database',
   },
   {
-    refusal: /^--http-cache varnish cannot be combined with --http \w+ --events [\w-]+\.$/,
+    refusal:
+      /^--http-cache varnish needs (an HTTP framework to put the cache in front of: this project has --http none|--events outbox for its purge requests: this project has --events [\w-]+(, the default of --orm [\w-]+)?)\.$/,
     example: { httpCache: 'varnish', http: 'none' },
     kind: 'decided',
     why: 'Varnish caches an HTTP API and is purged by the integration events of the outbox',

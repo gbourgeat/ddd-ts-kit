@@ -110,12 +110,25 @@ describe('init --http-cache', () => {
     expect(read(without, 'src/platform/composition/platform.ts')).not.toContain('CacheInvalidation');
   });
 
-  it('refuses a shared cache without an API, or without the outbox its purges ride on', () => {
-    const inMemory = initFailure('--http-cache', 'varnish', '--orm', 'none');
+  it('refuses a shared cache without an API, or without the outbox its purges ride on, naming what was passed', () => {
+    const noApi = initFailure('--http-cache', 'varnish', '--http', 'none');
+    const noOutboxByDefault = initFailure('--http-cache', 'varnish', '--orm', 'none');
+    const noOutbox = initFailure('--http-cache', 'varnish', '--orm', 'none', '--events', 'in-memory');
     const unknown = initFailure('--http-cache', 'squid');
 
-    expect(inMemory.message).toBe('--http-cache varnish cannot be combined with --http express --events in-memory.');
-    expect(inMemory.fix).toContain('keep an HTTP framework and --events outbox');
+    expect(noApi.message).toBe(
+      '--http-cache varnish needs an HTTP framework to put the cache in front of: this project has --http none.',
+    );
+
+    expect(noOutboxByDefault.message).toBe(
+      '--http-cache varnish needs --events outbox for its purge requests: this project has --events in-memory, the default of --orm none.',
+    );
+
+    expect(noOutbox.message).toBe(
+      '--http-cache varnish needs --events outbox for its purge requests: this project has --events in-memory.',
+    );
+
+    expect(noOutbox.fix).toContain('keep an HTTP framework and --events outbox');
     expect(unknown.message).toBe('Unknown value "squid" for --http-cache.');
   });
 

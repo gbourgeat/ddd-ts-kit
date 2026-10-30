@@ -257,9 +257,20 @@ function resolveHttpCache(options: StackOptions, http: string, events: string): 
   }
 
   throw new CliError(
-    `--http-cache ${httpCache} cannot be combined with --http ${http} --events ${events}.`,
+    `--http-cache ${httpCache} ${httpCacheMisfit(options, http, events)}.`,
     'The purge of the shared cache is a row of the outbox, written with the command and sent after its commit: keep an HTTP framework and --events outbox, or --http-cache none.',
   );
+}
+
+/** What the shared cache lacks, naming the flag that was passed, or the flag whose default it is. */
+function httpCacheMisfit(options: StackOptions, http: string, events: string): string {
+  if (http === 'none') {
+    return 'needs an HTTP framework to put the cache in front of: this project has --http none';
+  }
+
+  const origin = options.events === undefined ? `, the default of --orm ${options.orm ?? 'none'}` : '';
+
+  return `needs --events outbox for its purge requests: this project has --events ${events}${origin}`;
 }
 
 /** Nest controllers are read through the DTO classes of class-validator, in a project that runs on Nest. */
