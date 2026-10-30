@@ -125,7 +125,8 @@ add`/`checkout -f`, `eslint --fix`, `biome --write`). A worker's only free place
 are `/dev/null`, the standard devices and the temporary directory (`$TMPDIR`) outside every project (a project cloned there keeps its rules); any other absolute
 place is refused. A file is judged where it lands: a link of the scope, or a folder of its path that
 is one, is the place it reaches, a link of the temporary directory into a project is that place, and
-a file of the scope that has another name elsewhere (a hard link) is refused. A command nested deeper than the reader follows (more than five shells or `eval`s)
+a file of the scope that has another name elsewhere (a hard link) is refused. A command nested deeper than the reader follows (more than five shells or `eval`s, or more than 32
+wrappers and assignments before its program, which then names no program it knows)
 is refused rather than let through unread; so is, to a worker, a line that ends inside a quote or
 with a here-document that never closes, and a command the reader breaks on. Code it cannot read (inline code such as `node -e`, a
 script, a shell fed on its input, `make`, a package script or runner such as `npm test` or `npx`)

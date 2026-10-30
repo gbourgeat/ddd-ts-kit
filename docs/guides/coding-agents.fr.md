@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:79d7082658e25f7c -->
+<!-- translation-of: coding-agents.md sha256:e8d93add0348fd18 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -132,7 +132,8 @@ manquent (`>&`, un script `sed` ou `awk` qui écrit, `vim`/`ed`, `rsync`, `curl 
 périphériques standard et le répertoire temporaire (`$TMPDIR`) hors de tout projet (un projet cloné là garde ses règles) ; tout autre chemin absolu est
 refusé. Un fichier est jugé là où il aboutit : un lien du périmètre, ou un dossier de son chemin qui en
 est un, est l'endroit qu'il atteint, un lien du répertoire temporaire vers un projet est cet
-endroit, et un fichier du périmètre qui porte un autre nom ailleurs (un lien physique) est refusé. Une commande imbriquée plus profond que le lecteur ne suit (plus de cinq *shells* ou
+endroit, et un fichier du périmètre qui porte un autre nom ailleurs (un lien physique) est refusé. Une commande imbriquée plus profond que le lecteur ne suit (plus de 32 lanceurs et affectations
+avant son programme, qui ne nomme alors aucun programme qu'il connaisse, ou plus de cinq *shells* ou
 `eval`) est refusée plutôt que laissée passer sans lecture ; de même, à un *worker*, une ligne qui
 finit dans une citation ou sur un *here-document* jamais fermé, et une commande sur laquelle le
 lecteur échoue. Le code qu'il ne peut pas lire (du code

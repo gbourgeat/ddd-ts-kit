@@ -206,3 +206,15 @@ test('without TMPDIR in the environment, the system temp directory stays free to
   const noted = bash(root, 'echo x > "$TMPDIR/notes.txt" && echo y > "${TMPDIR:-/tmp}/more.txt"', agent);
   assert.equal(run('pre-bash', noted, { TMPDIR: undefined }).output, undefined);
 });
+
+test('a glob that starts outside the project is not walked, and a chain of wrappers longer than the guard reads names no program', () => {
+  const root = project();
+  const agent = worker(root);
+  const started = Date.now();
+  assert.equal(decision(run('pre-bash', bash(root, 'rm /**/.cache src/main.ts'))), undefined);
+  assert.ok(Date.now() - started < 4000, 'answered without walking the disk');
+  const wrapped = run('pre-bash', bash(root, `${'nice '.repeat(40)}rm src/main.ts`, agent));
+  assert.equal(decision(wrapped), 'deny');
+  assert.match(reason(wrapped), /name only the shell knows/);
+  assert.equal(run('pre-bash', bash(root, `${'nice '.repeat(3)}ls`, agent)).output, undefined);
+});

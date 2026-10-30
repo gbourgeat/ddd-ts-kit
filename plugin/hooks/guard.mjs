@@ -2220,16 +2220,17 @@ function foundPlaces(simple) {
 function writtenProjectPaths(project, commands) {
   const paths = new Set();
   for (const place of writtenPlaces(commands).filter((written) => written !== undefined)) {
-    for (const file of expandGlob(place)) {
+    for (const file of expandGlob(project, place)) {
       paths.add(projectPath(project, file));
     }
   }
   return [...paths];
 }
 
-function expandGlob(place) {
+// A pattern is walked inside the project only: one that starts outside it stays as written.
+function expandGlob(project, place) {
   // A pattern matching nothing (globSync returns []) writes no file, so it protects nothing.
-  return /[*?[]/.test(place) ? globSync(place) : [place];
+  return /[*?[]/.test(place) && place.startsWith(`${project.root}${sep}`) ? globSync(place) : [place];
 }
 
 // A command that writes no file by itself, its redirections aside: a neutral one (`cd`, `test`), a reader,

@@ -9,6 +9,8 @@ import { basename, resolve } from 'node:path';
 export const UNKNOWN = '\u0000';
 
 const DEPTH = 5;
+// The assignments, keywords and wrappers the reader takes off one command, at most.
+const LAYERS = 32;
 // `$((...))`: its body, between the two parentheses left, holds no separator of commands.
 const ARITHMETIC = /^\([^;&|`]*\)$/;
 // A here-document opened in a substitution: its delimiter, in either quote or bare; `<<<` opens none.
@@ -207,13 +209,22 @@ function changedDirectory(word, directory) {
   return word === '-' ? undefined : placeOf(word, directory);
 }
 
-/** Leading assignments, keywords and wrappers taken off: what is left starts with the program run. */
+/**
+ * Leading assignments, keywords and wrappers taken off: what is left starts with the program run.
+ * Past the layers the reader takes off, the program is one only the shell knows.
+ */
 function unwrapped(words) {
   let rest = words;
-  for (let next = unwrapOnce(rest); next !== rest; next = unwrapOnce(rest)) {
+  for (let layer = 0; ; layer += 1) {
+    const next = unwrapOnce(rest);
+    if (next === rest) {
+      return rest;
+    }
+    if (layer === LAYERS) {
+      return [UNKNOWN];
+    }
     rest = next;
   }
-  return rest;
 }
 
 /** One leading assignment, keyword or wrapper taken off, or the words themselves when there is none. */
@@ -237,7 +248,7 @@ function isAssignment(word) {
 function wrappedTextOf(words) {
   let rest = words;
   let text = wrappedText(rest);
-  while (text === undefined && unwrapOnce(rest) !== rest) {
+  for (let layer = 0; text === undefined && layer < LAYERS && unwrapOnce(rest) !== rest; layer += 1) {
     rest = unwrapOnce(rest);
     text = wrappedText(rest);
   }
