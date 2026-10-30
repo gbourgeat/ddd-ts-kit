@@ -1,9 +1,16 @@
+import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import process from 'node:process';
 
-// Read by the knex CLI (`npm run db:migrate`, `npm run db:generate <what-it-does>`). The migrations
-// call the compiled schema of the application: run `npm run build` first. A new migration is
-// `<timestamp>_<what-it-does>.js`, written from the ES module stub of knex: the project is ESM.
+// The knex CLI reads no .env: `npm run db:migrate` finds DATABASE_URL there, and what the shell sets wins.
+if (existsSync('.env')) {
+  process.loadEnvFile('.env');
+}
+
+// Read by the knex CLI (`npm run db:migrate`) and by `npm run db:generate <what-it-does>`, which
+// writes `<timestamp>_<what-it-does>.js`, its SQL held in the file: a migration calls nothing of the
+// application, so that it builds the same tables whatever the schema becomes. With `--custom`, the
+// file is the ES module stub of knex (the project is ESM), to fill by hand.
 export default {
   client: 'pg',
   connection: process.env.DATABASE_URL,

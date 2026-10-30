@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:6b9b97503850d069 -->
+<!-- translation-of: agent-sandbox.md sha256:d681447640a4df6a -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -289,8 +289,9 @@ Dans une session sous le profil régulé, l'agent écrit donc le schéma et le c
   `DATABASE_URL` n'est pas définie. Sous Prisma et TypeORM, le kit démarre alors PostgreSQL en
   processus (PGlite servi sur le protocole réseau, le moteur de `openTestDatabase()`), y rejoue les
   migrations déjà écrites, compare le schéma et écrit la nouvelle migration, avec les instructions
-  d'append-only de la piste d'audit. Drizzle génère depuis ses instantanés et les fichiers Knex
-  s'écrivent à la main. Un agent dans le bac à sable génère donc ses propres migrations ; sous
+  d'append-only de la piste d'audit. Drizzle génère depuis ses instantanés, et Knex compare
+  `createTables` aux migrations sur PostgreSQL en processus, quoi que dise `DATABASE_URL`. Un agent
+  dans le bac à sable génère donc ses propres migrations ; sous
   TypeORM, il compile d'abord (`npm run build && npm run db:generate migrations/<nom>`) ;
 - les specs d'intégration et de bout en bout qui nomment une `DATABASE_URL` ; les specs sur les
   doublures en mémoire et les specs de bout en bout sans `DATABASE_URL` (base en processus) tournent
