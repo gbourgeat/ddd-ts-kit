@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:42089ca22feb9c90 -->
+<!-- translation-of: coding-agents.md sha256:566c230ccfb9484d -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -89,7 +89,11 @@ dans un terminal), refuse une commande git qui saute les hooks du projet (`--no-
 commit, `-c core.hooksPath=...`, `LEFTHOOK=0` ou `HUSKY=0` : les hooks sont la barrière locale du
 pipeline) et, à un sous-agent, un `git config` qui fixe une valeur ou un `git -c` d'une clé qui
 lance une commande dans chaque *checkout* (`core.fsmonitor`, `core.pager`, `core.editor`,
-`core.sshCommand`, un `alias.*`, un pilote *diff* ou *filter*), demande l'avis du propriétaire du projet avant qu'une
+`core.sshCommand`, un `alias.*`, un pilote *diff*, *merge* ou *filter*, `diff.external`, un
+`include.path`, un assistant d'identifiants, un *pager*, un outil de `mergetool` ou `difftool`, un
+programme `gpg`, un `protocol.*`), donnée par `-c` ou `--config-env`, ou une variable
+d'environnement qui confie à git un programme ou des réglages (`GIT_EXTERNAL_DIFF`, `GIT_PAGER`,
+`GIT_EDITOR`, `GIT_SSH_COMMAND`, `GIT_CONFIG_*`...), demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit par les outils d'édition, vérifie chaque fichier
 écrit et renvoie les violations avec leur correction (les cinq premiers d'un *patch* de Codex,
 les autres nommés comme non vérifiés ; avec `"dependenciesBeforeWrite": true`, à
@@ -131,7 +135,9 @@ lecteur échoue. Le code qu'il ne peut pas lire (du code
 en ligne comme `node -e`, un script, un *shell* nourri par son entrée, `make`, un script ou un
 exécuteur de paquet comme `npm test` ou `npx`) s'exécute, mais avant chaque commande d'un *worker*
 qui en lance (toute commande sauf les pures lectures : `cat`, `ls`, `grep`, `git log`,
-`git status`...), la garde note l'état hors du périmètre (le `git status` et le `HEAD` du
+`git status`... nommées par leur nom, git sans réglage donné à la commande ni option qui confie
+les fichiers à un programme comme `grep -O` ou `--ext-diff` ; le kit compte comme le programme, ou
+comme premier opérande de `node` ou d'un exécuteur de paquet), la garde note l'état hors du périmètre (le `git status` et le `HEAD` du
 *worktree*, du *checkout* de la session quand c'en est un autre, et le manifeste et le *bin* de la
 CLI du kit et de Biome dans `node_modules`), et le compare à l'appel suivant du *worker*. Une lecture
 laisse en place la note du *worktree*, pour ce que la commande a laissé tourner en arrière-plan,

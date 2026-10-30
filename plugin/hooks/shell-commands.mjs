@@ -82,7 +82,9 @@ export function simpleCommands(text, directory, depth = 0) {
   for (const command of commands) {
     blocks += blockChange(command.words);
     const words = unwrapped(command.words);
-    found.push({ ...command, words, directory: current });
+    // The variables set for the command alone (`X=1 cmd`, `env X=1 cmd`), which the program reads.
+    const assigned = command.words.slice(0, command.words.length - words.length).filter(isAssignment);
+    found.push({ ...command, words, assigned, directory: current });
     current = movedTo(command, words, { current, stack, blocks });
     found.push(...nestedCommands(words, current, depth));
     const wrapped = wrappedTextOf(command.words);
@@ -216,7 +218,7 @@ function unwrapped(words) {
 
 /** One leading assignment, keyword or wrapper taken off, or the words themselves when there is none. */
 function unwrapOnce(rest) {
-  if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
+  if (isAssignment(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
     return rest.slice(1);
   }
   const name = commandName(rest);
@@ -225,6 +227,10 @@ function unwrapOnce(rest) {
   }
   const inner = afterOptions(rest.slice(1), WRAPPERS[name]);
   return WRAPPERS[name].tail === 'unknown' && inner.length > 0 ? [...inner, UNKNOWN] : inner;
+}
+
+function isAssignment(word) {
+  return /^[A-Za-z_][A-Za-z0-9_]*=/.test(word);
 }
 
 /** The text a command hands to another to split, read at each layer of its wrappers (`nice npx ...`). */
@@ -241,7 +247,7 @@ function wrappedTextOf(words) {
 /** The words after the options of a wrapper, its assignments (`env`), and its leading operand. */
 function afterOptions(words, { valued, skip }) {
   let index = 0;
-  while (index < words.length && (words[index].startsWith('-') || /^[A-Za-z_][A-Za-z0-9_]*=/.test(words[index]))) {
+  while (index < words.length && (words[index].startsWith('-') || isAssignment(words[index]))) {
     index += valued.includes(words[index]) ? 2 : 1;
   }
   if (skip === 'number') {

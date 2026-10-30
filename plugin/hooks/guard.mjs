@@ -526,6 +526,28 @@ const PATH_COMMANDS = {
 // acceptance read without `--lock`, a briefing, the place of a worker or a generator read without running it.
 const KIT_READS = new Set(['list', 'describe', 'explain', 'status', 'stories', 'story', 'story-check', 'todo']);
 
+// The variables of the environment by which git runs a program or reads settings given to it.
+const GIT_PROGRAM_VARIABLES =
+  /^GIT_(?:EXTERNAL_DIFF|CONFIG\w*|PAGER|EDITOR|SEQUENCE_EDITOR|SSH\w*|ASKPASS|PROXY_COMMAND|EXEC_PATH)=/;
+// The options of a package runner or of node that take a value: that value launches nothing.
+const LAUNCHER_VALUED = [
+  '-r',
+  '--require',
+  '--import',
+  '--loader',
+  '-p',
+  '--package',
+  '-c',
+  '--call',
+  '-C',
+  '--dir',
+  '--prefix',
+  '--filter',
+  '-w',
+  '--workspace',
+];
+// The folders of the programs of the system: a reader named by its path there is that reader.
+const SYSTEM_PROGRAMS = ['/bin', '/usr/bin', '/sbin', '/usr/sbin'];
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -2648,15 +2670,22 @@ function otherWorktreeBranches(directory) {
 }
 
 const DANGEROUS_CONFIG = [
-  /^core\.fsmonitor$/i,
-  /^core\.pager$/i,
-  /^core\.editor$/i,
-  /^core\.sshcommand$/i,
-  /^core\.hookspath$/i,
+  /^core\.(?:fsmonitor|pager|editor|sshcommand|hookspath|attributesfile|gitproxy|askpass)$/i,
   /^alias\./i,
-  /^diff\..+\.command$/i,
+  /^diff\.external$/i,
+  /^diff\..+\.(?:command|textconv)$/i,
+  /^merge\..+\.driver$/i,
   /^filter\./i,
-  /^gpg\.program$/i,
+  /^gpg\.(?:.+\.)?program$/i,
+  /^include(?:if\..+)?\.path$/i,
+  /^credential\.(?:.+\.)?helper$/i,
+  /^sequence\.editor$/i,
+  /^interactive\.difffilter$/i,
+  /^pager\./i,
+  /^(?:merge|diff)tool\./i,
+  /^protocol\./i,
+  /^remote\..+\.(?:uploadpack|receivepack)$/i,
+  /^uploadpack\.packobjectshook$/i,
 ];
 const CONFIG_READS = new Set(['--get', '--get-all', '--get-regexp', '--get-urlmatch', '-l', '--list', '--list-all']);
 const CONFIG_WRITES = new Set([
@@ -2689,10 +2718,12 @@ async function gitConfigReason(input, command) {
     return undefined;
   }
   shell = await import('./shell-commands.mjs');
-  const gits = shell
-    .simpleCommands(command, input.cwd ?? process.cwd())
-    .filter(({ words }) => shell.commandName(words) === 'git');
-  for (const { words } of gits) {
+  const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
+  const variable = commands.flatMap(exportedVariables).find((word) => GIT_PROGRAM_VARIABLES.test(word));
+  if (variable) {
+    return `\`${variable.split('=')[0]}\` hands git a program or settings to run it: a sub-agent sets none. ${REPORT_TO_CONDUCTOR}`;
+  }
+  for (const { words } of commands.filter((simple) => shell.commandName(simple.words) === 'git')) {
     const reason = gitConfigKeyReason(words);
     if (reason) {
       return reason;
@@ -2701,8 +2732,17 @@ async function gitConfigReason(input, command) {
   return undefined;
 }
 
+// The variables a command sets for itself, and those `export`, `declare` or `typeset` set for the rest of the line.
+function exportedVariables({ words, assigned = [] }) {
+  return ['export', 'declare', 'typeset'].includes(shell.commandName(words)) ? [...assigned, ...words] : assigned;
+}
+
 function gitConfigKeyReason(words) {
-  const inline = words.find((word, index) => words[index - 1] === '-c' && isDangerousConfig(word.split('=')[0]));
+  const inline = words
+    .map((word, index) =>
+      ['-c', '--config-env'].includes(words[index - 1]) ? word : /^--config-env=(.*)$/.exec(word)?.[1],
+    )
+    .find((setting) => setting !== undefined && isDangerousConfig(setting.split('=')[0]));
   if (inline) {
     const key = inline.split('=')[0];
     return `\`git -c ${key}\` runs a command in every checkout of the repository. ${REPORT_TO_CONDUCTOR}`;
@@ -2982,7 +3022,7 @@ function readsAnywhere(subcommand, tail) {
 // node (`.../cli/dist/bin.js`, `.../ddd-ts-kit/dist/bin.js`) or the kit script of a project.
 function kitInvocations(commands) {
   return commands.flatMap(({ words }) => {
-    const at = words.findIndex(isKitLauncher);
+    const at = launcherAt(words);
     if (at === -1) {
       return [];
     }
@@ -2991,6 +3031,25 @@ function kitInvocations(commands) {
     const index = rest.findIndex((word, position) => !word.startsWith('-') && rest[position - 1] !== '--cwd');
     return index === -1 ? [] : [{ subcommand: rest[index], args: rest.slice(index + 1) }];
   });
+}
+
+// The launcher is the program, or the first operand of a package runner or of node without inline
+// code: a word among the arguments of another program launches nothing.
+function launcherAt(words) {
+  if (words.length > 0 && isKitLauncher(words[0])) {
+    return 0;
+  }
+  const name = shell.commandName(words);
+  const skipped = SCRIPT_MANAGERS.includes(name) && ['exec', 'dlx', 'x'].includes(words[1]) ? 2 : 1;
+  const runs = ['npx', 'pnpx', 'bunx', 'node', 'nodejs', 'pnpm', 'yarn'].includes(name) || skipped === 2;
+  if (!runs || words.slice(1).some((word) => INLINE_CODE.node.test(word))) {
+    return -1;
+  }
+  const [first] = shell.operands(words.slice(skipped), LAUNCHER_VALUED);
+  const node = name === 'node' || name === 'nodejs';
+  return first !== undefined && isKitLauncher(first) && (!node || first.includes('/'))
+    ? words.indexOf(first, skipped)
+    : -1;
 }
 
 function isKitLauncher(word) {
@@ -3601,16 +3660,25 @@ function scriptRun({ words }) {
   return SCRIPT_MANAGERS.includes(manager) && SANCTIONED_SCRIPTS.has(script) ? `${manager} run ${script}` : undefined;
 }
 
-// A program that only reads, whatever its arguments, and git that only reads (without `--output`,
-// which writes a file): it runs no code of the project.
-function isPureReader({ words }) {
+// A program that only reads, whatever its arguments, named by its name or by its path in a folder of
+// the system (a program named `cat` elsewhere is another program), and git that only reads: without `--output`, which writes a file, nor a
+// setting given to the command, nor an option that hands the files to a program (`grep -O`,
+// `--ext-diff`). It runs no code of the project.
+function isPureReader({ words, assigned = [] }) {
   const name = shell.commandName(words);
+  if (words[0]?.includes('/') && !SYSTEM_PROGRAMS.includes(dirname(words[0]))) {
+    return false;
+  }
   if (name !== 'git') {
     return PURE_READERS.has(name);
   }
   const { subcommand, tail } = gitInvocation(words.slice(1));
   const reads = subcommand === 'branch' ? listsBranches(tail) : GIT_READ_ONLY.has(subcommand);
-  return reads && !words.some((word) => word.startsWith('--output'));
+  return reads && assigned.length === 0 && !words.some(runsAProgramOfGit);
+}
+
+function runsAProgramOfGit(word) {
+  return word === '-c' || word === '-O' || /^(?:--output|--config-env|--ext-diff|--open-files-in-pager|-O.)/.test(word);
 }
 
 // `git branch` reads with no operand or when it lists, and with none of the options that write.

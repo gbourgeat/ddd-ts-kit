@@ -87,7 +87,10 @@ the project owner writes it, in a terminal), refuses a git command that skips th
 project (`--no-verify`, `-n` on a commit, `-c core.hooksPath=...`, `LEFTHOOK=0` or `HUSKY=0`: the hooks are the local gate
 of the pipeline) and, to a sub-agent, a `git config` that sets a value or a `git -c` of a key that
 runs a command in every checkout (`core.fsmonitor`, `core.pager`, `core.editor`, `core.sshCommand`,
-an `alias.*`, a diff or filter driver), asks the
+an `alias.*`, a diff, merge or filter driver, `diff.external`, an `include.path`, a credential
+helper, a pager, a tool of `mergetool` or `difftool`, a `gpg` program, a `protocol.*`), given by
+`-c` or `--config-env`, or a variable of the environment that hands git a program or settings
+(`GIT_EXTERNAL_DIFF`, `GIT_PAGER`, `GIT_EDITOR`, `GIT_SSH_COMMAND`, `GIT_CONFIG_*`...), asks the
 project owner before a suppression, a skipped test or a change of the rules is written by the
 editor tools, checks
 every written file and returns the violations with their fix (the first five of a Codex patch, the
@@ -123,7 +126,9 @@ is refused rather than let through unread; so is, to a worker, a line that ends 
 with a here-document that never closes, and a command the reader breaks on. Code it cannot read (inline code such as `node -e`, a
 script, a shell fed on its input, `make`, a package script or runner such as `npm test` or `npx`)
 runs, but before each command of a worker that runs some (every command but the pure readers:
-`cat`, `ls`, `grep`, `git log`, `git status`...), the guard notes the state outside the scope (the
+`cat`, `ls`, `grep`, `git log`, `git status`... named by their name, git without a setting given to
+the command nor an option that hands the files to a program such as `grep -O` or `--ext-diff`; the
+kit counts as the program, or as the first operand of `node` or of a package runner), the guard notes the state outside the scope (the
 `git status` and `HEAD` of the worktree, of the session's checkout when it is another, and the
 manifest and bin of the kit's CLI and of Biome in `node_modules`), and compares it at the worker's
 next call. A read leaves the note of the worktree standing, for what the command left running in the
