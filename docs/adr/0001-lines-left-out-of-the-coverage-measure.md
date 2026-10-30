@@ -12,6 +12,7 @@ Each check guards a state its callers cannot produce. Removing it would leave th
 
 | Check | Why nothing reaches it |
 | --- | --- |
+| `http`, `json-forms-of.ts`, a field without a node | A field is named after a property of this schema, and `assertHints` refuses a dot in a name. |
 | `knex`, `knex-outbox-store.ts`, a row that is no object | A sum without `GROUP BY` always answers one row. |
 | `redis`, `publications.ts`, an entry id that is no text | An `XADD` answers an entry id or an error, and the error is read just before. |
 | `testing`, `decorator-compiler.ts`, a failure that is no object | The only caller catches what `execFileSync` throws, always an `Error`. |

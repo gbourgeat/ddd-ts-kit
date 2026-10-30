@@ -66,15 +66,14 @@ describe('the edges of a form', () => {
 });
 
 describe('the edges of a form, a property whose name holds a dot', () => {
-  // Read as a nested field: #680 keeps it as one property.
-  it('reads the last segment of the name and finds no schema for it', async () => {
-    const route = defineRoute(
+  const dotted = (body: z.ZodObject) =>
+    defineRoute(
       {
         method: 'POST',
         path: '/visits',
         operationId: 'planDottedVisit',
         summary: 'Plan',
-        request: { body: zodSchema(z.object({ 'address.line1': z.string().max(3) })) },
+        request: { body: zodSchema(body) },
         responses: { 204: { description: 'ok' } },
         security: false,
         form: {},
@@ -82,9 +81,16 @@ describe('the edges of a form, a property whose name holds a dot', () => {
       () => ({ status: 204 }),
     );
 
-    const [document] = await formDocumentsOf([{ ...route, groups: ['VisitRoutes'] }]);
+  it('refuses the route when the routes are built, naming the property', () => {
+    const route = dotted(z.object({ 'address.line1': z.string().max(3) }));
 
-    expect(document?.jsonForms.schema).toMatchObject({ properties: { line1: {} }, required: ['line1'] });
+    expect(() => formRoutes([{ ...route, groups: ['VisitRoutes'] }])).toThrow(/holds the property "address\.line1"/);
+  });
+
+  it('refuses it in a nested object too', () => {
+    const route = dotted(z.object({ address: z.object({ 'line.1': z.string() }) }));
+
+    expect(() => formRoutes([{ ...route, groups: ['VisitRoutes'] }])).toThrow(/holds the property "line\.1"/);
   });
 });
 

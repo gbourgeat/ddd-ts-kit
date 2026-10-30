@@ -1,5 +1,5 @@
 [English](0001-lines-left-out-of-the-coverage-measure.md) · **Français**
-<!-- translation-of: 0001-lines-left-out-of-the-coverage-measure.md sha256:7988b9396335ec7a -->
+<!-- translation-of: 0001-lines-left-out-of-the-coverage-measure.md sha256:ff4d2a15395a3a86 -->
 
 # ADR-0001 : les lignes laissées hors de la mesure de couverture
 
@@ -13,6 +13,7 @@ Chaque vérification garde un état que ses appelants ne peuvent pas produire. L
 
 | Vérification | Pourquoi rien ne l'atteint |
 | --- | --- |
+| `http`, `json-forms-of.ts`, un champ sans nœud | Un champ porte le nom d'une propriété de ce schéma, et `assertHints` refuse un point dans un nom. |
 | `knex`, `knex-outbox-store.ts`, une ligne qui n'est pas un objet | Une somme sans `GROUP BY` répond toujours une ligne. |
 | `redis`, `publications.ts`, un identifiant d'entrée qui n'est pas un texte | Un `XADD` répond un identifiant d'entrée ou une erreur, et l'erreur est lue juste avant. |
 | `testing`, `decorator-compiler.ts`, un échec qui n'est pas un objet | Le seul appelant attrape ce que lève `execFileSync`, toujours une `Error`. |
