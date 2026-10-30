@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:41ac494c7e3cbe91 -->
+<!-- translation-of: agent-sandbox.md sha256:6b9b97503850d069 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -351,6 +351,13 @@ deux niveaux précédents :
 **Prérequis.** Linux 6.2 ou plus récent avec Landlock (ABI 3) et seccomp, Docker 28 ou Podman 5 ;
 macOS sur Apple Silicon avec Docker Desktop ; Windows via WSL 2 est expérimental. Le lancement
 échoue fermé quand Landlock manque.
+
+**Windows** n'est pris en charge que via WSL 2 (la plateforme y est `linux`). Hors de WSL,
+`affected --run`, `verify-slice`, `worker-scope`, `story-scope`, `worktree` (sauf `--no-install` ou
+`--dry-run`) et `merge-trunk` refusent de s'exécuter, dès leur entrée et avant qu'aucun processus ne
+démarre : le gestionnaire de paquets est atteint par `cmd.exe`, qui passe sans les échapper les
+arguments d'un script (`affected --run "test & calc"` exécuterait `calc`). Le refus sort avec le
+code 2.
 
 **Limites à connaître**, en 0.1.4 :
 
