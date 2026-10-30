@@ -1,5 +1,5 @@
 // ddd-ts-kit:imports
-import { integer, text, timestamp } from 'drizzle-orm/pg-core';
+import { integer, text } from 'drizzle-orm/pg-core';
 import { contextSchema } from '@ddd-ts-kit/drizzle/postgres';
 // /ddd-ts-kit:imports
 

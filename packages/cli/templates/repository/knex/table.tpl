@@ -11,7 +11,6 @@ await create{{aggregate.pascal}}Table(knex);
 function create{{aggregate.pascal}}Table(knex: Knex): Promise<void> {
   return knex.schema.withSchema({{context.constant}}_SCHEMA).createTable('{{aggregate.table}}', (table) => {
     table.text('id').primary();
-    table.timestamp('registered_at', { useTz: true }).notNullable();
 {{#if personal.any}}
 {{personal.knexTable}}
 {{/if}}

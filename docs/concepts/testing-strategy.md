@@ -211,8 +211,10 @@ const appointment = anAppointment().forPatient('ada').startingAt(tomorrowAt9).ca
 ```
 
 A builder extends `Builder` of `@ddd-ts-kit/testing`: valid `defaults()` once, a `construct()`
-that goes through the public API of the aggregate, and one method per word of the language.
-Shortened from the builder of the example:
+that goes through the public API of the aggregate, and one method per word of the language. The
+instant of the birth is an ingredient named after its fact (`bookedAt` of `Appointment Booked`), as
+`generate aggregate --birth` writes it; `examples/scheduling` keeps `bornAt` until its aggregates
+are regenerated. Shaped like the builder of the example:
 
 <!-- checked sample -->
 ```ts
@@ -222,7 +224,7 @@ import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 
 // the aggregate, from the domain
 declare class Appointment extends AggregateRoot {
-  static create(id: string, patientId: string, startsAt: Date, bornAt: Date): Appointment;
+  static create(id: string, patientId: string, startsAt: Date, bookedAt: Date): Appointment;
   cancel(by: 'patient' | 'practice', at: Date): void;
 }
 
@@ -230,7 +232,7 @@ interface AppointmentIngredients {
   readonly id: string;
   readonly patientId: string;
   readonly startsAt: Date;
-  readonly bornAt: Date;
+  readonly bookedAt: Date;
   readonly cancelled: boolean;
 }
 
@@ -252,17 +254,17 @@ export class AppointmentBuilder extends Builder<AppointmentIngredients, Appointm
       id: sequence('appointment'),
       patientId: 'patient-1',
       startsAt: new Date('2026-03-02T09:00:00.000Z'),
-      bornAt: new Date('2026-03-01T00:00:00.000Z'),
+      bookedAt: new Date('2026-03-01T00:00:00.000Z'),
       cancelled: false,
     };
   }
 
   /** Through the public API only: a test can never start from a state the rules forbid. */
-  protected construct({ id, patientId, startsAt, bornAt, cancelled }: AppointmentIngredients): Appointment {
-    const appointment = Appointment.create(id, patientId, startsAt, bornAt);
+  protected construct({ id, patientId, startsAt, bookedAt, cancelled }: AppointmentIngredients): Appointment {
+    const appointment = Appointment.create(id, patientId, startsAt, bookedAt);
 
     if (cancelled) {
-      appointment.cancel('patient', bornAt);
+      appointment.cancel('patient', bookedAt);
     }
 
     return appointment;

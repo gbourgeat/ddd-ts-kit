@@ -4,27 +4,27 @@ import { {{name.pascal}} } from '{{alias.context}}/domain/aggregates/{{name.keba
 import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 import { {{name.article}}{{name.pascal}} } from '{{alias.context}}/test/builders/{{name.kebab}}.builder{{alias.ext}}';
 
-const bornAt = new Date('2026-03-01T00:00:00.000Z');
+const {{event.instant}} = new Date('2026-03-01T00:00:00.000Z');
 
 describe('{{name.title}}', () => {
   it('records its birth, and holds the state that event gives', () => {
-    const born = {{name.pascal}}.create('{{name.kebab}}-7', bornAt);
+    const born = {{name.pascal}}.create('{{name.kebab}}-7', {{event.instant}});
 
-    expect(born.registeredAt).toEqual(bornAt);
-    expect(born.pullEvents()).toEqual([new {{event.pascal}}('{{name.kebab}}-7', bornAt)]);
+    expect(born.{{event.instant}}).toEqual({{event.instant}});
+    expect(born.pullEvents()).toEqual([new {{event.pascal}}('{{name.kebab}}-7', {{event.instant}})]);
   });
 
   it('is rebuilt from its history, recording nothing', () => {
-    givenEvents((id, history) => {{name.pascal}}.rehydrate(id, history), [new {{event.pascal}}('{{name.kebab}}-7', bornAt)])
+    givenEvents((id, history) => {{name.pascal}}.rehydrate(id, history), [new {{event.pascal}}('{{name.kebab}}-7', {{event.instant}})])
       .when((loaded) => loaded.toState())
       .thenNoEvent()
       .thenState((loaded) => expect(loaded.version).toBe(1));
   });
 
   it('is loaded by its builder in the state its birth gives, recording nothing', () => {
-    const loaded = {{name.article}}{{name.pascal}}().identifiedBy('{{name.kebab}}-7').bornAt(bornAt).build();
+    const loaded = {{name.article}}{{name.pascal}}().identifiedBy('{{name.kebab}}-7').{{event.instant}}({{event.instant}}).build();
 
-    expect(loaded.registeredAt).toEqual(bornAt);
+    expect(loaded.{{event.instant}}).toEqual({{event.instant}});
     expect(loaded.pullEvents()).toEqual([]);
   });
 

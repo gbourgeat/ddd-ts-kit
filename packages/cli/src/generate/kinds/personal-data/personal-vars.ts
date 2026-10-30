@@ -34,7 +34,7 @@ export function personalVars(scope: Scope): RenderContext {
   const request = personalRequestOf(scope);
 
   if (request === undefined) {
-    return { any: false };
+    return { any: false, retains: false };
   }
 
   const { orm } = scope.config.stack;

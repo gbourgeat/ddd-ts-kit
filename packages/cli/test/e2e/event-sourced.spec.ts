@@ -124,8 +124,8 @@ describe.runIf(SLOW)('an event-sourced aggregate as generated', () => {
   it('passes the whole contract on the adapter and its fake once a business method and a mutate are added', () => {
     project.edit(
       AGGREGATE,
-      '  get registeredAt(): Date {',
-      '  credit(now: Date): void {\n    this.record(new LedgerCredited(this.id, now));\n  }\n\n  get registeredAt(): Date {',
+      '  get createdAt(): Date {',
+      '  credit(now: Date): void {\n    this.record(new LedgerCredited(this.id, now));\n  }\n\n  get createdAt(): Date {',
     );
 
     // The apply method of the generated event is empty: the credit has to move the state for the contract to see a change.
@@ -134,7 +134,7 @@ describe.runIf(SLOW)('an event-sourced aggregate as generated', () => {
       AGGREGATE,
       read(project.root, AGGREGATE).replace(
         /(private applyCredited\(event: LedgerCredited\): void \{\n)[^\n]*\n/,
-        '$1    this.state = { ...this.state, registeredAt: event.occurredAt };\n',
+        '$1    this.state = { ...this.state, createdAt: event.occurredAt };\n',
       ),
     );
 

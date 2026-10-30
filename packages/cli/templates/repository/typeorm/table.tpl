@@ -11,7 +11,6 @@ export const {{aggregate.tableCamel}} = new EntitySchema<{{aggregate.pascal}}Row
   schema: {{context.constant}}_SCHEMA,
   columns: {
     id: { type: 'text', primary: true },
-    registeredAt: { name: 'registered_at', type: 'timestamptz' },
 {{#if personal.any}}
 {{personal.typeormTable}}
 {{/if}}
@@ -30,7 +29,6 @@ export const {{aggregate.tableCamel}} = new EntitySchema<{{aggregate.pascal}}Row
   schema: {{context.constant}}_SCHEMA,
   columns: {
     id: { type: 'text', primary: true },
-    registeredAt: { name: 'registered_at', type: 'timestamptz' },
 {{#if personal.any}}
 {{personal.typeormTable}}
 {{/if}}

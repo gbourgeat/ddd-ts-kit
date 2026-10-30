@@ -4,12 +4,12 @@ import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}
 export type {{name.pascal}}Event = {{event.pascal}};
 
 export interface {{name.pascal}}State {
-  readonly registeredAt: Date;
+  readonly {{event.instant}}: Date;
   // TODO(domain): declare the rest of the state of {{name.pascal}} with value objects (a Money, a Period), not primitives: what its commands need to decide, nothing more.
 }
 
 export class {{name.pascal}} extends EventSourcedAggregate<{{name.pascal}}Event, {{name.pascal}}State> {
-  private state: {{name.pascal}}State = { registeredAt: new Date(0) };
+  private state: {{name.pascal}}State = { {{event.instant}}: new Date(0) };
 
   private constructor(id: string) {
     super(id);
@@ -40,8 +40,8 @@ export class {{name.pascal}} extends EventSourcedAggregate<{{name.pascal}}Event,
 
   // TODO(domain): add one method per business intention: it checks its invariants on `this.state`, then records what it decided, `this.record(new {{name.pascal}}<Fact>(this.id, now, ...))`, after `ddd-ts-kit generate domain-event {{context.kebab}} {{name.pascal}} <Fact>` added the event and its apply method. It never writes the state itself (event-sourcing/state-in-apply).
 
-  get registeredAt(): Date {
-    return this.state.registeredAt;
+  get {{event.instant}}(): Date {
+    return this.state.{{event.instant}};
   }
 
   toState(): {{name.pascal}}State {
@@ -59,6 +59,6 @@ export class {{name.pascal}} extends EventSourcedAggregate<{{name.pascal}}Event,
   }
 
   private apply{{event.fact}}(event: {{event.pascal}}): void {
-    this.state = { ...this.state, registeredAt: event.occurredAt };
+    this.state = { ...this.state, {{event.instant}}: event.occurredAt };
   }
 }

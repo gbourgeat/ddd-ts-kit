@@ -30,7 +30,7 @@ describe('generate repository --personal declares the personal columns of the ta
     );
 
     expect(read(root, `${PERSISTENCE}/invoice-row.schema.ts`)).toContain(
-      '  readonly registered_at: Date;\n  readonly customer_email: string | null;\n  readonly customer_name: string | null;\n',
+      '  readonly id: string;\n  readonly customer_email: string | null;\n  readonly customer_name: string | null;\n',
     );
 
     expect(read(root, `${PERSISTENCE}/create-billing-tables.schema.ts`)).toContain(
