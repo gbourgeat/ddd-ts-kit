@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:36ae5bb05c1cc022 -->
+<!-- translation-of: README.md sha256:1c144cd7c3e0fb65 -->
 
 # @ddd-ts-kit/knex
 
@@ -389,7 +389,7 @@ dialectes diffèrent (`RETURNING` sur PostgreSQL et SQLite, le nombre de lignes 
 MySQL). Il n'ignore qu'un conflit sur `conflict` (l'id) : une ligne qui prend une valeur qu'une
 autre ligne détient sous une contrainte d'unicité (un e-mail) est refusée par la base, et
 `optimisticUpdate` lève `UniqueViolationError` (code `CONFLICT`, 409), pas une mise à jour
-perdue ; sur MySQL, qui n'a pas de cible de conflit, `INSERT IGNORE` écarte aussi cette ligne.
+perdue ; sur MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` écarte aussi cette ligne, l'utilitaire demande si une ligne détient la clé quand rien n'a été écrit, et lève `UniqueViolationError` quand aucune ne la détient.
 
 ![Deux transactions chargent la facture inv-1 à la version 3 ; la première sauvegarde, sa mise à jour trouve la version 3 et la ligne passe à la version 4 ; la seconde sauvegarde ensuite, sa mise à jour attend toujours la version 3, n'écrit aucune ligne, et optimisticUpdate lève ConcurrencyError, code CONCURRENCY_CONFLICT](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/persistence-optimistic-concurrency.fr.svg)
 

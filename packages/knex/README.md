@@ -374,8 +374,7 @@ leaves the surrounding PostgreSQL transaction usable, and it hides the one place
 dialects differ (`RETURNING` on PostgreSQL and SQLite, the affected-row count on MySQL). It
 ignores a conflict on `conflict` alone (the id): a row that takes a value another row holds
 under a unique constraint (an email) is refused by the database, and `optimisticUpdate` raises
-`UniqueViolationError` (code `CONFLICT`, 409), not a lost update; on MySQL, which has no
-conflict target, `INSERT IGNORE` skips that row too.
+`UniqueViolationError` (code `CONFLICT`, 409), not a lost update; on MySQL, which has no conflict target and whose `INSERT IGNORE` skips that row too, the helper asks whether a row holds the key when nothing was written, and raises `UniqueViolationError` when none does.
 
 ![Two transactions load invoice inv-1 at version 3; the first saves, its update matches version 3 and the row moves to version 4; the second saves afterwards, its update still expects version 3, writes no row, and optimisticUpdate throws ConcurrencyError, code CONCURRENCY_CONFLICT](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/persistence-optimistic-concurrency.svg)
 

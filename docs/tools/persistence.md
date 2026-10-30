@@ -279,8 +279,9 @@ insert and on an update: `UniqueViolationError`, a `ConflictError` (code `CONFLI
 (`ON CONFLICT (id) DO NOTHING`); on Prisma, whose `skipDuplicates` names no target,
 `rowsCreated` looks the id up when nothing was written. A handler that has a business answer
 for the taken value (`EMAIL_TAKEN`) catches `UniqueViolationError` and raises its own refusal.
-On MySQL, which has no conflict target, `INSERT IGNORE` skips that row too, and the first save
-reads as a lost update.
+On MySQL, which has no conflict target and whose `INSERT IGNORE` skips that row too,
+`insertIgnoringConflict` of Knex and of TypeORM asks whether a row holds the id when nothing was
+written, and raises `UniqueViolationError` when none does, as `rowsCreated` does on Prisma.
 
 A unit of work the database cannot serve in time is answered 503, not 500: Prisma bounds the
 wait for a transaction (`maxWait`) and its run (`timeout`), Knex the wait for a connection

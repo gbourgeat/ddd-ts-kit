@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:cb998c151ea450d3 -->
+<!-- translation-of: README.md sha256:1bf8f5bcefec1a4e -->
 
 # @ddd-ts-kit/typeorm
 
@@ -243,8 +243,7 @@ interceptée, il laisse utilisable la transaction PostgreSQL qui l'entoure. Il n
 conflit sur la clé primaire (`ON CONFLICT (id) DO NOTHING` sur PostgreSQL et SQLite) : une ligne
 qui prend une valeur qu'une autre ligne détient sous une contrainte d'unicité (un e-mail) est
 refusée par la base, et `optimisticUpdate` lève `UniqueViolationError` (code `CONFLICT`, 409),
-pas une mise à jour perdue ; sur MySQL, qui n'a pas de cible de conflit, `INSERT IGNORE` écarte
-aussi cette ligne. N'utilisez pas
+pas une mise à jour perdue ; sur MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` écarte aussi cette ligne, l'utilitaire demande si une ligne détient la clé quand rien n'a été écrit, et lève `UniqueViolationError` quand aucune ne la détient. N'utilisez pas
 `manager.save` pour un agrégat : il lit avant d'écrire et choisit seul entre insertion et mise à
 jour, ce qui défait la garde de version. Le `@VersionColumn` de TypeORM n'est pas utilisé pour la
 même raison : la version appartient à l'agrégat.

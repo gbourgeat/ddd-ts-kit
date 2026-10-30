@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:389ae32513f9d12e -->
+<!-- translation-of: persistence.md sha256:26f55f8909876392 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -289,8 +289,10 @@ du pilote (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`, `SQLITE_CONSTRAI
 (`ON CONFLICT (id) DO NOTHING`) ; sur Prisma, dont `skipDuplicates` ne nomme aucune cible,
 `rowsCreated` cherche l'id quand rien n'a été écrit. Un *handler* qui a une réponse métier pour
 la valeur prise (`EMAIL_TAKEN`) attrape `UniqueViolationError` et lève son propre refus. Sur
-MySQL, qui n'a pas de cible de conflit, `INSERT IGNORE` écarte aussi cette ligne, et le premier
-enregistrement se lit comme une mise à jour perdue.
+MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` écarte aussi cette ligne,
+`insertIgnoringConflict` de Knex et de TypeORM demande si une ligne détient l'id quand rien n'a
+été écrit, et lève `UniqueViolationError` quand aucune ne le détient, comme `rowsCreated` sur
+Prisma.
 
 Une unité de travail que la base ne peut pas servir à temps reçoit un 503, pas un 500 : Prisma
 borne l'attente d'une transaction (`maxWait`) et sa durée (`timeout`), Knex l'attente d'une
