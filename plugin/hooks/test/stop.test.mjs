@@ -282,9 +282,8 @@ test('a marker the guard cannot leave lets it say and refuse again, never counts
   put(reminded, 'docs/a.md', 'a\n');
   put(reminded, 'docs/b.md', 'b\n');
   const session = { cwd: reminded, session_id: `unwritable-${reminded}` };
-  for (const _ of [1, 2]) {
-    assert.match(run('stop', session).output.systemMessage, /uncommitted/);
-  }
+  assert.match(run('stop', session).output.systemMessage, /uncommitted/);
+  assert.match(run('stop', session).output.systemMessage, /uncommitted/, 'said again at the next stop');
   const refused = project();
   put(refused, '.ddd-ts-kit/guard', 'a file where the folder of the guard would be');
   put(
@@ -293,7 +292,6 @@ test('a marker the guard cannot leave lets it say and refuse again, never counts
     "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
   );
   const stopping = { cwd: refused, sessionId: `unwritable-${refused}` };
-  for (const _ of [1, 2]) {
-    assert.equal(run('stop', stopping).output.decision, 'block');
-  }
+  assert.equal(run('stop', stopping).output.decision, 'block');
+  assert.equal(run('stop', stopping).output.decision, 'block', 'refused again at the next stop');
 });
