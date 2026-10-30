@@ -8,7 +8,6 @@ export interface Reported {
   readonly file: string;
   readonly line: number;
   readonly message: string;
-  readonly fix: string;
 }
 
 /** A project of two contexts, shipping downstream of billing, holding the files given. */
@@ -35,7 +34,7 @@ export function reported(root: string, rule: string, onlyFile?: string): Reporte
   const project = onlyFile === undefined ? loadProject(root) : loadProject(root, { onlyFile });
   const { violations } = runCheck(project, { rules: [rule], fileScopeOnly: onlyFile !== undefined });
 
-  return violations.map(({ file, line, message, fix }) => ({ file, line, message, fix }));
+  return violations.map(({ file, line, message }) => ({ file, line, message }));
 }
 
 /** A source written line by line, ending with a newline. */

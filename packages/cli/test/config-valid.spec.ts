@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { runCheck } from '../src/check/engine/run-check';
+import { loadProject } from '../src/check/project/load-project';
 import { changeConfig } from './check-support';
 import { cli, exists, tempDir } from './helpers';
 import { projectWith, reported } from './rules-support';
@@ -127,8 +129,8 @@ describe('config/valid on the directories the generators write in', () => {
 
 describe('config/valid on the keys of the file', () => {
   const aboutKeys = (root: string): [string, string][] =>
-    reported(root, 'config/valid')
-      .filter(({ message }) => message.includes('is not a key'))
+    runCheck(loadProject(root), { rules: ['config/valid'] })
+      .violations.filter(({ message }) => message.includes('is not a key'))
       .map(({ message, fix }) => [message, fix]);
 
   it('names a key the kit does not read, at the root and under stack, in the order of the file, with the nearest key it reads', () => {
