@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { CONFIG_FILE, restackConfigText, serializeConfig, type Config } from '../config';
 import { DEPCRUISE_FILE } from '../depcruise/depcruise-file';
@@ -14,7 +15,7 @@ import { inDialect } from '../package-manager/in-dialect';
 import { setUpSdk } from '../sdk';
 import { readTemplate, renderTemplate, type RenderContext } from '../templating';
 import { VERSION } from '../version';
-import { Workspace, type WorkspaceReport } from '../workspace';
+import { Workspace, type DiskWrites, type WorkspaceReport } from '../workspace';
 import { applyPreset } from '../presets/apply-preset';
 import { presetNamed } from '../presets/preset-named';
 import { addContext } from './add-context';
@@ -66,10 +67,11 @@ export interface InitOptions extends StackOptions {
   readonly rerun?: string;
 }
 
-export function runInit(root: string, options: InitOptions): WorkspaceReport {
+/** `disk` puts each file in place: a spec gives one that fails in the middle of a file, the way a process killed there would. */
+export function runInit(root: string, options: InitOptions, disk: DiskWrites = fs): WorkspaceReport {
   refuseUnprojectedRoot(root);
 
-  const ws = new Workspace(root, options.force);
+  const ws = new Workspace(root, options.force, disk);
   const config = { ...recordNoOutbox(ws, resolveStack(root, options), options.allowNoOutbox), initVersion: VERSION };
 
   const projectName = existingName(root) ?? (toName(path.basename(path.resolve(root))).kebab || 'app');

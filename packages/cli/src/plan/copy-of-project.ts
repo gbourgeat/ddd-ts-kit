@@ -18,7 +18,11 @@ export function copyOfProject(root: string): string {
   return copy;
 }
 
-/** The files git sees, tracked or not, the ignored ones left out; every file outside the build folders when git does not answer. */
+/**
+ * The files git sees, tracked or not, the ignored ones left out; every file outside the build folders
+ * when git does not answer. A symbolic link is no file of the project: it is left out, so that the
+ * copy never holds what one points at, wherever it points (a key of the home folder, say).
+ */
 function sourceFiles(root: string): string[] {
   const listed = spawnSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], {
     cwd: root,
@@ -29,7 +33,7 @@ function sourceFiles(root: string): string[] {
   if (listed.status === 0) {
     return listed.stdout
       .split('\0')
-      .filter((file) => file !== '' && fs.statSync(path.join(root, file), { throwIfNoEntry: false })?.isFile());
+      .filter((file) => file !== '' && fs.lstatSync(path.join(root, file), { throwIfNoEntry: false })?.isFile());
   }
 
   return walk(root, '');
