@@ -97,7 +97,8 @@ editor tools, checks
 every written file and returns the violations with their fix (the first five of a Codex patch, the
 others named as not checked; with `"dependenciesBeforeWrite": true`, on trial,
 it refuses before the write a new import that breaks a dependency rule), and refuses to finish while
-architecture errors remain (a check that does not end in time, or that answers more than the
+architecture errors remain in a tree with uncommitted changes (a clean tree is left to the
+pre-commit hook and the pipeline; a check that does not end in time, or that answers more than the
 64 MiB the guard reads, lets the session finish and says so;
 a session start past ten seconds of CLI calls skips the ones left and says it was cut short). With `"formatOnWrite": true` in the config (written by `init` for a new project), it first runs the Biome
 the project installed on the written file (the bin of its `@biomejs/biome` package, `format --write`, one file,
@@ -275,7 +276,7 @@ rule id named here is unknown to the CLI, or when a skill has no row.
 | `document` | `docs --check` (`npm run docs:check`, the `docs` gate of the pipeline), `declarations/barrel-current`, `tree/context-doc`, `sdk --check` | |
 | `extract-service` | `context/extractable`, `context/published-language-only`, `imports/alias-only`, the per-context entry point `generate service` writes and its boot test | |
 | `deviation` | `governance/recorded-deviation`, `config/suppression-needs-reason`, `config/rule-off-everywhere`, the guard asks the owner before a suppression, a skipped test or a change of the rules | |
-| `quality-gate` | `npm run verify`, the `Stop` hook of the guard (it refuses to finish while architecture errors remain), the `gate` job of the pipeline | |
+| `quality-gate` | `npm run verify`, the `Stop` hook of the guard (it refuses to finish while architecture errors remain in uncommitted changes), the `gate` job of the pipeline | |
 | `commit-discipline` | `check --commit-size` (advice), commitlint in the `commit-msg` hook and the title check of the pipeline | the size is advised, never refused: a choice of the kit, kept |
 
 Two gaps belong to no skill: a secret in a diff is caught by gitleaks in the pipeline only, and

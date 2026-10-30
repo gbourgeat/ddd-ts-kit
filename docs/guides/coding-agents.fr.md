@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:7fd098381aa4edfc -->
+<!-- translation-of: coding-agents.md sha256:e4fd897b42571b04 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -100,7 +100,8 @@ désactivation, un test sauté ou un changement des règles soit écrit par les 
 les autres nommés comme non vérifiés ; avec `"dependenciesBeforeWrite": true`, à
 l'essai, il refuse avant l'écriture un nouvel import qui enfreint une règle de dépendance), et
 refuse de terminer tant que des
-erreurs d'architecture restent (une vérification qui ne finit pas à temps, ou qui répond plus que
+erreurs d'architecture restent dans un arbre aux changements non *committés* (un arbre propre est
+laissé au *hook* de pre-commit et au *pipeline* ; une vérification qui ne finit pas à temps, ou qui répond plus que
 les 64 Mio que la garde lit, laisse la session terminer et le dit ; un début de session qui passe dix secondes d'appels à la CLI saute ceux qui
 restent et dit qu'il a été écourté). Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
 d'abord le Biome que le projet a installé sur le fichier écrit (le *bin* de son paquet
@@ -302,7 +303,7 @@ ligne.
 | `document` | `docs --check` (`npm run docs:check`, la porte `docs` du *pipeline*), `declarations/barrel-current`, `tree/context-doc`, `sdk --check` | |
 | `extract-service` | `context/extractable`, `context/published-language-only`, `imports/alias-only`, le point d'entrée par contexte qu'écrit `generate service` et son test de démarrage | |
 | `deviation` | `governance/recorded-deviation`, `config/suppression-needs-reason`, `config/rule-off-everywhere`, la garde demande l'avis du propriétaire avant une désactivation, un test sauté ou un changement des règles | |
-| `quality-gate` | `npm run verify`, le *hook* `Stop` de la garde (il refuse de terminer tant que des erreurs d'architecture restent), le *job* `gate` du *pipeline* | |
+| `quality-gate` | `npm run verify`, le *hook* `Stop` de la garde (il refuse de terminer tant que des erreurs d'architecture restent dans les changements non *committés*), le *job* `gate` du *pipeline* | |
 | `commit-discipline` | `check --commit-size` (un conseil), commitlint dans le *hook* `commit-msg` et le contrôle du titre du *pipeline* | la taille est conseillée, jamais refusée : un choix du kit, conservé |
 
 Deux manques n'appartiennent à aucune *skill* : un secret dans un *diff* n'est attrapé que par
