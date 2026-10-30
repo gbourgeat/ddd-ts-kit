@@ -54,8 +54,10 @@ jobs:
         if: steps.accepted.outputs.count != '0'
         run: |
           npm install --global --no-audit --no-fund @anthropic-ai/claude-code@2.1.309
-          kit=$(node -p "JSON.parse(require('node:fs').readFileSync('node_modules/ddd-ts-kit/package.json', 'utf8')).version")
-          git clone --quiet --depth 1 --branch "v$kit" https://github.com/gbourgeat/ddd-ts-kit.git "$RUNNER_TEMP/ddd-ts-kit"
+          kit=$(node -p "JSON.parse(require('node:fs').readFileSync('node_modules/ddd-ts-kit/package.json', 'utf8')).version") \
+            || { echo "::error::ddd-ts-kit is not installed in node_modules: the plugin is loaded at the tag of the kit version the project depends on."; exit 1; }
+          git clone --quiet --depth 1 --branch "v$kit" https://github.com/gbourgeat/ddd-ts-kit.git "$RUNNER_TEMP/ddd-ts-kit" \
+            || { echo "::error::The kit has no tag v$kit to load the plugin from: depend on a released version of ddd-ts-kit."; exit 1; }
       - name: One story per accepted intent, headless, to its pull request
         if: steps.accepted.outputs.count != '0'
         env:
