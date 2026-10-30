@@ -1,3 +1,4 @@
+import { IsArray, IsNotEmpty, IsString } from 'class-validator';
 import {
   isRefusal,
   type Actor,
@@ -6,14 +7,32 @@ import {
   type CommandBus,
 } from '@ddd-ts-kit/kernel';
 import { Background } from '@ddd-ts-kit/kernel/declarations';
+import type { Infer } from '@ddd-ts-kit/validation';
+import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { CancelAppointmentCommand } from '@/contexts/scheduling/calendars/application/commands/cancel-appointment/cancel-appointment.command';
 
-/** The appointments to cancel, named when the clearance was asked, and the reason their patients read. */
-export interface ClearCalendarPayload {
-  readonly calendarId: string;
-  readonly appointmentIds: readonly string[];
-  readonly reason: string;
+/**
+ * The appointments to cancel, named when the clearance was asked, and the reason their patients
+ * read. A clearance enqueued before a deploy that changes these fields is read with the schema of
+ * the new version: one it does not fit is dead with INVALID_JOB_PAYLOAD, never run. No field has an
+ * initial value, which a field the stored payload lacks would take.
+ */
+class ClearCalendarPayloadFields {
+  @IsString()
+  @IsNotEmpty()
+  declare calendarId: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  declare appointmentIds: string[];
+
+  @IsString()
+  declare reason: string;
 }
+
+const payloadSchema = classSchema(ClearCalendarPayloadFields);
+
+export type ClearCalendarPayload = Infer<typeof payloadSchema>;
 
 /** What an attempt left behind: the number of appointments of the payload already handled. */
 interface ClearCalendarCheckpoint {
@@ -34,6 +53,9 @@ const ENDED = 'APPOINTMENT_ENDED';
 @Background({ timeout: ATTEMPT_TIMEOUT, lease: '1m' })
 export class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarPayload> {
   static readonly jobName = 'scheduling.clear-calendar';
+
+  /** Read by the worker before each run: a stored payload that does not fit it is dead, never run. */
+  static readonly payload = payloadSchema;
 
   constructor(private readonly commands: CommandBus) {}
 

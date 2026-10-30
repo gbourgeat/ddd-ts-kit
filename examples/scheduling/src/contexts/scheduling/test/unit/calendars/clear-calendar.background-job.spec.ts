@@ -3,7 +3,7 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import type { BusMiddleware } from '@ddd-ts-kit/kernel';
+import type { BackgroundJobType, BusMiddleware } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
@@ -13,6 +13,7 @@ import { Agenda } from '@/contexts/scheduling/calendars/application/ports/agenda
 import { AppointmentRepository } from '@/contexts/scheduling/calendars/domain/repositories/appointment.repository';
 import { CalendarRepository } from '@/contexts/scheduling/calendars/domain/repositories/calendar.repository';
 import { WaitlistRepository } from '@/contexts/scheduling/waitlist/domain/repositories/waitlist.repository';
+import { ClearCalendarBackgroundJob } from '@/contexts/scheduling/calendars/application/background/clear-calendar.background-job';
 import { AppointmentStatus } from '@/contexts/scheduling/calendars/domain/vocabularies/appointment-status.vocabulary';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
@@ -79,6 +80,29 @@ describe('The clearance of a calendar, when its job runs', () => {
     expect(await application.backgroundJobs.runDue()).toMatchObject([{ outcome: 'succeeded' }]);
     expect((await appointments.findById('second'))?.cancellation).toMatchObject({ by: 'patient' });
   });
+
+  it('never runs a clearance enqueued in an earlier shape, without the reason its patients read: the job is dead', async () => {
+    const appointments = new FakeAppointmentRepository();
+    const application = applicationOn(new FakeCalendarRepository(), appointments);
+    const earlierVersion: BackgroundJobType<unknown> = ClearCalendarBackgroundJob;
+
+    await appointments.save(anAppointment().identifiedBy('first').onCalendar('calendar-1').build());
+
+    await application.as(holder, () =>
+      application.jobQueue.enqueue(earlierVersion, { calendarId: 'calendar-1', appointmentIds: ['first'] }),
+    );
+
+    await expect(application.backgroundJobs.runDue()).rejects.toMatchObject({
+      code: 'INVALID_JOB_PAYLOAD',
+      issues: [{ path: 'reason' }],
+    });
+
+    expect((await appointments.findById('first'))?.status).toBe(AppointmentStatus.Booked);
+
+    expect(application.backgroundJobs.store.list()).toMatchObject([
+      { status: 'dead', lastErrorCode: 'INVALID_JOB_PAYLOAD' },
+    ]);
+  });
 });
 
 /** The bus as a flaky database leaves it: every cancellation noted in `sent`, the first one of `second` refused with `outage`. */
@@ -118,7 +142,18 @@ async function cleared() {
     ),
   );
 
-  const application = createTestApplication({
+  const application = applicationOn(calendars, appointments);
+
+  await application.as(holder, (actor) =>
+    application.commandBus.execute(new ClearCalendarCommand(actor, 'calendar-1', startsAt(3), startsAt(17), REASON)),
+  );
+
+  return { application, appointments };
+}
+
+/** The test application of the context on the repositories given, its other ports faked. */
+function applicationOn(calendars: FakeCalendarRepository, appointments: FakeAppointmentRepository) {
+  return createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
     fakes: [
       fake(Agenda, new FakeAgenda()),
@@ -127,10 +162,4 @@ async function cleared() {
       fake(WaitlistRepository, new FakeWaitlistRepository()),
     ],
   });
-
-  await application.as(holder, (actor) =>
-    application.commandBus.execute(new ClearCalendarCommand(actor, 'calendar-1', startsAt(3), startsAt(17), REASON)),
-  );
-
-  return { application, appointments };
 }
