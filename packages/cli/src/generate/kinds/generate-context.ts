@@ -3,6 +3,7 @@ import { refreshContextDoc } from '../../docs/refresh-context-doc';
 import { CliError } from '../../cli-error';
 import { MissingPrerequisite } from '../missing-prerequisite';
 import { parseContextName, type Name } from '../../naming';
+import { TECHNICAL_WORDS } from '../../check/language/technical-words';
 import { moduleNameFlaw } from '../../model-modules';
 import { SHARED_KERNEL } from '../shared-kernel-scope';
 import { PRISMA_MAIN_SCHEMA, prismaSchemaOf } from '../../prisma-schema';
@@ -92,14 +93,29 @@ function refuseReservedName(context: Name): void {
   );
 }
 
+/** Whole names that group code instead of naming a capability; `core-banking` or `platform-fees` are not on it, only the name alone. */
+const GROUPING_NAMES: readonly string[] = [
+  ...TECHNICAL_WORDS,
+  'platform',
+  'shared',
+  'common',
+  'core',
+  'misc',
+  'general',
+  'other',
+  'main',
+  'default',
+  'lib',
+  'stuff',
+];
+
 /**
  * A context is addressed by its name as the first argument of every other kind, and its folder sits
  * beside the layers of the context tree: the name of the shared kernel, of a layer or a role folder,
- * or of a grouping of code (`utils`, `platform`, `shared`) names a context no kind can write into.
+ * or of a grouping of code alone (`utils`, `platform`, `shared`) names a context no kind can write into.
+ * Only the whole name is judged: `core-banking` is a capability.
  */
 function refuseUnaddressableName(context: Name): void {
-  const flaw = moduleNameFlaw(context.kebab);
-
   if (context.kebab === SHARED_KERNEL) {
     throw new CliError(
       `"${SHARED_KERNEL}" cannot name a bounded context: it names the shared kernel, and every kind reads it as the kernel, never as a context.`,
@@ -107,16 +123,16 @@ function refuseUnaddressableName(context: Name): void {
     );
   }
 
-  if (flaw?.reason === 'role-folder') {
+  if (moduleNameFlaw(context.kebab)?.reason === 'role-folder') {
     throw new CliError(
       `"${context.kebab}" cannot name a bounded context: it is the name of a folder of the tree (a layer, a role folder or a folder of the root of a context).`,
       'Name the context after the business capability it serves, for example billing or order-fulfilment.',
     );
   }
 
-  if (flaw?.reason === 'technical') {
+  if (GROUPING_NAMES.includes(context.kebab)) {
     throw new CliError(
-      `"${context.kebab}" cannot name a bounded context: "${flaw.word}" names a grouping of code, not a business capability.`,
+      `"${context.kebab}" cannot name a bounded context: "${context.kebab}" names a grouping of code, not a business capability.`,
       'Name the context after the business capability it serves, for example billing or order-fulfilment.',
     );
   }
