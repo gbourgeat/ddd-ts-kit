@@ -10,6 +10,7 @@ interface InvitationIngredients {
   readonly role: MemberRole;
   readonly tokenHash: string;
   readonly invitedBy: string;
+  readonly delegationId: string | undefined;
   readonly issuedAt: Date;
 }
 
@@ -34,6 +35,11 @@ export class InvitationBuilder extends Builder<InvitationIngredients, Invitation
     return this.with('invitedBy', accountId);
   }
 
+  /** Issued under that delegation, which lent the right to invite. */
+  under(delegationId: string): this {
+    return this.with('delegationId', delegationId);
+  }
+
   withTokenHash(tokenHash: string): this {
     return this.with('tokenHash', tokenHash);
   }
@@ -50,12 +56,15 @@ export class InvitationBuilder extends Builder<InvitationIngredients, Invitation
       role: MemberRole.Member,
       tokenHash: sequence('digest'),
       invitedBy: 'account-founder',
+      delegationId: undefined,
       issuedAt: new Date('2026-01-01T00:00:00.000Z'),
     };
   }
 
-  protected construct({ id, email, issuedAt, ...terms }: InvitationIngredients): Invitation {
-    return Invitation.issue(id, { ...terms, email: EmailAddress.create(email) }, issuedAt);
+  protected construct({ id, email, issuedAt, delegationId, ...terms }: InvitationIngredients): Invitation {
+    const under = delegationId === undefined ? {} : { delegationId };
+
+    return Invitation.issue(id, { ...terms, ...under, email: EmailAddress.create(email) }, issuedAt);
   }
 }
 

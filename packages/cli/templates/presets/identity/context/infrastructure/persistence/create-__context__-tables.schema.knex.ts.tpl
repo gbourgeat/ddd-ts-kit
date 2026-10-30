@@ -78,6 +78,7 @@ function createInvitationTable(knex: Knex): Promise<void> {
     table.text('role').notNullable();
     table.text('token_hash').notNullable().unique();
     table.text('invited_by').notNullable();
+    table.text('delegation_id');
     table.timestamp('issued_at', { useTz: true }).notNullable();
     table.timestamp('expires_at', { useTz: true }).notNullable();
     table.text('status').notNullable();

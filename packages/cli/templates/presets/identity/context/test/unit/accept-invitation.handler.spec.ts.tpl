@@ -124,19 +124,23 @@ describe('Accept invitation, while its issuer may still invite in its role', () 
 
     await delegations.save(
       aDelegation()
+        .identifiedBy('delegation-1')
         .to('subject-alan')
         .lending(MemberRight.InviteMembers)
         .between(new Date(now.getTime() - DAY), new Date(now.getTime() + DAY))
         .build(),
     );
 
-    await invitations.save(anInvitation().to('acme').issuedBy('subject-alan').withTokenHash(token.digest).build());
+    await invitations.save(
+      anInvitation().to('acme').issuedBy('subject-alan').under('delegation-1').withTokenHash(token.digest).build(),
+    );
+
     await application.commandBus.execute(new AcceptInvitationCommand(as('subject-grace'), token.token));
 
     expect((await members.findOf('acme', 'subject-grace'))?.role).toBe(MemberRole.Member);
   });
 
-  it('withdraws an invitation issued under a delegation once the delegation ended', async () => {
+  it('withdraws an invitation issued under a delegation once that delegation ended, whatever another one lends', async () => {
     const { application, accounts, invitations, members, delegations, tokens, as } = arrangeIdentity();
     const now = application.clock.now();
     const token = tokens.issue();
@@ -146,13 +150,25 @@ describe('Accept invitation, while its issuer may still invite in its role', () 
 
     await delegations.save(
       aDelegation()
+        .identifiedBy('delegation-1')
         .to('subject-alan')
         .lending(MemberRight.InviteMembers)
         .between(new Date(now.getTime() - 2 * DAY), new Date(now.getTime() - DAY))
         .build(),
     );
 
-    await invitations.save(anInvitation().to('acme').issuedBy('subject-alan').withTokenHash(token.digest).build());
+    await delegations.save(
+      aDelegation()
+        .identifiedBy('delegation-2')
+        .to('subject-alan')
+        .lending(MemberRight.InviteMembers)
+        .between(new Date(now.getTime() - DAY), new Date(now.getTime() + DAY))
+        .build(),
+    );
+
+    await invitations.save(
+      anInvitation().to('acme').issuedBy('subject-alan').under('delegation-1').withTokenHash(token.digest).build(),
+    );
 
     await expect(
       application.commandBus.execute(new AcceptInvitationCommand(as('subject-grace'), token.token)),

@@ -47,15 +47,23 @@ export class RoleRightsService {
 
   /**
    * Whether the account that issued `invitation`, as it holds at `now` (`held`), may still issue it:
-   * the right to invite, from its role or lent, and a role of its own at or above the one of the
-   * invitation. Removed, deactivated, demoted or no longer lent the right, its pending invitations
-   * are withdrawn: they let nobody in.
+   * a current membership in a role at or above the one of the invitation, and the right to invite
+   * from where it came when issued: the delegation the invitation names, still active, or else
+   * the role. Removed, deactivated, demoted, or the delegation ended or revoked, its pending
+   * invitations are withdrawn: they let nobody in.
    */
   mayStillIssue(invitation: Invitation, held: HeldRights): boolean {
-    const { organisationId, invitedBy, role } = invitation;
-    const inviting = this.rightsIn(organisationId, invitedBy, held).includes(MemberRight.InviteMembers);
+    const { role, delegationId } = invitation;
 
-    return inviting && held.member !== undefined && Member.mayAppoint(role, held.member.role);
+    if (!held.member?.isActive || !Member.mayAppoint(role, held.member.role)) {
+      return false;
+    }
+
+    if (delegationId === undefined) {
+      return GRANTED[held.member.role].includes(MemberRight.InviteMembers);
+    }
+
+    return activeAt(held).some((given) => given.id === delegationId && given.rights.includes(MemberRight.InviteMembers));
   }
 
   /** The delegation `right` is used under, when the role of the member does not grant it: what the facts it leads to name. */

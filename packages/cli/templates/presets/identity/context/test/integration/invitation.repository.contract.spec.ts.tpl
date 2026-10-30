@@ -58,6 +58,16 @@ describe.each(adapters())('%s, read by what a use case needs', (_name, create) =
     expect((await repository.findByTokenHash('digest-2'))?.id).toBe('invitation-2');
     expect(await repository.findByTokenHash('digest-9')).toBeUndefined();
   });
+
+  it('keeps the delegation an invitation was issued under, and none for one issued in a role', async () => {
+    const repository = await create();
+
+    await repository.save(anInvitation().identifiedBy('invitation-1').under('delegation-1').build());
+    await repository.save(anInvitation().identifiedBy('invitation-2').build());
+
+    expect((await repository.findById('invitation-1'))?.delegationId).toBe('delegation-1');
+    expect((await repository.findById('invitation-2'))?.delegationId).toBeUndefined();
+  });
 });
 
 /** The fake and the adapter, each given as the use cases get it. */
