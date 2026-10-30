@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:b21a768631343456 -->
+<!-- translation-of: event-sourcing.md sha256:f9ec77314e83d3a8 -->
 
 # Event sourcing, par agrégat
 
@@ -394,8 +394,10 @@ toute façon. Le kit scelle plutôt les valeurs personnelles :
   et `read` ne voit jamais `[erased]`. Une date ou un objet-valeur lu avec `data.instant` ou dans
   `decode` lui-même refuserait `[erased]`, et l'agrégat ne se chargerait plus. Le champ de
   l'événement qui porte une valeur personnelle admet donc son absence, et `data.isErased('reason')`
-  distingue une valeur effacée d'une valeur jamais donnée. Un upcaster lit les données avant leur
-  décodage : il transmet une valeur personnelle telle quelle.
+  distingue une valeur effacée d'une valeur jamais donnée. Le chiffreur ouvre une valeur effacée en
+  `{ $erased: { key } }`, jamais en texte : un texte qu'une personne a saisi comme `[erased]` n'est
+  pas pris pour elle. Un upcaster lit les données avant leur décodage et voit cette forme : il
+  transmet une valeur personnelle telle quelle.
 - Une projection reconstruite après un effacement montre la valeur effacée ; une projection qui
   détient déjà la valeur en clair doit être reconstruite, ou appliquer un événement d'effacement
   qui lui est propre.

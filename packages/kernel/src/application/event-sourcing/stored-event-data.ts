@@ -1,4 +1,5 @@
 import { ERASED_PERSONAL_DATA } from './erased-personal-data';
+import { isErasedValue } from './is-erased-value';
 import { isStoredData } from './is-stored-data';
 import { isStoredList } from './is-stored-list';
 import type { StoredData } from './stored-data';
@@ -16,8 +17,13 @@ export class StoredEventData {
     private readonly where: string,
   ) {}
 
+  /** A text; a personal value whose subject was erased reads `ERASED_PERSONAL_DATA`. */
   text(field: string): string {
     const value = this.data[field];
+
+    if (isErasedValue(value)) {
+      return ERASED_PERSONAL_DATA;
+    }
 
     if (typeof value !== 'string') {
       throw this.unreadable(field, 'a text');
@@ -68,10 +74,11 @@ export class StoredEventData {
 
   /**
    * Whether the field held a personal value whose subject was erased: the key that sealed it is
-   * gone, and the field reads `ERASED_PERSONAL_DATA`.
+   * gone. Told by what the cipher opens such a value into, an `ErasedValue`, never by its text: a
+   * text that reads `[erased]` is a text.
    */
   isErased(field: string): boolean {
-    return this.data[field] === ERASED_PERSONAL_DATA;
+    return isErasedValue(this.data[field]);
   }
 
   /**
@@ -90,13 +97,20 @@ export class StoredEventData {
     return this.personal(field, (text) => text);
   }
 
-  /** A personal date, kept as its ISO text, or `undefined` when it is absent or its subject was erased. */
+  /**
+   * A personal date, kept as its ISO text, or `undefined` when it is absent or its subject was
+   * erased. A text that is no date is an `UnreadableEventError`, as with `instant`.
+   */
   personalInstant(field: string): Date | undefined {
     return this.personal(field, () => this.instant(field));
   }
 
   texts(field: string): string[] {
     return this.list(field).map((item, index) => {
+      if (isErasedValue(item)) {
+        return ERASED_PERSONAL_DATA;
+      }
+
       if (typeof item !== 'string') {
         throw this.unreadable(`${field}[${index}]`, 'a text');
       }

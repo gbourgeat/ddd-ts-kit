@@ -140,6 +140,8 @@ describe('crypto-shredding', () => {
         born: personalData('a10', AT.toISOString()),
         email: personalData('a10', 'ada@example.org'),
         name: personalData('a10', 'Ada'),
+        aliases: [personalData('a10', 'Countess')],
+        typed: '[erased]',
         none: null,
       }),
     );
@@ -170,6 +172,8 @@ describe('crypto-shredding', () => {
 
     expect(after.isErased('born')).toBe(true);
     expect(before.isErased('born')).toBe(false);
+    expect([after.text('name'), after.texts('aliases')]).toEqual([ERASED_PERSONAL_DATA, [ERASED_PERSONAL_DATA]]);
+    expect([after.isErased('typed'), after.personalText('typed')]).toEqual([false, '[erased]']);
     expect(() => after.instant('born')).toThrow('"born" is not an instant');
     expect(() => before.personalInstant('name')).toThrow('"name" is not an instant');
     expect(() => before.personal('born', domainOf)).toThrow('no domain');

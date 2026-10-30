@@ -382,8 +382,9 @@ personal values instead:
   `read` never sees `[erased]`. A date or a value object read with `data.instant` or in `decode`
   itself would refuse `[erased]`, and the aggregate would no longer load. So the field of the event
   that holds a personal value admits its absence, and `data.isErased('reason')` tells an erased
-  value from one never given. An upcaster reads the data before it is decoded: it passes a
-  personal value on as it is.
+  value from one never given. The cipher opens an erased value as `{ $erased: { key } }`, never as
+  a text, so a text a person typed as `[erased]` is not taken for one. An upcaster reads the data
+  before it is decoded and sees that shape: it passes a personal value on as it is.
 - A projection rebuilt after an erasure shows the erased value; a projection that already holds
   the clear value has to be rebuilt, or to apply an erasure event of its own.
 

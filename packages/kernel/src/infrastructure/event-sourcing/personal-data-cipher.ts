@@ -1,5 +1,4 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
-import { ERASED_PERSONAL_DATA } from '../../application/event-sourcing/erased-personal-data';
 import { isStoredData } from '../../application/event-sourcing/is-stored-data';
 import { isStoredList } from '../../application/event-sourcing/is-stored-list';
 import type { StoredData } from '../../application/event-sourcing/stored-data';
@@ -16,7 +15,8 @@ const TAG_BYTES = 16;
  * Crypto-shredding of the personal values of stored data. `seal` replaces each value marked with
  * `personalData(subject, value)` by its encryption under the current key of its subject (AES-256-GCM,
  * a fresh nonce per value, the key id written next to it); `open` gives the values back, and
- * `ERASED_PERSONAL_DATA` for those whose key was destroyed by `SubjectKeyStore.erase`.
+ * an `ErasedValue` (`{ $erased: { key } }`) for those whose key was destroyed by `SubjectKeyStore.erase`,
+ * which `StoredEventData` reads as `ERASED_PERSONAL_DATA`: an erased value is told apart from any text.
  */
 export class PersonalDataCipher {
   constructor(private readonly keys: SubjectKeyStore) {}
@@ -81,7 +81,7 @@ export class PersonalDataCipher {
   private async opened(sealed: Sealed): Promise<StoredJson> {
     const key = await this.keys.find(sealed.key);
 
-    return key === undefined ? ERASED_PERSONAL_DATA : deciphered(key, sealed);
+    return key === undefined ? { $erased: { key: sealed.key } } : deciphered(key, sealed);
   }
 }
 
