@@ -146,6 +146,38 @@ describe('generate aggregate --birth, the fact an aggregate is born with', () =>
     expect(compiled(root)).toBe('');
   });
 
+  it('expects its birth event in the trace of the request that gives birth to it, after the save', () => {
+    const root = born('Invoice Issued');
+
+    const run = (...args: string[]): void => {
+      const result = cli(root, 'generate', ...args);
+
+      expect(result.code, result.stderr).toBe(0);
+    };
+
+    run('repository', 'billing', 'Invoice');
+
+    run(
+      'command',
+      'billing',
+      'IssueInvoice',
+      '--creates',
+      '--aggregate',
+      'Invoice',
+      '--permission',
+      'invoice.issue',
+      '--grant',
+      'accountant',
+    );
+
+    run('route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices');
+    run('e2e', 'billing', 'IssueInvoice');
+
+    expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toContain(
+      "              { name: 'repository InvoiceRepository.save' },\n              { name: 'unit-of-work before-commit', children: [{ name: 'domain-event billing.invoice.issued' }] },\n",
+    );
+  });
+
   it('keeps no invented instant in the storage: the audit columns of the row hold when it was created', () => {
     const root = born('Issued');
 
