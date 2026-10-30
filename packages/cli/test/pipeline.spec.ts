@@ -313,3 +313,15 @@ describe('pipeline mutation reading', () => {
     expect(gitlab.indexOf(copy)).toBeLessThan(gitlab.indexOf('DDD_TS_KIT_MUTATION_SINCE='));
   });
 });
+
+describe('the bots that update dependencies', () => {
+  it('wait a week for a release of every ecosystem, and pin the digest of every image', () => {
+    const root = initProject('--ci', 'github');
+    const dependabot = read(root, '.github/dependabot.yml');
+    const ecosystems = dependabot.split('package-ecosystem:').length - 1;
+
+    expect(ecosystems).toBe(3);
+    expect(dependabot.split('cooldown:\n      default-days: 7\n').length - 1).toBe(ecosystems);
+    expect(jsonAt(readJson(root, 'renovate.json'), 'extends')).toContain('docker:pinDigests');
+  });
+});
