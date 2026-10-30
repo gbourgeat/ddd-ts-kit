@@ -70,7 +70,7 @@ describe('scheduled jobs in the platform', () => {
     );
 
     expect(settings).toContain(
-      "  const settings: Readonly<Record<string, JobSettings>> = {\n    // Off while the files are on the disk of the server, since an archive removes the entries from the\n    // database: JOB_AUDIT_ARCHIVE_ENABLED=true once that disk is durable and backed up.\n    'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] === 'true' },\n    'privacy.purge-expired': { enabled: environment['JOB_PRIVACY_PURGE_EXPIRED_ENABLED'] !== 'false' },\n    'events.purge-published': { enabled: environment['JOB_EVENTS_PURGE_PUBLISHED_ENABLED'] !== 'false' },\n    'jobs.purge-finished': { enabled: environment['JOB_JOBS_PURGE_FINISHED_ENABLED'] !== 'false' },\n    // ddd-ts-kit:jobs\n    // /ddd-ts-kit:jobs\n  };",
+      "  const settings: Readonly<Record<string, JobSettings>> = {\n    'audit.verify': { enabled: environment['JOB_AUDIT_VERIFY_ENABLED'] !== 'false' },\n    // Off while the files are on the disk of the server, since an archive removes the entries from the\n    // database: JOB_AUDIT_ARCHIVE_ENABLED=true once that disk is durable and backed up.\n    'audit.archive': { enabled: environment['JOB_AUDIT_ARCHIVE_ENABLED'] === 'true' },\n    'privacy.purge-expired': { enabled: environment['JOB_PRIVACY_PURGE_EXPIRED_ENABLED'] !== 'false' },\n    'events.purge-published': { enabled: environment['JOB_EVENTS_PURGE_PUBLISHED_ENABLED'] !== 'false' },\n    'jobs.purge-finished': { enabled: environment['JOB_JOBS_PURGE_FINISHED_ENABLED'] !== 'false' },\n    // ddd-ts-kit:jobs\n    // /ddd-ts-kit:jobs\n  };",
     );
 
     expect(settings.match(/^import /gm)).toHaveLength(1);
@@ -81,6 +81,7 @@ describe('scheduled jobs in the platform', () => {
     const root = initProject();
 
     expect(await settingsOf(root, {})).toEqual({
+      'audit.verify': { enabled: true },
       'audit.archive': { enabled: false },
       'privacy.purge-expired': { enabled: true },
       'events.purge-published': { enabled: true },

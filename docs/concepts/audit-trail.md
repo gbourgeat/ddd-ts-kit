@@ -260,8 +260,14 @@ comes next. Whoever has looked at a break walks on from the entry after it. A ch
 archives is verified from the anchor of its last archive, which the caller names: the entries
 before it have left the database.
 
-Verification should run on a schedule and alert; a chain nobody verifies proves nothing in
-practice.
+Verification runs on a schedule and alerts; a chain nobody verifies proves nothing in practice.
+`verifyTrail(trail)` verifies every chain of a trail, each from its last archive to its head, so
+that a chain cut at its tail does not verify, and gathers the first break of each chain. A
+generated project with the trail on runs it every night at 04:30 UTC as the platform job
+`audit.verify`, which fails its run on a break, naming the chain and the sequence
+(`AuditTrailBrokenError`), and `npm run audit:verify` runs it by hand, exit code 1 on a break.
+The head of a chain is a row the application role writes: it shows a tail cut behind the back of
+the trail, not a chain rewritten as a whole, which only a checkpoint published elsewhere shows.
 
 ## Archiving
 

@@ -79,6 +79,10 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader, ArchivableAu
     return this.archives.filter((archive) => archive.chain === chain);
   }
 
+  async chainHeads(): Promise<readonly ChainHead[]> {
+    return [...this.heads.keys()].sort().flatMap((chain) => this.heads.get(chain) ?? []);
+  }
+
   async search(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>> {
     const order = orderOf(page);
     const found = this.entries.filter(matches(filter)).sort(comparing(order));

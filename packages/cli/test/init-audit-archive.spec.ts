@@ -14,7 +14,7 @@ describe('init: the monthly archive of the audit trail', () => {
     const root = initProject();
 
     expect(platform(root, 'audit/audit.module.ts')).toContain(
-      "      if (jobs) {\n        builder\n          .job('audit.archive', { cron: '0 4 1 * *', tenancy: 'global' })\n" +
+      "\n        builder\n          .job('audit.archive', { cron: '0 4 1 * *', tenancy: 'global' })\n" +
         '          .handledByFactory((resolve) => new ArchiveAuditEntries(audit.trail, resolve(FileStorage), resolve(Clock)));',
     );
 
@@ -38,7 +38,7 @@ describe('init: the monthly archive of the audit trail', () => {
   it('registers it on the scheduler of a hand-wired platform the same way', () => {
     const composition = platform(initProject('--di', 'manual', '--orm', 'knex'), 'composition/compose-application.ts');
 
-    expect(composition).toContain('  archiveAuditEntries(platform);');
+    expect(composition).toContain('  auditJobs(platform);');
 
     expect(composition).toContain(
       "  platform.jobs.register({ name: 'audit.archive', schedule: { cron: '0 4 1 * *' }, run: () => archive.run() });",
@@ -67,6 +67,6 @@ describe('init: the monthly archive of the audit trail', () => {
       'composition/compose-application.ts',
     );
 
-    expect(composition).not.toContain('archiveAuditEntries');
+    expect(composition).not.toContain('audit.archive');
   });
 });

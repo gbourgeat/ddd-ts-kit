@@ -18,8 +18,13 @@ import { CommandBus, QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 {{/if}}
 {{#if audit.archive}}
-import { ArchiveAuditEntries } from '@ddd-ts-kit/audit';
+import { ArchiveAuditEntries, VerifyAuditTrail } from '@ddd-ts-kit/audit';
 {{/if}}
+{{#unless audit.archive}}
+{{#if audit.on}}
+import { VerifyAuditTrail } from '@ddd-ts-kit/audit';
+{{/if}}
+{{/unless}}
 {{#if files.any}}
 import { PurgeStagedFiles } from '@ddd-ts-kit/kernel';
 {{/if}}
@@ -322,8 +327,8 @@ function registerPlatformJobs(platform: Platform, options: ApplicationOptions): 
 {{#if files.any}}
   purgeStagedFiles(platform);
 {{/if}}
-{{#if audit.archive}}
-  archiveAuditEntries(platform);
+{{#if audit.on}}
+  auditJobs(platform);
 {{/if}}
 {{#if privacy.on}}
   purgeExpiredEveryNight(platform);
@@ -345,16 +350,23 @@ function purgeStagedFiles(platform: Platform): void {
   platform.jobs.register({ name: 'files.purge-staged', schedule: { every: '1h' }, run: () => purge.run() });
 }
 {{/if}}
-{{#if audit.archive}}
+{{#if audit.on}}
 
 /**
- * The entries of the audit trail older than the twelve whole months it keeps online, moved to the
- * storage on the first day of every month at 04:00 UTC, verified and anchored.
+ * Every chain of the audit trail verified every night at 04:30 UTC, from its last archive to its head{{#if audit.archive}}; and the entries
+ * older than the twelve whole months it keeps online moved to the storage on the first day of every month at 04:00 UTC,
+ * verified and anchored{{/if}}.
  */
-function archiveAuditEntries(platform: Platform): void {
+function auditJobs(platform: Platform): void {
+  const verify = new VerifyAuditTrail(platform.audit.trail);
+{{#if audit.archive}}
   const archive = new ArchiveAuditEntries(platform.audit.trail, platform.files.storage, platform.clock);
+{{/if}}
 
+  platform.jobs.register({ name: 'audit.verify', schedule: { cron: '30 4 * * *' }, run: () => verify.run() });
+{{#if audit.archive}}
   platform.jobs.register({ name: 'audit.archive', schedule: { cron: '0 4 1 * *' }, run: () => archive.run() });
+{{/if}}
 }
 {{/if}}
 {{#if privacy.on}}

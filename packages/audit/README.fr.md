@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0420fa7dbad0bf7a -->
+<!-- translation-of: README.md sha256:16a90bbcd6a06686 -->
 
 # @ddd-ts-kit/audit
 
@@ -20,7 +20,7 @@ npm i typeorm          # seulement pour @ddd-ts-kit/audit/typeorm
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataErasure`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataErasure`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `verifyTrail` et sa tâche `VerifyAuditTrail`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
 | `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | rien : le client de l'unité de travail de `@ddd-ts-kit/prisma` convient structurellement |
@@ -617,7 +617,7 @@ const app = createApplication({
 ```
 
 Un projet généré par la CLI avec `--audit on` (la valeur par défaut) a ce câblage sous
-`src/platform/audit/` : `create-audit.ts` construit le journal et ses sources, `audit.module.ts`
+`src/platform/audit/` : `create-audit-trail.ts` construit le store des entrées, `create-audit.ts` ses sources, `audit.module.ts`
 lie les deux ports, abonne les événements d'intégration sous le nom de consommateur `audit` et
 enregistre la requête protégée `SearchAuditEntriesQuery`, et
 `src/platform/buses/create-command-bus.ts` place le *middleware* d'audit entre la garde des cas
@@ -824,6 +824,25 @@ quitté la base, donc `verifyChain(trail, { chain })` répond `missing-entry` à
 pour une chaîne dont la tête a été supprimée : le parcours ne lit pas les archives de lui-même.
 Une ancre est ce que dit une ligne d'`audit_archives` tant que `verifyArchive` ne l'a pas prouvée
 contre son fichier : c'est donc l'appelant qui nomme celle à laquelle il se fie.
+
+`verifyTrail(trail)` vérifie chaque chaîne d'un journal qui archive, chacune de l'ancre de sa
+dernière archive à sa tête (`chainHeads()` : la séquence et le hash de sa dernière entrée), de
+sorte qu'une chaîne coupée à sa fin répond `missing-entry` ; chaque chaîne s'arrête à sa propre
+rupture et les autres sont vérifiées quand même :
+
+```ts
+await verifyTrail(trail);
+// { valid: true, checked: 1204, breaks: [] }
+// { valid: false, checked: 1180, breaks: [{ kind: 'altered-content', chain: 'tenant:acme', position: 24, sequence: 4235, entryId: '...' }] }
+```
+
+`VerifyAuditTrail(trail)` est la tâche planifiée de la plateforme qui l'exécute et échoue avec
+`AuditTrailBrokenError` (`breaks`, code `AUDIT_TRAIL_BROKEN`) sur une rupture : le planificateur
+journalise l'exécution échouée et la compte. Un projet généré avec le journal actif l'enregistre
+comme `audit.verify`, chaque nuit à 04:30 UTC, désactivée par `JOB_AUDIT_VERIFY_ENABLED=false`, et
+`npm run audit:verify` exécute la même vérification à la main. La tête est une ligne qu'écrit le
+rôle de l'application : elle montre une fin retirée dans le dos du journal, pas une chaîne
+réécrite en entier.
 
 `ArchiveAuditEntries(trail, files, clock, monthsOnline = 12)` est la tâche planifiée de la
 plateforme : chaque passage archive les entrées antérieures au premier jour du mois situé

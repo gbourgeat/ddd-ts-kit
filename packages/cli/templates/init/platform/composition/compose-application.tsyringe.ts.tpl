@@ -218,12 +218,7 @@ export function composeApplication(
 {{/if}}
       guard,
 {{#if audit.on}}
-{{#if audit.archive}}
       auditModule(foundations.audit, { jobs: options.platformJobs !== false }),
-{{/if}}
-{{#unless audit.archive}}
-      auditModule(foundations.audit),
-{{/unless}}
 {{/if}}
 {{#if files.any}}
       filesModule(options.files ?? new InMemoryFileStorage(), { jobs: options.platformJobs !== false }),

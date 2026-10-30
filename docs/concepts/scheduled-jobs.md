@@ -367,7 +367,7 @@ while.
 
 ### Services and the jobs of the platform
 
-The jobs of the platform itself (`audit.archive`, `privacy.purge-expired`, `files.purge-staged`,
+The jobs of the platform itself (`audit.verify`, `audit.archive`, `privacy.purge-expired`, `files.purge-staged`,
 `events.purge-published`, `jobs.purge-finished`)
 belong to the whole application. A service written by `generate service` composes with
 `platformJobs: false`, and its `jobSettings(env, '<context>')` keeps the settings of its own jobs

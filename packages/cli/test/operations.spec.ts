@@ -123,7 +123,7 @@ describe('init --audit', () => {
       'await createAuditTables(knex, { schema: AUDIT_SCHEMA });',
     );
 
-    expect(read(root, 'src/platform/audit/create-audit.ts')).toContain(
+    expect(read(root, 'src/platform/audit/create-audit-trail.ts')).toContain(
       'new KnexAuditTrail(persistence.database, { schema: AUDIT_SCHEMA })',
     );
 
@@ -154,14 +154,14 @@ describe('init --audit', () => {
 
     cli(off, 'init', '--audit', 'off');
 
-    expect(read(prisma, 'src/platform/audit/create-audit.ts')).toContain(
+    expect(read(prisma, 'src/platform/audit/create-audit-trail.ts')).toContain(
       'return new PrismaAuditTrail(persistence.database, { schema: AUDIT_SCHEMA });',
     );
 
     // The models the audit package proves against its SQL, as they are.
     expect(read(prisma, 'prisma/schema/schema.prisma')).toContain(auditPrismaModels('audit'));
 
-    expect(read(typeorm, 'src/platform/audit/create-audit.ts')).toContain(
+    expect(read(typeorm, 'src/platform/audit/create-audit-trail.ts')).toContain(
       'return new TypeOrmAuditTrail(persistence.database, { schema: AUDIT_SCHEMA });',
     );
 
@@ -171,7 +171,7 @@ describe('init --audit', () => {
 
     for (const root of [prisma, typeorm]) {
       expect(read(root, 'package.json')).toContain('"db:audit-guard"');
-      expect(read(root, 'src/platform/audit/create-audit.ts')).not.toContain('InMemoryAuditTrail');
+      expect(read(root, 'src/platform/audit/create-audit-trail.ts')).not.toContain('InMemoryAuditTrail');
     }
 
     expect(stack(bare)).toMatchObject({ audit: 'off' });

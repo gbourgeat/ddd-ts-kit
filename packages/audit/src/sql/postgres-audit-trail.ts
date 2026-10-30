@@ -119,6 +119,18 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader, ArchivableAu
     return archivesIn(this.session(), this.tables, chain);
   }
 
+  async chainHeads(): Promise<readonly ChainHead[]> {
+    const rows = await this.session().query(
+      sql`select "chain", "sequence", "hash" from ${this.tables.chains} order by "chain"`,
+    );
+
+    return rows.map((row) => ({
+      chain: String(row['chain']),
+      sequence: Number(row['sequence']),
+      hash: String(row['hash']),
+    }));
+  }
+
   /**
    * The session of `transaction` while it is still the ambient one. A unit of work of another
    * database opened inside this one has ended before this commit: its records then go in a

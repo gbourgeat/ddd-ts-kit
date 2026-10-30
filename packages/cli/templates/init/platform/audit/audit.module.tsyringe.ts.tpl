@@ -1,8 +1,8 @@
 {{#if audit.archive}}
-import { ArchiveAuditEntries, AuditReader, AuditTrail } from '@ddd-ts-kit/audit';
+import { ArchiveAuditEntries, AuditReader, AuditTrail, VerifyAuditTrail } from '@ddd-ts-kit/audit';
 {{/if}}
 {{#unless audit.archive}}
-import { AuditReader, AuditTrail } from '@ddd-ts-kit/audit';
+import { AuditReader, AuditTrail, VerifyAuditTrail } from '@ddd-ts-kit/audit';
 {{/unless}}
 import { defineContextModule, type ContextModule } from '@ddd-ts-kit/di';
 import { subscribeAll } from '@ddd-ts-kit/events';
@@ -25,16 +25,12 @@ import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-e
  * The audit trail as a capability of the platform, not a bounded context: the store behind its
  * two ports, the subscription to every declared integration event, under a name of its own{{#if audit.route}}, and
  * its read side, one protected query registered like any use case so that reading the trail is
- * authorized and recorded{{/if}}{{#if audit.archive}}; and on the first day of every month at 04:00 UTC,
+ * authorized and recorded{{/if}}; every night at 04:30 UTC, every chain verified from its last archive to
+ * its head, a break failing the run (`audit.verify`){{#if audit.archive}}; and on the first day of every month at 04:00 UTC,
  * the entries older than the twelve whole months kept online moved to the storage of files,
  * verified and anchored (`audit.archive`){{/if}}.
  */
-{{#if audit.archive}}
 export function auditModule(audit: Audit, { jobs = true }: { readonly jobs?: boolean } = {}): ContextModule {
-{{/if}}
-{{#unless audit.archive}}
-export function auditModule(audit: Audit): ContextModule {
-{{/unless}}
   return defineContextModule({
     name: 'audit',
     register(builder) {
@@ -61,15 +57,19 @@ export function auditModule(audit: Audit): ContextModule {
         .handledBy(SearchAuditEntriesHandler, [AuditReader]);
 {{/unless}}
 {{/if}}
-{{#if audit.archive}}
 
       // Registered by the process that runs the jobs of the platform; a service of the deployment passes `jobs: false`.
       if (jobs) {
         builder
+          .job('audit.verify', { cron: '30 4 * * *', tenancy: 'global' })
+          .handledByFactory(() => new VerifyAuditTrail(audit.trail));
+{{#if audit.archive}}
+
+        builder
           .job('audit.archive', { cron: '0 4 1 * *', tenancy: 'global' })
           .handledByFactory((resolve) => new ArchiveAuditEntries(audit.trail, resolve(FileStorage), resolve(Clock)));
-      }
 {{/if}}
+      }
     },
     onStart({ resolve }) {
       subscribeAll(resolve(EventSubscribers).forContext(audit.consumer), audit.subscriptions);

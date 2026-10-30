@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:677c8eb4e788e0ea -->
+<!-- translation-of: audit-trail.md sha256:84aa88ea397402ef -->
 
 # Journal d'audit
 
@@ -277,8 +277,15 @@ de ce qui suit. Qui a examiné une rupture reprend à l'entrée suivante. Une ch
 archives se vérifie depuis l'ancre de sa dernière archive, que l'appelant nomme : les entrées
 d'avant ont quitté la base.
 
-La vérification devrait s'exécuter selon une planification et alerter ; une chaîne que personne
-ne vérifie ne prouve rien en pratique.
+La vérification s'exécute selon une planification et alerte ; une chaîne que personne ne vérifie
+ne prouve rien en pratique. `verifyTrail(trail)` vérifie chaque chaîne d'un journal, chacune de sa
+dernière archive à sa tête, de sorte qu'une chaîne coupée à sa fin ne se vérifie pas, et réunit la
+première rupture de chaque chaîne. Un projet généré avec le journal actif l'exécute chaque nuit à
+04:30 UTC comme job de la plateforme `audit.verify`, dont l'exécution échoue sur une rupture en
+nommant la chaîne et la séquence (`AuditTrailBrokenError`), et `npm run audit:verify` l'exécute à
+la main, code de sortie 1 sur une rupture. La tête d'une chaîne est une ligne que le rôle de
+l'application écrit : elle montre une fin coupée dans le dos du journal, pas une chaîne réécrite
+en entier, que seul un point de contrôle publié ailleurs montre.
 
 ## Archivage
 
