@@ -51,10 +51,19 @@ describe('events recorded while events are dispatched', () => {
 
   it('keeps two saves running side by side apart: each dispatches its own events', async () => {
     const { carts, dispatcher, heard } = aBench();
+    const secondHeard = gate();
 
     dispatcher.on('shop.cart.opened', async (event) => {
-      await new Promise((resolve) => setTimeout(resolve, event.aggregateId === 'c1' ? 10 : 1));
+      if (event.aggregateId === 'c1') {
+        // The first chain waits for the second: the second completes on its own, or this test times out.
+        await secondHeard.promise;
+      }
+
       heard.push(`${event.aggregateId} opened`);
+
+      if (event.aggregateId === 'c2') {
+        secondHeard.open();
+      }
     });
 
     await Promise.all([carts.save(Cart.open('c1')), carts.save(Cart.open('c2'))]);
@@ -64,6 +73,7 @@ describe('events recorded while events are dispatched', () => {
 
   it('opens a chain of its own for a save made after the first one is over', async () => {
     const { carts, dispatcher, heard, hear } = aBench();
+    const firstOver = gate();
     let later: Promise<void> = Promise.resolve();
 
     dispatcher.on('shop.cart.opened', async (event) => {
@@ -71,11 +81,12 @@ describe('events recorded while events are dispatched', () => {
         return;
       }
 
-      later = new Promise((resolve) => setTimeout(resolve, 5)).then(() => carts.save(Cart.open('c2')));
+      later = firstOver.promise.then(() => carts.save(Cart.open('c2')));
     });
 
     hear('shop.cart.opened');
     await carts.save(Cart.open('c1'));
+    firstOver.open();
     await later;
 
     expect(heard).toEqual(['shop.cart.opened', 'shop.cart.opened']);
@@ -158,3 +169,14 @@ describe('the dispatch and the unit of work', () => {
     expect(carts.saved).toEqual(['c1']);
   });
 });
+
+/** A promise the test opens when it decides: the order of two chains is a decision of the test, never of a timer. */
+function gate(): { promise: Promise<void>; open: () => void } {
+  let open = (): void => undefined;
+
+  const promise = new Promise<void>((resolve) => {
+    open = resolve;
+  });
+
+  return { promise, open };
+}
