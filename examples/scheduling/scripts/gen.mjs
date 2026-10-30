@@ -25,7 +25,7 @@ function summaryOf(text) {
       `ok: ${process.argv.slice(2).join(' ')}`,
       `created (${result.created.length}): ${result.created.join(' ')}`,
       `updated (${result.updated.length}): ${result.updated.join(' ')}`,
-      ...result.todos.map((todo) => `next ${todo.file}:${todo.line} ${todo.text}`),
+      ...result.todos.map((todo) => `next ${todo.file}:${todo.line} ${todo.gist ?? todo.text}`),
       ...result.notes.map((note) => `note: ${note}`),
     ];
 

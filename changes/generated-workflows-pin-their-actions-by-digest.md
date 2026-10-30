@@ -1,3 +1,0 @@
-**The GitHub workflows `init` writes pin every action by the digest of a commit.** `actions/checkout`, `actions/setup-node`, `actions/cache`, `actions/upload-artifact`, `docker/build-push-action` and the others were named by a major tag (`@v7`), which can move; each `uses:` is now `owner/repo@<40 hex digits> # v<n>`, the tag in a comment, as the workflows of the kit itself. The generated `renovate.json` extends `helpers:pinGitHubActionDigests`, so Renovate keeps the digests current (Dependabot already updates a pinned action).
-
-To move: an existing project keeps its tags until `init --force` rewrites its workflows, or until Renovate (with the preset above) opens a pull request that pins them.
