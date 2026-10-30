@@ -282,6 +282,13 @@ publication. The job that publishes keeps `id-token: write` and `environment: np
 builds nothing (a first job, without the identity, installs, builds and packs, and the publishing
 job publishes its tarballs), and needs npm 11.5.1 or later, which it checks. No `NPM_TOKEN` is stored anywhere.
 
+**The approval of the owner.** The publish job runs in the `npm` environment, which requires the
+approval of the owner of the repository: a run of `Release` stops before it publishes until the
+owner approves it in the Actions tab, and nothing reaches npm without that approval. Only an
+administrator of the repository creates a `v*` tag (a ruleset refuses it to everyone else), so a
+release starts from an administrator, then waits for the owner. Do not approve a run you did not
+expect.
+
 **A new package.** Trust is declared per package, and only for a package that exists on the
 registry. Before the first release that contains a package added to `packages/`, a maintainer
 reserves its name with a placeholder `0.0.0`, deprecated, and declares the workflow as its

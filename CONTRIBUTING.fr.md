@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:afd9c8445bf86473 -->
+<!-- translation-of: CONTRIBUTING.md sha256:694dd3bce5d87fa8 -->
 
 # Contribuer
 
@@ -301,6 +301,13 @@ qui ne vit que le temps de cette publication. Le job qui publie garde `id-token:
 construit et empaquette, et le job de publication publie ses archives), et a besoin de npm 11.5.1
 ou ultérieur, ce qu'il vérifie. Aucun
 `NPM_TOKEN` n'est stocké nulle part.
+
+**L'approbation du propriétaire.** Le job de publication s'exécute dans l'environnement `npm`, qui
+exige l'approbation du propriétaire du dépôt : un run de `Release` s'arrête avant de publier
+jusqu'à ce que le propriétaire l'approuve dans l'onglet Actions, et rien n'atteint npm sans cette
+approbation. Seul un administrateur du dépôt crée une étiquette `v*` (un *ruleset* la refuse à
+tout autre), si bien qu'une release part d'un administrateur, puis attend le propriétaire.
+N'approuvez pas un run que vous n'attendiez pas.
 
 **Un nouveau package.** La confiance se déclare package par package, et seulement pour un
 package qui existe sur le registre. Avant la première version publiée qui contient un package
