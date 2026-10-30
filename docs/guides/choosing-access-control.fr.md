@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:0c0c9a320fc1a2a3 -->
+<!-- translation-of: choosing-access-control.md sha256:6cbcecacd3714da4 -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
@@ -466,6 +466,19 @@ export class TupleDocumentGrants implements DocumentGrants {
   }
 }
 ```
+
+**Un tuple ne nomme aucun tenant.** `context:ordering operator user:olivia` tient quel que soit
+le *tenant* dans lequel le travail s'exécute : les tuples, le schéma et `RelationBasedAuthorizer`
+ne connaissent aucun *tenant*. Un élément est atteint par son propre identifiant, que deux
+*tenants* ne partagent jamais quand il est généré (un UUID), donc un tuple sur lui donne un élément
+d'un *tenant*. Le contexte, la ressource d'un cas d'usage sur aucun élément, est le même objet dans
+chaque *tenant* : avec des *tenants*, l'opérateur du contexte dans un *tenant* l'opère dans tous,
+et de même une personne qui appartient à deux *tenants* avec un statut différent dans chacun. Avec
+des *tenants*, gardez les relations pour les éléments, et décidez *tenant* par *tenant* ce que
+permet un cas d'usage sur aucun élément : par des rôles avec la vérification du *tenant*
+(préréglage 1, posé en premier comme dans le modèle combiné ci-dessous), ou sur un objet qui nomme
+le *tenant* (un type `tenant` avec son `operator`, les éléments l'atteignant par une relation
+`parent`), jamais sur le contexte.
 
 Les listes viennent par construction : `listAccessible` répond les identifiants que l'acteur
 atteint, que le port de lecture transforme en `id in (...)`. La recherche elle-même nomme quand

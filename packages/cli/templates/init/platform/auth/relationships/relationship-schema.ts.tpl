@@ -19,6 +19,11 @@ const modelledOnAnElement = new Set(Object.values(elements).flatMap((element) =>
  * element names its context as the resource (`{ type: 'context', id: '<context>' }`), and the
  * operators of the context hold every permission no element derives. A system actor (a scheduled
  * job, an integration event handler) is a subject of type `system`.
+{{#if tenancy.any}}
+ * A tuple names no tenant: the operator of a context operates it in every tenant, so decide per
+ * tenant what a use case on no element allows (roles with the tenant check, or an object that
+ * names the tenant), and keep the relationships for the elements, whose ids no two tenants share.
+{{/if}}
  */
 export const relationshipSchema = defineSchema({
   user: {},

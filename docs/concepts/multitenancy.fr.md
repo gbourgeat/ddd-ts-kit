@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:ed78b76506e7549a -->
+<!-- translation-of: multitenancy.md sha256:9684c7978f39f36a -->
 
 # Multitenance
 
@@ -390,6 +390,13 @@ Un projet qui veut une purge confinée la lance plutôt par *tenant*, dans des c
 
 ## Limites et quand ne pas l'utiliser
 
+- **Une relation tient dans chaque tenant.** Un tuple de ReBAC ne nomme aucun *tenant* : celui
+  posé sur un élément n'atteint que cet élément, dont aucun autre *tenant* ne partage
+  l'identifiant, mais celui posé sur le contexte d'un cas d'usage
+  (`context:ordering operator user:olivia`) tient dans chaque *tenant* où la personne travaille.
+  Décidez par *tenant* ce que permet un cas d'usage sur aucun élément, par des rôles avec la
+  vérification du *tenant* ou sur un objet qui nomme le *tenant*
+  ([Choisir le contrôle d'accès](../guides/choosing-access-control.fr.md#préréglage-3--des-relations-zanzibar)).
 - **Un tenant par unité de travail.** Une requête HTTP qui doit écrire dans deux *tenants* fait
   deux unités de travail, à dessein : une transaction ne couvre jamais plusieurs *tenants*. Avec
   une base par *tenant*, le travail d'un autre *tenant* lancé à l'intérieur d'une unité de

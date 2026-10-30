@@ -459,6 +459,17 @@ export class TupleDocumentGrants implements DocumentGrants {
 }
 ```
 
+**A tuple names no tenant.** `context:ordering operator user:olivia` holds whatever tenant the
+work runs in: the tuples, the schema and `RelationBasedAuthorizer` know no tenant. An element is
+reached by its own id, which no two tenants share when it is generated (a UUID), so a tuple on it
+gives one element of one tenant. The context, the resource of a use case on no element, is the
+same object in every tenant: with tenants, the operator of the context in one tenant operates it
+in all of them, and so does a person who belongs to two tenants with a different standing in each.
+With tenants, keep the relationships for the elements, and decide what a use case on no element
+allows tenant by tenant: by roles with the tenant check (preset 1, layered first as in the
+combined model below), or on an object that names the tenant (a type `tenant` with its
+`operator`, the elements reaching it by a `parent` relation), never on the context.
+
 Lists come by construction: `listAccessible` answers the ids the actor reaches, which the read
 port turns into `id in (...)`. The search itself still names a resource in its requirement, an
 enclosing one (the context, or the tenant when an actor who reaches nothing must get 403), and
