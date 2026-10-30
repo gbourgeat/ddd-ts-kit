@@ -54,10 +54,9 @@ and the schema derives the permission on that type
 ## Searches
 
 - **May the actor run it?** The requirement of the query always names a resource
-  (`RESOURCE_REQUIRED` otherwise): the enclosing one the generator writes,
-  `{ resource: () => ({ type: 'context', id: '<context>' }) }`, or the element for the use cases
-  that are about one (above). When an actor who reaches no element must get 403 rather than an
-  empty page, name the tenant of the actor instead, `{ type: 'tenant', id: <its tenant> }`, with,
+  (`RESOURCE_REQUIRED` otherwise): the context the generator writes ("The resource of a use
+  case", above). When an actor who reaches no element must get 403 rather than an empty page,
+  name the tenant of the actor instead, `{ type: 'tenant', id: <its tenant> }`, with,
   on the type `tenant`, the derived relation
   `[<ctx>Permissions['folder.search'].id]: via('folder', <ctx>Permissions['folder.view'].id)` and a
   tuple `tenant:<id>#folder@folder:<id>` written with each element. That check reads the elements
