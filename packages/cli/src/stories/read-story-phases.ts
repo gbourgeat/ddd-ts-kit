@@ -218,7 +218,7 @@ function reportPhase({ ws, story, specification }: StoryFacts): StoryPhase {
         : verified
           ? 'written, with its verification'
           : 'written, without `### Verification` naming `npm run verify`',
-    next: `Write \`## Report\` in docs/architecture/stories/${story}.md: each provisional decision, each compromise, each amendment of the acceptance, what is left, and \`### Verification\` with the last lines of \`npm run verify\`, of the acceptance run and of \`story-check\`, and \`not verified:\` for what could not run; it is the body of the pull request.`,
+    next: `Write \`## Report\` in docs/architecture/stories/${story}.md: each provisional decision, each compromise, each amendment of the acceptance, what is left, then \`### Digest\` with what \`npx ddd-ts-kit digest --base <base>\` prints, then \`### Verification\` with the last lines of \`npm run verify\`, of the acceptance run and of \`story-check\`, and \`not verified:\` for what could not run; it is the body of the pull request.`,
     gate: 'close',
   };
 }

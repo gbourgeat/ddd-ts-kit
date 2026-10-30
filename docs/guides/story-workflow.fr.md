@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:20f4856034a53bc7 -->
+<!-- translation-of: story-workflow.md sha256:6179d3a76175e09e -->
 
 # Parcours d'une story : une session par user story
 
@@ -62,7 +62,7 @@ l'intention et le chemin dans le ticket, et `## Origin` porte les deux.
 | 5 | la barrière de construction : `npx ddd-ts-kit story US5 --gate build` | la garde ouvre le code des contextes | |
 | 6 | construire, ligne par ligne | un commit par ligne, un agent `context-builder` par ligne `slice` | la session |
 | 7 | clore : tronc fusionné dans la branche, revue, `npm run verify`, `acceptance US5 --gate passing` | une branche verte | |
-| 8 | le rapport, puis la *pull request* | `## Report` avec `### Verification`, le corps de la *pull request* | le responsable du projet, à la revue |
+| 8 | le rapport, puis la *pull request* | `## Report` avec `### Digest` et `### Verification`, le corps de la *pull request* | le responsable du projet, à la revue |
 
 `npx ddd-ts-kit story US5` affiche les phases, ce que chacune contient et l'étape suivante ; une
 session qui démarre dans le *worktree* d'une *story* reçoit la même chose de la garde.
@@ -95,6 +95,16 @@ fournisseur, une plateforme) ; la barrière de clôture le lit aussi. Le bloc es
 [playbook du cycle de vie natif de l'IA d'Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
 demande comme preuve de gouvernance : la spécification, ce qui l'a produite et les politiques
 en vigueur, consignées avec elle.
+
+Avant `### Verification`, le rapport tient `### Digest` : ce qu'imprime
+`npx ddd-ts-kit digest --base <base>` une fois la dernière ligne commitée, `<base>` étant la base
+de `.ddd-ts-kit/story.json`, collé tel qu'imprimé. En une trentaine de lignes, il dit, par
+contexte, les cas d'usage, les permissions et les rôles qui les détiennent, les routes et leurs
+codes d'erreur, les événements et les ports que la *story* ajoute, modifie ou retire ; puis les
+titres de *spec* qu'elle écrit ; puis ses fichiers dans l'ordre de lecture (la racine d'un
+contexte, domaine, application, présentation, infrastructure, tests, le reste), et à part, comme
+régénérés, les fichiers générés que nomme `REVIEW.md`. La relecture le lit avant le *diff*, où le
+code écrit à la main et les fichiers régénérés viendraient sinon mêlés.
 
 ## La conception avant le code
 
@@ -222,8 +232,9 @@ revue non résolus et les vérifications en échec, traite chacun sous les règl
 demande d'affaiblir une vérification passe par la *skill* `deviation`, une vérification en
 échec est corrigée dans le code et jamais dans la vérification, pas de *force-push*), répond à
 chaque fil, pousse, attend les vérifications et recommence jusqu'à ce que la *pull request*
-n'attende plus que le responsable du code ; puis elle rend compte de ce qui a changé et de ce
-qui a été refusé, et pourquoi.
+n'attende plus que le responsable du code ; après chaque *push*, elle place le *digest* de la
+branche telle qu'elle est en tête du corps, sous `## Digest`, et dans `### Digest` du rapport ;
+puis elle rend compte de ce qui a changé et de ce qui a été refusé, et pourquoi.
 
 ## Plusieurs stories, plusieurs terminaux
 
