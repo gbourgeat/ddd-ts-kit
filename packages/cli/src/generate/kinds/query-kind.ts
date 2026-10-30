@@ -1,4 +1,5 @@
 import { CliError } from '../../cli-error';
+import { parseConceptName } from '../../naming';
 import { concept } from '../concept';
 import { emit } from '../emit';
 import type { Kind } from '../kind';
@@ -27,7 +28,11 @@ export const queryKind: Kind = {
 
     learnTerms(scope);
 
-    const name = concept(scope, request.args[1] ?? '', {
+    const input = request.args[1] ?? '';
+
+    refuseListQuery(input);
+
+    const name = concept(scope, input, {
       what: 'use case',
       strip: ['query', 'handler'],
       alongside: permissionWords(scope.flags.permission),
@@ -66,5 +71,26 @@ function queryVariant(scope: Scope): QueryVariant {
   throw new CliError(
     '--search cannot be combined with --public.',
     'A generated search is filtered by the access scope the authorizer computes for its actor: give it --permission <aggregate>.<action>, or generate a plain public query and page it yourself.',
+  );
+}
+
+/**
+ * A read that takes criteria, a scope or a page is a search, never a list (rule naming/search-not-list):
+ * the checker refuses `ListInvoices` whatever the glossary says, so the generator refuses it first,
+ * before a glossary refusal sends the user to a term that would lead to the same files.
+ */
+function refuseListQuery(input: string): void {
+  const name = parseConceptName(input, 'use case', { strip: ['query', 'handler'] });
+  const [first, ...rest] = name.words.split(' ');
+
+  if (first !== 'list') {
+    return;
+  }
+
+  const search = ['search', ...rest].map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+
+  throw new CliError(
+    `"${name.pascal}" names a query List...: a read that takes criteria, a scope or a page is a search (rule naming/search-not-list).`,
+    `Name it ${search} (\`generate query <context> ${search} --search ...\`), and add \`--term "Search=<what it means for the business>"\` when the glossary does not hold Search yet.`,
   );
 }

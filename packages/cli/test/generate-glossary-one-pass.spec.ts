@@ -43,3 +43,18 @@ describe('the glossary refusal of a use case and its permission', () => {
     expect(exists(root, 'src/contexts/ordering/ordering.permissions.ts')).toBe(true);
   });
 });
+
+describe('a query named List...', () => {
+  it('is refused before the glossary, with the Search form', () => {
+    const root = initProject('--context', 'billing:core', '--audit', 'off');
+
+    expect(cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--term', 'Invoice=A bill').code).toBe(0);
+
+    const refused = cli(root, 'generate', 'query', 'billing', 'ListInvoices', '--permission', 'invoice.read');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('names a query List...');
+    expect(refused.stderr).toContain('Name it SearchInvoices');
+    expect(exists(root, 'src/contexts/billing/application/queries/list-invoices')).toBe(false);
+  });
+});

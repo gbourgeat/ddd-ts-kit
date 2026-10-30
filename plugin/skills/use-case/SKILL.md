@@ -128,7 +128,9 @@ table: read [file-upload.md](file-upload.md) first (refused under `stack.storage
 `stack.http: none`).
 
 A read is `generate query ... (--permission ... --grant <role> | --public)`; a search adds `--search` (paged,
-narrowed in the query by the caller's access scope). A reaction inside the context is
+narrowed in the query by the caller's access scope). A list of things is named `Search<Things>`
+(`ListInvoices` is refused, rule `naming/search-not-list`), and `Search` is a term of the glossary like any other
+word: `--term "Search=<meaning>"`. A reaction inside the context is
 `generate event-handler` (phase below; `--name <Name>` when the design names the reaction); work started by time is
 `generate job ... --command <UseCase>`, which only sends the command; work a command hands to a
 worker, later and outside the request, is `generate background-job ... --command <UseCase>`,
