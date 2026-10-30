@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { isRecord } from '../config/values/is-record';
 import { jsonObject } from '../init/json-object';
+import { KIT_FOLDER } from '../workspace/kit-folder';
 import type { MergeReport } from './merge-report';
 
 /** Written while a merge of merge-trunk is in progress, next to the scope of a worker; never committed. */
-const MERGE_STATE_FILE = '.ddd-ts-kit/merge.json';
+const MERGE_STATE_FILE = `${KIT_FOLDER}/merge.json`;
 
 /** The steps run once, in their order, after the conflicts are settled; regenerate and the gate run again on each `--continue`. */
 export type MergeStep = 'install' | 'migrations' | 'adrs';
