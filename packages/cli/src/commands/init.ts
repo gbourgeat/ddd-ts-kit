@@ -1,5 +1,8 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { CliError } from '../cli-error';
+import { CONFIG_FILE } from '../config';
+import { withGeneratorLock } from '../generator-lock';
 import { runInit, type InitOptions } from '../init/run-init';
 import { Arguments } from './arguments';
 import { type Command } from './command';
@@ -76,7 +79,13 @@ export const initCommand: Command = (argv, io) => {
     fs.mkdirSync(root, { recursive: true });
   }
 
-  return printReport(io, args, runInit(root, { ...initOptions(args, dryRun), rerun: rerunOf(argv) }));
+  const init = (): number =>
+    printReport(io, args, runInit(root, { ...initOptions(args, dryRun), rerun: rerunOf(argv) }));
+
+  // Run on a project, init reads and writes back the files the generators share: one at a time does.
+  return !dryRun && fs.existsSync(path.join(root, CONFIG_FILE))
+    ? withGeneratorLock({ root, command: `ddd-ts-kit init ${argv.join(' ')}` }, init)
+    : init();
 };
 
 /** The command the owner runs outside a sandbox to write what this one could not: the same flags, written for real. */

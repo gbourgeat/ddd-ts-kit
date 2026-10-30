@@ -14,6 +14,7 @@ import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
 import { MODULE_OPTION, usageOf } from '../generate/usage-of';
 import { contextArgument } from '../generate/context-argument';
 import { Workspace } from '../workspace';
+import { withGeneratorLock } from '../generator-lock';
 import type { Arguments } from './arguments';
 import type { Io } from './io';
 import type { Command } from './command';
@@ -30,6 +31,27 @@ export function generate(argv: readonly string[], io: Io, probe?: GeneratorProbe
   const args = generateArguments(argv);
   const [kindName, ...rest] = args.positionals;
   const kind = requestedKind(kindName, rest);
+  const asked: Asked = { argv, io, probe, args, kind, rest };
+
+  // A kind that writes the shared files reads them and writes them back: one generator at a time does.
+  return kind.writesShared && !args.flag('dry-run')
+    ? withGeneratorLock({ root: args.projectRoot, command: `ddd-ts-kit generate ${argv.join(' ')}` }, () =>
+        generateKind(asked),
+      )
+    : generateKind(asked);
+}
+
+/** What `generate` was asked: the command line, read, with the kind it names and the arguments of the kind. */
+interface Asked {
+  readonly argv: readonly string[];
+  readonly io: Io;
+  readonly probe: GeneratorProbe | undefined;
+  readonly args: Arguments;
+  readonly kind: Kind;
+  readonly rest: readonly string[];
+}
+
+function generateKind({ argv, io, probe, args, kind, rest }: Asked): number {
   const root = args.projectRoot;
   const ws = new Workspace(root, args.flag('force'));
   const { config } = readConfig(root);
