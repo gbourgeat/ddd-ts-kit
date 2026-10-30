@@ -123,7 +123,8 @@ identifies a person. Declare the code in `errors` of the route (`errors/known-co
 the error class of its concept instead.
 
 A use case that receives a file is `generate file-upload`, and its content never goes in a
-table: under `stack.storage: local` or `s3`, read [file-upload.md](file-upload.md) first.
+table: read [file-upload.md](file-upload.md) first (refused under `stack.storage: none` or
+`stack.http: none`).
 
 A read is `generate query ... (--permission ... --grant <role> | --public)`; a search adds `--search` (paged,
 narrowed in the query by the caller's access scope). A reaction inside the context is

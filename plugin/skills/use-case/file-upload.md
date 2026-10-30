@@ -1,8 +1,10 @@
 # A use case that receives a file
 
-Read when the use case receives a file or answers one, under `stack.storage: local` or
-`stack.storage: s3` (`generate file-upload` needs one of them). Why never in the database, the
-ports, the streaming and the checks of the content, and the signed links are in
+Read when the use case receives a file or answers one. `generate file-upload` needs both a file
+storage and an HTTP stack: it is refused under `stack.storage: none` and under `stack.http: none`.
+On `storage: none`, `npx ddd-ts-kit init --force --storage local` (or `s3`) wires the storage,
+with an HTTP stack in `ddd-ts-kit.config.json`. Why never in the database, the ports, the
+streaming and the checks of the content, and the signed links are in
 `docs/concepts/file-storage.md` of the kit, "Receiving a file" and "Serving a file"; what follows
 is the command and what to fill.
 
