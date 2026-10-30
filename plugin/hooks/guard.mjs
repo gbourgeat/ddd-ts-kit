@@ -720,7 +720,8 @@ function refusalOf(writes, input, check) {
 // read without it) are judged before the write; the others are left to the check after it, and said.
 function cliVerdict(writes, input) {
   const judged = writes.filter(
-    ({ project, file }) => /\.(ts|mts|cts)$/.test(file) || insideContexts(project, projectPath(project, file)),
+    ({ project, file, deleted }) =>
+      !deleted && (/\.(ts|mts|cts)$/.test(file) || insideContexts(project, projectPath(project, file))),
   );
   const verdict = refusalOf(judged.slice(0, CLI_WRITE_FILES), input, cliRefusal);
   if (!verdict && judged.length > CLI_WRITE_FILES) {
@@ -729,7 +730,11 @@ function cliVerdict(writes, input) {
   return verdict;
 }
 
-function quickRefusal({ project, file, written, replaced }, input) {
+// A file a patch removes is judged as `rm` judges it: the baseline and the scope of a worker hold it.
+function quickRefusal({ project, file, written, replaced, deleted }, input) {
+  if (deleted) {
+    return baselineFileReason(project, file) ?? workerScopeReason(project, file, input);
+  }
   return (
     baselineFileReason(project, file) ??
     acceptanceReason(project, input, { file, written, replaced }) ??
@@ -748,7 +753,10 @@ function cliRefusal({ project, file, written, replaced }, input) {
   return storyCodeReason(project, file) ?? dependencyReason(project, { file, written, replaced }, input);
 }
 
-function deviationOf({ project, file, written, replaced }) {
+function deviationOf({ project, file, written, replaced, deleted }) {
+  if (deleted) {
+    return undefined;
+  }
   const deviation = governedFileReason(project, file) ?? escapeReason(written, replaced);
   return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
@@ -893,19 +901,31 @@ function sessionPlaceReason(input, { place, by, typed }) {
   );
 }
 
-// Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: the patch
-// fed to that command is judged the same way a write through the editor tool is. A here-document that
-// only holds the text of a patch for another command (`cat <<EOF > notes.md`) is no patch.
+// Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: each patch
+// the line holds (a here-document, an argument) is judged the same way a write through the editor tool
+// is; a patch the command does not hold (read from a file, a pipe) cannot be judged and is refused. A
+// here-document that only holds the text of a patch for another command (`cat <<EOF > notes.md`) is no patch.
 async function codexPatchVerdict(input, command, cwd) {
-  if (hostOf(input) !== 'codex' || !/^\s*\*\*\* Begin Patch/m.test(command)) {
+  if (hostOf(input) !== 'codex') {
     return undefined;
   }
   shell = await import('./shell-commands.mjs');
-  if (!shell.simpleCommands(command, cwd).some(({ words }) => shell.commandName(words) === 'apply_patch')) {
+  const project = findProject(cwd);
+  const commands = readCommands(project ?? { root: cwd }, command, cwd);
+  if (!commands?.some(({ words }) => shell.commandName(words) === 'apply_patch')) {
     return undefined;
   }
-  const start = command.indexOf('*** Begin Patch');
-  const writes = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd);
+  const patches = command.split('*** Begin Patch').slice(1);
+  if (patches.length === 0) {
+    return !project || project.mode === 'off'
+      ? undefined
+      : {
+          decision: project.mode === 'advise' ? 'ask' : 'deny',
+          reason:
+            "apply_patch is judged when the command holds the patch: give it as a here-document (`apply_patch <<'EOF'` ... `EOF`), not from a file or a pipe.",
+        };
+  }
+  const writes = patches.flatMap((patch) => patchWrites(patch.split('*** End Patch')[0], cwd));
   return writesVerdict(judgedWrites(writes, input), input, () => undefined);
 }
 
@@ -1032,7 +1052,7 @@ function unknownProgramReason(commands) {
 }
 
 function postWrite(input) {
-  const all = writesOf(input);
+  const all = writesOf(input).filter(({ deleted }) => !deleted);
   // Biome lays out every written file, which is quick; the check, which is not, reads the first ones.
   formatWrites(all);
   const writes = all.slice(0, POST_WRITE_FILES);
@@ -1348,7 +1368,8 @@ function writesOf(input) {
 }
 
 // The patch of Codex: `*** Add File:`, `*** Update File:` (and `*** Move to:`), `*** Delete File:`,
-// each followed by its lines, `+` added and `-` removed. Its paths are relative to the session.
+// each followed by its lines, `+` added and `-` removed. Its paths are relative to the session. A
+// deleted file, and the file a move leaves, are writes that remove it (`deleted`).
 function patchWrites(patch, cwd) {
   const writes = [];
   let current;
@@ -1356,18 +1377,22 @@ function patchWrites(patch, cwd) {
     const header = /^\*\*\* (Add|Update|Delete) File: (.+)$/.exec(line);
     const moved = /^\*\*\* Move to: (.+)$/.exec(line);
     if (header) {
-      current = header[1] === 'Delete' ? undefined : { file: resolve(cwd, header[2].trim()), added: [], removed: [] };
+      current = { file: resolve(cwd, header[2].trim()), added: [], removed: [], deleted: header[1] === 'Delete' };
       writes.push(current);
     } else if (moved && current) {
+      writes.push({ file: current.file, added: [], removed: [], deleted: true });
       current.file = resolve(cwd, moved[1].trim());
     } else if (current && /^[+-]/.test(line)) {
       (line.startsWith('+') ? current.added : current.removed).push(line.slice(1));
     }
   }
 
-  return writes
-    .filter(Boolean)
-    .map(({ file, added, removed }) => ({ file, written: added.join('\n'), replaced: removed.join('\n') }));
+  return writes.map(({ file, added, removed, deleted }) => ({
+    file,
+    written: added.join('\n'),
+    replaced: removed.join('\n'),
+    ...(deleted ? { deleted } : {}),
+  }));
 }
 
 // Up to a folder another user may write: a config there, the shared temp dir above all, is no project.

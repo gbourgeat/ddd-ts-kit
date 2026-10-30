@@ -170,7 +170,10 @@ in. What a redirection, `sed -i` or `tee` types in a file is held as the editor 
 of a context in the main checkout of the trunk, a new file of a generated role. A generated file
 put back or deleted (`git checkout`, `git restore`, `git rm`, `rm`) stays free, since it is rebuilt
 after; so does what a session other than a worker or the test writer writes where only the shell
-knows. A Codex `apply_patch` sent through the shell is read as a patch.
+knows. A Codex `apply_patch` sent through the shell is read as a patch, each patch of the line,
+in a here-document or an argument; one the command does not hold (a file, a pipe) is refused. A
+file a patch deletes, or leaves by a move, is held as `rm` holds it (the baseline, the scope of a
+worker).
 For a `context-builder` (the agent of the plugin, `ddd-ts-kit:context-builder`: an agent of the project
 named `context-builder` without that prefix is held to the scope of its worktree, but neither counted nor
 recorded), it counts the tool calls inside those same hooks and warns the agent

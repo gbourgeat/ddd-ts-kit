@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:e4fd897b42571b04 -->
+<!-- translation-of: coding-agents.md sha256:c52186a7b0177361 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -187,7 +187,10 @@ d'un contexte dans le *checkout* principal du tronc, un nouveau fichier d'un rô
 généré remis en état ou supprimé (`git checkout`, `git restore`, `git rm`, `rm`) reste libre, puisqu'il
 est reconstruit ensuite ; de même ce qu'une session autre qu'un *worker* ou le `domain-test-writer`
 écrit là où seul le *shell* sait. Un
-`apply_patch` de Codex envoyé par le *shell* est lu comme un *patch*.
+`apply_patch` de Codex envoyé par le *shell* est lu comme un *patch*, chaque *patch* de la ligne,
+dans un *here-document* ou un argument ; celui que la commande ne contient pas (un fichier, un
+*pipe*) est refusé. Un fichier qu'un *patch* supprime, ou quitte par un déplacement, est tenu comme
+`rm` le tient (la *baseline*, le périmètre d'un *worker*).
 Pour un `context-builder` (l'agent du *plugin*, `ddd-ts-kit:context-builder` : un agent du projet
 nommé `context-builder` sans ce préfixe est tenu à la portée de son *worktree*, mais ni compté ni
 enregistré), il compte les appels d'outils dans ces mêmes *hooks* et avertit
