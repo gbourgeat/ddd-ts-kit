@@ -38,8 +38,10 @@ import { openRedis } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 // this project are rows, so there is no key to destroy{{#if audit.on}}. Each copy leaves a dated entry in the audit
 // trail, with the operator{{/if}}.
 {{/unless}}
+{{#if housekeeping.any}}
 // {{#if events.outbox}}What the outbox keeps of the person, by the fields src/platform/privacy/personal-events.ts lists{{#if queue.stored}}, and{{/if}}{{/if}}{{#unless events.outbox}}{{#if queue.stored}}And{{/if}}{{/unless}}{{#if queue.stored}} the jobs
-// enqueued with the person as `subject`{{/if}}{{#if housekeeping.any}} are erased too.{{/if}}
+// enqueued with the person as `subject`{{/if}} are erased too.
+{{/if}}
 // The report says what was reached. An id that reached nothing is refused, exit code 1, and announced
 // to nobody: a mistyped id{{#if tenancy.any}}, a tenant missing from the directory{{/if}} or an erasure already complete. --rerun says
 // it is expected, and announces the erasure again: running it completes one that failed half way.
