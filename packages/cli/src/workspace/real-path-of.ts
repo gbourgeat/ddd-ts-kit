@@ -4,14 +4,14 @@ import path from 'node:path';
 /** A folder above the target, or the target of a link, that is no folder nor file: the write fails there, and is reported unwritable. */
 export const BLOCKED = Symbol('blocked');
 
-/** What `realPathOf` answers: the real path, `BLOCKED`, or undefined when a link on the way cannot be read. */
+/** What `realPathOf` answers: the real path, `BLOCKED`, or undefined past the links it follows. */
 export type RealPath = string | typeof BLOCKED | undefined;
 
 /**
  * The real path `absolute` is written at: a link in its place followed to where it points, then
  * the real path of the deepest part that exists, the parts below it appended as they are;
  * `BLOCKED` when what stands there is no folder above the target, or no file nor folder at the
- * end of a link; undefined when a link on the way cannot be read.
+ * end of a link; undefined past the links it follows, which a loop of links never ends.
  */
 export function realPathOf(absolute: string, hops = 0): RealPath {
   const at = path.resolve(absolute);

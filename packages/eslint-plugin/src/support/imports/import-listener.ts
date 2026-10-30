@@ -26,8 +26,13 @@ const WHOLE: Taken = { names: [], whole: true };
 
 type Visit = (site: ImportSite) => void;
 
+/** The listeners of the imports, the one of the declarations always there: a rule that adds to it calls it. */
+export type ImportListener = TSESLint.RuleListener & {
+  readonly ImportDeclaration: (node: TSESTree.ImportDeclaration) => void;
+};
+
 /** Every way a module names another one: static, type-only, re-export, dynamic, `require`, `import()` types. */
-export function importListener(file: LintedFile, visit: Visit): TSESLint.RuleListener {
+export function importListener(file: LintedFile, visit: Visit): ImportListener {
   const see = (source: TSESTree.Node | null | undefined, taken: Taken = WHOLE): void => {
     if (source === null || source === undefined) {
       return;

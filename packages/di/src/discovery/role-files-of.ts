@@ -146,5 +146,5 @@ function candidateOf(root: string, relative: string, { extensions, modules }: Re
 }
 
 function compare(left: string, right: string): number {
-  return Number(left > right) - Number(left < right);
+  return left < right ? -1 : 1;
 }

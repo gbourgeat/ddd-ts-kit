@@ -32,6 +32,13 @@ describe('the tree of a commit, when a reader of its contexts fails', () => {
     expect(tree).toMatchObject({ contexts: [], problem: `${file} is under no directory an import alias names` });
   });
 
+  // A refusal once #681 is fixed.
+  it('lets through what is no refusal: a config nested too deep for its refusal to be written', () => {
+    const nested = `${'['.repeat(200_000)}${']'.repeat(200_000)}`;
+
+    expect(() => treeOf({ 'ddd-ts-kit.config.json': `{"stack":{"orm":${nested}}}` })).toThrow(RangeError);
+  });
+
   it('lets through what is no refusal: a schema written inline that a regular expression cannot hold', () => {
     const controller = [
       "@Controller({ method: 'POST', path: '/pay', body: z.object({ amount: z.number(), currency: z.string() }), })",

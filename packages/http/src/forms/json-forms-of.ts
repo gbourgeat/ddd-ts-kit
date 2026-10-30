@@ -71,7 +71,6 @@ function objectSchema(blocks: readonly FormBlock[], node: SchemaNode): JsonSchem
 }
 
 function propertySchema(field: FieldBlock<FormBlock>, node: SchemaNode | undefined): JsonSchema {
-  /* v8 ignore next 3 -- ADR-0001: the fields of a form are read from this schema, each has its node */
   if (node === undefined) {
     return {};
   }

@@ -12,7 +12,6 @@ Each check guards a state its callers cannot produce. Removing it would leave th
 
 | Check | Why nothing reaches it |
 | --- | --- |
-| `http`, `json-forms-of.ts`, a field without a node | The fields of a form are read from this schema, so each has its node. |
 | `knex`, `knex-outbox-store.ts`, a row that is no object | A sum without `GROUP BY` always answers one row. |
 | `redis`, `publications.ts`, an entry id that is no text | An `XADD` answers an entry id or an error, and the error is read just before. |
 | `testing`, `decorator-compiler.ts`, a failure that is no object | The only caller catches what `execFileSync` throws, always an `Error`. |
@@ -20,8 +19,7 @@ Each check guards a state its callers cannot produce. Removing it would leave th
 | `cli`, `clean-one-export-per-file.ts`, no second export | `judgeExports` explains a lone export, so there are at least two here. |
 | `cli`, `timeline-of.ts`, an empty list of commits | This runs once a report commit was found, so neither list is empty. |
 | `cli`, `format-progress.ts`, a row without a `ready` value | `statusRowOf` gives each row that is not done a `ready` value. |
-| `cli`, `forecast-merge.ts`, an error that is no `CliError` | A fault of the kit: nothing in a repository makes this reader throw it. |
-| `cli`, `tree-at.ts`, an error that is no `CliError` | `readConfig` wraps every failure in a `CliError`. 226,479 generated configs gave no other error, which is strong evidence and not a proof. |
+| `cli`, `forecast-merge.ts`, an error that is no `CliError` | Only a conflicted blob too large for a string gets here, over 512 MiB: a spec cannot afford one. |
 | `eslint-plugin`, `pattern-identifiers.ts`, another kind of target | The parser refuses a member expression in a declaration or a parameter. |
 | `eslint-plugin`, `returns-package-type.ts`, `this` as a name | `this` stands in an entity name only under `typeof`, never in a type reference. |
 

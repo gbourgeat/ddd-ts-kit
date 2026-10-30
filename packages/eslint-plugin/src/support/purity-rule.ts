@@ -1,9 +1,9 @@
-import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
 import type { LintedFile } from '../project/linted-file';
 import { defineRule, type Report } from './rule/define-rule';
 import { ambientName } from './globals/ambient-name';
 import { propertyName } from './globals/property-name';
-import { importListener } from './imports/import-listener';
+import { importListener, type ImportListener } from './imports/import-listener';
 import { innerLayer } from './imports/inner-layer';
 
 export interface Purity {
@@ -75,7 +75,7 @@ function reporters(layer: string, report: Report<'used' | 'imported'>): Reporter
 }
 
 /** The modules the rule forbids as a whole, however the file names them. */
-function moduleImports(rule: Purity, file: LintedFile, imported: Reporters['imported']): TSESLint.RuleListener {
+function moduleImports(rule: Purity, file: LintedFile, imported: Reporters['imported']): ImportListener {
   return importListener(file, ({ node, target }) => {
     if (target.kind !== 'file' && rule.modules.includes(moduleName(target))) {
       imported(node, target.name);
@@ -86,11 +86,11 @@ function moduleImports(rule: Purity, file: LintedFile, imported: Reporters['impo
 /** The module as the import listener judges it, then each named import the rule forbids. */
 function importDeclarationListener(
   rule: Purity,
-  imports: TSESLint.RuleListener,
+  imports: ImportListener,
   used: Reporters['used'],
 ): (node: TSESTree.ImportDeclaration) => void {
   return (node) => {
-    imports.ImportDeclaration?.(node);
+    imports.ImportDeclaration(node);
 
     for (const specifier of namedSpecifiersOf(node)) {
       used(specifier, forbiddenNamedImport(rule, node.source.value, specifier));
