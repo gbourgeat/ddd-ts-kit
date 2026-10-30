@@ -3,7 +3,9 @@ import {
   ExecutionScope,
   InMemoryTenantDirectory,
   InvalidJobScheduleError,
+  JobQueue,
   JobScheduler,
+  NoCurrentTenantError,
   TenantDirectory,
   type Actor,
   type ScheduledJob,
@@ -90,5 +92,18 @@ describe('a job that runs per tenant in a test application', () => {
     await application.jobs.runNow('desk.close-the-day');
 
     expect(seen).toEqual([]);
+  });
+});
+
+describe('the queue of a kernel module that names its tenants', () => {
+  it('refuses work that names no tenant, where a kernel module without tenants finds the job', async () => {
+    const tenanted = createApplication({
+      modules: [kernelModule({ tenants: new InMemoryTenantDirectory(['north']) })],
+    });
+
+    const single = createApplication({ modules: [kernelModule()] });
+
+    await expect(tenanted.resolve(JobQueue).find('job-1')).rejects.toBeInstanceOf(NoCurrentTenantError);
+    await expect(single.resolve(JobQueue).find('job-1')).resolves.toBe(undefined);
   });
 });

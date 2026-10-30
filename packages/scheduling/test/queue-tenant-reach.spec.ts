@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { executionContext, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  acrossTenants,
+  executionContext,
+  NoCurrentTenantError,
+  SequentialIdGenerator,
+  systemActor,
+  type Actor,
+  type AuditRecord,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 import { aQueueBench } from './support/a-queue-bench';
 import { CompileStatementsJob } from './support/statements-job';
 
@@ -20,6 +29,13 @@ function staffOver(tenants: readonly string[]): ExecutionContext {
     origin: 'http',
     elevation: { reason: 'SUPPORT', tenants },
   });
+}
+
+/** A caller who signed in but names no tenant, a global job... */
+function noTenant(): ExecutionContext {
+  const actor: Actor = { id: 'visitor-1', type: 'user', roles: [], attributes: {} };
+
+  return executionContext({ correlationId: 'corr-none', actor, origin: 'http' });
 }
 
 describe('the jobs of a tenant', () => {
@@ -49,7 +65,7 @@ describe('the jobs of a tenant', () => {
     ]);
   });
 
-  it('are reached by an elevation over that tenant, and by work without a tenant', async () => {
+  it('are reached by an elevation over that tenant, and by work without a tenant in a project without tenancy', async () => {
     const { queue, scope } = aQueueBench();
 
     await scope.run(memberOf('acme'), () => queue.enqueue(CompileStatementsJob, FEBRUARY));
@@ -57,5 +73,54 @@ describe('the jobs of a tenant', () => {
     expect(await scope.run(staffOver(['globex']), () => queue.find('job-1'))).toBe(undefined);
     expect((await scope.run(staffOver(['acme']), () => queue.find('job-1')))?.id).toBe('job-1');
     expect((await queue.find('job-1'))?.id).toBe('job-1');
+  });
+});
+
+describe('the jobs of a multi-tenant project', () => {
+  it('are refused to work that names no tenant, before the store is read', async () => {
+    const { queue, scope, store } = aQueueBench({ tenant: true });
+
+    await scope.run(memberOf('acme'), () => queue.enqueue(CompileStatementsJob, FEBRUARY));
+
+    await expect(scope.run(noTenant(), () => queue.find('job-1'))).rejects.toBeInstanceOf(NoCurrentTenantError);
+    await expect(scope.run(noTenant(), () => queue.cancel('job-1'))).rejects.toBeInstanceOf(NoCurrentTenantError);
+    await expect(queue.find('job-1')).rejects.toBeInstanceOf(NoCurrentTenantError);
+    await expect(queue.cancel('job-1')).rejects.toBeInstanceOf(NoCurrentTenantError);
+
+    expect(store.finds).toBe(0);
+  });
+
+  it('stay with their tenant', async () => {
+    const { queue, scope } = aQueueBench({ tenant: true });
+
+    await scope.run(memberOf('acme'), () => queue.enqueue(CompileStatementsJob, FEBRUARY));
+
+    expect(await scope.run(memberOf('globex'), () => queue.find('job-1'))).toBe(undefined);
+    expect((await scope.run(memberOf('acme'), () => queue.find('job-1')))?.id).toBe('job-1');
+  });
+
+  it('are reached by a system job through an elevation, recorded in the trail', async () => {
+    const { clock, queue, scope } = aQueueBench({ tenant: true });
+    const recorded: AuditRecord[] = [];
+    const trail = { record: async (entry: AuditRecord) => void recorded.push(entry) };
+    const options = { scope, trail, clock, ids: new SequentialIdGenerator('audit') };
+    const nightly = executionContext({ correlationId: 'nightly', actor: systemActor('nightly'), origin: 'schedule' });
+
+    await scope.run(memberOf('acme'), () => queue.enqueue(CompileStatementsJob, FEBRUARY));
+
+    const job = await scope.run(nightly, () =>
+      acrossTenants(options, { reason: 'NIGHTLY_SWEEP', tenants: ['acme'] }, () => queue.find('job-1')),
+    );
+
+    expect(job?.tenantId).toBe('acme');
+    expect(recorded.map(({ reason }) => reason)).toEqual(['NIGHTLY_SWEEP']);
+  });
+
+  it('still take a job from work that names no tenant, which runs in none', async () => {
+    const { queue, scope } = aQueueBench({ tenant: true });
+
+    const enqueued = await scope.run(noTenant(), () => queue.enqueue(CompileStatementsJob, FEBRUARY));
+
+    expect(enqueued).toEqual({ id: 'job-1', duplicate: false });
   });
 });
