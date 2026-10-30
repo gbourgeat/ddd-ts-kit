@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:3b2e2f6a66e8cd68 -->
+<!-- translation-of: coding-agents.md sha256:3527325cf51987a4 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -70,13 +70,14 @@ tokens. Un test du plugin (`node --test plugin/skills/descriptions.test.mjs`) ti
 Le corps d'une skill est lu en entier dès qu'elle se charge : ce qu'une seule option de `stack`
 demande est donc rangé à côté. Le corps garde chaque règle et une ligne, « sous
 `stack.<clé>: <valeur>`, lire d'abord `<fichier>.md` », et le fichier, lu sur cette stack
-seulement, s'ouvre sur le moment où on le lit et renvoie à la page de `docs/concepts/` qu'il
-paraphrase. `wiring` garde le style déclaré et lit `explicit.md`, `nest.md` et
-`earlier-layouts.md` ; `access-control` lit `relationships.md` sous `rebac` ; `persistence` lit
-`tenancy.md`, `event-sourcing.md`, `personal-data.md` et `migrations.md` ; `use-case` lit
-`factories.md`, `function-routes.md` et `file-upload.md`. Sur la stack par défaut, charger
-`wiring` coûte environ 430 mots de moins que quand il les tenait tous, `access-control` environ
-530, `persistence` environ 990.
+seulement, s'ouvre sur le moment où on le lit et renvoie à la page de `docs/` qu'il paraphrase
+(sous `concepts/`, `tools/` ou `guides/`). `wiring` garde le style déclaré et lit `explicit.md`,
+`nest.md` et `earlier-layouts.md` ; `access-control` lit `relationships.md` sous `rebac` ;
+`persistence` lit `tenancy.md`, `event-sourcing.md`, `personal-data.md` et `migrations.md` ;
+`use-case` lit `factories.md`, `function-routes.md` et `file-upload.md`. Un test du plugin
+(`node --test plugin/skills/bodies.test.mjs`) tient ces quatre corps sous un plafond de mots,
+comptés comme `wc -w` les compte : `wiring` 1 200, `access-control` 1 900, `persistence` 1 200,
+`use-case` 2 200.
 
 Le hook est la partie qui rend le reste contraignant. Dans un projet qui a un
 `ddd-ts-kit.config.json`, il rappelle la démarche et la carte des contextes au début de la

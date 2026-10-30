@@ -68,12 +68,14 @@ others at about 1,600 tokens. A test of the plugin
 The body of a skill is read whole once the skill loads, so what one option of `stack` needs is
 kept beside it: the body keeps every rule and one line, "under `stack.<key>: <value>`, read
 `<file>.md` first", and the file, read on that stack only, opens with when it is read and points
-to the page of `docs/concepts/` it paraphrases. `wiring` keeps the declared style and reads
-`explicit.md`, `nest.md` and `earlier-layouts.md`; `access-control` reads `relationships.md`
-under `rebac`; `persistence` reads `tenancy.md`, `event-sourcing.md`, `personal-data.md` and
-`migrations.md`; `use-case` reads `factories.md`, `function-routes.md` and `file-upload.md`. On
-the default stack, loading `wiring` costs about 430 words less than when it held them all,
-`access-control` about 530, `persistence` about 990.
+to the page of `docs/` it paraphrases (under `concepts/`, `tools/` or `guides/`). `wiring` keeps
+the declared style and reads `explicit.md`, `nest.md` and `earlier-layouts.md`;
+`access-control` reads `relationships.md` under `rebac`; `persistence` reads `tenancy.md`,
+`event-sourcing.md`, `personal-data.md` and `migrations.md`; `use-case` reads `factories.md`,
+`function-routes.md` and `file-upload.md`. A test of the plugin
+(`node --test plugin/skills/bodies.test.mjs`) holds these four bodies under a ceiling of words,
+as `wc -w` counts them: `wiring` 1,200, `access-control` 1,900, `persistence` 1,200, `use-case`
+2,200.
 
 The hook is the part that makes the rest binding. In a project that has a
 `ddd-ts-kit.config.json` it reminds the workflow and the context map at session start, says
