@@ -83,6 +83,7 @@ function configIn(directory: string): Config | string {
   try {
     return readConfig(directory).config;
   } catch (error) {
+    /* v8 ignore next 3 -- ADR-0001: readConfig refuses with a CliError: what is left is a fault of the kit */
     if (!(error instanceof CliError)) {
       throw error;
     }
