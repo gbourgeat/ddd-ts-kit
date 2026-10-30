@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ace9b93671dda53c -->
+<!-- translation-of: README.md sha256:20d784abd49495f0 -->
 
 # ddd-ts-kit
 
@@ -656,7 +656,8 @@ emplacements à remplacer documentés.
 
 Chaque `uses:` des workflows GitHub générés nomme l'empreinte d'un commit, avec son étiquette en
 commentaire (`actions/checkout@<40 chiffres hexadécimaux> # v7.0.1`), car une étiquette peut
-bouger et une empreinte non ; le `renovate.json` étend `helpers:pinGitHubActionDigests` et
+bouger et une empreinte non ; le `renovate.json` étend `helpers:pinGitHubActionDigests` (le préréglage ne correspond à aucun
+fichier dans un projet sans workflows GitHub, `--ci gitlab` par exemple, et y est inerte) et
 Dependabot tient aussi les empreintes à jour.
 
 `--agent-profile regulated` enregistre `agents.profile` dans la configuration, avec ou sans

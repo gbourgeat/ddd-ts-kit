@@ -629,7 +629,9 @@ documented placeholders.
 
 Every `uses:` of the generated GitHub workflows names the digest of a commit with its tag in a comment
 (`actions/checkout@<40 hex digits> # v7.0.1`), since a tag can move and a digest cannot; the
-`renovate.json` extends `helpers:pinGitHubActionDigests` and Dependabot keeps the digests current too.
+`renovate.json` extends `helpers:pinGitHubActionDigests` (the preset matches no file in a project
+without GitHub workflows, `--ci gitlab` for one, and is inert there) and Dependabot keeps the digests
+current too.
 
 `--agent-profile regulated` records `agents.profile` in the config, with or without `--force`
 (`--agent-profile none` removes it), and writes the `sandbox` block of Claude Code next to the
