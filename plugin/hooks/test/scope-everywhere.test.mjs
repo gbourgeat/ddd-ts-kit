@@ -464,10 +464,100 @@ test('a worker reads git anywhere, and writes in its own worktree however it nam
     `git -C ${worktree} commit -m "feat(billing): a slice"`,
     `cd ${worktree} && git worktree list`,
     `cd ${worktree} && git symbolic-ref HEAD`,
-    `cd ${worktree} && git checkout -b work/billing-2`,
+    `cd ${worktree} && git switch work/billing`,
   ]) {
     assert.equal(run('pre-bash', bash(conductor, command, agent)).output, undefined, command);
   }
+});
+
+// A worker's git keeps to its own branch: the one its scope file records, else the one its worktree has checked out.
+const OWN_BRANCH_REFUSED = [
+  'git push origin HEAD:main',
+  'git push origin main',
+  'git push origin :main',
+  'git push origin +work/billing',
+  'git push --delete origin work/billing',
+  'git push -d origin work/billing',
+  'git push --force',
+  'git push -f',
+  'git push -uf origin work/billing',
+  'git push --force-with-lease',
+  'git push --force-with-lease=work/billing origin work/billing',
+  'git push --all origin',
+  'git push --tags',
+  'git push --mirror',
+  'git fetch origin main:main',
+  'git fetch origin +refs/heads/main:refs/heads/main',
+  'git tag x',
+  'git tag -d x',
+  'git tag -a v1 -m release',
+  'git checkout -b x',
+  'git checkout -B work/billing',
+  'git checkout --orphan x',
+  'git checkout --detach',
+  'git checkout main',
+  'git checkout -',
+  'git switch main',
+  'git switch -c x',
+  'git switch --create x',
+  'git switch -C work/billing',
+  'git switch --orphan x',
+  'git switch --detach HEAD~1',
+  'git switch -',
+];
+
+const OWN_BRANCH_ALLOWED = [
+  'git push',
+  'git push -u origin work/billing',
+  'git push --set-upstream origin work/billing',
+  'git push origin work/billing',
+  'git push origin refs/heads/work/billing',
+  'git push origin HEAD',
+  'git push origin HEAD:work/billing',
+  'git push origin HEAD:refs/heads/work/billing',
+  'git push -o ci.skip origin work/billing',
+  'git fetch origin main',
+  'git fetch',
+  'git tag',
+  'git tag -l "v*"',
+  'git tag --contains HEAD',
+  'git checkout work/billing',
+  'git checkout -- src/contexts/billing/CONTEXT.md',
+  'git checkout main -- src/contexts/billing/CONTEXT.md',
+  'git checkout HEAD src/contexts/billing/CONTEXT.md',
+  'git checkout -p main',
+  'git checkout',
+  'git switch work/billing',
+];
+
+test("a worker's git keeps to its own branch: it pushes it alone, fetches into no ref, makes no tag and checks out no other", () => {
+  const { conductor, worktree, agent } = pinnedBuilder('own-branch');
+  put(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing', branch: 'work/billing' }));
+  put(worktree, 'src/contexts/billing/CONTEXT.md', '# billing\n');
+  for (const command of OWN_BRANCH_REFUSED) {
+    const refused = run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /a worker's git keeps to its branch `work\/billing`/, command);
+  }
+  for (const command of OWN_BRANCH_ALLOWED) {
+    assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent)).output, undefined, command);
+  }
+  const fetched = run('pre-bash', bash(conductor, 'git fetch origin main:main', agent));
+  assert.match(reason(fetched), /fetches into no ref/);
+  assert.equal(run('pre-bash', bash(conductor, 'git fetch origin main', agent)).output, undefined);
+});
+
+test('a worker whose scope file records no branch keeps to the branch its worktree has checked out', () => {
+  const { conductor, worktree, agent } = pinnedBuilder('checked-out-branch');
+  assert.equal(
+    run('pre-bash', bash(conductor, `cd ${worktree} && git push origin work/billing`, agent)).output,
+    undefined,
+  );
+  const refused = run('pre-bash', bash(conductor, `cd ${worktree} && git push origin HEAD:main`, agent));
+  assert.match(reason(refused), /keeps to its branch `work\/billing`/);
+  git(worktree, 'checkout', '--quiet', '--detach');
+  const detached = run('pre-bash', bash(conductor, `cd ${worktree} && git push origin work/billing`, agent));
+  assert.match(reason(detached), /keeps to its own branch:/);
 });
 
 test('before its pin, a builder commits in a worktree that holds a scope, not in the conductor nor outside the repository', () => {
@@ -475,6 +565,8 @@ test('before its pin, a builder commits in a worktree that holds a scope, not in
   const first = builder('before-the-pin', conductor);
   assert.equal(run('pre-bash', bash(conductor, `git -C ${worktree} add .`, first)).output, undefined);
   assert.match(reason(run('pre-bash', bash(conductor, 'git add .', first))), /the conductor lands a branch/);
+  const pushed = run('pre-bash', bash(conductor, `git -C ${worktree} push origin HEAD:main`, first));
+  assert.match(reason(pushed), /keeps to its branch `work\/billing`/);
   const away = directory('no-repository');
   assert.match(reason(run('pre-bash', bash(conductor, `git -C ${away} commit -m x`, first))), /runs in/);
 });

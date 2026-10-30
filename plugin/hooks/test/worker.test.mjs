@@ -301,8 +301,6 @@ const WORKER_COMMANDS_ALLOWED = [
   'git log --oneline -5',
   "git commit -F - <<'EOF'\nfeat(invoicing): issue an invoice\n\nA total > 0 is checked; rm -rf src is a sentence here.\nEOF",
   'git commit -m "feat(invoicing): echo > file is a message"',
-  'git checkout -b build/invoicing-2',
-  'git checkout main',
   'git checkout -- src/contexts/invoicing/CONTEXT.md',
   'git restore src/contexts/invoicing/CONTEXT.md',
   'git restore --staged package.json',
@@ -343,6 +341,8 @@ const WORKER_COMMANDS_ALLOWED = [
 ];
 
 const WORKER_COMMANDS_REFUSED = [
+  ['git checkout -b build/invoicing-2', /a worker's git keeps to its own branch/],
+  ['git checkout main', /a worker's git keeps to its own branch/],
   ["sed -i.bak -e 's/a/b/' src/main.ts", /`sed -i` editing src\/main\.ts: You build the context/],
   ['perl -pi -e "s/a/b/" src/main.ts', /`perl -i` editing src\/main\.ts/],
   ["perl -i -pe 's/a/b/' package.json", /`perl -i` editing package\.json/],
@@ -457,7 +457,7 @@ const UNKNOWN_WRITERS = [
   ['git checkout -f', /`git checkout` changes the whole project/],
   ['git checkout --pathspec-from-file=list HEAD~1', /`git checkout` changes files only the shell knows/],
   ['git reset --hard HEAD~1', /`git reset` changes the whole project/],
-  ['git switch -f main', /`git switch` changes the whole project/],
+  ['git switch -f main', /a worker's git keeps to its own branch/],
   ['git read-tree -u --reset HEAD', /`git read-tree` changes the whole project/],
   ['git checkout-index -f -a', /`git checkout-index` changes the whole project/],
   ['git worktree add .worktrees/evil', /`git worktree` changes \.worktrees\/evil/],

@@ -165,9 +165,14 @@ refuses a dependency change and another formatter than `npm run format`. The `ar
 tree by git (they read with `git show` and `git diff`). A sub-agent is refused
 deleting, moving or resetting a branch checked out in another worktree (another worker's, or the
 trunk), short options bundled or long ones cut included. A worker's git changes its own worktree
-only: from any other checkout it reads (`status`, `log`, `diff`, `worktree list`, `fetch`...), so
-only the conductor lands a branch or moves its checkout, and no worker removes a worktree or writes
-a ref (`worktree remove`, `update-ref`). The same shell reading holds the `domain-test-writer` to
+only: from any other checkout it reads (`status`, `log`, `diff`, `worktree list`, `fetch` into no
+ref...), so only the conductor lands a branch or moves its checkout, and no worker removes a
+worktree or writes a ref by `update-ref` or `symbolic-ref`. In its worktree, its git keeps to its
+own branch, the one its scope file records (else the one checked out there): it pushes that branch
+alone (`git push`, `git push -u origin <branch>`, `HEAD:<branch>`), without `--force`, `-f`,
+`--force-with-lease`, a `+` refspec, a deletion (`:<ref>`, `--delete`, `-d`) nor `--all`,
+`--tags` or `--mirror`; it fetches into no ref (`git fetch origin main:main`), makes no tag, and
+checks out or switches to no other branch nor creates one (`-b`, `-c`, `--orphan`, `--detach`). The same shell reading holds the `domain-test-writer` to
 the paths of a test (a spec, the root `test/` or the test folders of a context, and a file it names:
 a place only the shell knows is refused to it), the code of a story to its build gate, and every
 session's hand-writing of a generated file or the baseline, each by the places a command writes

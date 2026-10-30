@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:b9b003e5bd5f83f7 -->
+<!-- translation-of: coding-agents.md sha256:666c262d8a5fda3a -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -181,9 +181,15 @@ son arbre de travail par git (ils lisent avec `git show` et `git diff`). Un sous
 déplacer, ni réinitialiser une branche extraite dans un autre *worktree* (celle d'un autre
 *worker*, ou le tronc), options courtes groupées ou longues abrégées comprises. Le git d'un *worker*
 ne change que son propre *worktree* : depuis tout autre *checkout* il lit (`status`, `log`, `diff`,
-`worktree list`, `fetch`...), de sorte que seul le chef d'orchestre pose une branche ou déplace son
-*checkout*, et qu'aucun *worker* ne retire un *worktree* ni n'écrit une référence (`worktree remove`,
-`update-ref`). La même lecture
+`worktree list`, `fetch` vers aucune référence...), de sorte que seul le chef d'orchestre pose une
+branche ou déplace son *checkout*, et qu'aucun *worker* ne retire un *worktree* ni n'écrit une
+référence par `update-ref` ou `symbolic-ref`. Dans son *worktree*, son git s'en tient à sa propre
+branche, celle que note son fichier de périmètre (sinon celle qui y est extraite) : il pousse cette
+branche seule (`git push`, `git push -u origin <branche>`, `HEAD:<branche>`), sans `--force`, `-f`,
+`--force-with-lease`, *refspec* en `+`, suppression (`:<ref>`, `--delete`, `-d`) ni `--all`,
+`--tags` ou `--mirror` ; il ne récupère vers aucune référence (`git fetch origin main:main`), ne
+crée aucune étiquette, et n'extrait ni ne bascule vers une autre branche, ni n'en crée une (`-b`,
+`-c`, `--orphan`, `--detach`). La même lecture
 du *shell* tient le `domain-test-writer` aux chemins d'un test (une *spec*, le `test/` de la racine
 ou les dossiers de test d'un contexte, et un fichier qu'il nomme : un endroit que seul le *shell*
 connaît lui est refusé), le code d'une *story* à sa barrière

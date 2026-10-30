@@ -416,6 +416,32 @@ const GIT_READING_FORMS = {
   remote: [undefined, 'show', 'get-url'],
   tag: [undefined],
 };
+// What a worker's git may name of the refs: the options of push, fetch, tag, checkout and switch
+// that take a value, those of push that name other refs than its branch, those of tag that list,
+// those of checkout and switch that create a branch or leave it.
+const PUSH_VALUED = ['-o', '--push-option', '--repo', '--receive-pack', '--exec'];
+const PUSH_OTHER_REFS =
+  /^--(?:force|force-with-lease|force-if-includes|delete|all|branches|mirror|tags|follow-tags|prune)(?:=|$)/;
+const FETCH_VALUED = [
+  '-o',
+  '--server-option',
+  '--depth',
+  '--deepen',
+  '-j',
+  '--jobs',
+  '--upload-pack',
+  '--refmap',
+  '--filter',
+  '--negotiation-tip',
+];
+const TAG_VALUED = ['-m', '--message', '-F', '--file', '-u', '--local-user', '--cleanup'];
+const TAG_LISTS = /^(?:-l|--list|-v|--verify|--contains|--no-contains|--points-at|--merged|--no-merged)(?:=|$)/;
+const SWITCH_VALUED = ['-b', '-B', '-c', '-C', '--create', '--force-create', '--orphan', '--conflict'];
+const CHECKOUT_PATHS = /^(?:--ours|--theirs|-p|--patch|--pathspec-from-file(?:=.*)?)$/;
+const SWITCH_CREATES = {
+  checkout: /^(?:-[a-zA-Z]*[bB]|--orphan|--detach)$/,
+  switch: /^(?:-[a-zA-Z]*[cCd]|--create|--force-create|--orphan|--detach)$/,
+};
 // The options of `git branch` that delete, move, copy or reset a branch, and those that change its settings.
 const BRANCH_DELETES = ['-d', '-D', '--delete'];
 const BRANCH_MOVES = ['-m', '-M', '--move', '-c', '-C', '--copy'];
@@ -3138,8 +3164,74 @@ function workerGitReason(project, input, commands) {
     if (!readsAnywhere(subcommand, tail) && !isOwnCheckout(own, moved)) {
       return `\`git ${subcommand}\` runs in ${moved ?? 'a place only the shell knows'}, not in your worktree: only the conductor lands a branch or moves its checkout. Run it as \`cd <worktree> && ...\`, and report to the conductor that the branch is ready.`;
     }
+    const branch = () => workerBranch(own ?? findProject(moved).root);
+    if (leavesOwnBranch(subcommand, tail, { moved, branch })) {
+      const where = branch() === undefined ? 'its own branch' : `its branch \`${branch()}\``;
+      return `\`git ${subcommand}\`: a worker's git keeps to ${where}: it pushes that branch alone, without force nor deletion, fetches into no ref, makes no tag, and checks out no other branch nor creates one; the trunk and the other refs are the conductor's. ${REPORT_TO_CONDUCTOR}`;
+    }
   }
   return undefined;
+}
+
+// The branch of a worker: the one its scope file records, else the one its worktree has checked out.
+function workerBranch(root) {
+  const recorded = named(readJson(join(root, WORKER_SCOPE))?.branch, GIT_REF);
+  return recorded ?? named(git({ root }, ['symbolic-ref', '--quiet', '--short', 'HEAD'])?.trim(), GIT_REF);
+}
+
+// A push of another ref than the worker's branch, forced or deleting; a fetch into a ref; a tag; a
+// checkout or a switch to another branch, a new one or none. `branch` is read only when a ref is named.
+function leavesOwnBranch(subcommand, tail, { moved, branch }) {
+  if (subcommand === 'fetch') {
+    return shell
+      .operands(tail, FETCH_VALUED)
+      .slice(1)
+      .some((spec) => spec.includes(':'));
+  }
+  if (subcommand === 'tag') {
+    return shell.operands(tail, TAG_VALUED).length > 0 && !tail.some((word) => TAG_LISTS.test(word));
+  }
+  if (subcommand === 'push') {
+    return (
+      tail.some((word) => PUSH_OTHER_REFS.test(word) || /^-[a-zA-Z46]*[fd]/.test(word)) ||
+      shell
+        .operands(tail, PUSH_VALUED)
+        .slice(1)
+        .some((spec) => !pushesOwnBranch(spec, branch))
+    );
+  }
+  if (subcommand === 'checkout' || subcommand === 'switch') {
+    const target = switchTarget(subcommand, tail, moved);
+    return (
+      tail.some((word) => SWITCH_CREATES[subcommand].test(word)) ||
+      (target !== undefined && ![branch(), `refs/heads/${branch()}`].includes(target))
+    );
+  }
+  return false;
+}
+
+// A refspec of a push that names the worker's branch as its destination, or the current branch alone.
+function pushesOwnBranch(spec, branch) {
+  const [source, destination] = spec.split(':');
+  if (spec.startsWith('+') || source === '') {
+    return false;
+  }
+  const target = destination ?? source;
+  return (
+    (destination === undefined && ['HEAD', '@'].includes(target)) ||
+    [branch(), `refs/heads/${branch()}`].includes(target)
+  );
+}
+
+// The branch a checkout or a switch moves to: for a checkout, its one operand that names no file of
+// the tree, unless an option gives paths (`--ours`, `--theirs`, `--patch`, `--pathspec-from-file`).
+function switchTarget(subcommand, tail, moved) {
+  const named = shell.operands(tail, SWITCH_VALUED);
+  if (subcommand === 'switch') {
+    return named[0];
+  }
+  const paths = tail.includes('--') || tail.some((word) => CHECKOUT_PATHS.test(word));
+  return paths || named.length !== 1 || existsSync(resolve(moved, named[0])) ? undefined : named[0];
 }
 
 // The worktree a worker is pinned to, or the one its command stands in, before its first call is over.
