@@ -31,6 +31,10 @@ folders keeps them flat: read and write them there, or run `npx ddd-ts-kit platf
 when the team asks for the move (it moves the whole platform: `composition/`, `observability/`,
 `jobs/`, `audit/search-audit-entries/` too).
 
+Under `stack.authz: rebac`, read [relationships.md](relationships.md) first: who holds a
+permission left on the context, the resource each use case names, the searches and the system
+actors.
+
 ## A permission is mandatory
 
 Nothing is reachable by default (`authz/declared`): the generator refuses a command or a
@@ -47,13 +51,7 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
   super-admin `*` alone does not count: a permission no role names is refused to everybody
   else, and `check` warns (`authz/granted`). One meant for administrators only is granted to
   `Role.Admin` by name. A grant to every signed-in person goes in `authorization/signed-in-grants.ts`.
-  Under attributes or relationships, `--grant` is refused: give the right in that model. Under
-  relationships a permission left on the context is held by its operators, and `check` warns
-  (`authz/granted`) until some source writes an `operator` relationship on that context (a provisioning
-  step, a bootstrap, the grant of a system actor) or every signed-in person holds it. A job or a handler that
-  sends a protected command acts as a system actor, which needs its own relationship in
-  `relationships/relate-system-actors.ts` (`generate job` writes it for a job, a handler by hand
-  needs it): `authz/system-actor-granted` is an error without it.
+  Under attributes or relationships, `--grant` is refused: give the right in that model.
 
 - The permission is named in the ubiquitous language (`invoice.issue`, not `admin.write`),
   joins `<context>.permissions.ts`, and its words are checked
@@ -97,35 +95,6 @@ does not, and at run time its result is refused with `PolicyNotAskedError` and r
 generators write the question about the message; replace the message by the loaded aggregate. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
 the aggregate.
 
-## The resource of a use case under relationships
-
-Under `stack.authz` `rebac`, `generate command` and `generate query` (not a search) write the
-context as the resource, `{ resource: () => ({ type: 'context', id: '<context>' }) }`, and a
-`// TODO(domain): name the <element> this command is about` next to it, which `todo` and `status`
-list. The context is the right resource only for a use case on no element: declaring a service,
-running a search (its scope narrows the ids). A use case about one element (change the
-dependencies of a service, add a member to a team) names that element, once its message carries
-the id:
-
-```ts
-@Requires(cataloguePermissions['service.change'], {
-  resource: (command) => ({ type: 'service', id: command.serviceId }),
-})
-```
-
-and the schema derives the permission on that type (`service: { derived: { [cataloguePermissions['service.change'].id]: 'owning-member' } }`
-in `elements` of `relationships/relationship-schema.ts`). The schema written by `init` derives on
-`context` only the permissions no element derives: modelling a right on an element takes it away
-from the operators of the context. A right left on the context is held by every operator of it,
-and the project's bridge from roles to permissions (a member holds it) widens it to every
-member: any member then acts on any element, and every spec written as a member of the owning
-team stays green. When a search runs under the permission of its element, give the gate its own
-permission (`service.search`, on the context) and keep the scope on the element's
-(`service.view`), since the first is no longer held on the context once derived on the element.
-`authz/resource-modelled` (an error under relationships) reports a requirement on the context for
-a permission the schema derives on an element, and a search whose gate and scope share such a
-permission; a schema or a resource it cannot read is reported too.
-
 ## Searches
 
 Never load then filter in memory. `generate query ... --search` writes a handler that asks the
@@ -134,27 +103,15 @@ port; the adapter turns it into the query.
 
 A search across many elements asks two questions, under two permissions:
 
-- **May the actor run it?** The requirement of the query. Under relationships it always names a
-  resource (`RESOURCE_REQUIRED` otherwise): the enclosing one the generator writes,
-  `{ resource: () => ({ type: 'context', id: '<context>' }) }` (see "The resource of a use case
-  under relationships" below for the use cases that are about one element). When an actor who reaches no
-  element must get 403 rather than an empty page, name the tenant of the actor instead,
-  `{ type: 'tenant', id: <its tenant> }`, with, on the type `tenant`, the derived relation
-  `[<ctx>Permissions['folder.search'].id]: via('folder', <ctx>Permissions['folder.view'].id)` and a
-  tuple `tenant:<id>#folder@folder:<id>` written with each element. That check reads the elements of the tenant one by one for an actor who holds none.
+- **May the actor run it?** The requirement of the query.
 - **Which elements?** `Access.scope(query.actor, <context>Permissions['folder.view'], 'folder')`,
-  the permission of one element, mapped on its type: the relationships answer `ids`. An empty
-  page for an actor who reaches nothing is the right answer, not a leak.
+  the permission of one element, mapped on its type. An empty page for an actor who reaches
+  nothing is the right answer, not a leak.
 
 Never put the permission the scope asks in `signed-in-grants.ts` to let the query past the bus:
 what those grants cover lists `all` before the model is asked, so every signed-in person reads
 every element. When anybody may run the search, grant there its own permission
 (`folder.search`) and keep the scope on the permission of the element.
-
-Prove it with the real authorizer (the schema, the mapping and an `InMemoryRelationTupleStore`
-in `authorizationModule`), never `AllowAll` nor an answer written by hand: an element is absent
-for an actor with no relation to it, absent for the actor of another element, and absent from
-the page asked without any criterion.
 
 ## A field only some callers see
 
