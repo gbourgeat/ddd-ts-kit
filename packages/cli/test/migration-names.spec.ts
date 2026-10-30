@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { cli, exists, tempDir, write } from './helpers';
 
+/** The ORM whose tool is at `node_modules/<package>/...`. */
+function ormOf(bin: string): string {
+  const [, name = ''] = bin.split('/');
+
+  return name === 'drizzle-kit' ? 'drizzle' : name;
+}
+
 /** A project whose ORM tool is a stand-in that leaves a mark when it runs. */
 function projectWithTool(bin: string): string {
   const root = tempDir('migration-names');
 
-  write(root, 'ddd-ts-kit.config.json', JSON.stringify({ contexts: {} }));
+  write(root, 'ddd-ts-kit.config.json', JSON.stringify({ contexts: {}, stack: { orm: ormOf(bin) } }));
   write(root, bin, "require('node:fs').writeFileSync('tool-ran', '');\n");
 
   return root;

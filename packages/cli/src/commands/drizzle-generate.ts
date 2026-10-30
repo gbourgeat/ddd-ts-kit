@@ -7,6 +7,7 @@ import {
   auditGuardStatementsOf,
   generateAndRead,
   migrationName,
+  refuseOtherOrm,
   replayDrizzleMigrations,
   schemasIfMissing,
   tidyWrittenMigration,
@@ -33,6 +34,8 @@ export const drizzleGenerateCommand: Command = (argv, io) => {
   });
 
   const root = args.projectRoot;
+
+  refuseOtherOrm(root, 'drizzle');
   const interactive = process.stdin.isTTY && process.stdout.isTTY;
 
   if (args.flag('replay')) {

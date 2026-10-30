@@ -15,4 +15,5 @@ export { schemasIfMissing } from './audit-guard/schemas-if-missing';
 export { hasDatabaseUrl } from './has-database-url';
 export { runOnInProcessDatabase } from './run-on-in-process-database';
 export { offlinePrismaMigration } from './offline-prisma-migration';
+export { refuseOtherOrm } from './refuse-other-orm';
 export { migrationName } from './migration-name';

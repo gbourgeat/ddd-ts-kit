@@ -74,9 +74,13 @@ describe('a command given less than it needs', () => {
     write(root, 'docs/architecture/slices.md', '# Slices\n');
 
     expect(failure(cli(root, 'plan-waves', '--json')).message).toBe('docs/architecture/slices.md has no slices table.');
-    expect(failure(cli(root, 'prisma-generate', '--json')).message).toBe('A migration is named by what it does.');
 
-    expect(failure(cli(root, 'typeorm-generate', '--json')).message).toBe(
+    const prisma = bareProject('names-prisma', { contexts: {}, stack: { orm: 'prisma' } });
+    const typeorm = bareProject('names-typeorm', { contexts: {}, stack: { orm: 'typeorm' } });
+
+    expect(failure(cli(prisma, 'prisma-generate', '--json')).message).toBe('A migration is named by what it does.');
+
+    expect(failure(cli(typeorm, 'typeorm-generate', '--json')).message).toBe(
       'A migration is named by where it goes and what it does.',
     );
   });

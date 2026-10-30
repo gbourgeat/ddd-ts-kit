@@ -5,6 +5,7 @@ import {
   hasDatabaseUrl,
   migrationName,
   offlinePrismaMigration,
+  refuseOtherOrm,
   runOrmTool,
 } from '../migration';
 import { Arguments } from './arguments';
@@ -18,6 +19,8 @@ import type { Command } from './command';
 export const prismaGenerateCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, { name: { type: 'string' } });
   const root = args.projectRoot;
+
+  refuseOtherOrm(root, 'prisma');
 
   const name = migrationName(
     requiredName(args.text('name')?.trim() ?? ''),
