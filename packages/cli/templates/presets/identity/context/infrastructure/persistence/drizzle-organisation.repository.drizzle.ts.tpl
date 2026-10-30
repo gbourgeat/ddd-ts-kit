@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
+import { optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
@@ -48,7 +48,7 @@ export class DrizzleOrganisationRepository implements OrganisationRepository {
     return executorOf(this.database)
       .insert(organisations)
       .values(row)
-      .onConflictDoNothing({ target: organisations.id })
+      .onConflictDoNothing({ target: primaryKeyOf(organisations) })
       .returning({ id: organisations.id });
   }
 

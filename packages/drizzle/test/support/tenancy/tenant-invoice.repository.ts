@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { FixedClock, stampCreation, stampUpdate, tenantScopeOf, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate, ownTenantCondition, tenantCondition } from '../../../src/postgres';
+import { optimisticUpdate, ownTenantCondition, primaryKeyOf, tenantCondition } from '../../../src/postgres';
 import type { Database } from '../platform/database/database';
 import { Invoice, type InvoiceState } from '../billing-core/domain/invoice';
 import type { InvoiceRepository } from '../billing-core/domain/repositories/invoice.repository';
@@ -56,7 +56,7 @@ export class TenantInvoiceRepository implements InvoiceRepository {
       .executor()
       .insert(invoices)
       .values(row)
-      .onConflictDoNothing({ target: invoices.id })
+      .onConflictDoNothing({ target: primaryKeyOf(invoices) })
       .returning({ id: invoices.id });
   }
 

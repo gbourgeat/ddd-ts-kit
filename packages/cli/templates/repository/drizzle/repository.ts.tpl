@@ -1,9 +1,9 @@
 import { and, eq } from 'drizzle-orm';
 {{#if tenant.scoped}}
-import { optimisticUpdate, ownTenantCondition, tenantCondition } from '@ddd-ts-kit/drizzle/postgres';
+import { optimisticUpdate, ownTenantCondition, primaryKeyOf, tenantCondition } from '@ddd-ts-kit/drizzle/postgres';
 {{/if}}
 {{#unless tenant.scoped}}
-import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
+import { optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
 {{/unless}}
 {{#if tenant.scoped}}
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
@@ -64,7 +64,7 @@ export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal
 
     const insertion = this.database.executor().insert({{aggregate.tableCamel}}).values(row);
     // The key alone: a row that takes a value another row holds under another unique constraint is refused.
-    const ignoringTheKey = insertion.onConflictDoNothing({ target: {{aggregate.tableCamel}}.id });
+    const ignoringTheKey = insertion.onConflictDoNothing({ target: primaryKeyOf({{aggregate.tableCamel}}) });
 
     return ignoringTheKey.returning({ id: {{aggregate.tableCamel}}.id });
   }
