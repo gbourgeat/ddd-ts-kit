@@ -6,7 +6,7 @@ import { vars } from '../vars';
 import { assertEventStore } from './assert-event-store';
 import { birthNames } from './birth-names';
 import { instantOf } from './instant-of';
-import { writeDomainEvent } from './write-domain-event';
+import { writeBirth } from './write-birth';
 
 /** The fact an event-sourced aggregate is born with when `--birth` names none: its stream starts with it. */
 const DEFAULT_BIRTH = 'Created';
@@ -28,14 +28,14 @@ export function writeEventSourcedAggregate(scope: Scope, name: Name): void {
     instant: instantOf(names.fact),
   };
 
-  emit(scope, vars(scope, { name: named(name), aggregate: named(name), event }), [
+  const [aggregate] = emit(scope, vars(scope, { name: named(name), aggregate: named(name), event }), [
     ['aggregate/event-sourced.aggregate.ts.tpl', `domain/aggregates/${name.kebab}.aggregate.ts`],
     ['aggregate/event-sourced.events.mapper.ts.tpl', `infrastructure/persistence/${name.kebab}-events.mapper.ts`],
     ['builder/event-sourced.builder.ts.tpl', `test/builders/${name.kebab}.builder.ts`],
     ['aggregate/event-sourced.aggregate.spec.ts.tpl', `test/unit/${name.kebab}.aggregate.spec.ts`],
   ]);
 
-  writeDomainEvent(scope, names);
+  writeBirth(scope, name, names, aggregate === true);
 
   scope.ws.note(
     `${name.pascal} is event-sourced: \`ddd-ts-kit generate repository ${scope.context.kebab} ${name.pascal}\` writes its repository adapter, which delegates to EventSourcedRepository of @ddd-ts-kit/kernel over the EventStore the platform binds (persistence.eventSourcing, in the event_store schema; the SubjectKeyStore and the PersonalDataCipher of src/platform/event-sourcing/ seal its personal values), and its stored events are declared in infrastructure/persistence/${name.kebab}-events.mapper.ts. See docs/concepts/event-sourcing.md of ddd-ts-kit.`,

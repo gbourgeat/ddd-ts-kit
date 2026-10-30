@@ -69,3 +69,25 @@ describe('the fact of a domain event that starts with its aggregate', () => {
     expect(exists(root, 'src/contexts/ordering/domain/events/order-confirmed.event.ts')).toBe(true);
   });
 });
+
+describe('--birth on an aggregate that already exists', () => {
+  it('writes no event, and says that --birth applies to a new aggregate', () => {
+    const root = orderProject();
+
+    const again = cli(
+      root,
+      'generate',
+      'aggregate',
+      'ordering',
+      'Order',
+      '--birth',
+      'Rebirthed',
+      '--term',
+      'Rebirth=Again',
+    );
+
+    expect(again.code).toBe(0);
+    expect(again.stdout).toContain('--birth Rebirthed applies to a new aggregate');
+    expect(exists(root, 'src/contexts/ordering/domain/events/order-rebirthed.event.ts')).toBe(false);
+  });
+});

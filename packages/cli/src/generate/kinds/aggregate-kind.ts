@@ -10,7 +10,7 @@ import { vars } from '../vars';
 import type { Name } from '../../naming';
 import { birthNames } from './birth-names';
 import { birthVars } from './birth-vars';
-import { writeDomainEvent } from './write-domain-event';
+import { writeBirth } from './write-birth';
 import { writeEventSourcedAggregate } from './write-event-sourced-aggregate';
 
 export const aggregateKind: Kind = {
@@ -47,13 +47,13 @@ function writeAggregate(scope: Scope, name: Name): void {
   const input = scope.flags.birth;
   const birth = input === undefined ? undefined : birthNames(scope, name, input);
 
-  emit(scope, vars(scope, { name: named(name), aggregate: named(name), birth: birthVars(birth) }), [
+  const [aggregate] = emit(scope, vars(scope, { name: named(name), aggregate: named(name), birth: birthVars(birth) }), [
     ['aggregate/aggregate.ts.tpl', `domain/aggregates/${name.kebab}.aggregate.ts`],
     ['builder/builder.ts.tpl', `test/builders/${name.kebab}.builder.ts`],
     ['aggregate/aggregate.spec.ts.tpl', `test/unit/${name.kebab}.aggregate.spec.ts`],
   ]);
 
   if (birth !== undefined) {
-    writeDomainEvent(scope, birth);
+    writeBirth(scope, name, birth, aggregate === true);
   }
 }

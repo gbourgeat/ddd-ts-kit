@@ -1,0 +1,1 @@
+**`generate aggregate --birth` on an aggregate that already exists no longer writes an event the aggregate does not record.** The aggregate is kept, the birth event and its spec are not written, and a `note:` says that `--birth` applies to a new aggregate: add the event with `generate domain-event`, or replace the aggregate with `--force`. The same holds for `--event-sourced`.
