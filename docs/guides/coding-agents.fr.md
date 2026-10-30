@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:e8d93add0348fd18 -->
+<!-- translation-of: coding-agents.md sha256:907d813031def990 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -146,7 +146,10 @@ comme premier opérande de `node` ou d'un exécuteur de paquet), la garde note l
 *worktree*, du *checkout* de la session quand c'en est un autre, et le manifeste et le *bin* de la
 CLI du kit et de Biome dans `node_modules`), et le compare à l'appel suivant du *worker*. Une lecture
 laisse en place la note du *worktree*, pour ce que la commande a laissé tourner en arrière-plan,
-jusqu'à un changement ou une nouvelle note. L'arrêt du *worker* la compare une dernière fois : le
+jusqu'à un changement ou une nouvelle note. L'arrêt du *worker* la compare une dernière fois, avec ce que sa branche contient hors du
+périmètre depuis la base que note son fichier de périmètre (`baseCommit` : les *commits* depuis,
+ce que le tronc a apporté mis à part, et les fichiers non *committés* ; un fichier de périmètre
+sans base laisse les *commits* non comparés, la garde laissant passer) : le
 *worker* continue une fois pour remettre un fichier en état, et ce qui reste est dit au chef
 d'orchestre dans `lastStop.outside` de `agent.json`, dans son rapport, dans `status --workers` et
 dans `worker-scope --resume`. Un `git status` qui ne répond pas en entier ne compare rien, et la

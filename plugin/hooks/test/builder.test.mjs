@@ -631,3 +631,24 @@ test("the guard's own git runs no program a repository plants in its config or i
   run('stop', { cwd: root });
   assert.equal(existsSync(marker), false);
 });
+
+test('at its stop, a builder is told the files outside its scope its branch committed since its base', () => {
+  const root = committed();
+  const base = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
+  put(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'ordering', baseCommit: base }));
+  const agent = builder('committed-outside');
+  run('pre-bash', bash(root, 'git status', agent));
+  put(root, 'src/contexts/billing/domain/invoice.ts', 'export const invoice = 1;\n');
+  put(root, 'src/contexts/ordering/domain/order.ts', 'export const order = 1;\n');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'feat(ordering): an order');
+  const stopped = run('subagent-stop', { cwd: root, ...agent, stop_hook_active: false });
+  assert.equal(stopped.output.decision, 'block');
+  assert.match(stopped.output.reason, /src\/contexts\/billing\/domain\/invoice\.ts/);
+  assert.doesNotMatch(stopped.output.reason, /ordering\/domain\/order\.ts/);
+  // Without the base the scope file records, the stop compares what it noted alone.
+  put(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'ordering' }));
+  const unknown = builder('no-base');
+  run('pre-bash', bash(root, 'git status', unknown));
+  assert.equal(run('subagent-stop', { cwd: root, ...unknown, stop_hook_active: false }).output, undefined);
+});

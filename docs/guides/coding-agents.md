@@ -137,7 +137,10 @@ kit counts as the program, or as the first operand of `node` or of a package run
 `git status` and `HEAD` of the worktree, of the session's checkout when it is another, and the
 manifest and bin of the kit's CLI and of Biome in `node_modules`), and compares it at the worker's
 next call. A read leaves the note of the worktree standing, for what the command left running in the
-background, until a change or a new note. The worker's stop compares it one last time: the worker
+background, until a change or a new note. The worker's stop compares it one last time, with what its branch holds outside the scope since the
+base its scope file records (`baseCommit`: the commits since then, what the trunk brought in left
+out, and the uncommitted files; a scope file without a base leaves the commits uncompared, as the
+guard fails open): the worker
 goes on once to put a file back, and what stays is said to the conductor in `lastStop.outside` of
 `agent.json`, in its report, in `status --workers` and in `worker-scope --resume`. A `git status`
 that does not answer in full compares nothing, and the guard says so. A file of the worktree changed outside the scope, deleted or committed included, stops the

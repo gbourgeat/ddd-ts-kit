@@ -1183,9 +1183,24 @@ function changedAtStop(places, input) {
     return undefined;
   }
   const told = settleNote(project, input, false) ?? heldChangeReason(project, input, [])?.reason;
-  const said = [notice, told].filter(Boolean).join('\n');
+  const said = [notice, told, branchOutsideReason(project, input)].filter(Boolean).join('\n');
   notice = undefined;
   return said || undefined;
+}
+
+// What the branch of a worker holds outside its scope since the base its scope file records: its
+// commits since then, what the trunk brought in left out, and what stays uncommitted. A scope file
+// that records no base leaves the commits uncompared, as the guard fails open.
+function branchOutsideReason(project, input) {
+  const base = readJson(join(project.root, WORKER_SCOPE))?.baseCommit;
+  if (typeof base !== 'string' || !/^[0-9a-f]{7,64}$/.test(base)) {
+    return undefined;
+  }
+  const outside = worktreeOutside(project, input);
+  const paths = [...committedSince(project, base, outside).keys(), ...Object.keys(snapshot(project, outside).changes)];
+  return paths.length === 0
+    ? undefined
+    : `Your branch holds files outside your scope since its base ${base.slice(0, 12)}: ${[...new Set(paths)].join(', ')}. Take them out of your branch (\`git checkout ${base.slice(0, 12)} -- <path>\` or \`git rm\` for a new file, then \`git commit\`), or name them in your report for the conductor. ${REPORT_TO_CONDUCTOR}`;
 }
 
 function releasePin(pin) {
