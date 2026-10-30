@@ -1,5 +1,5 @@
 [English](0001-lines-left-out-of-the-coverage-measure.md) · **Français**
-<!-- translation-of: 0001-lines-left-out-of-the-coverage-measure.md sha256:4cd34e3adfa73e06 -->
+<!-- translation-of: 0001-lines-left-out-of-the-coverage-measure.md sha256:7988b9396335ec7a -->
 
 # ADR-0001 : les lignes laissées hors de la mesure de couverture
 
@@ -21,6 +21,7 @@ Chaque vérification garde un état que ses appelants ne peuvent pas produire. L
 | `cli`, `timeline-of.ts`, une liste de commits vide | Ce code s'exécute une fois un commit de rapport trouvé, aucune liste n'est donc vide. |
 | `cli`, `format-progress.ts`, une ligne sans valeur `ready` | `statusRowOf` donne une valeur `ready` à chaque ligne qui n'est pas terminée. |
 | `cli`, `forecast-merge.ts`, une erreur qui n'est pas une `CliError` | Seul un blob en conflit trop grand pour une chaîne arrive ici, au-delà de 512 Mio : une spec ne peut pas se l'offrir. |
+| `cli`, `tree-at.ts`, un lecteur qui échoue sans `CliError` | Un lecteur refuse avec une `CliError` : ce qui reste est une faute du kit, ou une source trop grande pour une chaîne. |
 | `eslint-plugin`, `pattern-identifiers.ts`, un autre genre de cible | L'analyseur refuse une expression membre dans une déclaration ou un paramètre. |
 | `eslint-plugin`, `returns-package-type.ts`, `this` comme nom | `this` n'apparaît dans un nom d'entité que sous `typeof`, jamais dans une référence de type. |
 

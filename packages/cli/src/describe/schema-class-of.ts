@@ -8,5 +8,14 @@ export function schemaClassOf(source: string, written: string): string {
 
   const inline = /^classSchema\((\w+)/.exec(written)?.[1];
 
-  return inline ?? new RegExp(String.raw`\bconst ${written} = classSchema\((\w+)`).exec(source)?.[1] ?? written;
+  return inline ?? constantClassOf(source, written) ?? written;
+}
+
+/** The class of the schema constant `written`; anything but a name, a schema written inline for one, is none. */
+function constantClassOf(source: string, written: string): string | undefined {
+  if (!/^\w+$/.test(written)) {
+    return undefined;
+  }
+
+  return new RegExp(String.raw`\bconst ${written} = classSchema\((\w+)`).exec(source)?.[1];
 }

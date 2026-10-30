@@ -37,6 +37,7 @@ export function treeAt(root: string, commit: string, directory: string): Project
   try {
     return { ws, config, grants, contexts: describeOnDisk(ws, config, readContexts(ws, config)) };
   } catch (error) {
+    /* v8 ignore next 3 -- ADR-0001: a reader refuses with a CliError: what is left is a fault of the kit, or a source too large for a string */
     if (!(error instanceof CliError)) {
       throw error;
     }
