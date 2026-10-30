@@ -27,13 +27,17 @@ the command through a table of the same database, for the same reason.
 
 ## Declaring and enqueueing
 
-A job is a class of `application/background/`: a static `jobName`, a decorator with its
-options, and a `run` method that sends commands. This one is the job of the running example,
-which cancels the appointments of a calendar before an absence of its practitioner:
+A job is a class of `application/background/`: a static `jobName`, a static `payload` schema, a
+decorator with its options, and a `run` method that sends commands. This one is the job of the
+running example, which cancels the appointments of a calendar before an absence of its
+practitioner. Its payload schema is written here with zod; the example writes it with
+class-validator, its validation library, as a class of decorated fields without initial value
+(a field the stored payload lacks would take that value, and pass):
 
 <!-- checked sample -->
 ```ts
 // scheduling/application/background/clear-calendar.background-job.ts
+import { z } from 'zod';
 import {
   AuthorizedCommand,
   isRefusal,
@@ -43,18 +47,24 @@ import {
   type CommandBus,
 } from '@ddd-ts-kit/kernel';
 import { Background } from '@ddd-ts-kit/kernel/declarations';
+import type { Infer } from '@ddd-ts-kit/validation';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
 
 // the command of another use case of the context, which the job sends
 declare class CancelAppointmentCommand extends AuthorizedCommand {
   constructor(actor: Actor, appointmentId: string, reason: string);
 }
 
-/** Plain JSON: ids and text, a date as its ISO text. */
-export interface ClearCalendarPayload {
-  readonly calendarId: string;
-  readonly appointmentIds: readonly string[];
-  readonly reason: string;
-}
+// plain JSON: ids and text, a date as its ISO text
+const payloadSchema = zodSchema(
+  z.object({
+    calendarId: z.string().min(1),
+    appointmentIds: z.array(z.string()),
+    reason: z.string(),
+  }),
+);
+
+export type ClearCalendarPayload = Infer<typeof payloadSchema>;
 
 /** What an attempt left behind: the number of appointments of the payload already handled. */
 interface ClearCalendarCheckpoint {
@@ -64,6 +74,9 @@ interface ClearCalendarCheckpoint {
 @Background({ timeout: '30m', lease: '1m' })
 export class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarPayload> {
   static readonly jobName = 'scheduling.clear-calendar';
+
+  // read by the worker before each run: a stored payload that does not fit it is never run
+  static readonly payload = payloadSchema;
 
   constructor(private readonly commands: CommandBus) {}
 
@@ -126,6 +139,7 @@ import {
   type Actor,
   type BackgroundJob,
   type BackgroundJobExecution,
+  type BackgroundJobPayloadSchema,
 } from '@ddd-ts-kit/kernel';
 import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
@@ -137,6 +151,7 @@ interface ClearCalendarPayload {
 }
 declare class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarPayload> {
   static readonly jobName: 'scheduling.clear-calendar';
+  static readonly payload: BackgroundJobPayloadSchema<ClearCalendarPayload>;
   run(payload: ClearCalendarPayload, execution: BackgroundJobExecution): Promise<void>;
 }
 declare abstract class AppointmentRepository {
@@ -189,7 +204,11 @@ does not compile, since `appointmentIds` and `reason` are missing.
   label of its metrics and its spans, and the key of its idempotency. The **queue** of a job is
   its context, the first part of its name.
 - **The payload** is plain JSON, typed by the class: `enqueue` refuses at compile time a payload
-  that is not the one `run` takes. A date travels as its ISO text.
+  that is not the one `run` takes. A date travels as its ISO text. The static `payload` of the
+  class is its schema, in the validation library of the project (zod, class-validator, TypeBox,
+  Standard Schema, or the `BackgroundJobPayloadSchema` of the kernel written by hand): the
+  worker reads the stored payload with it before each run, and hands `run` what the schema
+  answers. A class without one does not compile where it is enqueued, declared or registered.
 - **Options**: `delay` or `runAt` (not before), `idempotencyKey` (a second job of the same name
   and key, enqueued for the same tenant, is not added while the first is kept: `enqueue` answers
   its id with `duplicate: true`; two tenants never share a key) and `subject` (the id of what the
@@ -209,8 +228,9 @@ does not compile, since `appointmentIds` and `reason` are missing.
   file on tsyringe, `platform.backgroundJobs.register(..)` in the module file where the platform
   is wired by hand, under Nest or without a container), sending its command as `execution.actor`
   with one field of its payload per other input of the command (a `Date` travels as its ISO
-  text, a value object is refused: a command takes primitives and ids), and a spec that enqueues
-  it as a user and runs what is due. `init --queue database|redis|memory` chooses the store
+  text, a value object is refused: a command takes primitives and ids), the schema of that
+  payload in the validation library of the stack, and a spec that enqueues it as a user and runs
+  what is due, then enqueues it as an earlier version typed it and shows the run refused. `init --queue database|redis|memory` chooses the store
   ([`stack.queue`](../CONFIG.md)), whatever the container: the kernel module of `@ddd-ts-kit/di`
   binds it on tsyringe, `src/platform/jobs/create-background-work.ts` builds the queue, the worker and
   the process runner on it otherwise.
@@ -221,7 +241,7 @@ its client, or a command sent twice by a consumer, must find the job it already 
 <!-- checked sample -->
 ```ts
 import { randomUUID } from 'node:crypto';
-import type { BackgroundJob, BackgroundJobExecution, JobQueue } from '@ddd-ts-kit/kernel';
+import type { BackgroundJob, BackgroundJobExecution, BackgroundJobPayloadSchema, JobQueue } from '@ddd-ts-kit/kernel';
 
 interface CompileMonthlyReportPayload {
   readonly practiceId: string;
@@ -229,6 +249,7 @@ interface CompileMonthlyReportPayload {
 }
 declare class CompileMonthlyReportJob implements BackgroundJob<CompileMonthlyReportPayload> {
   static readonly jobName: 'reporting.compile-monthly-report';
+  static readonly payload: BackgroundJobPayloadSchema<CompileMonthlyReportPayload>;
   run(payload: CompileMonthlyReportPayload, execution: BackgroundJobExecution): Promise<void>;
 }
 declare const jobs: JobQueue;
@@ -244,6 +265,62 @@ const first = await jobs.enqueue(CompileMonthlyReportJob, report, { idempotencyK
 const again = await jobs.enqueue(CompileMonthlyReportJob, report, { idempotencyKey: key });
 // again.id === first.id and again.duplicate === true: nothing was added
 console.log(first.id === again.id, again.duplicate);
+```
+
+## Evolving a payload
+
+A payload outlives the deploy that enqueued it: a job waits for its delay, its retry or a free
+worker, and runs on the version deployed by then. The worker reads it with the schema of that
+version before each run. A payload that does not fit is never run as the new type: the attempt
+fails with `InvalidJobPayloadError` (`INVALID_JOB_PAYLOAD`), whose message names the job, the id
+of the stored job and the path and code of each issue (`issues` holds them with their messages),
+and the job is dead at once, since no further attempt would read it better. `find` shows it
+`dead` with that code, the log and the metrics carry the code, the `ErrorReporter` receives the
+error; an operator retries it (`retryDead`) once a version that reads it is deployed, or cancels
+it.
+
+Two ways to change a payload without leaving jobs dead behind:
+
+- **A new field is optional.** The schema accepts the payloads enqueued before it, and `run`
+  gives the field a value when it is absent (`payload.channel ?? 'mail'`). Once no job of the
+  earlier shape is kept (they all ran, or were purged), the field may become required.
+- **A new shape is a new job name.** Renaming a field, changing its type or its meaning is a new
+  class, `scheduling.clear-calendar-v2`, which the use case enqueues from then on; the class of
+  the earlier name stays registered, with its schema, until the jobs it enqueued have run, then
+  goes. Deploy the workers that know the new name before the code that enqueues it (see the
+  limits below).
+
+A spec shows the refusal without a cast: the class typed as `BackgroundJobType<unknown>` is the
+job as an earlier version typed it, and takes any payload.
+
+<!-- checked sample -->
+```ts
+import { expect } from 'vitest';
+import type { BackgroundJob, BackgroundJobPayloadSchema, BackgroundJobType, JobQueue } from '@ddd-ts-kit/kernel';
+import type { TestBackgroundJobs } from '@ddd-ts-kit/di';
+
+interface ClearCalendarPayload {
+  readonly calendarId: string;
+  readonly appointmentIds: readonly string[];
+  readonly reason: string;
+}
+declare class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarPayload> {
+  static readonly jobName: 'scheduling.clear-calendar';
+  static readonly payload: BackgroundJobPayloadSchema<ClearCalendarPayload>;
+  run(payload: ClearCalendarPayload): Promise<void>;
+}
+declare const application: { readonly jobQueue: JobQueue; readonly backgroundJobs: TestBackgroundJobs };
+
+const earlierVersion: BackgroundJobType<unknown> = ClearCalendarBackgroundJob;
+
+// a clearance enqueued before the reason was added to the payload
+await application.jobQueue.enqueue(earlierVersion, { calendarId: 'calendar-1', appointmentIds: ['first'] });
+
+await expect(application.backgroundJobs.runDue()).rejects.toMatchObject({
+  code: 'INVALID_JOB_PAYLOAD',
+  issues: [{ path: 'reason' }],
+});
+expect(application.backgroundJobs.store.list()).toMatchObject([{ status: 'dead', lastErrorCode: 'INVALID_JOB_PAYLOAD' }]);
 ```
 
 ## The enqueue shares the transaction of the command
@@ -522,6 +599,9 @@ memory. The middleware on the command bus is the one place where the test inject
 - **Permissions are those of the enqueue.** A delayed run or a retry hours later acts with the
   roles and attributes the actor had when the job was enqueued: a job that must see a revoked
   right reads the actor again (by its id) before it acts.
+- **A stored payload is read with the schema of the version that runs it.** One that does not
+  fit is dead at once (`INVALID_JOB_PAYLOAD`), never run: change a payload as "Evolving a
+  payload" says.
 - **Every worker of a queue knows every job of its context.** A worker claims any due job of
   the queues it consumes: one that does not know a job name (an older worker during a rolling
   deploy) fails the attempt (`UNKNOWN_BACKGROUND_JOB`) and the job dies after its attempts.

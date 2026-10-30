@@ -216,6 +216,7 @@ delivers the timeout.
 ```ts
 import {
   ProcessRunner,
+  processTimeoutDuePayload,
   type BackgroundJob,
   type BackgroundJobExecution,
   type DomainEvent,
@@ -266,6 +267,8 @@ const MAX_ATTEMPTS = 3;
 @Background({ maxAttempts: MAX_ATTEMPTS })
 export class ConfirmationDeadlineTimeoutBackgroundJob implements BackgroundJob<ProcessTimeoutDue> {
   static readonly jobName = 'scheduling.confirmation-deadline-timeout';
+
+  static readonly payload = processTimeoutDuePayload;
 
   private readonly process = new ConfirmationDeadlineProcess();
 

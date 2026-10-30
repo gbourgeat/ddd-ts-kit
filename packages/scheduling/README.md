@@ -16,7 +16,7 @@ npm i @ddd-ts-kit/scheduling
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, the `JobTimers` and `JobCheckpoints` ports, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, `reportFailedRuns`, `UNEXPECTED_ERROR`, the metric names; for background jobs `QueueWorker`, `StoredJobQueue`, the `JobStore` port, `InMemoryJobStore`, `tenantKeyOf`, `reportFailedBackgroundJobs`, `JobInterruptedError`, `InvalidEnqueueError`, `UnknownBackgroundJobError`, `AttemptsExhaustedError`; for process managers `StoredProcessRunner`, `NoTimeoutJobError` | the kernel |
+| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, the `JobTimers` and `JobCheckpoints` ports, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, `reportFailedRuns`, `UNEXPECTED_ERROR`, the metric names; for background jobs `QueueWorker`, `StoredJobQueue`, the `JobStore` port, `InMemoryJobStore`, `tenantKeyOf`, `reportFailedBackgroundJobs`, `JobInterruptedError`, `InvalidEnqueueError`, `InvalidJobPayloadError`, `UnknownBackgroundJobError`, `AttemptsExhaustedError`; for process managers `StoredProcessRunner`, `NoTimeoutJobError` | the kernel |
 | `@ddd-ts-kit/scheduling/testing` | `ManualJobScheduler`, `ManualJobTimers` | the kernel |
 
 The declarations (`@Scheduled`, `@Background`), the ports (`JobScheduler`, `JobQueue`,
@@ -612,6 +612,7 @@ with the guarantees: [Background jobs](../../docs/concepts/background-jobs.md).
 import type {
   BackgroundJob,
   BackgroundJobExecution,
+  BackgroundJobPayloadSchema,
   Clock,
   ErrorReporter,
   ExecutionScope,
@@ -628,6 +629,7 @@ interface CompileStatementsPayload {
 }
 declare class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
   static readonly jobName: 'billing.compile-statements';
+  static readonly payload: BackgroundJobPayloadSchema<CompileStatementsPayload>;
   run(payload: CompileStatementsPayload, execution: BackgroundJobExecution): Promise<void>;
 }
 declare const job: CompileStatementsBackgroundJob;
@@ -649,7 +651,8 @@ const worker = new QueueWorker({
 worker.register({
   name: CompileStatementsBackgroundJob.jobName,
   options: { maxAttempts: 3 },
-  // the payload comes back from the store as plain JSON
+  // the worker reads the stored payload with this schema before each run, and hands run what it answers
+  payload: CompileStatementsBackgroundJob.payload,
   run: (payload, execution) => job.run(payload as CompileStatementsPayload, execution),
 });
 await worker.start();
@@ -669,7 +672,12 @@ that run the jobs (`jobs: { start: true }`).
 Each attempt is recorded as a `BackgroundJobRun` (`succeeded`, `retried`, `dead`, `released`,
 `interrupted`), logged at `info`, `warn` or `error`, and counted in `background_job_runs_total`
 and `background_job_duration_ms` (`BACKGROUND_RUNS_COUNTER`, `BACKGROUND_DURATION_HISTOGRAM`),
-labelled `job`, `context`, `status` and `error_code`. A store of your own passes
+labelled `job`, `context`, `status` and `error_code`. Before each run the worker reads the stored
+payload with the `payload` of the definition, the static `payload` schema of the job, and hands
+`run` what it answers: a payload it refuses is never run, the attempt fails with
+`InvalidJobPayloadError` (`INVALID_JOB_PAYLOAD`, its message naming the job, the id of the stored
+job and the path and code of each issue, `issues` holding them) and the job is dead at once, no
+attempt left. A store of your own passes
 `jobStoreContract` of `@ddd-ts-kit/testing/contracts`, with its unit of work.
 
 ## Process managers

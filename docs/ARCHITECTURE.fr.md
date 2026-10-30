@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:50ab22c02032b5c7 -->
+<!-- translation-of: ARCHITECTURE.md sha256:d29458f4f19ff6b5 -->
 
 # Référence de l'architecture
 
@@ -333,7 +333,7 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | Id | Règle |
 |---|---|
 | `layer/domain-purity` | `domain/` n'importe que son propre `domain/`, le noyau partagé et `@ddd-ts-kit/kernel`. Aucun framework, aucun ORM, aucune bibliothèque de validation, aucun module intégré de Node qui fait des entrées-sorties. |
-| `layer/application-inward` | `application/` importe `domain/`, `application/`, les langages publiés, le noyau et `@ddd-ts-kit/auth` (permissions et politiques). Jamais `infrastructure/` ni `presentation/`, jamais un framework ni un pilote. |
+| `layer/application-inward` | `application/` importe `domain/`, `application/`, les langages publiés, le noyau et `@ddd-ts-kit/auth` (permissions et politiques). Jamais `infrastructure/` ni `presentation/`, jamais un framework ni un pilote. Un *job* en arrière-plan, `application/background/*.background-job.ts` et aucun autre fichier de la couche, importe aussi `@ddd-ts-kit/validation` et la bibliothèque de validation dans laquelle est écrit le schéma de sa charge utile (zod, class-validator, class-transformer, TypeBox, valibot, arktype) : une charge utile stockée est une donnée au repos qui survit à un déploiement, le même genre de contrat que la charge utile d'un événement d'intégration, que `published-language/` valide déjà. |
 | `layer/presentation-no-infrastructure` | `presentation/` importe `application/` (et les types du domaine pour la traduction), jamais `infrastructure/`. |
 | `layer/infrastructure-no-presentation` | `infrastructure/` implémente des ports de `application/` et de `domain/`, et n'importe jamais `presentation/`. |
 | `context/published-language-only` | Un fichier n'importe d'un autre contexte que par le `published-language/` de ce contexte. |

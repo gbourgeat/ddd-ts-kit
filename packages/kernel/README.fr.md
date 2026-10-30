@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:54d43e72b9776af4 -->
+<!-- translation-of: README.md sha256:d2ada085467f288d -->
 
 # @ddd-ts-kit/kernel
 
@@ -41,7 +41,7 @@ avec une bibliothèque.
 | Acteur | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext`, `systemActor` |
 | Interfaces standard | `Session`, `ExecutionContext` et `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `CacheInvalidation` et `CachePurger` (avec `cacheTag`, `tenantCacheTags`, `CachePurgeRequest`, `PublishedCacheInvalidation`, `PurgingPublisher`, `RepeatedCachePurger` : voir « Purger les caches HTTP »), `Lock`, `RateLimiter`, `Page` et `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` et `AuditEntry` |
 | *Jobs* planifiés | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
-| *Jobs* en arrière-plan | `JobQueue`, `BackgroundJob`, `BackgroundJobExecution`, `EnqueueOptions`, `QueuedJob`, `QueuedJobStatus`, `backgroundJobPolicy`, `retryDelayMs`, `executionContextOfBackgroundJob`, `whenCommitted` (voir « JobQueue ») |
+| *Jobs* en arrière-plan | `JobQueue`, `BackgroundJob`, `BackgroundJobExecution`, `BackgroundJobPayloadSchema`, `processTimeoutDuePayload`, `EnqueueOptions`, `QueuedJob`, `QueuedJobStatus`, `backgroundJobPolicy`, `retryDelayMs`, `executionContextOfBackgroundJob`, `whenCommitted` (voir « JobQueue ») |
 | Gestionnaires de processus | `ProcessManager`, `ProcessDecision`, `ProcessRunner`, `ProcessStore`, `InMemoryProcessStore`, `UnreadableProcessStateError` (voir « ProcessRunner et ProcessStore ») |
 | Fichiers | `FileStorage`, `StoredFile`, `FileScanner`, `FileKeys`, `TenantFileKeys`, `FileStaging`, `FileUpload`, `fileUploadsMiddleware`, `FileInspection`, `FileError`, `InMemoryFileStorage`, `LocalFileStorage`, `PurgeStagedFiles` (voir « FileStorage, StoredFile, FileScanner ») |
 | Multitenance | `tenantScopeOf`, `tenantReachOf`, `acrossTenants`, `tenantKey`, `tenantCacheKey`, `isTenantId`, `TenantDirectory`, `InMemoryTenantDirectory` (voir « Multitenance ») |
@@ -1085,6 +1085,9 @@ comment tester un *job* sont dans le README de `@ddd-ts-kit/scheduling`.
 export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
   static readonly jobName = 'billing.compile-statements';
 
+  // le schéma de sa charge utile, `zodSchema(z.object({ month: z.string() }))` ou toute bibliothèque de validation
+  static readonly payload = compileStatementsPayload;
+
   constructor(private readonly commands: CommandBus) {}
 
   async run(payload: CompileStatementsPayload, execution: BackgroundJobExecution): Promise<void> {
@@ -1095,10 +1098,14 @@ export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStat
 
 Un *job* en arrière-plan est nommé par son `jobName` statique, par lequel un cas d'usage le met
 en file (`jobs.enqueue(CompileStatementsBackgroundJob, { month })`, la charge utile typée par
-`run`). Le décorateur prend les options, toutes facultatives : `maxAttempts` (5), `backoff`
+`run`). Son `payload` statique est le schéma de cette charge utile, un `BackgroundJobPayloadSchema`
+(`parse(input)` qui répond un `Result`, ce qu'est le `Schema` de `@ddd-ts-kit/validation`, quelle
+que soit la bibliothèque qu'il adapte) : le *worker* lit la charge utile stockée avec lui avant
+chaque exécution et n'en exécute jamais une qu'il refuse (`INVALID_JOB_PAYLOAD`) ; le *job* des
+délais d'un processus utilise `processTimeoutDuePayload`. Le décorateur prend les options, toutes facultatives : `maxAttempts` (5), `backoff`
 (`{ baseMs: 1000, factor: 2, maxMs: 300000 }`), `timeout` et `lease` (30 s), en millisecondes
-ou `'10m'`. Un nom qui n'est pas `<context>.<job-name>` et des options illisibles lèvent une
-`DeclarationError` au chargement du fichier. `BackgroundJobExecution` est ce que reçoit `run` :
+ou `'10m'`. Un nom qui n'est pas `<context>.<job-name>`, une classe sans `payload` statique et des options
+illisibles lèvent une `DeclarationError` au chargement du fichier. `BackgroundJobExecution` est ce que reçoit `run` :
 `jobId`, `attempt`, `enqueuedAt`, `startedAt`, le `checkpoint` qu'une tentative précédente a
 enregistré, un `signal` d'interruption, `saveCheckpoint(value)` et
 `reportProgress({ done, total })`.

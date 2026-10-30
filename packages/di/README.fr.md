@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2d64ed4c1b28d4b6 -->
+<!-- translation-of: README.md sha256:d69dde88f535aa60 -->
 
 # @ddd-ts-kit/di
 
@@ -1197,13 +1197,17 @@ module, et rien n'est global.
 ## Jobs en arrière-plan
 
 Une classe de `application/background/` qui porte `@Background` est un *job* en arrière-plan de
-son contexte, nommé par son `jobName` statique :
+son contexte, nommé par son `jobName` statique, sa charge utile stockée lue avec son schéma
+`payload` statique :
 
 ```ts
 // contexts/billing/application/background/compile-statements.background-job.ts
 @Background({ maxAttempts: 3, timeout: '10m' })
 export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
   static readonly jobName = 'billing.compile-statements';
+
+  // le schéma de sa charge utile, `zodSchema(z.object({ month: z.string() }))` ou toute bibliothèque de validation
+  static readonly payload = compileStatementsPayload;
 
   constructor(private readonly commands: CommandBus) {}
 
@@ -1215,7 +1219,11 @@ export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStat
 
 Un module explicite écrit `builder.backgroundJob('billing.compile-statements', { maxAttempts: 3 })
 .handledBy(CompileStatementsBackgroundJob, [CommandBus])` ; un nom autre que le `jobName` de la
-classe est refusé (`INVALID_JOB_SETTINGS`), un nom déclaré deux fois aussi (`DUPLICATE_JOB`).
+classe est refusé (`INVALID_JOB_SETTINGS`), une classe sans `payload` statique aussi, un nom déclaré
+deux fois aussi (`DUPLICATE_JOB`). Un *job* construit par `handledByFactory(factory, payload)` y reçoit
+son schéma. Une charge utile stockée que le schéma refuse n'est jamais exécutée : la tentative échoue
+avec `INVALID_JOB_PAYLOAD` et le *job* est mort, ce que `app.backgroundJobs.runDue()` lève dans une
+*spec*.
 
 - **Enregistré à la création de l'application** sur le `QueueWorker` de `@ddd-ts-kit/scheduling`,
   qui consomme ensuite la file d'attente du contexte. La classe est construite à sa première

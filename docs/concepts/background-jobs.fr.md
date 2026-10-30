@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:54badd185cdfd150 -->
+<!-- translation-of: background-jobs.md sha256:9305504422980c7b -->
 
 # Jobs en arrière-plan
 
@@ -31,13 +31,18 @@ base de données, pour la même raison.
 
 ## Déclarer et mettre en file
 
-Un *job* est une classe de `application/background/` : un `jobName` statique, un décorateur avec
-ses options, et une méthode `run` qui envoie des commandes. Celui-ci est le *job* de l'exemple
-fil rouge, qui annule les rendez-vous d'un calendrier avant une absence de son praticien :
+Un *job* est une classe de `application/background/` : un `jobName` statique, un schéma
+`payload` statique, un décorateur avec ses options, et une méthode `run` qui envoie des
+commandes. Celui-ci est le *job* de l'exemple fil rouge, qui annule les rendez-vous d'un
+calendrier avant une absence de son praticien. Le schéma de sa charge utile est écrit ici avec
+zod ; l'exemple l'écrit avec class-validator, sa bibliothèque de validation, comme une classe de
+champs décorés sans valeur initiale (un champ absent de la charge utile stockée prendrait cette
+valeur, et passerait) :
 
 <!-- checked sample -->
 ```ts
 // scheduling/application/background/clear-calendar.background-job.ts
+import { z } from 'zod';
 import {
   AuthorizedCommand,
   isRefusal,
@@ -47,18 +52,24 @@ import {
   type CommandBus,
 } from '@ddd-ts-kit/kernel';
 import { Background } from '@ddd-ts-kit/kernel/declarations';
+import type { Infer } from '@ddd-ts-kit/validation';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
 
 // la commande d'un autre cas d'usage du contexte, que le job envoie
 declare class CancelAppointmentCommand extends AuthorizedCommand {
   constructor(actor: Actor, appointmentId: string, reason: string);
 }
 
-/** Du JSON simple : des identifiants et du texte, une date sous forme de texte ISO. */
-export interface ClearCalendarPayload {
-  readonly calendarId: string;
-  readonly appointmentIds: readonly string[];
-  readonly reason: string;
-}
+// du JSON simple : des identifiants et du texte, une date sous forme de texte ISO
+const payloadSchema = zodSchema(
+  z.object({
+    calendarId: z.string().min(1),
+    appointmentIds: z.array(z.string()),
+    reason: z.string(),
+  }),
+);
+
+export type ClearCalendarPayload = Infer<typeof payloadSchema>;
 
 /** Ce qu'une tentative a laissé : le nombre de rendez-vous du payload déjà traités. */
 interface ClearCalendarCheckpoint {
@@ -68,6 +79,9 @@ interface ClearCalendarCheckpoint {
 @Background({ timeout: '30m', lease: '1m' })
 export class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarPayload> {
   static readonly jobName = 'scheduling.clear-calendar';
+
+  // lu par le worker avant chaque exécution : une charge utile stockée qui ne lui convient pas n'est jamais exécutée
+  static readonly payload = payloadSchema;
 
   constructor(private readonly commands: CommandBus) {}
 
@@ -130,6 +144,7 @@ import {
   type Actor,
   type BackgroundJob,
   type BackgroundJobExecution,
+  type BackgroundJobPayloadSchema,
 } from '@ddd-ts-kit/kernel';
 import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
@@ -141,6 +156,7 @@ interface ClearCalendarPayload {
 }
 declare class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarPayload> {
   static readonly jobName: 'scheduling.clear-calendar';
+  static readonly payload: BackgroundJobPayloadSchema<ClearCalendarPayload>;
   run(payload: ClearCalendarPayload, execution: BackgroundJobExecution): Promise<void>;
 }
 declare abstract class AppointmentRepository {
@@ -195,6 +211,11 @@ La charge utile (payload) est vérifiée par rapport à `run` :
   d'un *job* est son contexte, la première partie de son nom.
 - **La charge utile** est du JSON simple, typé par la classe : `enqueue` refuse à la compilation
   une charge utile qui n'est pas celle que prend `run`. Une date voyage sous forme de texte ISO.
+  Le `payload` statique de la classe est son schéma, dans la bibliothèque de validation du projet
+  (zod, class-validator, TypeBox, Standard Schema, ou le `BackgroundJobPayloadSchema` du noyau
+  écrit à la main) : le *worker* lit la charge utile stockée avec lui avant chaque exécution, et
+  passe à `run` ce que le schéma répond. Une classe qui n'en a pas ne compile pas là où elle est
+  mise en file, déclarée ou enregistrée.
 - **Options** : `delay` ou `runAt` (pas avant), `idempotencyKey` (un second *job* de même nom et
   de même clé, mis en file pour le même *tenant*, n'est pas ajouté tant que le premier est gardé :
   `enqueue` répond son identifiant avec `duplicate: true` ; deux *tenants* ne partagent jamais une
@@ -216,8 +237,10 @@ La charge utile (payload) est vérifiée par rapport à `run` :
   plateforme est câblée à la main, sous Nest ou sans conteneur), qui envoie sa commande en tant
   que `execution.actor` avec un champ de sa charge utile par autre entrée de la commande (une
   `Date` voyage sous forme de texte ISO, un objet-valeur est refusé : une commande prend des
-  primitives et des identifiants), et une *spec* qui le met en file en tant qu'utilisateur et
-  exécute ce qui est échu. `init --queue database|redis|memory` choisit le store
+  primitives et des identifiants), le schéma de cette charge utile dans la bibliothèque de
+  validation de la pile, et une *spec* qui le met en file en tant qu'utilisateur et exécute ce
+  qui est échu, puis le met en file tel qu'une version antérieure le typait et montre
+  l'exécution refusée. `init --queue database|redis|memory` choisit le store
   ([`stack.queue`](../CONFIG.fr.md)), quel que soit le conteneur : le module noyau de
   `@ddd-ts-kit/di` le lie sur tsyringe, `src/platform/jobs/create-background-work.ts` construit dessus
   la file, le *worker* et le *runner* des processus sinon.
@@ -229,7 +252,7 @@ retentée par son client, ou une commande envoyée deux fois par un consommateur
 <!-- checked sample -->
 ```ts
 import { randomUUID } from 'node:crypto';
-import type { BackgroundJob, BackgroundJobExecution, JobQueue } from '@ddd-ts-kit/kernel';
+import type { BackgroundJob, BackgroundJobExecution, BackgroundJobPayloadSchema, JobQueue } from '@ddd-ts-kit/kernel';
 
 interface CompileMonthlyReportPayload {
   readonly practiceId: string;
@@ -237,6 +260,7 @@ interface CompileMonthlyReportPayload {
 }
 declare class CompileMonthlyReportJob implements BackgroundJob<CompileMonthlyReportPayload> {
   static readonly jobName: 'reporting.compile-monthly-report';
+  static readonly payload: BackgroundJobPayloadSchema<CompileMonthlyReportPayload>;
   run(payload: CompileMonthlyReportPayload, execution: BackgroundJobExecution): Promise<void>;
 }
 declare const jobs: JobQueue;
@@ -252,6 +276,64 @@ const first = await jobs.enqueue(CompileMonthlyReportJob, report, { idempotencyK
 const again = await jobs.enqueue(CompileMonthlyReportJob, report, { idempotencyKey: key });
 // again.id === first.id et again.duplicate === true : rien n'a été ajouté
 console.log(first.id === again.id, again.duplicate);
+```
+
+## Faire évoluer une charge utile
+
+Une charge utile survit au déploiement qui l'a mise en file : un *job* attend son délai, sa
+nouvelle tentative ou un *worker* libre, et s'exécute sur la version déployée entre-temps. Le
+*worker* la lit avec le schéma de cette version avant chaque exécution. Une charge utile qui ne
+lui convient pas n'est jamais exécutée comme le nouveau type : la tentative échoue avec
+`InvalidJobPayloadError` (`INVALID_JOB_PAYLOAD`), dont le message nomme le *job*, l'identifiant
+du *job* stocké et le chemin et le code de chaque problème (`issues` les garde avec leurs
+messages), et le *job* est mort aussitôt, puisqu'aucune autre tentative ne la lirait mieux.
+`find` le montre `dead` avec ce code, le journal et les métriques portent le code, l'`ErrorReporter`
+reçoit l'erreur ; un opérateur le relance (`retryDead`) une fois déployée une version qui la lit,
+ou l'annule.
+
+Deux façons de changer une charge utile sans laisser de *jobs* morts derrière soi :
+
+- **Un nouveau champ est optionnel.** Le schéma accepte les charges utiles mises en file avant
+  lui, et `run` donne une valeur au champ quand il manque (`payload.channel ?? 'mail'`). Une fois
+  qu'aucun *job* de l'ancienne forme n'est gardé (tous ont tourné, ou ont été purgés), le champ
+  peut devenir obligatoire.
+- **Une nouvelle forme est un nouveau nom de *job*.** Renommer un champ, changer son type ou son
+  sens, c'est une nouvelle classe, `scheduling.clear-calendar-v2`, que le cas d'usage met en file
+  à partir de là ; la classe de l'ancien nom reste enregistrée, avec son schéma, jusqu'à ce que
+  les *jobs* qu'elle a mis en file aient tourné, puis s'en va. Déployez les *workers* qui
+  connaissent le nouveau nom avant le code qui le met en file (voir les limites plus bas).
+
+Une *spec* montre le refus sans transtypage : la classe typée `BackgroundJobType<unknown>` est le
+*job* tel qu'une version antérieure le typait, et prend n'importe quelle charge utile.
+
+<!-- checked sample -->
+```ts
+import { expect } from 'vitest';
+import type { BackgroundJob, BackgroundJobPayloadSchema, BackgroundJobType, JobQueue } from '@ddd-ts-kit/kernel';
+import type { TestBackgroundJobs } from '@ddd-ts-kit/di';
+
+interface ClearCalendarPayload {
+  readonly calendarId: string;
+  readonly appointmentIds: readonly string[];
+  readonly reason: string;
+}
+declare class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarPayload> {
+  static readonly jobName: 'scheduling.clear-calendar';
+  static readonly payload: BackgroundJobPayloadSchema<ClearCalendarPayload>;
+  run(payload: ClearCalendarPayload): Promise<void>;
+}
+declare const application: { readonly jobQueue: JobQueue; readonly backgroundJobs: TestBackgroundJobs };
+
+const earlierVersion: BackgroundJobType<unknown> = ClearCalendarBackgroundJob;
+
+// un dégagement mis en file avant que le motif n'entre dans la charge utile
+await application.jobQueue.enqueue(earlierVersion, { calendarId: 'calendar-1', appointmentIds: ['first'] });
+
+await expect(application.backgroundJobs.runDue()).rejects.toMatchObject({
+  code: 'INVALID_JOB_PAYLOAD',
+  issues: [{ path: 'reason' }],
+});
+expect(application.backgroundJobs.store.list()).toMatchObject([{ status: 'dead', lastErrorCode: 'INVALID_JOB_PAYLOAD' }]);
 ```
 
 ## La mise en file partage la transaction de la commande
@@ -548,6 +630,9 @@ mémoire. Le *middleware* sur le bus de commandes est le seul endroit où le tes
   tentative des heures plus tard agit avec les rôles et attributs que l'acteur avait quand le *job*
   a été mis en file : un *job* qui doit voir un droit révoqué relit l'acteur (par son identifiant)
   avant d'agir.
+- **Une charge utile stockée est lue avec le schéma de la version qui l'exécute.** Celle qui ne
+  lui convient pas est morte aussitôt (`INVALID_JOB_PAYLOAD`), jamais exécutée : changez une
+  charge utile comme le dit « Faire évoluer une charge utile ».
 - **Chaque *worker* d'une file connaît chaque *job* de son contexte.** Un *worker* prend n'importe
   quel *job* échu des files qu'il consomme : celui qui ne connaît pas un nom de *job* (un *worker*
   plus ancien pendant un déploiement progressif) fait échouer la tentative
