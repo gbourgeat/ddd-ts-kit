@@ -2,7 +2,6 @@ import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { CliError } from '../cli-error';
-import { isRecord } from '../config/values/is-record';
 import { ESLINT_IN_PROJECT, LINT_RUN_VARIABLE } from '../lint/eslint-in-project';
 import { lintCacheOf } from '../lint/lint-cache-of';
 import { type LintAnswer, parseLintAnswer } from '../lint/parse-lint-answer';
@@ -109,12 +108,8 @@ function refuseWhatEslintRefused(output: string, lint: LintRun): void {
   }
 }
 
-function refusalOf(output: string): unknown {
-  try {
-    const parsed: unknown = JSON.parse(output);
+const REFUSAL = /^\{"refusal":"([\w-]+)"\}$/;
 
-    return isRecord(parsed) ? parsed['refusal'] : undefined;
-  } catch {
-    return undefined;
-  }
+function refusalOf(output: string): string | undefined {
+  return REFUSAL.exec(output)?.[1];
 }

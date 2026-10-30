@@ -33,6 +33,15 @@ describe('generate, the next step of a refusal', () => {
     expect(failure(result).fix).not.toContain('upstreams');
   });
 
+  it('still tells to declare an upstream that is not declared and closes no cycle', () => {
+    expect(cli(root, 'generate', 'context', 'archive', '--classification', 'generic').code).toBe(0);
+
+    const result = cli(root, 'generate', 'gateway', 'billing', 'archive', 'Refund', '--json');
+
+    expect(result.code).toBe(2);
+    expect(failure(result).message).toContain('does not declare "archive" as an upstream');
+  });
+
   it('gives the whole command that creates the use case a route calls, permission included', () => {
     const result = cli(root, 'generate', 'route', 'billing', 'Ghost', '--method', 'POST', '--path', '/g', '--json');
 
