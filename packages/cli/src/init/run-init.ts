@@ -49,6 +49,7 @@ import {
   singlePrismaSchemaSteps,
 } from '../prisma-schema';
 import { ownEntry } from '../config/values/own-entry';
+import { generatedFilesNamed } from '../review';
 
 const KNIP_FILE = 'knip.json';
 
@@ -258,15 +259,21 @@ function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }
     );
   }
 
-  writeReviewPolicy(ws, context);
+  writeReviewPolicy(ws, config, context);
 }
 
-/** The review policy is the team's once written: created when missing, never replaced, not even with --force. */
-function writeReviewPolicy(ws: Workspace, context: RenderContext): void {
+/**
+ * The review policy is the team's once written: created when missing, never replaced, not even
+ * with --force. It names the generated files from the list `digest` lists apart.
+ */
+function writeReviewPolicy(ws: Workspace, config: Config, context: RenderContext): void {
   const [target, template] = REVIEW_POLICY;
 
   if (!ws.exists(target)) {
-    ws.create(target, renderTemplate(template, context));
+    ws.create(
+      target,
+      renderTemplate(template, { ...context, review: { generatedFiles: generatedFilesNamed(config) } }),
+    );
   }
 }
 

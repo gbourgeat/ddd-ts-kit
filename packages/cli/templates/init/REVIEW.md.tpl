@@ -20,4 +20,4 @@ At most five nits per review; the rest as a count. A nit that recurs becomes a l
 
 ## Do not report
 
-Generated files (the barrels, `openapi/`, `docs/integration/asyncapi.yaml` and `docs/integration/event-catalog.md`, `{{config.platformDir}}/http/openapi-documents.ts`, `.dependency-cruiser.cjs`, the generated sections of each `CONTEXT.md`) and anything `npm run verify` already refuses.
+Generated files ({{review.generatedFiles}}) and anything `npm run verify` already refuses. `npx ddd-ts-kit digest --base <base>` lists those of a branch apart from the files to review, in reading order.

@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:9889898a9f5b8011 -->
+<!-- translation-of: commands.md sha256:2de44447ad1ea4b0 -->
 
 # Quelle commande, quand
 
@@ -101,6 +101,7 @@ exemple, reste un `TODO(domain)` du schéma et de l'appel.
 | `npx ddd-ts-kit stories` | les *stories* ouvertes dans les *worktrees* du dépôt et où deux d'entre elles se croisent : les contextes que les deux nomment, les fichiers que les deux changent, ce que la fusion de l'une dans l'autre laisse à régler à la main, le retard de chacune sur son tronc | avant de découper les lignes d'une *story* et avant chaque ligne, après `git fetch` | un texte court, `--json` pour des données ; code de sortie 0 | se tenir à l'écart de ce qu'une autre *story* change, ou consigner laquelle arrive la première |
 | `npx ddd-ts-kit worktree <name>` | le *worktree* de tout travail qui n'est ni une *story* ni un *worker* : `.worktrees/<name>` sur `work/<name>` coupé de `origin/main`, installé | avant d'écrire le code d'un contexte depuis le *checkout* principal du tronc, que la garde refuse dans un projet créé par `init` | le *worktree*, sa branche et son installation | y travailler, *commiter*, ouvrir sa *pull request* |
 | `npx ddd-ts-kit story [<code>] [--gate build\|close]` | les phases d'une *story* et l'étape suivante ; `build` ouvre son code, `close` sa *pull request* | à tout moment dans le *worktree* d'une *story* | un texte court, `--json` pour des données ; code de sortie 1 tant que la barrière n'est pas franchie | faire l'étape suivante |
+| `npx ddd-ts-kit digest --base <ref>` | ce que change la branche, pour qui la relit : par contexte, les cas d'usage, les permissions et les rôles qui les détiennent, les routes et leurs codes d'erreur, les événements et les ports ajoutés, modifiés ou retirés depuis la base de fusion ; les nouveaux titres de spec ; les fichiers à relire dans l'ordre de lecture, les fichiers générés à part | à la clôture d'une *story*, dans `## Report` ; en tête de sa *pull request* | une trentaine de lignes de Markdown, `--json` pour des données ; code de sortie 2 hors de git ou sur une référence inconnue | la relecture le lit avant le *diff* |
 | `/ddd-ts-kit:plan-slices` | le travail en tranches verticales, ordonnées, avec leurs commandes de générateur | étape 6, après l'amorçage | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `npx ddd-ts-kit cited --rows <id> --base origin/main` | les noms que la conception d'une ligne cite comme du code et que le tronc n'a pas : retirés par son historique (avec le commit et ce qui les remplace), refusés par l'arborescence canonique, ou proches d'un nom qu'il a gagné depuis que la ligne a été écrite ; un nom prévu reste muet | avant de construire seul une ligne, avant de committer une revue de conception | une ligne par nom, `--json` pour les données ; code de sortie 0 | construire sur ce que le tronc a, et corriger le document sur le tronc |
 | `npx ddd-ts-kit generate acceptance <story>`, puis `npx ddd-ts-kit acceptance <story> --lock` | la *spec* d'acceptation d'une *story*, un `it.todo` par critère de `docs/architecture/stories/<story>.md`, à écrire en scénarios enveloppés dans `pending(...)` ; le verrou les enregistre, après quoi un scénario ne change qu'avec son critère, et un critère ou un scénario dont les critères n'ont pas changé seulement avec un verdict de l'agent `acceptance-judge` | avant la première ligne de code d'une *story* | `test/acceptance/<story>.acceptance.spec.ts` et son `.lock.json` | `npx ddd-ts-kit acceptance <story> --gate written`, puis les lignes |
@@ -291,6 +292,7 @@ Usage
   ddd-ts-kit story-scope <story> [--from <file>] [--kind story|fix] [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
+  ddd-ts-kit digest --base <ref>
   ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
   ddd-ts-kit mutation [--report <file>] [--survivors] [--changed <ref>] [--json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
@@ -556,6 +558,15 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    (git merge-tree, nothing written); how far each is behind its base; from the worktree of a
                    story, the stories it meets; the guard of the plugin says it at session start and on a
                    write to a file another story changes
+  digest           what the branch changes, for its reviewer, in about thirty lines of Markdown read before
+                   the diff: per context, the use cases, permissions (with the roles that hold them), routes
+                   (with their error codes), events published and consumed, ports and adapters added, changed
+                   or removed since the merge base of <ref> and HEAD (both described as describe reads them,
+                   each extracted by git archive under the temporary directory, the working tree untouched);
+                   the spec titles the branch adds, those the kit generated counted; the files to review in
+                   reading order (context, domain, application, presentation, infrastructure, tests,
+                   elsewhere), and apart, as regenerated, the generated files REVIEW.md names; what is not
+                   committed is said, not digested; exits 2 outside a git repository or on an unknown ref
   --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
                    Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
                    report, its agent as the guard recorded it) and prints the message that resumes its agent

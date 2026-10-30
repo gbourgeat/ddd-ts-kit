@@ -98,6 +98,7 @@ path). A field of another type, the `readonly string[]` of the products for one,
 | `npx ddd-ts-kit stories` | the stories open in the worktrees of the repository and where two of them meet: the contexts both name, the files both change, what merging one into the other leaves to settle by hand, how far each is behind its trunk | before cutting the rows of a story and before each row, after `git fetch` | a short text, `--json` for data; exits 0 | keep off what another story changes, or record which one lands first |
 | `npx ddd-ts-kit worktree <name>` | the worktree of any piece of work that is neither a story nor a worker: `.worktrees/<name>` on `work/<name>` cut from `origin/main`, installed | before writing the code of a context from the main checkout of the trunk, which the guard refuses in a project `init` created | the worktree, its branch and its install | work there, commit, open its pull request |
 | `npx ddd-ts-kit story [<code>] [--gate build\|close]` | the phases of a story and the next step; `build` opens its code, `close` its pull request | at any time in the worktree of a story | a short text, `--json` for data; exits 1 while the gate is not met | do the next step |
+| `npx ddd-ts-kit digest --base <ref>` | what the branch changes, for its reviewer: per context the use cases, permissions and the roles that hold them, routes and their error codes, events and ports added, changed or removed since the merge base; the new spec titles; the files to review in reading order, the generated ones apart | at the close of a story, into `## Report`; at the top of its pull request | about thirty lines of Markdown, `--json` for data; exits 2 outside git or on an unknown ref | the reviewer reads it before the diff |
 | `/ddd-ts-kit:plan-slices` | the work as vertical slices, ordered, with their generator commands | step 6, after the bootstrap | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `npx ddd-ts-kit cited --rows <id> --base origin/main` | the names the design of a row cites as code that the trunk does not have: removed by its history (with the commit and what replaced them), refused by the canonical tree, or close to a name it gained since the line was written; planned names stay silent | before building a row alone, before committing a design review | one line per name, `--json` for data; exits 0 | build on what the trunk has, and correct the document on the trunk |
 | `npx ddd-ts-kit generate acceptance <story>`, then `npx ddd-ts-kit acceptance <story> --lock` | the acceptance spec of a story, one `it.todo` per criterion of `docs/architecture/stories/<story>.md`, to write as scenarios wrapped in `pending(...)`; the lock records them, after which a scenario changes only with its criterion, and a criterion or a scenario whose criteria stayed only with a verdict of the `acceptance-judge` agent | before the first row of code of a story | `test/acceptance/<story>.acceptance.spec.ts` and its `.lock.json` | `npx ddd-ts-kit acceptance <story> --gate written`, then the rows |
@@ -285,6 +286,7 @@ Usage
   ddd-ts-kit story-scope <story> [--from <file>] [--kind story|fix] [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
+  ddd-ts-kit digest --base <ref>
   ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
   ddd-ts-kit mutation [--report <file>] [--survivors] [--changed <ref>] [--json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
@@ -550,6 +552,15 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    (git merge-tree, nothing written); how far each is behind its base; from the worktree of a
                    story, the stories it meets; the guard of the plugin says it at session start and on a
                    write to a file another story changes
+  digest           what the branch changes, for its reviewer, in about thirty lines of Markdown read before
+                   the diff: per context, the use cases, permissions (with the roles that hold them), routes
+                   (with their error codes), events published and consumed, ports and adapters added, changed
+                   or removed since the merge base of <ref> and HEAD (both described as describe reads them,
+                   each extracted by git archive under the temporary directory, the working tree untouched);
+                   the spec titles the branch adds, those the kit generated counted; the files to review in
+                   reading order (context, domain, application, presentation, infrastructure, tests,
+                   elsewhere), and apart, as regenerated, the generated files REVIEW.md names; what is not
+                   committed is said, not digested; exits 2 outside a git repository or on an unknown ref
   --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
                    Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
                    report, its agent as the guard recorded it) and prints the message that resumes its agent

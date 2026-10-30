@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readConfig } from '../src/config';
+import { generatedFilesNamed } from '../src/review';
 import { cli, read, write } from './helpers';
 import { initProject } from './support/init-project';
 import { NPM } from './support/npm';
@@ -80,6 +82,16 @@ describe('the review policy init writes', () => {
     expect(read(root, 'REVIEW.md')).toBe('# Ours\n');
     expect(forced).toMatchObject({ created: expect.not.arrayContaining(['REVIEW.md']) });
     expect(forced).toMatchObject({ updated: expect.not.arrayContaining(['REVIEW.md']) });
+  });
+
+  it('names the generated files from the list digest lists apart, and says how to list those of a branch', () => {
+    const root = initProject(...NPM);
+    const policy = read(root, 'REVIEW.md');
+
+    expect(policy).toContain(`Generated files (${generatedFilesNamed(readConfig(root).config)})`);
+    expect(policy).toContain('the behaviour pages of `docs/behaviour/`');
+    expect(policy).toContain('the schema index `src/platform/database/schema.ts`');
+    expect(policy).toContain('`npx ddd-ts-kit digest --base <base>` lists those of a branch apart');
   });
 
   it('speaks the package manager of the project', () => {

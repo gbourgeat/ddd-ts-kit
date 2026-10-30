@@ -30,6 +30,7 @@ const ALLOW: readonly string[] = [
   'Bash(npx ddd-ts-kit story-scope *)',
   'Bash(npx ddd-ts-kit stories)',
   'Bash(npx ddd-ts-kit stories *)',
+  'Bash(npx ddd-ts-kit digest *)',
   'Bash(npx ddd-ts-kit worktree *)',
   'Bash(npx ddd-ts-kit verify-merge)',
   'Bash(npx ddd-ts-kit verify-merge *)',

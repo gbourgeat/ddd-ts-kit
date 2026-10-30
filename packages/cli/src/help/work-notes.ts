@@ -85,6 +85,21 @@ export const WORK_NOTES: readonly Note[] = [
     ],
   },
   {
+    name: 'digest',
+    command: 'digest',
+    lines: [
+      'what the branch changes, for its reviewer, in about thirty lines of Markdown read before',
+      'the diff: per context, the use cases, permissions (with the roles that hold them), routes',
+      '(with their error codes), events published and consumed, ports and adapters added, changed',
+      'or removed since the merge base of <ref> and HEAD (both described as describe reads them,',
+      'each extracted by git archive under the temporary directory, the working tree untouched);',
+      'the spec titles the branch adds, those the kit generated counted; the files to review in',
+      'reading order (context, domain, application, presentation, infrastructure, tests,',
+      'elsewhere), and apart, as regenerated, the generated files REVIEW.md names; what is not',
+      'committed is said, not digested; exits 2 outside a git repository or on an unknown ref',
+    ],
+  },
+  {
     name: '--resume',
     command: 'worker-scope',
     lines: [

@@ -1823,6 +1823,41 @@ specs listed under `## Regression` instead of `test/acceptance/`, each of which 
 no passing phase is read: the regression specs run with the tests of the project. `--json`
 prints `{ story, gate, met, next, phases }`.
 
+## digest
+
+```
+ddd-ts-kit digest --base <ref>
+```
+
+What the branch changes, for its reviewer, in about thirty lines of Markdown read before the
+diff: the story skill writes it into `## Report`, the pull-request skill keeps it at the top of
+the body of the pull request. HEAD is compared with its merge base with `<ref>`, so that a trunk
+that moved on since the branch was cut adds nothing; both commits are extracted by `git archive`
+under the temporary directory of the system, described there as `describe` reads a project, and
+removed afterwards: the working tree is never checked out, and what it holds uncommitted is said
+in a note, not digested.
+
+- **By context**: the use cases, the permissions with the roles that hold them by name (in
+  `<platformDir>/auth/roles/roles.ts`, and `signed-in` for `signed-in-grants.ts`), the routes with
+  their error codes, the events published and consumed, the ports with their adapters, each
+  `added`, `changed` or `removed`.
+- **New spec titles**: per spec file the branch changes, the titles the base did not state, read
+  as the behaviour pages read them; those a template of the kit wrote are counted, not listed.
+- **To review, in reading order**: the files a person wrote, by part: the root of a context (its
+  `CONTEXT.md`, permissions, codes), domain (the shared kernel too), application, presentation
+  (the published language too), infrastructure (the migrations too), tests, elsewhere (the
+  platform, the documents, the config).
+- **Regenerated, do not review**: the generated files the `## Do not report` of `REVIEW.md` names,
+  from one list: the barrels, `openapi/`, `clients/`, the AsyncAPI document and the event catalog,
+  the behaviour pages, `docs/context-map.md`, the OpenAPI documents of the platform, the schema
+  index, `.dependency-cruiser.cjs`, and a `CONTEXT.md` changed in its generated sections alone.
+
+Outside a git repository, before the first commit, on a ref git does not know or one that shares
+no history with HEAD, it refuses with exit 2. `--json` prints `{ base, baseCommit, head, branch,
+contexts, specs, review, regenerated, notes }`: each context `{ name, change, useCases,
+permissions, routes, publishedEvents, consumedEvents, ports }`, each entry with its `change`; each
+spec `{ file, titles: [{ title, state }], generated }`; each file to review `{ path, part, change }`.
+
 ## cited
 
 ```
