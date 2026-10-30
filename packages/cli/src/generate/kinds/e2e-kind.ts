@@ -11,6 +11,7 @@ import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { reactionOf, type JobStart, type Reaction } from './e2e/reaction-of';
 import { tracedCommand } from './traced-command';
+import { isControlPlane } from '../../config/is-control-plane';
 import { declaredModules } from '../../model-modules';
 
 export const e2eKind: Kind = {
@@ -46,7 +47,7 @@ export const e2eKind: Kind = {
         spec,
         renderTemplate(
           'e2e/e2e.spec.ts.tpl',
-          vars(scope, { name: named(name), e2e: { ...endpoint, ...traced, tree } }),
+          vars(scope, { name: named(name), e2e: { ...endpoint, ...traced, tree, tenant: tenantOf(scope) } }),
         ),
       );
     }
@@ -68,6 +69,13 @@ function reactionSpec(scope: Scope, name: Name, reaction: Reaction | JobStart): 
     .join('\n\n');
 
   return renderTemplate('e2e/e2e-job.spec.ts.tpl', vars(scope, { name: named(name), e2e: { ...reaction.e2e, cases } }));
+}
+
+/** The tenant the actors of the spec act in: a tenant-scoped repository refuses a token without one. */
+function tenantOf(scope: Scope): string {
+  return scope.config.stack.tenancy === 'none' || isControlPlane(scope.config, scope.context.kebab)
+    ? ''
+    : ", tenantId: 'acme'";
 }
 
 /** What starts the use case the spec drives. */

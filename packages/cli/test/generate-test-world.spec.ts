@@ -161,7 +161,7 @@ describe('generate test-world, in the declared style', () => {
 });
 
 describe('generate test-world, and the reader of a query', () => {
-  it('reads the fake of the reader of a query as standing for its port, and leaves it to the spec that gives its answer', () => {
+  it('finds the port of the fake of a plain query through the in-memory adapter it extends, and leaves it to the spec that gives its answer', () => {
     const project = billingProject('world-reader');
 
     expect(
@@ -170,8 +170,7 @@ describe('generate test-world, and the reader of a query', () => {
 
     const fake = read(project, `${BILLING}/test/fakes/get-invoice-reader.fake.ts`);
 
-    expect(fake).toContain('export class FakeGetInvoiceReader implements GetInvoiceReader {');
-    expect(fake).not.toContain('InMemory');
+    expect(fake).toContain('export class FakeGetInvoiceReader extends InMemoryGetInvoiceReader {');
 
     expect(report(cli(project, 'generate', 'test-world', 'billing', '--json')).notes).toContain(
       'Not in the world: FakeGetInvoiceReader needs constructor arguments: a spec builds it with what it should answer.',
