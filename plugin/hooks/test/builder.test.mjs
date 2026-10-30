@@ -636,6 +636,9 @@ test('at its stop, a builder is told the files outside its scope its branch comm
   const root = committed();
   const base = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
   put(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'ordering', baseCommit: base }));
+  const clean = builder('clean-branch');
+  run('pre-bash', bash(root, 'git status', clean));
+  assert.equal(run('subagent-stop', { cwd: root, ...clean, stop_hook_active: false }).output, undefined);
   const agent = builder('committed-outside');
   run('pre-bash', bash(root, 'git status', agent));
   put(root, 'src/contexts/billing/domain/invoice.ts', 'export const invoice = 1;\n');
