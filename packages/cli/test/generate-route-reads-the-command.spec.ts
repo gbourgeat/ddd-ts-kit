@@ -183,13 +183,13 @@ describe('generate route after a command whose constructor declares its fields, 
         '',
         'export class RefundInvoiceBody {',
         '  @IsString()',
-        "  reason = '';",
+        '  declare reason: string;',
         '',
         '  @IsNumber()',
-        '  refundAmount = 0;',
+        '  declare refundAmount: number;',
         '',
         '  @IsBoolean()',
-        '  notifyCustomer = false;',
+        '  declare notifyCustomer: boolean;',
         '}',
         '',
       ].join('\n'),
@@ -327,7 +327,7 @@ describe('generate route after a command whose constructor declares its fields, 
       'new RefundInvoiceCommand(actor, params.invoiceId, body.reason, body.refundAmount, body.notifyCustomer)',
     );
 
-    expect(read(root, `${FOLDER}/refund-invoice.body.ts`)).toContain('  @IsNumber()\n  refundAmount = 0;');
+    expect(read(root, `${FOLDER}/refund-invoice.body.ts`)).toContain('  @IsNumber()\n  declare refundAmount: number;');
     expect(read(root, SPEC)).toContain(EXPECTED);
   });
 });

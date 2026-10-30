@@ -3,22 +3,22 @@ import { IsOptional, IsString } from 'class-validator';
 /** The role of a member of an organisation changed. Version 1: a field may be added, never renamed nor removed. */
 export class MemberRoleChangedV1Payload {
   @IsString()
-  memberId = '';
+  declare memberId: string;
 
   @IsString()
-  organisationId = '';
+  declare organisationId: string;
 
   @IsString()
-  accountId = '';
+  declare accountId: string;
 
   @IsString()
-  from = '';
+  declare from: string;
 
   @IsString()
-  to = '';
+  declare to: string;
 
   /** The delegation that lent the right to decide it, when the role of who decided did not grant it. */
   @IsOptional()
   @IsString()
-  delegationId?: string;
+  declare delegationId?: string;
 }

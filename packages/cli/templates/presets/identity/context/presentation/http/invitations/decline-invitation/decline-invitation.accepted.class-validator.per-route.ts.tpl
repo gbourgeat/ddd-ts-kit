@@ -2,5 +2,5 @@ import { IsString } from 'class-validator';
 
 export class DeclineInvitationAccepted {
   @IsString()
-  id = '';
+  declare id: string;
 }

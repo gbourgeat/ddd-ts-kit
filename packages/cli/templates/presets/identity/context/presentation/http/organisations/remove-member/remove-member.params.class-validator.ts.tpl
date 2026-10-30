@@ -3,9 +3,9 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class RemoveMemberParams {
   @IsString()
   @IsNotEmpty()
-  organisationId = '';
+  declare organisationId: string;
 
   @IsString()
   @IsNotEmpty()
-  accountId = '';
+  declare accountId: string;
 }

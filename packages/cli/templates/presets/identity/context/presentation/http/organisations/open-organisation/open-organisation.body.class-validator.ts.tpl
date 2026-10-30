@@ -4,9 +4,9 @@ export class OpenOrganisationBody {
   /** Lower-case letters, digits and hyphens: the identifier of the organisation, for good. */
   @IsString()
   @IsNotEmpty()
-  slug = '';
+  declare slug: string;
 
   @IsString()
   @IsNotEmpty()
-  name = '';
+  declare name: string;
 }

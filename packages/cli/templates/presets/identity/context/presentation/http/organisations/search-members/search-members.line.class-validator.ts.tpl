@@ -3,20 +3,20 @@ import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vo
 
 export class SearchMembersLine {
   @IsString()
-  memberId = '';
+  declare memberId: string;
 
   @IsString()
-  accountId = '';
+  declare accountId: string;
 
   @IsString()
-  displayName = '';
+  declare displayName: string;
 
   @IsEmail()
-  email = '';
+  declare email: string;
 
   @IsIn(Object.values(MemberRole))
-  role = '';
+  declare role: string;
 
   @IsISO8601()
-  joinedAt = '';
+  declare joinedAt: string;
 }

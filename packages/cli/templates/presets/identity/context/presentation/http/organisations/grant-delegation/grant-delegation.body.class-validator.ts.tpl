@@ -4,15 +4,15 @@ import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.
 export class GrantDelegationBody {
   @IsString()
   @IsNotEmpty()
-  delegateId = '';
+  declare delegateId: string;
 
   @IsArray()
   @IsIn(Object.values(MemberRight), { each: true })
-  rights: MemberRight[] = [];
+  declare rights: MemberRight[];
 
   @IsISO8601()
-  startsAt = '';
+  declare startsAt: string;
 
   @IsISO8601()
-  endsAt = '';
+  declare endsAt: string;
 }

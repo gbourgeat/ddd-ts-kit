@@ -3,5 +3,5 @@ import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vo
 
 export class ChangeMemberRoleBody {
   @IsIn(Object.values(MemberRole))
-  role: MemberRole = MemberRole.Member;
+  declare role: MemberRole;
 }

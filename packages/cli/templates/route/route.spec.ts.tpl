@@ -17,6 +17,22 @@ describe('{{route.method}} {{route.path}}', () => {
     {{route.answerExpectation}}
     {{route.messageExpectation}}
   });
+  {{#if route.refusesMissing}}
+
+  it('refuses a body without `{{route.missingField}}` with 422, naming the field', async () => {
+    const {{route.bus}} = new {{route.recordingBus}}();
+    const { send } = routeOf({{name.camel}}Route({{route.bus}}));
+
+    const response = await send({{route.missingRequest}});
+
+    expect(response).toMatchObject({
+      status: 422,
+      body: { code: 'VALIDATION_FAILED', issues: [{ path: 'body.{{route.missingField}}' }] },
+    });
+
+    expect({{route.bus}}.executed).toEqual([]);
+  });
+  {{/if}}
 
   // TODO(domain): replace each entry below by a test of the same shape, through the same `routeOf` (`{ caller }` names another one, `anonymousActor()` of the kernel nobody).
   it.todo('refuses an input that does not have the expected shape with 422');

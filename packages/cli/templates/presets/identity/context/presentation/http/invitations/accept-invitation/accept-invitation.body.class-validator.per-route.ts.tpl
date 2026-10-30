@@ -4,5 +4,5 @@ export class AcceptInvitationBody {
   /** The token the invitation was sent with. */
   @IsString()
   @IsNotEmpty()
-  token = '';
+  declare token: string;
 }
