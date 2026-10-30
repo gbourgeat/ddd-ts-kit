@@ -15,7 +15,10 @@ export interface VerifyChainOptions {
   /** Required with a reader. With entries: the one chain to verify, every chain found otherwise. */
   readonly chain?: string;
 
-  /** First and last sequence to examine, both included. Default: from 1, to the last entry given. */
+  /**
+   * First and last sequence to examine, both included. Default: from 1, or from the entry after
+   * `after`, to the last entry given.
+   */
   readonly from?: number;
 
   readonly to?: number;
@@ -30,9 +33,9 @@ export interface VerifyChainOptions {
 
   /**
    * The entry just before the first one examined, as an archive keeps it (`lastHash` and
-   * `toSequence`): the first entry must link to its hash, so that the entries left in the trail
-   * are proven to go on from the archived ones. Without it, starting at `from` above 1 trusts the
-   * entry before.
+   * `toSequence`): the examination starts after it and the first entry must link to its hash, so
+   * that the entries left in the trail are proven to go on from the archived ones. Without it,
+   * starting at `from` above 1 trusts the entry before.
    */
   readonly after?: AuditCheckpoint;
 }
@@ -50,11 +53,12 @@ export async function verifyChain(
   source: readonly AuditEntry[] | AuditReader,
   options: VerifyChainOptions = {},
 ): Promise<ChainVerification> {
-  const entries = isReader(source) ? await readChain(source, options) : source;
+  const range = startingAfterTheAnchor(options);
+  const entries = isReader(source) ? await readChain(source, range) : source;
   let checked = 0;
 
-  for (const chain of chainsOf(entries, options)) {
-    const outcome = verifyOne(inRange(entries, chain, options), { ...options, chain });
+  for (const chain of chainsOf(entries, range)) {
+    const outcome = verifyOne(inRange(entries, chain, range), { ...range, chain });
 
     checked += outcome.checked;
 
@@ -64,6 +68,12 @@ export async function verifyChain(
   }
 
   return { valid: true, checked };
+}
+
+function startingAfterTheAnchor(options: VerifyChainOptions): VerifyChainOptions {
+  const { from, after } = options;
+
+  return from === undefined && after !== undefined ? { ...options, from: after.sequence + 1 } : options;
 }
 
 function isReader(source: readonly AuditEntry[] | AuditReader): source is AuditReader {

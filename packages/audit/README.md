@@ -674,7 +674,7 @@ const outcome = await verifyChain(reader, { chain: 'tenant:acme' });
 // { valid: false, checked: 311, break: { kind: 'altered-content', chain: 'tenant:acme', position: 311, sequence: 312, entryId: '...' } }
 ```
 
-`verifyChain(entries | reader, { chain?, from?, to?, checkpoints? })` walks a chain in the
+`verifyChain(entries | reader, { chain?, from?, to?, checkpoints?, after? })` walks a chain in the
 order given and reports the **first** place where it stops holding:
 
 | Kind | Meaning |
@@ -687,7 +687,8 @@ order given and reports the **first** place where it stops holding:
 was expected there. Given entries (an export), every chain found is verified, and the entries
 are never sorted first: a shuffled file is reported as such. Given a reader, `chain` is
 required and the range is read page by page, then held in memory: verify long chains by ranges
-(`from`, `to`). A range starting above 1 trusts the entry before it.
+(`from`, `to`). A range starting above 1 trusts the entry before it. A chain that has archives
+is verified [from the anchor of the last one](#archiving).
 
 The walk stops at its first break: past it the chain proves nothing of what comes next, and after
 an entry that is gone or out of place where it goes on would be a guess. The break is the answer,
@@ -759,8 +760,15 @@ const [first, second] = await trail.archivesOf('tenant:acme');
 verifyArchive(await textOf(files, second.fileKey), second, first);
 // { valid: true, entries: 1830 }: the digest, the range, every hash and link, the last hash
 await verifyChain(trail, { chain: 'tenant:acme', after: { chain: 'tenant:acme', sequence: second.toSequence, hash: second.lastHash } });
-// the entries left in the database link to the anchor of the last archive
+// { valid: true, checked: 1204 }: the entries left in the database link to the anchor of the last archive
 ```
+
+`after` says where the walk starts: at the position after the anchor, whose hash the first entry
+must link to. A chain that has archives is verified that way. Its first entry has left the
+database, so `verifyChain(trail, { chain })` answers `missing-entry` at sequence 1, as for a chain
+whose head was removed: the walk does not read the archives on its own. An anchor is what a row
+of `audit_archives` says until `verifyArchive` has proved it against its file, so the caller names
+the one it trusts.
 
 `ArchiveAuditEntries(trail, files, clock, monthsOnline = 12)` is the scheduled job of the
 platform: each run archives the entries older than the first day of the month `monthsOnline`

@@ -10,6 +10,7 @@ import {
 } from '../../src';
 import { FEBRUARY, JANUARY, MARCH, clock, recordAt, type ArchiveFixture } from './archive-fixture';
 import { archiveRefusalSpecs } from './archive-refusal-specs';
+import { archiveVerificationSpecs } from './archive-verification-specs';
 import { CHAIN, aRecord, sequencesOf } from './sql-trail-fixture';
 
 export type { ArchiveFixture } from './archive-fixture';
@@ -29,6 +30,7 @@ async function textOf(files: InMemoryFileStorage, archive: AuditArchive): Promis
 export function archiveSpecs(name: string, create: () => Promise<ArchiveFixture>): void {
   rangeSpecs(name, create);
   integritySpecs(name, create);
+  archiveVerificationSpecs(name, create);
   archiveRefusalSpecs(name, create);
 }
 

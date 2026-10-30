@@ -213,6 +213,40 @@ describe('verifyChain, ranges, several chains and readers', () => {
     });
   });
 
+  it('starts after the anchor it is given, which the first entry must link to', async () => {
+    const entries = await aChain(5);
+    const left = entries.slice(3);
+    const after = { chain: CHAIN, sequence: 3, hash: nth(entries, 2).hash };
+
+    expect(await verifyChain(left, { after })).toEqual({ valid: true, checked: 2 });
+    expect(await verifyChain(left, { after, from: 4 })).toEqual({ valid: true, checked: 2 });
+
+    expect(await verifyChain(entries, { after })).toEqual({ valid: true, checked: 2 });
+
+    expect(await verifyChain(left, { after: { ...after, hash: nth(entries, 1).hash } })).toEqual({
+      valid: false,
+      checked: 0,
+      break: { kind: 'altered-content', chain: CHAIN, position: 0, sequence: 4, entryId: 'acme-4' },
+    });
+
+    expect(await verifyChain(entries.slice(4), { after })).toMatchObject({
+      valid: false,
+      break: { kind: 'missing-entry', position: 0, sequence: 4 },
+    });
+  });
+
+  it('reads from a reader from the position after the anchor', async () => {
+    const trail = new InMemoryAuditTrail();
+
+    for (let index = 1; index <= 5; index += 1) {
+      await trail.record(aRecord(`acme-${index}`));
+    }
+
+    const after = { chain: CHAIN, sequence: 3, hash: nth(trail.entries, 2).hash };
+
+    expect(await verifyChain(trail, { chain: CHAIN, after })).toEqual({ valid: true, checked: 2 });
+  });
+
   it('needs to be told which chain to read from a reader', async () => {
     await expect(verifyChain(new InMemoryAuditTrail())).rejects.toThrow(TypeError);
   });
@@ -277,13 +311,13 @@ describe('anchoring', () => {
 
     const after = { chain: CHAIN, sequence: 2, hash: nth(entries, 1).hash };
 
-    expect(await verifyChain(entries.slice(2, 4), { after, from: 3, checkpoints })).toEqual({
+    expect(await verifyChain(entries.slice(2, 4), { after, checkpoints })).toEqual({
       valid: false,
       checked: 2,
       break: { ...missing, position: 2, sequence: 5 },
     });
 
-    expect(await verifyChain(entries.slice(2), { after, from: 3, checkpoints })).toEqual({ valid: true, checked: 4 });
+    expect(await verifyChain(entries.slice(2), { after, checkpoints })).toEqual({ valid: true, checked: 4 });
   });
 
   it('shows a chain gone as a whole, which a checkpoint names and no entry holds', async () => {

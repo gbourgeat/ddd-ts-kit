@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:83ec5cbedfee6e6f -->
+<!-- translation-of: audit-trail.md sha256:55f594f588d0f17f -->
 
 # Journal d'audit
 
@@ -273,7 +273,9 @@ de chaîne tronquée ne se voit qu'en comparant avec un point de contrôle plus 
 qui s'arrête avant un point de contrôle qu'on lui donne ne se vérifie pas.
 
 Une vérification signale la première rupture et s'arrête là : au-delà, la chaîne ne prouve rien
-de ce qui suit. Qui a examiné une rupture reprend à l'entrée suivante.
+de ce qui suit. Qui a examiné une rupture reprend à l'entrée suivante. Une chaîne qui a des
+archives se vérifie depuis l'ancre de sa dernière archive, que l'appelant nomme : les entrées
+d'avant ont quitté la base.
 
 La vérification devrait s'exécuter selon une planification et alerter ; une chaîne que personne
 ne vérifie ne prouve rien en pratique.

@@ -256,7 +256,9 @@ comparing with a later checkpoint: a chain that stops before a checkpoint it is 
 verify.
 
 A verification reports the first break and stops there: past it the chain proves nothing of what
-comes next. Whoever has looked at a break walks on from the entry after it.
+comes next. Whoever has looked at a break walks on from the entry after it. A chain that has
+archives is verified from the anchor of its last archive, which the caller names: the entries
+before it have left the database.
 
 Verification should run on a schedule and alert; a chain nobody verifies proves nothing in
 practice.

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6c1e12af74ac2db6 -->
+<!-- translation-of: README.md sha256:9d2d1e353d999be3 -->
 
 # @ddd-ts-kit/audit
 
@@ -703,7 +703,7 @@ const outcome = await verifyChain(reader, { chain: 'tenant:acme' });
 // { valid: false, checked: 311, break: { kind: 'altered-content', chain: 'tenant:acme', position: 311, sequence: 312, entryId: '...' } }
 ```
 
-`verifyChain(entries | reader, { chain?, from?, to?, checkpoints? })` parcourt une chaîne dans
+`verifyChain(entries | reader, { chain?, from?, to?, checkpoints?, after? })` parcourt une chaîne dans
 l'ordre donné et signale le **premier** endroit où elle cesse de tenir :
 
 | Genre | Signification |
@@ -717,7 +717,8 @@ l'ordre donné et signale le **premier** endroit où elle cesse de tenir :
 ne sont jamais triées d'abord : un fichier mélangé est signalé comme tel. Avec un lecteur, `chain`
 est obligatoire et la plage est lue page par page, puis tenue en mémoire : vérifiez les longues
 chaînes par plages (`from`, `to`). Une plage qui commence au-dessus de 1 fait confiance à l'entrée
-qui la précède.
+qui la précède. Une chaîne qui a des archives se vérifie
+[depuis l'ancre de la dernière](#archivage).
 
 Le parcours s'arrête à sa première rupture : au-delà, la chaîne ne prouve rien de ce qui suit, et
 après une entrée disparue ou déplacée, l'endroit où elle reprend serait une supposition. La
@@ -793,8 +794,15 @@ const [first, second] = await trail.archivesOf('tenant:acme');
 verifyArchive(await textOf(files, second.fileKey), second, first);
 // { valid: true, entries: 1830 } : l'empreinte, la plage, chaque hash et chaque lien, le dernier hash
 await verifyChain(trail, { chain: 'tenant:acme', after: { chain: 'tenant:acme', sequence: second.toSequence, hash: second.lastHash } });
-// les entrées restées en base se rattachent à l'ancre de la dernière archive
+// { valid: true, checked: 1204 } : les entrées restées en base se rattachent à l'ancre de la dernière archive
 ```
+
+`after` dit où commence le parcours : à la position qui suit l'ancre, au hash de laquelle la
+première entrée doit se lier. Une chaîne qui a des archives se vérifie ainsi. Sa première entrée a
+quitté la base, donc `verifyChain(trail, { chain })` répond `missing-entry` à la séquence 1, comme
+pour une chaîne dont la tête a été supprimée : le parcours ne lit pas les archives de lui-même.
+Une ancre est ce que dit une ligne d'`audit_archives` tant que `verifyArchive` ne l'a pas prouvée
+contre son fichier : c'est donc l'appelant qui nomme celle à laquelle il se fie.
 
 `ArchiveAuditEntries(trail, files, clock, monthsOnline = 12)` est la tâche planifiée de la
 plateforme : chaque passage archive les entrées antérieures au premier jour du mois situé
