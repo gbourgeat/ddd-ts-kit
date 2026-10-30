@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -8,6 +8,7 @@ import { installKit } from './support/install-kit';
 import { NPM } from './support/npm';
 import { readJson } from './support/read-json';
 import { commitAll } from './support/commit-all';
+import { git } from './support/git';
 
 const SETTINGS = '.claude/settings.json';
 const GATE = '.claude/hooks/production-gate.mjs';
@@ -29,6 +30,24 @@ function runHook(root: string, hook: string, input: unknown, env: Record<string,
   });
 
   return { status, stdout, stderr };
+}
+
+/** The hook with its input written `delay` ms after it started, as a harness that defers the write would. */
+function runLate(root: string, hook: string, input: string, delay: number): Promise<HookRun> {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [path.join(root, hook)], {
+      cwd: root,
+      env: { ...process.env, RELEASE_APPROVAL: '' },
+    });
+
+    let stderr = '';
+    let stdout = '';
+
+    child.stderr.on('data', (chunk: Buffer) => (stderr += String(chunk)));
+    child.stdout.on('data', (chunk: Buffer) => (stdout += String(chunk)));
+    child.on('close', (status) => resolve({ status, stdout, stderr }));
+    setTimeout(() => child.stdin.end(input), delay);
+  });
 }
 
 const bash = (command: string): unknown => ({ tool_name: 'Bash', tool_input: { command } });
@@ -122,7 +141,15 @@ describe('the production gate of the regulated profile', () => {
       encoding: 'utf8',
     });
 
-    expect(unreadable.status).toBe(0);
+    expect(unreadable.status).toBe(2);
+    expect(unreadable.stderr).toContain('could not be read');
+  });
+
+  it('waits for an input that arrives late, and judges it', async () => {
+    const late = await runLate(root, GATE, JSON.stringify(bash('pnpm run deploy:production')), 300);
+
+    expect(late.status).toBe(2);
+    expect(late.stderr).toContain('no approval is set');
   });
 });
 
@@ -134,7 +161,7 @@ describe('the change reference of the regulated profile', () => {
       hooks: {
         PreToolUse: expect.arrayContaining([
           {
-            matcher: 'Edit|Write',
+            matcher: 'Edit|Write|MultiEdit',
             hooks: [
               {
                 type: 'command',
@@ -199,7 +226,35 @@ describe('the change reference of the regulated profile', () => {
     });
 
     expect(unreadable.status).toBe(0);
-    expect(unreadable.stdout).toBe('');
+    expect(JSON.parse(unreadable.stdout)).toMatchObject({ hookSpecificOutput: { permissionDecision: 'ask' } });
+  });
+
+  it('asks for the containers and migrations of a worktree, of a second compose file, of a MultiEdit and from a subdirectory', () => {
+    const project = tempDir('hooks-places');
+
+    write(project, 'README.md', 'x');
+    git(project, 'init', '--quiet', '-b', 'main');
+    git(project, 'add', '-A');
+    git(project, 'commit', '--quiet', '-m', 'init');
+    git(project, 'worktree', 'add', '--quiet', '-b', 'us1', '.worktrees/us1');
+
+    const asks = (input: unknown): boolean => runHook(root, REFERENCE, input).stdout.includes('"ask"');
+
+    const at = (tool_name: string, cwd: string, file: string): unknown => ({
+      tool_name,
+      cwd,
+      tool_input: { file_path: file },
+    });
+
+    expect(asks(at('Edit', project, path.join(project, '.worktrees/us1/Dockerfile')))).toBe(true);
+    expect(asks(at('Edit', project, path.join(project, '.worktrees/us1/docker-compose.yml')))).toBe(true);
+    expect(asks(at('Edit', project, path.join(project, '.worktrees/us1/docker/varnish.vcl')))).toBe(true);
+    expect(asks(at('Edit', path.join(project, 'src'), path.join(project, 'Dockerfile')))).toBe(true);
+    expect(asks(at('MultiEdit', project, path.join(project, 'Dockerfile')))).toBe(true);
+    expect(asks(at('Write', project, path.join(project, 'docker-compose.override.yml')))).toBe(true);
+    expect(asks(at('Edit', project, path.join(project, 'src/apps/billing/Dockerfile')))).toBe(true);
+    expect(asks(at('Edit', project, path.join(project, 'src/index.ts')))).toBe(false);
+    expect(asks(at('Edit', project, path.join(project, '.worktrees/us1/README.md')))).toBe(false);
   });
 });
 
@@ -240,7 +295,7 @@ describe('the hooks of the regulated profile, under init again and doctor', () =
     expect(result.code).toBe(1);
 
     expect(result.stdout).toContain(
-      '  permission hooks.change-reference: missing (a PreToolUse hook on Edit|Write running node "$CLAUDE_PROJECT_DIR/.claude/hooks/change-reference.mjs")',
+      '  permission hooks.change-reference: missing (a PreToolUse hook on Edit|Write|MultiEdit running node "$CLAUDE_PROJECT_DIR/.claude/hooks/change-reference.mjs")',
     );
 
     expect(result.stdout).not.toContain('hooks.production-gate');

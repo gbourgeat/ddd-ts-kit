@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:6b9b97503850d069 -->
+<!-- translation-of: agent-sandbox.md sha256:35d006e0e4cbf702 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -97,7 +97,7 @@ ligne apporte, en termes de contrôle :
 | `strictKnownMarketplaces: [{ "source": "github", "repo": "gbourgeat/ddd-ts-kit" }]` | gérés | les *plugins* viennent des *marketplaces* que l'organisation nomme (celle du kit, ou votre miroir) : aucun *skill* non relu |
 | `requiredMinimumVersion: "<version>"` | gérés | un Claude Code plus ancien que la version nommée ne démarre pas : chaque session a les contrôles de cette version |
 | `hooks.PreToolUse` : `production-gate.mjs` sur `Bash` | projet, `.claude/hooks/` | une commande qui nomme l'environnement de production avec une action de mise en production ne tourne pas sans approbation nommée : l'autorisation de mise en production du processus de changement, tenue au moment où la commande tournerait |
-| `hooks.PreToolUse` : `change-reference.mjs` sur `Edit\|Write` | projet, `.claude/hooks/` | une modification d'une migration ou des conteneurs est confirmée par une personne avec une référence de changement en tête, enregistrée comme *trailer* `Change:` du *commit* : le ticket de changement du processus, sur ce qui atteint la production autrement que par le code |
+| `hooks.PreToolUse` : `change-reference.mjs` sur `Edit\|Write\|MultiEdit` | projet, `.claude/hooks/` | une modification d'une migration ou des conteneurs est confirmée par une personne avec une référence de changement en tête, enregistrée comme *trailer* `Change:` du *commit* : le ticket de changement du processus, sur ce qui atteint la production autrement que par le code |
 
 Les réglages gérés vivent hors du dépôt (`managed-settings.json`, déployé par l'équipe
 plateforme) : `init` les affiche comme un bloc à coller, la version laissée à l'équipe. Associez
@@ -118,8 +118,9 @@ manque. Chacun s'explique à l'agent :
   quoi. L'agent est prévenu de ne pas poser la variable lui-même. Les listes se modifient dans le
   fichier, ou s'étendent pour une session par les variables `PRODUCTION_GATE_ENVIRONMENTS` et
   `PRODUCTION_GATE_ACTIONS` (séparées par des virgules). Toute autre commande passe telle quelle.
-- `change-reference.mjs` tourne avant chaque `Edit` et `Write`. Un fichier sous `migrations/` ou
-  `prisma/migrations/`, sous `docker/`, le `Dockerfile` ou `docker-compose.yml` fait répondre au
+- `change-reference.mjs` tourne avant chaque `Edit`, `MultiEdit` et `Write`. Un fichier sous
+  `migrations/` ou `prisma/migrations/`, sous un dossier `docker/`, un `Dockerfile` ou un
+  `docker-compose*.yml`, où qu'il soit dans le dépôt ou dans un *worktree* du projet, fait répondre au
   *hook* `permissionDecision: "ask"` : la personne confirme la modification avec une référence de
   changement en tête (l'identifiant du ticket de changement ou de la *story*), et la session
   l'enregistre comme *trailer* `Change: <id>` du *commit* qui porte le fichier

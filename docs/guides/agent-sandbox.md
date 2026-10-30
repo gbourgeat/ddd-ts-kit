@@ -94,7 +94,7 @@ terms:
 | `strictKnownMarketplaces: [{ "source": "github", "repo": "gbourgeat/ddd-ts-kit" }]` | managed | plugins come from the marketplaces the organisation names (the kit's, or your mirror of it): no unreviewed skill |
 | `requiredMinimumVersion: "<version>"` | managed | a Claude Code older than the version named does not start: every session has the controls of that version |
 | `hooks.PreToolUse`: `production-gate.mjs` on `Bash` | project, `.claude/hooks/` | a command that names the production environment with a release action does not run without a named approval: the release authorisation of the change process, held at the moment the command would run |
-| `hooks.PreToolUse`: `change-reference.mjs` on `Edit\|Write` | project, `.claude/hooks/` | an edit of a migration or of the containers is confirmed by a person with a change reference in mind, recorded as the `Change:` trailer of the commit: the change ticket of the change process, on what reaches production otherwise than through the code |
+| `hooks.PreToolUse`: `change-reference.mjs` on `Edit\|Write\|MultiEdit` | project, `.claude/hooks/` | an edit of a migration or of the containers is confirmed by a person with a change reference in mind, recorded as the `Change:` trailer of the commit: the change ticket of the change process, on what reaches production otherwise than through the code |
 
 The managed settings live outside the repository (`managed-settings.json`, deployed by the
 platform team): `init` prints them as a block to paste, with the version left for the team to
@@ -115,8 +115,9 @@ itself to the agent:
   variable itself. The lists are edited in the file, or extended for one session by the
   variables `PRODUCTION_GATE_ENVIRONMENTS` and `PRODUCTION_GATE_ACTIONS` (comma-separated).
   Every other command passes untouched.
-- `change-reference.mjs` runs before every `Edit` and `Write`. A file under `migrations/` or
-  `prisma/migrations/`, under `docker/`, the `Dockerfile` or `docker-compose.yml` makes the hook
+- `change-reference.mjs` runs before every `Edit`, `MultiEdit` and `Write`. A file under
+  `migrations/` or `prisma/migrations/`, under a `docker/` folder, a `Dockerfile` or a
+  `docker-compose*.yml`, wherever it stands in the checkout or in a worktree of the project, makes the hook
   answer `permissionDecision: "ask"`: the person confirms the edit with a change reference in
   mind (the id of the change ticket or of the story), and the session records it as the trailer
   `Change: <id>` of the commit that holds the file (`git commit -m "<message>" -m "Change: <id>"`,

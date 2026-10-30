@@ -21,6 +21,6 @@ export const PROFILE_HOOKS: readonly ProfileHook[] = [
     name: 'change-reference',
     file: `${HOOKS_DIR}/change-reference.mjs`,
     template: 'init/hooks/change-reference.mjs',
-    matcher: 'Edit|Write',
+    matcher: 'Edit|Write|MultiEdit',
   },
 ];
