@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:c246e9bd6bff660e -->
+<!-- translation-of: commands.md sha256:a08874150ee09854 -->
 
 # Quelle commande, quand
 
@@ -75,7 +75,7 @@ exemple, reste un `TODO(domain)` du schéma et de l'appel.
 |---|---|---|---|---|
 | `/ddd-ts-kit:start` | conduit les étapes 1 à 7 de la méthode, une par tour, et reprend à partir du plan | en premier, avant tout code ; de nouveau pour reprendre | `docs/architecture/plan.md` et l'artefact de chaque étape | l'étape que nomme sa ligne `Next:` |
 | `/ddd-ts-kit:bootstrap` | choisit la *stack* selon des critères, lance `init`, crée les contextes | étape 5, une fois la carte des contextes esquissée | le projet et un `CONTEXT.md` par contexte | `/ddd-ts-kit:plan-slices` |
-| `npx ddd-ts-kit init [flags]` | écrit la configuration, la plateforme, le *pipeline*, les règles de l'agent | l'amorçage ; `--dry-run` d'abord pour lire ce qu'il écrit | un projet qui passe `npm run verify` | `npm install`, `npm run verify` |
+| `npx ddd-ts-kit init [flags]` | écrit la configuration, la plateforme, le *pipeline*, les règles de l'agent ; relancé, il garde la *stack* enregistrée : une valeur de drapeau invalide est refusée, un drapeau qui diffère de l'enregistré est noté et gardé (`init --force` le change) | l'amorçage ; `--dry-run` d'abord pour lire ce qu'il écrit | un projet qui passe `npm run verify` | `npm install`, `npm run verify` |
 | `npx ddd-ts-kit init --preset identity`, `generate context <name> --preset identity` | écrit un contexte générique en entier au lieu d'un contexte vide : les comptes venus du fournisseur d'identité, les organisations, les membres et les rôles, les invitations, les délégations ([pourquoi et lesquels](bootstrap-with-well-designed-contexts.fr.md)) | quand `contexts.md` contient un contexte générique d'identité | le contexte, ses *specs*, ses adaptateurs et son glossaire, verts d'emblée | lire sa section `## Design`, puis les tranches du cœur |
 | `npx ddd-ts-kit status` | la prochaine étape du plan, les tranches par statut et par responsable, ce qui reste par contexte | au début de chaque session | un texte court, `--json` pour des données | l'étape ou la tranche qu'il nomme |
 

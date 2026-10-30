@@ -102,7 +102,7 @@ dependencies are added, yours are kept and mentioned in the notes. The first tim
 name each dependency the stack about to be written contradicts, and the flag that keeps it
 (`package.json depends on fastify, and the project is written for --http express: pass --http
 fastify to keep it.`), a dry run included: run `init --dry-run` first on an existing project.
-Run again later, `init` keeps the stack recorded in the config.
+Run again later, `init` keeps the stack recorded in the config: a flag value no choice accepts is refused, and a flag that differs from the record is kept as recorded, with a note naming `init --force`. `drizzle-generate`, `prisma-generate` and `typeorm-generate` refuse a project of another ORM and name its `db:generate`.
 
 Every file `init` and `generate` write stays inside the project: a path that leads out of it
 through a symbolic link, in its place or above it (a `docs/adr` or a `.claude/settings.json`
@@ -582,7 +582,7 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> 
 ```
 
 `--events in-memory` together with an ORM is refused unless `--allow-no-outbox "<reason>"` is given:
-it records a `deviations` entry (`stack.events`) and writes the decision record it points to. The generated
+it records a `deviations` entry (`stack.events`) and writes the decision record it points to; `--allow-no-outbox` is refused when the stack keeps the outbox or has no ORM. The generated
 persistence of the four ORMs is written for PostgreSQL; `custom` starts on in-memory adapters
 held to the contract suites, for you to replace. The choices are recorded under `stack` in the
 config, `docsUi`, `ci` and `logger` included.
