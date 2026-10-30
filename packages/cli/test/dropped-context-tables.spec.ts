@@ -143,6 +143,18 @@ describe('ddd-ts-kit typeorm-generate, before a migration that drops the tables 
     );
   });
 
+  it('says nothing of a context that has no persistence folder yet', () => {
+    const root = projectWithEntities(`import { orders } from '${SOURCE}';\nexport const entities = [orders];\n`);
+
+    write(
+      root,
+      'ddd-ts-kit.config.json',
+      JSON.stringify({ contexts: { ordering: { classification: 'core' }, billing: { classification: 'core' } } }),
+    );
+
+    expect(said(root)).toBe('');
+  });
+
   it('runs before the command of the project', () => {
     const root = projectWithEntities('export const entities = [];\n');
 
