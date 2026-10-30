@@ -1,12 +1,8 @@
 import type { SourceFile } from '../model/source-file';
 import type { ClassShape } from '../structure/class-shape';
-import { matchingBracket } from '../text/matching-bracket';
+import { classStatements, type ClassProperty } from '../structure/class-statements';
 import type { DeclaredShape } from './declared-shape';
 import { stillGenerated } from './still-generated';
-import { topLevelStatements } from './top-level-statements';
-
-const DECORATOR_NAME = /@[A-Za-z_$][\w$]*\s*/y;
-const PROPERTY = /^(?:(?:readonly|public|declare)\s+)*([A-Za-z_$][\w$]*)\s*([?!])?/;
 
 /**
  * The DTO classes of a source: a class of the module that extends nothing, has no method and
@@ -28,42 +24,17 @@ function dtoMembers(shape: ClassShape, code: string): string[] | undefined {
     return undefined;
   }
 
-  const members = topLevelStatements(code.slice(shape.bodyStart + 1, shape.end), ';').map(member);
+  const members = classStatements(shape, code).map(member);
   const decorated = members.flatMap((one) => (one === undefined ? [] : [one]));
 
   return decorated.length === 0 || decorated.length < members.length ? undefined : decorated.sort();
 }
 
 /** `name?:@IsString()@MaxLength(500)` for a decorated property; nothing for anything else. */
-function member(statement: string): string | undefined {
-  const { decorators, rest } = decoratorsOf(statement.trim());
-  const property = PROPERTY.exec(rest);
-
-  if (decorators.length === 0 || property === null) {
+function member(property: ClassProperty | undefined): string | undefined {
+  if (property === undefined || property.decorators.length === 0) {
     return undefined;
   }
 
-  return `${property[1] ?? ''}${property[2] === '?' ? '?' : ''}:${decorators.join('')}`;
-}
-
-/** The decorators that open a statement, their arguments included, and what follows them. */
-function decoratorsOf(statement: string): { decorators: string[]; rest: string } {
-  const decorators: string[] = [];
-  let at = 0;
-
-  for (;;) {
-    DECORATOR_NAME.lastIndex = at;
-
-    const name = DECORATOR_NAME.exec(statement);
-
-    if (name === null) {
-      return { decorators, rest: statement.slice(at).trim() };
-    }
-
-    const open = at + name[0].length;
-    const end = statement.charAt(open) === '(' ? matchingBracket(statement, open) + 1 : open;
-
-    decorators.push(statement.slice(at, end).replace(/\s+/g, ''));
-    at = end + (statement.slice(end).length - statement.slice(end).trimStart().length);
-  }
+  return `${property.name}${property.optional ? '?' : ''}:${property.decorators.join('')}`;
 }

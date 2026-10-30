@@ -1,11 +1,13 @@
 import type { Project } from '../model/project';
 import type { SourceFile } from '../model/source-file';
+import { propertyOf } from '../structure/property-of';
 import { matchingBracket } from '../text/matching-bracket';
 
 const DEFINE = /\bexport\s+const\s+([\w$]+)\s*=\s*defineIntegrationEvent\s*\(/g;
 const ZOD_OBJECT = /\bz\.object\s*\(\s*\{/g;
-const MEMBER = /^ {2}(?:(?:readonly|declare)\s+)*([A-Za-z_$][\w$]*)[!?]?\s*[:=]/;
 const SUFFIX = '.integration-event.ts';
+/** A member of the class or the interface itself, not a line nested in one of its values. */
+const FIRST_INDENTATION = /^ {2}\S/;
 const KEY = /(?:^|[{,]\s*|\n\s*)([A-Za-z_$][\w$]*)\s*:/g;
 
 /** A field of the payload of an integration event, where it is written. */
@@ -117,7 +119,7 @@ function zodFields(file: SourceFile, range: { readonly from: number; readonly to
 /** The members of the class or the interface of a payload file, one per line at the first indentation. */
 function membersOf(file: SourceFile): PayloadField[] {
   return file.text.split('\n').flatMap((line, index) => {
-    const name = MEMBER.exec(line)?.[1];
+    const name = FIRST_INDENTATION.test(line) ? propertyOf(line)?.name : undefined;
 
     return name === undefined ? [] : [{ name, file: file.path, line: index + 1 }];
   });
