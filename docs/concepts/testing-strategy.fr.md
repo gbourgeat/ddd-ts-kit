@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:429096142ba3f3de -->
+<!-- translation-of: testing-strategy.md sha256:1ee5c50e17194438 -->
 
 # Stratégie de test
 
@@ -218,7 +218,9 @@ const appointment = anAppointment().forPatient('ada').startingAt(tomorrowAt9).ca
 
 Un *builder* étend `Builder` de `@ddd-ts-kit/testing` : des `defaults()` valides une fois pour
 toutes, un `construct()` qui passe par l'API publique de l'agrégat, et une méthode par mot du
-langage. Raccourci à partir du *builder* de l'exemple :
+langage. L'instant de la naissance est un ingrédient nommé d'après son fait (`bookedAt` de
+`Appointment Booked`), comme l'écrit `generate aggregate --birth` ; `examples/scheduling` garde
+`bornAt` tant que ses agrégats ne sont pas régénérés. Sur le modèle du *builder* de l'exemple :
 
 <!-- checked sample -->
 ```ts
@@ -228,7 +230,7 @@ import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 
 // l'agrégat, venu du domaine
 declare class Appointment extends AggregateRoot {
-  static create(id: string, patientId: string, startsAt: Date, bornAt: Date): Appointment;
+  static create(id: string, patientId: string, startsAt: Date, bookedAt: Date): Appointment;
   cancel(by: 'patient' | 'practice', at: Date): void;
 }
 
@@ -236,7 +238,7 @@ interface AppointmentIngredients {
   readonly id: string;
   readonly patientId: string;
   readonly startsAt: Date;
-  readonly bornAt: Date;
+  readonly bookedAt: Date;
   readonly cancelled: boolean;
 }
 
@@ -258,17 +260,17 @@ export class AppointmentBuilder extends Builder<AppointmentIngredients, Appointm
       id: sequence('appointment'),
       patientId: 'patient-1',
       startsAt: new Date('2026-03-02T09:00:00.000Z'),
-      bornAt: new Date('2026-03-01T00:00:00.000Z'),
+      bookedAt: new Date('2026-03-01T00:00:00.000Z'),
       cancelled: false,
     };
   }
 
   /** Par l'API publique seulement : un test ne peut jamais partir d'un état que les règles interdisent. */
-  protected construct({ id, patientId, startsAt, bornAt, cancelled }: AppointmentIngredients): Appointment {
-    const appointment = Appointment.create(id, patientId, startsAt, bornAt);
+  protected construct({ id, patientId, startsAt, bookedAt, cancelled }: AppointmentIngredients): Appointment {
+    const appointment = Appointment.create(id, patientId, startsAt, bookedAt);
 
     if (cancelled) {
-      appointment.cancel('patient', bornAt);
+      appointment.cancel('patient', bookedAt);
     }
 
     return appointment;

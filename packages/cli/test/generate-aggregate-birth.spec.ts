@@ -99,7 +99,7 @@ describe('generate aggregate --birth, the fact an aggregate is born with', () =>
     expect(read(root, SPEC)).not.toContain("it.todo('records the fact of its birth')");
 
     for (const file of [AGGREGATE, BUILDER, SPEC]) {
-      expect(read(root, file), file).not.toMatch(/registeredAt|bornAt|TODO\(domain\): name the fact/);
+      expect(read(root, file), file).not.toMatch(/registeredAt|bornAt|TODO\(domain\): record the fact/);
     }
   });
 
@@ -160,8 +160,10 @@ describe('generate aggregate --birth, the fact an aggregate is born with', () =>
       'const loaded = Invoice.rehydrate(row.id, {});',
     );
   });
+});
 
-  it('builds an existing aggregate born with a fact with the instant named after it', () => {
+describe('generate builder reads the birth an aggregate records', () => {
+  it('writes the builder generate aggregate --birth wrote, the instant named after the fact', () => {
     const root = born('Issued');
     const builder = read(root, BUILDER);
 
@@ -170,16 +172,66 @@ describe('generate aggregate --birth, the fact an aggregate is born with', () =>
     expect(cli(root, 'generate', 'builder', 'billing', 'Invoice').code).toBe(0);
     expect(read(root, BUILDER)).toBe(builder);
   });
+
+  it('reads the event create records whatever it is given, and says which parameters the builder cannot guess', () => {
+    const root = born('Issued');
+
+    write(
+      root,
+      AGGREGATE,
+      read(root, AGGREGATE)
+        .replace('static create(id: string, now: Date)', 'static create(id: string, now: Date, customerId: string)')
+        .replace('new InvoiceIssued(id, now)', 'new InvoiceIssued(id, now, customerId)'),
+    );
+
+    const result = report(cli(root, 'generate', 'builder', 'billing', 'Invoice', '--force', '--json'));
+
+    expect(read(root, BUILDER)).toContain('    return Invoice.create(ingredients.id, ingredients.issuedAt);');
+    expect(result.notes.join('\n')).toContain('`create` of Invoice takes 3 parameters: give the builder an ingredient');
+  });
+
+  it('writes no builder, and says why, when create records an event not named after its aggregate', () => {
+    const root = born('Issued');
+
+    write(root, AGGREGATE, read(root, AGGREGATE).replaceAll('InvoiceIssued', 'Issuance'));
+    fs.rmSync(path.join(root, BUILDER));
+
+    const result = report(cli(root, 'generate', 'builder', 'billing', 'Invoice', '--json'));
+
+    expect(result.created).toEqual([]);
+    expect(exists(root, BUILDER)).toBe(false);
+
+    expect(result.notes.join('\n')).toContain(
+      '`create` of Invoice records Issuance, which is not named Invoice<Fact>: no builder written.',
+    );
+  });
+
+  it('replays the birth event of an event-sourced aggregate, as generate aggregate --event-sourced wrote it', () => {
+    const root = initProject('--context', 'incidents:core', '--event-sourcing', 'on');
+    const builder = 'src/contexts/incidents/test/builders/incident.builder.ts';
+    const terms = ['--term', 'Incident=Something gone wrong', '--term', 'Trigger=To raise'];
+
+    expect(
+      cli(root, 'generate', 'aggregate', 'incidents', 'Incident', '--event-sourced', '--birth', 'Triggered', ...terms)
+        .code,
+    ).toBe(0);
+
+    const written = read(root, builder);
+
+    expect(written).toContain('return Incident.rehydrate(ingredients.id, {');
+    expect(cli(root, 'generate', 'builder', 'incidents', 'Incident', '--force').code).toBe(0);
+    expect(read(root, builder)).toBe(written);
+  });
 });
 
 describe('generate aggregate without --birth', () => {
-  it('leaves no instant of its own, and its TODO asks for the flag that names the birth', () => {
+  it('leaves no instant of its own, and its TODO says how to record the birth on the aggregate as it stands', () => {
     const root = billing();
 
     expect(cli(root, 'generate', 'aggregate', 'billing', 'Invoice').code).toBe(0);
 
     expect(read(root, AGGREGATE)).toContain(
-      '    // TODO(domain): name the fact Invoice is born with, recorded at `now`: `ddd-ts-kit generate aggregate billing Invoice --birth "<Fact>" --force` names the birth and writes its event.\n    return created;',
+      '    // TODO(domain): record the fact Invoice is born with at `now`, the instant the handler takes from its Clock: `ddd-ts-kit generate domain-event billing Invoice <Fact>` writes the event, then `created.record(new Invoice<Fact>(id, now));` here and, in its builder, an ingredient `<fact>At` passed to `create` (`generate builder billing Invoice --force` writes it). A new aggregate names it at once: `generate aggregate <context> <Name> --birth "<Fact>"`.\n    return created;',
     );
 
     expect(read(root, BUILDER)).toContain("    return { id: sequence('invoice') };");
@@ -189,6 +241,34 @@ describe('generate aggregate without --birth', () => {
     for (const file of [AGGREGATE, BUILDER, SPEC]) {
       expect(read(root, file), file).not.toMatch(/registeredAt|bornAt|Created/);
     }
+  });
+
+  it('takes the path of its TODO without rewriting the aggregate: the event, the record in create, the builder, and type-checks', () => {
+    const root = billing();
+
+    expect(cli(root, 'generate', 'aggregate', 'billing', 'Invoice').code).toBe(0);
+    expect(cli(root, 'generate', 'domain-event', 'billing', 'Invoice', 'Issued').code).toBe(0);
+
+    write(
+      root,
+      AGGREGATE,
+      read(root, AGGREGATE)
+        .replace(
+          "import { AggregateRoot } from '@ddd-ts-kit/kernel';",
+          "import { AggregateRoot } from '@ddd-ts-kit/kernel';\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event';",
+        )
+        .replace(
+          / {4}\/\/ TODO\(domain\): record the fact[^\n]*\n/,
+          '    created.record(new InvoiceIssued(id, now));\n\n',
+        ),
+    );
+
+    // Outside a git repository, --force keeps a builder the kit would write otherwise: the file goes first.
+    fs.rmSync(path.join(root, BUILDER));
+
+    expect(cli(root, 'generate', 'builder', 'billing', 'Invoice').code).toBe(0);
+    expect(read(root, BUILDER)).toContain('    return Invoice.create(ingredients.id, ingredients.issuedAt);');
+    expect(compiled(root)).toBe('');
   });
 });
 

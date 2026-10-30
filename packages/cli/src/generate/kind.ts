@@ -78,7 +78,7 @@ export interface KindFlags {
   readonly cache?: string;
   /** An aggregate keeps its state as the stream of its events. */
   readonly eventSourced: boolean;
-  /** The fact an event-sourced aggregate is born with, as `--birth <Fact>`; `Created` when absent. */
+  /** The fact an aggregate is born with, as `--birth "<Fact>"` in business words: its domain event is written and `create` records it; an event-sourced aggregate is born `Created` when absent. */
   readonly birth?: string;
   /** A command gives birth to its `--aggregate` (its handler calls `create` and answers the identifier); without it, the command changes an existing one. */
   readonly creates: boolean;

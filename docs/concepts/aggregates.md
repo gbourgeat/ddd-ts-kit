@@ -77,7 +77,6 @@ export interface AppointmentState {
   readonly clientId: string;
   readonly slot: TimeSlot;
   readonly status: 'booked' | 'cancelled';
-  readonly registeredAt: Date;
 }
 
 export class Appointment extends AggregateRoot<string> {
@@ -88,8 +87,8 @@ export class Appointment extends AggregateRoot<string> {
     super(id);
   }
 
-  static book(id: string, booking: Omit<AppointmentState, 'status' | 'registeredAt'>, now: Date): Appointment {
-    const booked = new Appointment(id, { ...booking, status: 'booked', registeredAt: now });
+  static book(id: string, booking: Omit<AppointmentState, 'status'>, now: Date): Appointment {
+    const booked = new Appointment(id, { ...booking, status: 'booked' });
 
     booked.record(new AppointmentBooked(id, now, booking.practitionerId, booking.slot));
 
@@ -132,8 +131,11 @@ export class Appointment extends AggregateRoot<string> {
 ```
 
 Here the birth factory is named `book`, in the language of the context; the reference names it
-`create` generically ([ARCHITECTURE.md](../ARCHITECTURE.md), section 4, "Aggregates"). What
-the shape guarantees:
+`create` generically ([ARCHITECTURE.md](../ARCHITECTURE.md), section 4, "Aggregates"). The
+instant of the birth is the `occurredAt` of `AppointmentBooked`, and the `created_at` audit column
+dates the row: the state holds an instant only when a rule reads it, named after its fact
+(`bookedAt`), as `generate aggregate --birth "Appointment Booked"` writes it (`examples/scheduling`
+keeps `registeredAt` until its aggregates are regenerated). What the shape guarantees:
 
 - **One door.** Private constructor, no setter, no public mutable property
   (`domain/aggregate-encapsulation`). State changes only through `reschedule` and `cancel`.

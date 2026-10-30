@@ -32,7 +32,7 @@ export class {{name.pascal}} extends AggregateRoot<string> {
 
 {{/if}}
 {{#unless birth.named}}
-    // TODO(domain): name the fact {{name.pascal}} is born with, recorded at `now`: `ddd-ts-kit generate aggregate {{context.kebab}} {{name.pascal}} --birth "<Fact>" --force` names the birth and writes its event.
+    // TODO(domain): record the fact {{name.pascal}} is born with at `now`, the instant the handler takes from its Clock: `ddd-ts-kit generate domain-event {{context.kebab}} {{name.pascal}} <Fact>` writes the event, then `created.record(new {{name.pascal}}<Fact>(id, now));` here and, in its builder, an ingredient `<fact>At` passed to `create` (`generate builder {{context.kebab}} {{name.pascal}} --force` writes it). A new aggregate names it at once: `generate aggregate <context> <Name> --birth "<Fact>"`.
 {{/unless}}
     return created;
   }
