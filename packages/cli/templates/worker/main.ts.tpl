@@ -46,6 +46,9 @@ const application = composeApplication(
     resilience: config.resilience,
     // This process is the one that runs the jobs, whatever `RUN_JOBS` says to the others.
     jobs: { start: true, settings: jobSettings(process.env) },
+{{#if housekeeping.any}}
+    housekeeping: config.housekeeping,
+{{/if}}
 {{#if tenancy.any}}
     tenants: config.tenants,
 {{/if}}
