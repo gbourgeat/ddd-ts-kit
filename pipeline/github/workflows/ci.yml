@@ -251,9 +251,11 @@ jobs:
           # The night runs without a base and writes no incremental file: its json report is the same object, which Stryker reads back.
           if [ -f reports/mutation/mutation.json ]; then cp reports/mutation/mutation.json reports/mutation/incremental.json; fi
       - name: Stryker on what the change touches, then the survivors of its files
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           mkdir -p reports/mutation
-          base=$(git merge-base "origin/${{ github.base_ref }}" HEAD)
+          base=$(git merge-base "origin/$BASE_REF" HEAD)
           DDD_TS_KIT_MUTATION_SINCE="$base" npm run --silent test:mutation | tee reports/mutation/changed.txt
           { echo '```'; cat reports/mutation/changed.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 

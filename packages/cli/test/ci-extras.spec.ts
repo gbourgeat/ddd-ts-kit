@@ -219,4 +219,16 @@ describe('the workflows init writes for the Claude jobs, on the default package 
     expect(workflow).toContain('--plugin-dir "$RUNNER_TEMP/ddd-ts-kit/plugin"');
     expect(workflow).not.toMatch(/marketplace add|pnpm install --global/);
   });
+
+  it('read the base branch of a pull request from the environment, never from the text of a script', () => {
+    const root = initProject('--ci', 'github', '--ci-extras', EVERYTHING);
+
+    for (const file of ['ci.yml', 'intent-to-spec.yml']) {
+      const scripts = read(root, `.github/workflows/${file}`)
+        .split('\n')
+        .filter((line) => /(base_ref|base\.ref)/.test(line) && !/^\s*(if|ref|[A-Z_]+):/.test(line));
+
+      expect(scripts, file).toEqual([]);
+    }
+  });
 });

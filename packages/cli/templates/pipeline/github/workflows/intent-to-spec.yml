@@ -63,10 +63,11 @@ jobs:
           # token of an app or a person for the checks of the story to run on it.
           GH_TOKEN: ${{ secrets.INTENT_TO_SPEC_TOKEN || secrets.GITHUB_TOKEN }}
           ACCEPTED: ${{ steps.accepted.outputs.files }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           git config user.name 'intent-to-spec'
           git config user.email 'intent-to-spec@users.noreply.github.com'
-          git fetch --no-tags origin "${{ github.event.pull_request.base.ref }}"
+          git fetch --no-tags origin "$BASE_REF"
           printf '%s\n' "$ACCEPTED" | grep '^docs/' | while read -r intent; do
             code=$(basename "$intent" .md | tr '[:lower:]' '[:upper:]' | tr -c 'A-Z0-9-\n' '-')
             claude -p "/ddd-ts-kit:story $code --headless $intent" \
