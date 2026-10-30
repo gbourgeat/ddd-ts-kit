@@ -15,7 +15,7 @@ export class SearchMembersLine {
   declare email: string;
 
   @IsIn(Object.values(MemberRole))
-  declare role: string;
+  declare role: MemberRole;
 
   @IsISO8601()
   declare joinedAt: string;

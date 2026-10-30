@@ -159,7 +159,7 @@ decorator mode:
 ```ts
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { Type } from 'class-transformer';
-import { IsISO8601, IsUUID, ValidateNested } from 'class-validator';
+import { IsDefined, IsISO8601, IsUUID, ValidateNested } from 'class-validator';
 
 // A nested class is always a component of the contract, named after the class. Each field is
 // declared without an initial value, which class-transformer would keep for a missing field.
@@ -171,6 +171,8 @@ class SlotDto {
 class BookBodyDto {
   @IsUUID() declare patientId: string;
 
+  // Required: nested validation lets a missing object through, `@IsDefined()` refuses it.
+  @IsDefined()
   @ValidateNested()
   @Type(() => SlotDto)
   declare slot: SlotDto;
