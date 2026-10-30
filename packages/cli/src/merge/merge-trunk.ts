@@ -16,6 +16,7 @@ import { mergeState } from './merge-state';
 import { NEXT_STEPS } from './next-steps';
 import { plainGitMerge } from './plain-git-merge';
 import { type PreviewRequest, previewMerge, type StageEntry } from './preview-merge';
+import { refuseShallowHistory } from './refuse-shallow-history';
 import { resolveConflict } from './resolve-conflict';
 import type { Resolution } from './resolution';
 import { startMerge } from './start-merge';
@@ -75,6 +76,8 @@ export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
   if (runGit(top, ['merge-base', '--is-ancestor', trunk.commit, head]) !== undefined) {
     return report;
   }
+
+  refuseShallowHistory(top, { ours: head, theirs: trunk.commit });
 
   const base = landedPoint({
     root: request.root,
@@ -206,6 +209,9 @@ function settled(
 
     return stopped;
   }
+
+  // The merge is in progress: a process stopped from here on leaves a state `--continue` goes on from.
+  mergeState.write(context.root, state);
 
   return continueMerge(context, state, { acceptLost: false, now: request.now ?? new Date() });
 }

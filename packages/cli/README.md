@@ -114,9 +114,8 @@ project.
 Each file is written whole or not at all: to `<name>.<random>.tmp` beside it, then renamed into
 place. A command stopped half way leaves complete files only (a process killed there may leave
 its `.tmp` file, which can be removed), and the same command run again writes the ones missing.
-`init` on a project already initialised, and each `generate` of a kind that writes shared files
-(`writesShared` in `generate --help --json`), hold the lock of the project, `.ddd-ts-kit/lock`,
-which git ignores: a second one waits up to five seconds, then exits 2 naming the command that
+`init` on a project already initialised, each `generate` that is not a dry run and `drizzle-generate`
+hold the lock of the project, `.ddd-ts-kit/lock`, which git ignores: a second one waits up to five seconds, then exits 2 naming the command that
 holds it and the fix, run the generators one after the other:
 ``Another generator holds the lock of this project: `ddd-ts-kit generate context billing` (pid 1234, started 12 seconds ago).``
 A lock taken on this machine is kept while its command runs and taken over once it has ended; one

@@ -1,3 +1,0 @@
-**A chain cut at its tail does not verify against a later checkpoint.** `verifyChain` used to compare a checkpoint with the entry at its position only, so a checkpoint past the last entry was never read. A chain that stops before the last checkpoint given, inside `to` when there is one, is now reported `missing-entry` at the first position gone. Given entries without `chain`, a chain a checkpoint names and no entry holds is reported too. `auditTrailContract` takes `cut`, which removes the end of a chain behind the back of the trail.
-
-`verifyChain` still stops at its first break, by decision: past it the chain proves nothing of what comes next. Whoever has looked at a break walks on with `from`, which the documentation now shows.

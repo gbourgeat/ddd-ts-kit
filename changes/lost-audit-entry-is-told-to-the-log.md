@@ -1,3 +1,0 @@
-**A failure whose audit entry could not be written is told to the log.** `logLostRecords(logger)` of `@ddd-ts-kit/audit` is an `onLostRecord` that writes one `audit entry lost` line, at level `error`: the category, the action and the reason of the entry, the type and the code of the failure, never its message. A generated project with the trail on passes it to `auditMiddleware`, `auditedSubjectKeys`, `auditedPersonalDataErasure`, `auditedPersonalDataExport` and `auditedPersonalDataRetention`, and the scripts of `--privacy on` now log errors.
-
-To move: a generated project calls `createAudit(persistence, source, logger)`, and its `Audit` gains `onLostRecord`. `init --force` writes them; by hand, pass `logLostRecords(logger)` as `onLostRecord` to the sources above.
