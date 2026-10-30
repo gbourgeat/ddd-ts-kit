@@ -41,6 +41,8 @@ export interface ErasureRequest {
   readonly operator: string;
   /** The correlation of the work: one per erasure. */
   readonly correlationId: string;
+  /** This subject was erased before: reaching nothing is expected, and the erasure is announced again, which completes one that failed before its announcement. */
+  readonly rerun?: boolean;
 {{#if tenancy.any}}
   /** The tenants the deployment serves: the copies are erased in each one, in an execution context of that tenant, since a write of tenant data is never widened. */
   readonly tenants: readonly string[];
@@ -93,6 +95,7 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
       shared: platformCopies(platform),
 {{/if}}
 {{/unless}}
+      isKnown: () => Promise.resolve(request.rerun === true),
 {{#if tenancy.any}}
       inEveryTenant: inEachTenant(platform.scope, request.tenants),
 {{/if}}
@@ -123,7 +126,9 @@ function platformCopies(platform: Platform): readonly PersonalDataCopy[] {
  * runs as a service of its own, or a system that copied the person from an integration event, erases
  * its copy on its side (GDPR article 19). It names the person by id and nobody else{{#if audit.on}}: who asked is in
  * the audit trail, under the correlation id the event carries{{/if}}. The relay of the application delivers it; an erasure that
- * failed publishes nothing, and running it again does.
+ * failed publishes nothing, and running it again does. Neither does an erasure that reached nothing:
+ * `eraseDataSubject` refuses it (`UnknownDataSubjectError`), a mistyped id or a tenant left out of the
+ * list must not tell the others that a person is gone; `rerun` says it is expected.
  */
 async function announceErasure(subject: string, { platform{{#if tenancy.any}}, tenants{{/if}} }: ErasureRequest): Promise<void> {
   const erasedAt = platform.clock.now();

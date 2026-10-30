@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import { parseArgs } from 'node:util';
+import { UnknownDataSubjectError } from '@ddd-ts-kit/kernel';
 {{#if http.any}}
 import { offlineAuthenticator } from '{{alias.platform}}/auth/authentication/offline-authenticator{{alias.ext}}';
 {{/if}}
@@ -24,7 +25,7 @@ import { openRedis } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 {{/if}}
 
 // The right to erasure of one data subject (GDPR, article 17), from the command line:
-//   npm run privacy:erase -- <subject-id> [--operator <who-asks>]
+//   npm run privacy:erase -- <subject-id> [--operator <who-asks>] [--rerun]
 {{#if eventSourcing.on}}
 // The key of the subject is destroyed first, so every personal value of its stored events reads as
 // erased; then every copy a context declared in src/platform/privacy/data-subject-copies.ts is
@@ -39,17 +40,22 @@ import { openRedis } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 {{/unless}}
 // {{#if events.outbox}}What the outbox keeps of the person, by the fields src/platform/privacy/personal-events.ts lists{{#if queue.stored}}, and{{/if}}{{/if}}{{#unless events.outbox}}{{#if queue.stored}}And{{/if}}{{/unless}}{{#if queue.stored}} the jobs
 // enqueued with the person as `subject`{{/if}}{{#if housekeeping.any}} are erased too.{{/if}}
-// The report says what was reached. Running it again completes an erasure that failed half way.
+// The report says what was reached. An id that reached nothing is refused, exit code 1, and announced
+// to nobody: a mistyped id{{#if tenancy.any}}, a tenant missing from the directory{{/if}} or an erasure already complete. --rerun says
+// it is expected, and announces the erasure again: running it completes one that failed half way.
 // What this script cannot reach: backups, logs, exports and the copies no context declared.
 const { positionals, values } = parseArgs({
   allowPositionals: true,
-  options: { operator: { type: 'string', default: os.userInfo().username } },
+  options: {
+    operator: { type: 'string', default: os.userInfo().username },
+    rerun: { type: 'boolean', default: false },
+  },
 });
 
 const [subject] = positionals;
 
 if (subject === undefined || positionals.length > 1) {
-  console.error('Usage: npm run privacy:erase -- <subject-id> [--operator <who-asks>]');
+  console.error('Usage: npm run privacy:erase -- <subject-id> [--operator <who-asks>] [--rerun]');
   process.exit(2);
 }
 {{#if tenancy.any}}
@@ -98,12 +104,20 @@ try {
     platform: application.platform,
     operator: values.operator,
     correlationId: randomUUID(),
+    rerun: values.rerun,
 {{#if tenancy.any}}
     tenants,
 {{/if}}
   });
 
   console.log(JSON.stringify(report, null, 2));
+} catch (error) {
+  if (!(error instanceof UnknownDataSubjectError)) {
+    throw error;
+  }
+
+  console.error(`${error.message}. Nothing was announced; --rerun says this person was erased before.`);
+  process.exitCode = 1;
 } finally {
   await application.stop();
 {{#if queue.redis}}

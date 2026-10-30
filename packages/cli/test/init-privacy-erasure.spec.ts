@@ -81,3 +81,18 @@ describe('what an erasure reaches beyond the copies of the contexts', () => {
     expect(script).toContain('await redis.close();');
   });
 });
+
+describe('an erasure that reached nothing', () => {
+  it.each([[[]], [BY_HAND]])('is refused and announces nobody, unless it is a run again (%j)', (flags) => {
+    const root = initProject(...flags);
+
+    expect(erasure(root)).toContain('isKnown: () => Promise.resolve(request.rerun === true),');
+
+    const script = read(root, 'scripts/privacy-erase.ts');
+
+    expect(script).toContain("rerun: { type: 'boolean', default: false },");
+    expect(script).toContain('rerun: values.rerun,');
+    expect(script).toContain('error instanceof UnknownDataSubjectError');
+    expect(script).toContain('process.exitCode = 1;');
+  });
+});
