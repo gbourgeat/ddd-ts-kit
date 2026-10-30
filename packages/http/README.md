@@ -1246,7 +1246,7 @@ answers an HTML page, with the stack outside production, and writes the error to
 body it quotes included. The handler writes to `logger` the type of the error
 (`entity.parse.failed`), the status and the request id, never the message nor the body: a
 refusal as a warning, a failure as an error. `problemNotFoundHandler`, after the routes, answers a
-path no route serves 404 `NOT_FOUND` as a problem, logged as a refusal, instead of the HTML page
+path no route serves 404 `NOT_FOUND` as a problem, logged at `info` (not a warning per probe of a scanner), instead of the HTML page
 `Cannot GET /path` of Express.
 
 ## Fastify 5

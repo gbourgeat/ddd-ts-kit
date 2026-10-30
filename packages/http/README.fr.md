@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:444cc45f98644b14 -->
+<!-- translation-of: README.md sha256:8874b7d49d8a67de -->
 
 # @ddd-ts-kit/http
 
@@ -1302,7 +1302,7 @@ hors production, et écrit l'erreur sur stderr, corps cité compris. Le gestionn
 `logger` le type de l'erreur (`entity.parse.failed`), le statut et l'identifiant de la requête,
 jamais le message ni le corps : un refus comme avertissement, une panne comme erreur.
 `problemNotFoundHandler`, après les routes, répond à un chemin qu'aucune route ne sert un 404
-`NOT_FOUND` sous forme de *problem*, journalisé comme un refus, au lieu de la page HTML
+`NOT_FOUND` sous forme de *problem*, journalisé en `info` (pas un avertissement par sonde d'un scanner), au lieu de la page HTML
 `Cannot GET /path` d'Express.
 
 ## Fastify 5

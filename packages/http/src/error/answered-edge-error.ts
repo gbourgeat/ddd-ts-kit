@@ -11,7 +11,8 @@ export interface EdgeErrorOptions {
   /**
    * Where each error is written: its type (`entity.parse.failed`, `FST_ERR_CTP_BODY_TOO_LARGE`,
    * the class of an unexpected error), the status answered and the request id, never its message
-   * nor the body, which may quote personal data. A refusal is a warning, a failure an error.
+   * nor the body, which may quote personal data. A refusal is a warning, a path no route serves
+   * an information, a failure an error.
    * Left out, nothing is written.
    */
   readonly logger?: Logger;
@@ -30,6 +31,7 @@ const MALFORMED_KINDS = new Set(['entity.parse.failed', 'FST_ERR_CTP_INVALID_JSO
 
 const KIND = /^[A-Za-z0-9_.]{1,64}$/;
 
+const NOT_FOUND = 404;
 const CONTENT_TOO_LARGE = 413;
 const FIRST_REFUSAL = 400;
 const LAST_FAILURE = 599;
@@ -55,6 +57,9 @@ export function answeredEdgeError({ error, headers, refusal }: EdgeError, option
 
   if (answer.status >= 500) {
     options.logger?.error('request failed before its route', fields);
+  } else if (answer.status === NOT_FOUND) {
+    // A path no route serves, as `problemNotFoundHandler` logs it: a scanner probes them by the thousand.
+    options.logger?.info('request refused before its route', fields);
   } else {
     options.logger?.warn('request refused before its route', fields);
   }

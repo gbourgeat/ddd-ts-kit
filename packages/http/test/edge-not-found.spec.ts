@@ -27,7 +27,7 @@ describe.each([
   ['Nest over Express', nestOver('express'), 'NotFoundException'],
   ['Nest over Fastify', nestOver('fastify'), 'NotFoundException'],
 ] as const)('a path no route serves on %s', (_name, start, errorType) => {
-  it('is answered 404 NOT_FOUND as a problem, with the identifiers of the request, and logged as a refusal', async () => {
+  it('is answered 404 NOT_FOUND as a problem, with the identifiers of the request, and logged at info, not as a warning', async () => {
     const logger = new InMemoryLogger();
     const response = await fetch(`${await started(start, logger)}/nowhere`, { headers: { 'x-request-id': 'req-1' } });
 
@@ -45,7 +45,7 @@ describe.each([
 
     expect(logger.entries).toEqual([
       {
-        level: 'warn',
+        level: 'info',
         message: 'request refused before its route',
         fields: { errorType, status: 404, requestId: 'req-1' },
       },
