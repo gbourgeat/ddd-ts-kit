@@ -129,6 +129,23 @@ describe('verifyChain', () => {
     });
   });
 
+  it('stops at the first break, and goes on past it when the range starts after it', async () => {
+    const entries = await aChain(6);
+
+    entries[1] = { ...nth(entries, 1), reason: 'INVENTED' };
+    entries[4] = { ...nth(entries, 4), reason: 'INVENTED' };
+
+    expect(await verifyChain(entries)).toMatchObject({ valid: false, checked: 1, break: { sequence: 2 } });
+
+    expect(await verifyChain(entries, { from: 3 })).toEqual({
+      valid: false,
+      checked: 2,
+      break: { kind: 'altered-content', chain: CHAIN, position: 2, sequence: 5, entryId: 'acme-5' },
+    });
+
+    expect(await verifyChain(entries, { from: 6 })).toEqual({ valid: true, checked: 1 });
+  });
+
   it('reports reordered entries, without sorting them back', async () => {
     const [first, second, third, fourth] = await aChain(4);
 
@@ -243,5 +260,46 @@ describe('anchoring', () => {
     });
 
     expect(await verifyChain(trail.entries, { checkpoints: sealed })).toEqual({ valid: true, checked: 5 });
+  });
+
+  it('shows a chain cut at its tail against a later checkpoint, from the anchor of an archive too', async () => {
+    const entries = await aChain(6);
+    const checkpoints = [{ chain: CHAIN, sequence: 6, hash: nth(entries, 5).hash }];
+    const missing = { kind: 'missing-entry', chain: CHAIN };
+
+    expect(await verifyChain(entries, { checkpoints })).toEqual({ valid: true, checked: 6 });
+
+    expect(await verifyChain(entries.slice(0, 4), { checkpoints })).toEqual({
+      valid: false,
+      checked: 4,
+      break: { ...missing, position: 4, sequence: 5 },
+    });
+
+    const after = { chain: CHAIN, sequence: 2, hash: nth(entries, 1).hash };
+
+    expect(await verifyChain(entries.slice(2, 4), { after, from: 3, checkpoints })).toEqual({
+      valid: false,
+      checked: 2,
+      break: { ...missing, position: 2, sequence: 5 },
+    });
+
+    expect(await verifyChain(entries.slice(2), { after, from: 3, checkpoints })).toEqual({ valid: true, checked: 4 });
+  });
+
+  it('shows a chain gone as a whole, which a checkpoint names and no entry holds', async () => {
+    const checkpoints = [{ chain: CHAIN, sequence: 3, hash: nth(await aChain(3), 2).hash }];
+    const missing = { kind: 'missing-entry', chain: CHAIN, position: 0, sequence: 1 };
+
+    expect(await verifyChain(await aChain(2, 'other'), { checkpoints })).toEqual({
+      valid: false,
+      checked: 2,
+      break: missing,
+    });
+
+    expect(await verifyChain(new InMemoryAuditTrail(), { chain: CHAIN, checkpoints })).toEqual({
+      valid: false,
+      checked: 0,
+      break: missing,
+    });
   });
 });

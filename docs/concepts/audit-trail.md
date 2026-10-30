@@ -252,7 +252,11 @@ some hashes where that person cannot write. That is anchoring: at intervals, a c
 hash at a given position) leaves for somewhere else, such as another database under another
 role, an object store with retention lock, a transparency log or a signed timestamp. Later
 verification compares the chain with those checkpoints. A truncated tail is only seen by
-comparing with a later checkpoint.
+comparing with a later checkpoint: a chain that stops before a checkpoint it is given does not
+verify.
+
+A verification reports the first break and stops there: past it the chain proves nothing of what
+comes next. Whoever has looked at a break walks on from the entry after it.
 
 Verification should run on a schedule and alert; a chain nobody verifies proves nothing in
 practice.

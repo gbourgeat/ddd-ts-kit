@@ -20,7 +20,12 @@ export interface VerifyChainOptions {
 
   readonly to?: number;
 
-  /** Checkpoints published elsewhere: an entry at one of these positions must have that hash. */
+  /**
+   * Checkpoints published elsewhere: an entry at one of these positions must have that hash, and
+   * the chain must reach the last of them, inside `to` when there is one: a chain that stops
+   * before is a chain cut at its tail. Without `chain`, a chain a checkpoint names is verified
+   * like a chain found in the entries.
+   */
   readonly checkpoints?: readonly AuditCheckpoint[];
 
   /**
@@ -34,9 +39,12 @@ export interface VerifyChainOptions {
 
 /**
  * Walks one chain, or each chain found in the entries, in the order given, and reports the
- * first place where it does not hold. Entries are examined as they come, never sorted: an
- * export that was shuffled is reported as such. Starting at `from` above 1 trusts the entry
- * before it; a chain rewritten as a whole is self-consistent and only a checkpoint shows it.
+ * first place where it does not hold, and stops there: past a break the chain proves nothing of
+ * what comes next, and where it would go on is a guess. Whoever has looked at a break walks on
+ * with `from` after it, which trusts that entry. Entries are examined as they come, never sorted:
+ * an export that was shuffled is reported as such. Starting at `from` above 1 trusts the entry
+ * before it; a chain rewritten as a whole is self-consistent and only a checkpoint shows it, as
+ * only a later checkpoint or `to` shows a chain cut at its tail.
  */
 export async function verifyChain(
   source: readonly AuditEntry[] | AuditReader,
@@ -94,7 +102,13 @@ async function readChain(reader: AuditReader, options: VerifyChainOptions): Prom
 }
 
 function chainsOf(entries: readonly AuditEntry[], options: VerifyChainOptions): string[] {
-  return options.chain === undefined ? [...new Set(entries.map((entry) => entry.chain))] : [options.chain];
+  if (options.chain !== undefined) {
+    return [options.chain];
+  }
+
+  const checkpoints = options.checkpoints ?? [];
+
+  return [...new Set([...entries, ...checkpoints].map(({ chain }) => chain))];
 }
 
 function inRange(entries: readonly AuditEntry[], chain: string, { from, to }: VerifyChainOptions): AuditEntry[] {
@@ -127,7 +141,7 @@ function verifyOne(entries: readonly AuditEntry[], options: OneChain): ChainVeri
 
   const expected = first + entries.length;
 
-  if (options.to === undefined || expected > options.to) {
+  if (expected > (options.to ?? lastCheckpointOf(options))) {
     return { valid: true, checked: entries.length };
   }
 
@@ -139,6 +153,10 @@ function verifyOne(entries: readonly AuditEntry[], options: OneChain): ChainVeri
   } as const;
 
   return { valid: false, checked: entries.length, break: missing };
+}
+
+function lastCheckpointOf({ chain, checkpoints = [] }: OneChain): number {
+  return Math.max(...checkpoints.filter((checkpoint) => checkpoint.chain === chain).map(({ sequence }) => sequence));
 }
 
 function breakAt(entries: readonly AuditEntry[], position: number, options: OneChain): ChainBreakKind | undefined {

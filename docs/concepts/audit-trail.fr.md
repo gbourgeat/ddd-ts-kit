@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:cd810a2c963fc7df -->
+<!-- translation-of: audit-trail.md sha256:83ec5cbedfee6e6f -->
 
 # Journal d'audit
 
@@ -269,7 +269,11 @@ peut pas écrire. C'est l'ancrage : à intervalles réguliers, un point de contr
 hachage à une position donnée) part ailleurs, par exemple dans une autre base de données sous un
 autre rôle, un stockage objet avec verrouillage de rétention, un journal de transparence ou un
 horodatage signé. La vérification ultérieure compare la chaîne à ces points de contrôle. Une fin
-de chaîne tronquée ne se voit qu'en comparant avec un point de contrôle plus récent.
+de chaîne tronquée ne se voit qu'en comparant avec un point de contrôle plus récent : une chaîne
+qui s'arrête avant un point de contrôle qu'on lui donne ne se vérifie pas.
+
+Une vérification signale la première rupture et s'arrête là : au-delà, la chaîne ne prouve rien
+de ce qui suit. Qui a examiné une rupture reprend à l'entrée suivante.
 
 La vérification devrait s'exécuter selon une planification et alerter ; une chaîne que personne
 ne vérifie ne prouve rien en pratique.

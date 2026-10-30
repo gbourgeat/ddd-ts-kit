@@ -680,7 +680,7 @@ order given and reports the **first** place where it stops holding:
 | Kind | Meaning |
 |---|---|
 | `altered-content` | the entry does not hash to its `hash`, does not link to the entry before it, or disagrees with a checkpoint |
-| `missing-entry` | the expected sequence is nowhere in what was examined (a hole, a missing head, a chain shorter than `to`) |
+| `missing-entry` | the expected sequence is nowhere in what was examined (a hole, a missing head, a chain shorter than `to` or than the last checkpoint given) |
 | `reordered` | the expected sequence exists elsewhere, or a position appears twice |
 
 `position` is the index among the examined entries of the chain, `sequence` the sequence that
@@ -688,6 +688,14 @@ was expected there. Given entries (an export), every chain found is verified, an
 are never sorted first: a shuffled file is reported as such. Given a reader, `chain` is
 required and the range is read page by page, then held in memory: verify long chains by ranges
 (`from`, `to`). A range starting above 1 trusts the entry before it.
+
+The walk stops at its first break: past it the chain proves nothing of what comes next, and after
+an entry that is gone or out of place where it goes on would be a guess. The break is the answer,
+and whoever has looked at it walks on from the entry after it, which trusts that entry:
+
+```ts
+await verifyChain(reader, { chain: 'tenant:acme', from: 313 });
+```
 
 ![Four entries of the chain tenant:acme, each holding the hash of the entry before it and its own, the first linked to the genesis hash; a changed entry is reported as altered-content, a removed one as missing-entry, two swapped as reordered; a chain rewritten as a whole is valid again, so a checkpoint copied where the trail's owner cannot write is what shows it](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-hash-chain.svg)
 
@@ -711,7 +719,10 @@ the checkpoint to the outbox there makes it leave only if the entry commits; a h
 a remote service directly may anchor an entry whose transaction rolls back afterwards. Where
 the checkpoints go is the project's choice: another database under another role, an object
 store with retention lock, a transparency log, a signed timestamp. A truncated tail (the last
-entries removed) is only seen by comparing with a later checkpoint or by asking for `to`.
+entries removed) is only seen by comparing with a later checkpoint or by asking for `to`: a chain
+that stops before the last checkpoint given is reported `missing-entry` at the first position
+gone, inside `to` when there is one. Given entries without `chain`, a chain a checkpoint names and
+no entry holds is reported the same way.
 
 ## Archiving
 
@@ -862,8 +873,11 @@ A new store passes the same suite as these:
 
 ```ts
 import { auditTrailContract } from '@ddd-ts-kit/audit/testing';
-auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail', createTrail: () => freshTrail(), tamper });
+auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail', createTrail: () => freshTrail(), tamper, cut });
 ```
+
+`tamper` and `cut` do what somebody with access to the storage does, rewrite an entry or remove the
+end of a chain; without them the suite checks that on what it read.
 
 ## Querying
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9e8c430de04cc23d -->
+<!-- translation-of: README.md sha256:6c1e12af74ac2db6 -->
 
 # @ddd-ts-kit/audit
 
@@ -709,7 +709,7 @@ l'ordre donné et signale le **premier** endroit où elle cesse de tenir :
 | Genre | Signification |
 |---|---|
 | `altered-content` | l'entrée ne se hache pas en son `hash`, ne se lie pas à l'entrée qui la précède, ou contredit un point de contrôle |
-| `missing-entry` | la séquence attendue n'est nulle part dans ce qui a été examiné (un trou, une tête manquante, une chaîne plus courte que `to`) |
+| `missing-entry` | la séquence attendue n'est nulle part dans ce qui a été examiné (un trou, une tête manquante, une chaîne plus courte que `to` ou que le dernier point de contrôle donné) |
 | `reordered` | la séquence attendue existe ailleurs, ou une position apparaît deux fois |
 
 `position` est l'indice parmi les entrées examinées de la chaîne, `sequence` la séquence qui y
@@ -718,6 +718,15 @@ ne sont jamais triées d'abord : un fichier mélangé est signalé comme tel. Av
 est obligatoire et la plage est lue page par page, puis tenue en mémoire : vérifiez les longues
 chaînes par plages (`from`, `to`). Une plage qui commence au-dessus de 1 fait confiance à l'entrée
 qui la précède.
+
+Le parcours s'arrête à sa première rupture : au-delà, la chaîne ne prouve rien de ce qui suit, et
+après une entrée disparue ou déplacée, l'endroit où elle reprend serait une supposition. La
+rupture est la réponse, et qui l'a examinée reprend le parcours à l'entrée suivante, ce qui fait
+confiance à cette entrée :
+
+```ts
+await verifyChain(reader, { chain: 'tenant:acme', from: 313 });
+```
 
 ![Quatre entrées de la chaîne tenant:acme, chacune gardant le hachage de l'entrée précédente et le sien, la première liée au hachage d'origine ; une entrée modifiée est signalée comme altered-content, une entrée supprimée comme missing-entry, deux entrées interverties comme reordered ; une chaîne réécrite en entier redevient valide : c'est donc un point de contrôle copié là où le propriétaire du journal ne peut pas écrire qui le révèle](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-hash-chain.fr.svg)
 
@@ -743,7 +752,10 @@ Ajouter là le point de contrôle à l'outbox fait qu'il ne part que si l'entré
 annulée ensuite. L'endroit où vont les points de contrôle est le choix du projet : une autre base
 de données sous un autre rôle, un stockage d'objets avec verrou de rétention, un journal de
 transparence, un horodatage signé. Une fin tronquée (les dernières entrées supprimées) ne se voit
-qu'en comparant avec un point de contrôle ultérieur ou en demandant `to`.
+qu'en comparant avec un point de contrôle ultérieur ou en demandant `to` : une chaîne qui s'arrête
+avant le dernier point de contrôle donné est signalée `missing-entry` à la première position
+disparue, dans la limite de `to` quand il y en a un. Avec des entrées sans `chain`, une chaîne
+qu'un point de contrôle nomme et qu'aucune entrée ne porte est signalée de la même façon.
 
 ## Archivage
 
@@ -901,8 +913,11 @@ Un nouveau store passe la même suite que ceux-ci :
 
 ```ts
 import { auditTrailContract } from '@ddd-ts-kit/audit/testing';
-auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail', createTrail: () => freshTrail(), tamper });
+auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail', createTrail: () => freshTrail(), tamper, cut });
 ```
+
+`tamper` et `cut` font ce que ferait quelqu'un qui a accès au stockage, réécrire une entrée ou
+retirer la fin d'une chaîne ; sans eux, la suite le vérifie sur ce qu'elle a lu.
 
 ## Interroger le journal
 
