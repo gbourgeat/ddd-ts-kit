@@ -91,6 +91,15 @@ describe('optimisticUpdate', () => {
     ['of Prisma', { code: 'P2002' }],
     ['of MySQL', { code: 'ER_DUP_ENTRY', sqlState: '23000' }],
     ['of SQLite', { code: 'SQLITE_CONSTRAINT_UNIQUE' }],
+    ['on the key, of SQLite', { code: 'SQLITE_CONSTRAINT_PRIMARYKEY' }],
+    [
+      'raw, of libsql',
+      { code: 'SQLITE_CONSTRAINT', message: 'SQLITE_CONSTRAINT: UNIQUE constraint failed: members.email' },
+    ],
+    [
+      'raw, of libsql wrapped by drizzle',
+      { cause: { code: 'SQLITE_CONSTRAINT', message: 'SQLITE_CONSTRAINT: PRIMARY KEY constraint failed: members.id' } },
+    ],
   ] as const) {
     it(`raises a UniqueViolationError, a conflict and not a lost update, for a unique value refused ${what}`, async () => {
       const aggregate = { id: 'member-2', version: 0 };
@@ -107,6 +116,17 @@ describe('optimisticUpdate', () => {
       expect(aggregate.version).toBe(0);
     });
   }
+
+  it('lets another raw constraint of SQLite through as it is: a NOT NULL is no unique violation', async () => {
+    const aggregate = { id: 'member-2', version: 0 };
+
+    const notNull = {
+      code: 'SQLITE_CONSTRAINT',
+      message: 'SQLITE_CONSTRAINT: NOT NULL constraint failed: members.email',
+    };
+
+    await expect(optimisticUpdate(aggregate, () => Promise.reject(notNull))).rejects.toBe(notNull);
+  });
 
   it('lets a refusal through as it is, whatever its cause', async () => {
     const aggregate = { id: 'member-2', version: 1 };

@@ -274,7 +274,7 @@ the error of the driver, never an unexpected error.
 A save that takes a value another row holds under a unique constraint (an email, a number) is
 not a lost update: running it again is refused again. The four ORM answer it alike, on an
 insert and on an update: `UniqueViolationError`, a `ConflictError` (code `CONFLICT`, 409) whose
-`cause` is the error of the driver (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`,
+`cause` is the error of the driver (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`, `SQLITE_CONSTRAINT_PRIMARYKEY`, a raw `SQLITE_CONSTRAINT` whose message names a unique key,
 `P2002`), raised by `optimisticUpdate`. The first save ignores a conflict on the id alone
 (`ON CONFLICT (id) DO NOTHING`); on Prisma, whose `skipDuplicates` names no target,
 `rowsCreated` looks the id up when nothing was written. A handler that has a business answer

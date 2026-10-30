@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:c54271ba3ff6c496 -->
+<!-- translation-of: persistence.md sha256:4df8d022fd1d1495 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -284,7 +284,7 @@ Un enregistrement qui prend une valeur qu'une autre ligne détient sous une cont
 (un e-mail, un numéro) n'est pas une mise à jour perdue : le relancer est refusé de nouveau. Les
 quatre ORM y répondent de même, sur une insertion comme sur une mise à jour :
 `UniqueViolationError`, une `ConflictError` (code `CONFLICT`, 409) dont la `cause` est l'erreur
-du pilote (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`, `P2002`), levée par
+du pilote (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`, `SQLITE_CONSTRAINT_PRIMARYKEY`, un `SQLITE_CONSTRAINT` brut dont le message nomme une clé unique, `P2002`), levée par
 `optimisticUpdate`. Le premier enregistrement n'ignore qu'un conflit sur l'id
 (`ON CONFLICT (id) DO NOTHING`) ; sur Prisma, dont `skipDuplicates` ne nomme aucune cible,
 `rowsCreated` cherche l'id quand rien n'a été écrit. Un *handler* qui a une réponse métier pour
