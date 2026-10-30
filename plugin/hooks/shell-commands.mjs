@@ -99,7 +99,17 @@ export function simpleCommands(text, directory, depth = 0) {
 }
 
 function unreadMarker(truncated, directory, depth) {
-  return { words: [], redirects: [], heredoc: false, piped: false, directory, depth, ender: undefined, truncated };
+  return {
+    words: [],
+    assigned: [],
+    redirects: [],
+    heredoc: false,
+    piped: false,
+    directory,
+    depth,
+    ender: undefined,
+    truncated,
+  };
 }
 
 /** Where `cd`, `pushd` and `popd` leave the commands after them, `place` holding the directory and the `pushd` stack. */
@@ -215,16 +225,15 @@ function changedDirectory(word, directory) {
  */
 function unwrapped(words) {
   let rest = words;
-  for (let layer = 0; ; layer += 1) {
-    const next = unwrapOnce(rest);
-    if (next === rest) {
-      return rest;
-    }
+  let next = unwrapOnce(rest);
+  for (let layer = 0; next !== rest; layer += 1) {
     if (layer === LAYERS) {
       return [UNKNOWN];
     }
     rest = next;
+    next = unwrapOnce(rest);
   }
+  return rest;
 }
 
 /** One leading assignment, keyword or wrapper taken off, or the words themselves when there is none. */
@@ -379,8 +388,10 @@ function findExecutions(words, directory) {
       const inner = words.slice(index + 1, end === -1 ? undefined : end);
       for (const root of roots.length > 0 ? roots : ['.']) {
         const found = inner.map((part) => part.replaceAll('{}', `${root}/{}`));
+        const program = unwrapped(found);
         executions.push({
-          words: unwrapped(found),
+          words: program,
+          assigned: found.slice(0, found.length - program.length).filter(isAssignment),
           redirects: [],
           heredoc: false,
           piped: false,

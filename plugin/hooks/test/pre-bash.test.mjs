@@ -242,6 +242,7 @@ test('the hooks of the project and the steps of the conductor are read on the wo
     'git cherry-pick -X theirs main',
     'git merge --strategy-option theirs main',
     'git merge -s ours main',
+    'git checkout --theirs "$FILE"',
   ]) {
     assert.equal(decision(run('pre-bash', bash(root, command, agent))), 'deny', command);
   }

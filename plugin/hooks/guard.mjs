@@ -1471,20 +1471,21 @@ function readConfig(path) {
 // or a file that cannot be opened has no content.
 function readBounded(path, limit, encoding = 'utf8') {
   let descriptor;
+  let read = {};
   try {
     descriptor = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
     const stat = fstatSync(descriptor);
-    if (!stat.isFile()) {
-      return {};
+    if (stat.isFile()) {
+      read = stat.size > limit ? { tooLarge: stat.size } : { content: readFileSync(descriptor, encoding) };
     }
-    return stat.size > limit ? { tooLarge: stat.size } : { content: readFileSync(descriptor, encoding) };
   } catch {
-    return {};
+    // Missing, or not readable by this user: no content.
   } finally {
     if (descriptor !== undefined) {
       closeSync(descriptor);
     }
   }
+  return read;
 }
 
 function isRecord(value) {
@@ -2248,7 +2249,7 @@ function readsOnly(simple) {
   if (name === 'git') {
     const { subcommand, tail } = gitInvocation(args, undefined);
     const all = subcommand === 'commit' && tail.some((word) => /^-[^-]*a/.test(word) || word === '--all');
-    return GIT_READS.has(subcommand) && !all && !words.some(runsAProgramOfGit) && (simple.assigned ?? []).length === 0;
+    return GIT_READS.has(subcommand) && !all && !words.some(runsAProgramOfGit) && simple.assigned.length === 0;
   }
   // `npx ddd-ts-kit ...`, `pnpm exec ddd-ts-kit ...`: a launcher of the kit reads the lock; `npx`
   // of anything else can write it.
@@ -2865,7 +2866,7 @@ function gitConfigReason(input, commands) {
 }
 
 // The variables a command sets for itself, and those `export`, `declare` or `typeset` set for the rest of the line.
-function exportedVariables({ words, assigned = [] }) {
+function exportedVariables({ words, assigned }) {
   return ['export', 'declare', 'typeset'].includes(shell.commandName(words)) ? [...assigned, ...words] : assigned;
 }
 
@@ -3802,9 +3803,9 @@ function linkReason(project, place, input) {
   const path = projectPath(project, place);
   const real = relative(realpathSync(project.root), realPlace(place)).split(sep).join('/');
   if (real !== path) {
-    const outside = real.startsWith('../') || isAbsolute(real) || contextScopeReason(project, real, scope.context);
-    return outside
-      ? `${path} is a link to ${isAbsolute(real) || real.startsWith('../') ? realPlace(place) : real}, outside your scope: a worker writes through no link that leaves it. ${REPORT_TO_CONDUCTOR}`
+    const away = real.startsWith('../');
+    return away || contextScopeReason(project, real, scope.context)
+      ? `${path} is a link to ${away ? realPlace(place) : real}, outside your scope: a worker writes through no link that leaves it. ${REPORT_TO_CONDUCTOR}`
       : undefined;
   }
   return statSync(place, { throwIfNoEntry: false })?.nlink > 1
@@ -3876,7 +3877,7 @@ function scriptRun({ words }) {
 // the system (a program named `cat` elsewhere is another program), and git that only reads: without `--output`, which writes a file, nor a
 // setting given to the command, nor an option that hands the files to a program (`grep -O`,
 // `--ext-diff`). It runs no code of the project.
-function isPureReader({ words, assigned = [] }) {
+function isPureReader({ words, assigned }) {
   const name = shell.commandName(words);
   if (words[0]?.includes('/') && !SYSTEM_PROGRAMS.includes(dirname(words[0]))) {
     return false;
@@ -4224,14 +4225,14 @@ function runsCode(command) {
     (CODE_RUNNERS.has(name) ||
       CODE_RUNNERS.has(name.replace(/[\d.]+$/, '')) ||
       shell.SHELLS.has(name) ||
-      isProgramPath(command.words[0] ?? '', name)) &&
+      isProgramPath(command.words[0] ?? '')) &&
     kitInvocations([command]).length === 0
   );
 }
 
-// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`), but a pure reader's.
-function isProgramPath(word, name) {
-  return (/^\.{0,2}\//.test(word) || word.includes('node_modules/.bin/')) && !PURE_READERS.has(name);
+// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`).
+function isProgramPath(word) {
+  return /^\.{0,2}\//.test(word) || word.includes('node_modules/.bin/');
 }
 
 // A plain `git commit`: no `-a`, no paths of its own, so that it records the index alone.

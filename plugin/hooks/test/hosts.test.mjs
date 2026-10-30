@@ -243,4 +243,7 @@ test('Codex: every patch of a line is judged, a delete and a move included, and 
     run('pre-bash', codexShell(directory('no-project'), 'apply_patch < /tmp/change.patch')).output,
     undefined,
   );
+  const asked = run('pre-bash', codexShell(project({ guard: 'advise' }), 'apply_patch < /tmp/p'));
+  assert.match(asked.output.systemMessage, /holds the patch/);
+  assert.equal(run('pre-bash', codexShell(project({ guard: 'off' }), 'apply_patch < /tmp/p')).output, undefined);
 });

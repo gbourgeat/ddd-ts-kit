@@ -16,13 +16,15 @@ test('a worker writes through no link to a place outside its scope, by the edito
   symlinkSync('../../main.ts', join(context, 'main.ts'));
   symlinkSync('../../platform/new.ts', join(context, 'new.ts'));
   linkSync(join(root, 'package.json'), join(context, 'package.json'));
-  for (const file of ['platform/extra.ts', 'main.ts', 'new.ts', 'package.json']) {
+  symlinkSync(join(guardTemp, 'away.ts'), join(context, 'away.ts'));
+  for (const file of ['platform/extra.ts', 'main.ts', 'new.ts', 'package.json', 'away.ts']) {
     const written = run('pre-write', write(join(context, file), agent));
     assert.equal(decision(written), 'deny', file);
     const redirected = run('pre-bash', bash(root, `echo x > src/contexts/ordering/${file}`, agent));
     assert.equal(decision(redirected), 'deny', file);
   }
   assert.match(reason(run('pre-write', write(join(context, 'main.ts'), agent))), /src\/main\.ts/);
+  assert.match(reason(run('pre-write', write(join(context, 'away.ts'), agent))), new RegExp(`link to ${guardTemp}`));
   assert.match(reason(run('pre-write', write(join(context, 'package.json'), agent))), /another name/);
   symlinkSync(join(root, 'src/main.ts'), join(guardTemp, 'main-link.ts'));
   assert.equal(decision(run('pre-bash', bash(root, `echo x > ${guardTemp}/main-link.ts`, agent))), 'deny');
