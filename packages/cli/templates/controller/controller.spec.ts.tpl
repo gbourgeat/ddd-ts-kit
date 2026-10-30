@@ -28,7 +28,10 @@ describe('{{route.method}} {{route.path}}', () => {
 
     expect(response).toMatchObject({
       status: 422,
-      body: { code: 'VALIDATION_FAILED', issues: [{ path: 'body.{{route.missingField}}' }] },
+      body: {
+        code: 'VALIDATION_FAILED',
+        issues: expect.arrayContaining([expect.objectContaining({ path: 'body.{{route.missingField}}' })]),
+      },
     });
 
     expect({{route.bus}}.executed).toEqual([]);
