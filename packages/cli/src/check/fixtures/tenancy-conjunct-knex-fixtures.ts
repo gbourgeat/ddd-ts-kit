@@ -19,7 +19,9 @@ export const TENANCY_CONJUNCT_KNEX_FIXTURES: readonly Fixture[] = [
   refused('orWhereRaw', `return ${READ}.where({ id }).orWhereRaw('note = ?', [id]);`),
   refused('orWhereExists', `return ${READ}.where({ id }).orWhereExists(notes);`),
   refused('orWhere with a type argument', `return ${READ}.where({ id }).orWhere<InvoiceRow>({ note: id });`),
-  refused('orHaving', `return ${READ}.groupBy('status').having('due', '>', 1).orHaving('due', '<', 0);`),
+  refused('clearWhere', `return ${READ}.clearWhere().where({ id });`),
+  refused('clearWhere on a local', `const table = ${WRITE};\n\n    return table.clearWhere().delete();`),
+  refused(`clear of the conditions`, `return ${READ}.clear('where').where({ id });`),
   refused('the or modifier', `return ${READ}.where({ id }).or.where({ note: id });`),
   refused('orWhere on a local', `const table = ${READ}.where({ id });\n\n    return table.orWhere({ note: id });`),
   refused(
@@ -87,6 +89,18 @@ export const TENANCY_CONJUNCT_KNEX_FIXTURES: readonly Fixture[] = [
     `const grouped = ${READ}.select('status').groupBy('status');\n\n    return derivedTable(this.database, grouped, 'dues').where({ a }).orWhere({ b });`,
   ),
   accepted('orderBy, which only starts alike', `return ${READ}.where({ id }).orderBy('id').orderByRaw('note');`),
+  accepted(
+    'orHaving at the top, which applies after the where',
+    `return ${READ}.groupBy('status').having('due', '>', 1).orHaving('due', '<', 0).orHavingRaw('count(*) > 1');`,
+  ),
+  accepted(
+    'a clear of what is no condition',
+    `return ${READ}.clear('select').clearSelect().clearOrder().clearHaving().where({ id });`,
+  ),
+  accepted(
+    'whereRaw and andWhereRaw, which stay one conjunct',
+    `return ${READ}.whereRaw('id = ? or note = ?', [id, id]).andWhereRaw('a = 1 or b = 2');`,
+  ),
   accepted('a modify given a function of its own', `return ${READ}.modify(withStatus, status);`),
   accepted(
     'the words in a text or a comment',

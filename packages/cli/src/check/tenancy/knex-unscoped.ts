@@ -1,6 +1,7 @@
 import type { SourceFile } from '../model/source-file';
 import { executorUses } from './executor-uses';
-import { knexOrOnTenantBuilder } from './knex-or-on-tenant-builder';
+import { isOrLink } from './is-or-link';
+import { knexLinksOutsideCondition } from './knex-links-outside-condition';
 import { rawReachesRows } from './raw-reaches-rows';
 import { rawSqlText } from './raw-sql-text';
 
@@ -13,12 +14,16 @@ const RAW_STATEMENT = /^\s*\.raw\s*\(/;
 const OR_ON_BUILDER =
   'at the top of a statement of a tenant helper is outside its tenant condition: group the alternatives beside it, `.where((either) => either.where(a).orWhere(b))`.';
 
+const CLEARED =
+  'removes the tenant condition of a statement of a tenant helper: start a new statement from the helper.';
+
 /**
  * What a Knex adapter of tenant data reaches without the helpers: the executor called, chained or
  * held, and raw SQL. A raw call whose first argument is a literal that reaches no row by itself
  * (an aggregate in a select, a constraint of the schema: `rawReachesRows`) is not reported, since
  * the statement it is put in is what the tenant confines; any other raw call is. An `or` at the
- * top of a statement of the helpers leaves the tenant condition behind (`knexOrOnTenantBuilder`).
+ * top of a statement of the helpers, or a clear of its conditions, leaves the tenant condition
+ * behind (`knexLinksOutsideCondition`).
  */
 export function knexUnscoped(file: SourceFile): readonly { offset: number; message: string }[] {
   const { code } = file.scan;
@@ -34,9 +39,9 @@ export function knexUnscoped(file: SourceFile): readonly { offset: number; messa
     .filter((match) => reachesRows(file, match.index + match[0].length))
     .map((match) => ({ offset: match.index, message: 'Raw SQL reaches the tables with no tenant condition.' }));
 
-  const alternatives = knexOrOnTenantBuilder(code).map(({ offset, method }) => ({
-    offset,
-    message: `\`${method}\` ${OR_ON_BUILDER}`,
+  const alternatives = knexLinksOutsideCondition(file).map((link) => ({
+    offset: link.offset,
+    message: `\`${link.method}\` ${isOrLink(link) ? OR_ON_BUILDER : CLEARED}`,
   }));
 
   return [...straight, ...raw, ...alternatives];

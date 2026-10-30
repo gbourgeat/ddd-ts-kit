@@ -1,7 +1,9 @@
+import type { SourceFile } from '../model/source-file';
 import { balancedArguments } from './balanced-arguments';
 import { chainLinks, type ChainLink } from './chain-links';
 import { endOfEnclosing } from './end-of-enclosing';
 import { isOrLink } from './is-or-link';
+import { rawSqlText } from './raw-sql-text';
 
 const HELPERS = ['tenantTable', 'ownTenantTable', 'whereTenant'];
 const NAME = '[A-Za-z_$][\\w$]*';
@@ -24,13 +26,14 @@ interface BuilderLocal {
 }
 
 /**
- * The links of a Knex adapter that put an `or` at the top of a statement of the tenant helpers: on
- * the chain of a helper, of what a function of the file answers, of a local that holds one of
- * them, and in the builder given to `whereTenant`. In SQL `and` binds first, so such an `or` is
- * outside the tenant condition. The callback of a `where` is a group, and what it holds is left
- * out; a `modify` is no group.
+ * The links of a Knex adapter that leave the tenant condition of a statement of the helpers: an
+ * `or` at its top, or what clears its conditions; on the chain of a helper, of what a function of
+ * the file answers, of a local that holds one of them, and in the builder given to `whereTenant`.
+ * In SQL `and` binds first, so such an `or` is outside the condition. The callback of a `where`
+ * is a group, and what it holds is left out; a `modify` is no group.
  */
-export function knexOrOnTenantBuilder(code: string): readonly ChainLink[] {
+export function knexLinksOutsideCondition(file: SourceFile): readonly ChainLink[] {
+  const { code } = file.scan;
   const answered = [...code.matchAll(ANSWERS_BUILDER)].map(([, name = '']) => escaped(name));
   const source = `(?<![\\w$])(?:${[...HELPERS, ...answered].join('|')})\\s*(?:<[^()]*>\\s*)?\\(`;
   const calls = [...code.matchAll(new RegExp(source, 'g'))].flatMap((match) => chainsOfCall(code, match));
@@ -40,7 +43,7 @@ export function knexOrOnTenantBuilder(code: string): readonly ChainLink[] {
     ...uses(code, local),
   ]);
 
-  const links = [...calls, ...locals].flatMap((chain) => orLinks(code, chain));
+  const links = [...calls, ...locals].flatMap((chain) => linksOutside(file, chain));
 
   return [...new Map(links.map((link) => [link.offset, link])).values()];
 }
@@ -116,18 +119,22 @@ function hiddenRanges(code: string, { name, from, to }: BuilderLocal): readonly 
   });
 }
 
-/** The `or` links of a chain, and the ones a `modify` adds on the same builder through its callback. */
-function orLinks(code: string, links: readonly ChainLink[]): readonly ChainLink[] {
+/** The links of a chain that leave the condition, and the ones a `modify` adds on the same builder through its callback. */
+function linksOutside(file: SourceFile, links: readonly ChainLink[]): readonly ChainLink[] {
   return links.flatMap((link) => {
-    if (isOrLink(link)) {
+    if (isOrLink(link) || clearsConditions(file, link)) {
       return [link];
     }
 
-    return link.method === 'modify' ? orLinksOfModify(code, link) : [];
+    return link.method === 'modify' ? linksOfModify(file, link) : [];
   });
 }
 
-function orLinksOfModify(code: string, { argumentsAt, argumentsText }: ChainLink): readonly ChainLink[] {
+function clearsConditions(file: SourceFile, { method, argumentsAt }: ChainLink): boolean {
+  return method === 'clearWhere' || (method === 'clear' && rawSqlText(file, argumentsAt) === 'where');
+}
+
+function linksOfModify(file: SourceFile, { argumentsAt, argumentsText }: ChainLink): readonly ChainLink[] {
   const callback = CALLBACK.exec(argumentsText);
 
   if (callback === null) {
@@ -140,7 +147,7 @@ function orLinksOfModify(code: string, { argumentsAt, argumentsText }: ChainLink
     to: argumentsAt + argumentsText.length,
   };
 
-  return uses(code, local).flatMap((chain) => orLinks(code, chain));
+  return uses(file.scan.code, local).flatMap((chain) => linksOutside(file, chain));
 }
 
 function escaped(name: string): string {

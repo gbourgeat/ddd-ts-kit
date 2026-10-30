@@ -41,6 +41,20 @@ export const TENANCY_CONJUNCT_TYPEORM_FIXTURES: readonly Fixture[] = [
     `return ${BUILDER}.where(new Brackets((either) => either.where({ ${SPREAD} }).orWhere('note = :id', { id }))).getMany();`,
   ),
   refused('a where array in a query builder', `return ${BUILDER}.where([{ id, ${SPREAD} }, { note: id }]).getMany();`),
+  refused('a where after the where that carries it', `return ${BUILDER}.where({ ${SPREAD} }).where({ id }).getMany();`),
+  refused(
+    'a where after the andWhere that carries it',
+    `return ${BUILDER}.andWhere({ ${SPREAD} }).where({ id }).getMany();`,
+  ),
+  refused(
+    'a where after a local on a delete',
+    `const mine = { id, ${OWN_SPREAD} };\n\n    return ${MANAGER}.createQueryBuilder().delete().from(invoices).where(mine).where({ id }).execute();`,
+  ),
+  accepted('in the last where', `return ${BUILDER}.where({ id }).where({ ${SPREAD} }).getMany();`),
+  accepted(
+    'orHaving, which applies after the where',
+    `return ${BUILDER}.where({ ${SPREAD} }).having('due > 1').orHaving('due < 0').getMany();`,
+  ),
   accepted(
     'a where array whose entries all spread it',
     `return ${MANAGER}.find(invoices, { where: [{ id, ${SPREAD} }, { note: id, ${SPREAD} }] });`,

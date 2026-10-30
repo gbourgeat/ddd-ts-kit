@@ -30,7 +30,7 @@ const HANDED_TO_INSERT = /insertIgnoringConflict\s*\(\s*[\w$.]*$/;
 const INSERT_IGNORING_CONFLICT = /insertIgnoringConflict\s*\(/;
 
 const NOT_A_CONJUNCT =
-  'The tenant condition is no conjunct of the statement: spread the helper into the where or an andWhere of the query builder, and group alternatives beside it in `new Brackets(...)`, never in an orWhere at its top.';
+  'The tenant condition is no conjunct of the statement: spread the helper into the last where of the query builder (a later where resets it) or an andWhere after it, and group alternatives beside it in `new Brackets(...)`, never in an orWhere at its top.';
 
 const UNJUDGED =
   'The manager is used other than through a statement this rule can judge (held in a variable, a transaction).';
@@ -109,7 +109,8 @@ function unconfinedStatement(code: string, use: AccessorUse): string | undefined
 /**
  * A query builder: an insert names the tenant in the row it is given, a delete or an update
  * carries the own condition in its where, a select the condition of a read, spread at the top of
- * a where or an andWhere, inline or in the local it is given, and no orWhere stands beside them.
+ * the last where or an andWhere after it, since a where resets what comes before it, inline or
+ * in the local it is given, and no orWhere stands beside them.
  */
 function unconfinedBuilder(code: string, use: AccessorUse): string | undefined {
   const { statement, offset: at } = use;
@@ -126,6 +127,12 @@ function unconfinedBuilder(code: string, use: AccessorUse): string | undefined {
   const reading = { code, at, helper: pattern };
 
   const conjunct = links
+    .slice(
+      Math.max(
+        links.findLastIndex(({ method }) => method === 'where'),
+        0,
+      ),
+    )
     .filter(({ method }) => method === 'where' || method === 'andWhere')
     .some(({ argumentsText }) => spreadsAtTop(argumentsText, reading));
 
