@@ -447,8 +447,8 @@ written before background jobs existed, and its platform module binds no store: 
 module keeps jobs and process instances in the process, which consumes them even next to a
 worker (`RUN_JOBS` off): nothing a process enqueues is left unrun, but nothing survives its
 restart. To keep them in the database: add the
-tables to the schema (`createJobTable` and `createProcessTable` of `@ddd-ts-kit/knex` in a new
-migration, or `jobsTable` and `processesTable` of `@ddd-ts-kit/drizzle/postgres` and `npm run
+tables to the schema (`createJobTable` and `createProcessTable` of `@ddd-ts-kit/knex` in
+`createTables` and `npm run db:generate`, or `jobsTable` and `processesTable` of `@ddd-ts-kit/drizzle/postgres` and `npm run
 db:generate`, or the models of `prisma/jobs-and-processes.postgresql.prisma` of
 `@ddd-ts-kit/prisma` and `npm run db:generate`), give `Persistence` the stores (`KnexJobStore`,
 `KnexProcessStore`, or their Drizzle or Prisma twins), rebind `JobStore` and `ProcessStore` in the platform module, add
