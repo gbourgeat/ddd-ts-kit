@@ -3,7 +3,6 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
-  appendFileSync,
   closeSync,
   constants,
   existsSync,
@@ -19,6 +18,7 @@ import {
   rmSync,
   statSync,
   writeFileSync,
+  writeSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -557,6 +557,8 @@ const HOOK_SELECTION = /^LEFTHOOK_(?:EXCLUDE|SKIP)=/;
 const STATE_BYTES = 16 * 1024 * 1024;
 // The agents of the plugin that only read: they write their findings in their answer.
 const READ_ONLY_AGENTS = ['architecture-reviewer', 'domain-explorer', 'story-verifier'];
+// How the record of a trial is appended: created if missing, never through a link under its name.
+const RECORD_APPEND = constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | constants.O_NOFOLLOW;
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -2974,7 +2976,13 @@ function recordTrial(project, { file, ...outcome }) {
     const directory = join(resolve(project.root, common.stdout.trim()), 'ddd-ts-kit');
     mkdirSync(directory, { recursive: true });
     const entry = { at: new Date().toISOString(), file: projectPath(project, file), ...outcome };
-    appendFileSync(join(directory, 'before-write.jsonl'), `${JSON.stringify(entry)}\n`, { mode: 0o600 });
+    // Appended through no link: a link put under the name of the record is never followed.
+    const descriptor = openSync(join(directory, 'before-write.jsonl'), RECORD_APPEND, 0o600);
+    try {
+      writeSync(descriptor, `${JSON.stringify(entry)}\n`);
+    } finally {
+      closeSync(descriptor);
+    }
   } catch {
     // The record serves the verdict of the trial, never the write.
   }
@@ -3852,8 +3860,12 @@ function sanctionedScripts(commands) {
 }
 
 // `npm run <script>`, `pnpm <script>`, `yarn run <script>`... of a sanctioned script, as `<manager> run <script>`.
+// A script run in another folder (`--prefix`, `-C`, `--dir`, `--filter`) is no tool of this project.
 function scriptRun({ words }) {
   const manager = shell.commandName(words);
+  if (words.some((word) => /^(?:--prefix|-C|--dir|--filter|-F|-w|--workspace)(?:=|$)/.test(word))) {
+    return undefined;
+  }
   const [first, second] = shell.operands(words.slice(1), VALUED_MANAGER_OPTIONS);
   const script = ['run', 'run-script'].includes(first) ? second : manager === 'npm' ? undefined : first;
   return SCRIPT_MANAGERS.includes(manager) && SANCTIONED_SCRIPTS.has(script) ? `${manager} run ${script}` : undefined;

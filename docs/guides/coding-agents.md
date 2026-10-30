@@ -146,8 +146,8 @@ command when it was already changed (kept under `.ddd-ts-kit/guard/held/`), `git
 rename, `rm` for a new file. A file left changed in the working tree of the session's checkout (not
 one the conductor commits or merges meanwhile) or a change of those packages is said once, for the
 conductor, who alone knows whether it made it. What the project's own scripts (`npm run format`,
-`lint:fix`, `regenerate`, `docs:generate`, `openapi:generate`, `events:generate`), alone on the
-line, rewrite outside the scope among the files their tools rewrite (code, JSON, `docs/`) is said
+`lint:fix`, `regenerate`, `docs:generate`, `openapi:generate`, `events:generate`, not run in another
+folder by `--prefix`, `-C`, `--dir` or `--filter`), alone on the line, rewrite outside the scope among the files their tools rewrite (code, JSON, `docs/`) is said
 with the script that rewrote it, not held: the worker leaves it out of its commits. The scope is pinned at the worker's first
 call: a scope file removed or changed stops it until the conductor restores it, and the mode of the
 guard is pinned with it, so a config of the worktree that turns the guard off, or grows past what

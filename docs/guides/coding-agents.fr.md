@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:96e951c26efb9cbe -->
+<!-- translation-of: coding-agents.md sha256:79d7082658e25f7c -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -158,7 +158,8 @@ pour un renommage, `rm` pour un nouveau fichier. Un fichier laissé modifié dan
 du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) ou
 un changement de ces paquets est dit une fois, pour le chef d'orchestre, qui seul sait s'il l'a fait.
 Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerate`, `docs:generate`,
-`openapi:generate`, `events:generate`), seuls sur la ligne, réécrivent hors du périmètre parmi les
+`openapi:generate`, `events:generate`, sans être lancés dans un autre dossier par `--prefix`, `-C`,
+`--dir` ou `--filter`), seuls sur la ligne, réécrivent hors du périmètre parmi les
 fichiers que leurs outils réécrivent (code, JSON, `docs/`) est dit avec le script qui l'a réécrit,
 sans retenir le *worker* : il le laisse hors de ses commits. Le
 périmètre est fixé au premier appel du *worker* : un fichier de périmètre supprimé ou changé

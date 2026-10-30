@@ -964,6 +964,22 @@ test('what the sanctioned scripts of the project rewrite outside the scope is sa
   assert.match(reason(run('pre-bash', bash(root, 'git status', agent))), /outside your scope: src\/main\.ts\./);
 });
 
+test('a sanctioned script run in another folder is no tool of the project: what it changes is held', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'format', agent_id: 'elsewhere' };
+  for (const script of ['npm run format --prefix /tmp/elsewhere', 'pnpm -C /tmp/elsewhere run format']) {
+    assert.equal(run('pre-bash', bash(root, script, agent)).output, undefined, script);
+    writeFileSync(join(root, 'src/main.ts'), 'formatted elsewhere\n');
+    assert.match(
+      reason(run('pre-bash', bash(root, 'git status', agent))),
+      /outside your scope: src\/main\.ts\./,
+      script,
+    );
+    git(root, 'checkout', 'HEAD', '--', 'src/main.ts');
+    assert.equal(run('pre-bash', bash(root, 'git status', agent)).output, undefined, script);
+  }
+});
+
 test('every clean install the guard knows leaves the packages out of the note around it', () => {
   const root = committed();
   const manifest = join(root, 'node_modules/ddd-ts-kit/package.json');

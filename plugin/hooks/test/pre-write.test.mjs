@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import {
@@ -465,6 +465,19 @@ test('on trial, a record that cannot be written leaves the write judged all the 
   const file = pricingService(root, 'export class Pricing {}\n');
   const edit = { file_path: file, old_string: 'export', new_string: "import express from 'express';\nexport" };
   assert.equal(decision(run('pre-write', { tool_name: 'Edit', tool_input: edit })), 'deny');
+});
+
+test('on trial, the record follows no link a repository puts under its name', () => {
+  const root = project({ dependenciesBeforeWrite: true });
+  spawnSync('git', ['init', '--quiet'], { cwd: root });
+  const victim = join(root, 'victim.txt');
+  writeFileSync(victim, 'kept\n');
+  mkdirSync(join(root, '.git/ddd-ts-kit'), { recursive: true });
+  symlinkSync(victim, join(root, '.git/ddd-ts-kit/before-write.jsonl'));
+  const file = pricingService(root, 'export class Pricing {}\n');
+  const edit = { file_path: file, old_string: 'export', new_string: "import { money } from './money';\nexport" };
+  run('pre-write', { tool_name: 'Edit', tool_input: edit });
+  assert.equal(readFileSync(victim, 'utf8'), 'kept\n');
 });
 
 test('on trial, a patch stops at its first refused file, and the CLI judges two files a call, naming the others', () => {
