@@ -278,8 +278,9 @@ its own.
 **No secret.** The workflow publishes through trusted publishing (OIDC): each package names
 `release.yml` of this repository, in its `npm` environment, as its trusted publisher, and
 `npm publish` exchanges the identity token of the job for a token that lives for that one
-publication. The job keeps `id-token: write` and `environment: npm`, and needs npm 11.5.1 or
-later, which it checks. No `NPM_TOKEN` is stored anywhere.
+publication. The job that publishes keeps `id-token: write` and `environment: npm`, installs and
+builds nothing (a first job, without the identity, installs, builds and packs, and the publishing
+job publishes its tarballs), and needs npm 11.5.1 or later, which it checks. No `NPM_TOKEN` is stored anywhere.
 
 **A new package.** Trust is declared per package, and only for a package that exists on the
 registry. Before the first release that contains a package added to `packages/`, a maintainer

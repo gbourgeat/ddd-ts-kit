@@ -42,9 +42,48 @@ jobs:
           DDD_TS_KIT_MIGRATIONS_SERVER: postgres://app:app@localhost:5432
         run: npm run ci:test:migrations
 
+  # Installs, builds and packs. It holds no publishing identity: the install scripts of the lockfile
+  # and the build run here, and the job that can publish receives the tarballs they made.
+  pack:
+    name: Build and pack
+    needs: generated-stacks
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          check-latest: true
+          cache: npm
+      - run: npm ci
+      - name: The tag is the version every package states
+        env:
+          TAG: ${{ github.ref_name }}
+        run: node pipeline/monorepo/release-version.mjs --expect "${TAG#v}"
+      - run: npm run build
+      - name: The tarballs are what a consumer can install
+        run: npm run package:check
+      - name: One tarball per package
+        env:
+          TAG: ${{ github.ref_name }}
+        run: node pipeline/monorepo/publish-packages.mjs "${TAG#v}" --pack tarballs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tarballs
+          path: tarballs/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  # Publishes the tarballs of the job above: nothing is installed or built here, so no script of a
+  # dependency runs next to the identity token.
   publish:
     name: Publish to npm
-    needs: generated-stacks
+    needs: pack
     runs-on: ubuntu-26.04
     timeout-minutes: 20
     environment: npm
@@ -59,16 +98,11 @@ jobs:
         with:
           node-version: 24
           check-latest: true
-          cache: npm
           registry-url: https://registry.npmjs.org
-      - run: npm ci
-      - name: The tag is the version every package states
-        env:
-          TAG: ${{ github.ref_name }}
-        run: node pipeline/monorepo/release-version.mjs --expect "${TAG#v}"
-      - run: npm run build
-      - name: The tarballs are what a consumer can install
-        run: npm run package:check
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: tarballs
+          path: tarballs
       - name: The npm of this runner exchanges an identity token (trusted publishing needs 11.5.1 or later)
         run: |
           npm --version
@@ -79,10 +113,11 @@ jobs:
       - name: Publish (trusted publishing through OIDC, with provenance)
         env:
           TAG: ${{ github.ref_name }}
-        run: node pipeline/monorepo/publish-packages.mjs "${TAG#v}"
+        run: node pipeline/monorepo/publish-packages.mjs "${TAG#v}" --from tarballs
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag
 
