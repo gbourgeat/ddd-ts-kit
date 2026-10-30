@@ -11,6 +11,8 @@ import { EntryPoint } from './extraction/entry-point';
 import { ownEntry } from '../../config/values/own-entry';
 
 const NAME = 'worker';
+const ENV_EXAMPLE = '.env.example';
+const JOBS_IN_THE_API = 'true by default; `ddd-ts-kit generate worker` moves them to a process of their own';
 
 export const workerKind: Kind = {
   name: NAME,
@@ -66,6 +68,22 @@ function leaveTheJobsToTheWorker(ws: Workspace, config: Config): void {
     );
   } else {
     ws.update(file, flipped);
+  }
+
+  sayItInTheEnvironment(ws);
+}
+
+/** `.env.example` says what `RUN_JOBS` means when it is left unset, as `init` writes it for a project with a worker. */
+function sayItInTheEnvironment(ws: Workspace): void {
+  const environment = ws.read(ENV_EXAMPLE);
+
+  if (environment !== undefined) {
+    ws.update(
+      ENV_EXAMPLE,
+      environment
+        .replace(JOBS_IN_THE_API, 'false by default, the worker (apps/worker) runs them')
+        .replace('# RUN_JOBS=true', '# RUN_JOBS=false'),
+    );
   }
 }
 
