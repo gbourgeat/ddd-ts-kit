@@ -54,6 +54,14 @@ describe('a command given less than it needs', () => {
     expect(failure(cli(list, 'init', '--json')).message).toBe('package.json must hold a JSON object.');
   });
 
+  it('depcruise-config refuses --check with --write, writing nothing', () => {
+    const root = bareProject('depcruise');
+    const refused = failure(cli(root, 'depcruise-config', '--check', '--write', '--json'));
+
+    expect(refused.message).toBe('--check and --write cannot be combined.');
+    expect(fs.existsSync(path.join(root, '.dependency-cruiser.cjs'))).toBe(false);
+  });
+
   it('move-to-module needs a declared context and the paths to move', () => {
     const root = bareProject('move', {
       contexts: { billing: { classification: 'core', upstreams: [], modules: { payments: {} } } },
@@ -66,6 +74,11 @@ describe('a command given less than it needs', () => {
     expect(failure(cli(root, 'move-to-module', 'billing', 'payments', '--json')).message).toBe(
       'move-to-module needs the paths to move.',
     );
+
+    const noModule = failure(cli(root, 'move-to-module', 'billing', '--json'));
+
+    expect(noModule.message).toBe('move-to-module needs the module to move into.');
+    expect(noModule.fix).toContain('ddd-ts-kit move-to-module billing <module> <path>...');
   });
 
   it('plan-waves needs the slices table, a migration its name, and a TypeORM migration its place', () => {

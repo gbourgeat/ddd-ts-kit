@@ -22,6 +22,14 @@ export const moveToModuleCommand: Command = (argv, io) => {
   const ws = new Workspace(args.projectRoot, false);
   const { config } = readConfig(args.projectRoot);
   const context = contextArgument(config, contextName).kebab;
+
+  if (moduleName === '') {
+    throw new CliError(
+      'move-to-module needs the module to move into.',
+      `Usage: ddd-ts-kit move-to-module ${context} <module> <path>...; a module is declared first with \`ddd-ts-kit generate module ${context} <module> --purpose "<which concepts it holds>"\`.`,
+    );
+  }
+
   const module = readName(moduleName, 'module', MODULE_FIX).kebab;
 
   assertDeclared(config, context, module);

@@ -213,7 +213,10 @@ describe('mutation, the survivors it lists', () => {
 
     expect(missing.code).toBe(2);
     expect(missing.stderr).toContain(`No mutation report at ${REPORT}.`);
-    expect(missing.stderr).toContain('npm run test:mutation');
+
+    expect(missing.stderr).toContain(
+      '`pnpm run test:mutation`, which runs Stryker on the domain and application layers',
+    );
   });
 
   it('says so when the report holds no mutant of a context, passing over a file without mutants and a mutant without status', () => {
