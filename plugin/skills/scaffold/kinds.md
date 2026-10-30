@@ -1,7 +1,7 @@
 # Generator kinds
 
 `npx ddd-ts-kit generate <kind> ... --json`. Common options: `--term "<Term>=<meaning>"`
-(repeatable, on the kinds whose usage shows it; `"<Term>=<meaning>|<not to be confused with>"` fills the third cell of the row), `--module <module>` (on the kinds whose usage shows `[--module <module>]`, `writesInModules`
+(repeatable, on the kinds whose usage shows it, `heldToGlossary` in the JSON of `generate --help --json`, the others refusing it; `"<Term>=<meaning>|<not to be confused with>"` fills the third cell of the row), `--module <module>` (on the kinds whose usage shows `[--module <module>]`, `writesInModules`
 in the JSON, and required by them in a context that declares modules of the model:
 the files of each layer land in `<module>/domain/`, `<module>/application/`,
 `<module>/infrastructure/` and `<module>/presentation/`, their specs in `test/unit/<module>/`;

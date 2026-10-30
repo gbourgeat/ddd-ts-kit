@@ -68,6 +68,7 @@ missing. Rows with no path between them can be built in parallel.
 | US1.03 | ordering | slice | Place order | `generate command ordering PlaceOrder --aggregate Order --creates --permission order.place --grant customer`; `generate route ordering PlaceOrder --method POST --path /orders` | US1.01, US1.02 | ordering | todo |
 | US1.04 | billing | slice | Invoice a placed order | `generate integration-handler billing ordering ordering.order.placed` | US1.02 | billing | todo |
 | US1.05 | incidents | slice | Open an incident | `generate command incidents OpenIncident --module triage --aggregate Incident --creates --permission incident.open` | US1.01 | incidents | todo |
+| US1.06 | ordering | slice | Track order | `generate query ordering TrackOrder --permission order.track --term "Track=Follow where a placed order stands"`; `generate route ordering TrackOrder --method GET --path /orders/:id/tracking`; `generate representation ordering TrackOrder xml` | US1.01 | ordering | todo |
 ```
 
 - Every aggregate a command row names has a `skeleton` row that generates the aggregate **and its
@@ -87,8 +88,22 @@ missing. Rows with no path between them can be built in parallel.
   write shared files. The worker merges the trunk, then fills the TODOs.
 - `Start with` holds the exact generator commands (without `npx ddd-ts-kit` and `--json`), so
   the worker runs them instead of working them out. Every command or query names its
-  permission or `--public`; every name is made of glossary terms, or the row adds the term
-  (`--term "<Term>=<meaning>"`).
+  permission or `--public`.
+- A command of a kind held to the glossary (`heldToGlossary: true` in
+  `npx ddd-ts-kit generate --help --json`, the kinds whose usage shows `--term`) adds the term
+  for a word of its name the glossary does not define (`--term "<Term>=<meaning>"`); the other
+  kinds (`port`, `adapter`, `gateway`, `acl`, `repository`, `builder`, `property`, `vocabulary`,
+  `route`, `controller`, `route-group`, `guard`, `representation`, `form`, `schema`,
+  `test-world`, `e2e`) take no `--term`, which the generator refuses: their names are read from
+  the concept they serve.
+- The commands of a row run in the order written, each after the command that writes what it
+  builds on, as the summary of its kind says (`After generate ...`): the aggregate before its
+  repository, its builder, its state machine and the command that names it with `--aggregate`;
+  the command or query before its route; the route before its `representation` and its `form`; a
+  port before its adapter; the integration event before its handler and its projection; the
+  command before the job that sends it. That order inside a row is the row's own business:
+  `plan-waves` says `put <command> first` when a row breaks it, and names the row to add to
+  `Depends on` when a command builds on the file of another row.
 - When `contexts.<name>.modules` of `ddd-ts-kit.config.json` is not empty, each row of that
   context names its module, and every generator command of the row whose usage shows
   `[--module <module>]` (`npx ddd-ts-kit generate --help --json`, `writesInModules: true`)
