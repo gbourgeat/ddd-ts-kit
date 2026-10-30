@@ -20,6 +20,9 @@ export interface ArchivableAuditTrail {
   /** The archives of a chain, oldest first: the anchor to verify the entries left from is the last one. */
   archivesOf(chain: string): Promise<readonly AuditArchive[]>;
 
-  /** The head of every chain, in the order of their names: the sequence and the hash of its last entry, archived or not. */
+  /**
+   * The head of every chain, in the code-point order of their names: the sequence and the hash of
+   * its last entry, archived or not.
+   */
   chainHeads(): Promise<readonly ChainHead[]>;
 }

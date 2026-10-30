@@ -16,6 +16,7 @@ import type { ArchiveOptions } from '../archive/archive-options';
 import { archiveOf } from '../archive/archive-of';
 import type { AuditArchive } from '../archive/audit-archive';
 import type { AuditArchiveReport } from '../archive/audit-archive-report';
+import { byChainName } from '../chain/by-chain-name';
 import type { ChainHead } from '../chain/chain-head';
 import { chainOfTenant } from '../chain/chain-of-tenant';
 import { emptyChain } from '../chain/empty-chain';
@@ -80,7 +81,7 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader, ArchivableAu
   }
 
   async chainHeads(): Promise<readonly ChainHead[]> {
-    return [...this.heads.keys()].sort().flatMap((chain) => this.heads.get(chain) ?? []);
+    return [...this.heads.values()].sort(byChainName);
   }
 
   async search(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>> {
