@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:609670b14039f18d -->
+<!-- translation-of: README.md sha256:a3acea8627d62ae0 -->
 
 # ddd-ts-kit
 
@@ -122,9 +122,8 @@ le répertoire du projet.
 Chaque fichier est écrit en entier ou pas du tout : dans `<name>.<random>.tmp` à côté de lui, puis
 renommé à sa place. Une commande arrêtée à mi-chemin ne laisse que des fichiers complets (un
 processus tué à ce moment peut laisser son fichier `.tmp`, qu'on peut supprimer), et la même
-commande relancée écrit ceux qui manquent. `init` sur un projet déjà initialisé, et chaque
-`generate` d'un genre qui écrit des fichiers partagés (`writesShared` dans `generate --help
---json`), tiennent le verrou du projet, `.ddd-ts-kit/lock`, que git ignore : une deuxième commande
+commande relancée écrit ceux qui manquent. `init` sur un projet déjà initialisé, chaque
+`generate` qui n'est pas un essai à blanc et `drizzle-generate` tiennent le verrou du projet, `.ddd-ts-kit/lock`, que git ignore : une deuxième commande
 attend jusqu'à cinq secondes, puis sort avec le code 2 en nommant la commande qui le tient et le
 correctif, lancer les générateurs l'un après l'autre :
 ``Another generator holds the lock of this project: `ddd-ts-kit generate context billing` (pid 1234, started 12 seconds ago).``

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir } from './helpers';
+import { cli, exists, read, tempDir, write } from './helpers';
 import { git } from './support/git';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
@@ -224,6 +224,55 @@ describe('two generators that write the shared files of one project', () => {
       spawnSync('git', ['check-ignore', '--quiet', '--no-index', `${LOCK}/holder.json`], { cwd: root }).status,
     ).toBe(0);
   });
+});
+
+describe('generators of one project started together', () => {
+  it('started together with kinds that write inside their context keep every glossary row', async () => {
+    const root = initProject(...NPM);
+
+    expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core').code).toBe(0);
+
+    const kinds = ['entity', 'aggregate', 'domain-event'];
+    const names = Array.from({ length: 6 }, (_, at) => `Item${at}`);
+
+    const ended = await Promise.all(
+      names.map((name, at) =>
+        started(root, 'generate', kinds[at % kinds.length] ?? 'entity', 'billing', name, '--term', `${name}=x`),
+      ),
+    );
+
+    const landed = names.filter((_, at) => ended[at]?.code === 0);
+    const glossary = read(root, 'src/contexts/billing/CONTEXT.md');
+
+    expect(landed.length, ended.map(({ stderr }) => stderr).join('\n')).toBeGreaterThan(0);
+
+    for (const name of landed) {
+      expect(glossary).toMatch(new RegExp(`^\\| ${name}\\b`, 'm'));
+    }
+
+    expect(exists(root, LOCK)).toBe(false);
+  }, 90_000);
+
+  it('keep two drizzle-generate apart: drizzle-kit never runs twice at once in one project', async () => {
+    const root = tempDir('drizzle-lock');
+
+    const slowKit = [
+      "const fs = require('node:fs');",
+      "if (fs.existsSync('running')) { fs.writeFileSync('overlap', 'yes'); }",
+      "fs.writeFileSync('running', '');",
+      'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 700);',
+      "fs.rmSync('running');",
+    ].join('\n');
+
+    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ contexts: {} }));
+    write(root, 'node_modules/drizzle-kit/bin.cjs', slowKit);
+
+    const ended = await Promise.all(['one', 'two'].map((name) => started(root, 'drizzle-generate', '--name', name)));
+
+    expect(ended.map(({ code }) => code)).toEqual([0, 0]);
+    expect(exists(root, 'overlap')).toBe(false);
+    expect(exists(root, LOCK)).toBe(false);
+  }, 60_000);
 });
 
 describe('the lock of the generators, its folder and its holder', () => {
