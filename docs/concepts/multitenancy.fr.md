@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:bdbb124dd90f9dc1 -->
+<!-- translation-of: multitenancy.md sha256:493227f90211ec9e -->
 
 # Multitenance
 
@@ -118,10 +118,10 @@ signale toute autre forme :
 
 | ORM | La condition du *tenant* | Les alternatives |
 |---|---|---|
-| Knex | aucun `.orWhere*`, `.orHaving*` ou `.or` au sommet d'une instruction de `tenantTable`, `ownTenantTable` ou `whereTenant`, qui les refusent aussi à la construction de l'instruction (`UngroupedOrError`) | `.where((either) => either.where(a).orWhere(b))` |
+| Knex | aucun `.orWhere*` ou `.or` au sommet d'une instruction de `tenantTable`, `ownTenantTable` ou `whereTenant`, aucun `clearWhere()` ou `clear('where')` : les *helpers* les refusent aussi à la construction de l'instruction (`UngroupedOrError`, `ClearedTenantConditionError`), et tiennent le texte d'un `whereRaw`, ou un `knex.raw` donné à un *where*, pour un seul terme entre parenthèses. Un `orHaving` s'applique après le *where* et reste libre | `.where((either) => either.where(a).orWhere(b))` |
 | Drizzle | un argument direct de `where` ou de `and`, jamais sous `or`, `not` ou un gabarit `sql` | `.where(and(tenantCondition(column, scope), or(a, b)))` |
 | Prisma | étalée au sommet du `where` ou de son `AND`, jamais sous `OR`, `NOT` ou une relation | `where: { ...tenantWhere(scope), OR: [a, b] }` |
-| TypeORM | étalée au sommet du *where* ; un tableau *where* est un `or` de ses entrées, chacune l'étale donc ; aucun `orWhere` au sommet d'un *query builder* | `.andWhere(new Brackets((either) => either.where(a).orWhere(b)))` |
+| TypeORM | étalée au sommet du *where* ; un tableau *where* est un `or` de ses entrées, chacune l'étale donc ; aucun `orWhere` au sommet d'un *query builder*, et la condition dans son dernier `where` ou un `andWhere` après lui, puisqu'un `where` réinitialise ce qui le précède | `.andWhere(new Brackets((either) => either.where(a).orWhere(b)))` |
 
 Un contexte dont les tables n'appartiennent à aucun *tenant*, parce qu'il décide qui appartient à
 quel *tenant*, est déclaré tel dans la configuration plutôt que désactivé instruction par
