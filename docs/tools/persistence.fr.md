@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:98dffa3711e094bf -->
+<!-- translation-of: persistence.md sha256:c54271ba3ff6c496 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -291,6 +291,14 @@ du pilote (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`, `P2002`), levée
 la valeur prise (`EMAIL_TAKEN`) attrape `UniqueViolationError` et lève son propre refus. Sur
 MySQL, qui n'a pas de cible de conflit, `INSERT IGNORE` écarte aussi cette ligne, et le premier
 enregistrement se lit comme une mise à jour perdue.
+
+Une unité de travail que la base ne peut pas servir à temps reçoit un 503, pas un 500 : Prisma
+borne l'attente d'une transaction (`maxWait`) et sa durée (`timeout`), Knex l'attente d'une
+connexion (`acquireConnectionTimeout`, 60 secondes), et au-delà l'unité de travail est rejetée
+par `TransactionTimeoutError` (code `SERVICE_UNAVAILABLE`), rien n'étant validé. Un projet
+généré sur Prisma lit les deux limites dans `DATABASE_TRANSACTION_WAIT_MS` et
+`DATABASE_TRANSACTION_TIMEOUT_MS`, une minute chacune par défaut ; Drizzle et TypeORM attendent
+une connexion de leur *pool* et ne bornent aucune transaction, ils n'ont donc pas ce réglage.
 
 ![Deux transactions chargent la facture inv-1 à la version 3 ; la première mise à jour correspond à la version 3 et écrit la version 4 ; la seconde attend toujours la version 3, n'écrit aucune ligne et échoue avec ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.fr.svg)
 

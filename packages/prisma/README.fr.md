@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7507d8bf6f208220 -->
+<!-- translation-of: README.md sha256:37bdfbc97cf96d0e -->
 
 # @ddd-ts-kit/prisma
 
@@ -249,8 +249,16 @@ Un gestionnaire de commande n'appelle pas `run` lui-même : le bus de commandes 
 un gestionnaire d'événement d'intégration déclaré s'exécute lui aussi dans une unité de travail.
 Un script, ou un consommateur câblé à la main, l'appelle comme ci-dessus.
 
-`createPrismaUnitOfWork(prisma, { timeout: 15_000, isolationLevel: 'RepeatableRead' })`
-transmet les options de `$transaction`.
+`createPrismaUnitOfWork(prisma, { maxWait: 10_000, timeout: 15_000, isolationLevel: 'RepeatableRead' })`
+transmet les options de `$transaction` : `maxWait`, le temps pendant lequel `run` attend une
+transaction quand toutes les connexions du *pool* sont occupées (2 secondes par défaut), et
+`timeout`, le temps pendant lequel la transaction peut s'exécuter (5 secondes par défaut).
+Au-delà de l'un ou l'autre, Prisma répond `P2028`, et l'unité de travail est rejetée par
+`TransactionTimeoutError` du noyau (code `SERVICE_UNAVAILABLE`, répondu 503) : rien n'est
+validé, la requête peut réussir plus tard. Un projet généré lit les deux dans
+`DATABASE_TRANSACTION_WAIT_MS` et `DATABASE_TRANSACTION_TIMEOUT_MS`, une minute chacun par
+défaut, autant que Knex attend une connexion. Knex, Drizzle et TypeORM ne bornent aucune
+transaction dans le temps : ils n'ont pas besoin d'un tel réglage.
 
 `run` est construit sur `withinUnitOfWork` du noyau. Les événements du domaine des agrégats
 enregistrés à l'intérieur attendent que `work` ait rendu la main, puis sont distribués dans la
@@ -1041,8 +1049,9 @@ Ce que Prisma ne permet pas, et ce que le *package* en fait :
   n'utilise ni l'un ni l'autre : un `run` imbriqué rejoint la transaction englobante, et
   `claimBatch` appelé dans une unité de travail réclame dans cette unité de travail.
 - **Les transactions interactives sont bornées dans le temps** : 5 secondes par défaut, puis
-  Prisma annule. Passez `timeout` à `createPrismaUnitOfWork` pour les commandes longues. Elles
-  tiennent aussi une connexion pendant toute leur durée.
+  Prisma annule, et une transaction qui attend une connexion plus de 2 secondes ne commence
+  jamais. Passez `timeout` et `maxWait` à `createPrismaUnitOfWork` pour les commandes longues et
+  les rafales. Elles tiennent aussi une connexion pendant toute leur durée.
 - **Un `null` nu est refusé dans un champ `Json`**, et les sentinelles qui l'expriment vivent
   dans le client généré. Les registres omettent une charge utile `null` : elle est stockée en
   `NULL` SQL et relue en `null` ; le champ est donc `Json?`. Ce qui peut devoir repasser à `null`

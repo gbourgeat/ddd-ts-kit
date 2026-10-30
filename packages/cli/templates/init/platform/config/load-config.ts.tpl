@@ -62,6 +62,9 @@ export function loadConfig(variables: Variables): AppConfig {
     {{#if persistence.needsUrl}}
     databaseUrl: env.url('DATABASE_URL'),
     {{/if}}
+    {{#if orm.prisma}}
+    databaseTransaction: readDatabaseTransaction(env),
+    {{/if}}
     {{#if events.outbox}}
     outboxRelayIntervalMs: env.integer('OUTBOX_RELAY_INTERVAL_MS', { fallback: 500, min: 10, max: 60000 }),
     {{/if}}
@@ -128,6 +131,19 @@ function readHousekeeping(env: Environment): Housekeeping {
     {{#if queue.stored}}
     finishedJobsDays: days('BACKGROUND_JOBS_RETENTION_DAYS', DEFAULT_HOUSEKEEPING.finishedJobsDays),
     {{/if}}
+  };
+}
+
+{{/if}}
+{{#if orm.prisma}}
+/**
+ * The limits of an interactive transaction of Prisma, a minute each by default: as long as Knex
+ * waits for a connection, where Prisma would give up after 2 seconds of waiting and 5 of work.
+ */
+function readDatabaseTransaction(env: Environment): AppConfig['databaseTransaction'] {
+  return {
+    waitMs: env.integer('DATABASE_TRANSACTION_WAIT_MS', { fallback: 60_000, min: 1, max: 3_600_000 }),
+    timeoutMs: env.integer('DATABASE_TRANSACTION_TIMEOUT_MS', { fallback: 60_000, min: 1, max: 3_600_000 }),
   };
 }
 

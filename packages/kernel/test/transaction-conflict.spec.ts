@@ -4,7 +4,9 @@ import {
   ConcurrencyError,
   InMemoryUnitOfWork,
   NotFoundError,
+  SERVICE_UNAVAILABLE,
   TransactionConflictError,
+  TransactionTimeoutError,
 } from '../src';
 
 /** What a unit of work rejects with when its work throws `error`. */
@@ -60,5 +62,32 @@ describe('a transaction the database gave up for a concurrent one', () => {
 
     expect(await rejectionOf(constraint)).toBe(constraint);
     expect(await rejectionOf(refusal)).toBe(refusal);
+  });
+});
+
+describe('a transaction that waited or ran past the time its ORM allows', () => {
+  for (const [what, error] of [
+    ['a transaction Prisma could not start within maxWait, or expired after timeout', { code: 'P2028' }],
+    ['no connection from the pool of Prisma in time', { code: 'P2024' }],
+    [
+      'no connection from the pool of Knex in time',
+      Object.assign(new Error('pool is full'), { name: 'KnexTimeoutError' }),
+    ],
+  ] as const) {
+    it(`rejects the unit of work as unavailable, to try again later: ${what}`, async () => {
+      const rejection = await rejectionOf(error);
+
+      expect(rejection).toBeInstanceOf(TransactionTimeoutError);
+      expect(rejection).not.toBeInstanceOf(ConcurrencyError);
+      expect(rejection).toMatchObject({ code: SERVICE_UNAVAILABLE, cause: error });
+    });
+  }
+
+  it('lets a refusal and any other timeout through as they are', async () => {
+    const refusal = new NotFoundError('Appointment apt-1 was not found', { cause: { code: 'P2028' } });
+    const other = Object.assign(new Error('socket timeout'), { name: 'TimeoutError' });
+
+    expect(await rejectionOf(refusal)).toBe(refusal);
+    expect(await rejectionOf(other)).toBe(other);
   });
 });

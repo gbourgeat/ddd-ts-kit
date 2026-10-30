@@ -62,6 +62,11 @@ DATABASE_URL=mysql://app:app@localhost:3306/app
 DATABASE_URL=file:./data/app.sqlite
 {{/if}}
 {{/if}}
+{{#if orm.prisma}}
+# How long a unit of work waits for its transaction, and how long the transaction may run.
+DATABASE_TRANSACTION_WAIT_MS=60000
+DATABASE_TRANSACTION_TIMEOUT_MS=60000
+{{/if}}
 {{#if events.outbox}}
 OUTBOX_RELAY_INTERVAL_MS=500
 {{/if}}

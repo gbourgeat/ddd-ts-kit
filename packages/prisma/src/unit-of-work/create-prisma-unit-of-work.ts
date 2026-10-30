@@ -14,7 +14,9 @@ export interface PrismaUnitOfWork<Tx> extends UnitOfWork, PrismaContext<Tx> {}
  * (`withinUnitOfWork`): their handlers run inside the time Prisma allows the transaction.
  *
  * Prisma bounds an interactive transaction in time (`timeout`, 5 seconds by default) and
- * rolls it back beyond: pass `options` to widen it for long commands.
+ * rolls it back beyond, and gives up a transaction that waited for a connection longer than
+ * `maxWait` (2 seconds by default): pass `options` to widen them for long commands and bursts.
+ * Either answers `P2028`, which the unit of work rejects as a `TransactionTimeoutError`.
  */
 export function createPrismaUnitOfWork<Tx, Options>(
   // NoInfer: `Tx` is what `$transaction` hands out, and the root client must offer at least that.

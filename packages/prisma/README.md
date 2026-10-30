@@ -243,8 +243,15 @@ A command handler does not call `run` itself: the command bus does it, and a dec
 integration event handler is run in a unit of work too. A script, or a consumer wired by hand,
 calls it as above.
 
-`createPrismaUnitOfWork(prisma, { timeout: 15_000, isolationLevel: 'RepeatableRead' })`
-forwards the options of `$transaction`.
+`createPrismaUnitOfWork(prisma, { maxWait: 10_000, timeout: 15_000, isolationLevel: 'RepeatableRead' })`
+forwards the options of `$transaction`: `maxWait`, how long `run` waits for a transaction while
+every connection of the pool is busy (2 seconds by default), and `timeout`, how long the
+transaction may run (5 seconds by default). Beyond either, Prisma answers `P2028`, and the unit
+of work rejects with `TransactionTimeoutError` of the kernel (code `SERVICE_UNAVAILABLE`,
+answered 503): nothing committed, the request may succeed later. A generated project reads both
+from `DATABASE_TRANSACTION_WAIT_MS` and `DATABASE_TRANSACTION_TIMEOUT_MS`, a minute each by
+default, as long as Knex waits for a connection. Knex, Drizzle and TypeORM bound no transaction
+in time: they need no such setting.
 
 `run` is built on `withinUnitOfWork` of the kernel. The domain events of the aggregates saved
 inside it wait until `work` has returned, then are dispatched inside the transaction, before
@@ -1010,8 +1017,9 @@ What Prisma does not allow, and what the package does about it:
   outer transaction, and `claimBatch` called inside a unit of work claims in that unit of
   work.
 - **Interactive transactions are bounded in time**: 5 seconds by default, then Prisma rolls
-  back. Pass `timeout` to `createPrismaUnitOfWork` for long commands. They also hold a
-  connection for their whole duration.
+  back, and a transaction that waits more than 2 seconds for a connection never starts. Pass
+  `timeout` and `maxWait` to `createPrismaUnitOfWork` for long commands and bursts. They also
+  hold a connection for their whole duration.
 - **A bare `null` is refused in a `Json` field**, and the sentinels that express it live in the
   generated client. The stores leave a `null` payload out, so it is stored as SQL `NULL` and
   read back as `null`; the field is therefore `Json?`. What may have to be set back to `null`

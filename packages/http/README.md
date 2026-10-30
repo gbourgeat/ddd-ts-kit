@@ -594,7 +594,9 @@ Defaults: `VALIDATION_FAILED` 422 (with `issues`, paths prefixed by the part:
 or a deadlock: the client sends the request again), `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
 401, `FORBIDDEN` 403, `NOT_ACCEPTABLE` 406, `PRECONDITION_FAILED` 412, `UNSUPPORTED_MEDIA_TYPE` 415
 (a body or a file of a type the route does not take), `PRECONDITION_REQUIRED` 428, and for files
-`FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413. A domain code that is not mapped answers 422
+`FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413, and `SERVICE_UNAVAILABLE` 503 (a unit of work the
+database could not serve in time, `TransactionTimeoutError`: the client tries again later). A
+domain code that is not mapped answers 422
 (`fallbackStatus` of the second argument changes it).
 
 <!-- checked sample -->

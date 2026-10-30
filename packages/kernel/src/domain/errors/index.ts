@@ -14,4 +14,5 @@ export * from './refusal-facts';
 export * from './refusal-of';
 export * from './refusal';
 export * from './transaction-conflict-error';
+export * from './transaction-timeout-error';
 export * from './unique-violation-error';

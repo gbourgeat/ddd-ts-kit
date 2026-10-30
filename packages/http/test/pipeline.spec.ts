@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { DomainError, InvariantViolation, NotFoundError } from '@ddd-ts-kit/kernel';
+import { DomainError, InvariantViolation, NotFoundError, TransactionTimeoutError } from '@ddd-ts-kit/kernel';
 import { ValidationError } from '@ddd-ts-kit/validation';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import {
@@ -144,6 +144,7 @@ describe('the error mapper', () => {
       FILE_NOT_FOUND: 404,
       FILE_TOO_LARGE: 413,
       UNSUPPORTED_MEDIA_TYPE: 415,
+      SERVICE_UNAVAILABLE: 503,
     });
   });
 
@@ -163,6 +164,17 @@ describe('the error mapper', () => {
 
 describe('toProblem', () => {
   const mapper = createErrorMapper();
+
+  it('answers a unit of work the database could not serve in time 503, with nothing of the driver', () => {
+    const problem = toProblem(
+      new TransactionTimeoutError({ code: 'P2028', message: 'expired after 5000 ms' }),
+      mapper,
+      'req-1',
+    );
+
+    expect(problem).toMatchObject({ status: 503, title: 'Service Unavailable', code: 'SERVICE_UNAVAILABLE' });
+    expect(JSON.stringify(problem)).not.toContain('5000');
+  });
 
   it('describes a domain error with its code, status and message', () => {
     expect(toProblem(new NotFoundError('Order 7 does not exist.'), mapper, 'req-1')).toEqual({

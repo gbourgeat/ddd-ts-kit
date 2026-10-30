@@ -1,5 +1,7 @@
 import { TransactionConflictError } from '../../domain/errors/transaction-conflict-error';
+import { TransactionTimeoutError } from '../../domain/errors/transaction-timeout-error';
 import { isTransactionConflict } from '../persistence/is-transaction-conflict';
+import { isTransactionTimeout } from '../persistence/is-transaction-timeout';
 import { dispatchAfterCommit } from './dispatch-after-commit';
 import { dispatchBeforeCommit } from './dispatch-before-commit';
 import type { CommitStep } from './commit-step';
@@ -20,7 +22,9 @@ import { unitOfWorkScope, type UnitOfWorkScope } from './unit-of-work-scope';
  *
  * A deadlock or a serialization failure the database raised anywhere in the transaction, on the
  * statement it chose, rejects the outermost unit of work as a `TransactionConflictError`, a
- * `ConcurrencyError` whose `cause` is the error of the driver: the caller runs it again.
+ * `ConcurrencyError` whose `cause` is the error of the driver: the caller runs it again. A
+ * transaction its ORM could not start in time, the pool being busy, or ended for running too
+ * long rejects it as a `TransactionTimeoutError` (`SERVICE_UNAVAILABLE`), the same way.
  *
  * Called inside a unit of work already running on the same asynchronous call chain it joins it:
  * `transaction(work)` and nothing else, so one dispatch, at the end of the outermost. Two
@@ -41,7 +45,7 @@ export async function withinUnitOfWork<T>(
     .run(scope, () => transaction(() => thenDispatched(work, scope, applied)))
     .catch(async (error: unknown) => {
       await undone(applied);
-      throw isTransactionConflict(error) ? new TransactionConflictError(error) : error;
+      throw translated(error);
     })
     .finally(() => {
       scope.stage = 'closed';
@@ -51,6 +55,15 @@ export async function withinUnitOfWork<T>(
   await afterTheCommit(scope);
 
   return result;
+}
+
+/** What the database said of the transaction, in the words of the kernel; any other failure as it is. */
+function translated(error: unknown): unknown {
+  if (isTransactionConflict(error)) {
+    return new TransactionConflictError(error);
+  }
+
+  return isTransactionTimeout(error) ? new TransactionTimeoutError(error) : error;
 }
 
 function isRunning(scope: UnitOfWorkScope | undefined): boolean {

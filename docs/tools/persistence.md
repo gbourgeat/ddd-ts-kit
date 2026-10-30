@@ -282,6 +282,14 @@ for the taken value (`EMAIL_TAKEN`) catches `UniqueViolationError` and raises it
 On MySQL, which has no conflict target, `INSERT IGNORE` skips that row too, and the first save
 reads as a lost update.
 
+A unit of work the database cannot serve in time is answered 503, not 500: Prisma bounds the
+wait for a transaction (`maxWait`) and its run (`timeout`), Knex the wait for a connection
+(`acquireConnectionTimeout`, 60 seconds), and beyond them the unit of work rejects with
+`TransactionTimeoutError` (code `SERVICE_UNAVAILABLE`), nothing committed. A generated project on
+Prisma reads both limits from `DATABASE_TRANSACTION_WAIT_MS` and
+`DATABASE_TRANSACTION_TIMEOUT_MS`, a minute each by default; Drizzle and TypeORM wait for a
+connection of their pool and bound no transaction, so they have no such setting.
+
 ![Two transactions load invoice inv-1 at version 3; the first update matches version 3 and writes version 4; the second update still expects version 3, writes no row and fails with ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.svg)
 
 The fake of the unit specs and the real adapter keep that promise alike: the same
