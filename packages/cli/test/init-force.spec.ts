@@ -206,7 +206,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
       expect.arrayContaining(['src/platform/resilience/own-policy.ts']),
     );
 
-    expect(found[0]?.fix).toContain('`eslint --fix` rewrites it');
+    expect(keptImports[0]?.fix).toContain('`eslint --fix` rewrites it');
   });
 
   it('adds no permission twice to the settings of the agent when init runs again, on pnpm as on npm', () => {
