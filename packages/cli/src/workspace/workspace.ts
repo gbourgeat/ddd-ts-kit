@@ -3,6 +3,7 @@ import path from 'node:path';
 import { CONFIG_FILE } from '../config';
 import { inDialect } from '../package-manager/in-dialect';
 import { packageManagerOf } from '../package-manager/package-manager-of';
+import type { DiskWrites } from './disk-writes';
 import type { NextStep } from './next-step';
 import { gistOf } from './gist-of';
 import { isLanguageStep } from './is-language-step';
@@ -54,9 +55,11 @@ export class Workspace {
 
   private pruning = false;
 
+  /** `disk` puts each file in place, whole: a spec gives one that fails in the middle of a file. */
   constructor(
     readonly root: string,
     private readonly force: boolean,
+    private readonly disk: DiskWrites = fs,
   ) {}
 
   exists(asked: string): boolean {
@@ -286,7 +289,7 @@ export class Workspace {
    * or a file --force would replace that git does not hold, refuses the whole plan first.
    */
   commit(dryRun: boolean): WorkspaceReport {
-    refuseLeaving(this.root, [...new Set([...this.pending.keys(), ...this.removed])].sort(), (file) =>
+    const real = refuseLeaving(this.root, [...new Set([...this.pending.keys(), ...this.removed])].sort(), (file) =>
       this.absolute(file),
     );
 
@@ -294,7 +297,8 @@ export class Workspace {
 
     const unwritten: string[] = [];
     const planned = [...this.pending].map(([file, { content, existed }]) => ({ file, content, existed }));
-    const written = writtenOf(planned, { dryRun, absolute: (file) => this.absolute(file) }, unwritten);
+    const writing = { dryRun, absolute: (file: string) => this.absolute(file), real, disk: this.disk };
+    const written = writtenOf(planned, writing, unwritten);
     const unwritable = [...new Set([...this.masked, ...unwritten])].sort();
     const deleted = unwritable.length === 0 ? [...this.removed].sort() : [];
 

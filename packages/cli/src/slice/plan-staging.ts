@@ -4,9 +4,10 @@ import type { StagingPlan } from './staging-plan';
 import type { StagingScope } from './staging-scope';
 import { modulesByContext } from '../model-modules';
 import { prismaSchemaOf } from '../prisma-schema';
+import { KIT_FOLDER } from '../workspace/kit-folder';
 
 /** The kit's own working files: never committed, never listed. */
-const KIT_FILES = '.ddd-ts-kit/';
+const KIT_FILES = `${KIT_FOLDER}/`;
 /** An end-to-end spec, a place of a slice outside its context. */
 const END_TO_END_SPEC = /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/;
 /** The acceptance spec of a story, whose scenarios a slice unwraps once it satisfies them; its lock is the conductor's. */
