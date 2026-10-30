@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d2ada085467f288d -->
+<!-- translation-of: README.md sha256:56e6680d6d2398b0 -->
 
 # @ddd-ts-kit/kernel
 
@@ -1656,6 +1656,7 @@ complet dans [Multitenance](../../docs/concepts/multitenancy.fr.md).
 |---|---|
 | `isTenantId(value)`, `assertTenantId(id)`, `InvalidTenantIdError` | la seule grammaire d'un id de *tenant* (lettres, chiffres, `_`, `-`, 63 au plus) : `executionContext`, `executionContextOfEvent`, `acrossTenants`, `InMemoryTenantDirectory`, `tenantScopeOf`, `tenantReachOf` et les réglages de sécurité au niveau des lignes refusent tout autre, pour qu'aucun id de *tenant* ne puisse être lu comme un joker, une liste ou un séparateur de clé |
 | `tenantScopeOf(scope)` | le seul *tenant* que nomme une écriture ; `NoCurrentTenantError` pour un travail qui n'en nomme aucun |
+| `assertNamesTenant(context, access)` | ce qu'un store de données de *tenant* vérifie avant de lire ou d'écrire : le travail nomme un *tenant*, ou lit sous une élévation ; `NoCurrentTenantError` sinon, hors de toute portée d'exécution compris |
 | `tenantReachOf(scope)` | ce qu'une lecture peut voir : `{ kind: 'tenant', tenantId }`, ou `{ kind: 'elevated', tenants }` sous une élévation |
 | `tenantsOf(actor)`, `isTenantMember(actor, tenantId)` | les *tenants* auxquels appartient un acteur : son `tenantId` et son attribut `tenants` |
 | `acrossTenants({ scope, trail, clock, ids }, { reason, tenants }, work)` | le personnel de la plateforme qui lit par-dessus les *tenants* : refusé sans raison ou sans *tenant*, enregistré dans l'`AuditTrail` (action `tenancy:elevate`) avant que le travail s'exécute ; les écritures nomment toujours un seul *tenant* |

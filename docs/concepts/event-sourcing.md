@@ -85,8 +85,10 @@ delegates to `EventSourcedRepository` over the `EventStore` and the `PersonalDat
 platform binds, with the codec of the aggregate, its snapshot policy left as a `TODO(domain)`; the
 fake is that adapter over the in-memory stores of the kernel, and the repository contract runs on
 the fake and on the adapter over `InMemoryEventStore` (its stale-save case stays pending until
-a `mutate` that records an event is added, which needs a business method). The event store keeps no tenant: a stream is
-`<context>.<aggregate>-<id>`, so the application layer decides who may load an id.
+a `mutate` that records an event is added, which needs a business method). A stream is
+`<context>.<aggregate>-<id>`: in a project without tenancy the application layer decides who may load an id, and
+in a multi-tenant one the store keeps each stream in its tenant
+([Under shared-table tenancy](#under-shared-table-tenancy)).
 
 **No double write.** Appending the events and publishing the integration events are one
 transaction: the store joins the transaction of the unit of work, and the publisher is a
@@ -526,18 +528,33 @@ read model that joins two of them is two projections, or a projection fed by the
 
 ### Under shared-table tenancy
 
-An event store given the execution scope (`InMemoryEventStore(scope)`, or `scope` in the options
-of `createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing` and
-`createTypeOrmEventSourcing`) records the tenant of the work at the first append of a stream, in
-the nullable `tenant_id` column of the events, and gives it back on each stored event
-(`StoredEvent.tenantId`). A read or an append of a stream of another tenant is then refused
-with an `EventStreamTenantError`, which names the stream and never the other tenant; platform
-staff elevated over the tenant (`acrossTenants`) may read it, never append to it. Work that names
-no tenant is not scoped: nothing is recorded and nothing is refused, so a project without tenancy
-is unchanged. A stream stored before the column existed has no tenant and is refused to every
-tenant until a migration gives it one. Every repository of an event-sourced aggregate relies on
-it, `generate repository --tenant-scoped` included: the store is what isolates the stream, not a
-condition on a statement. The same contract case holds the in-memory store and the four ORM.
+The execution scope is what says that streams belong to tenants: `init --tenancy shared-table`
+hands it to the store (`InMemoryEventStore(scope)`, or `scope` in the options of
+`createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing` and
+`createTypeOrmEventSourcing`), and a project without tenancy does not, so nothing there is recorded
+or refused. Given the scope, the store records the tenant of the work at the first append of a
+stream, in the nullable `tenant_id` column of the events, and gives it back on each stored event
+(`StoredEvent.tenantId`).
+
+- **Work that names no tenant is refused** before any statement, with a `NoCurrentTenantError`,
+  whether it reads or appends, on a stream that exists or not, and so is work outside any execution
+  scope. No stream is created in no tenant.
+- **A stream of another tenant is refused** with an `EventStreamTenantError`, which names the stream
+  and never the other tenant, from whatever version it is read. The repository of an aggregate
+  answers it as it answers an id nobody saved: `findById` gives `undefined`, so that a caller
+  learns nothing of an id it does not own.
+- **An elevation reads, it never writes.** Platform staff and system jobs elevated over the tenant
+  (`acrossTenants`) may read its streams and append to none, since a write names one tenant: a job
+  that appends runs per tenant.
+
+`readAll` and `head` stay open, because a subscription reads the whole store and applies each event
+in its tenant; the rule `event-sourcing/store-behind-repository` keeps them out of the use cases. A
+stream stored before the column existed has no tenant and is refused to everyone until a migration
+gives it one. Every repository of an event-sourced aggregate relies on this,
+`generate repository --tenant-scoped` included: the store is what isolates the stream, not a
+condition on a statement. The same contract cases hold the in-memory store and the four ORM. A
+context declared the control plane of the tenants belongs to no tenant, so it keeps its state in
+tables: `generate aggregate --event-sourced` refuses it.
 
 A `CatchUpSubscription` or an `EventStoreProjectionRebuild` given the same `scope` applies each
 event in the tenant of its stream (origin `event`, as a consumer of the outbox runs), so the

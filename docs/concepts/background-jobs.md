@@ -221,8 +221,12 @@ does not compile, since `appointmentIds` and `reason` are missing.
   through an element (`GET /calendars/:id/clearances/:clearanceId`) checks that `subject` is
   that element: a job id is no secret, it is the causation of everything the job does.
 - **Tenants.** Work done for a tenant finds and cancels the jobs of that tenant only, and those
-  of the tenants an elevation names; work without a tenant (a single-tenant project, a system
-  job) reaches every job.
+  of the tenants an elevation names. In a multi-tenant project (`tenant: true` on `StoredJobQueue`,
+  which `init --tenancy shared-table` writes, or `tenants` on `kernelModule`) work that names no
+  tenant is refused with a `NoCurrentTenantError` before the store is read, a system job included:
+  it reaches the jobs of tenants through an elevation (`acrossTenants`). In a project without
+  tenancy no work has a tenant, and every job is reached. `enqueue` stays open: a global job may
+  enqueue, and what it enqueues runs in no tenant, where tenant data refuses it.
 - **Generated**: `ddd-ts-kit generate background-job <context> <Name> --command <UseCase>` writes
   the class (`@Background()` in the declared style, `builder.backgroundJob(..)` in the module
   file on tsyringe, `platform.backgroundJobs.register(..)` in the module file where the platform

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:39cb687fd254e9bd -->
+<!-- translation-of: README.md sha256:bb30072fb47eb5e2 -->
 
 # @ddd-ts-kit/auth
 
@@ -1157,8 +1157,9 @@ par-dessus : l'acteur courant est l'acteur du contexte d'exécution courant, don
 peuvent pas être en désaccord : `ActorContext` est une vue de la portée, et un adaptateur écrit
 contre lui continue de fonctionner. Les nouveaux adaptateurs, et ceux que génère la CLI, nomment
 `ExecutionScope`. `require()` lève `NoExecutionContextError` (ou `NoCurrentActorError`) quand
-une frontière n'a rien ouvert, et `tenantScopeOf` lève `NoCurrentTenantError` pour un travail
-qui ne nomme aucun *tenant* : des erreurs de câblage, trouvées par le premier test. C'est de la
+une frontière n'a rien ouvert, une erreur de câblage trouvée par le premier test, et
+`tenantScopeOf` lève `NoCurrentTenantError` pour un travail qui ne nomme aucun *tenant*, répondue
+par un 403. C'est de la
 défense en profondeur, pas de l'autorisation : le filtre par *tenant* d'un *repository*
 empêche un bug de laisser fuiter des lignes, la permission reste décidée dans la couche
 application.
