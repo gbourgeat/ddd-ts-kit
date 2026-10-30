@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:76091dc86ada1168 -->
+<!-- translation-of: event-sourcing.md sha256:9089340d4aa180b9 -->
 
 # Event sourcing, par agrégat
 
@@ -389,6 +389,13 @@ toute façon. Le kit scelle plutôt les valeurs personnelles :
   du store PostgreSQL. `erase(subject)` supprime la clé, et un rejeu lit alors
   `ERASED_PERSONAL_DATA` (`[erased]`) à la place de chaque valeur scellée avec elle. Une clé
   ultérieure de la même personne n'ouvre jamais une valeur plus ancienne.
+- `decode` lit une valeur personnelle avec `data.personalText('reason')`, `data.personalInstant('bornOn')`
+  ou `data.personal('email', Email.of)` : chacune répond `undefined` une fois la personne effacée,
+  et `read` ne voit jamais `[erased]`. Une date ou un objet-valeur lu avec `data.instant` ou dans
+  `decode` lui-même refuserait `[erased]`, et l'agrégat ne se chargerait plus. Le champ de
+  l'événement qui porte une valeur personnelle admet donc son absence, et `data.isErased('reason')`
+  distingue une valeur effacée d'une valeur jamais donnée. Un upcaster lit les données avant leur
+  décodage : il transmet une valeur personnelle telle quelle.
 - Une projection reconstruite après un effacement montre la valeur effacée ; une projection qui
   détient déjà la valeur en clair doit être reconstruite, ou appliquer un événement d'effacement
   qui lui est propre.

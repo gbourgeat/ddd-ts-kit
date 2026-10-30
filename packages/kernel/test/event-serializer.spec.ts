@@ -25,6 +25,17 @@ const serializer = new EventSerializer<AccountEvent>(accountEvents, {
   ids: new SequentialIdGenerator('evt'),
 });
 
+/** A value object of the domain, read from a text: it refuses a text that is not an address. */
+function domainOf(email: string): string {
+  const domain = email.split('@')[1];
+
+  if (domain === undefined) {
+    throw new RangeError(`${email} has no domain`);
+  }
+
+  return domain;
+}
+
 function stored(event: EventToAppend, version = 1): StoredEvent {
   return {
     ...event,
@@ -119,6 +130,49 @@ describe('crypto-shredding', () => {
     expect(await serializer.deserialize(stored(before))).toEqual(new AccountOpened('a8', AT, ERASED_PERSONAL_DATA));
     expect(await serializer.deserialize(stored(after))).toEqual(new AccountOpened('a8', AT, 'Grace H.'));
     expect(await keys.erase('nobody')).toBe(false);
+  });
+
+  it('reads a personal value as absent once its subject was erased, whatever type it is read as', async () => {
+    const cipher = new PersonalDataCipher(keys);
+
+    const sealed = await cipher.seal(
+      storedDataOf({
+        born: personalData('a10', AT.toISOString()),
+        email: personalData('a10', 'ada@example.org'),
+        name: personalData('a10', 'Ada'),
+        none: null,
+      }),
+    );
+
+    const before = new StoredEventData(await cipher.open(sealed), 'hr.person.born e1');
+
+    expect([before.personalInstant('born'), before.personal('email', domainOf), before.personalText('name')]).toEqual([
+      AT,
+      'example.org',
+      'Ada',
+    ]);
+
+    await keys.erase('a10');
+
+    const after = new StoredEventData(await cipher.open(sealed), 'hr.person.born e1');
+
+    expect([after.personalInstant('born'), after.personal('email', domainOf), after.personalText('name')]).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+
+    expect([after.optionalInstant('born'), after.personalInstant('none'), after.personalText('missing')]).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+
+    expect(after.isErased('born')).toBe(true);
+    expect(before.isErased('born')).toBe(false);
+    expect(() => after.instant('born')).toThrow('"born" is not an instant');
+    expect(() => before.personalInstant('name')).toThrow('"name" is not an instant');
+    expect(() => before.personal('born', domainOf)).toThrow('no domain');
   });
 
   it('refuses to store or to read personal data without a cipher', async () => {

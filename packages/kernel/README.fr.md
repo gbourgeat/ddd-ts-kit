@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1f2a228c8fddd594 -->
+<!-- translation-of: README.md sha256:b7b597fa71f51dbd -->
 
 # @ddd-ts-kit/kernel
 
@@ -2214,7 +2214,7 @@ export class AttendanceRecord extends EventSourcedAggregate<AttendanceEvent, Att
 | `EventSerializer<E>` | Chaque événement stocké d'un agrégat (`StoredEventTypes<E>` : une entrée par événement, sinon cela ne compile pas). Un événement stocké n'est jamais réécrit : il passe par un *upcaster* à la lecture. Un événement d'une forme plus récente que ce que connaît la version publiée, ou une version sans *upcaster*, est une `UnreadableEventError` |
 | `EventSourcedRepository` | Ce à quoi délègue l'adaptateur de *repository* : `findById` rejoue le flux `<category>-<id>` (depuis le dernier *snapshot*), `save` ajoute dans la transaction de l'unité de travail ; les événements partent ensuite avec l'enregistrement comme n'importe quels autres |
 | `SnapshotPolicy` | Par agrégat : `every` tant d'événements, une `version` de la forme (une autre est ignorée, le flux rejoué), `encode` et `decode`. `expectSnapshotEquivalence` de `@ddd-ts-kit/testing` prouve qu'un *snapshot* reconstruit l'état que donne un rejeu complet |
-| `personalData(subject, value)` | Marque une valeur personnelle dans `encode`. `PersonalDataCipher` sur un `SubjectKeyStore` la scelle avec la clé de sa personne concernée (AES-256-GCM) ; `SubjectKeyStore.erase(subject)` détruit la clé, et un rejeu lit alors `ERASED_PERSONAL_DATA` |
+| `personalData(subject, value)` | Marque une valeur personnelle dans `encode`. `PersonalDataCipher` sur un `SubjectKeyStore` la scelle avec la clé de sa personne concernée (AES-256-GCM) ; `SubjectKeyStore.erase(subject)` détruit la clé, et un rejeu lit alors `ERASED_PERSONAL_DATA`. `decode` lit une valeur personnelle avec `data.personalText('x')`, `data.personalInstant('at')` ou `data.personal('email', Email.of)`, qui répondent `undefined` une fois la personne effacée : une valeur qui n'est pas un texte libre ne rend jamais l'agrégat illisible ; `data.isErased('x')` dit si elle l'a été |
 
 ```ts
 // infrastructure/persistence/event-store-attendance-record.repository.ts

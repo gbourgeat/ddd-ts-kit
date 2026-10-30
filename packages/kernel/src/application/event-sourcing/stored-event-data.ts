@@ -1,3 +1,4 @@
+import { ERASED_PERSONAL_DATA } from './erased-personal-data';
 import { isStoredData } from './is-stored-data';
 import { isStoredList } from './is-stored-list';
 import type { StoredData } from './stored-data';
@@ -60,8 +61,38 @@ export class StoredEventData {
     return date;
   }
 
+  /** A date that may be absent; a personal date whose subject was erased reads as absent. */
   optionalInstant(field: string): Date | undefined {
-    return this.optionalText(field) === undefined ? undefined : this.instant(field);
+    return this.optionalText(field) === undefined || this.isErased(field) ? undefined : this.instant(field);
+  }
+
+  /**
+   * Whether the field held a personal value whose subject was erased: the key that sealed it is
+   * gone, and the field reads `ERASED_PERSONAL_DATA`.
+   */
+  isErased(field: string): boolean {
+    return this.data[field] === ERASED_PERSONAL_DATA;
+  }
+
+  /**
+   * A personal value, read by `read` from its text (a value object, a parsed code), or `undefined`
+   * when the field is absent or its subject was erased. `read` never sees `ERASED_PERSONAL_DATA`,
+   * so a value that is not free text keeps the aggregate readable after an erasure.
+   */
+  personal<T>(field: string, read: (text: string) => T): T | undefined {
+    const text = this.optionalText(field);
+
+    return text === undefined || this.isErased(field) ? undefined : read(text);
+  }
+
+  /** A personal text, or `undefined` when it is absent or its subject was erased. */
+  personalText(field: string): string | undefined {
+    return this.personal(field, (text) => text);
+  }
+
+  /** A personal date, kept as its ISO text, or `undefined` when it is absent or its subject was erased. */
+  personalInstant(field: string): Date | undefined {
+    return this.personal(field, () => this.instant(field));
   }
 
   texts(field: string): string[] {

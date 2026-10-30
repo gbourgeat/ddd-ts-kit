@@ -377,6 +377,13 @@ personal values instead:
   PostgreSQL store. `erase(subject)` deletes the key, and a replay then reads
   `ERASED_PERSONAL_DATA` (`[erased]`) in place of every value sealed with it. A later key of the
   same subject never opens an older value.
+- `decode` reads a personal value with `data.personalText('reason')`, `data.personalInstant('bornOn')`
+  or `data.personal('email', Email.of)`: each answers `undefined` once the subject is erased, and
+  `read` never sees `[erased]`. A date or a value object read with `data.instant` or in `decode`
+  itself would refuse `[erased]`, and the aggregate would no longer load. So the field of the event
+  that holds a personal value admits its absence, and `data.isErased('reason')` tells an erased
+  value from one never given. An upcaster reads the data before it is decoded: it passes a
+  personal value on as it is.
 - A projection rebuilt after an erasure shows the erased value; a projection that already holds
   the clear value has to be rebuilt, or to apply an erasure event of its own.
 
