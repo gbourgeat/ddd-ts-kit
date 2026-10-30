@@ -65,6 +65,16 @@ and `story`, run by the user only (`disable-model-invocation`), are not, which l
 others at about 1,600 tokens. A test of the plugin
 (`node --test plugin/skills/descriptions.test.mjs`) holds the limits.
 
+The body of a skill is read whole once the skill loads, so what one option of `stack` needs is
+kept beside it: the body keeps every rule and one line, "under `stack.<key>: <value>`, read
+`<file>.md` first", and the file, read on that stack only, opens with when it is read and points
+to the page of `docs/concepts/` it paraphrases. `wiring` keeps the declared style and reads
+`explicit.md`, `nest.md` and `earlier-layouts.md`; `access-control` reads `relationships.md`
+under `rebac`; `persistence` reads `tenancy.md`, `event-sourcing.md`, `personal-data.md` and
+`migrations.md`; `use-case` reads `factories.md`, `function-routes.md` and `file-upload.md`. On
+the default stack, loading `wiring` costs about 430 words less than when it held them all,
+`access-control` about 530, `persistence` about 990.
+
 The hook is the part that makes the rest binding. In a project that has a
 `ddd-ts-kit.config.json` it reminds the workflow and the context map at session start, says
 when the installed packages are not the version the skills describe, refuses
