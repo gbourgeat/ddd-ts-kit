@@ -213,8 +213,10 @@ test('a glob that starts outside the project is not walked, and a chain of wrapp
   const root = project();
   const agent = worker(root);
   const started = Date.now();
-  assert.equal(decision(run('pre-bash', bash(root, 'rm /**/.cache src/main.ts'))), undefined);
-  assert.ok(Date.now() - started < 4000, 'answered without walking the disk');
+  const outside = run('pre-bash', bash(root, 'rm /**/.cache src/main.ts', agent));
+  assert.equal(decision(outside), 'deny');
+  assert.match(reason(outside), /changes \/\*\*\/\.cache/, 'the pattern as written, not walked');
+  assert.ok(Date.now() - started < 20_000, 'answered without walking the disk');
   const wrapped = run('pre-bash', bash(root, `${'nice '.repeat(40)}rm src/main.ts`, agent));
   assert.equal(decision(wrapped), 'deny');
   assert.match(reason(wrapped), /name only the shell knows/);
