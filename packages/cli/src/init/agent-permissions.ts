@@ -87,9 +87,10 @@ export const GENERATED_FILES: readonly string[] = [
 // Then the generated files: an ask rule keeps the Edit tool off them without reaching the sandbox,
 // which takes the allow and deny rules only, and the guard of the plugin refuses a hand edit of
 // one outright. Then the files that hold the rules and the pipeline: changing one is a decision of
-// the project owner, the files the editor hook of the plugin asks about (`GOVERNED_FILES` of the guard
-// names the same pipeline and gate files). The review policy holds a rule of the project too. Before them, --force, which replaces files of the project with
-// the templates of the kit: the person decides, the allow rule of generate notwithstanding.
+// the project owner; `GOVERNED_FILES` of the guard of the plugin names most of the same pipeline and gate
+// files, and not `.github/copilot/settings.json`. The review policy holds a rule of the project too.
+// Before them, --force, which replaces files of the project with the templates of the kit: the person
+// decides, the allow rule of generate notwithstanding.
 const ASK: readonly string[] = [
   'Bash(git push *)',
   'Bash(npm publish *)',
