@@ -158,6 +158,19 @@ describe('a request in the tenant it names', () => {
     }
   });
 
+  it('answers 404 to a credential that names a tenant id outside the grammar, a claim or a list alike', async () => {
+    for (const tenantId of ['*', 'acme,globex']) {
+      const { route, seen } = recordingRoute();
+
+      const response = await executeRoute(route, request({}, { tenantId: 'x' }), {
+        resolvePrincipal: () => ({ ...ada, tenantId }),
+      });
+
+      expect(response.status).toBe(404);
+      expect(seen.execution).toBeUndefined();
+    }
+  });
+
   it('answers 404 to a tenant the deployment does not serve, even to a caller of that tenant', async () => {
     const resolveTenant = servedTenantOf(firstTenantOf(tenantFromHeader(), tenantFromClaim()), ['globex']);
 
