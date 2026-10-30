@@ -16,7 +16,7 @@ import { declarationsOf } from './declarations-of';
 import { eventTypeAsPublished } from './event-type-as-published';
 import { pickDeclaration } from './pick-declaration';
 import { refuseUnpublishedVersion } from './refuse-unpublished-version';
-import type { WantedEvent } from './find-event-declaration';
+import type { WantedEvent } from './wanted-event';
 import { subscriptionVars } from './subscription-vars';
 import { givenName } from '../given-name';
 import { learnTerms } from '../learn-terms';
