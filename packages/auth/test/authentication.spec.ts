@@ -79,6 +79,8 @@ describe('principalResolver', () => {
     expect(await resolve({ headers: {} })).toEqual(anonymousSession());
     expect(await resolve({ headers: { 'x-count': 3 } })).toEqual(anonymousSession());
     expect(await resolve({})).toEqual(anonymousSession());
+    expect(await resolve({ headers: null })).toEqual(anonymousSession());
+    expect(await resolve({ headers: 'Bearer token-of-ada' })).toEqual(anonymousSession());
     expect(await resolve(undefined)).toEqual(anonymousSession());
   });
 

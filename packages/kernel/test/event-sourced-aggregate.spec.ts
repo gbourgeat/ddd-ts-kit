@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryEventStore, appendChanges } from '../src';
-import { AT, Account, AccountOpened, MoneyDeposited, Overdraft } from './support/bank/account';
+import { InMemoryEventStore, appendChanges, type DomainEvent } from '../src';
+import { AT, Account, AccountOpened, MoneyDeposited, Overdraft, type AccountEvent } from './support/bank/account';
 
 describe('EventSourcedAggregate', () => {
   it('changes its state through the apply method of each event it records, and keeps the events for the save', () => {
@@ -43,6 +43,22 @@ describe('EventSourcedAggregate', () => {
 
     expect(account.toState()).toEqual({ holder: 'Ada', balance: 1001, movements: 10 });
     expect(account.version).toBe(11);
+  });
+
+  it('refuses a snapshot when nothing restores the state it kept', () => {
+    const history = { snapshot: { version: 10, state: { holder: 'Ada', balance: 1000, movements: 9 } }, events: [] };
+
+    expect(() => Account.rehydrateWithoutRestore('a1', history)).toThrow(
+      'Account was given a snapshot and restores none: pass restore to replay',
+    );
+  });
+
+  it('refuses a stream holding an event it has no apply method for, as one of a type it no longer knows', () => {
+    const frozen: DomainEvent = { name: 'bank.account.frozen', aggregateId: 'a1', occurredAt: AT };
+
+    expect(() => Account.rehydrate('a1', { events: [frozen as AccountEvent] })).toThrow(
+      'Account has no apply method for "bank.account.frozen"',
+    );
   });
 
   it('hands what it recorded since it was loaded to the append, then stands at the new version', async () => {

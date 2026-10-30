@@ -130,3 +130,35 @@ describe.each(BROKERS)('RabbitMqEventBus: when the connection is lost, %s', { ti
     await network.close();
   });
 });
+
+// In memory alone: a relay in front of a real broker cuts after the publication reached the channel.
+const IN_MEMORY = BROKERS.slice(0, 1);
+
+describe.each(IN_MEMORY)('RabbitMqEventBus: when the connection drops under a publication, %s', (_name, connect) => {
+  let broker: Broker;
+
+  beforeEach(async () => {
+    broker = await connect();
+  });
+
+  afterEach(async () => {
+    await broker.dispose();
+  });
+
+  it('rejects a publication the connection dropped under, before it reached the channel', async () => {
+    const network = await broker.network();
+    const bus = broker.bus({ connection: network.connection });
+
+    await bus.publish([anEvent('evt-1')]);
+
+    const publication = bus.publish([anEvent('evt-2')]).then(
+      () => 'published',
+      (error: unknown) => error,
+    );
+
+    network.cutConnections();
+
+    expect(await publication).toMatchObject({ code: 'BROKER_UNAVAILABLE', reason: 'RECONNECTING' });
+    await network.close();
+  });
+});

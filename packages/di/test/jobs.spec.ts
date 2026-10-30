@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, JobScheduler, type ScheduledJob } from '@ddd-ts-kit/kernel';
+import { Clock, FixedClock, InMemoryLock, JobScheduler, type Lock, type ScheduledJob } from '@ddd-ts-kit/kernel';
 import { Scheduled, type ScheduledOptions } from '@ddd-ts-kit/kernel/declarations';
 import {
   contextModule,
@@ -125,6 +125,42 @@ describe('the scheduler of a declared job', () => {
     expect(app.resolve(JobScheduler).describe()).toMatchObject([
       { name: MONTHLY, schedule: 'cron 0 6 1 * * (Europe/Paris)', enabled: true },
     ]);
+  });
+
+  it('takes the lock of the kernel for a scheduled occurrence, resolved at the run and not when the scheduler is built', async () => {
+    const taken: string[] = [];
+    let beat = (): void => undefined;
+
+    const firstBeat = new Promise<void>((resolve) => {
+      beat = resolve;
+    });
+
+    const lock = (resolve: (target: typeof Clock) => Clock): Lock => {
+      const inner = new InMemoryLock(resolve(Clock));
+
+      return {
+        acquire: (key, options) => {
+          taken.push(key);
+
+          return inner.acquire(key, options);
+        },
+      };
+    };
+
+    const monitoring = defineContextModule({
+      name: 'monitoring',
+      register(builder) {
+        builder.job('monitoring.heartbeat', { every: '1ms' }).handledByFactory(() => ({ run: async () => beat() }));
+      },
+    });
+
+    const app = createApplication({ modules: [kernelModule({ lock }), monitoring] });
+
+    await app.start();
+    await firstBeat;
+    await app.stop();
+
+    expect(taken[0]).toMatch(/^job:monitoring\.heartbeat:\d{4}-\d{2}-\d{2}T/);
   });
 
   it('needs a job scheduler: a context listed without the kernel module says so', () => {

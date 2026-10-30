@@ -48,6 +48,7 @@ ruleTester.run('domain-events-transactional-before-commit', domainEventsTransact
       EVENT_HANDLER,
       `import { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';\nimport { Pricing } from '../../domain/services/pricing.service.js';\nimport { Reminders } from '../reminders/reminders.js';\nimport { Authorizer } from '@ddd-ts-kit/auth';\n${declared('InvoiceRepository, Pricing, Reminders, Authorizer')}`,
     ),
+    at(EVENT_HANDLER, `import Reminders from '../reminders/reminders.js';\n${declared('Reminders')}`),
     at(
       EVENT_HANDLER,
       `import { Mailer } from '../ports/mailer.port.js';\nimport { Money } from '../../../../shared-kernel/money.vo.js';\n${declared('Mailer, Money, Unknown')}`,

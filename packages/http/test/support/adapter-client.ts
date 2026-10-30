@@ -1,5 +1,6 @@
 import { afterAll, beforeAll } from 'vitest';
 import { UnauthorizedError, createErrorMapper, type ErrorContext } from '../../src';
+import { annotateOrder } from './every-method';
 import { orderRoutes } from './orders';
 import { executionScope, readExecution } from './read-execution';
 import type { ReadAuthorization, RunningServer, StartServer } from './running-server';
@@ -17,7 +18,7 @@ export function adapterClient(start: StartServer, readAuthorization: ReadAuthori
   const reported: AdapterClient['reported'] = [];
 
   beforeAll(async () => {
-    server = await start([...orderRoutes, readExecution], {
+    server = await start([...orderRoutes, readExecution, annotateOrder], {
       errorMapper: createErrorMapper({ ORDER_ALREADY_SHIPPED: 410 }),
       validateResponses: true,
       executionScope,

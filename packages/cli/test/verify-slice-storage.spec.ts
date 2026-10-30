@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, read, write } from './helpers';
 import { committedProject } from './support/committed-project';
@@ -90,4 +92,12 @@ describe('verify-slice counts what the generator wrote for the slice outside its
       expect(plan(root)).toEqual({ toStage: expect.arrayContaining([SCHEMA_INDEX]), leftOut: [] });
     },
   );
+
+  it('leaves out the schema index once the slice deleted it: its lines on disk are gone', () => {
+    const root = billingSlice('drizzle');
+
+    fs.rmSync(path.join(root, SCHEMA_INDEX));
+
+    expect(plan(root).leftOut).toEqual([SCHEMA_INDEX]);
+  });
 });

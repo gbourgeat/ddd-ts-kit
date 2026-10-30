@@ -91,6 +91,7 @@ function readyText(row: StatusRow): string {
       return `: ready on a branch, once ${ids} ${waiting.length === 1 ? 'merges' : 'merge'}`;
     case 'waiting':
       return `: waits for ${ids}`;
+    /* v8 ignore next 2 -- ADR-0001: statusRowOf gives each row that is not done a ready value */
     default:
       return '';
   }

@@ -15,6 +15,15 @@ export class SlowGateway {
     return `${id}:${answer}`;
   }
 
+  /** Every parameter optional: a call that gives none leaves the place of the signal empty. */
+  async lookup(id?: string, signal?: AbortSignal): Promise<string> {
+    this.signals.push(signal);
+
+    const answer = await new Promise<string>((resolve) => this.waiting.push(resolve));
+
+    return `${id ?? 'all'}:${answer}`;
+  }
+
   async ping(): Promise<string> {
     return new Promise<string>((resolve) => this.waiting.push(resolve));
   }

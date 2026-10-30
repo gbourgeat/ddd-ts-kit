@@ -59,6 +59,12 @@ it('stands alone', () => {});
 
     expect(slot?.groups).toEqual([]);
   });
+
+  it('leaves out a table of cases that no call follows', () => {
+    const rules = rulesIn("describe('Slot', () => {\n  it.each([['ends', 1]]);\n  it('counts', () => {});\n});\n");
+
+    expect(rules.groups[0]?.rules.map((rule) => rule.title)).toEqual(['counts']);
+  });
 });
 
 describe('behaviourPage, the rows of the plan a rule serves', () => {

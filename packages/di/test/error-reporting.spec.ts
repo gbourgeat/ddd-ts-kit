@@ -8,6 +8,7 @@ import {
   type ErrorReport,
 } from '@ddd-ts-kit/kernel';
 import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '../src';
+import { lazyErrorReporter } from '../src/kernel/lazy-error-reporter';
 import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
 import { OrderRepository } from './support/ordering/domain/repositories/order.repository';
 import { orderingModule } from './support/ordering/ordering.module';
@@ -73,6 +74,22 @@ describe('kernelModule', () => {
     await expect(app.stop()).resolves.toBeUndefined();
 
     expect(flushed).toEqual([2_000]);
+  });
+});
+
+describe('the reporter the kernel module hands to what it builds at creation', () => {
+  it('reports and flushes through the reporter bound when it is called, never resolved before', async () => {
+    const app = createTestApplication({ modules: [orderingModule] });
+    const lazy = lazyErrorReporter((target) => app.get(target));
+    const failure = new Error('boom');
+
+    lazy.report(failure, { severity: 'error', origin: 'job', operation: REORDER });
+
+    expect(app.errors.reports).toEqual([
+      { error: failure, report: { severity: 'error', origin: 'job', operation: REORDER } },
+    ]);
+
+    await expect(lazy.flush(50)).resolves.toBe(true);
   });
 });
 

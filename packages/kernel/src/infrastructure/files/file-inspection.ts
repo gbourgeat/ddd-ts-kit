@@ -3,6 +3,7 @@ import { Transform, type TransformCallback } from 'node:stream';
 import { acceptsMediaType } from '../../application/files/accepts-media-type';
 import { contentMatches } from '../../application/files/content-matches';
 import { FileError } from '../../application/files/file-error';
+import type { ContentExpectation } from '../../application/files/content-expectation';
 import type { InspectionLimits } from '../../application/files/inspection-limits';
 
 /** Enough bytes for every signature, and for a fair judgement of text. */
@@ -21,11 +22,12 @@ export class FileInspection extends Transform {
 
   private held: Buffer[] = [];
 
-  private verified: boolean;
+  /** What the first bytes still have to prove; nothing once they did, or when nothing was expected. */
+  private pending: ContentExpectation | undefined;
 
   constructor(private readonly limits: InspectionLimits = {}) {
     super();
-    this.verified = limits.expected === undefined;
+    this.pending = limits.expected;
   }
 
   get checksum(): string {
@@ -52,7 +54,9 @@ export class FileInspection extends Transform {
   }
 
   private pass(bytes: Buffer, ended: boolean, done: TransformCallback): void {
-    if (this.verified) {
+    const expected = this.pending;
+
+    if (expected === undefined) {
       done(null, bytes);
 
       return;
@@ -68,21 +72,15 @@ export class FileInspection extends Transform {
     }
 
     this.held = [];
-    this.verified = true;
-    done(this.refusalOf(head), head);
+    this.pending = undefined;
+    done(refusalOf(head, expected), head);
   }
+}
 
-  private refusalOf(head: Buffer): FileError | null {
-    const { expected } = this.limits;
+function refusalOf(head: Buffer, expected: ContentExpectation): FileError | null {
+  const valid =
+    acceptsMediaType(expected.accepted, expected.mediaType) &&
+    contentMatches(head.subarray(0, HEAD_BYTES), expected.mediaType);
 
-    if (expected === undefined) {
-      return null;
-    }
-
-    const valid =
-      acceptsMediaType(expected.accepted, expected.mediaType) &&
-      contentMatches(head.subarray(0, HEAD_BYTES), expected.mediaType);
-
-    return valid ? null : FileError.unsupportedMediaType(expected.mediaType, expected.accepted);
-  }
+  return valid ? null : FileError.unsupportedMediaType(expected.mediaType, expected.accepted);
 }

@@ -51,6 +51,7 @@ function resolutionsOf(repo: MergeRepository, sides: ForecastSides): Resolution[
       return undefined;
     }
 
+    /* v8 ignore next -- ADR-0001: only a conflicted blob too large for a string gets here, over 512 MiB */
     throw error;
   }
 }

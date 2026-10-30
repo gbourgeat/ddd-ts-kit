@@ -64,7 +64,7 @@ function sharedOut(known: UseCasesOfContext, specs: readonly SpecOfPage[]): Shar
         : undefined;
 
     if (useCase !== undefined) {
-      shareUseCase(shared.useCases, known, spec);
+      shareUseCase(shared.useCases, useCase, { known, spec });
     } else if (parts === undefined) {
       shared.others.push(spec);
     } else {
@@ -79,17 +79,16 @@ function sharedOut(known: UseCasesOfContext, specs: readonly SpecOfPage[]): Shar
  * A spec under its use case. A policy that decides the permission of several use cases states its
  * rules under the first of them, which says it is shared, and is named under each other one.
  */
-function shareUseCase(useCases: Map<UseCaseFact, SpecOfPage[]>, known: UseCasesOfContext, spec: SpecOfPage): void {
-  const [first, ...others] = spec.subject.role === 'policy' ? policyOwners(known, spec.subject.subject) : [];
-  const owner = first ?? useCaseOfSpec(known, spec.subject);
+function shareUseCase(
+  useCases: Map<UseCaseFact, SpecOfPage[]>,
+  owner: UseCaseFact,
+  { known, spec }: { known: UseCasesOfContext; spec: SpecOfPage },
+): void {
+  const [, ...others] = spec.subject.role === 'policy' ? policyOwners(known, spec.subject.subject) : [];
 
   const add = (useCase: UseCaseFact, placed: SpecOfPage): void => {
     useCases.set(useCase, [...(useCases.get(useCase) ?? []), placed]);
   };
-
-  if (owner === undefined) {
-    return;
-  }
 
   const titles = others.map((useCase) => toName(useCase.name).title);
 

@@ -232,6 +232,15 @@ describe('database per tenant', () => {
     expect(await asTenant(scope, 'acme', () => unitOfWork.run(() => unitOfWork.run(async () => 2)))).toBe(2);
   });
 
+  it('says whether a transaction is open on the call chain', async () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const unitOfWork = createTenantRoutedUnitOfWork(databases, scope);
+
+    expect(unitOfWork.inTransaction()).toBe(false);
+    expect(await asTenant(scope, 'acme', () => unitOfWork.run(async () => unitOfWork.inTransaction()))).toBe(true);
+    expect(unitOfWork.inTransaction()).toBe(false);
+  });
+
   it('reaches no database for work that names no tenant', async () => {
     const scope = new AsyncLocalStorageExecutionScope();
     const unitOfWork = createTenantRoutedUnitOfWork(databases, scope);

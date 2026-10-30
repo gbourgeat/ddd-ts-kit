@@ -28,11 +28,13 @@ describe('createApplication', () => {
 
   it('shares a singleton by default and builds a transient on every resolution', () => {
     abstract class Backorders extends Stock {}
+    abstract class Returns extends Stock {}
 
     const backorders = defineContextModule({
       name: 'backorders',
       register: (builder) => {
         builder.bind(Backorders).toClass(InMemoryStock).transient();
+        builder.bind(Returns).toClass(InMemoryStock).singleton();
       },
     });
 
@@ -40,6 +42,7 @@ describe('createApplication', () => {
 
     expect(app.resolve(Stock)).toBe(app.resolve(Stock));
     expect(app.resolve(Backorders)).not.toBe(app.resolve(Backorders));
+    expect(app.resolve(Returns)).toBe(app.resolve(Returns));
   });
 
   it('binds factories and values', () => {

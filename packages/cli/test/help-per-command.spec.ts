@@ -6,6 +6,7 @@ import { commandHelp } from '../src/help/command-help';
 import { NOTES } from '../src/help/notes';
 import { referenceText } from '../src/help/reference-text';
 import { USAGE } from '../src/help/usage';
+import { run } from '../src/run';
 import { cli, tempDir } from './helpers';
 import { jsonAt } from './support/json-at';
 
@@ -102,6 +103,15 @@ describe('<command> --help', () => {
 
   it.each([['--help'], ['help'], ['nothing-of-the-kind', '--help']])('keeps the whole reference for %s', (...argv) => {
     expect(cli(tempDir('help-whole'), ...argv).stdout).toContain(referenceText());
+  });
+
+  it('keeps the whole reference without any argument, and under --json for a command the usage does not name', () => {
+    const out: string[] = [];
+
+    expect(run([], { out: (text) => out.push(text), err: () => undefined })).toBe(0);
+    expect(out.join('\n')).toContain(referenceText());
+
+    expect(cli(tempDir('help-whole'), 'nothing-of-the-kind', '--help', '--json').stdout).toContain(referenceText());
   });
 });
 

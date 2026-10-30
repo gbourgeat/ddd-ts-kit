@@ -1,5 +1,6 @@
 import { eventsConsumerIdempotent } from '../../src/rules/events-consumer-idempotent';
 import { eventsOutboxRequired } from '../../src/rules/events-outbox-required';
+import { DECLARED, declaring } from '../support/declared-style';
 import { at, BILLING, ruleTester } from '../support/rule-tester';
 
 const MODULE = `${BILLING}/billing.module.ts`;
@@ -92,6 +93,11 @@ ruleTester.run('events-consumer-idempotent', eventsConsumerIdempotent, {
     at(MODULE, 'builder.on(productListedV1, { ...shared }).handledBy(ProductListedHandler);'),
     at(MODULE, "emitter.on('close', () => stop());"),
     at(
+      HANDLER,
+      declaring('CommandHandler', '@CommandHandler(IssueInvoice, [CommandBus])\nexport class IssueInvoiceHandler {}'),
+      DECLARED,
+    ),
+    at(
       MODULE,
       "import { on, subscribeAll } from '@ddd-ts-kit/events';\nsubscribeAll(platform.subscriber, [on(productListedV1, (event) => consumer.handle(event), { consumer: 'billing.price-list', processed: platform.persistence.processedEvents })]);",
     ),
@@ -126,6 +132,10 @@ ruleTester.run('events-consumer-idempotent', eventsConsumerIdempotent, {
     },
     {
       ...at(MODULE, "builder.on(productListedV1, { consumer: '' }).handledBy(ProductListedHandler);"),
+      errors: [{ messageId: 'consumerName' }],
+    },
+    {
+      ...at(MODULE, 'builder.on(productListedV1, { consumer: undefined }).handledBy(ProductListedHandler);'),
       errors: [{ messageId: 'consumerName' }],
     },
     {

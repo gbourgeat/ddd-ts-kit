@@ -66,6 +66,18 @@ describe('doctor', () => {
       expect.objectContaining({ area: 'script', name: 'regenerate', problem: 'written otherwise', found: 'echo done' }),
     ]);
   });
+
+  it('reads a package.json it cannot parse as one that declares nothing', () => {
+    write(root, 'package.json', '{ "scripts": {');
+
+    const result = cli(root, 'doctor', '--json');
+
+    expect(result.code).toBe(0);
+
+    expect(jsonAt(result.json(), 'findings')).toContainEqual(
+      expect.objectContaining({ area: 'script', name: 'regenerate', problem: 'missing' }),
+    );
+  });
 });
 
 describe('doctor, on the review policy', () => {

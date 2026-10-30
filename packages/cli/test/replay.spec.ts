@@ -47,4 +47,25 @@ describe('a replayed command refused by the generator', () => {
       missing: false,
     });
   });
+
+  it('records an error that is not a refusal of the generator without a fix, the copy named as given when it is gone', () => {
+    const copy = path.join(tempDir('replay-gone'), 'copy');
+
+    const failed = replayed(
+      ROW,
+      { text: 'generate command billing PayInvoice', argv: ['command', 'billing', 'PayInvoice'] },
+      {
+        copy,
+        generate: () => {
+          throw new Error(`EACCES: ${copy}/src/contexts/billing/CONTEXT.md`);
+        },
+      },
+    );
+
+    expect(failed.refusal).toEqual({
+      message: 'EACCES: src/contexts/billing/CONTEXT.md',
+      fix: null,
+      missing: false,
+    });
+  });
 });

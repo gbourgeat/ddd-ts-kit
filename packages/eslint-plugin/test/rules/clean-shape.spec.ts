@@ -82,11 +82,16 @@ ruleTester.run('clean-no-flag-argument', cleanNoFlagArgument, {
       `${BILLING}/test/builders/invoice.builder.ts`,
       'class InvoiceBuilder { paid(value: boolean): this { return this; } }',
     ),
+    at(AGGREGATE, 'class Invoice { pay({ now }: Options): void {} issue(at = now()): void {} }'),
     'class Anything { run(dry: boolean): void {} }',
   ],
   invalid: [
     {
       ...at(AGGREGATE, 'class Invoice { close(force: boolean): void {} }'),
+      errors: [{ messageId: 'flag', data: { className: 'Invoice', method: 'close', flag: 'force' } }],
+    },
+    {
+      ...at(AGGREGATE, "class Invoice { 'close'(force: boolean): void {} }"),
       errors: [{ messageId: 'flag', data: { className: 'Invoice', method: 'close', flag: 'force' } }],
     },
     {

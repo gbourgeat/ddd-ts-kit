@@ -23,6 +23,8 @@ ruleTester.run('domain-value-object-class, the functions of the model', domainVa
       'export const dueOn = (day: Date) => { const isSatisfiedBy = (invoice: Invoice): boolean => invoice.dueAt <= day; return { isSatisfiedBy }; };',
     ),
     service('export const split = (total: Money) => ({ first: Money.of(1), rest: total.add(total) });'),
+    service('export const money = (cents: number, line?: Line) => ({ cents, total: line?.total() });'),
+    service('export const money = (cents: number) => ({ cents, label: `${cents}`.trim() });'),
     service(
       'type State = { readonly status: string };\nexport const evolve = (state: State, status: string): State => ({ ...state, status });',
     ),
@@ -38,6 +40,10 @@ ruleTester.run('domain-value-object-class, the functions of the model', domainVa
     classes(
       'src/shared-kernel/storable-stamp.ts',
       "import type { EventStamp } from '@ddd-ts-kit/kernel';\nexport function storableStamp(stamp: EventStamp): EventStamp { return { eventId: stamp.eventId, occurredAt: new Date(0), version: 1 }; }",
+    ),
+    classes(
+      'src/shared-kernel/storable-stamp.ts',
+      "import type * as kernel from '@ddd-ts-kit/kernel';\nexport function storableStamp(stamp: kernel.EventStamp): kernel.EventStamp { return { eventId: stamp.eventId, occurredAt: new Date(0), version: 1 }; }",
     ),
     at(SERVICE, PLAIN),
   ],
@@ -75,6 +81,18 @@ ruleTester.run('domain-value-object-class, the functions of the model', domainVa
       ...service('export const money = (cents: number) => ({ cents, doubled: (): number => cents * 2 });'),
       errors: plainValue('money'),
     },
+    {
+      ...service('function describe(): string { return ""; }\nexport const spec = (n: number) => ({ describe, n });'),
+      errors: plainValue('spec'),
+    },
+    {
+      ...service(
+        'type MoneyProps = { readonly cents: number };\nconst money = (cents: number) => ({ cents });\nexport { money, type MoneyProps };',
+      ),
+      errors: plainValue('money'),
+    },
+    { ...service('export default function money(cents: number) { return { cents }; }'), errors: plainValue('default') },
+    { ...service('export const money = (cents: number) => ({ cents = 1 });'), errors: plainValue('money') },
     { ...classes(SHARED_PLAIN, PLAIN), errors: plainValue('money') },
   ],
 });

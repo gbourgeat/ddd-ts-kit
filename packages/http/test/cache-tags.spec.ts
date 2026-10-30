@@ -32,7 +32,7 @@ function appointments(): { id: string }[] {
   return [{ id: 'a-1' }, { id: 'a 2' }];
 }
 
-function readDay(cache: CachePolicy, refuse = false): Route {
+function readDay(cache: CachePolicy, refuse = false, items: () => { id: string }[] = appointments): Route {
   return defineRoute(
     {
       method: 'GET',
@@ -50,7 +50,7 @@ function readDay(cache: CachePolicy, refuse = false): Route {
         throw new NotFoundError('No such calendar.');
       }
 
-      return { status: 200, body: { calendarId: params.calendarId, items: appointments() } };
+      return { status: 200, body: { calendarId: params.calendarId, items: items() } };
     },
   );
 }
@@ -117,6 +117,19 @@ describe('the tags of a public answer', () => {
     expect(
       (await executeRoute(readDay(tagged, true), request(), behind(CacheTagHeader.xkey))).headers['xkey'],
     ).toBeUndefined();
+  });
+
+  it('are not sent either when the answer names none of the resources its tags read', async () => {
+    const byItem: CachePolicy = { ...tagged, tags: [{ resource: 'appointment', field: 'items.id' }] };
+
+    const response = await executeRoute(
+      readDay(byItem, false, () => []),
+      request(),
+      behind(CacheTagHeader.xkey),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers['xkey']).toBeUndefined();
   });
 
   it('are listed as templates in the contract', () => {

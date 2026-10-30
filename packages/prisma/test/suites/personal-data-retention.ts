@@ -11,6 +11,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { personalDataRetentionContract } from '@ddd-ts-kit/testing/contracts';
 import { PrismaPersonalDataErasure, createPrismaUnitOfWork, type PrismaPersonalTable } from '../../src';
+import { expiredRows } from '../../src/personal-data/expired-rows';
 import type { Prisma } from '../generated/client/client';
 import { createDatabase, type TestDatabase } from '../support/database';
 import { PEOPLE, aPersonRow, insertPeople, peopleOf, type PersonRow } from '../support/personal-data/people';
@@ -131,5 +132,15 @@ describe('PrismaPersonalDataErasure, the purge of what outlived its retention', 
 
     expect(await withoutRetention(workIn('acme')).purgeExpired(NOW)).toBe(0);
     expect(await rowsOf('ada')).toHaveLength(1);
+  });
+});
+
+describe('the rows expired of a declaration', () => {
+  it('cannot be asked for a declaration that gives no retention: the purge leaves such a table out', () => {
+    const { retention: _, ...kept } = declarationOf('row');
+
+    expect(() => expiredRows(kept, { now: NOW, tenant: undefined })).toThrow(
+      'The declaration of people gives no retention to purge by',
+    );
   });
 });

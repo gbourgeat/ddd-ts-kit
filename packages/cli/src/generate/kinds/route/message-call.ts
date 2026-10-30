@@ -2,10 +2,14 @@ import { describedField } from './described-field';
 import type { MessagePlan, ReadField, UnreadField } from './message-plan';
 import type { UseCase } from './use-case';
 
-/** How one place of the generated code names what it hands the message: the actor and each field it read. */
+/**
+ * How one place of the generated code names what it hands the message: the actor and each field it
+ * read. A place that hands the request over whole, the mapper of a controller, reads no field and
+ * says nothing of them.
+ */
 export interface Passing {
   readonly actor: string;
-  readonly field: (field: ReadField) => string;
+  readonly field?: (field: ReadField) => string;
 }
 
 /** Where the request carries a field the route does not read yet, and what reading it takes: no comma, the arguments of the call are laid out at theirs. */
@@ -28,5 +32,7 @@ export function messageCall(useCase: UseCase, plan: MessagePlan, passing: Passin
     (field) => `/* TODO(domain): read ${describedField(field)} ${ORIGINS[field.from]} */ undefined`,
   );
 
-  return `new ${useCase.message}(${[...actor, ...plan.read.map(passing.field), ...placeholders].join(', ')})`;
+  const read = passing.field === undefined ? [] : plan.read.map(passing.field);
+
+  return `new ${useCase.message}(${[...actor, ...read, ...placeholders].join(', ')})`;
 }

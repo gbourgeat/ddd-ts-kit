@@ -250,6 +250,84 @@ describe('ddd-ts-kit drizzle-generate --replay with nothing forked, or refused',
     expect(result.code).toBe(0);
     expect(result.stdout).toContain('nothing to replay');
   });
+
+  it('reads no journal at all as a history that forks, with nothing of the branch to replay', () => {
+    const root = repository();
+
+    fs.rmSync(path.join(root, JOURNAL));
+
+    const result = cli(root, 'drizzle-generate', '--replay', '--base', 'main');
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('nothing to replay');
+  });
+});
+
+describe('ddd-ts-kit drizzle-generate --replay when drizzle-kit does not write what is expected', () => {
+  it(
+    'answers the exit code of a drizzle-kit that fails, and says what to restore',
+    () => {
+      const root = repository();
+
+      branchesThatBothAddedAMigration(root);
+      git(root, 'checkout', 'main', '--', JOURNAL);
+
+      write(
+        root,
+        'node_modules/drizzle-kit/bin.cjs',
+        "console.error('drizzle-kit: the schema cannot be read');\nprocess.exit(7);\n",
+      );
+
+      const result = cli(root, 'drizzle-generate', '--replay', '--base', 'main');
+
+      expect(result.code).toBe(7);
+
+      expect(result.stderr).toContain(
+        'drizzle-kit failed on add-invoices: the migrations generated above are written, the others stay deleted.',
+      );
+
+      expect(result.stderr).toContain('restore migrations/ as the merge left it (`git checkout HEAD -- migrations`)');
+      expect(tagOf(root, 'working-add-invoices')).toBe('');
+    },
+    REPLAY_TIMEOUT,
+  );
+
+  it(
+    'warns when drizzle-kit writes nothing for a migration, whose change the base already holds',
+    () => {
+      const root = repository();
+
+      branchesThatBothAddedAMigration(root);
+      git(root, 'checkout', 'main', '--', JOURNAL);
+      write(root, 'node_modules/drizzle-kit/bin.cjs', "console.log('No schema changes, nothing to migrate');\n");
+
+      const result = cli(root, 'drizzle-generate', '--replay', '--base', 'main');
+
+      expect(result.code).toBe(0);
+      expect(result.stderr).toContain('Warning: drizzle-kit wrote nothing for');
+      expect(result.stderr).toContain('_working-add-invoices: main already holds its change.');
+      expect(tagOf(root, 'working-add-invoices')).toBe('');
+    },
+    REPLAY_TIMEOUT,
+  );
+
+  it(
+    'reads a snapshot holding lists, and passes over one that is not JSON',
+    () => {
+      const root = repository();
+
+      write(root, 'schema/accounts.json', JSON.stringify({ name: 'accounts', columns: ['id', 'owner'] }));
+      write(root, 'migrations/meta/garbage_snapshot.json', 'not json');
+      branchesThatBothAddedAMigration(root);
+      git(root, 'checkout', 'main', '--', JOURNAL);
+
+      const result = cli(root, 'drizzle-generate', '--replay', '--base', 'main');
+
+      expect(result.code).toBe(0);
+      expect(migrationNames(root)).toEqual(['initial', 'add-payments', 'add-invoices']);
+    },
+    REPLAY_TIMEOUT,
+  );
 });
 
 function fail(): never {

@@ -1,6 +1,7 @@
 import { Redis } from 'ioredis';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PLACED, anEvent, recorder, unique } from './support/events';
+import { FaultyNetwork } from './support/proxy';
 import { SERVERS, serverOf } from './support/servers';
 import { Server } from './support/streams';
 import { eventually, pause } from './support/waiting';
@@ -92,5 +93,38 @@ describe.each(SERVERS)('RedisStreamsEventBus, closing, %s', { timeout: 30_000 },
     expect(billing.ids()).toEqual(['evt-1']);
     expect(await mine.ping()).toBe('PONG');
     mine.disconnect();
+  });
+
+  it('connects a client it was handed that waits for its first command', async () => {
+    const lazy = new Redis(redis.url, { lazyConnect: true, maxRetriesPerRequest: 1 });
+    const bus = server.bus({ connection: lazy });
+    const billing = recorder();
+
+    expect(lazy.status).toBe('wait');
+    bus.subscribe(PLACED, billing.handler);
+    await bus.publish([anEvent('evt-1')]);
+    await server.settled(bus);
+
+    expect(billing.ids()).toEqual(['evt-1']);
+    await bus.close();
+    lazy.disconnect();
+  });
+
+  it('refuses a publication that was still waiting for the connection when it closed', async () => {
+    const network = await FaultyNetwork.to(redis.url);
+
+    network.holdReplies();
+    const bus = server.bus({ connection: network.url });
+
+    const publication = bus.publish([anEvent('evt-1')]).then(
+      () => 'published',
+      (error: unknown) => error,
+    );
+
+    await eventually(() => network.bytesFromClient > 0);
+    await bus.close();
+
+    expect(await publication).toMatchObject({ code: 'EVENT_BUS_CLOSED' });
+    await network.close();
   });
 });

@@ -57,6 +57,15 @@ function declarationOf(erasure: ErasureMode) {
   });
 }
 
+/** The same declaration without file column: what most tables of a context are. */
+function plainDeclarationOf(erasure: ErasureMode) {
+  return personalFields<PersonRow, EntitySchema>(people, {
+    subject: 'personId',
+    fields: ['displayName', 'email', 'age'],
+    erasure,
+  });
+}
+
 function erasureOf(erasure: ErasureMode, context: ExecutionContext, files = new InMemoryFileStorage()) {
   return new TypeOrmPersonalDataErasure(createTypeOrmUnitOfWork(database.dataSource), {
     name: 'identity.people',
@@ -84,6 +93,21 @@ for (const erasure of ['row', 'pseudonymise'] as const) {
       return {
         declaration: declarationOf(erasure),
         erasure: erasureOf(erasure, workIn('acme')),
+        insert,
+        rowsOf: (subject) => rowsOf(subject),
+        aRowOf: (subject, n) => aPersonRow(subject, n),
+      };
+    },
+    createWithoutFiles: async () => {
+      await database.truncate();
+
+      return {
+        declaration: plainDeclarationOf(erasure),
+        erasure: new TypeOrmPersonalDataErasure(createTypeOrmUnitOfWork(database.dataSource), {
+          name: 'identity.people',
+          declarations: [plainDeclarationOf(erasure)],
+          tenant: { scope: new FixedExecutionScope(workIn('acme')) },
+        }),
         insert,
         rowsOf: (subject) => rowsOf(subject),
         aRowOf: (subject, n) => aPersonRow(subject, n),

@@ -11,6 +11,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { personalDataRetentionContract } from '@ddd-ts-kit/testing/contracts';
 import { KnexPersonalDataErasure, createKnexUnitOfWork, type TenantTableTarget } from '../src';
+import { rowsExpired } from '../src/personal-data/rows-expired';
 import { createDatabase, type TestDatabase } from './support/database';
 import {
   PEOPLE,
@@ -149,5 +150,15 @@ describe('KnexPersonalDataErasure, the purge of what outlived its retention', ()
 
     expect(await withoutRetention(workIn('acme')).purgeExpired(NOW)).toBe(0);
     expect(await rowsOf('ada')).toHaveLength(1);
+  });
+});
+
+describe('the rows expired of a declaration', () => {
+  it('cannot be asked for a declaration that gives no retention: the purge leaves such a table out', () => {
+    const { retention: _, ...kept } = declarationOf('row');
+
+    expect(() => rowsExpired(createKnexUnitOfWork(database.knex), kept, { now: NOW, tenant: undefined })).toThrow(
+      'The declaration of people gives no retention to purge by',
+    );
   });
 });

@@ -76,11 +76,8 @@ export class RedisRelaySignal {
   private listen(): Redis {
     const subscriber = this.client.duplicate();
 
-    subscriber.on('message', (channel) => {
-      if (channel !== this.channel) {
-        return;
-      }
-
+    // The connection subscribes to the one channel of the signal: every message is one of it.
+    subscriber.on('message', () => {
       for (const listener of [...this.listeners]) {
         listener();
       }

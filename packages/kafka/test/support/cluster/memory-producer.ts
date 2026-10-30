@@ -26,6 +26,9 @@ export class MemoryProducer<K, V> implements KafkaJS.Producer<K, V> {
 
   private readonly timeoutMs: number;
 
+  /** The fatal error the producer met: it refuses every send from then on, as librdkafka does. */
+  private fatal: KafkaJS.KafkaJSError | undefined;
+
   constructor(
     private readonly cluster: ClusterState,
     private readonly wire: Wire,
@@ -53,6 +56,14 @@ export class MemoryProducer<K, V> implements KafkaJS.Producer<K, V> {
 
   async send(record: KafkaJS.ProducerRecord<K, V>): Promise<KafkaJS.RecordMetadata[]> {
     this.client.ensureConnected('send');
+
+    if (this.fatal === undefined && this.wire.producerStateLost()) {
+      this.fatal = kafkaError('ERR_UNKNOWN_PRODUCER_ID', 'Broker: Unknown Producer Id', { fatal: true });
+    }
+
+    if (this.fatal !== undefined) {
+      throw this.fatal;
+    }
 
     if (!this.cluster.topics.has(record.topic)) {
       throw kafkaError('ERR_UNKNOWN_TOPIC_OR_PART', 'Broker: Unknown topic or partition');

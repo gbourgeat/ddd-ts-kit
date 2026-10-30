@@ -83,4 +83,22 @@ describe('the world of billing, as a team rewrote it', () => {
       expect(text).not.toContain('shortens');
     }
   });
+
+  it('says it looks for the options when their interface is named otherwise, or never closes', () => {
+    const renamed = editedWorld('world-read-no-options', (world) =>
+      world.replace('export interface BillingWorldOptions {', 'export interface BillingWorldOpts {'),
+    );
+
+    const unclosed = editedWorld('world-read-unclosed', (world) => {
+      const closing = world.indexOf('\n}\n', world.indexOf('export interface BillingWorldOptions {'));
+
+      return `${world.slice(0, closing)}\n${world.slice(closing + '\n}\n'.length)}`;
+    });
+
+    for (const { run } of [renamed, unclosed]) {
+      expect(hint(run(...ISSUE).notes)).toEqual([
+        expect.stringContaining('could not be read by the generator (it looks for `interface BillingWorldOptions`)'),
+      ]);
+    }
+  });
 });

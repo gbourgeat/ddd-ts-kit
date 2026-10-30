@@ -191,3 +191,30 @@ describe('generate process, the job of its timeouts', () => {
     );
   });
 });
+
+const NO_INPUT = WITH_INPUTS.replace(/constructor\([^)]*\)/s, 'constructor()');
+
+const UNREAD_ONLY = WITH_INPUTS.replace(
+  /constructor\([^)]*\)/s,
+  'constructor(\n    readonly note: string | null,\n  )',
+);
+
+describe('generate background-job, the schema of a payload that carries little', () => {
+  it('lets under class-validator a field it writes no check for through, allowed as is', () => {
+    const job = jobOf(WITH_UNREAD, '--validation', 'class-validator');
+
+    expect(job).toContain('  @Allow()\n  declare note: unknown;');
+  });
+
+  it.each(['none', 'standard-schema'])('writes under %s the empty payload of a command without input', (validation) => {
+    const job = jobOf(NO_INPUT, '--validation', validation);
+
+    expect(job).toContain('export type RemindCustomerPayload = Readonly<Record<string, never>>;');
+    expect(job).toContain("'An object is expected.'");
+    expect(job).not.toContain('const refusals');
+  });
+
+  it('checks nothing of a payload whose every field it writes no check for', () => {
+    expect(jobOf(UNREAD_ONLY, '--validation', 'none')).toContain('const refusals: readonly Refusal[] = [];');
+  });
+});

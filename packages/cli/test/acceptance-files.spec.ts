@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { commentless } from '../src/acceptance/commentless';
 import { readLock } from '../src/acceptance/read-lock';
 import { readVerdicts } from '../src/acceptance/read-verdicts';
+import { scenariosIn } from '../src/acceptance/scenarios-in';
 import { scan } from '../src/check/scan/scan';
 import { Workspace } from '../src/workspace';
 import { tempDir, write } from './helpers';
@@ -90,5 +91,15 @@ describe('a source without its comments', () => {
   it('blanks a block comment, and one left open at the end of the file', () => {
     expect(without('a; /* b */ c;')).toBe('a;         c;');
     expect(without('a; /* b')).toBe('a;     ');
+  });
+});
+
+describe('the scenarios of an acceptance spec', () => {
+  it('leaves out a call whose title is a template with an interpolation, and reads one left open at the end of the file', () => {
+    expect(scenariosIn("const row = 'US5.01';\nit(`#${row} places an order`, async () => {});\n")).toEqual([]);
+
+    const [open] = scenariosIn("it('#US5.01 places an order', async () => {");
+
+    expect(open).toMatchObject({ title: '#US5.01 places an order', rows: ['US5.01'], state: 'active', line: 1 });
   });
 });

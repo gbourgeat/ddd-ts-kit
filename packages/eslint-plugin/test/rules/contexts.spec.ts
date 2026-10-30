@@ -64,6 +64,10 @@ ruleTester.run('context-declared-relationship', contextDeclaredRelationship, {
       "import { x } from '@/contexts/billing/published-language/index.js';",
       { contexts: { shipping: { classification: 'supporting', upstreams: ['billing'] } } },
     ),
+    at(
+      'src/platform/application.ts',
+      "import { productListedV1 } from '@/contexts/catalog/published-language/index.js';",
+    ),
   ],
   invalid: [
     {

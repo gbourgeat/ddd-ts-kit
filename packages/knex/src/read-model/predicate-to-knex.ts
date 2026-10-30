@@ -1,9 +1,15 @@
 import type { Knex } from 'knex';
-import type { FieldValue, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
+import type { FieldValue, FilterOperand, FilterOperator, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
 import { columnOf } from './column-of';
 import { likePattern } from './like-pattern';
 
 type Columns = Readonly<Record<string, string>>;
+
+/** The operators that compare a value: `isNull` is rendered before any of them. */
+interface Comparison {
+  readonly operator: Exclude<FilterOperator, 'isNull'>;
+  readonly value: FilterOperand;
+}
 
 const COMPARISONS = { eq: '=', ne: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=' } as const;
 
@@ -47,16 +53,22 @@ function held(builder: Knex.QueryBuilder, predicate: Predicate, columns: Columns
 function tested(builder: Knex.QueryBuilder, test: PredicateTest, column: string): void {
   if (test.operator === 'isNull') {
     void (test.value === true ? builder.whereNull(column) : builder.whereNotNull(column));
-  } else if (test.negated) {
+
+    return;
+  }
+
+  const comparison = { operator: test.operator, value: test.value };
+
+  if (test.negated) {
     void builder.whereNot((refuted) => {
-      compared(refuted, test, column);
+      compared(refuted, comparison, column);
     });
   } else {
-    compared(builder, test, column);
+    compared(builder, comparison, column);
   }
 }
 
-function compared(builder: Knex.QueryBuilder, { operator, value }: PredicateTest, column: string): void {
+function compared(builder: Knex.QueryBuilder, { operator, value }: Comparison, column: string): void {
   const values: FieldValue[] = typeof value === 'object' && !(value instanceof Date) ? [...value] : [value];
   const [first = null, second = null] = values;
 
@@ -70,8 +82,6 @@ function compared(builder: Knex.QueryBuilder, { operator, value }: PredicateTest
     case 'contains':
     case 'startsWith':
       void builder.whereRaw('?? like ? escape ?', [column, likePattern(operator, String(first)), '\\']);
-      break;
-    case 'isNull':
       break;
     default:
       void builder.where(column, COMPARISONS[operator], first);

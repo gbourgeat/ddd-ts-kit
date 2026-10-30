@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { landDrizzle } from '../src/merge/land-drizzle';
 import { cli, read, write } from './helpers';
 import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub';
 import { git } from './support/git';
@@ -13,6 +14,8 @@ import {
   trunkRepository,
   workerFile,
 } from './support/trunk-history';
+
+const JOURNAL = 'migrations/meta/_journal.json';
 
 /** Generating again waits for the next second between two migrations, as drizzle-kit numbers them to the second. */
 const REPLAY_TIMEOUT = 30_000;
@@ -174,6 +177,31 @@ describe('merge-trunk: migrations', () => {
   );
 });
 
+describe('merge-trunk: a replay that fails for another reason than a refusal', () => {
+  it('lets the error through: a folder stands where the journal of the trunk goes back', () => {
+    const root = trunkRepository({
+      'ddd-ts-kit.config.json': JSON.stringify({ contexts: {} }),
+      'schema/accounts.json': '{"name":"accounts"}',
+    });
+
+    write(root, 'node_modules/drizzle-kit/bin.cjs', DRIZZLE_KIT_STUB);
+    generate(root, 'initial');
+    const trunk = commitFiles(root, {}, 'chore: initial migration');
+
+    onBranch(root, 'build/billing');
+    write(root, 'schema/invoices.json', '{"name":"invoices"}');
+    generate(root, 'working-add-invoices');
+
+    const ours = commitFiles(
+      root,
+      { [JOURNAL]: null, [`${JOURNAL}/notes.md`]: 'Written by hand.\n' },
+      'feat(billing): issue an invoice',
+    );
+
+    expect(() => landDrizzle(root, { base: trunk, ours, trunk, toLand: true })).toThrow(/^EISDIR/);
+  });
+});
+
 describe('merge-trunk: knex, Prisma and TypeORM migrations on --to-land', () => {
   it("renames a knex migration after the trunk's last on --to-land, its content kept, and leaves it alone otherwise", () => {
     const migrations = {
@@ -215,6 +243,16 @@ describe('merge-trunk: knex, Prisma and TypeORM migrations on --to-land', () => 
   it('renames the folder of a Prisma migration on --to-land', () => {
     const root = migrationBranches('prisma', {
       ours: { 'prisma/migrations/20261015101500_working_add_invoices/migration.sql': 'CREATE TABLE "invoices" ();\n' },
+      theirs: { 'prisma/migrations/20261016090000_add_payments/migration.sql': 'CREATE TABLE "payments" ();\n' },
+    });
+
+    expect(mergeTrunk(root, '--to-land').code).toBe(0);
+    expect(names(root, 'prisma/migrations')).toEqual(['add_invoices', 'add_payments']);
+  });
+
+  it('renames a Prisma folder that holds no migration.sql, nothing in it to read', () => {
+    const root = migrationBranches('prisma', {
+      ours: { 'prisma/migrations/20261015101500_working_add_invoices/notes.md': 'Written by hand.\n' },
       theirs: { 'prisma/migrations/20261016090000_add_payments/migration.sql': 'CREATE TABLE "payments" ();\n' },
     });
 

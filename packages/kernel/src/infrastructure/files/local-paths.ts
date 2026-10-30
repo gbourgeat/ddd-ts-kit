@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { assertFileKey } from '../../application/files/assert-file-key';
+import { resolvedInside } from './resolved-inside';
 
 /** Where the local storage puts a key: its content, its metadata, and a private place for a write in progress. */
 export class LocalPaths {
@@ -30,13 +31,6 @@ export class LocalPaths {
   }
 
   private inside(segments: readonly string[]): string {
-    const resolved = path.resolve(this.root, ...segments);
-
-    // A valid key cannot climb out; this holds the promise even if the key rules change one day.
-    if (!resolved.startsWith(this.root + path.sep)) {
-      throw new Error('A file key resolved outside the directory of the storage.');
-    }
-
-    return resolved;
+    return resolvedInside(this.root, segments);
   }
 }

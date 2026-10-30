@@ -29,6 +29,24 @@ describe('S3FileStorage without a server', () => {
     );
   });
 
+  it('refuses a body that is no Node.js stream, which is what the browser build of the SDK answers', async () => {
+    const browser = s3ClientOf({
+      endpoint: 'http://127.0.0.1:1',
+      region: 'us-east-1',
+      accessKeyId: 'key',
+      secretAccessKey: 'secret',
+    });
+
+    browser.middlewareStack.add(
+      () => () => Promise.resolve({ output: { Body: new Blob(['hello']).stream(), $metadata: {} }, response: {} }),
+      { step: 'initialize' },
+    );
+
+    await expect(new S3FileStorage({ client: browser, bucket: 'documents' }).get('a.pdf')).rejects.toThrow(
+      'not a Node.js stream',
+    );
+  });
+
   it('signs the key at the root of the bucket for a storage without a prefix', async () => {
     const link = await new S3FileStorage({ client, bucket: 'documents' }).signedDownloadUrl('reports/march.pdf', {
       expiresInSeconds: 300,

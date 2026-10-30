@@ -2,10 +2,23 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { resetSequences } from '@ddd-ts-kit/testing';
 import { InvalidCredentialError, RoleBasedAuthorizer } from '../src';
-import { AllowAll, DenyAll, FakeAuthenticator, RecordingAuthorizer, anActor } from '../src/testing';
-import { ada, billingPermissions } from './support/billing';
+import { AllowAll, DenyAll, FakeAuthenticator, RecordingAuthorizer, anActor, authorizerContract } from '../src/testing';
+import { ada, billingPermissions, bob } from './support/billing';
 
 const read = billingPermissions['invoice.read'];
+const issue = billingPermissions['invoice.issue'];
+
+authorizerContract(
+  { describe, it, expect, beforeEach },
+  {
+    name: 'RecordingAuthorizer over a role-based model, which records and does not explain',
+    create: () => ({
+      authorizer: new RecordingAuthorizer(new RoleBasedAuthorizer({ roles: { accountant: [issue] } })),
+      granted: { actor: ada, permission: issue, resource: { type: 'invoice', id: 'inv-1' } },
+      refused: { actor: bob, permission: issue, resource: { type: 'invoice', id: 'inv-1' } },
+    }),
+  },
+);
 
 describe('anActor', () => {
   beforeEach(resetSequences);

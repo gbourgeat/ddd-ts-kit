@@ -54,8 +54,8 @@ ruleTester.run('test-title-states-a-rule', testTitleStatesARule, {
       errors: [{ messageId: 'code', data: { title: 'issueInvoice saves the invoice', code: 'issueInvoice' } }],
     },
     {
-      ...at(SPEC, `${VITEST}it('', () => {});\nit('#US5.02 ', () => {});`),
-      errors: [{ messageId: 'empty' }, { messageId: 'empty' }],
+      ...at(SPEC, `${VITEST}it('', () => {});\nit('#US5.02 ', () => {});\ndescribe('', () => {});`),
+      errors: [{ messageId: 'empty' }, { messageId: 'empty' }, { messageId: 'empty' }],
     },
     {
       ...at(SPEC, `${VITEST}describe('Invoice tests', () => {});\ndescribe('InvoiceSpec', () => {});`),

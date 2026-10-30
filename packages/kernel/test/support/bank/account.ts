@@ -70,6 +70,11 @@ export class Account extends EventSourcedAggregate<AccountEvent, AccountState> {
     return account.replay(history, (state) => account.restore(state));
   }
 
+  /** As an aggregate that forgot to pass what restores its state would do. */
+  static rehydrateWithoutRestore(id: string, history: AggregateHistory<AccountEvent, AccountState>): Account {
+    return new Account(id).replay(history);
+  }
+
   deposit(cents: number): this {
     this.record(new MoneyDeposited(this.id, AT, cents));
 

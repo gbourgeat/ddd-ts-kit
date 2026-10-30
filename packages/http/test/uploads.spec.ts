@@ -56,6 +56,15 @@ describe.each([
     });
   });
 
+  it('drains a file sent under another name than the declared one, and misses the file when none follows', async () => {
+    const data = new FormData();
+
+    data.set('attachment', new Blob(['not the document'], { type: 'text/plain' }), 'notes.txt');
+    data.set('title', 'Referral letter');
+
+    expect(await codeOf(await post(data))).toEqual([422, 'VALIDATION_FAILED']);
+  });
+
   it('refuses a file larger than declared with 413, and leaves nothing stored', async () => {
     const before = storage.keys().length;
 

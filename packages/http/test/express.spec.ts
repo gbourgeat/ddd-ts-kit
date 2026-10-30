@@ -1,7 +1,9 @@
 import type { AddressInfo } from 'node:net';
 import express, { type Request } from 'express';
+import { describe, expect, it } from 'vitest';
 import { mountExpress } from '../src/express';
 import { describeAdapter } from './support/behaviour';
+import { presenceRoutes } from './support/every-method';
 
 describeAdapter(
   'Express',
@@ -34,3 +36,23 @@ describeAdapter(
   },
   (raw) => (raw as Request).headers.authorization,
 );
+
+describe('routes mounted on Express, by method', () => {
+  it('registers a HEAD and an OPTIONS route as written, each answered as declared', async () => {
+    const app = express();
+
+    mountExpress(app, presenceRoutes);
+    const server = app.listen(0);
+
+    await new Promise((resolve) => server.once('listening', resolve));
+    const { port } = server.address() as AddressInfo;
+    const url = `http://127.0.0.1:${String(port)}/orders/o-1/presence`;
+
+    try {
+      expect((await fetch(url, { method: 'HEAD' })).status).toBe(204);
+      expect((await fetch(url, { method: 'OPTIONS' })).status).toBe(204);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+});

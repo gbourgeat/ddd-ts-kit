@@ -60,6 +60,15 @@ function declarationOf(erasure: ErasureMode) {
   });
 }
 
+/** The same declaration without file column: what most tables of a context are. */
+function plainDeclarationOf(erasure: ErasureMode) {
+  return personalFields<PersonRow, TenantTableTarget>(PEOPLE, {
+    subject: 'person_id',
+    fields: ['display_name', 'email', 'age'],
+    erasure,
+  });
+}
+
 function erasureOf(erasure: ErasureMode, context: ExecutionContext, files = new InMemoryFileStorage()) {
   return new KnexPersonalDataErasure(createKnexUnitOfWork(database.knex), {
     name: 'identity.people',
@@ -92,6 +101,21 @@ for (const erasure of ['row', 'pseudonymise'] as const) {
       return {
         declaration: declarationOf(erasure),
         erasure: erasureOf(erasure, workIn('acme')),
+        insert,
+        rowsOf: (subject) => rowsOf(subject),
+        aRowOf: (subject, n) => aPersonRow(subject, n),
+      };
+    },
+    createWithoutFiles: async () => {
+      await database.truncate();
+
+      return {
+        declaration: plainDeclarationOf(erasure),
+        erasure: new KnexPersonalDataErasure(createKnexUnitOfWork(database.knex), {
+          name: 'identity.people',
+          declarations: [plainDeclarationOf(erasure)],
+          tenant: new FixedExecutionScope(workIn('acme')),
+        }),
         insert,
         rowsOf: (subject) => rowsOf(subject),
         aRowOf: (subject, n) => aPersonRow(subject, n),

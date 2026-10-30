@@ -278,4 +278,17 @@ describe('worker-scope, on slices, an existing worktree and other places', () =>
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('is not inside a git repository.');
   });
+
+  it('says what to do in a repository without a commit', () => {
+    const unborn = path.join(path.dirname(root), 'unborn');
+
+    cli(unborn, 'init', '--context', 'billing:core');
+    git(unborn, 'init', '--quiet', '--initial-branch', 'main');
+
+    const refused = cli(unborn, 'worker-scope', 'billing');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('error: The repository has no commit yet.');
+    expect(refused.stderr).toContain('fix: Commit the bootstrap first: a worktree is cut from a commit.');
+  });
 });

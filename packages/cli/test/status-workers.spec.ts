@@ -122,7 +122,9 @@ describe('status --workers', () => {
 
     expect(cli(root, 'status', '--workers').stdout).toContain('2 files changed (uncommitted only');
   });
+});
 
+describe('status --workers on the state of a worker', () => {
   it('says which worktree has its dependencies, in JSON and in words', () => {
     fs.mkdirSync(path.join(issuing, 'node_modules'));
 
@@ -151,6 +153,20 @@ describe('status --workers', () => {
 
   it('leaves status without --workers as it was', () => {
     expect(cli(root, 'status').stdout).toContain('Slices (docs/architecture/slices.md): 3');
+  });
+
+  it('shows no standing for a worker whose base names no commit any more', () => {
+    write(cancelling, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing', rows: ['M1.02'], base: 'gone' }));
+
+    const workers = jsonAt(cli(root, 'status', '--workers', '--json').json(), 'workers');
+
+    const old = Array.isArray(workers)
+      ? workers.find((worker) => jsonAt(worker, 'worktree') === cancelling)
+      : undefined;
+
+    expect(old).toMatchObject({ base: 'gone', rows: ['M1.02'] });
+    expect(old).not.toHaveProperty('ahead');
+    expect(old).not.toHaveProperty('behind');
   });
 });
 

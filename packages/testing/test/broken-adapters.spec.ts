@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, type Lock, type LockHandle, type Repository } from '@ddd-ts-kit/kernel';
+import { FixedClock, type EventStore, type Lock, type LockHandle, type Repository } from '@ddd-ts-kit/kernel';
 import { InMemoryRepository, resetSequences } from '../src';
-import { lockContract, repositoryContract } from '../src/contracts';
+import {
+  eventStoreUnitOfWorkContract,
+  lockContract,
+  repositoryContract,
+  type EventStoreUnderContract,
+} from '../src/contracts';
 import { anOrder } from './support/builders';
 import { CollectingRunner } from './support/collecting-runner';
 import { Order, at, type OrderSnapshot } from './support/order';
+import { TransactionalJournal } from './support/transactional-journal';
 
 beforeEach(() => {
   resetSequences();
@@ -168,5 +174,38 @@ describe('the lock contract and a lock that never frees a key', () => {
       'numbers the acquisitions of a key with a token that only grows',
       'waits for a key that is released within the time it was told to wait',
     ]);
+  });
+});
+
+/** An event store that takes every append and reads every stream back empty. */
+class ForgetfulJournal implements EventStoreUnderContract {
+  private readonly journal = new TransactionalJournal();
+
+  readonly unitOfWork = this.journal.unitOfWork;
+
+  readonly outbox = this.journal.outbox;
+
+  readonly store: EventStore = {
+    append: (stream, expected, events) => this.journal.store.append(stream, expected, events),
+    readStream: async () => [],
+    readAll: (after, limit) => this.journal.store.readAll(after, limit),
+    head: () => this.journal.store.head(),
+  };
+}
+
+describe('the event store contract and a store that loses what it appended', () => {
+  it('fails it wherever a stream is read back, and says which aggregate was saved and not found', async () => {
+    const collecting = new CollectingRunner();
+
+    eventStoreUnitOfWorkContract(collecting, { name: 'forgetful', createSubject: () => new ForgetfulJournal() });
+
+    const { failed, messages } = await collecting.run();
+
+    expect(failed).toEqual([
+      'commits the stream and the outbox records published for its events together',
+      'publishes nothing for an append refused by a concurrency conflict',
+    ]);
+
+    expect(messages[1]).toBe('Consignment c1 was saved and is not found');
   });
 });

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { runGit } from '../commit/run-git';
-import { readConfig } from '../config';
+import type { Config } from '../config';
 import { readRemaining } from '../progress/read-remaining';
 import { readSlices } from '../progress/read-slices';
 import { changedEntries } from '../slice/changed-entries';
@@ -22,22 +22,21 @@ export interface ProgressRequest {
   readonly fresh?: boolean;
 }
 
+/** The project a worker builds in, and its config. */
+export interface WorkerProject {
+  readonly project: string;
+  readonly config: Config;
+}
+
 /**
  * Where the worker of the project at `project` stands, read from its branch, its working tree
- * and the files the kit writes in `.ddd-ts-kit/`. Reads only; undefined when its config cannot
- * be read.
+ * and the files the kit writes in `.ddd-ts-kit/`. Reads only.
  */
 export function progressOf(
-  project: string,
+  { project, config }: WorkerProject,
   scope: WorkerFile,
   request: ProgressRequest = {},
-): WorkerProgress | undefined {
-  const config = configOf(project);
-
-  if (config === undefined) {
-    return undefined;
-  }
-
+): WorkerProgress {
   const ws = new Workspace(project, false);
   const entries = changedEntries(project);
   const storage = storageOfSlice({ root: project, config, context: scope.context }, entries);
@@ -61,16 +60,6 @@ export function progressOf(
     phase,
     next: nextStepOf({ ...facts, fresh: request.fresh === true }),
   };
-}
-
-type Config = ReturnType<typeof readConfig>['config'];
-
-function configOf(project: string): Config | undefined {
-  try {
-    return readConfig(project).config;
-  } catch {
-    return undefined;
-  }
 }
 
 function markersOf(ws: Workspace, config: Config, context: string): WorkerProgress['markers'] {

@@ -175,4 +175,24 @@ describe('worker-scope --base', () => {
     expect(refused.stderr).toContain('is the worktree of a worker (.ddd-ts-kit/worker.json is present)');
     expect(refused.stderr).toContain('`--base origin/main`');
   });
+
+  it('refuses a directory that exists and is not a worktree of the repository', () => {
+    const elsewhere = path.join(path.dirname(root), 'elsewhere');
+
+    fs.mkdirSync(elsewhere);
+
+    const refused = cli(root, 'worker-scope', 'shipping', '--worktree', elsewhere, '--no-install');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain(`${elsewhere} exists and is not a worktree of this repository.`);
+    expect(refused.stderr).toContain('Pass another directory with --worktree <path>, or remove that one.');
+  });
+
+  it('says that git could not add the worktree when its branch is checked out elsewhere', () => {
+    const refused = cli(root, 'worker-scope', 'shipping', '--branch', 'main', '--no-install');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('on the branch main.');
+    expect(refused.stderr).toContain('a branch checked out elsewhere takes --branch <name>.');
+  });
 });

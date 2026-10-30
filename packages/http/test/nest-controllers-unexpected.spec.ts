@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
-import { HTTP_CODE_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
+import { Body, Controller, HttpCode, Post, RequestMethod, UseGuards } from '@nestjs/common';
+import { HTTP_CODE_METADATA, METHOD_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { describe, expect, it } from 'vitest';
 import { Public } from '../src';
 import { CurrentActor, KitRoute, nestControllerRoutes } from '../src/nest';
@@ -97,8 +97,41 @@ describe('metadata of Nest the kit does not expect', () => {
       },
       /the body is read one field at a time/,
     ],
+    [
+      'a decorator of the kit on a member that is no method',
+      [Post()],
+      ({ prototype }: { prototype: object }) => {
+        Object.defineProperty(prototype, 'count', { get: () => 1, configurable: true });
+        KitRoute({ operationId: 'count', summary: 'Count', guards: [Public] })(prototype, 'count');
+      },
+      /Acting.count carries @KitRoute and is no method/,
+    ],
   ])('refuses %s', (_what, decorators, after, message) => {
     expect(() => nestControllerRoutes([controllerWith(decorators, after)])).toThrow(message);
+  });
+});
+
+describe('metadata of Nest the kit reads as far as it goes', () => {
+  it('serves at the path of the controller a method whose decorator names a method and no path', () => {
+    const [route] = nestControllerRoutes([
+      controllerWith([], ({ prototype }) => {
+        Reflect.defineMetadata(METHOD_METADATA, RequestMethod.POST, Reflect.get(prototype, 'act'));
+      }),
+    ]);
+
+    expect(route).toMatchObject({ method: 'POST', path: '/acting' });
+  });
+
+  it('refuses a controller bound to a receiver, which has no prototype to read the decorators from', () => {
+    class Acting {
+      act(): void {}
+    }
+
+    const Bound = Acting.bind(null);
+
+    Controller('bound')(Bound);
+
+    expect(() => nestControllerRoutes([Bound])).toThrow(/bound Acting has no prototype: it is no class/);
   });
 
   it('serves a route whose list of guards of Nest is empty, and one with a status of its own', () => {

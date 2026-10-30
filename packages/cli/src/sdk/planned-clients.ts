@@ -7,14 +7,8 @@ import { CLIENTS_DIRECTORY } from './clients-directory';
 import { contractDocuments } from './contract-documents';
 import type { PlannedClient } from './planned-client';
 
-/** One client per document of the contract, named by "sdk.name"; none while the config asks for no client. */
-export function plannedClients(ws: Workspace, config: Config): PlannedClient[] {
-  const sdk = config.sdk;
-
-  if (sdk === undefined) {
-    return [];
-  }
-
+/** One client per document of the contract, named by "sdk.name". */
+export function plannedClients(ws: Workspace, config: Config, sdk: NonNullable<Config['sdk']>): PlannedClient[] {
   const project = projectName(ws);
 
   return contractDocuments(ws, config).map((document) => ({

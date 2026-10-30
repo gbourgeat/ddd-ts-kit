@@ -48,6 +48,7 @@ function closeOf(own: readonly BranchCommit[], branch: readonly BranchCommit[]):
   const last = own.at(-1);
   const head = branch.at(-1);
 
+  /* v8 ignore next 3 -- ADR-0001: this runs once a report commit was found, so neither list is empty */
   if (last === undefined || head === undefined) {
     return undefined;
   }

@@ -95,11 +95,7 @@ function reporter<MessageIds extends string, Options extends readonly unknown[]>
 }
 
 function lineOf(descriptor: TSESLint.ReportDescriptor<string>): number {
-  const position = descriptor.loc ?? ('node' in descriptor ? descriptor.node.loc : undefined);
-
-  if (position === undefined) {
-    return 1;
-  }
+  const position = 'node' in descriptor ? (descriptor.loc ?? descriptor.node.loc) : descriptor.loc;
 
   return 'start' in position ? position.start.line : position.line;
 }

@@ -5,7 +5,7 @@ import { cli, exists, read, tempDir, walk, write } from './helpers';
 import { initProject } from './support/init-project';
 import { NPM } from './support/npm';
 import { leavingProject } from '../src/workspace/leaving-project';
-import { realPathOf } from '../src/workspace/real-path-of';
+import { BLOCKED, realPathOf } from '../src/workspace/real-path-of';
 import { realRootOf } from '../src/workspace/real-root-of';
 import { commitAll } from './support/commit-all';
 
@@ -119,6 +119,39 @@ describe.skipIf(process.platform === 'win32')('a write of the CLI stays inside t
 
     expect(cli(root, 'generate', 'adr', 'Choose a broker').code).toBe(0);
     expect(walk(root, 'docs/decisions').some((file) => file.endsWith('-choose-a-broker.md'))).toBe(true);
+  });
+
+  it('follows a link to nothing to where its target would be, and refuses it when that is out of the project', () => {
+    const elsewhere = outside();
+    const root = initProject(...NPM);
+
+    fs.rmSync(path.join(root, 'biome.json'));
+    link(root, 'biome.json', path.join(elsewhere, 'biome.json'));
+
+    const refused = cli(root, 'init', '--force');
+
+    expect(refused.code).toBe(2);
+
+    expect(refused.stderr).toContain(
+      `biome.json (which lands in ${path.join(fs.realpathSync(elsewhere), 'biome.json')})`,
+    );
+
+    expect(walk(elsewhere).sort()).toEqual(['settings.json', 'victim.md']);
+  });
+
+  it('cannot write through a link to a device, nor under a link that leads to itself', () => {
+    const root = initProject(...NPM);
+
+    link(root, 'docs/adr', '/dev/null');
+
+    expect(realPathOf(path.join(root, 'docs/adr/0001-choose-a-broker.md'))).toBe(BLOCKED);
+    expect(cli(root, 'generate', 'adr', 'Choose a broker').code).not.toBe(0);
+
+    fs.rmSync(path.join(root, 'docs/adr'));
+    link(root, 'docs/adr', 'adr');
+
+    expect(realPathOf(path.join(root, 'docs/adr/0001-choose-a-broker.md'))).toBeUndefined();
+    expect(cli(root, 'generate', 'adr', 'Choose a broker').code).not.toBe(0);
   });
 });
 

@@ -2,6 +2,7 @@ import { inspect } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import { expectNoSecret } from '@ddd-ts-kit/testing';
 import { NatsEventBus } from '../src';
+import { BrokerLink } from '../src/connection/broker-link';
 import { NATS_URL } from './support/environment';
 import { PLACED } from './support/events';
 import { unique } from './support/unique';
@@ -43,6 +44,23 @@ describe('NatsEventBus: what it shows of its credentials', () => {
     );
 
     await bus.close();
+  });
+
+  it('shows none of them through its link to the server either', async () => {
+    const link = new BrokerLink(
+      {
+        open: () => Promise.reject(new Error(`cannot reach ${URL_WITH_PASSWORD}`)),
+        reconnect: { initialMs: 1, factor: 1, maxMs: 1 },
+      },
+      { opened: async () => undefined, lost: () => undefined, failed: () => undefined },
+    );
+
+    expectNoSecret(link, [PASSWORD, TOKEN, URL_WITH_PASSWORD]);
+    expect(Object.keys(link)).toEqual([]);
+    expect(JSON.stringify({ link })).toBe('{"link":"BrokerLink [connection concealed]"}');
+    expect(inspect(link)).toBe('BrokerLink [connection concealed]');
+
+    await link.close();
   });
 
   it.skipIf(NATS_URL === undefined)(

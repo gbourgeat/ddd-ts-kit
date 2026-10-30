@@ -47,12 +47,17 @@ describe('InMemoryLogger', () => {
 });
 
 describe('NoopLogger', () => {
-  it('accepts everything and writes nothing', () => {
+  it('accepts everything and writes nothing', async () => {
     const logger: Logger = new NoopLogger();
 
+    logger.debug('ignored');
     logger.info('ignored', { context: 'billing' });
+    logger.warn('ignored');
+    logger.error('ignored', { errorType: 'Error' });
 
     expect(logger.child({ context: 'billing' })).toBe(logger);
+    expect(logger.isLevelEnabled('error')).toBe(false);
+    await expect(logger.flush()).resolves.toBeUndefined();
   });
 });
 

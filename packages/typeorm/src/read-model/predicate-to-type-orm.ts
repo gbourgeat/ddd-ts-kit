@@ -1,5 +1,5 @@
 import { Brackets, NotBrackets, type WhereExpressionBuilder } from 'typeorm';
-import type { FieldValue, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
+import type { FieldValue, FilterOperand, FilterOperator, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
 import { likePattern } from './like-pattern';
 
 export interface TypeOrmCriteriaOptions {
@@ -17,6 +17,12 @@ interface Rendering extends TypeOrmCriteriaOptions {
 }
 
 const COMPARISONS = { eq: '=', ne: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=' } as const;
+
+/** The operators that compare a value: `isNull` is rendered before any of them. */
+interface Comparison {
+  readonly operator: Exclude<FilterOperator, 'isNull'>;
+  readonly value: FilterOperand;
+}
 
 /**
  * Adds a predicate of a criteria plan to a query builder, as one parenthesised condition.
@@ -67,14 +73,20 @@ function tested(builder: WhereExpressionBuilder, test: PredicateTest, rendering:
 
   if (test.operator === 'isNull') {
     builder.andWhere(test.value === true ? `${column} IS NULL` : `${column} IS NOT NULL`);
-  } else if (test.negated) {
+
+    return;
+  }
+
+  const comparison = { operator: test.operator, value: test.value };
+
+  if (test.negated) {
     builder.andWhere(
       new NotBrackets((refuted) => {
-        compared(refuted, test, { column, rendering });
+        compared(refuted, comparison, { column, rendering });
       }),
     );
   } else {
-    compared(builder, test, { column, rendering });
+    compared(builder, comparison, { column, rendering });
   }
 }
 
@@ -85,7 +97,7 @@ interface Target {
 
 function compared(
   builder: WhereExpressionBuilder,
-  { operator, value }: PredicateTest,
+  { operator, value }: Comparison,
   { column, rendering }: Target,
 ): void {
   const values: FieldValue[] = typeof value === 'object' && !(value instanceof Date) ? [...value] : [value];
@@ -106,8 +118,6 @@ function compared(
         [two]: '\\',
       });
 
-      break;
-    case 'isNull':
       break;
     default:
       builder.andWhere(`${column} ${COMPARISONS[operator]} :${one}`, { [one]: first });

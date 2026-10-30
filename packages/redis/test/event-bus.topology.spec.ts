@@ -74,4 +74,34 @@ describe.each(SERVERS)('RedisStreamsEventBus, topology, %s', { timeout: 30_000 }
     expect(billing.ids()).toEqual(['evt-1', 'evt-2']);
     expect(reported[0]).toMatchObject({ kind: 'connection', code: expect.stringMatching(/^REDIS_(NOGROUP|ERR)$/) });
   });
+
+  it('refuses to create its group on a key that is not a stream, with what the server answered', async () => {
+    const [prefix, consumer] = [unique('test-events'), unique('billing')];
+    const bus = server.bus({ prefix, consumer });
+
+    await server.client.set(`${prefix}:${PLACED}`, 'not a stream');
+    bus.subscribe(PLACED, async () => undefined);
+
+    await expect(bus.assertTopology()).rejects.toThrow(/WRONGTYPE/);
+  });
+
+  it('goes on when an entry cannot be settled: it is acknowledged by nobody, and the failure is reported', async () => {
+    const [prefix, consumer] = [unique('test-events'), unique('billing')];
+    const stream = `${prefix}:${PLACED}`;
+    const reported: RedisStreamsFailure[] = [];
+    const bus = server.bus({ prefix, consumer, onFailure: failuresOf(reported) });
+    const received: string[] = [];
+
+    bus.subscribe(PLACED, async (event) => {
+      received.push(event.id);
+      await server.client.del(stream);
+      await server.client.set(stream, 'not a stream any more');
+    });
+
+    await bus.publish([anEvent('evt-1')]);
+    await eventually(() => received.length === 1 && bus.deliveriesInFlight === 0);
+    await eventually(() => reported.some((failure) => failure.code === 'REDIS_WRONGTYPE'));
+
+    expect(received).toEqual(['evt-1']);
+  });
 });

@@ -16,6 +16,7 @@ import { PrismaPersonalDataErasure, createPrismaUnitOfWork, type PrismaPersonalT
 import type { Prisma } from '../generated/client/client';
 import { createDatabase, type TestDatabase } from '../support/database';
 import {
+  PEOPLE,
   PEOPLE_STRICT,
   aPersonRow,
   declarationOf,
@@ -43,6 +44,15 @@ const erasureOf = (erasure: ErasureMode, context: ExecutionContext, files?: InMe
 
 const insert = (rows: readonly PersonRow[]): Promise<void> => insertPeople(database.prisma, rows);
 
+/** The same declaration without file column: what most tables of a context are. */
+function plainDeclarationOf(erasure: ErasureMode) {
+  return personalFields<PersonRow, PrismaPersonalTable>(PEOPLE, {
+    subject: 'person_id',
+    fields: ['display_name', 'email', 'age'],
+    erasure,
+  });
+}
+
 const rowsOf = (subject: string, tenant?: string): Promise<PersonRow[]> => peopleOf(database.prisma, subject, tenant);
 
 for (const erasure of ['row', 'pseudonymise'] as const) {
@@ -54,6 +64,21 @@ for (const erasure of ['row', 'pseudonymise'] as const) {
       return {
         declaration: declarationOf(erasure),
         erasure: erasureOf(erasure, workIn('acme')),
+        insert,
+        rowsOf: (subject) => rowsOf(subject),
+        aRowOf: (subject, n) => aPersonRow(subject, n),
+      };
+    },
+    createWithoutFiles: async () => {
+      await database.truncate();
+
+      return {
+        declaration: plainDeclarationOf(erasure),
+        erasure: new PrismaPersonalDataErasure<Prisma.TransactionClient>(createPrismaUnitOfWork(database.prisma), {
+          name: 'identity.people',
+          declarations: [plainDeclarationOf(erasure)],
+          tenant: { scope: new FixedExecutionScope(workIn('acme')) },
+        }),
         insert,
         rowsOf: (subject) => rowsOf(subject),
         aRowOf: (subject, n) => aPersonRow(subject, n),

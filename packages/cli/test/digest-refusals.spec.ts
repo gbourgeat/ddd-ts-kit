@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cli } from './helpers';
 import { git } from './support/git';
+import { withGitAnswering } from './support/git-answering';
 import { initProject } from './support/init-project';
 import { slicedProject } from './support/sliced-project';
 
@@ -48,6 +49,18 @@ describe('digest refuses, exit 2, what it cannot compare', () => {
       expect(refused.stderr).toContain(`error: ${ref} is not a commit of this repository.`);
       expect(refused.stderr).toContain('fix: Fetch it first (`git fetch origin`), or name the base of the branch');
     }
+  });
+
+  it('refuses a tree git could not write, and says where to look', () => {
+    const root = slicedProject();
+
+    const refused = withGitAnswering({ when: 'checkout-index', answer: 'exit 1' }, () =>
+      cli(root, 'digest', '--base', 'main'),
+    );
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toMatch(/error: The tree of [0-9a-f]{7} could not be written under /);
+    expect(refused.stderr).toContain('fix: Check the room left in the temporary directory of the system');
   });
 
   it('refuses a base that shares no history with HEAD', () => {

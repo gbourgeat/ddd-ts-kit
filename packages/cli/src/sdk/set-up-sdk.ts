@@ -13,11 +13,13 @@ import { writeClients } from './write-clients';
  * gone, and those the npm lockfile does not link yet.
  */
 export function setUpSdk(ws: Workspace, config: Config): SdkSetUp {
-  if (config.sdk === undefined || config.stack.http === 'none') {
+  const { sdk } = config;
+
+  if (sdk === undefined || config.stack.http === 'none') {
     return { gone: [], unlocked: [] };
   }
 
-  const clients = plannedClients(ws, config);
+  const clients = plannedClients(ws, config, sdk);
 
   wireSdk(ws, config, clients);
 

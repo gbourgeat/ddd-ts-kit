@@ -93,11 +93,8 @@ function arrowParameters(code: string, arrow: number): ParameterList[] {
   return code.charAt(previousCode(code, start - 1)) === '.' ? [] : [{ single: start }];
 }
 
+/** The list whose `)` is at `close`, which both callers have checked is one. */
 function listClosingAt(code: string, close: number): ParameterList[] {
-  if (code.charAt(close) !== ')') {
-    return [];
-  }
-
   const open = openingBracket(code, close);
 
   return open === -1 ? [] : [{ open, close }];

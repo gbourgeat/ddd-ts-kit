@@ -175,4 +175,56 @@ describe('the Nest controllers of a context, read from their sources', () => {
       ].join('\n'),
     );
   });
+
+  it('writes the members of a method on their own lines when they do not fit on one', () => {
+    const body = `${'A'.repeat(100)}Body`;
+
+    const rendered = renderControllersFile('billing', 'billingControllers', [
+      {
+        file: `${FOLDER}/invoices.controller.ts`,
+        className: 'InvoicesController',
+        specifier: '@/contexts/billing/presentation/http/invoices/invoices.controller',
+        methods: [
+          {
+            name: 'issueInvoice',
+            line: 1,
+            request: [{ source: 'body', type: { kind: 'class', name: body, specifier: '@/bodies' }, declared: false }],
+            answer: { kind: 'none' },
+            declaresResponse: false,
+          },
+        ],
+      },
+    ]);
+
+    expect(rendered).toContain(`    issueInvoice: {\n      body: ${body},\n      answer: null,\n    },\n  }),`);
+  });
 });
+
+describe('a DTO a Nest controller imports by a relative path', () => {
+  const file = `${FOLDER}/relative.controller.ts`;
+
+  const files = {
+    read: (asked: string) => (asked === file ? RELATIVE : undefined),
+    under: () => [file],
+  };
+
+  it('cannot be read: the kit resolves the aliases of the project alone', () => {
+    const [controller] = readNestControllers(files, CONFIG, 'billing');
+
+    expect(controller?.methods.map(({ request }) => request)).toEqual([
+      [{ source: 'body', type: { kind: 'unread', text: 'Dto' }, declared: false }],
+    ]);
+  });
+});
+
+const RELATIVE = `import { Body, Controller, Post } from '@nestjs/common';
+import { KitRoutes } from '@ddd-ts-kit/http/nest';
+import { Dto } from './dto';
+
+@Controller('relative')
+@KitRoutes({ guards: [] })
+export class RelativeController {
+  @Post()
+  async create(@Body() body: Dto): Promise<void> {}
+}
+`;

@@ -1,7 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { refreshDeclarations } from '../src/dev/refresh-declarations';
-import { cli, read, scaffoldEverything, tempDir, write } from './helpers';
+import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
 import { checkJsonOf } from './check-support';
+import { initProject } from './support/init-project';
 
 const BILLING = 'src/contexts/billing';
 /** The declarations of the folder the handler sits in, where its list is registered. */
@@ -109,6 +112,48 @@ describe('the generated list of a constructor follows the code, and a gate says 
 
     write(root, HANDLER, before);
     cli(root, 'docs');
+  });
+
+  it('tells which file it deleted once its folder holds no declared class, and which it could not write', () => {
+    const project = initProject('--context', 'billing:core');
+    const declarations = 'src/contexts/billing/application/application.declarations.ts';
+    const handler = 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts';
+    const told: string[] = [];
+
+    const terms = ['--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final'];
+
+    expect(cli(project, 'generate', 'command', 'billing', 'IssueInvoice', '--public', ...terms).code).toBe(0);
+    expect(exists(project, declarations)).toBe(true);
+
+    fs.rmSync(path.join(project, 'src/contexts/billing/application/commands'), { recursive: true });
+
+    expect(refreshDeclarations(project, (line) => told.push(line))).toContain(declarations);
+
+    expect(told).toContainEqual(
+      `ddd-ts-kit: deleted ${declarations}: its folder holds no declared class any more, or the declarations of its layer replace it`,
+    );
+
+    expect(exists(project, declarations)).toBe(false);
+
+    const masked = initProject('--context', 'billing:core');
+
+    expect(cli(masked, 'generate', 'command', 'billing', 'IssueInvoice', '--public', ...terms).code).toBe(0);
+
+    write(
+      masked,
+      handler,
+      read(masked, handler).replace(/\{\n/, '{\n  constructor(private readonly clock: Clock) {}\n'),
+    );
+
+    fs.rmSync(path.join(masked, declarations));
+    fs.symlinkSync('/dev/null', path.join(masked, declarations));
+    told.length = 0;
+
+    expect(refreshDeclarations(masked, (line) => told.push(line))).toEqual([]);
+
+    expect(told).toContainEqual(
+      `ddd-ts-kit: ${declarations} could not be written here: a sandbox or the permissions protect it`,
+    );
   });
 });
 
