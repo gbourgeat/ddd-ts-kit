@@ -3,8 +3,9 @@
 Each file `init` and `generate` write goes to `<name>.<random>.tmp` beside it, then is renamed into
 place, so that a command stopped half way leaves complete files only, never a truncated one that
 the next run would keep as existing; the same command run again writes the files still missing. A
-file written over keeps its mode, and a link that stays inside the project is still written
-through.
+file written over keeps its mode, a link that stays inside the project is still written through, a
+file that is a mount point (a config a container binds) is written in place, and a read-only file is
+reported unwritable by the real run as by the dry run.
 
 `init` on a project already initialised, and each `generate` of a kind that writes shared files
 (`writesShared` in `generate --help --json`: the config, the composition root, the code list and
@@ -12,8 +13,9 @@ permission set of a context, the barrels), hold the lock of the project, `.ddd-t
 the `.gitignore` of a project already ignores. Two such commands started at once in one checkout
 now run one after the other: the second waits up to five seconds, then exits 2 with
 ``Another generator holds the lock of this project: `ddd-ts-kit generate context billing` (pid 1234, started 12 seconds ago). This command waited for it and wrote nothing.``
-and the fix: run the generators one after the other. A lock whose command has ended on the same
-machine, or taken more than a minute ago, is taken over.
+and the fix: run the generators one after the other. A lock taken on the same machine is kept while
+its command runs, however long, and taken over once it has ended; one taken on another machine, or
+whose holder cannot be read, is taken over a minute after it was taken.
 
 The copy of the project `plan-waves` replays the planned commands in leaves symbolic links out: a
 tracked link to a file outside the project (a key of the home folder) is no longer copied into the

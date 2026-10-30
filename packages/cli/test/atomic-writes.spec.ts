@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { cli, read, tempDir, walk, write } from './helpers';
 import { NPM } from './support/npm';
 import { runInit, type InitOptions } from '../src/init/run-init';
-import type { DiskWrites } from '../src/workspace';
+import { Workspace, type DiskWrites } from '../src/workspace';
 import { writeIfAllowed } from '../src/workspace/write-if-allowed';
 
 const OPTIONS: InitOptions = { contexts: [], dryRun: false, force: false, packageManager: 'npm' };
@@ -80,6 +80,46 @@ describe('the writes of init and generate', () => {
       expect(read(root, 'AGENTS.md')).toBe('written\n');
       expect(fs.statSync(path.join(root, 'hook.sh')).mode & 0o777).toBe(0o755);
       expect(fs.readdirSync(root).sort()).toEqual(['AGENTS.md', 'CLAUDE.md', 'hook.sh']);
+    },
+  );
+
+  it('write a file that is a mount point in place, where the rename answers EBUSY', () => {
+    const root = tempDir('atomic-writes');
+
+    const busy: DiskWrites = {
+      writeFileSync: (file, content) => fs.writeFileSync(file, content),
+      renameSync: () => {
+        throw Object.assign(new Error('resource busy or locked'), { code: 'EBUSY' });
+      },
+    };
+
+    write(root, 'ddd-ts-kit.config.json', 'earlier\n');
+
+    expect(writeIfAllowed(path.join(root, 'ddd-ts-kit.config.json'), 'written\n', { disk: busy })).toBe(true);
+    expect(read(root, 'ddd-ts-kit.config.json')).toBe('written\n');
+    expect(fs.readdirSync(root)).toEqual(['ddd-ts-kit.config.json']);
+  });
+
+  it.skipIf(process.platform === 'win32' || process.getuid?.() === 0)(
+    'skip a read-only file of the plan in a dry run and in the real run alike',
+    () => {
+      const root = tempDir('atomic-writes');
+
+      write(root, 'locked.txt', 'earlier\n');
+      fs.chmodSync(path.join(root, 'locked.txt'), 0o444);
+
+      const [dryRun, real] = [true, false].map((dry) => {
+        const ws = new Workspace(root, false);
+
+        ws.update('locked.txt', 'written\n');
+
+        return ws.commit(dry);
+      });
+
+      expect(dryRun).toMatchObject({ unwritable: ['locked.txt'], updated: [] });
+      expect(real).toMatchObject({ unwritable: ['locked.txt'], updated: [] });
+      expect(read(root, 'locked.txt')).toBe('earlier\n');
+      expect(fs.readdirSync(root)).toEqual(['locked.txt']);
     },
   );
 });

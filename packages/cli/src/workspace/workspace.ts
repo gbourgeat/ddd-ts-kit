@@ -289,7 +289,7 @@ export class Workspace {
    * or a file --force would replace that git does not hold, refuses the whole plan first.
    */
   commit(dryRun: boolean): WorkspaceReport {
-    refuseLeaving(this.root, [...new Set([...this.pending.keys(), ...this.removed])].sort(), (file) =>
+    const real = refuseLeaving(this.root, [...new Set([...this.pending.keys(), ...this.removed])].sort(), (file) =>
       this.absolute(file),
     );
 
@@ -297,7 +297,8 @@ export class Workspace {
 
     const unwritten: string[] = [];
     const planned = [...this.pending].map(([file, { content, existed }]) => ({ file, content, existed }));
-    const written = writtenOf(planned, { dryRun, absolute: (file) => this.absolute(file), disk: this.disk }, unwritten);
+    const writing = { dryRun, absolute: (file: string) => this.absolute(file), real, disk: this.disk };
+    const written = writtenOf(planned, writing, unwritten);
     const unwritable = [...new Set([...this.masked, ...unwritten])].sort();
     const deleted = unwritable.length === 0 ? [...this.removed].sort() : [];
 
