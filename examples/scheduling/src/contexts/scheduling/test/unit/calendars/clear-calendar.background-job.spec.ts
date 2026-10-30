@@ -3,7 +3,8 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import type { BackgroundJobType, BusMiddleware } from '@ddd-ts-kit/kernel';
+import type { BusMiddleware } from '@ddd-ts-kit/kernel';
+import { earlierVersionOf } from '@ddd-ts-kit/testing';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
@@ -84,7 +85,7 @@ describe('The clearance of a calendar, when its job runs', () => {
   it('never runs a clearance enqueued in an earlier shape, without the reason its patients read: the job is dead', async () => {
     const appointments = new FakeAppointmentRepository();
     const application = applicationOn(new FakeCalendarRepository(), appointments);
-    const earlierVersion: BackgroundJobType<unknown> = ClearCalendarBackgroundJob;
+    const earlierVersion = earlierVersionOf(ClearCalendarBackgroundJob);
 
     await appointments.save(anAppointment().identifiedBy('first').onCalendar('calendar-1').build());
 

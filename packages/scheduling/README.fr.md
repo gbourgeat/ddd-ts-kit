@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:94b7d249b1e7c215 -->
+<!-- translation-of: README.md sha256:74a0287b249649a0 -->
 
 # @ddd-ts-kit/scheduling
 
@@ -18,7 +18,7 @@ npm i @ddd-ts-kit/scheduling
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, les ports `JobTimers` et `JobCheckpoints`, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, `reportFailedRuns`, `UNEXPECTED_ERROR`, les noms des métriques ; pour les *jobs* en arrière-plan `QueueWorker`, `StoredJobQueue`, le port `JobStore`, `InMemoryJobStore`, `tenantKeyOf`, `reportFailedBackgroundJobs`, `JobInterruptedError`, `InvalidEnqueueError`, `InvalidJobPayloadError`, `UnknownBackgroundJobError`, `AttemptsExhaustedError` ; pour les gestionnaires de processus `StoredProcessRunner`, `NoTimeoutJobError` | le kernel |
+| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, les ports `JobTimers` et `JobCheckpoints`, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, `reportFailedRuns`, `UNEXPECTED_ERROR`, les noms des métriques ; pour les *jobs* en arrière-plan `QueueWorker`, `StoredJobQueue`, le port `JobStore`, `InMemoryJobStore`, `tenantKeyOf`, `reportFailedBackgroundJobs`, `JobInterruptedError`, `InvalidEnqueueError`, `InvalidEnqueuedPayloadError`, `InvalidJobPayloadError`, `UnknownBackgroundJobError`, `AttemptsExhaustedError` ; pour les gestionnaires de processus `StoredProcessRunner`, `NoTimeoutJobError` | le kernel |
 | `@ddd-ts-kit/scheduling/testing` | `ManualJobScheduler`, `ManualJobTimers` | le kernel |
 
 Les déclarations (`@Scheduled`, `@Background`), les ports (`JobScheduler`, `JobQueue`,
@@ -701,8 +701,11 @@ Chaque tentative est enregistrée comme un `BackgroundJobRun` (`succeeded`, `ret
 charge utile stockée avec le `payload` de la définition, le schéma `payload` statique du *job*, et
 passe à `run` ce qu'il répond : une charge utile qu'il refuse n'est jamais exécutée, la tentative
 échoue avec `InvalidJobPayloadError` (`INVALID_JOB_PAYLOAD`, dont le message nomme le *job*,
-l'identifiant du *job* stocké et le chemin et le code de chaque problème, `issues` les gardant) et le
-*job* est mort aussitôt, sans tentative restante. Un store à
+l'identifiant du *job* stocké et le chemin et le code de chaque problème, `issues` les gardant, jamais
+le message de la bibliothèque, qui peut citer la donnée stockée) et le *job* est mort aussitôt, sans
+tentative restante. `StoredJobQueue` lit la charge utile avec le même schéma là où elle est mise en
+file : celle qui ne lui convient pas lève `InvalidEnqueuedPayloadError` (`INVALID_ENQUEUED_PAYLOAD`)
+et rien n'est stocké. Un store à
 vous passe `jobStoreContract` de `@ddd-ts-kit/testing/contracts`, avec son unité de travail.
 
 ## Gestionnaires de processus

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d69dde88f535aa60 -->
+<!-- translation-of: README.md sha256:71efe072ac709cad -->
 
 # @ddd-ts-kit/di
 
@@ -1223,7 +1223,8 @@ classe est refusé (`INVALID_JOB_SETTINGS`), une classe sans `payload` statique 
 deux fois aussi (`DUPLICATE_JOB`). Un *job* construit par `handledByFactory(factory, payload)` y reçoit
 son schéma. Une charge utile stockée que le schéma refuse n'est jamais exécutée : la tentative échoue
 avec `INVALID_JOB_PAYLOAD` et le *job* est mort, ce que `app.backgroundJobs.runDue()` lève dans une
-*spec*.
+*spec* ; `app.jobQueue.enqueue` lit la charge utile avec le même schéma et lève
+`INVALID_ENQUEUED_PAYLOAD` pour celle qui ne lui convient pas.
 
 - **Enregistré à la création de l'application** sur le `QueueWorker` de `@ddd-ts-kit/scheduling`,
   qui consomme ensuite la file d'attente du contexte. La classe est construite à sa première

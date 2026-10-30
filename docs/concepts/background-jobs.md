@@ -230,7 +230,8 @@ does not compile, since `appointmentIds` and `reason` are missing.
   with one field of its payload per other input of the command (a `Date` travels as its ISO
   text, a value object is refused: a command takes primitives and ids), the schema of that
   payload in the validation library of the stack, and a spec that enqueues it as a user and runs
-  what is due, then enqueues it as an earlier version typed it and shows the run refused. `init --queue database|redis|memory` chooses the store
+  what is due, then enqueues it as an earlier version declared it (`earlierVersionOf`) and shows
+  the run refused. `init --queue database|redis|memory` chooses the store
   ([`stack.queue`](../CONFIG.md)), whatever the container: the kernel module of `@ddd-ts-kit/di`
   binds it on tsyringe, `src/platform/jobs/create-background-work.ts` builds the queue, the worker and
   the process runner on it otherwise.
@@ -273,11 +274,17 @@ A payload outlives the deploy that enqueued it: a job waits for its delay, its r
 worker, and runs on the version deployed by then. The worker reads it with the schema of that
 version before each run. A payload that does not fit is never run as the new type: the attempt
 fails with `InvalidJobPayloadError` (`INVALID_JOB_PAYLOAD`), whose message names the job, the id
-of the stored job and the path and code of each issue (`issues` holds them with their messages),
-and the job is dead at once, since no further attempt would read it better. `find` shows it
+of the stored job and the path and code of each issue (`issues` holds them, never the message of
+the library, which may quote the stored data), and the job is dead at once, since no further attempt would read it better. `find` shows it
 `dead` with that code, the log and the metrics carry the code, the `ErrorReporter` receives the
 error; an operator retries it (`retryDead`) once a version that reads it is deployed, or cancels
 it.
+
+Where it is enqueued, the payload is read with the schema of the version that enqueues it: one
+that does not fit throws `InvalidEnqueuedPayloadError` (`INVALID_ENQUEUED_PAYLOAD`, the path and
+code of each issue) and nothing is stored, so the caller learns it before its unit of work
+commits. The payload is stored as written, and the worker reads it again with the schema of the
+version that runs it.
 
 Two ways to change a payload without leaving jobs dead behind:
 
@@ -290,14 +297,16 @@ Two ways to change a payload without leaving jobs dead behind:
   goes. Deploy the workers that know the new name before the code that enqueues it (see the
   limits below).
 
-A spec shows the refusal without a cast: the class typed as `BackgroundJobType<unknown>` is the
-job as an earlier version typed it, and takes any payload.
+A spec shows the refusal without a cast: `earlierVersionOf` of `@ddd-ts-kit/testing` is the job
+as an earlier version declared it, its name with a schema that reads any payload, which `enqueue`
+lets through.
 
 <!-- checked sample -->
 ```ts
 import { expect } from 'vitest';
-import type { BackgroundJob, BackgroundJobPayloadSchema, BackgroundJobType, JobQueue } from '@ddd-ts-kit/kernel';
+import type { BackgroundJob, BackgroundJobPayloadSchema, JobQueue } from '@ddd-ts-kit/kernel';
 import type { TestBackgroundJobs } from '@ddd-ts-kit/di';
+import { earlierVersionOf } from '@ddd-ts-kit/testing';
 
 interface ClearCalendarPayload {
   readonly calendarId: string;
@@ -311,7 +320,7 @@ declare class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarP
 }
 declare const application: { readonly jobQueue: JobQueue; readonly backgroundJobs: TestBackgroundJobs };
 
-const earlierVersion: BackgroundJobType<unknown> = ClearCalendarBackgroundJob;
+const earlierVersion = earlierVersionOf(ClearCalendarBackgroundJob);
 
 // a clearance enqueued before the reason was added to the payload
 await application.jobQueue.enqueue(earlierVersion, { calendarId: 'calendar-1', appointmentIds: ['first'] });

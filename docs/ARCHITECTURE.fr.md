@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:d29458f4f19ff6b5 -->
+<!-- translation-of: ARCHITECTURE.md sha256:260f8907f063e471 -->
 
 # Référence de l'architecture
 

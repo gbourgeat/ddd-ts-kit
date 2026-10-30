@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b31b48ccd0a62c3c -->
+<!-- translation-of: README.md sha256:f2e87b14b8185806 -->
 
 # @ddd-ts-kit/testing
 
@@ -15,7 +15,7 @@ npm i -D @ddd-ts-kit/testing
 
 | Entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/testing` | *builders*, scénarios, `createTestBuses`, `InMemoryRepository` | aucun runner, aucune bibliothèque |
+| `@ddd-ts-kit/testing` | *builders*, scénarios, `createTestBuses`, `InMemoryRepository`, `earlierVersionOf` | aucun runner, aucune bibliothèque |
 | `@ddd-ts-kit/testing/faker` | des données générées pour les *builders* | `@faker-js/faker` (*peer* optionnel) |
 | `@ddd-ts-kit/testing/e2e` | client HTTP, `settled`, `eventually`, `collectEvents`, `pending` | Node seulement : aucun framework HTTP, aucun conteneur |
 | `@ddd-ts-kit/testing/contracts` | les suites de contrat des ports du noyau, `ContractSuite` pour en écrire une autre | le runner que vous passez |
@@ -604,6 +604,16 @@ l'échec d'un seul gestionnaire tel quel, si bien qu'une spec affirme sa classe 
 ensemble dans une `AggregateError`. Un projet créé par `ddd-ts-kit init` le règle dans ses
 *worlds*, comme son application le fait sur son bus en processus ; ce sera la valeur par défaut
 d'une prochaine version mineure.
+
+### Un job en arrière-plan mis en file par une version antérieure
+
+Le *worker* lit une charge utile stockée avec le schéma du *job* avant chaque exécution, et
+`enqueue` la lit aussi : une charge utile d'une ancienne forme ne peut pas être mise en file par
+la classe de cette version. `earlierVersionOf(Job)` est le *job* tel qu'une version antérieure le
+déclarait, son nom et un schéma qui lit n'importe quelle charge utile, si bien qu'une *spec* met
+cette charge utile en file et montre le *job* mort :
+`jobQueue.enqueue(earlierVersionOf(ClearCalendarBackgroundJob), { calendarId: 'calendar-1' })`,
+puis `INVALID_JOB_PAYLOAD` à l'exécution suivante. Voir [Jobs en arrière-plan](../../docs/concepts/background-jobs.fr.md).
 
 ### Qui agit
 

@@ -14,7 +14,7 @@ npm i -D @ddd-ts-kit/testing
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/testing` | builders, scenarios, `createTestBuses`, `InMemoryRepository` | no runner, no library |
+| `@ddd-ts-kit/testing` | builders, scenarios, `createTestBuses`, `InMemoryRepository`, `earlierVersionOf` | no runner, no library |
 | `@ddd-ts-kit/testing/faker` | generated data for builders | `@faker-js/faker` (optional peer) |
 | `@ddd-ts-kit/testing/e2e` | HTTP client, `settled`, `eventually`, `collectEvents`, `pending` | Node only: no HTTP framework, no container |
 | `@ddd-ts-kit/testing/contracts` | contract suites of the kernel ports, `ContractSuite` to write another | the runner you pass |
@@ -597,6 +597,15 @@ single handler as it is, so a spec asserts its class or its `code`
 (`rejects.toMatchObject({ code: 'CONCURRENCY_CONFLICT' })`); several failures still come
 together in an `AggregateError`. A project created by `ddd-ts-kit init` sets it in its worlds,
 as its application does on its in-process bus; it becomes the default in a later minor version.
+
+### A background job enqueued by an earlier version
+
+The worker reads a stored payload with the schema of the job before each run, and `enqueue`
+reads it too: a payload of an earlier shape cannot be enqueued through the class of this
+version. `earlierVersionOf(Job)` is the job as an earlier version declared it, its name and a
+schema that reads any payload, so that a spec enqueues that payload and shows the job dead:
+`jobQueue.enqueue(earlierVersionOf(ClearCalendarBackgroundJob), { calendarId: 'calendar-1' })`,
+then `INVALID_JOB_PAYLOAD` at the next run. See [Background jobs](../../docs/concepts/background-jobs.md).
 
 ### Who is acting
 

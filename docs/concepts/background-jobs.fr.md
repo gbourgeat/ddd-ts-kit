@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:9305504422980c7b -->
+<!-- translation-of: background-jobs.md sha256:be944f81866f2f41 -->
 
 # Jobs en arrière-plan
 
@@ -239,8 +239,8 @@ La charge utile (payload) est vérifiée par rapport à `run` :
   `Date` voyage sous forme de texte ISO, un objet-valeur est refusé : une commande prend des
   primitives et des identifiants), le schéma de cette charge utile dans la bibliothèque de
   validation de la pile, et une *spec* qui le met en file en tant qu'utilisateur et exécute ce
-  qui est échu, puis le met en file tel qu'une version antérieure le typait et montre
-  l'exécution refusée. `init --queue database|redis|memory` choisit le store
+  qui est échu, puis le met en file tel qu'une version antérieure le déclarait
+  (`earlierVersionOf`) et montre l'exécution refusée. `init --queue database|redis|memory` choisit le store
   ([`stack.queue`](../CONFIG.fr.md)), quel que soit le conteneur : le module noyau de
   `@ddd-ts-kit/di` le lie sur tsyringe, `src/platform/jobs/create-background-work.ts` construit dessus
   la file, le *worker* et le *runner* des processus sinon.
@@ -285,11 +285,17 @@ nouvelle tentative ou un *worker* libre, et s'exécute sur la version déployée
 *worker* la lit avec le schéma de cette version avant chaque exécution. Une charge utile qui ne
 lui convient pas n'est jamais exécutée comme le nouveau type : la tentative échoue avec
 `InvalidJobPayloadError` (`INVALID_JOB_PAYLOAD`), dont le message nomme le *job*, l'identifiant
-du *job* stocké et le chemin et le code de chaque problème (`issues` les garde avec leurs
-messages), et le *job* est mort aussitôt, puisqu'aucune autre tentative ne la lirait mieux.
+du *job* stocké et le chemin et le code de chaque problème (`issues` les garde, jamais le message
+de la bibliothèque, qui peut citer la donnée stockée), et le *job* est mort aussitôt, puisqu'aucune autre tentative ne la lirait mieux.
 `find` le montre `dead` avec ce code, le journal et les métriques portent le code, l'`ErrorReporter`
 reçoit l'erreur ; un opérateur le relance (`retryDead`) une fois déployée une version qui la lit,
 ou l'annule.
+
+Là où elle est mise en file, la charge utile est lue avec le schéma de la version qui la met en
+file : celle qui ne lui convient pas lève `InvalidEnqueuedPayloadError`
+(`INVALID_ENQUEUED_PAYLOAD`, le chemin et le code de chaque problème) et rien n'est stocké, si
+bien que l'appelant l'apprend avant que son unité de travail ne soit validée. La charge utile est
+stockée telle qu'écrite, et le *worker* la relit avec le schéma de la version qui l'exécute.
 
 Deux façons de changer une charge utile sans laisser de *jobs* morts derrière soi :
 
@@ -303,14 +309,16 @@ Deux façons de changer une charge utile sans laisser de *jobs* morts derrière 
   les *jobs* qu'elle a mis en file aient tourné, puis s'en va. Déployez les *workers* qui
   connaissent le nouveau nom avant le code qui le met en file (voir les limites plus bas).
 
-Une *spec* montre le refus sans transtypage : la classe typée `BackgroundJobType<unknown>` est le
-*job* tel qu'une version antérieure le typait, et prend n'importe quelle charge utile.
+Une *spec* montre le refus sans transtypage : `earlierVersionOf` de `@ddd-ts-kit/testing` est le
+*job* tel qu'une version antérieure le déclarait, son nom avec un schéma qui lit n'importe quelle
+charge utile, que `enqueue` laisse passer.
 
 <!-- checked sample -->
 ```ts
 import { expect } from 'vitest';
-import type { BackgroundJob, BackgroundJobPayloadSchema, BackgroundJobType, JobQueue } from '@ddd-ts-kit/kernel';
+import type { BackgroundJob, BackgroundJobPayloadSchema, JobQueue } from '@ddd-ts-kit/kernel';
 import type { TestBackgroundJobs } from '@ddd-ts-kit/di';
+import { earlierVersionOf } from '@ddd-ts-kit/testing';
 
 interface ClearCalendarPayload {
   readonly calendarId: string;
@@ -324,7 +332,7 @@ declare class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarP
 }
 declare const application: { readonly jobQueue: JobQueue; readonly backgroundJobs: TestBackgroundJobs };
 
-const earlierVersion: BackgroundJobType<unknown> = ClearCalendarBackgroundJob;
+const earlierVersion = earlierVersionOf(ClearCalendarBackgroundJob);
 
 // un dégagement mis en file avant que le motif n'entre dans la charge utile
 await application.jobQueue.enqueue(earlierVersion, { calendarId: 'calendar-1', appointmentIds: ['first'] });
