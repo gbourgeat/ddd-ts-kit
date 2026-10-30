@@ -10,6 +10,7 @@ export class KeepSuite extends ContractSuite<JobStoreUnderContract> {
     this.cancels();
     this.purges();
     this.erasesASubject();
+    this.erasesOnlyThatSubject();
   }
 
   private cancels(): void {
@@ -90,7 +91,9 @@ export class KeepSuite extends ContractSuite<JobStoreUnderContract> {
       this.expect(await this.subject.heartbeat({ id: 'job-1', attempt: 1 }, later(LEASE_MS))).toBe(false);
       this.expect(await this.subject.complete({ id: 'job-1', attempt: 1 }, NOW)).toBe(false);
     });
+  }
 
+  private erasesOnlyThatSubject(): void {
     this.it(
       'leaves the jobs of another subject and those that name none, and reaches nothing the second time',
       async () => {
