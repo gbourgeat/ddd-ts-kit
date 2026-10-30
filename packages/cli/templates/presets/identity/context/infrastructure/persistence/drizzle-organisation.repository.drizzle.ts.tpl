@@ -45,7 +45,11 @@ export class DrizzleOrganisationRepository implements OrganisationRepository {
   private insert(state: VersionedOrganisation) {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
 
-    return executorOf(this.database).insert(organisations).values(row).onConflictDoNothing().returning({ id: organisations.id });
+    return executorOf(this.database)
+      .insert(organisations)
+      .values(row)
+      .onConflictDoNothing({ target: organisations.id })
+      .returning({ id: organisations.id });
   }
 
   private update(state: VersionedOrganisation, expected: number) {

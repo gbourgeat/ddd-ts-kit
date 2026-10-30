@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7c200e75632e9411 -->
+<!-- translation-of: README.md sha256:27a2af95795f2dc8 -->
 
 # @ddd-ts-kit/testing
 
@@ -862,7 +862,7 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 
 | Suite | Tient |
 |---|---|
-| `repositoryContract` | enregistrer puis retrouver, id inconnu, mise à jour, isolement de la copie stockée, concurrence optimiste (toute erreur de code `CONCURRENCY_CONFLICT`) |
+| `repositoryContract` | enregistrer puis retrouver, id inconnu, mise à jour, isolement de la copie stockée, concurrence optimiste (toute erreur de code `CONCURRENCY_CONFLICT`), et avec `createAggregateTaking` un nouvel agrégat qui prend une valeur unique d'un autre refusé avec le code `CONFLICT`, rien de stocké |
 | `tenantIsolationContract` | un *repository* sous une stratégie d'isolement des *tenants* : ce qu'un *tenant* a enregistré est caché à un autre ; un autre *tenant* qui enregistre sous le même id le laisse intact, par une mise à jour ou (si `recreate(aggregate)` est donné, un nouvel agrégat sous le même id) par une insertion ; le personnel de la plateforme, avec une élévation sur tous les *tenants*, n'écrit rien, et lit l'agrégat de l'autre *tenant* quand `elevatedReads` est vrai (tables partagées, sécurité au niveau des lignes) ; une écriture d'un travail qui ne nomme aucun *tenant* est refusée (`NoCurrentTenantError`) et une lecture est refusée ou ne trouve rien. `createRepository(scope)` lit le *tenant* dans la portée qu'on lui donne, sur un stockage où existent les *tenants* `acme` et `globex`. Pour prouver la sécurité au niveau des lignes elle-même, exécutez-la sur un *repository* qui n'écrit aucune condition de *tenant* |
 | `eventBusContract` | tout fournisseur d'`EventBus` : routage par type, plusieurs abonnés, désabonnement, aller-retour exact de l'enveloppe (`traceparent`, `correlationId`, `tenantId`), remontée de l'échec d'un gestionnaire. Les relivraisons sont acceptées ; rendez `settle()` depuis `createBus` pour les fournisseurs qui livrent de façon asynchrone |
 | `unitOfWorkContract` | toute `UnitOfWork`, appelée par `run` sans bus de commandes : les événements du domaine attendent la fin et sont distribués avant la validation (commit), si bien que les gestionnaires voient chaque sauvegarde et que ce qu'ils écrivent, l'outbox comprise, est validé avec ; un échec dans une sauvegarde, dans le travail, dans un gestionnaire ou dans la validation (une contrainte différée) ne laisse rien derrière lui ; les gestionnaires `after-commit` s'exécutent une fois les lignes validées, jamais autrement. Un adaptateur qui n'est pas construit sur `withinUnitOfWork` échoue ici |

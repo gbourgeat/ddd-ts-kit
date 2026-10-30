@@ -18,6 +18,12 @@ export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id exten
    * Optional: without it, the case of the stale save stays pending until the contract is given one.
    */
   mutate?(aggregate: A): void;
+  /**
+   * A new valid aggregate with an id of its own that takes a value `holder` holds where the storage keeps it
+   * unique (an email, a number), for an adapter over a table with such a constraint. Optional: without it, the
+   * case of the unique value is not run.
+   */
+  readonly createAggregateTaking?: (holder: A) => A;
   idOf(aggregate: A): Id;
   /** A plain-data view of the business state (not of `version`), compared with `toEqual`. */
   stateOf(aggregate: A): unknown;
@@ -47,6 +53,7 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
     this.storesTheChangesOfLaterSaves();
     this.ignoresWhatWasNotSaved();
     this.refusesToOverwriteAnUnseenChange();
+    this.refusesATakenUniqueValue();
   }
 
   private findsWhatWasSaved(): void {
@@ -167,6 +174,30 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
       this.expect(codeOf(failure)).toBe(CONCURRENCY_CONFLICT);
       this.expect(options.stateOf(await this.reload(aggregate))).toEqual(options.stateOf(theirs));
     });
+  }
+
+  private refusesATakenUniqueValue(): void {
+    const { createAggregateTaking } = this.options;
+
+    if (createAggregateTaking === undefined) {
+      return;
+    }
+
+    this.it(
+      'refuses a new aggregate that takes a unique value of another as a conflict, not a lost update',
+      async () => {
+        const holder = this.options.createAggregate();
+
+        await this.subject.save(holder);
+
+        const taker = createAggregateTaking(holder);
+        const failure = await failureOf(() => this.subject.save(taker));
+
+        this.expect(codeOf(failure)).toBe('CONFLICT');
+        this.expect(await this.subject.findById(this.options.idOf(taker))).toBe(undefined);
+        this.expect(this.options.stateOf(await this.reload(holder))).toEqual(this.options.stateOf(holder));
+      },
+    );
   }
 
   private async reload(aggregate: A): Promise<A> {

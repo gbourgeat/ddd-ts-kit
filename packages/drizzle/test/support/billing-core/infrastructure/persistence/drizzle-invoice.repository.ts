@@ -51,7 +51,10 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
   private insert(state: VersionedInvoice) {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
 
-    return this.database.executor().insert(invoices).values(row).onConflictDoNothing().returning({ id: invoices.id });
+    // The key alone: a row that takes a value another row holds under another unique constraint is refused.
+    const insertion = this.database.executor().insert(invoices).values(row);
+
+    return insertion.onConflictDoNothing({ target: invoices.id }).returning({ id: invoices.id });
   }
 
   private update(state: VersionedInvoice, expected: number) {

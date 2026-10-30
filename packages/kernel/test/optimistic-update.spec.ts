@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { ConcurrencyError, optimisticUpdate, schemaNameOf, type VersionStep } from '../src';
+import {
+  ConcurrencyError,
+  ConflictError,
+  optimisticUpdate,
+  schemaNameOf,
+  UniqueViolationError,
+  type VersionStep,
+} from '../src';
 
 describe('optimisticUpdate', () => {
   it('asks for an insert at version 0 and gives the aggregate version 1', async () => {
@@ -75,6 +82,37 @@ describe('optimisticUpdate', () => {
 
     await expect(saving).rejects.toBe(failure);
     expect(aggregate.version).toBe(3);
+  });
+
+  for (const [what, violation] of [
+    ['of PostgreSQL (knex)', { code: '23505' }],
+    ['of PostgreSQL wrapped by drizzle', { cause: { code: '23505' } }],
+    ['of PostgreSQL wrapped by TypeORM', { driverError: { code: '23505' } }],
+    ['of Prisma', { code: 'P2002' }],
+    ['of MySQL', { code: 'ER_DUP_ENTRY', sqlState: '23000' }],
+    ['of SQLite', { code: 'SQLITE_CONSTRAINT_UNIQUE' }],
+  ] as const) {
+    it(`raises a UniqueViolationError, a conflict and not a lost update, for a unique value refused ${what}`, async () => {
+      const aggregate = { id: 'member-2', version: 0 };
+
+      const failure = await optimisticUpdate(aggregate, () => Promise.reject(violation)).catch(
+        (error: unknown) => error,
+      );
+
+      expect(failure).toBeInstanceOf(UniqueViolationError);
+      expect(failure).toBeInstanceOf(ConflictError);
+      expect(failure).not.toBeInstanceOf(ConcurrencyError);
+      expect(failure).toMatchObject({ code: 'CONFLICT', cause: violation });
+      expect(String(failure)).not.toContain('23505');
+      expect(aggregate.version).toBe(0);
+    });
+  }
+
+  it('lets a refusal through as it is, whatever its cause', async () => {
+    const aggregate = { id: 'member-2', version: 1 };
+    const refusal = new ConflictError('Email taken', { cause: { code: '23505' } });
+
+    await expect(optimisticUpdate(aggregate, () => Promise.reject(refusal))).rejects.toBe(refusal);
   });
 });
 

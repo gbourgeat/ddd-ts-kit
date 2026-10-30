@@ -1,4 +1,4 @@
-import { optimisticUpdate } from '@ddd-ts-kit/prisma';
+import { optimisticUpdate, rowsCreated } from '@ddd-ts-kit/prisma';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
@@ -52,16 +52,20 @@ export class PrismaDelegationRepository implements DelegationRepository {
   async save(saved: Delegation): Promise<void> {
     await optimisticUpdate(saved, async ({ expected, next }) => {
       const state = { ...DelegationMapper.toRow(saved), version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.count;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).count;
     });
   }
 
-  private insert(state: VersionedDelegation): Promise<{ count: number }> {
+  /** `skipDuplicates` skips a row that takes any unique value: `rowsCreated` tells a taken id from another value. */
+  private async insert(state: VersionedDelegation): Promise<number> {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
+    const created = await delegationsOf(this.database).createMany({ data: [row], skipDuplicates: true });
 
-    return delegationsOf(this.database).createMany({ data: [row], skipDuplicates: true });
+    return rowsCreated(created, {
+      id: state.id,
+      holders: () => delegationsOf(this.database).count({ where: { id: state.id } }),
+    });
   }
 
   private update(state: VersionedDelegation, expected: number): Promise<{ count: number }> {

@@ -45,7 +45,11 @@ export class DrizzleAccountRepository implements AccountRepository {
   private insert(state: VersionedAccount) {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
 
-    return executorOf(this.database).insert(accounts).values(row).onConflictDoNothing().returning({ id: accounts.id });
+    return executorOf(this.database)
+      .insert(accounts)
+      .values(row)
+      .onConflictDoNothing({ target: accounts.id })
+      .returning({ id: accounts.id });
   }
 
   private update(state: VersionedAccount, expected: number) {

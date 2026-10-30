@@ -12,6 +12,10 @@ export interface IgnoringInsert {
  * catching the unique violation, it leaves the surrounding transaction usable on PostgreSQL.
  * It serves the processed-event store and the first save of an aggregate alike.
  *
+ * Only a conflict on `conflict` is ignored, on PostgreSQL and SQLite: a row that takes a value
+ * another row holds under another unique constraint (an email) is refused by the database, as
+ * any statement would be. MySQL has no conflict target: its `INSERT IGNORE` skips that row too.
+ *
  * `table` is the query builder of the target table, built on `executor`:
  * `insertIgnoringConflict(db, db('invoices').withSchema('billing'), { row, conflict: 'id' })`.
  */

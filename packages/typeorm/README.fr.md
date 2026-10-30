@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:969e2fb8013f859e -->
+<!-- translation-of: README.md sha256:cb998c151ea450d3 -->
 
 # @ddd-ts-kit/typeorm
 
@@ -239,7 +239,12 @@ Dans le style explicite, sans le décorateur, la même liaison tient en une lign
 `ConcurrencyError` (une `DomainError` de code `CONCURRENCY_CONFLICT`) quand l'instruction gardée
 n'a écrit aucune ligne, et fait avancer `invoice.version` sinon. `insertIgnoringConflict` insère
 sauf si la clé existe et dit s'il l'a fait ; contrairement à une violation d'unicité
-interceptée, il laisse utilisable la transaction PostgreSQL qui l'entoure. N'utilisez pas
+interceptée, il laisse utilisable la transaction PostgreSQL qui l'entoure. Il n'ignore qu'un
+conflit sur la clé primaire (`ON CONFLICT (id) DO NOTHING` sur PostgreSQL et SQLite) : une ligne
+qui prend une valeur qu'une autre ligne détient sous une contrainte d'unicité (un e-mail) est
+refusée par la base, et `optimisticUpdate` lève `UniqueViolationError` (code `CONFLICT`, 409),
+pas une mise à jour perdue ; sur MySQL, qui n'a pas de cible de conflit, `INSERT IGNORE` écarte
+aussi cette ligne. N'utilisez pas
 `manager.save` pour un agrégat : il lit avant d'écrire et choisit seul entre insertion et mise à
 jour, ce qui défait la garde de version. Le `@VersionColumn` de TypeORM n'est pas utilisé pour la
 même raison : la version appartient à l'agrégat.

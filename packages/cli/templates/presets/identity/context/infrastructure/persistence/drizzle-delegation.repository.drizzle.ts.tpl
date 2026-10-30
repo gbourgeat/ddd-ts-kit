@@ -59,7 +59,11 @@ export class DrizzleDelegationRepository implements DelegationRepository {
   private insert(state: VersionedDelegation) {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
 
-    return executorOf(this.database).insert(delegations).values(row).onConflictDoNothing().returning({ id: delegations.id });
+    return executorOf(this.database)
+      .insert(delegations)
+      .values(row)
+      .onConflictDoNothing({ target: delegations.id })
+      .returning({ id: delegations.id });
   }
 
   private update(state: VersionedDelegation, expected: number) {

@@ -271,6 +271,17 @@ concurrent one, a deadlock (`40P01`) or a serialization failure (`40001`, Prisma
 whichever statement it chose: `TransactionConflictError`, a `ConcurrencyError` whose `cause` is
 the error of the driver, never an unexpected error.
 
+A save that takes a value another row holds under a unique constraint (an email, a number) is
+not a lost update: running it again is refused again. The four ORM answer it alike, on an
+insert and on an update: `UniqueViolationError`, a `ConflictError` (code `CONFLICT`, 409) whose
+`cause` is the error of the driver (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`,
+`P2002`), raised by `optimisticUpdate`. The first save ignores a conflict on the id alone
+(`ON CONFLICT (id) DO NOTHING`); on Prisma, whose `skipDuplicates` names no target,
+`rowsCreated` looks the id up when nothing was written. A handler that has a business answer
+for the taken value (`EMAIL_TAKEN`) catches `UniqueViolationError` and raises its own refusal.
+On MySQL, which has no conflict target, `INSERT IGNORE` skips that row too, and the first save
+reads as a lost update.
+
 ![Two transactions load invoice inv-1 at version 3; the first update matches version 3 and writes version 4; the second update still expects version 3, writes no row and fails with ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.svg)
 
 The fake of the unit specs and the real adapter keep that promise alike: the same

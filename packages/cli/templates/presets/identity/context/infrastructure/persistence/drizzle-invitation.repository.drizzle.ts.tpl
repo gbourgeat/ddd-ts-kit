@@ -51,7 +51,11 @@ export class DrizzleInvitationRepository implements InvitationRepository {
   private insert(state: VersionedInvitation) {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
 
-    return executorOf(this.database).insert(invitations).values(row).onConflictDoNothing().returning({ id: invitations.id });
+    return executorOf(this.database)
+      .insert(invitations)
+      .values(row)
+      .onConflictDoNothing({ target: invitations.id })
+      .returning({ id: invitations.id });
   }
 
   private update(state: VersionedInvitation, expected: number) {

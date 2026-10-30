@@ -11,7 +11,7 @@ import {
   type JobUpdate,
   type NewJob,
 } from '@ddd-ts-kit/scheduling';
-import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict';
+import { insertIgnoringAnyConflict } from '../sql/insert-ignoring-any-conflict';
 import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
 import { jobEntity } from './job-entity';
 import type { JobRow } from './job-row';
@@ -43,7 +43,7 @@ export class TypeOrmJobStore implements JobStore {
     const manager = this.context.manager();
     const tenantId = tenantKeyOf(job.enqueuedBy);
 
-    const inserted = await insertIgnoringConflict(manager, this.jobs, {
+    const inserted = await insertIgnoringAnyConflict(manager, this.jobs, {
       id: job.id,
       name: job.name,
       queue: job.queue,

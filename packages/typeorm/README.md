@@ -228,7 +228,11 @@ In the explicit style, without the decorator, the same binding is one line of
 `ConcurrencyError` (a `DomainError` with code `CONCURRENCY_CONFLICT`) when the guarded
 statement wrote no row, and moves `invoice.version` on otherwise. `insertIgnoringConflict`
 inserts unless the key exists and says whether it did; unlike a caught unique violation it
-leaves the surrounding PostgreSQL transaction usable. Do not use `manager.save` for an
+leaves the surrounding PostgreSQL transaction usable. It ignores a conflict on the primary key
+alone (`ON CONFLICT (id) DO NOTHING` on PostgreSQL and SQLite): a row that takes a value
+another row holds under a unique constraint (an email) is refused by the database, and
+`optimisticUpdate` raises `UniqueViolationError` (code `CONFLICT`, 409), not a lost update; on
+MySQL, which has no conflict target, `INSERT IGNORE` skips that row too. Do not use `manager.save` for an
 aggregate: it reads before writing and decides by itself between insert and update, which
 defeats the version guard. TypeORM's own `@VersionColumn` is not used for the same reason: the
 version belongs to the aggregate.

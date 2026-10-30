@@ -66,7 +66,11 @@ export class DrizzleMemberRepository implements MemberRepository {
   private insert(state: VersionedMember) {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
 
-    return executorOf(this.database).insert(members).values(row).onConflictDoNothing().returning({ id: members.id });
+    return executorOf(this.database)
+      .insert(members)
+      .values(row)
+      .onConflictDoNothing({ target: members.id })
+      .returning({ id: members.id });
   }
 
   private update(state: VersionedMember, expected: number) {

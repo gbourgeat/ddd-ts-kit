@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:262bc6a4dfeddf99 -->
+<!-- translation-of: README.md sha256:b6ec10d4ebb5b095 -->
 
 # @ddd-ts-kit/drizzle
 
@@ -299,7 +299,7 @@ export class DrizzleOrderRepository implements OrderRepository {
       const row = OrderMapper.toRow(order, next);
       const written =
         expected === 0
-          ? await db.insert(orders).values(row).onConflictDoNothing().returning({ id: orders.id })
+          ? await db.insert(orders).values(row).onConflictDoNothing({ target: orders.id }).returning({ id: orders.id })
           : await db
               .update(orders)
               .set(row)
@@ -324,8 +324,14 @@ schéma relationnel (`drizzle(url, { schema })`), déclarez `Database` comme
 
 | `expected` | Instruction | Aucune ligne écrite signifie |
 |---|---|---|
-| `0` : jamais enregistré | `INSERT ... ON CONFLICT DO NOTHING` | l'id est déjà pris |
+| `0` : jamais enregistré | `INSERT ... ON CONFLICT (id) DO NOTHING` | l'id est déjà pris |
 | `n` | `UPDATE ... SET version = n + 1 WHERE id = ... AND version = n` | une autre transaction l'a enregistré depuis sa lecture |
+
+La cible du conflit est l'id seul (`onConflictDoNothing({ target: orders.id })`) : sans elle,
+PostgreSQL écarte aussi une ligne qui prend une valeur qu'une autre ligne détient sous une
+contrainte d'unicité (un e-mail), et l'enregistrement se lit comme une mise à jour perdue.
+Nommée, cette ligne est refusée par la base, et `optimisticUpdate` lève `UniqueViolationError`
+(code `CONFLICT`, 409), comme pour une mise à jour qui prend une telle valeur.
 
 ## Colonnes d'audit, restriction au tenant et pages
 
@@ -430,7 +436,9 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
     // tenant_id vient du travail en cours, created_* et updated_* de son acteur et de la Clock
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
 
-    return this.database.executor().insert(invoices).values(row).onConflictDoNothing().returning({ id: invoices.id });
+    const insertion = this.database.executor().insert(invoices).values(row);
+
+    return insertion.onConflictDoNothing({ target: invoices.id }).returning({ id: invoices.id });
   }
 
   private update(state: VersionedInvoice, expected: number) {

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a148519a238501a1 -->
+<!-- translation-of: README.md sha256:7507d8bf6f208220 -->
 
 # @ddd-ts-kit/prisma
 
@@ -295,7 +295,7 @@ export abstract class InvoiceRepository extends Repository<Invoice> {}
 // contexts/billing-core/infrastructure/persistence/prisma-invoice.repository.ts
 import type { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { optimisticUpdate, PrismaContext } from '@ddd-ts-kit/prisma';
+import { optimisticUpdate, PrismaContext, rowsCreated } from '@ddd-ts-kit/prisma';
 
 @Repository(InvoiceRepository)
 export class PrismaInvoiceRepository implements InvoiceRepository {
@@ -320,12 +320,15 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const row = { ...invoice.state, version: next };
-      const written =
-        expected === 0
-          ? await invoices.createMany({ data: [row], skipDuplicates: true })
-          : await invoices.updateMany({ where: { id: invoice.id, version: expected }, data: row });
 
-      return written.count;
+      if (expected === 0) {
+        const created = await invoices.createMany({ data: [row], skipDuplicates: true });
+
+        // skipDuplicates écarte toute valeur unique déjà prise : rowsCreated distingue un id pris d'une autre valeur.
+        return rowsCreated(created, { id: invoice.id, holders: () => invoices.count({ where: { id: invoice.id } }) });
+      }
+
+      return (await invoices.updateMany({ where: { id: invoice.id, version: expected }, data: row })).count;
     });
   }
 }
@@ -352,6 +355,7 @@ interface TransactionClient {
   readonly invoice: {
     findUnique(args: { where: { id: string } }): Promise<InvoiceRow | null>;
     createMany(args: { data: InvoiceRow[]; skipDuplicates: boolean }): Promise<{ count: number }>;
+    count(args: { where: { id: string } }): Promise<number>;
     updateMany(args: { where: { id: string; version: number }; data: InvoiceRow }): Promise<{ count: number }>;
   };
 }
@@ -372,7 +376,13 @@ assignable à celui-ci : déclarez plutôt `Database` comme
 n'a écrit aucune ligne, et fait avancer `invoice.version` sinon. Utilisez `createMany` et
 `updateMany` pour l'écriture gardée : ils renvoient un nombre de lignes, là où `create` et
 `update` lèvent une exception, et une violation d'unicité levée interrompt la transaction
-PostgreSQL englobante. `upsert` ne peut pas porter la garde de version.
+PostgreSQL englobante. `upsert` ne peut pas porter la garde de version. `skipDuplicates` ne
+nomme aucune cible de conflit : il écarte la ligne d'un agrégat qui prend une valeur qu'une
+autre ligne détient sous une contrainte d'unicité (un e-mail) comme il écarte un id déjà pris.
+`rowsCreated` les distingue : quand rien n'a été écrit et qu'aucune ligne ne détient l'id, il
+lève `UniqueViolationError` (code `CONFLICT`, 409), ce que répondent les autres ORM, et une
+instruction que la base refuse pour une valeur unique (`P2002`) est levée de même par
+`optimisticUpdate`.
 
 ![Deux transactions chargent la facture inv-1 en version 3 ; A enregistre d'abord, sa mise à jour correspond à la version 3 et la ligne passe en version 4 ; B enregistre ensuite, sa mise à jour attend toujours la version 3, ne correspond à aucune ligne, et optimisticUpdate lève une ConcurrencyError de code CONCURRENCY_CONFLICT ; la transaction de B est annulée](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/persistence-optimistic-concurrency.fr.svg)
 
@@ -455,7 +465,7 @@ d'un projet `--tenancy shared-table`, et `generate repository` les écrit ainsi.
 ```ts
 import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { optimisticUpdate, ownTenantWhere, tenantWhere } from '@ddd-ts-kit/prisma';
+import { optimisticUpdate, ownTenantWhere, rowsCreated, tenantWhere } from '@ddd-ts-kit/prisma';
 
 @Repository(InvoiceRepository)
 export class PrismaInvoiceRepository implements InvoiceRepository {
@@ -475,16 +485,19 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { ...InvoiceMapper.toRow(invoice), version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.count;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).count;
     });
   }
 
-  private insert(state: VersionedInvoice): Promise<Prisma.BatchPayload> {
+  private async insert(state: VersionedInvoice): Promise<number> {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
+    const created = await this.database.client().invoice.createMany({ data: [row], skipDuplicates: true });
 
-    return this.database.client().invoice.createMany({ data: [row], skipDuplicates: true });
+    return rowsCreated(created, {
+      id: state.id,
+      holders: () => this.database.client().invoice.count({ where: { id: state.id, ...tenantWhere(this.scope) } }),
+    });
   }
 
   private update(state: VersionedInvoice, expected: number): Promise<Prisma.BatchPayload> {
