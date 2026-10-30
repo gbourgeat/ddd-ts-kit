@@ -5,6 +5,7 @@ import { cli, exists, read, tempDir, walk, write } from './helpers';
 import { initProject } from './support/init-project';
 import { NPM } from './support/npm';
 import { leavingProject } from '../src/workspace/leaving-project';
+import { realPathOf } from '../src/workspace/real-path-of';
 import { realRootOf } from '../src/workspace/real-root-of';
 import { commitAll } from './support/commit-all';
 
@@ -163,9 +164,12 @@ describe.skipIf(process.platform === 'win32')('the root of the project, resolved
     const root = realRootOf(reached);
 
     expect(root).toBe(fs.realpathSync(real));
-    expect(leavingProject(root, path.join(reached, 'src/main.ts'))).toBeUndefined();
+    const inside = path.join(reached, 'src/main.ts');
+    const outside = path.join(reached, '../elsewhere.ts');
 
-    expect(leavingProject(root, path.join(reached, '../elsewhere.ts'))).toEqual({
+    expect(leavingProject(root, inside, realPathOf(inside))).toBeUndefined();
+
+    expect(leavingProject(root, outside, realPathOf(outside))).toEqual({
       to: path.join(path.dirname(reached), 'elsewhere.ts'),
     });
   });

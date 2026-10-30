@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ebf79468d2e45e4f -->
+<!-- translation-of: README.md sha256:0a472712f3a4516d -->
 
 # ddd-ts-kit
 
@@ -118,6 +118,19 @@ autre endroit), fait refuser la commande avec le code de sortie 2 et le chemin n
 écriture ; un lien qui reste dans le projet est suivi. `init` refuse un répertoire personnel et la racine du système de
 fichiers, où son `.claude/settings.json` serait le réglage de toutes les sessions : lancez-le dans
 le répertoire du projet.
+
+Chaque fichier est écrit en entier ou pas du tout : dans `<name>.<random>.tmp` à côté de lui, puis
+renommé à sa place. Une commande arrêtée à mi-chemin ne laisse que des fichiers complets (un
+processus tué à ce moment peut laisser son fichier `.tmp`, qu'on peut supprimer), et la même
+commande relancée écrit ceux qui manquent. `init` sur un projet déjà initialisé, et chaque
+`generate` d'un genre qui écrit des fichiers partagés (`writesShared` dans `generate --help
+--json`), tiennent le verrou du projet, `.ddd-ts-kit/lock`, que git ignore : une deuxième commande
+attend jusqu'à cinq secondes, puis sort avec le code 2 en nommant la commande qui le tient et le
+correctif, lancer les générateurs l'un après l'autre :
+``Another generator holds the lock of this project: `ddd-ts-kit generate context billing` (pid 1234, started 12 seconds ago).``
+Un verrou pris sur cette machine est gardé tant que sa commande tourne, et repris une fois qu'elle
+est terminée ; un verrou pris sur une autre machine, ou dont le détenteur ne se lit pas, est repris
+une minute après avoir été pris.
 
 `init --force` sur un projet déjà initialisé réécrit les fichiers qui appartiennent à `init` et
 garde la configuration : les contextes et leurs amonts, les règles, les limites, les dérogations
@@ -759,7 +772,8 @@ ddd-ts-kit generate [<kind>] --help [--json]
 ```
 
 Un passage de `generate` fait cinq choses, dans cet ordre, et n'écrit rien quand la première
-refuse :
+refuse (chaque fichier écrit en entier, un genre qui écrit des fichiers partagés sous le verrou du
+projet : [init](#init)) :
 
 ![Un passage de generate command : le nom est vérifié dans le glossaire du contexte (refusé avec le code de sortie 2 et le --term à ajouter quand un mot n'est pas défini), les fichiers sont écrits depuis les templates, les nouvelles pièces sont enregistrées entre des commentaires marqueurs, les documents dérivés sont rafraîchis, et les endroits qui attendent une décision métier sont affichés en fichier:ligne](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-generate-one-run.fr.svg)
 
@@ -1430,7 +1444,7 @@ de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé.
 
 Une fois les lignes ordonnables, les commandes de génération de leurs cellules `Start with` (entre
 accents graves, `generate ...` ou `npx ddd-ts-kit generate ...`) sont rejouées dans une copie du
-projet (les fichiers que git voit ; le projet reste tel quel), dans l'ordre des vagues, pour
+projet (les fichiers que git voit, un lien symbolique laissé de côté où qu'il pointe ; le projet reste tel quel), dans l'ordre des vagues, pour
 qu'une commande trouve ce que génèrent les lignes d'avant. Le générateur dit lui-même quels noms
 introduit chaque commande (le cas d'usage, l'agrégat et le fait d'un événement, un `--name`, les
 mots d'une `--permission`, ...), et chacun est jugé comme le générateur le juge, contre le

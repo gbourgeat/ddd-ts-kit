@@ -1,4 +1,5 @@
 import { DERIVED_FILES } from '../derived/derived-files';
+import { KIT_FOLDER } from '../workspace/kit-folder';
 
 /** The lockfiles of the package managers a project of the kit can use. */
 const LOCKFILES = ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb'];
@@ -11,7 +12,7 @@ const LOCKFILES = ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml',
 const MERGE_ONLY = [
   'docs/architecture/slices.md',
   'docs/architecture/plan.md',
-  '.ddd-ts-kit/**',
+  `${KIT_FOLDER}/**`,
   '**/migrations/**',
   ...LOCKFILES.map((file) => `**/${file}`),
 ];
