@@ -18,7 +18,7 @@ describe('the name of a bounded context', () => {
     },
   );
 
-  it.each(['core-banking', 'platform-fees', 'data-room', 'shared-services'])(
+  it.each(['core-banking', 'platform-fees', 'data-room', 'shared-services', 'scheduling'])(
     'is accepted as %s: only the whole name is judged',
     (name) => {
       const root = initProject('--context', 'billing:core', '--audit', 'off');

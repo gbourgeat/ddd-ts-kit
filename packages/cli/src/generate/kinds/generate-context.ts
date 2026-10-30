@@ -4,7 +4,7 @@ import { CliError } from '../../cli-error';
 import { MissingPrerequisite } from '../missing-prerequisite';
 import { parseContextName, type Name } from '../../naming';
 import { TECHNICAL_WORDS } from '../../check/language/technical-words';
-import { moduleNameFlaw } from '../../model-modules';
+import { CONTEXT_FOLDERS } from '../../model-modules/module-layers';
 import { SHARED_KERNEL } from '../shared-kernel-scope';
 import { PRISMA_MAIN_SCHEMA, prismaSchemaOf } from '../../prisma-schema';
 import type { Workspace } from '../../workspace';
@@ -123,9 +123,9 @@ function refuseUnaddressableName(context: Name): void {
     );
   }
 
-  if (moduleNameFlaw(context.kebab)?.reason === 'role-folder') {
+  if (CONTEXT_FOLDERS.includes(context.kebab)) {
     throw new CliError(
-      `"${context.kebab}" cannot name a bounded context: it is the name of a folder of the tree (a layer, a role folder or a folder of the root of a context).`,
+      `"${context.kebab}" cannot name a bounded context: it is the name of a layer or of a folder of the root of a context.`,
       'Name the context after the business capability it serves, for example billing or order-fulfilment.',
     );
   }
