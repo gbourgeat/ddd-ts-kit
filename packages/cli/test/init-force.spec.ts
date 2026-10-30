@@ -56,7 +56,11 @@ describe('init --force on a project that is already initialised', () => {
     expect(Object.keys(Object(readJson(root, CONFIG)))).toEqual(Object.keys(Object(before)));
     expect(read(root, 'knip.json')).toContain('src/contexts/*/published-language/index.ts');
     expect(read(root, '.dependency-cruiser.cjs')).toContain('shipping');
-    expect(checkJsonOf(cli(root, 'check', '--rule', 'config/valid', '--json')).violations).toEqual([]);
+
+    // Kept as the team wrote it, and named by check: nothing reads it.
+    expect(
+      checkJsonOf(cli(root, 'check', '--rule', 'config/valid', '--json')).violations.map(({ message }) => message),
+    ).toEqual(['"team" is not a key of ddd-ts-kit.config.json: nothing reads it.']);
   });
 
   it('records the version that rewrote the files, first, over an older one or none', () => {
@@ -159,10 +163,10 @@ describe('init --force and the spelling of the imports, the settings of the agen
     expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'moduleResolution')).toBe('NodeNext');
     expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application.js';");
 
-    // The roles of the platform are written from their template again: the grants the generators had added are gone, and said.
-    expect([...new Set(checkJsonOf(cli(root, 'check', '--json')).violations.map(({ ruleId }) => ruleId))]).toEqual([
-      'authz/granted',
-    ]);
+    // The roles of the platform are written from their template again: the grants the generators had added are gone, and said; config/valid names the key the team wrote that nothing reads.
+    expect(
+      [...new Set(checkJsonOf(cli(root, 'check', '--json')).violations.map(({ ruleId }) => ruleId))].sort(),
+    ).toEqual(['authz/granted', 'config/valid']);
   });
 
   it('moves the declarations to the other spelling when asked, and leaves the imports of the contexts to the rule and its fix', () => {
@@ -178,10 +182,17 @@ describe('init --force and the spelling of the imports, the settings of the agen
     // The entry point is the team's once written: it keeps its imports, which the rule reports.
     expect(read(root, 'src/main.ts')).toContain("from '@/platform/composition/compose-application.js';");
     expect(found.length).toBeGreaterThan(50);
-    expect([...new Set(found.map(({ ruleId }) => ruleId))].sort()).toEqual(['authz/granted', 'imports/extension']);
+
+    expect([...new Set(found.map(({ ruleId }) => ruleId))].sort()).toEqual([
+      'authz/granted',
+      'config/valid',
+      'imports/extension',
+    ]);
 
     // What init does not write, or keeps, keeps its imports: the contexts, the entry points and the specs generators wrote.
-    expect([...new Set(found.map(({ file }) => file.split('/').slice(0, 2).join('/')))].sort()).toEqual([
+    const keptImports = found.filter(({ ruleId }) => ruleId === 'imports/extension');
+
+    expect([...new Set(keptImports.map(({ file }) => file.split('/').slice(0, 2).join('/')))].sort()).toEqual([
       'src/apps',
       'src/contexts',
       'src/main.ts',
@@ -195,7 +206,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
       expect.arrayContaining(['src/platform/resilience/own-policy.ts']),
     );
 
-    expect(found[0]?.fix).toContain('`eslint --fix` rewrites it');
+    expect(keptImports[0]?.fix).toContain('`eslint --fix` rewrites it');
   });
 
   it('adds no permission twice to the settings of the agent when init runs again, on pnpm as on npm', () => {

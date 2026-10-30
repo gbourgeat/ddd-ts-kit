@@ -25,6 +25,7 @@ import { keepFlatPlatform } from '../platform-folders';
 import { ignoreWorktrees } from './ignore-worktrees';
 import { isTeamFile } from './is-team-file';
 import { forcedNote } from './forced-note';
+import { keptCombinationNotes } from './kept-combination-notes';
 import { keptOrMerged } from './kept-or-merged';
 import { writeManifest } from './manifest/write-manifest';
 import { dependenciesAgainstStack } from './manifest/dependencies-against-stack';
@@ -102,7 +103,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
 
   const report = ws.commit(options.dryRun);
 
-  report.notes.push(...closingNotes(report, options, config));
+  report.notes.push(...keptCombinationNotes(config, flat), ...closingNotes(report, options, config));
 
   return report;
 }
