@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { isRecord } from '../check/support/is-record';
 import { findProjectFormatter } from '../migration/find-project-formatter';
+import { inProjectDialect } from '../package-manager/in-project-dialect';
 
 /** What a tool answered: its exit code and everything it printed. */
 interface ToolRun {
@@ -65,7 +66,12 @@ function formatCheck(root: string, files: readonly string[], run: RunTool): Chec
 
   return result.status === 0
     ? {}
-    : { finding: `${formatter.name} wants these files formatted (\`npm run format\`):\n${tail(result.output)}` };
+    : {
+        finding: inProjectDialect(
+          `${formatter.name} wants these files formatted (\`npm run format\`):\n${tail(result.output)}`,
+          root,
+        ),
+      };
 }
 
 interface LintRequest {
@@ -92,13 +98,13 @@ function lintCheck({ root, files, run, cli }: LintRequest): Check {
 
   return result.status === 0
     ? {}
-    : { finding: `The linter reports these files (\`npm run lint\`):\n${tail(result.output)}` };
+    : { finding: inProjectDialect(`The linter reports these files (\`npm run lint\`):\n${tail(result.output)}`, root) };
 }
 
 /** The node arguments that lint the given files as the `lint` script does, or why they cannot be found. */
 function lintProgram(root: string, script: string, cli: string | undefined): string[] | string {
   if (!resolves(root, 'eslint')) {
-    return 'ESLint is not installed (run `npm install`)';
+    return inProjectDialect('ESLint is not installed (run `npm install`)', root);
   }
 
   if (/\bddd-ts-kit\s+lint\b/.test(script)) {

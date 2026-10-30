@@ -165,7 +165,7 @@ describe('ddd-ts-kit lint', () => {
 
     expect(result.code).toBe(2);
     expect(result.stderr).toContain('ESLint is not installed');
-    expect(result.stderr).toContain('npm ci');
+    expect(result.stderr).toContain('pnpm install --frozen-lockfile');
   });
 
   it('prints the failure of ESLint itself and exits 2', () => {
