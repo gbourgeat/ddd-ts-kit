@@ -65,6 +65,13 @@ costs: [../start/token-economy.md](../start/token-economy.md).
 3. The checks of the story: the scoped ones while iterating, then `npm run verify` and
    `npx ddd-ts-kit story --gate close`. Commit, `git push` (never `--force`), then
    `gh pr checks $ARGUMENTS --watch`.
+   After each push, the digest of the branch as it now stands goes at the top of the body:
+   `npx ddd-ts-kit digest --base <base>` (`<base>` the `base` of `.ddd-ts-kit/story.json`), its
+   output pasted as printed under `## Digest`, the first section of the body, in place of the
+   one there (`gh pr view $ARGUMENTS --json body`, then `gh pr edit $ARGUMENTS --body-file
+   <file>`; on GitLab `glab mr update $ARGUMENTS --description`), and under `### Digest` of
+   `## Report` in the story file, committed with the next change: the reviewer reads what the
+   branch changes before its diff.
 4. Back to 1, until nothing waits but the approval of the code owner: every check green, every
    thread resolved or answered, `reviewDecision` no longer `CHANGES_REQUESTED`. A round that
    changed nothing ends the loop: report what blocks.
