@@ -41,6 +41,53 @@ export class SearchInvoicesController {
 }
 `;
 
+/** A route whose body is written inline, over lines, with the commas of its fields. */
+const INLINE_BODY = `import { Controller } from '@ddd-ts-kit/http';
+import { z } from 'zod';
+
+@Controller({
+  method: 'POST',
+  path: '/payments',
+  body: z.object({
+    amount: z.number(),
+    currency: z.string(),
+  }),
+  response: { status: 204, description: 'Paid.' },
+  errors: [],
+})
+export class PayInvoiceController {}
+`;
+
+/** A route whose body is the last of its options, with no comma after it. */
+const LAST_BODY = `import { Controller } from '@ddd-ts-kit/http';
+
+@Controller({ method: 'PUT', path: '/receipts', response: { status: 204, description: 'Kept.' }, errors: [], body: ReceiptBody })
+export class KeepReceiptController {}
+`;
+
+describe('describe, the schema of a route', () => {
+  it('reports a schema written inline whole, and one that closes the options', () => {
+    const root = initProject('--context', 'billing:core');
+
+    write(root, `${HTTP}/payments/pay-invoice/pay-invoice.controller.ts`, INLINE_BODY);
+    write(root, `${HTTP}/receipts/keep-receipt/keep-receipt.controller.ts`, LAST_BODY);
+
+    const described = cli(root, 'describe', 'billing', '--json');
+
+    expect(described.code, described.stderr).toBe(0);
+
+    expect(jsonAt(described.json(), 'routes')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: '/payments',
+          request: [{ part: 'body', schema: 'z.object({ amount: z.number(), currency: z.string(), })' }],
+        }),
+        expect.objectContaining({ path: '/receipts', request: [{ part: 'body', schema: 'ReceiptBody' }] }),
+      ]),
+    );
+  });
+});
+
 describe('describe, the routes written by hand', () => {
   let root: string;
 

@@ -32,25 +32,27 @@ describe('the tree of a commit, when a reader of its contexts fails', () => {
     expect(tree).toMatchObject({ contexts: [], problem: `${file} is under no directory an import alias names` });
   });
 
-  // A refusal once #681 is fixed.
-  it('lets through what is no refusal: a config nested too deep for its refusal to be written', () => {
+  it('says why it describes nothing when the config is nested too deep to be read', () => {
     const nested = `${'['.repeat(200_000)}${']'.repeat(200_000)}`;
 
-    expect(() => treeOf({ 'ddd-ts-kit.config.json': `{"stack":{"orm":${nested}}}` })).toThrow(RangeError);
+    expect(treeOf({ 'ddd-ts-kit.config.json': `{"stack":{"orm":${nested}}}` })).toMatchObject({
+      contexts: [],
+      problem: 'ddd-ts-kit.config.json is nested more than 32 levels deep',
+    });
   });
 
-  it('lets through what is no refusal: a schema written inline that a regular expression cannot hold', () => {
+  it('describes a schema written inline with its commas, which a regular expression once choked on', () => {
     const controller = [
       "@Controller({ method: 'POST', path: '/pay', body: z.object({ amount: z.number(), currency: z.string() }), })",
       'export class PayController {}',
       '',
     ].join('\n');
 
-    expect(() =>
-      treeOf({
-        'ddd-ts-kit.config.json': JSON.stringify({ contexts: CONTEXTS }),
-        'src/contexts/billing/presentation/http/pay.controller.ts': controller,
-      }),
-    ).toThrow(SyntaxError);
+    const tree = treeOf({
+      'ddd-ts-kit.config.json': JSON.stringify({ contexts: CONTEXTS }),
+      'src/contexts/billing/presentation/http/pay.controller.ts': controller,
+    });
+
+    expect(tree).not.toHaveProperty('problem');
   });
 });
