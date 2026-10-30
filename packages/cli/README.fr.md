@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:82730684d9ece4af -->
+<!-- translation-of: README.md sha256:ed87868060171621 -->
 
 # ddd-ts-kit
 
@@ -1945,7 +1945,7 @@ Où en est une story, phase par phase, et l'étape suivante : sa spécification 
 conception par ligne non faite (`docs/architecture/reviews/<story>.md`, `## #<id>`), son
 acceptation écrite et verrouillée, ses lignes faites sans marqueur à elle, son acceptation qui
 passe, son tronc fusionné, son `## Origin` (`From:` et `Built with:`), son `## Report` avec
-`### Verification` nommant `npm run verify`. Dans le *worktree* d'une story, la story est la
+`### Digest` (ce qu'imprime `digest`) puis `### Verification` nommant `npm run verify`. Dans le *worktree* d'une story, la story est la
 sienne. `--gate build` sort en 1 tant que les quatre premières phases ne sont pas franchies (le
 code peut commencer : la garde du plugin ouvre les contextes) ; `--gate close` tant que toutes ne
 le sont pas. Pour une story de type `fix` (son `story.json`, ou une section `## Regression` dans
@@ -1953,6 +1953,46 @@ son fichier), les lignes et leur conception sont facultatives, la phase d'accept
 *specs* listées sous `## Regression` au lieu de `test/acceptance/`, chacune devant exister, et
 aucune phase « passe » n'est lue : les *specs* de régression tournent avec les tests du projet.
 `--json` imprime `{ story, gate, met, next, phases }`.
+
+## digest
+
+```
+ddd-ts-kit digest --base <ref> [--json]
+```
+
+Ce que change la branche, pour qui la relit, en une trentaine de lignes de Markdown lues avant le
+*diff* : le skill story l'écrit dans `## Report`, le skill pull-request le garde en tête du corps
+de la *pull request*. HEAD est comparé à sa base de fusion avec `<ref>`, si bien qu'un tronc qui a
+avancé depuis la création de la branche n'ajoute rien ; les deux *commits* sont écrits sous le
+répertoire temporaire du système par un index qui leur est propre (`git read-tree`, puis
+`git checkout-index`, qui, à la différence de `git archive`, garde ce que nomme `export-ignore` de
+`.gitattributes`), décrits là comme `describe` lit un projet,
+puis supprimés : l'arbre de travail n'est jamais extrait, et ce qu'il garde sans *commit* est dit
+dans une note, sans entrer dans le *digest*.
+
+- **By context** : les cas d'usage, les permissions avec les rôles qui les détiennent par leur nom
+  (dans `<platformDir>/auth/roles/roles.ts`, et `signed-in` pour `signed-in-grants.ts`), les
+  routes avec leurs codes d'erreur, les événements publiés et consommés, les ports avec leurs
+  adaptateurs, chacun `added`, `changed` ou `removed`.
+- **New spec titles** : pour chaque fichier de *spec* que change la branche, les titres que la
+  base n'énonçait pas, lus comme les pages de comportement les lisent ; ceux qu'a écrits un
+  *template* du kit sont comptés, non listés.
+- **To review, in reading order** : les fichiers écrits par une personne, par partie : la racine
+  d'un contexte (son `CONTEXT.md`, ses permissions, ses codes), le domaine (le *shared kernel*
+  aussi), l'application, la présentation (le langage publié aussi), l'infrastructure (les
+  migrations aussi), les tests, le reste (la plateforme, les documents, la configuration).
+- **Regenerated, do not review** : les fichiers générés que nomme le `## Do not report` de
+  `REVIEW.md`, depuis une seule liste : les *barrels*, `openapi/`, `clients/`, le document
+  AsyncAPI et le catalogue d'événements, les pages de comportement, `docs/context-map.md`, les
+  documents OpenAPI de la plateforme, l'index des schémas, `.dependency-cruiser.cjs`, et un
+  `CONTEXT.md` changé dans ses seules sections générées.
+
+Hors d'un dépôt git, avant le premier *commit*, sur une référence que git ne connaît pas ou qui ne
+partage aucun historique avec HEAD, il refuse avec le code de sortie 2. `--json` imprime
+`{ base, baseCommit, head, branch, contexts, specs, review, regenerated, notes }` : chaque contexte
+`{ name, change, useCases, permissions, routes, publishedEvents, consumedEvents, ports }`, chaque
+entrée avec son `change` ; chaque *spec* `{ file, titles: [{ title, state }], generated }` ;
+chaque fichier à relire `{ path, part, change }`.
 
 ## cited
 

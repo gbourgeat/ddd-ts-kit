@@ -1,4 +1,6 @@
 export { addContextToConfigText } from './add-context-to-config-text';
+export { KNOWN_CONFIG_KEYS } from './known-config-keys';
+export { KNOWN_STACK_KEYS } from './known-stack-keys';
 export { AGENT_PROFILES } from './agent-profiles';
 export { CI_EXTRAS } from './ci-extras';
 export { ciExtraProblems } from './ci-extra-problems';

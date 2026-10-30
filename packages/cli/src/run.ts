@@ -9,6 +9,7 @@ import { citedCommand } from './commands/cited';
 import { controllersCommand } from './commands/controllers';
 import { depcruiseConfigCommand } from './commands/depcruise-config';
 import { describeCommand } from './commands/describe';
+import { digestCommand } from './commands/digest';
 import { docsCommand } from './commands/docs';
 import { doctorCommand } from './commands/doctor';
 import { lintCommand } from './commands/lint';
@@ -62,6 +63,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'story-scope': storyScopeCommand,
   story: storyCommand,
   stories: storiesCommand,
+  digest: digestCommand,
   measures: measuresCommand,
   mutation: mutationCommand,
   worktree: worktreeCommand,

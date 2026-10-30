@@ -1,5 +1,11 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { runCheck } from '../src/check/engine/run-check';
+import { KNOWN_CONFIG_KEYS, KNOWN_STACK_KEYS } from '../src/config';
+import { parseConfig } from '../src/config/parse-config';
+import { parseStack } from '../src/config/parse-stack';
+import { loadProject } from '../src/check/project/load-project';
 import { changeConfig } from './check-support';
 import { cli, exists, tempDir } from './helpers';
 import { projectWith, reported } from './rules-support';
@@ -123,3 +129,72 @@ describe('config/valid on the directories the generators write in', () => {
     expect(exists(root, 'src/contexts/ordering/CONTEXT.md')).toBe(true);
   });
 });
+
+describe('config/valid on the keys of the file', () => {
+  const aboutKeys = (root: string): [string, string][] =>
+    runCheck(loadProject(root), { rules: ['config/valid'] })
+      .violations.filter(({ message }) => message.includes('is not a key'))
+      .map(({ message, fix }) => [message, fix]);
+
+  it('names a key the kit does not read, at the root and under stack, in the order of the file, with the nearest key it reads', () => {
+    const root = projectWith({}, { contextDir: 'src/ctx', stack: { ormm: 'knex' }, flavour: 'vanilla' });
+
+    expect(aboutKeys(root)).toEqual([
+      [
+        '"contextDir" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Write "contextsDir", the nearest key the kit reads, or remove it.',
+      ],
+      [
+        '"stack.ormm" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Write "stack.orm", the nearest key the kit reads, or remove it.',
+      ],
+      [
+        '"flavour" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Remove it, or write the key as docs/CONFIG.md spells it.',
+      ],
+    ]);
+  });
+
+  it('points a key written at the other level to its level, and leaves $schema and the // comment keys alone', () => {
+    const root = projectWith(
+      {},
+      { orm: 'knex', $schema: './config.schema.json', '//': 'why', stack: { contextsDir: 'src/ctx', '//': 'why' } },
+    );
+
+    expect(aboutKeys(root)).toEqual([
+      [
+        '"orm" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Move it under "stack": the kit reads it there.',
+      ],
+      [
+        '"stack.contextsDir" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Move it to the root of the file: the kit reads it there.',
+      ],
+    ]);
+  });
+
+  it('places each finding on the line of its key, a key of stack after the stack object, a root key named like one of stack on its own line', () => {
+    const root = projectWith({}, { stack: { orm: 'drizzle', ormm: 'knex' }, orm: 'knex' });
+    const found = reported(root, 'config/valid').filter(({ message }) => message.includes('is not a key'));
+
+    expect(found.map(({ message, line }) => [message.split(' ')[0], line])).toEqual([
+      ['"stack.ormm"', lineOfText(root, '"ormm"')],
+      ['"orm"', lineOfText(root, '"orm": "knex"')],
+    ]);
+  });
+
+  it('knows exactly the keys the parser reads, at the root and under stack', () => {
+    expect([...KNOWN_CONFIG_KEYS].sort()).toEqual(Object.keys(parseConfig({}, { leaving: 'default' })).sort());
+    expect([...KNOWN_STACK_KEYS].sort()).toEqual(Object.keys(parseStack({})).sort());
+  });
+
+  it('reads every key a fresh project writes', () => {
+    expect(aboutKeys(initProject())).toEqual([]);
+  });
+});
+
+function lineOfText(root: string, needle: string): number {
+  const text = fs.readFileSync(path.join(root, 'ddd-ts-kit.config.json'), 'utf8');
+
+  return text.slice(0, text.indexOf(needle)).split('\n').length;
+}

@@ -183,6 +183,11 @@ delivers; each decision taken without the owner (`D<n>`, provisional: what, why,
 alternatives, where in the code); each compromise (what was left simpler than the design, and
 why); each amendment of the acceptance and each criterion changed after the lock
 with its verdict (`npx ddd-ts-kit acceptance $0` lists them); each `TODO(review)` left; then
+`### Digest`, what `npx ddd-ts-kit digest --base <base>` prints once the last row is committed
+(`<base>` the `base` of `.ddd-ts-kit/story.json`), pasted under it as printed: per context the
+use cases, permissions and their grants, routes and their error codes, events and ports the
+story changes, its new spec titles, its files to review in reading order and, apart, those the
+kit regenerated, which the reviewer reads before the diff; then
 `### Verification`, the evidence from the toolchain and not your word: the last lines of
 `npm run verify`, of `npm run test:e2e -- test/acceptance/$0` and of `npx ddd-ts-kit
 story-check $0`, pasted as they were printed, and `not verified:` for what could not run here
@@ -190,7 +195,8 @@ story-check $0`, pasted as they were printed, and `not verified:` for what could
 the commits of the branch made by an agent (`git log <base>..HEAD --format=%B | grep -c
 '^Agent:'`) against those made by hand. `npx ddd-ts-kit story $0 --gate close` passes. Commit, push the branch, and
 `gh pr create` with the report as its body, `## Origin` repeated at its top: the record on the
-trunk links back to the intent, the ticket or the incident. Give the owner the link and the
+trunk links back to the intent, the ticket or the incident; `/ddd-ts-kit:pull-request` keeps the
+digest at the very top of the body afterwards. Give the owner the link and the
 report, then stop. When the owner asks for the pull request to be taken to green, the next step
 is `/ddd-ts-kit:pull-request <number>` from this worktree: it sweeps the review comments and
 the failing checks under the rules of this story, and never force-pushes.
