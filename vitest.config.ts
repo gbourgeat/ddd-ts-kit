@@ -95,7 +95,7 @@ const MEASURED_SOURCES = INTEGRATION ? ON_A_SERVER : AFFECTED;
  * A spec that imports a sibling package reaches its sources, never its `dist`: what a spec of knex
  * runs in the kernel is measured in `packages/kernel/src`, and no package has to be built before
  * the specs of another run on its latest code. Each entry of the exports map of a package names
- * the source file its `dist` file is compiled from; an alias matches the whole specifier, so that
+ * the source file its `dist` file is compiled from; the longest specifier comes first, so that
  * `@ddd-ts-kit/kernel` never catches `@ddd-ts-kit/kernel/testing`.
  */
 interface Manifest {
@@ -105,18 +105,19 @@ interface Manifest {
 
 const PACKAGES = fileURLToPath(new URL('packages', import.meta.url));
 
-function sourcesOfTheSiblingPackages(): { find: RegExp; replacement: string }[] {
-  return readdirSync(PACKAGES).flatMap((folder) => {
+function sourcesOfTheSiblingPackages(): { find: string; replacement: string }[] {
+  const aliases = readdirSync(PACKAGES).flatMap((folder) => {
     const manifest = JSON.parse(readFileSync(path.join(PACKAGES, folder, 'package.json'), 'utf8')) as Manifest;
 
     return Object.entries(manifest.exports ?? {}).map(([entry, target]) => {
-      const specifier = entry === '.' ? manifest.name : `${manifest.name}/${entry.slice(2)}`;
+      const find = entry === '.' ? manifest.name : `${manifest.name}/${entry.slice(2)}`;
       const source = target.default.replace(/^\.\/dist\//, 'src/').replace(/\.js$/, '.ts');
-      const find = new RegExp(`^${specifier.replace(/[/.]/g, '\\$&')}$`);
 
       return { find, replacement: path.join(PACKAGES, folder, source) };
     });
   });
+
+  return aliases.sort((left, right) => right.find.length - left.find.length);
 }
 
 /**

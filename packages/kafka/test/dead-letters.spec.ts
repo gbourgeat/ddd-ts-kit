@@ -15,7 +15,7 @@ import { failuresOf } from './support/hooks';
 import { recorder } from './support/recorder';
 import { eventually } from './support/waiting';
 
-describe.each(BROKERS)('KafkaEventBus: dead letters, %s', { timeout: 60_000 }, (_name, connect) => {
+describe.each(BROKERS)('KafkaEventBus: dead letters, %s', { timeout: 60_000 }, (name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
@@ -85,25 +85,29 @@ describe.each(BROKERS)('KafkaEventBus: dead letters, %s', { timeout: 60_000 }, (
     expect(await broker.countIn(deadTopicOf(consumer, topic))).toBe(1);
   });
 
-  it('keeps a record it cannot park on its dead-letter topic, and reports why', async () => {
-    const consumer = broker.consumer('billing');
-    const reported: KafkaFailure[] = [];
-    const bus = broker.bus({ consumer, onFailure: failuresOf(reported) });
-    const billing = recorder(MAX_ATTEMPTS);
-    const topic = broker.topicOf(PLACED);
+  // In memory alone: a real broker creates the deleted topic again as soon as a producer asks for it.
+  it.runIf(name === 'in memory')(
+    'keeps a record it cannot park on its dead-letter topic, and reports why',
+    async () => {
+      const consumer = broker.consumer('billing');
+      const reported: KafkaFailure[] = [];
+      const bus = broker.bus({ consumer, onFailure: failuresOf(reported) });
+      const billing = recorder(MAX_ATTEMPTS);
+      const topic = broker.topicOf(PLACED);
 
-    bus.subscribe(PLACED, billing.handler);
-    await bus.assertTopology();
-    await broker.deleteTopic(deadTopicOf(consumer, topic));
-    await bus.publish([anEvent('evt-1')]);
+      bus.subscribe(PLACED, billing.handler);
+      await bus.assertTopology();
+      await broker.deleteTopic(deadTopicOf(consumer, topic));
+      await bus.publish([anEvent('evt-1')]);
 
-    await eventually(() =>
-      reported.some((failure) => failure.kind === 'connection' && failure.code === 'ERR_UNKNOWN_TOPIC_OR_PART'),
-    );
+      await eventually(() =>
+        reported.some((failure) => failure.kind === 'connection' && failure.code === 'ERR_UNKNOWN_TOPIC_OR_PART'),
+      );
 
-    expect(billing.received).toHaveLength(MAX_ATTEMPTS);
-    expect(await broker.lagOf(consumer, [topic])).toBe(1);
-  });
+      expect(billing.received).toHaveLength(MAX_ATTEMPTS);
+      expect(await broker.lagOf(consumer, [topic])).toBe(1);
+    },
+  );
 
   it('copies a record that is not an envelope straight to the dead-letter topic and moves on', async () => {
     const consumer = broker.consumer('billing');

@@ -131,7 +131,10 @@ describe.each(BROKERS)('RabbitMqEventBus: when the connection is lost, %s', { ti
   });
 });
 
-describe.each(BROKERS)('RabbitMqEventBus: when the connection drops under a publication, %s', (_name, connect) => {
+// In memory alone: a relay in front of a real broker cuts after the publication reached the channel.
+const IN_MEMORY = BROKERS.slice(0, 1);
+
+describe.each(IN_MEMORY)('RabbitMqEventBus: when the connection drops under a publication, %s', (_name, connect) => {
   let broker: Broker;
 
   beforeEach(async () => {
