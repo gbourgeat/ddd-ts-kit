@@ -1,0 +1,1 @@
+**A contract title that holds `*/` stays inside the comment of the generated client.** The title and the version were written into the comment of `Client` as they came; they now go through the same escape as the summaries and descriptions of the operations, and a title on several lines is a multi-line comment.
