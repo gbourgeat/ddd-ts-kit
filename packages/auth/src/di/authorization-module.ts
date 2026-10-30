@@ -35,7 +35,7 @@ export interface AuthorizationModuleOptions {
   /**
    * Whether a handler whose permission a policy refines has to ask `Access` about it, and be
    * allowed, before it returns; otherwise its result is refused with `PolicyNotAskedError` (or
-   * `PolicyDenialIgnoredError` after a denial) and its change rolled back. On by default; turn it off only for an `Access` of the project other than `PolicyAccess`.
+   * `PolicyDenialIgnoredError` for a success after a denial) and its change rolled back. On by default; turn it off only for an `Access` of the project other than `PolicyAccess`.
    */
   readonly policiesAsked?: boolean;
 }

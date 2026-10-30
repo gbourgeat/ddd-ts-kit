@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:453b70e1b25ee3ea -->
+<!-- translation-of: README.md sha256:4591720dd7ef1ac9 -->
 
 # @ddd-ts-kit/auth
 
@@ -370,7 +370,7 @@ gestionnaire, en dernier sur le bus et à l'intérieur de l'unité de travail : 
 rend la main sans interroger `Access` sur cette permission voit son résultat refusé par
 `PolicyNotAskedError` et sa modification annulée, puisque la règle de la politique n'a jamais été
 appliquée ; celui dont la dernière question sur elle n'a pas été accordée, et qui poursuit
-quand même, par `PolicyDenialIgnoredError`. Un bus à vous exécute cette partie autour de son gestionnaire, avec
+quand même par un succès, par `PolicyDenialIgnoredError` (un `Result` en échec ou une exception est son propre refus). Un bus à vous exécute cette partie autour de son gestionnaire, avec
 `.aroundHandler((message, next, info) => resolve(UseCaseGuard).within?.(message, next, info) ?? next())`.
 Sans le conteneur, `policiesAskedMiddleware({ map, refined })` fait la même vérification. Seules
 les questions posées à `PolicyAccess` sont vues : un projet qui lie son propre `Access` passe

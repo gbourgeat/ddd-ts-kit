@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryCommandBus, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
+import {
+  AuthorizedCommand,
+  FixedClock,
+  InMemoryCommandBus,
+  err,
+  ok,
+  unitOfWorkMiddleware,
+  type Result,
+} from '@ddd-ts-kit/kernel';
 import {
   AuthorizationMap,
   ForbiddenError,
@@ -73,6 +81,24 @@ function application(voids: VoidHandler, answering?: () => Promise<unknown>) {
   return { commands, unitOfWork };
 }
 
+/** A use case whose handler answers a `Result`, the way a project of named refusals writes it. */
+class SettleInvoice extends AuthorizedCommand<Result<string, { readonly code: string }>> {}
+
+type SettleHandler = (
+  command: SettleInvoice,
+  access: PolicyAccess,
+) => Promise<Result<string, { readonly code: string }>>;
+
+function settlement(settles: SettleHandler) {
+  const access = new PolicyAccess({ policies: [onlyIssuerVoids], clock: new FixedClock(new Date(0)) });
+  const settling = AuthorizationMap.of(requires(SettleInvoice, billingPermissions['invoice.void']));
+
+  return new InMemoryCommandBus()
+    .use(authorizationMiddleware({ authorizer: new AllowAll(), map: settling }))
+    .aroundHandler(policiesAskedMiddleware({ map: settling, refined: [onlyIssuerVoids.permission] }))
+    .register(SettleInvoice, { execute: (command) => settles(command, access) });
+}
+
 const asking: VoidHandler = (command, access) =>
   access.authorize(command.actor, billingPermissions['invoice.void'], invoice);
 
@@ -112,10 +138,32 @@ describe('policiesAskedMiddleware', () => {
     await expect(commands.execute(new VoidInvoice(bob, 'inv-1'))).rejects.toBeInstanceOf(PolicyDenialIgnoredError);
 
     await expect(commands.execute(new VoidInvoice(bob, 'inv-1'))).rejects.toThrow(
-      'The command VoidInvoice requires billing:invoice.void, which a policy refines, and its handler returned after Access denied it',
+      'The command VoidInvoice requires billing:invoice.void, which a policy refines, and its handler answered with a success after Access denied it',
     );
 
     expect(unitOfWork.committed).toEqual([]);
+  });
+
+  it('lets a handler that stops on a denial with a failed Result answer its own refusal', async () => {
+    const refusal = err({ code: 'NOT_THE_ISSUER' });
+
+    const settles = settlement(async (command, access) => {
+      const decision = await access.decide(command.actor, billingPermissions['invoice.void'], invoice);
+
+      return decision.allowed ? ok('settled') : refusal;
+    });
+
+    expect(await settles.execute(new SettleInvoice(bob))).toBe(refusal);
+  });
+
+  it('refuses a handler that answers with a successful Result after a denial', async () => {
+    const settles = settlement(async (command, access) => {
+      await access.decide(command.actor, billingPermissions['invoice.void'], invoice);
+
+      return ok('settled');
+    });
+
+    await expect(settles.execute(new SettleInvoice(bob))).rejects.toBeInstanceOf(PolicyDenialIgnoredError);
   });
 
   it('judges the last decision on the permission of the use case: a denial followed by an allowed element lets the handler through', async () => {
