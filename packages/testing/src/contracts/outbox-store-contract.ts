@@ -4,31 +4,9 @@ import type { ContractRunner } from './contract-runner';
 import { ContractSuite } from './contract-suite';
 import { failureOf } from './failure-of';
 import { fullEnvelope } from './full-envelope';
+import { OutboxErasureSuite } from './outbox-store/outbox-erasure-suite';
+import type { OutboxStoreUnderContract } from './outbox-store/outbox-store-under-contract';
 import { tenantEnvelope } from './tenant-envelope';
-
-/**
- * The outbox store port of `@ddd-ts-kit/events`, restated structurally so that this package
- * does not depend on it. Any `OutboxStore` fits.
- */
-export interface OutboxStoreUnderContract {
-  append(events: readonly IntegrationEvent[]): Promise<void>;
-  claimBatch(
-    limit: number,
-    now: Date,
-  ): Promise<
-    {
-      readonly event: IntegrationEvent;
-      readonly status: string;
-      readonly attempts: number;
-      readonly lastErrorCode?: string;
-    }[]
-  >;
-  markPublished(ids: readonly string[], at: Date): Promise<void>;
-  markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void>;
-  retryDead(ids: readonly string[], now: Date): Promise<number>;
-  purgePublished(before: Date): Promise<number>;
-  stats(): Promise<{ readonly pending: number; readonly failed: number; readonly dead: number }>;
-}
 
 export interface OutboxStoreContractOptions {
   readonly name: string;
@@ -43,8 +21,14 @@ export interface OutboxStoreContractOptions {
   readonly carriesTenant?: boolean;
 }
 
+export type { OutboxStoreUnderContract };
+
 export function outboxStoreContract(runner: ContractRunner, options: OutboxStoreContractOptions): void {
   new OutboxStoreSuite(runner, options).describe(`${options.name} (outbox store contract)`);
+
+  new OutboxErasureSuite(runner, () => options.createStore(), options.leaseMs).describe(
+    `${options.name} (outbox store contract: the erasure of a person)`,
+  );
 }
 
 const NOW = new Date('2026-03-01T10:00:00.000Z');
@@ -59,6 +43,7 @@ class OutboxStoreSuite extends ContractSuite<OutboxStoreUnderContract> {
 
   protected tests(): void {
     this.handsOutWhatWasAppended();
+    this.takesNothingAsNothingToDo();
     this.returnsTheEventAsAppended();
     this.leasesWhatItHandsOut();
     this.followsTheOutcomeOfAnAttempt();
@@ -82,6 +67,17 @@ class OutboxStoreSuite extends ContractSuite<OutboxStoreUnderContract> {
       this.expect(claimed.map((record) => record.event.id)).toEqual(['evt-1', 'evt-2', 'evt-3']);
       this.expect(claimed.map((record) => record.attempts)).toEqual([1, 1, 1]);
       this.expect(claimed.map((record) => record.status)).toEqual(['pending', 'pending', 'pending']);
+    });
+  }
+
+  private takesNothingAsNothingToDo(): void {
+    this.it('takes an empty batch, an empty publication and an empty revival as nothing to do', async () => {
+      await this.subject.append([]);
+      await this.subject.markPublished([], NOW);
+
+      this.expect(await this.subject.retryDead([], NOW)).toBe(0);
+      this.expect(await this.subject.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
+      this.expect(await this.subject.claimBatch(10, NOW)).toEqual([]);
     });
   }
 
@@ -143,6 +139,20 @@ class OutboxStoreSuite extends ContractSuite<OutboxStoreUnderContract> {
 
       this.expect(await this.subject.stats()).toEqual({ pending: 1, failed: 0, dead: 0 });
       this.expect(await this.claimedIds(10, later(this.options.leaseMs * 10))).toEqual(['evt-2']);
+    });
+
+    this.it('leaves a published record published whatever is reported of it, and knows no unknown id', async () => {
+      await this.subject.append([outboxEvent('evt-1')]);
+      await this.subject.claimBatch(10, NOW);
+      await this.subject.markPublished(['evt-1'], NOW);
+
+      await this.subject.markFailed('evt-1', { code: 'BROKER_DOWN' }, null);
+      await this.subject.markFailed('evt-1', { code: 'BROKER_DOWN' }, later(5_000));
+      await this.subject.markFailed('unknown', { code: 'BROKER_DOWN' }, null);
+
+      this.expect(await this.subject.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
+      this.expect(await this.subject.claimBatch(10, later(this.options.leaseMs * 10))).toEqual([]);
+      this.expect(await this.subject.purgePublished(later(1_000))).toBe(1);
     });
 
     this.it('retries a failed record at its next attempt, not before', async () => {

@@ -212,7 +212,8 @@ does not compile, since `appointmentIds` and `reason` are missing.
 - **Options**: `delay` or `runAt` (not before), `idempotencyKey` (a second job of the same name
   and key, enqueued for the same tenant, is not added while the first is kept: `enqueue` answers
   its id with `duplicate: true`; two tenants never share a key) and `subject` (the id of what the
-  job works on, kept with it). On the declaration: `maxAttempts` (default 5), `backoff`
+  job works on, kept with it: a job about a person names that person, and their erasure drops it,
+  whatever its status). On the declaration: `maxAttempts` (default 5), `backoff`
   (exponential, 1 s doubled up to 5 min), `timeout` (none) and `lease` (30 s).
 - **`JobQueue`** is a port of the kernel: `enqueue`, `cancel` and `find`, which answers the
   status, the attempts, the progress, the last error code, the tenant and the subject of a job,
@@ -221,8 +222,12 @@ does not compile, since `appointmentIds` and `reason` are missing.
   through an element (`GET /calendars/:id/clearances/:clearanceId`) checks that `subject` is
   that element: a job id is no secret, it is the causation of everything the job does.
 - **Tenants.** Work done for a tenant finds and cancels the jobs of that tenant only, and those
-  of the tenants an elevation names; work without a tenant (a single-tenant project, a system
-  job) reaches every job.
+  of the tenants an elevation names. In a multi-tenant project (`tenant: true` on `StoredJobQueue`,
+  which `init --tenancy shared-table` writes, or `tenants` on `kernelModule`) work that names no
+  tenant is refused with a `NoCurrentTenantError` before the store is read, a system job included:
+  it reaches the jobs of tenants through an elevation (`acrossTenants`). In a project without
+  tenancy no work has a tenant, and every job is reached. `enqueue` stays open: a global job may
+  enqueue, and what it enqueues runs in no tenant, where tenant data refuses it.
 - **Generated**: `ddd-ts-kit generate background-job <context> <Name> --command <UseCase>` writes
   the class (`@Background()` in the declared style, `builder.backgroundJob(..)` in the module
   file on tsyringe, `platform.backgroundJobs.register(..)` in the module file where the platform
@@ -509,7 +514,7 @@ it restarts. Share the queue (the jobs table, Redis) to let the worker run it.
 | Field of the execution context of a run | Value |
 |---|---|
 | `origin` | `queue` |
-| `actor` | the actor of the work that enqueued it (a system actor when nothing did), also `execution.actor`: a snapshot taken at the enqueue, roles and attributes included, used as is by a delayed run and by every retry |
+| `actor` | the actor of the work that enqueued it (a system actor when nothing did), also `execution.actor`: a snapshot taken at the enqueue, roles included, used as is by a delayed run and by every retry. The row keeps its id, type, tenant, roles and `tenants`, never the rest of its attributes: the profile a credential gives, an email or a username, stays with the request, and a job that needs an attribute names it in `actorAttributes` of `StoredJobQueue` |
 | `tenantId` | the tenant of that work, when it carried one |
 | `correlationId` | the correlation of that work: the request and its job are found together |
 | `causationId` | the id of the job |
@@ -600,13 +605,14 @@ memory. The middleware on the command bus is the one place where the test inject
 - **Polling.** An idle queue is asked once per poll interval: a job starts up to that late.
 - **No priority, no rate limit per job, no repeatable jobs.** Repeated work is a scheduled job
   that enqueues.
-- **The table grows**: `background_jobs` keeps payloads and the actor of each job, and the
-  idempotency key of a job holds as long as the job is kept. Purge what finished
-  (`purgeFinished(before)` of the `JobStore`) from a scheduled job of the project: neither the
-  kit nor a generated project schedules one, because how long to keep is the project's
-  decision. Dead jobs stay until an operator decides. `process_instances` grows the same way.
+- **The table is purged at night**: `background_jobs` keeps the payload and the actor of each job,
+  and the idempotency key of a job holds as long as the job is kept. A generated project drops the
+  jobs that succeeded or were cancelled every night at 03:45 UTC (`jobs.purge-finished`, past
+  `BACKGROUND_JOBS_RETENTION_DAYS`, thirty by default): how long to keep is the project's decision.
+  A project wired by hand calls `purgeFinished(before)` of the `JobStore` from a scheduled job. Dead
+  jobs stay until an operator decides. `process_instances` grows, and nothing purges it yet.
 - **Permissions are those of the enqueue.** A delayed run or a retry hours later acts with the
-  roles and attributes the actor had when the job was enqueued: a job that must see a revoked
+  roles the actor had when the job was enqueued: a job that must see a revoked
   right reads the actor again (by its id) before it acts.
 - **A stored payload is read with the schema of the version that runs it.** One that does not
   fit is dead at once (`INVALID_JOB_PAYLOAD`), never run: change a payload as "Evolving a

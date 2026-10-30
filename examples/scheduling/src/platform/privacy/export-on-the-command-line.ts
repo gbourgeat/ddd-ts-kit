@@ -26,7 +26,7 @@ export interface CommandLineExport {
   /** Who is known to the platform: an id nobody knows is refused rather than answered with an empty document. */
   readonly persons: PersonDirectoryContract;
   /** The trail every handover is written to, and the elevation the lookup of an unknown id runs under. */
-  readonly audit: Pick<Audit, 'trail' | 'elevate'>;
+  readonly audit: Pick<Audit, 'trail' | 'elevate' | 'onLostRecord'>;
   /** The networks the deployment serves (`NETWORKS`): each export reads each one, in an execution context of that network. */
   readonly networks: readonly string[];
 }
@@ -45,7 +45,8 @@ export function exportOnTheCommandLine(
   { scope, clock, ids, operator, persons, audit, networks }: CommandLineExport,
 ): Promise<PersonalDataExportDocument> {
   const context = executionContext({ correlationId: ids.next(), actor: operatorActor(operator), origin: 'cli' });
-  const audited = exports.map((port) => auditedPersonalDataExport(port, audit.trail, { scope, clock, ids }));
+  const source = { scope, clock, ids, onLostRecord: audit.onLostRecord };
+  const audited = exports.map((port) => auditedPersonalDataExport(port, audit.trail, source));
 
   const isKnown = (subject: string): Promise<boolean> =>
     audit.elevate({ reason: PATIENT_EXPORT, tenants: 'all' }, async () => (await persons.byIds([subject])).length > 0);

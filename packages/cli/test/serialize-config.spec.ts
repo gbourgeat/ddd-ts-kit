@@ -44,4 +44,35 @@ describe('the config written back to disk', () => {
     expect(rewritten({ formatOnWrite: 'yes' })).not.toHaveProperty('formatOnWrite');
     expect(rewritten({})).not.toHaveProperty('formatOnWrite');
   });
+
+  it('keeps the modules of a context, each with its classification when it has one of its own', () => {
+    const written = rewritten({
+      contexts: {
+        billing: {
+          classification: 'core',
+          upstreams: [],
+          modules: { invoices: {}, payments: { classification: 'supporting' } },
+        },
+      },
+    });
+
+    expect(written['contexts']).toEqual({
+      billing: {
+        classification: 'core',
+        upstreams: [],
+        modules: { invoices: {}, payments: { classification: 'supporting' } },
+      },
+    });
+  });
+
+  it('keeps the vocabulary and the allowed names of the privacy rules, and leaves out an empty list', () => {
+    expect(rewritten({ privacy: { vocabulary: ['Patient'], allow: ['Ssn'] } })['privacy']).toEqual({
+      vocabulary: ['Patient'],
+      allow: ['Ssn'],
+    });
+
+    expect(rewritten({ privacy: { vocabulary: ['Patient'] } })['privacy']).toEqual({ vocabulary: ['Patient'] });
+    expect(rewritten({ privacy: { allow: ['Ssn'] } })['privacy']).toEqual({ allow: ['Ssn'] });
+    expect(rewritten({ privacy: {} })).not.toHaveProperty('privacy');
+  });
 });

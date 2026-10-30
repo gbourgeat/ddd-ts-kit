@@ -141,6 +141,30 @@ describe('generate aggregate --event-sourced', () => {
   });
 });
 
+describe('docs --stored-events on a codec it cannot read', () => {
+  it('refuses to record a codec whose encode names no type for its data, or a type the file does not declare', () => {
+    const codec = read(root, CODEC);
+
+    write(root, CODEC, codec.replace('encode: (): LedgerCreatedData => ({}),', 'encode: () => ({}),'));
+
+    const unnamed = cli(root, 'docs', '--stored-events');
+
+    expect(unnamed.code).not.toBe(0);
+    expect(unnamed.stderr).toContain(`${CODEC}:`);
+    expect(unnamed.stderr).toContain('the encode of LedgerCreated does not name the type of the data it stores');
+
+    write(root, CODEC, codec.replace('type LedgerCreatedData = Record<string, never>;', ''));
+
+    const undeclared = cli(root, 'docs', '--stored-events');
+
+    expect(undeclared.code).not.toBe(0);
+    expect(undeclared.stderr).toContain('LedgerCreatedData, the data of LedgerCreated, is not declared in this file');
+    expect(exists(root, LOCK)).toBe(false);
+
+    write(root, CODEC, codec);
+  });
+});
+
 describe('generate aggregate --event-sourced --birth', () => {
   const INCIDENTS = 'src/contexts/incidents';
   const TERMS = ['--term', 'Incident=Something gone wrong', '--term', 'Trigger=To raise'];

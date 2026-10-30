@@ -1,0 +1,3 @@
+**An erasure that reached nothing announces nobody.** `runErasure` asks `eraseDataSubject` to refuse a subject no copy knows, so `privacy.data-subject.erased` goes out only once something was erased. `privacy:erase` then prints why and exits with code 1: a mistyped id, a tenant the directory does not list, or an erasure already complete. `--rerun` (`rerun: true` of `runErasure`) says this person was erased before: reaching nothing is expected, the exit code is 0 and the erasure is announced again, which completes one that failed before its announcement.
+
+To move: a script that runs `privacy:erase` twice for one person passes `--rerun` the second time. `init --force` rewrites `src/platform/privacy/run-erasure.ts` and `scripts/privacy-erase.ts`.

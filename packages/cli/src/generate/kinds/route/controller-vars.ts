@@ -117,7 +117,7 @@ function mapperVars({ useCase }: ControllerPlan, { types, imports }: Written): R
     mapperImports: lines([imports.message, ...usedTypes]),
     messageKind: useCase.isQuery ? 'query' : 'command',
     actorNote: useCase.isProtected ? '; the actor is already there' : '',
-    mapperMessage: messageCall(useCase, NOTHING_READ, { actor: 'request.actor', field: () => '' }),
+    mapperMessage: messageCall(useCase, NOTHING_READ, { actor: 'request.actor' }),
   };
 }
 

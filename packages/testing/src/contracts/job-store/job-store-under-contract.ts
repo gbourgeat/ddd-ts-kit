@@ -42,5 +42,6 @@ export interface JobStoreUnderContract {
   find(id: string): Promise<QueuedJob | undefined>;
   retryDead(ids: readonly string[], now: Date): Promise<number>;
   purgeFinished(before: Date): Promise<number>;
+  eraseSubject(subject: string): Promise<number>;
   stats(queue: string): Promise<{ readonly waiting: number; readonly running: number; readonly dead: number }>;
 }

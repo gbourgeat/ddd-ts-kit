@@ -267,3 +267,16 @@ describe('ddd-ts-kit drizzle-generate, once drizzle-kit has written the migratio
     expect(result.stderr).toContain('Fix: Drop the key first');
   });
 });
+
+describe('ddd-ts-kit drizzle-generate without an audit trail', () => {
+  it('guards nothing, and leaves the migration as drizzle-kit wrote it', () => {
+    const root = projectWithDrizzleKit(
+      "const fs = require('node:fs'); fs.mkdirSync('migrations', { recursive: true }); fs.writeFileSync('migrations/0000_init.sql', 'CREATE TABLE \"invoices\" (\"id\" text);\\n');",
+    );
+
+    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ contexts: {}, stack: { audit: 'off' } }));
+
+    expect(cli(root, 'drizzle-generate', '--name', 'init').code).toBe(0);
+    expect(read(root, 'migrations/0000_init.sql')).toBe('CREATE TABLE "invoices" ("id" text);\n');
+  });
+});

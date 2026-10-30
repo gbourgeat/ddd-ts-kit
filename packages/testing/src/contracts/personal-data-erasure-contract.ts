@@ -13,6 +13,11 @@ export interface PersonalDataErasureContractOptions<Row> {
   readonly name: string;
   /** A fresh subject over an empty table; called before each test. */
   create(): Awaitable<PersonalDataErasureUnderContract<Row>>;
+  /**
+   * A fresh subject over an empty table whose declaration names no file column, with no file
+   * storage given to the adapter: what most tables of a context are. Called before each test.
+   */
+  createWithoutFiles(): Awaitable<PersonalDataErasureUnderContract<Row>>;
 }
 
 type Columns = Readonly<Record<string, unknown>>;
@@ -20,20 +25,23 @@ type Columns = Readonly<Record<string, unknown>>;
 /**
  * What every adapter of `PersonalDataErasure` over a `personalFields` declaration guarantees, the
  * in-memory one included: the rows about the subject alone are reached, deleted or pseudonymised
- * as the declaration says, counted once, and never twice.
+ * as the declaration says, counted once, and never twice; a declaration without file column needs
+ * no file storage.
  */
 export function personalDataErasureContract<Row extends object>(
   runner: ContractRunner,
   options: PersonalDataErasureContractOptions<Row>,
 ): void {
-  new PersonalDataErasureSuite(runner, options).describe(`${options.name} (personal data erasure contract)`);
+  new PersonalDataErasureSuite(runner, () => options.create()).describe(
+    `${options.name} (personal data erasure contract)`,
+  );
+
+  new WithoutFilesSuite(runner, () => options.createWithoutFiles()).describe(
+    `${options.name} (personal data erasure contract: a declaration without file column)`,
+  );
 }
 
 class PersonalDataErasureSuite<Row extends object> extends ContractSuite<PersonalDataErasureUnderContract<Row>> {
-  constructor(runner: ContractRunner, options: PersonalDataErasureContractOptions<Row>) {
-    super(runner, () => options.create());
-  }
-
   protected tests(): void {
     this.reachesTheRowsOfTheSubjectAlone();
     this.leavesTheRowsOfTheOthers();
@@ -95,6 +103,33 @@ class PersonalDataErasureSuite<Row extends object> extends ContractSuite<Persona
 
       this.expect(await this.subject.erasure.erase('ada')).toBe(0);
       this.expect(await this.subject.rowsOf('bob')).toEqual([this.subject.aRowOf('bob', 1)]);
+    });
+  }
+}
+
+/** A declaration that names no file column asks nothing of a file storage: the rows alone are reached. */
+class WithoutFilesSuite<Row extends object> extends ContractSuite<PersonalDataErasureUnderContract<Row>> {
+  protected tests(): void {
+    this.it('needs no file storage, and reaches the rows of the subject as the declaration says', async () => {
+      const { erasure, declaration } = this.subject;
+
+      this.expect(declaration.files).toEqual([]);
+      await this.subject.insert([this.subject.aRowOf('ada', 1), this.subject.aRowOf('bob', 1)]);
+
+      this.expect(await erasure.erase('ada')).toBe(1);
+
+      const left = await this.subject.rowsOf('ada');
+
+      if (declaration.erasure === 'row') {
+        this.expect(left).toEqual([]);
+      } else {
+        this.expect(left.map((row) => personalPartOf(row, declaration))).toEqual([
+          erasedPartOf(declaration, this.subject.aRowOf('ada', 1)),
+        ]);
+      }
+
+      this.expect(await this.subject.rowsOf('bob')).toEqual([this.subject.aRowOf('bob', 1)]);
+      this.expect(await erasure.erase('ada')).toBe(0);
     });
   }
 }

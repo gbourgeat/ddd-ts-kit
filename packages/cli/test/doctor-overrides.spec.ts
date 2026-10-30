@@ -106,4 +106,13 @@ describe('doctor, on the overrides init writes under a dependency that pins a pa
 
     expect(findingsOf(root)).toEqual([]);
   });
+
+  it('judges nothing of a chain whose manifest it cannot read', () => {
+    const root = installed('npm', 'nest');
+
+    write(root, 'node_modules/@nestjs/platform-express/package.json', '{ not json');
+    withoutOverrides(root);
+
+    expect(findingsOf(root)).toEqual([]);
+  });
 });

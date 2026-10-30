@@ -1,4 +1,7 @@
-import { defineConfig } from 'vitest/config';
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 import { BaseSequencer, type TestSpecification } from 'vitest/node';
 import { ON_A_SERVER } from './pipeline/monorepo/affected-packages.mjs';
 
@@ -28,43 +31,44 @@ class SlowFirstSequencer extends BaseSequencer {
 
 /**
  * The floor of each package, as [statements, branches, functions, lines]: what the unit run measured
- * on 2026-10-10 (2026-10-18 for cli, kernel, sentry and testing, 2026-10-19 for rabbitmq, nats and
- * kafka, 2026-10-23 for knex, pino, prisma, redis, s3 and typeorm), rounded down, so that the
- * coverage of a package cannot fall without the gate saying so. The statements and lines of sentry,
- * measured at 100, are held at 99: a floor of 100 would leave no line of margin. A floor is raised
- * when the package gains tests, never lowered to make a change pass.
+ * on 2026-10-30, rounded down, so that the coverage of a package cannot fall without the gate saying
+ * so. Lines stand at 100: every line of the sources runs under the unit specs, or is left out by a
+ * comment that cites docs/adr/0001-lines-left-out-of-the-coverage-measure.md. A 100 leaves no margin
+ * on purpose: a new line comes with its spec. It says that a line ran, not that each case did: the
+ * branches keep their own floor. A floor is raised when the package gains tests, never lowered to
+ * make a change pass.
  * rabbitmq, nats, kafka, s3 and redis run the same specs on a server the test holds itself (an AMQP
  * broker in memory, a NATS server, an S3 server and a Redis server in their own process, a Kafka
  * cluster in memory), so this run measures them whole; the integration job runs them on a real
  * server too.
  */
 const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>> = {
-  aspects: [97, 95, 97, 97],
-  audit: [98, 91, 100, 97],
-  auth: [99, 95, 98, 99],
-  cli: [98, 90, 99, 98],
-  di: [98, 94, 98, 98],
-  drizzle: [96, 88, 100, 96],
-  'eslint-plugin': [98, 91, 99, 98],
-  events: [98, 91, 99, 98],
-  http: [98, 93, 97, 98],
-  kafka: [96, 91, 98, 96],
-  kernel: [98, 94, 98, 98],
-  knex: [97, 91, 98, 97],
-  nats: [98, 96, 98, 98],
-  openfga: [99, 94, 97, 99],
-  pino: [99, 91, 100, 99],
-  prisma: [99, 93, 100, 99],
-  rabbitmq: [97, 97, 97, 97],
-  redis: [96, 90, 97, 97],
-  s3: [98, 86, 100, 98],
-  scheduling: [98, 94, 98, 98],
-  sentry: [99, 99, 100, 99],
-  testing: [99, 96, 99, 99],
-  tracing: [96, 90, 96, 96],
-  typeorm: [99, 94, 100, 99],
-  validation: [98, 94, 96, 100],
-  winston: [96, 95, 94, 97],
+  aspects: [99, 97, 99, 100],
+  audit: [100, 95, 100, 100],
+  auth: [99, 96, 99, 100],
+  cli: [99, 92, 99, 100],
+  di: [100, 96, 100, 100],
+  drizzle: [100, 94, 100, 100],
+  'eslint-plugin': [100, 93, 100, 100],
+  events: [100, 94, 100, 100],
+  http: [99, 95, 99, 100],
+  kafka: [100, 96, 100, 100],
+  kernel: [99, 96, 99, 100],
+  knex: [100, 94, 100, 100],
+  nats: [100, 98, 100, 100],
+  openfga: [100, 98, 100, 100],
+  pino: [100, 91, 100, 100],
+  prisma: [100, 95, 100, 100],
+  rabbitmq: [100, 99, 100, 100],
+  redis: [99, 94, 98, 100],
+  s3: [100, 87, 100, 100],
+  scheduling: [99, 97, 98, 100],
+  sentry: [100, 99, 100, 100],
+  testing: [99, 97, 99, 100],
+  tracing: [100, 92, 96, 100],
+  typeorm: [100, 95, 100, 100],
+  validation: [99, 95, 98, 100],
+  winston: [98, 95, 97, 100],
 };
 
 /**
@@ -83,7 +87,38 @@ const MEASURED = Object.entries(FLOORS).filter(([name]) => AFFECTED.length === 0
  * report is not touched.
  */
 const INTEGRATION = process.env['KIT_COVERAGE'] === 'integration';
+
+const ENTRY_POINTS = ['packages/cli/src/bin.ts', 'packages/cli/src/refresh-declarations.ts'];
 const MEASURED_SOURCES = INTEGRATION ? ON_A_SERVER : AFFECTED;
+
+/**
+ * A spec that imports a sibling package reaches its sources, never its `dist`: what a spec of knex
+ * runs in the kernel is measured in `packages/kernel/src`, and no package has to be built before
+ * the specs of another run on its latest code. Each entry of the exports map of a package names
+ * the source file its `dist` file is compiled from; the longest specifier comes first, so that
+ * `@ddd-ts-kit/kernel` never catches `@ddd-ts-kit/kernel/testing`.
+ */
+interface Manifest {
+  readonly name: string;
+  readonly exports?: Readonly<Record<string, { readonly default: string }>>;
+}
+
+const PACKAGES = fileURLToPath(new URL('packages', import.meta.url));
+
+function sourcesOfTheSiblingPackages(): { find: string; replacement: string }[] {
+  const aliases = readdirSync(PACKAGES).flatMap((folder) => {
+    const manifest = JSON.parse(readFileSync(path.join(PACKAGES, folder, 'package.json'), 'utf8')) as Manifest;
+
+    return Object.entries(manifest.exports ?? {}).map(([entry, target]) => {
+      const find = entry === '.' ? manifest.name : `${manifest.name}/${entry.slice(2)}`;
+      const source = target.default.replace(/^\.\/dist\//, 'src/').replace(/\.js$/, '.ts');
+
+      return { find, replacement: path.join(PACKAGES, folder, source) };
+    });
+  });
+
+  return aliases.sort((left, right) => right.find.length - left.find.length);
+}
 
 /**
  * A developer machine shares its cores with the editor, the coding agents and their worktrees: the
@@ -104,6 +139,7 @@ for (const name of REPOSITORY_OF_THE_CALLER) {
 }
 
 export default defineConfig({
+  resolve: { alias: sourcesOfTheSiblingPackages() },
   test: {
     include: ['packages/*/test/**/*.spec.ts'],
     // Every file runs at once on a laptop, its PGlite databases and child compilers included: a
@@ -118,6 +154,9 @@ export default defineConfig({
         MEASURED_SOURCES.length === 0
           ? ['packages/*/src/**']
           : MEASURED_SOURCES.map((name) => `packages/${name}/src/**`),
+      // The two entry points of the CLI run as a process and are never imported: one call each, which the
+      // end-to-end specs run from the built package. Left out rather than counted at zero.
+      exclude: [...coverageConfigDefaults.exclude, ...ENTRY_POINTS],
       reporter: INTEGRATION ? ['text-summary', 'lcov'] : ['text', 'cobertura', 'lcov'],
       reportsDirectory: INTEGRATION ? 'coverage/integration' : 'coverage',
       thresholds: INTEGRATION

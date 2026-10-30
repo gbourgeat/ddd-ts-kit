@@ -68,7 +68,7 @@ describe('the personal data of a generated project: --privacy', () => {
     expect(platform(byHand, 'privacy/run-erasure.ts')).toContain('keys: platform.eventSourcing.subjectKeys,');
 
     expect(platform(byHand, 'privacy/run-erasure.ts')).toContain(
-      'copies: dataSubjectCopies.map((copy) => copy(platform)),',
+      'copies: dataSubjectCopies.map((copy) => audited(copy(platform))),',
     );
   });
 
@@ -103,7 +103,7 @@ describe('the personal data of a generated project: --privacy', () => {
     const byHand = initProject(...BY_HAND);
 
     expect(platform(audited, 'privacy/run-export.ts')).toContain(
-      "import { AuditTrail, auditedPersonalDataExport } from '@ddd-ts-kit/audit';",
+      "import { AuditTrail, auditedPersonalDataExport, logLostRecords } from '@ddd-ts-kit/audit';",
     );
 
     expect(platform(audited, 'privacy/run-export.ts')).toContain(
@@ -123,7 +123,7 @@ describe('the personal data of a generated project: --privacy', () => {
     );
 
     expect(platform(byHand, 'privacy/run-export.ts')).toContain(
-      'const source = { scope: platform.scope, clock: platform.clock, ids: platform.ids };',
+      'const source = { scope: platform.scope, clock: platform.clock, ids: platform.ids, onLostRecord };',
     );
 
     expect(platform(byHand, 'privacy/run-export.ts')).toContain('clock: platform.clock,');
@@ -266,7 +266,7 @@ describe('what the event store hands the composition root', () => {
     const unaudited = initProject('--audit', 'off', ...EVENT_SOURCED);
 
     expect(platform(audited, 'event-sourcing/create-event-sourcing.ts')).toContain(
-      'const subjectKeys = auditedSubjectKeys(stores.subjectKeys, audit.trail, source);',
+      'const subjectKeys = auditedSubjectKeys(stores.subjectKeys, audit.trail, {\n    ...source,\n    onLostRecord: audit.onLostRecord,\n  });',
     );
 
     expect(platform(audited, 'composition/lay-foundations.ts')).toContain(

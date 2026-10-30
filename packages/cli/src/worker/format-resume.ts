@@ -12,6 +12,7 @@ export function formatResume(resume: WorkerResume): string {
     ...rowLines(progress),
     `report: ${progress.report === null ? 'none written' : `written ${minute(progress.report.modified)} (${progress.report.current ? 'current' : 'older than its last change'})`}`,
     `agent: ${agentText(progress)}`,
+    ...outsideLines(progress),
     ...resume.notes.map((note) => `note: ${note}`),
     '',
     ...nextLines(resume),
@@ -33,6 +34,12 @@ function rowLines({ rows, inSlice, markers, verification }: WorkerProgress): str
   return [
     `#${current.id}: ${files(inSlice.length)} uncommitted (${namedPaths(inSlice)}), ${markers.domain} TODO(domain), ${markers.test} it.todo; ${ran}`,
   ];
+}
+
+function outsideLines({ agent }: WorkerProgress): string[] {
+  const outside = agent?.lastStop?.outside;
+
+  return outside === undefined ? [] : [`outside its scope at its stop: ${outside}`];
 }
 
 function agentText({ agent, report }: WorkerProgress): string {

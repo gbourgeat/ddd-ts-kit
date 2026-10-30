@@ -17,8 +17,10 @@ const FILES: Readonly<Record<string, string>> = {
   }),
   [`${SCHEDULING}/domain/aggregates/appointment.aggregate.ts`]:
     'export class Appointment {\n  readonly id = "appointment-1";\n\n  cancel(): void {}\n}\n',
+  'src/shared-kernel/period.ts': 'export class Period {\n  readonly days = 1;\n}\n',
   [`${SCHEDULING}/domain/repositories/appointment.repository.ts`]: [
     "import type { Appointment } from '../aggregates/appointment.aggregate.js';",
+    "import type { Period } from '../../../../shared-kernel/period.js';",
     '',
     'export abstract class AppointmentRepository {',
     '  abstract findById(id: string): Promise<Appointment | undefined>;',
@@ -26,6 +28,8 @@ const FILES: Readonly<Record<string, string>> = {
     '  abstract findDue(at: Date): Promise<readonly Appointment[]>;',
     '',
     '  abstract countDue(at: Date): Promise<number>;',
+    '',
+    '  abstract findPeriod(): Promise<Period>;',
     '}',
     '',
   ].join('\n'),
@@ -99,6 +103,11 @@ typedTester.run('naming-business-name, with the types of the project', namingBus
     {
       ...handler('    const data = await this.appointmentRepository.countDue(now);\n\n    void data;'),
       errors: [named('variable', 'data', CONCEPT)],
+    },
+    {
+      ...handler('    const target = await this.appointments.findPeriod();\n\n    void target;'),
+      errors: [named('variable', 'target', 'Name it `period`, the name the code already gives to what it holds.')],
+      output: handler('    const period = await this.appointments.findPeriod();\n\n    void period;').code,
     },
     {
       ...handler('    for (const item of await this.appointments.findDue(now)) {\n      item.cancel();\n    }'),

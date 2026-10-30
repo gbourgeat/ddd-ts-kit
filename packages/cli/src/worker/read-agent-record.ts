@@ -5,6 +5,9 @@ import { isRecord } from '../init/is-record';
 import { AGENT_FILE } from './agent-file';
 import type { AgentRecord } from './worker-progress';
 
+/** The most said of what the guard found left outside the scope: the report of the worker holds the rest. */
+const OUTSIDE_LIMIT = 600;
+
 /** The agent the guard saw working in the project at `project`; null when it recorded none, or a file it cannot read. */
 export function readAgentRecord(project: string): AgentRecord | null {
   const json = readJson(path.join(project, AGENT_FILE));
@@ -43,7 +46,20 @@ function costsOf(value: unknown): Record<string, number> {
 }
 
 function stopOf(value: unknown): AgentRecord['lastStop'] {
-  return isRecord(value) && typeof value['at'] === 'string'
-    ? { at: value['at'], reportCurrent: value['reportCurrent'] === true }
-    : null;
+  if (!isRecord(value) || typeof value['at'] !== 'string') {
+    return null;
+  }
+
+  const outside = value['outside'];
+
+  return {
+    at: value['at'],
+    reportCurrent: value['reportCurrent'] === true,
+    ...(typeof outside === 'string' ? { outside: oneLine(outside) } : {}),
+  };
+}
+
+/** A text of the worktree, said to the conductor as data: one line, cut. */
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().slice(0, OUTSIDE_LIMIT);
 }

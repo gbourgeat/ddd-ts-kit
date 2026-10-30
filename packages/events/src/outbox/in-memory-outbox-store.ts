@@ -5,6 +5,8 @@ import type { OutboxRecord } from './outbox-record';
 import type { OutboxStats } from './outbox-stats';
 import type { OutboxStatus } from './outbox-status';
 import type { OutboxStore } from './outbox-store';
+import { erasedPayloadOf } from './erased-payload-of';
+import type { PersonalEvent } from './personal-event';
 
 export interface InMemoryOutboxStoreOptions {
   /** How long a claimed record stays invisible to other claims. Default 30000. */
@@ -132,6 +134,21 @@ export class InMemoryOutboxStore implements OutboxStore {
     }
 
     return purged;
+  }
+
+  async erasePersonalFields(subject: string, events: readonly PersonalEvent[]): Promise<number> {
+    let erased = 0;
+
+    for (const record of this.storedRecords.values()) {
+      const payload = erasedPayloadOf(record.event, subject, events);
+
+      if (payload !== undefined) {
+        record.event = { ...record.event, payload };
+        erased += 1;
+      }
+    }
+
+    return erased;
   }
 
   async stats(): Promise<OutboxStats> {

@@ -34,7 +34,7 @@ export async function archiveOf(
   const verification = await verifyChain(entries, { chain, from: first.sequence, ...after });
 
   if (!verification.valid) {
-    throw new AuditArchiveRefusedError(chain, verification.break);
+    throw new AuditArchiveRefusedError([{ chain, chainBreak: verification.break }]);
   }
 
   const { text, digest } = archivedContent(entries);

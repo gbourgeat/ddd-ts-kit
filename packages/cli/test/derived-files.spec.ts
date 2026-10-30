@@ -99,4 +99,13 @@ describe('the files the kit derives, one list for the merge, the staging of a sl
       DERIVED_FILES.map((kind) => kind.label({ ...TREE, platformDir: config.platformDir })),
     );
   });
+
+  it('gives every kind its pathspecs, the files of the platform among them once the platform is known', () => {
+    const known = DERIVED_FILES.flatMap((kind) => kind.pathspecs(TREE));
+    const unknown = DERIVED_FILES.flatMap((kind) => kind.pathspecs({ contextsDir: TREE.contextsDir }));
+
+    expect(known).toEqual(expect.arrayContaining(['docs/behaviour/**', 'src/platform/database/schema.ts']));
+    expect(unknown).not.toContain('src/platform/database/schema.ts');
+    expect(unknown).toContain('docs/behaviour/**');
+  });
 });

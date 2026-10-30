@@ -25,10 +25,11 @@ import { dataSubjectCopies } from '{{alias.platform}}/privacy/data-subject-copie
 export function runPurge(platform: Platform): Promise<PersonalDataPurgeReport> {
   const retentions = dataSubjectCopies.map((copy) => copy(platform)).filter(isPersonalDataRetention);
 {{#if audit.on}}
-  const source = { scope: platform.scope, clock: platform.clock, ids: platform.ids };
+  const { trail, onLostRecord } = platform.audit;
+  const source = { scope: platform.scope, clock: platform.clock, ids: platform.ids, onLostRecord };
 
   const audited = (port: PersonalDataRetention): PersonalDataRetention =>
-    auditedPersonalDataRetention(port, platform.audit.trail, source);
+    auditedPersonalDataRetention(port, trail, source);
 
   return purgeExpiredPersonalData(platform.clock.now(), retentions.map(audited));
 {{/if}}

@@ -9,6 +9,9 @@ import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilienc
 import type { FilesConfig } from '{{alias.platform}}/config/read-files{{alias.ext}}';
 {{/if}}
 import type { TracingConfig } from '{{alias.platform}}/config/read-tracing{{alias.ext}}';
+{{#if housekeeping.any}}
+import type { Housekeeping } from '{{alias.platform}}/jobs/housekeeping{{alias.ext}}';
+{{/if}}
 
 /** The validated configuration of the process: `loadConfig` is the only reader of the environment. */
 export interface AppConfig {
@@ -35,6 +38,10 @@ export interface AppConfig {
   {{/if}}
   {{#if events.outbox}}
   readonly outboxRelayIntervalMs: number;
+  {{/if}}
+  {{#if housekeeping.any}}
+  /** How long the platform keeps what it is done with, in days (`OUTBOX_RETENTION_DAYS`, `BACKGROUND_JOBS_RETENTION_DAYS`). */
+  readonly housekeeping: Housekeeping;
   {{/if}}
   {{#if docs.any}}
   readonly docsEnabled: boolean;

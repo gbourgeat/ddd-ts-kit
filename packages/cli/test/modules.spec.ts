@@ -170,3 +170,47 @@ describe('generating into a module of the model', () => {
     expect(exists(root, `${BILLING}/application/commands/cancel-invoice`)).toBe(false);
   });
 });
+
+describe('what move-to-module refuses to move', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = projectWithModule();
+  }, 120_000);
+
+  it('refuses a path that does not exist, and a file in no role folder of a layer', () => {
+    const missing = cli(root, 'move-to-module', 'billing', 'invoices', 'domain/aggregates/nothing.aggregate.ts');
+
+    expect(missing.code).toBe(2);
+    expect(missing.stderr).toContain(`error: ${BILLING}/domain/aggregates/nothing.aggregate.ts does not exist.`);
+
+    expect(missing.stderr).toContain(
+      'Name a file or a folder of a role of a layer, or a spec, relative to the context',
+    );
+
+    write(root, `${BILLING}/published-language/README.md`, 'The events of billing.\n');
+
+    const outside = cli(root, 'move-to-module', 'billing', 'invoices', 'published-language/README.md');
+
+    expect(outside.code).toBe(2);
+
+    expect(outside.stderr).toContain(
+      'error: published-language/README.md is in no role folder of a layer of "billing", and in no test/unit/ nor test/integration/.',
+    );
+
+    expect(exists(root, `${BILLING}/published-language/README.md`)).toBe(true);
+  });
+
+  it('moves no file that is not text, and says to move it by hand', () => {
+    const picture = `${BILLING}/domain/value-objects/stamp.png`;
+
+    fs.writeFileSync(path.join(root, picture), Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x0a]));
+
+    const refused = cli(root, 'move-to-module', 'billing', 'invoices', 'domain/value-objects/stamp.png');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain(`error: Nothing was moved: ${picture} is not a text file.`);
+    expect(refused.stderr).toContain('fix: Move it by hand with git mv, then run the command again without it.');
+    expect(exists(root, picture)).toBe(true);
+  });
+});

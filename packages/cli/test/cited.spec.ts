@@ -223,4 +223,20 @@ describe('cited --removed-since, after a change', () => {
       'No name removed since main is cited by the design of a row not done.',
     );
   });
+
+  it('reads nothing removed since a commit that shares no history with the branch', () => {
+    const tree = git(root, 'mktree').trim();
+    const elsewhere = git(root, 'commit-tree', tree, '-m', 'chore: another history').trim();
+
+    git(root, 'update-ref', 'refs/heads/elsewhere', elsewhere);
+    fs.rmSync(path.join(root, PORT));
+
+    const removed = cli(root, 'cited', '--removed-since', 'elsewhere');
+
+    git(root, 'checkout', '--', PORT);
+    git(root, 'update-ref', '-d', 'refs/heads/elsewhere');
+
+    expect(removed.code).toBe(0);
+    expect(removed.stdout).toBe('No name removed since elsewhere is cited by the design of a row not done.');
+  });
 });

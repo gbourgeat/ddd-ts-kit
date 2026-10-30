@@ -214,6 +214,7 @@ function bindJobs(builder: ModuleBuilder, { jobScheduler, tenants }: KernelModul
 
 function bindQueuePorts(builder: ModuleBuilder, options: KernelModuleOptions): void {
   const { traceparent } = options.instrumentation ?? {};
+  const tenancy = options.tenants === undefined ? {} : { tenant: true };
 
   builder.bind(JobStore).toFactory(either(options.jobStore, () => new InMemoryJobStore()));
 
@@ -226,6 +227,7 @@ function bindQueuePorts(builder: ModuleBuilder, options: KernelModuleOptions): v
           clock: resolve(Clock),
           ids: resolve(IdGenerator),
           scope: resolve(ExecutionScope),
+          ...tenancy,
           ...(traceparent === undefined ? {} : { traceparent }),
         }),
     ),

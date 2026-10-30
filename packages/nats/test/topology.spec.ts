@@ -97,6 +97,15 @@ describe.each(BROKERS)('NatsEventBus: topology, %s', { timeout: 30_000 }, (_name
     expect(reported[0]).toEqual({ kind: 'connection', code: 'JETSTREAM_10026' });
   });
 
+  it('reports a stream it cannot declare and does not take it for one that exists already', async () => {
+    const reported: NatsFailure[] = [];
+    const bus = broker.bus({ stream: 'a stream with spaces', onFailure: failuresOf(reported) });
+
+    await expect(bus.publish([anEvent('evt-1')])).rejects.toMatchObject({ code: 'BROKER_UNAVAILABLE' });
+
+    expect(reported[0]).toMatchObject({ kind: 'connection' });
+  });
+
   it('starts again when its stream is gone for a subscription made once connected', async () => {
     const reported: NatsFailure[] = [];
     const bus = broker.bus({ onFailure: failuresOf(reported) });

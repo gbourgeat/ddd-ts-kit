@@ -80,4 +80,13 @@ describe.each([
     expect(result.code).not.toBe(0);
     expect(exists(root, 'tool-ran')).toBe(false);
   });
+
+  it('starts no probe when DATABASE_URL is not a URL: the tool says what it makes of it', () => {
+    const root = projectWithTool(bin);
+
+    process.env['DATABASE_URL'] = 'not a url at all';
+
+    expect(cli(root, command, ...args).stderr).not.toContain('cannot be reached');
+    expect(exists(root, 'tool-ran')).toBe(true);
+  });
 });

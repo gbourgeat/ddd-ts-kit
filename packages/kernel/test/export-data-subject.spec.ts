@@ -75,6 +75,34 @@ class FailingExport implements PersonalDataExport {
   }
 }
 
+describe('InMemoryPersonalData.exportOf', () => {
+  interface LoyaltyRow {
+    readonly id: string;
+    readonly points: bigint;
+    readonly since: Date;
+    readonly tiers: readonly string[];
+    readonly note: string | null;
+    readonly nickname: string | undefined;
+  }
+
+  it('writes a scalar as it is, an instant as ISO text, a big integer as digits, a list as JSON and nothing as null', async () => {
+    const loyalty = new InMemoryPersonalData(
+      'loyalty',
+      personalFields<LoyaltyRow>('members', {
+        subject: 'id',
+        fields: ['points', 'since', 'tiers', 'note', 'nickname'],
+        erasure: 'row',
+      }),
+    );
+
+    loyalty.insert({ id: 'patient-1', points: 12n, since: NOW, tiers: ['gold'], note: null, nickname: undefined });
+
+    expect(await loyalty.exportOf('patient-1')).toMatchObject([
+      { values: { points: '12', since: NOW.toISOString(), tiers: '["gold"]', note: null, nickname: null } },
+    ]);
+  });
+});
+
 describe('exportDataSubject, the document', () => {
   it('gathers the records of every export in the order they are listed, into one dated document of a stable format', async () => {
     const document = await exportDataSubject('patient-1', { exports: [care(), billing()], clock });

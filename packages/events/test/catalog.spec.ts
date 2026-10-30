@@ -116,6 +116,18 @@ describe('generateEventCatalog, on what a registry may lack', () => {
 });
 
 describe('payloadFields', () => {
+  it('reads as any a property the schema types with nothing, or with no schema at all', () => {
+    const fields = payloadFields({
+      type: 'object',
+      properties: { anything: true, untyped: { description: 'Whatever the producer put there.' } },
+    });
+
+    expect(fields).toEqual([
+      { path: 'anything', type: 'any', required: false, description: '' },
+      { path: 'untyped', type: 'any', required: false, description: 'Whatever the producer put there.' },
+    ]);
+  });
+
   it('stops on a recursive schema instead of looping', () => {
     const fields = payloadFields({
       type: 'object',

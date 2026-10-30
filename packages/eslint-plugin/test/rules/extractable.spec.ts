@@ -32,6 +32,8 @@ ruleTester.run('context-extractable', contextExtractable, {
       CONFIG,
     ),
     at('src/platform/registry.ts', 'export let current = 0;\nexport const all = [];\nall.push(1);', CONFIG),
+    at(PORT, 'export declare const RATES: Map<string, number>;', CONFIG),
+    at(MODULE, "const clock = resolve('platform.clock');", CONFIG),
     at(`${BILLING}/test/fakes/rates.fake.ts`, 'export let calls = 0;', CONFIG),
     at(
       MODULE,

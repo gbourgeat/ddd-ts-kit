@@ -1,5 +1,11 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { OutboxRecord, OutboxStats, OutboxStore } from '@ddd-ts-kit/events';
+import {
+  erasedPayloadOf,
+  type OutboxRecord,
+  type OutboxStats,
+  type OutboxStore,
+  type PersonalEvent,
+} from '@ddd-ts-kit/events';
 import type { PrismaUnitOfWork } from '../unit-of-work/create-prisma-unit-of-work';
 import { lockedIdOf } from './locked-id-of';
 import { lockingSelect } from './locking-select';
@@ -138,6 +144,27 @@ export class PrismaOutboxStore<Tx> implements OutboxStore {
     });
 
     return purged.count;
+  }
+
+  async erasePersonalFields(subject: string, events: readonly PersonalEvent[]): Promise<number> {
+    if (events.length === 0) {
+      return 0;
+    }
+
+    const outbox = this.outbox();
+    const rows = await outbox.findMany({ where: { type: { in: [...new Set(events.map(({ type }) => type))] } } });
+    let erased = 0;
+
+    for (const row of rows) {
+      const payload = erasedPayloadOf(row, subject, events);
+
+      if (payload !== undefined) {
+        await outbox.updateMany({ where: { id: row.id }, data: payloadField(payload) });
+        erased += 1;
+      }
+    }
+
+    return erased;
   }
 
   async stats(): Promise<OutboxStats> {

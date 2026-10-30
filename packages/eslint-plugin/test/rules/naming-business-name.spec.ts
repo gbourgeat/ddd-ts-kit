@@ -81,6 +81,15 @@ ruleTester.run('naming-business-name', namingBusinessName, {
     {
       ...at(
         HANDLER,
+        'export async function remind(): Promise<void> {\n  const items = await deliveryRepository.findOverdue();\n\n  send(items);\n}\n',
+      ),
+      errors: [generic('variable', 'items', named('deliveries'))],
+      output:
+        'export async function remind(): Promise<void> {\n  const deliveries = await deliveryRepository.findOverdue();\n\n  send(deliveries);\n}\n',
+    },
+    {
+      ...at(
+        HANDLER,
         `${INVOICE}const target = (await this.invoiceRepository.findById(id)) ?? Invoice.create(id);\nsend(target);\n`,
       ),
       errors: [generic('variable', 'target', named('invoice'))],
@@ -107,6 +116,11 @@ ruleTester.run('naming-business-name', namingBusinessName, {
       output: null,
     },
     {
+      ...at(HANDLER, `${INVOICE}const target = Invoice.create('1');\nlines.map((line) => target.add(line));\n`),
+      errors: [generic('variable', 'target', named('invoice'))],
+      output: `${INVOICE}const invoice = Invoice.create('1');\nlines.map((line) => invoice.add(line));\n`,
+    },
+    {
       ...at(HANDLER, `${INVOICE}const items = Invoice.create('1');\nsend(items);\n`),
       errors: [generic('variable', 'items', named('invoice'))],
       output: null,
@@ -126,7 +140,7 @@ ruleTester.run('naming-business-name', namingBusinessName, {
     {
       ...at(
         HANDLER,
-        'for (const target of dueReminders) {}\nfor (const item in this.deliveries) {}\nfor (const el of due) {}\n',
+        'for (const target of dueReminders) {}\nfor (const item in this.deliveries) {}\nfor (const el of due) {}\nfor (const obj of load()) {}\nfor (const tmp of this.addresses) {}\n',
       ),
       errors: [
         generic('loop variable', 'target', 'Name it after one element of the collection, in the singular: `reminder`.'),
@@ -136,6 +150,12 @@ ruleTester.run('naming-business-name', namingBusinessName, {
           'el',
           'Name it after one element of the collection, in the singular (`for (const reminder of dueReminders)`).',
         ),
+        generic(
+          'loop variable',
+          'obj',
+          'Name it after one element of the collection, in the singular (`for (const reminder of dueReminders)`).',
+        ),
+        generic('loop variable', 'tmp', 'Name it after one element of the collection, in the singular: `address`.'),
       ],
     },
     {

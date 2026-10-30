@@ -39,7 +39,7 @@ export function generateEventSourcedRepository(scope: Scope, aggregate: Name): R
   wire(scope, 'repository/event-sourced', context);
 
   scope.ws.note(
-    `${aggregate.pascal} is event-sourced: EventStore${aggregate.pascal}Repository delegates to EventSourcedRepository over the EventStore the platform binds, with the codec of infrastructure/persistence/${aggregate.kebab}-events.mapper.ts; there is no table. Fake${aggregate.pascal}Repository is that adapter over the in-memory event store, and the repository contract (test/integration) runs on both once its \`mutate\` records an event. The event store keeps no tenant: a stream is \`${scope.context.kebab}.${aggregate.kebab}-<id>\`, so decide who may load an id in the application layer.`,
+    `${aggregate.pascal} is event-sourced: EventStore${aggregate.pascal}Repository delegates to EventSourcedRepository over the EventStore the platform binds, with the codec of infrastructure/persistence/${aggregate.kebab}-events.mapper.ts; there is no table. Fake${aggregate.pascal}Repository is that adapter over the in-memory event store, and the repository contract (test/integration) runs on both once its \`mutate\` records an event. ${streamNote(scope, aggregate)}`,
   );
 
   return context;
@@ -68,4 +68,13 @@ function assertNoColumns(scope: Scope): void {
     '--personal declares columns of a table, and an event-sourced aggregate has none.',
     'Write the personal values of its events with `personalData(subjectId, value)` in the codec of its stored events (docs/concepts/event-sourcing.md of ddd-ts-kit, "Personal data").',
   );
+}
+
+/** Who may load an id: the tenant of the stream under tenancy, the application layer otherwise. */
+function streamNote(scope: Scope, aggregate: Name): string {
+  const stream = `\`${scope.context.kebab}.${aggregate.kebab}-<id>\``;
+
+  return scope.config.stack.tenancy === 'none'
+    ? `A stream is ${stream} and names no tenant: decide who may load an id in the application layer.`
+    : `A stream is ${stream} and belongs to the tenant of its first append: another tenant finds nothing there, and work that names no tenant is refused.`;
 }

@@ -101,6 +101,20 @@ describe('the agent the guard saw in a worktree', () => {
     });
   });
 
+  it('reads what the guard found outside the scope at the stop as data: one line, cut', () => {
+    const project = projectWith('.ddd-ts-kit/agent.json', {
+      agentId: 'agent-7',
+      run: 1,
+      lastSeen: '2026-10-18T09:00:00Z',
+      lastStop: { at: '2026-10-18T09:01:00Z', reportCurrent: true, outside: `one\n  two ${'x'.repeat(700)}` },
+    });
+
+    const outside = readAgentRecord(project)?.lastStop?.outside;
+
+    expect(outside?.startsWith('one two xxx')).toBe(true);
+    expect(outside).toHaveLength(600);
+  });
+
   it('starts the run at the last tool call and counts no tool call when the record does not say', () => {
     const project = projectWith('.ddd-ts-kit/agent.json', {
       agentId: 'agent-7',

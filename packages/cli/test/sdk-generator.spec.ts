@@ -50,6 +50,32 @@ describe('reading a contract for its client', () => {
     });
   });
 
+  it('sends the token of OAuth 2 and of OpenID Connect as a bearer, and the scheme of HTTP as written', () => {
+    const contract = {
+      ...SHOP_CONTRACT,
+      components: {
+        ...SHOP_CONTRACT.components,
+        securitySchemes: {
+          oauth: { type: 'oauth2', flows: {} },
+          oidc: { type: 'openIdConnect', openIdConnectUrl: 'https://id.example/.well-known' },
+          basic: { type: 'http', scheme: 'basic' },
+          digest: { type: 'http' },
+        },
+      },
+    };
+
+    const schemes = Object.fromEntries(
+      readClientDocument({ name: 'api', source: 'openapi/openapi.yaml' }, contract).schemes,
+    );
+
+    expect(schemes).toEqual({
+      oauth: { in: 'header', name: 'Authorization', prefix: 'Bearer ' },
+      oidc: { in: 'header', name: 'Authorization', prefix: 'Bearer ' },
+      basic: { in: 'header', name: 'Authorization', prefix: 'Basic ' },
+      digest: { in: 'header', name: 'Authorization', prefix: 'Bearer ' },
+    });
+  });
+
   it('reads the parameters of the path item with those of the operation, a cookie left out', () => {
     const getOrder = SHOP.operations[1];
 

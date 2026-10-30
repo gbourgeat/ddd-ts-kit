@@ -182,6 +182,10 @@ ruleTester.run('ports-no-concrete-dependency', portsNoConcreteDependency, {
         'Clock, Money, Unknown',
       ),
     ),
+    at(
+      MODULE,
+      "import { KnexInvoiceRepository } from './infrastructure/persistence/knex-invoice.repository.js';\nconst Repo = class extends KnexInvoiceRepository {};",
+    ),
   ],
   invalid: [
     {

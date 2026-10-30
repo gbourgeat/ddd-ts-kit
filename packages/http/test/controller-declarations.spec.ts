@@ -14,6 +14,7 @@ import {
   executeRoute,
   type GuardRequest,
 } from '../src';
+import { LeavesOutAHeaderController } from './fixtures/controllers/controller-mistakes';
 
 const answer = { method: 'GET', summary: 'Read', response: { status: 204 } } as const;
 
@@ -266,5 +267,22 @@ describe('controllerRoutes', () => {
     expect(seen[0]?.session?.id).toBe('s-1');
     expect(seen[1]?.session).toBeUndefined();
     expect(seen[1]?.actor.type).toBe('anonymous');
+  });
+});
+
+describe('the answer of a controller', () => {
+  it('fails the call as a defect when handle leaves out a header the controller declares', async () => {
+    const seen: unknown[] = [];
+    const request = { params: {}, query: {}, headers: {}, body: { patientId: 'patient-7' }, raw: undefined };
+
+    const response = await executeRoute(controllerRoute(new LeavesOutAHeaderController()), request, {
+      onError: (error) => void seen.push(error),
+    });
+
+    expect(response.status).toBe(500);
+
+    expect(seen).toEqual([
+      new Error('handle declares the header Location and returned none: return { body, headers } with it.'),
+    ]);
   });
 });

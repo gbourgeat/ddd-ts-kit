@@ -227,10 +227,13 @@ describe('a field reserved to some callers, in a request body', () => {
     );
 
     const response = await executeRoute(nested, { ...as('ana', 'assistant'), body: { items: [body] } }, options());
+    const allowed = await executeRoute(nested, { ...as('dora', 'doctor'), body: { items: [body] } }, options());
 
     expect(JSON.parse(await text(response))).toMatchObject({
       detail: 'The field body.items.0.note may not be set by this caller.',
     });
+
+    expect(allowed.status).toBe(204);
   });
 });
 

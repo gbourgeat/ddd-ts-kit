@@ -210,8 +210,9 @@ reading:
 | pending growing | the relay is slower than the producers, or stopped |
 | age of the oldest pending record | the real delivery delay; it is a query on the table, the stats do not carry it |
 
-Published records must be purged regularly, or the table and its index grow without bound.
-The store answers all three needs:
+Published records must be purged regularly, or the table and its index grow without bound, and a
+record keeps its payload until then: a generated project drops them every night
+(`events.purge-published`, `OUTBOX_RETENTION_DAYS`). The store answers all three needs:
 
 <!-- checked sample -->
 ```ts

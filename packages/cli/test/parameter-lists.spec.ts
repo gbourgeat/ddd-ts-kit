@@ -34,4 +34,9 @@ describe('the parameter lists of a source', () => {
 
     expect(listsIn('function* walk<T>(tree: Tree<T>) {}')).toEqual(['(tree: Tree<T>)']);
   });
+
+  it('finds the one parameter of an arrow that opens the text, and none before an arrow that follows a bracket', () => {
+    expect(listsIn('order => order.id')).toEqual(['order']);
+    expect(listsIn('x = [] => 1')).toEqual([]);
+  });
 });

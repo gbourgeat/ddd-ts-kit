@@ -13,9 +13,10 @@ import {
   STORAGE_STACKS,
   TEST_STACKS,
   VALIDATION_STACKS,
+  parseConfig,
   type Stack,
 } from '../src/config';
-import { CLUES } from '../src/init/manifest/dependencies-against-stack';
+import { CLUES, dependenciesAgainstStack } from '../src/init/manifest/dependencies-against-stack';
 import { cli, tempDir, write } from './helpers';
 import { stringsAt } from './support/strings-at';
 
@@ -92,6 +93,12 @@ describe('init in a project whose dependencies already say its stack', () => {
     cli(root, 'init', '--http', 'fastify', '--orm', 'prisma', '--tests', 'jest');
 
     expect(notesOf(root, 'init', '--dry-run')).not.toContain('package.json depends on');
+  });
+});
+
+describe('a package.json that is not JSON', () => {
+  it('says nothing of the stack', () => {
+    expect(dependenciesAgainstStack('{', parseConfig({}).stack)).toEqual([]);
   });
 });
 

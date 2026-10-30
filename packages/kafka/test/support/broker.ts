@@ -50,9 +50,7 @@ export class Broker {
     });
   }
 
-  static async inMemory(): Promise<Broker> {
-    const cluster = new InMemoryKafka();
-
+  static async inMemory(cluster = new InMemoryKafka()): Promise<Broker> {
     return Broker.on(cluster, {
       connection: { cluster },
       network: async () => new MemoryNetwork(cluster),
@@ -121,6 +119,11 @@ export class Broker {
     const ends = await this.admin.fetchTopicOffsets(topic).catch(() => []);
 
     return ends.reduce((total, { high, low }) => total + Number(high) - Number(low), 0);
+  }
+
+  /** Removes a topic under the feet of the buses: what a producer sends to it is refused. */
+  async deleteTopic(topic: string): Promise<void> {
+    await this.admin.deleteTopics({ topics: [topic] });
   }
 
   async partitionsOf(topic: string): Promise<number> {

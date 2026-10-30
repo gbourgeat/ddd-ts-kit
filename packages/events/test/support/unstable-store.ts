@@ -1,5 +1,5 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { OutboxRecord, OutboxStats, OutboxStore } from '../../src';
+import type { OutboxRecord, OutboxStats, OutboxStore, PersonalEvent } from '../../src';
 
 class StoreUnavailable extends Error {
   constructor() {
@@ -42,6 +42,10 @@ export class UnstableStore implements OutboxStore {
 
   purgePublished(before: Date): Promise<number> {
     return this.inner.purgePublished(before);
+  }
+
+  erasePersonalFields(subject: string, events: readonly PersonalEvent[]): Promise<number> {
+    return this.inner.erasePersonalFields(subject, events);
   }
 
   stats(): Promise<OutboxStats> {

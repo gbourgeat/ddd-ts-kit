@@ -42,7 +42,7 @@ export interface CommandLineErasure {
  */
 export function eraseOnTheCommandLine(
   patientId: string,
-  parts: Pick<DataSubjectErasure, 'keys' | 'rebuilds' | 'copies'>,
+  parts: Pick<DataSubjectErasure, 'keys' | 'rebuilds' | 'copies' | 'shared'>,
   { scope, ids, operator, persons, elevate, networks }: CommandLineErasure,
 ): Promise<DataSubjectErasureReport> {
   const context = executionContext({ correlationId: ids.next(), actor: operatorActor(operator), origin: 'cli' });

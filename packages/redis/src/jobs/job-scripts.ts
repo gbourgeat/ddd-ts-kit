@@ -85,3 +85,13 @@ for _, id in ipairs(ids) do
   redis.call('ZREM', KEYS[2], id)
 end
 return #ids`;
+
+/** KEYS: records, waiting, running, dead, finished, keys. ARGV: id. Answers 1 when it dropped the record, 0 otherwise. */
+export const ERASE_JOB = `
+local raw = redis.call('HGET', KEYS[1], ARGV[1])
+if not raw then return 0 end
+local record = cjson.decode(raw)
+if record.key then redis.call('HDEL', KEYS[6], record.key) end
+for index = 2, 5 do redis.call('ZREM', KEYS[index], ARGV[1]) end
+redis.call('HDEL', KEYS[1], ARGV[1])
+return 1`;

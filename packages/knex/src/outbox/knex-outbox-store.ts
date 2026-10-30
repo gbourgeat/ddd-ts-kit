@@ -1,6 +1,13 @@
 import type { Knex } from 'knex';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { OutboxRecord, OutboxStats, OutboxStatus, OutboxStore } from '@ddd-ts-kit/events';
+import {
+  erasedPayloadOf,
+  type OutboxRecord,
+  type OutboxStats,
+  type OutboxStatus,
+  type OutboxStore,
+  type PersonalEvent,
+} from '@ddd-ts-kit/events';
 import { dialectOf } from '../sql/dialect-of';
 import type { SqlDialect } from '../sql/sql-dialect';
 import type { KnexContext } from '../unit-of-work/knex-context';
@@ -165,6 +172,32 @@ export class KnexOutboxStore implements OutboxStore {
       .delete();
   }
 
+  async erasePersonalFields(subject: string, events: readonly PersonalEvent[]): Promise<number> {
+    if (events.length === 0) {
+      return 0;
+    }
+
+    const executor = this.context.executor();
+    const dialect = dialectOf(executor);
+    const rows = await this.rows(executor).whereIn('type', [...new Set(events.map(({ type }) => type))]);
+
+    let erased = 0;
+
+    for (const row of rows) {
+      const payload = erasedPayloadOf({ ...row, payload: payloadOf(row, dialect) }, subject, events);
+
+      if (payload !== undefined) {
+        await this.rows(executor)
+          .where({ id: row.id })
+          .update({ payload: JSON.stringify(payload) });
+
+        erased += 1;
+      }
+    }
+
+    return erased;
+  }
+
   async stats(): Promise<OutboxStats> {
     const executor = this.context.executor();
 
@@ -261,6 +294,7 @@ export class KnexOutboxStore implements OutboxStore {
 
 /** A sum is a bigint or a decimal, which drivers return as a string, and NULL over no row. */
 function countAt(row: unknown, column: string): number {
+  /* v8 ignore next 3 -- ADR-0001: a sum without GROUP BY always answers one row */
   if (typeof row !== 'object' || row === null) {
     return 0;
   }
@@ -270,11 +304,16 @@ function countAt(row: unknown, column: string): number {
   return Number(value ?? 0);
 }
 
+/**
+ * SQLite has no JSON type: the driver hands the text back. Elsewhere the driver has parsed the
+ * column already, and a payload that is itself a string must not be parsed twice.
+ */
+function payloadOf(row: OutboxRow, dialect: SqlDialect): unknown {
+  return dialect === 'sqlite' && typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
+}
+
 function toRecord(row: OutboxRow, dialect: SqlDialect): OutboxRecord {
-  // SQLite has no JSON type: the driver hands the text back. Elsewhere the driver has parsed
-  // the column already, and a payload that is itself a string must not be parsed twice.
-  const payload: unknown =
-    dialect === 'sqlite' && typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
+  const payload = payloadOf(row, dialect);
 
   return {
     event: {

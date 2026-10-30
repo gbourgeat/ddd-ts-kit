@@ -176,6 +176,18 @@ export class DrizzleJobStore<
     return purged.length;
   }
 
+  async eraseSubject(subject: string): Promise<number> {
+    const { jobs } = this;
+
+    const erased = await this.context
+      .executor()
+      .delete(jobs)
+      .where(eq(jobs.subject, subject))
+      .returning({ id: jobs.id });
+
+    return erased.length;
+  }
+
   async stats(queue: string): Promise<JobStoreStats> {
     const { status } = this.jobs;
 

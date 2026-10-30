@@ -163,4 +163,23 @@ describe('story-check, the code against its design', () => {
       'US5 cannot close: every row done, 0 markers of its own left, 2 names of its design not in the code.',
     );
   });
+
+  it('judges a member of a class the tree lacks as that class, and nothing when every name is recorded as dropped', () => {
+    write(root, REVIEW, '# Design review of US5\n\n## #US5.01 Order\n\n`Quote.accept()` records the acceptance.\n');
+
+    expect(jsonAt(cli(root, 'story-check', 'US5', '--json').json(), 'design')).toEqual([
+      expect.objectContaining({
+        cited: 'Quote.accept',
+        why: 'no class, interface, type or function Quote is declared or imported under the source root',
+      }),
+    ]);
+
+    write(
+      root,
+      REVIEW,
+      '# Design review of US5\n\n## #US5.01 Order\n\n`Quote` was dropped: orders are placed at once.\n',
+    );
+
+    expect(jsonAt(cli(root, 'story-check', 'US5', '--json').json(), 'design')).toEqual([]);
+  });
 });

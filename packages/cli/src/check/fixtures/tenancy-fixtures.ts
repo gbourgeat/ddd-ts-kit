@@ -3,6 +3,7 @@ import { PATHS } from './paths';
 import { project } from './project';
 import { controlPlaneFixtures } from './control-plane-fixtures';
 import { tenancyBypass } from './tenancy-bypass';
+import { TENANCY_CONJUNCT_FIXTURES } from './tenancy-conjunct-fixtures';
 import { tenancyConfig } from './tenancy-config';
 import { TENANCY_PRISMA_FIXTURES } from './tenancy-prisma-fixtures';
 import { TENANCY_TYPEORM_FIXTURES } from './tenancy-typeorm-fixtures';
@@ -87,6 +88,7 @@ const readModel = (name: string, source: string, expected: Fixture['expect']): F
 export const TENANCY_FIXTURES: readonly Fixture[] = [
   ...TENANCY_PRISMA_FIXTURES,
   ...TENANCY_TYPEORM_FIXTURES,
+  ...TENANCY_CONJUNCT_FIXTURES,
   ...controlPlaneFixtures(),
   {
     ruleId: RULE,

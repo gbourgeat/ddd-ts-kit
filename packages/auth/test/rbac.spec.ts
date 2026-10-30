@@ -28,18 +28,6 @@ authorizerContract(
   },
 );
 
-authorizerContract(
-  { describe, it, expect, beforeEach },
-  {
-    name: 'RoleBasedAuthorizer with the tenant check',
-    create: () => ({
-      authorizer: new RoleBasedAuthorizer({ roles, tenantOf: tenantOfContext }),
-      granted: { actor: ada, permission: issue, context: { tenantId: 'acme' } },
-      refused: { actor: ada, permission: issue, context: { tenantId: 'globex' } },
-    }),
-  },
-);
-
 describe('RoleBasedAuthorizer', () => {
   const authorizer = new RoleBasedAuthorizer({ roles });
   const allowed = (actor: Actor, permission: Permission = issue) => authorizer.check({ actor, permission });

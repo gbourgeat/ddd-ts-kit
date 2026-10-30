@@ -12,7 +12,7 @@ and can prove it was not rewritten. It is recorded around the use cases, never b
 | every authorization decision, denials always | the decision hook of the authorization |
 | every command, with its outcome and error code | a bus middleware before the unit of work: success inside the transaction, failure after the rollback |
 | every integration event crossing a boundary | one idempotent consumer named `audit`; `generate integration-event` registers each new event in `audited-events.ts` |
-| every erasure of a data subject (crypto-shredding), with whether a key was destroyed | `auditedSubjectKeys`, the key store wrapped where it is bound (`src/platform/event-sourcing/create-event-sourcing.ts`, written by `init --event-sourcing on`), whoever calls `erase` |
+| every erasure of a data subject, with whether a key was destroyed (crypto-shredding) and the rows each copy reached, the copies wrapped by `auditedPersonalDataErasure` in `src/platform/privacy/run-erasure.ts` | `auditedSubjectKeys`, the key store wrapped where it is bound (`src/platform/event-sourcing/create-event-sourcing.ts`, written by `init --event-sourcing on`), whoever calls `erase` |
 | every export of what a context keeps of a data subject, with the number of records and never the values | `auditedPersonalDataExport`, the export port wrapped where the platform runs it (`src/platform/privacy/run-export.ts`, written by `init --privacy on` with the trail on) |
 | every purge of what outlived its retention, with the number of rows and no person | `auditedPersonalDataRetention`, the copies wrapped where the platform runs the purge (`src/platform/privacy/run-purge.ts`) |
 | bulk reads | the infrastructure that performs them, as the exception |
@@ -36,7 +36,9 @@ an opaque `data-subject` id): its date plus the retention of the key backups is 
 erasure is complete. The key is destroyed first and the entry written after; when the entry
 fails, the erasure fails and is run again, which records that no key was left. A script that
 erases opens an execution context (operator as actor, origin `cli`), or `erase` is refused
-before any key is touched: `npm run privacy:erase -- <subject-id> --operator <who-asks>` does.
+before any key is touched: `npm run privacy:erase -- <subject-id> --operator <who-asks>` does. A
+project without an event store is proven the same way, by the entry of each copy (`rows`, `0`
+included).
 
 ## Integrity
 

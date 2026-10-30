@@ -75,4 +75,21 @@ describe('worker-scope, on the dependencies of the worktree', () => {
       `Install the dependencies in the worktree before the worker starts: \`cd ${path.join(parent, 'clinic-calendars-2')} && npm ci\`.`,
     );
   });
+
+  it('says that the package manager could not run when it is not on the PATH, and asks whether it is installed', () => {
+    const bin = path.join(parent, 'git-only');
+    const previous = process.env['PATH'];
+
+    fs.mkdirSync(bin);
+    fs.symlinkSync('/usr/bin/git', path.join(bin, 'git'));
+    process.env['PATH'] = bin;
+
+    try {
+      const notes = notesOf('calendars', 'clinic-calendars-3', '--branch', 'build/calendars-3');
+
+      expect(notes.join('\n')).toContain('npm could not run (spawnSync npm ENOENT): is it installed?');
+    } finally {
+      process.env['PATH'] = previous;
+    }
+  });
 });

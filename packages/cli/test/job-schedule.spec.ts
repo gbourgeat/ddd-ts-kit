@@ -118,6 +118,12 @@ function kernelRefusal(schedule: JobSchedule): string | undefined {
   }
 }
 
+describe('a schedule that names neither an interval nor a cron expression', () => {
+  it('is refused as one', () => {
+    expect(jobScheduleProblem({})).toBe('A schedule is an interval or a cron expression.');
+  });
+});
+
 /** The schedule as the kernel receives it from the generated source: digits alone are milliseconds. */
 function asWritten({ every, cron, timeZone }: JobSchedule): KernelSchedule {
   if (every !== undefined) {

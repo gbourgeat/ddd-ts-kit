@@ -135,6 +135,10 @@ export class ClaimSuite extends ContractSuite<JobStoreUnderContract> {
       this.expect(await this.subject.heartbeat({ id: 'job-1', attempt: 2 }, later(LEASE_MS * 3))).toBe(false);
     });
 
+    this.it('answers false to the heartbeat of a job it does not hold', async () => {
+      this.expect(await this.subject.heartbeat({ id: 'unknown', attempt: 1 }, later(LEASE_MS))).toBe(false);
+    });
+
     this.it('never hands the same job to two concurrent claims', async () => {
       await this.addMany(['job-1', 'job-2', 'job-3', 'job-4', 'job-5', 'job-6']);
 

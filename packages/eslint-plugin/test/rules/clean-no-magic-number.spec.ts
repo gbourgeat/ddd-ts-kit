@@ -18,6 +18,7 @@ ruleTester.run('clean-no-magic-number', cleanNoMagicNumber, {
       'export const first = (items: string[]) => items[0] ?? items[2];\nexport const none = (n: number) => n === 0 || n - 1 === -1;',
     ),
     named(DOMAIN, 'type Pair = [1, 2];\nexport type Hour = 7 | 8;\nenum Level { Low = 3 }'),
+    named(DOMAIN, "export const CURRENCY = 'EUR';\nexport const PAID = true;"),
     named(`${BILLING}/infrastructure/persistence/invoice.mapper.ts`, 'export const page = () => 50;'),
     named(`${BILLING}/test/unit/range.vo.spec.ts`, 'export const at = () => 42;'),
     named('src/platform/http/server.ts', 'export const port = () => 3000;'),

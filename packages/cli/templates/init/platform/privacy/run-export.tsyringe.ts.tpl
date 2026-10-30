@@ -1,5 +1,5 @@
 {{#if audit.on}}
-import { AuditTrail, auditedPersonalDataExport } from '@ddd-ts-kit/audit';
+import { AuditTrail, auditedPersonalDataExport, logLostRecords } from '@ddd-ts-kit/audit';
 {{/if}}
 import type { Application as Container } from '@ddd-ts-kit/di';
 import {
@@ -7,6 +7,7 @@ import {
   ExecutionScope,
 {{#if audit.on}}
   IdGenerator,
+  Logger,
 {{/if}}
   executionContext,
   exportDataSubject,
@@ -47,7 +48,8 @@ export function runExport(subject: string, request: ExportRequest): Promise<Pers
   const context = executionContext({ correlationId, actor: operatorActor(operator), origin: 'cli' });
 {{#if audit.on}}
   const trail = container.resolve(AuditTrail);
-  const source = { scope, clock, ids: container.resolve(IdGenerator) };
+  const onLostRecord = logLostRecords(container.resolve(Logger));
+  const source = { scope, clock, ids: container.resolve(IdGenerator), onLostRecord };
   const audited = (port: PersonalDataExport): PersonalDataExport => auditedPersonalDataExport(port, trail, source);
   const exports = dataSubjectExports.map((port) => audited(container.resolve(port)));
 {{/if}}

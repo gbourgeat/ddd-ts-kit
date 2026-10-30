@@ -90,6 +90,10 @@ import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{#if files.any}}
 import { filesModule } from '{{alias.platform}}/files/files.module{{alias.ext}}';
 {{/if}}
+{{#if housekeeping.any}}
+import { DEFAULT_HOUSEKEEPING } from '{{alias.platform}}/jobs/housekeeping{{alias.ext}}';
+import { housekeepingModule } from '{{alias.platform}}/jobs/housekeeping.module{{alias.ext}}';
+{{/if}}
 {{#if privacy.on}}
 import { privacyModule } from '{{alias.platform}}/privacy/privacy.module{{alias.ext}}';
 {{/if}}
@@ -226,6 +230,9 @@ export function composeApplication(
 {{/if}}
 {{#if privacy.on}}
       privacyModule({ jobs: options.platformJobs !== false }),
+{{/if}}
+{{#if housekeeping.any}}
+      housekeepingModule(options.housekeeping ?? DEFAULT_HOUSEKEEPING, { jobs: options.platformJobs !== false }),
 {{/if}}
       ...contexts.modules,
     ],

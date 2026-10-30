@@ -50,6 +50,7 @@ export interface PrismaOutboxInsert {
 
 export interface PrismaOutboxWhere {
   id?: string | { in: string[] };
+  type?: { in: string[] };
   status?: OutboxStatus | { not: OutboxStatus };
   attempts?: number;
   nextAttemptAt?: { lte: Date };
@@ -58,6 +59,7 @@ export interface PrismaOutboxWhere {
 }
 
 export interface PrismaOutboxUpdate {
+  payload?: PrismaJsonInput;
   status?: OutboxStatus;
   attempts?: number | { increment: number };
   nextAttemptAt?: Date;

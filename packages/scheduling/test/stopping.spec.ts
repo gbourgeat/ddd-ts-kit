@@ -2,12 +2,30 @@ import { describe, expect, it } from 'vitest';
 import { JobAbortedError } from '../src';
 import { aBench } from './support/a-bench';
 import { HOUR, MINUTE } from './support/durations';
+import { InMemoryJobCheckpoints } from './support/in-memory-job-checkpoints';
 import { EXPORT, REMINDERS } from './support/job-names';
 import { QUARTERLY } from './support/quarterly';
 import { RecordingJob } from './support/recording-job';
 import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
 
 refuseUnhandledRejections();
+
+/** Checkpoints whose writes wait until the test lets them through, as a slow database would. */
+class GatedCheckpoints extends InMemoryJobCheckpoints {
+  private release: (() => void) | undefined;
+
+  override async write(job: string, handled: Date): Promise<void> {
+    await new Promise<void>((resolve) => {
+      this.release = resolve;
+    });
+
+    return super.write(job, handled);
+  }
+
+  open(): void {
+    this.release?.();
+  }
+}
 
 describe('stopping', () => {
   it('waits for the run in progress, and starts nothing more', async () => {
@@ -58,6 +76,28 @@ describe('stopping', () => {
     ]);
 
     expect(scheduler.timers.pending).toBe(0);
+  });
+
+  it('arms no timer for a job whose checkpoint was being written when the stop came', async () => {
+    const checkpoints = new GatedCheckpoints();
+    const { scheduler } = aBench({ checkpoints });
+    const job = new RecordingJob();
+
+    scheduler.register({ name: EXPORT, schedule: { every: '1m' }, run: job.run });
+    await scheduler.start();
+    await scheduler.advance(30_000);
+    expect(job.scheduledAt).toEqual(['2026-03-02T09:59:00.000Z']);
+
+    const stopping = scheduler.stop();
+
+    checkpoints.open();
+    await stopping;
+
+    expect(checkpoints.handled.get(EXPORT)).toEqual(new Date('2026-03-02T09:59:00.000Z'));
+    expect(scheduler.timers.pending).toBe(0);
+
+    await scheduler.advance(HOUR);
+    expect(job.executions).toHaveLength(1);
   });
 
   it('can be followed by a new start, which takes the jobs up from that instant', async () => {

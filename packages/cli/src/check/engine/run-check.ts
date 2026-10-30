@@ -14,6 +14,8 @@ export interface CheckOptions {
   readonly rules?: readonly string[];
   /** Skip the rules that need the whole tree. */
   readonly fileScopeOnly?: boolean;
+  /** The rules the engine judges with: the kit's, unless a spec hands its own. */
+  readonly catalogue?: readonly Rule[];
 }
 
 export function runCheck(project: Project, options: CheckOptions = {}): CheckResult {
@@ -21,7 +23,10 @@ export function runCheck(project: Project, options: CheckOptions = {}): CheckRes
     options.rules === undefined || options.rules.length === 0 || options.rules.includes(id);
 
   const suppressions = project.files.flatMap(findSuppressions);
-  const active = RULES.filter((rule) => selected(rule.id) && project.severity(rule.id) !== 'off');
+
+  const active = (options.catalogue ?? RULES).filter(
+    (rule) => selected(rule.id) && project.severity(rule.id) !== 'off',
+  );
 
   const raw = active
     .flatMap((rule) => violationsOf(rule, project, options.fileScopeOnly === true))

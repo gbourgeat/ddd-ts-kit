@@ -479,6 +479,8 @@ It implements the whole port, held by `loggerContract` like the pino and winston
   function of `logged` is not called.
 - **`flush()`** resolves once the standard output took every line written so far, and never
   rejects; the logger stays usable afterwards. `app.stop()` of the di package calls it last.
+- **`stream`** sends the lines to another stream than the standard output, and `flush()` waits
+  for that stream. A `write` of the project receives each line instead and wins over `stream`.
 - **A log call never throws.** Fields that cannot be read or serialized (a getter that throws,
   a circular object), on an entry or on a child, give the entry without them, marked
   `logError: "unserializable fields"`.

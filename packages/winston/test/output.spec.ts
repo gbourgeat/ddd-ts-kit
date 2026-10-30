@@ -10,6 +10,13 @@ import { memoryTransport } from './support/memory-transport';
 
 const ANSI_COLOURS = new RegExp(`${String.fromCharCode(27)}\\[\\d+m`, 'g');
 
+/** A transport whose stream refuses to end, as a file on a full disk does. */
+class FailingAtTheEnd extends winston.transports.Stream {
+  override _final(callback: (error?: Error | null) => void): void {
+    callback(new Error('disk full'));
+  }
+}
+
 let directory: string;
 
 beforeEach(() => {
@@ -144,6 +151,17 @@ describe('createWinstonLogger, the flush and the pretty format', () => {
     expect(JSON.parse(written[499] ?? '{}')).toMatchObject({ message: 'parcel 499 handed over', context: 'shipping' });
   });
 
+  it('resolves its flush although a transport fails to finish', async () => {
+    const instance = winston.createLogger({ transports: [new FailingAtTheEnd({ stream: new MemorySink().stream })] });
+
+    instance.on('error', () => undefined);
+    const logger = new WinstonLogger(instance);
+
+    logger.info('order shipped');
+
+    await expect(logger.flush()).resolves.toBeUndefined();
+  });
+
   it('writes one line a human reads in the pretty format', () => {
     const sink = new MemorySink();
 
@@ -231,6 +249,27 @@ describe('WinstonLogger', () => {
     child.debug('after');
 
     expect(sink.records().map((line) => line.message)).toEqual(['after']);
+  });
+
+  it('takes an entry the instance refuses twice without a throw: a format that fails is the project to fix', () => {
+    const sink = new MemorySink();
+
+    const failing = winston.format((info) => {
+      if ('level' in info) {
+        throw new Error('the format cannot read the entry');
+      }
+
+      return info;
+    });
+
+    const instance = winston.createLogger({ format: failing(), transports: [memoryTransport(sink)] });
+    const logger = new WinstonLogger(instance);
+
+    expect(() => {
+      logger.info('order shipped', { context: 'shipping' });
+    }).not.toThrow();
+
+    expect(sink.records()).toEqual([]);
   });
 
   it('resolves its flush on a logger without transport', async () => {

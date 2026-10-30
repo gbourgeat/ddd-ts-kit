@@ -3,6 +3,7 @@ import type { DataSubjectErasureReport } from './data-subject-erasure-report';
 import type { SubjectKeyStore } from '../ports/subject-key-store';
 import { isDataSubjectId } from './is-data-subject-id';
 import { NotADataSubjectIdError } from './not-a-data-subject-id-error';
+import type { PersonalDataCopy } from './personal-data-copy';
 import type { ProjectionToRebuild } from './projection-to-rebuild';
 import { UnknownDataSubjectError } from './unknown-data-subject-error';
 
@@ -26,8 +27,9 @@ interface Outcome {
  * running the erasure again completes it. Only a mistyped id skips the rebuilds. A subject that is
  * not an opaque identifier is refused before any key is touched: the audited keys write the
  * subject into the append-only trail, which never holds a name or an email. Give it the keys
- * wrapped by `auditedSubjectKeys` of `@ddd-ts-kit/audit`, so that every erasure leaves a dated proof;
- * a project that seals nothing (its aggregates are rows) gives none, and erases its copies alone.
+ * wrapped by `auditedSubjectKeys` and the copies wrapped by `auditedPersonalDataErasure` of
+ * `@ddd-ts-kit/audit`, so that every erasure leaves a dated proof of who asked for it; a project that
+ * seals nothing (its aggregates are rows) gives no keys, and its copies are that proof.
  */
 export async function eraseDataSubject(subject: string, parts: DataSubjectErasure): Promise<DataSubjectErasureReport> {
   if (!isDataSubjectId(subject)) {
@@ -53,19 +55,30 @@ function eraseKeyOf(subject: string, keys: SubjectKeyStore | undefined): Promise
   return keys === undefined ? Promise.resolve(false) : keys.erase(subject);
 }
 
-/** Every copy, in every tenant, one after the other: a copy that fails does not stop the next, and is thrown once everything ran. */
+/**
+ * Every copy, in every tenant, then those no tenant confines, one after the other: a copy that fails
+ * does not stop the next, and is thrown once everything ran.
+ */
 async function eraseCopies(subject: string, parts: DataSubjectErasure): Promise<ErasedCopies> {
-  const { copies = [], inEveryTenant = (work) => work() } = parts;
+  const { copies = [], shared = [], inEveryTenant = (work) => work() } = parts;
   const reached: Record<string, number> = {};
   const failures: unknown[] = [];
 
-  for (const copy of copies) {
+  const erase = async ({ name }: PersonalDataCopy, work: () => Promise<number>): Promise<void> => {
     try {
-      reached[copy.name] = await inEveryTenant(() => copy.erase(subject));
+      reached[name] = await work();
     } catch (error) {
-      reached[copy.name] = 0;
+      reached[name] = 0;
       failures.push(error);
     }
+  };
+
+  for (const copy of copies) {
+    await erase(copy, () => inEveryTenant(() => copy.erase(subject)));
+  }
+
+  for (const copy of shared) {
+    await erase(copy, () => copy.erase(subject));
   }
 
   return { reached, failures };

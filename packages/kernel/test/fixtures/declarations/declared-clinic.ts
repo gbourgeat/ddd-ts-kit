@@ -34,6 +34,7 @@ export * from './refused-when-declared/declare-an-adapter-of-a-port-with-a-body'
 export * from './refused-when-declared/declare-an-adapter-that-extends-its-port';
 export * from './refused-when-declared/declare-a-stranger';
 export * from './refused-when-declared/declare-a-projection';
+export * from './refused-when-declared/declare-with-an-empty-name';
 export * from './refused-when-declared/declare-a-reader-of-an-unnamed-event';
 
 // As the generated file of a context does, for a class whose decorator lists nothing: read from its constructor.

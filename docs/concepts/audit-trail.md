@@ -34,7 +34,7 @@ unit of work already crosses, wired once in the platform:
 | authorization decisions | every denial; every allowed action that is not a read; the allowed reads you declare sensitive | the decision hook of the authorization middleware |
 | commands | each command with `succeeded` or `failed` and the code of the error | a bus middleware placed before the unit of work |
 | integration events | that an event of a given type occurred, from its envelope only | one idempotent subscription |
-| erasures of data subjects | that the key of a subject was destroyed, or that none was left, by whom and when | the key store, wrapped by `auditedSubjectKeys` |
+| erasures of data subjects | that the key of a subject was destroyed, or that none was left; how many rows each copy reached, `0` included; by whom and when | the key store, wrapped by `auditedSubjectKeys`, and each copy, wrapped by `auditedPersonalDataErasure`, with or without an event store |
 | exports of data subjects | that a context handed over what it keeps of a subject, how many records, by whom and when, never the values | the export port of each context, wrapped by `auditedPersonalDataExport` |
 
 ![A command crosses the authorization middleware, the audit middleware and the unit of work before the use case, which holds no audit call; the decision hook, the audit middleware and an event subscription append to the audit trail and read who acted from the execution scope](../assets/diagrams/audit-trail-sources.svg)
@@ -207,7 +207,8 @@ scheduling product, the reason of an appointment belongs to that last group.
 Each entry stores the hash of the previous one and its own hash, computed over a canonical form
 that any program in any language can recompute. Changing, removing or reordering an entry
 breaks the chain at a place the verification names: altered content, a missing entry, or a
-reordering.
+reordering. An entry is hashed as the store keeps it, a text that cannot be stored as it came
+having a replacement character in its place, so a chain nobody touched always verifies.
 
 ![Four entries of the chain tenant:acme, each holding the hash of the one before it; verifyChain reports a changed, removed or swapped entry, and a checkpoint copied elsewhere catches a chain rewritten as a whole](../assets/diagrams/audit-trail-hash-chain.svg)
 
@@ -251,7 +252,13 @@ some hashes where that person cannot write. That is anchoring: at intervals, a c
 hash at a given position) leaves for somewhere else, such as another database under another
 role, an object store with retention lock, a transparency log or a signed timestamp. Later
 verification compares the chain with those checkpoints. A truncated tail is only seen by
-comparing with a later checkpoint.
+comparing with a later checkpoint: a chain that stops before a checkpoint it is given does not
+verify.
+
+A verification reports the first break and stops there: past it the chain proves nothing of what
+comes next. Whoever has looked at a break walks on from the entry after it. A chain that has
+archives is verified from the anchor of its last archive, which the caller names: the entries
+before it have left the database.
 
 Verification should run on a schedule and alert; a chain nobody verifies proves nothing in
 practice.
@@ -265,7 +272,8 @@ proves. The entries are verified first, from the anchor of the previous archive;
 file per range; recorded with the hash of the last one and the digest of the file; then deleted,
 which the guard allows for covered entries only. The entries left in the database link to that
 last hash, and each file can be verified again on its own, against its record and the archive
-before it. A chain that does not verify is not archived: a break is for someone to look at.
+before it. A chain that does not verify is not archived, a break being for someone to look at,
+and stops no other chain: the others are archived, then the refusals are reported together.
 
 A generated project whose trail is in a database runs this on the first day of every month and
 keeps twelve whole months online, by default with an object store and only on request with a
@@ -290,7 +298,8 @@ holds the data:
    keys that seal the stored events; `masked(field, { subject })` says whose each value is.
    Erasing a person is destroying their key: the masks become tokens nobody can recompute, the
    entries stay, the hashes stay valid.
-4. **Record the erasure itself.** The erasure leaves an entry with its actor and its date,
+4. **Record the erasure itself.** The erasure leaves an entry per copy it reaches, and one for the
+   key when there is an event store, with its actor and its date,
    which, plus the retention of the backups of the keys, is the day it is complete
    ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)). An export
    of what the system keeps of a person leaves one too, with the number of records and never the

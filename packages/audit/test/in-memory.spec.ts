@@ -19,6 +19,11 @@ auditTrailContract(runner, {
 
     trail.entries[index] = { ...entry, action };
   },
+  cut: (chain, fromSequence) => {
+    const kept = trail.entries.filter((entry) => entry.chain !== chain || entry.sequence < fromSequence);
+
+    trail.entries.splice(0, trail.entries.length, ...kept);
+  },
 });
 
 describe('InMemoryAuditTrail', () => {

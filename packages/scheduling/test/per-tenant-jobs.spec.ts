@@ -80,12 +80,17 @@ describe('a job declared per tenant', () => {
     const run = await scheduler.runNow(REMINDERS);
 
     expect(ran).toEqual(['acme', 'globex']);
-    expect(run).toMatchObject({ outcome: 'failed', errorCode: 'UNEXPECTED_ERROR' });
+    expect(run).toMatchObject({ outcome: 'failed', errorCode: 'NOT_FOUND' });
   });
 
   it('stops before the next tenant once its run is aborted', async () => {
     const { scheduler } = aBench({ tenants: new InMemoryTenantDirectory(['acme', 'globex']) });
     const ran: string[] = [];
+    let finished = (): void => undefined;
+
+    const firstRun = new Promise<void>((resolve) => {
+      finished = resolve;
+    });
 
     scheduler.register({
       name: REMINDERS,
@@ -95,10 +100,14 @@ describe('a job declared per tenant', () => {
       run: async ({ tenantId = 'none' }) => {
         ran.push(tenantId);
         await scheduler.advance(2_000);
+        finished();
       },
     });
 
     await scheduler.runNow(REMINDERS);
+    // `runNow` answers at the abort: the tenants go on, or stop, once the first run ended.
+    await firstRun;
+    await new Promise((resolve) => setImmediate(resolve));
 
     expect(ran).toEqual(['acme']);
     expect(scheduler.runs).toMatchObject([{ outcome: 'failed', errorCode: 'JOB_TIMEOUT' }]);

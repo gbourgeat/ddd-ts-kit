@@ -61,6 +61,16 @@ onDisk(
 onDisk(`${BILLING}/domain/vocabularies/loose.ts`, "export const Loose = { Paid: 'paid' } as const;\n");
 
 onDisk(
+  `${BILLING}/domain/vocabularies/channel.vocabulary.ts`,
+  'export const Channel = { Pigeon: `carrier-pigeon` } as const;\nexport type Channel = (typeof Channel)[keyof typeof Channel];\n',
+);
+
+onDisk(
+  `${BILLING}/domain/vocabularies/broken.vocabulary.ts`,
+  'export const Broken = { Paid: "paid" } as const satisfies',
+);
+
+onDisk(
   `${BILLING}/test/unit/declared-in-a-test.ts`,
   "export const Probe = { Late: 'late' } as const;\nexport type Probe = (typeof Probe)[keyof typeof Probe];\n",
 );

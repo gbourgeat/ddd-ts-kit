@@ -337,7 +337,10 @@ README of `@ddd-ts-kit/http`.
 `relay.tick()` claims a batch, publishes each event, marks it published, or schedules a retry
 with an exponential backoff; after `maxAttempts` the record is `dead` until
 `store.retryDead(ids, now)`. `store.stats()` gives `{ pending, failed, dead }` for a health
-check, `store.purgePublished(before)` keeps the table small.
+check, `store.purgePublished(before)` keeps the table small, and
+`store.erasePersonalFields(subject, events)` erases a person from the records of the events listed,
+whatever their status (`personalEventsInOutbox(store, events)` gives it to `eraseDataSubject` as a
+copy; a generated project reads the list `ddd-ts-kit docs` writes).
 
 ![The life of an outbox record: appended pending by the commit of the command, claimed by the relay when it is due, published then purged; a failed publication leaves it pending until its next attempt, after an exponential backoff; after maxAttempts attempts it is dead until retryDead puts it back pending](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/transactional-outbox-record-lifecycle.svg)
 
@@ -696,7 +699,8 @@ not guarantee.
 | `onFailure({ kind: 'tick' })` | the store itself failed | database health |
 
 Purge published records regularly (`purgePublished(before)`), or the table and its index grow
-without bound.
+without bound. A generated project does it every night (`events.purge-published`,
+`OUTBOX_RETENTION_DAYS`).
 
 ### Where change data capture fits
 

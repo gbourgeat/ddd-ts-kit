@@ -21,6 +21,22 @@ describe('withSpan', () => {
     expect(tracing.span('startup.migrations').attributes).toEqual({ 'app.step': 'migrate' });
   });
 
+  it('ends the span and marks it failed when the function throws at once, whatever it throws', () => {
+    const failure: unknown = 'not even an error';
+
+    expect(() =>
+      withSpan('startup.check', () => {
+        throw failure;
+      }),
+    ).toThrow('not even an error');
+
+    const span = tracing.span('startup.check');
+
+    expect(span.status).toEqual({ code: SpanStatusCode.ERROR });
+    expect(span.attributes).toEqual({});
+    expect(span.ended).toBe(true);
+  });
+
   it('ends the span when the promise settles and scrubs the failure', async () => {
     await expect(
       withSpan('job', async () => {

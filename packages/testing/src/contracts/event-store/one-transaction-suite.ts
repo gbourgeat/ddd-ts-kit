@@ -76,6 +76,7 @@ export class OneTransactionSuite extends ContractSuite<EventStoreUnderContract> 
       this.expect(refused === undefined).toBe(false);
 
       this.expect((await this.subject.store.readStream('shipping.consignment-c1')).length).toBe(2);
+      this.expect((await loaded(consignments, 'c1')).weight).toBe(100);
       this.expect((await this.relayed()).length).toBe(2);
     });
   }

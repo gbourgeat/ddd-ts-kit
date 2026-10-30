@@ -1,15 +1,16 @@
+import type { AliasRoot } from '../alias';
 import { scan } from '../check/scan/scan';
 import { computedImports } from './computed-imports';
 import type { Rewritten } from './rewritten';
 import { specifierLiterals } from './specifier-literals';
 
 export interface Rewrite {
-  /** What an alias specifier starts with. */
-  readonly prefixes: readonly string[];
-  /** The relative specifier an alias specifier becomes, or nothing when it names no emitted file. */
-  readonly relativeOf: (specifier: string) => string | undefined;
+  /** The roots of the aliases: a specifier is an alias when it starts with the prefix of one. */
+  readonly roots: readonly AliasRoot[];
+  /** The relative specifier an alias specifier of `root` becomes, or nothing when it names no emitted file. */
+  readonly relativeOf: (specifier: string, root: AliasRoot) => string | undefined;
   /** Why a specifier has no relative form, when more is known than that it names no emitted file. */
-  readonly problemOf?: (specifier: string) => string;
+  readonly problemOf?: (specifier: string, root: AliasRoot) => string;
 }
 
 interface Edit {
@@ -23,9 +24,10 @@ interface Edit {
  * a module specifier position are touched; a line never gains or loses a line break, so the
  * source map of the file keeps naming the right lines. A file without an alias comes back as is.
  */
-export function rewriteSpecifiers(source: string, { prefixes, relativeOf, problemOf = unknown }: Rewrite): Rewritten {
+export function rewriteSpecifiers(source: string, { roots, relativeOf, problemOf = unknown }: Rewrite): Rewritten {
   const scanned = scan(source);
   const edits: Edit[] = [];
+  const prefixes = roots.map(({ prefix }) => prefix);
 
   const problems = computedImports(source, scanned, prefixes).map(
     (line) =>
@@ -33,14 +35,16 @@ export function rewriteSpecifiers(source: string, { prefixes, relativeOf, proble
   );
 
   for (const { literal, whole } of specifierLiterals(scanned)) {
-    if (!prefixes.some((prefix) => literal.value.startsWith(prefix))) {
+    const root = roots.find(({ prefix }) => literal.value.startsWith(prefix));
+
+    if (root === undefined) {
       continue;
     }
 
-    const relative = whole ? relativeOf(literal.value) : undefined;
+    const relative = whole ? relativeOf(literal.value, root) : undefined;
 
     if (relative === undefined) {
-      problems.push(`line ${literal.line}: ${whole ? problemOf(literal.value) : computed(literal.value)}`);
+      problems.push(`line ${literal.line}: ${whole ? problemOf(literal.value, root) : computed(literal.value)}`);
     } else {
       edits.push({ start: literal.start + 1, end: literal.end - 1, text: relative });
     }

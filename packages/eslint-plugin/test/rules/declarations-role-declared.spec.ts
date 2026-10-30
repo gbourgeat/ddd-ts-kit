@@ -58,6 +58,14 @@ ruleTester.run('declarations-role-declared', declarationsRoleDeclared, {
     ),
     at(EVENT_HANDLER, declaring('DomainEventHandler', ISSUED), DECLARED),
     at(
+      HANDLER,
+      declaring(
+        'CommandHandler',
+        "import * as tracing from '@/platform/tracing/index.js';\n@tracing.Traced()\n@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])\nexport class IssueInvoiceHandler {}",
+      ),
+      DECLARED,
+    ),
+    at(
       PUBLISHER,
       declaring(
         'DomainEventHandler as Reacts',

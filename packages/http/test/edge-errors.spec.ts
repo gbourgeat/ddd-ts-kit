@@ -253,6 +253,37 @@ describe.each([
   });
 });
 
+describe.each([
+  ['Express', startExpress],
+  ['Fastify', startFastify],
+  ['Hono', startHono],
+  ['Nest over Express', nestOver('express')],
+  ['Nest over Fastify', nestOver('fastify')],
+] as const)('a tenant refusal below the edge of %s', (_name, start) => {
+  it.each([
+    ['/no-tenant', 403, 'FORBIDDEN'],
+    ['/invalid-tenant', 404, 'NOT_FOUND'],
+    ['/foreign-stream', 404, 'NOT_FOUND'],
+  ])('answers %s with what it means', async (path, status, code) => {
+    const response = await fetch(`${await started(start)}${path}`);
+    const problem: unknown = await response.json();
+
+    expect(response.status).toBe(status);
+    expect(response.headers.get('content-type')).toBe(PROBLEM);
+    expect(problem).toMatchObject({ status, code });
+  });
+
+  it('says nothing of the stream, of the tenant it belongs to or of the id it was given', async () => {
+    const url = await started(start);
+    const foreign = await (await fetch(`${url}/foreign-stream`)).text();
+    const invalid = await (await fetch(`${url}/invalid-tenant`)).text();
+
+    expect(foreign).not.toContain('billing.invoice-1');
+    expect(foreign).not.toContain('tenant');
+    expect(invalid).not.toContain('*');
+  });
+});
+
 describe('a refusal of the framework that carries a client status', () => {
   it('keeps its status on Fastify, a body in a media type no parser reads answered 415', async () => {
     const response = await fetch(`${await started(startFastify)}/orders`, {

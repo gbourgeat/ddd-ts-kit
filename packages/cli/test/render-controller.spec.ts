@@ -58,6 +58,21 @@ describe('the controller written for a function route', () => {
     expect(controller).not.toContain('@ddd-ts-kit/auth');
   });
 
+  it('keeps what else the route imported from the auth package, actorOf left out', () => {
+    const kept = renderController({
+      route: {
+        ...route,
+        imports: [...route.imports.slice(0, 1), "import { actorOf, sessionOf } from '@ddd-ts-kit/auth';\n"],
+      },
+      types,
+      group,
+      body: BODY,
+      groupImport: "import { InvoicesRoutes } from '../invoices.routes';",
+    });
+
+    expect(kept).toContain("import { sessionOf } from '@ddd-ts-kit/auth';");
+  });
+
   it('answers GET at the root of its group when the route named neither, keeping what differs from the group', () => {
     expect(controller).toContain(
       [

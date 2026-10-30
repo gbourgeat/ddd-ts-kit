@@ -40,6 +40,10 @@ import type { BackgroundJobs } from '{{alias.platform}}/jobs/background-jobs{{al
 export interface BackgroundWork {
   /** What a use case enqueues through, in the transaction of its command when the store shares it. */
   readonly jobQueue: JobQueue;
+{{#if queue.stored}}
+  /** Where the jobs wait: what the purge of what finished and the erasure of a person reach. */
+  readonly jobStore: JobStore;
+{{/if}}
   readonly backgroundJobs: BackgroundJobs;
   /** Runs the steps of the process managers and delivers their timeouts. */
   readonly processes: ProcessRunner;
@@ -82,10 +86,18 @@ export function createBackgroundWork({
 {{#if queue.memory}}
   const store = new InMemoryJobStore();
 {{/if}}
+{{#if tenancy.any}}
+  const jobQueue = new StoredJobQueue({ store, clock, ids, scope, tenant: true, traceparent: traced.traceparent });
+{{/if}}
+{{#unless tenancy.any}}
   const jobQueue = new StoredJobQueue({ store, clock, ids, scope, traceparent: traced.traceparent });
+{{/unless}}
 
   return {
     jobQueue,
+{{#if queue.stored}}
+    jobStore: store,
+{{/if}}
     backgroundJobs: backgroundJobsOn(workerOn(store, options, foundations), traced),
     processes: new StoredProcessRunner({
 {{#if queue.processTable}}

@@ -17,6 +17,7 @@ ruleTester.run('test-no-only-no-skip', testNoOnlyNoSkip, {
       SPEC,
       `${VITEST}const THROUGH_VARNISH = process.env['VARNISH_URL'] !== '';\nit.skipIf(!THROUGH_VARNISH)('serves the cached hours', () => {});`,
     ),
+    at(SPEC, `${VITEST}it.runIf.concurrent('records the payment', () => {});`),
     at(SOURCE, "it.only('not a test file', () => {});"),
   ],
   invalid: [

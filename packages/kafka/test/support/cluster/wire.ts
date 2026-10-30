@@ -7,6 +7,8 @@ export interface Wire {
   sent(): void;
   /** Calls `listener` each time the network gets better, so that what waits on it moves. */
   onRestore(listener: () => void): void;
+  /** Whether the brokers forgot the state of the idempotent producer that asks: its next send fails fatally. Answered once. */
+  producerStateLost(): boolean;
 }
 
 export const RELIABLE: Wire = {
@@ -14,6 +16,7 @@ export const RELIABLE: Wire = {
   reaching: () => true,
   sent: () => undefined,
   onRestore: () => undefined,
+  producerStateLost: () => false,
 };
 
 /**
@@ -31,6 +34,8 @@ export class InMemoryWire implements Wire {
 
   private closed = false;
 
+  private lostProducerState = false;
+
   private readonly listeners = new Set<() => void>();
 
   answering(): boolean {
@@ -47,6 +52,19 @@ export class InMemoryWire implements Wire {
 
   onRestore(listener: () => void): void {
     this.listeners.add(listener);
+  }
+
+  producerStateLost(): boolean {
+    const lost = this.lostProducerState;
+
+    this.lostProducerState = false;
+
+    return lost;
+  }
+
+  /** The brokers lose the state of the next idempotent producer that sends: a fatal error, as after a long outage. */
+  forgetProducerState(): void {
+    this.lostProducerState = true;
   }
 
   holdReplies(): void {

@@ -6,6 +6,8 @@ import { PLACED, TRACEPARENT, anEvent } from './support/events';
 import { recorder } from './support/recorder';
 import { eventually, pause } from './support/waiting';
 
+const CANCELLED = 'ordering.order.cancelled';
+
 describe.each(BROKERS)('KafkaEventBus: consuming, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;
 
@@ -96,6 +98,22 @@ describe.each(BROKERS)('KafkaEventBus: consuming, %s', { timeout: 60_000 }, (_na
 
   it('needs a consumer name for forConsumer too', () => {
     expect(() => broker.bus().forConsumer('')).toThrow(expect.objectContaining({ code: 'CONSUMER_NAME_REQUIRED' }));
+  });
+
+  it('starts consuming a type subscribed once it is connected, in the same group', async () => {
+    const bus = broker.bus({ consumer: broker.consumer('billing') });
+    const [placed, cancelled] = [recorder(), recorder()];
+
+    bus.subscribe(PLACED, placed.handler);
+    await bus.publish([anEvent('evt-1')]);
+    await broker.settled(bus);
+
+    bus.subscribe(CANCELLED, cancelled.handler);
+    await bus.publish([anEvent('evt-2', CANCELLED)]);
+    await broker.settled(bus);
+
+    expect(placed.ids()).toEqual(['evt-1']);
+    expect(cancelled.ids()).toEqual(['evt-2']);
   });
 
   it('keeps the record of a type whose handlers all unsubscribed, for the next handler', async () => {

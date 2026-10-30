@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { appendAuditGuard, typeOnlyImports } from '../src/migration';
+import { appendAuditGuard, auditGuardStatementsOf, schemasFirst, typeOnlyImports } from '../src/migration';
+import { guardedText } from '../src/migration/audit-guard/guarded-text';
 import { initProject } from './support/init-project';
 import { readJson } from './support/read-json';
 import { stringsAt } from './support/strings-at';
@@ -74,6 +75,35 @@ describe('a migration TypeORM writes', () => {
   it('imports its types as types, which verbatimModuleSyntax asks of the build that compiles it', () => {
     expect(typeOnlyImports(TYPEORM).split('\n')[0]).toBe(
       "import type { MigrationInterface, QueryRunner } from 'typeorm';",
+    );
+  });
+
+  it('creates the schemas of its tables first, which TypeORM never does, and is left alone without an up or a table', () => {
+    const first = schemasFirst(
+      TYPEORM.replace('"audit"."audit_entries" ("id"', '"billing"."invoices" ("id"').replace(
+        'DROP TABLE "audit"."audit_entries"',
+        'DROP TABLE "billing"."invoices"',
+      ),
+    );
+
+    expect(first).toContain(
+      'public async up(queryRunner: QueryRunner): Promise<void> {\n        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "billing"`);\n        await queryRunner.query(`CREATE TABLE "billing"."invoices"',
+    );
+
+    expect(schemasFirst('export class Nothing {}\n')).toBe('export class Nothing {}\n');
+  });
+
+  it('cannot add the guard to a TypeORM migration without an up and a down, and says so', () => {
+    expect(() => guardedText('typeorm', 'export class Init {}\n', GUARD)).toThrow(
+      'The migration holds no `up` and `down` methods to add the audit guard to.',
+    );
+  });
+
+  it('refuses to read the statements of the guard where @ddd-ts-kit/audit is not installed, naming the install', () => {
+    const root = tempDir('audit-guard');
+
+    expect(() => auditGuardStatementsOf(root, 'drizzle')('billing')).toThrow(
+      'The statements of the audit guard could not be read from @ddd-ts-kit/audit/drizzle.',
     );
   });
 

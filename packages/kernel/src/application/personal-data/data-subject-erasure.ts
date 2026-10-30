@@ -13,6 +13,11 @@ export interface DataSubjectErasure {
   /** The copies the contexts keep of a data subject in clear, erased after the key, in every tenant. None: the key and the rebuilds alone. */
   readonly copies?: readonly PersonalDataCopy[];
   /**
+   * The copies no tenant confines, the outbox and the background jobs of the platform: run once,
+   * after the copies, in the context of the erasure. None: the copies of the contexts alone.
+   */
+  readonly shared?: readonly PersonalDataCopy[];
+  /**
    * Runs a copy once per tenant, in an execution context of that tenant, and sums what it erased:
    * a copy writes tenant data, which no elevation widens (`inEachTenant`). Left out, a copy runs
    * once, in the current context.

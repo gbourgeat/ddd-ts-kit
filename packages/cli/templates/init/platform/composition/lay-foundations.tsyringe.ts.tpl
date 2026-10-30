@@ -64,7 +64,7 @@ export function layFoundations(persistence: Persistence, options: Observed): Fou
   const ids = new UuidGenerator();
   const logger = createLogger(scope, options.log);
 {{#if audit.on}}
-  const audit = createAudit(persistence, { scope, clock, ids });
+  const audit = createAudit(persistence, { scope, clock, ids }, logger);
 {{/if}}
 
   return {

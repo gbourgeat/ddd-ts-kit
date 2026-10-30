@@ -7,7 +7,12 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import Fastify from 'fastify';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import type { InMemoryLogger } from '@ddd-ts-kit/kernel';
+import {
+  EventStreamTenantError,
+  InvalidTenantIdError,
+  NoCurrentTenantError,
+  type InMemoryLogger,
+} from '@ddd-ts-kit/kernel';
 import { mountExpress, problemErrorHandler as expressErrorHandler } from '../../src/express';
 import { mountFastify, problemErrorHandler as fastifyErrorHandler } from '../../src/fastify';
 import { mountHono, problemErrorHandler as honoErrorHandler } from '../../src/hono';
@@ -34,7 +39,30 @@ const echoBody = defineRoute(
   ({ body }) => ({ status: 200, body: { absent: body === undefined } }),
 );
 
-const EDGE_ROUTES: readonly Route[] = [...orderRoutes, echoBody];
+/** A route whose work is refused below the edge, by a store that reads the tenant of the work. */
+function refusedBelow(path: string, refused: () => Error): Route {
+  return defineRoute(
+    {
+      method: 'GET',
+      path,
+      operationId: `refused${path.replaceAll('/', '-')}`,
+      summary: 'Reach what the tenant of the work does not reach',
+      responses: { 200: { description: 'Never answered.' } },
+      security: false,
+    },
+    () => {
+      throw refused();
+    },
+  );
+}
+
+const TENANT_REFUSALS = [
+  refusedBelow('/no-tenant', () => new NoCurrentTenantError()),
+  refusedBelow('/invalid-tenant', () => new InvalidTenantIdError('*')),
+  refusedBelow('/foreign-stream', () => new EventStreamTenantError('billing.invoice-1')),
+];
+
+const EDGE_ROUTES: readonly Route[] = [...orderRoutes, echoBody, ...TENANT_REFUSALS];
 
 /** The challenge a middleware in front of the routes refuses with, on `/unauthenticated`. */
 export const CHALLENGE = 'Bearer realm="orders"';

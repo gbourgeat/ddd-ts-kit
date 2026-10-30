@@ -115,3 +115,13 @@ describe('shipped templates', () => {
     }
   });
 });
+
+describe('a template or a placeholder the package does not hold', () => {
+  it('refuses a template missing from the package', () => {
+    expect(() => readTemplate('nowhere/missing.ts.tpl')).toThrow(/is missing from the package/);
+  });
+
+  it('refuses a placeholder that reads through a value which is not an object', () => {
+    expect(() => render('{{name.pascal.length}}', { name: { pascal: 'InvoiceLine' } })).toThrow(/unknown placeholder/);
+  });
+});

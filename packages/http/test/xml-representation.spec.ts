@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { XmlRepresentation, type BodyShape } from '../src';
+import { XmlParser } from '../src/representation/xml/xml-parser';
 
 const xml = new XmlRepresentation();
 const DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -63,6 +64,29 @@ describe('the XML convention of the kit', () => {
     expect(xml.read('<x><item>a</item><item>b</item></x>', shape)).toEqual(['a', 'b']);
   });
 
+  it('writes a streamed list chunk by chunk: the root opened first, one element per item, the root closed last', async () => {
+    const shape = { name: 'searchTags', schema: { type: 'array', items: { type: 'string' } } };
+
+    async function* tags(): AsyncIterable<string> {
+      yield 'a';
+      yield 'b';
+    }
+
+    const written = xml.write(tags(), shape);
+
+    if (typeof written === 'string') {
+      throw new Error('A streamed body is written as it comes.');
+    }
+
+    const chunks: string[] = [];
+
+    for await (const chunk of written) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks).toEqual([`${DECLARATION}<searchTags ${XSI}>`, '<item>a</item>', '<item>b</item>', '</searchTags>']);
+  });
+
   it('takes the name of the root from the schema when it gives one', () => {
     expect(xml.write({}, { name: 'getOrder', schema: { type: 'object', xml: { name: 'order' } } })).toBe(
       `${DECLARATION}<order ${XSI}></order>`,
@@ -102,6 +126,12 @@ describe('the XML convention of the kit', () => {
       '<?xml version="1.0"?><!-- before --><r a=\'1\'><!-- c --><t><![CDATA[<b>]]>&#65;&#x42;&apos;</t><?pi x?></r><!-- after -->';
 
     expect(xml.read(source, shape)).toEqual({ t: "<b>AB'", a: '1' });
+  });
+
+  it('refuses an element left open, and a tag without a name', () => {
+    expect(() => XmlParser.parse('<r><t>')).toThrow('an element is not closed');
+    expect(() => XmlParser.parse('<>')).toThrow('a name was expected');
+    expect(() => xml.read('<r><t>', { name: 'r', schema: {} })).toThrow('The request is not valid.');
   });
 
   it('refuses a document type declaration, and with it every entity it could declare', () => {

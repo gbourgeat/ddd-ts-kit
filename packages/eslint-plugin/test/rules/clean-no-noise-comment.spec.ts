@@ -15,6 +15,9 @@ ruleTester.run('clean-no-noise-comment', cleanNoNoiseComment, {
     '/** The invoices that are overdue at the given instant, oldest first. */\nfunction overdueInvoices(): void {}',
     'class Invoice {\n  /** Raised when the same invoice is issued twice. */\n  issue(): void {}\n}',
     '// get the invoice\n\nconst unrelated = 1;',
+    '/**\n * The vendor rounds half up (contract 4.2),\n * so we round before summing.\n */\nconst total = 1;',
+    '// why: the vendor rounds half up\nconst total = 1;\n\n// why: the vendor rounds half down\nconst other = 2;',
+    'function answer(): number {\n  // the answer the vendor expects\n  return 42;\n}',
   ],
   invalid: [
     { code: '// ---------- helpers ----------\nconst total = 1;', errors: [{ messageId: 'banner' }] },
@@ -58,6 +61,10 @@ ruleTester.run('clean-no-noise-comment', cleanNoNoiseComment, {
     {
       code: 'class Cache {\n  /** Gets the value. */\n  get(): void {}\n}',
       errors: [{ messageId: 'restatesName', data: { name: 'get', excerpt: 'Gets the value.' } }],
+    },
+    {
+      code: '// The copied entries\nconst copiedEntries = [];',
+      errors: [{ messageId: 'restatesName', data: { name: 'copiedEntries', excerpt: 'The copied entries' } }],
     },
   ],
 });

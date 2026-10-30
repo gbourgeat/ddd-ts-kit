@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { executionContext, InMemoryUnitOfWork, systemActor, type Actor } from '@ddd-ts-kit/kernel';
-import { InvalidEnqueueError } from '../src';
+import { InvalidEnqueueError, StoredJobQueue } from '../src';
 import { aQueueBench } from './support/a-queue-bench';
 import { CompileStatementsJob } from './support/statements-job';
 
 const ACCOUNTANT: Actor = { id: 'user-7', type: 'user', tenantId: 'tenant-3', roles: ['accountant'], attributes: {} };
+
+/** What a verified token gives: the profile of the person beside what the authorizer reads. */
+const SIGNED_IN: Actor = {
+  ...ACCOUNTANT,
+  attributes: {
+    username: 'ghopper',
+    email: 'grace@example.org',
+    emailVerified: true,
+    department: 'finance',
+    tenants: ['tenant-3', 'tenant-4'],
+  },
+};
 
 const FEBRUARY = { month: '2026-02', customers: ['c-1'] };
 
@@ -36,6 +48,35 @@ describe('enqueueing a background job', () => {
       tenantId: 'tenant-3',
       traceparent: '00-trace-span-01',
     });
+  });
+
+  it('keeps who acts and what authorizes the run, and leaves the profile of the actor out of the stored job', async () => {
+    const { queue, scope, store, clock } = aQueueBench();
+    const context = executionContext({ correlationId: 'corr-1', actor: SIGNED_IN, origin: 'http' });
+
+    await scope.run(context, () => queue.enqueue(CompileStatementsJob, FEBRUARY));
+
+    const [claimed] = await store.claim({ queue: 'billing', limit: 1, now: clock.now(), leaseMs: 1 });
+
+    expect(claimed?.enqueuedBy.actor).toEqual({
+      id: 'user-7',
+      type: 'user',
+      tenantId: 'tenant-3',
+      roles: ['accountant'],
+      attributes: { tenants: ['tenant-3', 'tenant-4'] },
+    });
+  });
+
+  it('keeps an attribute of the actor only when the queue is told a run needs it', async () => {
+    const { store, clock, ids, scope } = aQueueBench();
+    const context = executionContext({ correlationId: 'corr-1', actor: SIGNED_IN, origin: 'http' });
+    const queue = new StoredJobQueue({ store, clock, ids, scope, actorAttributes: ['department'] });
+
+    await scope.run(context, () => queue.enqueue(CompileStatementsJob, FEBRUARY));
+
+    const [claimed] = await store.claim({ queue: 'billing', limit: 1, now: clock.now(), leaseMs: 1 });
+
+    expect(claimed?.enqueuedBy.actor.attributes).toEqual({ tenants: ['tenant-3', 'tenant-4'], department: 'finance' });
   });
 
   it('acts as the job itself, under a correlation of its own, outside of any execution scope', async () => {

@@ -315,7 +315,9 @@ an elevation of platform staff reaches, `In([...])` or nothing over every tenant
 `ownTenantWhere(scope)` into the criteria of an update or a delete (the one tenant of the work,
 whatever an elevation widens) and `tenantScopeOf(scope)` of the kernel into an inserted row.
 `save` and `upsert` are not used: they write by the key, which the tenant is never part of. The
-rule `tenancy/scoped-statement` of the CLI holds the adapters of a `--tenancy shared-table`
+spread stays at the top of the where: a where array is an `or` of its entries, so each one spreads
+it, and a query builder groups its alternatives in `new Brackets(...)`, never in an `orWhere` at
+its top. The rule `tenancy/scoped-statement` of the CLI holds the adapters of a `--tenancy shared-table`
 project to it, and `generate repository` writes them this way.
 
 ```ts

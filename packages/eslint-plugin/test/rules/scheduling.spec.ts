@@ -111,6 +111,15 @@ ruleTester.run('scheduling-job-triggers-use-case', schedulingJobTriggersUseCase,
         { messageId: 'misplaced', data: { className: 'Purge', file: `${BILLING}/infrastructure/external/purge.ts` } },
       ],
     },
+    {
+      ...at(
+        MODULE,
+        "import { Heartbeat } from '@/platform/scheduling/heartbeat.js';\nbuilder.job('billing.heartbeat', { every: '1m' }).handledBy(Heartbeat, []);",
+      ),
+      errors: [
+        { messageId: 'misplaced', data: { className: 'Heartbeat', file: 'src/platform/scheduling/heartbeat.ts' } },
+      ],
+    },
   ],
 });
 

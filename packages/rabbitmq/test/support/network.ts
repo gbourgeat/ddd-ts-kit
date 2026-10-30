@@ -11,6 +11,8 @@ export interface Network {
   /** Grows with what the bus sends, to know that a publication left it. */
   readonly traffic: number;
   holdReplies(): void;
+  /** The channels start closing: amqplib refuses to publish until the broker answered. In memory only. */
+  beginClosing(): void;
   cutConnections(): void;
   refuseConnections(): void;
   restore(): void;

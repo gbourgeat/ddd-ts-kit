@@ -14,6 +14,7 @@ export function spanContextFromTraceparent(traceparent: string): SpanContext | u
 
   const [, traceId, spanId, flags] = match;
 
+  /* v8 ignore next 3 -- ADR-0001: the three groups are mandatory in the expression that matched */
   if (traceId === undefined || spanId === undefined || flags === undefined) {
     return undefined;
   }

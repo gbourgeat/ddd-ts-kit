@@ -31,6 +31,12 @@ describe('fromYaml', () => {
     expect(fromYaml('a:\r\n  - 1\r\n')).toEqual({ a: [1] });
   });
 
+  it('keeps one line break of a literal block followed by blank lines, and refuses a text without a value', () => {
+    expect(fromYaml('a: |\n  x\n\n\nb: 1\n')).toEqual({ a: 'x\n', b: 1 });
+    expect(fromYaml('a: |-\n  x\n\n')).toEqual({ a: 'x' });
+    expect(() => fromYaml('')).toThrow('a value is missing');
+  });
+
   it('refuses what the kit never writes, with the line', () => {
     const refused = ['a: &anchor 1\n', 'a: [1, 2]\n', 'a: >\n  folded\n', 'a:\n', 'a: 1\n b: 2\n', '- 1\na: 2\n'];
 

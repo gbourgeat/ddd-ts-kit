@@ -86,6 +86,11 @@ auditTrailContract(runner, {
     await current.run(`update $table set "action" = '${action}' where "id" = '${entry.id}'`);
     await current.run('alter table $table enable trigger "audit_entries_no_rewrite"');
   },
+  cut: async (chain, fromSequence) => {
+    await current.run('alter table $table disable trigger "audit_entries_no_rewrite"');
+    await current.run(`delete from $table where "chain" = '${chain}' and "sequence" >= ${fromSequence}`);
+    await current.run('alter table $table enable trigger "audit_entries_no_rewrite"');
+  },
 });
 
 sqlTrailSpecs({ name: 'TypeOrmAuditTrail', real: REAL_SERVER, create: fixture });

@@ -40,6 +40,25 @@ describe.each(SERVERS)('RedisStreamsEventBus, publishing, %s', { timeout: 30_000
     expect(await server.length(`${prefix}:ordering.order.cancelled`)).toBe(1);
   });
 
+  it('publishes nothing for an empty batch', async () => {
+    const bus = server.bus();
+
+    expect(await bus.publish([])).toBeUndefined();
+  });
+
+  it('rejects an entry the server refused, with the kind of error it answered', async () => {
+    const prefix = unique('test-events');
+    const bus = server.bus({ prefix });
+
+    await server.client.set(`${prefix}:${PLACED}`, 'not a stream');
+
+    await expect(bus.publish([anEvent('evt-1')])).rejects.toMatchObject({
+      code: 'PUBLISH_NOT_CONFIRMED',
+      eventId: 'evt-1',
+      reason: 'REDIS_WRONGTYPE',
+    });
+  });
+
   it('resolves only once the server acknowledged, and rejects a publication cut mid-flight', async () => {
     const network = await FaultyNetwork.to(redis.url);
     const bus = server.bus({ connection: network.url });

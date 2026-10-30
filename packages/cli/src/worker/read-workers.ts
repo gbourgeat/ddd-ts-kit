@@ -8,7 +8,7 @@ import { type BranchStanding, branchStanding } from './branch-standing';
 import { changedFiles } from './changed-files';
 import { listWorktrees, type Worktree } from './list-worktrees';
 import { overlapsOf } from './overlaps-of';
-import { progressOf } from './progress-of';
+import { readableProgress } from './readable-progress';
 import { readWorkerFile } from './read-worker-file';
 import type { WorkerFile } from './worker-file';
 import { REPORT_FILE } from './report-file';
@@ -40,7 +40,7 @@ function workerIn(worktree: Worktree, project: string): WorkerStatus[] {
 
   const branch = worktree.branch ?? scope.branch;
   // A scope file written before the rows were recorded has no rows to follow.
-  const progress = scope.rows === undefined ? undefined : progressOf(project, scope);
+  const progress = scope.rows === undefined ? undefined : readableProgress(project, scope);
   const standing = standingIn(worktree, project, scope);
 
   return [

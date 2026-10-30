@@ -82,6 +82,21 @@ describe('merge-trunk: the package.json of a client', () => {
     expect(left.blocks).toHaveLength(1);
   });
 
+  it('leaves the choice to a person when a side is not a package.json with a version', () => {
+    expect(
+      resolveConflict(path(MANIFEST, [], { ours: '{ not json', theirs: clientManifest('1.2.1') }), REPO),
+    ).toMatchObject({
+      kind: 'source',
+      settled: false,
+      how: 'a side is not a package.json with a version',
+    });
+
+    expect(resolveConflict(path(MANIFEST, [], { ours: clientManifest('1.3.0'), theirs: '[]' }), REPO)).toMatchObject({
+      settled: false,
+      how: 'a side is not a package.json with a version',
+    });
+  });
+
   it('takes the deletion of the trunk, and leaves the other files of a client derived', () => {
     const { theirs, ...deleted } = path(MANIFEST, [], { ours: clientManifest('1.3.0') });
 
@@ -298,6 +313,15 @@ describe('merge-trunk: what is left to a person, and what merges by key', () => 
 
     expect(mergeStoredEventsLock(ours, JSON.stringify({ 'billing.invoice.paid': { 1: 'sha256:cc' } }))).toEqual({
       conflicts: ['billing.invoice.paid v1'],
+    });
+
+    expect(
+      mergeStoredEventsLock(
+        JSON.stringify({ 'billing.invoice.paid': { 10: 'sha256:dd', 1: 'sha256:aa' } }),
+        JSON.stringify({ 'billing.invoice.paid': { 2: 'sha256:bb', 1: 'sha256:aa' } }),
+      ),
+    ).toEqual({
+      text: `${JSON.stringify({ 'billing.invoice.paid': { 1: 'sha256:aa', 2: 'sha256:bb', 10: 'sha256:dd' } }, null, 2)}\n`,
     });
 
     expect(resolveConflict(path('stored-events.lock.json', [], { ours, theirs }), REPO)).toMatchObject({

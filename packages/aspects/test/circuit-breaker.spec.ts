@@ -27,6 +27,23 @@ describe('circuitBreaker', () => {
     expect(gateway.calls).toHaveLength(2);
   });
 
+  it('counts no failure of a call that was in flight when it opened: one transition, not two', async () => {
+    const clock = new FixedClock(start);
+    const changes: CircuitStateChange[] = [];
+
+    const gateway = circuitBreaker({
+      failureThreshold: 1,
+      resetAfterMs: 30_000,
+      clock,
+      onStateChange: (change) => void changes.push(change),
+    })(new QuoteGateway());
+
+    await failing(gateway, 2);
+
+    expect(gateway.calls).toHaveLength(2);
+    expect(changes.map(({ from, to }) => `${from} > ${to}`)).toEqual(['closed > open']);
+  });
+
   it('counts consecutive failures only: a success starts over', async () => {
     const clock = new FixedClock(start);
     const gateway = circuitBreaker({ failureThreshold: 2, resetAfterMs: 30_000, clock })(new QuoteGateway());

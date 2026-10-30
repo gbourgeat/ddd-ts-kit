@@ -58,6 +58,7 @@ ruleTester.run('event-sourcing-past-tense', eventSourcingPastTense, {
       AGGREGATE,
       "import { InvoicePriceSet } from '@/contexts/billing/domain/events/invoice-price-set.event';\nexport class Invoice extends EventSourcedAggregate<InvoicePriceSet> {}",
     ),
+    at(HANDLER, "import { PayInvoice } from '@/contexts/billing/domain/events/pay-invoice.event';"),
   ],
   invalid: [
     {
@@ -120,6 +121,10 @@ ruleTester.run('event-sourcing-projection-never-appends', eventSourcingProjectio
       PROJECTION,
       "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';\n@Projection('billing.invoice-list')\nexport class InvoiceListProjection {}",
     ),
+    at(
+      'src/platform/events/projector.ts',
+      "import { EventStore } from '@ddd-ts-kit/kernel';\nexport class Projector {}",
+    ),
   ],
   invalid: [
     {
@@ -158,6 +163,10 @@ ruleTester.run('event-sourcing-upcaster-required', eventSourcingUpcasterRequired
     at(
       CODEC,
       codec('encode(event: InvoicePaid): InvoicePaidData { return { cents: 1 }; }', 3, "upcasters: { 1: up, '2': up }"),
+    ),
+    at(
+      CODEC,
+      "enum Status { Open = 'open' }\ninterface InvoicePaidData { readonly status: Status }\nexport const invoiceEvents = { 'billing.invoice.paid': defineStoredEvent(InvoicePaid, { version: 1, encode: (event): InvoicePaidData => ({ status: Status.Open }), decode }) };",
     ),
   ],
   invalid: [

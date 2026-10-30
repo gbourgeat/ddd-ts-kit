@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:62c82dbb24125131 -->
+<!-- translation-of: README.md sha256:969e2fb8013f859e -->
 
 # @ddd-ts-kit/typeorm
 
@@ -326,8 +326,10 @@ décompose dans le where d'une lecture, en options de recherche ou sur un *query
 `In([...])` ou rien au-dessus de tous les *tenants*), `ownTenantWhere(scope)` dans les critères
 d'une mise à jour ou d'une suppression (le seul *tenant* du travail, quoi qu'une élévation
 élargisse) et `tenantScopeOf(scope)` du noyau dans une ligne insérée. `save` et `upsert` ne
-servent pas : ils écrivent par la clé, dont le *tenant* ne fait jamais partie. La règle
-`tenancy/scoped-statement` de la CLI y tient les adaptateurs d'un projet `--tenancy shared-table`,
+servent pas : ils écrivent par la clé, dont le *tenant* ne fait jamais partie. L'étalement reste
+au sommet du *where* : un tableau *where* est un `or` de ses entrées, chacune l'étale donc, et un
+*query builder* groupe ses alternatives dans `new Brackets(...)`, jamais dans un `orWhere` à son
+sommet. La règle `tenancy/scoped-statement` de la CLI y tient les adaptateurs d'un projet `--tenancy shared-table`,
 et `generate repository` les écrit ainsi.
 
 ```ts
