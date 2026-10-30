@@ -116,7 +116,9 @@ that instruction: from another checkout a worker only reads (`cat`, `ls`, `grep`
 briefing), whatever the program. A session opened above the project holds its worker to the project
 its command names, and a worker standing in its worktree stays pinned to it when a command starts in
 another project. It follows a `cd` only when it is certain (after `&&`, into a directory that
-exists), so a write after `cd dir;` or a failed `cd` is refused rather than placed wrong; it reads a
+exists, and that no folder of `CDPATH` sends elsewhere), refuses a worker the variables that move
+where the shell or git find their places (`TMPDIR`, `CDPATH`, `HOME`, `GIT_DIR`, `GIT_WORK_TREE`,
+`PATH`, set for a command or exported), so a write after `cd dir;` or a failed `cd` is refused rather than placed wrong; it reads a
 name the shell computes (a variable, a substitution, a brace list), a wrapper (`nice`, `ionice`,
 `setsid`, `flock`, `busybox`, `su -c`, `env -S`), a package runner (`npx`, `npm exec`) and the
 command it runs; and it knows the writers the file tables miss (`>&`, a `sed` or `awk` script that

@@ -559,6 +559,8 @@ const STATE_BYTES = 16 * 1024 * 1024;
 const READ_ONLY_AGENTS = ['architecture-reviewer', 'domain-explorer', 'story-verifier'];
 // How the record of a trial is appended: created if missing, never through a link under its name.
 const RECORD_APPEND = constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | constants.O_NOFOLLOW;
+// The variables that move where the shell finds a path, a directory or a program, or git its repository.
+const PLACE_VARIABLES = /^(?:TMPDIR|CDPATH|HOME|GIT_DIR|GIT_WORK_TREE|PATH)=/;
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -1021,6 +1023,7 @@ function workerCommandReason(project, input, { context, command, commands }) {
     workingMigrationReason(command) ??
     formatterReason(project, commands) ??
     unknownProgramReason(commands) ??
+    placeVariableReason(commands) ??
     (pending ? undefined : fileChangeReason(project, input, commands)) ??
     unreadReason(commands);
   if (!refusal && !pending) {
@@ -1040,6 +1043,15 @@ function unreadReason(commands) {
   return unread === 'nested'
     ? `A command nested deeper than the guard reads is refused to a worker: write it as separate, flatter commands. ${REPORT_TO_CONDUCTOR}`
     : `A quote, a substitution or a here-document of this command never closes, so the guard cannot read what follows it: close it, or write separate commands. ${REPORT_TO_CONDUCTOR}`;
+}
+
+// The variables by which the shell and git find their places: set by a worker, the places the guard
+// reads would no longer be the places written.
+function placeVariableReason(commands) {
+  const variable = commands.flatMap(exportedVariables).find((word) => PLACE_VARIABLES.test(word));
+  return variable
+    ? `A worker sets no \`${variable.split('=')[0]}\`: it changes where the shell or git read and write, and the guard reads the places of a command by their values when the session started. ${EDIT_WITH_TOOLS}`
+    : undefined;
 }
 
 // A command whose program word holds a variable or a substitution runs a name only the shell

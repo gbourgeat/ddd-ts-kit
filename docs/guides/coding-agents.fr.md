@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:907d813031def990 -->
+<!-- translation-of: coding-agents.md sha256:ab08b42beeef8de7 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -121,7 +121,10 @@ dans son propre *worktree*, le kit interrogé pour lister, décrire, rendre comp
 *briefing*), quel que soit le programme. Une session ouverte au-dessus du projet tient son worker au
 projet que nomme sa commande, et un worker qui se tient dans son *worktree* y reste épinglé quand une
 commande commence dans un autre projet. Il ne suit un `cd`
-que lorsqu'il est certain (après `&&`, vers un répertoire qui existe), de sorte qu'une écriture
+que lorsqu'il est certain (après `&&`, vers un répertoire qui existe, et qu'aucun dossier de
+`CDPATH` n'envoie ailleurs), refuse à un *worker* les variables qui déplacent l'endroit où le
+*shell* ou git trouvent leurs chemins (`TMPDIR`, `CDPATH`, `HOME`, `GIT_DIR`, `GIT_WORK_TREE`,
+`PATH`, données à une commande ou exportées), de sorte qu'une écriture
 après `cd dir;` ou un `cd` qui échoue est refusée plutôt que mal placée ; il lit un nom que le
 *shell* calcule (une variable, une substitution, une liste d'accolades), un lanceur (`nice`,
 `ionice`, `setsid`, `flock`, `busybox`, `su -c`, `env -S`), un exécuteur de paquet (`npx`,

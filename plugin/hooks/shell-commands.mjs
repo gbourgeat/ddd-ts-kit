@@ -122,8 +122,18 @@ function movedTo(command, words, place) {
   if (!isCertain(command, place.blocks)) {
     return undefined;
   }
-  // A `cd` that cannot be seen to land on an existing directory leaves the place to the shell.
-  return name === 'cd' && (next === undefined || !existsSync(next)) ? undefined : next;
+  // A `cd` that cannot be seen to land on an existing directory, or that CDPATH sends elsewhere,
+  // leaves the place to the shell.
+  return name === 'cd' && (next === undefined || !existsSync(next) || sentElsewhere(words[1], next)) ? undefined : next;
+}
+
+// A relative directory that a folder of CDPATH holds: the shell goes there, not where it is spelled.
+function sentElsewhere(target, next) {
+  const folders = (process.env.CDPATH ?? '').split(':').filter(Boolean);
+  return (
+    !/^(?:\.{0,2}\/|\.{1,2}$)/.test(target ?? '/') &&
+    folders.some((folder) => resolve(folder, target) !== next && existsSync(resolve(folder, target)))
+  );
 }
 
 function movedBy(name, words, { current, stack }) {
