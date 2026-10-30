@@ -21,7 +21,7 @@ export const moduleKind: Kind = {
   usage:
     'module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...',
   summary:
-    'A module of the model of a context (Evans, Modules): declared in contexts.<name>.modules, given its row in the "## Modules" table of CONTEXT.md, its terms added to the glossary, and, in the explicit style, its module file <module>/<module>.module.ts, composed by <context>.module.ts. Run again, it adds what is missing. Generate into it with --module, move files into it with `ddd-ts-kit move-to-module`.',
+    'A module of the model of a context (Evans, Modules): declared in contexts.<name>.modules, given its row in the "## Modules" table of CONTEXT.md, its terms added to the glossary, and, in the explicit style, its module file <module>/<module>.module.ts, composed by <context>.module.ts. Run again, it adds what is missing. Generate into it with --module, move files into it with `ddd-ts-kit move-to-module`. After `generate context <name>`.',
   positionals: ['context', 'module'],
   writesShared: true,
   writesInModules: false,

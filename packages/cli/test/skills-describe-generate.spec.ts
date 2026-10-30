@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { heldToGlossary } from '../src/generate/held-to-glossary';
+import { KINDS } from '../src/generate/kinds';
 import { cli, REPO_ROOT, tempDir } from './helpers';
 import { initProject } from './support/init-project';
 
@@ -40,5 +42,12 @@ describe('the skills, on what generate prints', () => {
       expect(read(page), page).toContain('`npx ddd-ts-kit generate <kind> --help`');
       expect(read(page), page).not.toMatch(/`npx ddd-ts-kit --help`/);
     }
+  });
+
+  it('name in plan-slices every kind that takes no --term, as generate --help --json says it', () => {
+    const listed = /whose `heldToGlossary` is false \(([^)]*)\)/.exec(read('plugin/skills/plan-slices/SKILL.md'))?.[1];
+    const named = [...(listed ?? '').matchAll(/`([a-z0-9-]+)`/g)].map((match) => match[1]);
+
+    expect(named).toEqual(KINDS.filter((kind) => !heldToGlossary(kind)).map((kind) => kind.name));
   });
 });

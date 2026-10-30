@@ -93,6 +93,17 @@ describe('the presentation of a new project', () => {
     expect(cli(root, 'generate', 'form', 'billing', 'PayInvoice').stderr).toContain('has no controller for');
   });
 
+  it('names the route to generate first when a use case has no route, with the flags the route requires', () => {
+    const refused = cli(root, 'generate', 'representation', 'billing', 'PayInvoice', 'xml');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('The context billing has no controller for Pay invoice.');
+
+    expect(refused.stderr).toContain(
+      'Write it first: `ddd-ts-kit generate route billing PayInvoice --method <M> --path <path>` under "stack.routes": "controllers" or "nest", or `ddd-ts-kit generate controller billing PayInvoice --method <M> --path <path>`.',
+    );
+  });
+
   it('describes what each route answers and reads in, and where its form is', () => {
     const routes = jsonAt(cli(root, 'describe', 'billing', '--json').json(), 'routes');
     const text = cli(root, 'describe', 'billing').stdout;
@@ -109,6 +120,27 @@ describe('the presentation of a new project', () => {
     expect(text).toContain(
       '; answers also application/xml, text/csv; reads also application/xml; form: GET /forms/issueInvoice',
     );
+  });
+});
+
+describe('a representation of a use case routed by a function', () => {
+  it('names the controller to write or the defineRoute to complete by hand, never the route that is there', () => {
+    const root = initProject('--routes', 'functions', '--context', 'billing:core');
+
+    cli(root, 'generate', 'command', 'billing', 'VoidInvoice', '--permission', 'invoice.void', '--allow-name');
+    cli(root, 'generate', 'route', 'billing', 'VoidInvoice', '--method', 'POST', '--path', '/invoices/:id/void');
+
+    const refused = cli(root, 'generate', 'representation', 'billing', 'VoidInvoice', 'xml');
+
+    expect(exists(root, `${HTTP}/void-invoice.route.ts`)).toBe(true);
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('The context billing has no controller for Void invoice.');
+
+    expect(refused.stderr).toContain(
+      'Its route is not a controller class: write one with `ddd-ts-kit generate controller billing VoidInvoice --method <M> --path <path>`, or declare `produces` and `form` in its `defineRoute` by hand.',
+    );
+
+    expect(refused.stderr).not.toContain('generate route');
   });
 });
 

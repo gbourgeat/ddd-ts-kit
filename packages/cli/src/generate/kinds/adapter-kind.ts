@@ -23,7 +23,7 @@ export const adapterKind: Kind = {
   aliases: [],
   usage: 'adapter <context> <Port> [--kind external|gateway|simulated] [--decorators]',
   summary:
-    'An infrastructure adapter of an existing port towards an outside system, its spec and its registration with a retry and timeout policy; with --decorators its outbound method carries the policy itself. With --kind simulated, an adapter that answers in the memory of the process, for an environment whose provider is simulated.',
+    'An infrastructure adapter of an existing port towards an outside system, its spec and its registration with a retry and timeout policy; with --decorators its outbound method carries the policy itself. With --kind simulated, an adapter that answers in the memory of the process, for an environment whose provider is simulated. After `generate port <context> <Port>`.',
   positionals: ['context', 'Port'],
   writesShared: true,
   writesInModules: true,
