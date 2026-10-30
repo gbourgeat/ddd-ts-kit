@@ -17,6 +17,6 @@ export function textsOf(text: string): AuditRecord {
     correlationId: text,
     causationId: text,
     changes: { [text]: text, nested: { masked: text } },
-    extensions: { [text]: text },
+    extensions: { [text]: text, [`listed ${text}`]: [text] },
   };
 }

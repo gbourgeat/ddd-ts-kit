@@ -32,7 +32,7 @@ export class CheckpointsSuite extends ContractSuite<AuditTrailUnderContract> {
       await recordAll(this.subject, FIVE_ENTRIES);
 
       const entries = await entriesOf(this.subject, ALPHA);
-      const checkpoints = [this.checkpointAt(entries, 5)];
+      const checkpoints = checkpointsAt(entries, 5);
 
       this.expect(await verifyChain(this.subject, { chain: ALPHA, checkpoints })).toEqual({ valid: true, checked: 5 });
 
@@ -62,7 +62,7 @@ export class CheckpointsSuite extends ContractSuite<AuditTrailUnderContract> {
     this.it('reads a checkpoint inside the range asked for only', async () => {
       await recordAll(this.subject, FIVE_ENTRIES);
 
-      const checkpoints = [this.checkpointAt(await entriesOf(this.subject, ALPHA), 5)];
+      const checkpoints = checkpointsAt(await entriesOf(this.subject, ALPHA), 5);
 
       this.expect(await verifyChain(this.subject, { chain: ALPHA, to: 3, checkpoints })).toEqual({
         valid: true,
@@ -73,19 +73,13 @@ export class CheckpointsSuite extends ContractSuite<AuditTrailUnderContract> {
     this.it('reads the checkpoints of the chain it verifies', async () => {
       await recordAll(this.subject, [inTenant('a-1', 'alpha'), inTenant('b-1', 'beta'), inTenant('b-2', 'beta')]);
 
-      const checkpoints = [this.checkpointAt(await entriesOf(this.subject, 'tenant:beta'), 2)];
+      const checkpoints = checkpointsAt(await entriesOf(this.subject, 'tenant:beta'), 2);
 
       this.expect(await verifyChain(this.subject, { chain: ALPHA, checkpoints })).toEqual({ valid: true, checked: 1 });
     });
   }
+}
 
-  private checkpointAt(entries: readonly AuditEntry[], sequence: number): AuditCheckpoint {
-    const entry = entries.find((candidate) => candidate.sequence === sequence);
-
-    if (entry === undefined) {
-      throw new Error(`The chain holds no entry at sequence ${sequence}`);
-    }
-
-    return { chain: entry.chain, sequence, hash: entry.hash };
-  }
+function checkpointsAt(entries: readonly AuditEntry[], sequence: number): readonly AuditCheckpoint[] {
+  return entries.filter((entry) => entry.sequence === sequence).map(({ chain, hash }) => ({ chain, sequence, hash }));
 }
