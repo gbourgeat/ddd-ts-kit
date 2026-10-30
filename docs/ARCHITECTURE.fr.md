@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:d825cd916d88a6f4 -->
+<!-- translation-of: ARCHITECTURE.md sha256:5aa555a4a2d943bf -->
 
 # Référence de l'architecture
 
@@ -20,6 +20,9 @@ modèle, un vocabulaire et ses données.
   `docs --check` détecte sa dérive, et `ddd-ts-kit describe <context> --json` donne les mêmes
   faits sous forme de données. `ddd-ts-kit docs` écrit aussi `docs/behaviour/<context>.md`, ce
   qu'énoncent les tests du contexte, lu dans les titres de ses *specs*.
+- Un contexte porte le nom d'une capacité métier, en kebab-case : jamais `shared-kernel`, un regroupement technique
+  (`shared`, `common`, `utils`, `platform`...) ni le nom d'une couche ou d'un dossier de contexte (`domain`, `test`...) ;
+  `generate context` refuse ces noms, car aucun autre genre ne pourrait écrire dans un tel contexte.
 - Chaque contexte est classé : `core` (différenciant, il reçoit le meilleur effort de
   conception), `supporting` (nécessaire, non différenciant) ou `generic` (à acheter ou à garder
   trivial).

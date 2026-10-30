@@ -19,6 +19,7 @@ const MODULE_TECHNICAL_WORDS: readonly string[] = [
   'default',
   'lib',
   'stuff',
+  'platform',
 ];
 
 const KEBAB = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;

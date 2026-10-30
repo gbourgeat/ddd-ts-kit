@@ -3,6 +3,8 @@ import { refreshContextDoc } from '../../docs/refresh-context-doc';
 import { CliError } from '../../cli-error';
 import { MissingPrerequisite } from '../missing-prerequisite';
 import { parseContextName, type Name } from '../../naming';
+import { moduleNameFlaw } from '../../model-modules';
+import { SHARED_KERNEL } from '../shared-kernel-scope';
 import { PRISMA_MAIN_SCHEMA, prismaSchemaOf } from '../../prisma-schema';
 import type { Workspace } from '../../workspace';
 import type { ContextRequest } from './context-request';
@@ -16,6 +18,7 @@ export function generateContext(ws: Workspace, config: Config, request: ContextR
 
   refuseObjectName(request.name, context);
   refuseReservedName(context);
+  refuseUnaddressableName(context);
 
   const classification = knownClassification(context, request.classification);
 
@@ -87,6 +90,36 @@ function refuseReservedName(context: Name): void {
     `"${context.kebab}" cannot name a bounded context: on Prisma the models of a context live in ${prismaSchemaOf('<context>')}, and ${PRISMA_MAIN_SCHEMA} is the main file of the schema (the generator, the datasource, the tables of the platform), shared by every context.`,
     'Name the context after the business capability it serves, for example billing or order-fulfilment. The name is refused on every ORM, since `init --force` can move a project to Prisma.',
   );
+}
+
+/**
+ * A context is addressed by its name as the first argument of every other kind, and its folder sits
+ * beside the layers of the context tree: the name of the shared kernel, of a layer or a role folder,
+ * or of a grouping of code (`utils`, `platform`, `shared`) names a context no kind can write into.
+ */
+function refuseUnaddressableName(context: Name): void {
+  const flaw = moduleNameFlaw(context.kebab);
+
+  if (context.kebab === SHARED_KERNEL) {
+    throw new CliError(
+      `"${SHARED_KERNEL}" cannot name a bounded context: it names the shared kernel, and every kind reads it as the kernel, never as a context.`,
+      'Name the context after the business capability it serves, for example billing or order-fulfilment; what several contexts use belongs to the shared kernel.',
+    );
+  }
+
+  if (flaw?.reason === 'role-folder') {
+    throw new CliError(
+      `"${context.kebab}" cannot name a bounded context: it is the name of a folder of the tree (a layer, a role folder or a folder of the root of a context).`,
+      'Name the context after the business capability it serves, for example billing or order-fulfilment.',
+    );
+  }
+
+  if (flaw?.reason === 'technical') {
+    throw new CliError(
+      `"${context.kebab}" cannot name a bounded context: "${flaw.word}" names a grouping of code, not a business capability.`,
+      'Name the context after the business capability it serves, for example billing or order-fulfilment.',
+    );
+  }
 }
 
 function knownClassification(context: Name, classification: string | undefined): string {

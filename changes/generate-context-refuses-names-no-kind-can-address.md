@@ -1,0 +1,3 @@
+**`generate context` and `init --context` refuse a name no other kind can write into.** `shared-kernel` (every kind reads it as the shared kernel), the name of a layer or of a folder of a context (`domain`, `test`...) and a technical grouping (`shared`, `common`, `utils`, `platform`...) used to create a context that `generate aggregate` and the other kinds then refused. They are refused up front, with the reason, and `platform` joins the technical words a module cannot be named after.
+
+To move: a project that already has a context of such a name renames it, or keeps it and writes into it by hand.
