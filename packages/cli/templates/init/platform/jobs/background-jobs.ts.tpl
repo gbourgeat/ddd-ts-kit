@@ -1,8 +1,9 @@
-import type { BackgroundJob, BackgroundJobOptions } from '@ddd-ts-kit/kernel';
+import type { BackgroundJob, BackgroundJobOptions, BackgroundJobPayloadSchema } from '@ddd-ts-kit/kernel';
 
-/** A background job class: named by its static `jobName`, built from what its constructor takes. */
+/** A background job class: named by its static `jobName`, built from what its constructor takes, its stored payload read with its static `payload`. */
 export interface BackgroundJobClass<Deps extends readonly unknown[]> {
   readonly jobName: string;
+  readonly payload: BackgroundJobPayloadSchema<unknown>;
   new (...deps: Deps): BackgroundJob<unknown>;
 }
 

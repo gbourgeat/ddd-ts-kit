@@ -3,7 +3,7 @@ import { AsyncLocalStorageExecutionScope, FixedClock, executionContext } from '@
 import { InMemoryJobStore, QueueWorker } from '../src';
 import { aQueueBench } from './support/a-queue-bench';
 import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
-import { CompileStatementsJob } from './support/statements-job';
+import { CompileStatementsJob, statementsPayload } from './support/statements-job';
 
 refuseUnhandledRejections();
 
@@ -16,6 +16,7 @@ describe('an attempt whose job was cancelled while it ran', () => {
 
     worker.register({
       name: CompileStatementsJob.jobName,
+      payload: statementsPayload,
       run: async (payload, execution) => {
         const ending = (payload as { month: string }).month;
 
@@ -54,6 +55,7 @@ describe('what an attempt is told', () => {
 
     worker.register({
       name: CompileStatementsJob.jobName,
+      payload: statementsPayload,
       run: async (_payload, execution) => void seen.push(execution.traceparent),
     });
 

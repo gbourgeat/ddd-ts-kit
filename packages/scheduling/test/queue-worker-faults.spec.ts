@@ -3,7 +3,7 @@ import { InMemoryErrorReporter, InMemoryLogger, InMemoryUnitOfWork, NotFoundErro
 import { reportFailedBackgroundJobs, type BackgroundJobRun } from '../src';
 import { aQueueBench } from './support/a-queue-bench';
 import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
-import { CompileStatementsJob } from './support/statements-job';
+import { CompileStatementsJob, statementsPayload } from './support/statements-job';
 
 refuseUnhandledRejections();
 
@@ -65,7 +65,7 @@ describe('a worker whose store stumbles', () => {
   it('records as interrupted a job it could not refuse', async () => {
     const { queue, worker, store, runs } = aQueueBench();
 
-    worker.register({ name: 'billing.send-statements', run: () => Promise.resolve() });
+    worker.register({ name: 'billing.send-statements', payload: statementsPayload, run: () => Promise.resolve() });
     await queue.enqueue(CompileStatementsJob, FEBRUARY);
     store.failingWrites = 1;
     await worker.runDue();
@@ -78,6 +78,7 @@ describe('a worker whose store stumbles', () => {
 
     worker.register({
       name: CompileStatementsJob.jobName,
+      payload: statementsPayload,
       options: { lease: '1m' },
       run: async (_payload, execution) => {
         clock.advance(60_000);
@@ -201,6 +202,7 @@ describe('jobs enqueued at the same instant', () => {
 
     worker.register({
       name: 'billing.send-statements',
+      payload: statementsPayload,
       run: async (_payload, execution) => {
         checkpoints.push(execution.checkpoint);
         await execution.saveCheckpoint(checkpoints.length === 1 ? 'half' : undefined);

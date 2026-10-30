@@ -4,6 +4,7 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 {{spec.diPlain}}
 {{spec.contextImports}}
 import type { Actor, Message } from '@ddd-ts-kit/kernel';
+import { earlierVersionOf } from '@ddd-ts-kit/testing';
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 {{job.permissionsImport}}
 import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
@@ -37,6 +38,21 @@ describe('{{name.title}}, once enqueued', () => {
 {{#if job.protected}}
     expect(sent[0]).toMatchObject({ actor: { id: 'clerk-1' } });
 {{/if}}
+  });
+
+  it('never runs a payload enqueued in an earlier shape: the job is dead with INVALID_JOB_PAYLOAD', async () => {
+    const { application, sent } = {{spec.await}}arrange();
+    const earlierVersion = earlierVersionOf({{name.pascal}}BackgroundJob);
+
+    await application.as(clerk, () => application.jobQueue.enqueue(earlierVersion, {{job.misfit}}));
+
+    await expect(application.backgroundJobs.runDue()).rejects.toMatchObject({
+      code: 'INVALID_JOB_PAYLOAD',
+      job: '{{job.name}}',
+    });
+
+    expect(sent).toHaveLength(0);
+    expect(application.backgroundJobs.store.list()).toMatchObject([{ status: 'dead', lastErrorCode: 'INVALID_JOB_PAYLOAD' }]);
   });
 
   // TODO(domain): replace each entry below by a test of what "{{name.words}}" asks of the use case: a run may be a retry, and a long one resumes from its checkpoint.

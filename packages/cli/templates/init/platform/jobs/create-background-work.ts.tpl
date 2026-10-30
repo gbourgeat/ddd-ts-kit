@@ -129,6 +129,7 @@ function backgroundJobsOn(worker: QueueWorker, traced: TracedApplication): Backg
 
       worker.register({
         name,
+        payload: job.payload,
         ...(options === undefined ? {} : { options }),
         run: traced.backgroundJob((payload, execution) => built.run(payload, execution), {
           name,

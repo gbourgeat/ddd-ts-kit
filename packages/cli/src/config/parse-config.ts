@@ -2,6 +2,7 @@ import { CliError } from '../cli-error';
 import type { AgentsConfig, Config, Deviation, OwnersConfig } from './config';
 import { CONFIG_FILE } from './config-file';
 import { defaultAllowedPackages } from './default-allowed-packages';
+import { payloadSchemaPackagesOf } from './payload-schema-packages-of';
 import { DEFAULT_IMPORT_ALIAS } from './default-import-alias';
 import { parseBusinessNames } from './parse-business-names';
 import { parsePrivacy } from './parse-privacy';
@@ -91,7 +92,7 @@ function confinedDirectories(
 
 type AllowedPackages = Pick<
   Config,
-  'domainAllowedPackages' | 'applicationAllowedPackages' | 'publishedLanguageAllowedPackages'
+  'domainAllowedPackages' | 'applicationAllowedPackages' | 'publishedLanguageAllowedPackages' | 'payloadSchemaPackages'
 >;
 
 function parseAllowedPackages(raw: Record<string, unknown>, validation: string): AllowedPackages {
@@ -104,6 +105,7 @@ function parseAllowedPackages(raw: Record<string, unknown>, validation: string):
       raw['publishedLanguageAllowedPackages'],
       defaults.publishedLanguageAllowedPackages,
     ),
+    payloadSchemaPackages: payloadSchemaPackagesOf(validation),
   };
 }
 

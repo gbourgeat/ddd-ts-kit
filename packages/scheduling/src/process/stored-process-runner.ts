@@ -1,5 +1,6 @@
 import {
   UnreadableProcessStateError,
+  processTimeoutDuePayload,
   type BackgroundJobType,
   type CommandBus,
   type JobQueue,
@@ -158,5 +159,5 @@ function timeoutJobOf<State>(process: ProcessType<State>): BackgroundJobType<Pro
     throw new NoTimeoutJobError(process.processName);
   }
 
-  return { jobName: timeoutJob, prototype: { run: () => Promise.resolve() } };
+  return { jobName: timeoutJob, payload: processTimeoutDuePayload, prototype: { run: () => Promise.resolve() } };
 }

@@ -5,9 +5,12 @@ import {
   backgroundJobPolicy,
   executionContextOfBackgroundJob,
   retryDelayMs,
+  ok,
+  processTimeoutDuePayload,
   whenCommitted,
   type BackgroundJob,
   type BackgroundJobOptions,
+  type BackgroundJobPayloadSchema,
 } from '../src';
 import { Background, DeclarationError, declarationOf } from '../src/declarations';
 
@@ -67,10 +70,15 @@ describe('the execution context of a background job', () => {
   });
 });
 
+/** A schema that reads any payload as it is. */
+const asStored: BackgroundJobPayloadSchema<unknown> = { parse: (input) => ok(input) };
+
 describe('a background job declared with @Background', () => {
-  it('is recorded under its static jobName, with its options as written', () => {
+  it('is recorded under its static jobName, with its options as written and its payload schema', () => {
     class CompileStatementsJob implements BackgroundJob<{ month: string }> {
       static readonly jobName = 'billing.compile-statements';
+
+      static readonly payload = asStored;
 
       async run(): Promise<void> {
         return undefined;
@@ -83,6 +91,7 @@ describe('a background job declared with @Background', () => {
       role: 'background-job',
       name: 'billing.compile-statements',
       options: { maxAttempts: 3 },
+      payload: asStored,
     });
   });
 
@@ -91,6 +100,8 @@ describe('a background job declared with @Background', () => {
 
     class SendRemindersJob implements BackgroundJob<unknown> {
       static readonly jobName = 'billing.send-reminders';
+
+      static readonly payload = asStored;
 
       async run(): Promise<void> {
         return undefined;
@@ -113,6 +124,8 @@ describe('a background job declared with @Background', () => {
       class Job implements BackgroundJob<unknown> {
         static readonly jobName = jobName;
 
+        static readonly payload = asStored;
+
         async run(): Promise<void> {
           return undefined;
         }
@@ -124,6 +137,40 @@ describe('a background job declared with @Background', () => {
     expect(() => declare('compile')).toThrow(DeclarationError);
     expect(() => declare(undefined)).toThrow(/static jobName/);
     expect(() => declare('billing.compile', { maxAttempts: 0 })).toThrow(/Job "billing.compile": maxAttempts/);
+  });
+
+  it('is refused without a static payload schema, which the worker reads the stored payload with', () => {
+    class CompileJob implements BackgroundJob<unknown> {
+      static readonly jobName = 'billing.compile';
+
+      static readonly payload = asStored;
+
+      async run(): Promise<void> {
+        return undefined;
+      }
+    }
+
+    Reflect.deleteProperty(CompileJob, 'payload');
+
+    expect(() => Background()(CompileJob)).toThrow(/Job "billing.compile" has no static payload schema/);
+  });
+});
+
+describe('the payload of the timeout job of a process', () => {
+  it('reads the instance and the timeout it was enqueued with', () => {
+    expect(processTimeoutDuePayload.parse({ id: 'invoice-1', timeout: 'reminder', extra: 1 })).toEqual(
+      ok({ id: 'invoice-1', timeout: 'reminder' }),
+    );
+  });
+
+  it('refuses a payload without its instance or its timeout, naming each field', () => {
+    expect(processTimeoutDuePayload.parse({ id: '' })).toMatchObject({
+      ok: false,
+      error: [
+        { path: 'id', code: 'invalid_type' },
+        { path: 'timeout', code: 'invalid_type' },
+      ],
+    });
   });
 });
 

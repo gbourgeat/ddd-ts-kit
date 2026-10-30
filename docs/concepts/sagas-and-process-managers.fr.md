@@ -1,5 +1,5 @@
 [English](sagas-and-process-managers.md) · **Français**
-<!-- translation-of: sagas-and-process-managers.md sha256:860c7933057cca50 -->
+<!-- translation-of: sagas-and-process-managers.md sha256:ee53642dbd845965 -->
 
 # Sagas et gestionnaires de processus
 
@@ -234,6 +234,7 @@ arrière-plan qui livre le délai d'expiration.
 ```ts
 import {
   ProcessRunner,
+  processTimeoutDuePayload,
   type BackgroundJob,
   type BackgroundJobExecution,
   type DomainEvent,
@@ -284,6 +285,8 @@ const MAX_ATTEMPTS = 3;
 @Background({ maxAttempts: MAX_ATTEMPTS })
 export class ConfirmationDeadlineTimeoutBackgroundJob implements BackgroundJob<ProcessTimeoutDue> {
   static readonly jobName = 'scheduling.confirmation-deadline-timeout';
+
+  static readonly payload = processTimeoutDuePayload;
 
   private readonly process = new ConfirmationDeadlineProcess();
 

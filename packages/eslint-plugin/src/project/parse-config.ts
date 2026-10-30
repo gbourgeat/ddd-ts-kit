@@ -70,6 +70,7 @@ export function parseConfig(raw: unknown): Config {
       source['publishedLanguageAllowedPackages'],
       contractPackages(source['stack']),
     ),
+    payloadSchemaPackages: payloadSchemaPackages(source['stack']),
     limits: parseLimits(source['limits']),
     onePerFile: parseOnePerFile(source['onePerFile']),
     stack: parseStack(source['stack']),
@@ -115,9 +116,14 @@ function parseStack(value: unknown): Stack {
 }
 
 function contractPackages(stack: unknown): readonly string[] {
+  return [...KERNEL, '@ddd-ts-kit/events', ...payloadSchemaPackages(stack)];
+}
+
+/** As `payloadSchemaPackagesOf` of the CLI: `@ddd-ts-kit/validation` and the library of the stack. */
+function payloadSchemaPackages(stack: unknown): readonly string[] {
   const validation = isRecord(stack) ? text(stack['validation'], 'zod') : 'zod';
 
-  return [...KERNEL, '@ddd-ts-kit/events', '@ddd-ts-kit/validation', ...(SCHEMA_LIBRARIES[validation] ?? [])];
+  return ['@ddd-ts-kit/validation', ...(SCHEMA_LIBRARIES[validation] ?? [])];
 }
 
 function parseContext(value: unknown): ContextConfig {

@@ -319,7 +319,7 @@ the platform binds it at start-up. Why, and what each layer holds:
 | Id | Rule |
 |---|---|
 | `layer/domain-purity` | `domain/` imports only its own `domain/`, the shared kernel and `@ddd-ts-kit/kernel`. No framework, no ORM, no validation library, no Node built-in doing I/O. |
-| `layer/application-inward` | `application/` imports `domain/`, `application/`, published languages, the kernel and `@ddd-ts-kit/auth` (permissions and policies). Never `infrastructure/` or `presentation/`, never a framework or a driver. |
+| `layer/application-inward` | `application/` imports `domain/`, `application/`, published languages, the kernel and `@ddd-ts-kit/auth` (permissions and policies). Never `infrastructure/` or `presentation/`, never a framework or a driver. A background job, `application/background/*.background-job.ts` and no other file of the layer, also imports `@ddd-ts-kit/validation` and the validation library of the stack, no other (`stack.validation`: `zod`, `class-validator` and `class-transformer`, `typebox`; none under `standard-schema` and `none`), for the schema of its payload: a stored payload is data at rest that outlives a deploy, the same kind of contract as the payload of an integration event, which `published-language/` already validates. |
 | `layer/presentation-no-infrastructure` | `presentation/` imports `application/` (and domain types for mapping), never `infrastructure/`. |
 | `layer/infrastructure-no-presentation` | `infrastructure/` implements ports of `application/` and `domain/`, never imports `presentation/`. |
 | `context/published-language-only` | A file imports from another context only through that context's `published-language/`. |

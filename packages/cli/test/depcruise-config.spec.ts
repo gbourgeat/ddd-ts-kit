@@ -93,6 +93,27 @@ describe('depcruise-config against the script of the pipeline', () => {
     fs.writeFileSync(path.join(sandbox, 'ddd-ts-kit.config.json'), JSON.stringify(projectConfig));
   });
 
+  it.each(['zod', 'class-validator', 'typebox', 'standard-schema', 'none'])(
+    'lets a background job import the same schema packages under %s, and writes the same layer rules',
+    async (validation) => {
+      const config = { ...projectConfig, stack: { validation } };
+
+      fs.writeFileSync(path.join(sandbox, 'ddd-ts-kit.config.json'), JSON.stringify(config));
+
+      // a query of its own: the module is read again for the config written above
+      const loaded: unknown = await import(
+        `${pathToFileURL(path.join(sandbox, 'depcruise-config.mjs')).href}?${validation}`
+      );
+
+      const shipped = rulesOf(jsonAt(loaded, 'default')).filter(isLayerRule);
+      const ported = rulesOf(JSON.parse(JSON.stringify(cruiseConfiguration(parseConfig(config))))).filter(isLayerRule);
+
+      fs.writeFileSync(path.join(sandbox, 'ddd-ts-kit.config.json'), JSON.stringify(projectConfig));
+
+      expect(shipped).toEqual(ported);
+    },
+  );
+
   afterAll(() => {
     fs.rmSync(sandbox, { recursive: true, force: true });
   });
@@ -134,4 +155,8 @@ function rulesOf(configuration: unknown): unknown[] {
   const forbidden = jsonAt(configuration, 'forbidden');
 
   return Array.isArray(forbidden) ? forbidden : [];
+}
+
+function isLayerRule(rule: unknown): boolean {
+  return String(jsonAt(rule, 'name')).startsWith('layer-');
 }

@@ -14,6 +14,7 @@ import {
   type QueuedJob,
 } from '@ddd-ts-kit/kernel';
 import { InvalidEnqueueError } from './errors/invalid-enqueue-error';
+import { InvalidEnqueuedPayloadError } from './errors/invalid-enqueued-payload-error';
 import type { JobStore } from './store/job-store';
 
 export interface StoredJobQueueOptions {
@@ -27,8 +28,9 @@ export interface StoredJobQueueOptions {
 }
 
 /**
- * The `JobQueue` of the kernel on a `JobStore`: it names the job, captures what travels with it
- * and adds it to the store, in the transaction of the caller when the store shares it. `find`
+ * The `JobQueue` of the kernel on a `JobStore`: it names the job, reads the payload with the
+ * schema of the job (a payload it refuses throws `InvalidEnqueuedPayloadError`, nothing stored),
+ * captures what travels with it and adds it to the store, in the transaction of the caller when the store shares it. `find`
  * and `cancel` reach the jobs of the tenant of the work in progress only (the tenants of its
  * elevation), every job when the work has no tenant.
  */
@@ -41,6 +43,9 @@ export class StoredJobQueue implements JobQueue {
     options: EnqueueOptions = {},
   ): Promise<EnqueuedJob> {
     const name = nameOf(job);
+
+    assertFits(job, name, payload);
+
     const enqueuedAt = this.options.clock.now();
     const { idempotencyKey, subject } = options;
 
@@ -103,6 +108,15 @@ function nameOf(job: { readonly jobName: string }): string {
   }
 
   return job.jobName;
+}
+
+/** The payload is stored as the caller wrote it: the worker reads it again, with the schema of the version that runs it. */
+function assertFits(job: Pick<BackgroundJobType<unknown>, 'payload'>, name: string, payload: unknown): void {
+  const parsed = job.payload.parse(payload);
+
+  if (!parsed.ok) {
+    throw new InvalidEnqueuedPayloadError(name, parsed.error);
+  }
 }
 
 /** The queue of a job is its context: the first part of its name. */

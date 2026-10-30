@@ -1,5 +1,5 @@
 [English](file-import-export.md) · **Français**
-<!-- translation-of: file-import-export.md sha256:4ba42951faede786 -->
+<!-- translation-of: file-import-export.md sha256:224a4829d3a554a4 -->
 
 # Import et export de fichiers
 
@@ -68,6 +68,8 @@ l'identifiant de l'import, le point de reprise la dernière ligne validée.
 
 <!-- checked sample -->
 ```ts
+import type { Readable } from 'node:stream';
+import { z } from 'zod';
 import {
   AuthorizedCommand,
   FileStorage,
@@ -77,7 +79,8 @@ import {
   type CommandBus,
 } from '@ddd-ts-kit/kernel';
 import { Background } from '@ddd-ts-kit/kernel/declarations';
-import type { Readable } from 'node:stream';
+import type { Infer } from '@ddd-ts-kit/validation';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
 
 // Pas encore dans le kit : un lecteur en flux qui rend une ligne à la fois à partir d'un numéro de ligne.
 interface Row {
@@ -101,9 +104,9 @@ export abstract class ImportFiles {
   abstract keyOf(importId: string): Promise<string>;
 }
 
-export interface ImportRowsPayload {
-  readonly importId: string;
-}
+const payloadSchema = zodSchema(z.object({ importId: z.string() }));
+
+export type ImportRowsPayload = Infer<typeof payloadSchema>;
 
 interface ImportRowsCheckpoint {
   readonly row: number;
@@ -114,6 +117,8 @@ const BATCH_SIZE = 200;
 @Background({ timeout: '30m', lease: '1m' })
 export class ImportRowsBackgroundJob implements BackgroundJob<ImportRowsPayload> {
   static readonly jobName = 'patients.import-rows';
+
+  static readonly payload = payloadSchema;
 
   constructor(
     private readonly storage: FileStorage,

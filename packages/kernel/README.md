@@ -38,7 +38,7 @@ starts, so a business rule never changes with a library.
 | Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext`, `systemActor` |
 | Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `CacheInvalidation` and `CachePurger` (with `cacheTag`, `tenantCacheTags`, `CachePurgeRequest`, `PublishedCacheInvalidation`, `PurgingPublisher`, `RepeatedCachePurger`: see "Purging the HTTP caches"), `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
 | Scheduled jobs | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
-| Background jobs | `JobQueue`, `BackgroundJob`, `BackgroundJobExecution`, `EnqueueOptions`, `QueuedJob`, `QueuedJobStatus`, `backgroundJobPolicy`, `retryDelayMs`, `executionContextOfBackgroundJob`, `whenCommitted` (see "JobQueue") |
+| Background jobs | `JobQueue`, `BackgroundJob`, `BackgroundJobExecution`, `BackgroundJobPayloadSchema`, `processTimeoutDuePayload`, `EnqueueOptions`, `QueuedJob`, `QueuedJobStatus`, `backgroundJobPolicy`, `retryDelayMs`, `executionContextOfBackgroundJob`, `whenCommitted` (see "JobQueue") |
 | Process managers | `ProcessManager`, `ProcessDecision`, `ProcessRunner`, `ProcessStore`, `InMemoryProcessStore`, `UnreadableProcessStateError` (see "ProcessRunner and ProcessStore") |
 | Files | `FileStorage`, `StoredFile`, `FileScanner`, `FileKeys`, `TenantFileKeys`, `FileStaging`, `FileUpload`, `fileUploadsMiddleware`, `FileInspection`, `FileError`, `InMemoryFileStorage`, `LocalFileStorage`, `PurgeStagedFiles` (see "FileStorage, StoredFile, FileScanner") |
 | Tenancy | `tenantScopeOf`, `tenantReachOf`, `acrossTenants`, `tenantKey`, `tenantCacheKey`, `isTenantId`, `TenantDirectory`, `InMemoryTenantDirectory` (see "Tenancy") |
@@ -1051,6 +1051,9 @@ are in the README of `@ddd-ts-kit/scheduling`.
 export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
   static readonly jobName = 'billing.compile-statements';
 
+  // the schema of its payload, `zodSchema(z.object({ month: z.string() }))` or any validation library
+  static readonly payload = compileStatementsPayload;
+
   constructor(private readonly commands: CommandBus) {}
 
   async run(payload: CompileStatementsPayload, execution: BackgroundJobExecution): Promise<void> {
@@ -1060,11 +1063,15 @@ export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStat
 ```
 
 A background job is named by its static `jobName`, which is how a use case enqueues it
-(`jobs.enqueue(CompileStatementsBackgroundJob, { month })`, the payload typed by `run`). The decorator
+(`jobs.enqueue(CompileStatementsBackgroundJob, { month })`, the payload typed by `run`). Its static
+`payload` is the schema of that payload, a `BackgroundJobPayloadSchema` (`parse(input)` answering a
+`Result`, which the `Schema` of `@ddd-ts-kit/validation` is, whatever library it adapts): the worker
+reads the stored payload with it before each run and never runs one it refuses
+(`INVALID_JOB_PAYLOAD`); the timeout job of a process uses `processTimeoutDuePayload`. The decorator
 takes the options, all optional: `maxAttempts` (5), `backoff` (`{ baseMs: 1000, factor: 2,
 maxMs: 300000 }`), `timeout` and `lease` (30 s), as milliseconds or `'10m'`. A name that is not
-`<context>.<job-name>` and options it cannot read throw a `DeclarationError` when the file
-loads. `BackgroundJobExecution` is what `run` receives: `jobId`, `attempt`, `enqueuedAt`,
+`<context>.<job-name>`, a class without a static `payload` and options it cannot read throw a
+`DeclarationError` when the file loads. `BackgroundJobExecution` is what `run` receives: `jobId`, `attempt`, `enqueuedAt`,
 `startedAt`, the `checkpoint` an earlier attempt saved, an abort `signal`, `saveCheckpoint(value)`
 and `reportProgress({ done, total })`.
 

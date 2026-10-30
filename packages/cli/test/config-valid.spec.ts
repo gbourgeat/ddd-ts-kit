@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runCheck } from '../src/check/engine/run-check';
-import { KNOWN_CONFIG_KEYS, KNOWN_STACK_KEYS } from '../src/config';
+import { DERIVED_CONFIG_KEYS, KNOWN_CONFIG_KEYS, KNOWN_STACK_KEYS } from '../src/config';
 import { parseConfig } from '../src/config/parse-config';
 import { parseStack } from '../src/config/parse-stack';
 import { loadProject } from '../src/check/project/load-project';
@@ -183,8 +183,11 @@ describe('config/valid on the keys of the file', () => {
     ]);
   });
 
-  it('knows exactly the keys the parser reads, at the root and under stack', () => {
-    expect([...KNOWN_CONFIG_KEYS].sort()).toEqual(Object.keys(parseConfig({}, { leaving: 'default' })).sort());
+  it('knows exactly the keys the parser reads, at the root and under stack, past the ones it derives', () => {
+    expect([...KNOWN_CONFIG_KEYS, ...DERIVED_CONFIG_KEYS].sort()).toEqual(
+      Object.keys(parseConfig({}, { leaving: 'default' })).sort(),
+    );
+
     expect([...KNOWN_STACK_KEYS].sort()).toEqual(Object.keys(parseStack({})).sort());
   });
 

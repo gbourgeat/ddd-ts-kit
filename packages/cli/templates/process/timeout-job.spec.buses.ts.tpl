@@ -36,7 +36,11 @@ function arrange() {
   const worker = new QueueWorker({ store, clock, scope: executionScope });
   const job: BackgroundJob<unknown> = new {{name.pascal}}TimeoutBackgroundJob(runner);
 
-  worker.register({ name: {{name.pascal}}TimeoutBackgroundJob.jobName, run: (due, execution) => job.run(due, execution) });
+  worker.register({
+    name: {{name.pascal}}TimeoutBackgroundJob.jobName,
+    payload: {{name.pascal}}TimeoutBackgroundJob.payload,
+    run: (due, execution) => job.run(due, execution),
+  });
 
   return { clock, processes, runner, worker };
 }

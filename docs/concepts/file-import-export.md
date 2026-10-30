@@ -62,6 +62,8 @@ payload is the identifier of the import, the checkpoint the last row committed.
 
 <!-- checked sample -->
 ```ts
+import type { Readable } from 'node:stream';
+import { z } from 'zod';
 import {
   AuthorizedCommand,
   FileStorage,
@@ -71,7 +73,8 @@ import {
   type CommandBus,
 } from '@ddd-ts-kit/kernel';
 import { Background } from '@ddd-ts-kit/kernel/declarations';
-import type { Readable } from 'node:stream';
+import type { Infer } from '@ddd-ts-kit/validation';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
 
 // Not in the kit yet: a streaming reader that yields one row at a time from a row number.
 interface Row {
@@ -95,9 +98,9 @@ export abstract class ImportFiles {
   abstract keyOf(importId: string): Promise<string>;
 }
 
-export interface ImportRowsPayload {
-  readonly importId: string;
-}
+const payloadSchema = zodSchema(z.object({ importId: z.string() }));
+
+export type ImportRowsPayload = Infer<typeof payloadSchema>;
 
 interface ImportRowsCheckpoint {
   readonly row: number;
@@ -108,6 +111,8 @@ const BATCH_SIZE = 200;
 @Background({ timeout: '30m', lease: '1m' })
 export class ImportRowsBackgroundJob implements BackgroundJob<ImportRowsPayload> {
   static readonly jobName = 'patients.import-rows';
+
+  static readonly payload = payloadSchema;
 
   constructor(
     private readonly storage: FileStorage,

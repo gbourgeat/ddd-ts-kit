@@ -14,6 +14,7 @@ import { unlessAborted } from '../unless-aborted';
 import type { BackgroundJobOutcome } from './background-job-outcome';
 import type { BackgroundJobRecorder } from './background-job-recorder';
 import type { BackgroundJobRun } from './background-job-run';
+import { InvalidJobPayloadError } from './errors/invalid-job-payload-error';
 import { JobInterruptedError } from './errors/job-interrupted-error';
 import type { RegisteredBackgroundJob } from './registered-background-job';
 import type { RunningJob } from './running-job';
@@ -85,7 +86,7 @@ export class ClaimedJobRunner {
 
   private async attempt(running: RunningJob): Promise<BackgroundJobRun> {
     try {
-      await unlessAborted(running.controller.signal, this.inScope(running));
+      await unlessAborted(running.controller.signal, this.inScope(running, payloadOf(running)));
     } catch (error) {
       return this.failed(running, error);
     }
@@ -93,7 +94,7 @@ export class ClaimedJobRunner {
     return this.succeeded(running);
   }
 
-  private inScope(running: RunningJob): Promise<void> {
+  private inScope(running: RunningJob, payload: unknown): Promise<void> {
     const { job, registered, controller, startedAt } = running;
     const { timeoutMs } = registered.policy;
     const deadline = timeoutMs === undefined ? undefined : new Date(startedAt.getTime() + timeoutMs);
@@ -118,7 +119,7 @@ export class ClaimedJobRunner {
       reportProgress: (progress: JobProgress) => this.write(running, { progress }),
     };
 
-    return this.options.scope.run(context, () => registered.definition.run(job.payload, execution));
+    return this.options.scope.run(context, () => registered.definition.run(payload, execution));
   }
 
   private async write(running: RunningJob, update: JobUpdate): Promise<void> {
@@ -170,7 +171,12 @@ export class ClaimedJobRunner {
     return this.recorded(running, held ? 'succeeded' : 'interrupted');
   }
 
+  /** A payload that does not fit is dead at once: no attempt would read it better. */
   private async failed(running: RunningJob, error: unknown): Promise<BackgroundJobRun> {
+    if (error instanceof InvalidJobPayloadError) {
+      return this.settled(running, error, null);
+    }
+
     if (error instanceof JobInterruptedError) {
       return this.recorded(running, 'interrupted', error);
     }
@@ -221,6 +227,17 @@ export class ClaimedJobRunner {
 
     return this.recorder.record(run, error);
   }
+}
+
+/** The stored payload as the schema of the job reads it. Throws `InvalidJobPayloadError` when it does not fit. */
+function payloadOf({ job, registered }: RunningJob): unknown {
+  const parsed = registered.definition.payload.parse(job.payload);
+
+  if (!parsed.ok) {
+    throw new InvalidJobPayloadError(job, parsed.error);
+  }
+
+  return parsed.value;
 }
 
 function nothing(): void {

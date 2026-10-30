@@ -1,5 +1,6 @@
 import {
   ProcessRunner,
+  processTimeoutDuePayload,
   type BackgroundJob,
   type BackgroundJobExecution,
   type ProcessTimeoutDue,
@@ -14,6 +15,9 @@ const MAX_ATTEMPTS = 3;
 @Background({ maxAttempts: MAX_ATTEMPTS })
 export class ConfirmationDeadlineTimeoutBackgroundJob implements BackgroundJob<ProcessTimeoutDue> {
   static readonly jobName = 'scheduling.confirmation-deadline-timeout';
+
+  /** Read by the worker before each run: a stored timeout that does not fit it is dead, never run. */
+  static readonly payload = processTimeoutDuePayload;
 
   private readonly process = new ConfirmationDeadlineProcess();
 

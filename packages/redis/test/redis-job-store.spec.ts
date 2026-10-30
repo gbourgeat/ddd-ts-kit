@@ -1,6 +1,17 @@
 import type { Redis } from 'ioredis';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { InMemoryErrorReporter, InMemoryLogger, InMemoryUnitOfWork } from '@ddd-ts-kit/kernel';
+import {
+  AsyncLocalStorageExecutionScope,
+  FixedClock,
+  InMemoryErrorReporter,
+  InMemoryLogger,
+  InMemoryUnitOfWork,
+  SequentialIdGenerator,
+  err,
+  ok,
+  type BackgroundJobPayloadSchema,
+} from '@ddd-ts-kit/kernel';
+import { QueueWorker, StoredJobQueue } from '@ddd-ts-kit/scheduling';
 import { jobStoreContract } from '@ddd-ts-kit/testing/contracts';
 import { RedisJobStore, reportLostJobs } from '../src';
 import { SERVERS, aNamespace, closeAll, connect, connectToNothing, serverOf } from './support/servers';
@@ -18,6 +29,35 @@ const job = {
   enqueuedAt: new Date('2026-03-01T10:00:00.000Z'),
   runAt: new Date('2026-03-01T10:00:00.000Z'),
 };
+
+interface Statements {
+  readonly customers: readonly string[];
+  readonly month: string;
+}
+
+/** The schema of the job since the deploy that added the month. */
+const statements: BackgroundJobPayloadSchema<Statements> = {
+  parse(input) {
+    const { customers, month } = Object(input) as { customers?: string[]; month?: unknown };
+
+    return typeof month === 'string' && Array.isArray(customers)
+      ? ok({ customers, month })
+      : err([{ path: 'month', code: 'invalid_type', message: 'A month is expected.' }]);
+  },
+};
+
+/** The job as the version before that deploy enqueued it: customers only. */
+class CompileStatementsBeforeTheDeploy {
+  static readonly jobName = 'billing.compile-statements';
+
+  static readonly payload: BackgroundJobPayloadSchema<{ readonly customers: readonly string[] }> = {
+    parse: (input) => ok(Object(input) as { customers: string[] }),
+  };
+
+  async run(): Promise<void> {
+    return undefined;
+  }
+}
 
 describe.each(SERVERS)('RedisJobStore, %s', (_name, start) => {
   const redis = serverOf(start);
@@ -42,6 +82,31 @@ describe.each(SERVERS)('RedisJobStore, %s', (_name, start) => {
     const [claimed] = await store.claim({ queue: 'billing', limit: 1, now: job.runAt, leaseMs: 1_000 });
 
     expect([claimed?.payload, claimed?.enqueuedBy.actor.roles]).toEqual([{ customers: [] }, []]);
+  });
+
+  it('gives back a payload of an earlier shape that the worker refuses to run: the job is dead with its reason', async () => {
+    const store = new RedisJobStore(client, { namespace: aNamespace() });
+    const [clock, scope] = [new FixedClock(job.runAt), new AsyncLocalStorageExecutionScope()];
+    const queue = new StoredJobQueue({ store, clock, scope, ids: new SequentialIdGenerator('job') });
+    const worker = new QueueWorker({ store, clock, scope });
+    const ran: unknown[] = [];
+
+    worker.register({
+      name: job.name,
+      payload: statements,
+      run: async (payload) => {
+        ran.push(payload);
+      },
+    });
+
+    await queue.enqueue(CompileStatementsBeforeTheDeploy, { customers: ['c-1'] });
+
+    expect(await worker.runDue()).toMatchObject([
+      { jobId: 'job-1', outcome: 'dead', errorCode: 'INVALID_JOB_PAYLOAD' },
+    ]);
+
+    expect(ran).toEqual([]);
+    expect(await queue.find('job-1')).toMatchObject({ status: 'dead', lastErrorCode: 'INVALID_JOB_PAYLOAD' });
   });
 
   it('shows neither the client nor its options', () => {

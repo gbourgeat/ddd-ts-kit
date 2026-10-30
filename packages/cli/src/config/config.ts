@@ -130,6 +130,8 @@ export interface Config {
   readonly domainAllowedPackages: readonly string[];
   readonly applicationAllowedPackages: readonly string[];
   readonly publishedLanguageAllowedPackages: readonly string[];
+  /** What a background job imports for the schema of its payload: `@ddd-ts-kit/validation` and the library of `stack.validation`. Derived, never written in the file. */
+  readonly payloadSchemaPackages: readonly string[];
   readonly limits: Limits;
   readonly onePerFile: OnePerFile;
   /** The minimum test coverage of each layer, per context: read by the test runner config, lowered only by a recorded deviation. */

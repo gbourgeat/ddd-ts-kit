@@ -1,9 +1,14 @@
 import { CliError } from '../../../cli-error';
 import type { Name } from '../../../naming';
 import type { CommandInput } from '../job/command-input';
+import { payloadShapeOf, type PayloadShape } from './payload-shape';
 
 /** A field of the payload of a background job, and how the job hands it to its command. */
 export interface PayloadField {
+  readonly name: string;
+  readonly optional: boolean;
+  /** What its schema checks. */
+  readonly shape: PayloadShape;
   /** `readonly startsAt: string;` */
   readonly declaration: string;
   /** `new Date(payload.startsAt)` */
@@ -31,6 +36,9 @@ export function payloadFieldOf(command: Name, input: CommandInput): PayloadField
     const instant = `new Date(payload.${name})`;
 
     return {
+      name,
+      optional,
+      shape: { kind: 'instant' },
       declaration: `  readonly ${name}${mark}: string;`,
       argument: optional ? `payload.${name} === undefined ? undefined : ${instant}` : instant,
       sample: `${name}: ${SAMPLE_INSTANT},`,
@@ -42,6 +50,9 @@ export function payloadFieldOf(command: Name, input: CommandInput): PayloadField
   }
 
   return {
+    name,
+    optional,
+    shape: payloadShapeOf(type),
     declaration: `  readonly ${name}${mark}: ${type};`,
     argument: `payload.${name}`,
     sample: `${name}: ${sampleOf(type, name)},`,

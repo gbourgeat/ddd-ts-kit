@@ -3,6 +3,16 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const PROJECT_CONFIG = 'ddd-ts-kit.config.json';
+// A background job of a context, `application/background/*.background-job.ts` and no deeper, past the layer.
+const BACKGROUND_JOB_FILE = '/background/[^/]+\\.background-job\\.ts$';
+// The packages a schema is written with, by the validation library of the stack (`schemaLibrariesOf` of the CLI).
+const SCHEMA_LIBRARIES = {
+  zod: ['zod'],
+  'class-validator': ['class-validator', 'class-transformer'],
+  typebox: ['typebox'],
+  'standard-schema': [],
+  none: [],
+};
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 export default buildConfiguration(readProjectConfig());
@@ -19,6 +29,8 @@ function readProjectConfig() {
     upstreams: upstreamsByContext(raw.contexts ?? {}),
     domainPackages: raw.domainAllowedPackages ?? kernel,
     applicationPackages: raw.applicationAllowedPackages ?? kernel,
+    // what a background job imports for the schema of its payload, past the application layer
+    payloadSchemaPackages: ['@ddd-ts-kit/validation', ...schemaLibraries(raw.stack?.validation ?? 'zod')],
     contractPackages: raw.publishedLanguageAllowedPackages ?? [
       ...kernel,
       '@ddd-ts-kit/events',
@@ -46,10 +58,7 @@ function upstreamName(upstream) {
 }
 
 function schemaLibraries(validation) {
-  if (validation === 'zod') {
-    return ['zod'];
-  }
-  return validation === 'class-validator' ? ['class-validator', 'class-transformer'] : [];
+  return SCHEMA_LIBRARIES[validation] ?? [];
 }
 
 function buildConfiguration(project) {
@@ -90,6 +99,7 @@ function layerRules(project) {
   return [
     domainPurity(project),
     applicationInward(project),
+    backgroundJobInward(project),
     sideways({
       project,
       from: 'presentation',
@@ -135,26 +145,50 @@ function inAnyModule(layer) {
 
 function applicationInward(project) {
   const own = ownLayers(project);
-  const otherContexts = `^${escape(project.contextsDir)}/(?!$1/)[^/]+/`;
   return {
     name: 'layer-application-inward',
     severity: 'error',
     comment:
       'application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
-    from: { path: `${own.context}/${inAnyModule('application')}/`, pathNot: testFiles(project) },
+    from: {
+      path: `${own.context}/${inAnyModule('application')}/`,
+      pathNot: [...testFiles(project), backgroundJobOf(project)],
+    },
+    to: { pathNot: [...inwardOf(project), ...packages(project.applicationPackages)] },
+  };
+}
+
+// A background job, the same rule but for the validation library of the stack, for the schema of its
+// payload: a stored payload outlives the deploy that enqueued it, like the payload of an integration event.
+function backgroundJobInward(project) {
+  return {
+    name: 'layer-application-inward',
+    severity: 'error',
+    comment:
+      'A background job (application/background/*.background-job.ts) imports what application/ imports, @ddd-ts-kit/validation and the validation library of the stack, for the schema of its payload. Depend on a port and let the composition root bind the adapter.',
+    from: { path: backgroundJobOf(project), pathNot: testFiles(project) },
     to: {
-      pathNot: [
-        own.layer('domain'),
-        own.layer('application'),
-        own.rootFile('codes'),
-        own.rootFile('permissions'),
-        own.layer('published-language'),
-        own.sharedKernel,
-        otherContexts,
-        ...packages(project.applicationPackages),
-      ],
+      pathNot: [...inwardOf(project), ...packages([...project.applicationPackages, ...project.payloadSchemaPackages])],
     },
   };
+}
+
+// Anchored at the layer: a `background/` folder deeper in it holds no background job.
+function backgroundJobOf(project) {
+  return `${ownLayers(project).context}/${inAnyModule('application')}${BACKGROUND_JOB_FILE}`;
+}
+
+function inwardOf(project) {
+  const own = ownLayers(project);
+  return [
+    own.layer('domain'),
+    own.layer('application'),
+    own.rootFile('codes'),
+    own.rootFile('permissions'),
+    own.layer('published-language'),
+    own.sharedKernel,
+    `^${escape(project.contextsDir)}/(?!$1/)[^/]+/`,
+  ];
 }
 
 /** The patterns a rule of a layer is written with: `$1` is the context of the importing file. */

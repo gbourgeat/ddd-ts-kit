@@ -71,6 +71,7 @@ export class BackgroundJobLifecycle {
     return {
       name: job.name,
       options: job.options,
+      payload: job.payload,
       run: instrument === undefined ? run : instrument(run, { name: job.name, context: job.module }),
     };
   }

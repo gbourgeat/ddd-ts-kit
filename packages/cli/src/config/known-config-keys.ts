@@ -1,8 +1,9 @@
 import type { Config } from './config';
 
 /**
- * The keys of ddd-ts-kit.config.json the parser reads at the root, the keys of `Config`. It reads no other key, and
- * `config/valid` names one it finds with the nearest key of this list.
+ * The keys of ddd-ts-kit.config.json the parser reads at the root, the keys of `Config` but the
+ * derived ones. It reads no other key, and `config/valid` names one it finds with the nearest key
+ * of this list.
  */
 export const KNOWN_CONFIG_KEYS = [
   'stack',

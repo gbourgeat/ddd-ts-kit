@@ -1157,13 +1157,16 @@ service takes its jobs with it: they belong to its module, and nothing is global
 ## Background jobs
 
 A class of `application/background/` that carries `@Background` is a background job of its
-context, named by its static `jobName`:
+context, named by its static `jobName`, its stored payload read with its static `payload` schema:
 
 ```ts
 // contexts/billing/application/background/compile-statements.background-job.ts
 @Background({ maxAttempts: 3, timeout: '10m' })
 export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
   static readonly jobName = 'billing.compile-statements';
+
+  // the schema of its payload, `zodSchema(z.object({ month: z.string() }))` or any validation library
+  static readonly payload = compileStatementsPayload;
 
   constructor(private readonly commands: CommandBus) {}
 
@@ -1175,7 +1178,11 @@ export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStat
 
 An explicit module writes `builder.backgroundJob('billing.compile-statements', { maxAttempts: 3 })
 .handledBy(CompileStatementsBackgroundJob, [CommandBus])`; a name other than the `jobName` of the class is
-refused (`INVALID_JOB_SETTINGS`), a name declared twice too (`DUPLICATE_JOB`).
+refused (`INVALID_JOB_SETTINGS`), a class without a static `payload` too, a name declared twice too
+(`DUPLICATE_JOB`). A job built by `handledByFactory(factory, payload)` is given its schema there. A
+stored payload the schema refuses is never run: the attempt fails with `INVALID_JOB_PAYLOAD` and the
+job is dead, which `app.backgroundJobs.runDue()` throws in a spec; `app.jobQueue.enqueue` reads the
+payload with the same schema and throws `INVALID_ENQUEUED_PAYLOAD` for one that does not fit.
 
 - **Registered when the application is created** on the `QueueWorker` of `@ddd-ts-kit/scheduling`,
   which then consumes the queue of the context. The class is built on its first attempt.

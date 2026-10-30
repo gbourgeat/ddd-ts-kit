@@ -1,4 +1,4 @@
-import { DuplicateJobError, NoopLogger, NoopMetrics } from '@ddd-ts-kit/kernel';
+import { DuplicateJobError, NoopLogger, NoopMetrics, ok, type BackgroundJobPayloadSchema } from '@ddd-ts-kit/kernel';
 import { systemJobTimers } from '../system-job-timers';
 import type { BackgroundJobDefinition } from './background-job-definition';
 import { BackgroundJobRecorder } from './background-job-recorder';
@@ -10,6 +10,9 @@ import type { QueueState } from './queue-state';
 import type { QueueWorkerOptions } from './queue-worker-options';
 import { RegisteredBackgroundJob } from './registered-background-job';
 import type { ClaimedJob } from './store/claimed-job';
+
+/** The schema of a job no module registered: it is never run, so its payload is never read. */
+const unread: BackgroundJobPayloadSchema<unknown> = { parse: (input) => ok(input) };
 
 /**
  * Runs the background jobs of the queues it has jobs for, in this process: each queue is the
@@ -217,7 +220,7 @@ export class QueueWorker {
     const registered = this.jobs.get(job.name);
 
     if (registered === undefined) {
-      const stranger = new RegisteredBackgroundJob({ name: job.name, run: () => Promise.resolve() });
+      const stranger = new RegisteredBackgroundJob({ name: job.name, payload: unread, run: () => Promise.resolve() });
 
       return this.runner.refuse(job, stranger, { error: new UnknownBackgroundJobError(job.name), retry: true });
     }
