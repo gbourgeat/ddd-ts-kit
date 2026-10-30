@@ -1,0 +1,1 @@
+**A dangling link at `.ddd-ts-kit/lock` no longer hangs a command that takes the generator lock.** The command waited forever, with no message. It now waits as long as for a lock another command holds, then refuses, says what stands there and writes nothing.
