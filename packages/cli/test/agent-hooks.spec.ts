@@ -97,6 +97,29 @@ describe('the production gate of the regulated profile', () => {
     );
   });
 
+  it('blocks a release whose name joins the environment and the action with a dash, an underscore or a dot, and not another environment', () => {
+    for (const command of [
+      'pnpm run deploy-production',
+      'pnpm run deploy_production',
+      'pnpm run production-deploy',
+      'npm run db:migrate-production',
+      'NODE_ENV=production pnpm run db-migrate',
+      'fly deploy --app api-production',
+      'pnpm run deploy.production',
+    ]) {
+      expect(runHook(root, GATE, bash(command)).status, command).toBe(2);
+    }
+
+    for (const command of [
+      'pnpm run deploy-non-production',
+      'fly deploy --app api-pre-production',
+      'pnpm run deploy_preproduction',
+      'pnpm run reproduction-deploy',
+    ]) {
+      expect(runHook(root, GATE, bash(command)).status, command).toBe(0);
+    }
+  });
+
   it('lets every other command through, and reads the environments and actions of the team', () => {
     expect(runHook(root, GATE, bash('npm run db:migrate')).status).toBe(0);
     expect(runHook(root, GATE, bash('npm run verify')).status).toBe(0);
