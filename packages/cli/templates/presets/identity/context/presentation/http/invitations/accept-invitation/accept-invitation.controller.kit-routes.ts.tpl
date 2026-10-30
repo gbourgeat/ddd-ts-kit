@@ -82,6 +82,7 @@ const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
     'INVITATION_EXPIRED',
     'INVITATION_ADDRESSED_TO_ANOTHER',
     'ALREADY_MEMBER',
+    'INVITATION_WITHDRAWN',
   ],
 })
 export class AcceptInvitationController {

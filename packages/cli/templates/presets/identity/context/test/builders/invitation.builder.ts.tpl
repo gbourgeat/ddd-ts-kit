@@ -30,6 +30,10 @@ export class InvitationBuilder extends Builder<InvitationIngredients, Invitation
     return this.with('role', role);
   }
 
+  issuedBy(accountId: string): this {
+    return this.with('invitedBy', accountId);
+  }
+
   withTokenHash(tokenHash: string): this {
     return this.with('tokenHash', tokenHash);
   }

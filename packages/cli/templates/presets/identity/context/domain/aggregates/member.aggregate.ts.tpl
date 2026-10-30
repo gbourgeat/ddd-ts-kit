@@ -60,7 +60,7 @@ export class Member extends AggregateRoot<string> {
 
   /** Whoever invites or appoints in `role` holds that role or a higher one: only an owner makes an owner. */
   static assertAppointable(organisationId: string, role: MemberRole, by: MemberRole): void {
-    if (!outranks(role, by)) {
+    if (Member.mayAppoint(role, by)) {
       return;
     }
 
@@ -72,6 +72,11 @@ export class Member extends AggregateRoot<string> {
 {{#unless refusals.named}}
     throw role === MemberRole.Owner ? MemberError.ownersOnly(organisationId) : MemberError.aboveOwnRole(organisationId);
 {{/unless}}
+  }
+
+  /** Whether a member of the role `by` may invite or appoint in `role`, as `assertAppointable` decides. */
+  static mayAppoint(role: MemberRole, by: MemberRole): boolean {
+    return !outranks(role, by);
   }
 
   /** Never one's own role, never above one's own role, and the last owner stays one. */

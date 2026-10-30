@@ -23,7 +23,9 @@ owners and two owners who remove each other at once cannot both commit.
 **Invitations.** An invitation is issued to an email address, in a role, for a week. Its token
 is answered to the inviter once (`POST /organisations/:organisationId/invitations`) and only its
 SHA-256 digest is stored: send it to the person (a notification context, a link), who accepts or
-declines it signed in, with the address it was sent to.
+declines it signed in, with the address it was sent to. It holds while its issuer may still
+invite in its role: once the issuer is removed, deactivated, demoted below it or no longer lent
+the right to invite, it is withdrawn and lets nobody in (`INVITATION_WITHDRAWN`).
 
 **Delegations.** A member lends some of the rights of their role to another member of the
 organisation, for ninety days at most: the delegate acts in their own name, with those rights, and

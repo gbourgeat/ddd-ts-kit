@@ -27,4 +27,12 @@ export class InvitationError extends ConceptError {
       { invitationId },
     );
   }
+
+  static withdrawn(invitationId: string) {
+    return InvitationError.refusal(
+      'INVITATION_WITHDRAWN',
+      `The invitation ${invitationId} is withdrawn: its issuer may no longer invite in its role.`,
+      { invitationId },
+    );
+  }
 }

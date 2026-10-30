@@ -46,6 +46,7 @@ export class AcceptInvitationController {
       'INVITATION_EXPIRED',
       'INVITATION_ADDRESSED_TO_ANOTHER',
       'ALREADY_MEMBER',
+      'INVITATION_WITHDRAWN',
     ],
   })
   async acceptInvitation(@Body() body: {{#if schemas.shared}}InvitationToken{{/if}}{{#if schemas.perRoute}}AcceptInvitationBody{{/if}}, @CurrentActor() actor: Actor): Promise<{{#if schemas.shared}}Accepted{{/if}}{{#if schemas.perRoute}}AcceptInvitationAccepted{{/if}}> {

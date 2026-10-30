@@ -108,6 +108,11 @@ export class Invitation extends AggregateRoot<string> {
     return this.state.role;
   }
 
+  /** The account that issued it: the invitation holds while that account may still invite in its role (`RoleRightsService.mayStillIssue`). */
+  get invitedBy(): string {
+    return this.state.invitedBy;
+  }
+
   get status(): InvitationStatus {
     return this.state.status;
   }
