@@ -10,6 +10,7 @@ import type { LockTiming } from './lock-timing';
 import { ownLock, type LockPlace, type OwnLock } from './own-lock';
 import { removeMadeFolder } from './remove-made-folder';
 import { removeStale } from './remove-stale';
+import { unreadableLockRefusal } from './unreadable-lock-refusal';
 
 /**
  * The lock of the project at `root`, asked by `command` (its line, as the refusal of another names
@@ -64,23 +65,22 @@ function takeLock(place: LockPlace, timing: LockTiming): () => void {
   return owned === 'unlockable' ? () => undefined : () => release(owned);
 }
 
-/** One look at the lock another holds: taken over when stale, else waited for until the deadline. */
+/**
+ * One look at the lock another holds: taken over when stale, else waited for until the deadline. A
+ * lock that reads as nothing was released since the attempt, or is a link to nothing, which no
+ * attempt will ever take: the deadline holds for both.
+ */
 function waitOrTakeOver(lock: string, timing: LockTiming, deadline: number): void {
   const holder = holderOf(lock);
 
-  if (holder === undefined) {
-    // Released between the attempt and this look: the next attempt takes it.
-    return;
-  }
-
-  if (isStale(holder, Date.now(), timing.staleMs)) {
+  if (holder !== undefined && isStale(holder, Date.now(), timing.staleMs)) {
     removeStale(lock, holder);
 
     return;
   }
 
   if (Date.now() >= deadline) {
-    throw heldLockRefusal(holder, Date.now());
+    throw holder === undefined ? unreadableLockRefusal() : heldLockRefusal(holder, Date.now());
   }
 
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, timing.pollMs);

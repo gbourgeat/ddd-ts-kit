@@ -69,6 +69,25 @@ function declaredContexts(root: string): string[] {
   return typeof contexts === 'object' && contexts !== null ? Object.keys(contexts) : [];
 }
 
+describe('a lock that reads as nothing', () => {
+  it('is refused once the wait is over when it is a link to nothing, and nothing runs', () => {
+    const root = tempDir('lock-link');
+
+    fs.mkdirSync(path.join(root, '.ddd-ts-kit'));
+    fs.symlinkSync(path.join(root, 'nowhere'), path.join(root, LOCK));
+
+    let ran = false;
+
+    expect(() =>
+      withGeneratorLock({ root, command: HOLDER, timing: SHORT_WAIT }, () => {
+        ran = true;
+      }),
+    ).toThrow('stands there and cannot be read');
+
+    expect(ran).toBe(false);
+  });
+});
+
 describe('two generators that write the shared files of one project', () => {
   it('started together both land in the config and the composition root, or one is refused with the reason', async () => {
     const root = initProject(...NPM);
