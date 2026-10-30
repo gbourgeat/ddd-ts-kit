@@ -1,0 +1,1 @@
+**A controller whose schema is written inline no longer crashes `describe`, `docs` and `digest`.** `body: z.object({ amount: z.number(), currency: z.string() })` ended in a raw `SyntaxError`. The schema is now reported whole, over several lines included, and a part that closes the options with no comma after it is read too.

@@ -2,6 +2,7 @@ import { filesUnder } from '../generate/files-under';
 import { roleFoldersOf } from '../model-modules';
 import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description';
 import type { ContextSources } from './context-sources';
+import { endAtDepthZero } from '../check/text/end-at-depth-zero';
 import { decoratorOptions } from './decorator-options';
 import { guardErrors } from './guard-errors';
 import { listedIn } from './listed-in';
@@ -113,10 +114,30 @@ function requestOf(source: string, options: string): RequestPart[] {
   const outside = options.replace(RESPONSE, '');
 
   return PARTS.flatMap((part) => {
-    const written = new RegExp(String.raw`(?:^|[\n,{])\s*${part}(?::\s*([^,\n]+?))?\s*,`).exec(outside);
+    const written = writtenPart(outside, part);
 
-    return written === null ? [] : [{ part, schema: schemaClassOf(source, written[1] ?? part) }];
+    return written === undefined ? [] : [{ part, schema: schemaClassOf(source, written) }];
   });
+}
+
+/** What the options say of `part`, whole however many commas and lines it holds: its name alone when written short. */
+function writtenPart(options: string, part: string): string | undefined {
+  const named = new RegExp(String.raw`(?:^|[\n,{])\s*${part}\s*([:,])`).exec(options);
+
+  if (named === null) {
+    return undefined;
+  }
+
+  if (named[1] === ',') {
+    return part;
+  }
+
+  const from = named.index + named[0].length;
+
+  return options
+    .slice(from, endAtDepthZero(options, from, ','))
+    .trim()
+    .replace(/\s+/g, ' ');
 }
 
 function responsesOf(source: string, options: string): RouteResponse[] {

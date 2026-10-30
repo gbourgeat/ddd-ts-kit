@@ -39,18 +39,18 @@ describe('the tree of a commit, when a reader of its contexts fails', () => {
     expect(() => treeOf({ 'ddd-ts-kit.config.json': `{"stack":{"orm":${nested}}}` })).toThrow(RangeError);
   });
 
-  it('lets through what is no refusal: a schema written inline that a regular expression cannot hold', () => {
+  it('describes a schema written inline with its commas, which a regular expression once choked on', () => {
     const controller = [
       "@Controller({ method: 'POST', path: '/pay', body: z.object({ amount: z.number(), currency: z.string() }), })",
       'export class PayController {}',
       '',
     ].join('\n');
 
-    expect(() =>
-      treeOf({
-        'ddd-ts-kit.config.json': JSON.stringify({ contexts: CONTEXTS }),
-        'src/contexts/billing/presentation/http/pay.controller.ts': controller,
-      }),
-    ).toThrow(SyntaxError);
+    const tree = treeOf({
+      'ddd-ts-kit.config.json': JSON.stringify({ contexts: CONTEXTS }),
+      'src/contexts/billing/presentation/http/pay.controller.ts': controller,
+    });
+
+    expect(tree).not.toHaveProperty('problem');
   });
 });

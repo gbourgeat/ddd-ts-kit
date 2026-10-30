@@ -21,6 +21,7 @@ Each check guards a state its callers cannot produce. Removing it would leave th
 | `cli`, `timeline-of.ts`, an empty list of commits | This runs once a report commit was found, so neither list is empty. |
 | `cli`, `format-progress.ts`, a row without a `ready` value | `statusRowOf` gives each row that is not done a `ready` value. |
 | `cli`, `forecast-merge.ts`, an error that is no `CliError` | Only a conflicted blob too large for a string gets here, over 512 MiB: a spec cannot afford one. |
+| `cli`, `tree-at.ts`, a reader that fails with no `CliError` | A reader refuses with a `CliError`: what is left is a fault of the kit, or a source too large for a string. |
 | `eslint-plugin`, `pattern-identifiers.ts`, another kind of target | The parser refuses a member expression in a declaration or a parameter. |
 | `eslint-plugin`, `returns-package-type.ts`, `this` as a name | `this` stands in an entity name only under `typeof`, never in a type reference. |
 
