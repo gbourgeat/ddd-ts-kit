@@ -307,6 +307,12 @@ against a local server, not run against a real Keycloak by the pipeline of the k
 - **Several organizations per user give no default tenant** with the `organization` claim: they
   are the `tenants` of the actor, and each request names the one it works in (`x-tenant-id`);
   one without it works in no tenant.
+- **A client sends no `x-tenant-id` for an organisation the person is not a member of yet.** The
+  edge holds every authenticated request to the tenants of its token, so a header naming the
+  organisation of an invitation not yet accepted, or one about to be opened, is refused with 403
+  on every route. The routes of the identity context that come before a membership (provisioning
+  the account, accepting or declining an invitation, opening an organisation) work in no tenant:
+  call them without the header, then with it once the next token names the organisation.
 - **A scope is not a role.** The default mapping never reads `scope` as roles: a token that
   carries only scopes gives an actor with no role. A provider whose tokens carry no role claim
   needs a `toActor` that maps them.

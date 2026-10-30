@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:976089932cc53164 -->
+<!-- translation-of: identity.md sha256:9df041bd5ef2a3a4 -->
 
 # Identité : Keycloak ou simple OIDC et JWT
 
@@ -327,6 +327,13 @@ n'est pas exécuté contre un vrai Keycloak par le *pipeline* du kit. Voir
   *claim* `organization` : elles sont les `tenants` de l'acteur, et chaque requête HTTP nomme
   celui dans lequel elle travaille (`x-tenant-id`) ; une requête sans lui ne travaille dans aucun
   *tenant*.
+- **Un client n'envoie pas `x-tenant-id` pour une organisation dont la personne n'est pas encore
+  membre.** La bordure tient chaque requête authentifiée aux *tenants* de son jeton, donc un
+  en-tête qui nomme l'organisation d'une invitation pas encore acceptée, ou d'une organisation sur
+  le point d'être ouverte, est refusé par un 403 sur chaque route. Les routes du contexte
+  d'identité qui viennent avant une appartenance (provisionner le compte, accepter ou décliner une
+  invitation, ouvrir une organisation) ne travaillent dans aucun *tenant* : appelez-les sans
+  l'en-tête, puis avec lui une fois que le jeton suivant nomme l'organisation.
 - **Une portée n'est pas un rôle.** La correspondance par défaut ne lit jamais `scope` comme des
   rôles : un jeton qui ne porte que des portées donne un acteur sans rôle. Un fournisseur dont
   les jetons ne portent aucun *claim* de rôle a besoin d'un `toActor` qui les fait correspondre.
