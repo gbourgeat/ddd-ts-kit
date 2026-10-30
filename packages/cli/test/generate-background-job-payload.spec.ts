@@ -55,7 +55,7 @@ describe('generate background-job, the schema of its payload', () => {
     const job = read(remindJob('--validation', 'class-validator'), JOB);
 
     expect(job).toContain(
-      "class RemindCustomerPayloadFields {\n  @IsString()\n  declare customerId: string;\n\n  @IsISO8601()\n  declare dueBefore: string;\n\n  @IsIn(['mail', 'sms'])\n  declare channel: 'mail' | 'sms';\n\n  @IsArray()\n  @IsString({ each: true })\n  declare invoiceIds: string[];\n\n  @IsOptional()\n  @IsNumber()\n  limit?: number;\n}",
+      "class RemindCustomerPayloadFields {\n  @IsString()\n  declare customerId: string;\n\n  @IsISO8601()\n  declare dueBefore: string;\n\n  @IsIn(['mail', 'sms'])\n  declare channel: 'mail' | 'sms';\n\n  @IsArray()\n  @IsString({ each: true })\n  declare invoiceIds: string[];\n\n  @IsOptional()\n  @IsNumber()\n  declare limit?: number;\n}",
     );
 
     expect(job).toContain('const payloadSchema = classSchema(RemindCustomerPayloadFields);');

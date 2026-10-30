@@ -68,8 +68,8 @@ function schemaOf(name: Name, empty: boolean): string[] {
 
 /**
  * A field has no initial value: class-transformer would keep it for a field the stored payload
- * lacks, and the payload of an earlier shape would pass. A required one is declared, its value
- * set by class-transformer from the stored payload.
+ * lacks, and the payload of an earlier shape would pass. Each one is declared, its value set by
+ * class-transformer from the stored payload, as the classes of a route declare theirs.
  */
 function decoratedOf(field: PayloadField): Decorated {
   const { decorators, type } = describedBy(field.shape);
@@ -78,7 +78,7 @@ function decoratedOf(field: PayloadField): Decorated {
 
   return {
     decorators: [...todo, ...optional, ...decorators],
-    field: field.optional ? `${field.name}?: ${type};` : `declare ${field.name}: ${type};`,
+    field: `declare ${field.name}${field.optional ? '?' : ''}: ${type};`,
   };
 }
 
