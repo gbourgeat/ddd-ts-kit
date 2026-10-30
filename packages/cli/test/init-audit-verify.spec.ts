@@ -12,7 +12,7 @@ describe('init: the nightly verification of the audit trail', () => {
 
     expect(platform(root, 'audit/audit.module.ts')).toContain(
       "      if (jobs) {\n        builder\n          .job('audit.verify', { cron: '30 4 * * *', tenancy: 'global' })\n" +
-        '          .handledByFactory(() => new VerifyAuditTrail(audit.trail));',
+        '          .handledByFactory((resolve) => new VerifyAuditTrail(audit.trail, resolve(FileStorage)));',
     );
 
     expect(platform(root, 'composition/compose-application.ts')).toContain(
@@ -36,6 +36,12 @@ describe('init: the nightly verification of the audit trail', () => {
       expect(composition).toContain(
         "  platform.jobs.register({ name: 'audit.verify', schedule: { cron: '30 4 * * *' }, run: () => verify.run() });",
       );
+
+      expect(composition).toContain(
+        storage === 'none'
+          ? 'const verify = new VerifyAuditTrail(platform.audit.trail);'
+          : 'const verify = new VerifyAuditTrail(platform.audit.trail, platform.files.storage);',
+      );
     }
   });
 
@@ -45,6 +51,10 @@ describe('init: the nightly verification of the audit trail', () => {
     const off = initProject('--audit', 'off');
 
     expect(read(database, 'scripts/audit-verify.ts')).toContain(
+      'const verification = await verifyTrail(createAuditTrail(persistence), { files: openFiles(config.files) });',
+    );
+
+    expect(read(initProject('--storage', 'none'), 'scripts/audit-verify.ts')).toContain(
       'const verification = await verifyTrail(createAuditTrail(persistence));',
     );
 

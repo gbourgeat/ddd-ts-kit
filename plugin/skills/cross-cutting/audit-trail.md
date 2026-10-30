@@ -60,4 +60,4 @@ the platform, not a bounded context. Support staff acting as a user appear as su
 - No personal data in clear.
 - The `SubjectKeyStore` every caller resolves is the one wrapped by `auditedSubjectKeys`, and an export of a data subject goes through `auditedPersonalDataExport`.
 - The application's database role cannot update or delete entries.
-- Chain verification runs every night: the platform job `audit.verify` (`VerifyAuditTrail`, `verifyTrail` of `@ddd-ts-kit/audit`) verifies every chain from its last archive to its head and fails its run on a break; `npm run audit:verify` does it by hand. A project that switches it off (`JOB_AUDIT_VERIFY_ENABLED=false`) verifies some other way.
+- Chain verification runs every night: the platform job `audit.verify` (`VerifyAuditTrail`, `verifyTrail` of `@ddd-ts-kit/audit`) verifies every chain from its last archive, proved against its file when the project has a storage, to its head and fails its run on a break; `npm run audit:verify` does it by hand. A project that switches it off (`JOB_AUDIT_VERIFY_ENABLED=false`) verifies some other way.

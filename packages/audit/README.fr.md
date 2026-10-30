@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:16a90bbcd6a06686 -->
+<!-- translation-of: README.md sha256:96db6d641874df71 -->
 
 # @ddd-ts-kit/audit
 
@@ -827,8 +827,10 @@ contre son fichier : c'est donc l'appelant qui nomme celle à laquelle il se fie
 
 `verifyTrail(trail)` vérifie chaque chaîne d'un journal qui archive, chacune de l'ancre de sa
 dernière archive à sa tête (`chainHeads()` : la séquence et le hash de sa dernière entrée), de
-sorte qu'une chaîne coupée à sa fin répond `missing-entry` ; chaque chaîne s'arrête à sa propre
-rupture et les autres sont vérifiées quand même :
+sorte qu'une chaîne coupée à sa fin répond `missing-entry` ; avec `files`, le stockage où les
+archives ont été écrites, la dernière archive de chaque chaîne est d'abord relue et prouvée par
+`verifyArchive`. Chaque chaîne s'arrête à sa propre rupture et les autres sont vérifiées quand
+même :
 
 ```ts
 await verifyTrail(trail);
@@ -836,7 +838,7 @@ await verifyTrail(trail);
 // { valid: false, checked: 1180, breaks: [{ kind: 'altered-content', chain: 'tenant:acme', position: 24, sequence: 4235, entryId: '...' }] }
 ```
 
-`VerifyAuditTrail(trail)` est la tâche planifiée de la plateforme qui l'exécute et échoue avec
+`VerifyAuditTrail(trail, files?)` est la tâche planifiée de la plateforme qui l'exécute et échoue avec
 `AuditTrailBrokenError` (`breaks`, code `AUDIT_TRAIL_BROKEN`) sur une rupture : le planificateur
 journalise l'exécution échouée et la compte. Un projet généré avec le journal actif l'enregistre
 comme `audit.verify`, chaque nuit à 04:30 UTC, désactivée par `JOB_AUDIT_VERIFY_ENABLED=false`, et
@@ -956,6 +958,16 @@ grant select, insert, update on "audit"."audit_chains" to app;
 
 L'application ne peut alors ni réécrire une entrée, ni désactiver ou supprimer la garde. Il reste
 le rôle propriétaire et le superutilisateur, et c'est à cela que sert l'ancrage.
+
+La garde laisse passer un seul `DELETE` : celui d'une entrée qu'une ligne de `audit_archives`
+couvre, que `archiveBefore` écrit dans la même transaction. Un rôle qui peut à la fois insérer dans
+`audit_archives` et supprimer de `audit_entries` peut donc laisser partir des entrées derrière une
+ligne de son cru. Une telle ligne reste, les archives n'acceptant que l'ajout, et
+`verifyTrail(trail, { files })` relit le fichier de la dernière archive de chaque chaîne et le
+prouve avec `verifyArchive` : une ligne sans son fichier, ou dont le fichier ne la prouve pas, est
+la rupture de sa chaîne (`missing-entry`, ou `altered-content`, à la première séquence qu'elle
+nomme). Le `audit.verify` nocturne d'un projet généré avec un stockage de fichiers le fait. Gardez
+ces deux privilèges au rôle qui archive.
 
 Un nouveau store passe la même suite que ceux-ci :
 

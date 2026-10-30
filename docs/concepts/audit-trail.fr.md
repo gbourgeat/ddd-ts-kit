@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:84aa88ea397402ef -->
+<!-- translation-of: audit-trail.md sha256:fdcd02e14f86e0c1 -->
 
 # Journal d'audit
 
@@ -257,7 +257,13 @@ de deux *tenants* n'est donné que par leurs horodatages, il n'est pas prouvé p
 
 Le stockage refuse aussi la mise à jour et la suppression au niveau de la base de données
 (triggers), et le rôle de base de données de l'application ne devrait posséder ni la table ni
-les triggers.
+les triggers. La seule suppression admise est celle d'une entrée qu'une ligne de `audit_archives`
+couvre, que l'archive écrit dans la même transaction : un rôle qui peut à la fois insérer une telle
+ligne et supprimer des entrées peut laisser partir des entrées derrière une ligne de son cru. Cette
+ligne reste, les archives n'acceptant que l'ajout, et la vérification à qui l'on donne le stockage
+des fichiers relit le fichier de la dernière archive de chaque chaîne : une ligne qu'aucun fichier
+ne prouve est la rupture de sa chaîne. Ces deux privilèges reviennent au rôle qui archive, pas à
+l'application.
 
 ## Vérification et ancrage
 

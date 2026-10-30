@@ -1,5 +1,8 @@
+import { createHash } from 'node:crypto';
+import { Readable } from 'node:stream';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { InMemoryAuditTrail } from '../src';
+import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
+import { InMemoryAuditTrail, verifyTrail } from '../src';
 import { archiveSpecs } from './support/archive-specs';
 import { auditTrailContract } from '../src/testing';
 
@@ -27,6 +30,43 @@ auditTrailContract(runner, {
 });
 
 describe('InMemoryAuditTrail', () => {
+  it('reports an archive whose file is not lines of JSON, though it has the digest its row records', async () => {
+    const archived = new InMemoryAuditTrail();
+    const files = new InMemoryFileStorage();
+    const text = 'not json\n';
+
+    archived.archives.push({
+      chain: 'tenant:acme',
+      fromSequence: 1,
+      toSequence: 1,
+      lastHash: 'h',
+      entries: 1,
+      fileKey: 'audit-archives/one.ndjson',
+      fileDigest: createHash('sha256').update(text, 'utf8').digest('hex'),
+      archivedAt: new Date(0),
+    });
+
+    await archived.record({
+      id: 'entry-1',
+      occurredAt: new Date(0),
+      category: 'command',
+      action: 'A',
+      outcome: 'succeeded',
+      actor: { id: 'ada', type: 'user' },
+      correlationId: 'c',
+      origin: 'cli',
+      tenantId: 'acme',
+    });
+
+    await files.put('audit-archives/one.ndjson', Readable.from([Buffer.from(text)]), {
+      mediaType: 'application/x-ndjson',
+    });
+
+    expect((await verifyTrail(archived, { files })).breaks).toEqual([
+      { kind: 'altered-content', chain: 'tenant:acme', position: 0, sequence: 1 },
+    ]);
+  });
+
   it('chains by what chainOf answers when one is given', async () => {
     const perContext = new InMemoryAuditTrail({ chainOf: (record) => record.context ?? 'none' });
 

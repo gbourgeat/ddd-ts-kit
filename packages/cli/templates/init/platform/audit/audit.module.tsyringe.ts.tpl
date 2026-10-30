@@ -25,8 +25,8 @@ import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-e
  * The audit trail as a capability of the platform, not a bounded context: the store behind its
  * two ports, the subscription to every declared integration event, under a name of its own{{#if audit.route}}, and
  * its read side, one protected query registered like any use case so that reading the trail is
- * authorized and recorded{{/if}}; every night at 04:30 UTC, every chain verified from its last archive to
- * its head, a break failing the run (`audit.verify`){{#if audit.archive}}; and on the first day of every month at 04:00 UTC,
+ * authorized and recorded{{/if}}; every night at 04:30 UTC, every chain verified from its last archive{{#if audit.archive}},
+ * proved against its file,{{/if}} to its head, a break failing the run (`audit.verify`){{#if audit.archive}}; and on the first day of every month at 04:00 UTC,
  * the entries older than the twelve whole months kept online moved to the storage of files,
  * verified and anchored (`audit.archive`){{/if}}.
  */
@@ -62,7 +62,12 @@ export function auditModule(audit: Audit, { jobs = true }: { readonly jobs?: boo
       if (jobs) {
         builder
           .job('audit.verify', { cron: '30 4 * * *', tenancy: 'global' })
+{{#if audit.archive}}
+          .handledByFactory((resolve) => new VerifyAuditTrail(audit.trail, resolve(FileStorage)));
+{{/if}}
+{{#unless audit.archive}}
           .handledByFactory(() => new VerifyAuditTrail(audit.trail));
+{{/unless}}
 {{#if audit.archive}}
 
         builder

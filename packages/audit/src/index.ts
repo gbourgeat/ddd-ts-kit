@@ -32,6 +32,7 @@ export { verifyChain, type VerifyChainOptions } from './verify/verify-chain';
 export type { ChainHead } from './chain/chain-head';
 export type { TrailVerification } from './verify/trail-verification';
 export { verifyTrail } from './verify/verify-trail';
+export type { VerifyTrailOptions } from './verify/verify-trail-options';
 export { VerifyAuditTrail } from './verify/verify-audit-trail';
 export { AuditTrailBrokenError } from './verify/audit-trail-broken-error';
 export { AuditMasker } from './redaction/audit-masker';

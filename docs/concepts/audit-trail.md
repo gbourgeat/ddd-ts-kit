@@ -241,7 +241,12 @@ each other, and an offboarded tenant leaves chains that still verify. The price:
 between entries of two tenants is given by their timestamps only, not proven by a hash.
 
 The store refuses update and delete at the database level too (triggers), and the application's
-database role should own neither the table nor the triggers.
+database role should own neither the table nor the triggers. The one delete let through is that of
+an entry a row of `audit_archives` covers, which the archive writes in the same transaction: a role
+that may both insert such a row and delete entries can let entries go behind a row of its own. That
+row stays, the archives being append-only, and the verification given the storage of the files
+reads back the file of the last archive of each chain: a row that no file proves is the break of
+its chain. Those two privileges belong to the role that archives, not to the application.
 
 ## Verification and anchoring
 

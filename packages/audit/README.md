@@ -794,8 +794,9 @@ the one it trusts.
 
 `verifyTrail(trail)` verifies every chain of a trail that archives, each from the anchor of its
 last archive to its head (`chainHeads()`: the sequence and the hash of its last entry), so a
-chain cut at its tail answers `missing-entry`; each chain stops at its own break and the others
-are verified all the same:
+chain cut at its tail answers `missing-entry`; given `files`, the storage the archives were
+written to, the last archive of each chain is read back and proved by `verifyArchive` first. Each
+chain stops at its own break and the others are verified all the same:
 
 ```ts
 await verifyTrail(trail);
@@ -803,7 +804,7 @@ await verifyTrail(trail);
 // { valid: false, checked: 1180, breaks: [{ kind: 'altered-content', chain: 'tenant:acme', position: 24, sequence: 4235, entryId: '...' }] }
 ```
 
-`VerifyAuditTrail(trail)` is the scheduled job of the platform that runs it and fails with
+`VerifyAuditTrail(trail, files?)` is the scheduled job of the platform that runs it and fails with
 `AuditTrailBrokenError` (`breaks`, code `AUDIT_TRAIL_BROKEN`) on a break: the scheduler logs the
 failed run and counts it. A generated project with the trail on registers it as `audit.verify`,
 every night at 04:30 UTC, switched off with `JOB_AUDIT_VERIFY_ENABLED=false`, and `npm run
@@ -916,6 +917,15 @@ grant select, insert, update on "audit"."audit_chains" to app;
 
 The application can then neither rewrite an entry, nor disable or drop the guard. What remains
 is the owner role and the superuser, which is what anchoring is for.
+
+The guard lets one `DELETE` through: that of an entry a row of `audit_archives` covers, which
+`archiveBefore` writes in the same transaction. A role that may both insert into `audit_archives`
+and delete from `audit_entries` can therefore let entries go behind a row of its own. Such a row
+stays, the archives being append-only, and `verifyTrail(trail, { files })` reads back the file of
+the last archive of each chain and proves it with `verifyArchive`: a row without its file, or
+whose file does not prove it, is the break of its chain (`missing-entry`, or `altered-content`, at
+the first sequence it names). The nightly `audit.verify` of a generated project with a storage of
+files does so. Keep those two privileges to the role that archives.
 
 A new store passes the same suite as these:
 

@@ -192,7 +192,8 @@ and `execution.scheduledAt` says which period the work is for.
 
 Who did what, on what, when and with what outcome is recorded around the use cases in
 `{{config.platformDir}}/audit/`, each entry linked to the one before it by a hash, chain by chain (one per tenant).
-Every night at 04:30 UTC the job `audit.verify` verifies every chain from its last archive to its head: an entry
+Every night at 04:30 UTC the job `audit.verify` verifies every chain from its last archive{{#if audit.archive}}, read back from the
+storage and proved against its row,{{/if}} to its head: an entry
 changed, removed, reordered or cut from the end of its chain fails the run, and the log names the chain and the
 sequence (`AuditTrailBrokenError`). `JOB_AUDIT_VERIFY_ENABLED=false` switches it off in one environment.{{#if audit.archive}}
 On the first day of every month at 04:00 UTC, `audit.archive` moves the entries older than twelve whole months to the
