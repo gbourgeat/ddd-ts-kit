@@ -36,7 +36,8 @@ module.exports = {
           "^src/contexts/[^/]+/test/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
-          "^test/"
+          "^test/",
+          "/background/[^/]+\\.background-job\\.ts$"
         ]
       },
       "to": {
@@ -52,6 +53,53 @@ module.exports = {
           "^@ddd-ts-kit/kernel(/|$)",
           "(^|/)node_modules/@ddd-ts-kit/auth/",
           "^@ddd-ts-kit/auth(/|$)"
+        ]
+      }
+    },
+    {
+      "name": "layer-application-inward",
+      "severity": "error",
+      "comment": "A background job (application/background/*.background-job.ts) imports what application/ imports, and the validation library its payload schema is written with. Depend on a port and let the composition root bind the adapter.",
+      "from": {
+        "path": "^src/contexts/([^/]+)/(?:application|[^/]+/application)/background/[^/]+\\.background-job\\.ts$",
+        "pathNot": [
+          "^src/contexts/[^/]+/test/",
+          "\\.(spec|test)\\.[cm]?ts$",
+          "(^|/)open-test-database\\.ts$",
+          "^test/"
+        ]
+      },
+      "to": {
+        "pathNot": [
+          "^src/contexts/$1/(?:domain|[^/]+/domain)(/|\\.ts$)",
+          "^src/contexts/$1/(?:application|[^/]+/application)(/|\\.ts$)",
+          "^src/contexts/$1/$1\\.codes\\.ts$",
+          "^src/contexts/$1/$1\\.permissions\\.ts$",
+          "^src/contexts/$1/(?:published-language|[^/]+/published-language)(/|\\.ts$)",
+          "^src/shared-kernel/",
+          "^src/contexts/(?!$1/)[^/]+/",
+          "(^|/)node_modules/@ddd-ts-kit/kernel/",
+          "^@ddd-ts-kit/kernel(/|$)",
+          "(^|/)node_modules/@ddd-ts-kit/auth/",
+          "^@ddd-ts-kit/auth(/|$)",
+          "(^|/)node_modules/@ddd-ts-kit/validation/",
+          "^@ddd-ts-kit/validation(/|$)",
+          "(^|/)node_modules/@sinclair/typebox/",
+          "^@sinclair/typebox(/|$)",
+          "(^|/)node_modules/arktype/",
+          "^arktype(/|$)",
+          "(^|/)node_modules/class-transformer/",
+          "^class-transformer(/|$)",
+          "(^|/)node_modules/class-validator/",
+          "^class-validator(/|$)",
+          "(^|/)node_modules/class-validator-jsonschema/",
+          "^class-validator-jsonschema(/|$)",
+          "(^|/)node_modules/typebox/",
+          "^typebox(/|$)",
+          "(^|/)node_modules/valibot/",
+          "^valibot(/|$)",
+          "(^|/)node_modules/zod/",
+          "^zod(/|$)"
         ]
       }
     },
