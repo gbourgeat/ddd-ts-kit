@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:694dd3bce5d87fa8 -->
+<!-- translation-of: CONTRIBUTING.md sha256:59daca66bce218a0 -->
 
 # Contribuer
 
@@ -307,7 +307,8 @@ exige l'approbation du propriétaire du dépôt : un run de `Release` s'arrête 
 jusqu'à ce que le propriétaire l'approuve dans l'onglet Actions, et rien n'atteint npm sans cette
 approbation. Seul un administrateur du dépôt crée une étiquette `v*` (un *ruleset* la refuse à
 tout autre), si bien qu'une release part d'un administrateur, puis attend le propriétaire.
-N'approuvez pas un run que vous n'attendiez pas.
+Les archives qu'un run empaquette sont gardées une semaine : une approbation plus tardive, ou un
+run terminé après ce délai, relance tout le workflow. N'approuvez pas un run que vous n'attendiez pas.
 
 **Un nouveau package.** La confiance se déclare package par package, et seulement pour un
 package qui existe sur le registre. Avant la première version publiée qui contient un package

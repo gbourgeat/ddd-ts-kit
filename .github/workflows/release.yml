@@ -77,7 +77,7 @@ jobs:
           name: tarballs
           path: tarballs/*.tgz
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
 
   # Publishes the tarballs of the job above: nothing is installed or built here, so no script of a
   # dependency runs next to the identity token.

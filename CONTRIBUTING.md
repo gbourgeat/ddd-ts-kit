@@ -286,8 +286,8 @@ job publishes its tarballs), and needs npm 11.5.1 or later, which it checks. No 
 approval of the owner of the repository: a run of `Release` stops before it publishes until the
 owner approves it in the Actions tab, and nothing reaches npm without that approval. Only an
 administrator of the repository creates a `v*` tag (a ruleset refuses it to everyone else), so a
-release starts from an administrator, then waits for the owner. Do not approve a run you did not
-expect.
+release starts from an administrator, then waits for the owner. The tarballs a run packs are kept a week: an approval later than that, or a run finished after it,
+runs the whole workflow again. Do not approve a run you did not expect.
 
 **A new package.** Trust is declared per package, and only for a package that exists on the
 registry. Before the first release that contains a package added to `packages/`, a maintainer
