@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:afc71b9d702b0ba0 -->
+<!-- translation-of: event-sourcing.md sha256:dd04835771dac3d1 -->
 
 # Event sourcing, par agrégat
 
@@ -71,9 +71,11 @@ l'agrégat.
 `ddd-ts-kit generate aggregate <context> <Name> --event-sourced` écrit l'agrégat avec son
 événement de naissance et sa méthode apply, le codec, un *builder* qui rejoue un historique et une
 *spec* en événements donnés. L'événement de naissance est `<Name>Created` sauf si
-`--birth <Event>` nomme le fait que dit le métier (`--birth Triggered` écrit `IncidentTriggered`,
-`incidents.incident.triggered`), vérifié contre le glossaire comme tout autre nom : le nom d'un
-événement stocké est conservé pour toujours. `generate domain-event` sur un tel agrégat ajoute
+`--birth "<Fact>"` nomme le fait que dit le métier (`--birth Triggered` ou
+`--birth "Incident Triggered"` écrit `IncidentTriggered`, `incidents.incident.triggered`, et l'état
+garde `triggeredAt`), vérifié contre le glossaire comme tout autre nom : le nom d'un événement
+stocké est conservé pour toujours. La même option nomme la naissance d'un agrégat qui garde son
+état dans une table. `generate domain-event` sur un agrégat *event-sourced* ajoute
 l'événement à son union, à `appliers()` avec une méthode apply vide, et au codec, chacun là où il
 manque : lancé sur l'événement de naissance, ou une seconde fois, il laisse les deux fichiers tels
 quels. `describe`,

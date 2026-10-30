@@ -66,10 +66,12 @@ An audit trail is not a reason by itself: the kit records who did what around ev
 
 `ddd-ts-kit generate aggregate <context> <Name> --event-sourced` writes the aggregate with its
 birth event and apply method, the codec, a builder that replays a history and a given-events
-spec. The birth event is `<Name>Created` unless `--birth <Event>` names the fact the business
-says (`--birth Triggered` writes `IncidentTriggered`, `incidents.incident.triggered`), checked
-against the glossary like any other name: the name of a stored event is kept forever.
-`generate domain-event` on such an aggregate adds the event to its union, to `appliers()` with
+spec. The birth event is `<Name>Created` unless `--birth "<Fact>"` names the fact the business
+says (`--birth Triggered` or `--birth "Incident Triggered"` writes `IncidentTriggered`,
+`incidents.incident.triggered`, and the state holds `triggeredAt`), checked against the glossary
+like any other name: the name of a stored event is kept forever. The same flag names the birth of
+an aggregate that keeps its state in a table.
+`generate domain-event` on an event-sourced aggregate adds the event to its union, to `appliers()` with
 an empty apply method, and to the codec, each only where it is absent: run on the birth event, or
 a second time, it leaves both files as they are. `describe`, `list` and `CONTEXT.md` say which
 aggregates are event-sourced. The store they are saved through is wired by

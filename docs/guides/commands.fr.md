@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:9889898a9f5b8011 -->
+<!-- translation-of: commands.md sha256:0d484590c4a7374c -->
 
 # Quelle commande, quand
 
@@ -54,9 +54,9 @@ $ npx ddd-ts-kit todo ordering
 src/contexts/ordering/CONTEXT.md:5  TODO(domain)  say in two sentences which business capability this context owns and for whom; the first sentence is reused in the context map.
 src/contexts/ordering/application/commands/place-order/place-order.command.ts:7  TODO(domain)  declare the input of "place order" as a constructor with the actor first, then readonly primitives and ids, ...
 src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to a Order: ...
-src/contexts/ordering/domain/aggregates/order.aggregate.ts:28  TODO(domain)  add one method per business intention (issue, cancel, ...): each guards its invariants, replaces `this.state` and records the event of what happened.
+src/contexts/ordering/domain/aggregates/order.aggregate.ts:19  TODO(domain)  name the fact Order is born with, recorded at `now`: `ddd-ts-kit generate aggregate ordering Order --birth "<Fact>" --force` names the birth and writes its event.
 ...
-src/contexts/ordering/test/unit/order.aggregate.spec.ts:33  it.todo  records the fact of its birth
+src/contexts/ordering/test/unit/order.aggregate.spec.ts:30  it.todo  records the fact of its birth
 ...
 ```
 
@@ -668,7 +668,7 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
 Kinds
   context <name> --classification <core|supporting|generic> [--reason "<why it is of that classification>"] [--purpose "<two sentences>"] [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--upstream <ctx>[:relationship]]... [--preset identity]
   module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...
-  aggregate <context> <Name> [--event-sourced [--birth <Event>]] [--term "<Term>=<meaning>"]... [--module <module>]
+  aggregate <context> <Name> [--birth "<Fact>"] [--event-sourced] [--term "<Term>=<meaning>"]... [--module <module>]
   builder <context> <Aggregate>
   test-world <context> [Name]
   entity <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
