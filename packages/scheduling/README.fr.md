@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:74a0287b249649a0 -->
+<!-- translation-of: README.md sha256:7b042676f6872e39 -->
 
 # @ddd-ts-kit/scheduling
 
@@ -625,7 +625,7 @@ le kernel ; ce *package* les exécute. Pourquoi et quand, avec les garanties :
 
 | Pièce | |
 |---|---|
-| `StoredJobQueue` | la `JobQueue` du kernel sur un `JobStore` : nomme le *job*, capture la corrélation, l'acteur, le *tenant* et le `traceparent` du travail qui met en file, l'ajoute au store ; `find` et `cancel` n'atteignent que les *jobs* du *tenant* du travail en cours (des *tenants* de son élévation ; tous les *jobs* quand le travail n'a pas de *tenant*) |
+| `StoredJobQueue` | la `JobQueue` du kernel sur un `JobStore` : nomme le *job*, capture la corrélation, l'acteur, le *tenant* et le `traceparent` du travail qui met en file, l'ajoute au store ; `find` et `cancel` n'atteignent que les *jobs* du *tenant* du travail en cours (des *tenants* de son élévation). Sans `tenant`, un projet sans multitenance, le travail qui n'en nomme aucun atteint tous les *jobs* ; avec `tenant: true`, un projet multitenant, il est refusé (`NoCurrentTenantError`) avant toute lecture du store |
 | `JobStore` | le port des stores : `add`, `claim` (un bail), `heartbeat`, `update` (progression, point de reprise), `complete`, `fail`, `release`, `cancel`, `find`, `retryDead`, `purgeFinished`, `stats` ; chaque compte rendu nomme sa tentative (`JobLease`) |
 | `InMemoryJobStore` | le store des tests et d'un processus sans base de données : `add`, `cancel` et `retryDead` attendent la validation (commit) de l'unité de travail ; `list()` pour les assertions |
 | `tenantKeyOf(enqueuedBy)` | la partie *tenant* de la clé d'idempotence, pour un store qui la garde dans un index unique : le *tenant*, ou le texte vide |

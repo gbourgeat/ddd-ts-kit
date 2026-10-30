@@ -82,7 +82,12 @@ export function createBackgroundWork({
 {{#if queue.memory}}
   const store = new InMemoryJobStore();
 {{/if}}
+{{#if tenancy.any}}
+  const jobQueue = new StoredJobQueue({ store, clock, ids, scope, tenant: true, traceparent: traced.traceparent });
+{{/if}}
+{{#unless tenancy.any}}
   const jobQueue = new StoredJobQueue({ store, clock, ids, scope, traceparent: traced.traceparent });
+{{/unless}}
 
   return {
     jobQueue,

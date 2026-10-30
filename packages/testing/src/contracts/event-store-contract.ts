@@ -13,7 +13,8 @@ export interface EventStoreContractOptions {
   /** The snapshot, checkpoint and key stores that come with it, fresh and empty; their suite runs when given. */
   /**
    * A fresh, empty store reading its tenant from the scope it is returned with, on the same
-   * database as `createStore`; its suite runs when given. A store that keeps no tenant leaves it out.
+   * database as `createStore`; its suite runs when given. `createStore` then answers a store in one
+   * tenant, since this one refuses work that names none. A store that keeps no tenant leaves it out.
    */
   readonly createTenantStore?: () => Awaitable<TenantEventStore>;
   readonly createCompanions?: () => Awaitable<Pick<EventSourcingStores, 'snapshots' | 'checkpoints' | 'subjectKeys'>>;
@@ -27,7 +28,8 @@ export interface EventStoreContractOptions {
  * snapshots never replaced by an older one, checkpoints moved from where they stand, keys of data
  * subjects destroyed by an erasure. With `createTenantStore`, tenant isolation: a stream belongs
  * to the tenant of its first append, another tenant can neither read nor extend it, elevated staff
- * can read it, and the whole store tells the tenant of each event.
+ * can read it, work that names no tenant is refused before it reads or appends, and the whole store
+ * tells the tenant of each event.
  */
 export function eventStoreContract(runner: ContractRunner, options: EventStoreContractOptions): void {
   const create = (): Awaitable<EventStore> => options.createStore();

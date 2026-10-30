@@ -1587,6 +1587,7 @@ persistence packages, and the whole picture in
 |---|---|
 | `isTenantId(value)`, `assertTenantId(id)`, `InvalidTenantIdError` | the one grammar of a tenant id (letters, digits, `_`, `-`, at most 63): `executionContext`, `executionContextOfEvent`, `acrossTenants`, `InMemoryTenantDirectory`, `tenantScopeOf`, `tenantReachOf` and the row-level security settings refuse any other, so that no tenant id can be read as a wildcard, a list or a key separator |
 | `tenantScopeOf(scope)` | the one tenant a write names; `NoCurrentTenantError` for work that names none |
+| `assertNamesTenant(context, access)` | what a store of tenant data checks before it reads or writes: the work names a tenant, or reads under an elevation; `NoCurrentTenantError` otherwise, outside any execution scope included |
 | `tenantReachOf(scope)` | what a read may see: `{ kind: 'tenant', tenantId }`, or `{ kind: 'elevated', tenants }` under an elevation |
 | `tenantsOf(actor)`, `isTenantMember(actor, tenantId)` | the tenants an actor belongs to: its `tenantId` and its `tenants` attribute |
 | `acrossTenants({ scope, trail, clock, ids }, { reason, tenants }, work)` | platform staff reading over tenants: refused without a reason or a tenant, recorded in the `AuditTrail` (action `tenancy:elevate`) before the work runs; writes still name one tenant |

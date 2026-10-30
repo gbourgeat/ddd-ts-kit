@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:40d9370a2524db3f -->
+<!-- translation-of: multitenancy.md sha256:49e7ae5c60c0d934 -->
 
 # Multitenance
 
@@ -216,10 +216,13 @@ fragment livré laisse en commentaire) et TypeORM (`outboxEntity({ tenant: true 
 ses consommateurs s'exécutent dans ce *tenant*.
 
 L'event store d'un agrégat en *event sourcing* garde le *tenant* de chaque flux de la même façon.
-À qui l'on donne la portée d'exécution, il enregistre le *tenant* au premier ajout dans la colonne
-`tenant_id`, nullable, des événements et refuse de lire un flux d'un autre *tenant*, ou d'y
-ajouter (`EventStreamTenantError`), l'élévation ne faisant que lire ; les projections qu'il
-alimente appliquent chaque événement dans le *tenant* de son flux. Sur Knex,
+À qui l'on donne la portée d'exécution, ce que fait `init --tenancy shared-table` sur les quatre ORM,
+il refuse le travail qui ne nomme aucun *tenant* (`NoCurrentTenantError`), enregistre le *tenant* au
+premier ajout dans la colonne `tenant_id`, nullable, des événements et refuse de lire un flux d'un
+autre *tenant*, ou d'y ajouter (`EventStreamTenantError`), l'élévation ne faisant que lire ; les
+projections qu'il alimente appliquent chaque événement dans le *tenant* de son flux. La file de
+*jobs* tient la même ligne : `find` et `cancel` refusent le travail qui ne nomme aucun *tenant*, un
+*job* système passant par `acrossTenants`. Sur Knex,
 `addEventStoreTenantColumn(knex, { schema, tenantOfExistingStreams })` migre un store existant ;
 sur Drizzle, Prisma et TypeORM, la colonne rejoint les tables livrées et l'outillage de l'ORM écrit
 la migration. Voir [l'*event sourcing*](event-sourcing.fr.md#sous-des-tables-partagées-entre-tenants).
@@ -235,9 +238,10 @@ Trois règles tiennent quelle que soit la stratégie :
   et l'étendue d'une élévation gardée dans des réglages à part, que le travail non élevé
   laisse vides.
 - **Pas de tenant, pas de données.** Le travail qui ne nomme aucun *tenant* est refusé avant tout
-  SQL (`NoCurrentTenantError`) sur tables partagées et schémas, et n'atteint aucune base du tout
-  avec une base par *tenant*. Sous sécurité au niveau des lignes, une instruction sans les
-  réglages de *tenant* ne voit rien.
+  SQL (`NoCurrentTenantError`) sur tables partagées et schémas, flux d'événements et *jobs* stockés
+  compris, et n'atteint aucune base du tout avec une base par *tenant*. Sous sécurité au niveau des
+  lignes, une instruction sans les réglages de *tenant* ne voit rien. Un projet sans multitenance
+  ne garde rien de tout cela : ses stores ne connaissent pas les *tenants*.
 - **Les clés sont uniques entre les tenants.** Les identifiants sont générés (des UUID), de sorte
   qu'une clé ne nomme jamais deux lignes ; le contrat d'isolation vérifie qu'un autre *tenant*
   qui enregistre sous un identifiant existant ne change rien.
@@ -272,6 +276,20 @@ Trois règles tiennent quelle que soit la stratégie :
   l'équipe de la plateforme ne lit le journal d'un autre *tenant* qu'à l'intérieur de
   `acrossTenants`. Un refus à la frontière d'un appelant sans justificatif d'identité n'est pas enregistré,
   pour qu'aucune requête HTTP non authentifiée n'ouvre une chaîne.
+
+## Ce que répond un refus
+
+Un refus levé sous la frontière est un refus comme un autre, une `DomainError` répondue sur chaque
+adaptateur HTTP et chaque procédure RPC, écrite en avertissement et envoyée à aucun suivi d'erreurs :
+
+| Refus | Réponse | Quand |
+|---|---|---|
+| `NoCurrentTenantError` | 403 `FORBIDDEN` | l'appelant ne nomme aucun *tenant* : connecté avant d'en rejoindre un, ou une route publique sur des données de *tenant* |
+| `InvalidTenantIdError` | 404 `NOT_FOUND` | un jeton ou une requête nomme un identifiant hors grammaire : aucun tel *tenant* ne peut exister |
+| `EventStreamTenantError` | 404 `NOT_FOUND`, sans le flux | un ajout à un flux d'un autre *tenant* ; une lecture par un *repository* est l'élément inconnu du cas d'usage |
+
+Un *job* ou un consommateur refusé pour la même raison échoue avec le même code (`FORBIDDEN`,
+`NOT_FOUND`) dans `errorCode` et dans les métriques de ses exécutions.
 
 ## La résolution à la frontière
 

@@ -1,4 +1,5 @@
 import { InMemoryJobStore, type ClaimRequest, type ClaimedJob, type JobLease } from '../../src';
+import type { QueuedJob } from '@ddd-ts-kit/kernel';
 
 class StoreDown extends Error {
   readonly code = 'STORE_DOWN';
@@ -6,6 +7,9 @@ class StoreDown extends Error {
 
 /** The in-memory store, whose operations a spec makes fail a number of times. */
 export class UnreliableJobStore extends InMemoryJobStore {
+  /** How many times a job was read by its id. */
+  finds = 0;
+
   failingClaims = 0;
 
   failingHeartbeats = 0;
@@ -17,6 +21,12 @@ export class UnreliableJobStore extends InMemoryJobStore {
 
   /** A claim waits for it, then claims, when it is set. */
   heldClaim: Promise<void> | undefined;
+
+  override async find(id: string): Promise<QueuedJob | undefined> {
+    this.finds += 1;
+
+    return super.find(id);
+  }
 
   override async claim(request: ClaimRequest): Promise<ClaimedJob[]> {
     await this.heldClaim;

@@ -1108,8 +1108,8 @@ requests never mix, and `ActorContext` to a `ScopedActorContext` over it: the cu
 the actor of the current execution context, so the two cannot disagree: `ActorContext` is a
 view of the scope, and an adapter written against it keeps working. New adapters, and the
 ones the CLI generates, name `ExecutionScope`. `require()` throws `NoExecutionContextError` (or
-`NoCurrentActorError`) when a boundary opened nothing, and `tenantScopeOf` throws
-`NoCurrentTenantError` for work that names no tenant: wiring mistakes, found by the first test.
+`NoCurrentActorError`) when a boundary opened nothing, a wiring mistake found by the first test,
+and `tenantScopeOf` throws `NoCurrentTenantError` for work that names no tenant, answered 403.
 This is defence in depth, not authorization: the tenant filter of a repository stops a bug from
 leaking rows, the permission is still decided in the application layer.
 

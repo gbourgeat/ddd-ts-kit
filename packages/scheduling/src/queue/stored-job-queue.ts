@@ -1,4 +1,5 @@
 import {
+  assertNamesTenant,
   isJobName,
   parseDuration,
   systemActor,
@@ -25,6 +26,12 @@ export interface StoredJobQueueOptions {
   readonly scope: ExecutionScope;
   /** The `traceparent` of the active span, stored with the job: `captureTraceparent` of `@ddd-ts-kit/tracing`. */
   readonly traceparent?: () => string | undefined;
+  /**
+   * A multi-tenant project: `find` and `cancel` refuse work that names no tenant
+   * (`NoCurrentTenantError`) before the store is read; a system job reaches the jobs of tenants
+   * through an elevation (`acrossTenants`). Default false, for a project without tenancy.
+   */
+  readonly tenant?: boolean;
 }
 
 /**
@@ -32,7 +39,8 @@ export interface StoredJobQueueOptions {
  * schema of the job (a payload it refuses throws `InvalidEnqueuedPayloadError`, nothing stored),
  * captures what travels with it and adds it to the store, in the transaction of the caller when the store shares it. `find`
  * and `cancel` reach the jobs of the tenant of the work in progress only (the tenants of its
- * elevation), every job when the work has no tenant.
+ * elevation). In a project without tenancy, no work has a tenant and every job is reached; given
+ * `tenant`, work that names none is refused.
  */
 export class StoredJobQueue implements JobQueue {
   constructor(private readonly options: StoredJobQueueOptions) {}
@@ -71,9 +79,15 @@ export class StoredJobQueue implements JobQueue {
   }
 
   async find(id: string): Promise<QueuedJob | undefined> {
+    const context = this.options.scope.current();
+
+    if (this.options.tenant === true) {
+      assertNamesTenant(context, 'read');
+    }
+
     const job = await this.options.store.find(id);
 
-    return job !== undefined && isInReach(job, this.options.scope.current()) ? job : undefined;
+    return job !== undefined && isInReach(job, context) ? job : undefined;
   }
 
   /** Outside of any execution scope (a script, a test), the job acts as itself, under a correlation of its own. */

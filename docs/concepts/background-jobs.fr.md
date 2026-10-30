@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:be944f81866f2f41 -->
+<!-- translation-of: background-jobs.md sha256:c761eaace3d81e7e -->
 
 # Jobs en arrière-plan
 
@@ -229,8 +229,13 @@ La charge utile (payload) est vérifiée par rapport à `run` :
   travers un élément (`GET /calendars/:id/clearances/:clearanceId`) vérifie que `subject` est cet
   élément : l'identifiant d'un *job* n'a rien de secret, c'est la cause de tout ce que fait le *job*.
 - ***Tenants*.** Un travail fait pour un *tenant* ne trouve et n'annule que les *jobs* de ce
-  *tenant*, et ceux des *tenants* qu'une élévation nomme ; un travail sans *tenant* (un projet
-  mono-*tenant*, un *job* système) atteint tous les *jobs*.
+  *tenant*, et ceux des *tenants* qu'une élévation nomme. Dans un projet multitenant (`tenant: true`
+  sur `StoredJobQueue`, ce qu'écrit `init --tenancy shared-table`, ou `tenants` sur `kernelModule`),
+  le travail qui ne nomme aucun *tenant* est refusé par une `NoCurrentTenantError` avant toute
+  lecture du store, un *job* système compris : il atteint les *jobs* des *tenants* par une élévation
+  (`acrossTenants`). Dans un projet sans multitenance, aucun travail n'a de *tenant*, et tous les
+  *jobs* sont atteints. `enqueue` reste ouvert : un *job* global peut mettre en file, et ce qu'il y
+  met s'exécute sans *tenant*, là où les données d'un *tenant* le refusent.
 - **Généré** : `ddd-ts-kit generate background-job <context> <Name> --command <UseCase>` écrit la
   classe (`@Background()` dans le style déclaré, `builder.backgroundJob(..)` dans le fichier de
   module sur tsyringe, `platform.backgroundJobs.register(..)` dans le fichier de module là où la
