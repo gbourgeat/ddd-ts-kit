@@ -1,5 +1,5 @@
 import { escapeRegExp } from '../check/text/escape-reg-exp';
-import { filesUnder } from './files-under';
+import { filesWithoutModules } from './files-without-modules';
 import { askPolicyInGeneratedUseCase } from './kinds/ask-policy-in-generated-use-case';
 import { permissionPattern } from './permission-pattern';
 import { refinedByPolicy } from './refined-by-policy';
@@ -56,7 +56,7 @@ export function markPolicyQuestions(scope: Scope, permission: string): void {
 function refinementOf(scope: Scope, permission: string): Refinement {
   return {
     scope,
-    files: filesUnder(scope.ws, scope.dir).filter((file) => file.endsWith('.ts') && !file.startsWith('test/')),
+    files: filesWithoutModules(scope).filter((file) => file.endsWith('.ts') && !file.startsWith('test/')),
     reference: `${scope.context.camel}Permissions['${permission}']`,
     named: permissionPattern(scope, permission),
   };
