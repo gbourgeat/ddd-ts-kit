@@ -116,7 +116,7 @@ try {
     throw error;
   }
 
-  console.error(`${error.message}. Nothing was announced; --rerun says this person was erased before.`);
+  console.error(`${error.message}.{{#if tenancy.any}} Or a tenant the directory does not list.{{/if}} Nothing was announced; --rerun says this person was erased before.`);
   process.exitCode = 1;
 } finally {
   await application.stop();
