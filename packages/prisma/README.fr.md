@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:37bdfbc97cf96d0e -->
+<!-- translation-of: README.md sha256:c90776f3af4a5fb6 -->
 
 # @ddd-ts-kit/prisma
 
@@ -256,8 +256,9 @@ transaction quand toutes les connexions du *pool* sont occupées (2 secondes par
 Au-delà de l'un ou l'autre, Prisma répond `P2028`, et l'unité de travail est rejetée par
 `TransactionTimeoutError` du noyau (code `SERVICE_UNAVAILABLE`, répondu 503) : rien n'est
 validé, la requête peut réussir plus tard. Un projet généré lit les deux dans
-`DATABASE_TRANSACTION_WAIT_MS` et `DATABASE_TRANSACTION_TIMEOUT_MS`, une minute chacun par
-défaut, autant que Knex attend une connexion. Knex, Drizzle et TypeORM ne bornent aucune
+`DATABASE_TRANSACTION_WAIT_MS` et `DATABASE_TRANSACTION_TIMEOUT_MS`, 10 et 30 secondes par
+défaut : pas plus, puisqu'un appelant abandonne vers 30 secondes, et qu'une connexion tenue pour
+une réponse que personne ne lit ne déleste rien. Knex, Drizzle et TypeORM ne bornent aucune
 transaction dans le temps : ils n'ont pas besoin d'un tel réglage.
 
 `run` est construit sur `withinUnitOfWork` du noyau. Les événements du domaine des agrégats

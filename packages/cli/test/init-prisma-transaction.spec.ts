@@ -3,19 +3,19 @@ import { read } from './helpers';
 import { initProject } from './support/init-project';
 
 describe('the transactions of a project on Prisma', () => {
-  it('read how long a unit of work waits and runs from the environment, a minute each by default', () => {
+  it('read how long a unit of work waits and runs from the environment, 10 and 30 seconds by default', () => {
     const root = initProject('--orm', 'prisma');
 
     expect(read(root, 'src/platform/config/load-config.ts')).toContain(
-      "waitMs: env.integer('DATABASE_TRANSACTION_WAIT_MS', { fallback: 60_000, min: 1, max: 3_600_000 }),",
+      "waitMs: env.integer('DATABASE_TRANSACTION_WAIT_MS', { fallback: 10_000, min: 1, max: 3_600_000 }),",
     );
 
     expect(read(root, 'src/platform/config/load-config.ts')).toContain(
-      "timeoutMs: env.integer('DATABASE_TRANSACTION_TIMEOUT_MS', { fallback: 60_000, min: 1, max: 3_600_000 }),",
+      "timeoutMs: env.integer('DATABASE_TRANSACTION_TIMEOUT_MS', { fallback: 30_000, min: 1, max: 3_600_000 }),",
     );
 
     expect(read(root, '.env.example')).toContain(
-      'DATABASE_TRANSACTION_WAIT_MS=60000\nDATABASE_TRANSACTION_TIMEOUT_MS=60000',
+      'DATABASE_TRANSACTION_WAIT_MS=10000\nDATABASE_TRANSACTION_TIMEOUT_MS=30000',
     );
 
     expect(read(root, 'src/platform/database/open-persistence.ts')).toContain(

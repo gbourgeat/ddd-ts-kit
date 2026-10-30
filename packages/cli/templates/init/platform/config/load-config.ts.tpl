@@ -137,13 +137,14 @@ function readHousekeeping(env: Environment): Housekeeping {
 {{/if}}
 {{#if orm.prisma}}
 /**
- * The limits of an interactive transaction of Prisma, a minute each by default: as long as Knex
- * waits for a connection, where Prisma would give up after 2 seconds of waiting and 5 of work.
+ * The limits of an interactive transaction of Prisma: 10 seconds of waiting for a connection and
+ * 30 of work by default, where Prisma gives up after 2 and 5. Not more: a caller gives up near 30
+ * seconds, and a connection held longer for an answer nobody reads sheds no load.
  */
 function readDatabaseTransaction(env: Environment): AppConfig['databaseTransaction'] {
   return {
-    waitMs: env.integer('DATABASE_TRANSACTION_WAIT_MS', { fallback: 60_000, min: 1, max: 3_600_000 }),
-    timeoutMs: env.integer('DATABASE_TRANSACTION_TIMEOUT_MS', { fallback: 60_000, min: 1, max: 3_600_000 }),
+    waitMs: env.integer('DATABASE_TRANSACTION_WAIT_MS', { fallback: 10_000, min: 1, max: 3_600_000 }),
+    timeoutMs: env.integer('DATABASE_TRANSACTION_TIMEOUT_MS', { fallback: 30_000, min: 1, max: 3_600_000 }),
   };
 }
 

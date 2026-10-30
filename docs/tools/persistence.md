@@ -287,7 +287,8 @@ wait for a transaction (`maxWait`) and its run (`timeout`), Knex the wait for a 
 (`acquireConnectionTimeout`, 60 seconds), and beyond them the unit of work rejects with
 `TransactionTimeoutError` (code `SERVICE_UNAVAILABLE`), nothing committed. A generated project on
 Prisma reads both limits from `DATABASE_TRANSACTION_WAIT_MS` and
-`DATABASE_TRANSACTION_TIMEOUT_MS`, a minute each by default; Drizzle and TypeORM wait for a
+`DATABASE_TRANSACTION_TIMEOUT_MS`, 10 and 30 seconds by default (a caller gives up near 30
+seconds, and a connection held longer sheds no load); Drizzle and TypeORM wait for a
 connection of their pool and bound no transaction, so they have no such setting.
 
 ![Two transactions load invoice inv-1 at version 3; the first update matches version 3 and writes version 4; the second update still expects version 3, writes no row and fails with ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.svg)

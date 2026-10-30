@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:4df8d022fd1d1495 -->
+<!-- translation-of: persistence.md sha256:389ae32513f9d12e -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -297,7 +297,8 @@ borne l'attente d'une transaction (`maxWait`) et sa durée (`timeout`), Knex l'a
 connexion (`acquireConnectionTimeout`, 60 secondes), et au-delà l'unité de travail est rejetée
 par `TransactionTimeoutError` (code `SERVICE_UNAVAILABLE`), rien n'étant validé. Un projet
 généré sur Prisma lit les deux limites dans `DATABASE_TRANSACTION_WAIT_MS` et
-`DATABASE_TRANSACTION_TIMEOUT_MS`, une minute chacune par défaut ; Drizzle et TypeORM attendent
+`DATABASE_TRANSACTION_TIMEOUT_MS`, 10 et 30 secondes par défaut (un appelant abandonne vers 30
+secondes, et une connexion tenue plus longtemps ne déleste rien) ; Drizzle et TypeORM attendent
 une connexion de leur *pool* et ne bornent aucune transaction, ils n'ont donc pas ce réglage.
 
 ![Deux transactions chargent la facture inv-1 à la version 3 ; la première mise à jour correspond à la version 3 et écrit la version 4 ; la seconde attend toujours la version 3, n'écrit aucune ligne et échoue avec ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.fr.svg)

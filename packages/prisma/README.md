@@ -249,8 +249,9 @@ every connection of the pool is busy (2 seconds by default), and `timeout`, how 
 transaction may run (5 seconds by default). Beyond either, Prisma answers `P2028`, and the unit
 of work rejects with `TransactionTimeoutError` of the kernel (code `SERVICE_UNAVAILABLE`,
 answered 503): nothing committed, the request may succeed later. A generated project reads both
-from `DATABASE_TRANSACTION_WAIT_MS` and `DATABASE_TRANSACTION_TIMEOUT_MS`, a minute each by
-default, as long as Knex waits for a connection. Knex, Drizzle and TypeORM bound no transaction
+from `DATABASE_TRANSACTION_WAIT_MS` and `DATABASE_TRANSACTION_TIMEOUT_MS`, 10 and 30 seconds by
+default: not more, since a caller gives up near 30 seconds, and a connection held for an answer
+nobody reads sheds no load. Knex, Drizzle and TypeORM bound no transaction
 in time: they need no such setting.
 
 `run` is built on `withinUnitOfWork` of the kernel. The domain events of the aggregates saved
