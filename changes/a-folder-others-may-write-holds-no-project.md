@@ -1,0 +1,1 @@
+**A folder another user may write holds no project for the guard.** The guard looks for the config of a project and for the top of its repository up to a folder owned by neither the user nor the system, or writable by others, the shared temp directory above all: a config, a `.git` or a CLI planted there is never read nor run.

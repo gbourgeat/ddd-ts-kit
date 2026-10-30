@@ -549,6 +549,7 @@ const LAUNCHER_VALUED = [
 ];
 // The folders of the programs of the system: a reader named by its path there is that reader.
 const SYSTEM_PROGRAMS = ['/bin', '/usr/bin', '/sbin', '/usr/sbin'];
+const WINDOWS = process.platform === 'win32';
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -1338,9 +1339,13 @@ function patchWrites(patch, cwd) {
     .map(({ file, added, removed }) => ({ file, written: added.join('\n'), replaced: removed.join('\n') }));
 }
 
+// Up to a folder another user may write: a config there, the shared temp dir above all, is no project.
 function findProject(from) {
   let directory = resolve(from);
   for (;;) {
+    if (!isOwnFolder(directory)) {
+      return undefined;
+    }
     if (existsSync(join(directory, CONFIG))) {
       return describeProject(directory);
     }
@@ -1705,6 +1710,9 @@ function hasWorkerWorktree(root) {
 function repositoryTop(from) {
   let directory = resolve(from);
   for (;;) {
+    if (!isOwnFolder(directory)) {
+      return undefined;
+    }
     if (existsSync(join(directory, '.git'))) {
       return directory;
     }
@@ -1713,6 +1721,15 @@ function repositoryTop(from) {
     }
     directory = dirname(directory);
   }
+}
+
+// A folder that only this user or the system writes: owned by this user or by root, and not writable
+// by others. A folder not made yet is no other user's. Windows has no such owner: every folder is.
+function isOwnFolder(directory) {
+  const stat = statSync(directory, { throwIfNoEntry: false });
+  return (
+    WINDOWS || stat === undefined || ((stat.mode & 0o002) === 0 && (stat.uid === 0 || stat.uid === process.getuid()))
+  );
 }
 
 function isDirectory(path) {
