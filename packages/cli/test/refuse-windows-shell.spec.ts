@@ -65,14 +65,14 @@ describe('the commands that run a script of the project, on Windows outside WSL 
 
   it('refuse worker-scope before any side effect: no worktree, no branch, no file', () => {
     const root = committedProject('shop', '--context', 'billing:core');
-    const before = walk(root).sort();
+    const before = filesOutsideGit(root);
 
     expect(runOn('win32', root, 'worker-scope', 'billing').code).toBe(2);
 
     expect(exists(root, '.worktrees')).toBe(false);
     expect(git(root, 'worktree', 'list').trim().split('\n')).toHaveLength(1);
     expect(git(root, 'branch', '--list', 'build/*').trim()).toBe('');
-    expect(walk(root).sort()).toEqual(before);
+    expect(filesOutsideGit(root)).toEqual(before);
   });
 
   it('refuse merge-trunk before any side effect: no merge in progress, nothing written', () => {
@@ -138,3 +138,10 @@ describe('the commands that run a script of the project, on Windows outside WSL 
     expect(Object.keys(SCRIPT_RUNNERS).sort()).toEqual([...new Set(Object.values(REACHED_BY).flat())].sort());
   });
 });
+
+/** The files of the project a command may write, the internals of git left out: git itself writes there (a maintenance lock, packed refs) between two readings. */
+function filesOutsideGit(root: string): string[] {
+  return walk(root)
+    .filter((file) => !file.startsWith('.git/'))
+    .sort();
+}
