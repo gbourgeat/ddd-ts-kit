@@ -348,7 +348,9 @@ a `permit` that reads an attribute of the resource requires it (`known('departme
 `forbid` needs is refused when it is missing (`no-void-of-an-unknown-invoice`), and a comparison
 with an attribute of the actor demands that the actor has it (`sameDepartment`). The authorizer
 cannot do it for the rules: the bus asks about the context of a use case too, which no projection
-holds.
+holds. For the same reason, a `forbid(..., not(known(...)))` refuses every check of its permission
+that carries no element, a requirement without `resource:` included: give such a use case a
+permission of its own, never one a rule over known facts guards.
 
 Lists: a predicate is not a query, so `Access.scope` throws `ListingNotSupportedError` under pure
 ABAC. Give the read port the same condition as a filter (the department of the actor), or list

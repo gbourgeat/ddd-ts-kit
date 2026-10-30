@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:6cbcecacd3714da4 -->
+<!-- translation-of: choosing-access-control.md sha256:56f609f6ba48a51b -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
@@ -354,7 +354,10 @@ lit : un `permit` qui lit un attribut de la ressource l'exige (`known('departmen
 un `forbid` a besoin est refusé quand il manque (`no-void-of-an-unknown-invoice`), et une
 comparaison avec un attribut de l'acteur exige que l'acteur l'ait (`sameDepartment`). L'autorisateur
 ne peut pas le faire à la place des règles : le bus interroge aussi sur le contexte d'un cas
-d'usage, qu'aucune projection ne tient.
+d'usage, qu'aucune projection ne tient. Pour la même raison, un `forbid(..., not(known(...)))`
+refuse chaque vérification de sa permission qui ne porte sur aucun élément, une exigence sans
+`resource:` comprise : donnez à un tel cas d'usage une permission à lui, jamais une que garde une
+règle sur des faits connus.
 
 Les listes : un prédicat n'est pas une requête, donc `Access.scope` lève
 `ListingNotSupportedError` en ABAC pur. Donnez au port de lecture la même condition sous forme de
