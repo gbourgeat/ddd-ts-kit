@@ -166,6 +166,24 @@ test('skipping a test and relaxing the rules both need the owner', () => {
   assert.equal(pipeline.output.hookSpecificOutput.permissionDecision, 'ask');
 });
 
+test('the files the pipeline and the gates run from need the owner as the workflows do', () => {
+  const root = project();
+  for (const file of [
+    '.github/actions/setup/action.yml',
+    '.github/scripts/start-postgres.sh',
+    '.github/dependabot.yml',
+    '.gitlab/claude-review.gitlab-ci.yml',
+    '.claude/hooks/production-gate.mjs',
+    'renovate.json',
+    'stryker.config.mjs',
+    'pnpm-workspace.yaml',
+    'REVIEW.md',
+  ]) {
+    const edit = run('pre-write', write(join(root, file)));
+    assert.equal(edit.output?.hookSpecificOutput.permissionDecision, 'ask', file);
+  }
+});
+
 test('the generated barrel and the generated import graph rules are never edited by hand', () => {
   const root = project();
   const barrel = run('pre-write', write(join(root, 'src/contexts/ordering/ordering.declarations.ts')));

@@ -87,8 +87,8 @@ export const GENERATED_FILES: readonly string[] = [
 // Then the generated files: an ask rule keeps the Edit tool off them without reaching the sandbox,
 // which takes the allow and deny rules only, and the guard of the plugin refuses a hand edit of
 // one outright. Then the files that hold the rules and the pipeline: changing one is a decision of
-// the project owner, the same list as the editor hook of the plugin asks about. The review policy
-// holds a rule of the project too. Before them, --force, which replaces files of the project with
+// the project owner, the files the editor hook of the plugin asks about (`GOVERNED_FILES` of the guard
+// names the same pipeline and gate files). The review policy holds a rule of the project too. Before them, --force, which replaces files of the project with
 // the templates of the kit: the person decides, the allow rule of generate notwithstanding.
 const ASK: readonly string[] = [
   'Bash(git push *)',
@@ -111,7 +111,15 @@ const ASK: readonly string[] = [
   'Edit(./knip.json)',
   'Edit(./lefthook.yml)',
   'Edit(./.gitlab-ci.yml)',
+  'Edit(./.gitlab/**)',
   'Edit(./.github/workflows/**)',
+  'Edit(./.github/actions/**)',
+  'Edit(./.github/scripts/**)',
+  'Edit(./.github/dependabot.yml)',
+  'Edit(./renovate.json)',
+  'Edit(./stryker.config.mjs)',
+  'Edit(./pnpm-workspace.yaml)',
+  'Edit(./.claude/hooks/**)',
   'Edit(./.claude/settings.json)',
   'Edit(./.github/copilot/settings.json)',
 ];
