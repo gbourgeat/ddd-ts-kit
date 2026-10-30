@@ -906,17 +906,28 @@ before it: its entries are written at the commit of the outer one, in a transact
 `audit_entries_append_only` and two triggers: `UPDATE`, `DELETE` and `TRUNCATE` on
 `audit_entries` raise SQLSTATE `23001`, whoever asks. Triggers stop mistakes and application
 bugs; a role that owns the table can drop them. So the application should not own the table.
-Run the migrations with an owner role and give the application role only what it needs:
+Run the migrations with an owner role, and give the application role and the role that archives
+only what each needs:
 
 ```sql
 revoke all on all tables in schema "audit" from public;
-grant usage on schema "audit" to app;
+grant usage on schema "audit" to app, audit_archiver;
+-- the application: appends, searches, verifies (audit.verify)
 grant select, insert on "audit"."audit_entries" to app;
 grant select, insert, update on "audit"."audit_chains" to app;
+grant select on "audit"."audit_archives" to app;
+-- the archive (audit.archive): the head of each chain locked, the archive recorded, the entries it covers removed
+grant select, delete on "audit"."audit_entries" to audit_archiver;
+grant select, update on "audit"."audit_chains" to audit_archiver;
+grant select, insert on "audit"."audit_archives" to audit_archiver;
 ```
 
-The application can then neither rewrite an entry, nor disable or drop the guard. What remains
-is the owner role and the superuser, which is what anchoring is for.
+The application can then neither rewrite nor remove an entry, nor disable or drop the guard. What
+remains is the owner role and the superuser, which is what anchoring is for. The archive runs in a
+process of its own connected as `audit_archiver`: in a generated project, `JOB_AUDIT_ARCHIVE_ENABLED=false`
+for the application and a process of your own that runs `ArchiveAuditEntries` over a trail opened
+with the `DATABASE_URL` of that role. An application that runs `audit.archive` itself, the default of
+a generated project, also holds `select, insert on audit_archives` and `delete on audit_entries`.
 
 The guard lets one `DELETE` through: that of an entry a row of `audit_archives` covers, which
 `archiveBefore` writes in the same transaction. A role that may both insert into `audit_archives`

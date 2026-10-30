@@ -201,7 +201,11 @@ storage of files, verified and anchored.{{/if}}{{#if audit.sql}}
 
 ```bash
 npm run audit:verify                                            # the same verification, by hand: exit code 1 on a break
-```{{/if}}
+```
+
+This project runs its migrations and the application with one database role, which owns the tables of the trail and
+can drop their guard. In production, migrate with an owner role and give the application the grants of the README of
+`@ddd-ts-kit/audit` ("Append-only in the database too"){{#if audit.archive}}, and the archive a role of its own{{/if}}.{{/if}}
 {{/if}}
 {{#if files.any}}
 

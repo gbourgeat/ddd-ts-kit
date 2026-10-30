@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:96db6d641874df71 -->
+<!-- translation-of: README.md sha256:906a6fd41b47aa08 -->
 
 # @ddd-ts-kit/audit
 
@@ -947,17 +947,29 @@ celle du dehors, dans une transaction à elles.
 `audit_entries` lèvent le SQLSTATE `23001`, qui que ce soit qui les demande. Les triggers arrêtent
 les erreurs et les bogues de l'application ; un rôle propriétaire de la table peut les supprimer.
 L'application ne devrait donc pas posséder la table. Exécutez les migrations avec un rôle
-propriétaire et ne donnez au rôle de l'application que ce dont il a besoin :
+propriétaire, et ne donnez au rôle de l'application et au rôle qui archive que ce dont chacun a
+besoin :
 
 ```sql
 revoke all on all tables in schema "audit" from public;
-grant usage on schema "audit" to app;
+grant usage on schema "audit" to app, audit_archiver;
+-- l'application : ajoute, recherche, vérifie (audit.verify)
 grant select, insert on "audit"."audit_entries" to app;
 grant select, insert, update on "audit"."audit_chains" to app;
+grant select on "audit"."audit_archives" to app;
+-- l'archive (audit.archive) : la tête de chaque chaîne verrouillée, l'archive enregistrée, les entrées qu'elle couvre retirées
+grant select, delete on "audit"."audit_entries" to audit_archiver;
+grant select, update on "audit"."audit_chains" to audit_archiver;
+grant select, insert on "audit"."audit_archives" to audit_archiver;
 ```
 
-L'application ne peut alors ni réécrire une entrée, ni désactiver ou supprimer la garde. Il reste
-le rôle propriétaire et le superutilisateur, et c'est à cela que sert l'ancrage.
+L'application ne peut alors ni réécrire ni retirer une entrée, ni désactiver ou supprimer la garde.
+Il reste le rôle propriétaire et le superutilisateur, et c'est à cela que sert l'ancrage. L'archive
+s'exécute dans un processus à part, connecté en `audit_archiver` : dans un projet généré,
+`JOB_AUDIT_ARCHIVE_ENABLED=false` pour l'application et un processus à vous qui exécute
+`ArchiveAuditEntries` sur un journal ouvert avec le `DATABASE_URL` de ce rôle. Une application qui
+exécute elle-même `audit.archive`, le défaut d'un projet généré, détient aussi `select, insert on
+audit_archives` et `delete on audit_entries`.
 
 La garde laisse passer un seul `DELETE` : celui d'une entrée qu'une ligne de `audit_archives`
 couvre, que `archiveBefore` écrit dans la même transaction. Un rôle qui peut à la fois insérer dans
