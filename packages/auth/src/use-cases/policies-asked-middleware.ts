@@ -14,10 +14,11 @@ export interface PoliciesAskedMiddlewareOptions {
 /**
  * Refuses the result of a handler that never asked `Access` about the permission of its use case
  * when a policy refines it: the bus checked the permission without the element, and the rule of
- * the policy would be skipped. Refuses as well the result of a handler whose last question on that
- * permission was not allowed (denied, or failed and caught) and that answered with a success all the
- * same: a handler that stops on the denial with a failed `Result` (`err(...)`) or a throw is let
- * through with its own refusal. Install it with `aroundHandler` of the bus, inside the unit of
+ * the policy would be skipped. Refuses as well the result of a handler
+ * that answered with a success when no question on that permission was allowed (every answer
+ * denied, or failed and caught): a handler that stops with a failed `Result` (`err(...)`) or a
+ * throw is let through with its own refusal, and one that skips the elements it was denied and
+ * applies the others passes. Install it with `aroundHandler` of the bus, inside the unit of
  * work, so that the refusal rolls the change back and a middleware that answers in place of the
  * handler is not judged. Only the questions put to `PolicyAccess` are seen.
  */

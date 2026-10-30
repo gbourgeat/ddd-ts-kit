@@ -130,7 +130,7 @@ describe('policiesAskedMiddleware', () => {
     expect(unitOfWork.rolledBack).toEqual(['work', 'work']);
   });
 
-  it('refuses the result of a handler that goes on after Access denied the permission of its use case, and rolls its change back', async () => {
+  it('refuses a handler that goes on with a success when no question on the permission of its use case was allowed, and rolls its change back', async () => {
     const { commands, unitOfWork } = application(async (command, access) => {
       await access.decide(command.actor, billingPermissions['invoice.void'], invoice);
     });
@@ -138,13 +138,13 @@ describe('policiesAskedMiddleware', () => {
     await expect(commands.execute(new VoidInvoice(bob, 'inv-1'))).rejects.toBeInstanceOf(PolicyDenialIgnoredError);
 
     await expect(commands.execute(new VoidInvoice(bob, 'inv-1'))).rejects.toThrow(
-      'The command VoidInvoice requires billing:invoice.void, which a policy refines, and its handler answered with a success after Access denied it',
+      'The command VoidInvoice requires billing:invoice.void, which a policy refines, and its handler answered with a success though Access allowed it on no element',
     );
 
     expect(unitOfWork.committed).toEqual([]);
   });
 
-  it('lets a handler that stops on a denial with a failed Result answer its own refusal', async () => {
+  it('lets a handler allowed on no element that answers a failed Result give its own refusal', async () => {
     const refusal = err({ code: 'NOT_THE_ISSUER' });
 
     const settles = settlement(async (command, access) => {
@@ -156,7 +156,7 @@ describe('policiesAskedMiddleware', () => {
     expect(await settles.execute(new SettleInvoice(bob))).toBe(refusal);
   });
 
-  it('refuses a handler that answers with a successful Result after a denial', async () => {
+  it('refuses a handler allowed on no element that answers with a successful Result', async () => {
     const settles = settlement(async (command, access) => {
       await access.decide(command.actor, billingPermissions['invoice.void'], invoice);
 
@@ -166,18 +166,23 @@ describe('policiesAskedMiddleware', () => {
     await expect(settles.execute(new SettleInvoice(bob))).rejects.toBeInstanceOf(PolicyDenialIgnoredError);
   });
 
-  it('judges the last decision on the permission of the use case: a denial followed by an allowed element lets the handler through', async () => {
+  it('lets through a handler that applies the elements it is allowed on and skips the others, whatever the order of the answers', async () => {
     const ownInvoice: Invoice = { id: 'inv-2', issuedBy: 'bob' };
+    const voided: string[] = [];
 
     const { commands, unitOfWork } = application(async (command, access) => {
-      const other = await access.decide(command.actor, billingPermissions['invoice.void'], invoice);
-      const own = await access.decide(command.actor, billingPermissions['invoice.void'], ownInvoice);
+      const decisions = await Promise.all(
+        [ownInvoice, invoice].map((element) =>
+          access.decide(command.actor, billingPermissions['invoice.void'], element),
+        ),
+      );
 
-      expect([other.allowed, own.allowed]).toEqual([false, true]);
+      voided.push(...[ownInvoice, invoice].filter((_, index) => decisions[index]?.allowed).map(({ id }) => id));
     });
 
     await commands.execute(new VoidInvoice(bob, 'inv-2'));
 
+    expect(voided).toEqual(['inv-2']);
     expect(unitOfWork.committed).toEqual(['work']);
   });
 

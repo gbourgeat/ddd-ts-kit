@@ -359,8 +359,8 @@ being the port of `@ddd-ts-kit/di` the module binds.
 When a policy refines the permission of a use case, the guard also wraps its handler, last on the
 bus and inside the unit of work: a handler that returns without asking `Access` about that
 permission has its result refused with `PolicyNotAskedError` and its change rolled back, since the
-rule of the policy was never applied; one whose last question on it was not allowed, and that goes
-on all the same with a success, with `PolicyDenialIgnoredError` (a failed `Result` or a throw is its own refusal). A bus of your own runs that part around its handler, with
+rule of the policy was never applied; one that answers with a success when no question on it was
+allowed, with `PolicyDenialIgnoredError` (a failed `Result` or a throw is its own refusal). A bus of your own runs that part around its handler, with
 `.aroundHandler((message, next, info) => resolve(UseCaseGuard).within?.(message, next, info) ?? next())`.
 Without the container, `policiesAskedMiddleware({ map, refined })` is the same check. Only the
 questions put to `PolicyAccess` are seen: a project that binds its own `Access` passes
