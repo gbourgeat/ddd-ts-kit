@@ -1,6 +1,5 @@
 import type {
   Actored,
-  BackgroundJob,
   BackgroundJobOptions,
   Command,
   DependencyKind,
@@ -18,6 +17,7 @@ import type {
 import type { ConsumerOptions } from '../consumer/consumer-options';
 import type { DeclaredSource } from '../declared/declared-source';
 import type { Resolve } from '../wiring/resolve';
+import type { BackgroundJobTarget } from './background-job-target';
 import type { BindingTarget } from './binding-target';
 import type { HandlerTarget } from './handler-target';
 import type { ProtectedUseCaseTarget } from './protected-use-case-target';
@@ -60,10 +60,11 @@ export interface ModuleBuilder {
 
   /**
    * Declares a background job, under the static `jobName` of its class: bound as a singleton and
-   * registered on the `QueueWorker`, which consumes the queue of its context.
+   * registered on the `QueueWorker`, which consumes the queue of its context and reads each
+   * stored payload with the static `payload` schema of the class before the run.
    * `builder.backgroundJob('billing.compile-statements', { maxAttempts: 3 }).handledBy(CompileStatementsJob, [CommandBus])`.
    */
-  backgroundJob(name: string, options?: BackgroundJobOptions): HandlerTarget<BackgroundJob<unknown>>;
+  backgroundJob(name: string, options?: BackgroundJobOptions): BackgroundJobTarget;
 
   /**
    * Adds classes that declare themselves with the decorators of `@ddd-ts-kit/kernel/declarations`:

@@ -1,4 +1,11 @@
-import { CommandBus, InMemoryProcessStore, InMemoryUnitOfWork, type Command, type ResultOf } from '@ddd-ts-kit/kernel';
+import {
+  CommandBus,
+  InMemoryProcessStore,
+  InMemoryUnitOfWork,
+  processTimeoutDuePayload,
+  type Command,
+  type ResultOf,
+} from '@ddd-ts-kit/kernel';
 import { StoredProcessRunner } from '../../src';
 import { aQueueBench, type QueueBench } from './a-queue-bench';
 import { DunningProcess } from './dunning-process';
@@ -44,6 +51,7 @@ export function aProcessBench(): ProcessBench {
 
   queueBench.worker.register({
     name: 'billing.dunning-timeout',
+    payload: processTimeoutDuePayload,
     run: (payload, execution) => {
       const { id, timeout } = payload as { id: string; timeout: string };
 

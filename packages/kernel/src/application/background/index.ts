@@ -1,5 +1,6 @@
 export * from './background-job-execution';
 export * from './background-job-options';
+export * from './background-job-payload-schema';
 export * from './background-job-policy';
 export * from './background-job-type';
 export * from './background-job';

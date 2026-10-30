@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { executionContext, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
 import { AttemptsExhaustedError, UnknownBackgroundJobError } from '../src';
 import { aQueueBench } from './support/a-queue-bench';
-import { CompileStatementsJob } from './support/statements-job';
+import { CompileStatementsJob, statementsPayload } from './support/statements-job';
 
 const ACCOUNTANT: Actor = { id: 'user-7', type: 'user', tenantId: 'tenant-3', roles: [], attributes: {} };
 
@@ -79,6 +79,7 @@ describe('a worker running due jobs', () => {
 
     worker.register({
       name: CompileStatementsJob.jobName,
+      payload: statementsPayload,
       run: async (_payload, execution) => {
         job.runs.push({ payload: FEBRUARY, execution });
 
@@ -104,7 +105,7 @@ describe('a worker running due jobs', () => {
   it('gives back a job no module registered, and lets it die after the default attempts', async () => {
     const { queue, worker, clock, runs } = aQueueBench();
 
-    worker.register({ name: 'billing.send-statements', run: () => Promise.resolve() });
+    worker.register({ name: 'billing.send-statements', payload: statementsPayload, run: () => Promise.resolve() });
     await queue.enqueue(CompileStatementsJob, FEBRUARY);
     await worker.runDue();
 

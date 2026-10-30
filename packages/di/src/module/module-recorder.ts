@@ -1,6 +1,7 @@
 import type {
   BackgroundJob,
   BackgroundJobOptions,
+  BackgroundJobPayloadSchema,
   Command,
   DependencyKind,
   Message,
@@ -35,6 +36,7 @@ import { classRecipe, factoryRecipe, valueRecipe, type Recipe } from '../wiring/
 import type { WiringDraft } from '../wiring/wiring-draft';
 import { bindingOptionsOf } from './binding-options-of';
 import type { BindingOptions } from './binding-options';
+import type { BackgroundJobTarget } from './background-job-target';
 import type { BindingTarget } from './binding-target';
 import { backgroundJobOf, integrationEventHandlerOf, jobOf, messageHandlerOf } from './factory-made-handlers';
 import type { HandlerTarget } from './handler-target';
@@ -93,15 +95,29 @@ export class ModuleRecorder implements ModuleBuilder {
       },
     });
 
-  readonly backgroundJob = (name: string, options: BackgroundJobOptions = {}): HandlerTarget<BackgroundJob<unknown>> =>
-    this.handlerTarget<BackgroundJob<unknown>>({
+  /** The schema of the payload is the static `payload` of the class, or what `handledByFactory` is given. */
+  readonly backgroundJob = (name: string, options: BackgroundJobOptions = {}): BackgroundJobTarget => {
+    let given: BackgroundJobPayloadSchema<unknown> | undefined;
+
+    const target = this.handlerTarget<BackgroundJob<unknown>>({
       statement: `backgroundJob(${name})`,
       kind: 'job',
       factoryMade: backgroundJobOf(`backgroundJob(${name})`),
       record: (job) => {
-        this.draft.addBackgroundJob(writtenBackgroundJob(name, options, { job, module: this.module }));
+        const payload: unknown = given ?? Reflect.get(job, 'payload');
+
+        this.draft.addBackgroundJob(writtenBackgroundJob(name, options, { job, module: this.module, payload }));
       },
     });
+
+    return {
+      handledBy: target.handledBy.bind(target),
+      handledByFactory: (factory, payload) => {
+        given = payload;
+        target.handledByFactory(factory);
+      },
+    };
+  };
 
   readonly include = (declared: DeclaredSource): void => {
     includeDeclared({ draft: this.draft, module: this.module }, declared);

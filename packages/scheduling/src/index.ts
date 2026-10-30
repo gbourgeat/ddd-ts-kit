@@ -25,6 +25,7 @@ export type { BackgroundJobOutcome } from './queue/background-job-outcome';
 export type { BackgroundJobRun } from './queue/background-job-run';
 export { reportFailedBackgroundJobs } from './queue/report-failed-background-jobs';
 export { InvalidEnqueueError } from './queue/errors/invalid-enqueue-error';
+export { InvalidJobPayloadError } from './queue/errors/invalid-job-payload-error';
 export { JobInterruptedError } from './queue/errors/job-interrupted-error';
 export { UnknownBackgroundJobError } from './queue/errors/unknown-background-job-error';
 export { AttemptsExhaustedError } from './queue/errors/attempts-exhausted-error';

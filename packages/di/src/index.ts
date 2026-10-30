@@ -22,6 +22,7 @@ export type { BindingTarget } from './module/binding-target';
 export type { ContextModule } from './module/context-module';
 export { defineContextModule } from './module/define-context-module';
 export type { HandlerTarget } from './module/handler-target';
+export type { BackgroundJobTarget, PayloadDeclared } from './module/background-job-target';
 export type { ModuleBuilder } from './module/module-builder';
 export type { ModuleContext } from './module/module-context';
 export type { ProtectedUseCaseTarget } from './module/protected-use-case-target';

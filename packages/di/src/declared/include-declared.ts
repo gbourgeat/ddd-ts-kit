@@ -242,9 +242,9 @@ function registerJob(registration: Registration, declaration: JobDeclaration): v
 
 function registerBackgroundJob(registration: Registration, declaration: BackgroundJobDeclaration): void {
   const { draft, module, declaredBy } = registration;
-  const { name, options, implementation, dependencies } = declaration;
+  const { name, options, payload, implementation, dependencies } = declaration;
 
-  draft.addBackgroundJob({ name, options, job: implementation, module, declaredBy });
+  draft.addBackgroundJob({ name, options, payload, job: implementation, module, declaredBy });
   draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'job' }));
 }
 

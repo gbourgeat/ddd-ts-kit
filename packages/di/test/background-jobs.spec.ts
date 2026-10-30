@@ -6,8 +6,11 @@ import {
   InMemoryLogger,
   JobQueue,
   ProcessRunner,
+  err,
+  ok,
   type BackgroundJob,
   type BackgroundJobExecution,
+  type BackgroundJobPayloadSchema,
 } from '@ddd-ts-kit/kernel';
 import { Background } from '@ddd-ts-kit/kernel/declarations';
 import { InMemoryJobStore, JobStore, QueueWorker } from '@ddd-ts-kit/scheduling';
@@ -26,10 +29,23 @@ interface Statements {
   readonly month: string;
 }
 
+/** The schema of the payload, written by hand: a month. */
+const statements: BackgroundJobPayloadSchema<Statements> = {
+  parse(input) {
+    const month: unknown = Object(input).month;
+
+    return typeof month === 'string'
+      ? ok({ month })
+      : err([{ path: 'month', code: 'invalid_type', message: 'A month.' }]);
+  },
+};
+
 const months: string[] = [];
 
 class CompileStatementsJob implements BackgroundJob<Statements> {
   static readonly jobName = 'billing.compile-statements';
+
+  static readonly payload = statements;
 
   constructor(readonly commands: CommandBus) {}
 
@@ -42,6 +58,8 @@ Background({ maxAttempts: 3 }, [CommandBus])(CompileStatementsJob);
 
 class SendStatementsJob implements BackgroundJob<Statements> {
   static readonly jobName = 'billing.send-statements';
+
+  static readonly payload = statements;
 
   async run(payload: Statements): Promise<void> {
     months.push(`sent ${payload.month}`);
@@ -113,7 +131,10 @@ describe('a background job of an explicit module', () => {
         modules: [
           billing((builder) => {
             builder.include([CompileStatementsJob]);
-            builder.backgroundJob('billing.compile-statements').handledByFactory(() => new SendStatementsJob());
+
+            builder
+              .backgroundJob('billing.compile-statements')
+              .handledByFactory(() => new SendStatementsJob(), statements);
           }),
         ],
       }),
@@ -126,9 +147,9 @@ describe('a background job of an explicit module', () => {
     const app = createTestApplication({
       modules: [
         billing((builder) =>
-          builder.backgroundJob('billing.send-statements').handledByFactory(() => ({
-            run: () => Promise.reject(new Error('mailer down')),
-          })),
+          builder
+            .backgroundJob('billing.send-statements')
+            .handledByFactory(() => ({ run: () => Promise.reject(new Error('mailer down')) }), statements),
         ),
       ],
     });
