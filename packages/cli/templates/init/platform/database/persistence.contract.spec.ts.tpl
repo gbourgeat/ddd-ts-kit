@@ -55,17 +55,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await database.close();
 });
-{{#if tenancy.any}}
-{{#if eventSourcing.on}}
-
-/** A scope in one tenant: the event store refuses work that names none, and its stream suites run in this one. */
-function inOneTenant(): FixedExecutionScope {
-  return new FixedExecutionScope(
-    executionContext({ correlationId: 'contract', actor: systemActor('contract'), origin: 'test', tenantId: 'acme' }),
-  );
-}
-{{/if}}
-{{/if}}
 
 outboxStoreContract(runner, {
   name: 'The outbox store of the platform',
@@ -140,3 +129,14 @@ async function emptied(): Promise<Persistence> {
 
   return database.persistence;
 }
+{{#if tenancy.any}}
+{{#if eventSourcing.on}}
+
+/** A scope in one tenant: the event store refuses work that names none, and its stream suites run in this one. */
+function inOneTenant(): FixedExecutionScope {
+  return new FixedExecutionScope(
+    executionContext({ correlationId: 'contract', actor: systemActor('contract'), origin: 'test', tenantId: 'acme' }),
+  );
+}
+{{/if}}
+{{/if}}
