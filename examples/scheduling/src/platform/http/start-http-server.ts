@@ -52,8 +52,9 @@ function guardTheDoor(app: express.Express, served: Served, config: AppConfig): 
 }
 
 function listen(app: express.Express, port: number): Promise<Server> {
-  return new Promise<Server>((resolve) => {
-    const server = app.listen(port, () => resolve(server));
+  return new Promise<Server>((resolve, reject) => {
+    // Express 5 hands the error of listen to this callback, a port in use among them: the start fails with it.
+    const server = app.listen(port, (error) => (error === undefined ? resolve(server) : reject(error)));
   });
 }
 

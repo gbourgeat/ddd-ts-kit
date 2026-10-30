@@ -14,6 +14,14 @@ describe('the HTTP server init writes answers what fails at its edge', () => {
     expect(server).toContain(installed);
   });
 
+  it('fails the start on Express when the port cannot be bound, instead of answering a server that serves nothing', () => {
+    const server = read(initProject(), 'src/platform/http/start-http-server.ts');
+
+    expect(server).toContain(
+      'const server = app.listen(port, (error) => (error === undefined ? resolve(server) : reject(error)));',
+    );
+  });
+
   it('answers a failed limit of the callers as a problem, on Express and on Nest', () => {
     const express = read(initProject('--cache', 'redis'), 'src/platform/http/start-http-server.ts');
     const nest = read(initProject('--http', 'nest', '--cache', 'redis'), 'src/platform/http/start-http-server.ts');
