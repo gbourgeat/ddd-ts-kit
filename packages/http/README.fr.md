@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0c10cd7b6488666b -->
+<!-- translation-of: README.md sha256:313b907e9b6ead67 -->
 
 # @ddd-ts-kit/http
 
@@ -1445,7 +1445,7 @@ declare const invoicing: Invoicing;
 class IssueInvoiceBody {
   @IsString()
   @MinLength(1)
-  customerId = '';
+  declare customerId: string;
 }
 
 @Controller('invoices')

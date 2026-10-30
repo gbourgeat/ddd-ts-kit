@@ -161,18 +161,19 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { Type } from 'class-transformer';
 import { IsISO8601, IsUUID, ValidateNested } from 'class-validator';
 
-// A nested class is always a component of the contract, named after the class.
+// A nested class is always a component of the contract, named after the class. Each field is
+// declared without an initial value, which class-transformer would keep for a missing field.
 class SlotDto {
-  @IsISO8601() startsAt = '';
-  @IsISO8601() endsAt = '';
+  @IsISO8601() declare startsAt: string;
+  @IsISO8601() declare endsAt: string;
 }
 
 class BookBodyDto {
-  @IsUUID() patientId = '';
+  @IsUUID() declare patientId: string;
 
   @ValidateNested()
   @Type(() => SlotDto)
-  slot: SlotDto = new SlotDto();
+  declare slot: SlotDto;
 }
 
 export const bookWithClassValidator = classSchema(BookBodyDto);

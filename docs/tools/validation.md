@@ -160,7 +160,10 @@ Versions, licences and downloads checked on 2026-10-10 against the npm registry 
 The body of the booking route, four times. Each line ends in the same `Schema`, which a route
 takes as it is.
 
-class-validator, with legacy decorators and `reflect-metadata`:
+class-validator, with legacy decorators and `reflect-metadata`. Each field is `declare`d, with no
+initial value: class-transformer keeps an initial value for a field the body lacks, so
+`practitionerId = ''` under `@IsString()` would let a body without it pass as if it carried an empty
+one. An optional field is `@IsOptional()` with `declare startsAt?: string;`.
 
 <!-- checked sample: legacy-decorators -->
 ```ts
@@ -169,9 +172,9 @@ import { IsISO8601, IsUUID } from 'class-validator';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 
 class BookAppointmentDto {
-  @IsUUID() practitionerId = '';
-  @IsISO8601({ strict: true }) startsAt = '';
-  @IsISO8601({ strict: true }) endsAt = '';
+  @IsUUID() declare practitionerId: string;
+  @IsISO8601({ strict: true }) declare startsAt: string;
+  @IsISO8601({ strict: true }) declare endsAt: string;
 }
 
 // parse answers an instance of BookAppointmentDto; an undeclared property is an issue

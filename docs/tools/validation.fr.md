@@ -1,5 +1,5 @@
 [English](validation.md) · **Français**
-<!-- translation-of: validation.md sha256:21a01adbfff8846f -->
+<!-- translation-of: validation.md sha256:a7f39bea160de986 -->
 
 # Bibliothèques de validation : zod, class-validator, TypeBox, Standard Schema
 
@@ -164,7 +164,11 @@ GitHub.
 Le corps de la route de réservation, quatre fois. Chaque version aboutit au même `Schema`,
 qu'une route prend tel quel.
 
-class-validator, avec les décorateurs legacy et `reflect-metadata` :
+class-validator, avec les décorateurs legacy et `reflect-metadata`. Chaque champ est déclaré par
+`declare`, sans valeur initiale : class-transformer garde une valeur initiale pour un champ que le
+corps n'a pas, si bien que `practitionerId = ''` sous `@IsString()` laisserait passer un corps qui
+ne le porte pas, comme s'il en portait un vide. Un champ facultatif est `@IsOptional()` avec
+`declare startsAt?: string;`.
 
 <!-- checked sample: legacy-decorators -->
 ```ts
@@ -173,9 +177,9 @@ import { IsISO8601, IsUUID } from 'class-validator';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 
 class BookAppointmentDto {
-  @IsUUID() practitionerId = '';
-  @IsISO8601({ strict: true }) startsAt = '';
-  @IsISO8601({ strict: true }) endsAt = '';
+  @IsUUID() declare practitionerId: string;
+  @IsISO8601({ strict: true }) declare startsAt: string;
+  @IsISO8601({ strict: true }) declare endsAt: string;
 }
 
 // parse renvoie une instance de BookAppointmentDto ; une propriété non déclarée est une anomalie
