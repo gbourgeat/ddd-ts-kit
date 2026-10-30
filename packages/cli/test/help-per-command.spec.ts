@@ -146,16 +146,33 @@ describe('generate <kind> --help', () => {
     expect(kind).toEqual(expect.objectContaining({ name: 'value-object', writesInModules: true }));
   });
 
-  it('says of each kind whether its names are held to the glossary: true for the kinds whose usage shows --term', () => {
+  it('says of each kind whether its names are held to the glossary, the kinds that take --term', () => {
     const kinds = jsonAt(cli(tempDir('help-kind-glossary'), 'generate', '--help', '--json').json(), 'kinds');
+    const held = (kinds as readonly { name: string; heldToGlossary: boolean }[]).filter((kind) => kind.heldToGlossary);
 
-    const held = (kinds as readonly { name: string; usage: string; heldToGlossary: boolean }[]).map(
-      ({ name, usage, heldToGlossary }) => ({ name, takesTerm: usage.includes('--term'), heldToGlossary }),
-    );
-
-    expect(held.filter(({ takesTerm, heldToGlossary }) => takesTerm !== heldToGlossary)).toEqual([]);
-    expect(held).toContainEqual({ name: 'aggregate', takesTerm: true, heldToGlossary: true });
-    expect(held).toContainEqual({ name: 'port', takesTerm: false, heldToGlossary: false });
+    expect(held.map(({ name }) => name)).toEqual([
+      'context',
+      'module',
+      'aggregate',
+      'entity',
+      'value-object',
+      'state-machine',
+      'domain-event',
+      'error',
+      'domain-error',
+      'domain-service',
+      'command',
+      'query',
+      'file-upload',
+      'integration-event',
+      'integration-handler',
+      'event-handler',
+      'projection',
+      'job',
+      'background-job',
+      'process',
+      'policy',
+    ]);
   });
 
   it('says it in one line of the text help, beside --module', () => {
@@ -194,6 +211,11 @@ describe('generate <kind> --help', () => {
       'After `generate integration-event <upstreamContext> <Aggregate> <Fact>` of its eventType.',
     ],
     ['erasure-handler', 'After `generate repository <context> <Aggregate> --personal <column>,...`.'],
+    [
+      'route-group',
+      'with --group <ParentName>, it refines that group and inherits from it, after `generate route-group <context> <Name>` of the parent.',
+    ],
+    ['module', 'After `generate context <name>`.'],
   ])('states in the summary of %s the command it comes after', (name, after) => {
     expect(findKind(name)?.summary).toContain(after);
   });

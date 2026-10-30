@@ -19,7 +19,7 @@ export const routeGroupKind: Kind = {
   aliases: ['group'],
   usage: 'route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]',
   summary:
-    'A route group: an empty class carrying @RouteGroup with its path prefix, its tag and its guards (Authenticated unless --public or --role says otherwise); with --group, it refines that group and inherits from it.',
+    'A route group: an empty class carrying @RouteGroup with its path prefix, its tag and its guards (Authenticated unless --public or --role says otherwise); with --group <ParentName>, it refines that group and inherits from it, after `generate route-group <context> <Name>` of the parent.',
   positionals: ['context', 'Name'],
   writesShared: true,
   writesInModules: false,

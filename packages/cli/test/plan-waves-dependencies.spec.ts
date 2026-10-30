@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { escapeRegExp } from '../src/check/text/escape-reg-exp';
 import { cli, write } from './helpers';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
@@ -10,9 +11,13 @@ const CREDIT_FILE = 'src/contexts/billing/domain/aggregates/credit.aggregate.ts'
 const CREDIT = 'generate aggregate billing Credit --term "Credit=What billing owes a customer"';
 const REFUND = 'generate command billing RefundInvoice --aggregate Credit --permission invoice.refund';
 
-/** A row of the plan: `| <id> | <context> | slice | <id> | `<command>` | <dependsOn> | <context> | todo |`. */
-function row(id: string, command: string, dependsOn = '', context = 'billing'): string {
-  return `| ${id} | ${context} | slice | ${id} | \`${command}\` | ${dependsOn} | ${context} | todo |\n`;
+/** A row of the plan: `| <id> | <context> | slice | <id> | `<command>`; ... | <dependsOn> | <context> | todo |`. */
+function row(id: string, commands: string | readonly string[], dependsOn = '', context = 'billing'): string {
+  const startWith = (typeof commands === 'string' ? [commands] : commands)
+    .map((command) => `\`${command}\``)
+    .join('; ');
+
+  return `| ${id} | ${context} | slice | ${id} | ${startWith} | ${dependsOn} | ${context} | todo |\n`;
 }
 
 /** The rows written in the slices file of the project, then `plan-waves --json`. */
@@ -280,10 +285,6 @@ describe('plan-waves, a row of a kind held to the glossary or not, and the order
   const route = 'generate route billing InvoiceReceipt --method GET --path /invoices/:id/receipt';
   const representation = 'generate representation billing InvoiceReceipt xml';
 
-  /** One row of billing whose `Start with` runs the commands in the order given. */
-  const rowOf = (id: string, ...commands: string[]): string =>
-    `| ${id} | billing | slice | ${id} | ${commands.map((command) => `\`${command}\``).join('; ')} | | billing | todo |\n`;
-
   it('passes a port row without --term: the generator does not hold the name of a port to the glossary', () => {
     expect(planOf(root, row('US6.01', 'generate port billing PaymentProvider')).code).toBe(0);
   });
@@ -301,7 +302,7 @@ describe('plan-waves, a row of a kind held to the glossary or not, and the order
   });
 
   it('says to put the route first when a row writes the representation of a use case before its route', () => {
-    const backwards = planOf(root, rowOf('US6.02', receipt, representation, route));
+    const backwards = planOf(root, row('US6.02', [receipt, representation, route]));
 
     expect(jsonAt(backwards.json(), 'problems')).toEqual([
       expect.objectContaining({
@@ -310,17 +311,12 @@ describe('plan-waves, a row of a kind held to the glossary or not, and the order
         refusal: 'The context billing has no controller for Invoice receipt.',
         prerequisite: expect.stringMatching(
           new RegExp(
-            `^A later command of this row generates \`[^\`]+/invoice-receipt\\.controller\\.ts\`: put \`${escaped(route)}\` first\\.$`,
+            `^A later command of this row generates \`[^\`]+/invoice-receipt\\.controller\\.ts\`: put \`${escapeRegExp(route)}\` first\\.$`,
           ),
         ),
       }),
     ]);
 
-    expect(planOf(root, rowOf('US6.02', receipt, route, representation)).code).toBe(0);
+    expect(planOf(root, row('US6.02', [receipt, route, representation])).code).toBe(0);
   });
 });
-
-/** The text, read literally in a regular expression. */
-function escaped(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
-}

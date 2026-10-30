@@ -1,4 +1,5 @@
 import type { Kind } from './kind';
+import { flagsOf } from './flags-of';
 
 /**
  * True when a kind takes `--term`, its usage showing it: the names it writes are judged against
@@ -7,5 +8,5 @@ import type { Kind } from './kind';
  * an earlier command named, or it is read from the concept it serves (a port, an adapter, a route).
  */
 export function heldToGlossary(kind: Kind): boolean {
-  return /--term\b/.test(kind.usage);
+  return flagsOf(kind).has('term');
 }
