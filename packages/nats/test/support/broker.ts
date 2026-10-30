@@ -99,6 +99,16 @@ export class Broker {
     return info.num_pending + info.num_ack_pending;
   }
 
+  /** Messages a durable consumer gave out and that nobody acknowledged yet. */
+  async givenOutBy(durable: string): Promise<number> {
+    return (await this.manager.consumers.info(this.stream, durable)).num_ack_pending;
+  }
+
+  /** The in-memory server answers `400 Bad Request` to the waiting pulls of a durable consumer. */
+  refusePullsOf(durable: string): void {
+    this.server?.refusePullsOf(this.stream, durable);
+  }
+
   /**
    * Resolves once everything published to the bus was delivered or given up on: nothing
    * pending or unacknowledged on its durable consumers (a message waiting for its

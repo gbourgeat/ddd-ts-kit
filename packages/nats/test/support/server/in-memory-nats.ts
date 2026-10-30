@@ -98,6 +98,10 @@ export class InMemoryNats implements Router, Outbox {
     return delivered;
   }
 
+  refusePullsOf(stream: string, consumer: string): void {
+    this.jetstream.refusePullsOf(stream, consumer);
+  }
+
   listens(target: string): boolean {
     return [...this.sessions].some((session) => session.listens(target));
   }

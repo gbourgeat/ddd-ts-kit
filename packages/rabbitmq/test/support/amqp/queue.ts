@@ -51,7 +51,11 @@ export class Queue implements QueueState {
     return count;
   }
 
-  /** Hands the ready messages to the consumers with room left, in turn, on the next tick. */
+  /**
+   * Hands the ready messages to the consumers with room left, in turn, on the next tick. A pass
+   * serves the messages ready when it starts: one handed back meanwhile waits for the next pass,
+   * as a redelivery of the broker is a delivery of its own.
+   */
   dispatch(): void {
     if (this.dispatching) {
       return;
@@ -63,7 +67,7 @@ export class Queue implements QueueState {
       this.dispatching = false;
       let consumer = this.nextConsumer();
 
-      while (this.ready.length > 0 && consumer !== undefined) {
+      for (let left = this.ready.length; left > 0 && consumer !== undefined; left -= 1) {
         const message = this.take();
 
         if (message !== undefined) {
@@ -71,6 +75,10 @@ export class Queue implements QueueState {
         }
 
         consumer = this.nextConsumer();
+      }
+
+      if (this.ready.length > 0 && this.consumers.length > 0) {
+        this.dispatch();
       }
     });
   }
