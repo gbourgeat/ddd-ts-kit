@@ -40,6 +40,7 @@ import { aliasProblem } from '../../alias';
 import { DEFAULT_PACKAGE_MANAGER } from '../../package-manager/default-package-manager';
 import { CliError } from '../../cli-error';
 import { choose } from './choose';
+import { refuseUnusedNoOutbox } from './refuse-unused-no-outbox';
 import { recordedOptions } from './recorded-options';
 import { resolveCiExtras } from './resolve-ci-extras';
 import { resolvePersistence } from './resolve-persistence';
@@ -73,6 +74,8 @@ export function resolveStack(root: string, options: StackOptions): Config {
   // No flag and nothing to ask again: the config publishes its events in a way `init` does not offer, written by hand.
   const events = recorded !== undefined && asked.events === undefined ? recorded.stack.events : fresh.stack.events;
   const stack = { ...fresh.stack, events };
+
+  refuseUnusedNoOutbox(options.allowNoOutbox, stack);
   const ci = { extras: resolveCiExtras(options.ciExtras, recorded, stack.ci) };
   const config = supportedAlias({ ...(recorded ?? fresh), importAlias, importExtension, stack, ci });
 

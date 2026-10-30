@@ -64,3 +64,24 @@ describe('init run again on a project keeps its stack and says which flag it did
     expect(cli(initialised(), 'init', '--http', 'express').stdout).not.toContain('is kept as recorded');
   });
 });
+
+describe('init says what a choice does not do', () => {
+  it('notes the events of an event-sourced aggregate kept in memory when there is no ORM', () => {
+    const result = cli(tempDir('init'), 'init', '--orm', 'none', '--event-sourcing', 'on');
+
+    expect(result.code).toBe(0);
+
+    expect(result.stdout).toContain('note: Kept `eventSourcing: on` with `orm: none`');
+    expect(result.stdout).toContain('InMemoryEventStore');
+  });
+
+  it('refuses a reason for leaving the outbox out when the stack keeps it', () => {
+    const result = cli(tempDir('init'), 'init', '--allow-no-outbox', 'no need');
+
+    expect(result.code).toBe(2);
+
+    expect(result.stderr).toContain(
+      '--allow-no-outbox records nothing on this stack (--orm drizzle, --events outbox).',
+    );
+  });
+});

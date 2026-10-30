@@ -6,10 +6,11 @@ const FORMS_WITHOUT_HTTP =
 
 /** What init kept on a combination its defaults would not choose, said in a note so that exit code 0 hides nothing. */
 export function keptCombinationNotes(config: Config, flat: Relocation): string[] {
-  const { audit, orm, forms, http } = config.stack;
+  const { audit, orm, forms, http, eventSourcing } = config.stack;
 
   return [
     ...(audit === 'on' && orm === 'none' ? [auditWithoutOrm(auditFile(config, flat))] : []),
+    ...(eventSourcing === 'on' && orm === 'none' ? [eventSourcingWithoutOrm(config.platformDir)] : []),
     ...(forms === 'on' && http === 'none' ? [FORMS_WITHOUT_HTTP] : []),
   ];
 }
@@ -23,4 +24,8 @@ function auditFile(config: Config, flat: Relocation): string {
   const inFolder = `${config.platformDir}/audit/create-audit`;
 
   return `${flat.moved.get(inFolder) ?? inFolder}.ts`;
+}
+
+function eventSourcingWithoutOrm(platformDir: string): string {
+  return `Kept \`eventSourcing: on\` with \`orm: none\`: the event store is \`InMemoryEventStore\`, so the events of an event-sourced aggregate, their only record, are lost when the process stops, until ${platformDir}/database/open-persistence.ts binds a store of your storage; \`npx ddd-ts-kit init --force --orm <orm>\` keeps them in PostgreSQL.`;
 }
