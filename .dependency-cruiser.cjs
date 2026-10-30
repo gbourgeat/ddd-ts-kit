@@ -8,6 +8,7 @@ const TEST_FILES = [`^${PACKAGES}/[^/]+/test/`, '\\.(spec|test)\\.[cm]?ts$'];
 const CROSS_PACKAGE_PINS = [
   `^${PACKAGES}/eslint-plugin/test/classification\\.spec\\.ts$`,
   `^${PACKAGES}/cli/test/alias-boundaries\\.spec\\.ts$`,
+  `^${PACKAGES}/cli/test/payload-schema-packages-parity\\.spec\\.ts$`,
 ];
 
 /** @type {import('dependency-cruiser').IConfiguration} */
