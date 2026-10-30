@@ -850,7 +850,7 @@ every night, not on a pull request.
 
 ## Limits
 
-The parser is tolerant: a key it does not know is read by nothing (`check` reports it as `config/valid`, naming the nearest key it knows), and a wrong
+The parser is tolerant: a key it does not know is read by nothing (`check` reports it as `config/valid`, naming the nearest key it knows or the level it belongs to; `$schema` and the `//` keys that carry a comment are left alone), and a wrong
 classification, relationship, rule id, guard mode, worktrees mode, import extension, coverage rate or time budget is reported by `check` as `config/valid`,
 not when the file is read. Only a wrong `stack.*` value, or a file that is not a JSON object,
 stops a command.

@@ -1,4 +1,6 @@
-/** The keys of `stack` the parser reads; `config/valid` names any other with the nearest of these. */
+import type { Stack } from './stack';
+
+/** The keys of `stack` the parser reads, the keys of `Stack`; `config/valid` names any other with the nearest of these. */
 export const KNOWN_STACK_KEYS = [
   'http',
   'database',
@@ -35,4 +37,4 @@ export const KNOWN_STACK_KEYS = [
   'tenancy',
   'privacy',
   'packageManager',
-] as const;
+] as const satisfies readonly (keyof Stack)[];

@@ -2,6 +2,7 @@ import { KNOWN_RULE_IDS } from '../catalogue/known-rule-ids';
 import { ConfigInspection } from '../configuration/config-inspection';
 import type { Rule } from '../model/rule';
 import { reporter } from '../support/reporter';
+import { rawConfig } from '../configuration/raw-config';
 import { unknownKeys } from '../configuration/unknown-keys';
 
 export const configValid: Rule = {
@@ -14,7 +15,7 @@ export const configValid: Rule = {
     const inspection = new ConfigInspection(project, report);
 
     return [
-      ...unknownKeys(project, report),
+      ...unknownKeys(rawConfig(project), project.configText, report),
       ...Object.entries(project.config.contexts).flatMap(([name, context]) =>
         inspection.declaredContext(name, context),
       ),

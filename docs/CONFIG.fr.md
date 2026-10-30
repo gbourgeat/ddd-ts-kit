@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:b52c14ea4248da83 -->
+<!-- translation-of: CONFIG.md sha256:faa42baf89e42b0a -->
 
 # `ddd-ts-kit.config.json`
 
@@ -879,7 +879,7 @@ tient chaque contexte au plancher, comme la couverture tient chaque contexte à 
 
 ## Limites
 
-L'analyseur est tolérant : une clé qu'il ne connaît pas n'est lue par rien (`check` la signale sous `config/valid`, en nommant la clé connue la plus proche), et une
+L'analyseur est tolérant : une clé qu'il ne connaît pas n'est lue par rien (`check` la signale sous `config/valid`, en nommant la clé connue la plus proche ou le niveau auquel elle appartient ; `$schema` et les clés `//` qui portent un commentaire sont laissées tranquilles), et une
 classification, une relation, un identifiant de règle, un mode de garde, un mode des *worktrees*, une extension d'import
 , un taux de couverture ou un budget de temps erronés sont signalés par `check` sous `config/valid`, pas à la lecture
 du fichier. Seule une valeur `stack.*` erronée, ou un fichier qui n'est pas un objet JSON,

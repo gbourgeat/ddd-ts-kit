@@ -31,14 +31,15 @@ function nextRow(
   { letter, index }: { letter: string; index: number },
   b: string,
 ): number[] {
-  return Array.from(b).reduce<number[]>(
-    (row, other, j) => {
-      const substitution = (previous[j] ?? 0) + (letter === other ? 0 : 1);
-      const deletion = (previous[j + 1] ?? 0) + 1;
-      const insertion = (row[j] ?? 0) + 1;
+  const row = [index];
 
-      return [...row, Math.min(substitution, deletion, insertion)];
-    },
-    [index],
-  );
+  Array.from(b).forEach((other, j) => {
+    const substitution = (previous[j] ?? 0) + (letter === other ? 0 : 1);
+    const deletion = (previous[j + 1] ?? 0) + 1;
+    const insertion = (row[j] ?? 0) + 1;
+
+    row.push(Math.min(substitution, deletion, insertion));
+  });
+
+  return row;
 }

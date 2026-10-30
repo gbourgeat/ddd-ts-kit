@@ -103,7 +103,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
 
   const report = ws.commit(options.dryRun);
 
-  report.notes.push(...closingNotes(report, options, config));
+  report.notes.push(...keptCombinationNotes(config, flat), ...closingNotes(report, options, config));
 
   return report;
 }
@@ -114,7 +114,6 @@ function closingNotes(report: WorkspaceReport, options: InitOptions, config: Con
   const created = !options.dryRun && report.created.includes('package.json');
 
   return [
-    ...keptCombinationNotes(config),
     ...unwritable,
     ...(options.force ? [forcedNote(report, options.dryRun)] : []),
     ...(created

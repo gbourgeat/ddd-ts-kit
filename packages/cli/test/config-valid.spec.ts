@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runCheck } from '../src/check/engine/run-check';
+import { KNOWN_CONFIG_KEYS, KNOWN_STACK_KEYS } from '../src/config';
+import { parseConfig } from '../src/config/parse-config';
+import { parseStack } from '../src/config/parse-stack';
 import { loadProject } from '../src/check/project/load-project';
 import { changeConfig } from './check-support';
 import { cli, exists, tempDir } from './helpers';
@@ -152,11 +155,37 @@ describe('config/valid on the keys of the file', () => {
     ]);
   });
 
-  it('places each finding on the line of its key', () => {
-    const root = projectWith({}, { stack: { ormm: 'knex' } });
-    const [finding] = reported(root, 'config/valid').filter(({ message }) => message.includes('"stack.ormm"'));
+  it('points a key written at the other level to its level, and leaves $schema and the // comment keys alone', () => {
+    const root = projectWith(
+      {},
+      { orm: 'knex', $schema: './config.schema.json', '//': 'why', stack: { contextsDir: 'src/ctx', '//': 'why' } },
+    );
 
-    expect(finding?.line).toBe(lineOfText(root, '"ormm"'));
+    expect(aboutKeys(root)).toEqual([
+      [
+        '"orm" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Move it under "stack": the kit reads it there.',
+      ],
+      [
+        '"stack.contextsDir" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Move it to the root of the file: the kit reads it there.',
+      ],
+    ]);
+  });
+
+  it('places each finding on the line of its key, a key of stack after the stack object, a root key named like one of stack on its own line', () => {
+    const root = projectWith({}, { stack: { orm: 'drizzle', ormm: 'knex' }, orm: 'knex' });
+    const found = reported(root, 'config/valid').filter(({ message }) => message.includes('is not a key'));
+
+    expect(found.map(({ message, line }) => [message.split(' ')[0], line])).toEqual([
+      ['"stack.ormm"', lineOfText(root, '"ormm"')],
+      ['"orm"', lineOfText(root, '"orm": "knex"')],
+    ]);
+  });
+
+  it('knows exactly the keys the parser reads, at the root and under stack', () => {
+    expect([...KNOWN_CONFIG_KEYS].sort()).toEqual(Object.keys(parseConfig({}, { leaving: 'default' })).sort());
+    expect([...KNOWN_STACK_KEYS].sort()).toEqual(Object.keys(parseStack({})).sort());
   });
 
   it('reads every key a fresh project writes', () => {

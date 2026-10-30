@@ -8,7 +8,7 @@ describe('init says what it keeps on a combination its defaults would not choose
     expect(result.code).toBe(0);
 
     expect(result.stdout).toContain(
-      'note: Kept `audit: on` with `orm: none`: the entries of the audit trail live in the memory of the process and are lost when it stops, until src/platform/audit/create-audit.ts answers its TODO(platform) with an adapter of your storage; `--audit off` leaves the trail out.',
+      'note: Kept `audit: on` with `orm: none`: the entries of the audit trail live in the memory of the process and are lost when it stops, until src/platform/audit/create-audit.ts answers its TODO(platform) with an adapter of your storage; `npx ddd-ts-kit init --force --audit off` leaves the trail out.',
     );
   });
 
@@ -18,7 +18,7 @@ describe('init says what it keeps on a combination its defaults would not choose
     expect(result.code).toBe(0);
 
     expect(result.stdout).toContain(
-      'note: Kept `forms: on` with `http: none`: no route serves a form until an HTTP framework is chosen (`init --force --http <framework>`); `--forms off` records the choice.',
+      'note: Kept `forms: on` with `http: none`: no route serves a form until an HTTP framework is chosen (`npx ddd-ts-kit init --force --http <framework>`); `npx ddd-ts-kit init --force --forms off` records the choice.',
     );
   });
 
