@@ -61,4 +61,22 @@ describe.each(BROKERS)('KafkaEventBus: topology, %s', { timeout: 60_000 }, (_nam
       deadTopicOf(consumer, broker.topicOf(PLACED)),
     ]);
   });
+
+  it.each([
+    ['nothing to declare', {}],
+    ['topics it may not create', { publishedTypes: ['billing.invoice.issued'], topics: { create: false } }],
+  ] as const)('fails at startup when the cluster cannot be reached, with %s', async (_what, options) => {
+    const bus = broker.bus({ ...broker.unreachable(), connectTimeoutMs: 500, ...options });
+
+    await expect(bus.assertTopology()).rejects.toMatchObject({ code: 'BROKER_UNAVAILABLE' });
+    await bus.close();
+  });
+
+  it('asks the cluster again at each start, every topic already known', async () => {
+    const bus = broker.bus({ publishedTypes: ['billing.invoice.issued'] });
+
+    await bus.assertTopology();
+    await expect(bus.assertTopology()).resolves.toBeUndefined();
+    await bus.close();
+  });
 });
