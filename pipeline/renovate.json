@@ -21,6 +21,16 @@
     "schedule": ["at any time"],
     "minimumReleaseAge": null
   },
+  "customManagers": [
+    {
+      "description": "The Claude Code CLI the opt-in pipeline jobs install, written in a run line.",
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)\\.github/workflows/[^/]+\\.yml$/", "/(^|/)\\.gitlab/[^/]+\\.yml$/"],
+      "matchStrings": ["@anthropic-ai/claude-code@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "@anthropic-ai/claude-code",
+      "datasourceTemplate": "npm"
+    }
+  ],
   "packageRules": [
     {
       "groupName": "production dependencies (minor and patch)",

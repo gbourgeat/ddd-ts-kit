@@ -38,6 +38,7 @@ describe('inDialect(), a text written for npm as another package manager says it
     'each behind one npm script',
     'pnpm run verify',
     'pnpm exec eslint',
+    'npm install --global --no-audit --no-fund @anthropic-ai/claude-code@2.1.309',
   ])('leaves alone what is not a command of npm: %s', (text) => {
     expect(inDialect(text, 'pnpm')).toBe(text);
   });

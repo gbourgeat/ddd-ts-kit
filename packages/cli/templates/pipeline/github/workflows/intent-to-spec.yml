@@ -46,12 +46,15 @@ jobs:
           echo "$accepted" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
           echo "count=$(printf '%s\n' "$accepted" | grep -c '^docs/' || true)" >> "$GITHUB_OUTPUT"
+      # The agent at a version of this file, and the plugin at the tag of the kit version the project
+      # depends on: nothing moves under a run that can push. npm carries the agent whatever the
+      # package manager of the project is.
       - name: Claude Code and the plugin
         if: steps.accepted.outputs.count != '0'
         run: |
-          npm install --global @anthropic-ai/claude-code
-          claude plugin marketplace add gbourgeat/ddd-ts-kit
-          claude plugin install ddd-ts-kit@ddd-ts-kit
+          npm install --global --no-audit --no-fund @anthropic-ai/claude-code@2.1.309
+          kit=$(node -p "JSON.parse(require('node:fs').readFileSync('node_modules/ddd-ts-kit/package.json', 'utf8')).version")
+          git clone --quiet --depth 1 --branch "v$kit" https://github.com/gbourgeat/ddd-ts-kit.git "$RUNNER_TEMP/ddd-ts-kit"
       - name: One story per accepted intent, headless, to its pull request
         if: steps.accepted.outputs.count != '0'
         env:
@@ -67,6 +70,7 @@ jobs:
           printf '%s\n' "$ACCEPTED" | grep '^docs/' | while read -r intent; do
             code=$(basename "$intent" .md | tr '[:lower:]' '[:upper:]' | tr -c 'A-Z0-9-\n' '-')
             claude -p "/ddd-ts-kit:story $code --headless $intent" \
+              --plugin-dir "$RUNNER_TEMP/ddd-ts-kit/plugin" \
               --permission-mode acceptEdits \
               --output-format text
           done
