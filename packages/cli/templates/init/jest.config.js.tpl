@@ -1,6 +1,8 @@
 import process from 'node:process';
 import { governedJestCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
 
+const agent = Boolean(process.env.AI_AGENT || process.env.CLAUDECODE);
+
 export default {
   testEnvironment: 'node',
   // Jest does not read tsconfig: the import aliases of its "paths", repeated here, and held equal by `ddd-ts-kit check` (imports/alias-declared).
@@ -23,7 +25,8 @@ export default {
 {{/unless}}
   testTimeout: 60_000,
   // Each spec file is held to the time budget of its level ("budget" in ddd-ts-kit.config.json, the reference when it is absent): the slowest named at the end of the run, a file over its budget fails it.
-  reporters: ['default', '@ddd-ts-kit/testing/budget/jest'],
+  // Under a coding agent the summary reporter, as Vitest picks a terse one by itself.
+  reporters: [agent ? 'summary' : 'default', '@ddd-ts-kit/testing/budget/jest'],
   // A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
   testPathIgnorePatterns: ['/node_modules/', ...unaffectedContexts().map((directory) => `/${directory}`)],
   extensionsToTreatAsEsm: ['.ts'],

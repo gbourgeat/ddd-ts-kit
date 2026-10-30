@@ -10,7 +10,7 @@ npm install
 npm run verify          # every gate of the pipeline: green before the first line of business code
 cp .env.example .env
 {{#if database.server}}
-npm run infra:up        # the database, in Docker; add --profile observability for Jaeger
+npm run infra:up        # the database, in Docker; for Jaeger: docker compose --profile observability up -d --wait
 {{/if}}
 {{#if orm.drizzle}}
 npm run db:generate initial   # migrations/<timestamp>_initial.sql, from the Drizzle schema

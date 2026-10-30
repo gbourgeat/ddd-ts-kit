@@ -251,7 +251,10 @@ describe('a local GlitchTip', () => {
     const compose = read(reported(), 'docker-compose.yml');
     const services = compose.slice(0, compose.indexOf('\nvolumes:'));
 
-    expect(compose.split('\n')[1]).toContain('`--profile errors` to get GlitchTip');
+    expect(compose.split('\n').slice(0, 6).join('\n')).toContain(
+      'docker compose --profile errors up -d --wait          # GlitchTip',
+    );
+
     expect(services).toContain('\n  glitchtip:\n    image: glitchtip/glitchtip:6.2.6\n    profiles: [errors]\n');
     expect(services).toContain('\n  glitchtip-postgres:\n    image: postgres:18-alpine\n    profiles: [errors]\n');
     expect(services).toContain('\n  glitchtip-valkey:\n    image: valkey/valkey:9-alpine\n    profiles: [errors]\n');
