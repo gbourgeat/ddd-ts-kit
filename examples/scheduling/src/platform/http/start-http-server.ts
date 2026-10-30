@@ -1,7 +1,7 @@
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
-import { mountExpress } from '@ddd-ts-kit/http/express';
+import { mountExpress, problemErrorHandler, problemNotFoundHandler } from '@ddd-ts-kit/http/express';
 import type { Application } from '@/platform/composition/compose-application';
 import type { AppConfig } from '@/platform/config/app-config';
 import { refusalFor } from '@/platform/http/refusal-for';
@@ -15,7 +15,7 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary' | 'rateLimiter' | 'ready' | 'fileRoutes'>;
+type Served = Pick<Application, 'routes' | 'boundary' | 'logger' | 'rateLimiter' | 'ready' | 'fileRoutes'>;
 
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = express();
@@ -26,6 +26,10 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   mountExpress(app, served.fileRoutes, served.boundary);
   app.use(express.json());
   mountExpress(app, withDocumentation(served.routes, config, served.boundary), served.boundary);
+  // Instead of the final handler of Express, which answers HTML: a path no route serves, then an error, the
+  // one written to stderr with the body it quotes.
+  app.use(problemNotFoundHandler({ logger: served.logger }));
+  app.use(problemErrorHandler({ logger: served.logger }));
 
   const server = await listen(app, config.port);
 
