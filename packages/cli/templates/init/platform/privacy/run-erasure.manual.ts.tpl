@@ -72,9 +72,9 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
   const { platform, operator, correlationId } = request;
   const context = executionContext({ correlationId, actor: operatorActor(operator), origin: 'cli' });
 {{#if audit.on}}
-  const source = { scope: platform.scope, clock: platform.clock, ids: platform.ids };
-  const audited = (copy: PersonalDataCopy): PersonalDataCopy =>
-    auditedPersonalDataErasure(copy, platform.audit.trail, source);
+  const { trail, onLostRecord } = platform.audit;
+  const source = { scope: platform.scope, clock: platform.clock, ids: platform.ids, onLostRecord };
+  const audited = (copy: PersonalDataCopy): PersonalDataCopy => auditedPersonalDataErasure(copy, trail, source);
 {{/if}}
 
   return platform.scope.run(context, async () => {

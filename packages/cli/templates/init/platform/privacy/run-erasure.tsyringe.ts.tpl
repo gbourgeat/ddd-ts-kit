@@ -1,5 +1,5 @@
 {{#if audit.on}}
-import { AuditTrail, auditedPersonalDataErasure } from '@ddd-ts-kit/audit';
+import { AuditTrail, auditedPersonalDataErasure, logLostRecords } from '@ddd-ts-kit/audit';
 {{/if}}
 import type { Application as Container } from '@ddd-ts-kit/di';
 {{#if events.outbox}}
@@ -10,6 +10,9 @@ import {
   ExecutionScope,
   IdGenerator,
   IntegrationEventPublisher,
+{{#if audit.on}}
+  Logger,
+{{/if}}
 {{#if eventSourcing.on}}
   SubjectKeyStore,
 {{/if}}
@@ -81,7 +84,8 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
   const context = executionContext({ correlationId, actor: operatorActor(operator), origin: 'cli' });
 {{#if audit.on}}
   const trail = container.resolve(AuditTrail);
-  const source = { scope, clock: container.resolve(Clock), ids: container.resolve(IdGenerator) };
+  const onLostRecord = logLostRecords(container.resolve(Logger));
+  const source = { scope, clock: container.resolve(Clock), ids: container.resolve(IdGenerator), onLostRecord };
   const audited = (copy: PersonalDataCopy): PersonalDataCopy => auditedPersonalDataErasure(copy, trail, source);
 {{/if}}
 

@@ -328,8 +328,9 @@ that was then refused). Hence the arrangement: the middleware is installed **bef
 `logLostRecords(logger)` is an `onLostRecord` that writes one `audit entry lost` line to the log,
 at level `error`: the category, the action and the reason of the entry, the type and the code of
 the failure, never its message, which quotes data. A project generated with the trail on passes
-it to `auditMiddleware`, `auditedSubjectKeys`, `auditedPersonalDataExport` and
-`auditedPersonalDataRetention`, in the application and in the scripts of `--privacy on`.
+it to `auditMiddleware`, `auditedSubjectKeys`, `auditedPersonalDataErasure`,
+`auditedPersonalDataExport` and `auditedPersonalDataRetention`, in the application and in the
+scripts of `--privacy on`.
 
 ![CancelAppointment reaches authorization first: denied, it leaves one authorization denied entry and opens no transaction; allowed, the audit middleware opens the transaction and the handler runs in it; on success the succeeded entry is written in the same transaction and commits with the change, or neither exists; on failure the transaction rolls back, then the failed entry is written outside of it with the code of the error](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-transaction.svg)
 

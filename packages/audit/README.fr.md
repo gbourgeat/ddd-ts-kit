@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:22f4b7c5b782e1ff -->
+<!-- translation-of: README.md sha256:0420fa7dbad0bf7a -->
 
 # @ddd-ts-kit/audit
 
@@ -340,8 +340,9 @@ travail.
 `logLostRecords(logger)` est un `onLostRecord` qui écrit une ligne `audit entry lost` dans le
 journal applicatif, au niveau `error` : la catégorie, l'action et le motif de l'entrée, le type et
 le code de l'échec, jamais son message, qui cite des données. Un projet généré avec le journal
-d'audit le passe à `auditMiddleware`, `auditedSubjectKeys`, `auditedPersonalDataExport` et
-`auditedPersonalDataRetention`, dans l'application et dans les scripts de `--privacy on`.
+d'audit le passe à `auditMiddleware`, `auditedSubjectKeys`, `auditedPersonalDataErasure`,
+`auditedPersonalDataExport` et `auditedPersonalDataRetention`, dans l'application et dans les
+scripts de `--privacy on`.
 
 ![CancelAppointment passe d'abord par l'autorisation : refusée, elle laisse une entrée authorization denied et n'ouvre aucune transaction ; autorisée, le middleware d'audit ouvre la transaction et le gestionnaire s'y exécute ; en cas de succès, l'entrée succeeded est écrite dans la même transaction et validée avec le changement, ou aucun des deux n'existe ; en cas d'échec, la transaction est annulée, puis l'entrée failed est écrite hors de celle-ci avec le code de l'erreur](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-transaction.fr.svg)
 

@@ -6,6 +6,7 @@ const platform = (root: string, file: string): string => read(root, `src/platfor
 
 const COMMANDS = /commands: auditMiddleware\(trail, \{ \.\.\.source, unitOfWork, onLostRecord \}\)/;
 const QUERIES = /queries: auditMiddleware\(trail, \{[^}]*onLostRecord \}\)/;
+const ERASURE_SOURCE = /const source = \{[^}]*onLostRecord \};/;
 
 describe('a failure whose audit entry could not be written, in a generated project', () => {
   it('is told to the log by the middlewares, with tsyringe and by hand', () => {
@@ -18,14 +19,18 @@ describe('a failure whose audit entry could not be written, in a generated proje
     }
   });
 
-  it('is told to the log by the export, the purge and the keys of the data subjects', () => {
+  it('is told to the log by the export, the purge, the erasure and the keys of the data subjects', () => {
     const resolved = initProject();
     const byHand = initProject('--di', 'manual', '--orm', 'knex', '--event-sourcing', 'on');
 
     expect(platform(resolved, 'privacy/run-purge.ts')).toContain('logLostRecords(resolve(Logger))');
     expect(platform(resolved, 'privacy/run-export.ts')).toContain('logLostRecords(container.resolve(Logger))');
+    expect(platform(resolved, 'privacy/run-erasure.ts')).toContain('logLostRecords(container.resolve(Logger))');
+    expect(platform(resolved, 'privacy/run-erasure.ts')).toMatch(ERASURE_SOURCE);
     expect(platform(byHand, 'privacy/run-purge.ts')).toContain('const { trail, onLostRecord } = platform.audit;');
     expect(platform(byHand, 'privacy/run-export.ts')).toContain('const { trail, onLostRecord } = platform.audit;');
+    expect(platform(byHand, 'privacy/run-erasure.ts')).toContain('const { trail, onLostRecord } = platform.audit;');
+    expect(platform(byHand, 'privacy/run-erasure.ts')).toMatch(ERASURE_SOURCE);
     expect(platform(byHand, 'event-sourcing/create-event-sourcing.ts')).toContain('onLostRecord: audit.onLostRecord');
   });
 
