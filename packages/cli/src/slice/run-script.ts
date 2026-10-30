@@ -16,7 +16,6 @@ export function runScript({ root, manager, script, args = [] }: ScriptCall): Scr
   const run = spawnSync(manager, ['run', script, ...handOver, ...args], {
     cwd: root,
     encoding: 'utf8',
-    shell: process.platform === 'win32',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 

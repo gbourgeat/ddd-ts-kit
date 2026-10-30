@@ -1,0 +1,3 @@
+**`affected --run`, `verify-slice`, `worker-scope`, `story-scope`, `worktree` and `merge-trunk` refuse to run on Windows outside WSL 2.** They reach the package manager through `cmd.exe` on `win32`, which passes the arguments of a script unescaped: `affected --run "test & calc"` would have run `calc`. The CLI now refuses them at its entry, before any work, with exit code 2 (`worktree`, `worker-scope` and `story-scope` only when they would install: not with `--no-install` or `--dry-run`), and says to run under WSL 2, where the platform is `linux` and nothing changes. `docs/guides/agent-sandbox.md` and the README of the CLI state what Windows supports.
+
+To move: on Windows, run the CLI inside WSL 2.
