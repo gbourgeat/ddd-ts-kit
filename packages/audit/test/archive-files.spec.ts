@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { AuditArchiveRefusedError, archiveKeyOf, verifyArchive } from '../src';
+import { AuditArchiveRefusedError, archiveKeyOf, verifyArchive, type ChainBreak } from '../src';
 
 describe('the file of an archive', () => {
   it('is kept under the chain, one folder per segment, the range in its name', () => {
@@ -31,19 +31,25 @@ describe('the file of an archive', () => {
 });
 
 describe('a refused archive', () => {
-  it('says where the chain breaks when the verification found the place, and that nothing was archived either way', () => {
-    expect(new AuditArchiveRefusedError('tenant:acme', undefined).message).toBe(
-      'The entries of tenant:acme to archive do not verify: nothing was archived',
+  const brokenAt = (chain: string, sequence: number): ChainBreak => ({
+    kind: 'altered-content',
+    chain,
+    position: sequence - 1,
+    sequence,
+    entryId: `entry-${sequence}`,
+  });
+
+  it('says where each chain breaks, and that its entries stay', () => {
+    const refused = new AuditArchiveRefusedError([
+      { chain: 'tenant:acme', chainBreak: brokenAt('tenant:acme', 3) },
+      { chain: 'global', chainBreak: { kind: 'missing-entry', chain: 'global', position: 6, sequence: 7 } },
+    ]);
+
+    expect(refused.message).toBe(
+      'The entries to archive do not verify and stay in the trail: tenant:acme (altered-content at sequence 3), global (missing-entry at sequence 7)',
     );
 
-    expect(
-      new AuditArchiveRefusedError('tenant:acme', {
-        kind: 'altered-content',
-        chain: 'tenant:acme',
-        position: 2,
-        sequence: 3,
-        entryId: 'entry-3',
-      }).message,
-    ).toBe('The entries of tenant:acme to archive do not verify (altered-content at sequence 3): nothing was archived');
+    expect(refused.code).toBe('AUDIT_ARCHIVE_REFUSED');
+    expect(refused.archives).toEqual([]);
   });
 });

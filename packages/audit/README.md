@@ -732,12 +732,14 @@ archive and older than the date, without a hole, are verified from the anchor of
 before them; they are written to one file, one canonical JSON per line; the archive is recorded
 in `audit_archives` (range, last hash, SHA-256 of the file); then the entries are deleted. The
 guard of the table lets a `DELETE` through only for entries an archive covers, and refuses any
-change to the archives themselves. A chain that does not verify is refused with
-`AuditArchiveRefusedError` and keeps every entry: a break is for the operator to look at, not to
-bury in a file. The file is written, then read back from the storage and its digest checked,
-before the transaction commits: a storage that did not keep it is refused with
-`AuditArchiveNotStoredError` and nothing is removed; a failure afterwards leaves a file no archive
-names, which the next run writes again under the same key.
+change to the archives themselves. A chain that does not verify keeps every entry, a break being
+for the operator to look at, not to bury in a file, and stops no other chain: each one is tried,
+then `AuditArchiveRefusedError` says what was refused (`refusals`, each with its `chain` and its
+`chainBreak`) and what the others archived (`archives`). The file is written, then read back from
+the storage and its digest checked, before the transaction commits: a storage that did not keep it
+is refused with `AuditArchiveNotStoredError`, which ends the run, and nothing of that chain is
+removed; a failure afterwards leaves a file no archive names, which the next run writes again
+under the same key.
 
 What the trail proved stays provable:
 

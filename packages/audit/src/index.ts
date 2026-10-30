@@ -80,5 +80,5 @@ export { archiveKeyOf } from './archive/archive-key-of';
 export type { AuditArchive } from './archive/audit-archive';
 export type { AuditArchiveReport } from './archive/audit-archive-report';
 export { AuditArchiveNotStoredError } from './archive/audit-archive-not-stored-error';
-export { AuditArchiveRefusedError } from './archive/audit-archive-refused-error';
+export { AuditArchiveRefusedError, type AuditArchiveRefusal } from './archive/audit-archive-refused-error';
 export { verifyArchive } from './archive/verify-archive';

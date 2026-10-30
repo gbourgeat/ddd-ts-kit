@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:c11e66d7890433d3 -->
+<!-- translation-of: audit-trail.md sha256:cd810a2c963fc7df -->
 
 # Journal d'audit
 
@@ -284,7 +284,8 @@ de l'archive précédente ; écrites dans un fichier par plage ; enregistrées a
 dernière et l'empreinte du fichier ; puis supprimées, ce que la garde n'autorise que pour des
 entrées couvertes. Les entrées restées en base se rattachent à ce dernier hash, et chaque fichier
 se vérifie de nouveau seul, contre son enregistrement et l'archive qui le précède. Une chaîne qui
-ne se vérifie pas n'est pas archivée : une rupture est à examiner par quelqu'un.
+ne se vérifie pas n'est pas archivée, une rupture étant à examiner par quelqu'un, et n'arrête
+aucune autre chaîne : les autres sont archivées, puis les refus sont signalés ensemble.
 
 Un projet généré dont le journal est en base le fait le premier jour de chaque mois et garde douze
 mois entiers en ligne, par défaut avec un stockage objet et seulement sur demande avec un stockage

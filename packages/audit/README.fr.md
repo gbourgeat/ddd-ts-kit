@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2c9d46b62999495f -->
+<!-- translation-of: README.md sha256:9e8c430de04cc23d -->
 
 # @ddd-ts-kit/audit
 
@@ -765,12 +765,14 @@ l'archive qui les précède ; elles sont écrites dans un fichier, un JSON canon
 l'archive est enregistrée dans `audit_archives` (plage, dernier hash, SHA-256 du fichier) ; puis
 les entrées sont supprimées. La garde de la table ne laisse passer un `DELETE` que pour des
 entrées qu'une archive couvre, et refuse toute modification des archives elles-mêmes. Une chaîne
-qui ne se vérifie pas est refusée avec `AuditArchiveRefusedError` et garde toutes ses entrées :
-une rupture est à examiner par l'opérateur, pas à enfouir dans un fichier. Le fichier est écrit,
-puis relu depuis le stockage et son empreinte vérifiée, avant la validation de la transaction : un
-stockage qui ne l'a pas gardé est refusé avec `AuditArchiveNotStoredError` et rien n'est supprimé ;
-un échec ensuite laisse un fichier qu'aucune archive ne nomme, que le passage suivant réécrit sous
-la même clé.
+qui ne se vérifie pas garde toutes ses entrées, une rupture étant à examiner par l'opérateur, pas à
+enfouir dans un fichier, et n'arrête aucune autre chaîne : chacune est tentée, puis
+`AuditArchiveRefusedError` dit ce qui a été refusé (`refusals`, chacun avec sa `chain` et son
+`chainBreak`) et ce que les autres ont archivé (`archives`). Le fichier est écrit, puis relu depuis
+le stockage et son empreinte vérifiée, avant la validation de la transaction : un stockage qui ne
+l'a pas gardé est refusé avec `AuditArchiveNotStoredError`, qui met fin au passage, et rien de
+cette chaîne n'est supprimé ; un échec ensuite laisse un fichier qu'aucune archive ne nomme, que
+le passage suivant réécrit sous la même clé.
 
 Ce que le journal prouvait reste démontrable :
 

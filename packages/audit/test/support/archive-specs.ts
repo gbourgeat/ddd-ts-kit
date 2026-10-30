@@ -1,34 +1,18 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryFileStorage, type AuditTrail } from '@ddd-ts-kit/kernel';
+import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import {
   AuditArchiveNotStoredError,
   AuditArchiveRefusedError,
   verifyArchive,
   verifyChain,
-  type ArchivableAuditTrail,
   type AuditArchive,
 } from '../../src';
-import type { AuditTrailUnderContract } from '../../src/testing';
+import { FEBRUARY, JANUARY, MARCH, clock, recordAt, type ArchiveFixture } from './archive-fixture';
+import { archiveRefusalSpecs } from './archive-refusal-specs';
 import { CHAIN, aRecord, sequencesOf } from './sql-trail-fixture';
 
-/** A trail that archives, and what tampers with it the way an attacker with access to the store would. */
-export interface ArchiveFixture {
-  readonly trail: AuditTrailUnderContract & ArchivableAuditTrail;
-  /** Changes the action of an entry in the store itself, the guard set aside. */
-  tamper(id: string): Promise<void>;
-  /** A statement on the store: `$table` names the entries, `$schema` the schema of the trail. */
-  run?(statement: string): Promise<unknown>;
-}
-
-const JANUARY = new Date('2026-01-15T10:00:00.000Z');
-const FEBRUARY = new Date('2026-02-15T10:00:00.000Z');
-const MARCH = new Date('2026-03-15T10:00:00.000Z');
-const clock = new FixedClock(new Date('2026-04-01T00:00:00.000Z'));
-
-async function recordAt(trail: AuditTrail, id: string, at: Date, tenant = 'acme'): Promise<void> {
-  await trail.record({ ...aRecord(id, tenant), occurredAt: at });
-}
+export type { ArchiveFixture } from './archive-fixture';
 
 async function textOf(files: InMemoryFileStorage, archive: AuditArchive): Promise<string> {
   const content = await files.get(archive.fileKey);
@@ -45,6 +29,7 @@ async function textOf(files: InMemoryFileStorage, archive: AuditArchive): Promis
 export function archiveSpecs(name: string, create: () => Promise<ArchiveFixture>): void {
   rangeSpecs(name, create);
   integritySpecs(name, create);
+  archiveRefusalSpecs(name, create);
 }
 
 function rangeSpecs(name: string, create: () => Promise<ArchiveFixture>): void {

@@ -266,7 +266,8 @@ proves. The entries are verified first, from the anchor of the previous archive;
 file per range; recorded with the hash of the last one and the digest of the file; then deleted,
 which the guard allows for covered entries only. The entries left in the database link to that
 last hash, and each file can be verified again on its own, against its record and the archive
-before it. A chain that does not verify is not archived: a break is for someone to look at.
+before it. A chain that does not verify is not archived, a break being for someone to look at,
+and stops no other chain: the others are archived, then the refusals are reported together.
 
 A generated project whose trail is in a database runs this on the first day of every month and
 keeps twelve whole months online, by default with an object store and only on request with a
