@@ -18,6 +18,7 @@ export class OutboxErasureSuite extends ContractSuite<OutboxStoreUnderContract> 
 
   protected tests(): void {
     this.erasesAPerson();
+    this.reachesEveryStatus();
     this.erasesOnlyThatPerson();
   }
 
@@ -40,6 +41,15 @@ export class OutboxErasureSuite extends ContractSuite<OutboxStoreUnderContract> 
       });
     });
 
+    this.it('reaches nothing the second time', async () => {
+      await this.subject.append([personalEvent('evt-1', 'cus-1')]);
+      await this.subject.erasePersonalFields('cus-1', [REGISTERED]);
+
+      this.expect(await this.subject.erasePersonalFields('cus-1', [REGISTERED])).toBe(0);
+    });
+  }
+
+  private reachesEveryStatus(): void {
     this.it('reaches a record whatever its status: published and dead records keep a person too', async () => {
       const events = [
         personalEvent('evt-1', 'cus-1'),
@@ -62,13 +72,6 @@ export class OutboxErasureSuite extends ContractSuite<OutboxStoreUnderContract> 
         ['evt-3', ERASED_PERSONAL_DATA],
         ['evt-2', ERASED_PERSONAL_DATA],
       ]);
-    });
-
-    this.it('reaches nothing the second time', async () => {
-      await this.subject.append([personalEvent('evt-1', 'cus-1')]);
-      await this.subject.erasePersonalFields('cus-1', [REGISTERED]);
-
-      this.expect(await this.subject.erasePersonalFields('cus-1', [REGISTERED])).toBe(0);
     });
   }
 
