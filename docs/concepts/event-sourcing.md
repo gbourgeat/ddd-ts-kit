@@ -481,6 +481,14 @@ share no transaction: when the entry cannot be written the erasure fails, and ru
 records that no key was left, at a later date, so the completion date is never early
 ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)).
 
+The right of access reads the same sealed values. `EventStorePersonalDataExport` of the kernel
+hands over every value sealed with a key of the person, opened, one record per event under
+`<name>.<event type>`, each value named by its path in the data; `runExport` of a generated
+project gives it to `exportDataSubject` beside the exports of the contexts, as
+`platform.event-store` ([Personal data](personal-data.md#the-export-end-to-end)). A stream is
+named after its aggregate, so the export reads the whole store; once the key is destroyed it
+answers nothing.
+
 What a context keeps of the same person in clear, the rows of its tables, is not sealed: it is
 declared once next to the mapper (`personalFields`: the subject column, the personal columns, rows
 deleted or pseudonymised, the columns that hold a file), erased through a `PersonalDataErasure`

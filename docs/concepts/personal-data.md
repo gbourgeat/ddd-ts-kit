@@ -171,7 +171,13 @@ per context, in every tenant the tenant directory lists with shared tables (the 
 confined to its tenant as a write is. Each adapter reads the same declarations as the erasure and
 answers one record per row about the person, under `<context>.<table>`, with the personal columns
 and the keys of the files as plain data, no other column and nothing of anyone else; a row
-pseudonymised already reads `[erased]`, a row deleted answers nothing. The result is one document:
+pseudonymised already reads `[erased]`, a row deleted answers nothing. With `--event-sourcing on`,
+`runExport` also hands over what the event store keeps of the person, through
+`EventStorePersonalDataExport` of the kernel: one record per event that holds a value sealed with
+the key of the person, under `platform.event-store.<event type>`, each value opened and named by its
+path in the data of the event (`reason`, `contacts[0]`). A stream is named after its aggregate, not
+after the person, so this export reads the whole store, in rounds of 500 events, in each tenant; a
+value whose key an erasure destroyed is gone and answers nothing. The result is one document:
 
 ```json
 {
@@ -181,7 +187,8 @@ pseudonymised already reads `[erased]`, a row deleted answers nothing. The resul
   "records": [
     { "source": "billing.customers", "values": { "email": "ada@example.org", "display_name": "Ada" } },
     { "source": "billing.invoices", "values": { "customer_email": "ada@example.org" } },
-    { "source": "crm.contacts", "values": { "email": "ada@example.org", "phone": null } }
+    { "source": "crm.contacts", "values": { "email": "ada@example.org", "phone": null } },
+    { "source": "platform.event-store.care.dossier.opened", "values": { "note": "Asthma" } }
   ]
 }
 ```

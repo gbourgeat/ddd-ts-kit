@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b7b597fa71f51dbd -->
+<!-- translation-of: README.md sha256:430ea7228683569d -->
 
 # @ddd-ts-kit/kernel
 
@@ -2215,6 +2215,7 @@ export class AttendanceRecord extends EventSourcedAggregate<AttendanceEvent, Att
 | `EventSourcedRepository` | Ce à quoi délègue l'adaptateur de *repository* : `findById` rejoue le flux `<category>-<id>` (depuis le dernier *snapshot*), `save` ajoute dans la transaction de l'unité de travail ; les événements partent ensuite avec l'enregistrement comme n'importe quels autres |
 | `SnapshotPolicy` | Par agrégat : `every` tant d'événements, une `version` de la forme (une autre est ignorée, le flux rejoué), `encode` et `decode`. `expectSnapshotEquivalence` de `@ddd-ts-kit/testing` prouve qu'un *snapshot* reconstruit l'état que donne un rejeu complet |
 | `personalData(subject, value)` | Marque une valeur personnelle dans `encode`. `PersonalDataCipher` sur un `SubjectKeyStore` la scelle avec la clé de sa personne concernée (AES-256-GCM) ; `SubjectKeyStore.erase(subject)` détruit la clé, et un rejeu lit alors `ERASED_PERSONAL_DATA`. `decode` lit une valeur personnelle avec `data.personalText('x')`, `data.personalInstant('at')` ou `data.personal('email', Email.of)`, qui répondent `undefined` une fois la personne effacée : une valeur qui n'est pas un texte libre ne rend jamais l'agrégat illisible ; `data.isErased('x')` dit si elle l'a été |
+| `EventStorePersonalDataExport({ events, keys, name?, scope? })` | Le `PersonalDataExport` de ce que l'event store garde d'une personne : un enregistrement par événement qui porte une valeur scellée avec une clé de la personne, sous `<name>.<type d'événement>` (`event-store` par défaut), chaque valeur ouverte sous son chemin dans les données. Lit tout le store par tours (`batchSize`, 500), avec un scope les seuls événements du *tenant* du travail ; une valeur dont la clé a été détruite ne répond rien. `runExport` d'un projet en `--event-sourcing on` la remet comme `platform.event-store` |
 
 ```ts
 // infrastructure/persistence/event-store-attendance-record.repository.ts

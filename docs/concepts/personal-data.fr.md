@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:71661ae7ff73a32f -->
+<!-- translation-of: personal-data.md sha256:cd56ee4e3ce29fe9 -->
 
 # Les données personnelles dans un projet généré
 
@@ -175,7 +175,14 @@ données de *tenant* est confinée à son *tenant* comme une écriture. Chaque a
 déclarations que l'effacement et répond un enregistrement par ligne sur la personne, sous
 `<contexte>.<table>`, avec les colonnes personnelles et les clés des fichiers en données simples,
 aucune autre colonne et rien de personne d'autre ; une ligne déjà pseudonymisée se lit `[erased]`, une
-ligne supprimée ne répond rien. Le résultat est un document :
+ligne supprimée ne répond rien. Avec `--event-sourcing on`, `runExport` remet aussi ce que l'event
+store garde de la personne, par `EventStorePersonalDataExport` du kernel : un enregistrement par
+événement qui porte une valeur scellée avec la clé de la personne, sous
+`platform.event-store.<type d'événement>`, chaque valeur ouverte et nommée par son chemin dans les
+données de l'événement (`reason`, `contacts[0]`). Un flux porte le nom de son agrégat, pas celui de
+la personne : cet export lit donc tout le store, par tours de 500 événements, dans chaque *tenant* ;
+une valeur dont un effacement a détruit la clé a disparu et ne répond rien. Le résultat est un
+document :
 
 ```json
 {
@@ -185,7 +192,8 @@ ligne supprimée ne répond rien. Le résultat est un document :
   "records": [
     { "source": "billing.customers", "values": { "email": "ada@example.org", "display_name": "Ada" } },
     { "source": "billing.invoices", "values": { "customer_email": "ada@example.org" } },
-    { "source": "crm.contacts", "values": { "email": "ada@example.org", "phone": null } }
+    { "source": "crm.contacts", "values": { "email": "ada@example.org", "phone": null } },
+    { "source": "platform.event-store.care.dossier.opened", "values": { "note": "Asthma" } }
   ]
 }
 ```

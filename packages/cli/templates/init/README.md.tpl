@@ -290,7 +290,7 @@ variables of `.env`:
 
 ```bash
 npm run privacy:erase -- <subject-id> --operator <who-asks>     # {{#if eventSourcing.on}}the key, then {{/if}}every declared copy{{#if tenancy.any}}, in each tenant of TENANTS{{/if}}{{#if housekeeping.any}}, then what the platform keeps of the person{{/if}}
-npm run privacy:export -- <subject-id> > export.json            # one dated document of every declared record{{#if audit.on}}, audited{{/if}}
+npm run privacy:export -- <subject-id> > export.json            # one dated document of every declared record{{#if eventSourcing.on}} and every value the event store keeps sealed for the person{{/if}}{{#if audit.on}}, audited{{/if}}
 npm run privacy:purge                                           # what outlived its retention, as the nightly job does
 ```
 

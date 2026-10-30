@@ -276,6 +276,7 @@ export * from './infrastructure/event-sourcing/catch-up-subscription';
 export * from './infrastructure/event-sourcing/event-serializer';
 export * from './infrastructure/event-sourcing/event-sourcing-stores';
 export * from './infrastructure/event-sourcing/event-sourced-repository';
+export * from './infrastructure/event-sourcing/event-store-personal-data-export';
 export * from './infrastructure/event-sourcing/event-store-projection-rebuild';
 export * from './infrastructure/event-sourcing/personal-data-cipher';
 export * from './infrastructure/event-sourcing/postgres/event-store-tables-sql';

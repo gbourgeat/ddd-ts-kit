@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:9089340d4aa180b9 -->
+<!-- translation-of: event-sourcing.md sha256:b21a768631343456 -->
 
 # Event sourcing, par agrégat
 
@@ -496,6 +496,14 @@ ensuite, puisque les deux stockages, séparés, ne partagent aucune transaction 
 ne peut pas être écrite, l'effacement échoue, et le relancer enregistre qu'il ne restait aucune
 clé, à une date ultérieure, de sorte que la date d'achèvement n'est jamais précoce
 ([`@ddd-ts-kit/audit`](../../packages/audit/README.fr.md#e-effacements-de-personnes-concernées)).
+
+Le droit d'accès lit les mêmes valeurs scellées. `EventStorePersonalDataExport` du kernel remet
+chaque valeur scellée avec une clé de la personne, ouverte, un enregistrement par événement sous
+`<name>.<type d'événement>`, chaque valeur nommée par son chemin dans les données ; `runExport`
+d'un projet généré la donne à `exportDataSubject` à côté des exports des contextes, comme
+`platform.event-store` ([Données personnelles](personal-data.fr.md#lexport-de-bout-en-bout)). Un
+flux porte le nom de son agrégat : l'export lit donc tout le store ; une fois la clé détruite, il
+ne répond rien.
 
 Ce qu'un contexte garde de la même personne en clair, les lignes de ses tables, n'est pas scellé :
 on le déclare une fois à côté du *mapper* (`personalFields` : la colonne sujet, les colonnes

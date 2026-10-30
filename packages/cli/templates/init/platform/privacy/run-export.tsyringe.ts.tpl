@@ -4,10 +4,17 @@ import { AuditTrail, auditedPersonalDataExport, logLostRecords } from '@ddd-ts-k
 import type { Application as Container } from '@ddd-ts-kit/di';
 import {
   Clock,
+{{#if eventSourcing.on}}
+  EventStore,
+  EventStorePersonalDataExport,
+{{/if}}
   ExecutionScope,
 {{#if audit.on}}
   IdGenerator,
   Logger,
+{{/if}}
+{{#if eventSourcing.on}}
+  SubjectKeyStore,
 {{/if}}
   executionContext,
   exportDataSubject,
@@ -36,7 +43,7 @@ export interface ExportRequest {
 /**
  * The right of access and to portability of one data subject (GDPR articles 15 and 20), in an
  * execution context of its own (origin `cli`): every record each context declared in
- * `data-subject-exports.ts` keeps of the person{{#if tenancy.any}}, in every tenant{{/if}}, gathered into one dated document
+ * `data-subject-exports.ts` keeps of the person{{#if eventSourcing.on}}, and every value the event store keeps sealed with the key of the person{{/if}}{{#if tenancy.any}}, in every tenant{{/if}}, gathered into one dated document
  * of a stable format{{#if audit.on}}; every export writes its entry to the audit trail, the operator, the subject and
  * the number of records, never the values{{/if}}. A subject that is not an opaque identifier is refused
  * before anything is read.
@@ -51,10 +58,20 @@ export function runExport(subject: string, request: ExportRequest): Promise<Pers
   const onLostRecord = logLostRecords(container.resolve(Logger));
   const source = { scope, clock, ids: container.resolve(IdGenerator), onLostRecord };
   const audited = (port: PersonalDataExport): PersonalDataExport => auditedPersonalDataExport(port, trail, source);
+{{#if eventSourcing.on}}
+  const exports = [...dataSubjectExports.map((port) => container.resolve(port)), eventStoreExport(container)].map(audited);
+{{/if}}
+{{#unless eventSourcing.on}}
   const exports = dataSubjectExports.map((port) => audited(container.resolve(port)));
+{{/unless}}
 {{/if}}
 {{#unless audit.on}}
+{{#if eventSourcing.on}}
+  const exports: readonly PersonalDataExport[] = [...dataSubjectExports.map((port) => container.resolve(port)), eventStoreExport(container)];
+{{/if}}
+{{#unless eventSourcing.on}}
   const exports: readonly PersonalDataExport[] = dataSubjectExports.map((port) => container.resolve(port));
+{{/unless}}
 {{/unless}}
 
   return scope.run(context, () =>
@@ -68,6 +85,18 @@ export function runExport(subject: string, request: ExportRequest): Promise<Pers
   );
 }
 
+{{#if eventSourcing.on}}
+/** What the event store keeps of the person: every value sealed with their key, opened, under `platform.event-store.<event type>`. Empty once the key is destroyed. */
+function eventStoreExport(container: Container): PersonalDataExport {
+  return new EventStorePersonalDataExport({
+    name: 'platform.event-store',
+    events: container.resolve(EventStore),
+    keys: container.resolve(SubjectKeyStore),
+    scope: container.resolve(ExecutionScope),
+  });
+}
+
+{{/if}}
 function operatorActor(id: string): Actor {
   return { id, type: 'user', roles: [], attributes: {} };
 }

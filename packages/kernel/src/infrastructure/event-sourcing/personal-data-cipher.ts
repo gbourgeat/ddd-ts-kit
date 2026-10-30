@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { ERASED_PERSONAL_DATA } from '../../application/event-sourcing/erased-personal-data';
 import { isStoredData } from '../../application/event-sourcing/is-stored-data';
+import { isStoredList } from '../../application/event-sourcing/is-stored-list';
 import type { StoredData } from '../../application/event-sourcing/stored-data';
 import type { StoredJson } from '../../application/event-sourcing/stored-json';
 import type { SubjectKey } from '../../application/event-sourcing/subject-key';
@@ -41,6 +42,30 @@ export class PersonalDataCipher {
     });
   }
 
+  /**
+   * The values of the data sealed with a key of the subject that still exists, opened, each under
+   * its path in the data (`reason`, `cancelled.reason`, `contacts[0]`): what an export hands over
+   * of the person. A value of anyone else, or whose key was destroyed, is left out. `find` looks a
+   * key up, the key store by default: a reader of many events gives one that remembers.
+   */
+  async valuesOf(
+    subject: string,
+    data: StoredData,
+    find: (keyId: string) => Promise<SubjectKey | undefined> = (keyId) => this.keys.find(keyId),
+  ): Promise<Readonly<Record<string, string>>> {
+    const values: Record<string, string> = {};
+
+    for (const { path, sealed } of sealedIn(data, '')) {
+      const key = await find(sealed.key);
+
+      if (key?.subject === subject) {
+        values[path] = deciphered(key, sealed);
+      }
+    }
+
+    return values;
+  }
+
   private async sealed(subject: string, value: string): Promise<StoredJson> {
     const key = await this.keys.keyFor(subject);
     const iv = randomBytes(IV_BYTES);
@@ -56,19 +81,46 @@ export class PersonalDataCipher {
   private async opened(sealed: Sealed): Promise<StoredJson> {
     const key = await this.keys.find(sealed.key);
 
-    if (key === undefined) {
-      return ERASED_PERSONAL_DATA;
+    return key === undefined ? ERASED_PERSONAL_DATA : deciphered(key, sealed);
+  }
+}
+
+function deciphered(key: SubjectKey, sealed: Sealed): string {
+  const bytes = Buffer.from(sealed.data, 'base64');
+  const decipher = createDecipheriv(ALGORITHM, materialOf(key), Buffer.from(sealed.iv, 'base64'));
+
+  decipher.setAAD(Buffer.from(key.id));
+  decipher.setAuthTag(bytes.subarray(bytes.length - TAG_BYTES));
+
+  return Buffer.concat([decipher.update(bytes.subarray(0, bytes.length - TAG_BYTES)), decipher.final()]).toString(
+    'utf8',
+  );
+}
+
+/** Every sealed value of the data, at any depth, with its path. */
+function* sealedIn(value: StoredJson, path: string): Generator<{ readonly path: string; readonly sealed: Sealed }> {
+  if (isStoredList(value)) {
+    for (const [index, item] of value.entries()) {
+      yield* sealedIn(item, `${path}[${index}]`);
     }
 
-    const bytes = Buffer.from(sealed.data, 'base64');
-    const decipher = createDecipheriv(ALGORITHM, materialOf(key), Buffer.from(sealed.iv, 'base64'));
+    return;
+  }
 
-    decipher.setAAD(Buffer.from(key.id));
-    decipher.setAuthTag(bytes.subarray(bytes.length - TAG_BYTES));
+  if (!isStoredData(value)) {
+    return;
+  }
 
-    return Buffer.concat([decipher.update(bytes.subarray(0, bytes.length - TAG_BYTES)), decipher.final()]).toString(
-      'utf8',
-    );
+  const sealed = sealedOf(value);
+
+  if (sealed !== undefined) {
+    yield { path, sealed };
+
+    return;
+  }
+
+  for (const [field, item] of Object.entries(value)) {
+    yield* sealedIn(item, path === '' ? field : `${path}.${field}`);
   }
 }
 
