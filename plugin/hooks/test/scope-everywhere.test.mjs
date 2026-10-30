@@ -615,6 +615,10 @@ test('from the checkout of the conductor a builder reads, and whatever writes go
     `git -C ${worktree} pull`,
     `cd ${worktree}; sort -o src/main.ts /etc/hostname`,
     'npx ddd-ts-kit check --baseline prune',
+    'npx ddd-ts-kit docs',
+    'npx ddd-ts-kit docs --check --stored-events',
+    'npx ddd-ts-kit lint --fix',
+    'npx ddd-ts-kit affected --base main --run test',
     'git -C /etc commit -m x',
   ]) {
     const refused = run('pre-bash', bash(conductor, command, agent));
@@ -628,9 +632,18 @@ test('from the checkout of the conductor a builder reads, and whatever writes go
     'npx ddd-ts-kit list',
     'npx ddd-ts-kit worker-scope billing --dry-run',
     'npx ddd-ts-kit status --workers',
+    'npx ddd-ts-kit check',
+    'npx ddd-ts-kit check --changed-since main --json',
+    'npx ddd-ts-kit lint src/contexts/billing',
+    'npx ddd-ts-kit rules',
+    'npx ddd-ts-kit docs --check',
+    'npx ddd-ts-kit verify-merge --since main',
+    'npx ddd-ts-kit cited --base main',
+    'npx ddd-ts-kit affected --base main',
   ]) {
     assert.equal(run('pre-bash', bash(conductor, command, agent)).output, undefined, command);
   }
+  assert.equal(decision(run('pre-bash', bash(conductor, 'npx ddd-ts-kit check --baseline write', agent))), 'deny');
 });
 
 test('a builder without a scope in a repository without one, and the other agents, keep their git', () => {

@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:666c262d8a5fda3a -->
+<!-- translation-of: coding-agents.md sha256:7413c7ca96e82627 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -118,7 +118,9 @@ seulement celle qui commence par `cd <worktree> &&` : un worker lance chaque com
 celle qui écrit sans entrer dans son worktree est refusée avec cette consigne : depuis un autre
 *checkout*, un worker ne fait que lire (`cat`, `ls`, `grep`, git qui lit, `git add` et `git commit`
 dans son propre *worktree*, le kit interrogé pour lister, décrire, rendre compte ou lire un
-*briefing*), quel que soit le programme. Une session ouverte au-dessus du projet tient son worker au
+*briefing*, et ses contrôles qui n'écrivent rien : `check` sans `--baseline`, `lint` sans `--fix`,
+`rules`, `docs --check` sans `--stored-events`, `verify-merge`, `cited`, `affected` sans `--run`),
+quel que soit le programme. Une session ouverte au-dessus du projet tient son worker au
 projet que nomme sa commande, et un worker qui se tient dans son *worktree* y reste épinglé quand une
 commande commence dans un autre projet. Il ne suit un `cd`
 que lorsqu'il est certain (après `&&`, vers un répertoire qui existe, et qu'aucun dossier de

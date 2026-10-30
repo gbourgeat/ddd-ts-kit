@@ -552,9 +552,29 @@ const PATH_COMMANDS = {
   truncate: { valued: ['-s', '-r', '--size', '--reference'], changes: 'all' },
 };
 
-// The commands of the kit that write no file: what it lists, describes, explains and reports, the
-// acceptance read without `--lock`, a briefing, the place of a worker or a generator read without running it.
-const KIT_READS = new Set(['list', 'describe', 'explain', 'status', 'stories', 'story', 'story-check', 'todo']);
+// The commands of the kit that write no file: what it lists, describes, explains and reports, its
+// checks (`check` without `--baseline`, `lint` without `--fix`, `docs --check` without
+// `--stored-events`, `affected` without `--run`), the acceptance read without `--lock`, a briefing,
+// the place of a worker or a generator read without running it.
+const KIT_READS = new Set([
+  'list',
+  'describe',
+  'explain',
+  'status',
+  'stories',
+  'story',
+  'story-check',
+  'todo',
+  'check',
+  'lint',
+  'rules',
+  'docs',
+  'verify-merge',
+  'cited',
+  'affected',
+]);
+// The options by which a check of the kit writes: the baseline, a fix, the record of the stored events, a script run.
+const KIT_WRITING_OPTIONS = /^--(?:baseline|fix|stored-events|run)(?:=|$)/;
 
 // The variables of the environment by which git runs a program or reads settings given to it.
 const GIT_PROGRAM_VARIABLES =
@@ -1012,7 +1032,11 @@ function kitReads({ subcommand, args }) {
   if (['worker-scope', 'story-scope', 'generate', 'g'].includes(subcommand)) {
     return args.some((arg) => /^--(?:dry-run|resume|help)\b/.test(arg));
   }
-  return KIT_READS.has(subcommand);
+  return (
+    KIT_READS.has(subcommand) &&
+    !args.some((arg) => KIT_WRITING_OPTIONS.test(arg)) &&
+    (subcommand !== 'docs' || args.includes('--check'))
+  );
 }
 
 // What no agent runs, then what waits for a place, a landing, a lock or a generator first.

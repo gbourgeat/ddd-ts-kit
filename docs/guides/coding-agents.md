@@ -113,7 +113,9 @@ whole command line, every command of it, not only one that starts with `cd <work
 runs every command that way, and one that writes without moving into its worktree is refused with
 that instruction: from another checkout a worker only reads (`cat`, `ls`, `grep`, git that reads,
 `git add` and `git commit` in its own worktree, the kit asked to list, describe, report or read a
-briefing), whatever the program. A session opened above the project holds its worker to the project
+briefing, and its checks that write nothing: `check` without `--baseline`, `lint` without `--fix`,
+`rules`, `docs --check` without `--stored-events`, `verify-merge`, `cited`, `affected` without
+`--run`), whatever the program. A session opened above the project holds its worker to the project
 its command names, and a worker standing in its worktree stays pinned to it when a command starts in
 another project. It follows a `cd` only when it is certain (after `&&`, into a directory that
 exists, and that no folder of `CDPATH` sends elsewhere), refuses a worker the variables that move
