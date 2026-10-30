@@ -7,6 +7,9 @@ import { payloadTexts } from './payload-texts';
 
 const { emptyTodo, typeComment, unreadTodo } = payloadTexts;
 
+/** A field the schema checks: every shape but the one the generator writes no check for. */
+type CheckedField = PayloadField & { readonly shape: Exclude<PayloadShape, { kind: 'unread' }> };
+
 /** A Standard Schema written by hand, or, with no validation library, the schema of the kernel. */
 type Form = 'standard-schema' | 'kernel';
 
@@ -22,7 +25,8 @@ const LISTS: Readonly<Record<PrimitiveKind, string>> = {
   boolean: 'isListOfBooleans',
 };
 
-const SENT = "typeof input === 'object' && input !== null ? { ...input } : {}";
+/** A payload that is no object (a text, a number, a list) is refused before any field is read. */
+const NO_OBJECT = "typeof input !== 'object' || input === null || Array.isArray(input)";
 
 /**
  * Each field checked by hand, the type of the payload declared next to it: one refusal per
@@ -54,12 +58,19 @@ function typeOf({ name, fields }: PayloadOf): string[] {
     return [emptyTodo(name), `export type ${name.pascal}Payload = Readonly<Record<string, never>>;`];
   }
 
-  return [
-    typeComment(name),
-    `export interface ${name.pascal}Payload {`,
-    ...fields.map((field) => field.declaration),
-    '}',
-  ];
+  return [typeComment(name), `export interface ${name.pascal}Payload {`, ...fields.flatMap(declarationOf), '}'];
+}
+
+/**
+ * A field the generator writes no check for is let through as `unknown`, as `z.unknown()` and
+ * `Allow()` let it through: the type checker stops at the command it is handed to.
+ */
+function declarationOf(field: PayloadField): string[] {
+  if (field.shape.kind !== 'unread') {
+    return [field.declaration];
+  }
+
+  return [`  ${unreadTodo(field, field.shape.type)}`, `  readonly ${field.name}${field.optional ? '?' : ''}: unknown;`];
 }
 
 function refusalsOf(fields: readonly PayloadField[]): string[] {
@@ -70,29 +81,34 @@ function refusalsOf(fields: readonly PayloadField[]): string[] {
     '  readonly refuses: (sent: Readonly<Record<string, unknown>>) => boolean;',
     '}',
     '',
-    'const refusals: readonly Refusal[] = [',
-    ...fields.flatMap(refusalOf),
-    '];',
+    ...refusalListOf(fields.filter(isChecked)),
   ];
 }
 
-function refusalOf(field: PayloadField): string[] {
+function refusalListOf(checked: readonly CheckedField[]): string[] {
+  if (checked.length === 0) {
+    return ['const refusals: readonly Refusal[] = [];'];
+  }
+
+  return ['const refusals: readonly Refusal[] = [', ...checked.flatMap(refusalOf), '];'];
+}
+
+function refusalOf(field: CheckedField): string[] {
   const { test, message } = refusedBy(field);
-  const todo = field.shape.kind === 'unread' ? [`  ${unreadTodo(field, field.shape.type)}`] : [];
   const parts = [`path: '${field.name}'`, `message: '${message}'`, `refuses: (sent) => ${test}`];
   const line = `  { ${parts.join(', ')} },`;
 
-  return [...todo, ...(line.length <= LINE_WIDTH ? [line] : ['  {', ...parts.map((part) => `    ${part},`), '  },'])];
+  return [...(line.length <= LINE_WIDTH ? [line] : ['  {', ...parts.map((part) => `    ${part},`), '  },'])];
 }
 
-function refusedBy(field: PayloadField): { test: string; message: string } {
+function refusedBy(field: CheckedField): { test: string; message: string } {
   const sent = `sent.${field.name}`;
   const { test, message } = testOf(field.shape, sent);
 
   return { test: field.optional ? `${sent} !== undefined && ${grouped(test)}` : test, message };
 }
 
-function testOf(shape: PayloadShape, sent: string): { test: string; message: string } {
+function testOf(shape: CheckedField['shape'], sent: string): { test: string; message: string } {
   switch (shape.kind) {
     case 'instant':
       return {
@@ -106,12 +122,13 @@ function testOf(shape: PayloadShape, sent: string): { test: string; message: str
         test: shape.values.map((value) => `${sent} !== '${value}'`).join(' && '),
         message: `One of ${shape.values.join(', ')} is expected.`,
       };
-    case 'unread':
-      // Refused until its check is written: the spec of the job says so, and no payload runs unread.
-      return { test: 'true', message: 'Its check is not written yet.' };
     default:
       return { test: `typeof ${sent} !== '${shape.kind}'`, message: `${ARTICLES[shape.kind]} is expected.` };
   }
+}
+
+function isChecked(field: PayloadField): field is CheckedField {
+  return field.shape.kind !== 'unread';
 }
 
 function grouped(test: string): string {
@@ -146,7 +163,11 @@ function standardOfNothing(): string[] {
 function standardOfFields(): string[] {
   return [
     '    validate: (input) => {',
-    `      const sent: Readonly<Record<string, unknown>> = ${SENT};`,
+    `      if (${NO_OBJECT}) {`,
+    "        return { issues: [{ message: 'An object is expected.' }] };",
+    '      }',
+    '',
+    '      const sent: Readonly<Record<string, unknown>> = { ...input };',
     '      const refused = refusals.filter((refusal) => refusal.refuses(sent));',
     '',
     '      return fits(sent, refused)',
@@ -178,7 +199,11 @@ function kernelOfNothing(): string[] {
 function kernelOfFields(): string[] {
   return [
     '  parse(input) {',
-    `    const sent: Readonly<Record<string, unknown>> = ${SENT};`,
+    `    if (${NO_OBJECT}) {`,
+    "      return err([{ path: '', code: 'invalid_type', message: 'An object is expected.' }]);",
+    '    }',
+    '',
+    '    const sent: Readonly<Record<string, unknown>> = { ...input };',
     '    const refused = refusals.filter((refusal) => refusal.refuses(sent));',
     '',
     '    return fits(sent, refused)',

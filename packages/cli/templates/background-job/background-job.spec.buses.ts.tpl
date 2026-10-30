@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
-import type { BackgroundJob, BackgroundJobType, Message } from '@ddd-ts-kit/kernel';
+import type { BackgroundJob, Message } from '@ddd-ts-kit/kernel';
 import { InMemoryJobStore, QueueWorker, StoredJobQueue } from '@ddd-ts-kit/scheduling';
-import { createTestBuses } from '@ddd-ts-kit/testing';
+import { createTestBuses, earlierVersionOf } from '@ddd-ts-kit/testing';
 import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
 {{job.specImport}}
 
@@ -31,7 +31,7 @@ describe('{{name.title}}, once enqueued', () => {
 
   it('never runs a payload enqueued in an earlier shape: the job is dead with INVALID_JOB_PAYLOAD', async () => {
     const { jobQueue, worker, sent } = arrange();
-    const earlierVersion: BackgroundJobType<unknown> = {{name.pascal}}BackgroundJob;
+    const earlierVersion = earlierVersionOf({{name.pascal}}BackgroundJob);
 
     await jobQueue.enqueue(earlierVersion, {{job.misfit}});
 

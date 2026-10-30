@@ -1,4 +1,5 @@
 import type { Name } from '../../../naming';
+import { LINE_WIDTH } from '../../../layout';
 import type { RenderContext } from '../../../templating';
 import type { Scope } from '../../scope';
 import { grantedInSpec } from '../job/granted-in-spec';
@@ -51,13 +52,24 @@ function importsOf(schema: PayloadSchema): RenderContext {
   const values = schema.kernelNames.filter((name) => !name.startsWith('type '));
   const types = [...schema.kernelNames.filter((name) => name.startsWith('type ')), ...KERNEL_TYPES].sort();
   const kernel = [...values, ...types];
-  const names = values.length > 0 ? kernel.join(', ') : kernel.map((name) => name.replace(/^type /, '')).join(', ');
+  const names = values.length > 0 ? kernel : kernel.map((name) => name.replace(/^type /, ''));
 
   return {
     libraryImports: schema.libraryImports.join('\n'),
     hasLibraryImports: schema.libraryImports.length > 0,
-    kernelImport: `import ${values.length > 0 ? '' : 'type '}{ ${names} } from '@ddd-ts-kit/kernel';`,
+    kernelImport: kernelImportOf(values.length > 0 ? '' : 'type ', names),
     kitImports: schema.kitImports.join('\n'),
     hasKitImports: schema.kitImports.length > 0,
   };
+}
+
+/** On one line while it fits, a name per line otherwise, as the formatter of the project writes it. */
+function kernelImportOf(kind: string, names: readonly string[]): string {
+  const line = `import ${kind}{ ${names.join(', ')} } from '@ddd-ts-kit/kernel';`;
+
+  if (line.length <= LINE_WIDTH) {
+    return line;
+  }
+
+  return [`import ${kind}{`, ...names.map((name) => `  ${name},`), "} from '@ddd-ts-kit/kernel';"].join('\n');
 }

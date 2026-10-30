@@ -107,11 +107,63 @@ describe('generate background-job, the schema of its payload', () => {
   });
 });
 
+const OPTIONAL_ONLY = WITH_INPUTS.replace(
+  /constructor\([^)]*\)/s,
+  'constructor(\n    readonly limit?: number,\n    readonly urgent?: boolean,\n  )',
+);
+
+const WITH_UNREAD = WITH_INPUTS.replace('readonly limit?: number,', 'readonly note: string | null,');
+
+/** The job of a command whose constructor is `source`, in a project of the stack the flags name. */
+function jobOf(source: string, ...flags: string[]): string {
+  const root = jobProject(...flags);
+
+  write(root, COMMAND, source);
+  expect(cli(root, ...REMIND).code).toBe(0);
+
+  return read(root, JOB);
+}
+
+describe('generate background-job, the schema it writes by hand', () => {
+  it.each(['none', 'standard-schema'])(
+    'refuses under %s a stored payload that is no object, even when every field is optional',
+    (validation) => {
+      const job = jobOf(OPTIONAL_ONLY, '--validation', validation);
+
+      expect(job).toContain("if (typeof input !== 'object' || input === null || Array.isArray(input)) {");
+      expect(job).toContain('const sent: Readonly<Record<string, unknown>> = { ...input };');
+    },
+  );
+
+  it.each(['none', 'standard-schema'])(
+    'lets under %s a field it writes no check for through as unknown, with its TODO, as the libraries do',
+    (validation) => {
+      const job = jobOf(WITH_UNREAD, '--validation', validation);
+
+      expect(job).toContain(
+        '  // TODO(domain): check `note` (string | null) in the schema: the payload a queue kept is read with it before each run.\n  readonly note: unknown;',
+      );
+
+      expect(job).not.toMatch(/path: 'note'|=> true/);
+    },
+  );
+
+  it('writes the kernel import of a job without a validation library within the width of the formatter', () => {
+    const job = jobOf(WITH_INPUTS, '--validation', 'none');
+
+    expect(job.startsWith('import {\n  err,\n  ok,\n  type BackgroundJob,\n  type BackgroundJobExecution,\n')).toBe(
+      true,
+    );
+
+    expect(job.split('\n').filter((line) => line.length > 120 && !line.trimStart().startsWith('//'))).toEqual([]);
+  });
+});
+
 describe('the spec generate background-job writes', () => {
   it('enqueues the job as an earlier version typed it and shows the run refused, through the test application', () => {
     const spec = read(remindJob(), SPEC);
 
-    expect(spec).toContain('const earlierVersion: BackgroundJobType<unknown> = RemindCustomerBackgroundJob;');
+    expect(spec).toContain('const earlierVersion = earlierVersionOf(RemindCustomerBackgroundJob);');
     expect(spec).toContain('application.jobQueue.enqueue(earlierVersion, {})');
     expect(spec).toContain("code: 'INVALID_JOB_PAYLOAD',");
     expect(spec).toContain("      { status: 'dead', lastErrorCode: 'INVALID_JOB_PAYLOAD' },");

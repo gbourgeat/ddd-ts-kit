@@ -246,7 +246,7 @@ describe('generate background-job and process, where the platform is wired by ha
   it('tests the job and the timeout through a queue and a worker in memory, on the test buses', () => {
     const spec = read(root, JOB_SPEC);
 
-    expect(spec).toContain("import { createTestBuses } from '@ddd-ts-kit/testing';");
+    expect(spec).toContain("import { createTestBuses, earlierVersionOf } from '@ddd-ts-kit/testing';");
     expect(spec).toContain('await jobQueue.enqueue(CompileStatementsBackgroundJob, {});');
     expect(spec).toContain("expect(sent[0]).toMatchObject({ actor: { id: 'test-user' } });");
 

@@ -3,7 +3,8 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 {{spec.diPlain}}
 {{spec.contextImports}}
-import type { Actor, BackgroundJobType, Message } from '@ddd-ts-kit/kernel';
+import type { Actor, Message } from '@ddd-ts-kit/kernel';
+import { earlierVersionOf } from '@ddd-ts-kit/testing';
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 {{job.permissionsImport}}
 import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
@@ -41,7 +42,7 @@ describe('{{name.title}}, once enqueued', () => {
 
   it('never runs a payload enqueued in an earlier shape: the job is dead with INVALID_JOB_PAYLOAD', async () => {
     const { application, sent } = {{spec.await}}arrange();
-    const earlierVersion: BackgroundJobType<unknown> = {{name.pascal}}BackgroundJob;
+    const earlierVersion = earlierVersionOf({{name.pascal}}BackgroundJob);
 
     await application.as(clerk, () => application.jobQueue.enqueue(earlierVersion, {{job.misfit}}));
 

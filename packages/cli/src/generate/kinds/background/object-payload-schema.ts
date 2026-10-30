@@ -1,11 +1,10 @@
 import type { PayloadField } from './payload-field';
 import type { PayloadOf } from './payload-of';
 import type { PayloadSchema } from './payload-schema';
+import type { PayloadShape, PrimitiveKind } from './payload-shape';
 import { payloadTexts } from './payload-texts';
 
 const { emptyTodo, typeComment, unreadTodo } = payloadTexts;
-
-import type { PayloadShape, PrimitiveKind } from './payload-shape';
 
 type ObjectLibrary = 'zod' | 'typebox';
 
