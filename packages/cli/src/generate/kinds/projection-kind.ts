@@ -15,13 +15,16 @@ import { wire } from '../wire';
 import { wiringFamily } from '../wiring-family';
 import { subscriptionVars } from './subscription-vars';
 import type { EventDeclaration } from './event-declaration';
-import { findEventDeclaration } from './find-event-declaration';
+import { declarationsOf } from './declarations-of';
+import { eventTypeAsPublished } from './event-type-as-published';
+import { pickDeclaration } from './pick-declaration';
+import { refuseUnpublishedVersion } from './refuse-unpublished-version';
 import { ownEntry } from '../../config/values/own-entry';
 
 export const projectionKind: Kind = {
   name: 'projection',
   aliases: ['projector'],
-  usage: 'projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...',
+  usage: 'projection <context> <Name> <eventType>[@v<n>] [--term "<Term>=<meaning>"]...',
   summary:
     'A projector, the class that keeps one read model up to date from integration events of its own context or of a declared upstream, and its spec; registered in the module file of its context in the explicit style. After `generate integration-event <context> <Aggregate> <Fact>` of its eventType, in the context that publishes it.',
   positionals: ['context', 'Name', 'eventType'],
@@ -34,12 +37,18 @@ export const projectionKind: Kind = {
 
     const name = label(scope, request.args[1] ?? '', { what: 'projection', strip: ['projection', 'projector'] });
 
-    const eventType = request.args[2] ?? '';
-    const publisher = publisherOf(scope, eventType);
-    const declaration = findEventDeclaration(scope, publisher.kebab, eventType);
+    const input = request.args[2] ?? '';
+    const { written: eventType, version } = eventTypeAsPublished(input, undefined);
+    const publisher = publisherOf(scope, eventType, input);
+    const found = declarationsOf(scope, publisher.kebab, eventType);
+    const declaration = pickDeclaration(scope, found, version);
 
     if (declaration === undefined) {
-      throw undeclaredEvent(publisher, eventType);
+      if (version !== undefined) {
+        refuseUnpublishedVersion(found, eventType, version);
+      }
+
+      throw undeclaredEvent(publisher, { type: eventType, version });
     }
 
     const context = vars(scope, {
@@ -63,13 +72,13 @@ export const projectionKind: Kind = {
 };
 
 /** The context that publishes the event: this one, or one of its declared upstreams. */
-function publisherOf(scope: Scope, eventType: string): Name {
+function publisherOf(scope: Scope, eventType: string, input: string): Name {
   const parts = eventType.split('.');
 
   if (parts.length !== 3 || !parts.every((part) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(part))) {
     throw new CliError(
-      `"${eventType}" is not the type of an integration event.`,
-      `Pass the type as published, <context>.<aggregate>.<fact> in kebab-case, for example ${scope.context.kebab}.invoice.issued.`,
+      `"${input}" is not the type of an integration event.`,
+      `Pass the type as published, <context>.<aggregate>.<fact> in kebab-case, with or without @v<n>, for example ${scope.context.kebab}.invoice.issued or ${scope.context.kebab}.invoice.issued@v1.`,
     );
   }
 
@@ -86,12 +95,16 @@ function publisherOf(scope: Scope, eventType: string): Name {
   );
 }
 
-function undeclaredEvent(publisher: Name, eventType: string): MissingPrerequisite {
-  const [, aggregate = '', fact = ''] = eventType.split('.');
+function undeclaredEvent(
+  publisher: Name,
+  { type, version }: { type: string; version: number | undefined },
+): MissingPrerequisite {
+  const [, aggregate = '', fact = ''] = type.split('.');
+  const at = version === undefined ? '' : ` --version ${version}`;
 
   return new MissingPrerequisite(
-    `${publisher.kebab} declares no ${eventType} in its published language.`,
-    `A projection applies an event through its declaration, @On(<definition>): create it first with \`ddd-ts-kit generate integration-event ${publisher.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}\`, then run the command again.`,
+    `${publisher.kebab} declares no ${type}${version === undefined ? '' : ` at v${version}`} in its published language.`,
+    `A projection applies an event through its declaration, @On(<definition>): create it first with \`ddd-ts-kit generate integration-event ${publisher.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}${at}\`, then run the command again.`,
   );
 }
 

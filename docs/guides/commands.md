@@ -118,7 +118,7 @@ path). A field of another type, the `readonly string[]` of the products for one,
 |---|---|---|---|---|
 | `/ddd-ts-kit:integration-event` | a versioned event in the producer's published language, its consumer downstream | a context must react to another | the declaration, the outbox publication, an idempotent handler | `npm run docs:generate` |
 | `npx ddd-ts-kit generate integration-event <context> <Aggregate> <Fact>` | declares the event | in the upstream slice | `published-language/*.integration-event.ts` and its payload | `generate integration-handler` downstream |
-| `npx ddd-ts-kit generate integration-handler <context> <upstream> <eventType>` | the consumer, named after the event, or as the design calls it with `--name <Name>` (the consumer name follows) | in the downstream slice | the handler, its spec, its registration | `npm run docs:generate` |
+| `npx ddd-ts-kit generate integration-handler <context> <upstream> <eventType>[@v<n>]` | the consumer, named after the event, or as the design calls it with `--name <Name>` (the consumer name follows) | in the downstream slice | the handler, its spec, its registration | `npm run docs:generate` |
 | `npx ddd-ts-kit generate acl` or `gateway` | an anti-corruption layer, or a synchronous need behind a port | a downstream that must not take the upstream's model | the port and its adapter | the context map note |
 
 ## Persistence
@@ -700,10 +700,10 @@ Kinds
   form <context> <UseCase> [--module <module>]
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]... [--module <module>]
-  integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: consumer)
+  integration-handler <context> <upstreamContext> <eventType>[@v<n>] [--version <n>] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: consumer)
   erasure-handler <context> [--module <module>]
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
-  projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: projector)
+  projection <context> <Name> <eventType>[@v<n>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: projector)
   job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]... [--module <module>]
   background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]... [--module <module>]
   process <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: process-manager)

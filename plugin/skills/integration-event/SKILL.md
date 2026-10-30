@@ -57,10 +57,11 @@ The relationship is declared first (skill `ddd-ts-kit:context-map`); the generat
 otherwise.
 
 ```bash
-npx ddd-ts-kit generate integration-handler <ctx> <upstream> <event-type> --json
+npx ddd-ts-kit generate integration-handler <ctx> <upstream> <event-type>[@v<n>] --json
 ```
 
-writes `application/integration/handlers/<name>.integration-handler.ts` and its spec. The name
+writes `application/integration/handlers/<name>.integration-handler.ts` and its spec. The type
+is taken as `list` prints it, with or without `@v<n>` (the newest version without one). The name
 comes from the event; when the design names the handler after what it does here, pass
 `--name <Name>`: the file, the class, the consumer name and the system actor follow it.
 

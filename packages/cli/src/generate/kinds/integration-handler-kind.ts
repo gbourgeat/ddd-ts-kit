@@ -12,7 +12,11 @@ import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { wire } from '../wire';
 import type { EventDeclaration } from './event-declaration';
-import { findEventDeclaration } from './find-event-declaration';
+import { declarationsOf } from './declarations-of';
+import { eventTypeAsPublished } from './event-type-as-published';
+import { pickDeclaration } from './pick-declaration';
+import { refuseUnpublishedVersion } from './refuse-unpublished-version';
+import type { WantedEvent } from './wanted-event';
 import { subscriptionVars } from './subscription-vars';
 import { givenName } from '../given-name';
 import { learnTerms } from '../learn-terms';
@@ -21,7 +25,8 @@ import { ownEntry } from '../../config/values/own-entry';
 export const integrationHandlerKind: Kind = {
   name: 'integration-handler',
   aliases: ['consumer'],
-  usage: 'integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]...',
+  usage:
+    'integration-handler <context> <upstreamContext> <eventType>[@v<n>] [--version <n>] [--name <Name>] [--term "<Term>=<meaning>"]...',
   summary:
     'An idempotent handler of an integration event of a declared upstream, its spec and its subscription under a consumer name. After `generate integration-event <upstreamContext> <Aggregate> <Fact>` of its eventType.',
   positionals: ['context', 'upstreamContext', 'eventType'],
@@ -33,17 +38,17 @@ export const integrationHandlerKind: Kind = {
     learnTerms(scope);
 
     const upstream = declaredUpstream(scope, request.args[1] ?? '');
-    const eventType = eventTypeOf(upstream, request.args[2] ?? '');
+    const { type: eventType, version } = wantedEvent(upstream, request.args[2] ?? '', request.flags.version);
 
     const name = givenName(scope, toName(eventType.split('.').join(' ')), {
       what: 'integration handler',
       suffix: ['integration', 'handler'],
     });
 
-    const declaration = findEventDeclaration(scope, upstream.kebab, eventType);
+    const declaration = declarationAt(scope, upstream, { type: eventType, version });
 
     if (declaration === undefined && isDeclared(scope.config)) {
-      throw undeclaredEvent(upstream, eventType);
+      throw undeclaredEvent(upstream, { type: eventType, version });
     }
 
     const context = vars(scope, {
@@ -71,12 +76,13 @@ export const integrationHandlerKind: Kind = {
 };
 
 /** A handler declares itself against the declaration of its event: without one there is nothing to handle. */
-function undeclaredEvent(upstream: Name, eventType: string): MissingPrerequisite {
-  const [, aggregate = '', fact = ''] = eventType.split('.');
+function undeclaredEvent(upstream: Name, { type, version }: WantedEvent): MissingPrerequisite {
+  const [, aggregate = '', fact = ''] = type.split('.');
+  const at = version === undefined ? '' : ` --version ${version}`;
 
   return new MissingPrerequisite(
-    `${upstream.kebab} declares no ${eventType} in its published language.`,
-    `An integration event handler declares itself with @IntegrationEventHandler(<definition>, ...), which needs the declaration of the event: create it first with \`ddd-ts-kit generate integration-event ${upstream.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}\`, then run the command again.`,
+    `${upstream.kebab} declares no ${type}${version === undefined ? '' : ` at v${version}`} in its published language.`,
+    `An integration event handler declares itself with @IntegrationEventHandler(<definition>, ...), which needs the declaration of the event: create it first with \`ddd-ts-kit generate integration-event ${upstream.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}${at}\`, then run the command again.`,
   );
 }
 
@@ -98,20 +104,40 @@ function declaredUpstream(scope: Scope, input: string): Name {
   );
 }
 
-function eventTypeOf(upstream: Name, input: string): string {
-  const parts = input.split('.');
+/** The declaration of the version asked for, the newest without one; a version that cannot be found is refused. */
+function declarationAt(scope: Scope, upstream: Name, wanted: WantedEvent): EventDeclaration | undefined {
+  const found = declarationsOf(scope, upstream.kebab, wanted.type);
+  const declaration = pickDeclaration(scope, found, wanted.version);
+
+  if (declaration === undefined && wanted.version !== undefined) {
+    refuseUnpublishedVersion(found, wanted.type, wanted.version);
+
+    throw undeclaredEvent(upstream, wanted);
+  }
+
+  return declaration;
+}
+
+/** The event type of the command line, `<type>[@v<n>]`, of the upstream, at the version it names. */
+function wantedEvent(
+  upstream: Name,
+  input: string,
+  flag: string | undefined,
+): { type: string; version: number | undefined } {
+  const { written, version } = eventTypeAsPublished(input, flag);
+  const parts = written.split('.');
 
   const wellFormed =
     parts.length === 3 && parts.every((part) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(part)) && parts[0] === upstream.kebab;
 
-  if (wellFormed) {
-    return input;
+  if (!wellFormed) {
+    throw new CliError(
+      `"${input}" is not an event type of "${upstream.kebab}".`,
+      `Pass the type as published, <context>.<aggregate>.<fact> in kebab-case, with or without @v<n>, for example ${upstream.kebab}.invoice.issued or ${upstream.kebab}.invoice.issued@v1.`,
+    );
   }
 
-  throw new CliError(
-    `"${input}" is not an event type of "${upstream.kebab}".`,
-    `Pass the type as published, <context>.<aggregate>.<fact> in kebab-case, for example ${upstream.kebab}.invoice.issued.`,
-  );
+  return { type: written, version };
 }
 
 /** The script that writes the event catalog before 0.6 found a consumer by the type written out: such a project keeps it written out. */
