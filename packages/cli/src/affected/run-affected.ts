@@ -5,6 +5,7 @@ import type { Io } from '../commands/io';
 import { inDialect } from '../package-manager/in-dialect';
 import { PARTIAL_RUN } from './format-selection';
 import type { Selection } from './selection';
+import { refuseWindowsShell } from '../refuse-windows-shell';
 
 /** The variable the test runner config reads (`unaffectedContexts()` of @ddd-ts-kit/testing). */
 const AFFECTED = 'DDD_TS_KIT_AFFECTED';
@@ -40,10 +41,11 @@ export function runAffected({ root, manager, selection, script }: AffectedRun, i
       : `${script} on everything (${selection.reason}).`,
   );
 
+  refuseWindowsShell(process.platform);
+
   const run = spawnSync(program, args, {
     cwd: root,
     env: { ...process.env, [AFFECTED]: partial ? selection.contexts.join(',') : '' },
-    shell: process.platform === 'win32',
     stdio: 'inherit',
   });
 

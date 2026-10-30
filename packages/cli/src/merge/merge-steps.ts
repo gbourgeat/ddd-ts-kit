@@ -9,6 +9,7 @@ import type { MergeState, MergeStep } from './merge-state';
 import { NEXT_STEPS } from './next-steps';
 import { renumberAdrs } from './renumber-adrs';
 import { renumberMigrations } from './renumber-migrations';
+import { refuseWindowsShell } from '../refuse-windows-shell';
 
 /** What one step gave: the report with what it did, and why the merge stops when it does. */
 export interface StepOutcome {
@@ -35,10 +36,11 @@ export const MERGE_STEPS: Readonly<
       context.config?.stack.packageManager ??
       (fs.existsSync(path.join(context.root, 'pnpm-lock.yaml')) ? 'pnpm' : 'npm');
 
+    refuseWindowsShell(process.platform);
+
     const run = spawnSync(manager, ['install'], {
       cwd: context.root,
       encoding: 'utf8',
-      shell: process.platform === 'win32',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 

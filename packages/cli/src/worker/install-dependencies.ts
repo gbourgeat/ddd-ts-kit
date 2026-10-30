@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import type { Stack } from '../config';
 import { inDialect } from '../package-manager/in-dialect';
+import { refuseWindowsShell } from '../refuse-windows-shell';
 
 /** Enough of a failed install to read its cause, little enough to keep a note short. */
 const TAIL_LINES = 15;
@@ -24,11 +25,12 @@ export function installDependencies(directory: string, manager: Stack['packageMa
   const [program = 'npm', ...args] = command.split(' ');
   const started = Date.now();
 
+  refuseWindowsShell(process.platform);
+
   const run = spawnSync(program, args, {
     cwd: directory,
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
-    shell: process.platform === 'win32',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
