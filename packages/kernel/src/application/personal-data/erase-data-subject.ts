@@ -26,8 +26,9 @@ interface Outcome {
  * running the erasure again completes it. Only a mistyped id skips the rebuilds. A subject that is
  * not an opaque identifier is refused before any key is touched: the audited keys write the
  * subject into the append-only trail, which never holds a name or an email. Give it the keys
- * wrapped by `auditedSubjectKeys` of `@ddd-ts-kit/audit`, so that every erasure leaves a dated proof;
- * a project that seals nothing (its aggregates are rows) gives none, and erases its copies alone.
+ * wrapped by `auditedSubjectKeys` and the copies wrapped by `auditedPersonalDataErasure` of
+ * `@ddd-ts-kit/audit`, so that every erasure leaves a dated proof of who asked for it; a project that
+ * seals nothing (its aggregates are rows) gives no keys, and its copies are that proof.
  */
 export async function eraseDataSubject(subject: string, parts: DataSubjectErasure): Promise<DataSubjectErasureReport> {
   if (!isDataSubjectId(subject)) {
