@@ -176,6 +176,15 @@ describe('toProblem', () => {
     expect(JSON.stringify(problem)).not.toContain('5000');
   });
 
+  it('answers 500 for a fault whose code the mapping does not give a status of a server', () => {
+    const lookup = Object.assign(new Error('relation timed out'), { code: 'HYDRATION_TIMEOUT' });
+    const refusalCode = Object.assign(new Error('not a refusal'), { code: 'NOT_FOUND' });
+
+    expect(toProblem(lookup, mapper, 'req-1')).toMatchObject({ status: 500, code: 'INTERNAL_ERROR' });
+    expect(toProblem(refusalCode, mapper, 'req-1')).toMatchObject({ status: 500, code: 'INTERNAL_ERROR' });
+    expect(toProblem('thrown text', mapper, 'req-1')).toMatchObject({ status: 500, code: 'INTERNAL_ERROR' });
+  });
+
   it('describes a domain error with its code, status and message', () => {
     expect(toProblem(new NotFoundError('Order 7 does not exist.'), mapper, 'req-1')).toEqual({
       type: 'urn:problem:not-found',

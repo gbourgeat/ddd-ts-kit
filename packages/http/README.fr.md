@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:996f3b132e54748f -->
+<!-- translation-of: README.md sha256:444cc45f98644b14 -->
 
 # @ddd-ts-kit/http
 
@@ -627,7 +627,9 @@ perdue ou un interblocage : le client renvoie la requête), `INVARIANT_VIOLATION
 `UNSUPPORTED_MEDIA_TYPE` 415 (un corps ou un fichier d'un type que la route ne prend pas),
 `PRECONDITION_REQUIRED` 428, et pour les fichiers `FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413, et
 `SERVICE_UNAVAILABLE` 503 (une unité de travail que la base n'a pas pu servir à temps,
-`TransactionTimeoutError` : le client réessaie plus tard). Un code du domaine sans correspondance répond 422 (`fallbackStatus` du second argument le change).
+`TransactionTimeoutError` : le client réessaie plus tard). Une erreur qui n'est pas une
+`DomainError` répond 500 `INTERNAL_ERROR`, sauf si son `code` correspond à un statut de serveur,
+comme `SERVICE_UNAVAILABLE` : elle garde ce statut et ce code, rien de son message. Un code du domaine sans correspondance répond 422 (`fallbackStatus` du second argument le change).
 
 <!-- checked sample -->
 ```ts

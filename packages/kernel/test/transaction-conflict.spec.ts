@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   CONCURRENCY_CONFLICT,
   ConcurrencyError,
+  DomainError,
   InMemoryUnitOfWork,
+  isUnexpectedError,
   NotFoundError,
   SERVICE_UNAVAILABLE,
   TransactionConflictError,
@@ -89,5 +91,15 @@ describe('a transaction that waited or ran past the time its ORM allows', () => 
 
     expect(await rejectionOf(refusal)).toBe(refusal);
     expect(await rejectionOf(other)).toBe(other);
+  });
+});
+
+describe('a unit of work the database could not serve in time, as the readers of errors see it', () => {
+  it('is no business refusal: the error reporting reads it as unexpected, with its code and its cause', async () => {
+    const rejection = await rejectionOf({ code: 'P2028' });
+
+    expect(rejection).not.toBeInstanceOf(DomainError);
+    expect(isUnexpectedError(rejection)).toBe(true);
+    expect(rejection).toMatchObject({ name: 'TransactionTimeoutError', code: SERVICE_UNAVAILABLE });
   });
 });

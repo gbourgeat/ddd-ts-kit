@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryMetrics } from '@ddd-ts-kit/kernel';
+import { FixedClock, InMemoryMetrics, TransactionTimeoutError } from '@ddd-ts-kit/kernel';
 import { CIRCUIT_OPEN, CircuitOpenError, circuitBreaker, circuitStateGauge, type CircuitStateChange } from '../src';
 import { FlakyGateway } from './support/flaky-gateway';
 import { PairNotQuoted } from './support/pair-not-quoted';
@@ -53,6 +53,18 @@ describe('circuitBreaker', () => {
     await failing(gateway, 1);
 
     await expect(gateway.quote('EUR-USD')).resolves.toBeDefined();
+  });
+
+  it('counts a unit of work the database could not serve in time: the dependency is saturated', async () => {
+    const clock = new FixedClock(start);
+    const gateway = circuitBreaker({ failureThreshold: 1, resetAfterMs: 30_000, clock })(new QuoteGateway());
+
+    await gateway
+      .failNext(new TransactionTimeoutError({ code: 'P2024' }))
+      .quote('EUR-USD')
+      .catch(() => undefined);
+
+    await expect(gateway.quote('EUR-USD')).rejects.toBeInstanceOf(CircuitOpenError);
   });
 
   it('does not count a business refusal: the dependency answered', async () => {

@@ -1,7 +1,7 @@
 import { TransactionConflictError } from '../../domain/errors/transaction-conflict-error';
-import { TransactionTimeoutError } from '../../domain/errors/transaction-timeout-error';
 import { isTransactionConflict } from '../persistence/is-transaction-conflict';
 import { isTransactionTimeout } from '../persistence/is-transaction-timeout';
+import { TransactionTimeoutError } from '../persistence/transaction-timeout-error';
 import { dispatchAfterCommit } from './dispatch-after-commit';
 import { dispatchBeforeCommit } from './dispatch-before-commit';
 import type { CommitStep } from './commit-step';

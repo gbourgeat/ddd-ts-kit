@@ -272,6 +272,7 @@ export * from './infrastructure/domain-events/save-after-commit-error';
 export * from './infrastructure/domain-events/unit-of-work-stage';
 export * from './infrastructure/domain-events/when-committed';
 export * from './infrastructure/domain-events/within-unit-of-work';
+export * from './infrastructure/persistence/transaction-timeout-error';
 export * from './infrastructure/event-sourcing/catch-up-subscription';
 export * from './infrastructure/event-sourcing/event-serializer';
 export * from './infrastructure/event-sourcing/event-sourcing-stores';
