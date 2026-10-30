@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:9b9306b4ea1a31f4 -->
+<!-- translation-of: CONTRIBUTING.md sha256:3cee6c67dadb9b0f -->
 
 # Contribuer
 

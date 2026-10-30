@@ -1,5 +1,5 @@
 [English](0001-lines-left-out-of-the-coverage-measure.md) · **Français**
-<!-- translation-of: 0001-lines-left-out-of-the-coverage-measure.md sha256:eac5c116a715f97d -->
+<!-- translation-of: 0001-lines-left-out-of-the-coverage-measure.md sha256:90a1fec58567a004 -->
 
 # ADR-0001 : les lignes laissées hors de la mesure de couverture
 
@@ -25,6 +25,8 @@ Chaque vérification garde un état que ses appelants ne peuvent pas produire. L
 | `cli`, `tree-at.ts`, une erreur qui n'est pas une `CliError` | `readConfig` enveloppe chaque échec dans une `CliError`. 226 479 configurations générées n'ont donné aucune autre erreur, ce qui est un indice fort et non une preuve. |
 | `eslint-plugin`, `pattern-identifiers.ts`, un autre genre de cible | L'analyseur refuse une expression membre dans une déclaration ou un paramètre. |
 | `eslint-plugin`, `returns-package-type.ts`, `this` comme nom | `this` n'apparaît dans un nom d'entité que sous `typeof`, jamais dans une référence de type. |
+
+Les deux points d'entrée de la CLI, `bin.ts` et `refresh-declarations.ts`, sont laissés hors de la mesure dans `vitest.config.ts` : chacun est un appel qui s'exécute comme un processus, que les specs de bout en bout lancent depuis le *package* construit.
 
 ## Quand en retirer une
 

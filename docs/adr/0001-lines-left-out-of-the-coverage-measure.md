@@ -25,6 +25,8 @@ Each check guards a state its callers cannot produce. Removing it would leave th
 | `eslint-plugin`, `pattern-identifiers.ts`, another kind of target | The parser refuses a member expression in a declaration or a parameter. |
 | `eslint-plugin`, `returns-package-type.ts`, `this` as a name | `this` stands in an entity name only under `typeof`, never in a type reference. |
 
+The two entry points of the CLI, `bin.ts` and `refresh-declarations.ts`, are left out in `vitest.config.ts`: each is one call that runs as a process, which the end-to-end specs run from the built package.
+
 ## When to remove one
 
 A comment goes as soon as a narrower type makes its check impossible to write, or a change makes the state reachable: the check then gets a spec. A new line left out comes with a row in this table, in the same pull request.
