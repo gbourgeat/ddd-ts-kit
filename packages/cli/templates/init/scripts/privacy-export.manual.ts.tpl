@@ -56,6 +56,10 @@ const persistence = openPersistence();
 
 const application = composeApplication(persistence, {
   events: inProcessEvents(),
+{{#if audit.on}}
+  // Errors alone are logged: a failure whose audit entry could not be written says so, and what the script prints stays clean.
+  log: { level: 'error', format: 'json', service: 'privacy-export', environment: process.env['NODE_ENV'] ?? 'development', scrubMessages: true },
+{{/if}}
 {{#if http.any}}
   authenticator: offlineAuthenticator,
 {{/if}}

@@ -1,5 +1,5 @@
 {{#if audit.on}}
-import { AuditTrail, auditedPersonalDataRetention } from '@ddd-ts-kit/audit';
+import { AuditTrail, auditedPersonalDataRetention, logLostRecords } from '@ddd-ts-kit/audit';
 {{/if}}
 import type { Resolve } from '@ddd-ts-kit/di';
 import {
@@ -7,6 +7,7 @@ import {
 {{#if audit.on}}
   ExecutionScope,
   IdGenerator,
+  Logger,
 {{/if}}
   isPersonalDataRetention,
   purgeExpiredPersonalData,
@@ -31,7 +32,8 @@ export function runPurge(resolve: Resolve): Promise<PersonalDataPurgeReport> {
   const retentions = dataSubjectCopies.map((copy) => resolve(copy)).filter(isPersonalDataRetention);
 {{#if audit.on}}
   const trail = resolve(AuditTrail);
-  const source = { scope: resolve(ExecutionScope), clock, ids: resolve(IdGenerator) };
+  const onLostRecord = logLostRecords(resolve(Logger));
+  const source = { scope: resolve(ExecutionScope), clock, ids: resolve(IdGenerator), onLostRecord };
 
   const audited = (port: PersonalDataRetention): PersonalDataRetention =>
     auditedPersonalDataRetention(port, trail, source);

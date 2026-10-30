@@ -5,6 +5,7 @@ import {
   auditIntegrationEvents,
   auditMiddleware,
   auditedSubjectKeys,
+  logLostRecords,
   type AuditReader,
   type AuditSource,
   type AuditTrail,
@@ -13,7 +14,14 @@ import {
 import { KnexAuditTrail } from '@ddd-ts-kit/audit/knex';
 import type { OnDecision } from '@ddd-ts-kit/auth';
 import type { EventSubscription } from '@ddd-ts-kit/events';
-import { acrossTenants, type BusMiddleware, type SubjectKeyStore, type TenantElevation } from '@ddd-ts-kit/kernel';
+import {
+  acrossTenants,
+  type AuditRecord,
+  type BusMiddleware,
+  type Logger,
+  type SubjectKeyStore,
+  type TenantElevation,
+} from '@ddd-ts-kit/kernel';
 import type { Persistence } from '@/platform/database/persistence';
 import { AUDIT_SCHEMA } from '@/platform/database/schema';
 import { auditPermissions } from '@/platform/audit/audit.permissions';
@@ -57,11 +65,14 @@ export interface Audit {
   readonly consumer: string;
   /** The keys of the data subjects: every erasure, whoever asks for it, leaves an entry with its date. */
   readonly subjectKeys: SubjectKeyStore;
+  /** What a source outside this file passes on: a failure whose entry could not be written is told to the log. */
+  readonly onLostRecord: (error: unknown, record: AuditRecord | undefined) => void;
 }
 
-export function createAudit(persistence: Persistence, source: AuditSource): Audit {
+export function createAudit(persistence: Persistence, source: AuditSource, logger: Logger): Audit {
   const trail = createAuditTrail(persistence);
   const { unitOfWork, processedEvents } = persistence;
+  const onLostRecord = logLostRecords(logger);
 
   return {
     trail,
@@ -70,8 +81,8 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
     refusals: auditGuardRefusals(trail, source),
     decisions: auditDecisions(trail, { ...source, sensitivePermissions: SENSITIVE_READS }),
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.
-    commands: auditMiddleware(trail, { ...source, unitOfWork }),
-    queries: auditMiddleware(trail, { ...source, queries: [SearchAuditEntriesQuery] }),
+    commands: auditMiddleware(trail, { ...source, unitOfWork, onLostRecord }),
+    queries: auditMiddleware(trail, { ...source, queries: [SearchAuditEntriesQuery], onLostRecord }),
     subscriptions: auditIntegrationEvents(trail, {
       registry: auditedEvents,
       clock: source.clock,
@@ -82,7 +93,8 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
       consumer,
     }),
     consumer,
-    subjectKeys: auditedSubjectKeys(persistence.eventSourcing.subjectKeys, trail, source),
+    subjectKeys: auditedSubjectKeys(persistence.eventSourcing.subjectKeys, trail, { ...source, onLostRecord }),
+    onLostRecord,
   };
 }
 

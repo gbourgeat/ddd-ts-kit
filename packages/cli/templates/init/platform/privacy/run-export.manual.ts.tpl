@@ -39,8 +39,8 @@ export function runExport(subject: string, request: ExportRequest): Promise<Pers
   const { platform, operator, correlationId } = request;
   const context = executionContext({ correlationId, actor: operatorActor(operator), origin: 'cli' });
 {{#if audit.on}}
-  const { trail } = platform.audit;
-  const source = { scope: platform.scope, clock: platform.clock, ids: platform.ids };
+  const { trail, onLostRecord } = platform.audit;
+  const source = { scope: platform.scope, clock: platform.clock, ids: platform.ids, onLostRecord };
   const audited = (port: PersonalDataExport): PersonalDataExport => auditedPersonalDataExport(port, trail, source);
   const exports = dataSubjectExports.map((exported) => audited(exported(platform)));
 {{/if}}

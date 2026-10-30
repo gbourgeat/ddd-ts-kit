@@ -28,7 +28,10 @@ export function createEventSourcing(persistence: Persistence, audit: Audit, sour
 {{#unless tenancy.any}}
   const stores = persistence.eventSourcing;
 {{/unless}}
-  const subjectKeys = auditedSubjectKeys(stores.subjectKeys, audit.trail, source);
+  const subjectKeys = auditedSubjectKeys(stores.subjectKeys, audit.trail, {
+    ...source,
+    onLostRecord: audit.onLostRecord,
+  });
 
   return { ...stores, subjectKeys, cipher: new PersonalDataCipher(subjectKeys) };
 }

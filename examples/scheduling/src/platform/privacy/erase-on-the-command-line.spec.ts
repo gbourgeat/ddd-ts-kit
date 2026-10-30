@@ -4,6 +4,7 @@ import {
   FixedClock,
   FixedExecutionScope,
   InMemoryFileStorage,
+  InMemoryLogger,
   NotADataSubjectIdError,
   PersonalDataCipher,
   SequentialIdGenerator,
@@ -40,7 +41,7 @@ const source = { scope, clock: new FixedClock(NOW), ids };
 
 beforeAll(async () => {
   database = await openTestDatabase();
-  audit = createAudit(database.persistence, source);
+  audit = createAudit(database.persistence, source, new InMemoryLogger());
   persons = new KnexPersonDirectory(database.persistence.database, scope);
 
   const repository = new KnexPersonRepository(

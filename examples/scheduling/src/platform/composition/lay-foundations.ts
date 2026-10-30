@@ -50,6 +50,6 @@ export function layFoundations(persistence: Persistence, options: Observed): Fou
     logger,
     metrics: createMetrics(),
     traced: traceApplication({ consumers: options.traceConsumers ?? 'continue' }),
-    audit: createAudit(persistence, { scope, clock, ids }),
+    audit: createAudit(persistence, { scope, clock, ids }, logger),
   };
 }

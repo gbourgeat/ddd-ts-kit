@@ -71,6 +71,7 @@ export {
   type AuditedSubjectKeysOptions,
 } from './sources/audited-subject-keys';
 export type { AuthorizationDecision } from './sources/authorization-decision';
+export { logLostRecords } from './sources/log-lost-records';
 export { TenantAuditReader } from './tenancy/tenant-audit-reader';
 export type { ArchivableAuditTrail } from './archive/archivable-audit-trail';
 export type { ArchiveOptions } from './archive/archive-options';
