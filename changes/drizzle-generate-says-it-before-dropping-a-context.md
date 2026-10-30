@@ -1,1 +1,0 @@
-**`drizzle-generate` says before it runs that the migration will drop the tables of a context the schema index no longer names.** The warning gives the tables and the fix, and the exit code does not change: `DROP TABLE` of a table left the index by accident takes its rows with it once migrated, and a table removed from the tables file of a context on purpose is not concerned.

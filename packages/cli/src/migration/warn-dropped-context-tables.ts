@@ -1,37 +1,74 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isRecord } from '../check/support/is-record';
 import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder';
+import { isRecord } from '../check/support/is-record';
 import type { Io } from '../commands/io';
-import { readConfig } from '../config';
+import { readConfig, type Config } from '../config';
 import { schemaOfContext } from '../prisma-schema';
+import { declaredTables, type DeclaredTable } from './declared-tables';
+import { listedInIndex } from './listed-in-index';
 import { migrationFiles } from './migration-files';
 
+/** What writes the migrations: the tables each one knows of are read from what it leaves. */
+type MigrationTool = 'drizzle-kit' | 'typeorm';
+
+const CREATE_TABLE = /CREATE TABLE (?:IF NOT EXISTS )?"(\w+)"\."(\w+)"/g;
+
+interface ContextTable extends DeclaredTable {
+  /** The name of the file that exports it, without its extension. */
+  readonly file: string;
+}
+
 /**
- * Says, before drizzle-kit runs and without changing the exit code, that the migration it is about
- * to write drops the tables of a context: the last snapshot holds them, and the schema index,
- * which is all drizzle-kit reads, no longer names the tables file of the context. That is a line
- * lost from the index, not a table removed on purpose, and the data goes with the migration.
+ * Says, before the tool runs and without changing the exit code, that the migration it is about to
+ * write drops tables of a context: the migrations hold them, the context still exports them, and
+ * the schema index, which is all the tool reads, does not list them. That is a line lost from the
+ * index, not a table removed on purpose, and the rows go with the migration.
  */
-export function warnDroppedContextTables(root: string, io: Io): void {
+export function warnDroppedContextTables(root: string, io: Io, tool: MigrationTool = 'drizzle-kit'): void {
   const { config } = readConfig(root);
-  const index = `${config.platformDir}/database/schema.ts`;
-  const named = readIfPresent(path.join(root, index));
-  const tables = lastSnapshotTables(root);
+  const file = `${config.platformDir}/database/schema.ts`;
+  const index = readIfPresent(path.join(root, file));
+  const recorded = tool === 'typeorm' ? createdTables(root) : lastSnapshotTables(root);
 
-  for (const context of named === undefined ? [] : Object.keys(config.contexts)) {
+  for (const context of index === undefined ? [] : Object.keys(config.contexts)) {
     const schema = schemaOfContext(context);
-    const dropped = tables.filter((table) => table.startsWith(`${schema}.`));
 
-    if (dropped.length > 0 && named?.includes(`/${context}.schema`) === false) {
+    const dropped = tablesOf(root, config, context)
+      .filter(({ table }) => recorded.includes(`${schema}.${table}`))
+      .filter((table) => !listedInIndex(index ?? '', table))
+      .map(({ table }) => `${schema}.${table}`);
+
+    if (dropped.length > 0) {
       io.err(
         [
-          `Warning: the migration about to be written drops the tables of the context ${context} (${dropped.join(', ')}) and its schema: ${index} no longer names them, so drizzle-kit reads them as removed and writes DROP TABLE "${schema}"...; those rows are gone once it is migrated.`,
-          `  Fix: unless the tables are meant to go, delete the migration this writes, run \`npx ddd-ts-kit init --force\`, which lists the tables of ${context} again, and generate again.`,
+          `Warning: the migration about to be written drops the tables of the context ${context} (${dropped.join(', ')}): ${file} no longer names them, so ${tool} reads them as removed and writes DROP TABLE; those rows are gone once it is migrated.`,
+          `  Fix: unless they are meant to go, delete the migration this writes, run \`npx ddd-ts-kit init --force\`, which lists the tables of ${context} again, and generate again.`,
         ].join('\n'),
       );
     }
   }
+}
+
+/** The tables the files of the persistence of a context export. */
+function tablesOf(root: string, config: Config, context: string): ContextTable[] {
+  const directory = `${config.contextsDir}/${context}/infrastructure/persistence`;
+
+  return namesIn(path.join(root, directory))
+    .filter((name) => name.endsWith('.ts') && !name.endsWith('.spec.ts'))
+    .flatMap((name) =>
+      declaredTables(readIfPresent(path.join(root, directory, name)) ?? '').map((table) => ({
+        ...table,
+        file: name.replace(/\.ts$/, ''),
+      })),
+    );
+}
+
+/** The tables the migrations of TypeORM created, each as `<schema>.<table>`: it keeps no snapshot. */
+function createdTables(root: string): string[] {
+  const created = [...migrationFiles(root, 'migrations').values()].flatMap((text) => [...text.matchAll(CREATE_TABLE)]);
+
+  return created.map(([, schema = '', table = '']) => `${schema}.${table}`);
 }
 
 /** The tables of the snapshot of the last migration of the journal, each as `<schema>.<table>`, as drizzle-kit keys them. */
@@ -54,6 +91,14 @@ function parsed(text: string | undefined): unknown {
     return text === undefined ? undefined : JSON.parse(text);
   } catch {
     return undefined;
+  }
+}
+
+function namesIn(directory: string): string[] {
+  try {
+    return fs.readdirSync(directory);
+  } catch {
+    return [];
   }
 }
 
