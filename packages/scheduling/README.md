@@ -600,7 +600,7 @@ with the guarantees: [Background jobs](../../docs/concepts/background-jobs.md).
 
 | Piece | |
 |---|---|
-| `StoredJobQueue` | the `JobQueue` of the kernel on a `JobStore`: names the job, captures the correlation, the actor, the tenant and the `traceparent` of the work that enqueues, adds it to the store; `find` and `cancel` reach the jobs of the tenant of the work in progress only (of the tenants of its elevation; every job when the work has no tenant) |
+| `StoredJobQueue` | the `JobQueue` of the kernel on a `JobStore`: names the job, captures the correlation, the actor (its id, type, tenant, roles and `tenants`, never its profile; `actorAttributes` names an attribute a run needs), the tenant and the `traceparent` of the work that enqueues, adds it to the store; `find` and `cancel` reach the jobs of the tenant of the work in progress only (of the tenants of its elevation; every job when the work has no tenant) |
 | `JobStore` | the port of the stores: `add`, `claim` (a lease), `heartbeat`, `update` (progress, checkpoint), `complete`, `fail`, `release`, `cancel`, `find`, `retryDead`, `purgeFinished`, `stats`; every report names its attempt (`JobLease`) |
 | `InMemoryJobStore` | the store of tests and of a process without a database: `add`, `cancel` and `retryDead` wait for the commit of the unit of work; `list()` for assertions |
 | `tenantKeyOf(enqueuedBy)` | the tenant part of the idempotency key, for a store that keeps it in a unique index: the tenant, or the empty text |

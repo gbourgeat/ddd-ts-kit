@@ -509,7 +509,7 @@ it restarts. Share the queue (the jobs table, Redis) to let the worker run it.
 | Field of the execution context of a run | Value |
 |---|---|
 | `origin` | `queue` |
-| `actor` | the actor of the work that enqueued it (a system actor when nothing did), also `execution.actor`: a snapshot taken at the enqueue, roles and attributes included, used as is by a delayed run and by every retry |
+| `actor` | the actor of the work that enqueued it (a system actor when nothing did), also `execution.actor`: a snapshot taken at the enqueue, roles included, used as is by a delayed run and by every retry. The row keeps its id, type, tenant, roles and `tenants`, never the rest of its attributes: the profile a credential gives, an email or a username, stays with the request, and a job that needs an attribute names it in `actorAttributes` of `StoredJobQueue` |
 | `tenantId` | the tenant of that work, when it carried one |
 | `correlationId` | the correlation of that work: the request and its job are found together |
 | `causationId` | the id of the job |
@@ -606,7 +606,7 @@ memory. The middleware on the command bus is the one place where the test inject
   kit nor a generated project schedules one, because how long to keep is the project's
   decision. Dead jobs stay until an operator decides. `process_instances` grows the same way.
 - **Permissions are those of the enqueue.** A delayed run or a retry hours later acts with the
-  roles and attributes the actor had when the job was enqueued: a job that must see a revoked
+  roles the actor had when the job was enqueued: a job that must see a revoked
   right reads the actor again (by its id) before it acts.
 - **A stored payload is read with the schema of the version that runs it.** One that does not
   fit is dead at once (`INVALID_JOB_PAYLOAD`), never run: change a payload as "Evolving a

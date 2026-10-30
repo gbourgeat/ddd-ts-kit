@@ -532,7 +532,7 @@ Partagez la file (la table des *jobs*, Redis) pour que le *worker* l'exécute.
 | Champ du contexte d'exécution d'une exécution | Valeur |
 |---|---|
 | `origin` | `queue` |
-| `actor` | l'acteur du travail qui l'a mis en file (un acteur système quand rien ne l'a fait), aussi `execution.actor` : un instantané pris à la mise en file, rôles et attributs compris, utilisé tel quel par une exécution différée et par chaque nouvelle tentative |
+| `actor` | l'acteur du travail qui l'a mis en file (un acteur système quand rien ne l'a fait), aussi `execution.actor` : un instantané pris à la mise en file, rôles compris, utilisé tel quel par une exécution différée et par chaque nouvelle tentative. La ligne garde son id, son type, son *tenant*, ses rôles et `tenants`, jamais le reste de ses attributs : le profil que donne un *credential*, un email ou un nom d'utilisateur, reste avec la requête, et un *job* qui a besoin d'un attribut le nomme dans `actorAttributes` de `StoredJobQueue` |
 | `tenantId` | le *tenant* de ce travail, quand il en portait un |
 | `correlationId` | la corrélation de ce travail : l'appel d'origine et son *job* se retrouvent ensemble |
 | `causationId` | l'identifiant du *job* |
@@ -635,7 +635,7 @@ mémoire. Le *middleware* sur le bus de commandes est le seul endroit où le tes
   Les *jobs* morts restent jusqu'à ce qu'un opérateur décide. `process_instances` grossit de la
   même façon.
 - **Les permissions sont celles de la mise en file.** Une exécution différée ou une nouvelle
-  tentative des heures plus tard agit avec les rôles et attributs que l'acteur avait quand le *job*
+  tentative des heures plus tard agit avec les rôles que l'acteur avait quand le *job*
   a été mis en file : un *job* qui doit voir un droit révoqué relit l'acteur (par son identifiant)
   avant d'agir.
 - **Une charge utile stockée est lue avec le schéma de la version qui l'exécute.** Celle qui ne
