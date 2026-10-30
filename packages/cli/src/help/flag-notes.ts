@@ -51,7 +51,9 @@ export const FLAG_NOTES: readonly Note[] = [
       'written; outside a git repository, every file whose content would change does; commit',
       'or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,',
       'AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed',
-      'as kept) and merges .gitignore and .dockerignore, the lines of the team kept',
+      'as kept) and merges .gitignore and .dockerignore, the lines of the team kept; the files it',
+      'rewrites keep what their ddd-ts-kit:* regions, the roles, the Prisma datasource and the',
+      'services of the compose file hold, and a note names, file by file, what it could not keep',
     ],
   },
   {

@@ -1,5 +1,5 @@
 import type { Workspace } from '../workspace';
-import { PRISMA_MAIN_SCHEMA, prismaSchemaOf } from '../prisma-schema';
+import { PRISMA_MAIN_SCHEMA, prismaSchemaOf, withPreviewFeature } from '../prisma-schema';
 
 /** Where the models end in the file of a context the repository generator starts. */
 const END_OF_MODELS = '// /ddd-ts-kit:models';
@@ -50,31 +50,4 @@ function withBlock(content: string, block: string, header: string): string {
   return end === -1
     ? `${content.trimEnd()}\n\n${block}\n`
     : `${content.slice(0, end).trimEnd()}\n\n${block}\n${content.slice(end)}`;
-}
-
-/** The generator of the client with `feature` among its preview features, its assignments kept aligned. */
-function withPreviewFeature(schema: string, feature: string): string {
-  const body = /^generator client \{\n([\s\S]*?)^\}$/m.exec(schema)?.[1];
-
-  return body === undefined ? schema : schema.replace(body, generatorWith(body, feature));
-}
-
-function generatorWith(body: string, feature: string): string {
-  const listed = /^(\s*previewFeatures\s*=\s*\[)([^\]]*)\]/m.exec(body);
-
-  if (listed === null) {
-    const column = /^(\s*\w+\s*)=/m.exec(body)?.[1]?.length ?? 0;
-
-    return `${body}${'  previewFeatures'.padEnd(column)}= ["${feature}"]\n`;
-  }
-
-  const [assignment, opening = '', features = ''] = listed;
-
-  if (features.includes(`"${feature}"`)) {
-    return body;
-  }
-
-  const all = [features.trim(), `"${feature}"`].filter((one) => one !== '');
-
-  return body.replace(assignment, `${opening}${all.join(', ')}]`);
 }
