@@ -737,6 +737,7 @@ function quickRefusal({ project, file, written, replaced, deleted }, input) {
   }
   return (
     baselineFileReason(project, file) ??
+    scopeFileReason(project, file, input) ??
     acceptanceReason(project, input, { file, written, replaced }) ??
     generatedFileReason(project, file) ??
     (isUnwrapping(project, file, input)
@@ -891,6 +892,7 @@ function sessionPlaceReason(input, { place, by, typed }) {
     return undefined;
   }
   return (
+    scopeFileReason(owner, place, input) ??
     lockedRegressionReason(owner, projectPath(owner, place), input) ??
     (testWriter
       ? testWriterScopeReason(owner, place, input)
@@ -2645,6 +2647,19 @@ function isPartOfSpec(project, path) {
     .some((_, index) =>
       existsSync(join(project.root, 'test/e2e', `${words.slice(0, index + 1).join('-')}.e2e.spec.ts`)),
     );
+}
+
+// The scope file of a story or of a worker, and the kit's folder that holds it, are the conductor's:
+// the session of the worktree that holds it, and every sub-agent, change them in no way.
+function scopeFileReason(project, file, input) {
+  const path = projectPath(project, file);
+  const held = [STORY_SCOPE, WORKER_SCOPE].find(
+    (scope) => (path === scope || path === dirname(scope)) && existsSync(join(project.root, scope)),
+  );
+  const own = input.agent_type || findProject(input.cwd ?? process.cwd())?.root === project.root;
+  return held && own
+    ? `${held} is a shared file of this worktree, its scope: the conductor writes it with \`story-scope\` or \`worker-scope\`, and it holds the gates of the work done here. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
 }
 
 function baselineFileReason(project, file) {

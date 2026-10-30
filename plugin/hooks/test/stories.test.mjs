@@ -12,6 +12,7 @@ import {
   cliAnswering,
   cliModule,
   decision,
+  directory,
   edit,
   git,
   launcher,
@@ -624,4 +625,23 @@ test('at stop in the worktree of a story, a done row that departed from its desi
   );
   assert.equal(run('stop', { ...session, session_id: 'settled' }).output, undefined);
   assert.equal(run('stop', { ...session, stop_hook_active: true }).output, undefined);
+});
+
+test("the scope file of a story is the conductor's: the session of its worktree changes it in no way", () => {
+  const root = project();
+  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
+  for (const command of [
+    'rm .ddd-ts-kit/story.json',
+    'echo {} > .ddd-ts-kit/story.json',
+    'mv .ddd-ts-kit/story.json /tmp/story.json',
+    'rm -rf .ddd-ts-kit',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+  }
+  const written = run('pre-write', { cwd: root, ...write(join(root, '.ddd-ts-kit/story.json')) });
+  assert.equal(decision(written), 'deny');
+  assert.match(reason(written), /conductor/);
+  const conductor = directory('conductor');
+  assert.equal(run('pre-bash', bash(conductor, `rm ${root}/.ddd-ts-kit/story.json`)).output, undefined);
+  assert.equal(run('pre-bash', bash(root, 'cat .ddd-ts-kit/story.json')).output, undefined);
 });

@@ -187,7 +187,8 @@ names the workers to resume ([parallel work](parallel-work.md#when-an-agent-stop
 that write it in the main checkout of the trunk, and in a worktree of `.worktrees/` without its
 own `node_modules`: `npx ddd-ts-kit worktree <name>` opens the place to write it; a project
 started before is only told at session start. In the
-worktree of a story (`.ddd-ts-kit/story.json`), it refuses any code of a context until each row
+worktree of a story (`.ddd-ts-kit/story.json`, which the session there and every sub-agent change in
+no way, nor `.ddd-ts-kit/worker.json` in the worktree of a worker), it refuses any code of a context until each row
 has its design review and the acceptance is written and locked, says the phase of the story at
 session start with where it meets the other open stories, says once per file when the session
 writes a file another open story changes, and refuses once to end the session before its report
