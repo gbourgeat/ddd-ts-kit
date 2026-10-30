@@ -8,7 +8,7 @@ the files of each layer land in `<module>/domain/`, `<module>/application/`,
 the kinds that write only what the context keeps aside or outside the contexts, such as
 `builder`, `test-world`, `route-group`, `guard`, `schema`, `e2e` and `service`, refuse it), `--local-only`, `--dry-run`, `--force`. The authoritative list is
 `npx ddd-ts-kit generate <kind> --help` for one kind, and a flag the usage of a kind does not show is refused; `npx ddd-ts-kit generate --help --json` gives them all as data, with the
-shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) and whether it takes `--module` (`writesInModules`).
+shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) whether it takes `--module` (`writesInModules`) and whether it takes `--term` (`heldToGlossary`).
 
 | Kind | Arguments | Lands in |
 |---|---|---|

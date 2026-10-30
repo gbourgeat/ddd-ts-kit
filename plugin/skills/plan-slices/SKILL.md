@@ -91,11 +91,12 @@ missing. Rows with no path between them can be built in parallel.
   permission or `--public`.
 - A command of a kind held to the glossary (`heldToGlossary: true` in
   `npx ddd-ts-kit generate --help --json`, the kinds whose usage shows `--term`) adds the term
-  for a word of its name the glossary does not define (`--term "<Term>=<meaning>"`); the other
-  kinds (`port`, `adapter`, `gateway`, `acl`, `repository`, `builder`, `property`, `vocabulary`,
-  `route`, `controller`, `route-group`, `guard`, `representation`, `form`, `schema`,
-  `test-world`, `e2e`) take no `--term`, which the generator refuses: their names are read from
-  the concept they serve.
+  for a word of its name the glossary does not define (`--term "<Term>=<meaning>"`). The kinds
+  whose `heldToGlossary` is false (`builder`, `test-world`, `property`, `vocabulary`,
+  `repository`, `port`, `route`, `controller`, `route-group`, `guard`, `representation`, `form`,
+  `schema`, `erasure-handler`, `acl`, `e2e`, `acceptance`, `gateway`, `adapter`, `service`,
+  `worker`, `adr`) take no `--term`, which the generator refuses: what they name is read from the
+  concept they serve, or was named by an earlier command.
 - The commands of a row run in the order written, each after the command that writes what it
   builds on, as the summary of its kind says (`After generate ...`): the aggregate before its
   repository, its builder, its state machine and the command that names it with `--aggregate`;
