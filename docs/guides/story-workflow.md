@@ -58,7 +58,7 @@ writes the key in the intent and the path in the ticket, and `## Origin` carries
 | 5 | the build gate: `npx ddd-ts-kit story US5 --gate build` | the guard opens the code of the contexts | |
 | 6 | build, row by row | one commit per row, one `context-builder` agent per slice row | the session |
 | 7 | close: trunk merged in, review, `npm run verify`, `acceptance US5 --gate passing` | a green branch | |
-| 8 | the report, then the pull request | `## Report` with `### Verification`, the body of the pull request | the owner, at the review |
+| 8 | the report, then the pull request | `## Report` with `### Digest` and `### Verification`, the body of the pull request | the owner, at the review |
 
 `npx ddd-ts-kit story US5` prints the phases with what each one holds and the next step; a
 session that starts in the worktree of a story is told the same by the guard.
@@ -90,6 +90,16 @@ gate reads it too. The block is what the
 [AI-native SDLC playbook of Anthropic](https://cdn.prod.website-files.com/6889473510b50328dbb70ae6/6aba736348bdf4f08183f463_AI%20Native%20SDLC%20Playbook_designv2%20(1).pdf)
 asks as governance evidence: the spec, what produced it and the policies in force, logged with
 it.
+
+Before `### Verification`, the report holds `### Digest`: what
+`npx ddd-ts-kit digest --base <base>` prints once the last row is committed, `<base>` being the
+base of `.ddd-ts-kit/story.json`, pasted as printed. In about thirty lines it says, per context,
+the use cases, the permissions and the roles that hold them, the routes and their error codes,
+the events and the ports the story adds, changes or removes; then the spec titles the story
+writes; then its files in reading order (the root of a context, domain, application,
+presentation, infrastructure, tests, elsewhere), and apart, as regenerated, the generated files
+`REVIEW.md` names. A reviewer reads it before the diff, where the hand-written code and the
+regenerated files would otherwise come mixed.
 
 ## The design before the code
 
@@ -206,7 +216,9 @@ checks, addresses each under the rules of the story (a change the design review 
 foresee becomes a `D<n>` decision, a request to weaken a check goes through the `deviation`
 skill, a failing check is fixed in the code and never in the check, no force-push), replies to
 each thread, pushes, waits for the checks and repeats until the pull request waits only on the
-code owner; then it reports what was changed and what was declined and why.
+code owner; after each push it puts the digest of the branch as it stands at the top of the
+body, under `## Digest`, and in `### Digest` of the report; then it reports what was changed and
+what was declined and why.
 
 ## Several stories, several terminals
 

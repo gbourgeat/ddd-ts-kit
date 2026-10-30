@@ -15,7 +15,7 @@ export interface PermissionSet {
 }
 
 /** The permission sets a file declares, each with the keys of its first level. */
-export function permissionSets(file: SourceFile): PermissionSet[] {
+export function permissionSets(file: Pick<SourceFile, 'scan'>): PermissionSet[] {
   const { code, strings } = file.scan;
 
   return [...code.matchAll(PERMISSION_SET)].flatMap((found) => {

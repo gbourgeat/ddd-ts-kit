@@ -97,6 +97,7 @@ describe('agent settings', () => {
       'Bash(npx ddd-ts-kit verify-merge)',
       'Bash(npx ddd-ts-kit verify-merge *)',
       'Bash(npx ddd-ts-kit story-check *)',
+      'Bash(npx ddd-ts-kit digest *)',
       'Bash(npx ddd-ts-kit merge-trunk)',
       'Bash(npx ddd-ts-kit merge-trunk *)',
       'Bash(npx ddd-ts-kit generate *)',
@@ -112,7 +113,7 @@ describe('agent settings', () => {
     expect(keysAt(readJson(root, SETTINGS))).toEqual(['permissions']);
     expect(keysAt(readJson(root, SETTINGS), 'permissions')).toEqual(['allow', 'deny', 'ask']);
     expect(permissions(root, 'allow')).toEqual(expect.arrayContaining(allowed));
-    expect(permissions(root, 'allow')).toHaveLength(31);
+    expect(permissions(root, 'allow')).toHaveLength(32);
     expect(permissions(root, 'deny')).toEqual(DENIED);
     expect(permissions(root, 'ask')).toEqual(ASKED);
   });
@@ -260,7 +261,7 @@ describe('agent settings of the files that reach production', () => {
     expect(permissions(root, 'ask')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 66 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 67 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);

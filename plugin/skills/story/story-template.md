@@ -32,6 +32,10 @@ report that becomes the body of the pull request. -->
 <what the story delivers; each D<n>; each compromise; each amendment of the acceptance with its
 verdict; each TODO(review) left>
 
+### Digest
+
+<what `npx ddd-ts-kit digest --base <base>` prints, pasted as printed>
+
 ### Verification
 
 - `npm run verify`: <its last lines, pasted>
