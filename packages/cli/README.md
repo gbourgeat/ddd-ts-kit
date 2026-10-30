@@ -109,6 +109,16 @@ anything is written; a link that stays inside the project is written through. `i
 `.claude/settings.json` would be the settings of every session: run it in the directory of the
 project.
 
+Each file is written whole or not at all: to `<name>.<random>.tmp` beside it, then renamed into
+place. A command stopped half way leaves complete files only (a process killed there may leave
+its `.tmp` file, which can be removed), and the same command run again writes the ones missing.
+`init` on a project already initialised, and each `generate` of a kind that writes shared files
+(`writesShared` in `generate --help --json`), hold the lock of the project, `.ddd-ts-kit/lock`,
+which git ignores: a second one waits up to five seconds, then exits 2 naming the command that
+holds it and the fix, run the generators one after the other:
+``Another generator holds the lock of this project: `ddd-ts-kit generate context billing` (pid 1234, started 12 seconds ago).``
+A lock whose command has ended on this machine, or taken more than a minute ago, is taken over.
+
 `init --force` on a project that is already initialised rewrites the files `init` owns and keeps
 the config: the contexts and their upstreams, the rules, the limits, the deviations and every
 other key stay as written, and the stack changes only where a flag names a choice
@@ -723,7 +733,8 @@ ddd-ts-kit generate [<kind>] --help [--json]
 ```
 
 One run of `generate` does five things, in this order, and writes nothing when the first one
-refuses:
+refuses (each file written whole, a kind that writes shared files under the lock of the
+project: [init](#init)):
 
 ![One run of generate command: the name is checked against the glossary of the context (refused with exit code 2 and the --term to add when a word is not defined), the files are written from the templates, the new pieces are registered between marker comments, the derived documents are refreshed, and the places that need a business decision are printed as file:line](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-generate-one-run.svg)
 
@@ -1347,7 +1358,7 @@ command exits 1. A file without a slices table, or a context no row names, is re
 
 Once the rows can be ordered, the generator commands of their `Start with` cells (between
 backquotes, `generate ...` or `npx ddd-ts-kit generate ...`) are replayed in a copy of the
-project (the files git sees; the project is left as it was), in the order of the waves, so that a
+project (the files git sees, a symbolic link left out wherever it points; the project is left as it was), in the order of the waves, so that a
 command finds what the rows before it generate. The generator itself says which names each
 command introduces (the use case, the aggregate and the fact of an event, a `--name`, the words of
 a `--permission`, ...), and each is judged as the generator judges it, against the glossary of its
