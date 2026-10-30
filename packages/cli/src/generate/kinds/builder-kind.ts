@@ -22,7 +22,7 @@ export const builderKind: Kind = {
   aliases: [],
   usage: 'builder <context> <Aggregate>',
   summary:
-    'The test data builder of an existing aggregate, in test/builders/; the instant of its birth is an ingredient named after the fact its create records (issuedAt), and the builder of an event-sourced aggregate replays its birth event.',
+    'The test data builder of an existing aggregate, in test/builders/; the instant of its birth is an ingredient named after the fact its create records (issuedAt), and the builder of an event-sourced aggregate replays its birth event. After `generate aggregate <context> <Aggregate>`.',
   positionals: ['context', 'Aggregate'],
   writesShared: false,
   writesInModules: false,

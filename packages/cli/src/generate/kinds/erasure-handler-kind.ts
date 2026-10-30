@@ -14,7 +14,7 @@ export const erasureHandlerKind: Kind = {
   aliases: [],
   usage: 'erasure-handler <context>',
   summary:
-    'The idempotent handler of privacy.data-subject.erased that erases what the context keeps of the person through its PersonalDataErasure, its spec and its subscription: for a context that runs as a service of its own, or that copies personal data from integration events.',
+    'The idempotent handler of privacy.data-subject.erased that erases what the context keeps of the person through its PersonalDataErasure, its spec and its subscription: for a context that runs as a service of its own, or that copies personal data from integration events. After `generate repository <context> <Aggregate> --personal <column>,...`.',
   positionals: ['context'],
   writesShared: false,
   writesInModules: true,

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0c6238ea0f10531b -->
+<!-- translation-of: README.md sha256:30c337f1260e6a9d -->
 
 # ddd-ts-kit
 
@@ -833,7 +833,7 @@ Next, in this order: the language of the context first, then the business decisi
 | `file-upload` | `<context> <UseCaseName> --path <p> (--permission <aggregate>.<action> [--grant <role>] \| --public) [--method POST\|PUT] [--group <Name>]` | un téléversement : un contrôleur qui déclare le fichier qu'il reçoit (sa taille et ses types de média dans le contrat, vérifiés au fil du flux), la commande qui le porte comme un `FileUpload`, mis en attente par le bus de commandes avant la transaction, le gestionnaire qui l'enregistre et le promeut avec la validation (commit), et leurs *specs*. Refusé sans `stack.storage` ou sans *stack* HTTP, avec le `init --force --storage local` à lancer |
 | `route-group` (`group`) | `<context> <Name> [--prefix <path>] [--group <ParentName>] [--public \| --role <role>]` | `presentation/http/<name>.routes.ts` : une classe vide qui porte `@RouteGroup`, derrière `Authenticated` sauf si `--public` ou `--role` dit autre chose (`HasRole(Role.Admin)`, le rôle lu dans le vocabulaire de la plateforme, `<platformDir>/auth/authorization/role.ts`, qui le reçoit s'il ne le contient pas) ; avec `--group`, il affine ce groupe et en hérite |
 | `guard` | `<context> <Name>` | `presentation/http/guards/<name>.guard.ts` : une classe de garde déclarée à remplir, et sa *spec* |
-| `representation` | `<context> <UseCase> <xml\|csv\|media/type>[,...]` | ajoute `produces` au `@Controller` du cas d'usage, et `consumes: ['application/xml']` à celui qui reçoit un corps quand XML est demandé ; dit quand CSV a besoin d'une page ou d'une liste en flux, et quand `stack.representations` n'est pas `negotiated` |
+| `representation` | `<context> <UseCase> <xml\|csv\|media/type>[,...]` | après `generate route` du cas d'usage (un contrôleur sous `"stack.routes": "controllers"` ou `"nest"`) ou `generate controller` : ajoute `produces` au `@Controller` du cas d'usage, et `consumes: ['application/xml']` à celui qui reçoit un corps quand XML est demandé ; dit quand CSV a besoin d'une page ou d'une liste en flux, et quand `stack.representations` n'est pas `negotiated` |
 | `form` | `<context> <UseCase>` | ajoute `const form = defineForm<Infer<typeof body>>({ ... })` avant le `@Controller` d'un cas d'usage qui reçoit un corps, et `form` à ses options : les indications de son formulaire à `GET /forms/<operationId>` |
 | `schema` | `<context\|shared-kernel> <Name>` | `presentation/http/shared/<name>.schema.ts` du contexte, ou `presentation/<name>.schema.ts` du noyau partagé : une forme du contrat déclarée une fois (un schéma zod avec `.meta({ id })`, une classe class-validator, ou un schéma enveloppé par `sharedSchema`), à remplir ; les routes l'utilisent en entier, imbriquée ou en partie |
 | `integration-event` | `<context> <Aggregate> <Fact> [--version n]` | la déclaration `defineIntegrationEvent` dans le langage publié (sa charge utile dans `<event>.v<n>.payload.ts` avec class-validator ou un schéma à vous), l'export de l'index, le *publisher* `application/integration/publishers/<event>.publisher.ts`, une *spec*, l'enregistrement, une ligne de `platform/audit/audited-events.ts` |
@@ -980,7 +980,11 @@ Next, in this order: the language of the context first, then the business decisi
   aussi ; un mot technique passe quand un terme du glossaire le tient
   (`--term "Scoring model=<meaning>"` laisse passer `ScoringModel`), parce que le langage du
   métier l'emporte. `--allow-name` passe outre les trois vérifications ; `check` signalera tout de même ce
-  que le glossaire ne définit pas.
+  que le glossaire ne définit pas. Seuls les genres dont l'usage montre `--term` le prennent
+  (`heldToGlossary` dans `generate --help --json`, une ligne de `generate <kind> --help`) ; les
+  autres (`port`, `adapter`, `repository`, `route`, `representation`...) nomment ce qu'une
+  commande antérieure a nommé ou le nom du concept qu'ils servent, et refusent `--term`, en
+  nommant les genres qui le prennent.
 - Le code généré compile tel quel et passe `check`, le preset ESLint, dependency-cruiser et knip
   aux sévérités par défaut : un export par fichier, des fichiers bien en dessous de 350 lignes,
   des membres `private`, la disposition des lignes vides. Chaque endroit qui demande une
@@ -1008,7 +1012,9 @@ Next, in this order: the language of the context first, then the business decisi
   sur une ligne, `file:line  gist` (le `text` entier d'une étape).
 - Un genre qui a besoin d'autre chose pour compiler soit le crée (un *repository* ou un événement
   du domaine manquant), soit s'arrête avec la commande qui le crée (un agrégat, un cas d'usage ou
-  une route manquant).
+  une route manquant). Son `summary` nomme cette commande, `After generate ...`
+  (`After generate route <context> <UseCase>` pour une `representation`) : les commandes d'une
+  ligne des tranches s'exécutent dans cet ordre.
 - L'enregistrement se fait entre des commentaires marqueurs (`// ddd-ts-kit:<region>` ...
   `// /ddd-ts-kit:<region>`, des commentaires HTML en Markdown). Retirez un marqueur, et le
   générateur affiche ce qu'il faut ajouter à la main.
@@ -1017,7 +1023,8 @@ Next, in this order: the language of the context first, then the business decisi
 - `--local-only` refuse, en nommant les fichiers et sans rien écrire, quand le passage écrirait
   hors de `<contextsDir>/<context>/` et de `test/e2e/*.e2e.spec.ts`. `generate --help --json`
   affiche chaque genre avec son `usage`, ses `aliases`, son `summary` et son `writesShared`, plus
-  `shared` et `sharedWhen` : ce qu'il écrit hors de son contexte, et quand ; `generate <kind>
+  `shared` et `sharedWhen` : ce qu'il écrit hors de son contexte, et quand ; `writesInModules`,
+  vrai quand il prend `--module` ; et `heldToGlossary`, vrai quand il prend `--term`. `generate <kind>
   --help --json` affiche ce seul genre, en un objet, et `generate <kind> --help` la même chose en
   texte. Les deux servent un
   build réparti entre des *workers* (voir `worker-scope`).

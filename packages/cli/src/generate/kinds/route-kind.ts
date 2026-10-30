@@ -27,7 +27,7 @@ export const routeKind: Kind = {
   aliases: [],
   usage: `route ${USAGE}`,
   summary:
-    'An HTTP route calling an existing use case through its bus, with its spec: under "stack.routes": "controllers", a controller class in its folder, behind the guards of its route group; under "functions", a defineRoute function and its registration; under "nest", a Nest controller whose method takes and answers what its signature names, listed in the generated <context>.controllers.ts.',
+    'An HTTP route calling an existing use case through its bus, with its spec: under "stack.routes": "controllers", a controller class in its folder, behind the guards of its route group; under "functions", a defineRoute function and its registration; under "nest", a Nest controller whose method takes and answers what its signature names, listed in the generated <context>.controllers.ts. After `generate command <context> <UseCaseName>` or `generate query <context> <UseCaseName>`; with --group, after `generate route-group <context> <Name>`.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   writesInModules: true,
@@ -104,6 +104,6 @@ export const controllerKind: Kind = {
   name: 'controller',
   usage: `controller ${USAGE}`,
   summary:
-    'A controller class calling an existing use case through its bus, whatever "stack.routes" says: its folder, its schemas, its spec, and its route group when it is new.',
+    'A controller class calling an existing use case through its bus, whatever "stack.routes" says: its folder, its schemas, its spec, and its route group when it is new. After `generate command <context> <UseCaseName>` or `generate query <context> <UseCaseName>`; with --group, after `generate route-group <context> <Name>`.',
   run: (request) => routeKind.run({ ...request, asController: true }),
 };

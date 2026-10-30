@@ -110,15 +110,6 @@ describe('init --http-cache', () => {
     expect(read(without, 'src/platform/composition/platform.ts')).not.toContain('CacheInvalidation');
   });
 
-  it('refuses a shared cache without an API, or without the outbox its purges ride on', () => {
-    const inMemory = initFailure('--http-cache', 'varnish', '--orm', 'none');
-    const unknown = initFailure('--http-cache', 'squid');
-
-    expect(inMemory.message).toBe('--http-cache varnish cannot be combined with --http express --events in-memory.');
-    expect(inMemory.fix).toContain('keep an HTTP framework and --events outbox');
-    expect(unknown.message).toBe('Unknown value "squid" for --http-cache.');
-  });
-
   it('leaves no trace of Varnish in a project that asks for none', () => {
     const root = initProject();
 
@@ -209,5 +200,39 @@ describe('generate controller --cache', () => {
 
     expect(write.stderr).toContain('--cache private on a POST route');
     expect(unknown.stderr).toContain('Unknown cache policy "forever".');
+  });
+});
+
+describe('init --http-cache, what it refuses', () => {
+  it('refuses a shared cache without an API, or without the outbox its purges ride on, naming what was passed', () => {
+    const noApi = initFailure('--http-cache', 'varnish', '--http', 'none');
+    const noOutboxByDefault = initFailure('--http-cache', 'varnish', '--orm', 'none');
+    const noOutbox = initFailure('--http-cache', 'varnish', '--orm', 'none', '--events', 'in-memory');
+    const noOutboxByDatabase = initFailure('--http-cache', 'varnish', '--database', 'none');
+    const neither = initFailure('--http-cache', 'varnish', '--http', 'none', '--orm', 'none');
+    const unknown = initFailure('--http-cache', 'squid');
+
+    expect(noApi.message).toBe(
+      '--http-cache varnish needs an HTTP framework to put the cache in front of: this project has --http none.',
+    );
+
+    expect(noOutboxByDefault.message).toBe(
+      '--http-cache varnish needs --events outbox for its purge requests: this project has --events in-memory, the default of --orm none.',
+    );
+
+    expect(noOutbox.message).toBe(
+      '--http-cache varnish needs --events outbox for its purge requests: this project has --events in-memory.',
+    );
+
+    expect(noOutboxByDatabase.message).toBe(
+      '--http-cache varnish needs --events outbox for its purge requests: this project has --events in-memory, the default of --database none.',
+    );
+
+    expect(neither.message).toBe(
+      '--http-cache varnish needs an HTTP framework to put the cache in front of and --events outbox for its purge requests: this project has --http none and --events in-memory, the default of --orm none.',
+    );
+
+    expect(noOutbox.fix).toContain('keep an HTTP framework and --events outbox');
+    expect(unknown.message).toBe('Unknown value "squid" for --http-cache.');
   });
 });

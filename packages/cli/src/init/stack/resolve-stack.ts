@@ -48,6 +48,7 @@ import { resolveQueue } from './resolve-queue';
 import { resolveStyle } from './resolve-style';
 import { resolveTenancy } from './resolve-tenancy';
 import type { StackOptions } from './stack-options';
+import { httpCacheMisfit } from './http-cache-misfit';
 
 export type { StackOptions } from './stack-options';
 
@@ -257,7 +258,7 @@ function resolveHttpCache(options: StackOptions, http: string, events: string): 
   }
 
   throw new CliError(
-    `--http-cache ${httpCache} cannot be combined with --http ${http} --events ${events}.`,
+    `--http-cache ${httpCache} ${httpCacheMisfit(options, http, events)}.`,
     'The purge of the shared cache is a row of the outbox, written with the command and sent after its commit: keep an HTTP framework and --events outbox, or --http-cache none.',
   );
 }

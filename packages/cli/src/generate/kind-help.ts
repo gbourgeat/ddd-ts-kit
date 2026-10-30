@@ -1,3 +1,4 @@
+import { heldToGlossary } from './held-to-glossary';
 import type { Kind } from './kind';
 import { SHARED_WRITES } from './shared-writes';
 import { usageOf } from './usage-of';
@@ -16,6 +17,8 @@ export interface KindHelp {
   readonly sharedWhen: string | null;
   /** True when it takes `--module`: it writes files the modules of the model of a context divide. */
   readonly writesInModules: boolean;
+  /** True when it takes `--term`: its names are judged against the glossary of the context. */
+  readonly heldToGlossary: boolean;
 }
 
 /** One kind, as `generate <kind> --help --json` answers it. */
@@ -32,5 +35,6 @@ export function kindHelp(kind: Kind): KindHelp {
     shared: shared?.files ?? [],
     sharedWhen: shared?.when ?? null,
     writesInModules,
+    heldToGlossary: heldToGlossary(kind),
   };
 }

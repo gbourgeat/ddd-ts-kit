@@ -165,7 +165,15 @@ describe('generate, a flag the kind does not take', () => {
     const result = cli(root, 'generate', kind, 'billing', 'Invoice', ...flags, ...term, '--json');
 
     expect(failure(result).message).toBe(`generate ${kind} does not take --term: it would be ignored.`);
-    expect(failure(result).fix).toContain('give --term to the kind that names the concept first');
+
+    expect(failure(result).fix).toContain(
+      'give --term to the kind that names the concept first (the kinds held to the glossary, heldToGlossary in generate --help --json: context, module, aggregate, entity, value-object,',
+    );
+
+    expect(failure(result).fix).not.toMatch(
+      /glossary, heldToGlossary[^)]*\b(?:port|route|repository|representation)\b/,
+    );
+
     expect(failure(result).fix).toContain(`Usage: ddd-ts-kit generate ${kind} <context>`);
     expect(read(root, 'src/contexts/billing/CONTEXT.md')).not.toContain('| Void |');
   });

@@ -18,7 +18,7 @@ export const e2eKind: Kind = {
   aliases: [],
   usage: 'e2e <context> <UseCaseName> [--event <eventType>]',
   summary:
-    'An end-to-end spec on the whole application, in test/e2e/ at the project root: driving the route of a use case, or, for a use case no route reaches, publishing the integration event its handler receives (--event names it when several do) or running the job that sends its command.',
+    'An end-to-end spec on the whole application, in test/e2e/ at the project root: driving the route of a use case, or, for a use case no route reaches, publishing the integration event its handler receives (--event names it when several do) or running the job that sends its command. After `generate route <context> <UseCaseName>`, or the `generate integration-handler` or `generate job` that starts its use case.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   writesInModules: false,

@@ -28,7 +28,7 @@ export const integrationHandlerKind: Kind = {
   usage:
     'integration-handler <context> <upstreamContext> <eventType>[@v<n>] [--version <n>] [--name <Name>] [--term "<Term>=<meaning>"]...',
   summary:
-    'An idempotent handler of an integration event of a declared upstream, its spec and its subscription under a consumer name.',
+    'An idempotent handler of an integration event of a declared upstream, its spec and its subscription under a consumer name. After `generate integration-event <upstreamContext> <Aggregate> <Fact>` of its eventType.',
   positionals: ['context', 'upstreamContext', 'eventType'],
   writesShared: false,
   writesInModules: true,

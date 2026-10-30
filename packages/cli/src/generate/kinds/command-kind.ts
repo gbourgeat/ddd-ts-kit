@@ -22,7 +22,7 @@ export const commandKind: Kind = {
   usage:
     'command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name> [--creates]] [--term "<Term>=<meaning>"]...',
   summary:
-    'A command, its handler with injected ports, its spec and its registration on the command bus; with --aggregate the handler changes an existing aggregate and writes nothing until the domain is decided, with --creates it gives birth to one.',
+    'A command, its handler with injected ports, its spec and its registration on the command bus; with --aggregate the handler changes an existing aggregate and writes nothing until the domain is decided, with --creates it gives birth to one. With --aggregate, after `generate aggregate <context> <Name>`.',
   positionals: ['context', 'UseCaseName'],
   writesShared: true,
   writesInModules: true,

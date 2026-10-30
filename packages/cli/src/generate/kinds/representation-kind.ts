@@ -15,7 +15,7 @@ export const representationKind: Kind = {
   aliases: [],
   usage: 'representation <context> <UseCase> <xml|csv|media/type>[,...]',
   summary:
-    'Makes a controller answer in more media types than JSON: `produces` in `@Controller` (`@KitRoute` of a Nest controller), and `consumes` of XML for a route that receives a body. The request chooses by its Accept header when "stack.representations" is "negotiated"; the contract lists every media type.',
+    'Makes a controller answer in more media types than JSON: `produces` in `@Controller` (`@KitRoute` of a Nest controller), and `consumes` of XML for a route that receives a body. The request chooses by its Accept header when "stack.representations" is "negotiated"; the contract lists every media type. After `generate route <context> <UseCase>` under "stack.routes": "controllers" or "nest", or `generate controller <context> <UseCase>`.',
   positionals: ['context', 'UseCase', 'media'],
   writesShared: false,
   writesInModules: true,

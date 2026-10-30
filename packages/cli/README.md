@@ -797,7 +797,7 @@ Next, in this order: the language of the context first, then the business decisi
 | `file-upload` | `<context> <UseCaseName> --path <p> (--permission <aggregate>.<action> [--grant <role>] \| --public) [--method POST\|PUT] [--group <Name>]` | an upload: a controller that declares the file it receives (its size and media types in the contract, checked as it streams), the command that carries it as a `FileUpload`, staged by the command bus before the transaction, the handler that records it and promotes it with the commit, and their specs. Refused without `stack.storage` or without an HTTP stack, with the `init --force --storage local` to run |
 | `route-group` (`group`) | `<context> <Name> [--prefix <path>] [--group <ParentName>] [--public \| --role <role>]` | `presentation/http/<name>.routes.ts`: an empty class carrying `@RouteGroup`, behind `Authenticated` unless `--public` or `--role` says otherwise (`HasRole(Role.Admin)`, the role read from the vocabulary of the platform, `<platformDir>/auth/authorization/role.ts`, which gets it when it does not hold it); with `--group` it refines that group and inherits from it |
 | `guard` | `<context> <Name>` | `presentation/http/guards/<name>.guard.ts`: a declared guard class to fill, and its spec |
-| `representation` | `<context> <UseCase> <xml\|csv\|media/type>[,...]` | adds `produces` to the `@Controller` of the use case, and `consumes: ['application/xml']` to one that receives a body when XML is asked; says when CSV needs a page or a streamed list, and when `stack.representations` is not `negotiated` |
+| `representation` | `<context> <UseCase> <xml\|csv\|media/type>[,...]` | after `generate route` of the use case (a controller under `"stack.routes": "controllers"` or `"nest"`) or `generate controller`: adds `produces` to the `@Controller` of the use case, and `consumes: ['application/xml']` to one that receives a body when XML is asked; says when CSV needs a page or a streamed list, and when `stack.representations` is not `negotiated` |
 | `form` | `<context> <UseCase>` | adds `const form = defineForm<Infer<typeof body>>({ ... })` before the `@Controller` of a use case that receives a body, and `form` to its options: the hints of its form at `GET /forms/<operationId>` |
 | `schema` | `<context\|shared-kernel> <Name>` | `presentation/http/shared/<name>.schema.ts` of the context, or `presentation/<name>.schema.ts` of the shared kernel: one shape of the contract declared once (a zod schema with `.meta({ id })`, a class-validator class, or a schema wrapped by `sharedSchema`), to fill; the routes use it whole, nested or in part |
 | `integration-event` | `<context> <Aggregate> <Fact> [--version n]` | `defineIntegrationEvent` declaration in the published language (its payload in `<event>.v<n>.payload.ts` with class-validator or a schema of your own), index export, the publisher `application/integration/publishers/<event>.publisher.ts`, spec, registration, a line of `platform/audit/audited-events.ts` |
@@ -932,7 +932,11 @@ Next, in this order: the language of the context first, then the business decisi
   not read as past tense are refused too; a technical word passes when a term of the glossary
   holds it (`--term "Scoring model=<meaning>"` lets `ScoringModel` through), because the language
   of the business wins. `--allow-name` overrides the three checks; `check`
-  will still report what the glossary does not define.
+  will still report what the glossary does not define. Only the kinds whose usage shows `--term`
+  take it (`heldToGlossary` in `generate --help --json`, a line of `generate <kind> --help`); the
+  others (`port`, `adapter`, `repository`, `route`, `representation`...) name what an earlier
+  command named or what the concept they serve is called, and refuse `--term`, naming the kinds
+  that take it.
 - Generated code compiles as is and passes `check`, the ESLint preset, dependency-cruiser and knip
   at the default severities: one export per file, files far under 350 lines, `private` members,
   the blank-line layout. Every place that needs business knowledge carries a
@@ -956,7 +960,9 @@ Next, in this order: the language of the context first, then the business decisi
   output prints each place on one line, `file:line  gist` (the whole `text` of a step).
 - A kind that needs something else to compile either creates it (a missing repository or
   domain event) or stops with the command that creates it (a missing aggregate, use case or
-  route).
+  route). Its `summary` names that command, `After generate ...`
+  (`After generate route <context> <UseCase>` for a `representation`): the commands of one row
+  of the slices run in that order.
 - Registration goes between marker comments (`// ddd-ts-kit:<region>` ... `// /ddd-ts-kit:<region>`,
   HTML comments in Markdown). Remove a marker and the generator prints what to add by hand.
 - Every `generate` refreshes the generated documentation and `.dependency-cruiser.cjs` when
@@ -964,7 +970,8 @@ Next, in this order: the language of the context first, then the business decisi
 - `--local-only` refuses, naming the files and writing nothing, when the run would write outside
   `<contextsDir>/<context>/` and `test/e2e/*.e2e.spec.ts`. `generate --help --json` prints every
   kind with its `usage`, `aliases`, `summary` and `writesShared`, plus `shared` and `sharedWhen`:
-  what it writes outside its context, and when; `generate <kind> --help --json` prints that kind
+  what it writes outside its context, and when; `writesInModules`, true when it takes `--module`;
+  and `heldToGlossary`, true when it takes `--term`. `generate <kind> --help --json` prints that kind
   alone, as one object, and `generate <kind> --help` the same as text. Both serve a build split between workers (see
   `worker-scope`).
 - A fake is an entry point for knip and may have no importer for dependency-cruiser: a port
