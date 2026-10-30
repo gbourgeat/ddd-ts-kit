@@ -2,7 +2,15 @@ import type { Knex } from 'knex';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { anExecutionContext, asTenant, scoped } from '@ddd-ts-kit/testing';
-import { UngroupedOrError, createKnexUnitOfWork, derivedTable, ownTenantTable, tenantTable, whereTenant } from '../src';
+import {
+  ClearedTenantConditionError,
+  UngroupedOrError,
+  createKnexUnitOfWork,
+  derivedTable,
+  ownTenantTable,
+  tenantTable,
+  whereTenant,
+} from '../src';
 import { createDatabase, type TestDatabase } from './support/database';
 
 interface LineRow {
@@ -89,7 +97,6 @@ describe('a statement of a tenant helper', () => {
     ['orWhereIn', () => reads().orWhereIn('amount', [2])],
     ['orWhereNull', () => reads().orWhereNull('amount')],
     ['orWhereRaw', () => reads().orWhereRaw('amount = 2')],
-    ['orHaving', () => reads().orHaving('amount', '>', 2)],
     ['or', () => reads().or.where({ amount: 2 })],
     ['orWhere', () => writes().where({ amount: 1 }).orWhere({ amount: 2 })],
     ['orWhere', () => reads().clone().orWhere({ amount: 2 })],
@@ -106,6 +113,30 @@ describe('a statement of a tenant helper', () => {
     await asTenant(scope, 'acme', async () => {
       expect(statement).toThrow(new UngroupedOrError(method));
     });
+  });
+
+  it.each([
+    ['clearWhere', () => reads().clearWhere()],
+    [`clear('where')`, () => writes().clear('where')],
+    ['clearWhere', () => reads().clone().clearWhere()],
+  ])('refuses %s', async (method, statement) => {
+    await asTenant(scope, 'acme', async () => {
+      expect(statement).toThrow(new ClearedTenantConditionError(method));
+    });
+  });
+
+  it('clears what is not a condition', async () => {
+    const found = await asTenant(scope, 'acme', () => reads().select('amount').clear('select').where({ amount: 1 }));
+
+    expect(found).toEqual([expect.objectContaining({ id: 'acme-1', amount: 1 })]);
+  });
+
+  it('takes an orHaving, which applies after the tenant condition', async () => {
+    const found = await asTenant(scope, 'acme', () =>
+      reads().select('amount').groupBy('amount').having('amount', '=', 1).orHaving('amount', '=', 2),
+    );
+
+    expect(found.map(({ amount }) => amount).sort()).toEqual([1, 2]);
   });
 
   it('refuses an or at its top under an elevation over every tenant as well', async () => {
@@ -136,5 +167,64 @@ describe('a statement of a tenant helper', () => {
     );
 
     expect(idsOf(found)).toEqual(['acme-1', 'acme-2']);
+  });
+});
+
+describe('raw text on a statement of a tenant helper is one conjunct', () => {
+  const raw = (sql: string, bindings: Knex.RawBinding[] | Knex.ValueDict) => database.knex.raw(sql, bindings);
+  const either: [string, [number, string]] = ['amount = ? or id = ?', [1, 'globex-2']];
+
+  it.each([
+    ['whereRaw', () => reads().whereRaw(...either)],
+    ['andWhereRaw', () => reads().andWhereRaw(...either)],
+    ['whereRaw with a raw', () => reads().whereRaw(raw(...either))],
+    ['where with a raw', () => reads().where(raw(...either))],
+    ['andWhere with a raw', () => reads().andWhere(raw(...either))],
+    ['named bindings', () => reads().whereRaw('amount = :amount or id = :id', { amount: 1, id: 'globex-2' })],
+    [
+      'named bindings in a raw',
+      () => reads().where(raw('amount = :amount or id = :id', { amount: 1, id: 'globex-2' })),
+    ],
+    [
+      'a clone',
+      () =>
+        reads()
+          .whereRaw(...either)
+          .clone(),
+    ],
+  ])('in %s', async (_form, statement) => {
+    const found = await asTenant(scope, 'acme', statement);
+
+    expect(idsOf(found)).toEqual(['acme-1']);
+  });
+
+  it.each([
+    ['a value', () => reads().where('amount', raw('1 or id = ?', ['globex-2']))],
+    ['a value of an object', () => reads().where({ amount: raw('1 or id = ?', ['globex-2']) })],
+  ])('in %s', async (_form, statement) => {
+    await asTenant(scope, 'acme', async () => {
+      expect(statement().toSQL().sql).toContain('"amount" = (1 or id = ?)');
+    });
+  });
+
+  it('negated as a whole by whereNot', async () => {
+    const found = await asTenant(scope, 'acme', () => reads().whereNot(raw('amount = ? or id = ?', [2, 'globex-1'])));
+
+    expect(idsOf(found)).toEqual(['acme-1']);
+  });
+
+  it('on a write', async () => {
+    const changed = await asTenant(scope, 'acme', () =>
+      writes().whereRaw('amount = ? or id = ?', [1, 'globex-2']).update({ version: 2 }),
+    );
+
+    expect(changed).toBe(1);
+    expect(idsOf(await database.knex<LineRow>(LINES.table).where({ version: 2 }))).toEqual(['acme-1']);
+  });
+
+  it('stays a statement of the helper, which refuses an or after it', async () => {
+    await asTenant(scope, 'acme', async () => {
+      expect(() => reads().whereRaw('amount = 1').orWhereRaw('amount = 2')).toThrow(UngroupedOrError);
+    });
   });
 });

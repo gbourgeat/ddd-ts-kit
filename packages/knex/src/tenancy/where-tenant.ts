@@ -9,7 +9,8 @@ export const TENANT_COLUMN = 'tenant_id';
  * Confines a read to what the work in progress may see (`tenantReachOf`): its tenant, or the
  * tenants of an elevation. Work that names no tenant is refused, never read unscoped. An `or` at
  * the top of the statement is refused too (`UngroupedOrError`): SQL would bind it outside the
- * condition, so alternatives go in a group, `.where((either) => either.where(a).orWhere(b))`.
+ * condition, so alternatives go in a group, `.where((either) => either.where(a).orWhere(b))`. Raw
+ * text given to a where stays one conjunct in parentheses, and the conditions cannot be cleared.
  */
 export function whereTenant<Row extends object, Result>(
   builder: Knex.QueryBuilder<Row, Result>,

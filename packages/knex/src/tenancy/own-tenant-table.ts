@@ -9,7 +9,8 @@ import { TENANT_COLUMN } from './where-tenant';
 /**
  * The rows of the one tenant of the work in progress, for an update or a delete: an elevation
  * widens reads, never writes. An insert spreads `tenantRow(tenantScopeOf(scope))` into its row.
- * An `or` at the top of the statement is refused, as on `whereTenant`: alternatives go in a group.
+ * The statement holds its condition as on `whereTenant`: no `or` at its top, raw text in parentheses,
+ * no clearing of its conditions.
  */
 export function ownTenantTable<Row extends object>(
   context: KnexContext,
