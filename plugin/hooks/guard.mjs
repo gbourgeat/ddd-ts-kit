@@ -13,13 +13,14 @@ import {
   openSync,
   readdirSync,
   readFileSync,
+  readlinkSync,
   realpathSync,
   rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { linkedFolder, removeKitFile, writeKitFile } from './kit-files.mjs';
 
 const CONFIG = 'ddd-ts-kit.config.json';
@@ -725,7 +726,9 @@ function quickRefusal({ project, file, written, replaced }, input) {
     baselineFileReason(project, file) ??
     acceptanceReason(project, input, { file, written, replaced }) ??
     generatedFileReason(project, file) ??
-    (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
+    (isUnwrapping(project, file, input)
+      ? undefined
+      : (workerScopeReason(project, file, input) ?? linkReason(project, file, input))) ??
     strayWriteReason(project, input) ??
     testWriterScopeReason(project, file, input) ??
     worktreeCodeReason(project, file) ??
@@ -3252,9 +3255,14 @@ function writtenTargets(command) {
       at(target, `the redirection \`${operator} ${target.replaceAll(shell.UNKNOWN, '$(...)')}\``),
     );
 
-  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))].filter(
-    ({ place }) => place === undefined || !isFreePlace(place),
-  );
+  // A place of the temp directory that is a link elsewhere is the place it reaches; a device is itself.
+  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))]
+    .map((target) =>
+      target.place !== undefined && !target.place.startsWith('/dev/') && isFreePlace(target.place)
+        ? { ...target, place: realPlace(target.place) }
+        : target,
+    )
+    .filter(({ place }) => place === undefined || !isFreePlace(place));
 }
 
 // The only absolute places a worker writes outside its scope: the null and standard devices and
@@ -3265,7 +3273,7 @@ function isFreePlace(place) {
   }
   return [tmpdir(), process.env.TMPDIR]
     .filter((dir) => typeof dir === 'string' && dir !== '')
-    .map((dir) => resolve(dir))
+    .flatMap((dir) => [resolve(dir), realOf(resolve(dir))])
     .some((dir) => place === dir || place.startsWith(`${dir}/`));
 }
 
@@ -3283,6 +3291,7 @@ function shellWriteReason(project, input, { place, by }) {
   const refusal =
     generatedFileReason(project, place) ??
     workerScopeReason(project, place, input) ??
+    linkReason(project, place, input) ??
     handWrittenRoleReason(project, place);
 
   return refusal ? `${by}: ${refusal} ${FREE_OUTPUT}` : undefined;
@@ -3624,7 +3633,53 @@ function outsideScope(project, input, place) {
     return !isFreePlace(place);
   }
 
-  return owner.root !== project.root || workerScopeReason(project, place, input) !== undefined;
+  return (
+    owner.root !== project.root ||
+    (workerScopeReason(project, place, input) ?? linkReason(project, place, input)) !== undefined
+  );
+}
+
+// A file of a worker's scope is the file it reaches: through a link, or a folder of its path that is
+// one, it is judged where it lands; a file that has another name (a hard link) may be written there too.
+function linkReason(project, place, input) {
+  const scope = workerScope(project, input);
+  if (!scope) {
+    return undefined;
+  }
+  const path = projectPath(project, place);
+  const real = relative(realpathSync(project.root), realPlace(place)).split(sep).join('/');
+  if (real !== path) {
+    const outside = real.startsWith('../') || isAbsolute(real) || contextScopeReason(project, real, scope.context);
+    return outside
+      ? `${path} is a link to ${isAbsolute(real) || real.startsWith('../') ? realPlace(place) : real}, outside your scope: a worker writes through no link that leaves it. ${REPORT_TO_CONDUCTOR}`
+      : undefined;
+  }
+  return statSync(place, { throwIfNoEntry: false })?.nlink > 1
+    ? `${path} has another name elsewhere (a hard link): writing it changes that file too. A worker writes only files of its scope that have one name. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
+}
+
+// Where a write lands: the real path of the place, its links followed, a link that points nowhere yet
+// followed to where it would create its file.
+function realPlace(place, depth = 0) {
+  try {
+    return realpathSync(place);
+  } catch {
+    // Not there: a link that points nowhere yet, or a file to create under its real folder.
+  }
+  const target = linkTarget(place);
+  if (target !== undefined && depth < 8) {
+    return realPlace(resolve(dirname(place), target), depth + 1);
+  }
+  return join(realPlace(dirname(place), depth), basename(place));
+}
+
+function linkTarget(place) {
+  try {
+    return readlinkSync(place);
+  } catch {
+    return undefined;
+  }
 }
 
 // The code a worker's command runs (inline code, a script, a shell fed on its input, a test or a

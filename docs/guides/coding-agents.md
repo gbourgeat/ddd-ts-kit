@@ -121,7 +121,9 @@ command it runs; and it knows the writers the file tables miss (`>&`, a `sed` or
 writes, `vim`/`ed`, `rsync`, `curl -o`, `wget -O`, `tar -x`, `git stash`/`reset --hard`/`worktree
 add`/`checkout -f`, `eslint --fix`, `biome --write`). A worker's only free places outside its scope
 are `/dev/null`, the standard devices and the temporary directory (`$TMPDIR`); any other absolute
-place is refused. A command nested deeper than the reader follows (more than five shells or `eval`s)
+place is refused. A file is judged where it lands: a link of the scope, or a folder of its path that
+is one, is the place it reaches, a link of the temporary directory into a project is that place, and
+a file of the scope that has another name elsewhere (a hard link) is refused. A command nested deeper than the reader follows (more than five shells or `eval`s)
 is refused rather than let through unread; so is, to a worker, a line that ends inside a quote or
 with a here-document that never closes, and a command the reader breaks on. Code it cannot read (inline code such as `node -e`, a
 script, a shell fed on its input, `make`, a package script or runner such as `npm test` or `npx`)

@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:566c230ccfb9484d -->
+<!-- translation-of: coding-agents.md sha256:4f102fac67a7fbda -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -128,7 +128,9 @@ manquent (`>&`, un script `sed` ou `awk` qui écrit, `vim`/`ed`, `rsync`, `curl 
 `tar -x`, `git stash`/`reset --hard`/`worktree add`/`checkout -f`, `eslint --fix`, `biome
 --write`). Les seuls endroits libres d'un worker hors de son périmètre sont `/dev/null`, les
 périphériques standard et le répertoire temporaire (`$TMPDIR`) ; tout autre chemin absolu est
-refusé. Une commande imbriquée plus profond que le lecteur ne suit (plus de cinq *shells* ou
+refusé. Un fichier est jugé là où il aboutit : un lien du périmètre, ou un dossier de son chemin qui en
+est un, est l'endroit qu'il atteint, un lien du répertoire temporaire vers un projet est cet
+endroit, et un fichier du périmètre qui porte un autre nom ailleurs (un lien physique) est refusé. Une commande imbriquée plus profond que le lecteur ne suit (plus de cinq *shells* ou
 `eval`) est refusée plutôt que laissée passer sans lecture ; de même, à un *worker*, une ligne qui
 finit dans une citation ou sur un *here-document* jamais fermé, et une commande sur laquelle le
 lecteur échoue. Le code qu'il ne peut pas lire (du code
