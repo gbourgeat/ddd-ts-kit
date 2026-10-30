@@ -63,7 +63,7 @@ describe('{{name.title}}, end to end', () => {
 {{#if authz.rebac}}
     await application.relate({ object: 'context:{{context.kebab}}', relation: 'operator', subject: 'user:ada' });
 {{/if}}
-    const ada = await application.as({ id: 'ada', roles: ['admin'] });
+    const ada = await application.as({ id: 'ada', roles: ['admin']{{e2e.tenant}} });
 
     const trace = await tracing.traceOf(async () => {
       expectStatus(await ada.{{e2e.call}}('{{e2e.samplePath}}'{{e2e.body}}), {{e2e.status}});
@@ -88,7 +88,7 @@ describe('{{name.title}}, end to end', () => {
 {{#if authz.rebac}}
     await application.relate({ object: 'context:{{context.kebab}}', relation: 'operator', subject: 'user:ada' });
 {{/if}}
-    const ada = await application.as({ id: 'ada', roles: ['admin'] });
+    const ada = await application.as({ id: 'ada', roles: ['admin']{{e2e.tenant}} });
 
     const response = await ada.{{e2e.call}}('{{e2e.samplePath}}'{{e2e.body}});
 {{/if}}
