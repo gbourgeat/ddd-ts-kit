@@ -43,7 +43,6 @@ export function runAffected({ root, manager, selection, script }: AffectedRun, i
   const run = spawnSync(program, args, {
     cwd: root,
     env: { ...process.env, [AFFECTED]: partial ? selection.contexts.join(',') : '' },
-    shell: process.platform === 'win32',
     stdio: 'inherit',
   });
 

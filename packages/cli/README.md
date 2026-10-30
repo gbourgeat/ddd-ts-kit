@@ -22,7 +22,9 @@ to run.
 
 ![The commands of the CLI around a project: on the left the ones that write it (init, generate, docs, sdk and depcruise-config, the three migrations), in the middle the project (ddd-ts-kit.config.json, the bounded contexts and the platform under src/, the generated documents), on the right the ones that read it back (check and check-file, list and describe, status and todo, affected)](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-commands-and-project.svg)
 
-No runtime dependency. Node 22.12 or later.
+No runtime dependency. Node 22.12 or later. Windows through WSL 2 only: outside it, `affected --run`,
+`verify-slice`, `worker-scope`, `story-scope`, `worktree` (unless `--no-install` or `--dry-run`) and
+`merge-trunk` refuse to run.
 
 ```
 npx ddd-ts-kit init

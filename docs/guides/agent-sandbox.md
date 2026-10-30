@@ -329,6 +329,12 @@ Copilot CLI, OpenCode and others. What it adds to the two levels above:
 macOS on Apple Silicon with Docker Desktop; Windows through WSL 2 is experimental. Launch fails
 closed when Landlock is missing.
 
+**Windows** is supported through WSL 2 only (there the platform is `linux`). Outside it, `affected --run`,
+`verify-slice`, `worker-scope`, `story-scope`, `worktree` (unless `--no-install` or `--dry-run`) and
+`merge-trunk` refuse to run, at their entry and before any process starts: the package manager is
+reached through `cmd.exe`, which passes the arguments of a script unescaped (`affected --run "test & calc"`
+would run `calc`). The refusal exits with code 2.
+
 **Limits to know**, as of 0.1.4:
 
 - no folder of the host is mounted: files are copied in (`openshell sandbox upload`) and out
