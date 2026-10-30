@@ -8,10 +8,16 @@ const MAX_BUFFER = 256 * 1024 * 1024;
  * What git prints for a command run in `directory`; undefined when git answers with a failure
  * status or is not installed. A git that could not answer at all (its output over the buffer, a
  * timeout) is an error: it is not an empty answer. Only the user's own repository is read or changed.
+ * `environment` adds to the variables of the process, such as an index of its own.
  */
-export function runGit(directory: string, args: readonly string[]): string | undefined {
+export function runGit(
+  directory: string,
+  args: readonly string[],
+  environment?: Readonly<Record<string, string>>,
+): string | undefined {
   const run = spawnSync('git', [...args], {
     cwd: directory,
+    ...(environment === undefined ? {} : { env: { ...process.env, ...environment } }),
     encoding: 'utf8',
     maxBuffer: MAX_BUFFER,
     stdio: ['ignore', 'pipe', 'pipe'],

@@ -5,8 +5,8 @@ import { initProject } from './support/init-project';
 import { slicedProject } from './support/sliced-project';
 
 describe('digest refuses, exit 2, what it cannot compare', () => {
-  it('refuses without --base, and names the ref to give', () => {
-    const refused = cli(initProject(), 'digest');
+  it.each([[[]], [['--base=']]])('refuses without a base (%j), and names the ref to give', (base) => {
+    const refused = cli(initProject(), 'digest', ...base);
 
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('error: digest compares the branch with the commit it was cut from.');

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d493ed45308d8acd -->
+<!-- translation-of: README.md sha256:7ca143ecd378f08b -->
 
 # ddd-ts-kit
 
@@ -1929,7 +1929,7 @@ Où en est une story, phase par phase, et l'étape suivante : sa spécification 
 conception par ligne non faite (`docs/architecture/reviews/<story>.md`, `## #<id>`), son
 acceptation écrite et verrouillée, ses lignes faites sans marqueur à elle, son acceptation qui
 passe, son tronc fusionné, son `## Origin` (`From:` et `Built with:`), son `## Report` avec
-`### Verification` nommant `npm run verify`. Dans le *worktree* d'une story, la story est la
+`### Digest` (ce qu'imprime `digest`) puis `### Verification` nommant `npm run verify`. Dans le *worktree* d'une story, la story est la
 sienne. `--gate build` sort en 1 tant que les quatre premières phases ne sont pas franchies (le
 code peut commencer : la garde du plugin ouvre les contextes) ; `--gate close` tant que toutes ne
 le sont pas. Pour une story de type `fix` (son `story.json`, ou une section `## Regression` dans
@@ -1941,14 +1941,16 @@ aucune phase « passe » n'est lue : les *specs* de régression tournent avec le
 ## digest
 
 ```
-ddd-ts-kit digest --base <ref>
+ddd-ts-kit digest --base <ref> [--json]
 ```
 
 Ce que change la branche, pour qui la relit, en une trentaine de lignes de Markdown lues avant le
 *diff* : le skill story l'écrit dans `## Report`, le skill pull-request le garde en tête du corps
 de la *pull request*. HEAD est comparé à sa base de fusion avec `<ref>`, si bien qu'un tronc qui a
-avancé depuis la création de la branche n'ajoute rien ; les deux *commits* sont extraits par
-`git archive` sous le répertoire temporaire du système, décrits là comme `describe` lit un projet,
+avancé depuis la création de la branche n'ajoute rien ; les deux *commits* sont écrits sous le
+répertoire temporaire du système par un index qui leur est propre (`git read-tree`, puis
+`git checkout-index`, qui, à la différence de `git archive`, garde ce que nomme `export-ignore` de
+`.gitattributes`), décrits là comme `describe` lit un projet,
 puis supprimés : l'arbre de travail n'est jamais extrait, et ce qu'il garde sans *commit* est dit
 dans une note, sans entrer dans le *digest*.
 

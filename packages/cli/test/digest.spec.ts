@@ -212,13 +212,23 @@ describe('digest --base, on the changes a branch makes after the slice', () => {
 
 describe('digest --base, on a project below the top of its repository', () => {
   it('reads the project alone, its paths from the project root', () => {
-    const root = slicedProject(true);
+    const root = slicedProject({ below: true });
     const digest = cli(root, 'digest', '--base', 'main');
 
     expect(digest.code).toBe(0);
     expect(digest.stdout).toContain('  - use case added: command `IssueInvoice` (`invoice.issue`)');
     expect(digest.stdout).toContain(`\`${HANDLER_SPEC}\``);
     expect(digest.stdout).not.toContain('apps/invoicing');
+  });
+});
+
+describe('digest --base, on a repository that keeps its specs out of its archives', () => {
+  it('still reads the spec titles, git archive and export-ignore aside', () => {
+    const root = slicedProject({ attributes: '**/test/** export-ignore\n' });
+    const digest = cli(root, 'digest', '--base', 'main');
+
+    expect(digest.code).toBe(0);
+    expect(digest.stdout).toContain(`- \`${HANDLER_SPEC}\`: ${WRITTEN_TITLE}`);
   });
 });
 

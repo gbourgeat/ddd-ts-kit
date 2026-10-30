@@ -41,7 +41,7 @@ export const USAGE = `Usage
   ddd-ts-kit story-scope <story> [--from <file>] [--kind story|fix] [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
-  ddd-ts-kit digest --base <ref>
+  ddd-ts-kit digest --base <ref> [--json]
   ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
   ddd-ts-kit mutation [--report <file>] [--survivors] [--changed <ref>] [--json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]

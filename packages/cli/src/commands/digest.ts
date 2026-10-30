@@ -16,7 +16,7 @@ export const digestCommand: Command = (argv, io) => {
   const { config } = readConfig(root);
   const base = args.text('base');
 
-  if (base === undefined) {
+  if (base === undefined || base === '') {
     throw new CliError(
       'digest compares the branch with the commit it was cut from.',
       'Name it: `ddd-ts-kit digest --base origin/main` (the base of the story or of the briefing).',

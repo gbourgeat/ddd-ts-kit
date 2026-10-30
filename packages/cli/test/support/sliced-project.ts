@@ -9,18 +9,30 @@ export const HANDLER_SPEC = 'src/contexts/billing/test/unit/issue-invoice.handle
 /** The rule a person adds to the generated spec of the handler. */
 export const WRITTEN_TITLE = 'issues the invoice to the customer it is addressed to';
 
+/** Where the project stands in its repository, and the attributes its repository gives git. */
+export interface SlicedProjectOptions {
+  /** The project in a directory of the repository instead of at its top. */
+  readonly below?: boolean;
+  /** The `.gitattributes` the base commits at the top of the repository. */
+  readonly attributes?: string;
+}
+
 /**
  * A project whose repository holds `main`, the bootstrap and the aggregate Invoice, then the branch
  * `slice/issue-invoice` cut from it with one slice committed: the command IssueInvoice granted to
- * the role accountant, its route, and a rule written in the spec of its handler. `below` puts the
- * project in a directory of the repository instead of at its top.
+ * the role accountant, its route, and a rule written in the spec of its handler.
  */
-export function slicedProject(below = false): string {
+export function slicedProject({ below = false, attributes }: SlicedProjectOptions = {}): string {
   const top = tempDir('sliced');
   const root = below ? path.join(top, 'apps', 'invoicing') : top;
 
   expectOk(cli(root, 'init', '--context', 'billing:core'));
   expectOk(cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--term', 'Invoice=what a customer owes'));
+
+  if (attributes !== undefined) {
+    write(top, '.gitattributes', attributes);
+  }
+
   git(top, 'init', '--quiet', '--initial-branch', 'main');
   commit(top, 'feat(billing): the invoice');
   git(top, 'checkout', '--quiet', '-b', 'slice/issue-invoice');

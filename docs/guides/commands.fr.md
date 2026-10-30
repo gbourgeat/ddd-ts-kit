@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:2de44447ad1ea4b0 -->
+<!-- translation-of: commands.md sha256:ea25e2bb8cd8523e -->
 
 # Quelle commande, quand
 
@@ -292,7 +292,7 @@ Usage
   ddd-ts-kit story-scope <story> [--from <file>] [--kind story|fix] [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
-  ddd-ts-kit digest --base <ref>
+  ddd-ts-kit digest --base <ref> [--json]
   ddd-ts-kit measures [--since <date>] [--story <code>] [--by-author] [--format text|json]
   ddd-ts-kit mutation [--report <file>] [--survivors] [--changed <ref>] [--json]
   ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
@@ -548,8 +548,9 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    (docs/architecture/stories/<story>.md), its rows in slices.md, a design review section
                    per row not done (docs/architecture/reviews/<story>.md, ## #<id>), its acceptance written
                    and locked, its rows done, its acceptance passing, its trunk merged in, its ## Origin
-                   (From: and Built with:), its ## Report with ### Verification naming npm run verify; and
-                   the next step; in the worktree of a story, the story is its own; --gate build exits 1
+                   (From: and Built with:), its ## Report with ### Digest (what digest prints) then
+                   ### Verification naming npm run verify; and the next step; in the worktree of a story,
+                   the story is its own; --gate build exits 1
                    until the first four are met (the code may start: the guard of the plugin opens the
                    contexts), --gate close until all are
   stories          the stories open in the worktrees of the repository and where two of them meet: the
@@ -562,7 +563,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    the diff: per context, the use cases, permissions (with the roles that hold them), routes
                    (with their error codes), events published and consumed, ports and adapters added, changed
                    or removed since the merge base of <ref> and HEAD (both described as describe reads them,
-                   each extracted by git archive under the temporary directory, the working tree untouched);
+                   each written under the temporary directory through an index of its own, export-ignore of
+                   .gitattributes aside, the working tree untouched);
                    the spec titles the branch adds, those the kit generated counted; the files to review in
                    reading order (context, domain, application, presentation, infrastructure, tests,
                    elsewhere), and apart, as regenerated, the generated files REVIEW.md names; what is not

@@ -34,11 +34,11 @@ export function contextChanges(before: ProjectTree, after: ProjectTree): Context
 function entriesIn(tree: ProjectTree, name: string): ContextEntries | undefined {
   const described = tree.contexts.find((context: ContextDescription) => context.name === name);
 
-  if (described === undefined || tree.config === undefined) {
+  if (described === undefined || tree.config === undefined || tree.grants === undefined) {
     return undefined;
   }
 
-  return contextEntries(described, grantsOf(tree.ws, tree.config, name));
+  return contextEntries(described, grantsOf({ ws: tree.ws, config: tree.config, grants: tree.grants }, name));
 }
 
 function changeOf(was: ContextEntries | undefined, is: ContextEntries | undefined): Change {
