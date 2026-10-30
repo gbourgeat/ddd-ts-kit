@@ -207,6 +207,9 @@ function settled(
     return stopped;
   }
 
+  // The merge is in progress: a process stopped from here on leaves a state `--continue` goes on from.
+  mergeState.write(context.root, state);
+
   return continueMerge(context, state, { acceptLost: false, now: request.now ?? new Date() });
 }
 
