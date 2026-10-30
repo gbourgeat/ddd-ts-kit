@@ -19,8 +19,9 @@ export interface MigrationsWritten {
  * Makes the audit trail append-only in the migration that creates it: the tools of Drizzle, Prisma
  * and TypeORM write no trigger, so the statements of the guard follow the creation of the tables,
  * once. A project whose migrations already hold them, or none of whose migrations creates an audit
- * table, is left as it is; the check is made on every run, so that a run stopped before it was
- * made is completed by the next one, even when the tool of the ORM has nothing to write.
+ * table, is left as it is. The check is made on every run, so that a run stopped before it was
+ * made is completed by the next one, even when the tool of the ORM has nothing to write: the repair
+ * reaches the latest migration only, an older one may be applied already and is only named.
  */
 export function appendAuditGuard(
   migrations: MigrationsWritten,
@@ -34,14 +35,26 @@ export function appendAuditGuard(
     return;
   }
 
-  for (const file of [...written, ...migrations.migrations.filter((earlier) => !written.includes(earlier))]) {
-    const schema = auditSchemaCreated(read(file));
+  const latest = [...migrations.migrations].sort().at(-1);
 
-    if (schema !== undefined) {
-      writeInsideProject(root, file, guardedText(orm, read(file), statementsOf(schema)));
-      io.out(`audit guard   ${file}: the entries and archives of the audit trail refuse UPDATE, DELETE and TRUNCATE`);
+  const creating = [...written, ...migrations.migrations.filter((earlier) => !written.includes(earlier))].filter(
+    (file) => auditSchemaCreated(read(file)) !== undefined,
+  );
 
-      return;
+  for (const file of creating) {
+    if (!written.includes(file) && file !== latest) {
+      io.out(
+        `audit guard   ${file}: creates the audit trail without the guard that makes it append-only; it may be applied already, so it is left as it is`,
+      );
+
+      continue;
     }
+
+    const schema = auditSchemaCreated(read(file)) ?? 'public';
+
+    writeInsideProject(root, file, guardedText(orm, read(file), statementsOf(schema)));
+    io.out(`audit guard   ${file}: the entries and archives of the audit trail refuse UPDATE, DELETE and TRUNCATE`);
+
+    return;
   }
 }

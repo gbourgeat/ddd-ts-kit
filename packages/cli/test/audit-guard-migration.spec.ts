@@ -72,27 +72,38 @@ describe('the audit guard of a generated migration', () => {
 });
 
 describe('a run that writes no migration', () => {
-  it('guards the migration that creates the audit entries when none of the project holds the guard yet', () => {
+  const rerun = (files: Record<string, string>): { root: string; out: string[] } => {
     const root = tempDir('audit-guard-rerun');
-    const file = 'migrations/0000_init.sql';
+    const out: string[] = [];
 
     fs.mkdirSync(path.join(root, 'migrations'));
-    fs.writeFileSync(path.join(root, file), DRIZZLE);
-
-    fs.writeFileSync(
-      path.join(root, 'migrations/0001_invoices.sql'),
-      'CREATE TABLE "billing"."invoices" ("id" text);\n',
-    );
+    Object.entries(files).forEach(([file, content]) => fs.writeFileSync(path.join(root, file), content));
 
     appendAuditGuard(
-      { root, orm: 'drizzle', written: [], migrations: [file, 'migrations/0001_invoices.sql'] },
+      { root, orm: 'drizzle', written: [], migrations: Object.keys(files) },
       (schema) => GUARD.map((statement) => statement.replaceAll('"audit"', `"${schema}"`)),
-      { out: () => undefined, err: () => undefined },
+      { out: (text) => out.push(text), err: () => undefined },
     );
 
-    expect(fs.readFileSync(path.join(root, file), 'utf8')).toBe(
+    return { root, out };
+  };
+
+  it('guards the latest migration when it creates the audit entries and holds no guard', () => {
+    const { root } = rerun({ 'migrations/0000_init.sql': DRIZZLE });
+
+    expect(fs.readFileSync(path.join(root, 'migrations/0000_init.sql'), 'utf8')).toBe(
       `${DRIZZLE.trimEnd()}\n--> statement-breakpoint\n${GUARD[0]};\n--> statement-breakpoint\n${GUARD[1]};\n`,
     );
+  });
+
+  it('only names an older migration that creates the audit entries without the guard, and writes nothing to it', () => {
+    const { root, out } = rerun({
+      'migrations/0000_init.sql': DRIZZLE,
+      'migrations/0001_invoices.sql': 'CREATE TABLE "billing"."invoices" ("id" text);\n',
+    });
+
+    expect(fs.readFileSync(path.join(root, 'migrations/0000_init.sql'), 'utf8')).toBe(DRIZZLE);
+    expect(out.join('\n')).toContain('migrations/0000_init.sql: creates the audit trail without the guard');
   });
 });
 
