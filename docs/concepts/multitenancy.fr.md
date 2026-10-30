@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:40d9370a2524db3f -->
+<!-- translation-of: multitenancy.md sha256:bdbb124dd90f9dc1 -->
 
 # Multitenance
 
@@ -110,6 +110,18 @@ Ce que fournit chaque adaptateur, prouvé par `tenantIsolationContract`
 depuis l'exécuteur, le client ou le *manager*, une ligne atteinte par sa seule clé, un registre de
 modèles de lecture construit sans son *tenant*. Les trois autres se câblent à la main à partir des *packages* pour l'instant ;
 `init` les refuse et dit quoi ajouter.
+
+La condition du *tenant* ne vaut pour chaque ligne que si elle reste en `and` avec tout le reste de
+l'instruction. SQL lie `and` avant `or` : une alternative écrite à côté de la condition est donc
+en dehors d'elle. Les alternatives vont dans un groupe lié à la condition par un `and`, et la règle
+signale toute autre forme :
+
+| ORM | La condition du *tenant* | Les alternatives |
+|---|---|---|
+| Knex | aucun `.orWhere*`, `.orHaving*` ou `.or` au sommet d'une instruction de `tenantTable`, `ownTenantTable` ou `whereTenant`, qui les refusent aussi à la construction de l'instruction (`UngroupedOrError`) | `.where((either) => either.where(a).orWhere(b))` |
+| Drizzle | un argument direct de `where` ou de `and`, jamais sous `or`, `not` ou un gabarit `sql` | `.where(and(tenantCondition(column, scope), or(a, b)))` |
+| Prisma | étalée au sommet du `where` ou de son `AND`, jamais sous `OR`, `NOT` ou une relation | `where: { ...tenantWhere(scope), OR: [a, b] }` |
+| TypeORM | étalée au sommet du *where* ; un tableau *where* est un `or` de ses entrées, chacune l'étale donc ; aucun `orWhere` au sommet d'un *query builder* | `.andWhere(new Brackets((either) => either.where(a).orWhere(b)))` |
 
 Un contexte dont les tables n'appartiennent à aucun *tenant*, parce qu'il décide qui appartient à
 quel *tenant*, est déclaré tel dans la configuration plutôt que désactivé instruction par

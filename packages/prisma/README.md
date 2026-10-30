@@ -437,8 +437,9 @@ the `where` of a read (the tenant of the work, or the tenants an elevation of pl
 reaches, `{ tenantId: { in } }` or nothing over every tenant), `ownTenantWhere(scope)` into the
 `where` of an update or a delete (the one tenant of the work, whatever an elevation widens) and
 `tenantScopeOf(scope)` of the kernel into the `data` of a create. `findUnique`, `update` and
-`delete` by key are not used: the tenant is never part of the key. The rule
-`tenancy/scoped-statement` of the CLI holds the adapters of a `--tenancy shared-table` project to
+`delete` by key are not used: the tenant is never part of the key. The spread stays at the top of
+the `where`, an `OR` beside it: under an `OR`, a `NOT` or a relation it holds for one branch alone.
+The rule `tenancy/scoped-statement` of the CLI holds the adapters of a `--tenancy shared-table` project to
 it, and `generate repository` writes them this way.
 
 ```ts
