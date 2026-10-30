@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:20d784abd49495f0 -->
+<!-- translation-of: README.md sha256:049903f1129fb5c5 -->
 
 # ddd-ts-kit
 
@@ -24,7 +24,9 @@ qu'une *pull request* doit exécuter.
 
 ![Les commandes de la CLI autour d'un projet : à gauche celles qui l'écrivent (init, generate, docs, sdk et depcruise-config, les trois migrations), au milieu le projet (ddd-ts-kit.config.json, les contextes délimités et la plateforme sous src/, les documents générés), à droite celles qui le relisent (check et check-file, list et describe, status et todo, affected)](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-commands-and-project.fr.svg)
 
-Aucune dépendance d'exécution. Node 22.12 ou ultérieur.
+Aucune dépendance d'exécution. Node 22.12 ou ultérieur. Windows via WSL 2 uniquement : hors de WSL,
+`affected --run`, `verify-slice`, `worker-scope`, `story-scope`, `worktree` (sauf `--no-install` ou
+`--dry-run`) et `merge-trunk` refusent de s'exécuter.
 
 ```
 npx ddd-ts-kit init

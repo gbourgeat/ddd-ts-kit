@@ -38,7 +38,6 @@ export const MERGE_STEPS: Readonly<
     const run = spawnSync(manager, ['install'], {
       cwd: context.root,
       encoding: 'utf8',
-      shell: process.platform === 'win32',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 

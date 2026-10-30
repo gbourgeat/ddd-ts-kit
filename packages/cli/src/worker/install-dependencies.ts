@@ -28,7 +28,6 @@ export function installDependencies(directory: string, manager: Stack['packageMa
     cwd: directory,
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
-    shell: process.platform === 'win32',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 

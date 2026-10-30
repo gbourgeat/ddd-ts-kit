@@ -118,19 +118,13 @@ typed parameters, and throw it where the rule is kept:
 refusal gets a second factory (`generate error scheduling SlotTaken atStart`); a second code is a
 second class. Never `new` an error of `domain/errors/` (`errors/through-factory`). Facts are
 private: add `.exposing('<fact>')` in the factory only for what a client may read, never for what
-identifies a person. Declare the code in `errors` of the route (`errors/known-code`). In a project
-whose config says `"stack.refusals": "factories"`, a refusal is a factory of the error class of
-its concept instead: `generate error scheduling Appointment slotTaken` adds
-`AppointmentError.slotTaken()`; `npx ddd-ts-kit error-factories` moves such a project to named
-refusals when the user decides to.
+identifies a person. Declare the code in `errors` of the route (`errors/known-code`). Under
+`stack.refusals: factories`, read [factories.md](factories.md) first: a refusal is a factory of
+the error class of its concept instead.
 
-A use case that receives a file is
-`generate file-upload <ctx> <UseCase> --path /<resource>/:id/<file> (--permission ... --grant <role> | --public)`:
-a controller that declares the file (size and media types, in the contract), a command that
-carries it as a `FileUpload` (the bus stages it under a key of `FileKeys` before the transaction
-opens), a handler that reads `upload.file` and promotes it with the commit
-(`promoteOnCommit`). Record the `StoredFile` on the aggregate in that handler; the content never
-goes in a table. A download is a query answering a short signed link (`signedDownloadUrl`).
+A use case that receives a file is `generate file-upload`, and its content never goes in a
+table: read [file-upload.md](file-upload.md) first (refused under `stack.storage: none` or
+`stack.http: none`).
 
 A read is `generate query ... (--permission ... --grant <role> | --public)`; a search adds `--search` (paged,
 narrowed in the query by the caller's access scope). A reaction inside the context is
@@ -179,8 +173,8 @@ story states it.
    and returns the body (`{ body, headers }` when the response declares `headers`, a `Location` on a 201). Add `--mapper` or `--serializer` when the translation is more than a
    line; the controller is given nothing but its bus and those two. Its group
    (`<resource>.routes.ts`) holds the guards: a guard is a control at the edge, the permission
-   stays on the command. In a project of function routes (`"stack.routes": "functions"`, or no
-   key) the route is a `defineRoute` function with `actorOf(...)` and its `security`.
+   stays on the command. Under `stack.routes: functions` (or no `routes` key), read
+   [function-routes.md](function-routes.md) first.
 4. **Infrastructure**, only when the slice added a port: the adapter and the fake pass the
    same contract suite (skills `ddd-ts-kit:persistence`, `ddd-ts-kit:cross-cutting`).
 

@@ -1,5 +1,7 @@
 # NestJS: where each tool of Nest goes
 
+Read under `stack.http: nest`, before writing a route, a guard or a provider in a context.
+
 Rule: a context uses none of the tools of Nest the kit does its own way
 (`nest/no-parallel-pipeline`, an error), and a controller Nest serves reaches no use case,
 wherever it is written. A Nest controller the kit serves (`@KitRoute`) keeps Nest's route and
