@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:35d006e0e4cbf702 -->
+<!-- translation-of: agent-sandbox.md sha256:b3eea24af033ec00 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -90,7 +90,7 @@ ligne apporte, en termes de contrôle :
 | `sandbox.filesystem.allowWrite` : les caches qu'écrit l'installation de la pile | projet | une commande n'écrit que le projet, le répertoire temporaire et ces caches : `~/.npm` avec npm, le *store* et le cache de pnpm, `~/.cache/prisma` avec Prisma (plus bas) |
 | `sandbox.credentials.files` : `~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure` refusés | projet | une commande ne peut pas lire les clés du développeur : une injection de *prompt* ne peut pas les envoyer |
 | `sandbox.credentials.envVars` : `GITHUB_TOKEN`, `GH_TOKEN`, `GITLAB_TOKEN`, `NPM_TOKEN`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`, `AZURE_CLIENT_SECRET` refusées | projet | les variables sont retirées avant chaque commande en bac à sable : un jeton dans le *shell* du développeur n'est pas dans celui de l'agent |
-| `permissions.deny: Read(./.env)`, `Read(./.env.local)`, `Read(./.env.*.local)`, `Read(./.env.production)`, `Read(./.env.development)`, `Read(./.env.test)` | projet, écrit aussi sans le profil | les secrets du projet restent hors du contexte de l'agent : le bac à sable ne couvre que les commandes *shell*, pas l'outil Read, donc une règle de permission tient celui-ci |
+| `permissions.deny: Read(./.env)`, `Read(./.env.local)`, `Read(./.env.*.local)`, `Read(./.env.production)`, `Read(./.env.development)`, `Read(./.env.test)`, `Read(./.env.staging)`, `Read(./.env.stage)`, `Read(./.env.prod)`, `Read(./.env.preview)`, `Read(./.env.ci)`, `Read(./.envrc)` | projet, écrit aussi sans le profil | les secrets du projet restent hors du contexte de l'agent : le bac à sable ne couvre que les commandes *shell*, pas l'outil Read, donc une règle de permission tient celui-ci |
 | `allowManagedPermissionRulesOnly: true` | réglages gérés | les règles de permission de l'organisation sont les seules : un fichier de projet ou d'utilisateur ne peut pas les élargir |
 | `permissions.disableBypassPermissionsMode: "disable"` | gérés | le mode qui saute chaque demande de permission est refusé : aucune session ne tourne sans les portes |
 | `allowManagedHooksOnly: true` | gérés | seuls les *hooks* de l'organisation tournent ; copiez-y les *hooks* du profil, sinon un fichier de projet ne peut pas les garder. Un projet ne peut pas retirer la porte de production |

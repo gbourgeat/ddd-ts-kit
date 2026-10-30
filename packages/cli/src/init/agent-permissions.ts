@@ -69,6 +69,12 @@ const DENY: readonly string[] = [
   'Read(./.env.production)',
   'Read(./.env.development)',
   'Read(./.env.test)',
+  'Read(./.env.staging)',
+  'Read(./.env.stage)',
+  'Read(./.env.prod)',
+  'Read(./.env.preview)',
+  'Read(./.env.ci)',
+  'Read(./.envrc)',
 ];
 
 /**

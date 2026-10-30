@@ -1,0 +1,1 @@
+**`init` denies the `Read` of `.env.staging`, `.env.stage`, `.env.prod`, `.env.preview`, `.env.ci` and `.envrc`, and keeps `.envrc` out of git and out of the image.** They join the five environment files already denied; the example file stays readable. `init` adds the rules to the settings of a project that already has some, and `doctor` reports a missing one.

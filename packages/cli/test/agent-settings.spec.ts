@@ -18,6 +18,12 @@ const DENIED = [
   'Read(./.env.production)',
   'Read(./.env.development)',
   'Read(./.env.test)',
+  'Read(./.env.staging)',
+  'Read(./.env.stage)',
+  'Read(./.env.prod)',
+  'Read(./.env.preview)',
+  'Read(./.env.ci)',
+  'Read(./.envrc)',
 ];
 
 const GENERATED = [
@@ -131,6 +137,12 @@ describe('agent settings', () => {
       'Read(./.env.production)',
       'Read(./.env.development)',
       'Read(./.env.test)',
+      'Read(./.env.staging)',
+      'Read(./.env.stage)',
+      'Read(./.env.prod)',
+      'Read(./.env.preview)',
+      'Read(./.env.ci)',
+      'Read(./.envrc)',
     ]);
   });
 });
@@ -261,7 +273,7 @@ describe('agent settings of the files that reach production', () => {
     expect(permissions(root, 'ask')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 67 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 73 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);

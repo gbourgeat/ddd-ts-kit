@@ -2,6 +2,7 @@ node_modules
 dist
 /coverage/
 .env
+.envrc
 # .env.local, .env.production and the like hold secrets too; the example is the one to share.
 .env.*
 !.env.example
