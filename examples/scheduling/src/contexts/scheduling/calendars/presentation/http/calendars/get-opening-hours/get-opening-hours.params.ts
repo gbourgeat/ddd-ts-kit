@@ -2,5 +2,5 @@ import { IsString } from 'class-validator';
 
 export class GetOpeningHoursParams {
   @IsString()
-  calendarId = '';
+  declare calendarId: string;
 }

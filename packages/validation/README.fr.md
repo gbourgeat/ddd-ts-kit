@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:689a91239855eb3c -->
+<!-- translation-of: README.md sha256:d6b1e43435f9be23 -->
 
 # @ddd-ts-kit/validation
 
@@ -193,17 +193,17 @@ import { ArrayMinSize, IsInt, IsString, IsUUID, Min, ValidateNested } from 'clas
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 
 class OrderItemDto {
-  @IsString() sku = '';
-  @IsInt() @Min(1) quantity = 0;
+  @IsString() declare sku: string;
+  @IsInt() @Min(1) declare quantity: number;
 }
 
 class PlaceOrderDto {
-  @IsUUID() customerId = '';
+  @IsUUID() declare customerId: string;
 
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   @ArrayMinSize(1)
-  items: OrderItemDto[] = [];
+  declare items: OrderItemDto[];
 }
 
 export const placeOrder = classSchema(PlaceOrderDto);
@@ -218,8 +218,15 @@ classes imbriquées atteignables depuis la classe.
 
 Exige `experimentalDecorators` dans le `tsconfig.json` du projet.
 
+Chaque champ est déclaré par `declare`, sans valeur initiale. class-transformer garde la valeur
+initiale d'un champ que l'entrée n'a pas : `customerId = ''` sous `@IsString()` laisserait passer
+une commande sans client, comme si elle en nommait un vide. Un champ facultatif est
+`@IsOptional()` avec `declare note?: string;`. `classSchema` refuse une classe dont une instance
+neuve porte une valeur, par une `DeclarationError` qui nomme ses champs et la correction.
+
 Une classe DTO déclarée une fois est réutilisée entière (`classSchema(SlotDto, { shared: true })`,
-ou imbriquée avec `@ValidateNested()` et `@Type`), étendue (`class BookBody extends SlotDto { ... }`)
+ou imbriquée avec `@ValidateNested()` et `@Type`, et `@IsDefined()` quand elle est obligatoire : la
+validation imbriquée laisse passer un objet absent), étendue (`class BookBody extends SlotDto { ... }`)
 ou en partie, par trois utilitaires qui copient les contraintes, les types imbriqués et les
 transformations des propriétés qu'ils gardent :
 
@@ -229,15 +236,15 @@ import { IsEmail, IsIn, IsISO8601, IsString, IsUUID } from 'class-validator';
 import { omitClass, partialClass, pickClass } from '@ddd-ts-kit/validation/class-validator';
 
 class AppointmentDto {
-  @IsUUID() patientId = '';
-  @IsISO8601() startsAt = '';
-  @IsISO8601() endsAt = '';
-  @IsIn(['booked', 'cancelled']) status = 'booked';
+  @IsUUID() declare patientId: string;
+  @IsISO8601() declare startsAt: string;
+  @IsISO8601() declare endsAt: string;
+  @IsIn(['booked', 'cancelled']) declare status: 'booked' | 'cancelled';
 }
 
 class PatientDto {
-  @IsString() name = '';
-  @IsEmail() email = '';
+  @IsString() declare name: string;
+  @IsEmail() declare email: string;
 }
 
 export class RescheduleBody extends pickClass(AppointmentDto, ['startsAt', 'endsAt']) {}

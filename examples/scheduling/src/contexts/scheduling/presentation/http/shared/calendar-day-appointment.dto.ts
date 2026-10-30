@@ -4,14 +4,14 @@ import { AppointmentStatus } from '@/contexts/scheduling/calendars/domain/vocabu
 /** The appointment behind a held slot, for whoever may read it. */
 export class CalendarDayAppointmentDto {
   @IsString()
-  id = '';
+  declare id: string;
 
   @IsString()
-  patientId = '';
+  declare patientId: string;
 
   @IsString()
-  appointmentTypeId = '';
+  declare appointmentTypeId: string;
 
   @IsIn([AppointmentStatus.Requested, AppointmentStatus.Booked])
-  status: typeof AppointmentStatus.Requested | typeof AppointmentStatus.Booked = AppointmentStatus.Booked;
+  declare status: typeof AppointmentStatus.Requested | typeof AppointmentStatus.Booked;
 }

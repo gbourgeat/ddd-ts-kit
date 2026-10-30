@@ -129,7 +129,7 @@ function parameterVars(parameters: readonly string[]): RenderContext {
   return {
     zodParams: parameters.map((parameter) => `${parameter}: z.string().min(1)`).join(', '),
     typeboxParams: parameters.map((parameter) => `${parameter}: Type.String({ minLength: 1 })`).join(', '),
-    dtoParams: parameters.map((parameter) => `@IsString()\n  ${parameter} = '';`).join('\n\n  '),
+    dtoParams: parameters.map((parameter) => `@IsString()\n  declare ${parameter}: string;`).join('\n\n  '),
     sampleParams: sampleParams(parameters),
   };
 }

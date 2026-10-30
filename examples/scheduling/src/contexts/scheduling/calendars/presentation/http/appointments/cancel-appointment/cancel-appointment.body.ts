@@ -5,5 +5,5 @@ export class CancelAppointmentBody {
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  reason?: string;
+  declare reason?: string;
 }

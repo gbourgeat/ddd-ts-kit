@@ -2,17 +2,17 @@ import { IsIn, IsString } from 'class-validator';
 
 export class PracticeMemberAddedV1Payload {
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  personId = '';
+  declare personId: string;
 
   @IsIn(['manager', 'practitioner', 'assistant'])
-  role: 'manager' | 'practitioner' | 'assistant' = 'manager';
+  declare role: 'manager' | 'practitioner' | 'assistant';
 
   @IsString()
-  displayName = '';
+  declare displayName: string;
 
   @IsString()
-  timeZone = '';
+  declare timeZone: string;
 }

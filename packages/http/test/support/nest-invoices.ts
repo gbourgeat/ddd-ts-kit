@@ -22,16 +22,16 @@ export class InvoiceAlreadyIssued extends DomainError {
 }
 
 export class IssueInvoiceBody {
-  customerId = '';
+  declare customerId: string;
 }
 
 IsString()(IssueInvoiceBody.prototype, 'customerId');
 MinLength(1)(IssueInvoiceBody.prototype, 'customerId');
 
 export class IssuedInvoice {
-  invoiceId = '';
-  customerId = '';
-  issuedBy = '';
+  declare invoiceId: string;
+  declare customerId: string;
+  declare issuedBy: string;
 }
 
 for (const field of ['invoiceId', 'customerId', 'issuedBy']) {

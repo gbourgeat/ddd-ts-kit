@@ -18,6 +18,25 @@ describe('{{route.method}} {{route.path}}', () => {
     {{route.messageExpectation}}
     expect(route.path).toBe('{{route.path}}');
   });
+  {{#if route.refusesMissing}}
+
+  it('refuses a body without `{{route.missingField}}` with 422, naming the field', async () => {
+    const {{route.bus}} = new {{route.recordingBus}}();
+    const { send } = routeOf(new {{name.pascal}}Controller({{route.specArguments}}));
+
+    const response = await send({{route.missingRequest}});
+
+    expect(response).toMatchObject({
+      status: 422,
+      body: {
+        code: 'VALIDATION_FAILED',
+        issues: expect.arrayContaining([expect.objectContaining({ path: 'body.{{route.missingField}}' })]),
+      },
+    });
+
+    expect({{route.bus}}.executed).toEqual([]);
+  });
+  {{/if}}
 
   // TODO(domain): replace each entry below by a test of the same shape, through the same `routeOf` (`{ caller }` names another one, `anonymousActor()` of the kernel nobody); the guards of the controller stand before it, so a route behind a role is sent by an actor that has it.
   it.todo('refuses an input that does not have the expected shape with 422');

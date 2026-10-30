@@ -5,24 +5,24 @@ import { AttendanceFact } from '@/contexts/scheduling/calendars/domain/vocabular
 export class SearchAttendanceHistoryLine {
   /** Its rank in the history, from 1. */
   @IsInt()
-  version = 0;
+  declare version: number;
 
   @IsIn(Object.values(AttendanceFact))
-  fact: AttendanceFact = AttendanceFact.Opened;
+  declare fact: AttendanceFact;
 
   @IsISO8601()
-  notedAt = '';
+  declare notedAt: string;
 
   @IsOptional()
   @IsString()
-  appointmentId?: string;
+  declare appointmentId?: string;
 
   @IsOptional()
   @IsISO8601()
-  startsAt?: string;
+  declare startsAt?: string;
 
   /** The words of the patient who cancelled; `[erased]` once the patient was erased. */
   @IsOptional()
   @IsString()
-  reason?: string;
+  declare reason?: string;
 }

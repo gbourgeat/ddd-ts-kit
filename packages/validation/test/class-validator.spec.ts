@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
+  IsDefined,
   IsInt,
   IsOptional,
   IsString,
@@ -12,31 +13,32 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
 import { classSchema } from '../src/class-validator';
 
 class OrderItemDto {
   @IsString()
   @MinLength(1)
-  sku = '';
+  declare sku: string;
 
   @IsInt()
   @Min(1)
-  quantity = 0;
+  declare quantity: number;
 }
 
 class PlaceOrderDto {
   @IsUUID()
-  customerId = '';
+  declare customerId: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(200)
-  note?: string;
+  declare note?: string;
 
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   @ArrayMinSize(1)
-  items: OrderItemDto[] = [];
+  declare items: OrderItemDto[];
 }
 
 const order = classSchema(PlaceOrderDto);
@@ -47,7 +49,7 @@ class RushOrderDto extends PlaceOrderDto {}
 class OptionalNoteDto {
   @IsOptional()
   @IsString()
-  note?: string;
+  declare note?: string;
 }
 
 class LaterNoteDto extends OptionalNoteDto {}
@@ -58,15 +60,47 @@ class NothingDto {}
 /** A nested field whose class class-transformer is not told, so it stays a plain object. */
 class UntypedNestedDto {
   @ValidateNested()
-  item = new OrderItemDto();
+  declare item: OrderItemDto;
 }
 
 /** As the generated projects write it: a class with no decorated field is not refused for having none. */
 const UNKNOWN_VALUES_ALLOWED = { validator: { forbidUnknownValues: false } };
 
+/** As a team writes a DTO by hand: a reason and an amount that class-transformer would keep when the input lacks them. */
+class InitializedRefundDto {
+  @IsString()
+  reason = '';
+
+  @IsInt()
+  amount = 0;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
+/** A slot of an order, nested: once required, once left to nested validation alone. */
+class SlotDto {
+  @IsString()
+  declare startsAt: string;
+}
+
+class RequiredSlotDto {
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => SlotDto)
+  declare slot: SlotDto;
+}
+
+class NestedOnlySlotDto {
+  @ValidateNested()
+  @Type(() => SlotDto)
+  declare slot: SlotDto;
+}
+
 class GiftOrderDto extends PlaceOrderDto {
   @IsString()
-  message = '';
+  declare message: string;
 }
 
 describe('the class-validator adapter', () => {
@@ -203,5 +237,28 @@ describe('the JSON Schema of a class that extends another', () => {
 
     expect(Object.keys(schema['properties'] as object).sort()).toEqual(['customerId', 'items', 'message', 'note']);
     expect(schema['required']).toEqual(expect.arrayContaining(['customerId', 'items', 'message']));
+  });
+});
+
+describe('the class-validator adapter, on a field the input lacks', () => {
+  it('refuses at construction a class whose fields have an initial value, naming the class, the fields and the fix', () => {
+    expect(() => classSchema(InitializedRefundDto)).toThrow(DeclarationError);
+
+    expect(() => classSchema(InitializedRefundDto)).toThrow(
+      'InitializedRefundDto gives `reason`, `amount` an initial value, which class-transformer keeps for a field the input lacks: an input without it would pass. Declare each without an initial value, `declare reason: <its type>;`; a field whose absence means a default is `@IsOptional()` and read with `?? <default>`.',
+    );
+  });
+
+  it('lets through a class whose optional field holds no value on a fresh instance', () => {
+    expect(classSchema(OptionalNoteDto).parse({})).toMatchObject({ ok: true });
+  });
+
+  it('refuses an input that leaves out a nested object it requires with @IsDefined(), which nested validation alone lets through', () => {
+    expect(classSchema(RequiredSlotDto).parse({})).toMatchObject({
+      ok: false,
+      error: [{ path: 'slot', code: 'isDefined' }],
+    });
+
+    expect(classSchema(NestedOnlySlotDto).parse({})).toMatchObject({ ok: true });
   });
 });

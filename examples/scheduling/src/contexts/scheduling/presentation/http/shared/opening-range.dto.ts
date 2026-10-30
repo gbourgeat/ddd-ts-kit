@@ -4,11 +4,11 @@ import { Weekday } from '@/contexts/scheduling/calendars/domain/vocabularies/wee
 /** One range of the week: its weekday and its two wall-clock times `HH:MM`. */
 export class OpeningRangeDto {
   @IsIn(Object.values(Weekday))
-  weekday: Weekday = Weekday.Monday;
+  declare weekday: Weekday;
 
   @Matches(/^\d{2}:\d{2}$/)
-  start = '';
+  declare start: string;
 
   @Matches(/^\d{2}:\d{2}$/)
-  end = '';
+  declare end: string;
 }

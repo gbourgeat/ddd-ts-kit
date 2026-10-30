@@ -3,20 +3,20 @@ import { IsBoolean, IsInt, IsString } from 'class-validator';
 /** An appointment type the calendar offers; durations in minutes. */
 export class CalendarDayAppointmentTypeDto {
   @IsString()
-  id = '';
+  declare id: string;
 
   @IsString()
-  name = '';
+  declare name: string;
 
   @IsInt()
-  duration = 0;
+  declare duration: number;
 
   @IsInt()
-  grid = 0;
+  declare grid: number;
 
   @IsInt()
-  buffer = 0;
+  declare buffer: number;
 
   @IsBoolean()
-  needsConfirmation = false;
+  declare needsConfirmation: boolean;
 }

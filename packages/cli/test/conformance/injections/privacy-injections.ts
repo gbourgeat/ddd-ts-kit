@@ -27,7 +27,13 @@ export const PRIVACY_INJECTIONS: readonly Injection[] = [
     rule: 'privacy/event-payload-declared',
     what: 'a phone number added to the payload of identity.person.registered, which its personal option does not list',
     file: PAYLOAD,
-    changes: [{ file: PAYLOAD, from: "  email = '';\n", to: "  email = '';\n\n  readonly phone?: string;\n" }],
+    changes: [
+      {
+        file: PAYLOAD,
+        from: '  declare email: string;\n',
+        to: '  declare email: string;\n\n  readonly phone?: string;\n',
+      },
+    ],
     checker: true,
   },
   {

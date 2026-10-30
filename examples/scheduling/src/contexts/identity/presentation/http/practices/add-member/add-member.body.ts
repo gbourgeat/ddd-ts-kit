@@ -4,8 +4,8 @@ import { RoleName } from '@/contexts/identity/domain/vocabularies/role-name.voca
 export class AddMemberBody {
   @IsString()
   @IsNotEmpty()
-  personId = '';
+  declare personId: string;
 
   @IsIn(Object.values(RoleName))
-  role = '';
+  declare role: string;
 }

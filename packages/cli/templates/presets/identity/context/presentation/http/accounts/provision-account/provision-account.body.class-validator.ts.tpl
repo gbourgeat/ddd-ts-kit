@@ -5,5 +5,5 @@ export class ProvisionAccountBody {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  displayName?: string;
+  declare displayName?: string;
 }

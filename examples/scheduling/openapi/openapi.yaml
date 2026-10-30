@@ -3241,7 +3241,6 @@ paths:
               type: object
               required:
                 - assistantId
-                - availabilityIncluded
       responses:
         '201':
           description: Done; the body carries the identifier.

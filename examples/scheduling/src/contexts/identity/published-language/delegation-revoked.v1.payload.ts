@@ -2,17 +2,17 @@ import { IsIn, IsString } from 'class-validator';
 
 export class DelegationRevokedV1Payload {
   @IsString()
-  delegationId = '';
+  declare delegationId: string;
 
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  practitionerId = '';
+  declare practitionerId: string;
 
   @IsString()
-  assistantId = '';
+  declare assistantId: string;
 
   @IsIn(['revoked', 'expired', 'member-removed'])
-  cause: 'revoked' | 'expired' | 'member-removed' = 'revoked';
+  declare cause: 'revoked' | 'expired' | 'member-removed';
 }

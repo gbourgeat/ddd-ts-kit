@@ -187,17 +187,17 @@ import { ArrayMinSize, IsInt, IsString, IsUUID, Min, ValidateNested } from 'clas
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 
 class OrderItemDto {
-  @IsString() sku = '';
-  @IsInt() @Min(1) quantity = 0;
+  @IsString() declare sku: string;
+  @IsInt() @Min(1) declare quantity: number;
 }
 
 class PlaceOrderDto {
-  @IsUUID() customerId = '';
+  @IsUUID() declare customerId: string;
 
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   @ArrayMinSize(1)
-  items: OrderItemDto[] = [];
+  declare items: OrderItemDto[];
 }
 
 export const placeOrder = classSchema(PlaceOrderDto);
@@ -212,8 +212,15 @@ reachable from the class under `$defs`.
 
 Requires `experimentalDecorators` in the project's `tsconfig.json`.
 
+Each field is `declare`d, with no initial value. class-transformer keeps the initial value of a
+field the input lacks: `customerId = ''` under `@IsString()` would let an order without a customer
+pass, as if it named an empty one. An optional field is `@IsOptional()` with
+`declare note?: string;`. `classSchema` refuses a class whose fresh instance holds a value with a
+`DeclarationError` that names its fields and the fix.
+
 A DTO class declared once is reused whole (`classSchema(SlotDto, { shared: true })`, or nested
-with `@ValidateNested()` and `@Type`), extended (`class BookBody extends SlotDto { ... }`) or in
+with `@ValidateNested()` and `@Type`, and `@IsDefined()` when it is required: nested validation
+lets a missing object through), extended (`class BookBody extends SlotDto { ... }`) or in
 part, through three helpers that copy the constraints, the nested types and the transformations
 of the properties they keep:
 
@@ -223,15 +230,15 @@ import { IsEmail, IsIn, IsISO8601, IsString, IsUUID } from 'class-validator';
 import { omitClass, partialClass, pickClass } from '@ddd-ts-kit/validation/class-validator';
 
 class AppointmentDto {
-  @IsUUID() patientId = '';
-  @IsISO8601() startsAt = '';
-  @IsISO8601() endsAt = '';
-  @IsIn(['booked', 'cancelled']) status = 'booked';
+  @IsUUID() declare patientId: string;
+  @IsISO8601() declare startsAt: string;
+  @IsISO8601() declare endsAt: string;
+  @IsIn(['booked', 'cancelled']) declare status: 'booked' | 'cancelled';
 }
 
 class PatientDto {
-  @IsString() name = '';
-  @IsEmail() email = '';
+  @IsString() declare name: string;
+  @IsEmail() declare email: string;
 }
 
 export class RescheduleBody extends pickClass(AppointmentDto, ['startsAt', 'endsAt']) {}

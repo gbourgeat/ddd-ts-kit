@@ -33,6 +33,11 @@ describe('POST /calendars/:calendarId/appointment-types', () => {
 
   it.each([
     ['a body without a name', { duration: 30, grid: 15, buffer: 10, needsConfirmation: true }],
+    ['a body without a duration', { name: 'Consultation', grid: 15, buffer: 10, needsConfirmation: true }],
+    [
+      'a body that does not say whether it needs a confirmation',
+      { name: 'Consultation', duration: 30, grid: 15, buffer: 10 },
+    ],
     ['a duration that is not whole minutes', { ...valid, duration: 12.5 }],
     ['a confirmation that is not yes or no', { ...valid, needsConfirmation: 'maybe' }],
   ])('refuses %s with 422', async (_case, body) => {

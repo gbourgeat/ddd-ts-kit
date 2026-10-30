@@ -3,9 +3,9 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class CreateCalendarBody {
   @IsString()
   @IsNotEmpty()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
   @IsNotEmpty()
-  practitionerId = '';
+  declare practitionerId: string;
 }

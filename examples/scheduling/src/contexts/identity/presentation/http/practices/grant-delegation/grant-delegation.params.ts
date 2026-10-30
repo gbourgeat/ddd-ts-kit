@@ -2,8 +2,8 @@ import { IsString } from 'class-validator';
 
 export class GrantDelegationParams {
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  practitionerId = '';
+  declare practitionerId: string;
 }

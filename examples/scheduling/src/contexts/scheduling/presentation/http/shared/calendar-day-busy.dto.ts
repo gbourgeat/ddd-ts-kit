@@ -5,17 +5,17 @@ import { CalendarDayAppointmentDto } from '@/contexts/scheduling/presentation/ht
 /** A held slot: busy, and whose appointment it is only when the asker may read it. */
 export class CalendarDayBusyDto {
   @IsISO8601()
-  startsAt = '';
+  declare startsAt: string;
 
   @IsISO8601()
-  endsAt = '';
+  declare endsAt: string;
 
   /** The end of what is held, the buffer after the appointment included. */
   @IsISO8601()
-  heldUntil = '';
+  declare heldUntil: string;
 
   @IsOptional()
   @ValidateNested()
   @Type(() => CalendarDayAppointmentDto)
-  appointment?: CalendarDayAppointmentDto;
+  declare appointment?: CalendarDayAppointmentDto;
 }

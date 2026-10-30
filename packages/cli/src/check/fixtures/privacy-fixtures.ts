@@ -182,6 +182,16 @@ export const PRIVACY_FIXTURES: readonly Fixture[] = [
       ),
     }),
   },
+  memberFixture('a declared member of the payload class named like personal data, another field listed', [
+    '  declare productId: string;',
+    '  declare sellerEmail: string;',
+    '  declare readonly sellerPhone?: string;',
+  ]),
+  memberFixture('a public readonly payload member named like personal data, another field listed', [
+    '  public readonly productId: string;',
+    '  public readonly sellerEmail: string;',
+    '  public readonly sellerPhone: string;',
+  ]),
   {
     ruleId: 'privacy/erasure-reaches-copies',
     name: 'a consumer of an event that carries personal data, which declares its erasure',
@@ -284,6 +294,19 @@ export const PRIVACY_FIXTURES: readonly Fixture[] = [
     }),
   },
 ];
+
+/** A payload class whose members, written with the modifiers given, carry a phone number the personal option does not list. */
+function memberFixture(name: string, members: readonly string[]): Fixture {
+  return {
+    ruleId: 'privacy/event-payload-declared',
+    name,
+    expect: { file: PAYLOAD },
+    files: privacyOn({
+      [EVENT]: event([DECLARED_SELLER, '  payload: classSchema(ProductListedV1Payload),']),
+      [PAYLOAD]: source('export class ProductListedV1Payload {', ...members, '}'),
+    }),
+  };
+}
 
 /** A project whose platform answers the requests of a data subject, with what a fixture adds to its config. */
 function privacyOn(files: FixtureFiles, written: Record<string, unknown> = {}): FixtureFiles {

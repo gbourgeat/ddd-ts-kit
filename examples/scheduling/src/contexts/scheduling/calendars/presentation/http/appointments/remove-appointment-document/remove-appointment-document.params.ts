@@ -2,5 +2,5 @@ import { IsString } from 'class-validator';
 
 export class RemoveAppointmentDocumentParams {
   @IsString()
-  appointmentId = '';
+  declare appointmentId: string;
 }

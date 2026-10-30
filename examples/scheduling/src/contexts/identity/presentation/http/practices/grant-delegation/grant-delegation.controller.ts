@@ -40,7 +40,7 @@ export class GrantDelegationController {
 function termsOf({ assistantId, availabilityIncluded, endsAt }: GrantDelegationBody): GrantDelegationCommand['terms'] {
   return {
     assistantId,
-    availabilityIncluded,
+    availabilityIncluded: availabilityIncluded ?? false,
     ...(endsAt === undefined ? {} : { endsAt: new Date(endsAt) }),
   };
 }

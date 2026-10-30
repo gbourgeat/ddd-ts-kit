@@ -2,8 +2,8 @@ import { IsString } from 'class-validator';
 
 export class RemoveMemberParams {
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  personId = '';
+  declare personId: string;
 }

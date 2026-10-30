@@ -1381,7 +1381,7 @@ declare const invoicing: Invoicing;
 class IssueInvoiceBody {
   @IsString()
   @MinLength(1)
-  customerId = '';
+  declare customerId: string;
 }
 
 @Controller('invoices')

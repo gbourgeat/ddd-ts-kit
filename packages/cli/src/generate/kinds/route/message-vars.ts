@@ -23,8 +23,6 @@ const DECORATORS: Readonly<Record<FieldKind, string>> = {
   boolean: 'IsBoolean',
 };
 
-const INITIAL: Readonly<Record<FieldKind, string>> = { string: "''", number: '0', boolean: 'false' };
-
 /** The body of a route, as its library declares it. */
 interface Declared {
   readonly scope: Scope;
@@ -100,8 +98,12 @@ function bodyDeclarationOf({ scope, routed, body, todo }: Declared): string {
   }
 }
 
+/**
+ * A field without an initial value: class-transformer would keep it for a field the body lacks,
+ * and the request would pass as if it carried it. Declared, it is set from the body or missing.
+ */
 function dtoFieldOf(field: ReadField, index: number): string {
-  return `${index === 0 ? '' : '\n'}  @${DECORATORS[field.kind]}()\n  ${field.name} = ${INITIAL[field.kind]};`;
+  return `${index === 0 ? '' : '\n'}  @${DECORATORS[field.kind]}()\n  declare ${field.name}: ${field.kind};`;
 }
 
 /** What the generator could not read in the body, said in its schema: the path and the request say theirs at the call. */

@@ -3,8 +3,8 @@ import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vo
 
 export class InviteMemberBody {
   @IsEmail()
-  email = '';
+  declare email: string;
 
   @IsIn(Object.values(MemberRole))
-  role: MemberRole = MemberRole.Member;
+  declare role: MemberRole;
 }

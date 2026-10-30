@@ -9,22 +9,22 @@ const NOTE_LENGTH = 2000;
 export class BookAppointmentBody extends pickClass(TimeSpan, ['startsAt']) {
   @IsString()
   @IsNotEmpty()
-  calendarId = '';
+  declare calendarId: string;
 
   @IsString()
   @IsNotEmpty()
-  appointmentTypeId = '';
+  declare appointmentTypeId: string;
 
   /** Who the appointment is for; left out, the caller. */
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  patientId?: string;
+  declare patientId?: string;
 
   /** What the staff of the practice keeps about the appointment: who may see and set it is said where the body is declared. */
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(NOTE_LENGTH)
-  internalNote?: string;
+  declare internalNote?: string;
 }

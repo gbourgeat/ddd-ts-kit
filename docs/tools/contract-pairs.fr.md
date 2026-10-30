@@ -1,5 +1,5 @@
 [English](contract-pairs.md) · **Français**
-<!-- translation-of: contract-pairs.md sha256:3c9a237443f2e86d -->
+<!-- translation-of: contract-pairs.md sha256:77514e2af5637ca7 -->
 
 # Paires de contrat : un framework HTTP et une bibliothèque de validation
 
@@ -164,20 +164,23 @@ historique des décorateurs :
 ```ts
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { Type } from 'class-transformer';
-import { IsISO8601, IsUUID, ValidateNested } from 'class-validator';
+import { IsDefined, IsISO8601, IsUUID, ValidateNested } from 'class-validator';
 
-// Une classe imbriquée est toujours un composant du contrat, nommé d'après la classe.
+// Une classe imbriquée est toujours un composant du contrat, nommé d'après la classe. Chaque champ
+// est déclaré sans valeur initiale, que class-transformer garderait pour un champ absent.
 class SlotDto {
-  @IsISO8601() startsAt = '';
-  @IsISO8601() endsAt = '';
+  @IsISO8601() declare startsAt: string;
+  @IsISO8601() declare endsAt: string;
 }
 
 class BookBodyDto {
-  @IsUUID() patientId = '';
+  @IsUUID() declare patientId: string;
 
+  // Obligatoire : la validation imbriquée laisse passer un objet absent, `@IsDefined()` le refuse.
+  @IsDefined()
   @ValidateNested()
   @Type(() => SlotDto)
-  slot: SlotDto = new SlotDto();
+  declare slot: SlotDto;
 }
 
 export const bookWithClassValidator = classSchema(BookBodyDto);

@@ -3,14 +3,14 @@ import { IsString } from 'class-validator';
 /** An account became a member of an organisation, in a role. Version 1: a field may be added, never renamed nor removed. */
 export class MemberJoinedV1Payload {
   @IsString()
-  memberId = '';
+  declare memberId: string;
 
   @IsString()
-  organisationId = '';
+  declare organisationId: string;
 
   @IsString()
-  accountId = '';
+  declare accountId: string;
 
   @IsString()
-  role = '';
+  declare role: string;
 }

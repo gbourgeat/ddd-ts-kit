@@ -2,21 +2,21 @@ import { IsBoolean, IsISO8601, IsOptional, IsString } from 'class-validator';
 
 export class DelegationGrantedV1Payload {
   @IsString()
-  delegationId = '';
+  declare delegationId: string;
 
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  practitionerId = '';
+  declare practitionerId: string;
 
   @IsString()
-  assistantId = '';
+  declare assistantId: string;
 
   @IsBoolean()
-  availabilityIncluded = false;
+  declare availabilityIncluded: boolean;
 
   @IsOptional()
   @IsISO8601()
-  endsAt?: string;
+  declare endsAt?: string;
 }

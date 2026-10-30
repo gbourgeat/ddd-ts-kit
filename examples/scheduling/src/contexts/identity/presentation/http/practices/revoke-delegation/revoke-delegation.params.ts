@@ -2,11 +2,11 @@ import { IsString } from 'class-validator';
 
 export class RevokeDelegationParams {
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  practitionerId = '';
+  declare practitionerId: string;
 
   @IsString()
-  delegationId = '';
+  declare delegationId: string;
 }

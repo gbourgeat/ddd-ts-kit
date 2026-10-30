@@ -3,28 +3,28 @@ import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class GetClearanceAnswer {
   @IsString()
-  clearanceId = '';
+  declare clearanceId: string;
 
   /** The status of its job; `dead` when every attempt failed. */
   @IsIn(Object.values(QueuedJobStatus))
-  status = '';
+  declare status: string;
 
   @IsInt()
   @Min(0)
-  attempts = 0;
+  declare attempts: number;
 
   /** Appointments handled so far. */
   @IsInt()
   @Min(0)
-  done = 0;
+  declare done: number;
 
   /** Appointments to handle in all; absent until the first attempt started. */
   @IsOptional()
   @IsInt()
   @Min(0)
-  total?: number;
+  declare total?: number;
 
   @IsOptional()
   @IsString()
-  lastErrorCode?: string;
+  declare lastErrorCode?: string;
 }

@@ -8,5 +8,5 @@ export class SetOpeningHoursBody {
   @ArrayMaxSize(100)
   @ValidateNested({ each: true })
   @Type(() => OpeningRangeDto)
-  ranges: OpeningRangeDto[] = [];
+  declare ranges: OpeningRangeDto[];
 }
