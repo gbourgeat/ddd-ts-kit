@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:7037c1f9522bcf54 -->
+<!-- translation-of: persistence.md sha256:16685c2dddac667b -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -534,10 +534,16 @@ instruction qui répond que son objet existe est laissée de côté, les autres 
 migration, après un `add column` pour une colonne absente d'une table que les migrations ont créée.
 La migration contient ce SQL et n'appelle rien de l'application : elle construit donc les mêmes
 tables quoi que devienne `createTables`, et l'historique se rejoue sur une base neuve. Rien de
-différent, rien n'est écrit, comme sur les trois autres. Une colonne modifiée ou supprimée et une
-table supprimée sont listées en `TODO(domain)` de la migration, à écrire à la main ; un index ou une
-contrainte modifiés sous le même nom ne sont pas vus. `npm run db:generate -- <name> --custom` écrit
-la migration vide de knex, pour un changement de données ou une instruction écrite à la main.
+différent, rien n'est écrit, comme sur les trois autres. Une colonne modifiée ou supprimée, une table
+supprimée, et un index, une contrainte, un déclencheur, une énumération, une fonction ou une vue
+modifiés sous le même nom sont listés en `TODO(domain)` de la migration, à écrire à la main : les objets
+sont comparés par la définition qu'en donne PostgreSQL. Une instruction de `createTables` qui change des
+lignes ou retire quelque chose n'est jamais écrite, puisqu'une migration s'exécute sur une base qui
+contient des données : c'est une ligne de la commande et un `TODO(domain)` de la migration suivante.
+Toute autre instruction, la sécurité par ligne ou un commentaire, entre avec la table ou la colonne à
+laquelle elle appartient. `npm run db:generate -- <name> --custom` (`pnpm run db:generate <name> --
+--custom` aussi) écrit la migration vide de knex, pour un changement de données ou une instruction
+écrite à la main.
 
 `db:migrate` trouve `DATABASE_URL` dans le shell, sinon dans `.env` : `knexfile.js`,
 `prisma.config.ts` et la source de données TypeORM chargent le fichier, puisque ces trois CLI ne le

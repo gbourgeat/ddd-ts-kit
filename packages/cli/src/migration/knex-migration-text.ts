@@ -1,8 +1,8 @@
 import type { KnexSchemaDifference } from './knex-schema-difference';
 
 /** A migration of a Knex project: the SQL of the difference, held in the file so that it never changes with the application. */
-export function knexMigrationText({ statements, unwritten }: KnexSchemaDifference): string {
-  const body = [...unwritten.map(todoLine), ...statements.map(statementLine)].join('\n');
+export function knexMigrationText({ statements, unwritten, reported }: KnexSchemaDifference): string {
+  const body = [...unwritten, ...reported].map(todoLine).concat(statements.map(statementLine)).join('\n');
 
   return `// Written by \`npm run db:generate\`: what \`createTables\` builds and the migrations before this one do not.
 export const up = async (knex) => {

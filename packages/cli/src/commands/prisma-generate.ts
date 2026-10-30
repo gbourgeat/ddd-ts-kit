@@ -6,8 +6,8 @@ import {
   requiredMigrationName,
   runOrmTool,
 } from '../migration';
-import { Arguments } from './arguments';
 import type { Command } from './command';
+import { parseMigrationArguments } from './parse-migration-arguments';
 
 /**
  * `db:generate` of a Prisma project: `prisma migrate dev --create-only`, then, with an audit trail,
@@ -15,7 +15,7 @@ import type { Command } from './command';
  * `DATABASE_URL`, no server is needed: the migration is diffed on PostgreSQL in process.
  */
 export const prismaGenerateCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, { name: { type: 'string' } });
+  const args = parseMigrationArguments(argv, { name: { type: 'string' } });
   const root = args.projectRoot;
   const name = requiredMigrationName(args.text('name'));
 

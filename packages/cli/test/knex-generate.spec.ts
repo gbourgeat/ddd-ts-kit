@@ -1,62 +1,18 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { knexMigrationText } from '../src/migration/knex-migration-text';
-import { cli, read, write } from './helpers';
+import { cli, write } from './helpers';
 import { initProject } from './support/init-project';
-
-const MODULES = path.resolve(__dirname, '../../../node_modules');
-
-/** Slow: it starts PostgreSQL in process twice per comparison; skipped where the monorepo has no knex installed. */
-const INSTALLED = fs.existsSync(path.join(MODULES, 'knex/bin/cli.js'));
-
-const COMPILED = 'dist/src/platform/database/schema.js';
-
-const ORDERS = `await knex.schema.withSchema('ordering').createTable('orders', (table) => {
-    table.text('id').primary();
-    table.integer('version').notNullable();
-  });`;
-
-const INVOICES = `await knex.schema.withSchema('ordering').createTable('invoices', (table) => {
-    table.text('id').primary();
-    table.text('tenant_id').notNullable();
-    table.index(['tenant_id', 'id'], 'invoices_tenant_idx');
-  });`;
-
-/** The compiled form of `createTables`, which `npm run build` leaves in a project. */
-function schemaOf(...definitions: readonly string[]): string {
-  return `export const createTables = async (knex) => {
-  await knex.schema.createSchemaIfNotExists('ordering');
-  ${definitions.join('\n  ')}
-};
-`;
-}
-
-function knexProject(...definitions: readonly string[]): string {
-  const root = initProject('--orm', 'knex', '--package-manager', 'npm');
-
-  fs.symlinkSync(MODULES, path.join(root, 'node_modules'), 'dir');
-  write(root, COMPILED, schemaOf(...definitions));
-
-  return root;
-}
-
-function migrations(root: string): string[] {
-  return fs
-    .readdirSync(path.join(root, 'migrations'))
-    .filter((file) => file.endsWith('.js'))
-    .sort();
-}
-
-function migrationNamed(root: string, name: string): string {
-  const file = migrations(root).find((entry) => entry.endsWith(`_${name}.js`));
-
-  return read(root, `migrations/${file ?? ''}`);
-}
-
-function generate(root: string, name: string, ...flags: readonly string[]): ReturnType<typeof cli> {
-  return cli(root, 'knex-generate', '--name', name, ...flags);
-}
+import {
+  COMPILED,
+  generate,
+  INSTALLED,
+  INVOICES,
+  knexProject,
+  migrationNamed,
+  migrations,
+  ORDERS,
+  schemaOf,
+} from './support/knex-project';
 
 describe.runIf(INSTALLED)('db:generate of a Knex project', () => {
   it('writes the first migration from createTables, as SQL that calls nothing of the application', () => {
@@ -209,6 +165,25 @@ describe('ddd-ts-kit knex-generate refuses', () => {
     expect(refused.stderr).toContain(`${COMPILED} is not built`);
   });
 
+  it('a second word after the name, rather than ignoring it', () => {
+    const root = initProject('--orm', 'knex', '--package-manager', 'npm');
+
+    const refused = cli(root, 'knex-generate', '--name', 'add', 'invoices');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('invoices');
+  });
+
+  it('a migration that calls createTables, naming the entry of CHANGELOG.md to read', () => {
+    const root = initProject('--orm', 'knex', '--package-manager', 'npm');
+
+    write(root, 'migrations/00000000000000_initial.js', 'export const up = (knex) => createTables(knex);\n');
+
+    expect(cli(root, 'knex-generate', '--name', 'x').stderr).toMatch(
+      /CHANGELOG\.md.*On Knex, `db:generate` writes the migration/s,
+    );
+  });
+
   it('a migration without a name', () => {
     const root = initProject('--orm', 'knex', '--package-manager', 'npm');
 
@@ -221,15 +196,26 @@ describe('ddd-ts-kit knex-generate refuses', () => {
 
 describe('the text of a migration of a Knex project', () => {
   it('holds a statement as a template literal knex runs unchanged', () => {
-    const text = knexMigrationText({ statements: ["comment on table t is 'a `b` ${c} \\ d?'"], unwritten: [] });
+    const text = knexMigrationText({
+      statements: ["comment on table t is 'a `b` ${c} \\ d?'"],
+      unwritten: [],
+      reported: [],
+    });
 
     expect(text).toContain("`comment on table t is 'a \\`b\\` \\${c} \\\\ d\\\\?'`");
   });
 
   it('keeps each thing to write by hand on one line', () => {
-    const text = knexMigrationText({ statements: [], unwritten: ['column a\n  is b'] });
+    const text = knexMigrationText({ statements: [], unwritten: ['column a\n  is b'], reported: [] });
 
     expect(text).toContain('// TODO(domain): write this change by hand: column a is b.');
+  });
+
+  it('holds what is reported as a TODO(domain) too, never as a statement', () => {
+    const text = knexMigrationText({ statements: [], unwritten: [], reported: ['insert into t values (1)'] });
+
+    expect(text).toContain('// TODO(domain): write this change by hand: insert into t values (1).');
+    expect(text).not.toContain('knex.raw');
   });
 });
 

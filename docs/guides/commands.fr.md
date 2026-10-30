@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:fdb5571b431a03e4 -->
+<!-- translation-of: commands.md sha256:4fb640a3ce405e8b -->
 
 # Quelle commande, quand
 
@@ -356,9 +356,10 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    createTables with the migrations replayed, both on PostgreSQL in process (no server), and
                    writes the tables, columns and indexes the migrations lack, as SQL held in the migration,
                    which then replays on a fresh database whatever createTables becomes; what it cannot
-                   write (a column changed or dropped, a table dropped) is listed in the migration as a
-                   TODO(domain); nothing differs, nothing is written; --custom writes the empty migration
-                   of knex, to fill by hand
+                   write (a column or an object changed under its name, something dropped) and a statement
+                   that changes rows or removes something are listed in the migration as a TODO(domain);
+                   nothing differs, nothing is written; --custom writes the empty migration of knex, to fill
+                   by hand; a word after the name is refused
   error-factories  moves the refusals of a project to one class per refusal (--to named, the default), from
                    one class per error or from the factories of one error class per concept: --plan writes
                    error-factories.plan.json, where each refusal is given a class (the PascalCase of its

@@ -509,9 +509,14 @@ exists is left out, the others are written in the migration, after an `add colum
 missing from a table the migrations created. The migration holds this SQL and calls nothing of the
 application, so it builds the same tables whatever `createTables` becomes, and the history replays
 on a fresh database. Nothing different, nothing is written, as on the other three. A column changed
-or dropped and a table dropped are listed as a `TODO(domain)` of the migration, to write by hand;
-an index or a constraint changed under its name is not seen. `npm run db:generate -- <name> --custom`
-writes the empty migration of knex, for a change of data or a statement written by hand.
+or dropped, a table dropped, and an index, a constraint, a trigger, an enum, a function or a view
+changed under its name are listed as a `TODO(domain)` of the migration, to write by hand: objects are
+compared by the definition PostgreSQL gives of them. A statement of `createTables` that changes rows or
+removes something is never written, since a migration runs on a database that holds data: it is a line
+of the command and a `TODO(domain)` of the next migration. Any other statement, row security or a
+comment, goes in with the table or the column it belongs to. `npm run db:generate -- <name> --custom`
+(`pnpm run db:generate <name> -- --custom` too) writes the empty migration of knex, for a change of data
+or a statement written by hand.
 
 `db:migrate` finds `DATABASE_URL` in the shell, else in `.env`: `knexfile.js`, `prisma.config.ts` and
 the TypeORM data source load the file, since those three CLIs do not, and drizzle-kit reads it itself.

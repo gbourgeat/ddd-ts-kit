@@ -11,9 +11,9 @@ import {
   runOrmTool,
   writtenPaths,
 } from '../migration';
-import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { parseMigrationArguments } from './parse-migration-arguments';
 
 const KNEX = 'knex/bin/cli.js';
 const FOLDER = 'migrations';
@@ -27,7 +27,7 @@ const MIGRATION = /\.js$/;
  * by hand: a change of data, or what the comparison reports and cannot write.
  */
 export const knexGenerateCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, { name: { type: 'string' }, custom: { type: 'boolean', default: false } });
+  const args = parseMigrationArguments(argv, { name: { type: 'string' }, custom: { type: 'boolean', default: false } });
   const root = args.projectRoot;
   const name = requiredMigrationName(args.text('name'));
 
@@ -43,14 +43,14 @@ export const knexGenerateCommand: Command = (argv, io) => {
     return difference;
   }
 
+  for (const line of [...difference.unwritten, ...difference.reported]) {
+    io.err(`Not written, to write by hand in a migration: ${line}.`);
+  }
+
   if (difference.statements.length === 0 && difference.unwritten.length === 0) {
     io.out('No schema change: `createTables` builds what the migrations build.');
 
     return 0;
-  }
-
-  for (const line of difference.unwritten) {
-    io.err(`Not written, to write by hand in the migration: ${line}.`);
   }
 
   return writeMigration({ root, name, fill: () => knexMigrationText(difference) }, io);
@@ -96,7 +96,7 @@ function refuseLiveMigrations(root: string): void {
   if (live !== undefined) {
     throw new CliError(
       `${live[0]} calls \`createTables\`: what it builds changes with the code, so the migrations cannot be compared with it.`,
-      'Replace its `up` by the SQL of the tables it created, keeping the file: knex never runs a recorded migration again, and refuses a missing one. The changelog says how, under the entry of `knex-generate`.',
+      'Replace its `up` by the SQL of the tables it created, keeping the file: knex never runs a recorded migration again, and refuses a missing one. `CHANGELOG.md` of ddd-ts-kit says how, in the entry "On Knex, `db:generate` writes the migration".',
     );
   }
 }

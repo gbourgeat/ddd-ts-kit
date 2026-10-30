@@ -33,9 +33,13 @@ and the history replays on a fresh database.
 
 Where it differs from the three others:
 
-- A column changed or dropped and a table dropped are not written: they come out as a `TODO(domain)`
-  of the migration and a line of the command. An index or a constraint changed under its name is
-  not seen. Change `createTables`, and write the statement in the migration.
+- A column changed or dropped, a table dropped, and an index, a constraint, a trigger, an enum, a
+  function or a view changed under its name are not written: they come out as a `TODO(domain)` of the
+  migration and a line of the command. Change `createTables`, and write the statement in the migration.
+- A statement of `createTables` that changes rows or removes something is never written: `createTables`
+  runs on an empty database, a migration on one that holds data. It is a line of the command and a
+  `TODO(domain)` of the next migration, and writes none on its own. Row security, a comment and the like
+  go in with the table or the column they belong to, and are reported otherwise.
 - `npm run db:generate -- <name> --custom` writes the empty migration of knex, for that statement or
   for a change of data.
 - A definition the PostgreSQL in process cannot run (an extension it does not load) makes
