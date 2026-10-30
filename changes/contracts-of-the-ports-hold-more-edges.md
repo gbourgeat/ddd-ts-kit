@@ -1,3 +1,0 @@
-**The contracts of `@ddd-ts-kit/testing` hold more of what an adapter answers at the edges.** `outboxStoreContract` takes an empty batch, an empty publication and an empty revival as nothing to do, and expects `markFailed` to leave a published record published and to ignore an unknown id. The job store contract expects `false` for the heartbeat of a job the store does not hold. The event store contract loads a consignment again after a refused append and reads the winner's weight. A project that runs these contracts on an adapter of its own may see a new case fail: the case says what the port promises.
-
-`controllerRoutes` of `@ddd-ts-kit/http` types the result of a tuple of one controller as a tuple of one route.
