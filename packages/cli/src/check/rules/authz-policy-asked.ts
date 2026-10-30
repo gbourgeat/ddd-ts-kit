@@ -296,7 +296,8 @@ function asks(handler: SourceFile, permission: PermissionRef): boolean {
 
 /**
  * The lines of each `decide` or `decideOn` that names the permission and is a statement of its own
- * (`await this.access.decide(...);`): its answer is read by no one, so a denial changes nothing.
+ * (`await this.access.decide(...);`, with or without its semicolon, or the body of an `if` written
+ * without braces): its answer is read by no one, so a denial changes nothing.
  */
 function droppedDecisions(handler: SourceFile, permission: PermissionRef): number[] {
   const { code } = handler.scan;
@@ -308,11 +309,17 @@ function droppedDecisions(handler: SourceFile, permission: PermissionRef): numbe
     const asked = handler.text.slice(open, close);
     const start = match.index - (RECEIVER_BEFORE.exec(code.slice(0, match.index))?.[0].length ?? 0);
     const before = code.slice(0, start).trimEnd().at(-1) ?? ';';
-    const rest = code.slice(close + 1).trimStart();
-    const alone = ';{}'.includes(before) && ';}'.includes(rest.at(0) ?? ';');
+    const alone = ';{})'.includes(before) && endsTheStatement(code.slice(close + 1));
 
     return alone && named.test(asked) ? [lineAt(code, match.index)] : [];
   });
+}
+
+/** After a call: a `;`, a `}`, or a line break before the next statement, written without a semicolon. */
+function endsTheStatement(after: string): boolean {
+  const next = after.trimStart().at(0) ?? ';';
+
+  return ';}'.includes(next) || (/^[ \t]*\n/.test(after) && /[A-Za-z_$]/.test(next));
 }
 
 function namedPermission(permission: PermissionRef): RegExp {

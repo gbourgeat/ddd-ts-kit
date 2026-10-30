@@ -109,6 +109,8 @@ describe('authz/policy-asked on a decision the handler drops', () => {
       `    await this.access.decide(command.actor, ${ISSUE}, command);`,
       `    void this.access.decideOn({ actor: command.actor, permission: ${ISSUE}, subject: command });`,
       `    if (command) {\n      this.access.decide(command.actor, ${ISSUE}, command)\n    }`,
+      `    await this.access.decide(command.actor, ${ISSUE}, command)\n    await this.invoices.save(command)`,
+      `    if (command) this.access.decide(command.actor, ${ISSUE}, command);`,
     ];
 
     for (const body of dropped) {
@@ -123,6 +125,7 @@ describe('authz/policy-asked on a decision the handler drops', () => {
       `    const decision = await this.access.decide(command.actor, ${ISSUE}, command);\n    return decision.allowed;`,
       `    return await this.access.decide(command.actor, ${ISSUE}, command);`,
       `    return (await this.access.decide(command.actor, ${ISSUE}, command)).allowed;`,
+      `    const decision = await this.access\n      .decide(command.actor, ${ISSUE}, command)\n      .then((answer) => answer);\n    return decision;`,
       `    await this.access.authorize(command.actor, ${ISSUE}, command);\n    await this.access.decide(command.actor, billingPermissions['invoice.read'], command);`,
     ];
 
