@@ -951,7 +951,10 @@ auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail',
 ```
 
 `tamper` and `cut` do what somebody with access to the storage does, rewrite an entry or remove the
-end of a chain; without them the suite checks that on what it read.
+end of a chain; without them the suite checks that on what it read. A store that archives passes
+`archivableAuditTrailContract` too, with the same `createTrail` and `cut`: the head of every chain
+(`chainHeads`), the archive of the entries older than a date (`archiveBefore`), its row
+(`archivesOf`), and a verification that goes from the last archive to the head.
 
 ## Querying
 

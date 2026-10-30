@@ -5,7 +5,7 @@ import { createKnexUnitOfWork } from '@ddd-ts-kit/knex';
 import { auditArchiveUpgradeStatements } from '../src/drizzle';
 import { KnexAuditTrail, addAuditArchives, createAuditTables, dropAuditTables } from '../src/knex';
 import type { AuditTrailOptions } from '../src';
-import { auditTrailContract } from '../src/testing';
+import { archivableAuditTrailContract, auditTrailContract } from '../src/testing';
 import { startPostgres, type TestPostgres } from './support/postgres';
 import { archiveGuardSpecs, archiveSpecs, type ArchiveFixture } from './support/archive-specs';
 import { sqlArchiveFixture } from './support/archive-fixture';
@@ -81,6 +81,20 @@ auditTrailContract(runner, {
     await current.run('alter table $table disable trigger "audit_entries_no_rewrite"');
     await current.run(`update $table set "action" = '${action}' where "id" = '${entry.id}'`);
     await current.run('alter table $table enable trigger "audit_entries_no_rewrite"');
+  },
+  cut: async (chain, fromSequence) => {
+    await current.run('alter table $table disable trigger "audit_entries_no_rewrite"');
+    await current.run(`delete from $table where "chain" = '${chain}' and "sequence" >= ${fromSequence}`);
+    await current.run('alter table $table enable trigger "audit_entries_no_rewrite"');
+  },
+});
+
+archivableAuditTrailContract(runner, {
+  name: 'KnexAuditTrail in a schema of its own',
+  createTrail: async () => {
+    current = await fixture();
+
+    return current.trail;
   },
   cut: async (chain, fromSequence) => {
     await current.run('alter table $table disable trigger "audit_entries_no_rewrite"');

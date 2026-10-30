@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import { InMemoryAuditTrail, verifyTrail } from '../src';
 import { archiveSpecs } from './support/archive-specs';
-import { auditTrailContract } from '../src/testing';
+import { archivableAuditTrailContract, auditTrailContract } from '../src/testing';
 
 const runner = { describe, it, expect, beforeEach };
 
@@ -21,6 +21,20 @@ auditTrailContract(runner, {
     const index = trail.entries.findIndex((stored) => stored.id === entry.id);
 
     trail.entries[index] = { ...entry, action };
+  },
+  cut: (chain, fromSequence) => {
+    const kept = trail.entries.filter((entry) => entry.chain !== chain || entry.sequence < fromSequence);
+
+    trail.entries.splice(0, trail.entries.length, ...kept);
+  },
+});
+
+archivableAuditTrailContract(runner, {
+  name: 'InMemoryAuditTrail',
+  createTrail: () => {
+    trail = new InMemoryAuditTrail();
+
+    return trail;
   },
   cut: (chain, fromSequence) => {
     const kept = trail.entries.filter((entry) => entry.chain !== chain || entry.sequence < fromSequence);

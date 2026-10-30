@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:79bfb4b0080f8a35 -->
+<!-- translation-of: README.md sha256:f7fc05e7e73e613c -->
 
 # @ddd-ts-kit/audit
 
@@ -993,7 +993,11 @@ auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail',
 ```
 
 `tamper` et `cut` font ce que ferait quelqu'un qui a accès au stockage, réécrire une entrée ou
-retirer la fin d'une chaîne ; sans eux, la suite le vérifie sur ce qu'elle a lu.
+retirer la fin d'une chaîne ; sans eux, la suite le vérifie sur ce qu'elle a lu. Un stockage qui
+archive passe aussi `archivableAuditTrailContract`, avec les mêmes `createTrail` et `cut` : la tête
+de chaque chaîne (`chainHeads`), l'archive des entrées plus anciennes qu'une date
+(`archiveBefore`), sa ligne (`archivesOf`), et une vérification qui va de la dernière archive à la
+tête.
 
 ## Interroger le journal
 
