@@ -21,8 +21,10 @@ une règle. Cette page dit comment commencer, puis les règles que suit chaque c
 3. **Changer, puis vérifier ce que vous avez touché.** Un changement de documentation demande
    `npm run check:dashes`, `npm run docs:translations` et, s'il contient un exemple de code
    vérifié, `npm run docs:samples` ; un changement de code demande la construction, les tests et
-   le lint. Chaque package est tenu à un seuil de couverture (`vitest.config.ts`) : le nouveau
-   code vient avec ses specs. Les *hooks* du plugin sont tenus à 100 % de leurs lignes, branches
+   le lint. Chaque package est tenu à 100 % de ses lignes (`vitest.config.ts`) : le nouveau code
+   vient avec ses specs. Une vérification qu'aucune spec ne peut atteindre est retirée, ou laissée hors
+   de la mesure dans [l'enregistrement de décision de la mesure](docs/adr/0001-lines-left-out-of-the-coverage-measure.fr.md),
+   jamais déplacée sur une ligne déjà exécutée. Les *hooks* du plugin sont tenus à 100 % de leurs lignes, branches
    et fonctions (`npm run test:plugin`) : une branche qu'aucun test n'atteint le fait échouer, et
    une branche qu'aucune entrée de *hook* ne peut atteindre est retirée.
 4. **Ouvrir une pull request.** Son titre est un sujet de commit conventionnel ; son modèle
@@ -34,8 +36,7 @@ Les contributions particulièrement bienvenues :
 - un adaptateur pour un broker, un ORM, un framework HTTP ou une bibliothèque de validation que
   le kit ne prend pas encore en charge : il implémente le port et passe la suite de contrat de
   ce port ;
-- des tests pour les parties d'un package qui tournent sans serveur, là où son seuil de
-  couverture est bas ;
+- des tests pour les branches d'un package qu'aucune spec ne prend encore ;
 - la documentation : une page qui vous a paru obscure, un exemple qui manque, une traduction ;
 - un retour d'un vrai projet : ce qui a tenu, ce qui a gêné, dans les
   [Discussions](https://github.com/gbourgeat/ddd-ts-kit/discussions).
