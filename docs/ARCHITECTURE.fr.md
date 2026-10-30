@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:d9b83d9829530c2c -->
+<!-- translation-of: ARCHITECTURE.md sha256:f8f6cb11f3a2392d -->
 
 # Référence de l'architecture
 
@@ -82,10 +82,10 @@ src/
   platform/                      capacités techniques : config, base de données, événements, auth, traçage, serveur HTTP
     composition/                 ce qui fait de la plateforme et des contextes une application
     observability/               tracing.ts (premier import de chaque point d'entrée), journaux, mesures, rapports d'erreur
-    jobs/                        les réglages des jobs planifiés
+    jobs/                        les réglages des jobs planifiés, combien de temps la plateforme garde ce dont elle a fini
     audit/search-audit-entries/  le côté lecture du journal d'audit
     event-sourcing/              avec --event-sourcing on : l'event store, les clés des personnes concernées et le chiffre des événements stockés
-    privacy/                     avec --privacy on : les copies et les exports que chaque contexte déclare, l'effacement et l'export que lancent les scripts
+    privacy/                     avec --privacy on : les copies et les exports que chaque contexte déclare, les événements qui portent des données personnelles, l'effacement et l'export que lancent les scripts
     auth/
       authentication/            qui appelle : l'authentificateur, la session d'une requête, la frontière HTTP
       authorization/             ce qu'il peut faire, quel que soit le modèle : l'authorizer derrière le port, la garde des bus, Role

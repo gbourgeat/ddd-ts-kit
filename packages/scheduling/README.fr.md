@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:74a0287b249649a0 -->
+<!-- translation-of: README.md sha256:75998d216c19ed02 -->
 
 # @ddd-ts-kit/scheduling
 
@@ -626,8 +626,9 @@ le kernel ; ce *package* les exécute. Pourquoi et quand, avec les garanties :
 | Pièce | |
 |---|---|
 | `StoredJobQueue` | la `JobQueue` du kernel sur un `JobStore` : nomme le *job*, capture la corrélation, l'acteur, le *tenant* et le `traceparent` du travail qui met en file, l'ajoute au store ; `find` et `cancel` n'atteignent que les *jobs* du *tenant* du travail en cours (des *tenants* de son élévation ; tous les *jobs* quand le travail n'a pas de *tenant*) |
-| `JobStore` | le port des stores : `add`, `claim` (un bail), `heartbeat`, `update` (progression, point de reprise), `complete`, `fail`, `release`, `cancel`, `find`, `retryDead`, `purgeFinished`, `stats` ; chaque compte rendu nomme sa tentative (`JobLease`) |
+| `JobStore` | le port des stores : `add`, `claim` (un bail), `heartbeat`, `update` (progression, point de reprise), `complete`, `fail`, `release`, `cancel`, `find`, `retryDead`, `purgeFinished`, `eraseSubject`, `stats` ; chaque compte rendu nomme sa tentative (`JobLease`) |
 | `InMemoryJobStore` | le store des tests et d'un processus sans base de données : `add`, `cancel` et `retryDead` attendent la validation (commit) de l'unité de travail ; `list()` pour les assertions |
+| `jobsOfSubject(store)` | les *jobs* mis en file avec une personne pour `subject`, comme une copie de cette personne, pour `shared` de `eraseDataSubject` : `eraseSubject` les retire quel que soit leur statut |
 | `tenantKeyOf(enqueuedBy)` | la partie *tenant* de la clé d'idempotence, pour un store qui la garde dans un index unique : le *tenant*, ou le texte vide |
 | `QueueWorker` | prend et exécute les *jobs* des files pour lesquelles il a des *jobs* : `register`, `start`, `stop` (attend une prise en vol, dont les *jobs* reviennent sans être comptés, puis les tentatives en cours), `runDue` |
 | `reportFailedBackgroundJobs(reporter)` | l'observateur qui envoie au rapporteur d'erreurs une tentative en échec inattendu |

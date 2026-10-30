@@ -36,11 +36,16 @@ behaviour.
 - A context lists its port in `src/platform/privacy/data-subject-copies.ts`, its export port in
   `data-subject-exports.ts` (`init --privacy on`, the default with an ORM, writes the folder and
   the scripts `privacy:erase` and `privacy:export`).
-- `eraseDataSubject` of the kernel runs the key, every copy in every tenant (`inEachTenant`) and
-  the rebuilds, in that order. `npm run privacy:erase -- <subject-id>` reaches them all, the key
-  first when the project has an event store ([event-sourcing.md](event-sourcing.md)), then
-  announces `privacy.data-subject.erased` through the outbox for the services that keep a copy
-  (`generate erasure-handler <ctx>`, for a table).
+- `eraseDataSubject` of the kernel runs the key, every copy in every tenant (`inEachTenant`), the
+  copies no tenant confines (`shared`) and the rebuilds, in that order. `npm run privacy:erase --
+  <subject-id>` reaches them all, the key first when the project has an event store
+  ([event-sourcing.md](event-sourcing.md)), then announces `privacy.data-subject.erased` through
+  the outbox for the services that keep a copy (`generate erasure-handler <ctx>`, for a table). An
+  id that reached nothing is refused and announced to nobody; `--rerun` says it is expected.
+- The erasure also reaches what the platform keeps: the fields a `personal` option lists, in the
+  records of the outbox (`personal-events.ts`, which `docs` writes), and the jobs enqueued with the
+  person as `subject`. So a job about a person is enqueued with `{ subject: personId }`, its payload
+  holds identifiers rather than a name or an email, and a personal field of an event is declared.
 - `npm run privacy:export -- <subject-id>` hands over one dated document (`exportDataSubject`,
   `PersonalDataExportDocument`), each export wrapped by `auditedPersonalDataExport` when the
   trail is on, never the values in the entry.

@@ -1,5 +1,5 @@
 [English](modular-monolith.md) · **Français**
-<!-- translation-of: modular-monolith.md sha256:aaf72ee25663c3f6 -->
+<!-- translation-of: modular-monolith.md sha256:8252d2b993bbe7bb -->
 
 # Monolithe modulaire
 
@@ -153,7 +153,7 @@ outils, des contrats générés et des tests de bout en bout, qui voient tout le
 processus. `test/architecture/hosting.spec.ts` compose les deux racines et échoue quand un module,
 un consommateur ou un *job* d'un service est enregistré dans l'application entière, ou quand un
 consommateur l'est deux fois. Les *jobs* de la plateforme (`audit.archive`,
-`privacy.purge-expired`) restent à l'application entière, et les processus d'un même déploiement
+`privacy.purge-expired`, `events.purge-published`, `jobs.purge-finished`) restent à l'application entière, et les processus d'un même déploiement
 partagent le `DEPLOYMENT_NAME` qui préfixe les clés de leur verrou, de leur cache et de leur
 magasin de *jobs*.
 

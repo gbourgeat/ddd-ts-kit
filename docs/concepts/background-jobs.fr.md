@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:be944f81866f2f41 -->
+<!-- translation-of: background-jobs.md sha256:ace8a94083889686 -->
 
 # Jobs en arrière-plan
 
@@ -219,7 +219,8 @@ La charge utile (payload) est vérifiée par rapport à `run` :
 - **Options** : `delay` ou `runAt` (pas avant), `idempotencyKey` (un second *job* de même nom et
   de même clé, mis en file pour le même *tenant*, n'est pas ajouté tant que le premier est gardé :
   `enqueue` répond son identifiant avec `duplicate: true` ; deux *tenants* ne partagent jamais une
-  clé) et `subject` (l'identifiant de ce sur quoi le *job* travaille, gardé avec lui). Sur la
+  clé) et `subject` (l'identifiant de ce sur quoi le *job* travaille, gardé avec lui : un *job* qui
+  concerne une personne la nomme, et son effacement le retire, quel que soit son statut). Sur la
   déclaration : `maxAttempts` (5 par défaut), `backoff` (exponentiel, 1 s doublée jusqu'à 5 min),
   `timeout` (aucun) et `lease` (30 s).
 - **`JobQueue`** est un port du noyau : `enqueue`, `cancel` et `find`, qui répond le statut, les
@@ -628,12 +629,13 @@ mémoire. Le *middleware* sur le bus de commandes est le seul endroit où le tes
   démarre avec jusqu'à ce retard.
 - **Ni priorité, ni limite de débit par *job*, ni *jobs* répétables.** Un travail répété est un
   *job* planifié qui met en file.
-- **La table grossit** : `background_jobs` garde les charges utiles et l'acteur de chaque *job*, et
-  la clé d'idempotence d'un *job* tient aussi longtemps que le *job* est gardé. Purgez ce qui est
-  terminé (`purgeFinished(before)` du `JobStore`) depuis un *job* planifié du projet : ni le kit ni
-  un projet généré n'en planifie un, parce que la durée de conservation est la décision du projet.
-  Les *jobs* morts restent jusqu'à ce qu'un opérateur décide. `process_instances` grossit de la
-  même façon.
+- **La table est purgée la nuit** : `background_jobs` garde la charge utile et l'acteur de chaque
+  *job*, et la clé d'idempotence d'un *job* tient aussi longtemps que le *job* est gardé. Un projet
+  généré retire les *jobs* réussis ou annulés chaque nuit à 03:45 UTC (`jobs.purge-finished`, au-delà
+  de `BACKGROUND_JOBS_RETENTION_DAYS`, trente par défaut) : la durée de conservation est la décision
+  du projet. Un projet câblé à la main appelle `purgeFinished(before)` du `JobStore` depuis un *job*
+  planifié. Les *jobs* morts restent jusqu'à ce qu'un opérateur décide. `process_instances` grossit,
+  et rien ne le purge encore.
 - **Les permissions sont celles de la mise en file.** Une exécution différée ou une nouvelle
   tentative des heures plus tard agit avec les rôles que l'acteur avait quand le *job*
   a été mis en file : un *job* qui doit voir un droit révoqué relit l'acteur (par son identifiant)

@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:63f2079db40470f1 -->
+<!-- translation-of: personal-data.md sha256:71661ae7ff73a32f -->
 
 # Les données personnelles dans un projet généré
 
@@ -24,7 +24,7 @@ pour la preuve datée, [Multi-tenant](multitenancy.fr.md) pour ce qu'un *tenant*
 
 | Écrit par | Quoi | Où |
 |---|---|---|
-| `init --privacy on` (`on` avec un ORM, `off` sans ou sur demande) | les listes des copies et des exports que les contextes déclarent, `runErasure`, `runExport` et `runPurge`, le *job* de nuit `privacy.purge-expired`, les trois scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts`, `scripts/privacy-purge.ts` |
+| `init --privacy on` (`on` avec un ORM, `off` sans ou sur demande) | les listes des copies et des exports que les contextes déclarent, la liste des événements qui portent des données personnelles (`personal-events.ts`, écrite par `docs`), `runErasure`, `runExport` et `runPurge`, le *job* de nuit `privacy.purge-expired`, les trois scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts`, `scripts/privacy-purge.ts` |
 | `init --event-sourcing on` (`off` sauf demande) | l'event store, les clés des personnes concernées et le chiffre qui scelle une valeur personnelle d'un événement stocké, audités quand le journal est actif | `src/platform/event-sourcing/`, le schéma `event_store` |
 | `generate repository <ctx> <Aggregate> --personal <colonne>,...` | les colonnes dans le stockage, leur déclaration, et une fois par contexte l'effacement et l'export qui la lisent | le contexte |
 
@@ -103,7 +103,7 @@ Les deux modes, fixés par table :
 
 ## L'effacement, de bout en bout
 
-`npm run privacy:erase -- <subject-id> [--operator <qui-demande>]` tourne sur les sources avec les
+`npm run privacy:erase -- <subject-id> [--operator <qui-demande>] [--rerun]` tourne sur les sources avec les
 variables de `.env`. Le script ouvre la persistance, compose l'application, ouvre un contexte
 d'exécution d'origine `cli` avec l'opérateur pour acteur, et lance `eraseDataSubject` du kernel sur :
 
@@ -113,21 +113,31 @@ d'exécution d'origine `cli` avec l'opérateur pour acteur, et lance `eraseDataS
    l'application : chaque adaptateur efface ou pseudonymise les lignes de ses tables déclarées, dans
    le *tenant* du travail ; avec `--tenancy shared-table`, l'annuaire des *tenants* les nomme (les organisations du contexte
    d'identité quand le projet l'a, sinon `TENANTS`, séparés par des virgules) et une copie est jouée une fois par *tenant*, puisqu'une écriture de données de
-   *tenant* n'est jamais élargie ;
-3. les projections alimentées par le store, reconstruites une fois la clé détruite : données à la
+   *tenant* n'est jamais élargie ; avec `--audit on`, chaque copie laisse une entrée
+   `personal-data:erase` avec l'opérateur et le nombre de lignes, `0` compris, avec ou sans event store ;
+3. ce que la plateforme garde de la personne dans des tables qu'aucun *tenant* ne confine, une fois :
+   dans chaque enregistrement de l'outbox qui nomme la personne, en attente, publié ou mort, les champs
+   que l'option `personal` de son événement liste (`platform.outbox`, d'après `personal-events.ts`), et
+   chaque *job* mis en file avec la personne pour `subject`, quel que soit son statut
+   (`platform.background-jobs`) : un *job* en attente ne tourne jamais, un *job* en cours s'arrête à son
+   prochain *heartbeat*. Chacun laisse aussi son entrée ;
+4. les projections alimentées par le store, reconstruites une fois la clé détruite : données à la
    main pour l'instant, là où le lanceur dit `TODO(platform)`.
 
-Il imprime le rapport en JSON : si une clé a été détruite, les lignes que chaque contexte a atteintes,
-les projections reconstruites. Une copie qui échoue n'arrête pas les autres, et le premier échec est
-levé une fois que tout a tourné : relancer l'effacement achève celui qui a échoué à mi-chemin,
-n'atteint plus rien la deuxième fois et le dit. Un sujet qui n'est pas un identifiant opaque (un nom,
-un email) est refusé avant que quoi que ce soit ne soit touché.
+Il imprime le rapport en JSON : si une clé a été détruite, les lignes que chaque contexte et la
+plateforme ont atteintes, les projections reconstruites. Une copie qui échoue n'arrête pas les autres,
+et le premier échec est levé une fois que tout a tourné : relancer l'effacement achève celui qui a
+échoué à mi-chemin. Un effacement qui n'a rien atteint est refusé, code de sortie 1, et annoncé à
+personne : l'id est mal saisi, son *tenant* manque à l'annuaire, ou la personne a déjà été effacée, et
+les entrées du journal d'audit disent lequel. `--rerun` dit que c'est attendu : le code de sortie est 0
+et l'effacement est annoncé de nouveau. Un sujet qui n'est pas un identifiant opaque (un nom, un email)
+est refusé avant que quoi que ce soit ne soit touché.
 
 Une fois chaque copie effacée, `runErasure` publie `privacy.data-subject.erased` par l'outbox
 (`dataSubjectErasedV1` du kernel, `{ subjectId, erasedAt }` : l'id de la personne et de personne d'autre, l'opérateur restant dans le journal d'audit auquel mène son id de corrélation ; des identifiants
 seulement), une fois par *tenant* avec des tables partagées ; le relais de l'application en marche
-le livre. Un effacement qui a échoué ne publie rien, et le relancer le fait. C'est ainsi que
-l'article 19 porte au-delà de la base que tient la plateforme :
+le livre. Un effacement qui a échoué ne publie rien, et le relancer le fait, avec `--rerun` quand il
+ne reste rien à atteindre. C'est ainsi que l'article 19 porte au-delà de la base que tient la plateforme :
 
 - un contexte extrait en service à part efface sa copie de son côté : `npx ddd-ts-kit generate
   erasure-handler <context>` écrit le *handler* idempotent de l'événement sur l'effacement du
@@ -231,6 +241,15 @@ aucune personne. `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false` coupe le *job* dans u
 `npm run privacy:purge` le lance à la main et imprime les lignes atteintes par contexte. Une table
 dont la déclaration ne donne aucune durée garde ses lignes jusqu'à ce que la personne le demande.
 
+La plateforme garde des traces de son propre travail, et elles sont purgées de la même façon. À
+03:30 UTC, `events.purge-published` retire les enregistrements de l'outbox publiés depuis plus de
+`OUTBOX_RETENTION_DAYS` jours ; à 03:45 UTC, `jobs.purge-finished` retire les *jobs* réussis ou annulés
+depuis plus de `BACKGROUND_JOBS_RETENTION_DAYS` jours, trente jours chacun par défaut. Un enregistrement
+et une ligne de *job* gardent leur charge utile jusque-là. Un événement mort ou un *job* mort reste
+jusqu'à ce qu'un opérateur décide, et un effacement l'atteint malgré tout.
+`JOB_EVENTS_PURGE_PUBLISHED_ENABLED=false` et `JOB_JOBS_PURGE_FINISHED_ENABLED=false` en coupent un dans
+un environnement.
+
 Un projet qui lit ses durées dans la configuration (une variable d'environnement comme
 `RETENTION_PERIODS`, un objet JSON de la copie à la durée) et purge par son propre job ne déclare
 aucune `retention` littérale, que le registre écrirait `until erased` : il nomme la configuration,
@@ -296,9 +315,20 @@ clair est signalée.
 - **Les sauvegardes et la rétention du *broker*.** Un effacement atteint la base de données, jamais
   une sauvegarde ni un message déjà publié : la borne d'un effacement est une date, que la politique
   de rétention décide. L'annonce atteint les consommateurs en marche et abonnés ; un message déjà
-  dans une file de lettres mortes ou sur un *topic* y reste jusqu'à la fin de sa rétention. Les clés de l'event store rendent illisibles les événements d'une sauvegarde
+  dans une file de lettres mortes ou sur un *topic* y reste jusqu'à la fin de sa rétention. Un
+  enregistrement de l'outbox est dans la base : l'effacement l'atteint, et seulement par les champs que
+  l'option `personal` de son événement liste, à travers `personal-events.ts`, que `ddd-ts-kit docs`
+  tient à jour. Un enregistrement encore en attente part avec `[erased]` à la place du champ : un
+  consommateur dont le schéma refuse ce texte refuse l'événement, et rien de la personne ne sort. Les clés de l'event store rendent illisibles les événements d'une sauvegarde
   une fois détruites, raison pour laquelle elles vivent à part, avec une rétention plus courte
   ([Event sourcing](event-sourcing.fr.md#données-personnelles--crypto-shredding)).
+- **Un champ qu'aucune option `personal` ne liste, un *job* qui ne nomme aucun `subject`.** La charge
+  utile d'un événement se lit par sa déclaration, et une ligne de *job* se trouve par son `subject` :
+  `privacy/event-payload-declared` signale un champ nommé comme une donnée personnelle, et rien ne
+  signale un *job* qui tient une personne dans sa charge utile sans la nommer. Un *job* qui concerne une
+  personne est mis en file avec `{ subject: personId }`. Les *jobs* gardés dans la mémoire d'un
+  processus (`--queue memory`) sont hors de portée d'un script qui tourne dans un autre, et finissent
+  avec ce processus.
 - **Les journaux et les exports déjà remis.** Rien du kit ne les réécrit ; les adaptateurs de journal
   masquent les secrets, pas les noms ([Observabilité](observability.fr.md#ce-que-chaque-signal-peut-porter)).
 - **Une colonne qu'aucune déclaration ne nomme.** Une règle lit le nom d'une colonne, pas ce qu'un

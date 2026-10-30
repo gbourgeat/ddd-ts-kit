@@ -79,10 +79,10 @@ src/
   platform/                      technical capabilities: config, database, events, auth, tracing, http server
     composition/                 what turns the platform and the contexts into an application
     observability/               tracing.ts (the first import of every entry point), logs, measures, error reports
-    jobs/                        the settings of the scheduled jobs
+    jobs/                        the settings of the scheduled jobs, how long the platform keeps what it is done with
     audit/search-audit-entries/  the read side of the audit trail
     event-sourcing/              with --event-sourcing on: the event store, the keys of the data subjects and the cipher of the stored events
-    privacy/                     with --privacy on: the copies and exports each context declares, the erasure and the export the scripts run
+    privacy/                     with --privacy on: the copies and exports each context declares, the events that carry personal data, the erasure and the export the scripts run
     auth/
       authentication/            who is calling: the authenticator, the session of a request, the HTTP boundary
       authorization/             what they may do, whatever the model: the authorizer behind the port, the guard of the buses, Role

@@ -1,5 +1,5 @@
 [English](transactional-outbox.md) · **Français**
-<!-- translation-of: transactional-outbox.md sha256:45add3dcc78322f2 -->
+<!-- translation-of: transactional-outbox.md sha256:89f6b8e6534ac1b8 -->
 
 # Outbox transactionnelle
 
@@ -220,7 +220,9 @@ Le stockage expose le nombre d'enregistrements en attente, en échec et morts. L
 | âge du plus ancien enregistrement en attente | le vrai délai de livraison ; c'est une requête SQL sur la table, les statistiques ne le portent pas |
 
 Les enregistrements publiés doivent être purgés régulièrement, sinon la table et son index
-grossissent sans limite. Le stockage répond aux trois besoins :
+grossissent sans limite, et un enregistrement garde sa charge utile jusque-là : un projet généré les
+retire chaque nuit (`events.purge-published`, `OUTBOX_RETENTION_DAYS`). Le stockage répond aux trois
+besoins :
 
 <!-- checked sample -->
 ```ts
