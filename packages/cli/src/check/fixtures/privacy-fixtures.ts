@@ -183,6 +183,23 @@ export const PRIVACY_FIXTURES: readonly Fixture[] = [
     }),
   },
   {
+    ruleId: 'privacy/event-payload-declared',
+    name: 'a declared member of the payload class named like personal data, the option listing another field',
+    expect: { file: PAYLOAD },
+    files: privacyOn({
+      [EVENT]: event([DECLARED_SELLER, '  payload: classSchema(ProductListedV1Payload),']),
+      [PAYLOAD]: source(
+        'export class ProductListedV1Payload {',
+        '  declare productId: string;',
+        '',
+        '  declare sellerEmail: string;',
+        '',
+        '  declare readonly sellerPhone?: string;',
+        '}',
+      ),
+    }),
+  },
+  {
     ruleId: 'privacy/erasure-reaches-copies',
     name: 'a consumer of an event that carries personal data, which declares its erasure',
     expect: 'pass',

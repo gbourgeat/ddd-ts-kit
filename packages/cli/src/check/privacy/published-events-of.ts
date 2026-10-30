@@ -4,7 +4,7 @@ import { matchingBracket } from '../text/matching-bracket';
 
 const DEFINE = /\bexport\s+const\s+([\w$]+)\s*=\s*defineIntegrationEvent\s*\(/g;
 const ZOD_OBJECT = /\bz\.object\s*\(\s*\{/g;
-const MEMBER = /^ {2}(?:readonly\s+)?([A-Za-z_$][\w$]*)[!?]?\s*[:=]/;
+const MEMBER = /^ {2}(?:(?:readonly|declare)\s+)*([A-Za-z_$][\w$]*)[!?]?\s*[:=]/;
 const SUFFIX = '.integration-event.ts';
 const KEY = /(?:^|[{,]\s*|\n\s*)([A-Za-z_$][\w$]*)\s*:/g;
 
