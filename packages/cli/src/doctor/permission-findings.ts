@@ -65,13 +65,19 @@ function sandboxFindings(config: Config, settings: unknown): DoctorFinding[] {
     ['filesystem.allowWrite', holds(sandbox['filesystem'], 'allowWrite', install.writes), install.writes.join(', ')],
     [
       'network.allowedDomains',
-      listed(sandbox['network'], 'allowedDomains') && holds(sandbox['network'], 'allowedDomains', install.hosts),
+      listed(sandbox['network'], 'allowedDomains') &&
+        holds(sandbox['network'], 'allowedDomains', install.hosts) &&
+        !holdsAny(sandbox['network'], 'allowedDomains', ['*']),
       `${hosts.slice(0, -1).join(', ')} and ${hosts.at(-1) ?? ''}`,
     ],
-    ['credentials.files', listed(sandbox['credentials'], 'files'), `${count(expected, 'credentials', 'files')} denied`],
+    [
+      'credentials.files',
+      holdsEntries(sandbox['credentials'], 'files', expected),
+      `${count(expected, 'credentials', 'files')} denied`,
+    ],
     [
       'credentials.envVars',
-      listed(sandbox['credentials'], 'envVars'),
+      holdsEntries(sandbox['credentials'], 'envVars', expected),
       `${count(expected, 'credentials', 'envVars')} denied`,
     ],
   ];
@@ -92,6 +98,34 @@ function holds(block: unknown, key: string, wanted: readonly string[]): boolean 
   const value = isRecord(block) ? block[key] : undefined;
 
   return Array.isArray(value) && wanted.every((entry) => value.includes(entry));
+}
+
+/** The list holds one of the entries: a wildcard host lets every host through. */
+function holdsAny(block: unknown, key: string, entries: readonly string[]): boolean {
+  const value = isRecord(block) ? block[key] : undefined;
+
+  return Array.isArray(value) && entries.some((entry) => value.includes(entry));
+}
+
+/** The list of `sandbox.credentials` holds every entry the profile writes: a project may list more. */
+function holdsEntries(block: unknown, key: string, expected: Record<string, unknown>): boolean {
+  const value = isRecord(block) ? block[key] : undefined;
+  const wanted = (isRecord(expected['credentials']) ? expected['credentials'][key] : undefined) ?? [];
+
+  return (
+    Array.isArray(value) &&
+    Array.isArray(wanted) &&
+    wanted.every((entry) => value.some((held) => sameEntry(held, entry)))
+  );
+}
+
+/** Two entries of a credentials list name the same path or variable with the same mode. */
+function sameEntry(held: unknown, wanted: unknown): boolean {
+  if (!isRecord(held) || !isRecord(wanted)) {
+    return false;
+  }
+
+  return held['path'] === wanted['path'] && held['name'] === wanted['name'] && held['mode'] === wanted['mode'];
 }
 
 function count(block: Record<string, unknown>, ...keys: readonly string[]): number {
