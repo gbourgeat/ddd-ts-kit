@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:3bf6412a57dfd51f -->
+<!-- translation-of: commands.md sha256:c246e9bd6bff660e -->
 
 # Quelle commande, quand
 
@@ -709,7 +709,7 @@ Kinds
   integration-handler <context> <upstreamContext> <eventType>[@v<n>] [--version <n>] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: consumer)
   erasure-handler <context> [--module <module>]
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
-  projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: projector)
+  projection <context> <Name> <eventType>[@v<n>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: projector)
   job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]... [--module <module>]
   background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]... [--module <module>]
   process <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: process-manager)

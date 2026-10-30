@@ -12,8 +12,11 @@ import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { wire } from '../wire';
 import type { EventDeclaration } from './event-declaration';
-import { findEventDeclaration, type WantedEvent } from './find-event-declaration';
-import { publishedVersions } from './published-versions';
+import { declarationsOf } from './declarations-of';
+import { eventTypeAsPublished } from './event-type-as-published';
+import { pickDeclaration } from './pick-declaration';
+import { refuseUnpublishedVersion } from './refuse-unpublished-version';
+import type { WantedEvent } from './find-event-declaration';
 import { subscriptionVars } from './subscription-vars';
 import { givenName } from '../given-name';
 import { learnTerms } from '../learn-terms';
@@ -35,7 +38,7 @@ export const integrationHandlerKind: Kind = {
     learnTerms(scope);
 
     const upstream = declaredUpstream(scope, request.args[1] ?? '');
-    const { eventType, version } = typeAsPublished(upstream, request.args[2] ?? '', request.flags.version);
+    const { type: eventType, version } = wantedEvent(upstream, request.args[2] ?? '', request.flags.version);
 
     const name = givenName(scope, toName(eventType.split('.').join(' ')), {
       what: 'integration handler',
@@ -45,7 +48,7 @@ export const integrationHandlerKind: Kind = {
     const declaration = declarationAt(scope, upstream, { type: eventType, version });
 
     if (declaration === undefined && isDeclared(scope.config)) {
-      throw undeclaredEvent(upstream, eventType);
+      throw undeclaredEvent(upstream, { type: eventType, version });
     }
 
     const context = vars(scope, {
@@ -73,12 +76,13 @@ export const integrationHandlerKind: Kind = {
 };
 
 /** A handler declares itself against the declaration of its event: without one there is nothing to handle. */
-function undeclaredEvent(upstream: Name, eventType: string): MissingPrerequisite {
-  const [, aggregate = '', fact = ''] = eventType.split('.');
+function undeclaredEvent(upstream: Name, { type, version }: WantedEvent): MissingPrerequisite {
+  const [, aggregate = '', fact = ''] = type.split('.');
+  const at = version === undefined ? '' : ` --version ${version}`;
 
   return new MissingPrerequisite(
-    `${upstream.kebab} declares no ${eventType} in its published language.`,
-    `An integration event handler declares itself with @IntegrationEventHandler(<definition>, ...), which needs the declaration of the event: create it first with \`ddd-ts-kit generate integration-event ${upstream.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}\`, then run the command again.`,
+    `${upstream.kebab} declares no ${type}${version === undefined ? '' : ` at v${version}`} in its published language.`,
+    `An integration event handler declares itself with @IntegrationEventHandler(<definition>, ...), which needs the declaration of the event: create it first with \`ddd-ts-kit generate integration-event ${upstream.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}${at}\`, then run the command again.`,
   );
 }
 
@@ -100,82 +104,40 @@ function declaredUpstream(scope: Scope, input: string): Name {
   );
 }
 
-/** The declaration of the version asked for, the newest without one; a version the upstream does not publish is refused. */
+/** The declaration of the version asked for, the newest without one; a version that cannot be found is refused. */
 function declarationAt(scope: Scope, upstream: Name, wanted: WantedEvent): EventDeclaration | undefined {
-  const declaration = findEventDeclaration(scope, upstream.kebab, wanted);
+  const found = declarationsOf(scope, upstream.kebab, wanted.type);
+  const declaration = pickDeclaration(scope, found, wanted.version);
 
   if (declaration === undefined && wanted.version !== undefined) {
-    refuseUnpublishedVersion(publishedVersions(scope, upstream.kebab, wanted.type), wanted.type);
+    refuseUnpublishedVersion(found, wanted.type, wanted.version);
+
+    throw undeclaredEvent(upstream, wanted);
   }
 
   return declaration;
 }
 
-/** The type as `list` prints it, `<type>@v<n>`, or bare; `--version` says the same as the suffix, never something else. */
-function typeAsPublished(
+/** The event type of the command line, `<type>[@v<n>]`, of the upstream, at the version it names. */
+function wantedEvent(
   upstream: Name,
   input: string,
   flag: string | undefined,
-): { eventType: string; version: number | undefined } {
-  const [, suffix] = input.split('@');
-  const eventType = eventTypeOf(upstream, input);
-  const fromSuffix = suffix === undefined ? undefined : versionOf(suffix.replace(/^v/, ''), input);
-  const fromFlag = flag === undefined ? undefined : versionOf(flag, flag);
-
-  if (fromSuffix !== undefined && fromFlag !== undefined && fromSuffix !== fromFlag) {
-    throw new CliError(
-      `"${input}" names version ${fromSuffix} and --version ${fromFlag} names another.`,
-      'Pass the version once: <type>@v<n>, or --version <n>, or both when they agree.',
-    );
-  }
-
-  return { eventType, version: fromSuffix ?? fromFlag };
-}
-
-function versionOf(text: string, shown: string): number {
-  const version = Number(text);
-
-  if (/^[0-9]+$/.test(text) && version >= 1) {
-    return version;
-  }
-
-  throw new CliError(
-    `"${shown}" is not a valid version.`,
-    'Pass the type as `list` prints it, <type>@v<n> with n a positive integer, or --version <n>.',
-  );
-}
-
-function refuseUnpublishedVersion(published: readonly number[], eventType: string): void {
-  if (published.length === 0) {
-    return;
-  }
-
-  const listed = published.map((each) => `v${each}`).join(', ');
-
-  throw new CliError(
-    `${eventType} is published at ${listed} only.`,
-    `Pass one of ${published.map((each) => `${eventType}@v${each}`).join(', ')}, or the bare type for the newest.`,
-  );
-}
-
-function eventTypeOf(upstream: Name, input: string): string {
-  const [written = '', ...suffixes] = input.split('@');
+): { type: string; version: number | undefined } {
+  const { written, version } = eventTypeAsPublished(input, flag);
   const parts = written.split('.');
 
   const wellFormed =
-    suffixes.length <= 1 &&
-    parts.length === 3 &&
-    parts.every((part) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(part)) &&
-    parts[0] === upstream.kebab;
+    parts.length === 3 && parts.every((part) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(part)) && parts[0] === upstream.kebab;
 
-  if (wellFormed) {
-    return written;
+  if (!wellFormed) {
+    throw new CliError(
+      `"${input}" is not an event type of "${upstream.kebab}".`,
+      `Pass the type as published, <context>.<aggregate>.<fact> in kebab-case, with or without @v<n>, for example ${upstream.kebab}.invoice.issued or ${upstream.kebab}.invoice.issued@v1.`,
+    );
   }
 
-  throw new CliError(
-    `"${input}" is not an event type of "${upstream.kebab}".`,
-    `Pass the type as published, <context>.<aggregate>.<fact> in kebab-case, with or without @v<n>, for example ${upstream.kebab}.invoice.issued or ${upstream.kebab}.invoice.issued@v1.`,
-  );
+  return { type: written, version };
 }
 
 /** The script that writes the event catalog before 0.6 found a consumer by the type written out: such a project keeps it written out. */

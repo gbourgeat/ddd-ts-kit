@@ -6,6 +6,8 @@ export interface EventDefinition {
   readonly name: string;
   readonly type: string;
   readonly version: number;
+  /** The file of the published language that declares it, relative to the root of the project. */
+  readonly file: string;
 }
 
 const DEFINITION = /\bexport const (\w+) = defineIntegrationEvent\(\{\s*type:\s*'([^']+)',\s*version:\s*(\d+)/g;
@@ -19,6 +21,7 @@ export function readEventDefinitions(ws: Workspace, directory: string): EventDef
       name: match[1] ?? '',
       type: match[2] ?? '',
       version: Number(match[3]),
+      file: `${folder}/${file}`,
     })),
   );
 }

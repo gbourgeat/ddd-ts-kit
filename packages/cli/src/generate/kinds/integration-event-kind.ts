@@ -1,5 +1,4 @@
 import { refreshContextDoc } from '../../docs/refresh-context-doc';
-import { CliError } from '../../cli-error';
 import { toName } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { renderTemplate } from '../../templating';
@@ -15,6 +14,7 @@ import { wire } from '../wire';
 import { ensureDomainEvent } from './ensure-domain-event';
 import { assertDeclaresItsName } from './assert-declares-its-name';
 import { eventNameReference } from './event-name-reference';
+import { parseVersion } from './parse-version';
 import { publishInIndex } from './publish-in-index';
 
 export const integrationEventKind: Kind = {
@@ -30,7 +30,7 @@ export const integrationEventKind: Kind = {
 
     learnTerms(scope);
 
-    const version = parseVersion(request.flags.version);
+    const version = parseVersion(request.flags.version ?? '1');
     const names = ensureDomainEvent(scope, request.args[1] ?? '', request.args[2] ?? '');
 
     assertDeclaresItsName(scope, names);
@@ -87,19 +87,6 @@ function publish(scope: Scope, files: readonly string[], context: RenderContext)
   if (scope.ws.exists(registry)) {
     applyWiring(scope.ws, registry, renderTemplate('integration-event/audited.tpl', context));
   }
-}
-
-function parseVersion(input: string | undefined): number {
-  const version = Number(input ?? '1');
-
-  if (Number.isInteger(version) && version >= 1) {
-    return version;
-  }
-
-  throw new CliError(
-    `"${input}" is not a valid version.`,
-    'Pass --version with a positive integer; bump it only for a breaking change of the payload.',
-  );
 }
 
 function schemaFlavour(scope: Scope): string {
