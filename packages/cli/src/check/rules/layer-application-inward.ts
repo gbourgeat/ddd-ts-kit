@@ -10,7 +10,6 @@ import { describeTarget } from '../support/describe-target';
 import { inLayer } from '../support/in-layer';
 import { isDeclaredStyle } from '../support/is-declared-style';
 import { perFile } from '../support/per-file';
-import { payloadSchemaPackagesOf } from '../../config/payload-schema-packages-of';
 import { isBackgroundJobFile } from '../scheduling/is-background-job-file';
 
 const INWARD: readonly Layer[] = ['domain', 'application', 'published-language'];
@@ -59,9 +58,7 @@ export const layerApplicationInward: Rule = {
 function allowedPackages(path: string, here: Location, config: Project['config']): readonly string[] {
   const configured = config.applicationAllowedPackages;
 
-  return isBackgroundJobFile(path, here)
-    ? [...configured, ...payloadSchemaPackagesOf(config.stack.validation)]
-    : configured;
+  return isBackgroundJobFile(path, here) ? [...configured, ...config.payloadSchemaPackages] : configured;
 }
 
 function outward({ target, specifier }: ResolvedImport, wiring: Wiring): Flaw[] {

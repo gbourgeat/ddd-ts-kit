@@ -3,7 +3,6 @@ import type { CruiseRule } from './cruise-rule';
 import { escapePattern } from './escape-pattern';
 import { packagePatterns } from './package-patterns';
 import { testFiles } from './test-files';
-import { payloadSchemaPackagesOf } from '../config/payload-schema-packages-of';
 
 /** A background job of a context, `application/background/*.background-job.ts` and no deeper, past the layer. */
 const BACKGROUND_JOB_FILE = '/background/[^/]+\\.background-job\\.ts$';
@@ -64,7 +63,7 @@ function applicationInward(config: Config): CruiseRule {
  * with: a stored payload outlives the deploy that enqueued it, like the payload of an integration event.
  */
 function backgroundJobInward(config: Config): CruiseRule {
-  const allowed = [...config.applicationAllowedPackages, ...payloadSchemaPackagesOf(config.stack.validation)];
+  const allowed = [...config.applicationAllowedPackages, ...config.payloadSchemaPackages];
 
   return {
     name: 'layer-application-inward',
