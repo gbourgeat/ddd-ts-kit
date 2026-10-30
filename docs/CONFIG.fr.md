@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:faa42baf89e42b0a -->
+<!-- translation-of: CONFIG.md sha256:63495a6947662481 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -839,6 +839,8 @@ import { governedMutation } from '@ddd-ts-kit/testing/mutation';
 
 export default {
   testRunner: 'vitest',
+  // Nommé, car l'agencement strict de pnpm cache le *runner* au *glob* de plugins de Stryker.
+  plugins: ['@stryker-mutator/vitest-runner'],
   vitest: { configFile: 'vitest.mutation.config.ts' },
   checkers: [],
   coverageAnalysis: 'perTest',
