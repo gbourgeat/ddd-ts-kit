@@ -407,6 +407,7 @@ function findExecutions(words, directory) {
           piped: false,
           directory,
           found: true,
+          expression: words.slice(firstExpression(words)),
         });
       }
     }

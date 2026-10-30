@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:ab08b42beeef8de7 -->
+<!-- translation-of: coding-agents.md sha256:b9b003e5bd5f83f7 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -214,7 +214,10 @@ l'écrivent dans le *checkout* principal du tronc, et dans un *worktree* de `.wo
 propre `node_modules` : `npx ddd-ts-kit worktree <name>` ouvre l'endroit où l'écrire ; un projet
 démarré avant en est seulement averti au démarrage de session. Dans le *worktree* d'une
 *story* (`.ddd-ts-kit/story.json`, que la session qui s'y tient et tout sous-agent ne changent
-d'aucune façon, pas plus que `.ddd-ts-kit/worker.json` dans le *worktree* d'un *worker*), il refuse tout code d'un contexte tant que chaque ligne n'a
+d'aucune façon, pas plus que `.ddd-ts-kit/worker.json` dans le *worktree* d'un *worker*, y compris
+en supprimant un dossier au-dessus : `rm -r`, un `find -delete` ou `-exec rm` dont les tests
+`-name` peuvent le trouver, `git clean -x` ou `-X`, `git stash --all`, et `git clean -d` ou
+`git stash --include-untracked` quand git ne l'ignore pas), il refuse tout code d'un contexte tant que chaque ligne n'a
 pas sa revue de conception et que l'acceptation n'est pas écrite et verrouillée, dit la phase de
 la *story* au démarrage de session avec ses croisements avec les autres *stories* ouvertes, dit
 une fois par fichier quand la session écrit un fichier qu'une autre *story* ouverte change, et

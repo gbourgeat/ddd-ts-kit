@@ -34,6 +34,8 @@ const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
 // The worktree of a story one session takes to its pull request; its code waits for the build gate.
 const STORY_SCOPE = '.ddd-ts-kit/story.json';
+// The names `find` may find a scope file by: the files and the kit's folder that holds them.
+const SCOPE_NAMES = ['story.json', 'worker.json', '.ddd-ts-kit'];
 // Where the worktrees of a project live, inside it, ignored by git and by every tool.
 const WORKTREES_DIR = '.worktrees';
 // How long the guard keeps what `stories --json` said before reading it again.
@@ -884,7 +886,7 @@ function readOnlyReason(input, commands) {
   return undefined;
 }
 
-function sessionPlaceReason(input, { place, by, typed }) {
+function sessionPlaceReason(input, { place, by, typed, below }) {
   const testWriter = isTestWriter(input);
   if (place === undefined) {
     return testWriter
@@ -896,7 +898,7 @@ function sessionPlaceReason(input, { place, by, typed }) {
     return undefined;
   }
   return (
-    scopeFileReason(owner, place, input) ??
+    scopeFileReason(owner, place, input, below) ??
     lockedRegressionReason(owner, projectPath(owner, place), input) ??
     (testWriter
       ? testWriterScopeReason(owner, place, input)
@@ -2681,16 +2683,25 @@ function isPartOfSpec(project, path) {
 }
 
 // The scope file of a story or of a worker, and the kit's folder that holds it, are the conductor's:
-// the session of the worktree that holds it, and every sub-agent, change them in no way.
-function scopeFileReason(project, file, input) {
+// the session of the worktree that holds it, and every sub-agent, change them in no way, nor
+// remove them with a folder above them (`below`: every file under the place, or 'untracked': those
+// git does not ignore).
+function scopeFileReason(project, file, input, below = false) {
   const path = projectPath(project, file);
   const held = [STORY_SCOPE, WORKER_SCOPE].find(
-    (scope) => (path === scope || path === dirname(scope)) && existsSync(join(project.root, scope)),
+    (scope) =>
+      existsSync(join(project.root, scope)) &&
+      (path === scope || path === dirname(scope) || (holdsFile(path, scope) && reachesScope(project, scope, below))),
   );
   const own = input.agent_type || findProject(input.cwd ?? process.cwd())?.root === project.root;
   return held && own
     ? `${held} is a shared file of this worktree, its scope: the conductor writes it with \`story-scope\` or \`worker-scope\`, and it holds the gates of the work done here. ${REPORT_TO_CONDUCTOR}`
     : undefined;
+}
+
+// `git check-ignore` answers 1 for a file it does not ignore; out of a repository, git cleans nothing.
+function reachesScope(project, scope, below) {
+  return below === 'untracked' ? gitRun(project, ['check-ignore', '--quiet', scope]).status === 1 : below;
 }
 
 function baselineFileReason(project, file) {
@@ -3530,28 +3541,54 @@ function runsInlineCode({ words, heredoc, piped, redirects }) {
 }
 
 // The paths a command changes, each with what changes it.
-function changedPaths({ words, directory }) {
+function changedPaths({ words, directory, expression }) {
   const name = shell.commandName(words);
-  return tableWrites(name, words, directory) ?? programWrites(name, words, directory) ?? [];
+  return tableWrites(name, words, directory, expression) ?? programWrites(name, words, directory) ?? [];
 }
 
 // cp, mv, rm, dd, find -delete, patch and git: the writers whose targets the tables already read.
-function tableWrites(name, words, directory) {
+function tableWrites(name, words, directory, expression) {
   const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
   if (name in PATH_COMMANDS) {
-    return pathOperands(name, words.slice(1)).map((word) => at(word, name));
+    const recursive = name === 'rm' && words.some((word) => /^(?:-[a-zA-Z]*[rR][a-zA-Z]*|--recursive)$/.test(word));
+    return pathOperands(name, words.slice(1)).map((word) => ({
+      ...at(word, name),
+      below: recursive || (word.endsWith('/{}') && findReachesScope(expression)),
+    }));
   }
   if (name === 'dd') {
     return words.filter((word) => word.startsWith('of=')).map((word) => at(word.slice(3), 'dd'));
   }
   if (name === 'find' && words.includes('-delete')) {
     const roots = words.slice(1, shell.firstExpression(words));
-    return (roots.length > 0 ? roots : ['.']).map((root) => at(`${root}/{}`, 'find -delete'));
+    const below = findReachesScope(words.slice(shell.firstExpression(words)));
+    return (roots.length > 0 ? roots : ['.']).map((root) => ({ ...at(`${root}/{}`, 'find -delete'), below }));
   }
   if (name === 'patch' && !words.includes('--dry-run')) {
     return [{ place: undefined, by: 'patch' }];
   }
   return name === 'git' ? gitChangedPaths(words.slice(1), directory) : undefined;
+}
+
+// Whether what `find` finds can be a scope file or its folder: the names its `-name` and `-iname`
+// tests ask, when the expression is their plain conjunction; any other expression can find them.
+function findReachesScope(expression = []) {
+  if (expression.some((word) => ['-o', '-or', '!', '-not', '(', ','].includes(word))) {
+    return true;
+  }
+  const patterns = expression.flatMap((word, index) =>
+    ['-name', '-iname'].includes(word) ? expression.slice(index + 1, index + 2) : [],
+  );
+  return patterns.every((pattern) => SCOPE_NAMES.some((name) => namedBy(pattern, name)));
+}
+
+// A name a pattern of `find` matches, ignoring case; a bracket expression may match any.
+function namedBy(pattern, name) {
+  const glob = pattern
+    .replace(/[.+^${}()|\\]/g, '\\$&')
+    .replaceAll('*', '.*')
+    .replaceAll('?', '.');
+  return pattern.includes('[') || new RegExp(`^${glob}$`, 'i').test(name);
 }
 
 // The writers the cp and mv tables miss: an editor that rewrites in place, a downloader, an archive
@@ -3727,7 +3764,9 @@ function gitChangedPaths(args, directory) {
   }
   if (subcommand === 'clean' && !tail.some((word) => /^(-[a-zA-Z]*n|--dry-run)$/.test(word))) {
     const named = shell.operands(tail, ['-e', '--exclude']);
-    return (named.length > 0 ? named : ['.']).map(at);
+    // `-x` and `-X` remove ignored files, `-d` enters the folders git does not track.
+    const below = tail.some((word) => /^-[a-zA-Z]*[xX]/.test(word)) || untrackedBy(tail, /^-[a-zA-Z]*d/);
+    return (named.length > 0 ? named : ['.']).map((word) => ({ ...at(word), below }));
   }
   const checking = tail.some((word) => /^--(check|stat|numstat|summary|cached)$/.test(word));
 
@@ -3745,7 +3784,11 @@ function forcedGitWrite(subcommand, tail, at) {
     return [{ place: undefined, by: `git ${subcommand}` }];
   }
   if (touchesWorktree(subcommand, tail)) {
-    return [at('.')];
+    // `--all` stashes the ignored files too, `--include-untracked` those git does not ignore.
+    const below =
+      tail.some((word) => /^(?:-[a-zA-Z]*a[a-zA-Z]*|--all)$/.test(word)) ||
+      untrackedBy(tail, /^(?:-[a-zA-Z]*u[a-zA-Z]*|--include-untracked)$/);
+    return [{ ...at('.'), below }];
   }
   if (subcommand === 'worktree' && tail[0] === 'add') {
     return [at(shell.operands(tail.slice(1), ['-b', '-B']).at(-1) ?? '.')];
@@ -3755,6 +3798,11 @@ function forcedGitWrite(subcommand, tail, at) {
   }
   const out = gitOutputFile(subcommand, tail);
   return out === undefined ? undefined : [at(out)];
+}
+
+// 'untracked' when a word gives the option: the files git does not ignore are taken.
+function untrackedBy(tail, option) {
+  return tail.some((word) => option.test(word)) ? 'untracked' : false;
 }
 
 // stash writes the work tree unless it only reads it (list, show), and checkout-index with -a or -f.

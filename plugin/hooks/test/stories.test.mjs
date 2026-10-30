@@ -635,9 +635,39 @@ test("the scope file of a story is the conductor's: the session of its worktree 
     'echo {} > .ddd-ts-kit/story.json',
     'mv .ddd-ts-kit/story.json /tmp/story.json',
     'rm -rf .ddd-ts-kit',
+    'rm -rf .',
+    'git clean -fdx',
+    'git clean -fdX',
+    'find .ddd-ts-kit -delete',
+    'find . -name story.json -delete',
+    'find .ddd-ts-kit -name story.json -exec rm {} +',
+    "find . -iname 'STORY.*' -delete",
+    "find . -name '*.orig' -o -name '*.rej' -delete",
+    "find . -name '[sw]*.json' -delete",
+    'git stash -u -a',
+    'git stash --all',
   ]) {
     assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
   }
+  // `-d` and `--include-untracked` take what git does not ignore: init's .gitignore holds .ddd-ts-kit/.
+  const untracked = ['git clean -fd', 'git stash -u', 'git stash push --include-untracked'];
+  const elsewhere = ['git clean -f', 'git clean -fdx src', 'find src -delete', 'rm -rf src', 'rm a/{}'];
+  const otherNames = ["find . -name '*.orig' -delete", "find . -type f -name '*.rej' -exec rm {} +"];
+  for (const command of [...untracked, ...elsewhere, ...otherNames]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  git(root, 'init', '--quiet');
+  for (const command of [...untracked, 'git stash']) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  writeFileSync(join(root, '.gitignore'), 'node_modules\n');
+  for (const command of untracked) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+  }
+  assert.match(
+    reason(run('pre-bash', bash(root, 'git clean -fdx'))),
+    /^ddd-ts-kit: git clean: \.ddd-ts-kit\/story\.json is a shared file/,
+  );
   const written = run('pre-write', { cwd: root, ...write(join(root, '.ddd-ts-kit/story.json')) });
   assert.equal(decision(written), 'deny');
   assert.match(reason(written), /conductor/);
