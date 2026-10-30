@@ -11,7 +11,49 @@ import type { DoctorFinding } from './doctor-finding';
 
 /** The permissions of `.claude/settings.json` this version writes that the project's settings lack, and the sandbox and the hooks of the regulated profile when the config asks for it. */
 export function permissionFindings(config: Config, settings: unknown): DoctorFinding[] {
-  return [...ruleFindings(config, settings), ...sandboxFindings(config, settings), ...hookFindings(config, settings)];
+  return [
+    ...ruleFindings(config, settings),
+    ...sandboxFindings(config, settings),
+    ...hookFindings(config, settings),
+    ...openGateFindings(config, settings),
+  ];
+}
+
+/** Under the regulated profile, a mode that skips the permission prompts or a rule that allows every command: no gate is left. */
+function openGateFindings(config: Config, settings: unknown): DoctorFinding[] {
+  if (config.agents.profile !== 'regulated') {
+    return [];
+  }
+
+  const permissions = isRecord(settings) && isRecord(settings['permissions']) ? settings['permissions'] : {};
+  const allowed: readonly unknown[] = Array.isArray(permissions['allow']) ? permissions['allow'] : [];
+  const open = allowed.find((rule) => rule === 'Bash(*)' || rule === 'Bash');
+
+  return [
+    ...(permissions['defaultMode'] === 'bypassPermissions'
+      ? [
+          {
+            area: 'permission',
+            name: 'permissions.defaultMode',
+            problem: 'written otherwise',
+            expected: 'a mode that asks, as the regulated profile has no gate left under bypassPermissions',
+            found: 'bypassPermissions',
+          } satisfies DoctorFinding,
+        ]
+      : []),
+    ...(open === undefined
+      ? []
+      : [
+          {
+            area: 'permission',
+            name: 'permissions.allow',
+            problem: 'written otherwise',
+            expected:
+              'commands allowed one by one, as the regulated profile has no gate left under a rule for every command',
+            found: open,
+          } satisfies DoctorFinding,
+        ]),
+  ];
 }
 
 /** Under the regulated profile, each hook of the profile the settings do not register under `PreToolUse`. */

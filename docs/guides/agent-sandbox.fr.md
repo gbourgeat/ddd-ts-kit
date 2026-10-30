@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:b3eea24af033ec00 -->
+<!-- translation-of: agent-sandbox.md sha256:df0c8e8a43b36283 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -78,7 +78,7 @@ s'applique à un projet déjà initialisé, sans `--force`, et `--agent-profile 
 le profil, `.claude/settings.json` gagne un bloc `sandbox` à côté des permissions (une clé que le
 projet avait déjà posée est gardée), et `init` affiche le bloc de réglages gérés qu'un fichier de
 projet ne peut pas poser, pour que l'équipe plateforme le colle ; `ddd-ts-kit doctor` signale un
-projet dont les réglages manquent d'une ligne du bloc (`--strict` échoue dessus). Ce que chaque
+projet dont les réglages manquent d'une ligne du bloc, ou dont les permissions ne laissent aucune garde (`defaultMode` à `bypassPermissions`, ou une règle d'autorisation `Bash(*)` ou `Bash`) (`--strict` échoue dessus). Ce que chaque
 ligne apporte, en termes de contrôle :
 
 | Ligne | Où | Ce qu'elle apporte |

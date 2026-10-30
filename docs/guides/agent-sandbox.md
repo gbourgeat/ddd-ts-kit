@@ -75,7 +75,7 @@ applies to a project already initialised, without `--force`, and `--agent-profil
 it. With the profile, `.claude/settings.json` gains a `sandbox` block next to the permissions
 (a key the project already set is kept), and `init` prints the block of managed settings a
 project file cannot set, for the platform team to paste; `ddd-ts-kit doctor` reports a project
-whose settings lack a line of the block (`--strict` fails on it). What each line buys, in control
+whose settings lack a line of the block, or whose permissions leave no gate (`defaultMode` set to `bypassPermissions`, or an allow rule `Bash(*)` or `Bash`) (`--strict` fails on it). What each line buys, in control
 terms:
 
 | Line | Where | What it buys |
