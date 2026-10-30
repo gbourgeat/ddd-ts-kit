@@ -31,6 +31,8 @@ export const TOOL_NOTES: readonly Note[] = [
       'where drizzle-kit alone writes nothing and exits 0; then formats the snapshot and the',
       'journal it wrote with the Biome or Prettier of the format script, and warns when the',
       'SQL changes a primary key in an order that fails on PostgreSQL (exit code unchanged);',
+      'says first, exit code unchanged, when the migration will drop the tables of a declared',
+      'context because the schema index no longer names them;',
       '--replay, after merging the trunk into a branch when both added migrations: when the',
       'history forks from --base <ref> (origin/main by default), deletes the migrations of the',
       'branch the base does not have, with their snapshots and journal entries, then generates',

@@ -4,6 +4,8 @@ export { generateDrizzleMigration } from './generate-drizzle-migration';
 export { primaryKeyOrderFindings } from './primary-key-order-findings';
 export { replayDrizzleMigrations } from './replay-drizzle-migrations';
 export { tidyWrittenMigration } from './tidy-written-migration';
+export { listedInIndex } from './listed-in-index';
+export { warnDroppedContextTables } from './warn-dropped-context-tables';
 export { appendAuditGuard } from './audit-guard/append-audit-guard';
 export { auditGuardStatementsOf } from './audit-guard/audit-guard-statements-of';
 export { generateGuarded } from './audit-guard/generate-guarded';

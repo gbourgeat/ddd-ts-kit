@@ -3,7 +3,7 @@ import { identityPreset } from './identity-preset';
 import type { Preset } from './preset';
 
 /** Every preset of the kit, by name. */
-const PRESETS: readonly Preset[] = [identityPreset];
+export const PRESETS: readonly Preset[] = [identityPreset];
 
 export function presetNamed(name: string): Preset {
   const found = PRESETS.find((preset) => preset.name === name);
