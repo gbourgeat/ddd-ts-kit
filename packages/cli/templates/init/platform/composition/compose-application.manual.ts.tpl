@@ -60,6 +60,10 @@ import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{/if}}
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 import type { PlatformOptions } from '{{alias.platform}}/composition/platform-options{{alias.ext}}';
+{{#if housekeeping.any}}
+import { daysBefore } from '{{alias.platform}}/jobs/days-before{{alias.ext}}';
+import { DEFAULT_HOUSEKEEPING } from '{{alias.platform}}/jobs/housekeeping{{alias.ext}}';
+{{/if}}
 {{#if privacy.on}}
 import { runPurge } from '{{alias.platform}}/privacy/run-purge{{alias.ext}}';
 {{/if}}
@@ -324,6 +328,12 @@ function registerPlatformJobs(platform: Platform, options: ApplicationOptions): 
 {{#if privacy.on}}
   purgeExpiredEveryNight(platform);
 {{/if}}
+{{#if events.outbox}}
+  purgePublishedEvents(platform, options);
+{{/if}}
+{{#if queue.stored}}
+  purgeFinishedJobs(platform, options);
+{{/if}}
 }
 {{/if}}
 {{#if files.any}}
@@ -356,6 +366,32 @@ function purgeExpiredEveryNight(platform: Platform): void {
     schedule: { cron: '0 3 * * *' },
     run: async () => {
       await runPurge(platform);
+    },
+  });
+}
+{{/if}}
+{{#if events.outbox}}
+
+/** The records of what was published, their payload with them, dropped every night at 03:30 UTC past the days they are kept. */
+function purgePublishedEvents(platform: Platform, { housekeeping = DEFAULT_HOUSEKEEPING }: ApplicationOptions): void {
+  platform.jobs.register({
+    name: 'events.purge-published',
+    schedule: { cron: '30 3 * * *' },
+    run: async () => {
+      await platform.persistence.outbox.purgePublished(daysBefore(platform.clock, housekeeping.publishedEventsDays));
+    },
+  });
+}
+{{/if}}
+{{#if queue.stored}}
+
+/** The jobs that succeeded or were cancelled, their payload with them, dropped every night at 03:45 UTC past the days they are kept. */
+function purgeFinishedJobs(platform: Platform, { housekeeping = DEFAULT_HOUSEKEEPING }: ApplicationOptions): void {
+  platform.jobs.register({
+    name: 'jobs.purge-finished',
+    schedule: { cron: '45 3 * * *' },
+    run: async () => {
+      await platform.jobStore.purgeFinished(daysBefore(platform.clock, housekeeping.finishedJobsDays));
     },
   });
 }

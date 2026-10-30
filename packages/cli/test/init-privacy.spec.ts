@@ -68,7 +68,7 @@ describe('the personal data of a generated project: --privacy', () => {
     expect(platform(byHand, 'privacy/run-erasure.ts')).toContain('keys: platform.eventSourcing.subjectKeys,');
 
     expect(platform(byHand, 'privacy/run-erasure.ts')).toContain(
-      'copies: dataSubjectCopies.map((copy) => copy(platform)),',
+      'copies: dataSubjectCopies.map((copy) => audited(copy(platform))),',
     );
   });
 

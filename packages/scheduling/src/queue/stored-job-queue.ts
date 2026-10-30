@@ -3,6 +3,7 @@ import {
   isJobName,
   parseDuration,
   systemActor,
+  type Actor,
   type BackgroundJobType,
   type Clock,
   type EnqueuedBy,
@@ -32,12 +33,22 @@ export interface StoredJobQueueOptions {
    * through an elevation (`acrossTenants`). Default false, for a project without tenancy.
    */
   readonly tenant?: boolean;
+  /**
+   * The attributes of the actor a run reads, beyond `tenants`, stored with the job: an attribute a
+   * policy asks of a job (`department`). Default none: a stored job keeps who acts and never the
+   * profile a credential gave, an email or a username, which would outlive an erasure of the person.
+   */
+  readonly actorAttributes?: readonly string[];
 }
+
+/** What the authorizer reads of an actor that belongs to several tenants (`tenantsOf`). */
+const AUTHORIZING_ATTRIBUTES: readonly string[] = ['tenants'];
 
 /**
  * The `JobQueue` of the kernel on a `JobStore`: it names the job, reads the payload with the
  * schema of the job (a payload it refuses throws `InvalidEnqueuedPayloadError`, nothing stored),
- * captures what travels with it and adds it to the store, in the transaction of the caller when the store shares it. `find`
+ * captures what travels with it and adds it to the store, in the transaction of the caller when the store shares it: the
+ * correlation, the tenant, the trace, and of the actor its id, type, tenant, roles and `tenants`, never its profile. `find`
  * and `cancel` reach the jobs of the tenant of the work in progress only (the tenants of its
  * elevation). In a project without tenancy, no work has a tenant and every job is reached; given
  * `tenant`, work that names none is refused.
@@ -102,7 +113,22 @@ export class StoredJobQueue implements JobQueue {
 
     const { correlationId, actor, tenantId } = context;
 
-    return { correlationId, actor, ...(tenantId === undefined ? {} : { tenantId }), ...traced };
+    return {
+      correlationId,
+      actor: this.storedActor(actor),
+      ...(tenantId === undefined ? {} : { tenantId }),
+      ...traced,
+    };
+  }
+
+  /** The actor as a run needs it. A row outlives the request, so the rest of its attributes stays with the request. */
+  private storedActor(actor: Actor): Actor {
+    const kept = [...AUTHORIZING_ATTRIBUTES, ...(this.options.actorAttributes ?? [])];
+
+    return {
+      ...actor,
+      attributes: Object.fromEntries(Object.entries(actor.attributes).filter(([name]) => kept.includes(name))),
+    };
   }
 }
 

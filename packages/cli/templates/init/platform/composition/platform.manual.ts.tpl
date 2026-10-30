@@ -26,6 +26,9 @@ import type {
   RateLimiter,
   {{/if}}
 } from '@ddd-ts-kit/kernel';
+{{#if queue.stored}}
+import type { JobStore } from '@ddd-ts-kit/scheduling';
+{{/if}}
 {{#if audit.on}}
 import type { Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
@@ -89,6 +92,10 @@ export interface Platform {
   readonly jobs: JobScheduler;
   /** What a use case enqueues through: a background job is written with its command and run later by the worker, as the actor that enqueued it. */
   readonly jobQueue: JobQueue;
+  {{#if queue.stored}}
+  /** Where the jobs wait: what the purge of what finished and the erasure of a person reach. */
+  readonly jobStore: JobStore;
+  {{/if}}
   /** Where a context registers its background jobs; the application starts it when this process runs the jobs. */
   readonly backgroundJobs: BackgroundJobs;
   /** Runs the steps of the process managers, in the unit of work of the step, and delivers their timeouts through the queue. */

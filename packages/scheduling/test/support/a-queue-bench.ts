@@ -16,6 +16,7 @@ export interface QueueBench {
   readonly scope: AsyncLocalStorageExecutionScope;
   readonly logger: InMemoryLogger;
   readonly metrics: InMemoryMetrics;
+  readonly ids: SequentialIdGenerator;
   readonly queue: StoredJobQueue;
   readonly worker: QueueWorker;
   /** Every attempt the worker recorded, with what it threw. */
@@ -61,5 +62,5 @@ export function aQueueBench(options: BenchOptions = {}): QueueBench {
     onRun: (run, error) => runs.push({ run, error }),
   });
 
-  return { clock, timers, store, scope, logger, metrics, queue, worker, runs };
+  return { clock, timers, store, scope, logger, metrics, ids, queue, worker, runs };
 }

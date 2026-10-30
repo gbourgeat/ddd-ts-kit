@@ -17,6 +17,9 @@ import type { JobSettings } from '@ddd-ts-kit/kernel';
 import type { QueueWorkerOptions } from '@ddd-ts-kit/scheduling';
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
 import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
+{{#if housekeeping.any}}
+import type { Housekeeping } from '{{alias.platform}}/jobs/housekeeping{{alias.ext}}';
+{{/if}}
 import type { LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 {{#if cache.redis}}
 import type { RedisServices } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
@@ -35,6 +38,10 @@ export interface PlatformOptions {
   readonly events: EventProvider;
   /** Where log entries go; left out, the application writes nothing. */
   readonly log?: LogSettings;
+{{#if housekeeping.any}}
+  /** How long the platform keeps what it is done with, in days: the configuration in `main.ts`; left out (the tools, the tests), thirty. */
+  readonly housekeeping?: Housekeeping;
+{{/if}}
 {{#if errors.sentry}}
   /** Where unexpected failures are reported: the reporter of `errors.ts` in `main.ts`; left out (the tools, the tests), nowhere. */
   readonly errors?: ErrorReporter;

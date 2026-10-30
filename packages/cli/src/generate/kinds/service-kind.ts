@@ -42,7 +42,7 @@ export const serviceKind: Kind = {
     );
 
     ws.note(
-      `The service takes the scheduled jobs of ${context.kebab} with it: it runs them unless RUN_JOBS=false, and no job of another context nor of the platform (audit.archive, privacy.purge-expired stay with the whole application).`,
+      `The service takes the scheduled jobs of ${context.kebab} with it: it runs them unless RUN_JOBS=false, and no job of another context nor of the platform (audit.archive, privacy.purge-expired, events.purge-published, jobs.purge-finished stay with the whole application).`,
     );
 
     ws.note(

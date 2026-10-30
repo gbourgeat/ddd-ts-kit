@@ -1,7 +1,13 @@
 import { and, eq, inArray, lt, lte, ne, sql, type TablesRelationalConfig } from 'drizzle-orm';
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { OutboxRecord, OutboxStats, OutboxStore } from '@ddd-ts-kit/events';
+import {
+  erasedPayloadOf,
+  type OutboxRecord,
+  type OutboxStats,
+  type OutboxStore,
+  type PersonalEvent,
+} from '@ddd-ts-kit/events';
 import type { DrizzleContext } from '../unit-of-work/drizzle-context';
 import { outboxTable, type OutboxTable } from './outbox-table';
 
@@ -149,6 +155,33 @@ export class DrizzleOutboxStore<
       .returning({ id: this.outbox.id });
 
     return purged.length;
+  }
+
+  async erasePersonalFields(subject: string, events: readonly PersonalEvent[]): Promise<number> {
+    if (events.length === 0) {
+      return 0;
+    }
+
+    const { outbox } = this;
+    const executor = this.context.executor();
+
+    const rows = await executor
+      .select({ id: outbox.id, type: outbox.type, version: outbox.version, payload: outbox.payload })
+      .from(outbox)
+      .where(inArray(outbox.type, [...new Set(events.map(({ type }) => type))]));
+
+    let erased = 0;
+
+    for (const row of rows) {
+      const payload = erasedPayloadOf(row, subject, events);
+
+      if (payload !== undefined) {
+        await executor.update(outbox).set({ payload }).where(eq(outbox.id, row.id));
+        erased += 1;
+      }
+    }
+
+    return erased;
   }
 
   async stats(): Promise<OutboxStats> {

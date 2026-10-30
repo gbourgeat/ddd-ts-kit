@@ -34,7 +34,7 @@ unit of work already crosses, wired once in the platform:
 | authorization decisions | every denial; every allowed action that is not a read; the allowed reads you declare sensitive | the decision hook of the authorization middleware |
 | commands | each command with `succeeded` or `failed` and the code of the error | a bus middleware placed before the unit of work |
 | integration events | that an event of a given type occurred, from its envelope only | one idempotent subscription |
-| erasures of data subjects | that the key of a subject was destroyed, or that none was left, by whom and when | the key store, wrapped by `auditedSubjectKeys` |
+| erasures of data subjects | that the key of a subject was destroyed, or that none was left; how many rows each copy reached, `0` included; by whom and when | the key store, wrapped by `auditedSubjectKeys`, and each copy, wrapped by `auditedPersonalDataErasure`, with or without an event store |
 | exports of data subjects | that a context handed over what it keeps of a subject, how many records, by whom and when, never the values | the export port of each context, wrapped by `auditedPersonalDataExport` |
 
 ![A command crosses the authorization middleware, the audit middleware and the unit of work before the use case, which holds no audit call; the decision hook, the audit middleware and an event subscription append to the audit trail and read who acted from the execution scope](../assets/diagrams/audit-trail-sources.svg)
@@ -298,7 +298,8 @@ holds the data:
    keys that seal the stored events; `masked(field, { subject })` says whose each value is.
    Erasing a person is destroying their key: the masks become tokens nobody can recompute, the
    entries stay, the hashes stay valid.
-4. **Record the erasure itself.** The erasure leaves an entry with its actor and its date,
+4. **Record the erasure itself.** The erasure leaves an entry per copy it reaches, and one for the
+   key when there is an event store, with its actor and its date,
    which, plus the retention of the backups of the keys, is the day it is complete
    ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)). An export
    of what the system keeps of a person leaves one too, with the number of records and never the

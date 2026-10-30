@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5c46fb0c826c422f -->
+<!-- translation-of: README.md sha256:902a26aedf229889 -->
 
 # @ddd-ts-kit/events
 
@@ -345,7 +345,10 @@ du *broker*. Voir « Tags de cache et purge après la validation » dans le READ
 `relay.tick()` réclame un lot, publie chaque événement, le marque publié, ou planifie une
 nouvelle tentative avec une attente exponentielle (backoff) ; après `maxAttempts`,
 l'enregistrement est `dead` jusqu'à `store.retryDead(ids, now)`. `store.stats()` donne
-`{ pending, failed, dead }` pour une vérification de santé, `store.purgePublished(before)` garde
+`{ pending, failed, dead }` pour une vérification de santé, `store.erasePersonalFields(subject, events)`
+efface une personne des enregistrements des événements listés, quel que soit leur statut
+(`personalEventsInOutbox(store, events)` le donne à `eraseDataSubject` comme une copie ; un projet généré
+lit la liste qu'écrit `ddd-ts-kit docs`), et `store.purgePublished(before)` garde
 la table petite.
 
 ![La vie d'un enregistrement de l'outbox : ajouté en attente par la validation de la commande, réclamé par le relais quand il est dû, publié puis purgé ; une publication en échec le laisse en attente jusqu'à sa tentative suivante, après une attente exponentielle ; après maxAttempts tentatives, il est mort jusqu'à ce que retryDead le remette en attente](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/transactional-outbox-record-lifecycle.fr.svg)
@@ -734,7 +737,8 @@ ce qu'il ne garantit pas.
 | `onFailure({ kind: 'tick' })` | le stockage lui-même a échoué | santé de la base de données |
 
 Purgez régulièrement les enregistrements publiés (`purgePublished(before)`), sinon la table et
-son index grossissent sans limite.
+son index grossissent sans limite. Un projet généré le fait chaque nuit (`events.purge-published`,
+`OUTBOX_RETENTION_DAYS`).
 
 ### Où se place la capture des changements de données
 

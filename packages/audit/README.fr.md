@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1c49373595764ffb -->
+<!-- translation-of: README.md sha256:22f4b7c5b782e1ff -->
 
 # @ddd-ts-kit/audit
 
@@ -20,7 +20,7 @@ npm i typeorm          # seulement pour @ddd-ts-kit/audit/typeorm
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataErasure`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
 | `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | rien : le client de l'unité de travail de `@ddd-ts-kit/prisma` convient structurellement |
@@ -490,6 +490,20 @@ rejoignent sa transaction : la destruction et son entrée sont validées ensembl
 n'existe, et un échec annule l'entrée `failed` avec le reste. Ce que le journal garde de cet
 échec, c'est l'entrée `failed` de la commande, que `auditMiddleware` écrit après l'annulation.
 
+Ce qu'un projet garde en clair s'efface copie par copie, sans clé à détruire : un projet dont les
+agrégats sont des lignes n'a aucun stockage de clés. `auditedPersonalDataErasure(copy, trail, { scope,
+clock, ids })` décore une `PersonalDataCopy`, de sorte que chaque `erase` écrit la même entrée, avec le
+nom de la copie comme `context` et `changes: { rows }`, `0` compris, sous l'acteur du travail. Le
+contexte d'exécution est lu d'abord, les lignes sont effacées, puis l'entrée est écrite ; un échec est
+enregistré avec son code et relevé, `onLostRecord` prévenu quand cette entrée se perd aussi. `runErasure`
+d'un projet généré décore chaque copie, l'outbox et le stockage des *jobs* compris.
+
+```ts
+const audited = (copy: PersonalDataCopy): PersonalDataCopy => auditedPersonalDataErasure(copy, trail, source);
+
+await eraseDataSubject(subject, { copies: dataSubjectCopies.map(audited) });
+```
+
 ### f. Exports de personnes concernées
 
 Le droit d'accès et la portabilité remettent à une personne tout ce que le système garde d'elle :
@@ -698,7 +712,7 @@ jamais les données :
 Ce qui reste après l'effacement, c'est « un acteur avec cet id opaque a fait ceci à ce moment ».
 Savoir si c'est acceptable est une question juridique pour le projet, à trancher avant que la
 première entrée ne soit écrite. L'effacement lui-même laisse une entrée datée quand le stockage
-des clés est décoré par `auditedSubjectKeys` : voir
+des clés est décoré par `auditedSubjectKeys` et chaque copie par `auditedPersonalDataErasure` : voir
 [e. Effacements de personnes concernées](#e-effacements-de-personnes-concernées).
 
 ## Vérification et ancrage

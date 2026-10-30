@@ -83,6 +83,9 @@ import type { Persistence } from '{{alias.platform}}/database/persistence{{alias
 import { platformErrorMapper } from '{{alias.platform}}/composition/platform-error-mapper{{alias.ext}}';
 {{/if}}
 import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
+{{#if housekeeping.any}}
+import type { Housekeeping } from '{{alias.platform}}/jobs/housekeeping{{alias.ext}}';
+{{/if}}
 import type { LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 {{#if cache.redis}}
 import type { RedisServices } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
@@ -105,6 +108,10 @@ export interface PlatformOptions {
   {{/if}}
   /** Where log entries go; left out, the application writes nothing. */
   readonly log?: LogSettings;
+  {{#if housekeeping.any}}
+  /** How long the platform keeps what it is done with, in days: the configuration in `main.ts`; left out (the tools, the tests), thirty. */
+  readonly housekeeping?: Housekeeping;
+  {{/if}}
   /** The policy around every adapter that leaves the process; left out, `resilience/default-resilience-settings.ts`. */
   readonly resilience?: ResilienceSettings;
   /** Whether a consumed event continues the trace of its publication (the default) or starts one linked to it. */

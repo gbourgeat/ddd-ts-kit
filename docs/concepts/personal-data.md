@@ -24,7 +24,7 @@ own, and this page says so. The pieces of the kit this page rests on:
 
 | Written by | What | Where |
 |---|---|---|
-| `init --privacy on` (`on` with an ORM, `off` without one or when asked) | the lists of the copies and of the exports the contexts declare, `runErasure`, `runExport` and `runPurge`, the nightly job `privacy.purge-expired`, the three scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts`, `scripts/privacy-purge.ts` |
+| `init --privacy on` (`on` with an ORM, `off` without one or when asked) | the lists of the copies and of the exports the contexts declare, the list of the events that carry personal data (`personal-events.ts`, written by `docs`), `runErasure`, `runExport` and `runPurge`, the nightly job `privacy.purge-expired`, the three scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts`, `scripts/privacy-purge.ts` |
 | `init --event-sourcing on` (`off` unless asked) | the event store, the keys of the data subjects and the cipher that seals a personal value of a stored event, audited when the trail is on | `src/platform/event-sourcing/`, the `event_store` schema |
 | `generate repository <ctx> <Aggregate> --personal <column>,...` | the columns in the storage, their declaration, and once per context the erasure and the export that read it | the context |
 
@@ -102,7 +102,7 @@ The two modes, settled per table:
 
 ## The erasure, end to end
 
-`npm run privacy:erase -- <subject-id> [--operator <who-asks>]` runs on the sources with the
+`npm run privacy:erase -- <subject-id> [--operator <who-asks>] [--rerun]` runs on the sources with the
 variables of `.env`. The script opens the persistence, composes the application, opens an execution
 context of origin `cli` with the operator as actor, and runs `eraseDataSubject` of the kernel over:
 
@@ -112,21 +112,31 @@ context of origin `cli` with the operator as actor, and runs `eraseDataSubject` 
    application: each adapter erases or pseudonymises the rows of its declared tables, in the tenant
    of the work; with `--tenancy shared-table`, the tenant directory names the tenants (the organisations of the
    identity context when the project has it, else `TENANTS`, comma separated) and a
-   copy runs once per tenant, since a write of tenant data is never widened;
-3. the projections fed by the store, rebuilt once the key is gone: given by hand for now, where the
+   copy runs once per tenant, since a write of tenant data is never widened; with `--audit on`, each
+   copy leaves an entry `personal-data:erase` with the operator and the number of rows, `0` included,
+   with or without an event store;
+3. what the platform keeps of the person in tables no tenant confines, once: in every record of the
+   outbox that names the person, pending, published or dead, the fields the `personal` option of its
+   event lists (`platform.outbox`, from `personal-events.ts`), and every job enqueued with the person
+   as `subject`, whatever its status (`platform.background-jobs`): a waiting job never runs, a running
+   one stops at its next heartbeat. Each leaves its entry too;
+4. the projections fed by the store, rebuilt once the key is gone: given by hand for now, where the
    runner says `TODO(platform)`.
 
-It prints the report as JSON: whether a key was destroyed, the rows each context reached, the
-projections rebuilt. A copy that fails does not stop the others, and the first failure is thrown
-once everything ran: running the erasure again completes one that failed half way, reaches nothing
-the second time and says so. A subject that is not an opaque identifier (a name, an email) is
-refused before anything is touched.
+It prints the report as JSON: whether a key was destroyed, the rows each context and the platform
+reached, the projections rebuilt. A copy that fails does not stop the others, and the first failure
+is thrown once everything ran: running the erasure again completes one that failed half way. An
+erasure that reached nothing is refused, exit code 1, and announced to nobody: the id is mistyped,
+its tenant is missing from the directory, or the person was erased already, and the entries of the
+audit trail say which. `--rerun` says it is expected: the exit code is 0 and the erasure is announced
+again. A subject that is not an opaque identifier (a name, an email) is refused before anything is
+touched.
 
 Once every copy is erased, `runErasure` publishes `privacy.data-subject.erased` through the outbox
 (`dataSubjectErasedV1` of the kernel, `{ subjectId, erasedAt }`: the id of the person and nobody else, the operator staying in the audit trail that its correlation id leads to),
 once per tenant with shared tables; the relay of the running application delivers it. An erasure
-that failed publishes nothing, and running it again does. This is how article 19 reaches beyond the
-database the platform holds:
+that failed publishes nothing, and running it again does, with `--rerun` when nothing is left to
+reach. This is how article 19 reaches beyond the database the platform holds:
 
 - a context extracted into a service of its own erases its copy on its side: `npx ddd-ts-kit
   generate erasure-handler <context>` writes the idempotent handler of the event over the erasure
@@ -225,6 +235,14 @@ number of rows, `0` included, and no person. `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=
 job off in one environment, and `npm run privacy:purge` runs it by hand and prints the rows reached
 per context. A table whose declaration gives no retention keeps its rows until the person asks.
 
+The platform keeps traces of its own work, and they are purged the same way. At 03:30 UTC,
+`events.purge-published` drops the records of the outbox published more than `OUTBOX_RETENTION_DAYS`
+ago; at 03:45 UTC, `jobs.purge-finished` drops the jobs that succeeded or were cancelled more than
+`BACKGROUND_JOBS_RETENTION_DAYS` ago, thirty days each by default. A record and a job row keep their
+payload until then. A dead event or a dead job stays until an operator decides, and an erasure
+reaches it all the same. `JOB_EVENTS_PURGE_PUBLISHED_ENABLED=false` and
+`JOB_JOBS_PURGE_FINISHED_ENABLED=false` switch one off in one environment.
+
 A project that reads its periods from configuration (an environment variable such as
 `RETENTION_PERIODS`, a JSON object from copy to period) and purges by its own job declares no
 literal `retention`, which the register would write as `until erased`: it names the configuration
@@ -287,7 +305,17 @@ with `personalData(subject, value)` is declared by that, and only a key stored i
 - **Backups and the retention of the broker.** An erasure reaches the database, never a backup nor a
   message already published: the bound of an erasure is a date, which the retention policy decides.
   The announcement reaches the consumers that are running and subscribed; a message already in a
-  dead letter queue or on a topic stays there until its retention ends.
+  dead letter queue or on a topic stays there until its retention ends. A record of the outbox is in
+  the database: the erasure reaches it, and only by the fields the `personal` option of its event
+  lists, through `personal-events.ts`, which `ddd-ts-kit docs` keeps. A record still pending goes out
+  with `[erased]` in place of the field: a consumer whose schema refuses that text refuses the event,
+  and nothing of the person leaves.
+- **A field no `personal` option lists, a job that names no `subject`.** The payload of an event is
+  read by its declaration, and a job row is found by its `subject`: `privacy/event-payload-declared`
+  reports a field named like personal data, and nothing reports a job that holds a person in its
+  payload without naming them. A job about a person is enqueued with `{ subject: personId }`. Jobs
+  kept in the memory of a process (`--queue memory`) are out of reach of a script that runs in
+  another one, and end with that process.
   The keys of the event store make the events of a backup unreadable once destroyed, which is why
   they live apart, with a shorter retention ([Event sourcing](event-sourcing.md#personal-data-crypto-shredding)).
 - **Logs and exports already handed over.** Nothing of the kit rewrites them; the log adapters mask

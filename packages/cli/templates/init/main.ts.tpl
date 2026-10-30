@@ -54,6 +54,9 @@ const application = composeApplication(
     traceConsumers: config.tracing.consumers,
     resilience: config.resilience,
     jobs: { start: config.runJobs, settings: jobSettings(process.env) },
+    {{#if housekeeping.any}}
+    housekeeping: config.housekeeping,
+    {{/if}}
     {{#if tenancy.any}}
     tenants: config.tenants,
     {{/if}}

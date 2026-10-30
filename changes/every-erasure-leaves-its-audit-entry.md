@@ -1,0 +1,3 @@
+**Every erasure leaves its audit entry with its operator, with or without event sourcing.** `auditedPersonalDataErasure(copy, trail, { scope, clock, ids })` of `@ddd-ts-kit/audit` wraps a `PersonalDataCopy`: each run writes `data-access`, `personal-data:erase`, the subject, the name of the copy as `context` and `changes: { rows }`, `0` included, under the actor of the work. `runErasure` wraps every copy when the trail is on, in the three families of dependency injection, beside `auditedSubjectKeys` for the key.
+
+To move: `init --force` rewrites `src/platform/privacy/run-erasure.ts`; a project that keeps its file wraps each copy of `copies` with `auditedPersonalDataErasure`.

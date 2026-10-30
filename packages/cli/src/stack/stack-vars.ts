@@ -64,11 +64,18 @@ function platformVars(config: Config): RenderContext {
   };
 }
 
-/** The platform registers jobs of its own: the purge of staged files, the archive of the audit trail, the purge of what outlived its retention. */
+/** The platform registers jobs of its own: the purge of staged files, the archive of the audit trail, the purge of what outlived its retention, of what was published and of what finished. */
 function platformJobsOf(config: Config): boolean {
   const { storage, privacy } = config.stack;
 
-  return storage !== 'none' || privacy === 'on' || auditVars(config)['archive'] === true;
+  return storage !== 'none' || privacy === 'on' || auditVars(config)['archive'] === true || keepsItsWork(config);
+}
+
+/** The platform keeps rows of its own work beyond the process: the records of the outbox, the jobs of a stored queue. */
+function keepsItsWork(config: Config): boolean {
+  const { events, queue } = config.stack;
+
+  return events === 'outbox' || queue !== 'memory';
 }
 
 /** The members of the platform the hand-wired foundations hand on as they are, in the order the union names them. */
@@ -101,7 +108,11 @@ function foundedUnion(members: readonly string[]): string {
 
 /** Where the background jobs run and are kept. */
 function backgroundVars(config: Config): RenderContext {
-  return { worker: { on: config.worker, off: !config.worker }, queue: queueVars(config) };
+  return {
+    worker: { on: config.worker, off: !config.worker },
+    queue: queueVars(config),
+    housekeeping: { any: keepsItsWork(config) },
+  };
 }
 
 /**

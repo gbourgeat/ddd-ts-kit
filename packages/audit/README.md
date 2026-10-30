@@ -18,7 +18,7 @@ npm i typeorm          # only for @ddd-ts-kit/audit/typeorm
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataErasure`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (optional peer) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (optional peer) |
 | `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | nothing: the client of the unit of work of `@ddd-ts-kit/prisma` fits structurally |
@@ -476,6 +476,20 @@ destruction and its entry commit together or neither exists, and a failure rolls
 `failed` entry with the rest. What the trail keeps of that failure is the `failed` entry of the
 command, which `auditMiddleware` writes after the rollback.
 
+What a project keeps in clear is erased copy by copy, and no key is destroyed for it: a project
+whose aggregates are rows has no key store at all. `auditedPersonalDataErasure(copy, trail, { scope,
+clock, ids })` wraps a `PersonalDataCopy`, so that every `erase` writes the same entry, with the name
+of the copy as `context` and `changes: { rows }`, `0` included, under the actor of the work. The
+execution context is read first, the rows are erased, then the entry is written; a failure is recorded
+with its code and rethrown, `onLostRecord` told when that entry is lost too. `runErasure` of a
+generated project wraps every copy, the outbox and the job store included.
+
+```ts
+const audited = (copy: PersonalDataCopy): PersonalDataCopy => auditedPersonalDataErasure(copy, trail, source);
+
+await eraseDataSubject(subject, { copies: dataSubjectCopies.map(audited) });
+```
+
 ### f. Exports of data subjects
 
 The right of access and to portability hands a person everything the system keeps of them: a read
@@ -669,7 +683,8 @@ personal data be erased. The two coexist as long as the chain never holds the da
 
 What stays after erasure is "an actor with this opaque id did this at that time". Whether that
 is acceptable is a legal question for the project, to answer before the first entry is written.
-The erasure itself leaves a dated entry when the key store is wrapped by `auditedSubjectKeys`:
+The erasure itself leaves a dated entry when the key store is wrapped by `auditedSubjectKeys` and
+each copy by `auditedPersonalDataErasure`:
 see [e. Erasures of data subjects](#e-erasures-of-data-subjects).
 
 ## Verification and anchoring

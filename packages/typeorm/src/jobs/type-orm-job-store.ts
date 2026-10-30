@@ -173,6 +173,12 @@ export class TypeOrmJobStore implements JobStore {
     return purged.affected ?? 0;
   }
 
+  async eraseSubject(subject: string): Promise<number> {
+    const erased = await this.context.manager().delete(this.jobs, { subject });
+
+    return erased.affected ?? 0;
+  }
+
   async stats(queue: string): Promise<JobStoreStats> {
     // Portable form of `count(*) filter (where ...)`.
     const count = (status: string): string => `SUM(CASE WHEN job.status = '${status}' THEN 1 ELSE 0 END)`;

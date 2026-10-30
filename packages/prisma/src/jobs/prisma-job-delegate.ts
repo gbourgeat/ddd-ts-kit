@@ -55,6 +55,7 @@ export interface PrismaJobWhere {
   queue?: string;
   tenantId?: string;
   idempotencyKey?: string;
+  subject?: string;
   status?: QueuedJobStatus | { in: QueuedJobStatus[] };
   attempts?: number;
   finishedAt?: { lt: Date };

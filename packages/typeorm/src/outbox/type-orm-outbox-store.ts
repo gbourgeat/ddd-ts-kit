@@ -1,6 +1,12 @@
 import { In, LessThan, LessThanOrEqual, Not, type EntityManager, type EntitySchema } from 'typeorm';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import type { OutboxRecord, OutboxStats, OutboxStore } from '@ddd-ts-kit/events';
+import {
+  erasedPayloadOf,
+  type OutboxRecord,
+  type OutboxStats,
+  type OutboxStore,
+  type PersonalEvent,
+} from '@ddd-ts-kit/events';
 import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
 import { outboxEntity } from './outbox-entity';
 import type { OutboxRow } from './outbox-row';
@@ -144,6 +150,27 @@ export class TypeOrmOutboxStore implements OutboxStore {
       .delete(this.outbox, { status: 'published', publishedAt: LessThan(before) });
 
     return purged.affected ?? 0;
+  }
+
+  async erasePersonalFields(subject: string, events: readonly PersonalEvent[]): Promise<number> {
+    if (events.length === 0) {
+      return 0;
+    }
+
+    const manager = this.context.manager();
+    const rows = await manager.find(this.outbox, { where: { type: In([...new Set(events.map(({ type }) => type))]) } });
+    let erased = 0;
+
+    for (const row of rows) {
+      const payload = erasedPayloadOf(row, subject, events);
+
+      if (payload !== undefined) {
+        await manager.update(this.outbox, { id: row.id }, { payload });
+        erased += 1;
+      }
+    }
+
+    return erased;
   }
 
   async stats(): Promise<OutboxStats> {

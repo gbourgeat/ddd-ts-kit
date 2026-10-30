@@ -60,7 +60,7 @@ platform only: a hidden dependency on another context makes it fail.
    root), so its consumers, processes, jobs and routes run in the service only, and
    `everyContext` stays the full list for the contracts and the end-to-end tests. Its
    scheduled jobs leave with it, the jobs of the platform (`audit.archive`,
-   `privacy.purge-expired`) stay with the whole application (the service composes with
+   `privacy.purge-expired`, `events.purge-published`, `jobs.purge-finished`) stay with the whole application (the service composes with
    `platformJobs: false`), and every container shares one `DEPLOYMENT_NAME` while its
    `OTEL_SERVICE_NAME` stays its own. `test/architecture/hosting.spec.ts` composes both roots and
    proves nothing is registered twice (`npx ddd-ts-kit generate worker` gives the jobs of the

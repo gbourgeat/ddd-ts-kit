@@ -153,6 +153,10 @@ export class KnexJobStore implements JobStore {
       .delete();
   }
 
+  eraseSubject(subject: string): Promise<number> {
+    return this.rows(this.context.executor()).where({ subject }).delete();
+  }
+
   async stats(queue: string): Promise<JobStoreStats> {
     const counted: { status: string; count: number | string }[] = await this.rows(this.context.executor())
       .where({ queue })

@@ -15,6 +15,9 @@ import { Environment, type Variables } from '{{alias.platform}}/config/environme
 import { readFiles } from '{{alias.platform}}/config/read-files{{alias.ext}}';
 {{/if}}
 import { readTracing } from '{{alias.platform}}/config/read-tracing{{alias.ext}}';
+{{#if housekeeping.any}}
+import { DEFAULT_HOUSEKEEPING, type Housekeeping } from '{{alias.platform}}/jobs/housekeeping{{alias.ext}}';
+{{/if}}
 
 const environments = ['development', 'test', 'production'] as const;
 {{#if http.any}}
@@ -61,6 +64,9 @@ export function loadConfig(variables: Variables): AppConfig {
     {{/if}}
     {{#if events.outbox}}
     outboxRelayIntervalMs: env.integer('OUTBOX_RELAY_INTERVAL_MS', { fallback: 500, min: 10, max: 60000 }),
+    {{/if}}
+    {{#if housekeeping.any}}
+    housekeeping: readHousekeeping(env),
     {{/if}}
     {{#if docs.any}}
     docsEnabled: env.flag('API_DOCS', environment !== 'production'),
@@ -110,6 +116,22 @@ export function loadConfig(variables: Variables): AppConfig {
   return config;
 }
 
+{{#if housekeeping.any}}
+/** How long the platform keeps what it is done with, in days; past that, the nightly purges drop it. */
+function readHousekeeping(env: Environment): Housekeeping {
+  const days = (name: string, fallback: number): number => env.integer(name, { fallback, min: 1, max: 3650 });
+
+  return {
+    {{#if events.outbox}}
+    publishedEventsDays: days('OUTBOX_RETENTION_DAYS', DEFAULT_HOUSEKEEPING.publishedEventsDays),
+    {{/if}}
+    {{#if queue.stored}}
+    finishedJobsDays: days('BACKGROUND_JOBS_RETENTION_DAYS', DEFAULT_HOUSEKEEPING.finishedJobsDays),
+    {{/if}}
+  };
+}
+
+{{/if}}
 {{#if tenancy.any}}
 /** `TENANTS=acme,globex`: each id in the grammar of a tenant id. */
 function readTenants(env: Environment): readonly string[] {
