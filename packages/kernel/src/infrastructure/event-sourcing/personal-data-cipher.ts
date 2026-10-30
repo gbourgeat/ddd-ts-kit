@@ -6,6 +6,7 @@ import type { StoredJson } from '../../application/event-sourcing/stored-json';
 import type { SubjectKey } from '../../application/event-sourcing/subject-key';
 import type { SubjectKeyStore } from '../../application/ports/subject-key-store';
 import { rewriteObjects } from './rewrite-objects';
+import type { SubjectValues } from './subject-values';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_BYTES = 12;
@@ -45,25 +46,36 @@ export class PersonalDataCipher {
   /**
    * The values of the data sealed with a key of the subject that still exists, opened, each under
    * its path in the data (`reason`, `cancelled.reason`, `contacts[0]`): what an export hands over
-   * of the person. A value of anyone else, or whose key was destroyed, is left out. `find` looks a
-   * key up, the key store by default: a reader of many events gives one that remembers.
+   * of the person. A value of anyone else, or whose key was destroyed, is left out; a value of the
+   * subject that does not decipher is named in `unreadable`, and the others are opened all the
+   * same. `find` looks a key up, the key store by default: a reader of many events gives one that
+   * remembers.
    */
   async valuesOf(
     subject: string,
     data: StoredData,
     find: (keyId: string) => Promise<SubjectKey | undefined> = (keyId) => this.keys.find(keyId),
-  ): Promise<Readonly<Record<string, string>>> {
+  ): Promise<SubjectValues> {
     const values: Record<string, string> = {};
+    const unreadable: string[] = [];
 
     for (const { path, sealed } of sealedIn(data, '')) {
       const key = await find(sealed.key);
 
-      if (key?.subject === subject) {
-        values[path] = deciphered(key, sealed);
+      if (key?.subject !== subject) {
+        continue;
+      }
+
+      const opened = decipheredOrNot(key, sealed);
+
+      if (opened === undefined) {
+        unreadable.push(path);
+      } else {
+        values[path] = opened;
       }
     }
 
-    return values;
+    return { values, unreadable };
   }
 
   private async sealed(subject: string, value: string): Promise<StoredJson> {
@@ -82,6 +94,15 @@ export class PersonalDataCipher {
     const key = await this.keys.find(sealed.key);
 
     return key === undefined ? { $erased: { key: sealed.key } } : deciphered(key, sealed);
+  }
+}
+
+/** The value, or `undefined` when it does not decipher under its key: a sealed value altered, or a key that is not its. */
+function decipheredOrNot(key: SubjectKey, sealed: Sealed): string | undefined {
+  try {
+    return deciphered(key, sealed);
+  } catch {
+    return undefined;
   }
 }
 

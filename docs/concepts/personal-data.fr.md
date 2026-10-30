@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:cd56ee4e3ce29fe9 -->
+<!-- translation-of: personal-data.md sha256:c68a98faae498239 -->
 
 # Les données personnelles dans un projet généré
 
@@ -178,11 +178,14 @@ aucune autre colonne et rien de personne d'autre ; une ligne déjà pseudonymis�
 ligne supprimée ne répond rien. Avec `--event-sourcing on`, `runExport` remet aussi ce que l'event
 store garde de la personne, par `EventStorePersonalDataExport` du kernel : un enregistrement par
 événement qui porte une valeur scellée avec la clé de la personne, sous
-`platform.event-store.<type d'événement>`, chaque valeur ouverte et nommée par son chemin dans les
-données de l'événement (`reason`, `contacts[0]`). Un flux porte le nom de son agrégat, pas celui de
-la personne : cet export lit donc tout le store, par tours de 500 événements, dans chaque *tenant* ;
-une valeur dont un effacement a détruit la clé a disparu et ne répond rien. Le résultat est un
-document :
+`platform.event-store.<type d'événement>`, qui nomme son événement (`stream`, `aggregateId`,
+`version`, `occurredAt`), chaque valeur ouverte et nommée par son chemin dans les données de
+l'événement (`reason`, `contacts[0]`). Un flux porte le nom de son agrégat, pas celui de la
+personne : cet export lit donc tout le store, par tours de 500 événements dans l'ordre de leurs
+positions, dans chaque *tenant* ; le store valide ses ajouts dans cet ordre, si bien qu'un tour ne
+manque aucun événement. Une valeur dont un effacement a détruit la clé a disparu et ne répond
+rien ; une valeur qui ne se déchiffre pas est nommée dans `unreadable`, et l'export continue. Le
+résultat est un document :
 
 ```json
 {
@@ -193,7 +196,11 @@ document :
     { "source": "billing.customers", "values": { "email": "ada@example.org", "display_name": "Ada" } },
     { "source": "billing.invoices", "values": { "customer_email": "ada@example.org" } },
     { "source": "crm.contacts", "values": { "email": "ada@example.org", "phone": null } },
-    { "source": "platform.event-store.care.dossier.opened", "values": { "note": "Asthma" } }
+    {
+      "source": "platform.event-store.care.dossier.opened",
+      "values": { "note": "Asthma" },
+      "event": { "stream": "care.dossier-d1", "aggregateId": "d1", "version": 1, "occurredAt": "2026-10-02T08:15:00.000Z" }
+    }
   ]
 }
 ```

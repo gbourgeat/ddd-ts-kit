@@ -174,10 +174,13 @@ and the keys of the files as plain data, no other column and nothing of anyone e
 pseudonymised already reads `[erased]`, a row deleted answers nothing. With `--event-sourcing on`,
 `runExport` also hands over what the event store keeps of the person, through
 `EventStorePersonalDataExport` of the kernel: one record per event that holds a value sealed with
-the key of the person, under `platform.event-store.<event type>`, each value opened and named by its
-path in the data of the event (`reason`, `contacts[0]`). A stream is named after its aggregate, not
-after the person, so this export reads the whole store, in rounds of 500 events, in each tenant; a
-value whose key an erasure destroyed is gone and answers nothing. The result is one document:
+the key of the person, under `platform.event-store.<event type>`, naming its event (`stream`,
+`aggregateId`, `version`, `occurredAt`), each value opened and named by its path in the data of the
+event (`reason`, `contacts[0]`). A stream is named after its aggregate, not after the person, so
+this export reads the whole store, in rounds of 500 events in the order of their positions, in each
+tenant; the store commits its appends in that order, so a round never misses an event. A value
+whose key an erasure destroyed is gone and answers nothing; a value that does not decipher is named
+in `unreadable`, and the export goes on. The result is one document:
 
 ```json
 {
@@ -188,7 +191,11 @@ value whose key an erasure destroyed is gone and answers nothing. The result is 
     { "source": "billing.customers", "values": { "email": "ada@example.org", "display_name": "Ada" } },
     { "source": "billing.invoices", "values": { "customer_email": "ada@example.org" } },
     { "source": "crm.contacts", "values": { "email": "ada@example.org", "phone": null } },
-    { "source": "platform.event-store.care.dossier.opened", "values": { "note": "Asthma" } }
+    {
+      "source": "platform.event-store.care.dossier.opened",
+      "values": { "note": "Asthma" },
+      "event": { "stream": "care.dossier-d1", "aggregateId": "d1", "version": 1, "occurredAt": "2026-10-02T08:15:00.000Z" }
+    }
   ]
 }
 ```

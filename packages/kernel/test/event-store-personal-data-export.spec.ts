@@ -26,9 +26,16 @@ async function append(
 ) {
   const sealed = await new PersonalDataCipher(keys).seal(storedDataOf(data));
 
+  const metadata = stream === 'care.dossier-d1' ? { metadata: { aggregateId: 'd1' } } : {};
+
   await store.append(stream, (await store.readStream(stream)).length, [
-    { id: `${stream}-${type}`, type, schemaVersion: 1, data: sealed, occurredAt: AT },
+    { id: `${stream}-${type}`, type, schemaVersion: 1, data: sealed, occurredAt: AT, ...metadata },
   ]);
+}
+
+/** The event of a record: its stream, its aggregate, its version, its instant. */
+function eventOf(stream: string, aggregateId: string, version: number) {
+  return { stream, aggregateId, version, occurredAt: AT };
 }
 
 async function seeded(store: EventStore = new InMemoryEventStore()) {
@@ -60,19 +67,63 @@ describe('EventStorePersonalDataExport', () => {
     const exporter = new EventStorePersonalDataExport({ events: store, keys, batchSize: 1 });
 
     expect(await exporter.exportOf('ada')).toEqual([
-      { source: 'event-store.care.dossier.opened', values: { note: 'Asthma' } },
+      {
+        source: 'event-store.care.dossier.opened',
+        values: { note: 'Asthma' },
+        event: eventOf('care.dossier-d1', 'd1', 1),
+      },
       {
         source: 'event-store.care.dossier.contacts-noted',
         values: { 'contacts[0]': 'ada@example.org', 'next.of': 'Grace' },
+        event: eventOf('care.dossier-d1', 'd1', 2),
       },
     ]);
 
     expect(await exporter.exportOf('bob')).toEqual([
-      { source: 'event-store.care.dossier.contacts-noted', values: { 'contacts[1]': 'bob@example.org' } },
-      { source: 'event-store.care.dossier.opened', values: { note: 'Flu' } },
+      {
+        source: 'event-store.care.dossier.contacts-noted',
+        values: { 'contacts[1]': 'bob@example.org' },
+        event: eventOf('care.dossier-d1', 'd1', 2),
+      },
+      {
+        source: 'event-store.care.dossier.opened',
+        values: { note: 'Flu' },
+        event: eventOf('care.dossier-d2', 'care.dossier-d2', 1),
+      },
     ]);
 
     expect(await exporter.exportOf('nobody')).toEqual([]);
+  });
+
+  it('names a value that does not decipher in its record, and goes on with the others', async () => {
+    const keys = new InMemorySubjectKeyStore();
+    const store = new InMemoryEventStore();
+
+    const sealed = await new PersonalDataCipher(keys).seal(
+      storedDataOf({ note: personalData('ada', 'Asthma'), name: personalData('ada', 'Ada') }),
+    );
+
+    const note = sealed['note'];
+    const altered = typeof note === 'object' && note !== null && '$sealed' in note ? note['$sealed'] : {};
+
+    await store.append('care.dossier-d3', 0, [
+      {
+        id: 'e-1',
+        type: 'care.dossier.opened',
+        schemaVersion: 1,
+        data: { ...sealed, note: { $sealed: { ...Object(altered), data: 'AAAAAAAAAAAAAAAAAAAAAAAA' } } },
+        occurredAt: AT,
+      },
+    ]);
+
+    expect(await new EventStorePersonalDataExport({ events: store, keys }).exportOf('ada')).toEqual([
+      {
+        source: 'event-store.care.dossier.opened',
+        values: { name: 'Ada' },
+        event: eventOf('care.dossier-d3', 'care.dossier-d3', 1),
+        unreadable: ['note'],
+      },
+    ]);
   });
 
   it('answers nothing of a subject once erased, the values of the others staying', async () => {

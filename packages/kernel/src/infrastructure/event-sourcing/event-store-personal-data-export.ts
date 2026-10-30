@@ -26,9 +26,13 @@ export interface EventStorePersonalDataExportOptions {
 /**
  * What the event store keeps of a person, for the right of access and to portability: one record
  * per event that holds a value sealed with `personalData(subject, value)` for the subject, under
- * `<name>.<event type>`, each value opened and named by its path in the data of the event. A value
- * whose key was destroyed by an erasure is gone and answers nothing. A stream is named after its
- * aggregate, not after the person, so the whole store is read, in rounds; the snapshots are left
+ * `<name>.<event type>`, naming the event (its stream, its aggregate, its version and its
+ * instant), each value opened and named by its path in the data of the event. A value whose key
+ * was destroyed by an erasure is gone and answers nothing; a value that does not decipher is named
+ * in `unreadable`, and the export goes on. A stream is named after its aggregate, not after the
+ * person, so the whole store is read, in rounds of positions: a store that commits its appends in
+ * the order of their positions, as `EventStore` asks and the PostgreSQL store does under the lock
+ * of its head, never shows a round an event before one it already gave. The snapshots are left
  * out, being made of the same events.
  */
 export class EventStorePersonalDataExport implements PersonalDataExport {
@@ -44,10 +48,20 @@ export class EventStorePersonalDataExport implements PersonalDataExport {
     const records: PersonalDataRecord[] = [];
 
     for await (const event of this.eventsOfTheTenant()) {
-      const values = await cipher.valuesOf(subject, event.data, find);
+      const { values, unreadable } = await cipher.valuesOf(subject, event.data, find);
 
-      if (Object.keys(values).length > 0) {
-        records.push({ source: `${this.name}.${event.type}`, values });
+      if (Object.keys(values).length > 0 || unreadable.length > 0) {
+        records.push({
+          source: `${this.name}.${event.type}`,
+          values,
+          event: {
+            stream: event.stream,
+            aggregateId: aggregateIdOf(event),
+            version: event.version,
+            occurredAt: event.occurredAt,
+          },
+          ...(unreadable.length > 0 ? { unreadable } : {}),
+        });
       }
     }
 
@@ -74,6 +88,13 @@ export class EventStorePersonalDataExport implements PersonalDataExport {
       }
     }
   }
+}
+
+/** The aggregate the event belongs to, as the serializer reads it: its metadata, else its stream. */
+function aggregateIdOf(event: StoredEvent): string {
+  const declared = event.metadata['aggregateId'];
+
+  return typeof declared === 'string' ? declared : event.stream;
 }
 
 /** The lookup of a key that reads each one once, however many values it sealed. */
