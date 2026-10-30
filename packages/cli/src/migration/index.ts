@@ -19,3 +19,8 @@ export { runOnInProcessDatabase } from './run-on-in-process-database';
 export { offlinePrismaMigration } from './offline-prisma-migration';
 export { refuseOtherOrm } from './refuse-other-orm';
 export { migrationName } from './migration-name';
+export { requiredMigrationName } from './required-migration-name';
+export { knexMigrationText } from './knex-migration-text';
+export { knexSchemaDifference } from './knex-schema-difference';
+export { migrationsUnder } from './audit-guard/migrations-under';
+export { writtenPaths } from './written-paths';

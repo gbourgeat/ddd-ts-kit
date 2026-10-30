@@ -14,9 +14,10 @@ import {
   tidyWrittenMigration,
   warnDroppedContextTables,
 } from '../migration';
-import { Arguments } from './arguments';
+import type { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { parseMigrationArguments } from './parse-migration-arguments';
 
 /** The trunk a branch merged, when `--replay` is not given another. */
 const DEFAULT_BASE = 'origin/main';
@@ -29,7 +30,7 @@ const DEFAULT_BASE = 'origin/main';
  * the trunk it merged.
  */
 export const drizzleGenerateCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, {
+  const args = parseMigrationArguments(argv, {
     name: { type: 'string' },
     custom: { type: 'boolean', default: false },
     replay: { type: 'boolean', default: false },

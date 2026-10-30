@@ -158,7 +158,7 @@ names), and `$test/`, `$scripts/`, `$generated/` (already taken).
 | dependency-cruiser | `paths`, once told to | `tsConfig: { fileName: 'tsconfig.json' }` in the generated `.dependency-cruiser.cjs` |
 | knip | `paths`, by itself | nothing |
 | drizzle-kit (`npm run db:generate <what-it-does>`) | `paths`, by itself, when it loads the TypeScript schema | nothing: the script is `ddd-ts-kit drizzle-generate --name`, which runs `drizzle-kit generate --name` in the project root |
-| knex and TypeORM CLIs | the compiled output (`npm run build` first) | a knex migration is a JavaScript file at the project root: it names the compiled schema by its relative path under `dist/` |
+| knex and TypeORM CLIs | the compiled output (`npm run build` first) | the TypeORM data source and `ddd-ts-kit knex-generate` read `dist/`; a knex migration is a JavaScript file that holds its SQL and imports nothing of the project |
 | Prisma CLI | `prisma.config.ts`, which imports no file of the project | nothing |
 | ESLint with `@ddd-ts-kit/eslint-plugin`, `ddd-ts-kit check` | `importAlias`, `importExtension` and `sourceRoot` of the config | they classify an import by its path and never load a file: with or without its extension, a specifier names the same source, and the boundary rules judge it the same |
 | Biome | nothing | it formats; a fixed import that passes the line width is wrapped by `npm run format` |
@@ -289,7 +289,7 @@ well (`npm run ci:test:alias`).
   written without an extension, and fails once `paths` is removed.
 - **TypeORM, knex and Prisma** read no TypeScript of the project through an alias: the TypeORM
   CLI loads the compiled data source (rewritten, so plain `node` loads it), a knex migration is
-  a JavaScript file that names the compiled schema by a relative path with its `.js`, and
+  a JavaScript file that holds its SQL and imports nothing of the project, and
   `prisma.config.ts` imports no file of the project.
 - A stale `dist/` cannot be loaded by a dev tool: `paths` names sources only, and a tool that
   ignores `paths` fails instead of falling back.

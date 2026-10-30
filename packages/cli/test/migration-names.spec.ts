@@ -22,6 +22,7 @@ const REFUSED = 'cannot name a migration: a migration is named in letters, digit
 
 describe.each([
   ['drizzle-generate', 'node_modules/drizzle-kit/bin.cjs'],
+  ['knex-generate', 'node_modules/knex/bin/cli.js'],
   ['prisma-generate', 'node_modules/prisma/build/index.js'],
 ])('ddd-ts-kit %s --name', (command, bin) => {
   it.each(['--custom', '-x', '../evil', 'add.invoices', 'add invoices', 'ajout-évité'])(
@@ -41,6 +42,22 @@ describe.each([
       expect(exists(root, 'tool-ran')).toBe(false);
     },
   );
+});
+
+describe.each([
+  ['drizzle-generate', 'node_modules/drizzle-kit/bin.cjs'],
+  ['knex-generate', 'node_modules/knex/bin/cli.js'],
+  ['prisma-generate', 'node_modules/prisma/build/index.js'],
+])('ddd-ts-kit %s, a word after the name', (command, bin) => {
+  it('is refused rather than ignored', () => {
+    const root = projectWithTool(bin);
+
+    const refused = cli(root, command, '--name', 'add', 'invoices');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('"invoices"');
+    expect(exists(root, 'tool-ran')).toBe(false);
+  });
 });
 
 describe('ddd-ts-kit typeorm-generate <folder>/<name>', () => {

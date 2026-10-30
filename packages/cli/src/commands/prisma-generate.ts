@@ -1,15 +1,14 @@
-import { CliError } from '../cli-error';
 import {
   ensureDatabaseReachable,
   generateGuarded,
   hasDatabaseUrl,
-  migrationName,
   offlinePrismaMigration,
   refuseOtherOrm,
+  requiredMigrationName,
   runOrmTool,
 } from '../migration';
-import { Arguments } from './arguments';
 import type { Command } from './command';
+import { parseMigrationArguments } from './parse-migration-arguments';
 
 /**
  * `db:generate` of a Prisma project: `prisma migrate dev --create-only`, then, with an audit trail,
@@ -17,15 +16,12 @@ import type { Command } from './command';
  * `DATABASE_URL`, no server is needed: the migration is diffed on PostgreSQL in process.
  */
 export const prismaGenerateCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, { name: { type: 'string' } });
+  const args = parseMigrationArguments(argv, { name: { type: 'string' } });
   const root = args.projectRoot;
 
   refuseOtherOrm(root, 'prisma');
 
-  const name = migrationName(
-    requiredName(args.text('name')?.trim() ?? ''),
-    'Name it by what it does, in kebab-case: `npm run db:generate add-invoices`.',
-  );
+  const name = requiredMigrationName(args.text('name'));
 
   ensureDatabaseReachable();
 
@@ -45,14 +41,3 @@ export const prismaGenerateCommand: Command = (argv, io) => {
     io,
   );
 };
-
-function requiredName(name: string): string {
-  if (name === '') {
-    throw new CliError(
-      'A migration is named by what it does.',
-      'Run `npm run db:generate <what-it-does>`, for example `npm run db:generate add-invoices`.',
-    );
-  }
-
-  return name;
-}
