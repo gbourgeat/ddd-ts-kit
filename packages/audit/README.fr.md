@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:906a6fd41b47aa08 -->
+<!-- translation-of: README.md sha256:79bfb4b0080f8a35 -->
 
 # @ddd-ts-kit/audit
 
@@ -827,10 +827,14 @@ contre son fichier : c'est donc l'appelant qui nomme celle à laquelle il se fie
 
 `verifyTrail(trail)` vérifie chaque chaîne d'un journal qui archive, chacune de l'ancre de sa
 dernière archive à sa tête (`chainHeads()` : la séquence et le hash de sa dernière entrée), de
-sorte qu'une chaîne coupée à sa fin répond `missing-entry` ; avec `files`, le stockage où les
-archives ont été écrites, la dernière archive de chaque chaîne est d'abord relue et prouvée par
-`verifyArchive`. Chaque chaîne s'arrête à sa propre rupture et les autres sont vérifiées quand
-même :
+sorte qu'une chaîne coupée à sa fin répond `missing-entry`. Les lignes des archives se suivent
+sans trou, et la tête reprend après la dernière : une tête en deçà, ou à sa fin avec un autre
+hash, répond `altered-content`. Avec `files`, le stockage où les archives ont été écrites, chaque
+archive de chaque chaîne est relue, la plus ancienne d'abord, et prouvée par `verifyArchive`
+contre celle d'avant : son empreinte, son intervalle, chaque entrée et chaque lien, son dernier
+hash. Un stockage qui ne rend pas un fichier est la rupture de cette seule chaîne
+(`unreadable-archive`). Sans `files`, une ancre est ce que dit sa ligne. Chaque chaîne s'arrête à
+sa propre rupture et les autres sont vérifiées quand même :
 
 ```ts
 await verifyTrail(trail);
@@ -975,7 +979,7 @@ La garde laisse passer un seul `DELETE` : celui d'une entrée qu'une ligne de `a
 couvre, que `archiveBefore` écrit dans la même transaction. Un rôle qui peut à la fois insérer dans
 `audit_archives` et supprimer de `audit_entries` peut donc laisser partir des entrées derrière une
 ligne de son cru. Une telle ligne reste, les archives n'acceptant que l'ajout, et
-`verifyTrail(trail, { files })` relit le fichier de la dernière archive de chaque chaîne et le
+`verifyTrail(trail, { files })` relit le fichier de chaque archive de chaque chaîne et le
 prouve avec `verifyArchive` : une ligne sans son fichier, ou dont le fichier ne la prouve pas, est
 la rupture de sa chaîne (`missing-entry`, ou `altered-content`, à la première séquence qu'elle
 nomme). Le `audit.verify` nocturne d'un projet généré avec un stockage de fichiers le fait. Gardez

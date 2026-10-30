@@ -8,6 +8,7 @@ import type { AuditTrailOptions } from '../src';
 import { auditTrailContract } from '../src/testing';
 import { startPostgres, type TestPostgres } from './support/postgres';
 import { archiveGuardSpecs, archiveSpecs, type ArchiveFixture } from './support/archive-specs';
+import { sqlArchiveFixture } from './support/archive-fixture';
 import { sqlTrailSpecs } from './support/sql-trail-specs';
 import { REAL_SERVER, aRecord, type SqlTrailFixture } from './support/sql-trail-fixture';
 
@@ -157,7 +158,7 @@ async function tampered(current: SqlTrailFixture, id: string): Promise<void> {
 async function archiveFixture(): Promise<ArchiveFixture> {
   const created = await fixture();
 
-  return { trail: created.trail, tamper: (id) => tampered(created, id), run: created.run };
+  return sqlArchiveFixture(created.trail, (id) => tampered(created, id), created.run);
 }
 
 archiveSpecs('KnexAuditTrail', archiveFixture);

@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:fdcd02e14f86e0c1 -->
+<!-- translation-of: audit-trail.md sha256:58942512ddf6b3fd -->
 
 # Journal d'audit
 
@@ -261,7 +261,7 @@ les triggers. La seule suppression admise est celle d'une entrée qu'une ligne d
 couvre, que l'archive écrit dans la même transaction : un rôle qui peut à la fois insérer une telle
 ligne et supprimer des entrées peut laisser partir des entrées derrière une ligne de son cru. Cette
 ligne reste, les archives n'acceptant que l'ajout, et la vérification à qui l'on donne le stockage
-des fichiers relit le fichier de la dernière archive de chaque chaîne : une ligne qu'aucun fichier
+des fichiers relit le fichier de chaque archive de chaque chaîne : une ligne qu'aucun fichier
 ne prouve est la rupture de sa chaîne. Ces deux privilèges reviennent au rôle qui archive, pas à
 l'application.
 
@@ -289,9 +289,12 @@ dernière archive à sa tête, de sorte qu'une chaîne coupée à sa fin ne se v
 première rupture de chaque chaîne. Un projet généré avec le journal actif l'exécute chaque nuit à
 04:30 UTC comme job de la plateforme `audit.verify`, dont l'exécution échoue sur une rupture en
 nommant la chaîne et la séquence (`AuditTrailBrokenError`), et `npm run audit:verify` l'exécute à
-la main, code de sortie 1 sur une rupture. La tête d'une chaîne est une ligne que le rôle de
-l'application écrit : elle montre une fin coupée dans le dos du journal, pas une chaîne réécrite
-en entier, que seul un point de contrôle publié ailleurs montre.
+la main, code de sortie 1 sur une rupture. La tête reprend après la dernière archive : en deçà, ou
+à sa fin avec un autre hash, c'est une rupture. Avec le stockage des fichiers, chaque archive est
+relue et prouvée contre celle d'avant, et un stockage qui échoue est la rupture de cette seule
+chaîne ; sans lui, une ancre est ce que dit sa ligne. La tête d'une chaîne est une ligne que le
+rôle de l'application écrit : elle montre une fin coupée dans le dos du journal, pas une chaîne
+réécrite en entier, que seul un point de contrôle publié ailleurs montre.
 
 ## Archivage
 

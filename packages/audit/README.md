@@ -794,9 +794,14 @@ the one it trusts.
 
 `verifyTrail(trail)` verifies every chain of a trail that archives, each from the anchor of its
 last archive to its head (`chainHeads()`: the sequence and the hash of its last entry), so a
-chain cut at its tail answers `missing-entry`; given `files`, the storage the archives were
-written to, the last archive of each chain is read back and proved by `verifyArchive` first. Each
-chain stops at its own break and the others are verified all the same:
+chain cut at its tail answers `missing-entry`. The rows of the archives follow each other with
+no gap, and the head goes on from the last one: a head behind it, or at its end with another
+hash, answers `altered-content`. Given `files`, the storage the archives were written to, every
+archive of each chain is read back, oldest first, and proved by `verifyArchive` against the one
+before it: its digest, its range, every entry and link, its last hash. A storage that fails to
+give a file back is the break of that chain alone (`unreadable-archive`). Without `files`, an
+anchor is what its row says. Each chain stops at its own break and the others are verified all
+the same:
 
 ```ts
 await verifyTrail(trail);
@@ -933,7 +938,7 @@ The guard lets one `DELETE` through: that of an entry a row of `audit_archives` 
 `archiveBefore` writes in the same transaction. A role that may both insert into `audit_archives`
 and delete from `audit_entries` can therefore let entries go behind a row of its own. Such a row
 stays, the archives being append-only, and `verifyTrail(trail, { files })` reads back the file of
-the last archive of each chain and proves it with `verifyArchive`: a row without its file, or
+every archive of each chain and proves it with `verifyArchive`: a row without its file, or
 whose file does not prove it, is the break of its chain (`missing-entry`, or `altered-content`, at
 the first sequence it names). The nightly `audit.verify` of a generated project with a storage of
 files does so. Keep those two privileges to the role that archives.

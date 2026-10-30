@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import { VerifyAuditTrail, verifyTrail } from '../../src';
 import { entriesOf } from '../../src/testing/entries-of';
-import { FEBRUARY, JANUARY, MARCH, clock, recordAt, type ArchiveFixture } from './archive-fixture';
+import { FEBRUARY, JANUARY, MARCH, clock, forgedArchive, recordAt, type ArchiveFixture } from './archive-fixture';
 
 /** What the verification of a trail owes to the archives: the row of the last one is proved against its file. */
 export function archiveProofSpecs(name: string, create: () => Promise<ArchiveFixture>): void {
@@ -36,24 +36,17 @@ export function archiveProofSpecs(name: string, create: () => Promise<ArchiveFix
     });
 
     it('reports entries let go under an archive row that no file proves', async () => {
-      const { trail, run } = await create();
+      const { trail, forgeArchive, removeCovered } = await create();
       const files = new InMemoryFileStorage();
 
       await recordAt(trail, 'january', JANUARY);
       await recordAt(trail, 'february', FEBRUARY);
       await recordAt(trail, 'march', MARCH);
 
-      if (run === undefined) {
-        return;
-      }
-
       const [, february] = await entriesOf(trail, 'tenant:acme');
 
-      await run(
-        `insert into $schema."audit_archives" ("chain", "from_sequence", "to_sequence", "last_hash", "entries", "file_key", "file_digest", "archived_at") values ('tenant:acme', 1, 2, '${february?.hash ?? ''}', 2, 'audit-archives/none.ndjson', 'none', now())`,
-      );
-
-      await run(`delete from $table where "chain" = 'tenant:acme' and "sequence" <= 2`);
+      await forgeArchive(forgedArchive({ toSequence: 2, lastHash: february?.hash ?? '' }));
+      await removeCovered('tenant:acme', 2);
 
       expect(await verifyTrail(trail)).toEqual({ valid: true, checked: 1, breaks: [] });
 

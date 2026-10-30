@@ -12,6 +12,7 @@ import { FEBRUARY, JANUARY, MARCH, clock, recordAt, type ArchiveFixture } from '
 import { archiveRefusalSpecs } from './archive-refusal-specs';
 import { archiveVerificationSpecs } from './archive-verification-specs';
 import { CHAIN, aRecord, sequencesOf } from './sql-trail-fixture';
+import { archiveAnchorSpecs } from './archive-anchor-specs';
 import { archiveProofSpecs } from './archive-proof-specs';
 import { trailVerificationSpecs } from './trail-verification-specs';
 
@@ -36,6 +37,7 @@ export function archiveSpecs(name: string, create: () => Promise<ArchiveFixture>
   archiveRefusalSpecs(name, create);
   trailVerificationSpecs(name, create);
   archiveProofSpecs(name, create);
+  archiveAnchorSpecs(name, create);
 }
 
 function rangeSpecs(name: string, create: () => Promise<ArchiveFixture>): void {

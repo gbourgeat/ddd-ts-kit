@@ -10,6 +10,7 @@ import type { AuditTrailOptions } from '../../src';
 import { auditTrailContract } from '../../src/testing';
 import { PrismaClient } from '../generated/client/client';
 import { archiveGuardSpecs, archiveSpecs, type ArchiveFixture } from '../support/archive-specs';
+import { sqlArchiveFixture } from '../support/archive-fixture';
 import { startPostgres, type TestPostgres } from '../support/postgres';
 import { AUDIT_DDL_PATH } from '../support/prisma/generate';
 import { sqlTrailSpecs } from '../support/sql-trail-specs';
@@ -194,7 +195,7 @@ async function tampered(current: SqlTrailFixture, id: string): Promise<void> {
 async function archiveFixture(): Promise<ArchiveFixture> {
   const created = await fixture();
 
-  return { trail: created.trail, tamper: (id) => tampered(created, id), run: created.run };
+  return sqlArchiveFixture(created.trail, (id) => tampered(created, id), created.run);
 }
 
 archiveSpecs('PrismaAuditTrail', archiveFixture);

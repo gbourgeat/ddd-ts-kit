@@ -35,17 +35,6 @@ describe('InMemoryAuditTrail', () => {
     const files = new InMemoryFileStorage();
     const text = 'not json\n';
 
-    archived.archives.push({
-      chain: 'tenant:acme',
-      fromSequence: 1,
-      toSequence: 1,
-      lastHash: 'h',
-      entries: 1,
-      fileKey: 'audit-archives/one.ndjson',
-      fileDigest: createHash('sha256').update(text, 'utf8').digest('hex'),
-      archivedAt: new Date(0),
-    });
-
     await archived.record({
       id: 'entry-1',
       occurredAt: new Date(0),
@@ -56,6 +45,17 @@ describe('InMemoryAuditTrail', () => {
       correlationId: 'c',
       origin: 'cli',
       tenantId: 'acme',
+    });
+
+    archived.archives.push({
+      chain: 'tenant:acme',
+      fromSequence: 1,
+      toSequence: 1,
+      lastHash: (await archived.chainHeads())[0]?.hash ?? '',
+      entries: 1,
+      fileKey: 'audit-archives/one.ndjson',
+      fileDigest: createHash('sha256').update(text, 'utf8').digest('hex'),
+      archivedAt: new Date(0),
     });
 
     await files.put('audit-archives/one.ndjson', Readable.from([Buffer.from(text)]), {
@@ -107,6 +107,19 @@ archiveSpecs('InMemoryAuditTrail', async () => {
       if (entry !== undefined) {
         archivable.entries.splice(index, 1, { ...entry, action: 'forged' });
       }
+    },
+    cut: async (chain, fromSequence) => {
+      const kept = archivable.entries.filter((entry) => entry.chain !== chain || entry.sequence < fromSequence);
+
+      archivable.entries.splice(0, archivable.entries.length, ...kept);
+    },
+    forgeArchive: async (archive) => {
+      archivable.archives.push(archive);
+    },
+    removeCovered: async (chain, toSequence) => {
+      const kept = archivable.entries.filter((entry) => entry.chain !== chain || entry.sequence > toSequence);
+
+      archivable.entries.splice(0, archivable.entries.length, ...kept);
     },
   };
 });

@@ -4,7 +4,10 @@ import { AuditTrailBrokenError, VerifyAuditTrail, verifyTrail } from '../../src'
 import { FEBRUARY, JANUARY, MARCH, clock, recordAt, type ArchiveFixture } from './archive-fixture';
 import { entriesOf } from '../../src/testing/entries-of';
 
-/** What every trail that archives answers to the verification of all its chains, each from its last archive to its head. */
+/**
+ * What every trail that archives answers to the verification of all its chains, each from its last
+ * archive to its head.
+ */
 export function trailVerificationSpecs(name: string, create: () => Promise<ArchiveFixture>): void {
   describe(`${name}: the verification of every chain`, () => {
     it('gives the head of every chain, in the order of their names, archived entries counted', async () => {
@@ -71,19 +74,12 @@ export function trailVerificationSpecs(name: string, create: () => Promise<Archi
     });
 
     it('does not verify a chain cut at its tail: the head says how far it goes', async () => {
-      const { trail, run } = await create();
+      const { trail, cut } = await create();
 
       await recordAt(trail, 'january', JANUARY);
       await recordAt(trail, 'february', FEBRUARY);
       await recordAt(trail, 'march', MARCH);
-
-      if (run === undefined) {
-        return;
-      }
-
-      await run('alter table $table disable trigger "audit_entries_no_rewrite"');
-      await run(`delete from $table where "id" = 'march'`);
-      await run('alter table $table enable trigger "audit_entries_no_rewrite"');
+      await cut('tenant:acme', 3);
 
       expect(await verifyTrail(trail)).toEqual({
         valid: false,
