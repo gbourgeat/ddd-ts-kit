@@ -7,6 +7,7 @@ const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const ROUTE = `${BILLING}/presentation/http/issue-invoice.route.ts`;
 const ADAPTER = `${BILLING}/infrastructure/persistence/drizzle-invoice.repository.ts`;
+const BACKGROUND_JOB = `${BILLING}/application/background/compile-statements.background-job.ts`;
 
 const ASPECT =
   'an aspect (logging, metrics, retry, timeout, circuit breaking, caching) is applied from outside, never written in the model or in a use case';
@@ -125,6 +126,10 @@ ruleTester.run('layer-domain-purity', layerDomainPurity, {
 
 ruleTester.run('layer-application-inward', layerApplicationInward, {
   valid: [
+    at(
+      BACKGROUND_JOB,
+      "import { z } from 'zod';\nimport { zodSchema } from '@ddd-ts-kit/validation/zod';\nimport { IsString } from 'class-validator';",
+    ),
     at(HANDLER, "import type { Clock } from '@ddd-ts-kit/kernel';"),
     at(HANDLER, "import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js';"),
     at(HANDLER, "import type { PaymentGateway } from '../../ports/payment-gateway.port.js';"),
@@ -141,6 +146,21 @@ ruleTester.run('layer-application-inward', layerApplicationInward, {
     ),
   ],
   invalid: [
+    {
+      ...at(HANDLER, "import { z } from 'zod';\nimport { zodSchema } from '@ddd-ts-kit/validation/zod';"),
+      errors: [
+        { messageId: 'package', data: { name: 'zod', context: 'billing' } },
+        { messageId: 'package', data: { name: '@ddd-ts-kit/validation', context: 'billing' } },
+      ],
+    },
+    {
+      ...at(`${BILLING}/application/background/statements.ts`, "import { z } from 'zod';"),
+      errors: [{ messageId: 'package', data: { name: 'zod', context: 'billing' } }],
+    },
+    {
+      ...at(BACKGROUND_JOB, "import { Knex } from 'knex';"),
+      errors: [{ messageId: 'package', data: { name: 'knex', context: 'billing' } }],
+    },
     {
       ...at(HANDLER, "import { retry, timeout } from '@ddd-ts-kit/aspects';"),
       errors: [

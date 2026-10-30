@@ -1,7 +1,7 @@
-import type { Location } from '../model/location';
 import type { Project } from '../model/project';
 import type { SourceFile } from '../model/source-file';
 import { classesOf } from '../declarations/classes-of';
+import { isBackgroundJobFile } from './is-background-job-file';
 import { isJobFile } from './is-job-file';
 
 /** A class the application runs on a schedule or in the background, as the file of a context holds it. */
@@ -37,13 +37,4 @@ export function jobClasses(project: Project): JobClass[] {
           },
         ];
   });
-}
-
-/** `application/background/*.background-job.ts` of a context, specs aside. */
-function isBackgroundJobFile(file: string, location: Location): boolean {
-  if (location.area !== 'context' || location.layer !== 'application' || /\.(?:spec|test)\.ts$/.test(file)) {
-    return false;
-  }
-
-  return location.inside[0] === 'background' && file.endsWith('.background-job.ts');
 }

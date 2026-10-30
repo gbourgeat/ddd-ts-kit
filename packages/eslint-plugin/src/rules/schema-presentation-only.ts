@@ -1,19 +1,7 @@
 import type { LintedFile } from '../project/linted-file';
 import { importListener } from '../support/imports/import-listener';
 import { defineRule } from '../support/rule/define-rule';
-
-/** The packages a schema of the HTTP contract is written with: whoever imports one declares a schema. */
-const VALIDATION_PACKAGES: readonly string[] = [
-  '@ddd-ts-kit/validation',
-  '@sinclair/typebox',
-  'arktype',
-  'class-transformer',
-  'class-validator',
-  'class-validator-jsonschema',
-  'typebox',
-  'valibot',
-  'zod',
-];
+import { VALIDATION_PACKAGES } from '../support/schemas/validation-packages';
 
 /** The layers of a context that never read a type of the contract: its presentation layer does, its module and specs wire and drive it. */
 const READERS_OUTSIDE = ['domain', 'application', 'infrastructure', 'published-language'];

@@ -3,6 +3,20 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const PROJECT_CONFIG = 'ddd-ts-kit.config.json';
+// A background job of a context, past its layer.
+const BACKGROUND_JOB_FILE = '/background/[^/]+\\.background-job\\.ts$';
+// The packages a schema is written with.
+const VALIDATION_PACKAGES = [
+  '@ddd-ts-kit/validation',
+  '@sinclair/typebox',
+  'arktype',
+  'class-transformer',
+  'class-validator',
+  'class-validator-jsonschema',
+  'typebox',
+  'valibot',
+  'zod',
+];
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 export default buildConfiguration(readProjectConfig());
@@ -90,6 +104,7 @@ function layerRules(project) {
   return [
     domainPurity(project),
     applicationInward(project),
+    backgroundJobInward(project),
     sideways({
       project,
       from: 'presentation',
@@ -135,26 +150,44 @@ function inAnyModule(layer) {
 
 function applicationInward(project) {
   const own = ownLayers(project);
-  const otherContexts = `^${escape(project.contextsDir)}/(?!$1/)[^/]+/`;
   return {
     name: 'layer-application-inward',
     severity: 'error',
     comment:
       'application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
-    from: { path: `${own.context}/${inAnyModule('application')}/`, pathNot: testFiles(project) },
-    to: {
-      pathNot: [
-        own.layer('domain'),
-        own.layer('application'),
-        own.rootFile('codes'),
-        own.rootFile('permissions'),
-        own.layer('published-language'),
-        own.sharedKernel,
-        otherContexts,
-        ...packages(project.applicationPackages),
-      ],
+    from: {
+      path: `${own.context}/${inAnyModule('application')}/`,
+      pathNot: [...testFiles(project), BACKGROUND_JOB_FILE],
     },
+    to: { pathNot: [...inwardOf(project), ...packages(project.applicationPackages)] },
   };
+}
+
+// A background job, the same rule but for the validation library its payload schema is written
+// with: a stored payload outlives the deploy that enqueued it, like the payload of an integration event.
+function backgroundJobInward(project) {
+  const own = ownLayers(project);
+  return {
+    name: 'layer-application-inward',
+    severity: 'error',
+    comment:
+      'A background job (application/background/*.background-job.ts) imports what application/ imports, and the validation library its payload schema is written with. Depend on a port and let the composition root bind the adapter.',
+    from: { path: `${own.context}/${inAnyModule('application')}${BACKGROUND_JOB_FILE}`, pathNot: testFiles(project) },
+    to: { pathNot: [...inwardOf(project), ...packages([...project.applicationPackages, ...VALIDATION_PACKAGES])] },
+  };
+}
+
+function inwardOf(project) {
+  const own = ownLayers(project);
+  return [
+    own.layer('domain'),
+    own.layer('application'),
+    own.rootFile('codes'),
+    own.rootFile('permissions'),
+    own.layer('published-language'),
+    own.sharedKernel,
+    `^${escape(project.contextsDir)}/(?!$1/)[^/]+/`,
+  ];
 }
 
 /** The patterns a rule of a layer is written with: `$1` is the context of the importing file. */

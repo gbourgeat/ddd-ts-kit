@@ -3,11 +3,16 @@ import type { CruiseRule } from './cruise-rule';
 import { escapePattern } from './escape-pattern';
 import { packagePatterns } from './package-patterns';
 import { testFiles } from './test-files';
+import { VALIDATION_PACKAGES } from '../check/schemas/validation-packages';
+
+/** A background job of a context, `application/background/*.background-job.ts`, past the layer. */
+const BACKGROUND_JOB_FILE = '/background/[^/]+\\.background-job\\.ts$';
 
 export function layerRules(config: Config): CruiseRule[] {
   return [
     domainPurity(config),
     applicationInward(config),
+    backgroundJobInward(config),
     sideways(config, {
       from: 'presentation',
       to: 'infrastructure',
@@ -41,9 +46,44 @@ function domainPurity(config: Config): CruiseRule {
 }
 
 function applicationInward(config: Config): CruiseRule {
+  return {
+    name: 'layer-application-inward',
+    severity: 'error',
+    comment:
+      'application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
+    from: {
+      path: `${contextOf(config)}/${inAnyModule('application')}/`,
+      pathNot: [...testFiles(config), BACKGROUND_JOB_FILE],
+    },
+    to: { pathNot: [...inwardOf(config), ...packagePatterns(config.applicationAllowedPackages)] },
+  };
+}
+
+/**
+ * A background job, the same rule but for the validation library its payload schema is written
+ * with: a stored payload outlives the deploy that enqueued it, like the payload of an integration event.
+ */
+function backgroundJobInward(config: Config): CruiseRule {
+  const allowed = [...config.applicationAllowedPackages, ...VALIDATION_PACKAGES];
+
+  return {
+    name: 'layer-application-inward',
+    severity: 'error',
+    comment:
+      'A background job (application/background/*.background-job.ts) imports what application/ imports, and the validation library its payload schema is written with. Depend on a port and let the composition root bind the adapter.',
+    from: {
+      path: `${contextOf(config)}/${inAnyModule('application')}${BACKGROUND_JOB_FILE}`,
+      pathNot: testFiles(config),
+    },
+    to: { pathNot: [...inwardOf(config), ...packagePatterns(allowed)] },
+  };
+}
+
+/** What every file of application/ may import inside the project. */
+function inwardOf(config: Config): string[] {
   const otherContexts = `^${escapePattern(config.contextsDir)}/(?!$1/)[^/]+/`;
 
-  const allowed = [
+  return [
     own(config, 'domain'),
     own(config, 'application'),
     ownRootFile(config, 'codes'),
@@ -52,15 +92,6 @@ function applicationInward(config: Config): CruiseRule {
     sharedKernel(config),
     otherContexts,
   ];
-
-  return {
-    name: 'layer-application-inward',
-    severity: 'error',
-    comment:
-      'application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
-    from: { path: `${contextOf(config)}/${inAnyModule('application')}/`, pathNot: testFiles(config) },
-    to: { pathNot: [...allowed, ...packagePatterns(config.applicationAllowedPackages)] },
-  };
 }
 
 interface Sideways {

@@ -8,8 +8,12 @@ import { handler } from './handler';
 import { outsidePackageDeviation } from './outside-package-deviation';
 import { PATHS } from './paths';
 import { project } from './project';
+import { SAMPLES } from './samples';
+import { source } from './source';
 
-const { ADAPTER, AGGREGATE, COMMAND, HANDLER, REPOSITORY_PORT, ROUTE } = PATHS;
+const { ADAPTER, AGGREGATE, BILLING, COMMAND, HANDLER, MODULE, REPOSITORY_PORT, ROUTE } = PATHS;
+
+const PURGE_JOB = `${BILLING}/application/background/purge-drafts.background-job.ts`;
 
 export const LAYER_FIXTURES: readonly Fixture[] = [
   {
@@ -113,6 +117,26 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
           'export type T = UseCase<ProductListedV1, InvoiceRepository>;',
         ].join('\n'),
       ),
+    ),
+  },
+  {
+    ruleId: 'layer/application-inward',
+    name: 'a background job declares its payload schema with the validation library of the project',
+    expect: 'pass',
+    files: purgeJob(),
+  },
+  {
+    ruleId: 'layer/application-inward',
+    name: 'a background job importing a driver: only the validation library is allowed there',
+    expect: { file: PURGE_JOB },
+    files: purgeJob("import type { Knex } from 'knex';", 'export type K = Knex;'),
+  },
+  {
+    ruleId: 'layer/application-inward',
+    name: 'a handler importing a validation library, which only a background job may',
+    expect: { file: HANDLER },
+    files: project(
+      handler("import { z } from 'zod';\nexport class IssueInvoiceHandler {}\nexport const shape = z.string();\n"),
     ),
   },
   {
@@ -259,3 +283,35 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
     ),
   },
 ];
+
+/** A background job and its payload schema in zod, the module file registering it, its spec. */
+function purgeJob(...imports: readonly string[]) {
+  return project({
+    [PURGE_JOB]: source(
+      "import { z } from 'zod';",
+      "import type { BackgroundJob, BackgroundJobExecution, CommandBus } from '@ddd-ts-kit/kernel';",
+      "import { zodSchema } from '@ddd-ts-kit/validation/zod';",
+      ...imports,
+      '',
+      'const payload = zodSchema(z.object({ before: z.string() }));',
+      '',
+      'export class PurgeDraftsBackgroundJob implements BackgroundJob<{ readonly before: string }> {',
+      "  static readonly jobName = 'billing.purge-drafts';",
+      '',
+      '  static readonly payload = payload;',
+      '',
+      '  constructor(private readonly commands: CommandBus) {}',
+      '',
+      '  async run(payload: { readonly before: string }, execution: BackgroundJobExecution): Promise<void> {}',
+      '}',
+    ),
+    [`${BILLING}/test/unit/purge-drafts.background-job.spec.ts`]: SAMPLES.SPEC,
+    [MODULE]: source(
+      "import { PurgeDraftsBackgroundJob } from '@/contexts/billing/application/background/purge-drafts.background-job.js';",
+      '',
+      'export function billingModule(platform: Platform): void {',
+      '  platform.backgroundJobs.register(PurgeDraftsBackgroundJob, [platform.commands]);',
+      '}',
+    ),
+  });
+}
