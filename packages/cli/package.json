@@ -1,6 +1,6 @@
 {
   "name": "ddd-ts-kit",
-  "version": "0.100.0",
+  "version": "0.101.0",
   "description": "Bootstrap, scaffold and verify Domain-Driven Design (DDD), Clean Architecture and hexagonal TypeScript backends on Node.js: project and code generators, architecture checks, OpenAPI and AsyncAPI documents, for developers and AI coding agents (Claude Code, Codex, GitHub Copilot).",
   "keywords": [
     "ddd",
@@ -52,10 +52,10 @@
     "clean:packages": "node dist/bin.js check --clean-only ../kernel/src ../validation/src ../http/src ../tracing/src ../di/src ../events/src ../testing/src ../s3/src ../drizzle/src ../knex/src ../prisma/src ../typeorm/src ../aspects/src ../rabbitmq/src ../auth/src ../audit/src ../redis/src ../scheduling/src ../pino/src ../winston/src ../sentry/src ../kafka/src ../nats/src ../eslint-plugin/src"
   },
   "devDependencies": {
-    "@ddd-ts-kit/audit": "^0.100.0",
-    "@ddd-ts-kit/auth": "^0.100.0",
-    "@ddd-ts-kit/events": "^0.100.0",
-    "@ddd-ts-kit/kernel": "^0.100.0",
+    "@ddd-ts-kit/audit": "^0.101.0",
+    "@ddd-ts-kit/auth": "^0.101.0",
+    "@ddd-ts-kit/events": "^0.101.0",
+    "@ddd-ts-kit/kernel": "^0.101.0",
     "@types/pg": "^8.23.1",
     "pg": "^8.23.1"
   }
