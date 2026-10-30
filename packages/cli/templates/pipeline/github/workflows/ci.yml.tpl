@@ -27,7 +27,7 @@ jobs:
       args: ${{ steps.affected.outputs.args }}
       lint: ${{ steps.affected.outputs.lint }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # A pull request is checked out as its merge commit, whose first parent is the base it is compared with.
           fetch-depth: 2
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: npm run ci:typecheck
 
@@ -54,14 +54,14 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       # The cache of ESLint (`ddd-ts-kit lint` keys it by the content of each file): a pull request restores the one the
       # default branch wrote last for this lockfile and this config, and lints the files that changed since; the default
       # branch and the night restore nothing, lint everything, which also sees a type changed in another file, and write it.
       - name: The cache of ESLint, as the default branch wrote it last
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .eslintcache/
           key: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'ddd-ts-kit.config.json') }}-${{ github.sha }}
@@ -73,7 +73,7 @@ jobs:
         run: npm run ci:lint -- $LINT
       - name: The cache of ESLint, for the pull requests that follow
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .eslintcache/
           key: eslint-${{ runner.os }}-${{ hashFiles('package-lock.json', 'eslint.config.mjs', 'ddd-ts-kit.config.json') }}-${{ github.sha }}
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - name: Architecture rules
         run: npm run ci:arch:check -- --format github
@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: npm run ci:deadcode
 
@@ -107,7 +107,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - name: Unit specs, each context held to its coverage thresholds
         if: ${{ needs.install.outputs.scope != 'none' }}
@@ -115,7 +115,7 @@ jobs:
           DDD_TS_KIT_AFFECTED: ${{ needs.install.outputs.contexts }}
           PARTIAL: ${{ needs.install.outputs.args }}
         run: npm run ci:test:unit -- $PARTIAL
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
           name: coverage
@@ -131,7 +131,7 @@ jobs:
     env:
       DATABASE_URL: postgres://app:app@localhost:5432/app
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - name: PostgreSQL
         if: ${{ needs.install.outputs.scope != 'none' }}
@@ -153,7 +153,7 @@ jobs:
     env:
       DATABASE_URL: postgres://app:app@localhost:5432/app
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - name: PostgreSQL
         if: ${{ needs.install.outputs.scope != 'none' }}
@@ -170,7 +170,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - name: The production build
         run: npm run ci:build
@@ -183,7 +183,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup
@@ -193,7 +193,7 @@ jobs:
       # Opt-in (--ci-extras dependency-review): free on a public repository, GitHub Code Security on a private one.
       - name: Dependency review
         if: ${{ github.event_name == 'pull_request' && !cancelled() }}
-        uses: actions/dependency-review-action@v5.0.0
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
 {{/if}}
@@ -207,9 +207,9 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
-      - uses: docker/build-push-action@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           push: false
@@ -225,11 +225,11 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - name: Stryker on the domain and application layers of every context, each layer held to its "mutation" floor of ddd-ts-kit.config.json
         run: npm run test:mutation
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
           name: mutation
@@ -245,7 +245,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # The whole history: the files of the change are those since its merge base with the base branch.
           fetch-depth: 0

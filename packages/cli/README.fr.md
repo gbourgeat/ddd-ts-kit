@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2029de335ff3ebde -->
+<!-- translation-of: README.md sha256:ace9b93671dda53c -->
 
 # ddd-ts-kit
 
@@ -653,6 +653,11 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 fichiers de *pipeline* sont des copies des fichiers du répertoire `pipeline/` du dépôt, livrées
 dans `templates/pipeline/` ; un test échoue quand une copie diffère de sa source au-delà de ses
 emplacements à remplacer documentés.
+
+Chaque `uses:` des workflows GitHub générés nomme l'empreinte d'un commit, avec son étiquette en
+commentaire (`actions/checkout@<40 chiffres hexadécimaux> # v7.0.1`), car une étiquette peut
+bouger et une empreinte non ; le `renovate.json` étend `helpers:pinGitHubActionDigests` et
+Dependabot tient aussi les empreintes à jour.
 
 `--agent-profile regulated` enregistre `agents.profile` dans la configuration, avec ou sans
 `--force` (`--agent-profile none` le retire), et écrit le bloc `sandbox` de Claude Code à côté des
