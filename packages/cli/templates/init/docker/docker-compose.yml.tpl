@@ -1,5 +1,8 @@
-# Local infrastructure. `npm run infra:up` starts it and waits until it is healthy;
-# to also get Jaeger run `docker compose --profile observability up -d --wait`{{#if authn.keycloak}}, for Keycloak `docker compose --profile identity up -d --wait`{{/if}}{{#if errors.sentry}}, for GlitchTip `docker compose --profile errors up -d --wait`{{/if}} (the flag goes before `up`). Ports come from .env (see .env.example).
+# Local infrastructure. `npm run infra:up` starts it and waits until it is healthy. A profile starts more, and the flag goes before `up`:
+#   docker compose --profile observability up -d --wait   # Jaeger{{#if authn.keycloak}}
+#   docker compose --profile identity up -d --wait        # Keycloak{{/if}}{{#if errors.sentry}}
+#   docker compose --profile errors up -d --wait          # GlitchTip{{/if}}
+# Ports come from .env (see .env.example).
 # Every port is published on 127.0.0.1 only: the credentials below are for this machine. To reach a service from another
 # machine on purpose, write the address to listen on in its entry ("0.0.0.0:5432:5432"), never with these credentials.
 name: {{project.name}}
