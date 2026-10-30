@@ -1,10 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-{{#if knip.apps}}
-    "{{config.sourceRoot}}/apps/*/main.ts",
-{{/if}}
-    "scripts/*.ts"{{knip.e2eEntry}}{{knip.toolEntry}}
+    "scripts/*.ts"{{knip.e2eEntry}}{{knip.toolEntry}}{{knip.appsEntry}}
   ],
   "project": ["{{config.sourceRoot}}/**/*.ts", "scripts/**/*.ts"{{knip.e2eProject}}{{#if orm.prisma}}, "prisma/**/*.prisma"{{/if}}],
 {{#if knip.ignores}}
