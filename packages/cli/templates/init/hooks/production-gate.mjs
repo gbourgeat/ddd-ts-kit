@@ -10,8 +10,8 @@ import process from 'node:process';
 // read between separators of any kind (a space, a colon, a dash, an underscore, a dot), so that
 // `deploy-production` and `deploy_production` name it as `deploy:production` does.
 const PRODUCTION_ENVIRONMENTS = ['production'];
-// The names that hold a production word and are another environment: they are not read as production.
-const OTHER_ENVIRONMENTS = ['non-production', 'pre-production'];
+// A production word with one of these in front names another environment (`non-production`, `pre-prod`).
+const OTHER_ENVIRONMENT_PREFIXES = ['non', 'pre'];
 // The actions a release makes: a command that carries one of them with one of the words above is gated.
 const RELEASE_ACTIONS = ['deploy', 'migrate', 'rollback'];
 // Where the release checklist of the team is, named in the refusal.
@@ -41,11 +41,14 @@ const tokens = (text) =>
     .filter((token) => token !== '');
 const phrase = (text) => ` ${tokens(text).join(' ')} `;
 
-function named(command, list) {
-  const read = OTHER_ENVIRONMENTS.reduce((text, name) => text.replaceAll(phrase(name), ' '), phrase(command));
+function named(command, list, others = []) {
+  const read = others.reduce((text, name) => text.replaceAll(phrase(name), ' '), phrase(command));
 
   return list.find((word) => read.includes(phrase(word)));
 }
+
+const otherEnvironments = (environments) =>
+  environments.flatMap((word) => OTHER_ENVIRONMENT_PREFIXES.map((prefix) => `${prefix}-${word}`));
 
 const input = readInput();
 
@@ -54,7 +57,8 @@ if (input === undefined || input.tool_name !== 'Bash' || typeof input.tool_input
 }
 
 const command = input.tool_input.command;
-const environment = named(command, words(PRODUCTION_ENVIRONMENTS, 'PRODUCTION_GATE_ENVIRONMENTS'));
+const environments = words(PRODUCTION_ENVIRONMENTS, 'PRODUCTION_GATE_ENVIRONMENTS');
+const environment = named(command, environments, otherEnvironments(environments));
 const action = named(command, words(RELEASE_ACTIONS, 'PRODUCTION_GATE_ACTIONS'));
 
 if (environment === undefined || action === undefined) {

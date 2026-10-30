@@ -120,6 +120,14 @@ describe('the production gate of the regulated profile', () => {
     }
   });
 
+  it('reads the exemptions from each configured production word', () => {
+    const configured = { PRODUCTION_GATE_ENVIRONMENTS: 'prod' };
+
+    expect(runHook(root, GATE, bash('pnpm run deploy-prod'), configured).status).toBe(2);
+    expect(runHook(root, GATE, bash('pnpm run deploy-non-prod'), configured).status).toBe(0);
+    expect(runHook(root, GATE, bash('fly deploy --app api-pre-prod'), configured).status).toBe(0);
+  });
+
   it('lets every other command through, and reads the environments and actions of the team', () => {
     expect(runHook(root, GATE, bash('npm run db:migrate')).status).toBe(0);
     expect(runHook(root, GATE, bash('npm run verify')).status).toBe(0);
