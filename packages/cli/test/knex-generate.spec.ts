@@ -142,6 +142,17 @@ describe.runIf(INSTALLED)('db:generate of a Knex project', () => {
     expect(result.code).toBe(1);
     expect(migrations(root)).toEqual([]);
   }, 180_000);
+
+  it('fails with the code of knex and fills nothing when migrate:make cannot read the knexfile', () => {
+    const root = knexProject(ORDERS);
+
+    write(root, 'knexfile.js', "throw new Error('no settings here');\n");
+
+    const result = generate(root, 'initial', '--custom');
+
+    expect(result.code).not.toBe(0);
+    expect(migrations(root)).toEqual([]);
+  }, 180_000);
 });
 
 describe('ddd-ts-kit knex-generate refuses', () => {
