@@ -58,10 +58,9 @@ lookups of the port, the columns, the mapper.
   type and checksum of its `StoredFile`, and `FileStaging` orders the write (staged before the
   transaction, recorded, moved to its key with the commit, an orphan in `staging/` purged a day
   later). `docs/concepts/file-storage.md`.
-- **Multi-tenant**: under `stack.tenancy: shared-table` (or another strategy, or to become
-  multi-tenant), read [tenancy.md](tenancy.md) first: every statement on tenant data goes
-  through the helpers of the ORM package, and a read model store is built with its `tenant`
-  option (`tenancy/scoped-statement`); reads may widen under an audited elevation, writes never.
+- **Multi-tenant**: every statement on tenant data is confined to the tenant of the work
+  (`tenancy/scoped-statement`). Under `stack.tenancy: shared-table` (or another strategy, or to
+  become multi-tenant), read [tenancy.md](tenancy.md) first.
 - **Outbox in the same transaction** as the business write (`events/outbox-required`).
 - **An event-sourced aggregate** (chosen per aggregate, `generate aggregate ... --event-sourced`)
   keeps the same port: under `stack.eventSourcing: on`, read [event-sourcing.md](event-sourcing.md)
