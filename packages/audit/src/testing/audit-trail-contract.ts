@@ -7,10 +7,11 @@ import {
   type AuditSortField,
   type Sort,
 } from '@ddd-ts-kit/kernel';
-import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
+import { ContractSuite, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
 import { GENESIS_HASH } from '../chain/genesis-hash';
 import { hashOf } from '../chain/hash-of';
 import { verifyChain } from '../verify/verify-chain';
+import type { AuditTrailContractOptions } from './audit-trail-contract-options';
 import type { AuditTrailUnderContract } from './audit-trail-under-contract';
 import { CheckpointsSuite } from './checkpoints-suite';
 import { entriesOf } from './entries-of';
@@ -21,22 +22,6 @@ import { JOURNAL } from './records/journal';
 import { later } from './records/later';
 import { recordAll } from './record-all';
 import { SealedTextsSuite } from './sealed-texts-suite';
-
-export interface AuditTrailContractOptions {
-  readonly name: string;
-  /** A fresh, empty trail with the default chains (one per tenant, `global` otherwise); called before each test. */
-  createTrail(): Awaitable<AuditTrailUnderContract>;
-  /**
-   * Rewrites the stored `action` of this entry behind the back of the trail, the way somebody
-   * with access to the storage would. When absent, tampering is only checked on what was read.
-   */
-  readonly tamper?: (entry: AuditEntry, action: string) => Awaitable<void>;
-  /**
-   * Removes the entries of this chain from this sequence on, behind the back of the trail. When
-   * absent, a chain cut at its tail is only checked on what was read.
-   */
-  readonly cut?: (chain: string, fromSequence: number) => Awaitable<void>;
-}
 
 /** What every audit trail, fake or real, guarantees to the sources and to the reader. */
 export function auditTrailContract(runner: ContractRunner, options: AuditTrailContractOptions): void {

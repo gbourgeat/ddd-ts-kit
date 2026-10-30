@@ -2,7 +2,7 @@ import type { AuditEntry } from '@ddd-ts-kit/kernel';
 import { ContractSuite, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
 import type { AuditCheckpoint } from '../chain/audit-checkpoint';
 import { verifyChain } from '../verify/verify-chain';
-import type { AuditTrailContractOptions } from './audit-trail-contract';
+import type { AuditTrailContractOptions } from './audit-trail-contract-options';
 import type { AuditTrailUnderContract } from './audit-trail-under-contract';
 import { entriesOf } from './entries-of';
 import { inTenant } from './records/in-tenant';
