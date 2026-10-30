@@ -153,7 +153,9 @@ guard is pinned with it, so a config of the worktree that turns the guard off, o
 the guard reads, does not lift a worker, its change being compared as any other. A branch the worker
 merges into its own is its work: only what the trunk holds is the trunk's. The kit's own
 `merge-trunk` is not noted, and an install of the lockfile leaves the packages out of the note. It
-refuses a dependency change and another formatter than `npm run format`. A sub-agent is refused
+refuses a dependency change and another formatter than `npm run format`. The `architecture-reviewer`, the
+`domain-explorer` and the `story-verifier` change no file of a project by the shell, nor its work
+tree by git (they read with `git show` and `git diff`). A sub-agent is refused
 deleting, moving or resetting a branch checked out in another worktree (another worker's, or the
 trunk), short options bundled or long ones cut included. A worker's git changes its own worktree
 only: from any other checkout it reads (`status`, `log`, `diff`, `worktree list`, `fetch`...), so

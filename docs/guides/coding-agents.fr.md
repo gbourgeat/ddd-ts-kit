@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:820bc7f3ef1737a5 -->
+<!-- translation-of: coding-agents.md sha256:7fd098381aa4edfc -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -166,7 +166,9 @@ une config du *worktree* qui éteint la garde, ou qui dépasse ce que la garde l
 *worker*, son changement étant comparé comme tout autre. Une branche que le *worker* fusionne dans la
 sienne est son travail : seul ce que le tronc contient est au tronc. Le `merge-trunk` du kit n'est pas noté,
 et une installation du *lockfile* laisse les paquets hors de la note. Il refuse un changement de
-dépendance et un autre formateur que `npm run format`. Un sous-agent ne peut ni supprimer, ni
+dépendance et un autre formateur que `npm run format`. L'`architecture-reviewer`, le
+`domain-explorer` et le `story-verifier` ne changent aucun fichier d'un projet par le *shell*, ni
+son arbre de travail par git (ils lisent avec `git show` et `git diff`). Un sous-agent ne peut ni supprimer, ni
 déplacer, ni réinitialiser une branche extraite dans un autre *worktree* (celle d'un autre
 *worker*, ou le tronc), options courtes groupées ou longues abrégées comprises. Le git d'un *worker*
 ne change que son propre *worktree* : depuis tout autre *checkout* il lit (`status`, `log`, `diff`,

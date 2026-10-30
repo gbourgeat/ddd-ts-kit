@@ -1030,7 +1030,7 @@ test('inline code of the conductor is not watched', () => {
 test('the conductor and the other agents are not held to the scope of a worker', () => {
   const root = project({}, ['--package-manager', 'npm']);
   worker(root, 'invoicing');
-  const reviewer = { agent_type: 'ddd-ts-kit:architecture-reviewer' };
+  const reviewer = { agent_type: 'release-notes-writer' };
   for (const [command] of WORKER_COMMANDS_REFUSED) {
     assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
     assert.equal(run('pre-bash', bash(root, command, reviewer)).output, undefined, command);

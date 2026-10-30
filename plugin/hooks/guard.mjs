@@ -555,6 +555,8 @@ const WINDOWS = process.platform === 'win32';
 const HOOK_SELECTION = /^LEFTHOOK_(?:EXCLUDE|SKIP)=/;
 // The most of a file of state, a scope file or a plan the guard reads: past it, it is not read.
 const STATE_BYTES = 16 * 1024 * 1024;
+// The agents of the plugin that only read: they write their findings in their answer.
+const READ_ONLY_AGENTS = ['architecture-reviewer', 'domain-explorer', 'story-verifier'];
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -833,6 +835,10 @@ function readCommands(project, command, cwd) {
 // held to the paths of a test. What a redirection, `sed -i` or `tee` types in a file is held as the
 // editor tools are; what a command only moves, deletes or restores is not.
 function sessionShellReason(input, commands) {
+  const reading = readOnlyReason(input, commands);
+  if (reading) {
+    return reading;
+  }
   for (const command of commands) {
     const typed = writtenTargets(command).map((target) => ({ ...target, typed: true }));
     for (const target of [...typed, ...changedPaths(command)]) {
@@ -840,6 +846,26 @@ function sessionShellReason(input, commands) {
       if (refusal) {
         return `${target.by}: ${refusal}`;
       }
+    }
+  }
+  return undefined;
+}
+
+// The reviewer, the explorer and the verifier of the plugin change no file of a project, by any tool:
+// nor its work tree by git, whose index alone they may stage.
+function readOnlyReason(input, commands) {
+  if (!READ_ONLY_AGENTS.some((name) => String(input.agent_type ?? '').includes(name))) {
+    return undefined;
+  }
+  for (const command of commands) {
+    const written = [...writtenTargets(command), ...changedPaths(command)].find(
+      ({ place }) => place !== undefined && findProject(place) !== undefined,
+    );
+    const { subcommand, tail } = gitInvocation(command.words.slice(1), command.directory);
+    const git = shell.commandName(command.words) === 'git' && !readsAnywhere(subcommand, tail) && subcommand !== 'add';
+    if (written || git) {
+      const by = written ? `${written.by} changes ${written.place}` : `\`git ${subcommand}\` changes the work tree`;
+      return `A read-only agent changes no file of a project: ${by}. Read with \`git show <ref>:<path>\` and \`git diff\`, and write what you find in your answer. ${FREE_OUTPUT}`;
     }
   }
   return undefined;

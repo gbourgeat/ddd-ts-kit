@@ -248,3 +248,30 @@ test('the hooks of the project and the steps of the conductor are read on the wo
   assert.equal(run('pre-bash', bash(root, 'echo LEFTHOOK=0 && git status')).output, undefined);
   assert.equal(run('pre-bash', bash(root, 'git merge main', agent)).output, undefined);
 });
+
+test('the reviewer, the explorer and the verifier change no file of a project by the shell', () => {
+  const root = committed();
+  for (const agent of ['ddd-ts-kit:architecture-reviewer', 'ddd-ts-kit:domain-explorer', 'ddd-ts-kit:story-verifier']) {
+    const reader = { agent_type: agent };
+    for (const command of [
+      'echo x > src/main.ts',
+      'rm src/main.ts',
+      'git checkout -- src/main.ts',
+      'git checkout work/billing',
+      'git switch main',
+      'git stash',
+      'git reset --hard HEAD~1',
+    ]) {
+      assert.equal(decision(run('pre-bash', bash(root, command, reader))), 'deny', `${agent} ${command}`);
+    }
+    for (const command of [
+      'git show HEAD:src/main.ts',
+      'git diff main',
+      'cat src/main.ts > /dev/null',
+      'npm test',
+      'git add .',
+    ]) {
+      assert.equal(run('pre-bash', bash(root, command, reader)).output, undefined, `${agent} ${command}`);
+    }
+  }
+});
