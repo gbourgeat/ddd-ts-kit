@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, tempDir } from './helpers';
 
@@ -25,5 +27,40 @@ describe('init says what it keeps on a combination its defaults would not choose
   it('says nothing when the defaults decide: no ORM means audit off, no HTTP means forms off', () => {
     expect(cli(tempDir('init'), 'init', '--orm', 'none').stdout).not.toContain('Kept `audit');
     expect(cli(tempDir('init'), 'init', '--http', 'none').stdout).not.toContain('Kept `forms');
+  });
+});
+
+describe('init run again on a project keeps its stack and says which flag it did not apply', () => {
+  const initialised = (): string => {
+    const dir = tempDir('init');
+
+    cli(dir, 'init');
+
+    return dir;
+  };
+
+  it('notes a flag that differs from the recorded stack, and changes nothing', () => {
+    const dir = initialised();
+    const result = cli(dir, 'init', '--http', 'fastify');
+
+    expect(result.code).toBe(0);
+
+    expect(result.stdout).toContain(
+      'note: `--http fastify` is kept as recorded (express): `npx ddd-ts-kit init --force --http fastify` changes it.',
+    );
+
+    expect(fs.readFileSync(path.join(dir, 'ddd-ts-kit.config.json'), 'utf8')).toContain('"http": "express"');
+  });
+
+  it('refuses a value no flag accepts, as it does in an empty directory', () => {
+    const result = cli(initialised(), 'init', '--http', 'nope');
+
+    expect(result.code).toBe(2);
+
+    expect(result.stderr).toContain('Unknown value "nope" for --http.');
+  });
+
+  it('says nothing of a flag that repeats the record', () => {
+    expect(cli(initialised(), 'init', '--http', 'express').stdout).not.toContain('is kept as recorded');
   });
 });

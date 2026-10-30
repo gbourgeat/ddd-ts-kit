@@ -62,6 +62,8 @@ export function resolveStack(root: string, options: StackOptions): Config {
   const recorded = recordedConfig(root, options.force);
 
   if (recorded !== undefined && !options.force) {
+    refuseUnknownChoices(recorded, options);
+
     return supportedAlias({ ...recorded, agents: agentsOf(options, recorded) });
   }
 
@@ -80,6 +82,15 @@ export function resolveStack(root: string, options: StackOptions): Config {
     sdk: sdkOf(options, config),
     agents: agentsOf(options, config),
   };
+}
+
+/** The recorded stack is kept, but a flag is still read as a new project reads it: a value no choice accepts is refused, not dropped. */
+function refuseUnknownChoices(recorded: Config, options: StackOptions): void {
+  const named = Object.entries(options).some(([key, value]) => value !== undefined && key in recorded.stack);
+
+  if (named) {
+    stackOf({ ...recordedOptions(recorded), ...options });
+  }
 }
 
 /** `--agent-profile` sets the profile of the agents or removes it (`none`), with or without `--force`; without the flag the config keeps its own. */
