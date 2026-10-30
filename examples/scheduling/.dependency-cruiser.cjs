@@ -37,7 +37,7 @@ module.exports = {
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/",
-          "/background/[^/]+\\.background-job\\.ts$"
+          "^src/contexts/([^/]+)/(?:application|[^/]+/application)/background/[^/]+\\.background-job\\.ts$"
         ]
       },
       "to": {
@@ -59,7 +59,7 @@ module.exports = {
     {
       "name": "layer-application-inward",
       "severity": "error",
-      "comment": "A background job (application/background/*.background-job.ts) imports what application/ imports, and the validation library its payload schema is written with. Depend on a port and let the composition root bind the adapter.",
+      "comment": "A background job (application/background/*.background-job.ts) imports what application/ imports, @ddd-ts-kit/validation and the validation library of the stack, for the schema of its payload. Depend on a port and let the composition root bind the adapter.",
       "from": {
         "path": "^src/contexts/([^/]+)/(?:application|[^/]+/application)/background/[^/]+\\.background-job\\.ts$",
         "pathNot": [
@@ -84,22 +84,10 @@ module.exports = {
           "^@ddd-ts-kit/auth(/|$)",
           "(^|/)node_modules/@ddd-ts-kit/validation/",
           "^@ddd-ts-kit/validation(/|$)",
-          "(^|/)node_modules/@sinclair/typebox/",
-          "^@sinclair/typebox(/|$)",
-          "(^|/)node_modules/arktype/",
-          "^arktype(/|$)",
-          "(^|/)node_modules/class-transformer/",
-          "^class-transformer(/|$)",
           "(^|/)node_modules/class-validator/",
           "^class-validator(/|$)",
-          "(^|/)node_modules/class-validator-jsonschema/",
-          "^class-validator-jsonschema(/|$)",
-          "(^|/)node_modules/typebox/",
-          "^typebox(/|$)",
-          "(^|/)node_modules/valibot/",
-          "^valibot(/|$)",
-          "(^|/)node_modules/zod/",
-          "^zod(/|$)"
+          "(^|/)node_modules/class-transformer/",
+          "^class-transformer(/|$)"
         ]
       }
     },
