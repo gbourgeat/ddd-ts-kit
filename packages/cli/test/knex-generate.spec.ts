@@ -232,3 +232,20 @@ describe('the text of a migration of a Knex project', () => {
     expect(text).toContain('// TODO(domain): write this change by hand: column a is b.');
   });
 });
+
+describe('generate repository', () => {
+  it.each([
+    ['drizzle', 'npm run db:generate <what-it-does>'],
+    ['knex', 'npm run db:generate <what-it-does>'],
+    ['prisma', 'npm run db:generate <what-it-does>'],
+    ['typeorm', 'npm run build && npm run db:generate migrations/<what-it-does>'],
+  ])('says on %s that the table reaches no database before its migration', (orm, command) => {
+    const root = initProject('--orm', orm, '--context', 'ordering:core', '--package-manager', 'npm');
+
+    cli(root, 'generate', 'aggregate', 'ordering', 'Order', '--term', 'Order=A purchase');
+
+    const generated = cli(root, 'generate', 'repository', 'ordering', 'Order');
+
+    expect(generated.stdout).toContain(`The table reaches no database until \`${command}\``);
+  });
+});
