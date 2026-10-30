@@ -6,9 +6,10 @@ import { renderCruiseFile } from '../depcruise/render-cruise-file';
 import { writeDocs } from '../docs/write-docs';
 import { declareContextEntries } from '../generate/kinds/declare-context-entries';
 import { keptWiring } from './kept-wiring';
-import { orphanedWiringNotes, type OrphanedWiring } from './orphaned-wiring-notes';
+import type { OrphanedWiring } from './orphaned-wiring-notes';
 import { rewireContexts } from './rewire-contexts';
 import { stackBefore } from './stack-before';
+import { wiringNotes } from './wiring-notes';
 import { formatJson } from '../json/format-json';
 import { toName } from '../naming';
 import { ignoreCodeTypesWhereTheyAre } from '../knip';
@@ -95,9 +96,7 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
   writeCopilotSettings(ws);
   ws.create(`${config.sharedKernelDir}/.gitkeep`, '');
 
-  if (options.force) {
-    rewireContexts(ws, config);
-  }
+  const rewired = options.force ? rewireContexts(ws, config) : { contexts: [], repositories: [] };
 
   const declared = addContexts(ws, config, [...options.contexts, ...presetContexts(config, options)]);
   const withContexts = addPresets(ws, declared, [...new Set(options.presets ?? [])]);
@@ -106,7 +105,7 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
   writeContracts(ws, { config: withContexts, projectName, presetApplied: (options.presets ?? []).length > 0 });
   setUpSdk(ws, withContexts);
 
-  orphanedWiringNotes(ws, orphaned).forEach((note) => ws.note(note));
+  wiringNotes(ws, rewired, orphaned).forEach((note) => ws.note(note));
 
   const report = ws.commit(options.dryRun);
 

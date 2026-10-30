@@ -33,7 +33,7 @@ const RESTORED_BY: Readonly<Record<string, string>> = {
  * replace a file it does not hold, and the command of each writes them again.
  */
 export function orphanedWiringNotes(ws: Workspace, orphaned: readonly OrphanedWiring[]): string[] {
-  return orphaned.flatMap(({ file, region, lines }) => {
+  return orphaned.flatMap(({ file, region, lines, why }) => {
     const text = ws.read(file) ?? '';
     const lost = lines.map((line) => line.trim()).filter((line) => !text.includes(line));
 
@@ -41,11 +41,12 @@ export function orphanedWiringNotes(ws: Workspace, orphaned: readonly OrphanedWi
       return [];
     }
 
-    const held = lost.length === 0 ? 'its grants' : `${lost.length} line(s) of it (${lost.join(' ')})`;
+    const told =
+      lines.length === 0
+        ? why
+        : `--force could not keep ${lost.length} line(s) of "${region}" (${lost.join(' ')}): ${why}`;
 
-    return [
-      `${file}: --force could not keep ${held}, this version has no "${region}" there and the tree does not say them. \`git show HEAD:${file}\` shows them; ${restoring(region)}.`,
-    ];
+    return [`${file}: ${told}. \`git show HEAD:${file}\` shows what it held; ${restoring(region)}.`];
   });
 }
 

@@ -1,25 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import {
-  cli,
-  DEFAULT_STACK,
-  read,
-  scaffoldEverything,
-  tempDir,
-  write,
-  type CliResult,
-  type StackFlags,
-} from './helpers';
+import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir, write, type StackFlags } from './helpers';
 import { commitAll } from './support/commit-all';
 import { git } from './support/git';
 import { initProject } from './support/init-project';
+import { ok, orderingProject } from './support/ordering-project';
 
 const FULL = ['--audit', 'on', '--privacy', 'on'];
-
-function ok(result: CliResult): CliResult {
-  expect(result.code, result.stderr || result.stdout).toBe(0);
-
-  return result;
-}
 
 /** What `scaffoldEverything` leaves out and that writes outside the context: a repository of personal data, a role of a group of routes, a development dependency. */
 function wireTheRest(root: string, withHttp: boolean): void {
@@ -100,38 +86,6 @@ const ROLES = 'src/platform/auth/roles/roles.ts';
 const PLATFORM_MODULE = 'src/platform/composition/platform.module.ts';
 const JOB_SETTINGS = 'src/platform/jobs/job-settings.ts';
 const COMPOSE = 'docker-compose.yml';
-
-/** A project on `orm` with one aggregate stored and one integration event, committed. */
-function orderingProject(orm: string, ...flags: readonly string[]): string {
-  const root = initProject('--orm', orm, '--audit', 'on', '--context', 'ordering:core', ...flags);
-  const term = (row: string): string[] => ['--term', row];
-
-  ok(cli(root, 'generate', 'aggregate', 'ordering', 'Order', ...term('Order=A purchase')));
-  ok(cli(root, 'generate', 'repository', 'ordering', 'Order'));
-
-  ok(
-    cli(
-      root,
-      'generate',
-      'command',
-      'ordering',
-      'PlaceOrder',
-      '--permission',
-      'order.place',
-      '--grant',
-      'admin',
-      '--aggregate',
-      'Order',
-      '--creates',
-      ...term('Place=Record'),
-    ),
-  );
-
-  ok(cli(root, 'generate', 'integration-event', 'ordering', 'Order', 'Placed', ...term('Placed=Recorded')));
-  commitAll(root);
-
-  return root;
-}
 
 /** The file with the body of a region taken out, as `--force` of 0.101 left it. */
 function emptied(text: string, region: string): string {
@@ -229,7 +183,7 @@ describe('init --force on what an earlier version left', () => {
 
     expect(read(root, AUDITED)).toContain('orderPlacedV1,');
     expect(forced.stdout).not.toContain(`${AUDITED}: --force could not keep`);
-    expect(forced.stdout).toContain(`${JOB_SETTINGS}: --force could not keep 1 line(s) of it`);
+    expect(forced.stdout).toContain(`${JOB_SETTINGS}: --force could not keep 1 line(s) of "scheduled"`);
     expect(forced.stdout).toContain('`git show HEAD:src/platform/jobs/job-settings.ts`');
     expect(read(root, JOB_SETTINGS)).not.toContain('ordering.close');
   });
@@ -242,7 +196,7 @@ describe('init --force on what an earlier version left', () => {
 
     const forced = ok(cli(root, 'init', '--force'));
 
-    expect(forced.stdout).toContain(`${ROLES}: --force could not keep its grants`);
+    expect(forced.stdout).toContain(`${ROLES}: it holds no object of roles the kit reads to its end`);
     expect(forced.stdout).toContain('--grant <role>` writes them again');
   });
 });

@@ -1,9 +1,10 @@
-import { regionsOf, type Region } from '../markers';
+import { regionsOf, REGION_MARKER, unpairedMarkers, type Region } from '../markers';
 
-/** A region of the file as it was that the template of this version no longer holds, and what it held. */
+/** What the file before held and the text could not take: the region, its lines when they are known, and why. */
 export interface OrphanedRegion {
   readonly region: string;
   readonly lines: readonly string[];
+  readonly why: string;
 }
 
 /** The file as the template writes it, with what the regions of the file before held, and what no region could take. */
@@ -35,13 +36,47 @@ export function keepRegions(written: string, existing: string): KeptRegions {
     }
   }
 
+  const text = after.join('\n');
+  const orphans = paired.filter(({ place }) => place === undefined).map(({ region }) => region);
+
   return {
-    text: after.join('\n'),
+    text,
     kept: taken.flatMap(({ region }) => bodyOf(before, region)),
-    orphaned: paired
-      .filter(({ place }) => place === undefined)
-      .map(({ region }) => ({ region: region.name, lines: bodyOf(before, region).filter(isText) })),
+    orphaned: [
+      ...orphans.map((region) => ({
+        region: region.name,
+        lines: bodyOf(before, region).filter(isText),
+        why: 'this version has no such region and the tree does not say them',
+      })),
+      ...withoutTheirRegion({ before, text, regions, places }),
+      ...unpairedMarkers(before).map(unpaired),
+    ],
   };
+}
+
+function unpaired(region: string): OrphanedRegion {
+  return {
+    region,
+    lines: [],
+    why: `the marker ddd-ts-kit:${region} has no partner, so what it marked was not read as a region`,
+  };
+}
+
+/** A region of the template the file does not hold, its markers removed by hand: the lines of the file the text no longer has are those it held, or what this version changed. */
+function withoutTheirRegion({ before, text, regions, places }: Unread): OrphanedRegion[] {
+  const absent = places.find((place) => !regions.some(({ name }) => name === place.name));
+  const lost = before.filter((line) => isText(line) && !REGION_MARKER.test(line) && !text.includes(line.trim()));
+
+  return absent === undefined || lost.length === 0
+    ? []
+    : [{ region: absent.name, lines: lost, why: 'the file has no such region to read them from' }];
+}
+
+interface Unread {
+  readonly before: readonly string[];
+  readonly text: string;
+  readonly regions: readonly Region[];
+  readonly places: readonly Region[];
 }
 
 function bodyOf(lines: readonly string[], { open, close }: Region): string[] {

@@ -53,7 +53,9 @@ export const FLAG_NOTES: readonly Note[] = [
       'AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed',
       'as kept) and merges .gitignore and .dockerignore, the lines of the team kept; the files it',
       'rewrites keep what their ddd-ts-kit:* regions, the roles, the Prisma datasource and the',
-      'services of the compose file hold, and a note names, file by file, what it could not keep',
+      'services of the compose file hold, and a note names, file by file, what it could not keep:',
+      'a region this version does not hold, a marker without its partner, a roles object it',
+      'cannot read to its end, the repositories left on the ORM a flag changed',
     ],
   },
   {

@@ -6,10 +6,18 @@ import { placeContextFiles } from '../generate/place-context-files';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
 import { parseContextName } from '../naming';
 import type { Workspace } from '../workspace';
+import { repositoriesLeftBehind } from './repositories-left-behind';
 import { rewireAuditedEvents } from './rewire-audited-events';
 import { rewirePersonalData } from './rewire-personal-data';
 import { rewirePreset } from './rewire-preset';
 import { rewireTables } from './rewire-tables';
+import { stackBefore } from './stack-before';
+
+/** What wiring the contexts again gave: the contexts, and the commands that write what it could not. */
+export interface Rewired {
+  readonly contexts: readonly string[];
+  readonly repositories: readonly string[];
+}
 
 /**
  * `--force` just rewrote the files of the platform from their templates, what their regions held
@@ -17,11 +25,12 @@ import { rewireTables } from './rewire-tables';
  * tree says of each one joins them where a region does not hold it, a region lost or emptied by
  * an earlier version included. What is there already is left as it is.
  */
-export function rewireContexts(ws: Workspace, config: Config): void {
+export function rewireContexts(ws: Workspace, config: Config): Rewired {
   // A project initialised again may keep its code lists and permission sets where 0.86 and 0.87 wrote them.
   placeContextFiles(ws, config);
 
   const present = Object.entries(config.contexts).filter(([name]) => ws.exists(`${config.contextsDir}/${name}`));
+  const earlierOrm = stackBefore(ws.root)?.orm;
 
   for (const [name, { classification, upstreams, deployable }] of present) {
     const context = parseContextName(name);
@@ -39,9 +48,8 @@ export function rewireContexts(ws: Workspace, config: Config): void {
 
   stopIgnoringValidation(ws, config);
 
-  if (present.length > 0) {
-    ws.note(
-      `--force rewrote the files of the platform from their templates and kept what the generators and the team wrote in their regions, the grants of the roles and the services of the compose file included. It wired the declared contexts again (${present.map(([name]) => name).join(', ')}), and listed again from the tree the tables and the audited events of each one that a region did not hold. Nothing the generators wired is lost, unless a line below names it; \`git diff\` shows the rest.`,
-    );
-  }
+  return {
+    contexts: present.map(([name]) => name),
+    repositories: present.flatMap(([name]) => repositoriesLeftBehind(ws, config, { name, earlierOrm })),
+  };
 }

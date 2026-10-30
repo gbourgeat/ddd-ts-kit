@@ -1,3 +1,4 @@
+import { namedOutsideImports } from '../check/scan/named-outside-imports';
 import type { Config } from '../config';
 import { applyWiring } from '../generate/apply-wiring';
 import { contextVars } from '../generate/context-vars';
@@ -12,7 +13,8 @@ const SUFFIX = '.integration-event.ts';
 /**
  * The events a context publishes are in the audit trail: one the registry does not name (a project
  * whose earlier `--force` emptied it, a region the template no longer holds) joins it again, read
- * from its declaration. What the registry names already is left as it is.
+ * from its declaration. An import names nothing the registry holds. What the registry names already
+ * is left as it is.
  */
 export function rewireAuditedEvents(ws: Workspace, config: Config, name: string): void {
   const registry = `${config.platformDir}/audit/audited-events.ts`;
@@ -28,7 +30,7 @@ export function rewireAuditedEvents(ws: Workspace, config: Config, name: string)
   for (const [, camel = '', version = ''] of declarations.flatMap((file) => [
     ...(ws.read(`${directory}/${file}`) ?? '').matchAll(DECLARED),
   ])) {
-    if (!new RegExp(`\\b${camel}V${version}\\b`).test(ws.read(registry) ?? '')) {
+    if (!namedOutsideImports(ws.read(registry) ?? '', `${camel}V${version}`)) {
       const event = { camel, version };
 
       applyWiring(

@@ -9,19 +9,22 @@ export interface Region {
 
 /** The regions of a text, in their order, each closed after it opens. What a region holds is its own: one written inside another is not listed. */
 export function regionsOf(lines: readonly string[]): Region[] {
+  const opened = new Map<string, number>();
   const regions: Region[] = [];
-  let open: { name: string; at: number } | undefined;
 
   lines.forEach((line, at) => {
     const [, closing, name] = REGION_MARKER.exec(line) ?? [];
+    const open = name === undefined ? undefined : opened.get(name);
 
-    if (name !== undefined && closing === '' && open === undefined) {
-      open = { name, at };
-    } else if (name !== undefined && closing === '/' && open?.name === name) {
-      regions.push({ name, open: open.at, close: at });
-      open = undefined;
+    if (name !== undefined && closing === '') {
+      opened.set(name, at);
+    } else if (name !== undefined && open !== undefined) {
+      regions.push({ name, open, close: at });
+      opened.delete(name);
     }
   });
 
-  return regions;
+  const ordered = regions.toSorted((one, other) => one.open - other.open);
+
+  return ordered.filter((region) => !ordered.some((outer) => outer.open < region.open && region.close < outer.close));
 }

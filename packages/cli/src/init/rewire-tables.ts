@@ -2,6 +2,7 @@ import type { Config } from '../config';
 import { applyWiring } from '../generate/apply-wiring';
 import { contextVars } from '../generate/context-vars';
 import { TABLES_FILES } from '../generate/kinds/tables-files';
+import { listedInIndex } from '../migration';
 import { parseContextName, type Name } from '../naming';
 import { PRISMA_MAIN_SCHEMA, prismaSchemaOf, schemaOfContext, withDatasourceSchema } from '../prisma-schema';
 import { renderTemplate, type RenderValue } from '../templating';
@@ -34,7 +35,7 @@ export function rewireTables(ws: Workspace, config: Config, name: string): void 
   }
 
   for (const entry of entriesOf(orm, context, tables)) {
-    if (!entry.named.test(ws.read(index) ?? '')) {
+    if (!listedInIndex(ws.read(index) ?? '', entry.listed)) {
       applyWiring(
         ws,
         index,
@@ -54,19 +55,21 @@ function relistInDatasource(ws: Workspace, context: Name): void {
 
 /** One line of the schema index: what shows it is there, and what its wiring needs. */
 interface IndexEntry {
-  readonly named: RegExp;
+  readonly listed: Parameters<typeof listedInIndex>[1];
   readonly vars: Record<string, RenderValue>;
 }
 
 function entriesOf(orm: string, context: Name, tables: string): IndexEntry[] {
+  const file = `${context.kebab}.schema`;
+
   switch (orm) {
     case 'knex':
-      return [{ named: new RegExp(`\\bcreate${context.pascal}Tables\\b`), vars: {} }];
+      return [{ listed: { file, constant: `create${context.pascal}Tables` }, vars: {} }];
     case 'drizzle':
-      return [{ named: new RegExp(`/${context.kebab}\\.schema\\b`), vars: {} }];
+      return [{ listed: { file }, vars: {} }];
     default:
       return [...tables.matchAll(TYPEORM_TABLE)].map(([, table = '']) => ({
-        named: new RegExp(`\\b${table}\\b`),
+        listed: { file, constant: table },
         vars: { aggregate: { tableCamel: table } },
       }));
   }

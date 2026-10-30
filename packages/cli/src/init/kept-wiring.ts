@@ -6,18 +6,29 @@ import {
   withDatasourceSchema,
   withPreviewFeature,
 } from '../prisma-schema';
+import { regionsOf } from '../markers';
 import { keepRegions, type OrphanedRegion } from './keep-regions';
 import { keptComposeServices } from './kept-compose-services';
 import { keptRoleVocabulary } from './kept-role-vocabulary';
 import { keptRoles } from './kept-roles';
 import { withNamedImports } from './with-named-imports';
+import { withSystemGrants } from './with-system-grants';
 
 const ROLES = 'auth/roles/roles.ts';
 const ROLE_VOCABULARY = 'auth/authorization/role.ts';
 const COMPOSE = 'docker-compose.yml';
 
+const UNREAD_ROLES =
+  'it holds no object of roles the kit reads to its end, so its grants were left out, not half of them kept';
+
+const NO_SYSTEM_GRANTS =
+  'its roles have no list of [Role.System] to hold the region system-grants, so `generate job` leaves the grant of a system actor to a TODO';
+
 /** What decides how the contexts are assembled: a line wired under one of them means nothing under another. */
 const WIRING_CHOICES = ['di', 'style', 'assembly', 'http', 'routes'] as const;
+
+/** What the contexts are wired into again from the tree: a line of another stack left out there is not a line lost. */
+const WIRED_AGAIN = ['imports', 'contexts', 'routes', 'copies', 'exports'];
 
 /** A file `init` rewrites: where its template puts it, what the template writes, what the file holds. */
 export interface RewrittenFile {
@@ -40,17 +51,33 @@ export interface KeptWiring {
  * other one out: they are wired again from the tree.
  */
 export function keptWiring(config: Config, earlier: Config['stack'] | undefined, file: RewrittenFile): KeptWiring {
+  const existing = file.existing.replaceAll('\r\n', '\n');
+
   if (earlier !== undefined && isWrittenForAnotherStack(config, earlier, file.target)) {
-    return { text: file.written, orphaned: [] };
+    return { text: file.written, orphaned: forAnotherStack(existing) };
   }
 
-  const outside = keptOutsideRegions(config, file);
-  const regions = keepRegions(outside.text, file.existing);
+  const outside = keptOutsideRegions(config, { ...file, existing });
+  const regions = keepRegions(outside.text, existing);
 
   return {
-    text: withNamedImports(regions.text, file.existing, [...regions.kept, ...outside.kept]),
+    text: withNamedImports(regions.text, existing, [...regions.kept, ...outside.kept]),
     orphaned: [...outside.orphaned, ...regions.orphaned],
   };
+}
+
+/** What a file held for the stack this run leaves, and that wiring the contexts again does not give back. */
+function forAnotherStack(existing: string): OrphanedRegion[] {
+  const lines = existing.split('\n');
+
+  return regionsOf(lines)
+    .filter(({ name }) => !WIRED_AGAIN.includes(name))
+    .map(({ name, open, close }) => ({
+      region: name,
+      lines: lines.slice(open + 1, close).filter((line) => line.trim() !== ''),
+      why: 'they were written for the stack this run leaves',
+    }))
+    .filter(({ lines: held }) => held.length > 0);
 }
 
 function isWrittenForAnotherStack(config: Config, earlier: Config['stack'], target: string): boolean {
@@ -88,13 +115,23 @@ function keptOutsideRegions(config: Config, { target, written, existing }: Rewri
   }
 }
 
-/** A `roles` the kit cannot read in the file before leaves its grants to the team: nothing else says who held what. */
+/** A `roles` the kit cannot read to its end leaves its grants to the team: nothing else says who held what. */
 function roles(written: string, existing: string): OutsideRegions {
   const kept = keptRoles(written, existing);
 
-  return kept === undefined
-    ? { text: written, kept: [], orphaned: [{ region: 'roles', lines: [] }] }
-    : { text: kept.text, kept: [kept.grants], orphaned: [] };
+  if (kept === undefined) {
+    return { text: written, kept: [], orphaned: [{ region: 'roles', lines: [], why: UNREAD_ROLES }] };
+  }
+
+  const object = withSystemGrants(kept.grants);
+
+  return object === undefined
+    ? {
+        text: kept.text,
+        kept: [kept.grants],
+        orphaned: [{ region: 'system-grants', lines: [], why: NO_SYSTEM_GRANTS }],
+      }
+    : { text: kept.text.replace(kept.grants, () => object), kept: [object], orphaned: [] };
 }
 
 /** The datasource of the main Prisma file keeps the database schema of each context, the generator its preview features. */
