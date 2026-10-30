@@ -3,7 +3,7 @@ import path from 'node:path';
 import { CliError } from '../cli-error';
 import { CONFIG_FILE, readConfig } from '../config';
 
-type MigratedOrm = 'drizzle' | 'prisma' | 'typeorm';
+type MigratedOrm = 'drizzle' | 'knex' | 'prisma' | 'typeorm';
 
 const NAMES: Readonly<Record<string, string>> = {
   drizzle: 'Drizzle',
@@ -31,7 +31,7 @@ export function refuseOtherOrm(root: string, command: MigratedOrm): void {
     `${command}-generate writes the migrations of a ${NAMES[command]} project, and this project uses ${uses}.`,
     orm === 'none' || orm === 'custom'
       ? `A project with ${uses} has no migration for the kit to generate: drop ${command}-generate.`
-      : `Run \`npm run db:generate <what-it-does>\`, the script of this project${orm === 'knex' ? '' : ` (\`ddd-ts-kit ${orm}-generate\`)`}.`,
+      : `Run \`npm run db:generate <what-it-does>\`, the script of this project (\`ddd-ts-kit ${orm}-generate\`).`,
   );
 }
 

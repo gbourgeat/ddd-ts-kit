@@ -37,11 +37,25 @@ describe('a generate command of another ORM refuses before it writes anything', 
     );
   });
 
-  it('names the script of a Knex project, which has no generate command of the kit', () => {
+  it('names the script and the command of a Knex project', () => {
     const result = cli(project('--orm', 'knex'), 'prisma-generate', '--name', 'x');
 
+    const fix =
+      'fix: Run `pnpm run db:generate <what-it-does>`, the script of this project (`ddd-ts-kit knex-generate`).';
+
     expect(result.stderr).toContain('this project uses Knex.');
-    expect(result.stderr).toContain('fix: Run `pnpm run db:generate <what-it-does>`, the script of this project.');
+    expect(result.stderr).toContain(fix);
+  });
+
+  it('refuses knex-generate on a Drizzle project before it writes anything', () => {
+    const root = project();
+    const before = fs.readdirSync(path.join(root, 'migrations'));
+    const result = cli(root, 'knex-generate', '--name', 'x');
+    const refusal = 'knex-generate writes the migrations of a Knex project, and this project uses Drizzle.';
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain(refusal);
+    expect(fs.readdirSync(path.join(root, 'migrations'))).toEqual(before);
   });
 
   it('says there is nothing to generate on a project without a database', () => {
