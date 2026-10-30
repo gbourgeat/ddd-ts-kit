@@ -11,6 +11,7 @@ import { inDialect } from '../package-manager/in-dialect';
 import { readStoryPlace } from '../stories/read-story-place';
 import { STORY_SCOPE_FILE } from '../stories/story-scope-file';
 import { Workspace } from '../workspace';
+import { writeInsideProject } from '../workspace/write-inside-project';
 import { addWorktree } from './add-worktree';
 import { branchExists } from './branch-exists';
 import { briefedRows } from './briefed-rows';
@@ -194,7 +195,6 @@ function herePlace(root: string, request: WorkerRequest): Place {
  * branch started.
  */
 function writeScope(inside: string, scope: WorkerFile & { readonly base: string }, baseCommit: string): void {
-  const file = path.join(inside, WORKER_SCOPE_FILE);
   const { branch, ...recorded } = scope;
 
   const written: WorkerFile = {
@@ -203,8 +203,7 @@ function writeScope(inside: string, scope: WorkerFile & { readonly base: string 
     ...(branch === undefined ? {} : { branch }),
   };
 
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(written, null, 2)}\n`);
+  writeInsideProject(inside, WORKER_SCOPE_FILE, `${JSON.stringify(written, null, 2)}\n`);
 }
 
 function notesOf(root: string, inside: string, dependencies: Dependencies): string[] {

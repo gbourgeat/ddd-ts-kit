@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { CliError } from '../cli-error';
+import { writeInsideProject } from '../workspace/write-inside-project';
 import { gitProcess } from './git-process';
 import type { Resolution } from './resolution';
 
@@ -16,8 +17,7 @@ export function applyResolutions(top: string, resolutions: readonly Resolution[]
     if (content === null) {
       fs.rmSync(absolute, { force: true });
     } else if (content !== undefined) {
-      fs.mkdirSync(path.dirname(absolute), { recursive: true });
-      fs.writeFileSync(absolute, content);
+      writeInsideProject(top, file, content);
     }
   }
 

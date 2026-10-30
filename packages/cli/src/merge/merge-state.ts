@@ -3,6 +3,7 @@ import path from 'node:path';
 import { isRecord } from '../config/values/is-record';
 import { jsonObject } from '../init/json-object';
 import { KIT_FOLDER } from '../workspace/kit-folder';
+import { writeInsideProject } from '../workspace/write-inside-project';
 import type { MergeReport } from './merge-report';
 
 /** Written while a merge of merge-trunk is in progress, next to the scope of a worker; never committed. */
@@ -42,8 +43,7 @@ export const mergeState = {
   },
 
   write(root: string, state: MergeState): void {
-    fs.mkdirSync(path.dirname(mergeState.file(root)), { recursive: true });
-    fs.writeFileSync(mergeState.file(root), `${JSON.stringify(state, null, 2)}\n`);
+    writeInsideProject(root, MERGE_STATE_FILE, `${JSON.stringify(state, null, 2)}\n`);
   },
 
   remove(root: string): void {

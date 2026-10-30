@@ -1,6 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { runGit } from '../commit/run-git';
+import { writeInsideProject } from '../workspace/write-inside-project';
 import type { SliceVerification } from './slice-verification';
 import { VERIFICATION_FILE } from './verification-file';
 
@@ -25,8 +24,5 @@ export function recordVerification(root: string, verification: SliceVerification
     toStage: verification.toStage,
   };
 
-  const file = path.join(root, VERIFICATION_FILE);
-
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);
+  writeInsideProject(root, VERIFICATION_FILE, `${JSON.stringify(record, null, 2)}\n`);
 }
