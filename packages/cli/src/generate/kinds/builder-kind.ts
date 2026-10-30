@@ -3,13 +3,16 @@ import type { Kind } from '../kind';
 import { named } from '../named';
 import { openScope } from '../open-scope';
 import { vars } from '../vars';
+import { birthOf } from './birth-of';
+import { birthVars } from './birth-vars';
 import { existingAggregate } from './existing-aggregate';
 
 export const builderKind: Kind = {
   name: 'builder',
   aliases: [],
   usage: 'builder <context> <Aggregate>',
-  summary: 'The test data builder of an existing aggregate, in test/builders/.',
+  summary:
+    'The test data builder of an existing aggregate, in test/builders/; the instant of its birth is an ingredient named after the fact its create records (issuedAt).',
   positionals: ['context', 'Aggregate'],
   writesShared: false,
   writesInModules: false,
@@ -17,7 +20,7 @@ export const builderKind: Kind = {
     const scope = openScope(request);
     const aggregate = existingAggregate(scope, request.args[1] ?? '');
 
-    emit(scope, vars(scope, { aggregate: named(aggregate) }), [
+    emit(scope, vars(scope, { aggregate: named(aggregate), birth: birthVars(birthOf(scope, aggregate)) }), [
       ['builder/builder.ts.tpl', `test/builders/${aggregate.kebab}.builder.ts`],
     ]);
   },

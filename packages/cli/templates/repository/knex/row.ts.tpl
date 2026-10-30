@@ -7,7 +7,6 @@ import type { AuditRow } from '@ddd-ts-kit/knex';
 
 export interface {{aggregate.pascal}}Columns {
   readonly id: string;
-  readonly registered_at: Date;
 {{#if personal.any}}
 {{personal.knexRow}}
 {{/if}}

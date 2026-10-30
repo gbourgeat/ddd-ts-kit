@@ -19,7 +19,7 @@ interface RetentionRequest {
 
 const COLUMN = /^[a-z][a-z0-9_]*$/;
 /** The columns every generated table has for its own needs: none holds personal data, and only `id` names a subject. */
-const OWN_COLUMNS = ['version', 'registered_at', 'tenant_id', 'created_at', 'created_by', 'updated_at', 'updated_by'];
+const OWN_COLUMNS = ['version', 'tenant_id', 'created_at', 'created_by', 'updated_at', 'updated_by'];
 const MODES: readonly PersonalRequest['erasure'][] = ['pseudonymise', 'row'];
 /** The ORMs whose package ships the erasure adapter that reads a declaration. */
 const ADAPTED: readonly OrmStack[] = ['knex', 'drizzle', 'prisma', 'typeorm'];
@@ -114,7 +114,7 @@ function assertColumn(column: string, flag: string): void {
   if (OWN_COLUMNS.includes(column) || (column === 'id' && flag === '--personal')) {
     throw new CliError(
       `${flag} names "${column}", a column every generated table keeps for its own needs.`,
-      'The identifier, the version, registered_at, tenant_id and the audit columns hold no personal data: name the columns of the state that do.',
+      'The identifier, the version, tenant_id and the audit columns hold no personal data: name the columns of the state that do.',
     );
   }
 }
@@ -151,7 +151,7 @@ const UNITS: Readonly<Record<string, RetentionRequest['unit']>> = { d: 'days', m
  * `--retention <column>:<n><d|m|y>`: the period, one unit, from a column that dates the end of the
  * relation with the person (`ended_at`, `closed_at`), which joins the storage as a nullable
  * timestamp, empty while the relation lasts. Never a column the table keeps for itself:
- * `registered_at` dates the beginning, and a purge counted from it would erase, every night and for
+ * `created_at` dates the beginning, and a purge counted from it would erase, every night and for
  * good, people who are still customers.
  */
 function retentionOf(text: string, named: readonly string[]): RetentionRequest {
@@ -179,7 +179,7 @@ function assertRetentionColumn(column: string, named: readonly string[]): void {
     throw new CliError(
       `--retention runs from "${column}", which is ${own ? 'a column the generated table keeps for its own needs' : 'named by --personal or --subject'}.`,
       own
-        ? 'A retention runs from the end of the relation with the person, never from its beginning: counted from registered_at, the nightly purge would erase people who are still customers. Name a column that dates the end (ended_at, closed_at): it joins the table, empty while the relation lasts.'
+        ? 'A retention runs from the end of the relation with the person, never from its beginning: counted from created_at, the nightly purge would erase people who are still customers. Name a column that dates the end (ended_at, closed_at): it joins the table, empty while the relation lasts.'
         : 'A retention runs from the end of the relation with the person: name a column that dates it (ended_at, closed_at), which joins the table, empty while the relation lasts.',
     );
   }

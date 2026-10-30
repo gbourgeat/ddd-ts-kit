@@ -6,13 +6,15 @@ import { auditColumns, tenantColumn } from '@ddd-ts-kit/drizzle/postgres';
 {{#unless tenant.scoped}}
 import { auditColumns } from '@ddd-ts-kit/drizzle/postgres';
 {{/unless}}
+{{#if personal.retains}}
+import { timestamp } from 'drizzle-orm/pg-core';
+{{/if}}
 @@tables
 {{#if tenant.scoped}}
 export const {{aggregate.tableCamel}} = {{context.camel}}Schema.table(
   '{{aggregate.table}}',
   {
     id: text('id').primaryKey(),
-    registeredAt: timestamp('registered_at', { withTimezone: true, mode: 'date' }).notNull(),
 {{#if personal.any}}
 {{personal.drizzleTenantTable}}
 {{/if}}
@@ -27,7 +29,6 @@ export const {{aggregate.tableCamel}} = {{context.camel}}Schema.table(
 {{#unless tenant.scoped}}
 export const {{aggregate.tableCamel}} = {{context.camel}}Schema.table('{{aggregate.table}}', {
   id: text('id').primaryKey(),
-  registeredAt: timestamp('registered_at', { withTimezone: true, mode: 'date' }).notNull(),
 {{#if personal.any}}
 {{personal.drizzleTable}}
 {{/if}}

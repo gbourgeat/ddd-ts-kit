@@ -26,8 +26,8 @@ const PREPARES_A_PARCEL = `  it('prepares a parcel when billing issues an invoic
 
 /**
  * What a team writes after `init` and `generate` in the project of the first-class stack, kept
- * to the minimum the proof needs: the aggregate records its birth fact, the list reads three
- * lines, the relationship schema knows the listed element, shipping prepares a parcel when
+ * to the minimum the proof needs (the aggregate records its birth fact as generated, with --birth):
+ * the list reads three lines, the relationship schema knows the listed element, shipping prepares a parcel when
  * billing issues an invoice, and the generated trace assertion is extended to that whole story. Nothing here repairs generated code: each edit answers a
  * `TODO(domain)` or a `TODO(platform)` the generator left, in either style.
  */
@@ -72,17 +72,6 @@ export function writeBusinessDecisions(root: string): void {
 
   edit(root, exists(root, DECLARED_READER) ? DECLARED_READER : EXPLICIT_READER, [
     ['readonly SearchInvoicesItem[] = []', `readonly SearchInvoicesItem[] = ${LINES}`],
-  ]);
-
-  edit(root, 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts', [
-    [
-      "import { AggregateRoot } from '@ddd-ts-kit/kernel';",
-      "import { AggregateRoot } from '@ddd-ts-kit/kernel';\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event';",
-    ],
-    [
-      '    const created = new Invoice(id, { registeredAt: now });',
-      '    const created = new Invoice(id, { registeredAt: now });\n\n    created.record(new InvoiceIssued(id, now));',
-    ],
   ]);
 
   // The gate of the search is held on the context, the scope on the element: two permissions, since the invoice no longer leaves its view to the operators.

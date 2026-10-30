@@ -4,7 +4,7 @@ import type { {{aggregate.pascal}}Columns, {{aggregate.pascal}}Row } from '{{ali
 export const {{aggregate.pascal}}Mapper = {
   toDomain(row: {{aggregate.pascal}}Row): {{aggregate.pascal}} {
     // TODO(domain): rebuild each value object of {{aggregate.pascal}}State from its columns.
-    const loaded = {{aggregate.pascal}}.rehydrate(row.id, { registeredAt: row.registeredAt });
+    const loaded = {{aggregate.pascal}}.rehydrate(row.id, {});
 
     loaded.version = row.version;
 

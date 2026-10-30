@@ -1,7 +1,6 @@
 @@models
 model {{context.pascal}}{{aggregate.pascal}} {
   id           String   @id
-  registeredAt DateTime @map("registered_at") @db.Timestamptz(3)
 {{#if personal.any}}
 {{personal.prismaModel}}
 {{/if}}

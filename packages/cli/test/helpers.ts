@@ -159,10 +159,10 @@ function scaffoldBilling(step: Step, withHttp: boolean, grant: (role: string) =>
   ];
 
   step('generate', 'context', 'billing', '--classification', 'core', '--purpose', purpose, ...terms.flatMap(term));
-  step('generate', 'aggregate', 'billing', 'Invoice');
+  // Born issued: the aggregate records its birth event, which the reactions below handle.
+  step('generate', 'aggregate', 'billing', 'Invoice', '--birth', 'Invoice Issued');
   step('generate', 'entity', 'billing', 'InvoiceLine', ...term('Line=One billed item of an invoice'));
   step('g', 'vo', 'billing', 'Money', ...term('Money=An amount in a currency'));
-  step('generate', 'domain-event', 'billing', 'Invoice', 'Issued');
   step('generate', 'domain-service', 'billing', 'Pricing', ...term('Price=What a customer pays for one item'));
   step('generate', 'repository', 'billing', 'Invoice');
 
