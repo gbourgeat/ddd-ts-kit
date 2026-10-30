@@ -29,7 +29,7 @@ const HIDDEN_WRITES = [
 // Each only looks like a write: the text of a quote or a comment, a script run by name, a reading.
 const TEXTS = [
   'npm test # then rm src/main.ts',
-  "echo 'rm src/main.ts > src/main.ts",
+  "echo 'rm src/main.ts > src/main.ts'",
   'echo "a \\"quoted\\" rm src/main.ts, a \\d" > /dev/null',
   'echo "one line \\\ncontinued" > /dev/null',
   'ls src/contexts/invoicing \\',

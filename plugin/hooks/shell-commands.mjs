@@ -9,6 +9,10 @@ import { basename, resolve } from 'node:path';
 export const UNKNOWN = '\u0000';
 
 const DEPTH = 5;
+// `$((...))`: its body, between the two parentheses left, holds no separator of commands.
+const ARITHMETIC = /^\([^;&|`]*\)$/;
+// A here-document opened in a substitution: its delimiter, in either quote or bare; `<<<` opens none.
+const HEREDOC = /^<<(-?)[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|\\?([^\s;&|()<>'"]+))/;
 export const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'fish']);
 // The options of a shell that take a value (`-o errexit`, `-O extglob`, `--rcfile <file>`).
 const SHELL_VALUED = new Set(['-o', '+o', '-O', '+O', '--rcfile', '--init-file']);
@@ -64,12 +68,14 @@ const WRAPPERS = {
 export function simpleCommands(text, directory, depth = 0) {
   if (depth > DEPTH) {
     // Deeper than the reader follows: a marker so the guard refuses it rather than read nothing.
-    return [
-      { words: [], redirects: [], heredoc: false, piped: false, directory, depth, ender: undefined, truncated: true },
-    ];
+    return [unreadMarker('nested', directory, depth)];
   }
-  const { commands, substitutions } = parseShell(text);
+  const { commands, substitutions, open } = parseShell(text);
   const found = substitutions.flatMap((inner) => simpleCommands(inner, directory, depth + 1));
+  if (open) {
+    // The text ends inside a quote or a here-document: what comes after it was not read as commands.
+    found.push(unreadMarker('open', directory, depth));
+  }
   let current = directory;
   const stack = [];
   let blocks = 0;
@@ -86,6 +92,10 @@ export function simpleCommands(text, directory, depth = 0) {
   }
 
   return found;
+}
+
+function unreadMarker(truncated, directory, depth) {
+  return { words: [], redirects: [], heredoc: false, piped: false, directory, depth, ender: undefined, truncated };
 }
 
 /** Where `cd`, `pushd` and `popd` leave the commands after them, `place` holding the directory and the `pushd` stack. */
@@ -352,7 +362,14 @@ function findExecutions(words, directory) {
       const inner = words.slice(index + 1, end === -1 ? undefined : end);
       for (const root of roots.length > 0 ? roots : ['.']) {
         const found = inner.map((part) => part.replaceAll('{}', `${root}/{}`));
-        executions.push({ words: unwrapped(found), redirects: [], heredoc: false, piped: false, directory });
+        executions.push({
+          words: unwrapped(found),
+          redirects: [],
+          heredoc: false,
+          piped: false,
+          directory,
+          found: true,
+        });
       }
     }
   });
@@ -380,6 +397,7 @@ function parseShell(text) {
     heredocs: [],
     word: undefined,
     redirect: undefined,
+    open: false,
   };
   state.command = newCommand(false, 0);
   while (state.index < text.length) {
@@ -390,6 +408,7 @@ function parseShell(text) {
   return {
     commands: state.commands.filter((command) => command.words.length > 0 || command.redirects.length > 0),
     substitutions: state.substitutions,
+    open: state.open || state.heredocs.length > 0,
   };
 }
 
@@ -408,7 +427,11 @@ function readNext(state) {
   if (char === "'") {
     const end = closingQuote(text, index);
     state.index = end + 1;
+    state.open ||= end === text.length;
     return append(state, text.slice(index + 1, end));
+  }
+  if (char === '$' && next === "'") {
+    return readAnsiQuoted(state);
   }
   if (char === '"') {
     return readDoubleQuoted(state);
@@ -471,6 +494,27 @@ function closingQuote(text, index) {
   return end === -1 ? text.length : end;
 }
 
+function readAnsiQuoted(state) {
+  const { text, index } = state;
+  const end = closingAnsiQuote(text, index);
+  const value = text.slice(index + 2, end);
+  state.index = end + 1;
+  state.open ||= end === text.length;
+  append(state, value.includes('\\') ? UNKNOWN : value);
+}
+
+// The `'` that closes the `$'` at `index`, where `\'` does not: an escape in it means what only the shell decodes.
+function closingAnsiQuote(text, index) {
+  for (let at = index + 2; at < text.length; at += 1) {
+    if (text[at] === '\\') {
+      at += 1;
+    } else if (text[at] === "'") {
+      return at;
+    }
+  }
+  return text.length;
+}
+
 /** Inside double quotes `\` escapes `"`, `\`, `$` and the backquote, and a substitution still runs. */
 function readDoubleQuoted(state) {
   const { text } = state;
@@ -482,7 +526,7 @@ function readDoubleQuoted(state) {
       index += 2;
     } else if (text[index] === '`' || (text[index] === '$' && text[index + 1] === '(')) {
       const end = substitutionEnd(text, index);
-      state.substitutions.push(substitutionBody(text, index, end));
+      keepSubstitution(state, index, end);
       value += UNKNOWN;
       index = end + 1;
     } else {
@@ -491,15 +535,34 @@ function readDoubleQuoted(state) {
     }
   }
   state.index = index + 1;
+  state.open ||= index >= text.length;
   append(state, value);
 }
 
 function readSubstitution(state) {
   const { text, index } = state;
   const end = substitutionEnd(text, index);
-  state.substitutions.push(substitutionBody(text, index, end));
+  keepSubstitution(state, index, end);
   state.index = end + 1;
   append(state, UNKNOWN);
+}
+
+// The commands of a substitution are read apart. `$((...))` runs only what nests in it: its parentheses
+// open no subshell, and its `<<` is a shift, not a here-document.
+function keepSubstitution(state, index, end) {
+  state.open ||= end >= state.text.length;
+  state.substitutions.push(...commandTexts(substitutionBody(state.text, index, end)));
+}
+
+function commandTexts(body) {
+  if (!ARITHMETIC.test(body)) {
+    return [body];
+  }
+  const nested = [];
+  for (let at = body.indexOf('$('); at !== -1; at = body.indexOf('$(', substitutionEnd(body, at))) {
+    nested.push(...commandTexts(substitutionBody(body, at, substitutionEnd(body, at))));
+  }
+  return nested;
 }
 
 /** The index of the character that closes the substitution opened at `index`: a backquote, or the matching parenthesis. */
@@ -509,12 +572,13 @@ function substitutionEnd(text, index) {
     return end === -1 ? text.length : end;
   }
   let depth = 0;
+  const heredocs = [];
   for (let at = index + 1; at < text.length; at += 1) {
     const char = text[at];
     if (char === '\\') {
       at += 1;
     } else if (char === "'") {
-      at = closingQuote(text, at);
+      at = text[at - 1] === '$' ? closingAnsiQuote(text, at - 1) : closingQuote(text, at);
     } else if (char === '"') {
       at = closingDoubleQuote(text, at);
     } else if (char === '`') {
@@ -523,9 +587,34 @@ function substitutionEnd(text, index) {
       depth += 1;
     } else if (char === ')' && --depth === 0) {
       return at;
+    } else if (char === '<' || char === '\n' || char === '#') {
+      at = passedOver({ text, at, heredocs });
     }
   }
   return text.length;
+}
+
+// Inside a substitution, what no quote or parenthesis counts in: a comment to the end of its line, the
+// text of a here-document from the line after its operator. Answers the index the scan stands on.
+function passedOver({ text, at, heredocs }) {
+  if (text[at] === '#') {
+    return /[\s;&|(]/.test(text[at - 1]) ? lineEnd(text, at) - 1 : at;
+  }
+  if (text[at] === '\n') {
+    return heredocs.length === 0 ? at : heredocBodies(text, at + 1, heredocs.splice(0)).index - 1;
+  }
+  const opened = HEREDOC.exec(text.slice(at, at + 256));
+  if (!opened) {
+    return at;
+  }
+  const [word, dash, single, double, plain] = opened;
+  heredocs.push({ delimiter: single ?? double ?? plain, tabs: dash === '-' });
+  return at + word.length - 1;
+}
+
+function lineEnd(text, index) {
+  const end = text.indexOf('\n', index);
+  return end === -1 ? text.length : end;
 }
 
 // The index of the `"` that closes the one at `index`, a `\"` inside it passed over.
@@ -594,15 +683,24 @@ function endCommand(state, piped, ender) {
 
 /** After the newline that ends a line, the bodies of its here-documents, each up to its delimiter line. */
 function skipHeredocBodies(state) {
-  state.index += 1;
-  for (const { delimiter, tabs } of state.heredocs.splice(0)) {
-    while (state.index < state.text.length) {
-      const end = state.text.indexOf('\n', state.index);
-      const line = state.text.slice(state.index, end === -1 ? undefined : end);
-      state.index = end === -1 ? state.text.length : end + 1;
-      if ((tabs ? line.replace(/^\t+/, '') : line) === delimiter) {
-        break;
-      }
+  const { index, closed } = heredocBodies(state.text, state.index + 1, state.heredocs.splice(0));
+  state.index = index;
+  state.open ||= !closed;
+}
+
+/** Where the text goes on after the bodies that start at `index`, and whether each found its delimiter line. */
+function heredocBodies(text, index, heredocs) {
+  let at = index;
+  let closed = true;
+  for (const { delimiter, tabs } of heredocs) {
+    let found = false;
+    while (at < text.length && !found) {
+      const end = lineEnd(text, at);
+      const line = text.slice(at, end);
+      at = Math.min(end + 1, text.length);
+      found = (tabs ? line.replace(/^\t+/, '') : line) === delimiter;
     }
+    closed &&= found;
   }
+  return { index: at, closed };
 }

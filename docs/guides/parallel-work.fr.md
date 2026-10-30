@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:69afaa7833f5ccb7 -->
+<!-- translation-of: parallel-work.md sha256:211b2943c15009bd -->
 
 # Travailler en parallèle sans collisions
 
@@ -513,8 +513,10 @@ repart de zéro.
 - `agent.json`, écrit par le garde : l'identifiant de l'agent, son exécution (1 au lancement, une
   de plus à chaque reprise), quand elle a commencé et à quel *commit*, quand il a été vu pour la
   dernière fois, les appels comptés, les appels de chaque ligne commitée, et son dernier arrêt
-  quand il a fini de lui-même ;
-- `report.md`, écrit par le *hook* `SubagentStop` depuis le dernier message de l'agent, dont la fraîcheur se lit à l'heure du dernier *commit* et du
+  quand il a fini de lui-même, avec ce que le garde a trouvé laissé hors de son périmètre
+  (`status --workers` et `--resume` le disent aussi) ;
+- `report.md`, écrit par le *hook* `SubagentStop` depuis le dernier message de l'agent, suivi de ce
+  que le garde a trouvé laissé hors du périmètre à cet arrêt, dont la fraîcheur se lit à l'heure du dernier *commit* et du
   dernier changement d'un fichier de la tranche.
 
 **Une commande pour le chef d'orchestre.** Sur une notification d'arrêt, depuis le tronc :

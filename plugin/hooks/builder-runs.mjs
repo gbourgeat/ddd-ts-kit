@@ -11,6 +11,8 @@ import { writeKitFile } from './kit-files.mjs';
 const AGENT_FILE = '.ddd-ts-kit/agent.json';
 const REPORT_FILE = '.ddd-ts-kit/report.md';
 const VERIFICATION_FILE = '.ddd-ts-kit/verification.json';
+// The most read of an answer of git, as in the guard.
+const ANSWER_BYTES = 64 * 1024 * 1024;
 
 // Calibration. The guard sees the shell and the writes (Bash, Write, Edit, MultiEdit), never the
 // reads (Read, Grep, Glob): its count is below the turns taken. Two real context-builder runs,
@@ -64,38 +66,40 @@ export function startRun(input, places) {
 
 /**
  * The agent ends on its own (a stop at the turn limit runs no hook). Records the stop in its
- * worktree and, once a run, keeps it going with one instruction when it would leave a slice that
- * passed verify-slice uncommitted, or no current report.
+ * worktree, with `outside`, what the guard found outside its scope, for the conductor, in the record
+ * and in the report. Once a run, keeps it going with one instruction when it would leave a slice that
+ * passed verify-slice uncommitted, no current report, or a file outside its scope.
  */
-export function stopRun(input, places) {
+export function stopRun(input, places, outside) {
   const run = readJson(places.state);
   if (!run?.worker || !existsSync(run.worker)) {
     return undefined;
   }
-  writeReport(run.worker, input);
+  writeReport(run.worker, input, outside);
   const slice = sliceState(run.worker);
   const agent = readJson(join(run.worker, AGENT_FILE));
   if (agent) {
     writeJson(join(run.worker, AGENT_FILE), {
       ...agent,
-      lastStop: { at: new Date().toISOString(), reportCurrent: slice.reportCurrent },
+      lastStop: { at: new Date().toISOString(), reportCurrent: slice.reportCurrent, ...(outside ? { outside } : {}) },
     });
   }
   if (input.stop_hook_active || run.stopBlocked === run.run) {
     return undefined;
   }
-  const reason = stopReason(slice);
+  const reason = stopReason(slice, outside);
   if (reason) {
     writeJson(places.state, { ...run, stopBlocked: run.run });
   }
   return reason;
 }
 
-function stopReason(slice) {
-  if (slice.verifiedUncommitted) {
-    return 'ddd-ts-kit: verify-slice passed but the slice is not committed. Commit it with the command verify-slice printed, then end with your report as your final message.';
-  }
-  return undefined;
+function stopReason(slice, outside) {
+  const uncommitted = slice.verifiedUncommitted
+    ? 'verify-slice passed but the slice is not committed. Commit it with the command verify-slice printed, then end with your report as your final message.'
+    : undefined;
+  const said = [uncommitted, outside].filter(Boolean).join(' ');
+  return said ? `ddd-ts-kit: ${said}` : undefined;
 }
 
 /**
@@ -103,10 +107,10 @@ function stopReason(slice) {
  * its final message, and the file `worker-scope --resume` reads is written here, from that message
  * (the hook input, else the last assistant message of the transcript it names). Fails open.
  */
-export function writeReport(worker, input) {
+export function writeReport(worker, input, outside) {
   const report = finalMessage(input);
   if (report) {
-    writeKitFile(join(worker, REPORT_FILE), `${report}\n`);
+    writeKitFile(join(worker, REPORT_FILE), `${report}\n${outside ? `\nThe guard at the stop: ${outside}\n` : ''}`);
   }
 }
 
@@ -239,7 +243,7 @@ function modifiedAt(file) {
 }
 
 function git(directory, args) {
-  const run = spawnSync('git', args, { cwd: directory, encoding: 'utf8', timeout: 3000 });
+  const run = spawnSync('git', args, { cwd: directory, encoding: 'utf8', timeout: 3000, maxBuffer: ANSWER_BYTES });
   return run.status === 0 ? run.stdout : undefined;
 }
 
