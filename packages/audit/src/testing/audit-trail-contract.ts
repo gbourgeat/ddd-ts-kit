@@ -166,11 +166,13 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
 
     this.it('shows an entry rewritten in the storage itself', async () => {
       await this.recordAll([inTenant('a-1', 'alpha'), inTenant('a-2', 'alpha'), inTenant('a-3', 'alpha')]);
-      const entries = await this.entriesOf(ALPHA);
+      const [, second] = await this.entriesOf(ALPHA);
 
-      for (const second of entries.filter((entry) => entry.sequence === 2)) {
-        await tamper(second, 'contract.thing.forged');
+      if (second === undefined) {
+        throw new Error('The second entry of the chain was not listed');
       }
+
+      await tamper(second, 'contract.thing.forged');
 
       const altering = { kind: 'altered-content', chain: ALPHA, position: 1, sequence: 2, entryId: 'a-2' };
 

@@ -51,6 +51,7 @@ function resolutionsOf(repo: MergeRepository, sides: ForecastSides): Resolution[
       return undefined;
     }
 
+    /* v8 ignore next -- ADR-0001: a fault of the kit, nothing in the repository makes this reader throw it */
     throw error;
   }
 }

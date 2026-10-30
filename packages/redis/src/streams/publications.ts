@@ -48,9 +48,13 @@ export class Publications {
     events.forEach((event, index) => {
       const [error, entryId] = answers[index] ?? [new Error('no answer'), undefined];
 
-      // The server answers an entry id or an error for each XADD: nothing else is confirmed.
-      if (error !== null || typeof entryId !== 'string') {
-        throw new PublishNotConfirmedError(event.id, error === null ? 'NO_ENTRY_ID' : failureCode(error));
+      if (error !== null) {
+        throw new PublishNotConfirmedError(event.id, failureCode(error));
+      }
+
+      /* v8 ignore next 3 -- ADR-0001: an XADD answers an entry id or an error, and the error is read above */
+      if (typeof entryId !== 'string') {
+        throw new PublishNotConfirmedError(event.id, 'NO_ENTRY_ID');
       }
     });
   }

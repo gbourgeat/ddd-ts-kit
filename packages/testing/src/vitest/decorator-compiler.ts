@@ -166,7 +166,10 @@ function emittedExtension(extension: string): string {
 }
 
 function saidBy(failure: unknown): string {
-  return isRecord(failure)
-    ? [failure.stdout, failure.stderr].filter((output) => typeof output === 'string').join('')
-    : String(failure);
+  /* v8 ignore next 3 -- ADR-0001: the only caller catches what execFileSync throws, always an Error */
+  if (!isRecord(failure)) {
+    return String(failure);
+  }
+
+  return [failure.stdout, failure.stderr].filter((output) => typeof output === 'string').join('');
 }

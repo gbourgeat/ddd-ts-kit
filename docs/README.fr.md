@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f634af0efeecf136 -->
+<!-- translation-of: README.md sha256:489307aacf9094be -->
 
 # Documentation
 
@@ -31,6 +31,7 @@ source.
 |---|---|
 | [Référence d'architecture](ARCHITECTURE.fr.md) | l'arborescence canonique, chaque identifiant de règle, les règles tactiques, les tests, le clean code |
 | [Configuration](CONFIG.fr.md) | chaque clé de `ddd-ts-kit.config.json` |
+| [Lignes laissées hors de la mesure de couverture](adr/0001-lines-left-out-of-the-coverage-measure.fr.md) | les vérifications que rien n'atteint, pourquoi, et quand chacune part |
 | [Pipeline](../pipeline/README.md) | les portes de qualité, les *hooks* git, GitHub et GitLab côte à côte |
 | README des packages sous [`packages/`](../packages) | ce que fait chaque *package*, ses limites et ce qui a été vérifié |
 

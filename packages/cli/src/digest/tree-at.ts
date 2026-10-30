@@ -82,6 +82,7 @@ function configIn(directory: string): Config | string {
   try {
     return readConfig(directory).config;
   } catch (error) {
+    /* v8 ignore next 3 -- ADR-0001: readConfig wraps every failure in a CliError */
     if (!(error instanceof CliError)) {
       throw error;
     }

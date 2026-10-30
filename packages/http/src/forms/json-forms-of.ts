@@ -63,18 +63,19 @@ function objectSchema(blocks: readonly FormBlock[], node: SchemaNode): JsonSchem
   return {
     type: 'object',
     properties: Object.fromEntries(
-      fields.map((field) => {
-        const child = children.get(lastSegment(field.name));
-
-        return [lastSegment(field.name), child === undefined ? {} : propertySchema(field, child)];
-      }),
+      fields.map((field) => [lastSegment(field.name), propertySchema(field, children.get(lastSegment(field.name)))]),
     ),
     required: fields.filter((field) => field.required).map((field) => lastSegment(field.name)),
     ...(conditional.length === 0 ? {} : { allOf: conditional }),
   };
 }
 
-function propertySchema(field: FieldBlock<FormBlock>, node: SchemaNode): JsonSchema {
+function propertySchema(field: FieldBlock<FormBlock>, node: SchemaNode | undefined): JsonSchema {
+  /* v8 ignore next 3 -- ADR-0001: the fields of a form are read from this schema, each has its node */
+  if (node === undefined) {
+    return {};
+  }
+
   if (field.widget === 'group') {
     return { ...objectSchema(field.blocks ?? [], node), ...(field.readOnly === true ? { readOnly: true } : {}) };
   }
