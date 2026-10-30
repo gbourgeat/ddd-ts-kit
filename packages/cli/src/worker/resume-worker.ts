@@ -1,5 +1,4 @@
 import path from 'node:path';
-import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import { findWorker, type WorkerChoice } from './find-worker';
 import { progressOf } from './progress-of';
@@ -42,14 +41,11 @@ const RECENT_MINUTES = 3;
 export function resumeWorker(root: string, request: ResumeRequest): WorkerResume {
   const worker = findWorker(root, request);
   const config = readConfig(worker.project).config;
-  const progress = progressOf(worker.project, worker.scope, { stopped: true, fresh: request.fresh });
 
-  if (progress === undefined) {
-    throw new CliError(
-      `The config of ${worker.project} cannot be read.`,
-      'Run `npx ddd-ts-kit doctor` in the worktree.',
-    );
-  }
+  const progress = progressOf({ project: worker.project, config }, worker.scope, {
+    stopped: true,
+    fresh: request.fresh,
+  });
 
   const { next, agent } = progress;
   const base = worker.scope.base ?? 'origin/main';

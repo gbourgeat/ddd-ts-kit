@@ -156,6 +156,7 @@ describe('what acceptance always reports', () => {
         "it('AC1 a customer reads the cancellation', async () => {});",
         "it('#US6.09 AC1 a cancelled order is archived', async () => {});",
         "it('#US6.01 AC7 a cancelled order is announced', async () => {});",
+        "it('#US6.01 a customer reads the cancelled order', async () => {});",
         '',
       ].join('\n'),
     );
@@ -173,10 +174,19 @@ describe('what acceptance always reports', () => {
           expect.objectContaining({ kind: 'no-row', at: 'test/acceptance/us6.acceptance.spec.ts:3' }),
           expect.objectContaining({ kind: 'unknown-row', at: 'test/acceptance/us6.acceptance.spec.ts:4' }),
           expect.objectContaining({ kind: 'unknown-criterion', at: 'test/acceptance/us6.acceptance.spec.ts:5' }),
+          expect.objectContaining({ kind: 'no-criterion', at: 'test/acceptance/us6.acceptance.spec.ts:6' }),
           expect.objectContaining({ kind: 'unlocked', from: 'written' }),
         ],
       }),
     ]);
+  });
+
+  it('says so in a project without a story: no row in slices.md, no spec in test/acceptance/', () => {
+    const bare = initProject();
+    const none = cli(bare, 'acceptance');
+
+    expect(none.code).toBe(0);
+    expect(none.stdout).toBe('No story: docs/architecture/slices.md has no row and test/acceptance/ no spec.');
   });
 
   it('lists every story of slices.md and every spec without a story', () => {

@@ -34,6 +34,15 @@ describe('RelationBasedAuthorizer.explain', () => {
     );
   });
 
+  it('says that a type a tuple leads to declares no such relation, instead of taking it for granted', async () => {
+    const authorizer = await authorizerWith([fact('document:1', 'parent', 'drive:shared')]);
+
+    const { decision, trace } = await authorizer.explain({ actor: ada, permission: edit, resource: document('1') });
+
+    expect(decision).toEqual({ allowed: false, reason: 'NO_RELATION' });
+    expect(traceText(trace)).toContain('x   drive:shared edit (parent of document:1): "drive" declares no "edit"');
+  });
+
   it('tells why a permission does not hold: every way tried, and where each one stopped', async () => {
     const authorizer = await authorizerWith([
       fact('group:finance', 'member', 'user:ada'),

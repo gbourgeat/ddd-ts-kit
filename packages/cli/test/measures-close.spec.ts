@@ -97,4 +97,56 @@ describe('ddd-ts-kit measures: a history larger than the default buffer', () => 
     expect(() => runGit(root, ['log', '--format=%H', '-n', '1', '--bogus-option-that-is-not-a-status'])).not.toThrow();
     expect(cli(root, 'measures', '--json').code).toBe(0);
   });
+
+  it('names the earliest of the incidents a story repeats, and none for an origin outside the incident records', () => {
+    const root = repository();
+    const incident = (code: string): string => `---\nerror_code: ${code}\n---\n# Incident\n`;
+
+    const story = (origin: string): string =>
+      `# US2 Fix\n\n## Origin\n\n${origin}\n\n## Acceptance criteria\n\n- AC1: fixed\n\n## Report\n`;
+
+    git(root, 'switch', '--quiet', 'main');
+
+    commitFiles(root, {
+      message: 'docs(incidents): inc-1',
+      at: '2026-03-02T09:00:00Z',
+      files: { 'docs/architecture/incidents/inc-1.md': incident('SLOT_TAKEN') },
+    });
+
+    commitFiles(root, {
+      message: 'docs(incidents): inc-2',
+      at: '2026-03-03T09:00:00Z',
+      files: { 'docs/architecture/incidents/inc-2.md': incident('SLOT_TAKEN') },
+    });
+
+    commitFiles(root, {
+      message: 'docs(story): US2 from inc-3, US3 from elsewhere',
+      at: '2026-03-04T09:00:00Z',
+      files: {
+        'docs/architecture/incidents/inc-3.md': incident('SLOT_TAKEN'),
+        'docs/architecture/stories/US2.md': story('Incident docs/architecture/incidents/inc-3.md.'),
+        'docs/architecture/stories/US3.md': story('Incident docs/architecture/incidents/inc-9.md, never written.'),
+      },
+    });
+
+    const view = measuresOf(root);
+
+    expect(storyOf(view, 'US2').repeatIncident).toBe('docs/architecture/incidents/inc-1.md');
+    expect(storyOf(view, 'US3').repeatIncident).toBeUndefined();
+  });
+
+  it('says that git could not be read when it is on the PATH and cannot be run, never that it answered nothing', () => {
+    const root = repository();
+    const bin = tempDir('measures-close-bin');
+    const previous = process.env['PATH'];
+
+    fs.writeFileSync(path.join(bin, 'git'), '#!/bin/sh\n', { mode: 0o644 });
+    process.env['PATH'] = bin;
+
+    try {
+      expect(() => runGit(root, ['log', '--format=%H', '-n', '1'])).toThrow('git log could not be read: EACCES.');
+    } finally {
+      process.env['PATH'] = previous;
+    }
+  });
 });

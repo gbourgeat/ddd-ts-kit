@@ -97,4 +97,51 @@ describe('doctor, on the dependencies of the checkout', () => {
       { area: 'install', name: '@ddd-ts-kit/kafka', problem: 'other version', expected: VERSION, found: '0.2.0' },
     ]);
   });
+
+  it('reads the install of a pnpm workspace above the project, named by its pnpm-workspace.yaml', () => {
+    const pnpm = project('pnpm');
+    const above = path.dirname(pnpm);
+
+    installKit(pnpm);
+    fs.renameSync(path.join(pnpm, 'node_modules'), path.join(above, 'node_modules'));
+    write(above, 'pnpm-workspace.yaml', "packages:\n  - 'shop'\n");
+    write(above, 'pnpm-lock.yaml', 'lockfileVersion: 9\n');
+    fs.utimesSync(path.join(above, 'pnpm-lock.yaml'), new Date(0), new Date(0));
+
+    expect(cli(pnpm, 'doctor').stdout).toContain('This checkout runs it');
+  });
+
+  it('judges the freshness of the install only where the lockfile is, and nothing without one', () => {
+    installKit(root);
+    fs.rmSync(path.join(root, 'package-lock.json'), { force: true });
+    write(root, 'node_modules/@ddd-ts-kit/kernel/package.json', JSON.stringify({ version: '0.1.0' }));
+
+    expect(jsonAt(cli(root, 'doctor', '--json').json(), 'findings')).toEqual([
+      { area: 'install', name: '@ddd-ts-kit/kernel', problem: 'other version', expected: VERSION, found: '0.1.0' },
+    ]);
+  });
+
+  it('reads a package of the kit whose manifest it cannot parse as not installed', () => {
+    installKit(root);
+    write(root, 'node_modules/@ddd-ts-kit/kernel/package.json', '{ not json');
+
+    expect(jsonAt(cli(root, 'doctor', '--json').json(), 'findings')).toEqual([
+      { area: 'install', name: '@ddd-ts-kit/kernel', problem: 'not installed', expected: VERSION },
+    ]);
+  });
+
+  it('does not judge the install script of a package whose manifest it cannot read', () => {
+    const prisma = path.join(tempDir('doctor-install-prisma'), 'shop');
+
+    cli(prisma, 'init', '--context', 'billing:core', '--package-manager', 'npm', '--orm', 'prisma');
+    installKit(prisma);
+    write(prisma, 'node_modules/prisma/package.json', JSON.stringify({ name: 'prisma', version: '6.0.0' }));
+    write(prisma, 'node_modules/@prisma/engines/package.json', '{ not json');
+
+    const findings = jsonAt(cli(prisma, 'doctor', '--json').json(), 'findings');
+
+    expect(Array.isArray(findings) ? findings.map((finding) => jsonAt(finding, 'area')) : []).not.toContain(
+      'install-script',
+    );
+  });
 });

@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
+import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, write } from './helpers';
+import { cli, read, tempDir, write } from './helpers';
+import { expectOk } from './support/expect-ok';
 import { git } from './support/git';
 import { HANDLER_SPEC, slicedProject, WRITTEN_TITLE, commit } from './support/sliced-project';
 
@@ -229,6 +231,102 @@ describe('digest --base, on a repository that keeps its specs out of its archive
 
     expect(digest.code).toBe(0);
     expect(digest.stdout).toContain(`- \`${HANDLER_SPEC}\`: ${WRITTEN_TITLE}`);
+  });
+});
+
+describe('digest --base, on a branch that adds a context and its events', () => {
+  let root: string;
+  let digest: string;
+
+  beforeAll(() => {
+    root = slicedProject();
+    git(root, 'checkout', '--quiet', '-b', 'slice/shipping');
+
+    expectOk(cli(root, 'generate', 'integration-event', 'billing', 'Invoice', 'Issued'));
+
+    expectOk(
+      cli(
+        root,
+        'generate',
+        'context',
+        'shipping',
+        '--classification',
+        'supporting',
+        '--upstream',
+        'billing',
+        '--term',
+        'Parcel=A package handed to a carrier',
+      ),
+    );
+
+    expectOk(cli(root, 'generate', 'integration-handler', 'shipping', 'billing', 'billing.invoice.issued'));
+
+    // The roles written otherwise than as an object literal: nobody is read as holding a permission by name.
+    write(
+      root,
+      'src/platform/auth/roles/roles.ts',
+      read(root, 'src/platform/auth/roles/roles.ts').replace(/= \{([\s\S]*)\};\n$/, '= Object.freeze({$1});\n'),
+    );
+
+    write(root, 'src/shared-kernel/money.ts', 'export type Money = { readonly cents: number };\n');
+    write(root, 'test/acceptance/shipping.acceptance.spec.ts', "it.todo('#US2.01 ships a parcel');\n");
+    commit(root, 'feat(shipping): react to an issued invoice');
+    digest = cli(root, 'digest', '--base', 'main').stdout;
+  });
+
+  it('names the context added with the event it consumes, and the event the other publishes, with its versions', () => {
+    expect(digest).toContain('- `shipping` (context added)');
+    expect(digest).toContain('  - consumed event added: `billing.invoice.issued` from billing, by `');
+    expect(digest).toContain('  - published event added: `billing.invoice.issued` v1');
+    expect(digest).toContain('granted to no role by name');
+  });
+
+  it('reads the shared kernel with the domain and an acceptance spec with the tests', () => {
+    expect(digest).toMatch(/^- Domain: .*`src\/shared-kernel\/money\.ts`/m);
+    expect(digest).toMatch(/^- Tests: .*`test\/acceptance\/shipping\.acceptance\.spec\.ts`/m);
+  });
+
+  it('digests nothing against its own HEAD', () => {
+    const same = cli(root, 'digest', '--base', 'HEAD').stdout;
+
+    expect(same).toContain('No use case, permission, route, event or port changed.');
+    expect(same).toContain('No file to review.');
+    expect(same).toContain('0 files changed');
+  });
+});
+
+describe('digest --base, on a base that holds no project this version reads', () => {
+  it('says so in a note when the base commit holds no config at this path, and when it holds one it cannot read', () => {
+    const top = tempDir('digest-no-project');
+    const root = path.join(top, 'apps', 'invoicing');
+
+    git(top, 'init', '--quiet', '--initial-branch', 'main');
+    write(top, 'README.md', '# The repository\n');
+    commit(top, 'chore: the repository');
+
+    const before = git(top, 'rev-parse', 'HEAD').trim();
+
+    expectOk(cli(root, 'init', '--context', 'billing:core'));
+
+    const config = read(root, 'ddd-ts-kit.config.json');
+
+    write(root, 'ddd-ts-kit.config.json', '[]\n');
+    commit(top, 'feat: the project, its config broken');
+
+    const broken = git(top, 'rev-parse', 'HEAD').trim();
+
+    write(root, 'ddd-ts-kit.config.json', config);
+    commit(top, 'fix: the config');
+
+    expect(cli(root, 'digest', '--base', before, '--json').json()).toMatchObject({
+      notes: [
+        `The contexts of the base are not described: ${before.slice(0, 7)} holds no ddd-ts-kit.config.json at this path.`,
+      ],
+    });
+
+    expect(cli(root, 'digest', '--base', broken).stdout).toContain(
+      '- The contexts of the base are not described: ddd-ts-kit.config.json must hold a JSON object.',
+    );
   });
 });
 

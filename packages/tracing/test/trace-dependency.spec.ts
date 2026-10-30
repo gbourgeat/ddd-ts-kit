@@ -1,3 +1,4 @@
+import { SpanStatusCode } from '@opentelemetry/api';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LocalRootTracker, configureTracing, resetTracingConfiguration, traceDependency, withSpan } from '../src';
 import { AccountRepository } from './support/account-repository';
@@ -71,6 +72,26 @@ describe('traceDependency', () => {
     await expect(wrapped.lazyCount()).resolves.toBe(1);
 
     expect(tracing.spans().map((span) => span.name)).toEqual(['repository AccountRepository.lazyCount']);
+  });
+
+  it('ends the span of a method it learnt to be async when a later call throws at once or answers no promise', async () => {
+    const wrapped = repository();
+
+    await wrapped.lazyFind('acc-1');
+    await expect(wrapped.lazyFind('acc-1')).resolves.toBe(100);
+    expect(() => wrapped.lazyFind('')).toThrow(RangeError);
+    expect(wrapped.lazyFind('acc-9')).toBeUndefined();
+
+    const spans = tracing.spans().filter((span) => span.name === 'repository AccountRepository.lazyFind');
+
+    expect(spans.map((span) => span.status.code)).toEqual([
+      SpanStatusCode.UNSET,
+      SpanStatusCode.ERROR,
+      SpanStatusCode.UNSET,
+    ]);
+
+    expect(spans[1]?.attributes).toMatchObject({ 'error.type': 'RangeError' });
+    expect(spans.every((span) => span.ended)).toBe(true);
   });
 
   it('nests dependency spans under the active span', async () => {

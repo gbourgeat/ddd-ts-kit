@@ -39,6 +39,11 @@ export class MemoryConsumer<K, V> implements KafkaJS.Consumer<K, V>, GroupMember
 
   private readonly reading = new Set<string>();
 
+  /** While disconnecting, the partitions whose next record the client had already fetched. */
+  private readonly fetched = new Set<string>();
+
+  private disconnecting = false;
+
   private readonly handling = new Set<Promise<void>>();
 
   private handler: ((payload: KafkaJS.EachMessagePayload<K, V>) => Promise<void>) | undefined;
@@ -68,18 +73,29 @@ export class MemoryConsumer<K, V> implements KafkaJS.Consumer<K, V>, GroupMember
     this.stopListening = this.cluster.listen(this);
   }
 
-  /** Reads nothing more, lets `eachMessage` finish, then leaves: its partitions go to the other members. */
+  /**
+   * Fetches nothing more, lets `eachMessage` finish, then leaves: its partitions go to the other
+   * members. What the client had already fetched still reaches `eachMessage`: the record that
+   * follows the one in progress on each partition being read.
+   */
   async disconnect(): Promise<void> {
     if (!this.client.isConnected) {
       return;
     }
 
-    this.handler = undefined;
+    for (const key of this.reading) {
+      this.fetched.add(key);
+    }
+
+    this.disconnecting = true;
 
     while (this.handling.size > 0) {
       await Promise.allSettled([...this.handling]);
     }
 
+    this.handler = undefined;
+    this.disconnecting = false;
+    this.fetched.clear();
     this.client.disconnect();
     this.stopListening();
     this.group.leave(this);
@@ -231,6 +247,7 @@ export class MemoryConsumer<K, V> implements KafkaJS.Consumer<K, V>, GroupMember
 
       if (this.canRead(key) && record !== undefined) {
         this.reading.add(key);
+        this.fetched.delete(key);
         const work = this.handle(topic, partition, record);
 
         this.handling.add(work);
@@ -244,6 +261,7 @@ export class MemoryConsumer<K, V> implements KafkaJS.Consumer<K, V>, GroupMember
       this.handler !== undefined &&
       this.client.isConnected &&
       this.wire.answering() &&
+      (!this.disconnecting || this.fetched.has(key)) &&
       !this.reading.has(key) &&
       !this.pausedKeys.has(key)
     );
@@ -305,10 +323,17 @@ export class MemoryConsumer<K, V> implements KafkaJS.Consumer<K, V>, GroupMember
     }
   }
 
+  /** The keys of the partitions named, or of every assigned partition of the topic; a partition the group took back is refused, as librdkafka refuses it. */
   private keysOf(topics: readonly Pausable[]): string[] {
     return topics.flatMap(({ topic, partitions }) =>
       (partitions ?? this.assigned.filter((entry) => entry.topic === topic).map((entry) => entry.partition)).map(
-        (partition) => positionKey(topic, partition),
+        (partition) => {
+          if (!this.assigned.some((entry) => entry.topic === topic && entry.partition === partition)) {
+            throw kafkaError('ERR__UNKNOWN_PARTITION', 'Local: Unknown partition');
+          }
+
+          return positionKey(topic, partition);
+        },
       ),
     );
   }

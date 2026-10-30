@@ -91,6 +91,10 @@ describe('the root of a type written as one reference', () => {
     expect(typeRoot('A<X> | B<Y>')).toBeUndefined();
     expect(typeRoot("'draft'")).toBeUndefined();
   });
+
+  it('is nothing for an indexed access whose bracket never opens', () => {
+    expect(typeRoot('Foo]')).toBeUndefined();
+  });
 });
 
 describe('the interfaces and type aliases of a file', () => {
@@ -111,6 +115,10 @@ describe('the interfaces and type aliases of a file', () => {
       "type Code = 'a'\n  | 'b'",
       "type Inner = 'c'",
     ]);
+  });
+
+  it('end a type alias at the end of the text when nothing ends it before', () => {
+    expect(typeDeclarations('type Code = string')).toEqual([{ name: 'Code', start: 0, end: 18, topLevel: true }]);
   });
 });
 

@@ -1,3 +1,4 @@
+import { PassThrough } from 'node:stream';
 import { describe, expect, it } from 'vitest';
 import { DomainError, FixedClock, LOG_LEVELS, SCRUBBED_MESSAGE } from '@ddd-ts-kit/kernel';
 import { StdoutLogger } from '../src';
@@ -141,6 +142,27 @@ describe('StdoutLogger, on errors, levels and flush', () => {
 
     expect(LOG_LEVELS.filter((level) => new StdoutLogger().isLevelEnabled(level))).toEqual(['info', 'warn', 'error']);
     expect(LOG_LEVELS.filter((level) => quiet.isLevelEnabled(level))).toEqual(['error']);
+  });
+
+  it('writes each line on the stream it is given, and a write of the project wins over it', () => {
+    const stream = new PassThrough();
+    const lines: string[] = [];
+
+    new StdoutLogger({ clock, stream }).info('on the stream');
+    new StdoutLogger({ clock, stream, write: (line) => lines.push(line) }).info('on the write');
+
+    expect(String(stream.read())).toContain('"message":"on the stream"');
+    expect(lines).toHaveLength(1);
+  });
+
+  it('resolves its flush when its stream throws, as a redirected standard output does on a full disk', async () => {
+    const stream = {
+      write(): boolean {
+        throw new Error('ENOSPC');
+      },
+    };
+
+    await expect(new StdoutLogger({ stream }).flush()).resolves.toBeUndefined();
   });
 
   it('resolves its flush, on the standard output and on a write of the project, and stays usable', async () => {

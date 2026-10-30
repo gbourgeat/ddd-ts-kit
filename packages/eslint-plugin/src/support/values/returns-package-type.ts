@@ -20,15 +20,10 @@ export function returnsPackageType(file: LintedFile, program: TSESTree.Program, 
 }
 
 function leftmost(name: TSESTree.EntityName): string {
-  switch (name.type) {
-    case AST_NODE_TYPES.Identifier: {
-      return name.name;
-    }
-    case AST_NODE_TYPES.TSQualifiedName: {
-      return leftmost(name.left);
-    }
-    default: {
-      return '';
-    }
+  if (name.type === AST_NODE_TYPES.TSQualifiedName) {
+    return leftmost(name.left);
   }
+
+  // `this` stands in an entity name only under `typeof`, never in a type reference.
+  return name.type === AST_NODE_TYPES.Identifier ? name.name : '';
 }

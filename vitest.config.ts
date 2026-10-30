@@ -1,4 +1,7 @@
-import { defineConfig } from 'vitest/config';
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 import { BaseSequencer, type TestSpecification } from 'vitest/node';
 import { ON_A_SERVER } from './pipeline/monorepo/affected-packages.mjs';
 
@@ -83,7 +86,37 @@ const MEASURED = Object.entries(FLOORS).filter(([name]) => AFFECTED.length === 0
  * report is not touched.
  */
 const INTEGRATION = process.env['KIT_COVERAGE'] === 'integration';
+
+const ENTRY_POINTS = ['packages/cli/src/bin.ts', 'packages/cli/src/refresh-declarations.ts'];
 const MEASURED_SOURCES = INTEGRATION ? ON_A_SERVER : AFFECTED;
+
+/**
+ * A spec that imports a sibling package reaches its sources, never its `dist`: what a spec of knex
+ * runs in the kernel is measured in `packages/kernel/src`, and no package has to be built before
+ * the specs of another run on its latest code. Each entry of the exports map of a package names
+ * the source file its `dist` file is compiled from; an alias matches the whole specifier, so that
+ * `@ddd-ts-kit/kernel` never catches `@ddd-ts-kit/kernel/testing`.
+ */
+interface Manifest {
+  readonly name: string;
+  readonly exports?: Readonly<Record<string, { readonly default: string }>>;
+}
+
+const PACKAGES = fileURLToPath(new URL('packages', import.meta.url));
+
+function sourcesOfTheSiblingPackages(): { find: RegExp; replacement: string }[] {
+  return readdirSync(PACKAGES).flatMap((folder) => {
+    const manifest = JSON.parse(readFileSync(path.join(PACKAGES, folder, 'package.json'), 'utf8')) as Manifest;
+
+    return Object.entries(manifest.exports ?? {}).map(([entry, target]) => {
+      const specifier = entry === '.' ? manifest.name : `${manifest.name}/${entry.slice(2)}`;
+      const source = target.default.replace(/^\.\/dist\//, 'src/').replace(/\.js$/, '.ts');
+      const find = new RegExp(`^${specifier.replace(/[/.]/g, '\\$&')}$`);
+
+      return { find, replacement: path.join(PACKAGES, folder, source) };
+    });
+  });
+}
 
 /**
  * A developer machine shares its cores with the editor, the coding agents and their worktrees: the
@@ -104,6 +137,7 @@ for (const name of REPOSITORY_OF_THE_CALLER) {
 }
 
 export default defineConfig({
+  resolve: { alias: sourcesOfTheSiblingPackages() },
   test: {
     include: ['packages/*/test/**/*.spec.ts'],
     // Every file runs at once on a laptop, its PGlite databases and child compilers included: a
@@ -118,6 +152,9 @@ export default defineConfig({
         MEASURED_SOURCES.length === 0
           ? ['packages/*/src/**']
           : MEASURED_SOURCES.map((name) => `packages/${name}/src/**`),
+      // The two entry points of the CLI run as a process and are never imported: one call each, which the
+      // end-to-end specs run from the built package. Left out rather than counted at zero.
+      exclude: [...coverageConfigDefaults.exclude, ...ENTRY_POINTS],
       reporter: INTEGRATION ? ['text-summary', 'lcov'] : ['text', 'cobertura', 'lcov'],
       reportsDirectory: INTEGRATION ? 'coverage/integration' : 'coverage',
       thresholds: INTEGRATION

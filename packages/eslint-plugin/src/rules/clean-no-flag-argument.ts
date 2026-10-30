@@ -1,8 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file';
+import type { ContextLocation } from '../project/location';
 import { className } from '../support/classes/class-name';
-import { isCallable } from '../support/classes/is-callable';
-import { isFunction } from '../support/classes/is-function';
+import { type Callable, isCallable } from '../support/classes/is-callable';
 import { memberName } from '../support/classes/member-name';
 import { visibilityOf } from '../support/classes/visibility-of';
 import { defineRule } from '../support/rule/define-rule';
@@ -20,6 +19,8 @@ export const cleanNoFlagArgument = defineRule<'flag'>({
       return {};
     }
 
+    const location = file.location;
+
     return {
       ClassBody(body) {
         const owner = className(body.parent);
@@ -32,7 +33,7 @@ export const cleanNoFlagArgument = defineRule<'flag'>({
         for (const member of body.body.filter(isCallable)) {
           const method = memberName(member) ?? '';
 
-          if (visibilityOf(member) !== 'public' || !isJudged(file, method)) {
+          if (visibilityOf(member) !== 'public' || !isJudged(location, method)) {
             continue;
           }
 
@@ -46,22 +47,12 @@ export const cleanNoFlagArgument = defineRule<'flag'>({
 });
 
 /** Public behaviour of the domain, and the `execute` of a use case. */
-function isJudged(file: LintedFile, method: string): boolean {
-  if (file.location.area !== 'context') {
-    return false;
-  }
-
-  return file.location.layer === 'domain' || (file.location.layer === 'application' && method === 'execute');
+function isJudged(location: ContextLocation, method: string): boolean {
+  return location.layer === 'domain' || (location.layer === 'application' && method === 'execute');
 }
 
-function flagsOf(member: TSESTree.MethodDefinition | TSESTree.PropertyDefinition): TSESTree.Identifier[] {
-  const callable = member.value;
-
-  if (callable === null || !isFunction(callable)) {
-    return [];
-  }
-
-  return callable.params.flatMap((parameter) => {
+function flagsOf(member: Callable): TSESTree.Identifier[] {
+  return member.value.params.flatMap((parameter) => {
     const flag = flagOf(parameter);
 
     return flag === undefined ? [] : [flag];

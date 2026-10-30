@@ -215,4 +215,32 @@ describe('mutation, the survivors it lists', () => {
     expect(missing.stderr).toContain(`No mutation report at ${REPORT}.`);
     expect(missing.stderr).toContain('npm run test:mutation');
   });
+
+  it('says so when the report holds no mutant of a context, passing over a file without mutants and a mutant without status', () => {
+    const bare = initProject('--context', 'billing:core');
+
+    write(
+      bare,
+      REPORT,
+      JSON.stringify({
+        schemaVersion: '2',
+        files: {
+          'src/platform/config/read-config.ts': { language: 'typescript', source: '' },
+          [BILLING]: { language: 'typescript', source: '', mutants: [{ id: '0', mutatorName: 'StringLiteral' }, 7] },
+        },
+      }),
+    );
+
+    const scored = cli(bare, 'mutation', '--survivors');
+
+    expect(scored.code).toBe(0);
+    expect(scored.stdout).toMatch(/^billing\s+domain\s+0\s+0\s+0\s+0\s+100\.0%\s+80%\s+held$/m);
+    expect(scored.stdout).toContain('Survivors: none.');
+
+    write(bare, REPORT, JSON.stringify({ schemaVersion: '2', files: { 'src/platform/config/read-config.ts': {} } }));
+
+    expect(cli(bare, 'mutation').stdout).toBe(
+      'The report holds no mutant of a context: nothing of the domain and application layers was mutated.',
+    );
+  });
 });

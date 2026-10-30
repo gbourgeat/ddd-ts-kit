@@ -11,8 +11,9 @@ export function argumentsOf({ read, injected }: NestMethod, request: Request): u
 
   for (const { index, source, key } of read.parameters) {
     const part: unknown = request[source];
+    const name = source === 'headers' ? key?.toLowerCase() : key;
 
-    args[index] = key === undefined ? part : fieldOf(part, source === 'headers' ? key.toLowerCase() : key);
+    args[index] = name === undefined ? part : fieldOf(part, name);
   }
 
   const handed: Readonly<Record<Injected, unknown>> = {
@@ -28,12 +29,6 @@ export function argumentsOf({ read, injected }: NestMethod, request: Request): u
   return args;
 }
 
-function fieldOf(part: unknown, key: string): unknown {
-  if (typeof part !== 'object' || part === null) {
-    return undefined;
-  }
-
-  const value: unknown = Reflect.get(part, key);
-
-  return value;
+function fieldOf(part: unknown, name: string): unknown {
+  return typeof part === 'object' && part !== null ? (Reflect.get(part, name) as unknown) : undefined;
 }

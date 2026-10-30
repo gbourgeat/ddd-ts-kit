@@ -100,6 +100,24 @@ describe('check --commit-size', () => {
     fs.rmSync(path.join(root, 'dump.sql'));
   });
 
+  it('counts no line for an untracked link to nothing, and names the platform as the slice of its files', () => {
+    const before = cli(root, 'check', '--commit-size', '--json').json();
+
+    fs.symlinkSync('nowhere.ts', path.join(root, 'dangling.ts'));
+    write(root, 'src/platform/http/cors.ts', 'export const cors = true;\n');
+
+    const measured = cli(root, 'check', '--commit-size', '--json').json();
+
+    expect(measured).toMatchObject({
+      files: Number(Reflect.get(Object(before), 'files')) + 2,
+      lines: Number(Reflect.get(Object(before), 'lines')) + 1,
+      slices: expect.arrayContaining([{ slice: 'platform', files: 1 }]),
+    });
+
+    fs.rmSync(path.join(root, 'dangling.ts'));
+    fs.rmSync(path.join(root, 'src/platform/http/cors.ts'));
+  });
+
   it('with --staged measures the index only', () => {
     git(root, 'add', 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.ts');
 

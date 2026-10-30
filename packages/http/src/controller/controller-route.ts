@@ -11,9 +11,5 @@ export function controllerRoute(
 ): Route {
   const [route] = controllerRoutes([controller], options);
 
-  if (route === undefined) {
-    throw new Error('A controller declares one route, and none was built.');
-  }
-
   return route;
 }

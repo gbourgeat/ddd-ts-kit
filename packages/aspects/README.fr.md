@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c552df03f697335d -->
+<!-- translation-of: README.md sha256:1340a1a9b38b6626 -->
 
 # @ddd-ts-kit/aspects
 
@@ -496,6 +496,8 @@ Il implémente tout le port, tenu par `loggerContract` comme les adaptateurs pin
 - **`flush()`** se résout une fois que la sortie standard a pris chaque ligne écrite jusque-là,
   et ne rejette jamais ; le *logger* reste utilisable ensuite. `app.stop()` du *package* di
   l'appelle en dernier.
+- **`stream`** envoie les lignes vers un autre flux que la sortie standard, et `flush()` attend
+  ce flux. Un `write` du projet reçoit chaque ligne à la place et l'emporte sur `stream`.
 - **Un appel de journalisation ne lève jamais d'exception.** Des champs qui ne peuvent être ni
   lus ni sérialisés (un accesseur qui lève, un objet circulaire), sur une entrée ou sur un
   enfant, donnent l'entrée sans eux, marquée `logError: "unserializable fields"`.

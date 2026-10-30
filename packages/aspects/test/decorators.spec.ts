@@ -2,6 +2,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { decoratorOf } from '../src/decorators';
+import { createAspectFakes, withAspectRuntime } from '../src/testing';
 import type { DecoratedRateGateway } from './fixtures/decorated-rate-gateway';
 import { decoratorModes, removeCompiled } from './support/decorator-modes';
 import { PairNotQuoted } from './support/pair-not-quoted';
@@ -41,6 +42,18 @@ for (const mode of decoratorModes(FIXTURES)) {
 
 afterAll(() => {
   removeCompiled(FIXTURES);
+});
+
+describe('a method decorated in the legacy mode, called off its instance', () => {
+  it('runs the original as it is: the advice belongs to an instance, and a call without one gets none', async () => {
+    const { DecoratedRateGateway } = await import('./fixtures/decorated-rate-gateway');
+    const fakes = createAspectFakes();
+    const { rate } = new DecoratedRateGateway();
+
+    await expect(withAspectRuntime(fakes, () => rate.call(undefined, 'EUR-USD'))).rejects.toBeInstanceOf(TypeError);
+
+    expect(fakes.logger.entries).toEqual([]);
+  });
 });
 
 function describeDecorators(label: string, load: () => Promise<Loaded>): void {

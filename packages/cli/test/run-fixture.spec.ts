@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Fixture } from '../src/check/fixtures/fixture';
+import type { Rule } from '../src/check/model/rule';
 import { FIXTURES } from '../src/check/fixtures/fixtures';
 import { runFixture } from '../src/check/fixtures/run-fixture';
 
@@ -54,5 +55,38 @@ describe('a rule fixture that does not behave as it says', () => {
   it('says which violation it found when it behaves', () => {
     expect(runFixture(PASSING)).toMatchObject({ ok: true, detail: 'no violation' });
     expect(runFixture(FAILING).detail).toMatch(/^clean\/no-hash-private at .+:\d+$/);
+  });
+});
+
+/** A rule of a spec, not of the kit: it reports every source and says nothing of what to do. */
+const WITHOUT_FIX: Rule = {
+  id: 'spec/without-fix',
+  description: 'Reports every source without a fix.',
+  scope: 'file',
+  run(project) {
+    return project.files.map(({ path }) => ({
+      ruleId: this.id,
+      severity: 'error',
+      file: path,
+      line: 1,
+      message: 'Reported without a fix.',
+      fix: '',
+    }));
+  },
+};
+
+describe('a rule fixture of a rule that writes no fix', () => {
+  it('is refused: a violation says what to do', () => {
+    const fixture: Fixture = {
+      ruleId: WITHOUT_FIX.id,
+      name: 'a source the rule reports',
+      files: { 'ddd-ts-kit.config.json': '{ "contexts": {} }\n', 'src/invoice.ts': 'export const invoice = 1;\n' },
+      expect: { file: 'src/invoice.ts' },
+    };
+
+    expect(runFixture(fixture, { catalogue: [WITHOUT_FIX] })).toMatchObject({
+      ok: false,
+      detail: 'the violation carries no fix',
+    });
   });
 });

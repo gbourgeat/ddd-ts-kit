@@ -3,7 +3,10 @@ import {
   DomainEventDispatcher,
   EventBus,
   FixedClock,
+  InMemoryDomainEventDispatcher,
+  InMemoryEventBus,
   InMemoryMetrics,
+  IntegrationEventSubscriber,
   InMemoryReadModelStore,
   Criteria,
   scoped,
@@ -14,6 +17,7 @@ import {
   contextModule,
   createApplication,
   createTestApplication,
+  defineContextModule,
   fake,
   kernelModule,
   override,
@@ -84,6 +88,55 @@ describe('a declared projection', () => {
     await app.eventBus.publish([placed('evt-2', 2)]);
 
     expect(await app.get(CustomerOrders).get('customer-1')).toBeUndefined();
+  });
+});
+
+describe('a declared projection, in an application that binds no Metrics', () => {
+  it('applies the events all the same: nothing is measured', async () => {
+    const bus = new InMemoryEventBus();
+
+    const platform = defineContextModule({
+      name: 'platform',
+      register(builder) {
+        builder.bind(IntegrationEventSubscriber).toValue(bus);
+        builder.bind(DomainEventDispatcher).toValue(new InMemoryDomainEventDispatcher());
+      },
+    });
+
+    const app = createApplication({ modules: [platform, reportingModule()] });
+
+    await app.start();
+    await bus.publish([placed('evt-1', 1)]);
+
+    expect(await app.resolve(CustomerOrders).get('customer-1')).toMatchObject({
+      orders: 1,
+      lastOrderId: 'order-evt-1',
+    });
+
+    await app.stop();
+  });
+
+  it('fails the event, naming the projection and the method, when a fake of the projection has no such method', async () => {
+    const forgetful: Partial<InstanceType<typeof CustomerOrdersProjection>> = {};
+
+    const app = createTestApplication({
+      modules: [reportingModule()],
+      fakes: [fake(CustomerOrdersProjection, forgetful as InstanceType<typeof CustomerOrdersProjection>)],
+    });
+
+    await app.start();
+
+    const failure = await app.eventBus.publish([placed('evt-1', 1)]).then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+
+    expect(failure instanceof AggregateError ? failure.errors : []).toMatchObject([
+      {
+        code: 'INCOMPLETE_BINDING',
+        message: 'Projection Object declares that "orderPlaced" applies an event, and has no such method.',
+      },
+    ]);
   });
 });
 

@@ -90,20 +90,13 @@ function judged(file: SourceFile, project: Project): Finding[] {
   return [...(verdict.explained || allowed ? [] : tooMany(verdict)), ...misnamed(file, verdict)];
 }
 
+/** One finding, on the second export: `judgeExports` explains a lone one, so there are at least two here. */
 function tooMany({ counted }: ExportVerdict): Finding[] {
-  const [, second] = counted;
-
-  if (second === undefined) {
-    return [];
-  }
-
-  return [
-    {
-      line: second.line,
-      message: `The file exports ${counted.length} classes, interfaces or functions (${counted.map(({ name }) => name).join(', ')}).`,
-      fix: COUNT_FIX,
-    },
-  ];
+  return counted.slice(1, 2).map((second) => ({
+    line: second.line,
+    message: `The file exports ${counted.length} classes, interfaces or functions (${counted.map(({ name }) => name).join(', ')}).`,
+    fix: COUNT_FIX,
+  }));
 }
 
 function misnamed(file: SourceFile, { mains }: ExportVerdict): Finding[] {

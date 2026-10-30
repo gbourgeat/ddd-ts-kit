@@ -13,6 +13,7 @@ import { MAX_ATTEMPTS } from './support/environment';
 import { PLACED, anEvent } from './support/events';
 import { failuresOf } from './support/hooks';
 import { recorder } from './support/recorder';
+import { eventually } from './support/waiting';
 
 describe.each(BROKERS)('KafkaEventBus: dead letters, %s', { timeout: 60_000 }, (_name, connect) => {
   let broker: Broker;
@@ -44,6 +45,64 @@ describe.each(BROKERS)('KafkaEventBus: dead letters, %s', { timeout: 60_000 }, (
     expect(shipping.ids()).toEqual(['evt-1']);
     expect((await broker.recordsOf(topic))[1]?.headers).toMatchObject({ [REPLAY_FOR_HEADER]: consumer });
     expect(await billingBus.replayDead({ consumer, type: PLACED })).toBe(0);
+  });
+
+  it('replays up to the limit, oldest first, and leaves the rest dead for the next replay', async () => {
+    const consumer = broker.consumer('billing');
+    const bus = broker.bus({ consumer, topics: { partitions: 1 } });
+    const billing = recorder(MAX_ATTEMPTS * 2);
+    const topic = broker.topicOf(PLACED);
+
+    bus.subscribe(PLACED, billing.handler);
+    await bus.publish([anEvent('evt-1'), anEvent('evt-2')]);
+    await broker.settled(bus);
+    expect(await broker.countIn(deadTopicOf(consumer, topic))).toBe(2);
+
+    expect(await bus.replayDead({ consumer, type: PLACED }, 1)).toBe(1);
+    await broker.settled(bus);
+    expect(billing.ids().slice(MAX_ATTEMPTS * 2)).toEqual(['evt-1']);
+
+    expect(await bus.replayDead({ consumer, type: PLACED }, 1)).toBe(1);
+    await broker.settled(bus);
+    expect(billing.ids().slice(MAX_ATTEMPTS * 2)).toEqual(['evt-1', 'evt-2']);
+    expect(await bus.replayDead({ consumer, type: PLACED })).toBe(0);
+  });
+
+  it('stops a replay whose records cannot be moved, and leaves them dead', async () => {
+    const consumer = broker.consumer('billing');
+    const bus = broker.bus({ consumer });
+    const billing = recorder(MAX_ATTEMPTS);
+    const topic = broker.topicOf(PLACED);
+
+    bus.subscribe(PLACED, billing.handler);
+    await bus.publish([anEvent('evt-1')]);
+    await broker.settled(bus);
+    expect(await broker.countIn(deadTopicOf(consumer, topic))).toBe(1);
+
+    await broker.deleteTopic(topic);
+
+    expect(await bus.replayDead({ consumer, type: PLACED })).toBe(0);
+    expect(await broker.countIn(deadTopicOf(consumer, topic))).toBe(1);
+  });
+
+  it('keeps a record it cannot park on its dead-letter topic, and reports why', async () => {
+    const consumer = broker.consumer('billing');
+    const reported: KafkaFailure[] = [];
+    const bus = broker.bus({ consumer, onFailure: failuresOf(reported) });
+    const billing = recorder(MAX_ATTEMPTS);
+    const topic = broker.topicOf(PLACED);
+
+    bus.subscribe(PLACED, billing.handler);
+    await bus.assertTopology();
+    await broker.deleteTopic(deadTopicOf(consumer, topic));
+    await bus.publish([anEvent('evt-1')]);
+
+    await eventually(() =>
+      reported.some((failure) => failure.kind === 'connection' && failure.code === 'ERR_UNKNOWN_TOPIC_OR_PART'),
+    );
+
+    expect(billing.received).toHaveLength(MAX_ATTEMPTS);
+    expect(await broker.lagOf(consumer, [topic])).toBe(1);
   });
 
   it('copies a record that is not an envelope straight to the dead-letter topic and moves on', async () => {

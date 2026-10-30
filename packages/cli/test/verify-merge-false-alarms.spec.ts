@@ -100,6 +100,24 @@ describe('verify-merge, the choices of a merge that are no loss', () => {
   });
 });
 
+describe('verify-merge, a base line the merge dropped', () => {
+  it('is lost where the side kept it, outside the lines it changed, though the side added a copy of it', () => {
+    const kept = 'return Money.of(cents);';
+
+    const histories = {
+      base: { [PRICING]: pricing('const cents = amount.cents;', kept) },
+      ours: { [PRICING]: pricing('const cents = amount.cents;', kept, kept) },
+      theirs: { [PRICING]: pricing('const cents = amount.cents;', 'audit(cents);', kept) },
+    };
+
+    const dropped = merged(histories, { [PRICING]: pricing('const cents = amount.cents;', 'audit(cents);') });
+    const errors = jsonAt(cli(dropped, 'verify-merge', 'HEAD', '--json').json(), 'merges', '0', 'errors');
+
+    expect(Array.isArray(errors) ? errors.map((finding) => jsonAt(finding, 'line')) : []).toContain(3);
+    expect(kinds(dropped, 'errors')).toContain('lost-line');
+  });
+});
+
 describe('verify-merge, files it reads as one thing or not at all', () => {
   it('reports a file the merge commit deleted, that both sides kept, as one finding', () => {
     const guide = Array.from({ length: 6 }, (_, index) => `Step ${index + 1} of issuing an invoice.`).join('\n');

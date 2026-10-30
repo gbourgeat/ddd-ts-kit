@@ -182,4 +182,15 @@ describe('the trunk phase of a story', () => {
 
     expect(trunkPhase(new Workspace(us6, false), 'US6')).toMatchObject({ met: false, detail: 'gone names no commit' });
   });
+
+  it('is read elsewhere when the file of the story names no story or no base', () => {
+    const us6 = worktrees['us6'] ?? '';
+
+    write(us6, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US6', branch: 'story/us6' }));
+
+    expect(trunkPhase(new Workspace(us6, false), 'US6')).toMatchObject({
+      met: true,
+      detail: 'read in the worktree of the story',
+    });
+  });
 });

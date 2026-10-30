@@ -166,9 +166,7 @@ function emittedExtension(extension: string): string {
 }
 
 function saidBy(failure: unknown): string {
-  if (!isRecord(failure)) {
-    return String(failure);
-  }
-
-  return [failure.stdout, failure.stderr].filter((output) => typeof output === 'string').join('');
+  return isRecord(failure)
+    ? [failure.stdout, failure.stderr].filter((output) => typeof output === 'string').join('')
+    : String(failure);
 }

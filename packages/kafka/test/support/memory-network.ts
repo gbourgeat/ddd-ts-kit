@@ -32,6 +32,11 @@ export class MemoryNetwork implements Network {
     this.wire.restore();
   }
 
+  /** The next send of a producer through this network fails fatally: the brokers forgot its state. */
+  forgetProducerState(): void {
+    this.wire.forgetProducerState();
+  }
+
   async close(): Promise<void> {
     this.wire.close();
   }

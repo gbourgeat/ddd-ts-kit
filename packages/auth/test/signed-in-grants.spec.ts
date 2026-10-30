@@ -9,7 +9,7 @@ import {
   type Authorizer,
   type Decision,
 } from '../src';
-import { authorizerContract, DenyAll } from '../src/testing';
+import { AllowAll, authorizerContract, DenyAll } from '../src/testing';
 import { billingPermissions, bob, catalogPermissions } from './support/billing';
 
 const issue = billingPermissions['invoice.issue'];
@@ -102,6 +102,18 @@ describe('SignedInGrantsAuthorizer.explain', () => {
         '    billing:invoice.read asked of the roles clerk',
         '      clerk grants billing:invoice.read',
       ].join('\n'),
+    );
+  });
+
+  it('gives the decision of a model that allows without explaining, one level deeper', async () => {
+    const allowing = new SignedInGrantsAuthorizer({ grants: ['catalog:*'], otherwise: new AllowAll() });
+
+    const { decision, trace } = await allowing.explain({ actor: bob, permission: read });
+
+    expect(decision).toEqual({ allowed: true });
+
+    expect(traceText(trace)).toBe(
+      ['x no grant of every signed-in person covers billing:invoice.read', '  the model allows'].join('\n'),
     );
   });
 

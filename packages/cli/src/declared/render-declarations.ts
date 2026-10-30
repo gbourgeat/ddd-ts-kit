@@ -66,10 +66,7 @@ function summaryOf(folderFiles: readonly string[], specifierOf: (file: string) =
   return `${folderFiles.map((file) => `export * from '${specifierOf(file)}';`).join('\n')}\n`;
 }
 
+/** Two keys of the map of the folders, which are never the same one. */
 function byPath(left: string, right: string): number {
-  if (left === right) {
-    return 0;
-  }
-
   return left < right ? -1 : 1;
 }

@@ -12,11 +12,7 @@ export function spanContextFromTraceparent(traceparent: string): SpanContext | u
     return undefined;
   }
 
-  const [, traceId, spanId, flags] = match;
-
-  if (traceId === undefined || spanId === undefined || flags === undefined) {
-    return undefined;
-  }
+  const [, traceId = '', spanId = '', flags = '00'] = match;
 
   const spanContext: SpanContext = {
     traceId,

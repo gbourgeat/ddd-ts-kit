@@ -2,6 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   ConcurrencyError,
+  PostgresSubjectKeyStore,
   UnreadableEventError,
   eventStoreTablesSql,
   postgresEventSourcing,
@@ -36,6 +37,7 @@ describe('the event store on PostgreSQL', () => {
     });
 
     expect(() => storedDataFrom('[1]', 'The data of e1')).toThrow(UnreadableEventError);
+    expect(() => storedDataFrom('42', 'The data of e1')).toThrow(UnreadableEventError);
     expect(() => storedDataFrom({ at: new Date(0) }, 'The data of e1')).toThrow('The data of e1 is not a JSON object');
   });
 
@@ -216,6 +218,22 @@ describe('PostgresCheckpointStore on an in-process PostgreSQL', () => {
 });
 
 describe('PostgresSubjectKeyStore on an in-process PostgreSQL', () => {
+  it('refuses to answer a key that an erasure removed while it was being created', async () => {
+    const racing: SqlRun = async (statement, parameters) => {
+      const rows = await run(statement, parameters);
+
+      if (statement.startsWith('insert into "shipping"."subject_keys"')) {
+        await run('delete from "shipping"."subject_keys" where subject = $1::text', [parameters[0] ?? '']);
+      }
+
+      return rows;
+    };
+
+    await expect(new PostgresSubjectKeyStore(racing, { schema: 'shipping' }).keyFor('customer-9')).rejects.toThrow(
+      'The key of customer-9 was erased while it was being created',
+    );
+  });
+
   it('creates the key of a subject once, finds it by its id, and forgets it for good when erased', async () => {
     const { subjectKeys } = stores;
 

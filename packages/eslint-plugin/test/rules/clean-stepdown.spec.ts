@@ -20,6 +20,10 @@ ruleTester.run('clean-stepdown', cleanStepdown, {
      const price = (line: Line): number => line.unit;`,
     `const price = (line: Line): number => line.unit;
      export const prices = lines.map(price);`,
+    `class Invoice {
+      total = price(this.line);
+    }
+    const price = (line: Line): number => line.unit;`,
     `export const parity = (n: number): boolean => isEven(n);
      function isEven(n: number): boolean { return n === 0 ? true : isOdd(n - 1); }
      function isOdd(n: number): boolean { return n === 0 ? false : isEven(n - 1); }`,

@@ -261,13 +261,10 @@ export class KnexOutboxStore implements OutboxStore {
 
 /** A sum is a bigint or a decimal, which drivers return as a string, and NULL over no row. */
 function countAt(row: unknown, column: string): number {
-  if (typeof row !== 'object' || row === null) {
-    return 0;
-  }
+  const counted: unknown =
+    typeof row === 'object' && row !== null ? Object.entries(row).find(([key]) => key === column)?.[1] : undefined;
 
-  const value: unknown = Object.entries(row).find(([key]) => key === column)?.[1];
-
-  return Number(value ?? 0);
+  return Number(counted ?? 0);
 }
 
 function toRecord(row: OutboxRow, dialect: SqlDialect): OutboxRecord {

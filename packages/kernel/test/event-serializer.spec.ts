@@ -8,6 +8,7 @@ import {
   StoredEventData,
   UnreadableEventError,
   defineStoredEvent,
+  personalData,
   storedDataOf,
   storedStampOf,
   type DomainEvent,
@@ -92,6 +93,15 @@ describe('EventSerializer', () => {
 });
 
 describe('crypto-shredding', () => {
+  it('seals the personal values held in a list, at any depth, and opens them again', async () => {
+    const cipher = new PersonalDataCipher(keys);
+    const contacts = [personalData('a7', 'ada@example.org'), 'public', { tags: ['vip'] }];
+    const sealed = await cipher.seal(storedDataOf({ contacts }));
+
+    expect(JSON.stringify(sealed)).not.toContain('ada@example.org');
+    expect(await cipher.open(sealed)).toEqual({ contacts: ['ada@example.org', 'public', { tags: ['vip'] }] });
+  });
+
   it('stores a personal value sealed with the key of its subject and reads it back in clear', async () => {
     const written = await serializer.serialize(new AccountOpened('a7', AT, 'Ada Lovelace'));
 

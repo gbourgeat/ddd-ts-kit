@@ -1,6 +1,5 @@
 import type { CursorPosition } from '../pagination/cursor-position';
-import { decodeCursor } from '../pagination/decode-cursor';
-import { InvalidPageRequestError } from '../pagination/invalid-page-request-error';
+import { cursorPositionOf } from '../pagination/cursor-position-of';
 import type { Sort } from '../pagination/sort';
 import type { CursorValues } from './cursor-values';
 import type { FieldDeclaration } from './field-declaration';
@@ -15,7 +14,7 @@ type Fields = Readonly<Record<string, FieldDeclaration>>;
  * holds reaches a store unchecked.
  */
 export function readCursor(cursor: string, sort: readonly Sort[], fields: Fields): CursorValues | undefined {
-  const position = decoded(cursor);
+  const position = cursorPositionOf(cursor);
 
   if (position === undefined || Object.keys(position).length !== sort.length) {
     return undefined;
@@ -39,18 +38,6 @@ export function readCursor(cursor: string, sort: readonly Sort[], fields: Fields
   }
 
   return values;
-}
-
-function decoded(cursor: string): CursorPosition | undefined {
-  try {
-    return decodeCursor(cursor);
-  } catch (error) {
-    if (error instanceof InvalidPageRequestError) {
-      return undefined;
-    }
-
-    throw error;
-  }
 }
 
 function valueOf(

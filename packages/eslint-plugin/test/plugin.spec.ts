@@ -204,6 +204,7 @@ describe('a rule set for some files', () => {
       'clean/stepdown': { severity: 'off', files: ['src/legacy/**'] },
       'clean/blank-lines': { severity: 'warn', files: ['test/**'] },
       'clean/function-size': { severity: 'off', files: [] },
+      'clean/braces': { severity: 'off', files: ['scripts/**'] },
     };
 
     const config = inProject({ rules }, (root) => dddTsKit({ tsconfigRootDir: root }));
@@ -221,9 +222,28 @@ describe('a rule set for some files', () => {
     expect(blankLines?.rules?.['@stylistic/padding-line-between-statements']).toEqual(expect.arrayContaining(['warn']));
     expect(names).not.toContain('ddd-ts-kit/rules/clean/function-size');
 
+    expect(config.find((entry) => entry.name === 'ddd-ts-kit/rules/clean/braces')).toMatchObject({
+      files: ['scripts/**'],
+      rules: { curly: 'off' },
+    });
+
     expect(
       config.find((entry) => entry.name === 'ddd-ts-kit/architecture')?.rules?.['ddd-ts-kit/clean-stepdown'],
     ).not.toBe('off');
+  });
+});
+
+describe('the config file', () => {
+  it('reads one that is not JSON as an empty config', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ddd-ts-kit-eslint-'));
+
+    try {
+      fs.writeFileSync(path.join(root, 'ddd-ts-kit.config.json'), '{ "contexts": ');
+
+      expect(architectureOf(root)?.rules).toEqual(inProject({}, (other) => architectureOf(other))?.rules);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

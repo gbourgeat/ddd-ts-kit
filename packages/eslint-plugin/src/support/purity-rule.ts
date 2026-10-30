@@ -1,4 +1,5 @@
-import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
+import type { LintedFile } from '../project/linted-file';
 import { defineRule, type Report } from './rule/define-rule';
 import { ambientName } from './globals/ambient-name';
 import { propertyName } from './globals/property-name';
@@ -40,16 +41,13 @@ export function purityRule(rule: Purity) {
         return {};
       }
 
-      const used = usageReporter(layer, report);
+      const { used, imported } = reporters(layer, report);
       const ambient = (node: TSESTree.Node): string => ambientName(sourceCode, node) ?? '';
+      const imports = moduleImports(rule, file, imported);
 
       return {
-        ...importListener(file, ({ node, target }) => {
-          if (target.kind !== 'file' && rule.modules.includes(moduleName(target))) {
-            report({ node, messageId: 'imported', data: { name: target.name, layer } });
-          }
-        }),
-        ImportSpecifier: (node) => used(node, forbiddenNamedImport(rule, node)),
+        ...imports,
+        ImportDeclaration: importDeclarationListener(rule, imports, used),
         MemberExpression: (node) => used(node, forbiddenMember(rule, ambient(node.object), propertyName(node))),
         'CallExpression:exit': (node: TSESTree.CallExpression) =>
           used(node, rule.calls.includes(ambient(node.callee)) ? `${ambient(node.callee)}()` : undefined),
@@ -59,13 +57,43 @@ export function purityRule(rule: Purity) {
   });
 }
 
-function usageReporter(
-  layer: string,
-  report: Report<'used' | 'imported'>,
-): (node: TSESTree.Node, what: string | undefined) => void {
-  return (node, what) => {
-    if (what !== undefined) {
-      report({ node, messageId: 'used', data: { what, layer } });
+interface Reporters {
+  /** A forbidden access, when `what` names one. */
+  readonly used: (node: TSESTree.Node, what: string | undefined) => void;
+  readonly imported: (node: TSESTree.Node, name: string) => void;
+}
+
+function reporters(layer: string, report: Report<'used' | 'imported'>): Reporters {
+  return {
+    used: (node, what) => {
+      if (what !== undefined) {
+        report({ node, messageId: 'used', data: { what, layer } });
+      }
+    },
+    imported: (node, name) => report({ node, messageId: 'imported', data: { name, layer } }),
+  };
+}
+
+/** The modules the rule forbids as a whole, however the file names them. */
+function moduleImports(rule: Purity, file: LintedFile, imported: Reporters['imported']): TSESLint.RuleListener {
+  return importListener(file, ({ node, target }) => {
+    if (target.kind !== 'file' && rule.modules.includes(moduleName(target))) {
+      imported(node, target.name);
+    }
+  });
+}
+
+/** The module as the import listener judges it, then each named import the rule forbids. */
+function importDeclarationListener(
+  rule: Purity,
+  imports: TSESLint.RuleListener,
+  used: Reporters['used'],
+): (node: TSESTree.ImportDeclaration) => void {
+  return (node) => {
+    imports.ImportDeclaration?.(node);
+
+    for (const specifier of namedSpecifiersOf(node)) {
+      used(specifier, forbiddenNamedImport(rule, node.source.value, specifier));
     }
   };
 }
@@ -74,12 +102,11 @@ function moduleName(target: { readonly kind: 'package' | 'builtin'; readonly nam
   return target.kind === 'builtin' ? (target.name.replace(/^node:/, '').split('/')[0] ?? '') : target.name;
 }
 
-function forbiddenNamedImport(rule: Purity, node: TSESTree.ImportSpecifier): string | undefined {
-  if (node.parent.type !== AST_NODE_TYPES.ImportDeclaration) {
-    return undefined;
-  }
+function namedSpecifiersOf(node: TSESTree.ImportDeclaration): TSESTree.ImportSpecifier[] {
+  return node.specifiers.filter((specifier) => specifier.type === AST_NODE_TYPES.ImportSpecifier);
+}
 
-  const source = node.parent.source.value;
+function forbiddenNamedImport(rule: Purity, source: string, node: TSESTree.ImportSpecifier): string | undefined {
   const name = node.imported.type === AST_NODE_TYPES.Identifier ? node.imported.name : node.imported.value;
 
   return rule.namedImports[source.replace(/^node:/, '')]?.includes(name) === true

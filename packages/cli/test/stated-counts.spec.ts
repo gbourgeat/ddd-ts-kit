@@ -62,9 +62,17 @@ const COUNTED: readonly Counted[] = [
 /**
  * Pages that describe the kit as it is. Left out: the changelog and `changes/`, written once for a
  * release; the proposals, which quote the counts of their day; the templates and the example,
- * whose pages describe a generated project.
+ * whose pages describe a generated project; the copy of the pages the site assembles on a
+ * workstation, which git ignores and which may date from an earlier source.
  */
-const LEFT_OUT = [/CHANGELOG(\.fr)?\.md$/, /^changes\//, /^docs\/proposals\//, /\/templates\//, /^examples\//];
+const LEFT_OUT = [
+  /CHANGELOG(\.fr)?\.md$/,
+  /^changes\//,
+  /^docs\/proposals\//,
+  /\/templates\//,
+  /^examples\//,
+  /^site\/src\/content\//,
+];
 
 describe('the counts a page states', () => {
   for (const counted of COUNTED) {

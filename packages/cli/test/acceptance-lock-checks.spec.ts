@@ -43,6 +43,26 @@ describe('the checks before a lock, unit', () => {
     expect(checked.unchecked).toHaveLength(2);
   });
 
+  it('runs no tool without a file to lock, and reads no script from a package.json it cannot parse', () => {
+    const run = (): never => {
+      throw new Error('no tool runs');
+    };
+
+    expect(checkLockedFiles(projectWith({ lint: 'eslint .' }), [], { run })).toEqual({ findings: [], unchecked: [] });
+
+    const broken = tempDir('lock-checks');
+
+    fs.writeFileSync(path.join(broken, 'package.json'), '{ not json');
+
+    expect(checkLockedFiles(broken, [SPEC], { run: () => ({ status: 1, output: 'never run' }) })).toEqual({
+      findings: [],
+      unchecked: [
+        expect.stringMatching(/^format: package\.json has no `format` script/),
+        'lint: package.json has no `lint` script',
+      ],
+    });
+  });
+
   it('runs the formatter in check mode and the linter on the files only, and names what they report', () => {
     const root = projectWith({ format: 'biome format --write .', lint: 'ddd-ts-kit lint' });
 

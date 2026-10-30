@@ -1,9 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import { Clock, FixedClock } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, kernelModule, overrideForTests, type Application } from '../src';
+import {
+  AsyncLocalStorageExecutionScope,
+  Clock,
+  DomainEventDispatcher,
+  FixedClock,
+  InMemoryDomainEventDispatcher,
+  InMemoryLock,
+  InMemoryLogger,
+  InMemoryMetrics,
+  InMemoryQueryBus,
+  JobScheduler,
+  QueryBus,
+  SequentialIdGenerator,
+} from '@ddd-ts-kit/kernel';
+import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
+import {
+  createApplication,
+  createTestApplication,
+  defineContextModule,
+  kernelModule,
+  overrideForTests,
+  type Application,
+} from '../src';
 import { createTestKernel } from '../src/testing/create-test-kernel';
 import { testApplicationOf } from '../src/testing/test-application-of';
 import type { Resolve } from '../src/wiring/resolve';
+import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
 import { orderingModule } from './support/ordering/ordering.module';
 
 /** An application whose private fields bear the names of members of the test kernel. */
@@ -133,5 +156,46 @@ describe('createTestApplication', () => {
     overrideForTests(app, Clock, later);
 
     expect(app.get(Clock)).toBe(later);
+  });
+
+  it('attaches the handlers again to a query bus, a dispatcher or a scheduler swapped in with overrideForTests', async () => {
+    const clock = new FixedClock(new Date('2026-03-02T09:58:30.000Z'));
+    const ran: string[] = [];
+
+    const reordering = defineContextModule({
+      name: 'reordering',
+      register(builder) {
+        builder.job('ordering.reorder-stock', { every: '1d' }).handledByFactory(() => ({
+          run: async () => void ran.push('ordering.reorder-stock'),
+        }));
+      },
+    });
+
+    const app = createTestApplication({ modules: [orderingModule, reordering] });
+    const queries = new InMemoryQueryBus();
+    const dispatcher = new InMemoryDomainEventDispatcher();
+
+    const scheduler = new ManualJobScheduler({
+      clock,
+      lock: new InMemoryLock(clock),
+      scope: new AsyncLocalStorageExecutionScope(),
+      ids: new SequentialIdGenerator('run'),
+      logger: new InMemoryLogger(),
+      metrics: new InMemoryMetrics(),
+    });
+
+    overrideForTests(app, QueryBus, queries);
+    overrideForTests(app, DomainEventDispatcher, dispatcher);
+    overrideForTests(app, JobScheduler, scheduler);
+
+    const id = await app.commandBus.execute(new PlaceOrder('book'));
+
+    expect(await queries.execute(new GetOrder(id))).toMatchObject({ id, sku: 'book' });
+    expect(app.get(DomainEventDispatcher)).toBe(dispatcher);
+    expect(scheduler.describe().map((job) => job.name)).toEqual(['ordering.reorder-stock']);
+
+    await scheduler.runNow('ordering.reorder-stock');
+
+    expect(ran).toEqual(['ordering.reorder-stock']);
   });
 });

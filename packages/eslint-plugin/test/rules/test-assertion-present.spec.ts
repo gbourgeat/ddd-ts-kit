@@ -50,6 +50,10 @@ ruleTester.run('test-assertion-present', testAssertionPresent, {
       errors: [{ messageId: 'none', data: { title: 'announces the payment' } }],
     },
     {
+      ...at(SPEC, `${VITEST}it('records the payment', () => { pay()(); });`),
+      errors: [{ messageId: 'none', data: { title: 'records the payment' } }],
+    },
+    {
       ...at(SPEC, `${VITEST}it('refuses a second payment');`),
       errors: [{ messageId: 'pending', data: { title: 'refuses a second payment' } }],
     },

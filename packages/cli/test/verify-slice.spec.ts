@@ -93,6 +93,40 @@ describe('verify-slice', () => {
     expect(jsonAt(verification, 'toStage')).toEqual([SERVICE, SPEC]);
     expect(jsonAt(verification, 'leftOut')).toEqual([]);
     expect(jsonAt(verification, 'nearTheLimit')).toEqual([{ file: SERVICE, lines: 320 }]);
+
+    const cases = Array.from({ length: 326 }, (_, line) => `  it('case ${line}', () => undefined);`).join('\n');
+
+    write(root, SPEC, `import { it } from 'vitest';\n\n${cases}\n`);
+
+    expect(jsonAt(cli(root, 'verify-slice', 'billing', '--since', 'main', '--json').json(), 'nearTheLimit')).toEqual([
+      { file: SPEC, lines: 328 },
+      { file: SERVICE, lines: 320 },
+    ]);
+  });
+
+  it('says that the package manager could not run when it is not on the PATH, and fails the slice', () => {
+    withScripts('node -e ""');
+    write(root, SERVICE, "export const pricing = 'priced';\n");
+
+    const bin = path.join(path.dirname(root), 'git-only');
+    const previous = process.env['PATH'];
+
+    fs.mkdirSync(bin);
+    fs.symlinkSync('/usr/bin/git', path.join(bin, 'git'));
+    process.env['PATH'] = bin;
+
+    try {
+      const result = cli(root, 'verify-slice', 'billing', '--since', 'main', '--json');
+
+      expect(result.code).toBe(1);
+
+      expect(result.json()).toMatchObject({
+        ok: false,
+        regenerate: { ok: false, output: 'npm could not run (spawnSync npm ENOENT): is it installed?' },
+      });
+    } finally {
+      process.env['PATH'] = previous;
+    }
   });
 
   it('never proposes to commit a file outside the slice, a private note at the root included, and says to leave it out', () => {
@@ -261,6 +295,15 @@ describe('verify-slice in the worktree of a worker', () => {
 
     expect(jsonAt(second, 'row')).toBe('M1.02');
     expect(jsonAt(second, 'commit')).toBe('git commit -m "feat(billing): discount an invoice" -m "Slice: M1.02"');
+
+    write(root, 'src/contexts/billing/domain/services/discount.service.ts', "export const discount = 'given';\n");
+    git(root, 'add', '--all');
+    git(root, 'commit', '--quiet', '--message', 'feat(billing): discount an invoice', '--message', 'Slice: M1.02');
+
+    const third = cli(root, 'verify-slice', 'billing', '--since', 'main', '--json').json();
+
+    expect(third).not.toHaveProperty('row');
+    expect(third).not.toHaveProperty('commit');
   });
 
   it('writes nothing outside a worker, and says the failed steps in its record', () => {

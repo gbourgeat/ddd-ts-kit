@@ -63,18 +63,18 @@ function objectSchema(blocks: readonly FormBlock[], node: SchemaNode): JsonSchem
   return {
     type: 'object',
     properties: Object.fromEntries(
-      fields.map((field) => [lastSegment(field.name), propertySchema(field, children.get(lastSegment(field.name)))]),
+      fields.map((field) => {
+        const child = children.get(lastSegment(field.name));
+
+        return [lastSegment(field.name), child === undefined ? {} : propertySchema(field, child)];
+      }),
     ),
     required: fields.filter((field) => field.required).map((field) => lastSegment(field.name)),
     ...(conditional.length === 0 ? {} : { allOf: conditional }),
   };
 }
 
-function propertySchema(field: FieldBlock<FormBlock>, node: SchemaNode | undefined): JsonSchema {
-  if (node === undefined) {
-    return {};
-  }
-
+function propertySchema(field: FieldBlock<FormBlock>, node: SchemaNode): JsonSchema {
   if (field.widget === 'group') {
     return { ...objectSchema(field.blocks ?? [], node), ...(field.readOnly === true ? { readOnly: true } : {}) };
   }

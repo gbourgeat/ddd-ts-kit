@@ -145,6 +145,23 @@ describe.skipIf(process.platform === 'win32')('generate where a sandbox protects
   });
 });
 
+describe.skipIf(process.platform === 'win32')('a command that prints its own report', () => {
+  it('says on the error output which file it could not write, and exits with the code of an unwritten file', () => {
+    const root = explicitProject('depcruise-unwritable');
+
+    fs.rmSync(path.join(root, '.dependency-cruiser.cjs'));
+    mask(root, '.dependency-cruiser.cjs');
+
+    const result = cli(root, 'depcruise-config', '--write');
+
+    expect(result.code).toBe(UNWRITTEN_EXIT_CODE);
+
+    expect(result.stderr).toBe(
+      'error: 1 file(s) could not be written here, where a sandbox or the permissions protect them: .dependency-cruiser.cjs. Nothing was deleted. Run the same command where they can be written.',
+    );
+  });
+});
+
 describe('a path the workspace cannot write', () => {
   const tooLong = (): string => path.join(tempDir('init-unwritable'), 'x'.repeat(300), 'file.txt');
 
@@ -168,5 +185,18 @@ describe('a path the workspace cannot write', () => {
 
   it('is skipped on the errors of a protected path only: any other error is thrown', () => {
     expect(() => writeIfAllowed(tooLong(), '')).toThrow(/ENAMETOOLONG/);
+
+    const target = path.join(tempDir('init-unwritable'), 'file.txt');
+
+    const disk = {
+      writeFileSync: (file: string, content: string): void => fs.writeFileSync(file, content),
+      renameSync: (): void => {
+        throw Object.assign(new Error('EXDEV: cross-device link not permitted'), { code: 'EXDEV' });
+      },
+    };
+
+    expect(() => writeIfAllowed(target, 'content', { disk })).toThrow(/EXDEV/);
+    expect(fs.existsSync(target)).toBe(false);
+    expect(fs.readdirSync(path.dirname(target))).toEqual([]);
   });
 });

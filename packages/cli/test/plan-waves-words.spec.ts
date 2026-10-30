@@ -88,4 +88,20 @@ describe('plan-waves, the names of the planned commands', () => {
     expect(started.code).toBe(0);
     expect(plan(refund('todo')).code).toBe(1);
   });
+
+  it('reads no term from a command the generator cannot parse, which the replay refuses for its option', () => {
+    const refused = plan(
+      '| US4.01 | billing | slice | Refund invoice | `generate command billing RefundInvoice --aggregate Invoice --public --bogus --term "Refund=Give back"` | | billing | todo |\n',
+    );
+
+    expect(refused.code).toBe(1);
+
+    const problems = jsonAt(refused.json(), 'problems');
+
+    expect(Array.isArray(problems) ? problems.map((problem) => jsonAt(problem, 'kind')) : []).toEqual([
+      'refused-command',
+    ]);
+
+    expect(JSON.stringify(problems)).toContain("Unknown option '--bogus'");
+  });
 });

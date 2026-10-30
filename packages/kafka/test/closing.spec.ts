@@ -45,6 +45,34 @@ describe.each(BROKERS)('KafkaEventBus: closing, %s', { timeout: 60_000 }, (_name
     expect(await broker.lagOf(consumer, [broker.topicOf(PLACED)])).toBe(0);
   });
 
+  it('leaves where it is a record the client handed it while it drained, uncommitted', async () => {
+    const consumer = broker.consumer('billing');
+    const bus = broker.bus({ consumer, topics: { partitions: 1 } });
+    let finish: () => void = () => undefined;
+
+    const working = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+
+    const done: string[] = [];
+
+    bus.subscribe(PLACED, async (event) => {
+      done.push(event.id);
+      await working;
+    });
+
+    await bus.publish([anEvent('evt-1'), anEvent('evt-2')]);
+    await eventually(() => done.length === 1);
+
+    const closing = bus.close();
+
+    finish();
+    await closing;
+
+    expect(done).toEqual(['evt-1']);
+    expect(await broker.lagOf(consumer, [broker.topicOf(PLACED)])).toBe(1);
+  });
+
   it('leaves a record that waits for its retry uncommitted, for the next start', async () => {
     const consumer = broker.consumer('billing');
     const bus = broker.bus({ consumer, retry: { delayMs: 60_000, maxAttempts: 3 } });
@@ -77,6 +105,19 @@ describe.each(BROKERS)('KafkaEventBus: closing, %s', { timeout: 60_000 }, (_name
     expect(() => bus.subscribe(PLACED, async () => undefined)).toThrow(
       expect.objectContaining({ code: 'EVENT_BUS_CLOSED' }),
     );
+  });
+
+  it('fails a publication whose topics it was still creating when it closed', async () => {
+    const bus = broker.bus();
+
+    const publication = bus.publish([anEvent('evt-1')]).then(
+      () => 'published',
+      (error: unknown) => error,
+    );
+
+    await bus.close();
+
+    expect(await publication).toMatchObject({ code: 'BROKER_UNAVAILABLE' });
   });
 
   it('refuses to declare its topology or to replay once closed', async () => {

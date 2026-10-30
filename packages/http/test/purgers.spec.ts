@@ -48,6 +48,20 @@ describe('VarnishCachePurger', () => {
     expect(api.received).toEqual([]);
   });
 
+  it('fails when no cache answers at the address, so the relay retries', async () => {
+    const failure: unknown = await new VarnishCachePurger({ url: 'http://127.0.0.1:1' }).purge(['calendar']).then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+
+    expect(failure).toBeInstanceOf(CachePurgeError);
+
+    expect(failure).toMatchObject({
+      status: undefined,
+      message: expect.stringMatching(/^PURGE .* reached no cache\.$/),
+    });
+  });
+
   it('fails with the status Varnish answered, so the relay retries', async () => {
     api.answerWith(403);
 

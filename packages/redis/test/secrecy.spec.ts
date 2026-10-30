@@ -3,7 +3,7 @@ import { Redis } from 'ioredis';
 import { afterAll, describe, expect, it } from 'vitest';
 import { expectNoSecret } from '@ddd-ts-kit/testing';
 import { RedisStreamsEventBus } from '../src/event-bus';
-import { RedisCache, RedisLock, RedisRateLimiter, RedisRelaySignal, connectRedis } from '../src';
+import { RedisCache, RedisJobStore, RedisLock, RedisRateLimiter, RedisRelaySignal, connectRedis } from '../src';
 import { ServerLink } from '../src/streams/server-link';
 
 const PASSWORD = 'redis-password-e2a8';
@@ -42,6 +42,7 @@ describe('the Redis adapters: what they show of the client they hold', () => {
 
     const adapters = {
       RedisCache: new RedisCache(client, { namespace: 'billing', lock: new RedisLock(client) }),
+      RedisJobStore: new RedisJobStore(client, { namespace: 'billing' }),
       RedisLock: new RedisLock(client),
       RedisRateLimiter: new RedisRateLimiter(client),
       RedisRelaySignal: new RedisRelaySignal(client),

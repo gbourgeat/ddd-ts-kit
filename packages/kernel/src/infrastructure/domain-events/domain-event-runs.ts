@@ -7,35 +7,31 @@ export interface DomainEventRun {
   dispatch(scope: UnitOfWorkScope, phase: DomainEventPhase): Promise<void>;
 }
 
+/** Neighbours of the queue handed over by the same save to the same dispatcher: never empty. */
+type Group = [QueuedDomainEvent, ...QueuedDomainEvent[]];
+
 export function domainEventRuns(events: readonly QueuedDomainEvent[]): DomainEventRun[] {
-  const groups: QueuedDomainEvent[][] = [];
+  const groups: Group[] = [];
 
   for (const queued of events) {
-    const first = groups.at(-1)?.[0];
+    const last = groups.at(-1);
 
-    if (first !== undefined && first.dispatcher === queued.dispatcher && first.within === queued.within) {
-      groups.at(-1)?.push(queued);
+    if (last !== undefined && last[0].dispatcher === queued.dispatcher && last[0].within === queued.within) {
+      last.push(queued);
     } else {
       groups.push([queued]);
     }
   }
 
-  return groups.flatMap(runOf);
+  return groups.map(runOf);
 }
 
-function runOf(group: readonly QueuedDomainEvent[]): DomainEventRun[] {
+function runOf(group: Group): DomainEventRun {
   const [first] = group;
-
-  if (first === undefined) {
-    return [];
-  }
-
   const facts = group.map(({ event }) => event);
 
-  return [
-    {
-      dispatch: (scope, phase) =>
-        first.within(() => unitOfWorkScope.run(scope, async () => first.dispatcher.dispatch(facts, phase))),
-    },
-  ];
+  return {
+    dispatch: (scope, phase) =>
+      first.within(() => unitOfWorkScope.run(scope, async () => first.dispatcher.dispatch(facts, phase))),
+  };
 }

@@ -122,6 +122,8 @@ onDisk(
 );
 
 onDisk(`${BILLING}/infrastructure/persistence/plain.repository.ts`, 'export class Plain {}');
+onDisk(`${BILLING}/infrastructure/persistence/broken.repository.ts`, 'export class Broken {');
+fs.mkdirSync(path.join(root, `${BILLING}/infrastructure/persistence/folder.repository.ts`), { recursive: true });
 
 const binding = (implementation: string, file: string, statement: string): string =>
   `import { ${implementation} } from './infrastructure/persistence/${file}.js';\n${statement}`;
@@ -176,6 +178,8 @@ ruleTester.run('ports-implements-never-extends', portsImplementsNeverExtends, {
       MODULE,
       binding('Missing', 'missing.repository', 'builder.bind(InvoiceRepository).toClass(Missing, []);'),
     ),
+    inProject(MODULE, binding('Broken', 'broken.repository', 'builder.bind(InvoiceRepository).toClass(Broken, []);')),
+    inProject(MODULE, binding('Folder', 'folder.repository', 'builder.bind(InvoiceRepository).toClass(Folder, []);')),
   ],
   invalid: [
     {

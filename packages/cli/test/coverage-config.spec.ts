@@ -62,6 +62,26 @@ describe('the coverage thresholds of the config', () => {
       'config/valid: "coverage.application.paths" is not a rate: it is ignored.',
     ]);
   });
+
+  it('are objects: check says what the reference gives in place of a block or a layer that is not one', () => {
+    const root = tempDir('coverage-config');
+
+    cli(root, 'init');
+    changeConfig(root, { coverage: 'high', mutation: 80, budget: ['fast'] });
+
+    const messages = (): string[] =>
+      checkJsonOf(cli(root, 'check', '--rule', 'config/valid', '--json')).violations.map(({ message }) => message);
+
+    expect(messages()).toEqual([
+      '"coverage" is not an object: the thresholds of the reference are used.',
+      '"mutation" is not an object: the floor of the reference is used.',
+      '"budget" is not an object: the budgets of the reference are used.',
+    ]);
+
+    changeConfig(root, { coverage: { domain: 90 }, mutation: {}, budget: {} });
+
+    expect(messages()).toEqual(['"coverage.domain" is not an object: the thresholds of the reference are used.']);
+  });
 });
 
 /** The reference the test runner applies, read from the source of `@ddd-ts-kit/testing`, which the CLI does not depend on. */

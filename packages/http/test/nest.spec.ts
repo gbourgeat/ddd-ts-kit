@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
-import type { DynamicModule } from '@nestjs/common';
+import type { ArgumentsHost, DynamicModule } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import type { Request } from 'express';
@@ -8,7 +8,7 @@ import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import { defineRoute } from '../src';
-import { createRoutesModule } from '../src/nest';
+import { createRoutesModule, ProblemExceptionFilter } from '../src/nest';
 import { describeAdapter } from './support/behaviour';
 
 describeAdapter(
@@ -94,5 +94,82 @@ describe('a Nest routes module built from injected dependencies', () => {
     } finally {
       await app.close();
     }
+  });
+});
+
+describe('createRoutesModule', () => {
+  it('refuses, when Nest starts, a platform of HTTP it does not mount on', () => {
+    const module = createRoutesModule([]);
+    const provider = module.providers?.find((candidate) => typeof candidate === 'object' && 'useFactory' in candidate);
+
+    if (provider === undefined || typeof provider !== 'object' || !('useFactory' in provider)) {
+      throw new Error('The module provides its mounter by a factory.');
+    }
+
+    const mounter: unknown = provider.useFactory({ httpAdapter: { getType: () => 'koa' } });
+
+    const init = (): void => {
+      const onModuleInit: unknown =
+        typeof mounter === 'object' && mounter !== null ? Reflect.get(mounter, 'onModuleInit') : undefined;
+
+      if (typeof onModuleInit === 'function') {
+        Reflect.apply(onModuleInit, mounter, []);
+      }
+    };
+
+    expect(init).toThrow('Unsupported Nest HTTP platform "koa".');
+  });
+});
+
+/** The host Nest hands a filter, over one request and its response. */
+class HttpHost implements ArgumentsHost {
+  constructor(
+    private readonly request: object,
+    private readonly response: object,
+  ) {}
+
+  getArgs<T extends unknown[] = unknown[]>(): T {
+    return [this.request, this.response] as T;
+  }
+
+  getArgByIndex<T = unknown>(index: number): T {
+    return this.getArgs()[index] as T;
+  }
+
+  switchToRpc(): never {
+    throw new Error('HTTP only.');
+  }
+
+  switchToWs(): never {
+    throw new Error('HTTP only.');
+  }
+
+  switchToHttp(): ReturnType<ArgumentsHost['switchToHttp']> {
+    return {
+      getRequest: <T = unknown>(): T => this.request as T,
+      getResponse: <T = unknown>(): T => this.response as T,
+      getNext: <T = unknown>(): T => undefined as T,
+    };
+  }
+
+  getType<T extends string = 'http'>(): T {
+    return 'http' as T;
+  }
+}
+
+describe('ProblemExceptionFilter', () => {
+  it('ends a response whose headers were already sent instead of writing a problem after them', () => {
+    const written: string[] = [];
+
+    const writer = {
+      isHeadersSent: () => true,
+      end: (response: object) => void written.push(`ended ${String(Reflect.get(response, 'id'))}`),
+      setHeader: () => void written.push('a header'),
+      reply: () => void written.push('a problem'),
+    };
+
+    new ProblemExceptionFilter(writer).catch(new Error('cut short'), new HttpHost({ headers: {} }, { id: 'r-1' }));
+
+    expect(written).toEqual(['ended r-1']);
   });
 });

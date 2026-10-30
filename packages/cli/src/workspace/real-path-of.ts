@@ -15,15 +15,25 @@ export type RealPath = string | typeof BLOCKED | undefined;
  */
 export function realPathOf(absolute: string, hops = 0): RealPath {
   const at = path.resolve(absolute);
+  const link = linkAt(at);
 
-  if (lstatOf(at)?.isSymbolicLink() === true) {
-    return hops > 32 ? undefined : linkedPathOf(at, hops);
+  if (link !== undefined) {
+    return hops > 32 ? undefined : linkedPathOf(at, link, hops);
   }
 
   return existingRealPathOf(at);
 }
 
-function linkedPathOf(at: string, hops: number): RealPath {
+/** Where the link at `absolute` points; undefined when what stands there is no link. */
+function linkAt(absolute: string): string | undefined {
+  try {
+    return fs.readlinkSync(absolute);
+  } catch {
+    return undefined;
+  }
+}
+
+function linkedPathOf(at: string, link: string, hops: number): RealPath {
   try {
     const target = fs.statSync(at);
 
@@ -34,11 +44,7 @@ function linkedPathOf(at: string, hops: number): RealPath {
     return fs.realpathSync(at);
   } catch {
     // A link to nothing: the write creates its target, wherever it points.
-    try {
-      return realPathOf(path.resolve(path.dirname(at), fs.readlinkSync(at)), hops + 1);
-    } catch {
-      return undefined;
-    }
+    return realPathOf(path.resolve(path.dirname(at), link), hops + 1);
   }
 }
 

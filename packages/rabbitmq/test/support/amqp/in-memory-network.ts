@@ -16,6 +16,8 @@ export class InMemoryNetwork implements Wire {
 
   private repliesHeld = false;
 
+  private closing = false;
+
   /** Publications sent through this network, to know that one left the bus. */
   traffic = 0;
 
@@ -38,8 +40,16 @@ export class InMemoryNetwork implements Wire {
     return this.repliesHeld;
   }
 
+  closingChannels(): boolean {
+    return this.closing;
+  }
+
   sent(): void {
     this.traffic += 1;
+  }
+
+  beginClosing(): void {
+    this.closing = true;
   }
 
   holdReplies(): void {
@@ -58,6 +68,7 @@ export class InMemoryNetwork implements Wire {
 
   restore(): void {
     this.repliesHeld = false;
+    this.closing = false;
     this.refusing = false;
   }
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   AsyncLocalStorageExecutionScope,
+  InMemoryErrorReporter,
   InMemoryEventBus,
   executionContext,
   inEventScope,
@@ -16,6 +17,7 @@ import {
   resetTracingConfiguration,
   traceDependency,
   traceLogFields,
+  tracedErrorReporter,
   tracedSubscriber,
   withSpan,
 } from '../src';
@@ -68,6 +70,20 @@ describe('with an execution scope', () => {
 
     expect(recorded).not.toContain('ada');
     expect(recorded).not.toContain('acme');
+  });
+
+  it('writes nothing on a root that ended before the work under it reached the scope', async () => {
+    const ping = gateway();
+    let later: Promise<void> = Promise.resolve();
+
+    withSpan('fire-and-forget', () => {
+      later = scope.run(request, () => Promise.resolve().then(() => ping.ping()));
+    });
+
+    await later;
+
+    expect(tracing.span('fire-and-forget').attributes).not.toHaveProperty(CORRELATION_ID_ATTRIBUTE);
+    expect(tracing.span('gateway Ping.ping').ended).toBe(true);
   });
 
   it('leaves a root alone when no work was in progress under it', async () => {
@@ -151,5 +167,28 @@ describe('without a configured execution scope', () => {
 
     expect(scope.run(request, () => traceLogFields(scope))).toMatchObject({ correlationId: 'corr-1' });
     expect(traceLogFields(scope)).toEqual({});
+  });
+});
+
+describe('tracedErrorReporter', () => {
+  let tracing: TestTracing;
+
+  beforeEach(() => {
+    tracing = setupTracing();
+  });
+
+  afterEach(() => tracing.teardown());
+
+  it('names the active trace on a report that names none, and flushes the reporter it decorates', async () => {
+    const reporter = new InMemoryErrorReporter();
+    const traced = tracedErrorReporter(reporter);
+    const failure = new Error('boom');
+
+    withSpan('job', () => {
+      traced.report(failure, { severity: 'error', origin: 'process', operation: 'job' });
+    });
+
+    expect(reporter.reports[0]?.report.traceId).toBe(tracing.span('job').spanContext().traceId);
+    await expect(traced.flush(100)).resolves.toBe(true);
   });
 });

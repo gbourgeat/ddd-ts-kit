@@ -6,6 +6,7 @@ ruleTester.run('clean-no-hash-private', cleanNoHashPrivate, {
     'class Invoice { private total = 0; private add(amount: number): void { this.total += amount; } }',
     'class Invoice { constructor(private readonly id: string) {} }',
     "const object = { '#key': 1 };",
+    'class Invoice { total(): number { return count(#total); } }',
   ],
   invalid: [
     {

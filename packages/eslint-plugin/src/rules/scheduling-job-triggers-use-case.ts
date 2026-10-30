@@ -66,8 +66,10 @@ function jobFile(file: LintedFile, sourceCode: Source, tell: Tell): TSESLint.Rul
   });
 
   const imports = importListener(file, ({ node, target }) => {
-    if (isModel(target)) {
-      tell({ node, messageId: 'model', data: { target: describeModel(target) } });
+    const model = modelOf(target);
+
+    if (model !== undefined) {
+      tell({ node, messageId: 'model', data: { target: model } });
     }
   });
 
@@ -132,22 +134,19 @@ function isRepositoryFile(target: ImportTarget | undefined): boolean {
   );
 }
 
-function isModel(target: ImportTarget): boolean {
+/** Where the import reaches a model, as the message names it: the infrastructure, or a model folder of the domain. */
+function modelOf(target: ImportTarget): string | undefined {
   if (target.kind !== 'file' || target.location.area !== 'context') {
-    return false;
+    return undefined;
   }
 
   const { layer, inside } = target.location;
 
-  return layer === 'infrastructure' || (layer === 'domain' && MODEL_FOLDERS.has(inside[0] ?? ''));
-}
-
-function describeModel(target: ImportTarget): string {
-  if (target.kind !== 'file' || target.location.area !== 'context') {
-    return 'the model';
+  if (layer === 'infrastructure') {
+    return 'infrastructure/';
   }
 
-  return target.location.layer === 'infrastructure' ? 'infrastructure/' : `domain/${target.location.inside[0] ?? ''}/`;
+  return layer === 'domain' && MODEL_FOLDERS.has(inside[0] ?? '') ? `domain/${inside[0] ?? ''}/` : undefined;
 }
 
 /** Outside application/scheduling: no class carries `@Scheduled`, and a module registers only jobs that live there. */

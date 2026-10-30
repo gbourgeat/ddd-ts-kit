@@ -82,6 +82,26 @@ describe('merge-trunk: the report in words', () => {
     expect(text).toContain('regenerate: ok');
   });
 
+  it('says where the branch landed, and what the client of the Prisma schema answered', () => {
+    const text = formatMergeReport({
+      ...STOPPED,
+      base: {
+        commit: BASE,
+        evidence: 'landed',
+        landedAs: { commit: TRUNK, subject: 'feat(billing): issue (#12)', from: 'this branch up to bbbbbbb' },
+      },
+      client: { status: 'failed', output: 'prisma generate\nerror: schema' },
+    });
+
+    expect(text).toContain(
+      `base ${BASE.slice(0, 7)}: this branch up to bbbbbbb landed as aaaaaaa "feat(billing): issue (#12)"`,
+    );
+
+    expect(text).toContain(
+      'prisma client: failed (`npm run db:client`, the schema changed in this merge)\n  prisma generate\n  error: schema',
+    );
+  });
+
   it('tells what each side did when one only removes lines and the other keeps the base', () => {
     const long = `  ${'x'.repeat(90)}`;
 

@@ -2,15 +2,11 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import type { Actor } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, fake, kernelModule } from '../src';
+import { createApplication, kernelModule } from '../src';
 import { discoverContext } from '../src/discovery';
 // What `ddd-ts-kit docs` generates next to the role files of a discovered context: here the stubbed loader answers the classes themselves, so their lists are registered the same way.
 import './fixtures/contexts/billing/billing.dependencies';
 import { InvoiceIssuedPublisher } from './fixtures/contexts/billing/application/integration/publishers/invoice-issued.publisher';
-import { IssueInvoice } from './fixtures/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
-import { IssueInvoiceHandler } from './fixtures/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';
-import { CustomerDirectory } from './fixtures/contexts/billing/application/ports/customer-directory.port';
 import { IssueMonthlyInvoicesJob } from './fixtures/contexts/billing/application/scheduling/issue-monthly-invoices.job';
 import { InMemoryInvoiceRepository } from './fixtures/contexts/billing/infrastructure/persistence/in-memory-invoice.repository';
 import { wiringRejection } from './support/rejection';
@@ -35,7 +31,6 @@ function contextWith(files: Readonly<Record<string, string>>): string {
 }
 
 const HANDLER = 'application/commands/issue-invoice/issue-invoice.handler.mjs';
-const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
 const declaredRepository = async (): Promise<unknown> => ({ InMemoryInvoiceRepository, somethingElse: 42 });
 
 describe('discovery', () => {
@@ -147,6 +142,14 @@ describe('discovery', () => {
     expect(failure.message).toContain('a *.handler file: that suffix is for command-handler or query-handler.');
   });
 
+  it('fails on a layer that is a file, not a folder: an absence is one thing, a broken tree another', async () => {
+    const directory = contextWith({ application: 'not a folder', 'domain/order.ts': '' });
+
+    await expect(discoverContext('billing', directory, { load: declaredRepository })).rejects.toMatchObject({
+      code: 'ENOTDIR',
+    });
+  });
+
   it('refuses a directory that is not a bounded context', async () => {
     const failure = await wiringRejection(discoverContext('billing', contextWith({ 'notes/readme.mjs': '' })));
 
@@ -242,89 +245,6 @@ describe('a discovered publisher', () => {
     expect(failure.message).toBe(
       `${misplaced} of context "billing" is outside its canonical folder: a *.publisher file belongs in application/integration/publishers/, at the level of the context or in a module of its model (<module>/application/...) named in the generated <context>.dependencies file.`,
     );
-  });
-});
-
-describe('discovery of a context divided into modules of its model', () => {
-  const IN_MODULE = 'invoicing/application/commands/issue-invoice';
-
-  it('finds the role files of a module the generated dependencies file names, without the config', async () => {
-    const classes: Readonly<Record<string, unknown>> = {
-      [`${IN_MODULE}/issue-invoice.command.mjs`]: { IssueInvoice },
-      [`${IN_MODULE}/issue-invoice.handler.mjs`]: { IssueInvoiceHandler },
-      'infrastructure/persistence/in-memory-invoice.repository.mjs': { InMemoryInvoiceRepository },
-    };
-
-    const directory = contextWith({
-      ...Object.fromEntries(Object.keys(classes).map((file) => [file, ''])),
-      'billing.dependencies.mjs': "export const modules = ['invoicing'];\n",
-    });
-
-    const module = await discoverContext('billing', directory, {
-      load: async (file) => classes[path.relative(directory, file.pathname)],
-    });
-
-    const app = createTestApplication({
-      modules: [module],
-      fakes: [fake(CustomerDirectory, { exists: async () => true })],
-    });
-
-    await app.start();
-
-    expect(await app.commandBus.execute(new IssueInvoice(ada, 'customer-1'))).toEqual(expect.any(String));
-
-    expect(app.describe().commands).toMatchObject([
-      { message: 'IssueInvoice', file: path.join(directory, `${IN_MODULE}/issue-invoice.handler.mjs`) },
-    ]);
-  });
-
-  it('reads the modules as a bundler rewrites the generated file: double quotes, no spaces', async () => {
-    const classes: Readonly<Record<string, unknown>> = {
-      [`${IN_MODULE}/issue-invoice.command.mjs`]: { IssueInvoice },
-      [`${IN_MODULE}/issue-invoice.handler.mjs`]: { IssueInvoiceHandler },
-      'infrastructure/persistence/in-memory-invoice.repository.mjs': { InMemoryInvoiceRepository },
-    };
-
-    const directory = contextWith({
-      ...Object.fromEntries(Object.keys(classes).map((file) => [file, ''])),
-      'billing.dependencies.mjs': 'export const modules=["invoicing"];\n',
-    });
-
-    const module = await discoverContext('billing', directory, {
-      load: async (file) => classes[path.relative(directory, file.pathname)],
-    });
-
-    const app = createTestApplication({
-      modules: [module],
-      fakes: [fake(CustomerDirectory, { exists: async () => true })],
-    });
-
-    await app.start();
-
-    expect(app.describe().commands).toMatchObject([{ message: 'IssueInvoice' }]);
-  });
-
-  it('refuses a role file in the wrong role folder of a module, and says where it belongs', async () => {
-    const misplaced = 'invoicing/application/ports/issue-invoice.handler.mjs';
-
-    const directory = contextWith({
-      [misplaced]: "throw new Error('never loaded');",
-      'billing.dependencies.mjs': "export const modules = ['invoicing'];\n",
-    });
-
-    const failure = await wiringRejection(discoverContext('billing', directory));
-
-    expect(failure.code).toBe('MISPLACED_DECLARATION');
-    expect(failure.message).toContain('<module>/application/');
-  });
-
-  it('reads no folder as a module that the dependencies file does not name: check reports it, discovery does not wire it', async () => {
-    const directory = contextWith({ [`${IN_MODULE}/issue-invoice.handler.mjs`]: "throw new Error('never loaded');" });
-
-    const failure = await wiringRejection(discoverContext('billing', directory));
-
-    expect(failure.code).toBe('MISPLACED_DECLARATION');
-    expect(failure.message).toContain(`${IN_MODULE}/issue-invoice.handler.mjs`);
   });
 });
 

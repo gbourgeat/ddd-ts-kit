@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { config } from '../src/check/fixtures/config';
+import { candidatesOf } from '../src/citations/candidates-of';
 import { citationLine } from '../src/citations/citation-line';
 import type { Evidence } from '../src/citations/evidence';
 import { formatCitations } from '../src/citations/format-citations';
 import { formatRemovals } from '../src/citations/format-removals';
 import { historyOf } from '../src/citations/history-of';
+import { judgeMember } from '../src/citations/judge-member';
 import { judgePath } from '../src/citations/judge-path';
 import { nameIndexOf } from '../src/citations/name-index-of';
+import { roleSuffixOf } from '../src/citations/role-suffix-of';
+import { sameStemNames } from '../src/citations/same-stem-names';
 import type { StaleCitation } from '../src/citations/stale-citation';
 import { parseConfig } from '../src/config';
 import { designLine } from '../src/worker/design-line';
@@ -41,6 +45,43 @@ const removed: StaleCitation = {
   removedBy: { path: `${PORTS}/price-list.port.ts` },
   candidates: [{ name: `${PORTS}/prices.port.ts`, file: `${PORTS}/prices.port.ts`, evidence: 'renamed' }],
 };
+
+describe('a name a design cites', () => {
+  it('judges Class.member as the class when the code has no such class', () => {
+    expect(judgeMember('TaxRule.applyTo', citing, evidence([])).state).toBe('planned');
+  });
+
+  it('reads the longest role suffix of a name, and none of a name made of a suffix alone', () => {
+    expect(roleSuffixOf('PurgeDraftsBackgroundJob')).toEqual({ suffix: 'BackgroundJob', part: 'work by time' });
+    expect(roleSuffixOf('Job')).toBeUndefined();
+  });
+
+  it('offers a name with the stem of the cited one declared in a file named without a role, by the suffix of the name itself', () => {
+    const port = `${PORTS}/price-list-reader.ts`;
+    const declared = { ...evidence([port]), index: nameIndexOf([{ name: 'PriceListReader', file: port }], [port]) };
+
+    expect(sameStemNames('PriceListService', ['billing'], declared)).toEqual([
+      { name: 'PriceListReader', file: port, evidence: 'same-stem' },
+    ]);
+  });
+
+  it('looks for the successor of a file removed outside the contexts in its own directory', () => {
+    const shared = 'src/shared-kernel/money.vo.ts';
+    const successor = 'src/shared-kernel/money-amount.vo.ts';
+    const history = historyOf(`D\t${shared}\nA\t${successor}`, 'main');
+    const removal = history.removals.get(shared);
+
+    expect(removal).toBeDefined();
+
+    if (removal === undefined) {
+      return;
+    }
+
+    expect(candidatesOf({ cited: 'Money', removal, contexts: [] }, { ...evidence([successor]), history })).toEqual([
+      { name: 'MoneyAmount', file: successor, evidence: 'added-with-removal' },
+    ]);
+  });
+});
 
 describe('a path a design cites', () => {
   it('is present when a file lies under the directory it names', () => {

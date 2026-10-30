@@ -1,5 +1,6 @@
 import { ProjectionRebuild, type ProjectionRebuildReport } from '@ddd-ts-kit/kernel';
 import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
+import { failureOf } from '../failure-of';
 import { ReadModelStoreSuite } from './read-model-store-suite';
 import { rowOf as row } from './row-of';
 import { SourceOfTruth } from './source-of-truth';
@@ -43,12 +44,9 @@ export class RebuildSuite extends ReadModelStoreSuite {
       source.duringExport = () => Promise.reject(new Error('the source is down'));
       await this.put(row('a2'), at('evt-1', 1));
 
-      this.expect(
-        await this.rebuild(source).then(
-          () => 'rebuilt',
-          () => 'failed',
-        ),
-      ).toBe('failed');
+      const failure = await failureOf(() => this.rebuild(source));
+
+      this.expect(failure instanceof Error && failure.message).toBe('the source is down');
 
       this.expect(await this.ids()).toEqual(['a2']);
       this.expect(await this.subject.table.rebuilding()).toBe(false);

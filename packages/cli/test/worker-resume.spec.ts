@@ -185,3 +185,31 @@ describe('worker-scope --resume', () => {
     );
   });
 });
+
+describe('worker-scope --resume, on a slices file that lost the row', () => {
+  it('briefs the row from the scope file alone', () => {
+    write(
+      worktree,
+      'docs/architecture/slices.md',
+      SLICES.split('\n')
+        .filter((line) => !line.startsWith('| M1.02 '))
+        .join('\n'),
+    );
+
+    const resumed = cli(root, 'worker-scope', 'billing', '--resume', '--json');
+
+    expect(resumed.code).toBe(0);
+    expect(String(jsonAt(resumed.json(), 'briefing'))).toContain('Resume: row #M1.02 was started by an earlier agent.');
+  });
+
+  it('checks the design against nothing when the base of the worker names no commit any more', () => {
+    const scope: Record<string, unknown> = JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'));
+
+    write(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ ...scope, base: 'gone' }));
+
+    const resumed = cli(root, 'worker-scope', 'billing', '--resume', '--json');
+
+    expect(resumed.code).toBe(0);
+    expect(jsonAt(resumed.json(), 'base')).toBe('gone');
+  });
+});

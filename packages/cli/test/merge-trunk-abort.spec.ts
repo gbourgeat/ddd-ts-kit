@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { exists, read, write } from './helpers';
 import { git } from './support/git';
+import { withGitAnswering } from './support/git-answering';
 import { commitFiles, goOn, mergeTrunk, merging, onBranch, trunkRepository } from './support/trunk-history';
 
 const INVOICE = 'src/contexts/billing/invoice.ts';
@@ -73,6 +74,21 @@ function settledWithBehaviour(): string {
 
   return root;
 }
+
+describe('merge-trunk --abort, when git refuses', () => {
+  it('stops with what git answered when nothing regenerated stands in the way, and leaves the merge in progress', () => {
+    const root = settled(0);
+
+    const refused = withGitAnswering({ when: 'merge --abort', answer: 'echo "fatal: refused" >&2; exit 128' }, () =>
+      goOn(root, '--abort'),
+    );
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('error: git merge --abort failed: fatal: refused.');
+    expect(refused.stderr).toContain('fix: Run `git reset --merge`');
+    expect(merging(root)).toBe(true);
+  });
+});
 
 describe('merge-trunk: a behaviour page it regenerates', () => {
   it('is discarded by --abort, which names it, when it was modified after being staged', () => {

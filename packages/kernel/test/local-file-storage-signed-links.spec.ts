@@ -144,6 +144,7 @@ describe('LocalFileStorage, the download links it signs itself', () => {
     await storage.put('documents/a.pdf', Readable.from([PDF]), { mediaType: 'application/pdf' });
 
     expect(await storage.openSigned(forged(Buffer.from('not json').toString('base64url')))).toBeUndefined();
+    expect(await storage.openSigned(forged(Buffer.from('42').toString('base64url')))).toBeUndefined();
 
     expect(await storage.openSigned(forged(grantOf({ action: 'delete', key: 'documents/a.pdf', expiresAt })))).toBe(
       undefined,

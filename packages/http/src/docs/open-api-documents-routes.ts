@@ -41,12 +41,16 @@ export function openApiDocumentsRoutes(
   }
 
   const assets = shown.assetsUrl ?? DEFAULT_ASSETS[ui];
-  const listed = documents.map(({ name, document }) => listedDocument(name, document, { contractsPath, uiPath }));
   const title = shown.title ?? 'API documentation';
 
+  const listed = documents.map(({ name, document }) => ({
+    document,
+    entry: listedDocument(name, document, { contractsPath, uiPath }),
+  }));
+
   return [
-    ...documents.flatMap(({ document }, index) => documentRoutes(document, listed[index], { ui, assets })),
-    page(uiPath, 'getOpenApiUi', documentsPage({ ui, title, documents: listed, assets })),
+    ...listed.flatMap(({ document, entry }) => documentRoutes(document, entry, { ui, assets })),
+    page(uiPath, 'getOpenApiUi', documentsPage({ ui, title, documents: listed.map(({ entry }) => entry), assets })),
   ];
 }
 
@@ -61,13 +65,9 @@ function listedDocument(name: string, document: OpenApiDocument, { contractsPath
 
 function documentRoutes(
   document: OpenApiDocument,
-  listed: ListedDocument | undefined,
+  listed: ListedDocument,
   { ui, assets }: { readonly ui: DocsUi; readonly assets: string },
 ): Route[] {
-  if (listed === undefined) {
-    return [];
-  }
-
   const html = docsPage({ ui, title: listed.title, specUrl: listed.url, assets });
   const id = listed.name.replace(/-(\w)/g, (_dash, letter: string) => letter.toUpperCase());
 

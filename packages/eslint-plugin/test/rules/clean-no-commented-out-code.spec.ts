@@ -74,5 +74,7 @@ ruleTester.run('clean-no-commented-out-code', cleanNoCommentedOutCode, {
       errors: [{ messageId: 'code' }],
     },
     { code: '// items.forEach((item) => {\nexport const value = 1;', errors: [{ messageId: 'code' }] },
+    { code: "// throw new Error('boom');\nexport const value = 1;", errors: [{ messageId: 'code' }] },
+    { code: '// let total: number;\nexport const value = 1;', errors: [{ messageId: 'code' }] },
   ],
 });

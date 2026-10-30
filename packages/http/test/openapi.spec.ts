@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { defineRoute } from '../src';
 import { generateOpenApi } from '../src/openapi';
 import { openApiOptions } from './support/open-api-options';
 import { orderRoutes } from './support/orders';
@@ -101,6 +104,25 @@ describe('the operations of a generated contract', () => {
       },
       { name: 'expand', in: 'query', required: false, schema: { type: 'string', enum: ['lines'] } },
     ]);
+  });
+
+  it('writes no parameter for a query schema that lists no property', () => {
+    const search = defineRoute(
+      {
+        method: 'GET',
+        path: '/search',
+        operationId: 'search',
+        summary: 'Search by any field',
+        request: { query: zodSchema(z.record(z.string(), z.string())) },
+        responses: { 204: { description: 'Searched.' } },
+        security: false,
+      },
+      () => ({ status: 204 }),
+    );
+
+    const written = generateOpenApi(openApiOptions([search])).paths['/search']?.['get'];
+
+    expect(written?.['parameters'] ?? []).toEqual([]);
   });
 
   it('lists the codes sharing a status in one problem response', () => {

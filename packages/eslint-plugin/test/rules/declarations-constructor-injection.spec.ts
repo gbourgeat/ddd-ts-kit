@@ -17,6 +17,11 @@ ruleTester.run('declarations-constructor-injection', declarationsConstructorInje
     at(HANDLER, handler(BARE, TAKEN), SIGNATURE),
     at(HANDLER, handler(BARE, TAKEN), DECLARED),
     at(
+      'src/platform/http/server.ts',
+      'export class Server { constructor(private readonly db: KnexDatabase) {} }',
+      DECLARED,
+    ),
+    at(
       HANDLER,
       handler(BARE, 'readonly cache: Cache<Session>, @Optional() protected readonly clock: Clock'),
       SIGNATURE,

@@ -6,6 +6,8 @@ import {
   InMemoryEventBus,
   IntegrationEventSubscriber,
   type IntegrationEvent,
+  type IntegrationEventCallback,
+  type Subscription,
 } from '@ddd-ts-kit/kernel';
 import {
   UnreadableEventError,
@@ -38,6 +40,19 @@ function busesWithoutProcessedEvents(bus: InMemoryEventBus): ContextModule {
   });
 }
 
+/** A bus whose subscriptions cannot be released, as a broker whose connection dropped. */
+class StuckBus extends InMemoryEventBus {
+  override subscribe(type: string, handler: IntegrationEventCallback): Subscription {
+    super.subscribe(type, handler);
+
+    return {
+      unsubscribe: () => {
+        throw new Error('the channel is already closed');
+      },
+    };
+  }
+}
+
 describe('consumers declared with builder.on', () => {
   it('receive nothing before start, the events after it, and nothing once stopped', async () => {
     const app = createApplication({ modules: [kernelModule(), billingModule] });
@@ -50,6 +65,24 @@ describe('consumers declared with builder.on', () => {
     await bus.publish([placed('event-3', 'order-3')]);
 
     expect(app.resolve(InvoiceLedger).invoicedOrders).toEqual(['order-2']);
+  });
+
+  it('are released when the application stops, and one that cannot be is reported with the stop', async () => {
+    const app = createApplication({ modules: [busesWithoutProcessedEvents(new StuckBus()), billingModule] });
+
+    await app.start();
+
+    const failure = await app.stop().then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+
+    expect(failure).toBeInstanceOf(AggregateError);
+    expect(failure).toMatchObject({ message: '1 module(s) failed to stop' });
+
+    expect(failure instanceof AggregateError ? failure.errors : []).toEqual([
+      new Error('the channel is already closed'),
+    ]);
   });
 
   it('subscribe once, however many times the application is started', async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, InMemoryEventBus } from '@ddd-ts-kit/kernel';
-import { InMemoryOutboxStore, InMemoryRelaySignal, OutboxRelay, type OutboxRecord } from '../src';
+import { InMemoryOutboxStore, InMemoryRelaySignal, OutboxRelay, type OutboxRecord, type RelaySignal } from '../src';
 import { at } from './support/events';
 import { eventually } from './support/eventually';
 import { GatedPublisher } from './support/gated-publisher';
@@ -16,6 +16,23 @@ class CountingStore extends InMemoryOutboxStore {
     this.claims += 1;
 
     return super.claimBatch(limit, now);
+  }
+}
+
+/** A signal that keeps calling a subscriber that left, as a listener of a database may until its socket closes. */
+class LingeringSignal implements RelaySignal {
+  private readonly listeners: (() => void)[] = [];
+
+  subscribe(listener: () => void): { unsubscribe(): void } {
+    this.listeners.push(listener);
+
+    return { unsubscribe: () => undefined };
+  }
+
+  notify(): void {
+    for (const listener of this.listeners) {
+      listener();
+    }
   }
 }
 
@@ -73,6 +90,26 @@ describe('OutboxRelay woken by the store', () => {
 
     expect(store.claims).toBe(2);
     expect(publisher.delivered).toEqual(['evt-1', 'evt-2', 'evt-3', 'evt-4']);
+  });
+
+  it('starts no tick for a wake-up that a signal delivers once the relay stopped', async () => {
+    const signal = new LingeringSignal();
+    const store = new CountingStore();
+
+    const relay = new OutboxRelay({
+      store,
+      publisher: new InMemoryEventBus(),
+      clock: new FixedClock(at),
+      wakeOn: signal,
+    });
+
+    relay.start({ intervalMs: AN_HOUR });
+    await relay.stop();
+    const claimed = store.claims;
+
+    signal.notify();
+
+    expect(store.claims).toBe(claimed);
   });
 
   it('keeps polling as the safety net when a notification is missed', async () => {

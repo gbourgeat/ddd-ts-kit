@@ -55,6 +55,11 @@ export class MemoryChannel extends DeclaringChannel implements ConfirmChannel, C
     callback?: Confirmation,
   ): boolean {
     this.ensureOpen();
+
+    if (this.wire.closingChannels()) {
+      throw new IllegalOperation('Channel closing');
+    }
+
     this.wire.sent();
     const confirmed = this.awaitConfirmation(callback);
     const target = this.broker.exchange(exchange);
@@ -127,8 +132,10 @@ export class MemoryChannel extends DeclaringChannel implements ConfirmChannel, C
     return { consumerTag: tag };
   }
 
+  /** Answered by the broker on the next turn, as a round trip: a message already on its way still reaches the consumer. */
   async cancel(consumerTag: string): Promise<Replies.Empty> {
     this.ensureOpen();
+    await new Promise((resolve) => setImmediate(resolve));
     const consumer = this.consumers.get(consumerTag);
 
     if (consumer !== undefined) {
