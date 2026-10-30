@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { changeConfig } from './check-support';
@@ -123,3 +124,46 @@ describe('config/valid on the directories the generators write in', () => {
     expect(exists(root, 'src/contexts/ordering/CONTEXT.md')).toBe(true);
   });
 });
+
+describe('config/valid on the keys of the file', () => {
+  const aboutKeys = (root: string): [string, string][] =>
+    reported(root, 'config/valid')
+      .filter(({ message }) => message.includes('is not a key'))
+      .map(({ message, fix }) => [message, fix]);
+
+  it('names a key the kit does not read, at the root and under stack, in the order of the file, with the nearest key it reads', () => {
+    const root = projectWith({}, { contextDir: 'src/ctx', stack: { ormm: 'knex' }, flavour: 'vanilla' });
+
+    expect(aboutKeys(root)).toEqual([
+      [
+        '"contextDir" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Write "contextsDir", the nearest key the kit reads, or remove it.',
+      ],
+      [
+        '"stack.ormm" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Write "stack.orm", the nearest key the kit reads, or remove it.',
+      ],
+      [
+        '"flavour" is not a key of ddd-ts-kit.config.json: nothing reads it.',
+        'Remove it, or write the key as docs/CONFIG.md spells it.',
+      ],
+    ]);
+  });
+
+  it('places each finding on the line of its key', () => {
+    const root = projectWith({}, { stack: { ormm: 'knex' } });
+    const [finding] = reported(root, 'config/valid').filter(({ message }) => message.includes('"stack.ormm"'));
+
+    expect(finding?.line).toBe(lineOfText(root, '"ormm"'));
+  });
+
+  it('reads every key a fresh project writes', () => {
+    expect(aboutKeys(initProject())).toEqual([]);
+  });
+});
+
+function lineOfText(root: string, needle: string): number {
+  const text = fs.readFileSync(path.join(root, 'ddd-ts-kit.config.json'), 'utf8');
+
+  return text.slice(0, text.indexOf(needle)).split('\n').length;
+}

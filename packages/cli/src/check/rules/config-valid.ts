@@ -2,16 +2,19 @@ import { KNOWN_RULE_IDS } from '../catalogue/known-rule-ids';
 import { ConfigInspection } from '../configuration/config-inspection';
 import type { Rule } from '../model/rule';
 import { reporter } from '../support/reporter';
+import { unknownKeys } from '../configuration/unknown-keys';
 
 export const configValid: Rule = {
   id: 'config/valid',
   description:
-    'ddd-ts-kit.config.json is consistent: known contexts, classifications, relationships, rule ids, guard mode, agent profile and import extension, directories inside the project, the same contexts as on disk, a function limit within the ceiling, complete onePerFile.allow entries, positive commit limits, coverage thresholds that are percentages, known extra pipeline jobs and contract documents that name what they hold.',
+    'ddd-ts-kit.config.json is consistent: no key the kit does not read, known contexts, classifications, relationships, rule ids, guard mode, agent profile and import extension, directories inside the project, the same contexts as on disk, a function limit within the ceiling, complete onePerFile.allow entries, positive commit limits, coverage thresholds that are percentages, known extra pipeline jobs and contract documents that name what they hold.',
   scope: 'project',
   run(project) {
-    const inspection = new ConfigInspection(project, reporter(project, this.id));
+    const report = reporter(project, this.id);
+    const inspection = new ConfigInspection(project, report);
 
     return [
+      ...unknownKeys(project, report),
       ...Object.entries(project.config.contexts).flatMap(([name, context]) =>
         inspection.declaredContext(name, context),
       ),

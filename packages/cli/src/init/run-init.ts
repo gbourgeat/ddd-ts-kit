@@ -25,6 +25,7 @@ import { keepFlatPlatform } from '../platform-folders';
 import { ignoreWorktrees } from './ignore-worktrees';
 import { isTeamFile } from './is-team-file';
 import { forcedNote } from './forced-note';
+import { keptCombinationNotes } from './kept-combination-notes';
 import { keptOrMerged } from './kept-or-merged';
 import { writeManifest } from './manifest/write-manifest';
 import { dependenciesAgainstStack } from './manifest/dependencies-against-stack';
@@ -113,6 +114,7 @@ function closingNotes(report: WorkspaceReport, options: InitOptions, config: Con
   const created = !options.dryRun && report.created.includes('package.json');
 
   return [
+    ...keptCombinationNotes(config),
     ...unwritable,
     ...(options.force ? [forcedNote(report, options.dryRun)] : []),
     ...(created
