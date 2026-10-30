@@ -330,8 +330,10 @@ macOS on Apple Silicon with Docker Desktop; Windows through WSL 2 is experimenta
 closed when Landlock is missing.
 
 **Windows** is supported through WSL 2 only (there the platform is `linux`). Outside it, `affected --run`,
-`slice`, `worker` and `merge` refuse to run: they start the scripts of the project through a shell,
-and `cmd.exe` would pass the arguments unescaped (`affected --run "test & calc"` would run `calc`).
+`verify-slice`, `worker-scope`, `story-scope`, `worktree` (unless `--no-install` or `--dry-run`) and
+`merge-trunk` refuse to run, at their entry and before any process starts: the package manager is
+reached through `cmd.exe`, which passes the arguments of a script unescaped (`affected --run "test & calc"`
+would run `calc`). The refusal exits with code 2.
 
 **Limits to know**, as of 0.1.4:
 

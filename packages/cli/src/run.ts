@@ -44,6 +44,7 @@ import { ownEntry } from './config/values/own-entry';
 import { helpFor } from './help/help-for';
 import { usageFor } from './help/usage-for';
 import { ISSUES_URL } from './issues-url';
+import { refuseWindowsShell } from './refuse-windows-shell';
 import { VERSION } from './version';
 import { stdoutJson } from './json/stdout-json';
 
@@ -101,7 +102,12 @@ const processIo: Io = {
 /** The other names of a command, resolved once: the help, the refusals and the command read the canonical one. */
 const ALIASES: Readonly<Record<string, string>> = { g: 'generate' };
 
-export function run(asked: readonly string[], io: Io = processIo): number {
+/** What the entry reads of its environment: a spec passes `win32` to see what Windows outside WSL 2 gets. */
+export interface RunOptions {
+  readonly platform?: NodeJS.Platform;
+}
+
+export function run(asked: readonly string[], io: Io = processIo, options?: RunOptions): number {
   const argv = canonical(asked);
   const [command, ...rest] = argv;
 
@@ -122,7 +128,7 @@ export function run(asked: readonly string[], io: Io = processIo): number {
       return 0;
     }
 
-    return commandNamed(command)(rest, io);
+    return dispatch(argv, io, options);
   } catch (error) {
     if (!(error instanceof CliError)) {
       return internalError(argv, error, io);
@@ -130,6 +136,15 @@ export function run(asked: readonly string[], io: Io = processIo): number {
 
     return refused(error, argv, io);
   }
+}
+
+/** The command named, once it is known and, on Windows outside WSL 2, allowed to run a script: refused before any work. */
+function dispatch([name = '', ...rest]: readonly string[], io: Io, options?: RunOptions): number {
+  const command = commandNamed(name);
+
+  refuseWindowsShell(options?.platform ?? process.platform, name, rest);
+
+  return command(rest, io);
 }
 
 /**
