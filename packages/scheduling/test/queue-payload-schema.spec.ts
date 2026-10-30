@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { ok, type BackgroundJob } from '@ddd-ts-kit/kernel';
-import { InvalidJobPayloadError } from '../src';
+import {
+  InMemoryErrorReporter,
+  err,
+  ok,
+  type BackgroundJob,
+  type BackgroundJobPayloadSchema,
+} from '@ddd-ts-kit/kernel';
+import { InvalidEnqueuedPayloadError, InvalidJobPayloadError, QueueWorker, reportFailedBackgroundJobs } from '../src';
 import { aQueueBench } from './support/a-queue-bench';
 import { refuseUnhandledRejections } from './support/refuse-unhandled-rejections';
-import { CompileStatementsJob } from './support/statements-job';
+import { CompileStatementsJob, statementsPayload } from './support/statements-job';
 
 refuseUnhandledRejections();
 
@@ -47,7 +53,7 @@ describe('a worker reading the stored payload with the schema of its job', () =>
     expect(runs[0]?.error).toMatchObject({
       job: 'billing.compile-statements',
       jobId: 'job-1',
-      issues: [{ path: 'customers', code: 'invalid_type', message: 'A list of customer ids is expected.' }],
+      issues: [{ path: 'customers', code: 'invalid_type' }],
       message:
         'Background job "billing.compile-statements" (job job-1) was not run: its stored payload does not fit its schema (customers: invalid_type).',
     });
@@ -99,6 +105,62 @@ describe('a worker reading the stored payload with the schema of its job', () =>
     expect(await worker.runDue()).toMatchObject([{ outcome: 'retried', errorCode: 'UNEXPECTED_ERROR' }]);
   });
 });
+
+describe('a refusal of the stored payload, as the error reporter receives it', () => {
+  it('holds the path and the code of each issue, never a stored value nor the message that quotes it', async () => {
+    const { queue, store, clock, scope } = aQueueBench();
+    const errors = new InMemoryErrorReporter();
+    const worker = new QueueWorker({ store, clock, scope, onRun: reportFailedBackgroundJobs(errors) });
+
+    worker.register({ name: CompileStatementsJob.jobName, payload: quoting, run: () => Promise.resolve() });
+    await queue.enqueue(CompileStatementsJobBeforeTheDeploy, { month: 'ACME-2026-02' });
+    await worker.runDue();
+
+    const [reported] = errors.reports;
+
+    expect(reported?.error).toMatchObject({
+      code: 'INVALID_JOB_PAYLOAD',
+      issues: [{ path: 'month', code: 'invalid_string' }],
+    });
+
+    expect([JSON.stringify(reported), String(Object(reported?.error).message)].join(' ')).not.toContain('ACME');
+  });
+});
+
+describe('a queue enqueueing a background job', () => {
+  it('refuses a payload the schema of the job refuses, by path and code, and stores nothing', async () => {
+    const { queue, store } = aQueueBench();
+
+    await expect(queue.enqueue(MonthlyStatementsJob, { month: '2026-02' })).rejects.toMatchObject({
+      code: 'INVALID_ENQUEUED_PAYLOAD',
+      job: 'billing.compile-statements',
+      issues: [{ path: 'customers', code: 'invalid_type' }],
+    });
+
+    await expect(queue.enqueue(MonthlyStatementsJob, { month: '2026-02' })).rejects.toBeInstanceOf(
+      InvalidEnqueuedPayloadError,
+    );
+
+    expect(store.list()).toEqual([]);
+  });
+});
+
+/** A job whose type forgot the customers its schema requires: what `enqueue` reads is the schema. */
+class MonthlyStatementsJob implements BackgroundJob<MonthOnly> {
+  static readonly jobName = CompileStatementsJob.jobName;
+
+  static readonly payload: BackgroundJobPayloadSchema<MonthOnly> = { parse: (input) => statementsPayload.parse(input) };
+
+  async run(): Promise<void> {
+    return undefined;
+  }
+}
+
+/** A schema whose message quotes the value it refuses, as a library may. */
+const quoting: BackgroundJobPayloadSchema<unknown> = {
+  parse: (input) =>
+    err([{ path: 'month', code: 'invalid_string', message: `"${String(Object(input).month)}" is not a month.` }]),
+};
 
 function failing(): never {
   throw new Error('The schema itself failed.');

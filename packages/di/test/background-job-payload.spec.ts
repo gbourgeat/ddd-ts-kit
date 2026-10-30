@@ -46,6 +46,17 @@ class YearlyStatementsJob implements BackgroundJob<{ readonly year: string }> {
   }
 }
 
+/** The job typed loosely, its schema the one of this version: `enqueue` reads the schema. */
+class UnsureStatementsJob implements BackgroundJob<{ readonly month: unknown }> {
+  static readonly jobName = CompileStatementsJob.jobName;
+
+  static readonly payload: BackgroundJobPayloadSchema<{ readonly month: unknown }> = statements;
+
+  async run(): Promise<void> {
+    return undefined;
+  }
+}
+
 const billing = (register: (builder: ModuleBuilder) => void) => defineContextModule({ name: 'billing', register });
 
 describe('the payload of a background job', () => {
@@ -62,6 +73,17 @@ describe('the payload of a background job', () => {
 
     expect(months).toEqual([]);
     expect(app.backgroundJobs.store.list()).toMatchObject([{ status: 'dead', lastErrorCode: 'INVALID_JOB_PAYLOAD' }]);
+  });
+
+  it('is refused where it is enqueued when the schema of this version refuses it, and nothing is stored', async () => {
+    const app = createTestApplication({ modules: [billing((builder) => builder.include([CompileStatementsJob]))] });
+
+    await expect(app.jobQueue.enqueue(UnsureStatementsJob, { month: 2026 })).rejects.toMatchObject({
+      code: 'INVALID_ENQUEUED_PAYLOAD',
+      issues: [{ path: 'month', code: 'invalid_type' }],
+    });
+
+    expect(app.backgroundJobs.store.list()).toEqual([]);
   });
 
   it('is required of a job of an explicit module: a class without its schema is refused', () => {

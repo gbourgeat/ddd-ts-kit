@@ -15,6 +15,7 @@ export { scoped } from './execution/scoped';
 export { asTenant } from './execution/as-tenant';
 export { SessionBuilder } from './execution/session-builder';
 export { createTestBuses, type TestBuses, type TestBusesOptions } from './harness/create-test-buses';
+export { earlierVersionOf } from './jobs/earlier-version-of';
 export type { CommandMatcher } from './processes/command-matcher';
 export { givenProcess, type ProcessScenario } from './processes/given-process';
 export { ProcessOutcome } from './processes/process-outcome';
