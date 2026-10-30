@@ -88,15 +88,7 @@ describe('a run that writes no migration', () => {
     return { root, out };
   };
 
-  it('guards the latest migration when it creates the audit entries and holds no guard', () => {
-    const { root } = rerun({ 'migrations/0000_init.sql': DRIZZLE });
-
-    expect(fs.readFileSync(path.join(root, 'migrations/0000_init.sql'), 'utf8')).toBe(
-      `${DRIZZLE.trimEnd()}\n--> statement-breakpoint\n${GUARD[0]};\n--> statement-breakpoint\n${GUARD[1]};\n`,
-    );
-  });
-
-  it('only names an older migration that creates the audit entries without the guard, and writes nothing to it', () => {
+  it('writes nothing to a migration of an earlier run, and names the one that lacks the guard with the way to add it', () => {
     const { root, out } = rerun({
       'migrations/0000_init.sql': DRIZZLE,
       'migrations/0001_invoices.sql': 'CREATE TABLE "billing"."invoices" ("id" text);\n',
@@ -104,6 +96,7 @@ describe('a run that writes no migration', () => {
 
     expect(fs.readFileSync(path.join(root, 'migrations/0000_init.sql'), 'utf8')).toBe(DRIZZLE);
     expect(out.join('\n')).toContain('migrations/0000_init.sql: creates the audit trail without the guard');
+    expect(out.join('\n')).toContain('drizzle-generate --custom --name add-audit-guard');
   });
 });
 

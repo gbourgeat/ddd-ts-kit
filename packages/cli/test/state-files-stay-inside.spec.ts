@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { applyResolutions } from '../src/merge/apply-resolutions';
+import type { Resolution } from '../src/merge/resolution';
 import { cli, tempDir, write } from './helpers';
 import { committedProject } from './support/committed-project';
 import { git } from './support/git';
@@ -72,5 +74,60 @@ describe('the state and scope files a command writes', () => {
 
     expect(run.code).toBe(0);
     expect(fs.existsSync(path.join(project, 'ddd-ts-kit-baseline.json'))).toBe(true);
+  });
+
+  it('a state file that cannot be written is reported with the file named, not left stale: a folder in its place', () => {
+    write(project, '.ddd-ts-kit/story.json/held', 'x');
+    git(project, 'add', '-f', '.ddd-ts-kit');
+    git(project, 'commit', '--quiet', '--no-verify', '-m', 'a folder where the story file goes');
+
+    const run = cli(project, 'story-scope', 'US1', '--no-install');
+
+    expect(run.code).toBe(2);
+    expect(run.stderr + run.stdout).toContain('story.json could not be written');
+  });
+
+  it('a state file that cannot be written is reported with the file named: a read-only one', () => {
+    const baseline = path.join(project, 'ddd-ts-kit-baseline.json');
+
+    fs.writeFileSync(baseline, '{}');
+    fs.chmodSync(baseline, 0o444);
+
+    const run = cli(project, 'check', '--baseline', 'write');
+
+    expect(run.code).toBe(2);
+    expect(run.stderr + run.stdout).toContain('ddd-ts-kit-baseline.json could not be written');
+  });
+});
+
+describe('the resolutions of a merge', () => {
+  it('are applied all or none: a path that leads out of the project refuses them before the first one is written', () => {
+    const top = tempDir('resolutions-inside');
+    const elsewhere = tempDir('resolutions-outside');
+
+    const resolution = (file: string, content: string | null): Resolution => ({
+      file,
+      kind: 'registry',
+      content,
+      settled: false,
+      how: 'test',
+      blocks: [],
+    });
+
+    fs.writeFileSync(path.join(top, 'first.txt'), 'before');
+    fs.writeFileSync(path.join(top, 'removed.txt'), 'kept');
+    fs.symlinkSync(path.join(elsewhere, 'made.txt'), path.join(top, 'out.txt'));
+
+    expect(() =>
+      applyResolutions(top, [
+        resolution('first.txt', 'after'),
+        resolution('removed.txt', null),
+        resolution('out.txt', 'x'),
+      ]),
+    ).toThrow('written out of the project');
+
+    expect(fs.readFileSync(path.join(top, 'first.txt'), 'utf8')).toBe('before');
+    expect(fs.existsSync(path.join(top, 'removed.txt'))).toBe(true);
+    expect(fs.existsSync(path.join(elsewhere, 'made.txt'))).toBe(false);
   });
 });
