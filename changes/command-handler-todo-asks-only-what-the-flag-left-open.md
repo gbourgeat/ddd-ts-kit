@@ -1,0 +1,1 @@
+**The `TODO(domain)` of a command handler asks only what its flags left open.** A handler generated with `--creates` says to keep `create` and pass the facts of the command as value objects, instead of offering the other option too; the handler that changes an aggregate no longer describes `--creates`.
