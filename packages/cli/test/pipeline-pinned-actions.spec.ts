@@ -37,25 +37,31 @@ const PIN = /uses: ([\w.-]+\/[\w./-]+)@([0-9a-f]{40}) # (v\d+(?:\.\d+)*)$/;
 function pinsOf(uses: readonly Use[], label: string): Map<string, Map<string, Pin[]>> {
   const actions = new Map<string, Map<string, Pin[]>>();
 
-  for (const { file, line } of uses) {
-    const match = PIN.exec(line);
+  for (const use of uses) {
+    const pinned = pinOf(use, label);
 
-    if (match === null) {
+    if (pinned === undefined) {
       continue;
     }
 
-    const [, action, digest, tag] = match;
+    const [action, pin] = pinned;
+    const version = `${pin.digest} # ${pin.tag}`;
     const versions = actions.get(action) ?? new Map<string, Pin[]>();
 
-    versions.set(`${digest} # ${tag}`, [
-      ...(versions.get(`${digest} # ${tag}`) ?? []),
-      { file: `${label}${file}`, digest, tag },
-    ]);
-
+    versions.set(version, [...(versions.get(version) ?? []), pin]);
     actions.set(action, versions);
   }
 
   return actions;
+}
+
+/** The action a `uses:` line pins and its pin, or nothing for a local action or a line that is not a pin. */
+function pinOf({ file, line }: Use, label: string): [string, Pin] | undefined {
+  const [, action, digest, tag] = PIN.exec(line) ?? [];
+
+  return action === undefined || digest === undefined || tag === undefined
+    ? undefined
+    : [action, { file: `${label}${file}`, digest, tag }];
 }
 
 /** The pins of several labelled sets of uses, merged: action -> digest@tag -> the files that say it. */
