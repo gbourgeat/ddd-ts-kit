@@ -8,12 +8,20 @@ import { composeApplication } from '{{alias.platform}}/composition/compose-appli
 {{#if persistence.needsUrl}}
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 {{/if}}
+{{#unless persistence.needsUrl}}
+{{#if queue.redis}}
+import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
+{{/if}}
+{{/unless}}
 import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
 {{#if tenancy.any}}
 import { tenantDirectory } from '{{alias.platform}}/composition/tenant-directory{{alias.ext}}';
 {{/if}}
 import { inProcessEvents } from '{{alias.platform}}/events/in-process-events{{alias.ext}}';
 import { runErasure } from '{{alias.platform}}/privacy/run-erasure{{alias.ext}}';
+{{#if queue.redis}}
+import { openRedis } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
+{{/if}}
 
 // The right to erasure of one data subject (GDPR, article 17), from the command line:
 //   npm run privacy:erase -- <subject-id> [--operator <who-asks>]
@@ -29,6 +37,8 @@ import { runErasure } from '{{alias.platform}}/privacy/run-erasure{{alias.ext}}'
 // this project are rows, so there is no key to destroy{{#if audit.on}}. Each copy leaves a dated entry in the audit
 // trail, with the operator{{/if}}.
 {{/unless}}
+// {{#if events.outbox}}What the outbox keeps of the person, by the fields src/platform/privacy/personal-events.ts lists{{#if queue.stored}}, and{{/if}}{{/if}}{{#unless events.outbox}}{{#if queue.stored}}And{{/if}}{{/unless}}{{#if queue.stored}} the jobs
+// enqueued with the person as `subject`{{/if}}{{#if housekeeping.any}} are erased too.{{/if}}
 // The report says what was reached. Running it again completes an erasure that failed half way.
 // What this script cannot reach: backups, logs, exports and the copies no context declared.
 const { positionals, values } = parseArgs({
@@ -55,10 +65,17 @@ const persistence = {{persistence.await}}openPersistence(loadConfig(process.env)
 const persistence = openPersistence();
 {{/unless}}
 
+{{#if queue.redis}}
+const redis = openRedis(loadConfig(process.env));
+
+{{/if}}
 const application = composeApplication(persistence, {
   events: inProcessEvents(),
 {{#if http.any}}
   authenticator: offlineAuthenticator,
+{{/if}}
+{{#if queue.redis}}
+  redis,
 {{/if}}
 });
 
@@ -68,6 +85,9 @@ const tenants = await tenantDirectory(persistence, fixedTenants).tenants();
 if (tenants.length === 0) {
   console.error('The tenant directory lists no tenant: a write of tenant data is never widened. Name them in TENANTS, comma separated, or open an organisation first.');
   await application.stop();
+{{#if queue.redis}}
+  await redis.close();
+{{/if}}
   await persistence.close();
   process.exit(2);
 }
@@ -86,5 +106,8 @@ try {
   console.log(JSON.stringify(report, null, 2));
 } finally {
   await application.stop();
+{{#if queue.redis}}
+  await redis.close();
+{{/if}}
   await persistence.close();
 }

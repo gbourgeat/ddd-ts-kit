@@ -1,6 +1,9 @@
 {{#if audit.on}}
 import { auditedPersonalDataErasure } from '@ddd-ts-kit/audit';
 {{/if}}
+{{#if events.outbox}}
+import { personalEventsInOutbox } from '@ddd-ts-kit/events';
+{{/if}}
 import {
   dataSubjectErasedV1,
 {{#if tenancy.any}}
@@ -13,12 +16,23 @@ import {
 {{/if}}
   type Actor,
   type DataSubjectErasureReport,
+{{#if housekeeping.any}}
+  type PersonalDataCopy,
+{{/if}}
+{{#unless housekeeping.any}}
 {{#if audit.on}}
   type PersonalDataCopy,
 {{/if}}
+{{/unless}}
 } from '@ddd-ts-kit/kernel';
+{{#if queue.stored}}
+import { jobsOfSubject } from '@ddd-ts-kit/scheduling';
+{{/if}}
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 import { dataSubjectCopies } from '{{alias.platform}}/privacy/data-subject-copies{{alias.ext}}';
+{{#if events.outbox}}
+import { personalEvents } from '{{alias.platform}}/privacy/personal-events{{alias.ext}}';
+{{/if}}
 
 export interface ErasureRequest {
   /** The assembled platform: the {{#if eventSourcing.on}}keys, the {{/if}}scope{{#if audit.on}}, the trail{{/if}} and the copies come from it. */
@@ -69,9 +83,15 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
 {{/if}}
 {{#if audit.on}}
       copies: dataSubjectCopies.map((copy) => audited(copy(platform))),
+{{#if housekeeping.any}}
+      shared: platformCopies(platform).map(audited),
+{{/if}}
 {{/if}}
 {{#unless audit.on}}
       copies: dataSubjectCopies.map((copy) => copy(platform)),
+{{#if housekeeping.any}}
+      shared: platformCopies(platform),
+{{/if}}
 {{/unless}}
 {{#if tenancy.any}}
       inEveryTenant: inEachTenant(platform.scope, request.tenants),
@@ -84,6 +104,20 @@ export function runErasure(subject: string, request: ErasureRequest): Promise<Da
   });
 }
 
+{{#if housekeeping.any}}
+/** What the platform keeps of a person in tables no tenant confines{{#if events.outbox}}: the records of the outbox, by what `personal-events.ts` lists{{/if}}{{#if queue.stored}}{{#if events.outbox}},{{/if}}{{#unless events.outbox}}:{{/unless}} the jobs enqueued with the person as `subject`{{/if}}. */
+function platformCopies(platform: Platform): readonly PersonalDataCopy[] {
+{{#if events.outbox}}
+  const outbox = personalEventsInOutbox(platform.persistence.outbox, personalEvents);
+{{/if}}
+{{#if queue.stored}}
+  const jobs = jobsOfSubject(platform.jobStore);
+{{/if}}
+
+  return [{{#if events.outbox}}outbox{{/if}}{{#if events.outbox}}{{#if queue.stored}}, {{/if}}{{/if}}{{#if queue.stored}}jobs{{/if}}];
+}
+
+{{/if}}
 /**
  * Once every copy is erased, `privacy.data-subject.erased` goes to the outbox{{#if tenancy.any}}, once per tenant{{/if}}: a context that
  * runs as a service of its own, or a system that copied the person from an integration event, erases

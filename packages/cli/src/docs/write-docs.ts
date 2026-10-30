@@ -14,6 +14,7 @@ import { refreshContextDoc } from './refresh-context-doc';
 import { writeBehaviour } from './write-behaviour';
 import { writeCodeOwners } from './write-code-owners';
 import { writeOpenApiDocuments } from './write-open-api-documents';
+import { writePersonalEvents } from './write-personal-events';
 import { writePrivacyRegister } from './write-privacy-register';
 
 const INTEGRATION_README = 'docs/integration/README.md';
@@ -51,6 +52,7 @@ export function writeDocs(
 
   writeContextMap(ws, contextMapLines(contexts));
   writePrivacyRegister(ws, config, contexts);
+  writePersonalEvents(ws, config, contexts);
 
   const kept = refreshBarrels(ws, config, earlier);
 

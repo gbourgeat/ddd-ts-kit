@@ -289,7 +289,7 @@ and their lines here. Two scripts answer the requests of a person, on the source
 variables of `.env`:
 
 ```bash
-npm run privacy:erase -- <subject-id> --operator <who-asks>     # {{#if eventSourcing.on}}the key, then {{/if}}every declared copy{{#if tenancy.any}}, in each tenant of TENANTS{{/if}}
+npm run privacy:erase -- <subject-id> --operator <who-asks>     # {{#if eventSourcing.on}}the key, then {{/if}}every declared copy{{#if tenancy.any}}, in each tenant of TENANTS{{/if}}{{#if housekeeping.any}}, then what the platform keeps of the person{{/if}}
 npm run privacy:export -- <subject-id> > export.json            # one dated document of every declared record{{#if audit.on}}, audited{{/if}}
 npm run privacy:purge                                           # what outlived its retention, as the nightly job does
 ```
@@ -298,9 +298,18 @@ A declaration with `retention` (`generate repository ... --retention ended_at:36
 03:00 UTC by the job `privacy.purge-expired`{{#if audit.on}}, each purge recorded in the audit trail{{/if}}; `JOB_PRIVACY_PURGE_EXPIRED_ENABLED=false`
 switches it off in one environment. How long is your decision: write it in your register with its reason.
 
-Running an erasure again completes one that failed half way.{{#if audit.on}} Every run of either script is
-recorded in the audit trail, a trial included: try them on a test subject, never on a real person.{{/if}}
-Neither script reaches backups, logs, exports or a copy no context declared: say so in your register{{#if eventSourcing.on}}, and keep the keys in a
+An erasure that reached nothing is refused with exit code 1 and announced to nobody: a mistyped id{{#if tenancy.any}}, a tenant
+`TENANTS` does not list{{/if}}, or a person already erased. `--rerun` says it is expected, and announces the erasure again, which
+completes one that failed half way.{{#if audit.on}} Every run of either script is recorded in the audit trail, operator
+included, a trial too: try them on a test subject, never on a real person.{{/if}}
+{{#if housekeeping.any}}
+The platform keeps its own traces of a person for a while: {{#if events.outbox}}a record of the outbox holds its payload for `OUTBOX_RETENTION_DAYS` once
+published (`events.purge-published`, every night){{/if}}{{#if events.outbox}}{{#if queue.stored}}, {{/if}}{{/if}}{{#if queue.stored}}a finished job for `BACKGROUND_JOBS_RETENTION_DAYS` (`jobs.purge-finished`){{/if}}. An erasure reaches them earlier:
+{{#if events.outbox}}the fields the `personal` option of an event lists, in `{{config.platformDir}}/privacy/personal-events.ts`, which `ddd-ts-kit docs` writes{{/if}}{{#if events.outbox}}{{#if queue.stored}}, and {{/if}}{{/if}}{{#if queue.stored}}the jobs enqueued with
+the person as `subject`{{/if}}.
+
+{{/if}}
+Neither script reaches backups, logs, exports or a copy no context declared{{#if housekeeping.any}}, nor a message already delivered, an event with no `personal` option or a job enqueued without `subject`{{/if}}: say so in your register{{#if eventSourcing.on}}, and keep the keys in a
 store of their own in production, with a shorter backup retention than the events
 (docs/concepts/event-sourcing.md of ddd-ts-kit, "Personal data"){{/if}}.
 
