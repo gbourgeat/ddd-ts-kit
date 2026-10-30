@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:081a768cc7b0e335 -->
+<!-- translation-of: coding-agents.md sha256:98d51374b26216f7 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -127,7 +127,7 @@ après `cd dir;` ou un `cd` qui échoue est refusée plutôt que mal placée ; i
 manquent (`>&`, un script `sed` ou `awk` qui écrit, `vim`/`ed`, `rsync`, `curl -o`, `wget -O`,
 `tar -x`, `git stash`/`reset --hard`/`worktree add`/`checkout -f`, `eslint --fix`, `biome
 --write`). Les seuls endroits libres d'un worker hors de son périmètre sont `/dev/null`, les
-périphériques standard et le répertoire temporaire (`$TMPDIR`) ; tout autre chemin absolu est
+périphériques standard et le répertoire temporaire (`$TMPDIR`) hors de tout projet (un projet cloné là garde ses règles) ; tout autre chemin absolu est
 refusé. Un fichier est jugé là où il aboutit : un lien du périmètre, ou un dossier de son chemin qui en
 est un, est l'endroit qu'il atteint, un lien du répertoire temporaire vers un projet est cet
 endroit, et un fichier du périmètre qui porte un autre nom ailleurs (un lien physique) est refusé. Une commande imbriquée plus profond que le lecteur ne suit (plus de cinq *shells* ou

@@ -120,7 +120,7 @@ name the shell computes (a variable, a substitution, a brace list), a wrapper (`
 command it runs; and it knows the writers the file tables miss (`>&`, a `sed` or `awk` script that
 writes, `vim`/`ed`, `rsync`, `curl -o`, `wget -O`, `tar -x`, `git stash`/`reset --hard`/`worktree
 add`/`checkout -f`, `eslint --fix`, `biome --write`). A worker's only free places outside its scope
-are `/dev/null`, the standard devices and the temporary directory (`$TMPDIR`); any other absolute
+are `/dev/null`, the standard devices and the temporary directory (`$TMPDIR`) outside every project (a project cloned there keeps its rules); any other absolute
 place is refused. A file is judged where it lands: a link of the scope, or a folder of its path that
 is one, is the place it reaches, a link of the temporary directory into a project is that place, and
 a file of the scope that has another name elsewhere (a hard link) is refused. A command nested deeper than the reader follows (more than five shells or `eval`s)

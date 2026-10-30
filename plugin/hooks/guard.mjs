@@ -3325,11 +3325,11 @@ function writtenTargets(command) {
         ? { ...target, place: realPlace(target.place) }
         : target,
     )
-    .filter(({ place }) => place === undefined || !isFreePlace(place));
+    .filter(({ place }) => place === undefined || !isFreePlace(place) || findProject(place) !== undefined);
 }
 
 // The only absolute places a worker writes outside its scope: the null and standard devices and
-// the system temporary directory (os.tmpdir() or $TMPDIR). Everything else is judged.
+// the system temporary directory (os.tmpdir() or $TMPDIR) outside every project. Everything else is judged.
 function isFreePlace(place) {
   if (['/dev/null', '/dev/stdout', '/dev/stderr'].includes(place)) {
     return true;

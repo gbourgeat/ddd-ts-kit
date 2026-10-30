@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import {
   bash,
@@ -1122,3 +1122,15 @@ function noted(root, input) {
     .slice(0, 16);
   return existsSync(join(root, '.ddd-ts-kit/guard', `before-run-${key}.json`));
 }
+
+test('a project under the temp directory keeps its rules for a redirection: the temp directory is free outside every project only', () => {
+  const root = project();
+  const agent = worker(root, 'ordering');
+  const temp = { TMPDIR: dirname(root) };
+  for (const command of ['echo x > src/main.ts', `echo x > ${root}/src/main.ts`]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, agent), temp)), 'deny', command);
+  }
+  assert.equal(decision(run('pre-bash', bash(root, 'echo x > openapi/openapi.yaml'), temp)), 'deny');
+  assert.equal(run('pre-bash', bash(root, 'echo x > src/contexts/ordering/notes.md', agent), temp).output, undefined);
+  assert.equal(run('pre-bash', bash(root, 'echo x > ../outside.txt', agent), temp).output, undefined);
+});
