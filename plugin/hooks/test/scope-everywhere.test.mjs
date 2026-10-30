@@ -495,6 +495,9 @@ test('a builder whose session stands above the project is held by the places its
     undefined,
   );
   assert.equal(run('pre-bash', bash(above, 'ls', agent)).output, undefined);
+  // A line it cannot read names no project; the other sessions stand where they stand.
+  assert.equal(run('pre-bash', bash(above, TOO_LONG, agent)).output, undefined);
+  assert.equal(run('pre-bash', bash(above, `echo x > ${worktree}/src/main.ts`)).output, undefined);
 });
 
 test('a builder standing in its worktree stays held to it when a command starts in another project', () => {
@@ -520,6 +523,7 @@ test('from the checkout of the conductor a builder reads, and whatever writes go
     `git -C ${worktree} pull`,
     `cd ${worktree}; sort -o src/main.ts /etc/hostname`,
     'npx ddd-ts-kit check --baseline prune',
+    'git -C /etc commit -m x',
   ]) {
     const refused = run('pre-bash', bash(conductor, command, agent));
     assert.equal(decision(refused), 'deny', command);
