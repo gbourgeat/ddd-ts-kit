@@ -45,7 +45,6 @@ export class PrismaInvitationRepository implements InvitationRepository {
     });
   }
 
-  /** `skipDuplicates` skips a row that takes any unique value: `rowsCreated` tells a taken id from another value. */
   private async insert(state: VersionedInvitation): Promise<number> {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
     const created = await invitationsOf(this.database).createMany({ data: [row], skipDuplicates: true });

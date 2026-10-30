@@ -39,7 +39,6 @@ export class PrismaOrganisationRepository implements OrganisationRepository {
     });
   }
 
-  /** `skipDuplicates` skips a row that takes any unique value: `rowsCreated` tells a taken id from another value. */
   private async insert(state: VersionedOrganisation): Promise<number> {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
     const created = await organisationsOf(this.database).createMany({ data: [row], skipDuplicates: true });

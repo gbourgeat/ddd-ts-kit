@@ -60,10 +60,7 @@ export class Prisma{{aggregate.pascal}}Repository implements {{aggregate.pascal}
     });
   }
 
-  /**
-   * The row is written in the tenant of the work: `tenantScopeOf` names it, `tenantWhere` finds it again.
-   * `skipDuplicates` skips a row that takes any unique value: `rowsCreated` tells a taken id from another value.
-   */
+  /** The row is written in the tenant of the work: `tenantScopeOf` names it, `tenantWhere` finds it again. */
   private async insert(state: Versioned{{aggregate.pascal}}): Promise<number> {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
     const created = await this.database.client().{{context.camel}}{{aggregate.pascal}}.createMany({ data: [row], skipDuplicates: true });
@@ -96,7 +93,6 @@ export class Prisma{{aggregate.pascal}}Repository implements {{aggregate.pascal}
       const state = { ...{{aggregate.pascal}}Mapper.toRow(saved), version: next };
 
       if (expected === 0) {
-        // skipDuplicates skips a row that takes any unique value: rowsCreated tells a taken id from another value.
         const created = await table.createMany({
           data: [{ ...state, ...stampCreation(this.scope, this.clock) }],
           skipDuplicates: true,

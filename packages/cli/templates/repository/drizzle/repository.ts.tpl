@@ -63,7 +63,6 @@ export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal
     const row = { ...state, {{#if tenant.scoped}}...tenantScopeOf(this.scope), {{/if}}...stampCreation(this.scope, this.clock) };
 
     const insertion = this.database.executor().insert({{aggregate.tableCamel}}).values(row);
-    // The key alone: a row that takes a value another row holds under another unique constraint is refused.
     const ignoringTheKey = insertion.onConflictDoNothing({ target: primaryKeyOf({{aggregate.tableCamel}}) });
 
     return ignoringTheKey.returning({ id: {{aggregate.tableCamel}}.id });

@@ -57,7 +57,6 @@ export class PrismaDelegationRepository implements DelegationRepository {
     });
   }
 
-  /** `skipDuplicates` skips a row that takes any unique value: `rowsCreated` tells a taken id from another value. */
   private async insert(state: VersionedDelegation): Promise<number> {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
     const created = await delegationsOf(this.database).createMany({ data: [row], skipDuplicates: true });

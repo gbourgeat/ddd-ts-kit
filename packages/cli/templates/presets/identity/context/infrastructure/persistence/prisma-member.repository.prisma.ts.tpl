@@ -56,7 +56,6 @@ export class PrismaMemberRepository implements MemberRepository {
     });
   }
 
-  /** `skipDuplicates` skips a row that takes any unique value: `rowsCreated` tells a taken id from another value. */
   private async insert(state: VersionedMember): Promise<number> {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
     const created = await membersOf(this.database).createMany({ data: [row], skipDuplicates: true });
