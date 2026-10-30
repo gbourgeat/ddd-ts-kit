@@ -1,8 +1,8 @@
 import { CliError } from '../cli-error';
+import { PERMISSION_NAME } from './permission-name';
+import { permissionWords } from './permission-words';
 import { concept } from './concept';
 import type { Scope } from './scope';
-
-const PERMISSION_NAME = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/;
 
 /** A permission is named in the ubiquitous language, like everything else: `<aggregate>.<action>`. */
 export function permissionNamed(scope: Scope, permission: string): string {
@@ -13,7 +13,7 @@ export function permissionNamed(scope: Scope, permission: string): string {
     );
   }
 
-  concept(scope, permission.replaceAll('.', ' '), { what: 'permission' });
+  concept(scope, permissionWords(permission).join(' '), { what: 'permission' });
 
   return permission;
 }

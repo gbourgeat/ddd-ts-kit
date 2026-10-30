@@ -35,7 +35,7 @@ export function writeEventSourcedAggregate(scope: Scope, name: Name): void {
     ['aggregate/event-sourced.aggregate.spec.ts.tpl', `test/unit/${name.kebab}.aggregate.spec.ts`],
   ]);
 
-  writeBirth(scope, name, names, aggregate === true);
+  writeBirth(scope, names, aggregate === true);
 
   scope.ws.note(
     `${name.pascal} is event-sourced: \`ddd-ts-kit generate repository ${scope.context.kebab} ${name.pascal}\` writes its repository adapter, which delegates to EventSourcedRepository of @ddd-ts-kit/kernel over the EventStore the platform binds (persistence.eventSourcing, in the event_store schema; the SubjectKeyStore and the PersonalDataCipher of src/platform/event-sourcing/ seal its personal values), and its stored events are declared in infrastructure/persistence/${name.kebab}-events.mapper.ts. See docs/concepts/event-sourcing.md of ddd-ts-kit.`,

@@ -54,6 +54,6 @@ function writeAggregate(scope: Scope, name: Name): void {
   ]);
 
   if (birth !== undefined) {
-    writeBirth(scope, name, birth, aggregate === true);
+    writeBirth(scope, birth, aggregate === true);
   }
 }

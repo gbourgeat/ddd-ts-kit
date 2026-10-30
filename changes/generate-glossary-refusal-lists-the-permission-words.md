@@ -1,0 +1,1 @@
+**The glossary refusal of `generate query` and `generate command` lists the missing words of the use case and of its permission together.** `GetOrder --permission order.read` used to refuse `get`, then, one run later, `read`; one message now lists both with their `--term` flags.

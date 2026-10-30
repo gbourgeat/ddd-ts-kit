@@ -5,6 +5,7 @@ import type { Kind } from '../kind';
 import { learnTerms } from '../learn-terms';
 import { markPolicyQuestions } from '../mark-policy-questions';
 import { refinedByPolicy } from '../refined-by-policy';
+import { permissionWords } from '../permission-words';
 import { openScope } from '../open-scope';
 import type { Scope } from '../scope';
 import { wire } from '../wire';
@@ -26,7 +27,12 @@ export const queryKind: Kind = {
 
     learnTerms(scope);
 
-    const name = concept(scope, request.args[1] ?? '', { what: 'use case', strip: ['query', 'handler'] });
+    const name = concept(scope, request.args[1] ?? '', {
+      what: 'use case',
+      strip: ['query', 'handler'],
+      alongside: permissionWords(scope.flags.permission),
+    });
+
     const variant = queryVariant(scope);
     const { permission } = scope.flags;
     const asksPolicy = variant === '' && permission !== undefined && refinedByPolicy(scope, permission);
