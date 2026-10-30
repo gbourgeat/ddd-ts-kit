@@ -43,6 +43,12 @@ test('the ordinary forms of a write to a registry are asked', () => {
     'ls && rm -f pipeline/monorepo/families.mjs',
     'FOO=1 nice -n 10 sed -i s/a/b/ packages/cli/test/support/support-matrix.ts',
     'echo $(truncate -s 0 pipeline/monorepo/families.mjs)',
+    "rg x pipeline/monorepo/families.mjs -l | xargs sed -i 's/a/b/' pipeline/monorepo/families.mjs",
+    "cat pipeline/monorepo/families.mjs | sed -i s/x/y/ other.txt",
+    "sed -e 's/a/b/w pipeline/monorepo/families.mjs' other.txt",
+    'git diff --output=pipeline/monorepo/families.mjs',
+    'npx biome check --write pipeline/monorepo/families.mjs',
+    "grep 'a' pipeline/monorepo/families.mjs > other.txt; cat other.txt > pipeline/monorepo/families.mjs",
   ]) {
     assert.equal(ask(command), 'ask', command);
   }
@@ -60,6 +66,15 @@ test('the readers of a registry go through', () => {
     'nice -n 10 head -5 pipeline/monorepo/families.mjs 2>/dev/null | wc -l',
     'LC_ALL=C wc -l pipeline/monorepo/families.mjs',
     'diff pipeline/monorepo/families.mjs /tmp/x',
+    'git -C /tmp/some-path diff pipeline/monorepo/families.mjs',
+    "grep -n 'a>b' pipeline/monorepo/families.mjs",
+    'grep "a;b" pipeline/monorepo/families.mjs',
+    'grep -i x pipeline/monorepo/families.mjs | wc -l',
+    'npx biome check pipeline/monorepo/families.mjs',
+    'prettier --check pipeline/monorepo/families.mjs',
+    'eslint pipeline/monorepo/families.mjs',
+    'less pipeline/monorepo/families.mjs',
+    'tail -n 5 pipeline/monorepo/families.mjs',
   ]) {
     assert.equal(ask(command), undefined, command);
   }
