@@ -117,7 +117,8 @@ its `.tmp` file, which can be removed), and the same command run again writes th
 which git ignores: a second one waits up to five seconds, then exits 2 naming the command that
 holds it and the fix, run the generators one after the other:
 ``Another generator holds the lock of this project: `ddd-ts-kit generate context billing` (pid 1234, started 12 seconds ago).``
-A lock whose command has ended on this machine, or taken more than a minute ago, is taken over.
+A lock taken on this machine is kept while its command runs and taken over once it has ended; one
+taken on another machine, or whose holder cannot be read, is taken over a minute after it was taken.
 
 `init --force` on a project that is already initialised rewrites the files `init` owns and keeps
 the config: the contexts and their upstreams, the rules, the limits, the deviations and every

@@ -8,6 +8,7 @@ import { git } from './support/git';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 import { NPM } from './support/npm';
+import { withGeneratorLock } from '../src/generator-lock';
 
 const REPO = path.resolve(import.meta.dirname, '../../..');
 const TSX = path.join(REPO, 'node_modules/.bin/tsx');
@@ -15,6 +16,10 @@ const BIN = path.join(REPO, 'packages/cli/src/bin.ts');
 const COMPOSITION = 'src/platform/composition/compose-application.ts';
 const LOCK = '.ddd-ts-kit/lock';
 const HOLDER = 'ddd-ts-kit generate context billing --classification core';
+/** How long before the command under test the holder of a lock took it, in seconds. */
+const HEAD_START = 2;
+/** A wait short enough for a spec that calls the lock itself. */
+const SHORT_WAIT = { waitMs: 200, pollMs: 50, staleMs: 60_000 };
 
 interface Ended {
   readonly code: number | null;
@@ -36,8 +41,15 @@ function started(root: string, ...args: string[]): Promise<Ended> {
   });
 }
 
+interface Holder {
+  readonly pid: number;
+  readonly secondsAgo: number;
+  /** This machine unless said. */
+  readonly host?: string;
+}
+
 /** The lock as a command holding it left it: its folder, and the file that names the command. */
-function heldLock(root: string, holder: { readonly pid: number; readonly secondsAgo: number }): void {
+function heldLock(root: string, holder: Holder): void {
   fs.mkdirSync(path.join(root, LOCK), { recursive: true });
 
   fs.writeFileSync(
@@ -45,7 +57,7 @@ function heldLock(root: string, holder: { readonly pid: number; readonly seconds
     JSON.stringify({
       command: HOLDER,
       pid: holder.pid,
-      host: os.hostname(),
+      host: holder.host ?? os.hostname(),
       startedAt: new Date(Date.now() - holder.secondsAgo * 1000).toISOString(),
     }),
   );
@@ -85,11 +97,11 @@ describe('two generators that write the shared files of one project', () => {
     expect(exists(root, LOCK)).toBe(false);
   }, 60_000);
 
-  it('take over a lock taken more than a minute ago, and one whose process has ended, then release it', () => {
+  it('take over a lock of another machine taken more than a minute ago, and one whose process has ended on this machine, then release it', () => {
     const root = initProject(...NPM);
     const ended = spawnSync(process.execPath, ['-e', '']).pid ?? 0;
 
-    heldLock(root, { pid: process.pid, secondsAgo: 120 });
+    heldLock(root, { pid: process.pid, secondsAgo: 120, host: 'another-machine' });
     expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core').code).toBe(0);
     expect(exists(root, LOCK)).toBe(false);
 
@@ -99,25 +111,69 @@ describe('two generators that write the shared files of one project', () => {
     expect(declaredContexts(root)).toEqual(['billing', 'shipping']);
   });
 
+  it('keep the lock of a command that runs on this machine, however long ago it was taken', () => {
+    const root = initProject(...NPM);
+    let ran = false;
+
+    heldLock(root, { pid: process.pid, secondsAgo: 600 });
+
+    expect(() =>
+      withGeneratorLock({ root, command: 'ddd-ts-kit generate context shipping', timing: SHORT_WAIT }, () => {
+        ran = true;
+      }),
+    ).toThrow(
+      `Another generator holds the lock of this project: \`${HOLDER}\` (pid ${process.pid}, started 600 seconds ago).`,
+    );
+
+    expect(ran).toBe(false);
+    expect(exists(root, LOCK)).toBe(true);
+  });
+
+  it('leave no lock behind when the holder file cannot be written, and throw what the disk answered', () => {
+    const root = initProject(...NPM);
+    let ran = false;
+
+    const disk = {
+      writeFileSync: (): void => {
+        throw new Error('no space left on the device');
+      },
+    };
+
+    expect(() =>
+      withGeneratorLock({ root, command: 'ddd-ts-kit generate context shipping', disk }, () => {
+        ran = true;
+      }),
+    ).toThrow('no space left on the device');
+
+    expect(ran).toBe(false);
+    expect(exists(root, '.ddd-ts-kit')).toBe(false);
+  });
+
   it('refuse with exit code 2 once the wait is over, naming the command that holds the lock and the fix, and write nothing', () => {
     const root = initProject(...NPM);
     const config = read(root, 'ddd-ts-kit.config.json');
 
-    heldLock(root, { pid: process.pid, secondsAgo: 12 });
+    heldLock(root, { pid: process.pid, secondsAgo: HEAD_START });
 
     const refused = cli(root, 'generate', 'context', 'shipping', '--classification', 'core', '--json');
     const error = jsonAt(refused.json(), 'error');
 
     expect(refused.code).toBe(2);
 
-    expect(String(jsonAt(error, 'message'))).toMatch(
+    const message = String(jsonAt(error, 'message'));
+    const seconds = Number(/started (\d+) seconds ago/.exec(message)?.[1]);
+
+    expect(message).toMatch(
       new RegExp(
-        `^Another generator holds the lock of this project: \`${HOLDER}\` \\(pid ${process.pid}, started 1\\d seconds ago\\)\\. This command waited for it and wrote nothing\\.$`,
+        `^Another generator holds the lock of this project: \`${HOLDER}\` \\(pid ${process.pid}, started \\d+ seconds ago\\)\\. This command waited for it and wrote nothing\\.$`,
       ),
     );
 
+    // The head start of the holder, then the five seconds of the wait: however slowly the runner went.
+    expect(seconds).toBeGreaterThanOrEqual(HEAD_START + 5);
+
     expect(jsonAt(error, 'fix')).toBe(
-      'Run the generators one after the other: run this command again once that one has ended. A lock whose command has ended is taken over, and so is one taken more than a minute ago; to take it at once, remove .ddd-ts-kit/lock.',
+      'Run the generators one after the other: run this command again once that one has ended. A lock taken on this machine is kept while its command runs and taken over once it has ended; one taken on another machine, or whose holder cannot be read, is taken over a minute after it was taken. To take it at once, remove .ddd-ts-kit/lock.',
     );
 
     expect(read(root, 'ddd-ts-kit.config.json')).toBe(config);

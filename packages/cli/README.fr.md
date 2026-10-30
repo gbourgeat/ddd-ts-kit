@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:cecd3480508cc529 -->
+<!-- translation-of: README.md sha256:bfc44c570d1ec8d1 -->
 
 # ddd-ts-kit
 
@@ -126,8 +126,9 @@ commande relancée écrit ceux qui manquent. `init` sur un projet déjà initial
 attend jusqu'à cinq secondes, puis sort avec le code 2 en nommant la commande qui le tient et le
 correctif, lancer les générateurs l'un après l'autre :
 ``Another generator holds the lock of this project: `ddd-ts-kit generate context billing` (pid 1234, started 12 seconds ago).``
-Un verrou dont la commande est terminée sur cette machine, ou pris il y a plus d'une minute, est
-repris.
+Un verrou pris sur cette machine est gardé tant que sa commande tourne, et repris une fois qu'elle
+est terminée ; un verrou pris sur une autre machine, ou dont le détenteur ne se lit pas, est repris
+une minute après avoir été pris.
 
 `init --force` sur un projet déjà initialisé réécrit les fichiers qui appartiennent à `init` et
 garde la configuration : les contextes et leurs amonts, les règles, les limites, les dérogations
