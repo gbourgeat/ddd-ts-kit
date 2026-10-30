@@ -75,6 +75,9 @@ install of its package manager), never an install that names a package.
   scripts and the tests you run are checked after the fact: a shared file they changed stops you
   until you put it back as the guard says, with the command it names. Output to `/dev/null` or to
   the system temp directory stays free.
+- Your git changes your worktree only: run it as `cd <worktree> && ...`. From any other checkout
+  it reads (`status`, `log`, `diff`), and the guard refuses the rest: the conductor lands your
+  branch, and no worker removes a worktree or writes a ref.
 - When you need something outside your scope (a field in an upstream contract, a new
   aggregate, a dependency, a platform binding): do not work around it and do not retry a
   refused write. Finish the slices that do not depend on it and put the need in your report.

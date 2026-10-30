@@ -139,10 +139,33 @@ describe('status --workers', () => {
     expect(text).toContain('    context billing, dependencies not installed\n');
   });
 
+  it('says what the guard found left outside the scope of a worker at its stop', () => {
+    expect(cli(root, 'status', '--workers').stdout).not.toContain('outside its scope at its stop');
+
+    recordStop(issuing, 'Code changed\nsrc/main.ts');
+
+    expect(cli(root, 'status', '--workers').stdout).toContain(
+      '    outside its scope at its stop: Code changed src/main.ts\n',
+    );
+  });
+
   it('leaves status without --workers as it was', () => {
     expect(cli(root, 'status').stdout).toContain('Slices (docs/architecture/slices.md): 3');
   });
 });
+
+function recordStop(worktree: string, outside: string): void {
+  write(
+    worktree,
+    '.ddd-ts-kit/agent.json',
+    JSON.stringify({
+      agentId: 'agent-7',
+      run: 1,
+      lastSeen: '2026-10-18T09:00:00Z',
+      lastStop: { at: '2026-10-18T09:01:00Z', reportCurrent: true, outside },
+    }),
+  );
+}
 
 function open(row: string, worktree: string, branch: string): void {
   const opened = cli(
