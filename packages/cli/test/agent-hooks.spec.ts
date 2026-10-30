@@ -142,7 +142,14 @@ describe('the production gate of the regulated profile', () => {
     });
 
     expect(unreadable.status).toBe(2);
-    expect(unreadable.stderr).toContain('could not be read');
+    expect(unreadable.stderr).toContain('the input is not JSON');
+  });
+
+  it.each([null, 'x', 7])('refuses an input that is JSON but no object: %s', (scalar) => {
+    const run = runHook(root, GATE, scalar);
+
+    expect(run.status).toBe(2);
+    expect(run.stderr).toContain('the input is not a JSON object');
   });
 
   it('waits for an input that arrives late, and judges it', async () => {
@@ -229,6 +236,14 @@ describe('the change reference of the regulated profile', () => {
     expect(JSON.parse(unreadable.stdout)).toMatchObject({ hookSpecificOutput: { permissionDecision: 'ask' } });
   });
 
+  it.each([null, 'x', 7])('asks when the input is JSON but no object: %s', (scalar) => {
+    const run = runHook(root, REFERENCE, scalar);
+
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('the input is not a JSON object');
+    expect(JSON.parse(run.stdout)).toMatchObject({ hookSpecificOutput: { permissionDecision: 'ask' } });
+  });
+
   it('asks for the containers and migrations of a worktree, of a second compose file, of a MultiEdit and from a subdirectory', () => {
     const project = tempDir('hooks-places');
 
@@ -254,6 +269,7 @@ describe('the change reference of the regulated profile', () => {
     expect(asks(at('Write', project, path.join(project, 'docker-compose.override.yml')))).toBe(true);
     expect(asks(at('Edit', project, path.join(project, 'src/apps/billing/Dockerfile')))).toBe(true);
     expect(asks(at('Edit', project, path.join(project, 'src/index.ts')))).toBe(false);
+    expect(asks(at('Edit', project, path.join(`${project}..sibling`, 'Dockerfile')))).toBe(false);
     expect(asks(at('Edit', project, path.join(project, '.worktrees/us1/README.md')))).toBe(false);
   });
 });

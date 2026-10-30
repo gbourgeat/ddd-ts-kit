@@ -7,6 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readSync } from 'node:fs';
 import path from 'node:path';
 
+// The same list is CHANGE_GATED of packages/cli/src/story/change-gated.ts (story-check): change both together.
 // What reaches production otherwise than through the code: the migrations of the ORM, the containers.
 const GATED = [
   /(^|\/)migrations\//,
@@ -36,7 +37,7 @@ function readStdin() {
       }
 
       if (error.code !== 'EAGAIN') {
-        throw error;
+        throw new Error(`the input could not be read (${error.code ?? 'unknown error'})`, { cause: error });
       }
 
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
@@ -44,11 +45,14 @@ function readStdin() {
   }
 }
 
+// The input of the hook, or why it cannot be judged: unreadable, not JSON, or JSON that is no object.
 function readInput() {
   try {
-    return JSON.parse(readStdin());
-  } catch {
-    return undefined;
+    const input = JSON.parse(readStdin());
+
+    return typeof input === 'object' && input !== null ? { input } : { failure: 'the input is not a JSON object' };
+  } catch (error) {
+    return { failure: error instanceof SyntaxError ? 'the input is not JSON' : error.message };
   }
 }
 
@@ -61,7 +65,11 @@ function ask(reason) {
   process.exit(0);
 }
 
-const contains = (outer, inner) => !path.relative(outer, inner).startsWith('..');
+function contains(outer, inner) {
+  const relative = path.relative(outer, inner);
+
+  return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+}
 
 // The root of the checkout that holds the file, a worktree of the project included, so that the
 // path is read from there whatever the directory the session works in. Falls back to that directory.
@@ -77,6 +85,7 @@ function checkoutOf(absolute, cwd) {
       cwd: directory,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 5000,
     }).trim();
 
     return contains(top, cwd) || contains(cwd, top) ? top : cwd;
@@ -85,12 +94,12 @@ function checkoutOf(absolute, cwd) {
   }
 }
 
-const input = readInput();
+const { input, failure } = readInput();
 const file = input?.tool_input?.file_path;
 
-if (input === undefined) {
+if (failure !== undefined) {
   ask(
-    'change-reference: the input of the hook could not be read, so the file cannot be judged. Allow the edit only if it is no migration and no part of the containers.',
+    `change-reference: ${failure}, so the file cannot be judged. Allow the edit only if it is no migration and no part of the containers.`,
   );
 }
 

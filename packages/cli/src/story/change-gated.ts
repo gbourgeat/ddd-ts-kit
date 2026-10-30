@@ -3,8 +3,8 @@
  * containers. `paths` is the `GATED` list of the change-reference hook the regulated profile writes
  * (`packages/cli/templates/init/hooks/change-reference.mjs`): the hook asks for a change reference
  * before such a file is edited, `story-check` reads the `Change:` trailer of the commit that holds
- * it. The two lists change together. `pathspecs` are the same places for git, to list only the
- * commits that touch one of them.
+ * it. The two lists change together (the template names this file in a comment too).
+ * `pathspecs` are the same places for git, to list only the commits that touch one of them.
  */
 export const CHANGE_GATED = {
   paths: [
@@ -20,7 +20,8 @@ export const CHANGE_GATED = {
     ':(glob)prisma/migrations/**',
     ':(glob)**/docker/**',
     ':(glob)**/Dockerfile',
-    ':(glob)**/docker-compose*.y*ml',
+    ':(glob)**/docker-compose*.yml',
+    ':(glob)**/docker-compose*.yaml',
   ],
   /** True for a file the change-reference hook watches. */
   matches(file: string): boolean {

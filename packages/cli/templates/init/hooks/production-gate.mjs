@@ -41,7 +41,7 @@ function readStdin() {
       }
 
       if (error.code !== 'EAGAIN') {
-        throw error;
+        throw new Error(`the input could not be read (${error.code ?? 'unknown error'})`, { cause: error });
       }
 
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
@@ -49,11 +49,14 @@ function readStdin() {
   }
 }
 
+// The input of the hook, or why it cannot be judged: unreadable, not JSON, or JSON that is no object.
 function readInput() {
   try {
-    return JSON.parse(readStdin());
-  } catch {
-    return undefined;
+    const input = JSON.parse(readStdin());
+
+    return typeof input === 'object' && input !== null ? { input } : { failure: 'the input is not a JSON object' };
+  } catch (error) {
+    return { failure: error instanceof SyntaxError ? 'the input is not JSON' : error.message };
   }
 }
 
@@ -61,11 +64,11 @@ function named(command, list) {
   return list.find((word) => new RegExp(`(^|[^\\w-])${word}([^\\w-]|$)`, 'i').test(command));
 }
 
-const input = readInput();
+const { input, failure } = readInput();
 
-if (input === undefined) {
+if (failure !== undefined) {
   process.stderr.write(
-    'production-gate: the input of the hook could not be read, so the command cannot be judged. Nothing was run. Run the command again.\n',
+    `production-gate: ${failure}, so the command cannot be judged. Nothing was run. Run the command again.\n`,
   );
   process.exit(2);
 }
