@@ -49,7 +49,7 @@
     "ci:test:migrations": "DDD_TS_KIT_E2E=1 VITEST_MAX_WORKERS=1 bash pipeline/monorepo/heavy-lock.sh vitest run --hookTimeout=1200000 packages/cli/test/e2e/migrations-for-real.spec.ts",
     "ci:test:pairwise": "DDD_TS_KIT_E2E=1 DDD_TS_KIT_PAIRWISE=1 VITEST_MAX_WORKERS=2 bash pipeline/monorepo/heavy-lock.sh vitest run --hookTimeout=240000 packages/cli/test/e2e/pairwise.spec.ts",
     "ci:test:stacks-at-night": "DDD_TS_KIT_E2E=1 DDD_TS_KIT_NIGHT=only VITEST_MAX_WORKERS=2 bash pipeline/monorepo/heavy-lock.sh vitest run --hookTimeout=900000 packages/cli/test/e2e/first-minute-proven.spec.ts",
-    "ci:test:managers": "DDD_TS_KIT_E2E=1 VITEST_MAX_WORKERS=2 bash pipeline/monorepo/heavy-lock.sh vitest run --hookTimeout=600000 packages/cli/test/e2e/package-managers.spec.ts packages/cli/test/e2e/first-minute.spec.ts packages/cli/test/e2e/first-minute-proven.spec.ts packages/cli/test/e2e/first-minute-js.spec.ts",
+    "ci:test:managers": "DDD_TS_KIT_E2E=1 VITEST_MAX_WORKERS=2 bash pipeline/monorepo/heavy-lock.sh vitest run --hookTimeout=600000 packages/cli/test/e2e/package-managers.spec.ts packages/cli/test/e2e/mutation-on-managers.spec.ts packages/cli/test/e2e/first-minute.spec.ts packages/cli/test/e2e/first-minute-proven.spec.ts packages/cli/test/e2e/first-minute-js.spec.ts",
     "ci:docs": "npm run check:dashes && npm run docs:translations",
     "ci:audit": "npm audit --omit=dev --audit-level=high",
     "ci:build": "npm run package:check",

@@ -811,6 +811,8 @@ import { governedMutation } from '@ddd-ts-kit/testing/mutation';
 
 export default {
   testRunner: 'vitest',
+  // Named, since pnpm's strict layout hides the runner from the plugin glob of Stryker.
+  plugins: ['@stryker-mutator/vitest-runner'],
   vitest: { configFile: 'vitest.mutation.config.ts' },
   checkers: [],
   coverageAnalysis: 'perTest',
