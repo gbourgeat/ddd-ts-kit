@@ -1,6 +1,8 @@
+import { EventStreamTenantError } from '../../application/event-sourcing/event-stream-tenant-error';
 import { storedDataOf } from '../../application/event-sourcing/stored-data-of';
 import { StoredEventData } from '../../application/event-sourcing/stored-event-data';
 import type { EventToAppend } from '../../application/event-sourcing/event-to-append';
+import type { StoredEvent } from '../../application/event-sourcing/stored-event';
 import { appendChanges } from '../../application/persistence/append-changes';
 import type { EventStore } from '../../application/ports/event-store';
 import type { DomainEvent } from '../../domain/domain-event';
@@ -25,6 +27,7 @@ export interface EventSourcedRepositoryParts<A extends EventSourcedAggregate<E, 
  * stream, from the last snapshot when the aggregate takes them; `save` appends what the aggregate
  * recorded, at the version it was loaded at, in the transaction of the unit of work, and takes a
  * snapshot when one is due. The events then leave with the save like any other (`dispatchingOnSave`).
+ * An aggregate of another tenant is not found, as a row of another tenant is not: its id tells nothing.
  */
 export class EventSourcedRepository<A extends EventSourcedAggregate<E, S>, E extends DomainEvent, S = never> {
   constructor(private readonly parts: EventSourcedRepositoryParts<A, E, S>) {}
@@ -36,9 +39,9 @@ export class EventSourcedRepository<A extends EventSourcedAggregate<E, S>, E ext
   async findById(id: string): Promise<A | undefined> {
     const stream = EventSourcedRepository.streamOf(this.parts.category, id);
     const snapshot = await this.snapshotOf(stream);
-    const stored = await this.parts.store.readStream(stream, snapshot?.version ?? 0);
+    const stored = await this.storedAfter(stream, snapshot?.version ?? 0);
 
-    if (snapshot === undefined && stored.length === 0) {
+    if (stored === undefined || (snapshot === undefined && stored.length === 0)) {
       return undefined;
     }
 
@@ -60,6 +63,19 @@ export class EventSourcedRepository<A extends EventSourcedAggregate<E, S>, E ext
     });
 
     await this.snapshotIfDue(aggregate, stream, before);
+  }
+
+  /** The events of the stream past `version`, nothing for a stream of another tenant. */
+  private async storedAfter(stream: string, version: number): Promise<readonly StoredEvent[] | undefined> {
+    try {
+      return await this.parts.store.readStream(stream, version);
+    } catch (error) {
+      if (error instanceof EventStreamTenantError) {
+        return undefined;
+      }
+
+      throw error;
+    }
   }
 
   private async serialized(events: readonly DomainEvent[]): Promise<EventToAppend[]> {
