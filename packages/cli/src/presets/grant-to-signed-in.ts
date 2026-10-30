@@ -1,14 +1,10 @@
-import { specifierOf } from '../alias';
 import { insertInRegion } from '../markers';
 import type { Scope } from '../generate/scope';
-import { withImport } from '../generate/with-import';
 import { renderTemplate } from '../templating';
-import { withAuthorizerImport } from './with-authorizer-import';
+import { wrapAuthorizer } from './wrap-authorizer';
 import { platformPath } from '../generate/platform-path';
 
 const REGION = 'signed-in-grants';
-const WRAPPED = 'SignedInGrantsAuthorizer';
-const AUTHORIZER = /(export function createAuthorizer\(\): Authorizer \{\n) {2}return ([\s\S]*?);\n\}/;
 
 /**
  * Grants every signed-in person the permissions of the context, whatever the access model: the
@@ -40,36 +36,6 @@ function grantStep(scope: Scope, isWrapped: boolean): string {
   return isWrapped
     ? `check this grant: ${granted}`
     : `wrap the authorizer of create-authorizer.ts in new SignedInGrantsAuthorizer({ grants: signedInGrants, otherwise }): until then ${scope.context.kebab} refuses who holds no grant of the access model.`;
-}
-
-/** The authorizer of the platform, wrapped once; false when the file is not one the generator wrote. */
-function wrapAuthorizer(scope: Scope, file: string, grants: string): boolean {
-  const source = scope.ws.read(file);
-
-  if (source === undefined) {
-    return false;
-  }
-
-  if (source.includes(WRAPPED)) {
-    return true;
-  }
-
-  if (!AUTHORIZER.test(source)) {
-    return false;
-  }
-
-  const wrapped = source.replace(
-    AUTHORIZER,
-    `$1  const model = $2;\n\n  return new ${WRAPPED}({ grants: signedInGrants, otherwise: model });\n}`,
-  );
-
-  scope.ws.update(file, withImport(withAuthorizerImport(wrapped, WRAPPED), signedInImport(scope, grants)));
-
-  return true;
-}
-
-function signedInImport(scope: Scope, grants: string): string {
-  return `import { signedInGrants } from '${specifierOf(scope.config, grants)}';`;
 }
 
 function writeFile(scope: Scope, file: string, content: string): void {

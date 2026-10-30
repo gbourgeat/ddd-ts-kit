@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:a08874150ee09854 -->
+<!-- translation-of: commands.md sha256:f4db854d67ea213c -->
 
 # Quelle commande, quand
 
@@ -166,7 +166,7 @@ exemple, reste un `TODO(domain)` du schéma et de l'appel.
 | Commande | Fait | Quand | Produit | Ensuite |
 |---|---|---|---|---|
 | lire [CHANGELOG.md](../../CHANGELOG.md), livré aussi en `node_modules/ddd-ts-kit/CHANGELOG.md` | ce qui a changé et ce qu'il faut faire | avant la mise à jour, ou quand le début de session dit que le *plugin* décrit une autre version | les étapes de la version | mettre à jour ensemble les versions de `@ddd-ts-kit/*` et de `ddd-ts-kit` |
-| *commit*, puis `npx ddd-ts-kit init --force` | réécrit les fichiers que possède `init`, garde la configuration, y inscrit sa version en `initVersion` et recâble les contextes ; garde `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` et le *pipeline* comme ceux de l'équipe, fusionne `.gitignore` et `.dockerignore` ; refuse, code 2, tant qu'un fichier à remplacer diffère du dernier *commit* | après la mise à jour, sur un arbre de travail propre | les fichiers de plateforme de la nouvelle version, les fichiers gardés, et des notes | `git diff`, puis `npm run verify` |
+| *commit*, puis `npx ddd-ts-kit init --force` | réécrit les fichiers que possède `init`, garde la configuration, y inscrit sa version en `initVersion` et recâble les contextes. Ce que les générateurs et l'équipe ont écrit dans ces fichiers reste : le contenu de chaque région `ddd-ts-kit:*` (la valeur d'une passerelle, les réglages d'un *job*, une *policy*, un *fake* écrit à la main), les droits de `roles.ts` et le vocabulaire des rôles, les schémas de base et les *preview features* de la *datasource* Prisma, les services de `docker-compose.yml` ; les tables et les événements audités qu'une région ne porte pas sont relistés depuis l'arbre. À version égale, `git diff` est vide. Ce qu'il ne peut pas garder est nommé dans une note, fichier par fichier, avec la commande qui le réécrit : une région que cette version ne porte plus, un marqueur resté sans son partenaire, un objet `roles` qu'il ne lit pas jusqu'au bout et qu'il laisse de côté en entier, les *repositories* restés sur l'ORM qu'un *flag* a changé. Garde `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts`, le *pipeline* et le journal Drizzle `migrations/meta/_journal.json` comme ceux de l'équipe, fusionne `.gitignore` et `.dockerignore` ; refuse, code 2, tant qu'un fichier à remplacer diffère du dernier *commit* | après la mise à jour, sur un arbre de travail propre | les fichiers de plateforme de la nouvelle version, les fichiers gardés, et des notes | `git diff`, puis `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` puis `--apply`, `value-objects` | déplace les routes en fonctions vers des contrôleurs, les classes d'erreur vers des fabriques, les objets-valeurs d'un `Result` vers des fabriques qui lèvent une erreur | quand le projet adopte ces formes | les fichiers réécrits et la clé de configuration | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npx ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]` | déplace les fichiers de `src/platform/` qu'un projet a générés à plat vers leurs dossiers (`composition/`, `observability/`, `jobs/`, `auth/authentication/`, `auth/authorization/`, le dossier du modèle, `audit/search-audit-entries/`), avec chaque import qui les nomme et les scripts de package.json | quand `doctor` signale `folder src/platform: flat` ; les générateurs et `init --force` gardent le rangement à plat jusque-là | les fichiers déplacés, les imports réécrits, les fichiers de l'équipe laissés à plat | `npm run format`, `npm run verify` |
 | `npm run regenerate` | régénère ce qui découle de la configuration | après tout changement de la configuration | `.dependency-cruiser.cjs`, les documents générés | `npm run verify` |
@@ -343,6 +343,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    where drizzle-kit alone writes nothing and exits 0; then formats the snapshot and the
                    journal it wrote with the Biome or Prettier of the format script, and warns when the
                    SQL changes a primary key in an order that fails on PostgreSQL (exit code unchanged);
+                   says first, exit code unchanged, when the migration will drop the tables of a declared
+                   context because the schema index no longer names them;
                    --replay, after merging the trunk into a branch when both added migrations: when the
                    history forks from --base <ref> (origin/main by default), deletes the migrations of the
                    branch the base does not have, with their snapshots and journal entries, then generates
@@ -654,7 +656,11 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    written; outside a git repository, every file whose content would change does; commit
                    or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,
                    AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed
-                   as kept) and merges .gitignore and .dockerignore, the lines of the team kept
+                   as kept) and merges .gitignore and .dockerignore, the lines of the team kept; the files it
+                   rewrites keep what their ddd-ts-kit:* regions, the roles, the Prisma datasource and the
+                   services of the compose file hold, and a note names, file by file, what it could not keep:
+                   a region this version does not hold, a marker without its partner, a roles object it
+                   cannot read to its end, the repositories left on the ORM a flag changed
   --force          generate replaces the files that exist with what the kit writes, only while git holds
                    them: a file to replace that differs from the last commit refuses the command, exit 2,
                    the files named, nothing written; outside a git repository, every file whose content

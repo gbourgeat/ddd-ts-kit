@@ -1,7 +1,5 @@
+import { REGION_MARKER } from '../markers';
 import type { ConflictBlock, Segment } from './conflict-blocks';
-
-/** A marker of a generated region, `// ddd-ts-kit:<region>` or `<!-- ddd-ts-kit:<region> -->`, opening or closing. */
-const MARKER = /^\s*(?:\/\/|<!--)\s*(\/?)ddd-ts-kit:([a-z][a-z0-9-]*)\s*(?:-->)?\s*$/;
 
 /** What settles a conflict inside a region: its lines, or undefined to leave it to a person. */
 export type RegionChoice = (block: ConflictBlock, region: string) => readonly string[] | undefined;
@@ -29,7 +27,7 @@ function regionsOf(segments: readonly Segment[]): Map<number, string> {
 
   segments.forEach((segment, index) => {
     if (segment.kind === 'conflict') {
-      if (![...segment.ours, ...segment.base, ...segment.theirs].some((line) => MARKER.test(line))) {
+      if (![...segment.ours, ...segment.base, ...segment.theirs].some((line) => REGION_MARKER.test(line))) {
         open.at(-1)?.blocks.push(index);
       }
     } else {
@@ -44,7 +42,7 @@ function regionsOf(segments: readonly Segment[]): Map<number, string> {
 
 /** Opens a region on its opening marker; on its closing one, gives its name to the conflicts it held. */
 function followed(open: { name: string; blocks: number[] }[], line: string, regions: Map<number, string>): void {
-  const [, closing, name] = MARKER.exec(line) ?? [];
+  const [, closing, name] = REGION_MARKER.exec(line) ?? [];
 
   if (name !== undefined && closing === '') {
     open.push({ name, blocks: [] });

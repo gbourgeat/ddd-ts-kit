@@ -13,6 +13,7 @@ import {
   runOrmTool,
   schemasFirst,
   typeOnlyImports,
+  warnDroppedContextTables,
 } from '../migration';
 import { Arguments } from './arguments';
 import type { Command } from './command';
@@ -29,7 +30,8 @@ const IN_PROCESS_ENV = { DATABASE_URL: '{url}', DATABASE_POOL_SIZE: '1' };
  * TypeORM does not write, and the migration is brought to the rules of the project (type-only
  * imports, its formatter), since the build compiles it into `dist/migrations`. With no
  * `DATABASE_URL`, no server is needed: the migrations already written run on PostgreSQL in process,
- * and the new one is the difference with the entities.
+ * and the new one is the difference with the entities. It says first when that difference will
+ * drop the tables of a context the schema index no longer lists.
  */
 export const typeormGenerateCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {});
@@ -43,6 +45,8 @@ export const typeormGenerateCommand: Command = (argv, io) => {
   const offline = !hasDatabaseUrl();
 
   const dataSource = `dist/${readConfig(root).config.platformDir}/database/data-source.js`;
+
+  warnDroppedContextTables(root, io, 'typeorm');
 
   return generateGuarded(
     {
