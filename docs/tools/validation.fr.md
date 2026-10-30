@@ -1,5 +1,5 @@
 [English](validation.md) · **Français**
-<!-- translation-of: validation.md sha256:a7f39bea160de986 -->
+<!-- translation-of: validation.md sha256:ce62a5af85f9cf98 -->
 
 # Bibliothèques de validation : zod, class-validator, TypeBox, Standard Schema
 
@@ -168,7 +168,9 @@ class-validator, avec les décorateurs legacy et `reflect-metadata`. Chaque cham
 `declare`, sans valeur initiale : class-transformer garde une valeur initiale pour un champ que le
 corps n'a pas, si bien que `practitionerId = ''` sous `@IsString()` laisserait passer un corps qui
 ne le porte pas, comme s'il en portait un vide. Un champ facultatif est `@IsOptional()` avec
-`declare startsAt?: string;`.
+`declare startsAt?: string;`. `classSchema` refuse une classe dont une instance neuve porte une
+valeur, par une `DeclarationError` qui nomme ses champs : le premier test ou le premier démarrage
+le dit.
 
 <!-- checked sample: legacy-decorators -->
 ```ts

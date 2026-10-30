@@ -163,7 +163,9 @@ takes as it is.
 class-validator, with legacy decorators and `reflect-metadata`. Each field is `declare`d, with no
 initial value: class-transformer keeps an initial value for a field the body lacks, so
 `practitionerId = ''` under `@IsString()` would let a body without it pass as if it carried an empty
-one. An optional field is `@IsOptional()` with `declare startsAt?: string;`.
+one. An optional field is `@IsOptional()` with `declare startsAt?: string;`. `classSchema` refuses a
+class whose fresh instance holds a value with a `DeclarationError` that names its fields, so the
+first test or the first start says it.
 
 <!-- checked sample: legacy-decorators -->
 ```ts

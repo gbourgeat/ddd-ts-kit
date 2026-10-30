@@ -5,6 +5,7 @@ import { err, ok } from '@ddd-ts-kit/kernel';
 import type { Schema } from '../schema';
 import type { ValidationIssue } from '../validation-issue';
 import type { DtoClass } from './dto-class';
+import { assertNoInitialValue } from './assert-no-initial-value';
 import { selfContainedSchema } from './self-contained-schema';
 
 export interface ClassSchemaOptions {
@@ -18,7 +19,14 @@ export interface ClassSchemaOptions {
   readonly shared?: boolean;
 }
 
+/**
+ * Validates with the decorators of a class. A class one of whose fields has an initial value is
+ * refused here, at construction (`DeclarationError`): that value would stand in for a field the
+ * input lacks.
+ */
 export function classSchema<T extends object>(dto: DtoClass<T>, options: ClassSchemaOptions = {}): Schema<T> {
+  assertNoInitialValue(dto);
+
   const validatorOptions: ValidatorOptions = {
     whitelist: true,
     forbidNonWhitelisted: true,

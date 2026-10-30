@@ -6,27 +6,27 @@ import { classSchema, omitClass, partialClass, pickClass } from '../src/class-va
 
 class PlaceDto {
   @IsString()
-  room = '';
+  declare room: string;
 }
 
 class AppointmentDto {
   @IsString()
   @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
-  patientId = '';
+  declare patientId: string;
 
   @IsISO8601()
-  startsAt = '';
+  declare startsAt: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  reason?: string;
+  declare reason?: string;
 
   @ValidateNested()
   @Type(() => PlaceDto)
-  place = new PlaceDto();
+  declare place: PlaceDto;
 
-  undecorated = 0;
+  declare undecorated: number;
 }
 
 const ISO_8601 = {
