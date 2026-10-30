@@ -17,7 +17,8 @@ npm run db:generate initial   # migrations/<timestamp>_initial.sql, from the Dri
 npm run db:migrate
 {{/if}}
 {{#if orm.knex}}
-npm run db:migrate      # builds, then applies migrations/ (the first one creates every table)
+npm run db:generate initial   # migrations/<timestamp>_initial.js, from `createTables` of {{config.platformDir}}/database/schema.ts
+npm run db:migrate
 {{/if}}
 {{#if orm.prisma}}
 npm run db:client       # the Prisma client and the schema of the tests, from the files of prisma/schema/

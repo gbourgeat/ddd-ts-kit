@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cli, read, tempDir } from './helpers';
+import { cli, exists, read, tempDir } from './helpers';
 import { initProject } from './support/init-project';
 import { NPM } from './support/npm';
 import { jsonAt } from './support/json-at';
@@ -147,16 +147,28 @@ describe('the package.json init writes', () => {
       textsAt(manifest(initProject(...NPM, '--orm', orm)), 'scripts')['db:generate'];
 
     expect(generate('drizzle')).toBe('ddd-ts-kit drizzle-generate --name');
-    expect(generate('knex')).toBe('knex migrate:make');
+    expect(generate('knex')).toBe('npm run build && ddd-ts-kit knex-generate --name');
     expect(generate('prisma')).toBe('ddd-ts-kit prisma-generate --name');
     expect(read(initProject(...NPM), 'drizzle.config.ts')).toContain("migrations: { prefix: 'timestamp' },");
   });
+});
 
-  it('gives knex the stub of an ES module and a first migration that sorts before every timestamp', () => {
+describe('the migrations of a generated project', () => {
+  it('gives knex the stub of an ES module and an empty folder of migrations, which db:generate fills', () => {
     const root = initProject(...NPM, '--orm', 'knex');
 
     expect(read(root, 'knexfile.js')).toContain("resolve('knex/lib/migrations/migrate/stub/mjs.stub')");
-    expect(read(root, 'migrations/00000000000000_initial.js')).toContain('createTables(knex)');
+    expect(exists(root, 'migrations/.gitkeep')).toBe(true);
+    expect(exists(root, 'migrations/00000000000000_initial.js')).toBe(false);
+    expect(textsAt(manifest(root), 'scripts')['db:migrate']).toBe('knex migrate:latest');
+  });
+
+  it.each([
+    ['knex', 'knexfile.js'],
+    ['prisma', 'prisma.config.ts'],
+    ['typeorm', 'src/platform/database/data-source.ts'],
+  ])('makes the migrations of %s read .env, which its CLI does not', (orm, file) => {
+    expect(read(initProject(...NPM, '--orm', orm), file)).toContain("process.loadEnvFile('.env');");
   });
 });
 

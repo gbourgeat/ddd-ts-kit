@@ -463,7 +463,7 @@ magasin : le module du kernel garde les *jobs* et les instances de processus dan
 qui les consomme même à côté d'un *worker* (`RUN_JOBS` désactivé) : rien de ce qu'un processus
 met en file ne reste sans exécution, mais rien ne survit à son redémarrage. Pour les garder dans
 la base : ajoutez les tables au schéma (`createJobTable` et `createProcessTable` de
-`@ddd-ts-kit/knex` dans une nouvelle migration, ou `jobsTable` et `processesTable` de
+`@ddd-ts-kit/knex` dans `createTables` et `npm run db:generate`, ou `jobsTable` et `processesTable` de
 `@ddd-ts-kit/drizzle/postgres` et `npm run db:generate`, ou les modèles de
 `prisma/jobs-and-processes.postgresql.prisma` de `@ddd-ts-kit/prisma` et `npm run db:generate`),
 donnez les magasins à `Persistence` (`KnexJobStore`, `KnexProcessStore`, ou leurs jumeaux Drizzle

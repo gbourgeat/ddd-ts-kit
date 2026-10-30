@@ -15,6 +15,7 @@ const REFUSED = 'cannot name a migration: a migration is named in letters, digit
 
 describe.each([
   ['drizzle-generate', 'node_modules/drizzle-kit/bin.cjs'],
+  ['knex-generate', 'node_modules/knex/bin/cli.js'],
   ['prisma-generate', 'node_modules/prisma/build/index.js'],
 ])('ddd-ts-kit %s --name', (command, bin) => {
   it.each(['--custom', '-x', '../evil', 'add.invoices', 'add invoices', 'ajout-évité'])(

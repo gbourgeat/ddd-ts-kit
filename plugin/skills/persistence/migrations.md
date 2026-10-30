@@ -1,7 +1,8 @@
 # Migrations: sandboxed, merged, parallel
 
 Read under `agents.profile: regulated` or any sandbox where a command cannot reach the database,
-on a branch whose trunk gained a migration since it started, or as a worker of a parallel build.
+on a branch whose trunk gained a migration since it started, as a worker of a parallel build, or
+under Knex when `db:generate` lists a change it did not write.
 How each of the four tools names, orders and applies migrations, and what a merge breaks, is in
 `docs/tools/persistence.md` of the kit, "Migrations: names, merges and order", with the
 measurements; what follows is the commands and the order of the steps.
@@ -16,10 +17,31 @@ Prisma and TypeORM when `DATABASE_URL` is set to a server that does not answer (
   on PostgreSQL in process (PGlite, the engine of `openTestDatabase()`), diffs them against the
   schema and writes the migration, audit guard statements included, so a sandboxed agent
   generates its own migrations. On TypeORM, build first:
-  `npm run build && npm run db:generate migrations/<name>`. Drizzle generates without a
+  `npm run build && npm run db:generate migrations/<name>`. Knex compares `createTables` with the
+  migrations on PostgreSQL in process, whatever `DATABASE_URL` says. Drizzle generates without a
   connection too.
 - `db:migrate` and the specs that name a `DATABASE_URL` stay the owner's, from a terminal outside
   the sandbox, or the CI's: hand over the command and wait.
+
+## Under Knex
+
+Knex has no schema diff, and the steps are those of the three other ORM: the tool is the kit's.
+`db:generate` builds, compares the compiled `createTables` with the migrations replayed, both on
+PostgreSQL in process, and writes the new tables, columns and indexes as SQL held in the migration.
+A migration calls nothing of the application: it builds the same tables whatever the schema becomes,
+and the history replays on a fresh database.
+
+Where it differs from the three others:
+
+- A column changed or dropped and a table dropped are not written: they come out as a `TODO(domain)`
+  of the migration and a line of the command. An index or a constraint changed under its name is
+  not seen. Change `createTables`, and write the statement in the migration.
+- `npm run db:generate -- <name> --custom` writes the empty migration of knex, for that statement or
+  for a change of data.
+- A definition the PostgreSQL in process cannot run (an extension it does not load) makes
+  `db:generate` fail: `--custom` too, and the migration is yours to write.
+- A migration that calls `createTables` is refused: it builds what the code holds today. Keep the
+  file under its name and replace its `up` by the SQL of what it created.
 
 ## When the trunk brings a migration
 
