@@ -76,6 +76,10 @@ export class Broker {
     return (await this.channel.checkQueue(queue)).messageCount;
   }
 
+  async consumersOn(queue: string): Promise<number> {
+    return (await this.channel.checkQueue(queue)).consumerCount;
+  }
+
   async take(queue: string): Promise<GetMessage | undefined> {
     const message = await this.channel.get(queue, { noAck: true });
 

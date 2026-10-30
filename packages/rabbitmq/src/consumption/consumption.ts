@@ -176,6 +176,12 @@ export class Consumption {
     });
 
     subscription.consumerTag = consumerTag;
+
+    // The subscription left while its consumer was being registered: the consumer leaves too,
+    // or every message of the queue would reach a consumer without handler and come back at once.
+    if (this.subscriptions.get(subscription.queues.work) !== subscription) {
+      void channel.cancel(consumerTag).catch(ignore);
+    }
   }
 
   private async process(delivery: Delivery): Promise<void> {

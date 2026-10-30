@@ -101,6 +101,14 @@ export class PullConsumer {
     }
   }
 
+  /** Answers `400 Bad Request` to every waiting pull, which makes the client end its iterator with an error. */
+  refusePulls(): void {
+    for (const pull of this.pulls.splice(0)) {
+      this.status(pull.inbox, 400, 'Bad Request');
+      finish(pull);
+    }
+  }
+
   /** The consumer or its stream was deleted: the pull requests hear it, the timers stop. */
   stop(deleted: boolean): void {
     for (const pull of this.pulls.splice(0)) {

@@ -66,6 +66,10 @@ export class JetStream {
     return { ...appended, stream: stream.name };
   }
 
+  refusePullsOf(stream: string, consumer: string): void {
+    this.streams.get(stream)?.consumers.get(consumer)?.refusePulls();
+  }
+
   stop(): void {
     for (const stream of this.streams.values()) {
       for (const consumer of stream.consumers.values()) {

@@ -180,6 +180,14 @@ export class Consumption {
     const consumer = await session.client.consumers.get(topology.stream, subscription.names.durable);
     const messages = await consumer.consume({ max_messages: prefetch });
 
+    // The subscription left while its consumer was being reached: nothing would handle a message,
+    // and each one would come back at once. Not awaited: `close` waits for a reader of the messages.
+    if (this.subscriptions.get(subscription.names.durable) !== subscription) {
+      void messages.close().catch(ignore);
+
+      return;
+    }
+
     subscription.messages = messages;
     void this.pump(subscription, messages);
   }
