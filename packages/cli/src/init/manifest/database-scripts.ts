@@ -39,7 +39,8 @@ export function databaseScripts(config: Config): Record<string, string> {
  * The TypeORM CLI reads the compiled data source of the platform, wherever the project keeps its
  * platform; it takes the path of the new migration (`npm run db:generate migrations/add-invoices`).
  * `db:generate` goes through the CLI of the kit, which makes the audit trail append-only in the
- * migration that creates it.
+ * migration that creates it. `db:migrate` builds first: it reads `dist/migrations`, and what
+ * `db:generate` just wrote is a source until then.
  */
 function scriptsOf(config: Config): Record<string, string> {
   const { orm } = config.stack;
@@ -51,7 +52,7 @@ function scriptsOf(config: Config): Record<string, string> {
 
   return {
     'db:generate': 'ddd-ts-kit typeorm-generate',
-    'db:migrate': `typeorm migration:run -d ${dataSource}`,
+    'db:migrate': `npm run build && typeorm migration:run -d ${dataSource}`,
   };
 }
 

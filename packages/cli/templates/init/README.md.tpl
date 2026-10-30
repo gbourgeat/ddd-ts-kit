@@ -26,7 +26,7 @@ npm run db:migrate
 {{/if}}
 {{#if orm.typeorm}}
 npm run build && npm run db:generate migrations/initial   # migrations/<timestamp>-initial.ts, from the entity schemas
-npm run db:migrate
+npm run db:migrate      # builds, then applies migrations/
 {{/if}}
 npm run dev
 ```

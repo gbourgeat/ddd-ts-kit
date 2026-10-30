@@ -134,7 +134,9 @@ describe('the package.json init writes', () => {
   it('reads the data source of TypeORM where the project keeps its platform', () => {
     const scripts = textsAt(manifest(initProject(...NPM, '--orm', 'typeorm')), 'scripts');
 
-    expect(scripts['db:migrate']).toBe('typeorm migration:run -d dist/src/platform/database/data-source.js');
+    expect(scripts['db:migrate']).toBe(
+      'npm run build && typeorm migration:run -d dist/src/platform/database/data-source.js',
+    );
 
     // The CLI of the kit reads the same data source from the config: `ddd-ts-kit typeorm-generate`.
     expect(scripts['db:generate']).toBe('ddd-ts-kit typeorm-generate');
