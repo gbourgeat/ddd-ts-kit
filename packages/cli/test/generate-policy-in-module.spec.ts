@@ -120,3 +120,20 @@ describe('a policy that refines the permission of a use case of a module', () =>
     expect(read(root, `${QUERIES}/search-invoices/search-invoices.handler.ts`)).toContain('access.scope');
   });
 });
+
+describe('a use case of the same name in two modules', () => {
+  it('is refused by the placement, so one logical path never stands for two files', () => {
+    const root = invoicing();
+
+    expect(cli(root, 'generate', 'module', 'billing', 'refunds', '--term', 'Refunds=back', '--purpose', 'p').code).toBe(
+      0,
+    );
+
+    expect(cli(root, ...COMMAND).code).toBe(0);
+
+    const second = cli(root, ...COMMAND.slice(0, -1), 'refunds');
+
+    expect(second.code).toBe(2);
+    expect(second.stderr).toContain('would split it between two modules');
+  });
+});

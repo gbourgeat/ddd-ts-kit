@@ -6,7 +6,7 @@ import { vars } from '../vars';
 import { assertEventStore } from './assert-event-store';
 import { birthNames } from './birth-names';
 import { instantOf } from './instant-of';
-import { writeBirth } from './write-birth';
+import { writeDomainEvent } from './write-domain-event';
 
 /** The fact an event-sourced aggregate is born with when `--birth` names none: its stream starts with it. */
 const DEFAULT_BIRTH = 'Created';
@@ -28,14 +28,27 @@ export function writeEventSourcedAggregate(scope: Scope, name: Name): void {
     instant: instantOf(names.fact),
   };
 
-  const [aggregate] = emit(scope, vars(scope, { name: named(name), aggregate: named(name), event }), [
+  const context = vars(scope, { name: named(name), aggregate: named(name), event });
+
+  const [created] = emit(scope, context, [
     ['aggregate/event-sourced.aggregate.ts.tpl', `domain/aggregates/${name.kebab}.aggregate.ts`],
+  ]);
+
+  if (created !== true) {
+    scope.ws.note(
+      `--event-sourced applies when the aggregate is created, like --birth: ${name.pascal} was kept as it is, so nothing event-sourced is written for it. Replace it with --force, or change it by hand.`,
+    );
+
+    return;
+  }
+
+  emit(scope, context, [
     ['aggregate/event-sourced.events.mapper.ts.tpl', `infrastructure/persistence/${name.kebab}-events.mapper.ts`],
     ['builder/event-sourced.builder.ts.tpl', `test/builders/${name.kebab}.builder.ts`],
     ['aggregate/event-sourced.aggregate.spec.ts.tpl', `test/unit/${name.kebab}.aggregate.spec.ts`],
   ]);
 
-  writeBirth(scope, names, aggregate === true);
+  writeDomainEvent(scope, names);
 
   scope.ws.note(
     `${name.pascal} is event-sourced: \`ddd-ts-kit generate repository ${scope.context.kebab} ${name.pascal}\` writes its repository adapter, which delegates to EventSourcedRepository of @ddd-ts-kit/kernel over the EventStore the platform binds (persistence.eventSourcing, in the event_store schema; the SubjectKeyStore and the PersonalDataCipher of src/platform/event-sourcing/ seal its personal values), and its stored events are declared in infrastructure/persistence/${name.kebab}-events.mapper.ts. See docs/concepts/event-sourcing.md of ddd-ts-kit.`,

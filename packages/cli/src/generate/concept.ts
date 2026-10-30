@@ -10,7 +10,10 @@ import { spokenInLanguage } from './spoken-in-language';
 export function concept(scope: Scope, input: string, role: ConceptRole): Name {
   const name = parseConceptName(input, role.what, { strip: role.strip ?? [] });
 
-  const alongside = (role.alongside ?? []).map((input) => parseConceptName(input, role.what));
+  const alongside = (role.alongside ?? []).map(({ words, what, label }) => ({
+    name: parseConceptName(words, what),
+    label,
+  }));
 
   spokenInLanguage(scope, { name, alongside });
 

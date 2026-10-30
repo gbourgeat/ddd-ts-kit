@@ -6,10 +6,15 @@ import { toName, type Name } from '../naming';
 import { glossaryOf } from './glossary-of';
 import type { Scope } from './scope';
 
-/** A name and the others the same command writes. */
+/** A name judged with the others the same command writes, each with how a refusal calls it. */
 export interface Together {
   readonly name: Name;
-  readonly alongside: readonly Name[];
+  readonly alongside: readonly { readonly name: Name; readonly label: string }[];
+}
+
+interface Judged {
+  readonly name: Name;
+  readonly label: string;
 }
 
 /**
@@ -19,8 +24,8 @@ export interface Together {
  * language hears the name instead, and the generator goes on. The `alongside` names, written by the
  * same command, are judged for unknown words with it, so that one refusal lists every missing term.
  */
-export function spokenInLanguage(scope: Scope, judged: Name | Together, qualifiers: readonly string[] = []): void {
-  const { name, alongside } = 'alongside' in judged ? judged : { name: judged, alongside: [] };
+export function spokenInLanguage(scope: Scope, together: Name | Together, qualifiers: readonly string[] = []): void {
+  const { name, alongside } = 'alongside' in together ? together : { name: together, alongside: [] };
 
   if (scope.flags.allowName) {
     return;
@@ -35,20 +40,30 @@ export function spokenInLanguage(scope: Scope, judged: Name | Together, qualifie
   const glossary = glossaryOf(scope);
   const file = `${scope.dir}/CONTEXT.md`;
 
-  refuseTechnicalWords(name, glossary, file);
-  refuseUnknownWords([name, ...alongside], { glossary, file, qualifiers });
+  const judged: Judged[] = [{ name, label: `"${name.pascal}"` }, ...alongside];
+
+  refuseTechnicalWords(judged, glossary, file);
+  refuseUnknownWords(judged, { glossary, file, qualifiers });
 }
 
-function refuseTechnicalWords(name: Name, glossary: Glossary, file: string): void {
-  const technical = technicalWordsOf(name.pascal, glossary);
+function refuseTechnicalWords(judged: readonly Judged[], glossary: Glossary, file: string): void {
+  const flawed = judged
+    .map(({ name, label }) => ({ name, label, technical: technicalWordsOf(name.pascal, glossary) }))
+    .filter(({ technical }) => technical.length > 0);
 
-  if (technical.length === 0) {
+  if (flawed.length === 0) {
     return;
   }
 
+  const carries = flawed
+    .map(({ label, technical }) => `${label} carries the technical word "${technical.join('", "')}"`)
+    .join(' and ');
+
+  const terms = flawed.map(({ name }) => `--term "${name.title}=<what it means for the business>"`).join(' ');
+
   throw new CliError(
-    `"${name.pascal}" carries the technical word "${technical.join('", "')}".`,
-    `Use the noun or verb a domain expert uses for it, a term of the ubiquitous language (rule language/no-technical-name). If the business does say "${name.title}", define the term in the glossary of ${file}, in the same command: --term "${name.title}=<what it means for the business>". --allow-name lets the name through without it.`,
+    `${carries}.`,
+    `Use the noun or verb a domain expert uses for it, a term of the ubiquitous language (rule language/no-technical-name). If the business does say ${flawed.map(({ name }) => `"${name.title}"`).join(' and ')}, define the term in the glossary of ${file}, in the same command: ${terms}. --allow-name lets the name through without it.`,
   );
 }
 
@@ -59,9 +74,9 @@ interface Language {
   readonly qualifiers: readonly string[];
 }
 
-function refuseUnknownWords(names: readonly Name[], { glossary, file, qualifiers }: Language): void {
+function refuseUnknownWords(names: readonly Judged[], { glossary, file, qualifiers }: Language): void {
   const judged = names
-    .map((name) => ({ name, unknown: unknownWords(name.pascal, glossary, qualifiers) }))
+    .map(({ name, label }) => ({ label, unknown: unknownWords(name.pascal, glossary, qualifiers) }))
     .filter(({ unknown }) => unknown.length > 0);
 
   if (judged.length === 0) {
@@ -78,7 +93,7 @@ function refuseUnknownWords(names: readonly Name[], { glossary, file, qualifiers
   const flags = unknown.map((word) => `--term "${toName(word).pascal}=<what it means for the business>"`).join(' ');
 
   const uses = judged
-    .map((entry) => `"${entry.name.pascal}" uses ${entry.unknown.map((word) => `"${word}"`).join(', ')}`)
+    .map((entry) => `${entry.label} uses ${entry.unknown.map((word) => `"${word}"`).join(', ')}`)
     .join(' and ');
 
   throw new CliError(

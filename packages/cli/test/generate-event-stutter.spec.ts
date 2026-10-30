@@ -91,3 +91,42 @@ describe('--birth on an aggregate that already exists', () => {
     expect(exists(root, 'src/contexts/ordering/domain/events/order-rebirthed.event.ts')).toBe(false);
   });
 });
+
+describe('a reference to a stuttering event that exists', () => {
+  const stutter = ['ordering', 'Order', 'Order Confirmed', '--term', 'Confirm=To confirm'];
+
+  it('is never refused: a handler is generated for it', () => {
+    const root = orderProject();
+
+    expect(cli(root, 'generate', 'domain-event', ...stutter, '--allow-name').code).toBe(0);
+
+    const handler = cli(root, 'generate', 'event-handler', ...stutter);
+
+    expect(handler.code, handler.stderr).toBe(0);
+  });
+
+  it('is refused by the kinds that would create the event', () => {
+    const root = orderProject();
+
+    const refused = cli(root, 'generate', 'event-handler', ...stutter);
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('starts with the aggregate Order');
+  });
+});
+
+describe('--event-sourced on an aggregate that already exists', () => {
+  it('writes nothing event-sourced and says that it applies when the aggregate is created', () => {
+    const root = initProject('--context', 'ordering:core', '--audit', 'off', '--event-sourcing', 'on');
+
+    expect(cli(root, 'generate', 'aggregate', 'ordering', 'Order', '--term', 'Order=A purchase').code).toBe(0);
+    const mapper = 'src/contexts/ordering/infrastructure/persistence/order-events.mapper.ts';
+
+    const again = cli(root, 'generate', 'aggregate', 'ordering', 'Order', '--event-sourced', '--term', 'Created=born');
+
+    expect(again.code, again.stderr).toBe(0);
+    expect(again.stdout).toContain('--event-sourced applies when the aggregate is created');
+    expect(again.stdout).not.toContain('is event-sourced');
+    expect(exists(root, mapper)).toBe(false);
+  });
+});

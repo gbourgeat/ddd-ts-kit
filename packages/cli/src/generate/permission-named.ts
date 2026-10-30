@@ -1,6 +1,5 @@
 import { CliError } from '../cli-error';
 import { PERMISSION_NAME } from './permission-name';
-import { permissionWords } from './permission-words';
 import { concept } from './concept';
 import type { Scope } from './scope';
 
@@ -13,7 +12,7 @@ export function permissionNamed(scope: Scope, permission: string): string {
     );
   }
 
-  concept(scope, permissionWords(permission).join(' '), { what: 'permission' });
+  concept(scope, permission.replaceAll('.', ' '), { what: 'permission' });
 
   return permission;
 }

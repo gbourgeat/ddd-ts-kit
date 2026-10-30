@@ -2,7 +2,10 @@ import type { EventNames } from '../event-names';
 import type { Scope } from '../scope';
 import { writeDomainEvent } from './write-domain-event';
 
-/** The event of the birth belongs to the aggregate that records it: an aggregate that was kept does not record this one. */
+/**
+ * The event of the birth belongs to the aggregate that records it: an aggregate that was kept does not
+ * record this one.
+ */
 export function writeBirth(scope: Scope, birth: EventNames, written: boolean): void {
   if (written) {
     writeDomainEvent(scope, birth);

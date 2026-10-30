@@ -19,7 +19,7 @@ export const queryKind: Kind = {
   usage:
     'query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]...',
   summary:
-    'A query, its result, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus; with --search, one page of a search filtered by the access scope of the actor.',
+    'A query, its result, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus; with --search, one page of a search filtered by the access scope of the actor; a name that starts with List is refused, a read that takes criteria is a Search<Things>.',
   positionals: ['context', 'UseCaseName'],
   writesShared: true,
   writesInModules: true,
@@ -91,6 +91,6 @@ function refuseListQuery(input: string): void {
 
   throw new CliError(
     `"${name.pascal}" names a query List...: a read that takes criteria, a scope or a page is a search (rule naming/search-not-list).`,
-    `Name it ${search} (\`generate query <context> ${search} --search ...\`), and add \`--term "Search=<what it means for the business>"\` when the glossary does not hold Search yet.`,
+    `Name it ${search}: \`ddd-ts-kit generate query <context> ${search} --search --permission <aggregate>.<action> --term "Search=<what it means for the business>"\` (leave --term out when the glossary holds Search already).`,
   );
 }

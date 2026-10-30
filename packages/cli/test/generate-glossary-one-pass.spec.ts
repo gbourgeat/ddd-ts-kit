@@ -17,9 +17,18 @@ describe('the glossary refusal of a use case and its permission', () => {
     const refused = cli(root, 'generate', kind, 'ordering', 'GetOrder', '--permission', 'order.read');
 
     expect(refused.code).toBe(2);
-    expect(refused.stderr).toContain('"GetOrder" uses "get" and "OrderRead" uses "read"');
+    expect(refused.stderr).toContain('"GetOrder" uses "get" and the permission "order.read" uses "read"');
     expect(refused.stderr).toContain('--term "Get=<what it means for the business>"');
     expect(refused.stderr).toContain('--term "Read=<what it means for the business>"');
+  });
+
+  it('lists a technical word of the permission with the missing terms of the use case', () => {
+    const root = orderProject();
+
+    const refused = cli(root, 'generate', 'query', 'ordering', 'GetOrder', '--permission', 'order.manager');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('the permission "order.manager" carries the technical word "manager"');
   });
 
   it('is satisfied by the two terms of one command', () => {
