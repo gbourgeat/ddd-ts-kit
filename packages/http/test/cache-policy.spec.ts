@@ -170,6 +170,7 @@ describe('a cache policy that cannot stand', () => {
     );
 
     expect(declaring({ scope: CacheScope.public, maxAge: '2000ms' })).not.toThrow();
+    expect(declaring({ scope: CacheScope.public, maxAge: '1.5s' })).toThrow(/"1.5s" is not a whole number of seconds/);
     expect(declaring({ scope: CacheScope.noStore, staleIfError: '1m' })).toThrow(/a no-store answer is kept by nobody/);
   });
 

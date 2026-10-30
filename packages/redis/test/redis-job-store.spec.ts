@@ -114,6 +114,27 @@ describe.each(SERVERS)('RedisJobStore, %s', (_name, start) => {
 
     expect([JSON.stringify(store), Object.keys(store)]).toEqual(['"RedisJobStore [client concealed]"', []]);
   });
+
+  it('tells who wired it of each job of a batch a committed unit of work could not write', async () => {
+    const lost: string[] = [];
+    const own = connect(redis.url);
+    const store = new RedisJobStore(own, { namespace: aNamespace(), onLostJob: (_error, id) => lost.push(id) });
+
+    for (const id of ['job-1', 'job-2']) {
+      await store.add({ ...job, id });
+    }
+
+    for (const { id, attempt } of await store.claim({ queue: 'billing', limit: 2, now: job.runAt, leaseMs: 1_000 })) {
+      await store.fail({ id, attempt }, { errorCode: 'LEDGER_DOWN', retryAt: null, at: job.runAt });
+    }
+
+    await new InMemoryUnitOfWork().run(async () => {
+      expect(await store.retryDead(['job-1', 'job-2'], job.runAt)).toBe(2);
+      own.disconnect();
+    });
+
+    expect(lost).toEqual(['job-1', 'job-2']);
+  });
 });
 
 describe('RedisJobStore whose server is away', () => {

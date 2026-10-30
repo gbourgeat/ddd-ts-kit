@@ -93,6 +93,7 @@ function judged(file: SourceFile, project: Project): Finding[] {
 function tooMany({ counted }: ExportVerdict): Finding[] {
   const [, second] = counted;
 
+  /* v8 ignore next 3 -- ADR-0001: judgeExports explains a lone export, so there are at least two here */
   if (second === undefined) {
     return [];
   }

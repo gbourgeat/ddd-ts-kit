@@ -1,8 +1,26 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { cli } from './helpers';
+import { offlinePrismaMigration } from '../src/migration';
+import { cli, tempDir } from './helpers';
 import { initProject } from './support/init-project';
+
+describe('the lock of the migrations of Prisma, written before the diff', () => {
+  it('is written once, and anything but a lock already there stops the diff', () => {
+    const root = tempDir('prisma-lock');
+    const io = { out: () => undefined, err: () => undefined };
+    const migrations = path.join(root, 'prisma/migrations');
+
+    fs.mkdirSync(migrations, { recursive: true });
+    fs.chmodSync(migrations, 0o555);
+
+    try {
+      expect(() => offlinePrismaMigration({ root, folder: 'prisma/migrations', name: 'init', io })).toThrow(/EACCES/);
+    } finally {
+      fs.chmodSync(migrations, 0o755);
+    }
+  });
+});
 
 const MODULES = path.resolve(__dirname, '../../../node_modules');
 

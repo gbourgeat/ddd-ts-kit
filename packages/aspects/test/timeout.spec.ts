@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TIMEOUT, TimeoutError, compose, retry, timeout } from '../src';
+import { TIMEOUT, TimeoutError, compose, retry, timeout, type Scheduler } from '../src';
 import { ManualScheduler, createAspectFakes, withAspectRuntime } from '../src/testing';
 import { settled } from './support/settled';
 import { SlowGateway } from './support/slow-gateway';
@@ -35,6 +35,28 @@ describe('timeout', () => {
       timeoutMs: 2000,
       message: 'SlowGateway.fetch did not answer within 2000 ms',
     });
+  });
+
+  it('answers all the same when the scheduler of the project cannot cancel the timer it armed', async () => {
+    const cancelled: string[] = [];
+
+    /** A scheduler whose cancellation fails, as one over a timer wheel already closed would. */
+    const closing: Scheduler = {
+      schedule: () => () => {
+        cancelled.push('asked');
+
+        throw new Error('the timer wheel is closed');
+      },
+    };
+
+    const gateway = timeout(2000, { scheduler: closing })(new SlowGateway());
+    const pending = gateway.ping();
+
+    gateway.release('pong');
+
+    expect(await pending).toBe('pong');
+    await settled();
+    expect(cancelled).toEqual(['asked']);
   });
 
   it('does not touch the arguments unless asked to pass a signal', async () => {
@@ -79,6 +101,18 @@ describe('timeout, asked to pass a signal', () => {
 
     expect(gateway.signals[0]).not.toBe(caller.signal);
     expect(gateway.signals[0]?.aborted).toBe(true);
+  });
+
+  it('fills in the parameters the caller left out, so that the signal lands on the last one', async () => {
+    const scheduler = new ManualScheduler();
+    const gateway = timeout(2000, { scheduler, signal: true })(new SlowGateway());
+
+    const pending = gateway.lookup();
+
+    gateway.release('found');
+
+    expect(await pending).toBe('all:found');
+    expect(gateway.signals[0]).toBeInstanceOf(AbortSignal);
   });
 
   it('passes no signal to a method that declares no parameter', async () => {

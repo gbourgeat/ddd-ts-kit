@@ -159,6 +159,15 @@ describe('hydrate, when the other context fails', () => {
     expect(JSON.stringify(page.warnings)).not.toContain('down');
   });
 
+  it('warns of nothing when the relation that may fall back answered', async () => {
+    const page = await hydrate(rows)
+      .with('practitioner', (row) => row.practitionerId, practitioners().byIds)
+      .orElse('practitioner', unknownPractitioner, { onFailure: 'fallback', timeoutMs: 1_000 });
+
+    expect(page.items.map((row) => row.practitioner.name)).toEqual(['Ada', 'Bob', 'Ada', 'unknown', 'unknown']);
+    expect(page.warnings).toEqual([]);
+  });
+
   it('gives a lookup up after its time, by the same policy', async () => {
     const never = (): Promise<ReadonlyMap<string, Practitioner>> => new Promise(() => undefined);
     const slow = hydrate(rows).with('practitioner', (row) => row.practitionerId, never);

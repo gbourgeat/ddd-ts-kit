@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PLACED, TRACEPARENT, anEvent, recorder, unique } from './support/events';
 import { SERVERS, serverOf } from './support/servers';
 import { Server } from './support/streams';
+import { eventually, pause } from './support/waiting';
 
 describe.each(SERVERS)('RedisStreamsEventBus, delivering, %s', { timeout: 30_000 }, (_name, start) => {
   const redis = serverOf(start);
@@ -82,5 +83,28 @@ describe.each(SERVERS)('RedisStreamsEventBus, delivering, %s', { timeout: 30_000
     await server.settled(bus);
 
     expect(billing.ids()).toEqual(events.map((event) => event.id));
+  });
+
+  it('stops reading when the last handler unsubscribes, while its group keeps its place', async () => {
+    const [prefix, consumer] = [unique('test-events'), unique('billing')];
+    const stream = `${prefix}:${PLACED}`;
+    const bus = server.bus({ prefix, consumer });
+    const [first, second] = [recorder(), recorder()];
+    const subscriptions = [bus.subscribe(PLACED, first.handler), bus.subscribe(PLACED, second.handler)];
+
+    await bus.publish([anEvent('evt-1')]);
+    await server.settled(bus);
+    subscriptions[0]?.unsubscribe();
+    await bus.publish([anEvent('evt-2')]);
+    await server.settled(bus);
+    subscriptions[1]?.unsubscribe();
+    await eventually(async () => (await server.consumers(stream, consumer)) === 0);
+    await bus.publish([anEvent('evt-3')]);
+    await pause(100);
+
+    expect(first.ids()).toEqual(['evt-1']);
+    expect(second.ids()).toEqual(['evt-1', 'evt-2']);
+    expect(await server.pending(stream, consumer)).toBe(0);
+    expect(await server.length(stream)).toBe(3);
   });
 });

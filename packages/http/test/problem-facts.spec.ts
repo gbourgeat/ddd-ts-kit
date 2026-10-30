@@ -23,6 +23,17 @@ class BookingError extends ConceptError {
     });
   }
 
+  static tooManyAppointments(held: number, ids: readonly string[]) {
+    return BookingError.refusal('TOO_MANY_APPOINTMENTS', `The patient holds ${String(held)} appointments.`, {
+      ids,
+      held,
+    });
+  }
+
+  static alreadyBooked(ids: readonly string[]) {
+    return BookingError.refusal('ALREADY_BOOKED', `The appointment ${ids[0] ?? 'asked'} is already booked.`, { ids });
+  }
+
   static agendaUnreadable(shard: string) {
     return BookingError.refusal('AGENDA_UNREADABLE', 'The agenda cannot be read.', { shard }).exposing('shard');
   }
@@ -73,6 +84,16 @@ describe('the facts of a refusal in the problem document', () => {
     expect(JSON.stringify(quoted)).not.toContain('patient-7');
     expect(unquoted.detail).toBe('The patient holds too many appointments.');
     expect(toProblem(new Error('boom'), mapper, 'req-1')).not.toHaveProperty('detail');
+  });
+
+  it('answers the sentence as well when the message quotes a private number, or a value held in a private list', () => {
+    const byNumber = toProblem(BookingError.tooManyAppointments(3, []), mapper, 'req-1');
+    const inAList = toProblem(BookingError.alreadyBooked(['apt-7']), mapper, 'req-1');
+    const unquoted = toProblem(BookingError.alreadyBooked([]), mapper, 'req-1');
+
+    expect(byNumber.detail).toBe('Too many appointments.');
+    expect(inAList.detail).toBe('Already booked.');
+    expect(unquoted.detail).toBe('The appointment asked is already booked.');
   });
 
   it('hides a refusal mapped to a server fault, its exposed facts included', () => {

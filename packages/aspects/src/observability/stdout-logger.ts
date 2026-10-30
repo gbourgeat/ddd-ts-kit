@@ -26,8 +26,10 @@ export interface StdoutLoggerOptions {
   readonly scrubMessages?: boolean;
   /** Defaults to the clock of the aspect runtime, then to the system clock. */
   readonly clock?: Clock;
-  /** Receives each line, newline included. Defaults to the standard output. */
+  /** Receives each line, newline included. Defaults to `stream`. */
   readonly write?: (line: string) => void;
+  /** Where the lines go without a `write`, and what `flush` waits for. Defaults to the standard output. */
+  readonly stream?: Pick<NodeJS.WritableStream, 'write'>;
 }
 
 interface Header {
@@ -78,7 +80,7 @@ export class StdoutLogger implements Logger {
 
     return new Promise((resolve) => {
       try {
-        process.stdout.write('', () => {
+        this.stream.write('', () => {
           resolve();
         });
       } catch {
@@ -94,7 +96,7 @@ export class StdoutLogger implements Logger {
 
     const header = { time: clockOr(this.options.clock).now().toISOString(), level, message };
 
-    (this.options.write ?? writeToStdout)(`${this.serialized(header, fields)}\n`);
+    this.writeLine(`${this.serialized(header, fields)}\n`);
   }
 
   private serialized(header: Header, fields: LogFields): string {
@@ -115,6 +117,18 @@ export class StdoutLogger implements Logger {
     }
   }
 
+  private writeLine(line: string): void {
+    if (this.options.write === undefined) {
+      this.stream.write(line);
+    } else {
+      this.options.write(line);
+    }
+  }
+
+  private get stream(): Pick<NodeJS.WritableStream, 'write'> {
+    return this.options.stream ?? process.stdout;
+  }
+
   private boundWith(fields: LogFields): LogFields {
     try {
       return { ...this.options.base, ...fields };
@@ -122,8 +136,4 @@ export class StdoutLogger implements Logger {
       return { ...this.options.base, ...UNWRITABLE_FIELDS };
     }
   }
-}
-
-function writeToStdout(line: string): void {
-  process.stdout.write(line);
 }

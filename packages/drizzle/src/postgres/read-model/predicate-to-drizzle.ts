@@ -16,11 +16,14 @@ import {
   type SQL,
 } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
-import type { FieldValue, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
+import type { FieldValue, FilterOperand, FilterOperator, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
 import { columnOf } from './column-of';
 import { likePattern } from './like-pattern';
 
 type Columns = Readonly<Record<string, PgColumn>>;
+
+/** The operators that compare a value: `isNull` is rendered before any of them. */
+type Comparison = Exclude<FilterOperator, 'isNull'>;
 
 const COMPARISONS = { eq, ne, gt, gte, lt, lte } as const;
 
@@ -48,10 +51,12 @@ function tested(test: PredicateTest, column: PgColumn): SQL {
     return test.value === true ? isNull(column) : isNotNull(column);
   }
 
-  return test.negated ? not(compared(test, column)) : compared(test, column);
+  const comparison = compared(test.operator, test.value, column);
+
+  return test.negated ? not(comparison) : comparison;
 }
 
-function compared({ operator, value }: PredicateTest, column: PgColumn): SQL {
+function compared(operator: Comparison, value: FilterOperand, column: PgColumn): SQL {
   const values: FieldValue[] = typeof value === 'object' && !(value instanceof Date) ? [...value] : [value];
   const [first = null, second = null] = values;
 
@@ -63,8 +68,6 @@ function compared({ operator, value }: PredicateTest, column: PgColumn): SQL {
     case 'contains':
     case 'startsWith':
       return sql`${column} like ${likePattern(operator, String(first))} escape ${'\\'}`;
-    case 'isNull':
-      return isNull(column);
     default:
       return COMPARISONS[operator](column, first);
   }

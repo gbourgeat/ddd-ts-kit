@@ -24,7 +24,7 @@ const FIXED_ROUTES = new Map([
 
 /** A directory of pages, and the route its pages are published under. The first that matches wins. */
 const DIRECTORY_ROUTES = [
-  [/^docs\/(concepts|tools|guides|proposals)\/(.+)$/, (section, rest) => `${section}/${rest}`],
+  [/^docs\/(concepts|tools|guides|proposals|adr)\/(.+)$/, (section, rest) => `${section}/${rest}`],
   [/^packages\/eslint-plugin\/docs\/rules\/(.+)$/, (rest) => `rules/${rest}`],
   [/^packages\/([^/]+)\/README\.md$/, (name) => `packages/${name}`],
   [/^packages\/([^/]+)\/docs\/(.+)$/, (name, rest) => `packages/${name}/${rest}`],

@@ -146,9 +146,5 @@ function candidateOf(root: string, relative: string, { extensions, modules }: Re
 }
 
 function compare(left: string, right: string): number {
-  if (left === right) {
-    return 0;
-  }
-
   return left < right ? -1 : 1;
 }

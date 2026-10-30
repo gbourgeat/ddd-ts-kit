@@ -39,6 +39,12 @@ describe('the commands of ddd-ts-kit', () => {
       expect(unknown.stderr).toContain('fix: Use one of: affected, init, generate');
     },
   );
+
+  it('write to the streams of the process when no terminal is given, as the entry point runs them', () => {
+    // The version goes to the standard output of this run, the refusal to its error output: one line each.
+    expect(run(['--version'])).toBe(0);
+    expect(run(['nothing-of-the-kind', '--cwd', tempDir('run')])).toBe(2);
+  });
 });
 
 describe('an internal error of ddd-ts-kit', () => {

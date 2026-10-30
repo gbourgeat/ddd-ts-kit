@@ -5,7 +5,9 @@ import { cli, write } from './helpers';
 import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub';
 import { git } from './support/git';
 import { IDENTITY_VARIABLES } from './support/git-identity';
+import { jsonAt } from './support/json-at';
 import { commitFiles, goOn, mergeTrunk, merging, onBranch, trunkRepository } from './support/trunk-history';
+import { type StubInstallers, stubInstallers } from './support/stub-installers';
 
 const INVOICE = 'src/contexts/billing/invoice.ts';
 const manifest = (regenerate: string): string => JSON.stringify({ name: 'billing', scripts: { regenerate } });
@@ -208,5 +210,121 @@ describe('merge-trunk: a deleted file, a drizzle refusal, and the refusals to st
     write(root, 'src/added.ts', 'mine\n');
 
     expect(mergeTrunk(root).stderr).toContain('The working tree is not clean: src/added.ts.');
+  });
+});
+
+describe('merge-trunk: the trunk a remote names', () => {
+  it('refuses a branch without a commit, from the trunk origin/HEAD names', () => {
+    const origin = conflicting();
+    const root = trunkRepository({});
+
+    git(root, 'remote', 'add', 'origin', origin);
+    git(root, 'fetch', '--quiet', 'origin');
+    git(root, 'remote', 'set-head', 'origin', 'main');
+    git(root, 'checkout', '--quiet', '--orphan', 'build/billing');
+    git(root, 'rm', '-rq', '--cached', '.');
+    fs.rmSync(path.join(root, '.gitignore'));
+
+    const refused = cli(root, 'merge-trunk');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('error: The branch has no commit yet.');
+    expect(refused.stderr).toContain('fix: Commit first: a merge joins two commits.');
+  });
+});
+
+describe('merge-trunk --continue, what a person did to the merge in between', () => {
+  it('forgets its state when the merge was aborted by hand, and says that none is in progress', () => {
+    const root = conflicting();
+
+    expect(mergeTrunk(root).code).toBe(1);
+    expect(fs.existsSync(path.join(root, '.ddd-ts-kit/merge.json'))).toBe(true);
+
+    git(root, 'merge', '--abort');
+
+    const refused = goOn(root, '--continue');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('No merge of merge-trunk is in progress in this worktree.');
+    expect(fs.existsSync(path.join(root, '.ddd-ts-kit/merge.json'))).toBe(false);
+  });
+
+  it('reads a file left to a person that the person removed as settled by its removal', () => {
+    const root = trunkRepository({ [INVOICE]: 'class Invoice {\n}\n' });
+
+    onBranch(root, 'build/billing');
+    commitFiles(root, { [INVOICE]: 'class Invoice {\n  pay() {}\n}\n' }, 'feat(billing): pay');
+    onBranch(root, 'main');
+    commitFiles(root, { [INVOICE]: null }, 'refactor(billing): no invoice class (#2)');
+    onBranch(root, 'build/billing');
+
+    expect(mergeTrunk(root).code).toBe(1);
+
+    git(root, 'rm', '--quiet', INVOICE);
+
+    expect(goOn(root, '--continue', '--json').json()).toMatchObject({ status: 'committed' });
+    expect(fs.existsSync(path.join(root, INVOICE))).toBe(false);
+  });
+
+  it('stops while the install fails, once the lockfile took the side of the trunk after the branch changed package.json', () => {
+    const installers: StubInstallers = stubInstallers();
+
+    try {
+      const root = trunkRepository({
+        'package.json': JSON.stringify({ name: 'billing', dependencies: {} }),
+        'package-lock.json': '{ "name": "billing", "packages": {} }\n',
+      });
+
+      onBranch(root, 'build/billing');
+
+      commitFiles(
+        root,
+        {
+          'package.json': JSON.stringify({ name: 'billing', dependencies: { money: '1.0.0' } }),
+          'package-lock.json': '{ "name": "billing", "packages": { "money": {} } }\n',
+        },
+        'feat(billing): money',
+      );
+
+      onBranch(root, 'main');
+
+      commitFiles(
+        root,
+        { 'package-lock.json': '{ "name": "billing", "packages": { "calendar": {} } }\n' },
+        'chore: calendar (#2)',
+      );
+
+      onBranch(root, 'build/billing');
+      installers.failing(true);
+
+      const stopped = mergeTrunk(root, '--json');
+
+      expect(stopped.code).toBe(1);
+
+      expect(stopped.json()).toMatchObject({
+        status: 'stopped',
+        stop: expect.stringContaining('`npm install` failed:'),
+      });
+
+      expect(String(jsonAt(stopped.json(), 'stop'))).toContain('npm error The lockfile is missing');
+      expect(installers.calls()).toEqual([`npm install in ${root}`]);
+    } finally {
+      installers.restore();
+    }
+  });
+
+  it('stops when the regenerate script of the project ended the merge itself', () => {
+    const root = conflicting({
+      'ddd-ts-kit.config.json': JSON.stringify({ contexts: {} }),
+      'package.json': manifest("node -e \"require('node:fs').rmSync('.git/MERGE_HEAD')\""),
+    });
+
+    expect(mergeTrunk(root).code).toBe(1);
+    resolved(root);
+
+    const stopped = goOn(root, '--continue');
+
+    expect(stopped.code).toBe(2);
+    expect(stopped.stderr).toContain('error: No merge is in progress in this worktree.');
   });
 });

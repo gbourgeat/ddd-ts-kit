@@ -27,6 +27,7 @@ function leftmost(name: TSESTree.EntityName): string {
     case AST_NODE_TYPES.TSQualifiedName: {
       return leftmost(name.left);
     }
+    /* v8 ignore next 3 -- ADR-0001: `this` stands in an entity name only under `typeof`, never in a type reference */
     default: {
       return '';
     }

@@ -105,15 +105,33 @@ describe('redaction', () => {
   it('lets a projector pick values that are not fields of the message, and never stores an object whole', async () => {
     const fields = [
       auditedProjection(RescheduleAppointmentCommand, (command) => ({
-        plain: { day: command.startsAt.toISOString().slice(0, 10), whole: command, attempts: 2n, nothing: undefined },
+        plain: {
+          day: command.startsAt.toISOString().slice(0, 10),
+          whole: command,
+          attempts: 2n,
+          retries: 3,
+          ratio: Number.NaN,
+          nothing: undefined,
+        },
         resource: { type: 'appointment', id: command.appointmentId },
       })),
     ];
 
     const entry = await changesRecordedWith(fields);
 
-    expect(entry?.changes).toEqual({ day: '2026-03-04', attempts: '2' });
+    expect(entry?.changes).toEqual({ day: '2026-03-04', attempts: '2', retries: 3 });
     expect(entry?.resource).toEqual({ type: 'appointment', id: 'apt-1' });
+  });
+
+  it('refuses at run time a projection that masks a value when no masker is wired', async () => {
+    const fields = [
+      auditedProjection(RescheduleAppointmentCommand, (command) => ({
+        masked: { patientEmail: command.patientEmail },
+        resource: { type: 'appointment', id: command.appointmentId },
+      })),
+    ];
+
+    await expect(changesRecordedWith(fields)).rejects.toBeInstanceOf(MissingMaskerError);
   });
 
   it('only accepts the names of fields the message has', () => {

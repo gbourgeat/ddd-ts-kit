@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RabbitMqEventBus, queueNamesOf } from '../src';
-import type { Broker } from './support/broker';
+import { Broker } from './support/broker';
 import { BROKERS } from './support/brokers';
 import { PLACED, TRACEPARENT, anEvent } from './support/events';
 import { recorder } from './support/recorder';
@@ -114,5 +114,43 @@ describe.each(BROKERS)('RabbitMqEventBus: consuming, %s', { timeout: 30_000 }, (
     await eventually(async () => (await broker.readyIn(queueNamesOf({ consumer, type: PLACED }).work)) === 1);
     expect(first.ids()).toEqual(['evt-1']);
     expect(second.ids()).toEqual(['evt-1', 'evt-2']);
+  });
+});
+
+/** The broker takes its turns one at a time: a delivery on its way, then a cancel. */
+async function turns(count: number): Promise<void> {
+  for (let turn = 0; turn < count; turn += 1) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+}
+
+/** A message is on its way while the cancel of the consumer is: an order the in-memory broker keeps, a real one may not. */
+describe('RabbitMqEventBus: a message on its way when the last handler leaves, in memory', { timeout: 30_000 }, () => {
+  let broker: Broker;
+
+  beforeEach(async () => {
+    broker = await Broker.inMemory();
+  });
+
+  afterEach(async () => {
+    await broker.dispose();
+  });
+
+  it('hands the message back to its queue, for the next consumer', async () => {
+    const consumer = unique('billing');
+    const bus = broker.bus({ consumer });
+    const { work } = queueNamesOf({ consumer, type: PLACED });
+    const billing = recorder();
+    const subscription = bus.subscribe(PLACED, billing.handler);
+
+    await bus.publish([anEvent('evt-1')]);
+    await broker.settled(bus);
+    await bus.publish([anEvent('evt-2')]);
+    subscription.unsubscribe();
+    // The delivery already on its way reaches the consumer, then the cancel reaches the broker.
+    await turns(2);
+
+    expect((await broker.take(work))?.fields.redelivered).toBe(true);
+    expect(billing.ids()).toEqual(['evt-1']);
   });
 });

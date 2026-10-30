@@ -222,6 +222,10 @@ describe('ddd-ts-kit affected', () => {
       'scope=none\ncontexts=\nargs=\nlint=',
     );
 
+    expect(cli(root, 'affected', '--base', 'base').stdout).toBe(
+      'Nothing that runs is affected: only documents changed.',
+    );
+
     expect(cli(root, 'affected', '--format', 'xml').stderr).toContain('Unknown value "xml" for --format.');
   });
 });
@@ -313,5 +317,21 @@ describe('ddd-ts-kit affected --run', () => {
     write(root, 'probe.mjs', 'process.exit(3);\n');
 
     expect(probe().code).toBe(3);
+  });
+
+  it('says that the package manager could not run when it is not on the PATH, and asks whether it is installed', () => {
+    const previous = process.env['PATH'];
+
+    process.env['PATH'] = tempDir('no-npm');
+
+    try {
+      const refused = cli(root, 'affected', '--run', 'probe');
+
+      expect(refused.code).toBe(2);
+      expect(refused.stderr).toContain('error: npm could not run (spawnSync npm ENOENT).');
+      expect(refused.stderr).toContain('fix: Is npm installed and on the PATH?');
+    } finally {
+      process.env['PATH'] = previous;
+    }
   });
 });

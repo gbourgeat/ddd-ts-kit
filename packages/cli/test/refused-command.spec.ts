@@ -39,4 +39,32 @@ describe('a refused command, as a problem of the plan', () => {
         '#US6.01 `generate command catalog ReviseProduct` is refused by the generator: The modules of catalog: pricing listing Pass one: --module pricing',
     });
   });
+
+  it('says nothing of a file an earlier command of the same row generates: the worker has it', () => {
+    const aggregate = 'src/contexts/catalog/domain/aggregates/product.aggregate.ts';
+
+    const earlier: Replay = {
+      row: ROW,
+      command: 'generate aggregate catalog Product',
+      argv: ['aggregate', 'catalog', 'Product'],
+      heard: [],
+      builtOn: [],
+      created: [aggregate],
+      refusal: undefined,
+    };
+
+    const refused: Replay = {
+      row: ROW,
+      command: 'generate command catalog ReviseProduct --aggregate Product',
+      argv: ['command', 'catalog', 'ReviseProduct', '--aggregate', 'Product'],
+      heard: [],
+      builtOn: [aggregate],
+      created: [],
+      refusal: { message: 'Product has no revise method.', fix: 'Write it.', missing: false },
+    };
+
+    const [problem] = refusedCommand(replayedPlan([ROW], [earlier, refused]), 1, () => refused);
+
+    expect(problem).toMatchObject({ rows: ['US6.01'], prerequisite: null });
+  });
 });

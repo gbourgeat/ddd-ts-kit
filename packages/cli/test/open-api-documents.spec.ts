@@ -47,6 +47,31 @@ describe('the documents of the contract', () => {
     expect(cli(root, 'describe', 'billing', '--json').json()).toMatchObject({ contracts: { openapi: 'openapi/' } });
   });
 
+  it('lays out a list too long for one line one entry per line', () => {
+    const tags = Array.from({ length: 12 }, (_, index) => `reporting-area-${index}`);
+
+    changeConfig(root, { openapi: { documents: [{ name: 'reporting', tags }] } });
+
+    expect(cli(root, 'docs').code).toBe(0);
+    expect(read(root, MODULE)).toContain("    tags: [\n      'reporting-area-0',\n      'reporting-area-1',\n");
+    expect(read(root, MODULE)).toContain("      'reporting-area-11',\n    ],\n  },\n");
+  });
+
+  it('notes a split of the contract that the script of the project does not read', () => {
+    fs.rmSync(path.join(root, MODULE));
+    fs.writeFileSync(path.join(root, 'scripts/openapi.ts'), '// writes the contract of 0.4, whole\n');
+
+    const result = cli(root, 'docs', '--json').json() as { notes: string[] };
+
+    expect(result.notes).toContainEqual(
+      expect.stringContaining(
+        `"openapi.documents" splits the contract, but scripts/openapi.ts does not read ${MODULE}: compare it with the script \`init\` writes`,
+      ),
+    );
+
+    expect(fs.existsSync(path.join(root, MODULE))).toBe(false);
+  });
+
   it('are reported by config/valid when one has no name, names nothing or names an unknown context', () => {
     changeConfig(root, {
       openapi: {

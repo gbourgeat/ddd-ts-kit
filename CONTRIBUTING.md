@@ -19,8 +19,10 @@ how to start, then the rules every change follows.
    Node 22.12 or later.
 3. **Change, then check what you touched.** A documentation change needs `npm run check:dashes`,
    `npm run docs:translations` and, if it has a checked code sample, `npm run docs:samples`; a
-   code change needs the build, the tests and the lint. Each package is held to a coverage floor
-   (`vitest.config.ts`): new code comes with its specs. The hooks of the plugin are held to 100
+   code change needs the build, the tests and the lint. Each package is held to 100 percent of its lines
+   (`vitest.config.ts`): new code comes with its specs. A check no spec can reach is removed, or left
+   out in [the decision record of the measure](docs/adr/0001-lines-left-out-of-the-coverage-measure.md),
+   never moved onto a line that already runs. The hooks of the plugin are held to 100
    percent of their lines, branches and functions (`npm run test:plugin`): a branch no test
    reaches fails it, and a branch no hook input can reach is removed.
 4. **Open a pull request.** Its title is a conventional commit subject; its template asks what
@@ -30,7 +32,7 @@ Kinds of contribution that are especially welcome:
 
 - an adapter for a broker, an ORM, an HTTP framework or a validation library the kit does not
   support yet: it implements the port and passes the contract suite of that port;
-- tests for the parts of a package that run without a server, where its coverage floor is low;
+- tests for the branches of a package that no spec takes yet;
 - documentation: a page that was unclear to you, a missing example, a translation;
 - feedback from a real project: what held, what got in the way, in
   [Discussions](https://github.com/gbourgeat/ddd-ts-kit/discussions).

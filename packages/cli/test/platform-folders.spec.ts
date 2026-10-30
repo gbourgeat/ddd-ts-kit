@@ -1,6 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { aliasRoots } from '../src/alias';
+import { BASELINE_FILE } from '../src/check/baseline/read-baseline';
+import { parseConfig } from '../src/config';
+import { movedSpecifier } from '../src/platform-folders/moved-specifier';
 import { PLATFORM_LAYOUT } from '../src/platform-layout';
 import { cli, exists, read, walk, write } from './helpers';
 import { initProject } from './support/init-project';
@@ -292,5 +296,31 @@ describe('platform-folders, on the files of the team', () => {
     expect(read(root, 'src/main.ts')).toBe(main);
     expect(exists(root, 'outside-file.ts')).toBe(true);
     expect(exists(root, 'src/platform/composition/main.ts')).toBe(false);
+  });
+
+  it('takes the errors the baseline records for a moved file to its new path', () => {
+    const root = initProject();
+
+    flatten(root);
+
+    write(
+      root,
+      BASELINE_FILE,
+      JSON.stringify({ [`${PLATFORM}/tracing.ts`]: { 'clean/no-escape-hatch': { count: 1 } } }, null, 2),
+    );
+
+    expect(cli(root, 'platform-folders').code).toBe(0);
+
+    expect(JSON.parse(read(root, BASELINE_FILE))).toEqual({
+      [`${PLATFORM}/observability/tracing.ts`]: { 'clean/no-escape-hatch': { count: 1 } },
+    });
+  });
+
+  it('leaves alone an import of the directory of the file itself, which moves with it', () => {
+    const roots = aliasRoots(parseConfig({}));
+    const moved = new Map([[`${PLATFORM}/tracing`, `${PLATFORM}/observability/tracing`]]);
+
+    expect(movedSpecifier('./', `${PLATFORM}/tracing.ts`, { roots, moved })).toBeUndefined();
+    expect(movedSpecifier('.', `${PLATFORM}/tracing.ts`, { roots, moved })).toBeUndefined();
   });
 });

@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { rewriteSpecifiers } from '../src/build';
 
-const PREFIXES = ['@/', '$test/', '$scripts/'];
+const ROOTS = [
+  { prefix: '@/', directory: 'src' },
+  { prefix: '$test/', directory: 'test' },
+  { prefix: '$scripts/', directory: 'scripts' },
+];
 
 /** Every alias becomes `<the path after the prefix>` under `./out/`, so a test reads what was rewritten. */
 const toOut = (source: string): ReturnType<typeof rewriteSpecifiers> =>
-  rewriteSpecifiers(source, { prefixes: PREFIXES, relativeOf: (specifier) => `./out/${specifier.split('/').at(-1)}` });
+  rewriteSpecifiers(source, { roots: ROOTS, relativeOf: (specifier) => `./out/${specifier.split('/').at(-1)}` });
 
 const EVERY_POSITION = [
   "import a from '@/a.js';",
@@ -111,7 +115,7 @@ describe('rewriting the alias specifiers of an emitted file', () => {
 
   it('reports an alias that names no emitted file, and still rewrites nothing of a computed import of another module', () => {
     const missing = rewriteSpecifiers("import a from '@/a.js';\nimport b from '$test/b.js';", {
-      prefixes: PREFIXES,
+      roots: ROOTS,
       relativeOf: (specifier) => (specifier.startsWith('$test/') ? undefined : './a.js'),
     });
 

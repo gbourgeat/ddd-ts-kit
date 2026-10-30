@@ -1,12 +1,13 @@
+import type { AliasRoot } from '../alias';
 import type { EmittedPlace } from './emitted-place';
 import { emittedTarget } from './emitted-target';
 
 const EXTENSION = /\.(?:[cm]?js|[cm]?ts)$/;
 
 /** Why an alias specifier names no emitted file, in the words of what to write instead. */
-export function unresolvedProblem(place: EmittedPlace, specifier: string): string {
+export function unresolvedProblem(place: EmittedPlace, root: AliasRoot, specifier: string): string {
   const bare = specifier.replace(EXTENSION, '');
-  const stem = (emittedTarget({ ...place, suffix: '' }, bare) ?? '').replace(/\.js$/, '');
+  const stem = emittedTarget({ ...place, suffix: '' }, root, bare).replace(/\.js$/, '');
   const written = bare === specifier ? 'no extension' : 'an extension';
 
   if (place.suffix !== '' && place.isFile(`${stem}/index.js`)) {

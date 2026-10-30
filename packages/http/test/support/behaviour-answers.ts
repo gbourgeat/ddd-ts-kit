@@ -18,6 +18,17 @@ export function answersAsDeclared({ call, post }: AdapterClient): void {
       expect(await read.json()).toEqual({ id: KNOWN_ORDER, customerId: 'c-1', lines: 2 });
     });
 
+    it('answers a PATCH as declared: a method the order routes leave out is served alike', async () => {
+      const annotated = await call(`/orders/${KNOWN_ORDER}/note`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ note: 'gift' }),
+      });
+
+      expect(annotated.status).toBe(200);
+      expect(await annotated.json()).toEqual({ orderId: KNOWN_ORDER, note: 'gift' });
+    });
+
     it('answers without a body when the route declares none', async () => {
       const response = await call(`/orders/${KNOWN_ORDER}`, { method: 'DELETE' });
 

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { runCheck } from '../engine/run-check';
+import { type CheckOptions, runCheck } from '../engine/run-check';
 import type { Violation } from '../model/violation';
 import { loadProject } from '../project/load-project';
 import type { Fixture } from './fixture';
@@ -13,14 +13,14 @@ export interface FixtureOutcome {
   readonly violations: readonly Violation[];
 }
 
-/** Writes the mini-project to a temporary directory, checks it with every rule and says whether the rule behaved. */
-export function runFixture(fixture: Fixture): FixtureOutcome {
+/** Writes the mini-project to a temporary directory, checks it with every rule (`options` may say which) and says whether the rule behaved. */
+export function runFixture(fixture: Fixture, options: CheckOptions = {}): FixtureOutcome {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ddd-ts-kit-fixture-'));
 
   try {
     writeFiles(root, fixture.files);
 
-    const { violations } = runCheck(loadProject(root));
+    const { violations } = runCheck(loadProject(root), options);
     const verdict = judge(fixture, violations);
 
     return { fixture, ok: verdict === undefined, detail: verdict ?? summary(fixture, violations), violations };

@@ -101,6 +101,28 @@ describe('ddd-ts-kit lint', () => {
     );
   });
 
+  it('names the rules in transition one after the other, by their id', () => {
+    installEslint(
+      [
+        { ruleId: 'ddd-ts-kit/test-shape', severity: 1 },
+        { ruleId: 'ddd-ts-kit/clean-new', severity: 1 },
+      ],
+      {
+        'ddd-ts-kit/test-shape': { docs: { transition: '0.90.0' } },
+        'ddd-ts-kit/clean-new': { docs: { transition: '0.28.0' } },
+      },
+    );
+
+    const result = cli(root, 'lint');
+
+    expect(result.code).toBe(0);
+
+    expect(result.stderr.split('\n').map((line) => line.split(':')[0])).toEqual([
+      'ddd-ts-kit/clean-new',
+      'ddd-ts-kit/test-shape',
+    ]);
+  });
+
   it('keeps the cache of ESLint next to the project, keyed by content, and drops it when the lint changed', () => {
     installEslint([]);
 

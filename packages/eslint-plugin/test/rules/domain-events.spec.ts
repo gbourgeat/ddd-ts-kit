@@ -35,6 +35,7 @@ ruleTester.run('domain-events-dispatched-on-save', domainEventsDispatchedOnSave,
       `${IMPORTED}\nexport class InvoiceIssuedEventHandler { constructor(private readonly dispatcher: DomainEventDispatcher) {} }`,
     ),
     at(INTEGRATION_HANDLER, IMPORTED),
+    at(HANDLER, `import * as kernel from '@ddd-ts-kit/kernel';\n${SAVED}`),
     at(MAPPER, IMPORTED),
     at(GATEWAY, IMPORTED),
     at(

@@ -80,6 +80,22 @@ describe('PolicyBasedAuthorizer', () => {
   const clock = new FixedClock(MORNING);
   const authorizer = new PolicyBasedAuthorizer({ policies, clock, attributes: invoices() });
 
+  it('applies a policy written without a condition to every request, permit and forbid alike', async () => {
+    const unconditional = new PolicyBasedAuthorizer({
+      policies: [permit('invoice.anybody-reads', [read]), forbid('invoice.nobody-voids', [voiding])],
+      clock,
+      attributes: invoices(),
+    });
+
+    expect(await unconditional.check({ actor: salesClerk, permission: read, resource: second })).toEqual({
+      allowed: true,
+    });
+
+    expect((await unconditional.check({ actor: legalManager, permission: voiding, resource: first })).allowed).toBe(
+      false,
+    );
+  });
+
   it('decides on the attributes of the actor and of the resource', async () => {
     expect(await authorizer.check({ actor: salesClerk, permission: read, resource: first })).toEqual({ allowed: true });
 

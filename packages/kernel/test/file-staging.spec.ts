@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream';
 import { describe, expect, it } from 'vitest';
 import {
+  AcceptEveryFileScanner,
   FileError,
   FileStaging,
   FixedClock,
@@ -37,7 +38,7 @@ class RefusingScanner implements FileScanner {
   }
 }
 
-function aDesk(scanner: FileScanner = { scan: async () => ({ accepted: true }) }) {
+function aDesk(scanner: FileScanner = new AcceptEveryFileScanner()) {
   const clock = new FixedClock(NOW);
   const storage = new InMemoryFileStorage({ clock });
   const reporter = new InMemoryErrorReporter();
@@ -174,6 +175,23 @@ describe('FileStaging', () => {
       .catch(() => undefined);
 
     expect(reporter.reports.map(({ report }) => report.operation)).toEqual(['return file to staging']);
+  });
+
+  it('fails the staging as a missing file when the scanner opens a content the purge removed meanwhile', async () => {
+    const storage = new InMemoryFileStorage();
+
+    const slowScanner: FileScanner = {
+      scan: async (file, open) => {
+        await storage.delete(stagedKeyOf(file.key));
+        await open();
+
+        return { accepted: true };
+      },
+    };
+
+    const staging = new FileStaging(storage, slowScanner, new InMemoryErrorReporter());
+
+    expect(await codeOf(staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' }))).toBe('FILE_NOT_FOUND');
   });
 
   it('removes a file its scanner refuses, after letting it read the content', async () => {

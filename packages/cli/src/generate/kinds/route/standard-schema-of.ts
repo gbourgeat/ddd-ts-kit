@@ -16,13 +16,10 @@ export interface StandardPart {
 
 /**
  * A Standard Schema written by hand, the protocol being all the stack names: the type it
- * produces, the check of each field, and the JSON Schema of the contract. Nothing without fields.
+ * produces, the check of each field, and the JSON Schema of the contract. A part without fields
+ * is written by nobody: its callers write nothing for it.
  */
 export function standardSchemaOf(part: StandardPart): string {
-  if (part.fields.length === 0) {
-    return '';
-  }
-
   return [
     ...(part.todo === '' ? [] : [`// ${part.todo}`]),
     ...producedType(part),

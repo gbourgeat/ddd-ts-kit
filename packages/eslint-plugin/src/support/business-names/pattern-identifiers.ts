@@ -17,6 +17,7 @@ export function patternIdentifiers(target: TSESTree.Node): TSESTree.Identifier[]
       );
     case AST_NODE_TYPES.TSParameterProperty:
       return patternIdentifiers(target.parameter);
+    /* v8 ignore next 2 -- ADR-0001: the parser refuses a member expression in a declaration or a parameter */
     default:
       return [];
   }

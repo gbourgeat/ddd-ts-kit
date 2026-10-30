@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { insertInRegion, parseWiring, replaceRegion } from '../src/markers';
+import { insertInRegion, parseWiring, replaceInRegion, replaceRegion } from '../src/markers';
 
 const file = [
   '// ddd-ts-kit:imports',
@@ -68,6 +68,17 @@ describe('marker regions', () => {
 
     expect(replaceRegion(listed, 'routes', ['second(),', 'third(),'])).toContain(
       '    // ddd-ts-kit:routes\n    second(),\n    third(),\n    // /ddd-ts-kit:routes',
+    );
+  });
+
+  it('leaves the file as it is for a block of blank lines, and replaces nothing in a region that is gone', () => {
+    expect(insertInRegion(file, 'registrations', '\n  \n')).toBe(file);
+    expect(replaceInRegion(file, 'policies', { replaced: 'first();', by: 'second();' })).toBeUndefined();
+
+    const listed = insertInRegion(file, 'routes', 'first(),') ?? '';
+
+    expect(replaceInRegion(listed, 'routes', { replaced: 'first(),', by: 'second(),' })).toContain(
+      '    // ddd-ts-kit:routes\n    second(),\n    // /ddd-ts-kit:routes',
     );
   });
 

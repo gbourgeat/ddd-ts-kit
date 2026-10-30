@@ -168,3 +168,18 @@ describe('docs, the code owners', () => {
     expect(read(root, 'CODEOWNERS')).toContain('@shop/billing-team');
   });
 });
+
+describe('docs, the code owners of a shared kernel kept outside the aliased trees', () => {
+  it('names no consumer of it, since no context imports it by alias', () => {
+    const root = project();
+
+    configure(root, (config) => {
+      config['sharedKernelDir'] = 'shared';
+    });
+
+    own(root, { billing: ['@shop/billing-team'] }, ['@shop/tech-lead']);
+
+    expect(cli(root, 'docs').code).toBe(0);
+    expect(read(root, 'CODEOWNERS')).toMatch(/^shared\/\s+@shop\/tech-lead$/m);
+  });
+});

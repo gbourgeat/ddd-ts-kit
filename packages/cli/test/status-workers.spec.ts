@@ -142,6 +142,20 @@ describe('status --workers', () => {
   it('leaves status without --workers as it was', () => {
     expect(cli(root, 'status').stdout).toContain('Slices (docs/architecture/slices.md): 3');
   });
+
+  it('shows no standing for a worker whose base names no commit any more', () => {
+    write(cancelling, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing', rows: ['M1.02'], base: 'gone' }));
+
+    const workers = jsonAt(cli(root, 'status', '--workers', '--json').json(), 'workers');
+
+    const old = Array.isArray(workers)
+      ? workers.find((worker) => jsonAt(worker, 'worktree') === cancelling)
+      : undefined;
+
+    expect(old).toMatchObject({ base: 'gone', rows: ['M1.02'] });
+    expect(old).not.toHaveProperty('ahead');
+    expect(old).not.toHaveProperty('behind');
+  });
 });
 
 function open(row: string, worktree: string, branch: string): void {

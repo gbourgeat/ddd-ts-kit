@@ -9,6 +9,8 @@ import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 import { NPM } from './support/npm';
 import { withGeneratorLock } from '../src/generator-lock';
+import { holderOf } from '../src/generator-lock/holder-of';
+import { removeStale } from '../src/generator-lock/remove-stale';
 
 const REPO = path.resolve(import.meta.dirname, '../../..');
 const TSX = path.join(REPO, 'node_modules/.bin/tsx');
@@ -221,5 +223,63 @@ describe('two generators that write the shared files of one project', () => {
     expect(
       spawnSync('git', ['check-ignore', '--quiet', '--no-index', `${LOCK}/holder.json`], { cwd: root }).status,
     ).toBe(0);
+  });
+});
+
+describe('the lock of the generators, its folder and its holder', () => {
+  it('take no lock where no folder can be made for it, and run as without one', () => {
+    const root = initProject(...NPM);
+
+    fs.writeFileSync(path.join(root, '.ddd-ts-kit'), 'a file where the kit folder goes\n');
+
+    expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core').code).toBe(0);
+    expect(declaredContexts(root)).toEqual(['billing']);
+    expect(fs.statSync(path.join(root, '.ddd-ts-kit')).isFile()).toBe(true);
+  });
+
+  it('read the holder of a lock from its folder alone when its file is not JSON, and none once the folder is gone', () => {
+    const root = initProject(...NPM);
+    const lock = path.join(root, LOCK);
+
+    fs.mkdirSync(lock, { recursive: true });
+    fs.writeFileSync(path.join(lock, 'holder.json'), '{ not json');
+
+    expect(holderOf(lock)).toEqual({ startedAt: fs.statSync(lock).mtimeMs });
+
+    fs.rmSync(lock, { recursive: true });
+
+    expect(holderOf(lock)).toBeUndefined();
+  });
+
+  it('remove a stale lock only while it is the one judged stale, and leave one that cannot be moved aside', () => {
+    const root = initProject(...NPM);
+    const lock = path.join(root, LOCK);
+    const judged = { startedAt: 1, pid: 1 };
+
+    heldLock(root, { pid: process.pid, secondsAgo: 600 });
+    removeStale(lock, judged);
+
+    expect(exists(root, LOCK)).toBe(true);
+
+    const holder = holderOf(lock);
+
+    expect(holder).toBeDefined();
+
+    if (holder === undefined) {
+      return;
+    }
+
+    fs.chmodSync(path.join(root, '.ddd-ts-kit'), 0o555);
+
+    try {
+      removeStale(lock, holder);
+      expect(exists(root, LOCK)).toBe(true);
+    } finally {
+      fs.chmodSync(path.join(root, '.ddd-ts-kit'), 0o755);
+    }
+
+    removeStale(lock, holder);
+
+    expect(exists(root, LOCK)).toBe(false);
   });
 });

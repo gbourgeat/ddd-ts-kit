@@ -196,6 +196,33 @@ describe('config/valid on the keys of the file', () => {
   });
 });
 
+describe('the parser of the config, on what it cannot read as written', () => {
+  it('passes over an upstream or an extra directory written as neither a text nor an object with its key', () => {
+    const { contexts } = parseConfig({
+      contexts: {
+        billing: { classification: 'core', upstreams: [42, { relationship: 'conformist' }], extraDirectories: [42] },
+      },
+    });
+
+    expect(contexts['billing']).toMatchObject({ upstreams: [], extraDirectories: [] });
+  });
+
+  it('refuses a choice of the stack it does not know, naming the choices', () => {
+    let refusal: unknown;
+
+    try {
+      parseStack({ http: 'nothing' });
+    } catch (error) {
+      refusal = error;
+    }
+
+    expect(refusal).toMatchObject({
+      message: 'ddd-ts-kit.config.json: "stack.http" is "nothing".',
+      fix: expect.stringContaining('Set "stack.http" to one of: '),
+    });
+  });
+});
+
 function lineOfText(root: string, needle: string): number {
   const text = fs.readFileSync(path.join(root, 'ddd-ts-kit.config.json'), 'utf8');
 

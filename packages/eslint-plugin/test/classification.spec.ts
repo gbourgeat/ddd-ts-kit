@@ -157,6 +157,12 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
     expect(read).toEqual(keysReadByThePlugin(cliParseConfig(raw), read));
   });
 
+  it('drops an extra directory that is neither a path nor a record holding one', () => {
+    const raw = { contexts: { billing: { extraDirectories: ['sagas', { path: 'flows' }, 42] } } };
+
+    expect(parseConfig(raw).contexts['billing']?.extraDirectories).toEqual(['sagas', 'flows']);
+  });
+
   it.each(RAW_CONFIGS)('names the same home-made copies of standard interfaces under %j', (raw) => {
     const names = parallelNames(parseConfig(raw).standardInterfaces);
 

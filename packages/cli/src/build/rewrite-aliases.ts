@@ -34,17 +34,18 @@ export function rewriteAliases({ root, roots, suffix, project }: RewriteRequest)
     throw noOutput(project);
   }
 
-  const place: EmittedPlace = { roots, layout, suffix, isFile: (file) => isFile(path.join(root, file)) };
+  const place: EmittedPlace = { layout, suffix, isFile: (file) => isFile(path.join(root, file)) };
   const files = emittedUnder(root, layout.outDir);
-  const prefixes = roots.map(({ prefix }) => prefix);
 
-  const problemOf = (specifier: string): string => unresolvedProblem(place, specifier);
+  const problemOf = (specifier: string, alias: AliasRoot): string => unresolvedProblem(place, alias, specifier);
 
   const rewritten = files.map((file) => {
     const source = fs.readFileSync(path.join(root, file), 'utf8');
-    const relativeOf = (specifier: string): string | undefined => emittedSpecifier(place, file, specifier);
 
-    return { file, source, ...rewriteSpecifiers(source, { prefixes, relativeOf, problemOf }) };
+    const relativeOf = (specifier: string, alias: AliasRoot): string | undefined =>
+      emittedSpecifier(place, file, { root: alias, specifier });
+
+    return { file, source, ...rewriteSpecifiers(source, { roots, relativeOf, problemOf }) };
   });
 
   refuse(rewritten.flatMap(({ file, problems }) => problems.map((problem) => `${file}, ${problem}`)));

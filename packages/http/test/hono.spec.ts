@@ -1,3 +1,4 @@
+import { request as httpRequest } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
@@ -76,6 +77,40 @@ describe('a body larger than Hono reads', () => {
     expect(response.status).toBe(413);
     expect(response.headers.get('content-type')).toBe('application/problem+json; charset=utf-8');
     expect(await response.json()).toMatchObject({ status: 413, code: 'BODY_TOO_LARGE', requestId: 'req-2' });
+  });
+
+  it('is refused 413 on a socket, by the size the request announces, before its body is read', async () => {
+    const app = new Hono();
+
+    mountHono(app, orderRoutes, { bodyLimit: 16 });
+
+    const server = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' });
+
+    await new Promise((resolve) => server.once('listening', resolve));
+    const { port } = server.address() as AddressInfo;
+
+    const status = await new Promise<number | undefined>((resolve, reject) => {
+      const sent = httpRequest(
+        {
+          host: '127.0.0.1',
+          port,
+          method: 'POST',
+          path: '/orders',
+          headers: { 'content-type': 'application/json', 'content-length': '1000000' },
+        },
+        (answer) => {
+          answer.resume();
+          answer.on('end', () => resolve(answer.statusCode));
+        },
+      );
+
+      sent.on('error', reject);
+      sent.flushHeaders();
+    });
+
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+
+    expect(status).toBe(413);
   });
 
   it('is refused 413 when it streams past the limit without announcing its size', async () => {

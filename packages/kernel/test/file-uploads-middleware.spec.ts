@@ -64,8 +64,11 @@ function aBus() {
 describe('fileUploadsMiddleware', () => {
   it('stages the file of a command under a new key of its area, before the transaction begins', async () => {
     const { bus, storage, seenWhenTheTransactionBegan } = aBus();
+    const command = new AttachDocument(Readable.from([PDF]));
 
-    const file = await bus.execute(new AttachDocument(Readable.from([PDF])));
+    expect(command.document.fileName).toBe('referral.pdf');
+
+    const file = await bus.execute(command);
 
     expect(file).toMatchObject({ key: 'documents/2026/03/file-1', size: PDF.length, mediaType: 'application/pdf' });
     expect(seenWhenTheTransactionBegan).toEqual([['staging/documents/2026/03/file-1']]);

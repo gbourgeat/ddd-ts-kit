@@ -144,6 +144,8 @@ describe('story-scope', () => {
     expect(jsonAt(second.json(), 'others')).toEqual([
       expect.objectContaining({ story: 'US5', worktree: story, branch: 'story/us5', contexts: ['ordering'] }),
     ]);
+
+    expect(cli(root, 'story-scope', 'US6').stdout).toContain(`other story open: US5 in ${story}, changing ordering`);
   });
 });
 

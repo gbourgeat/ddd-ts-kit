@@ -95,6 +95,7 @@ ruleTester.run('errors-factory-name', errorsFactoryName, {
     at(ERROR, concept(factory('unknown', "'UNKNOWN_INVOICE'")), FACTORIES),
     at(ERROR, concept(factory('notAPayer', "'NOT_A_PAYER'")), FACTORIES),
     at(ERROR, concept('static is(error: unknown): boolean { return error instanceof InvoiceError; }'), FACTORIES),
+    at(ERROR, `${concept(factory('alreadyIssued', "'INVOICE_ALREADY_ISSUED'"))}\nclass Helper {}`, FACTORIES),
     at(ERROR, concept(factory('create', "'BILLING_FAILED'"))),
     at(AGGREGATE, concept(factory('create', "'BILLING_FAILED'")), FACTORIES),
     at(
@@ -230,6 +231,7 @@ ruleTester.run('errors-factory-name under named', errorsFactoryName, {
     at(REFUSAL, refusal(`${named('forInvoice')}\n${named('atIssue')}`), NAMED),
     at(REFUSAL, refusal('static is(error: unknown): boolean { return error instanceof InvoiceAlreadyIssued; }'), NAMED),
     at(REFUSAL, refusal('private static forInvoices() { return 1; }\nstatic later() { return 2; }'), NAMED),
+    at(REFUSAL, `${refusal(named('forInvoice'))}\nclass Helper {}`, NAMED),
     at(AGGREGATE, refusal(named('slotTaken'), 'InvoiceAlreadyIssuedError'), NAMED),
     at(SPEC, refusal(named('slotTaken'), 'InvoiceAlreadyIssuedError'), NAMED),
     at(ERROR, concept(factory('alreadyIssued', "'INVOICE_ALREADY_ISSUED'")), FACTORIES),

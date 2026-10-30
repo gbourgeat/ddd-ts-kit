@@ -174,6 +174,12 @@ describe('the refusal-texts ignorer, what a mutation run leaves out of the strin
     expect(refusalTextsIgnorer(pathOf(staticCall('SlotTaken', 'refusal', TEXT), null))).toBeUndefined();
   });
 
+  it('keeps a text handed to an optional call measured: only a call or a new refuses', () => {
+    const optional = node({ type: 'OptionalCallExpression', callee: { type: 'Identifier', name: 'refuse' } });
+
+    expect(refusalTextsIgnorer(argumentOf(optional, TEXT))).toBeUndefined();
+  });
+
   it('declares itself to Stryker as the ignorer named by the governed mutation', () => {
     expect(REFUSAL_TEXTS).toBe('refusal-texts');
 

@@ -48,6 +48,10 @@ export class FaultyNetwork implements Network {
     this.repliesHeld = true;
   }
 
+  beginClosing(): void {
+    throw new Error('A relay in front of a real broker cannot start closing the channels of a client');
+  }
+
   cutConnections(): void {
     for (const socket of this.sockets) {
       socket.destroy();

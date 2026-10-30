@@ -59,4 +59,16 @@ describe('ErrorMessageScrubber', () => {
     expect(exported.status).toEqual({ code: 2 });
     expect(JSON.stringify([exported.events, exported.status])).not.toContain('jane');
   });
+
+  it('leaves an event that carries no attributes as it is', () => {
+    const ended = {
+      attributes: {},
+      events: [{}, { attributes: { 'exception.message': 'secret' } }],
+      status: { code: 2 },
+    };
+
+    new ErrorMessageScrubber().onEnd(ended);
+
+    expect(ended.events).toEqual([{}, { attributes: {} }]);
+  });
 });

@@ -79,10 +79,7 @@ function rank(path: string, home: string): number {
   return path.includes(SHARED_OF_A_CONTEXT) ? 1 : 2;
 }
 
+/** The paths of two files of the project, which are never the same one. */
 function compare(a: string, b: string): number {
-  if (a === b) {
-    return 0;
-  }
-
   return a < b ? -1 : 1;
 }

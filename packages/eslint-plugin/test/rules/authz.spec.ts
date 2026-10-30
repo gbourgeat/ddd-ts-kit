@@ -28,6 +28,10 @@ ruleTester.run('authz-declared', authzDeclared, {
     at(HANDLER, 'builder.command(IssueInvoice).handledBy(IssueInvoiceHandler);'),
     at(SPEC, 'builder.command(IssueInvoice).handledBy(IssueInvoiceHandler);'),
     at(ROUTE, route("security: ['bearer']")),
+    at(
+      COMMAND,
+      'export class VoidInvoice extends AuthorizedCommand { constructor(actor: Actor) { if (actor.isSystem()) { super(systemActor("billing")); } else { super(actor); } } }',
+    ),
     at(ROUTE, route('security: false')),
     at(ROUTE, route('security')),
     at(ROUTE, route('...defaults')),

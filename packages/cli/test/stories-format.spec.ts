@@ -98,6 +98,20 @@ describe('a merge forecast', () => {
       byHand: [],
     });
   });
+
+  it('is none when git cannot compute the merge, as of a branch that shares no history', () => {
+    const root = tempDir('forecast');
+
+    write(root, 'a.txt', 'a\n');
+    git(root, 'init', '--quiet', '--initial-branch', 'main');
+    git(root, 'add', '--all');
+    git(root, 'commit', '--quiet', '--message', 'chore: a');
+    git(root, 'checkout', '--quiet', '--orphan', 'elsewhere');
+    git(root, 'commit', '--quiet', '--allow-empty', '--message', 'chore: another history');
+    git(root, 'checkout', '--quiet', 'main');
+
+    expect(forecastMerge(mergeRepositoryOf(root), { ours: 'main', theirs: 'elsewhere' })).toBeUndefined();
+  });
 });
 
 describe('a story on a detached HEAD, in a repository without slices', () => {

@@ -40,6 +40,17 @@ export class AccountRepository {
     return Promise.resolve(this.rows.size);
   }
 
+  // Not declared async either: a known account answers a promise, a blank id throws at once, an unknown one answers nothing.
+  lazyFind(id: string): Promise<number> | undefined {
+    if (id === '') {
+      throw new RangeError('an account id is expected');
+    }
+
+    const balance = this.read(id);
+
+    return balance === undefined ? undefined : Promise.resolve(balance);
+  }
+
   *ids(): Generator<string> {
     yield* this.rows.keys();
   }

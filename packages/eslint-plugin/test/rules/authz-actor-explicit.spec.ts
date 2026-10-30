@@ -41,6 +41,7 @@ ruleTester.run('authz-actor-explicit', authzActorExplicit, {
       'class H { async execute(query: SearchInvoices) { const scope = await this.access.scopeOf(query.actor, permission); return this.invoices.within(scope); } }',
     ),
     at(HANDLER, 'function within(scope: AccessScope) { return scope.current(); }'),
+    at(HANDLER, 'class H { execute() { return this.contexts().current(); } }'),
     at(
       HANDLER,
       'class H { constructor(private readonly scope: ProjectScope) {} execute() { return this.scope.require(); } }',

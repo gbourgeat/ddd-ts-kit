@@ -112,7 +112,7 @@ function verifyOne(entries: readonly AuditEntry[], options: OneChain): ChainVeri
   const first = options.from ?? 1;
 
   for (const [position, entry] of entries.entries()) {
-    const kind = breakAt(entries, position, options);
+    const kind = breakAt(entries, { entry, position }, options);
 
     if (kind === undefined) {
       continue;
@@ -141,13 +141,17 @@ function verifyOne(entries: readonly AuditEntry[], options: OneChain): ChainVeri
   return { valid: false, checked: entries.length, break: missing };
 }
 
-function breakAt(entries: readonly AuditEntry[], position: number, options: OneChain): ChainBreakKind | undefined {
-  const entry = entries[position];
+/** The entry at a position of the listing. */
+interface Listed {
+  readonly entry: AuditEntry;
+  readonly position: number;
+}
 
-  if (entry === undefined) {
-    return undefined;
-  }
-
+function breakAt(
+  entries: readonly AuditEntry[],
+  { entry, position }: Listed,
+  options: OneChain,
+): ChainBreakKind | undefined {
   const expected = (options.from ?? 1) + position;
 
   if (entry.sequence !== expected) {

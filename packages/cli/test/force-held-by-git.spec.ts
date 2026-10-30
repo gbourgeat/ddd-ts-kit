@@ -1,9 +1,12 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, read, write } from './helpers';
 import { commitAll } from './support/commit-all';
 import { git } from './support/git';
 import { initProject } from './support/init-project';
 import { NPM } from './support/npm';
+import { Workspace } from '../src/workspace';
 import { filesGitDoesNotHold } from '../src/workspace/files-git-does-not-hold';
 import { tempDir } from './helpers';
 
@@ -49,6 +52,15 @@ describe('--force never destroys work that git does not hold', () => {
     expect(read(root, AGGREGATE)).toContain('// a business rule written by hand');
   });
 
+  it('names as it is a file only planned that --force writes over: nothing stands there to follow', () => {
+    const ws = new Workspace(tempDir('nothing-on-disk'), true);
+
+    ws.create('package.json', '{}\n');
+    ws.replacing('package.json');
+
+    expect(() => ws.commit(false)).toThrow('outside a git repository, where nothing else holds them: package.json.');
+  });
+
   it('refuses an edit only staged, as the last commit does not hold it either', () => {
     const root = committedWithAnAggregate();
 
@@ -92,6 +104,19 @@ describe('--force never destroys work that git does not hold', () => {
     expect(cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--force').code).toBe(0);
     expect(read(root, AGGREGATE)).toContain('export class Invoice');
     expect(git(root, 'diff', '--name-only').split('\n')).toContain(AGGREGATE);
+  });
+
+  it('refuses --force where a folder stands in place of the committed file, and leaves the folder', () => {
+    const root = committedWithAnAggregate();
+
+    fs.rmSync(path.join(root, AGGREGATE));
+    fs.mkdirSync(path.join(root, AGGREGATE));
+
+    const refused = cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--force');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain(`uncommitted or untracked: ${AGGREGATE}.`);
+    expect(fs.statSync(path.join(root, AGGREGATE)).isDirectory()).toBe(true);
   });
 
   it('refuses init --force writing the script of the kit over an uncommitted script of the team', () => {

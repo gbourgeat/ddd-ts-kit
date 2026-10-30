@@ -26,6 +26,15 @@ const DEFAULT_SECURITY = ['bearer'];
  * of every route. Controllers are given as classes with `resolve`, or as instances.
  */
 export function controllerRoutes(
+  controllers: readonly [ControllerClass | ErasedController],
+  options?: ControllerRoutesOptions,
+): readonly [Route];
+export function controllerRoutes(
+  controllers: readonly (ControllerClass | ErasedController)[],
+  options?: ControllerRoutesOptions,
+): readonly Route[];
+
+export function controllerRoutes(
   controllers: readonly (ControllerClass | ErasedController)[],
   options: ControllerRoutesOptions = {},
 ): readonly Route[] {

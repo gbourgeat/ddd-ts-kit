@@ -2,6 +2,8 @@
 # unit job (flag `unit`) and the integration job (flag `integration`, the specs on a server: databases, brokers,
 # MinIO, OpenFGA, Varnish), and adds them up, a line covered by either counting. It feeds the badge of the README and
 # keeps the history; the gate is the floor of each package in vitest.config.ts, which measures the unit run alone.
+# Codecov counts a line with a branch never taken as not covered, Vitest as covered with the branch measured apart: its
+# percentage stays under the 100 of lines of vitest.config.ts by what the branches miss.
 coverage:
   status:
     project:

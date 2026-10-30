@@ -96,6 +96,13 @@ describe('evaluateCriteria, ordering', () => {
   ])('orders %s', (_label, criteria, expected) => {
     expect(skus(criteria)).toEqual(expected);
   });
+
+  it('keeps the order of arrival of rows equal on every field of the order, the tie-breaker included', () => {
+    const twin = { ...p1, name: 'Twin' };
+    const page = evaluateCriteria(products, [twin, p1], all.orderBy('price').page(offsetPage({ limit: 50 })));
+
+    expect(page.items.map(({ name }) => name)).toEqual(['Twin', 'Anvil']);
+  });
 });
 
 describe('validateCriteria of decimals and booleans', () => {

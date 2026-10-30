@@ -59,6 +59,7 @@ class OutboxStoreSuite extends ContractSuite<OutboxStoreUnderContract> {
 
   protected tests(): void {
     this.handsOutWhatWasAppended();
+    this.takesNothingAsNothingToDo();
     this.returnsTheEventAsAppended();
     this.leasesWhatItHandsOut();
     this.followsTheOutcomeOfAnAttempt();
@@ -82,6 +83,17 @@ class OutboxStoreSuite extends ContractSuite<OutboxStoreUnderContract> {
       this.expect(claimed.map((record) => record.event.id)).toEqual(['evt-1', 'evt-2', 'evt-3']);
       this.expect(claimed.map((record) => record.attempts)).toEqual([1, 1, 1]);
       this.expect(claimed.map((record) => record.status)).toEqual(['pending', 'pending', 'pending']);
+    });
+  }
+
+  private takesNothingAsNothingToDo(): void {
+    this.it('takes an empty batch, an empty publication and an empty revival as nothing to do', async () => {
+      await this.subject.append([]);
+      await this.subject.markPublished([], NOW);
+
+      this.expect(await this.subject.retryDead([], NOW)).toBe(0);
+      this.expect(await this.subject.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
+      this.expect(await this.subject.claimBatch(10, NOW)).toEqual([]);
     });
   }
 
@@ -143,6 +155,20 @@ class OutboxStoreSuite extends ContractSuite<OutboxStoreUnderContract> {
 
       this.expect(await this.subject.stats()).toEqual({ pending: 1, failed: 0, dead: 0 });
       this.expect(await this.claimedIds(10, later(this.options.leaseMs * 10))).toEqual(['evt-2']);
+    });
+
+    this.it('leaves a published record published whatever is reported of it, and knows no unknown id', async () => {
+      await this.subject.append([outboxEvent('evt-1')]);
+      await this.subject.claimBatch(10, NOW);
+      await this.subject.markPublished(['evt-1'], NOW);
+
+      await this.subject.markFailed('evt-1', { code: 'BROKER_DOWN' }, null);
+      await this.subject.markFailed('evt-1', { code: 'BROKER_DOWN' }, later(5_000));
+      await this.subject.markFailed('unknown', { code: 'BROKER_DOWN' }, null);
+
+      this.expect(await this.subject.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
+      this.expect(await this.subject.claimBatch(10, later(this.options.leaseMs * 10))).toEqual([]);
+      this.expect(await this.subject.purgePublished(later(1_000))).toBe(1);
     });
 
     this.it('retries a failed record at its next attempt, not before', async () => {

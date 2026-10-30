@@ -37,6 +37,7 @@ describe('pageRequestFrom', () => {
   it('reads an offset page from strings, as frameworks hand them over, or from numbers', () => {
     expect(pageRequestFrom({ offset: '40', limit: '10' })).toEqual(offsetPage({ offset: 40, limit: 10 }));
     expect(pageRequestFrom({ offset: 40, limit: 10 })).toEqual(offsetPage({ offset: 40, limit: 10 }));
+    expect(pageRequestFrom({ offset: '40' }, { kind: 'cursor' })).toEqual(offsetPage({ offset: 40 }));
   });
 
   it('reads a cursor page as soon as a cursor is given', () => {
@@ -186,6 +187,7 @@ describe('pageSchemaOf', () => {
 
     expect(parsed).toMatchObject({ ok: false, error: [{ path: 'items.1.id' }, { path: 'total' }] });
     expect(page.parse({ items: 'none' })).toMatchObject({ ok: false, error: [{ path: 'items' }] });
+    expect(page.parse({ items: [], nextCursor: 42 })).toMatchObject({ ok: false, error: [{ path: 'nextCursor' }] });
   });
 
   it('moves the local definitions of the item schema to the top, where references resolve', () => {

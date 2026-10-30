@@ -46,10 +46,12 @@ export interface Consumer {
 /** What a connection asks of the network it was opened on. */
 export interface Wire {
   holdingReplies(): boolean;
+  /** The closing of the channels started and the broker did not answer yet: they refuse to send. */
+  closingChannels(): boolean;
   sent(): void;
 }
 
-export const RELIABLE: Wire = { holdingReplies: () => false, sent: () => undefined };
+export const RELIABLE: Wire = { holdingReplies: () => false, closingChannels: () => false, sent: () => undefined };
 
 /** A queue, as the broker and the channels reach it. */
 export interface QueueState {

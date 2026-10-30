@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
+import { initProject } from './support/init-project';
 
 let root: string;
 
@@ -134,5 +135,38 @@ describe('docs, around what people wrote and what is missing', () => {
 
     expect(exists(bare, 'docs/integration/README.md')).toBe(true);
     expect(read(bare, 'docs/context-map.md')).toContain('billing["billing<br/><small>core</small>"]:::core');
+  });
+
+  it('reads the purpose of a context past the comments of its section', () => {
+    const project = initProject('--context', 'shipping:supporting');
+    const doc = 'src/contexts/shipping/CONTEXT.md';
+
+    write(
+      project,
+      doc,
+      read(project, doc).replace(
+        /## Purpose\n\n[^\n]*/,
+        '## Purpose\n\n<!-- one sentence, reused in the map --> Hands parcels to carriers. <!-- unclosed',
+      ),
+    );
+
+    expect(cli(project, 'docs').code).toBe(0);
+    expect(read(project, 'docs/context-map.md')).toContain('| `shipping` | supporting | Hands parcels to carriers. |');
+  });
+
+  it('adds the reference at the end of a CONTEXT.md written without any generated list, and notes the lists it lacks', () => {
+    const project = initProject('--context', 'shipping:supporting');
+    const doc = 'src/contexts/shipping/CONTEXT.md';
+
+    write(project, doc, '# Shipping\n\n## Notes\n\nWritten by the team.');
+
+    const result = cli(project, 'docs', '--json').json() as { notes: string[] };
+
+    expect(result.notes).toContainEqual(expect.stringContaining(`${doc} has no "ddd-ts-kit:aggregates" region`));
+    expect(result.notes.join('\n')).not.toContain('ddd-ts-kit:personal-data');
+
+    expect(read(project, doc)).toMatch(
+      /^# Shipping\n\n## Notes\n\nWritten by the team\.\n\n## Reference\n\n<!-- ddd-ts-kit:reference -->\n/,
+    );
   });
 });

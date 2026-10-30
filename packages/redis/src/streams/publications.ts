@@ -52,6 +52,7 @@ export class Publications {
         throw new PublishNotConfirmedError(event.id, failureCode(error));
       }
 
+      /* v8 ignore next 3 -- ADR-0001: an XADD answers an entry id or an error, and the error is read above */
       if (typeof entryId !== 'string') {
         throw new PublishNotConfirmedError(event.id, 'NO_ENTRY_ID');
       }

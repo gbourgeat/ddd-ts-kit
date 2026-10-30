@@ -60,6 +60,18 @@ ruleTester.run('clean-one-export-per-file: the count', cleanOneExportPerFile, {
     at('src/platform/sequence.ts', SEQUENCE),
     at('src/platform/installed-runtime.ts', RUNTIME),
     at(
+      'src/platform/outbox-relay.ts',
+      'export interface RelayOptions { readonly batch: number }\nexport class OutboxRelay { static { register(); } private attempts = 0; readonly options: RelayOptions = { batch: 1 }; }',
+    ),
+    at(
+      'src/platform/retry.ts',
+      "import type * as kernel from '@ddd-ts-kit/kernel';\nexport interface Backoff { readonly ms: number }\nexport function retry(options: kernel.Options, backoff: Backoff): void {}",
+    ),
+    at(
+      'src/platform/counter.ts',
+      'let current = 0;\nfunction next(): number { return current + 1; }\nexport function advance(): void { current = next(); }\nexport function read(): number { return current; }',
+    ),
+    at(
       'src/platform/retry.ts',
       'function retry(): void {}\nfunction helper(): void {}\nclass Local {}\nexport { retry };',
     ),
@@ -124,6 +136,13 @@ ruleTester.run('clean-one-export-per-file: the count', cleanOneExportPerFile, {
       ...at(
         'src/platform/retry.ts',
         'function retry(): void {}\nfunction backoff(): void {}\nexport { retry, backoff };',
+      ),
+      errors: [{ messageId: 'several' }],
+    },
+    {
+      ...at(
+        'src/platform/sql.ts',
+        'export class Sql {}\nexport function sql(text: string): Sql { return new Sql(); }\nexport class Other {}',
       ),
       errors: [{ messageId: 'several' }],
     },
