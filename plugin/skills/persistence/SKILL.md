@@ -58,70 +58,18 @@ lookups of the port, the columns, the mapper.
   type and checksum of its `StoredFile`, and `FileStaging` orders the write (staged before the
   transaction, recorded, moved to its key with the commit, an orphan in `staging/` purged a day
   later). `docs/concepts/file-storage.md`.
-- **Multi-tenant** (`"stack.tenancy": "shared-table"`): every statement on tenant data goes
-  through the helpers of the ORM package, `tenantTable` and `ownTenantTable` (Knex),
-  `tenantCondition` and `ownTenantCondition` (Drizzle), `tenantWhere` and `ownTenantWhere` spread
-  into the where (Prisma, TypeORM; `findFirst`, never `findUnique` or `save`: the key holds no
-  tenant), `tenantScopeOf` in every inserted row, never a table straight from the executor, the
-  client or the manager, a read model store built with its `tenant` option
-  (`tenancy/scoped-statement`); reads may widen under an audited elevation, writes never. A
-  context whose tables belong to no tenant because it decides who belongs to which (the identity
-  preset) is declared `"tenancy": "control-plane"` under `contexts.<name>`, with its deviation and
-  ADR: the rule leaves it alone, no suppression per statement. Row-level security, schema and database per tenant are in the packages, wired by
-  hand; prove the adapter with `tenantIsolationContract`. A measure grouped then paged selects
-  from the scoped query with `derivedTable`; a raw aggregate is fine in its select as a literal
-  (bind a list as one value, `state = any(?)`, rather than interpolating placeholders), raw SQL
-  that names a table, calls an unknown function or interpolates is not. A project that becomes
-  multi-tenant migrates with `addTenantColumn` and `addOutboxTenantColumn(..., { tenantOfUnpublished })`.
-  See `docs/concepts/multitenancy.md`.
+- **Multi-tenant**: under `stack.tenancy: shared-table` (or another strategy, or to become
+  multi-tenant), read [tenancy.md](tenancy.md) first: every statement on tenant data goes
+  through the helpers of the ORM package, and a read model store is built with its `tenant`
+  option (`tenancy/scoped-statement`); reads may widen under an audited elevation, writes never.
 - **Outbox in the same transaction** as the business write (`events/outbox-required`).
 - **An event-sourced aggregate** (chosen per aggregate, `generate aggregate ... --event-sourced`)
-  keeps the same port; its adapter delegates to `EventSourcedRepository` over the `EventStore`
-  of the ORM package (`create<Orm>EventSourcing`), its stored events are declared in
-  `<aggregate>-events.mapper.ts` with a named data type, and a change of that type is a new
-  version with its upcaster (`event-sourcing/*`; `ddd-ts-kit docs --stored-events` records a
-  version once its shape is final, and `docs --check` fails while one is unrecorded). When to choose it: `docs/concepts/event-sourcing.md` of the kit.
-  Personal values are sealed per data subject (`personalData`, `PersonalDataCipher`); erasing
-  one destroys its key in the `SubjectKeyStore`, then rebuilds the projections that hold a
-  clear copy. `init --event-sourcing on` wires the stores (`persistence.eventSourcing`, schema
-  `event_store`) and `src/platform/event-sourcing/`: the keys wrapped by `auditedSubjectKeys` of
-  `@ddd-ts-kit/audit` when the audit trail is on, so that every erasure leaves a dated audit entry,
-  and the cipher; `generate aggregate --event-sourced` is refused without it. Keep the keys in a
-  store of their own in production, with a shorter backup retention than the events. What a table keeps of a person in clear is declared
-  next to its mapper with `personalFields` (the subject column, the personal columns, `row` or
-  `pseudonymise`, the columns that hold a file) and erased through a `PersonalDataErasure` port of
-  the context (`export abstract class PatientErasure extends PersonalDataErasure {}`);
-  `generate repository <ctx> <Aggregate> --personal <column>,... [--subject <column>] [--erasure row]`
-  writes all of it: the columns in the storage, the declaration (`<aggregate>.personal-fields.ts`,
-  spelled as the erasure of the ORM reads it), and once per context the erasure and the export: the
-  ports (`extends PersonalDataErasure`, `extends PersonalDataExport`), the adapters over
-  `<Orm>PersonalDataErasure` and `<Orm>PersonalDataExport`, their fakes, one spec on the test
-  database and their lines in the copies and in the exports (`docs/concepts/personal-data.md` of
-  the kit draws both);
-  `eraseDataSubject` of the kernel runs the key, every copy in every tenant (`inEachTenant`) and
-  the rebuilds, in that order; a context lists its port in
-  `src/platform/privacy/data-subject-copies.ts` (its export port in `data-subject-exports.ts`;
-  `init --privacy on`, the default with an ORM, writes the folder and the scripts `privacy:erase`
-  and `privacy:export`), and `npm run privacy:erase -- <subject-id>` reaches them all, the key
-  first when the project has an event store, then announces `privacy.data-subject.erased` through the
-  outbox for the services that keep a copy (`generate erasure-handler <ctx>`, for a table; an event-sourced context has none, the key destroyed erases its sealed values); `npm run privacy:export -- <subject-id>` hands over one
-  dated document (`exportDataSubject`, `PersonalDataExportDocument`), each export wrapped by
-  `auditedPersonalDataExport` when the trail is on, never the values in the entry; `personalDataErasureContract` of
-  `@ddd-ts-kit/testing` holds the adapter and the fake (`InMemoryPersonalData`) to the same behaviour.
-  How long the rows keep the person goes on the same declaration, `retention: { after: 'ended_at',
-  months: 36 }` (`generate repository ... --retention ended_at:36m`): the job `privacy.purge-expired`
-  erases what outlived it every night, `npm run privacy:purge` by hand. A period the project reads
-  from configuration and purges by itself is not a literal: declare `configuredRetention:
-  'RETENTION_PERIODS'` (the key, never the value, and never beside `retention`) so the register
-  says "configured by" it instead of "until erased".
-  The adapter of a context extends the one of its ORM package (`KnexPersonalDataErasure`,
-  `DrizzlePersonalDataErasure`, `PrismaPersonalDataErasure`, `TypeOrmPersonalDataErasure`), given
-  the declarations, the scope for tenant data and the file storage; a personal column that is not a
-  text accepts null, or the rows are erased with `row`.
-  `privacy/declared-field` (a warning) reports a column named like personal data (`email`,
-  `phone`, `birth_date`, `address`... plus `privacy.vocabulary` of the config) that no declaration
-  of its context names, and `privacy/subject-is-opaque` a subject that is personal data itself:
-  declare the column, or record why it holds nothing of a person.
+  keeps the same port: under `stack.eventSourcing: on`, read [event-sourcing.md](event-sourcing.md)
+  first.
+- **What a table keeps of a person is declared** (`--personal`), with its erasure, export and
+  retention: under `stack.privacy: on` (the default with an ORM), read
+  [personal-data.md](personal-data.md) first when a table keeps something of a person.
+  `privacy/declared-field` (a warning) reports a personal column no declaration names.
 - **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of
@@ -132,28 +80,16 @@ lookups of the port, the columns, the mapper.
   without a terminal it fails: add then drop in a later migration, or `-- <name> --custom`;
   never under `script` or another pseudo-terminal, where it waits), applied with
   `npm run db:migrate`, committed, forward-only, and compatible with the version still running.
-  Under the sandbox of the regulated profile a command cannot reach the database, whatever `sandbox.network` allows: `db:migrate` fails on the connection, and so does `db:generate` on Prisma and TypeORM when `DATABASE_URL` is set to a server that does not answer (exit 3). Leave `DATABASE_URL` unset and `db:generate` needs no server at all: it replays the migrations on PostgreSQL in process (PGlite, the engine of `openTestDatabase()`), diffs them against the schema and writes the migration, audit guard statements included, so a sandboxed agent generates its own migrations (on TypeORM, build first: `npm run build && npm run db:generate migrations/<name>`). `db:migrate` and the specs that name a `DATABASE_URL` stay the owner's, from a terminal outside the sandbox, or the CI's; hand over the command and wait. Drizzle generates without a connection too.
-  When a merge brings a migration from the main branch before yours is merged, yours is
-  generated again on top: `npx ddd-ts-kit merge-trunk` does it as it brings the main branch in
-  (under drizzle-kit it takes the main branch's journal and replays the branch's migrations, in
-  order, under their names), and `merge-trunk --to-land`, run by the conductor before the squash
-  merge, gives them their real names (renamed after the main branch's last under knex, Prisma
-  and TypeORM; a migration of each side on the same table stops it: run `db:generate` again on
-  the main branch). After a merge made without it, under drizzle-kit, take the main branch's
-  journal (`git checkout origin/main -- migrations/meta/_journal.json`) and run
-  `npx ddd-ts-kit drizzle-generate --replay` (`--base <ref>`, `origin/main` by default); it
-  refuses a migration whose SQL was edited by hand and puts the folder back: generate that one
-  again on top by hand and write the edit again. `persistence/migration-history` reports the forked or unordered history
-  otherwise, which drizzle's migrator would skip silently. Procedure and measurements:
-  `docs/tools/persistence.md`, "Migrations: names, merges and order". `drizzle-generate`
-  formats the snapshot and journal it wrote with the project's formatter, and warns when the
-  SQL changes a primary key in an order that fails, which `persistence/primary-key-order`
-  reports until fixed: reorder it (old key dropped first) or write it with `--custom`. One
-  `db:generate` writes every schema change made since the last one as one migration: to keep two
-  apart (a table, then a constraint once it is filled), change the schema in two steps, with a
-  `db:generate` after each; the replay refuses two such migrations of a branch rather than join
-  them: generate them again one at a time, in their order. A worker of a parallel build generates a working migration only,
-  `npm run db:generate working-<what>`, which the conductor replaces on the trunk at merge.
+  Under drizzle-kit, `drizzle-generate` (what `db:generate` runs) formats the snapshot and journal it wrote with the project's formatter, and
+  warns when the SQL changes a primary key in an order that fails, which
+  `persistence/primary-key-order` reports until fixed: reorder it (old key dropped first) or
+  write it with `--custom`. One `db:generate` writes every schema change made since the last one
+  as one migration: to keep two apart (a table, then a constraint once it is filled), change the
+  schema in two steps, with a `db:generate` after each. Under `agents.profile: regulated` (or any
+  sandbox where a command cannot reach the database), when a merge brings a migration from the
+  main branch before yours is merged, or as a worker of a parallel build, read
+  [migrations.md](migrations.md) first; `persistence/migration-history` reports a forked or
+  unordered history.
 
 ## By ORM
 
