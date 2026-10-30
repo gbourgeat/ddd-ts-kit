@@ -3,6 +3,7 @@ import {
   AsyncLocalStorageExecutionScope,
   FixedClock,
   FixedExecutionScope,
+  InMemoryLogger,
   NotADataSubjectIdError,
   PERSONAL_DATA_EXPORT_FORMAT,
   SequentialIdGenerator,
@@ -42,7 +43,7 @@ let audit: Audit;
 
 beforeAll(async () => {
   database = await openTestDatabase();
-  audit = createAudit(database.persistence, { scope, clock, ids });
+  audit = createAudit(database.persistence, { scope, clock, ids }, new InMemoryLogger());
 
   const { database: context } = database.persistence;
 

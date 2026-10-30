@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:dd04835771dac3d1 -->
+<!-- translation-of: event-sourcing.md sha256:76091dc86ada1168 -->
 
 # Event sourcing, par agrégat
 
@@ -91,9 +91,10 @@ plateforme, avec le codec de l'agrégat, sa politique de *snapshot* laissée en 
 *fake* est cet adaptateur sur les stores en mémoire du kernel, et le contrat de *repository*
 s'exécute sur le *fake* et sur l'adaptateur au-dessus d'`InMemoryEventStore` (son cas de sauvegarde
 périmée reste en attente tant qu'un `mutate` qui enregistre un événement n'est pas ajouté, ce qui
-demande une méthode métier). L'event store ne garde
-aucun *tenant* : un flux est `<context>.<aggregate>-<id>`, donc c'est la couche application qui
-décide qui peut charger un identifiant.
+demande une méthode métier). Un flux est
+`<context>.<aggregate>-<id>` : dans un projet sans multitenance, c'est la couche application qui
+décide qui peut charger un identifiant, et dans un projet multitenant le store garde chaque flux
+dans son *tenant* ([Sous des tables partagées entre *tenants*](#sous-des-tables-partagées-entre-tenants)).
 
 **Pas de double écriture.** Ajouter les événements et publier les événements d'intégration ne
 font qu'une transaction : le store rejoint la transaction de l'unité de travail, et le
@@ -547,19 +548,33 @@ projection alimentée par le distributeur.
 
 ### Sous des tables partagées entre *tenants*
 
-Un event store à qui l'on donne la portée d'exécution (`InMemoryEventStore(scope)`, ou `scope` dans
-les options de `createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing`
-et `createTypeOrmEventSourcing`) enregistre le *tenant* du travail au premier ajout d'un flux, dans
-la colonne `tenant_id`, nullable, des événements, et le rend sur chaque événement stocké
-(`StoredEvent.tenantId`). Lire un flux d'un autre *tenant*, ou y ajouter, est alors refusé par une
-`EventStreamTenantError`, qui nomme le flux et jamais l'autre *tenant* ; le personnel de la
-plateforme élevé sur ce *tenant* (`acrossTenants`) peut le lire, jamais y ajouter. Un travail qui
-ne nomme aucun *tenant* n'est pas borné : rien n'est enregistré et rien n'est refusé, de sorte
-qu'un projet sans multitenance ne change pas. Un flux stocké avant que la colonne existe n'a pas de
-*tenant* et est refusé à tous, jusqu'à ce qu'une migration lui en donne un. Tout *repository*
-d'agrégat en *event sourcing* s'y appuie, `generate repository --tenant-scoped` compris : c'est le
-store qui isole le flux, pas une condition sur une instruction. Le même cas de contrat tient le
-store en mémoire et les quatre ORM.
+La portée d'exécution est ce qui dit que les flux appartiennent à des *tenants* :
+`init --tenancy shared-table` la donne au store (`InMemoryEventStore(scope)`, ou `scope` dans les
+options de `createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing` et
+`createTypeOrmEventSourcing`), et un projet sans multitenance ne la donne pas, si bien que rien n'y
+est enregistré ni refusé. Avec la portée, le store enregistre le *tenant* du travail au premier
+ajout d'un flux, dans la colonne `tenant_id`, nullable, des événements, et le rend sur chaque
+événement stocké (`StoredEvent.tenantId`).
+
+- **Le travail qui ne nomme aucun *tenant* est refusé** avant toute instruction, par une
+  `NoCurrentTenantError`, qu'il lise ou qu'il ajoute, sur un flux qui existe ou non, et le travail
+  hors de toute portée d'exécution aussi. Aucun flux n'est créé sans *tenant*.
+- **Un flux d'un autre *tenant* est refusé** par une `EventStreamTenantError`, qui nomme le flux et
+  jamais l'autre *tenant*, quelle que soit la version depuis laquelle on le lit. Le *repository*
+  d'un agrégat y répond comme à un identifiant que personne n'a enregistré : `findById` rend
+  `undefined`, si bien qu'un appelant n'apprend rien d'un identifiant qui n'est pas le sien.
+- **Une élévation lit, elle n'écrit jamais.** Le personnel de la plateforme et les *jobs* système
+  élevés sur ce *tenant* (`acrossTenants`) peuvent lire ses flux et n'ajouter à aucun, puisqu'une
+  écriture nomme un seul *tenant* : un *job* qui ajoute s'exécute par *tenant*.
+
+`readAll` et `head` restent ouverts, car une souscription lit tout le store et applique chaque
+événement dans son *tenant* ; la règle `event-sourcing/store-behind-repository` les tient hors des
+cas d'usage. Un flux stocké avant que la colonne existe n'a pas de *tenant* et est refusé à tous,
+jusqu'à ce qu'une migration lui en donne un. Tout *repository* d'agrégat en *event sourcing* s'y
+appuie, `generate repository --tenant-scoped` compris : c'est le store qui isole le flux, pas une
+condition sur une instruction. Les mêmes cas de contrat tiennent le store en mémoire et les quatre
+ORM. Un contexte déclaré plan de contrôle des *tenants* n'appartient à aucun *tenant* : il garde son
+état dans des tables, et `generate aggregate --event-sourced` le refuse.
 
 Un `CatchUpSubscription` ou un `EventStoreProjectionRebuild` à qui l'on donne la même `scope`
 applique chaque événement dans le *tenant* de son flux (origine `event`, comme un consommateur de

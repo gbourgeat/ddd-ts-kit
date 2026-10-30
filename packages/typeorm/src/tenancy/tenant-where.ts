@@ -12,7 +12,8 @@ export interface TenantWhere {
  * on a query builder. The tenant of the work, or the tenants of an elevation; work that names no
  * tenant is refused (`NoCurrentTenantError`). The one way a repository of a tenant-scoped project
  * reads (`tenancy/scoped-statement`). Writes use `ownTenantWhere`, which an elevation does not
- * widen.
+ * widen. The spread stays at the top of the where, in each entry of a where array, since the array
+ * is an `or` of its entries; a query builder groups its alternatives in `new Brackets(...)`.
  */
 export function tenantWhere(scope: ExecutionScope): TenantWhere {
   const reach = tenantReachOf(scope);

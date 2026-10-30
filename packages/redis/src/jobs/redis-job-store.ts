@@ -15,13 +15,16 @@ import {
 import { listOf } from '../replies/list-of';
 import { conceal } from '../secrecy/conceal';
 import { claimedJobOfRecord } from './claimed-job-of-record';
-import { ADD_JOB, CLAIM_JOBS, PURGE_JOBS, TRANSITION_JOB } from './job-scripts';
+import { ADD_JOB, CLAIM_JOBS, ERASE_JOB, PURGE_JOBS, TRANSITION_JOB } from './job-scripts';
 import { parseJobRecord } from './parse-job-record';
 import { queuedJobOfRecord } from './queued-job-of-record';
 import type { RedisJobRecord } from './redis-job-record';
 import type { RedisJobStoreOptions } from './redis-job-store-options';
 
 const DESCRIPTION = 'RedisJobStore [client concealed]';
+
+/** The field of the records hash that holds the counter of the claim order. */
+const SEQUENCE_FIELD = '#sequence';
 
 /** A change of a record: fields set, `false` removes one, `attemptsDelta` moves the count. */
 type Change = Readonly<Record<string, unknown>>;
@@ -151,6 +154,16 @@ export class RedisJobStore implements JobStore {
     return Number(await this.client.eval(PURGE_JOBS, keys.length, ...keys, before.getTime()));
   }
 
+  async eraseSubject(subject: string): Promise<number> {
+    const held = (await this.records()).filter((record) => record.subject === subject);
+
+    return this.afterCommit(
+      held.length,
+      held.map(({ id }) => id),
+      () => this.erase(held),
+    );
+  }
+
   async stats(queue: string): Promise<JobStoreStats> {
     const [waiting, running, dead] = await Promise.all(
       ['waiting', 'running', 'dead'].map((set) => this.client.zcard(this.key(set, queue))),
@@ -212,6 +225,23 @@ export class RedisJobStore implements JobStore {
     return answer;
   }
 
+  private async erase(records: readonly RedisJobRecord[]): Promise<number> {
+    let erased = 0;
+
+    for (const { id, queue } of records) {
+      const keys = [
+        this.key('records'),
+        ...['waiting', 'running', 'dead'].map((set) => this.key(set, queue)),
+        this.key('finished'),
+        this.key('keys'),
+      ];
+
+      erased += Number(await this.client.eval(ERASE_JOB, keys.length, ...keys, id));
+    }
+
+    return erased;
+  }
+
   private async revive(ids: readonly string[], now: Date): Promise<number> {
     let revived = 0;
 
@@ -255,6 +285,15 @@ export class RedisJobStore implements JobStore {
     );
 
     return Number(applied) === 1;
+  }
+
+  /** Every record of the namespace: the store keeps no index of the subjects, and an erasure is rare. */
+  private async records(): Promise<RedisJobRecord[]> {
+    const fields = await this.client.hgetall(this.key('records'));
+
+    return Object.entries(fields)
+      .filter(([field]) => field !== SEQUENCE_FIELD)
+      .map(([, raw]) => parseJobRecord(raw));
   }
 
   private async record(id: string): Promise<RedisJobRecord | undefined> {

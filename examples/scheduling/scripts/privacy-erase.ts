@@ -1,4 +1,6 @@
+import { personalEventsInOutbox } from '@ddd-ts-kit/events';
 import { NotADataSubjectIdError, PersonalDataCipher, UnknownDataSubjectError } from '@ddd-ts-kit/kernel';
+import { jobsOfSubject } from '@ddd-ts-kit/scheduling';
 import { layFoundations } from '@/platform/composition/lay-foundations';
 import { Environment } from '@/platform/config/environment';
 import { readFiles } from '@/platform/config/read-files';
@@ -6,6 +8,7 @@ import { readNetworks } from '@/platform/config/read-networks';
 import { openPersistence } from '@/platform/database/open-persistence';
 import { copiesOfAPerson } from '@/platform/privacy/copies-of-a-person';
 import { eraseOnTheCommandLine } from '@/platform/privacy/erase-on-the-command-line';
+import { personalEvents } from '@/platform/privacy/personal-events';
 import { openFiles } from '@/platform/files/open-files';
 import { storeFedProjections } from '@/platform/event-store/store-fed-projections';
 import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader';
@@ -15,8 +18,9 @@ import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persiste
 // the erasure to the audit trail, with the operator as actor, erases every copy the contexts keep
 // of the person in clear in each network (`NETWORKS`): the person of identity, the contact of
 // notification, the notes, the cancellation reasons and the documents of their appointments and
-// the name of the practitioner directory in scheduling; then rebuilds the projections fed by the
-// event store, so the history shows `[erased]` in their place. Run against the database of the
+// the name of the practitioner directory in scheduling; then what the platform keeps of the person
+// in tables no network confines, the records of the outbox and the jobs enqueued about them; then
+// rebuilds the projections fed by the event store, so the history shows `[erased]` in their place. Run against the database of the
 // application (DATABASE_URL) and its file storage (FILES_*), while it runs or not: a rebuild
 // never stops the catch-up. Running it again for the same person completes an erasure whose
 // entry, copy or rebuild failed. Exit code 2: a usage error, a value that is not an opaque
@@ -53,6 +57,7 @@ try {
       keys: subjectKeys,
       rebuilds: storeFedProjections(persistence, new PersonalDataCipher(subjectKeys)),
       copies: copiesOfAPerson(persistence, { scope, clock, files }),
+      shared: [personalEventsInOutbox(persistence.outbox, personalEvents), jobsOfSubject(persistence.jobs)],
     },
     {
       scope,

@@ -7,6 +7,7 @@ import {
   auditGuardRefusals,
   auditIntegrationEvents,
   auditMiddleware,
+  logLostRecords,
   type ArchivableAuditTrail,
   type AuditReader,
   type AuditSource,
@@ -24,6 +25,7 @@ import {
   auditGuardRefusals,
   auditIntegrationEvents,
   auditMiddleware,
+  logLostRecords,
   type ArchivableAuditTrail,
   type AuditReader,
   type AuditSource,
@@ -45,7 +47,7 @@ import { TypeOrmAuditTrail } from '@ddd-ts-kit/audit/typeorm';
 {{/if}}
 import type { OnDecision } from '@ddd-ts-kit/auth';
 import type { EventSubscription } from '@ddd-ts-kit/events';
-import type { BusMiddleware } from '@ddd-ts-kit/kernel';
+import type { AuditRecord, BusMiddleware, Logger } from '@ddd-ts-kit/kernel';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 {{#if audit.schemaFile}}
 import { AUDIT_SCHEMA } from '{{alias.platform}}/database/schema{{alias.ext}}';
@@ -89,11 +91,14 @@ export interface Audit {
   readonly subscriptions: readonly EventSubscription[];
   /** The name those subscriptions listen under. */
   readonly consumer: string;
+  /** What a source outside this file passes on: a failure whose entry could not be written is told to the log. */
+  readonly onLostRecord: (error: unknown, record: AuditRecord | undefined) => void;
 }
 
-export function createAudit(persistence: Persistence, source: AuditSource): Audit {
+export function createAudit(persistence: Persistence, source: AuditSource, logger: Logger): Audit {
   const trail = createAuditTrail({{#if audit.sql}}persistence{{/if}});
   const { unitOfWork, processedEvents } = persistence;
+  const onLostRecord = logLostRecords(logger);
 
   return {
     trail,
@@ -104,14 +109,14 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
 {{#if audit.route}}
     decisions: auditDecisions(trail, { ...source, sensitivePermissions: [auditPermissions['trail.read'].id] }),
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.
-    commands: auditMiddleware(trail, { ...source, unitOfWork }),
-    queries: auditMiddleware(trail, { ...source, queries: [SearchAuditEntriesQuery] }),
+    commands: auditMiddleware(trail, { ...source, unitOfWork, onLostRecord }),
+    queries: auditMiddleware(trail, { ...source, queries: [SearchAuditEntriesQuery], onLostRecord }),
 {{/if}}
 {{#unless audit.route}}
     decisions: auditDecisions(trail, source),
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.
-    commands: auditMiddleware(trail, { ...source, unitOfWork }),
-    queries: auditMiddleware(trail, source),
+    commands: auditMiddleware(trail, { ...source, unitOfWork, onLostRecord }),
+    queries: auditMiddleware(trail, { ...source, onLostRecord }),
 {{/unless}}
     subscriptions: auditIntegrationEvents(trail, {
       registry: auditedEvents,
@@ -123,6 +128,7 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
       consumer,
     }),
     consumer,
+    onLostRecord,
   };
 }
 

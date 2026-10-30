@@ -88,8 +88,9 @@ export interface KernelModuleOptions {
   readonly jobScheduler?: Provided<JobScheduler>;
   /**
    * The tenants that exist, bound as `TenantDirectory`: a job declared `tenancy: 'per-tenant'` runs
-   * once for each, in its execution scope, on the default scheduler. Absent: no directory is
-   * bound, and the default scheduler refuses such a job when it is registered.
+   * once for each, in its execution scope, on the default scheduler, and the default queue refuses
+   * work that names no tenant (`tenant` of `StoredJobQueue`). Absent: no directory is bound, and the
+   * default scheduler refuses such a job when it is registered.
    */
   readonly tenants?: Provided<TenantDirectory>;
   /**
@@ -98,7 +99,7 @@ export interface KernelModuleOptions {
    * a job survives a restart and is shared by the workers.
    */
   readonly jobStore?: Provided<JobStore>;
-  /** Defaults to a queue on `jobStore` that captures the correlation, the actor, the tenant and the trace of the work. */
+  /** Defaults to a queue on `jobStore` that captures the correlation, the actor, the tenant and the trace of the work, and reaches the jobs of that tenant. */
   readonly jobQueue?: Provided<JobQueue>;
   /** Defaults to a worker on `jobStore`, `Clock`, `ExecutionScope`, `Logger`, `Metrics` and `ErrorReporter`, tuned by `queues`. */
   readonly queueWorker?: Provided<QueueWorker>;

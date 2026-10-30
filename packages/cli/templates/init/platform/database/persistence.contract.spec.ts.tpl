@@ -5,7 +5,7 @@ import { FixedExecutionScope, executionContext, systemActor } from '@ddd-ts-kit/
 {{#unless queue.processTable}}
 {{#if tenancy.any}}
 {{#if eventSourcing.on}}
-import { FixedExecutionScope } from '@ddd-ts-kit/kernel';
+import { FixedExecutionScope, executionContext, systemActor } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{/if}}
 {{/unless}}
@@ -74,8 +74,8 @@ processedEventStoreContract(runner, {
 eventStoreContract(runner, {
   name: 'The event store of the platform',
 {{#if tenancy.any}}
-  createStore: async () => (await emptied()).eventSourcing(new FixedExecutionScope()).events,
-  createCompanions: async () => (await emptied()).eventSourcing(new FixedExecutionScope()),
+  createStore: async () => (await emptied()).eventSourcing(inOneTenant()).events,
+  createCompanions: async () => (await emptied()).eventSourcing(inOneTenant()),
   createTenantStore: async () => {
     const scope = new FixedExecutionScope();
 
@@ -129,3 +129,14 @@ async function emptied(): Promise<Persistence> {
 
   return database.persistence;
 }
+{{#if tenancy.any}}
+{{#if eventSourcing.on}}
+
+/** A scope in one tenant: the event store refuses work that names none, and its stream suites run in this one. */
+function inOneTenant(): FixedExecutionScope {
+  return new FixedExecutionScope(
+    executionContext({ correlationId: 'contract', actor: systemActor('contract'), origin: 'test', tenantId: 'acme' }),
+  );
+}
+{{/if}}
+{{/if}}

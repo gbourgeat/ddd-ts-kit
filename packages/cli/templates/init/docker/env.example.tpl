@@ -29,6 +29,14 @@ LOG_LEVEL=info
 {{#if worker.on}}
 # RUN_JOBS=false
 {{/if}}
+{{#if events.outbox}}
+# Days a published event stays in the outbox, its payload with it, before the job events.purge-published drops it.
+# OUTBOX_RETENTION_DAYS=30
+{{/if}}
+{{#if queue.stored}}
+# Days a job that succeeded or was cancelled stays in its store, before the job jobs.purge-finished drops it.
+# BACKGROUND_JOBS_RETENTION_DAYS=30
+{{/if}}
 {{#if database.postgres}}
 
 POSTGRES_USER=app

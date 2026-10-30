@@ -80,7 +80,7 @@ describe('a job declared per tenant', () => {
     const run = await scheduler.runNow(REMINDERS);
 
     expect(ran).toEqual(['acme', 'globex']);
-    expect(run).toMatchObject({ outcome: 'failed', errorCode: 'UNEXPECTED_ERROR' });
+    expect(run).toMatchObject({ outcome: 'failed', errorCode: 'NOT_FOUND' });
   });
 
   it('stops before the next tenant once its run is aborted', async () => {

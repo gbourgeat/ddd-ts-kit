@@ -105,6 +105,17 @@ checker reporting a statement that reaches a table straight from the executor, t
 manager, a row reached by its key alone, a read model store built without its tenant. The three others
 are wired by hand from the packages for now; `init` refuses them and says what to add.
 
+The tenant condition holds for every row only as a conjunct of the statement. SQL binds `and`
+before `or`, so an alternative written beside the condition is outside it. Alternatives go in a
+group and-ed with the condition, and the rule reports any other form:
+
+| ORM | The tenant condition | Alternatives |
+|---|---|---|
+| Knex | no `.orWhere*` or `.or` at the top of a statement of `tenantTable`, `ownTenantTable` or `whereTenant`, no `clearWhere()` or `clear('where')`: the helpers also refuse them when the statement is built (`UngroupedOrError`, `ClearedTenantConditionError`), and hold the text of a `whereRaw`, or a `knex.raw` given to a where, as one conjunct in parentheses. An `orHaving` applies after the where, and is free | `.where((either) => either.where(a).orWhere(b))` |
+| Drizzle | a direct argument of `where` or of `and`, never under `or`, `not` or a `sql` template | `.where(and(tenantCondition(column, scope), or(a, b)))` |
+| Prisma | spread at the top of the `where` or of its `AND`, never under `OR`, `NOT` or a relation | `where: { ...tenantWhere(scope), OR: [a, b] }` |
+| TypeORM | spread at the top of the where; a where array is an `or` of its entries, so each one spreads it; no `orWhere` at the top of a query builder, and the condition in its last `where` or an `andWhere` after it, since a `where` resets what comes before it | `.andWhere(new Brackets((either) => either.where(a).orWhere(b)))` |
+
 A context whose tables belong to no tenant, because it decides who belongs to which, is declared
 so in the config rather than suppressed statement by statement: `"tenancy": "control-plane"`
 under `contexts.<name>`, a deviation recorded in `deviations` with its decision record. The rule
@@ -206,9 +217,12 @@ Prisma (`tenant: true`, on a model with the `tenantId` field the shipped fragmen
 out) and TypeORM (`outboxEntity({ tenant: true })`), so that its consumers run in that tenant.
 
 The event store of an event-sourced aggregate keeps the tenant of each stream the same way. Given
-the execution scope, it records the tenant at the first append in the nullable `tenant_id` of the
-events and refuses a read or an append of a stream of another tenant (`EventStreamTenantError`),
-elevation reading only; the projections it feeds apply each event in the tenant of its stream. On
+the execution scope, which `init --tenancy shared-table` hands it on the four ORM, it refuses work
+that names no tenant (`NoCurrentTenantError`), records the tenant at the first append in the
+nullable `tenant_id` of the events and refuses a read or an append of a stream of another tenant
+(`EventStreamTenantError`), elevation reading only; the projections it feeds apply each event in the
+tenant of its stream. The job queue holds the same line: `find` and `cancel` refuse work that names
+no tenant, a system job going through `acrossTenants`. On
 Knex, `addEventStoreTenantColumn(knex, { schema, tenantOfExistingStreams })` migrates an existing
 store; on Drizzle, Prisma and TypeORM the column joins the shipped tables and the tooling of the
 ORM writes the migration. See [event sourcing](event-sourcing.md#under-shared-table-tenancy).
@@ -222,9 +236,10 @@ Three rules hold whatever the strategy:
   update and the delete only the tenant (`ddd_ts_kit.tenant_id`), and the reach of an elevation
   kept in settings of its own that work which is not elevated leaves empty.
 - **No tenant, no data.** Work that names no tenant is refused before any SQL
-  (`NoCurrentTenantError`) on shared tables and schemas, and reaches no database at all on
-  database per tenant. Under row-level security, a statement without the tenant settings sees
-  nothing.
+  (`NoCurrentTenantError`) on shared tables and schemas, event streams and stored jobs included, and
+  reaches no database at all on database per tenant. Under row-level security, a statement without
+  the tenant settings sees nothing. A project without tenancy keeps none of this: its stores are
+  not told about tenants.
 - **Keys are unique across tenants.** Identifiers are generated (UUIDs), so that a key never
   names two rows; the isolation contract checks that another tenant saving under an existing id
   changes nothing.
@@ -255,6 +270,20 @@ Three rules hold whatever the strategy:
   trail: an actor that names no tenant reads nothing, and platform staff read another tenant's
   trail only inside `acrossTenants`. A refusal at the edge of a caller without a credential is not
   recorded, so that no unauthenticated request opens a chain.
+
+## What a refusal answers
+
+A refusal raised below the edge is a refusal like any other, a `DomainError` answered on every HTTP
+adapter and RPC procedure, written as a warning and sent to no error tracker:
+
+| Refusal | Answer | When |
+|---|---|---|
+| `NoCurrentTenantError` | 403 `FORBIDDEN` | the caller names no tenant: signed in before joining one, or a public route on tenant data |
+| `InvalidTenantIdError` | 404 `NOT_FOUND` | a credential or a request names an id outside the grammar: no such tenant can exist |
+| `EventStreamTenantError` | 404 `NOT_FOUND`, without the stream | an append to a stream of another tenant; a read through a repository is the unknown element of the use case |
+
+A job or a consumer refused for the same reason fails its run with the same code (`FORBIDDEN`,
+`NOT_FOUND`) in `errorCode` and in the metrics of its runs.
 
 ## Resolution at the edge
 

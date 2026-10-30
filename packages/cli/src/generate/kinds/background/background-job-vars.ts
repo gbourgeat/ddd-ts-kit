@@ -41,11 +41,14 @@ export function backgroundJobVars(scope: Scope, name: Name, command: SentCommand
     arguments: [...actor, ...fields.map((field) => field.argument)].join(', '),
     asActor: command.isProtected ? ' as the actor that enqueued the job' : '',
     todo: hasPayload
-      ? 'each run may be a retry, so the use case it sends is safe to repeat; a long run reports its progress and saves a checkpoint between two commands.'
-      : `hand ${command.name.pascal}Command what it needs from the payload once its constructor declares it; each run may be a retry, so the use case it sends is safe to repeat.`,
+      ? `each run may be a retry, so the use case it sends is safe to repeat; a long run reports its progress and saves a checkpoint between two commands. ${ABOUT_A_PERSON}`
+      : `hand ${command.name.pascal}Command what it needs from the payload once its constructor declares it; each run may be a retry, so the use case it sends is safe to repeat. ${ABOUT_A_PERSON}`,
     ...grantedInSpec(scope, command),
   };
 }
+
+/** What an erasure reaches of a job: the row of the person it names, and only that. */
+const ABOUT_A_PERSON = 'A job about a person is enqueued with `subject: <their id>`, so that their erasure drops it.';
 
 /** The library above the kernel, `@ddd-ts-kit/validation` below it, as the formatter of the project sorts them. */
 function importsOf(schema: PayloadSchema): RenderContext {

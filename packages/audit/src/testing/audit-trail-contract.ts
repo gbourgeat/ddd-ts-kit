@@ -7,31 +7,27 @@ import {
   type AuditSortField,
   type Sort,
 } from '@ddd-ts-kit/kernel';
-import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
+import { ContractSuite, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
 import { GENESIS_HASH } from '../chain/genesis-hash';
 import { hashOf } from '../chain/hash-of';
 import { verifyChain } from '../verify/verify-chain';
+import type { AuditTrailContractOptions } from './audit-trail-contract-options';
 import type { AuditTrailUnderContract } from './audit-trail-under-contract';
+import { CheckpointsSuite } from './checkpoints-suite';
+import { entriesOf } from './entries-of';
 import { aRecord } from './records/a-record';
 import { fullRecord } from './records/full-record';
 import { inTenant } from './records/in-tenant';
 import { JOURNAL } from './records/journal';
 import { later } from './records/later';
-
-export interface AuditTrailContractOptions {
-  readonly name: string;
-  /** A fresh, empty trail with the default chains (one per tenant, `global` otherwise); called before each test. */
-  createTrail(): Awaitable<AuditTrailUnderContract>;
-  /**
-   * Rewrites the stored `action` of this entry behind the back of the trail, the way somebody
-   * with access to the storage would. When absent, tampering is only checked on what was read.
-   */
-  readonly tamper?: (entry: AuditEntry, action: string) => Awaitable<void>;
-}
+import { recordAll } from './record-all';
+import { SealedTextsSuite } from './sealed-texts-suite';
 
 /** What every audit trail, fake or real, guarantees to the sources and to the reader. */
 export function auditTrailContract(runner: ContractRunner, options: AuditTrailContractOptions): void {
   new AuditTrailSuite(runner, options).describe(`${options.name} (audit trail contract)`);
+  new CheckpointsSuite(runner, options).describe(`${options.name} (audit trail contract: checkpoints)`);
+  new SealedTextsSuite(runner, () => options.createTrail()).describe(`${options.name} (audit trail contract: texts)`);
 }
 
 const ALPHA = 'tenant:alpha';
@@ -255,18 +251,16 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
     });
   }
 
-  private async recordAll(records: readonly AuditRecord[]): Promise<void> {
-    for (const record of records) {
-      await this.subject.record(record);
-    }
+  private recordAll(records: readonly AuditRecord[]): Promise<void> {
+    return recordAll(this.subject, records);
   }
 
   private async all(): Promise<readonly AuditEntry[]> {
     return (await this.subject.search({}, offsetPage({ limit: 100 }))).items;
   }
 
-  private async entriesOf(chain: string): Promise<readonly AuditEntry[]> {
-    return (await this.subject.search({ chain }, offsetPage({ limit: 100, sort: BY_SEQUENCE }))).items;
+  private entriesOf(chain: string): Promise<readonly AuditEntry[]> {
+    return entriesOf(this.subject, chain);
   }
 
   private async sequencesOf(chain: string): Promise<number[]> {

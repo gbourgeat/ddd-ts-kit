@@ -110,6 +110,17 @@ describe('the resume of a worker for the conductor', () => {
 
     expect(formatResume(resumeOf(ended))).toContain('report: written 2026-10-18T09:31Z (current)');
     expect(formatResume(resumeOf(ended))).toContain('ended on its own with a current report');
+    expect(formatResume(resumeOf(ended))).not.toContain('outside its scope');
+
+    const outside = progressOf({
+      agent: {
+        ...agent,
+        lastStop: { at: '2026-10-18T09:31:00Z', reportCurrent: true, outside: 'src/main.ts changed' },
+      },
+      report: { modified: '2026-10-18T09:31:00Z', current: true },
+    });
+
+    expect(formatResume(resumeOf(outside))).toContain('outside its scope at its stop: src/main.ts changed');
   });
 
   it('gives the message for the agent first and the briefing as the fallback, with the notes', () => {

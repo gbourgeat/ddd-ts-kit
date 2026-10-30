@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a200ed121f4cf2fd -->
+<!-- translation-of: README.md sha256:a148519a238501a1 -->
 
 # @ddd-ts-kit/prisma
 
@@ -447,7 +447,9 @@ décompose dans le `where` d'une lecture (le tenant du travail, ou les tenants q
 tenants), `ownTenantWhere(scope)` dans le `where` d'une mise à jour ou d'une suppression (le seul
 tenant du travail, quoi qu'une élévation élargisse) et `tenantScopeOf(scope)` du noyau dans les
 `data` d'une création. `findUnique`, `update` et `delete` par clé ne servent pas : le tenant ne
-fait jamais partie de la clé. La règle `tenancy/scoped-statement` de la CLI y tient les adaptateurs
+fait jamais partie de la clé. L'étalement reste au sommet du `where`, un `OR` à côté de lui : sous
+un `OR`, un `NOT` ou une relation, il ne vaut que pour une branche. La règle
+`tenancy/scoped-statement` de la CLI y tient les adaptateurs
 d'un projet `--tenancy shared-table`, et `generate repository` les écrit ainsi.
 
 ```ts

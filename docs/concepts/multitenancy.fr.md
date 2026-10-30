@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:40d9370a2524db3f -->
+<!-- translation-of: multitenancy.md sha256:ed78b76506e7549a -->
 
 # Multitenance
 
@@ -111,6 +111,18 @@ depuis l'exécuteur, le client ou le *manager*, une ligne atteinte par sa seule 
 modèles de lecture construit sans son *tenant*. Les trois autres se câblent à la main à partir des *packages* pour l'instant ;
 `init` les refuse et dit quoi ajouter.
 
+La condition du *tenant* ne vaut pour chaque ligne que si elle reste en `and` avec tout le reste de
+l'instruction. SQL lie `and` avant `or` : une alternative écrite à côté de la condition est donc
+en dehors d'elle. Les alternatives vont dans un groupe lié à la condition par un `and`, et la règle
+signale toute autre forme :
+
+| ORM | La condition du *tenant* | Les alternatives |
+|---|---|---|
+| Knex | aucun `.orWhere*` ou `.or` au sommet d'une instruction de `tenantTable`, `ownTenantTable` ou `whereTenant`, aucun `clearWhere()` ou `clear('where')` : les *helpers* les refusent aussi à la construction de l'instruction (`UngroupedOrError`, `ClearedTenantConditionError`), et tiennent le texte d'un `whereRaw`, ou un `knex.raw` donné à un *where*, pour un seul terme entre parenthèses. Un `orHaving` s'applique après le *where* et reste libre | `.where((either) => either.where(a).orWhere(b))` |
+| Drizzle | un argument direct de `where` ou de `and`, jamais sous `or`, `not` ou un gabarit `sql` | `.where(and(tenantCondition(column, scope), or(a, b)))` |
+| Prisma | étalée au sommet du `where` ou de son `AND`, jamais sous `OR`, `NOT` ou une relation | `where: { ...tenantWhere(scope), OR: [a, b] }` |
+| TypeORM | étalée au sommet du *where* ; un tableau *where* est un `or` de ses entrées, chacune l'étale donc ; aucun `orWhere` au sommet d'un *query builder*, et la condition dans son dernier `where` ou un `andWhere` après lui, puisqu'un `where` réinitialise ce qui le précède | `.andWhere(new Brackets((either) => either.where(a).orWhere(b)))` |
+
 Un contexte dont les tables n'appartiennent à aucun *tenant*, parce qu'il décide qui appartient à
 quel *tenant*, est déclaré tel dans la configuration plutôt que désactivé instruction par
 instruction : `"tenancy": "control-plane"` sous `contexts.<name>`, une dérogation enregistrée dans
@@ -216,10 +228,13 @@ fragment livré laisse en commentaire) et TypeORM (`outboxEntity({ tenant: true 
 ses consommateurs s'exécutent dans ce *tenant*.
 
 L'event store d'un agrégat en *event sourcing* garde le *tenant* de chaque flux de la même façon.
-À qui l'on donne la portée d'exécution, il enregistre le *tenant* au premier ajout dans la colonne
-`tenant_id`, nullable, des événements et refuse de lire un flux d'un autre *tenant*, ou d'y
-ajouter (`EventStreamTenantError`), l'élévation ne faisant que lire ; les projections qu'il
-alimente appliquent chaque événement dans le *tenant* de son flux. Sur Knex,
+À qui l'on donne la portée d'exécution, ce que fait `init --tenancy shared-table` sur les quatre ORM,
+il refuse le travail qui ne nomme aucun *tenant* (`NoCurrentTenantError`), enregistre le *tenant* au
+premier ajout dans la colonne `tenant_id`, nullable, des événements et refuse de lire un flux d'un
+autre *tenant*, ou d'y ajouter (`EventStreamTenantError`), l'élévation ne faisant que lire ; les
+projections qu'il alimente appliquent chaque événement dans le *tenant* de son flux. La file de
+*jobs* tient la même ligne : `find` et `cancel` refusent le travail qui ne nomme aucun *tenant*, un
+*job* système passant par `acrossTenants`. Sur Knex,
 `addEventStoreTenantColumn(knex, { schema, tenantOfExistingStreams })` migre un store existant ;
 sur Drizzle, Prisma et TypeORM, la colonne rejoint les tables livrées et l'outillage de l'ORM écrit
 la migration. Voir [l'*event sourcing*](event-sourcing.fr.md#sous-des-tables-partagées-entre-tenants).
@@ -235,9 +250,10 @@ Trois règles tiennent quelle que soit la stratégie :
   et l'étendue d'une élévation gardée dans des réglages à part, que le travail non élevé
   laisse vides.
 - **Pas de tenant, pas de données.** Le travail qui ne nomme aucun *tenant* est refusé avant tout
-  SQL (`NoCurrentTenantError`) sur tables partagées et schémas, et n'atteint aucune base du tout
-  avec une base par *tenant*. Sous sécurité au niveau des lignes, une instruction sans les
-  réglages de *tenant* ne voit rien.
+  SQL (`NoCurrentTenantError`) sur tables partagées et schémas, flux d'événements et *jobs* stockés
+  compris, et n'atteint aucune base du tout avec une base par *tenant*. Sous sécurité au niveau des
+  lignes, une instruction sans les réglages de *tenant* ne voit rien. Un projet sans multitenance
+  ne garde rien de tout cela : ses stores ne connaissent pas les *tenants*.
 - **Les clés sont uniques entre les tenants.** Les identifiants sont générés (des UUID), de sorte
   qu'une clé ne nomme jamais deux lignes ; le contrat d'isolation vérifie qu'un autre *tenant*
   qui enregistre sous un identifiant existant ne change rien.
@@ -272,6 +288,20 @@ Trois règles tiennent quelle que soit la stratégie :
   l'équipe de la plateforme ne lit le journal d'un autre *tenant* qu'à l'intérieur de
   `acrossTenants`. Un refus à la frontière d'un appelant sans justificatif d'identité n'est pas enregistré,
   pour qu'aucune requête HTTP non authentifiée n'ouvre une chaîne.
+
+## Ce que répond un refus
+
+Un refus levé sous la frontière est un refus comme un autre, une `DomainError` répondue sur chaque
+adaptateur HTTP et chaque procédure RPC, écrite en avertissement et envoyée à aucun suivi d'erreurs :
+
+| Refus | Réponse | Quand |
+|---|---|---|
+| `NoCurrentTenantError` | 403 `FORBIDDEN` | l'appelant ne nomme aucun *tenant* : connecté avant d'en rejoindre un, ou une route publique sur des données de *tenant* |
+| `InvalidTenantIdError` | 404 `NOT_FOUND` | un jeton ou une requête nomme un identifiant hors grammaire : aucun tel *tenant* ne peut exister |
+| `EventStreamTenantError` | 404 `NOT_FOUND`, sans le flux | un ajout à un flux d'un autre *tenant* ; une lecture par un *repository* est l'élément inconnu du cas d'usage |
+
+Un *job* ou un consommateur refusé pour la même raison échoue avec le même code (`FORBIDDEN`,
+`NOT_FOUND`) dans `errorCode` et dans les métriques de ses exécutions.
 
 ## La résolution à la frontière
 

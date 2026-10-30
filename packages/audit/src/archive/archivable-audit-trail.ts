@@ -11,7 +11,8 @@ export interface ArchivableAuditTrail {
   /**
    * Writes, chain by chain, the entries older than `before` to one file each, verified first, then
    * removes them: the chain goes on from the hash of the last one, kept in the archive. A chain
-   * that does not verify is refused (`AuditArchiveRefusedError`) and keeps its entries.
+   * that does not verify keeps its entries and stops no other: the refusals are thrown together
+   * (`AuditArchiveRefusedError`) once every chain ran.
    */
   archiveBefore(before: Date, options: ArchiveOptions): Promise<AuditArchiveReport>;
 

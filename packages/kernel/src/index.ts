@@ -236,6 +236,7 @@ export * from './application/session/session-scopes';
 export * from './application/session/has-scope';
 export * from './application/session/system-session';
 export * from './application/tenancy/across-tenants';
+export * from './application/tenancy/assert-names-tenant';
 export * from './application/tenancy/assert-tenant-id';
 export * from './application/tenancy/elevation-options';
 export * from './application/tenancy/invalid-tenant-elevation-error';

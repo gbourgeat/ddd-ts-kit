@@ -11,6 +11,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { archivablePrefix } from '../archive/archivable-prefix';
 import type { ArchivableAuditTrail } from '../archive/archivable-audit-trail';
+import { archiveEach } from '../archive/archive-each';
 import type { ArchiveOptions } from '../archive/archive-options';
 import { archiveOf } from '../archive/archive-of';
 import type { AuditArchive } from '../archive/audit-archive';
@@ -21,6 +22,7 @@ import { emptyChain } from '../chain/empty-chain';
 import { headAfter } from '../chain/head-after';
 import { seal } from '../chain/seal';
 import { sealCheckpoint } from '../chain/seal-checkpoint';
+import { wellFormed } from '../chain/well-formed';
 import { comparing } from '../search/comparing';
 import { decodeCursor } from '../search/decode-cursor';
 import { encodeCursor } from '../search/encode-cursor';
@@ -49,7 +51,7 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader, ArchivableAu
   }
 
   async record(record: AuditRecord): Promise<void> {
-    const chain = (this.options.chainOf ?? chainOfTenant)(record);
+    const chain = wellFormed((this.options.chainOf ?? chainOfTenant)(record));
     const entry = seal(record, this.heads.get(chain) ?? emptyChain(chain));
 
     this.heads.set(chain, headAfter(entry));
@@ -59,9 +61,7 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader, ArchivableAu
 
   /** The entries older than `before`, chain by chain, verified, written to the file storage and removed; see `ArchivableAuditTrail`. */
   async archiveBefore(before: Date, options: ArchiveOptions): Promise<AuditArchiveReport> {
-    const archives: AuditArchive[] = [];
-
-    for (const chain of [...this.heads.keys()].sort()) {
+    return archiveEach([...this.heads.keys()].sort(), async (chain) => {
       const previous = this.archives.filter((archive) => archive.chain === chain).at(-1);
       const first = (previous?.toSequence ?? 0) + 1;
       const ofChain = this.entries.filter((entry) => entry.chain === chain);
@@ -69,11 +69,10 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader, ArchivableAu
 
       if (archive !== undefined) {
         this.forget(archive);
-        archives.push(archive);
       }
-    }
 
-    return { archives };
+      return archive;
+    });
   }
 
   async archivesOf(chain: string): Promise<readonly AuditArchive[]> {

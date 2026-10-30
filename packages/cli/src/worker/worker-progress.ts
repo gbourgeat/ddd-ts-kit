@@ -65,8 +65,8 @@ export interface AgentRecord {
   readonly toolCalls: number;
   /** The tool calls counted for each row it committed, by id. */
   readonly rowCosts: Readonly<Record<string, number>>;
-  /** When it last stopped on its own, and whether its report was current then. */
-  readonly lastStop: { readonly at: string; readonly reportCurrent: boolean } | null;
+  /** When it last stopped on its own, whether its report was current then, and what the guard found left outside its scope. */
+  readonly lastStop: { readonly at: string; readonly reportCurrent: boolean; readonly outside?: string } | null;
 }
 
 /**

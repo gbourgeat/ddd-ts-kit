@@ -794,7 +794,7 @@ test('every command of a worker that runs code the guard cannot read is noted, a
   );
 });
 
-test('a worker command made of pure readers only is not noted; a legitimate npm test is allowed and noted', () => {
+test('a worker command made of pure readers only takes no note; a legitimate npm test is allowed and noted, and reads keep that note', () => {
   const root = committed();
   const agent = { ...worker(root, 'ordering'), session_id: 'readers', agent_id: 'builder-1' };
   for (const command of [
@@ -819,7 +819,7 @@ test('a worker command made of pure readers only is not noted; a legitimate npm 
   assert.equal(noted(root, agent), true);
   put(root, 'src/contexts/ordering/domain/order.spec.ts', 'export {};\n');
   assert.equal(run('pre-bash', bash(root, 'cat README.md', agent)).output, undefined);
-  assert.equal(noted(root, agent), false);
+  assert.equal(noted(root, agent), true);
 });
 
 test('a combined short flag of a shell is read as -c: the commands it runs are judged before they run', () => {

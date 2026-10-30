@@ -79,7 +79,7 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
   const lock = new InMemoryLock(clock);
 {{/unless}}
 {{#if audit.on}}
-  const audit = createAudit(persistence, { scope, clock, ids });
+  const audit = createAudit(persistence, { scope, clock, ids }, logger);
 {{/if}}
 
 {{#if tenancy.any}}

@@ -474,8 +474,10 @@ report. A resumed agent gets a new turn budget, and its count starts again.
   commit, for which row, the steps that failed and the paths it listed to stage;
 - `agent.json`, written by the guard: the agent id, its run (1 at launch, one more at each
   resume), when its run started and at which commit, when it was last seen, the calls counted,
-  the calls each committed row took, and its last stop when it ended on its own;
-- `report.md`, written by the `SubagentStop` hook from the final message of the agent, whose freshness is read from the time of the last commit
+  the calls each committed row took, and its last stop when it ended on its own, with what the
+  guard found left outside its scope (`status --workers` and `--resume` say it too);
+- `report.md`, written by the `SubagentStop` hook from the final message of the agent, followed by
+  what the guard found left outside its scope at that stop, whose freshness is read from the time of the last commit
   and of the last change of a file of the slice.
 
 **One command for the conductor.** On a stop notification, from the trunk:

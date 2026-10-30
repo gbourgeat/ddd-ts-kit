@@ -4,6 +4,7 @@ import type { EventToAppend } from '../../../application/event-sourcing/event-to
 import type { StoredEvent } from '../../../application/event-sourcing/stored-event';
 import type { EventStore } from '../../../application/ports/event-store';
 import type { ExecutionScope } from '../../../application/ports/execution-scope';
+import { assertNamesTenant } from '../../../application/tenancy/assert-names-tenant';
 import { ConcurrencyError } from '../../../domain/errors/concurrency-error';
 import type { SqlRun } from '../../read-model/sql-run';
 import type { EventStoreTablesOptions } from './event-store-tables-options';
@@ -34,9 +35,11 @@ const TENANT_SELECTED = `${SELECTED}, tenant_id`;
  * PostgreSQL gives up the other statement of such a cycle, the unit of work rejects with a
  * `TransactionConflictError`, a `ConcurrencyError` too.
  *
- * Given an execution scope (`options.scope`), the first append of a stream records the tenant of the
- * work in `tenant_id`, and a read or an append of a stream of another tenant is refused with an
- * `EventStreamTenantError`.
+ * Given an execution scope (`options.scope`), the store holds tenant data: work that names no tenant
+ * is refused before any statement (`NoCurrentTenantError`), the first append of a stream records the
+ * tenant of the work in `tenant_id`, and a read or an append of a stream of another tenant is refused
+ * with an `EventStreamTenantError`. `readAll` and `head` stay open: a subscription reads the whole
+ * store and applies each event in its tenant.
  */
 export class PostgresEventStore implements EventStore {
   private readonly events: string;
@@ -76,13 +79,16 @@ export class PostgresEventStore implements EventStore {
   }
 
   async readStream(stream: string, after = 0): Promise<readonly StoredEvent[]> {
+    this.assertTenantNamed('read');
+
     const rows = await this.run(
       `select ${this.selected()} from ${this.events} where stream = $1::text and version > $2::integer order by version`,
       [stream, after],
     );
 
     if (this.scope !== undefined) {
-      this.assertReach(stream, rows[0], 'read');
+      // A read past the end of the stream gives no row, and the stream is no less the one of its tenant.
+      this.assertReach(stream, rows[0] ?? (await this.firstRowOf(stream)), 'read');
     }
 
     return rows.map(storedEventOf);
@@ -107,10 +113,22 @@ export class PostgresEventStore implements EventStore {
     return this.scope === undefined ? SELECTED : TENANT_SELECTED;
   }
 
+  private assertTenantNamed(access: 'read' | 'write'): void {
+    if (this.scope !== undefined) {
+      assertNamesTenant(this.scope.current(), access);
+    }
+  }
+
   private assertReach(stream: string, first: Row | undefined, access: 'read' | 'write'): void {
     if (first !== undefined) {
       assertStreamReach(this.scope?.current(), { stream, recorded: tenantOf(first) }, access);
     }
+  }
+
+  private async firstRowOf(stream: string): Promise<Row | undefined> {
+    const [first] = await this.run(`select tenant_id from ${this.events} where stream = $1::text limit 1`, [stream]);
+
+    return first;
   }
 
   /** The tenant a new event of the stream carries: the one its stream recorded, or the one of the work for a new stream. */
@@ -119,7 +137,9 @@ export class PostgresEventStore implements EventStore {
       return null;
     }
 
-    const [first] = await this.run(`select tenant_id from ${this.events} where stream = $1::text limit 1`, [stream]);
+    this.assertTenantNamed('write');
+
+    const first = await this.firstRowOf(stream);
 
     this.assertReach(stream, first, 'write');
 

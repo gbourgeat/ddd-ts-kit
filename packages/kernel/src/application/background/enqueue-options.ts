@@ -14,7 +14,8 @@ export interface EnqueueOptions {
   /**
    * The id of what the job works on (a calendar, an import), kept with the job and answered by
    * `find`, which never shows the payload: a query reading a job through the element it was
-   * asked about checks that the job is about that element.
+   * asked about checks that the job is about that element. A job about a person names that
+   * person here: the erasure of a person drops the jobs of that subject, whatever their status.
    */
   readonly subject?: string;
 }

@@ -48,9 +48,16 @@ function workerLines(worker: WorkerStatus, workers: readonly WorkerStatus[]): st
     ...(state === undefined ? [] : [`    state: ${state}`]),
     ...mergeLines(worker),
     `    report: ${reportText(worker)}`,
+    ...outsideLines(worker),
     `    ${worker.files.length} file${worker.files.length === 1 ? '' : 's'} changed (${since})`,
     ...worker.files.map((file) => `      ${file}`),
   ];
+}
+
+function outsideLines({ progress }: WorkerStatus): string[] {
+  const outside = progress?.agent?.lastStop?.outside;
+
+  return outside === undefined ? [] : [`    outside its scope at its stop: ${outside}`];
 }
 
 function reportText({ report, progress }: WorkerStatus): string {

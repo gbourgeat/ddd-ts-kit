@@ -122,7 +122,9 @@ describe('status --workers', () => {
 
     expect(cli(root, 'status', '--workers').stdout).toContain('2 files changed (uncommitted only');
   });
+});
 
+describe('status --workers on the state of a worker', () => {
   it('says which worktree has its dependencies, in JSON and in words', () => {
     fs.mkdirSync(path.join(issuing, 'node_modules'));
 
@@ -137,6 +139,16 @@ describe('status --workers', () => {
 
     expect(text).toContain('    context billing, rows #M1.01, base main, 1 commit ahead\n');
     expect(text).toContain('    context billing, dependencies not installed\n');
+  });
+
+  it('says what the guard found left outside the scope of a worker at its stop', () => {
+    expect(cli(root, 'status', '--workers').stdout).not.toContain('outside its scope at its stop');
+
+    recordStop(issuing, 'Code changed\nsrc/main.ts');
+
+    expect(cli(root, 'status', '--workers').stdout).toContain(
+      '    outside its scope at its stop: Code changed src/main.ts\n',
+    );
   });
 
   it('leaves status without --workers as it was', () => {
@@ -157,6 +169,19 @@ describe('status --workers', () => {
     expect(old).not.toHaveProperty('behind');
   });
 });
+
+function recordStop(worktree: string, outside: string): void {
+  write(
+    worktree,
+    '.ddd-ts-kit/agent.json',
+    JSON.stringify({
+      agentId: 'agent-7',
+      run: 1,
+      lastSeen: '2026-10-18T09:00:00Z',
+      lastStop: { at: '2026-10-18T09:01:00Z', reportCurrent: true, outside },
+    }),
+  );
+}
 
 function open(row: string, worktree: string, branch: string): void {
   const opened = cli(

@@ -30,6 +30,12 @@ export function jobSettings(environment: Environment, context?: string): Readonl
 {{#if privacy.on}}
     'privacy.purge-expired': { enabled: environment['JOB_PRIVACY_PURGE_EXPIRED_ENABLED'] !== 'false' },
 {{/if}}
+{{#if events.outbox}}
+    'events.purge-published': { enabled: environment['JOB_EVENTS_PURGE_PUBLISHED_ENABLED'] !== 'false' },
+{{/if}}
+{{#if queue.stored}}
+    'jobs.purge-finished': { enabled: environment['JOB_JOBS_PURGE_FINISHED_ENABLED'] !== 'false' },
+{{/if}}
     // ddd-ts-kit:jobs
     // /ddd-ts-kit:jobs
   };

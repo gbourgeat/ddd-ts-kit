@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fdc4b2763e2bdbae -->
+<!-- translation-of: README.md sha256:b7ff60f1d479a493 -->
 
 # @ddd-ts-kit/knex
 
@@ -600,7 +600,13 @@ const inserted = { ...state, ...tenantRow(tenantScopeOf(this.scope)), ...auditRo
 ```
 
 `whereTenant(builder, scope)` est la condition seule, pour un *builder* à vous. Un travail qui ne
-nomme aucun *tenant* lève `NoCurrentTenantError` avant tout SQL. Un modèle de lecture de données
+nomme aucun *tenant* lève `NoCurrentTenantError` avant tout SQL. Les trois gardent la condition en
+`and` avec le reste de l'instruction : SQL lie `and` avant `or`, donc `.orWhere*` et `.or` au sommet
+de leur *builder* lèvent `UngroupedOrError` et les alternatives vont dans un groupe,
+`.where((either) => either.where(a).orWhere(b))` ; le texte d'un `whereRaw`, ou un `knex.raw` donné
+à un *where*, reste entre parenthèses comme un seul terme, avec ses paramètres ; `clearWhere()` et
+`clear('where')` lèvent `ClearedTenantConditionError`. Un `orHaving` s'applique après le *where* et
+reste libre. Un modèle de lecture de données
 d'un *tenant* passe `tenant: scope` à `KnexReadModelTable` et à `KnexReadModelStore` : chaque
 ligne est écrite avec le *tenant* du travail, et chaque lecture et chaque écriture y est
 restreinte (les clés restent uniques entre *tenants* ; une reconstruction, qui ne s'exécute dans

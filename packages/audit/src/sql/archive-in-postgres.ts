@@ -1,4 +1,5 @@
 import { archivablePrefix } from '../archive/archivable-prefix';
+import { archiveEach } from '../archive/archive-each';
 import type { ArchiveOptions } from '../archive/archive-options';
 import { archiveOf } from '../archive/archive-of';
 import type { AuditArchive } from '../archive/audit-archive';
@@ -13,7 +14,8 @@ const OCCURRED_AT_UTC = sql`to_char("occurred_at" at time zone 'UTC', 'YYYY-MM-D
 
 /**
  * Archives every chain, one transaction each, in the order of their names: the head of the chain
- * is locked first, so no entry is appended to the range while it is written and removed.
+ * is locked first, so no entry is appended to the range while it is written and removed. A chain
+ * that does not verify rolls back its own transaction alone.
  */
 export async function archiveInPostgres(
   session: SqlSession,
@@ -21,19 +23,11 @@ export async function archiveInPostgres(
   { before, options }: { readonly before: Date; readonly options: ArchiveOptions },
 ): Promise<AuditArchiveReport> {
   const chains = await session.query(sql`select "chain" from ${tables.chains} order by "chain"`);
-  const archives: AuditArchive[] = [];
 
-  for (const row of chains) {
-    const archive = await session.transaction((transaction) =>
-      archiveChain(transaction, tables, { chain: String(row['chain']), before, options }),
-    );
-
-    if (archive !== undefined) {
-      archives.push(archive);
-    }
-  }
-
-  return { archives };
+  return archiveEach(
+    chains.map((row) => String(row['chain'])),
+    (chain) => session.transaction((transaction) => archiveChain(transaction, tables, { chain, before, options })),
+  );
 }
 
 interface ChainToArchive {

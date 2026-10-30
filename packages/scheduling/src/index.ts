@@ -33,6 +33,7 @@ export { UnknownBackgroundJobError } from './queue/errors/unknown-background-job
 export { AttemptsExhaustedError } from './queue/errors/attempts-exhausted-error';
 export { JobStore } from './queue/store/job-store';
 export { InMemoryJobStore } from './queue/store/in-memory-job-store';
+export { jobsOfSubject } from './queue/store/jobs-of-subject';
 export type { ClaimRequest } from './queue/store/claim-request';
 export type { ClaimedJob } from './queue/store/claimed-job';
 export type { JobFailure } from './queue/store/job-failure';

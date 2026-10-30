@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:be944f81866f2f41 -->
+<!-- translation-of: background-jobs.md sha256:f557cbcb0fdf846d -->
 
 # Jobs en arrière-plan
 
@@ -219,7 +219,8 @@ La charge utile (payload) est vérifiée par rapport à `run` :
 - **Options** : `delay` ou `runAt` (pas avant), `idempotencyKey` (un second *job* de même nom et
   de même clé, mis en file pour le même *tenant*, n'est pas ajouté tant que le premier est gardé :
   `enqueue` répond son identifiant avec `duplicate: true` ; deux *tenants* ne partagent jamais une
-  clé) et `subject` (l'identifiant de ce sur quoi le *job* travaille, gardé avec lui). Sur la
+  clé) et `subject` (l'identifiant de ce sur quoi le *job* travaille, gardé avec lui : un *job* qui
+  concerne une personne la nomme, et son effacement le retire, quel que soit son statut). Sur la
   déclaration : `maxAttempts` (5 par défaut), `backoff` (exponentiel, 1 s doublée jusqu'à 5 min),
   `timeout` (aucun) et `lease` (30 s).
 - **`JobQueue`** est un port du noyau : `enqueue`, `cancel` et `find`, qui répond le statut, les
@@ -229,8 +230,13 @@ La charge utile (payload) est vérifiée par rapport à `run` :
   travers un élément (`GET /calendars/:id/clearances/:clearanceId`) vérifie que `subject` est cet
   élément : l'identifiant d'un *job* n'a rien de secret, c'est la cause de tout ce que fait le *job*.
 - ***Tenants*.** Un travail fait pour un *tenant* ne trouve et n'annule que les *jobs* de ce
-  *tenant*, et ceux des *tenants* qu'une élévation nomme ; un travail sans *tenant* (un projet
-  mono-*tenant*, un *job* système) atteint tous les *jobs*.
+  *tenant*, et ceux des *tenants* qu'une élévation nomme. Dans un projet multitenant (`tenant: true`
+  sur `StoredJobQueue`, ce qu'écrit `init --tenancy shared-table`, ou `tenants` sur `kernelModule`),
+  le travail qui ne nomme aucun *tenant* est refusé par une `NoCurrentTenantError` avant toute
+  lecture du store, un *job* système compris : il atteint les *jobs* des *tenants* par une élévation
+  (`acrossTenants`). Dans un projet sans multitenance, aucun travail n'a de *tenant*, et tous les
+  *jobs* sont atteints. `enqueue` reste ouvert : un *job* global peut mettre en file, et ce qu'il y
+  met s'exécute sans *tenant*, là où les données d'un *tenant* le refusent.
 - **Généré** : `ddd-ts-kit generate background-job <context> <Name> --command <UseCase>` écrit la
   classe (`@Background()` dans le style déclaré, `builder.backgroundJob(..)` dans le fichier de
   module sur tsyringe, `platform.backgroundJobs.register(..)` dans le fichier de module là où la
@@ -532,7 +538,7 @@ Partagez la file (la table des *jobs*, Redis) pour que le *worker* l'exécute.
 | Champ du contexte d'exécution d'une exécution | Valeur |
 |---|---|
 | `origin` | `queue` |
-| `actor` | l'acteur du travail qui l'a mis en file (un acteur système quand rien ne l'a fait), aussi `execution.actor` : un instantané pris à la mise en file, rôles et attributs compris, utilisé tel quel par une exécution différée et par chaque nouvelle tentative |
+| `actor` | l'acteur du travail qui l'a mis en file (un acteur système quand rien ne l'a fait), aussi `execution.actor` : un instantané pris à la mise en file, rôles compris, utilisé tel quel par une exécution différée et par chaque nouvelle tentative. La ligne garde son id, son type, son *tenant*, ses rôles et `tenants`, jamais le reste de ses attributs : le profil que donne un *credential*, un email ou un nom d'utilisateur, reste avec la requête, et un *job* qui a besoin d'un attribut le nomme dans `actorAttributes` de `StoredJobQueue` |
 | `tenantId` | le *tenant* de ce travail, quand il en portait un |
 | `correlationId` | la corrélation de ce travail : l'appel d'origine et son *job* se retrouvent ensemble |
 | `causationId` | l'identifiant du *job* |
@@ -628,14 +634,15 @@ mémoire. Le *middleware* sur le bus de commandes est le seul endroit où le tes
   démarre avec jusqu'à ce retard.
 - **Ni priorité, ni limite de débit par *job*, ni *jobs* répétables.** Un travail répété est un
   *job* planifié qui met en file.
-- **La table grossit** : `background_jobs` garde les charges utiles et l'acteur de chaque *job*, et
-  la clé d'idempotence d'un *job* tient aussi longtemps que le *job* est gardé. Purgez ce qui est
-  terminé (`purgeFinished(before)` du `JobStore`) depuis un *job* planifié du projet : ni le kit ni
-  un projet généré n'en planifie un, parce que la durée de conservation est la décision du projet.
-  Les *jobs* morts restent jusqu'à ce qu'un opérateur décide. `process_instances` grossit de la
-  même façon.
+- **La table est purgée la nuit** : `background_jobs` garde la charge utile et l'acteur de chaque
+  *job*, et la clé d'idempotence d'un *job* tient aussi longtemps que le *job* est gardé. Un projet
+  généré retire les *jobs* réussis ou annulés chaque nuit à 03:45 UTC (`jobs.purge-finished`, au-delà
+  de `BACKGROUND_JOBS_RETENTION_DAYS`, trente par défaut) : la durée de conservation est la décision
+  du projet. Un projet câblé à la main appelle `purgeFinished(before)` du `JobStore` depuis un *job*
+  planifié. Les *jobs* morts restent jusqu'à ce qu'un opérateur décide. `process_instances` grossit,
+  et rien ne le purge encore.
 - **Les permissions sont celles de la mise en file.** Une exécution différée ou une nouvelle
-  tentative des heures plus tard agit avec les rôles et attributs que l'acteur avait quand le *job*
+  tentative des heures plus tard agit avec les rôles que l'acteur avait quand le *job*
   a été mis en file : un *job* qui doit voir un droit révoqué relit l'acteur (par son identifiant)
   avant d'agir.
 - **Une charge utile stockée est lue avec le schéma de la version qui l'exécute.** Celle qui ne
