@@ -45,7 +45,7 @@ export type { PolicyContext } from './policies/policy-context';
 export { RoleBasedAuthorizer, type RoleBasedAuthorizerOptions } from './rbac/role-based-authorizer';
 export { tenantOfContext } from './rbac/tenant-of-context';
 export { forbid, permit, type AttributePolicy } from './abac/attribute-policy';
-export { allOf, anyOf, not, type Condition } from './abac/condition';
+export { allOf, anyOf, known, not, type Condition } from './abac/condition';
 export { PolicyBasedAuthorizer, type PolicyBasedAuthorizerOptions } from './abac/policy-based-authorizer';
 export {
   SignedInGrantsAuthorizer,

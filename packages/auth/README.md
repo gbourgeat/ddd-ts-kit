@@ -830,7 +830,11 @@ export const authorizer = new PolicyBasedAuthorizer({
 
 A matching `forbid` wins over every `permit`; with no matching `permit` the answer is no.
 Conditions compose with `anyOf`, `allOf` and `not`, and see `{ actor, permission, resource?,
-attributes, context, now }`.
+attributes, context, now }`. An element the port does not hold answers no attribute, and a rule
+that compares one with nothing can let it through: `known('amount')` holds when the port answered
+every attribute named, so that a `forbid` refuses an element it knows nothing of
+(`forbid('invoice.no-void-of-an-unknown-invoice', [voiding], not(known('amount')))`) and a `permit`
+demands what it reads.
 
 `explain` names what is known of the element, by attribute name and never by value, then each
 policy that bears on the permission and whether it held. Why a manager may not void a large

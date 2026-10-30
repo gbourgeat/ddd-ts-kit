@@ -280,6 +280,7 @@ import {
   ResourceAttributes,
   allOf,
   forbid,
+  known,
   not,
   permit,
   type AttributePolicy,
@@ -294,14 +295,19 @@ declare const billingPermissions: PermissionSet<'billing', 'invoice.read' | 'inv
 declare const clock: Clock;
 
 // platform/auth/attributes/attribute-policies.ts
-const sameDepartment: Condition = ({ actor, attributes }) => actor.attributes['department'] === attributes['department'];
+const sameDepartment: Condition = ({ actor, attributes }) => {
+  const department = actor.attributes['department'];
+
+  return department !== undefined && department === attributes['department'];
+};
 const large: Condition = ({ attributes }) => Number(attributes['amount']) > 10_000;
 const approvedTwice: Condition = ({ attributes }) => attributes['approvals'] === 2;
 
 export const attributePolicies: readonly AttributePolicy[] = [
   permit('administrators-do-everything', ['*'], ({ actor }) => actor.roles.includes('admin')),
-  permit('read-own-department', [billingPermissions['invoice.read']], sameDepartment),
+  permit('read-own-department', [billingPermissions['invoice.read']], allOf(known('department'), sameDepartment)),
   permit('managers-void', [billingPermissions['invoice.void']], ({ actor }) => actor.attributes['manager'] === true),
+  forbid('no-void-of-an-unknown-invoice', [billingPermissions['invoice.void']], not(known('amount', 'approvals'))),
   forbid('no-large-void-without-four-eyes', [billingPermissions['invoice.void']], allOf(large, not(approvedTwice))),
 ];
 
@@ -332,6 +338,17 @@ export const authorizer = new PolicyBasedAuthorizer({
 A manager of the finance department voids an invoice of 12 000 approved once: the
 `managers-void` permit matches, but so does the `no-large-void-without-four-eyes` forbid, and
 the answer is `EXPLICIT_DENY`.
+
+A projection is eventually consistent: right after an invoice is created, and whenever its row is
+missing, the port answers `undefined` and every rule reads attributes that are not there. Written
+naively, such a rule fails open: `Number(undefined) > 10_000` is false, so the forbid does not
+hold for an invoice of any amount, and `undefined === undefined` makes an actor without a
+department of the same department as an unknown invoice. So each rule demands the facts it reads:
+a `permit` that reads an attribute of the resource requires it (`known('department')`), a fact a
+`forbid` needs is refused when it is missing (`no-void-of-an-unknown-invoice`), and a comparison
+with an attribute of the actor demands that the actor has it (`sameDepartment`). The authorizer
+cannot do it for the rules: the bus asks about the context of a use case too, which no projection
+holds.
 
 Lists: a predicate is not a query, so `Access.scope` throws `ListingNotSupportedError` under pure
 ABAC. Give the read port the same condition as a filter (the department of the actor), or list

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b09d8a4325f5a686 -->
+<!-- translation-of: README.md sha256:453b70e1b25ee3ea -->
 
 # @ddd-ts-kit/auth
 
@@ -863,7 +863,12 @@ export const authorizer = new PolicyBasedAuthorizer({
 
 Un `forbid` qui correspond l'emporte sur tous les `permit` ; sans `permit` qui corresponde, la
 réponse est non. Les conditions se composent avec `anyOf`, `allOf` et `not`, et voient
-`{ actor, permission, resource?, attributes, context, now }`.
+`{ actor, permission, resource?, attributes, context, now }`. Un élément que le port ne tient pas
+ne répond aucun attribut, et une règle qui en compare un avec rien peut le laisser passer :
+`known('amount')` tient quand le port a répondu chaque attribut nommé, de sorte qu'un `forbid`
+refuse un élément dont il ne sait rien
+(`forbid('invoice.no-void-of-an-unknown-invoice', [voiding], not(known('amount')))`) et qu'un
+`permit` exige ce qu'il lit.
 
 `explain` nomme ce que l'on sait de l'élément, par nom d'attribut et jamais par valeur, puis
 chaque politique qui porte sur la permission et si elle a tenu. Pourquoi un responsable ne peut
