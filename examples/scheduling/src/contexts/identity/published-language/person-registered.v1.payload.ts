@@ -2,11 +2,11 @@ import { IsEmail, IsString } from 'class-validator';
 
 export class PersonRegisteredV1Payload {
   @IsString()
-  personId = '';
+  declare personId: string;
 
   @IsString()
-  displayName = '';
+  declare displayName: string;
 
   @IsEmail()
-  email = '';
+  declare email: string;
 }

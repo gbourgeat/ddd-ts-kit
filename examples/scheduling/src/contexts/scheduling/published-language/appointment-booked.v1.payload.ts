@@ -2,33 +2,33 @@ import { IsISO8601, IsIn, IsOptional, IsString, Matches } from 'class-validator'
 
 export class AppointmentBookedV1Payload {
   @IsString()
-  appointmentId = '';
+  declare appointmentId: string;
 
   @IsString()
-  calendarId = '';
+  declare calendarId: string;
 
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  practitionerId = '';
+  declare practitionerId: string;
 
   @IsString()
-  patientId = '';
+  declare patientId: string;
 
   @IsISO8601()
-  startsAt = '';
+  declare startsAt: string;
 
   @IsISO8601()
-  endsAt = '';
+  declare endsAt: string;
 
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
-  day = '';
+  declare day: string;
 
   @IsIn(['booked', 'requested'])
-  status: 'booked' | 'requested' = 'booked';
+  declare status: 'booked' | 'requested';
 
   @IsOptional()
   @IsISO8601()
-  confirmBefore?: string;
+  declare confirmBefore?: string;
 }

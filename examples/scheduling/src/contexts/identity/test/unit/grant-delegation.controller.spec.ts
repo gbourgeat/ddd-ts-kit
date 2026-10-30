@@ -128,3 +128,27 @@ describe('POST /practices/:practiceId/desks/:practitionerId/delegations', () => 
     expect(response.body).toMatchObject({ code });
   });
 });
+
+describe('POST /practices/:practiceId/desks/:practitionerId/delegations, a body that leaves the availability out', () => {
+  it('is read as a delegation without the availability', async () => {
+    const sent: GrantDelegationCommand[] = [];
+
+    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, {
+      execute: async (command) => {
+        sent.push(command);
+
+        return 'grant-delegation-1';
+      },
+    });
+
+    await executeRoute(controllerRoute(new GrantDelegationController(commands), { guards: 'skip' }), {
+      params,
+      query: {},
+      headers: {},
+      body: { assistantId: 'person-3' },
+      raw: undefined,
+    });
+
+    expect(sent.map((command) => command.terms)).toEqual([{ assistantId: 'person-3', availabilityIncluded: false }]);
+  });
+});

@@ -1223,7 +1223,7 @@ export interface GrantDelegationInput {
   };
   readonly body: {
     assistantId: string;
-    availabilityIncluded: boolean;
+    availabilityIncluded?: boolean;
     endsAt?: string;
   };
 }

@@ -2,35 +2,35 @@ import { IsInt, IsString, Matches, Min } from 'class-validator';
 
 export class SearchOccupancyLine {
   @IsString()
-  id = '';
+  declare id: string;
 
   @IsString()
-  calendarId = '';
+  declare calendarId: string;
 
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
-  day = '';
+  declare day: string;
 
   @IsInt()
   @Min(0)
-  heldMinutes = 0;
+  declare heldMinutes: number;
 
   @IsInt()
   @Min(0)
-  appointmentsHeld = 0;
+  declare appointmentsHeld: number;
 
   @IsInt()
   @Min(0)
-  completed = 0;
+  declare completed: number;
 
   @IsInt()
   @Min(0)
-  noShows = 0;
+  declare noShows: number;
 
   @IsInt()
   @Min(0)
-  cancelledByPatient = 0;
+  declare cancelledByPatient: number;
 
   @IsInt()
   @Min(0)
-  cancelledByPractice = 0;
+  declare cancelledByPractice: number;
 }

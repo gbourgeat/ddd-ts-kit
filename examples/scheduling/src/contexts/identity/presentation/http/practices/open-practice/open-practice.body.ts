@@ -3,13 +3,13 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class OpenPracticeBody {
   @IsString()
   @IsNotEmpty()
-  name = '';
+  declare name: string;
 
   @IsString()
   @IsNotEmpty()
-  timeZone = '';
+  declare timeZone: string;
 
   @IsString()
   @IsNotEmpty()
-  managerId = '';
+  declare managerId: string;
 }

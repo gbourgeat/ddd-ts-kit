@@ -2,11 +2,11 @@ import { IsIn, IsString } from 'class-validator';
 
 export class PracticeMemberRemovedV1Payload {
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  personId = '';
+  declare personId: string;
 
   @IsIn(['manager', 'practitioner', 'assistant'])
-  role: 'manager' | 'practitioner' | 'assistant' = 'manager';
+  declare role: 'manager' | 'practitioner' | 'assistant';
 }

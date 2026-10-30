@@ -3,17 +3,17 @@ import { NotificationKindName } from '@/contexts/notification/domain/vocabularie
 
 export class SearchNotificationsLine {
   @IsString()
-  id = '';
+  declare id: string;
 
   @IsIn(Object.values(NotificationKindName))
-  kind = '';
+  declare kind: string;
 
   @IsString()
-  appointmentId = '';
+  declare appointmentId: string;
 
   @IsISO8601()
-  startsAt = '';
+  declare startsAt: string;
 
   @IsISO8601()
-  sentAt = '';
+  declare sentAt: string;
 }

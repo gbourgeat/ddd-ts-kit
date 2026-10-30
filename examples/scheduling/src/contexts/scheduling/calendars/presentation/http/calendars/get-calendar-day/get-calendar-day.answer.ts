@@ -6,35 +6,35 @@ import { CalendarDaySpanDto } from '@/contexts/scheduling/presentation/http/shar
 
 export class GetCalendarDayAnswer {
   @IsString()
-  calendarId = '';
+  declare calendarId: string;
 
   /** `YYYY-MM-DD` in the time zone below. */
   @IsString()
-  day = '';
+  declare day: string;
 
   @IsString()
-  timeZone = '';
+  declare timeZone: string;
 
   /** The opening ranges of the day. */
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CalendarDaySpanDto)
-  open: CalendarDaySpanDto[] = [];
+  declare open: CalendarDaySpanDto[];
 
   /** The time off that crosses the day. */
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CalendarDaySpanDto)
-  timeOff: CalendarDaySpanDto[] = [];
+  declare timeOff: CalendarDaySpanDto[];
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CalendarDayAppointmentTypeDto)
-  appointmentTypes: CalendarDayAppointmentTypeDto[] = [];
+  declare appointmentTypes: CalendarDayAppointmentTypeDto[];
 
   /** What is held, by start. */
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CalendarDayBusyDto)
-  busy: CalendarDayBusyDto[] = [];
+  declare busy: CalendarDayBusyDto[];
 }

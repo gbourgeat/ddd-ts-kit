@@ -2,14 +2,14 @@ import { IsString } from 'class-validator';
 
 export class CalendarCreatedV1Payload {
   @IsString()
-  calendarId = '';
+  declare calendarId: string;
 
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  practitionerId = '';
+  declare practitionerId: string;
 
   @IsString()
-  timeZone = '';
+  declare timeZone: string;
 }

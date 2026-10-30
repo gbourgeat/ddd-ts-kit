@@ -5,10 +5,10 @@ import { AgendaLine } from '@/contexts/scheduling/presentation/http/shared/agend
 export class GetAppointmentAnswer extends AgendaLine {
   @IsOptional()
   @IsString()
-  patientName?: string;
+  declare patientName?: string;
 
   /** Shown to the staff of the calendar only: the controller declares it reserved. */
   @IsOptional()
   @IsString()
-  internalNote?: string;
+  declare internalNote?: string;
 }

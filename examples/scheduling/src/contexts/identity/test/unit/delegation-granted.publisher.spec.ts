@@ -50,6 +50,7 @@ describe('Publishing "delegation granted" to other contexts', () => {
 
     await publisher.handle(new DelegationGranted('delegation-1', new Date('2026-01-01T00:00:00.000Z'), facts));
 
-    expect(bus.published).toMatchObject([{ payload: { delegationId: 'delegation-1', endsAt: undefined } }]);
+    expect(bus.published).toMatchObject([{ payload: { delegationId: 'delegation-1' } }]);
+    expect(bus.published[0]?.payload).not.toHaveProperty('endsAt');
   });
 });

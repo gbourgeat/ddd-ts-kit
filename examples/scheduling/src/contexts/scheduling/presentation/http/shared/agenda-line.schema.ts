@@ -4,43 +4,43 @@ import { AppointmentStatus } from '@/contexts/scheduling/calendars/domain/vocabu
 /** One appointment as every search of the agenda answers it: declared once, documented once as AgendaLine. */
 export class AgendaLine {
   @IsString()
-  id = '';
+  declare id: string;
 
   @IsString()
-  calendarId = '';
+  declare calendarId: string;
 
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  practitionerId = '';
+  declare practitionerId: string;
 
   @IsString()
-  patientId = '';
+  declare patientId: string;
 
   @IsString()
-  appointmentTypeId = '';
+  declare appointmentTypeId: string;
 
   @IsISO8601()
-  startsAt = '';
+  declare startsAt: string;
 
   @IsISO8601()
-  endsAt = '';
+  declare endsAt: string;
 
   /** The date of the start in the time zone of the practice. */
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
-  day = '';
+  declare day: string;
 
   @IsIn(Object.values(AppointmentStatus))
-  status: AppointmentStatus = AppointmentStatus.Booked;
+  declare status: AppointmentStatus;
 
   /** Only while requested: the instant before which the appointment must be confirmed. */
   @IsOptional()
   @IsISO8601()
-  confirmBefore?: string;
+  declare confirmBefore?: string;
 
   /** Only once cancelled: who cancelled. */
   @IsOptional()
   @IsIn(['patient', 'practice'])
-  cancelledBy?: 'patient' | 'practice';
+  declare cancelledBy?: 'patient' | 'practice';
 }

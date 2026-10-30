@@ -3,8 +3,8 @@ import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 export class RegisterPersonBody {
   @IsString()
   @IsNotEmpty()
-  displayName = '';
+  declare displayName: string;
 
   @IsEmail()
-  email = '';
+  declare email: string;
 }

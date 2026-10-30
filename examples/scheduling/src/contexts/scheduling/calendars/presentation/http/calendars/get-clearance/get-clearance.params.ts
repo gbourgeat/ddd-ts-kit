@@ -2,8 +2,8 @@ import { IsString } from 'class-validator';
 
 export class GetClearanceParams {
   @IsString()
-  calendarId = '';
+  declare calendarId: string;
 
   @IsString()
-  clearanceId = '';
+  declare clearanceId: string;
 }

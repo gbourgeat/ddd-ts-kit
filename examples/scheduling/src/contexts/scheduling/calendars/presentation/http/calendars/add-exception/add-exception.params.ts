@@ -2,5 +2,5 @@ import { IsString } from 'class-validator';
 
 export class AddExceptionParams {
   @IsString()
-  calendarId = '';
+  declare calendarId: string;
 }

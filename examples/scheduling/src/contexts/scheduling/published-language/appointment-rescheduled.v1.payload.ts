@@ -2,32 +2,32 @@ import { IsISO8601, IsString, Matches } from 'class-validator';
 
 export class AppointmentRescheduledV1Payload {
   @IsString()
-  appointmentId = '';
+  declare appointmentId: string;
 
   @IsString()
-  calendarId = '';
+  declare calendarId: string;
 
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  practitionerId = '';
+  declare practitionerId: string;
 
   @IsString()
-  patientId = '';
+  declare patientId: string;
 
   @IsISO8601()
-  startsAt = '';
+  declare startsAt: string;
 
   @IsISO8601()
-  endsAt = '';
+  declare endsAt: string;
 
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
-  day = '';
+  declare day: string;
 
   @IsISO8601()
-  previousStartsAt = '';
+  declare previousStartsAt: string;
 
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
-  previousDay = '';
+  declare previousDay: string;
 }

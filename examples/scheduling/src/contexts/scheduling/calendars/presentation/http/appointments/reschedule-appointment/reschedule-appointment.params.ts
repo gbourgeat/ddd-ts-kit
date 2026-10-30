@@ -2,5 +2,5 @@ import { IsString } from 'class-validator';
 
 export class RescheduleAppointmentParams {
   @IsString()
-  appointmentId = '';
+  declare appointmentId: string;
 }

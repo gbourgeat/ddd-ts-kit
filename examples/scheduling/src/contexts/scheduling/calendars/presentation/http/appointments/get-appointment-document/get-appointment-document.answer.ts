@@ -4,17 +4,17 @@ import { IsInt, IsString } from 'class-validator';
 export class GetAppointmentDocumentAnswer {
   /** A link that grants this file alone, for five minutes, as an attachment. */
   @IsString()
-  url = '';
+  declare url: string;
 
   @IsString()
-  expiresAt = '';
+  declare expiresAt: string;
 
   @IsString()
-  name = '';
+  declare name: string;
 
   @IsString()
-  mediaType = '';
+  declare mediaType: string;
 
   @IsInt()
-  size = 0;
+  declare size: number;
 }

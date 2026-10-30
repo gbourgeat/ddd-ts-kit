@@ -3,13 +3,14 @@ import { IsBoolean, IsISO8601, IsNotEmpty, IsOptional, IsString } from 'class-va
 export class GrantDelegationBody {
   @IsString()
   @IsNotEmpty()
-  assistantId = '';
+  declare assistantId: string;
 
-  /** Left out, the delegation does not include the right to change the availability. */
+  /** Left out, the delegation does not include the right to change the availability: the controller reads the absence as `false`. */
+  @IsOptional()
   @IsBoolean()
-  availabilityIncluded = false;
+  declare availabilityIncluded?: boolean;
 
   @IsOptional()
   @IsISO8601()
-  endsAt?: string;
+  declare endsAt?: string;
 }

@@ -2,14 +2,14 @@ import { IsString } from 'class-validator';
 
 export class PracticeOpenedV1Payload {
   @IsString()
-  practiceId = '';
+  declare practiceId: string;
 
   @IsString()
-  name = '';
+  declare name: string;
 
   @IsString()
-  timeZone = '';
+  declare timeZone: string;
 
   @IsString()
-  managerId = '';
+  declare managerId: string;
 }

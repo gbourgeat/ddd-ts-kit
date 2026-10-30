@@ -4,20 +4,20 @@ export class DefineAppointmentTypeBody {
   @IsString()
   @IsNotEmpty()
   @MaxLength(120)
-  name = '';
+  declare name: string;
 
   /** How long an appointment lasts, in minutes. */
   @IsInt()
-  duration = 0;
+  declare duration: number;
 
   /** The step, in minutes from midnight, on which appointments start. */
   @IsInt()
-  grid = 0;
+  declare grid: number;
 
   /** The minutes kept free after an appointment. */
   @IsInt()
-  buffer = 0;
+  declare buffer: number;
 
   @IsBoolean()
-  needsConfirmation = false;
+  declare needsConfirmation: boolean;
 }
