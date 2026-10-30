@@ -130,8 +130,10 @@ describe('generate background-job, for a command that takes inputs', () => {
     const job = read(root, `${BILLING}/application/background/remind-customer.background-job.ts`);
 
     expect(job).toContain(
-      "export interface RemindCustomerPayload {\n  readonly customerId: string;\n  readonly dueBefore: string;\n  readonly channel: 'mail' | 'sms';\n  readonly invoiceIds: readonly string[];\n  readonly limit?: number;\n}",
+      "  z.object({\n    customerId: z.string(),\n    dueBefore: z.iso.datetime(),\n    channel: z.enum(['mail', 'sms']),\n    invoiceIds: z.array(z.string()),\n    limit: z.number().optional(),\n  }),",
     );
+
+    expect(job).toContain('export type RemindCustomerPayload = Infer<typeof payloadSchema>;');
 
     expect(job).toContain(
       '      new RemindInvoicesCommand(\n        payload.customerId,\n        new Date(payload.dueBefore),\n        payload.channel,\n        payload.invoiceIds,\n        payload.limit,\n      ),',

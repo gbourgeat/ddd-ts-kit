@@ -1,10 +1,18 @@
-import type { BackgroundJob, BackgroundJobExecution, ProcessRunner, ProcessTimeoutDue } from '@ddd-ts-kit/kernel';
+import {
+  processTimeoutDuePayload,
+  type BackgroundJob,
+  type BackgroundJobExecution,
+  type ProcessRunner,
+  type ProcessTimeoutDue,
+} from '@ddd-ts-kit/kernel';
 import { Background } from '@ddd-ts-kit/kernel/declarations';
 import { {{name.pascal}}Process } from '{{alias.context}}/application/processes/{{name.kebab}}.process{{alias.ext}}';
 
 @Background()
 export class {{name.pascal}}TimeoutBackgroundJob implements BackgroundJob<ProcessTimeoutDue> {
   static readonly jobName = '{{process.timeoutJob}}';
+
+  static readonly payload = processTimeoutDuePayload;
 
   private readonly process = new {{name.pascal}}Process();
 

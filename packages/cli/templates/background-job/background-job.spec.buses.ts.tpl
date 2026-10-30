@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import type { BackgroundJob, Message } from '@ddd-ts-kit/kernel';
+import type { BackgroundJob, BackgroundJobType, Message } from '@ddd-ts-kit/kernel';
 import { InMemoryJobStore, QueueWorker, StoredJobQueue } from '@ddd-ts-kit/scheduling';
 import { createTestBuses } from '@ddd-ts-kit/testing';
 import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
@@ -29,6 +29,17 @@ describe('{{name.title}}, once enqueued', () => {
 {{/if}}
   });
 
+  it('never runs a payload enqueued in an earlier shape: the job is dead with INVALID_JOB_PAYLOAD', async () => {
+    const { jobQueue, worker, sent } = arrange();
+    const earlierVersion: BackgroundJobType<unknown> = {{name.pascal}}BackgroundJob;
+
+    await jobQueue.enqueue(earlierVersion, {{job.misfit}});
+
+    expect(await worker.runDue()).toMatchObject([{ job: '{{job.name}}', outcome: 'dead', errorCode: 'INVALID_JOB_PAYLOAD' }]);
+
+    expect(sent).toHaveLength(0);
+  });
+
   // TODO(domain): replace each entry below by a test of what "{{name.words}}" asks of the use case: a run may be a retry, and a long one resumes from its checkpoint.
   it.todo('has the same outcome when the same job runs twice');
   it.todo('resumes from its checkpoint after an interrupted attempt');
@@ -43,7 +54,11 @@ function arrange() {
   const job: BackgroundJob<unknown> = new {{name.pascal}}BackgroundJob(commandBus);
   const sent: Message[] = [];
 
-  worker.register({ name: {{name.pascal}}BackgroundJob.jobName, run: (payload, execution) => job.run(payload, execution) });
+  worker.register({
+    name: {{name.pascal}}BackgroundJob.jobName,
+    payload: {{name.pascal}}BackgroundJob.payload,
+    run: (payload, execution) => job.run(payload, execution),
+  });
 
   commandBus.register({{job.command}}Command, {
     execute: () => Promise.reject(new Error('{{job.command}}Command is recorded before it reaches a handler')),
