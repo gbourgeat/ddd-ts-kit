@@ -23,7 +23,7 @@ export function controllerOf(scope: Scope, useCase: Name): FoundController {
     throw prerequisiteRefusal(
       found === undefined,
       `The context ${scope.context.kebab} has no controller for ${useCase.title}.`,
-      `Write it first: \`ddd-ts-kit generate controller ${scope.context.kebab} ${useCase.pascal}\`; a function route declares \`produces\` and \`form\` in its \`defineRoute\` spec by hand.`,
+      `Write it first: \`ddd-ts-kit generate route ${scope.context.kebab} ${useCase.pascal} --method <M> --path <path>\` under "stack.routes": "controllers" or "nest", or \`ddd-ts-kit generate controller ${scope.context.kebab} ${useCase.pascal} --method <M> --path <path>\`; a function route declares \`produces\` and \`form\` in its \`defineRoute\` spec by hand.`,
     );
   }
 

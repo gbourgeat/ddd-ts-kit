@@ -93,6 +93,16 @@ describe('the presentation of a new project', () => {
     expect(cli(root, 'generate', 'form', 'billing', 'PayInvoice').stderr).toContain('has no controller for');
   });
 
+  it('names the route to generate first when a use case has no controller, with the flags the route requires', () => {
+    const refused = cli(root, 'generate', 'representation', 'billing', 'PayInvoice', 'xml').stderr;
+
+    expect(refused).toContain('The context billing has no controller for Pay invoice.');
+
+    expect(refused).toContain(
+      'Write it first: `ddd-ts-kit generate route billing PayInvoice --method <M> --path <path>` under "stack.routes": "controllers" or "nest", or `ddd-ts-kit generate controller billing PayInvoice --method <M> --path <path>`',
+    );
+  });
+
   it('describes what each route answers and reads in, and where its form is', () => {
     const routes = jsonAt(cli(root, 'describe', 'billing', '--json').json(), 'routes');
     const text = cli(root, 'describe', 'billing').stdout;

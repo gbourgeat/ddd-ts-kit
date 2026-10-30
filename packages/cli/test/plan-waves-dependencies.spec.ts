@@ -274,3 +274,53 @@ describe('plan-waves, an end-to-end spec on the job of another row', () => {
     ]);
   });
 });
+
+describe('plan-waves, a row of a kind held to the glossary or not, and the order of its commands', () => {
+  const receipt = 'generate query billing InvoiceReceipt --public --term "Receipt=The proof of a payment"';
+  const route = 'generate route billing InvoiceReceipt --method GET --path /invoices/:id/receipt';
+  const representation = 'generate representation billing InvoiceReceipt xml';
+
+  /** One row of billing whose `Start with` runs the commands in the order given. */
+  const rowOf = (id: string, ...commands: string[]): string =>
+    `| ${id} | billing | slice | ${id} | ${commands.map((command) => `\`${command}\``).join('; ')} | | billing | todo |\n`;
+
+  it('passes a port row without --term: the generator does not hold the name of a port to the glossary', () => {
+    expect(planOf(root, row('US6.01', 'generate port billing PaymentProvider')).code).toBe(0);
+  });
+
+  it('refuses a port row with --term, and names the kinds that take it', () => {
+    const termed = planOf(root, row('US6.01', 'generate port billing PaymentProvider --term "Provider=Who pays"'));
+
+    expect(jsonAt(termed.json(), 'problems')).toEqual([
+      expect.objectContaining({
+        kind: 'refused-command',
+        refusal: 'generate port does not take --term: it would be ignored.',
+        fix: expect.stringContaining('heldToGlossary in generate --help --json: context, module, aggregate,'),
+      }),
+    ]);
+  });
+
+  it('says to put the route first when a row writes the representation of a use case before its route', () => {
+    const backwards = planOf(root, rowOf('US6.02', receipt, representation, route));
+
+    expect(jsonAt(backwards.json(), 'problems')).toEqual([
+      expect.objectContaining({
+        kind: 'refused-command',
+        rows: ['US6.02'],
+        refusal: 'The context billing has no controller for Invoice receipt.',
+        prerequisite: expect.stringMatching(
+          new RegExp(
+            `^A later command of this row generates \`[^\`]+/invoice-receipt\\.controller\\.ts\`: put \`${escaped(route)}\` first\\.$`,
+          ),
+        ),
+      }),
+    ]);
+
+    expect(planOf(root, rowOf('US6.02', receipt, route, representation)).code).toBe(0);
+  });
+});
+
+/** The text, read literally in a regular expression. */
+function escaped(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+}

@@ -11,7 +11,7 @@ export const formKind: Kind = {
   aliases: [],
   usage: 'form <context> <UseCase>',
   summary:
-    'The form of a controller that receives a body: `defineForm` hints next to its schemas, named in `@Controller` (`@KitRoute` of a Nest controller) as `form`, served at GET /forms/<operationId> when "stack.forms" is "on". Fields, constraints and options come from the body schema, read-only and hidden fields from its field access.',
+    'The form of a controller that receives a body: `defineForm` hints next to its schemas, named in `@Controller` (`@KitRoute` of a Nest controller) as `form`, served at GET /forms/<operationId> when "stack.forms" is "on". Fields, constraints and options come from the body schema, read-only and hidden fields from its field access. After `generate route <context> <UseCase>` under "stack.routes": "controllers" or "nest", or `generate controller <context> <UseCase>`.',
   positionals: ['context', 'UseCase'],
   writesShared: false,
   writesInModules: true,

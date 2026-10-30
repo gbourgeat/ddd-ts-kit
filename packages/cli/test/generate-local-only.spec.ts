@@ -91,6 +91,7 @@ describe('generate --help --json', () => {
       shared: expect.arrayContaining(['<sharedKernelDir>/<name>.vo.ts and its spec']),
       sharedWhen: 'the first argument is shared-kernel: a value at least two contexts use',
       writesInModules: true,
+      heldToGlossary: true,
     });
 
     expect(kinds).toContainEqual(

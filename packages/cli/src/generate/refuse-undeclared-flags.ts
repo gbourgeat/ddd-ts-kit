@@ -1,10 +1,13 @@
 import { CliError } from '../cli-error';
+import { heldToGlossary } from './held-to-glossary';
 import type { Kind } from './kind';
+import { KINDS } from './kinds';
 import { usageOf } from './usage-of';
 
 /** Why a kind refuses a flag another kind takes, when more than "it reads no such flag" is worth saying. */
-const REASONS: Readonly<Record<string, string>> = {
-  term: 'what this kind names exists already or is not held to the glossary; give --term to the kind that names the concept first, or add the row to the "## Ubiquitous language" table of the CONTEXT.md',
+const REASONS: Readonly<Record<string, () => string>> = {
+  term: () =>
+    `what this kind names exists already or is not held to the glossary; give --term to the kind that names the concept first (the kinds held to the glossary, heldToGlossary in generate --help --json: ${kindsTakingTerm()}), or add the row to the "## Ubiquitous language" table of the CONTEXT.md`,
 };
 
 /**
@@ -26,11 +29,17 @@ export function refuseUndeclaredFlags(kind: Kind, passed: readonly string[], com
   const reasons = refused.flatMap((flag) => {
     const reason = REASONS[flag];
 
-    return reason === undefined ? [] : [`--${flag}: ${reason}.`];
+    return reason === undefined ? [] : [`--${flag}: ${reason()}.`];
   });
 
   throw new CliError(
     `generate ${kind.name} does not take ${refused.map((flag) => `--${flag}`).join(', ')}: it would be ignored.`,
     [...reasons, `Run it again without it. Usage: ddd-ts-kit generate ${usage}`].join(' '),
   );
+}
+
+function kindsTakingTerm(): string {
+  return KINDS.filter(heldToGlossary)
+    .map((kind) => kind.name)
+    .join(', ');
 }

@@ -15,7 +15,7 @@ export const stateMachineKind: Kind = {
   usage:
     'state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]...',
   summary:
-    'The lifecycle of an aggregate: its status as the closed vocabulary <Aggregate>Status (created, or extended with the --value it misses, the first one initial), the machine of domain/state-machines/ with the transitions asked, and its spec. CONTEXT.md draws it.',
+    'The lifecycle of an aggregate: its status as the closed vocabulary <Aggregate>Status (created, or extended with the --value it misses, the first one initial), the machine of domain/state-machines/ with the transitions asked, and its spec. CONTEXT.md draws it. After `generate aggregate <context> <Aggregate>`.',
   positionals: ['context', 'Aggregate'],
   writesShared: false,
   writesInModules: true,

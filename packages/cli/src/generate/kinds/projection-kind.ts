@@ -23,7 +23,7 @@ export const projectionKind: Kind = {
   aliases: ['projector'],
   usage: 'projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...',
   summary:
-    'A projector, the class that keeps one read model up to date from integration events of its own context or of a declared upstream, and its spec; registered in the module file of its context in the explicit style.',
+    'A projector, the class that keeps one read model up to date from integration events of its own context or of a declared upstream, and its spec; registered in the module file of its context in the explicit style. After `generate integration-event <context> <Aggregate> <Fact>` of its eventType, in the context that publishes it.',
   positionals: ['context', 'Name', 'eventType'],
   writesShared: false,
   writesInModules: true,

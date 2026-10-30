@@ -17,7 +17,7 @@ export const propertyKind: Kind = {
   aliases: [],
   usage: 'property <context> <ValueObject>',
   summary:
-    'The laws of a value object checked on generated values (fast-check): a spec beside its own, with fast-check added to the development dependencies when it is missing.',
+    'The laws of a value object checked on generated values (fast-check): a spec beside its own, with fast-check added to the development dependencies when it is missing. After `generate value-object <context> <ValueObject>`.',
   positionals: ['context', 'ValueObject'],
   writesShared: true,
   writesInModules: true,

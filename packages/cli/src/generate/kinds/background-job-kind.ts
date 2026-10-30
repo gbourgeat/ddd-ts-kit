@@ -22,7 +22,7 @@ export const backgroundJobKind: Kind = {
   aliases: [],
   usage: 'background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...',
   summary:
-    'A job a use case enqueues, run later by a worker as the actor that enqueued it, with retries and a lease: the class named by its static jobName, its spec through a queue in memory and its registration.',
+    'A job a use case enqueues, run later by a worker as the actor that enqueued it, with retries and a lease: the class named by its static jobName, its spec through a queue in memory and its registration. After `generate command <context> <UseCaseName>` of its --command.',
   positionals: ['context', 'Name'],
   writesShared: false,
   writesInModules: true,

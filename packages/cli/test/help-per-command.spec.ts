@@ -145,6 +145,58 @@ describe('generate <kind> --help', () => {
     expect(kinds).toContainEqual(kind);
     expect(kind).toEqual(expect.objectContaining({ name: 'value-object', writesInModules: true }));
   });
+
+  it('says of each kind whether its names are held to the glossary: true for the kinds whose usage shows --term', () => {
+    const kinds = jsonAt(cli(tempDir('help-kind-glossary'), 'generate', '--help', '--json').json(), 'kinds');
+
+    const held = (kinds as readonly { name: string; usage: string; heldToGlossary: boolean }[]).map(
+      ({ name, usage, heldToGlossary }) => ({ name, takesTerm: usage.includes('--term'), heldToGlossary }),
+    );
+
+    expect(held.filter(({ takesTerm, heldToGlossary }) => takesTerm !== heldToGlossary)).toEqual([]);
+    expect(held).toContainEqual({ name: 'aggregate', takesTerm: true, heldToGlossary: true });
+    expect(held).toContainEqual({ name: 'port', takesTerm: false, heldToGlossary: false });
+  });
+
+  it('says it in one line of the text help, beside --module', () => {
+    const root = tempDir('help-kind-glossary-text');
+
+    expect(cli(root, 'generate', 'aggregate', '--help').stdout).toContain(
+      '\nHeld to the glossary: a word of its names the glossary of the context does not define joins it with --term "<Term>=<meaning>", in the same command.\n',
+    );
+
+    expect(cli(root, 'generate', 'port', '--help').stdout).toContain(
+      '\nRefuses --term: its names are not held to the glossary, they are read from the concept they serve or named by an earlier command.\n',
+    );
+  });
+
+  it.each([
+    [
+      'representation',
+      'After `generate route <context> <UseCase>` under "stack.routes": "controllers" or "nest", or `generate controller <context> <UseCase>`.',
+    ],
+    [
+      'form',
+      'After `generate route <context> <UseCase>` under "stack.routes": "controllers" or "nest", or `generate controller <context> <UseCase>`.',
+    ],
+    ['route', 'After `generate command <context> <UseCaseName>` or `generate query <context> <UseCaseName>`'],
+    ['controller', 'After `generate command <context> <UseCaseName>` or `generate query <context> <UseCaseName>`'],
+    ['repository', 'After `generate aggregate <context> <Aggregate>`.'],
+    ['builder', 'After `generate aggregate <context> <Aggregate>`.'],
+    ['state-machine', 'After `generate aggregate <context> <Aggregate>`.'],
+    ['property', 'After `generate value-object <context> <ValueObject>`.'],
+    ['adapter', 'After `generate port <context> <Port>`.'],
+    ['job', 'After `generate command <context> <UseCaseName>` of its --command.'],
+    ['background-job', 'After `generate command <context> <UseCaseName>` of its --command.'],
+    ['projection', 'After `generate integration-event <context> <Aggregate> <Fact>` of its eventType'],
+    [
+      'integration-handler',
+      'After `generate integration-event <upstreamContext> <Aggregate> <Fact>` of its eventType.',
+    ],
+    ['erasure-handler', 'After `generate repository <context> <Aggregate> --personal <column>,...`.'],
+  ])('states in the summary of %s the command it comes after', (name, after) => {
+    expect(findKind(name)?.summary).toContain(after);
+  });
 });
 
 describe('a refused option', () => {

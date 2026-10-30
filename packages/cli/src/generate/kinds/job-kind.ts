@@ -26,7 +26,7 @@ export const jobKind: Kind = {
   usage:
     'job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]...',
   summary:
-    'A job run by time (once per tenant under tenancy, or `--global`) that sends one command as its own system actor, its spec, its registration, its switch in the job settings of the platform and, where the authorization model makes it one line, the grant of that actor.',
+    'A job run by time (once per tenant under tenancy, or `--global`) that sends one command as its own system actor, its spec, its registration, its switch in the job settings of the platform and, where the authorization model makes it one line, the grant of that actor. After `generate command <context> <UseCaseName>` of its --command.',
   positionals: ['context', 'Name'],
   writesShared: true,
   writesInModules: true,
