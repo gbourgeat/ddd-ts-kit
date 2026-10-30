@@ -578,7 +578,13 @@ const inserted = { ...state, ...tenantRow(tenantScopeOf(this.scope)), ...auditRo
 ```
 
 `whereTenant(builder, scope)` is the condition alone, for a builder of your own. Work that names
-no tenant raises `NoCurrentTenantError` before any SQL. A read model of tenant data passes
+no tenant raises `NoCurrentTenantError` before any SQL. The three keep the condition a conjunct of
+the statement: SQL binds `and` before `or`, so `.orWhere*` and `.or` at the top of their builder
+throw `UngroupedOrError` and the alternatives go in a group,
+`.where((either) => either.where(a).orWhere(b))`; the text of a `whereRaw`, or a `knex.raw` given
+to a where, is kept in parentheses as one conjunct, with its bindings; `clearWhere()` and
+`clear('where')` throw `ClearedTenantConditionError`. An `orHaving` applies after the where, and
+is free. A read model of tenant data passes
 `tenant: scope` to `KnexReadModelTable` and `KnexReadModelStore`: each row is written with the
 tenant of the work and every read and write is confined to it (keys stay unique across tenants;
 a rebuild, which runs in no tenant, is refused).

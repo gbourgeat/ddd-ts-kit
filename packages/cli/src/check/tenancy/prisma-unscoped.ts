@@ -1,6 +1,7 @@
 import type { SourceFile } from '../model/source-file';
 import { accessorUses, type AccessorUse } from './accessor-uses';
 import { declaredInArguments } from './declared-in-arguments';
+import { unconfinedWhere } from './unconfined-where';
 
 /** What confines a read to the tenants of the work. */
 const CONDITION = /(?<![\w$])(?:tenantWhere|ownTenantWhere)\s*\(/;
@@ -16,12 +17,6 @@ const WRITE = /\.(update|updateMany|delete|deleteMany)\s*\(/;
 const INSERT = /\.(create|createMany|createManyAndReturn)\s*\(/;
 const READ = /\.(findFirst|findFirstOrThrow|findMany|count|aggregate|groupBy)\s*\(/;
 const RAW = /\.\$(?:queryRaw|queryRawUnsafe|executeRaw|executeRawUnsafe)\b/;
-
-/** What a statement on the client has to carry: the method that found it, and the helper its arguments must name. */
-interface Guard {
-  readonly method: string;
-  readonly pattern: RegExp;
-}
 
 /** What a Prisma adapter of tenant data reaches without the helpers, judged statement by statement on the client. */
 export function prismaUnscoped(file: SourceFile): readonly { offset: number; message: string }[] {
@@ -55,15 +50,17 @@ function unconfinedStatement(code: string, use: AccessorUse): string | undefined
   const write = WRITE.exec(statement)?.[1];
 
   if (write !== undefined) {
-    return confined(code, use, { method: write, pattern: OWN_CONDITION })
-      ? undefined
-      : 'A write names no tenant: spread ownTenantWhere(this.scope) into its where.';
+    return unconfinedWhere(code, use, {
+      method: write,
+      pattern: OWN_CONDITION,
+      absent: 'A write names no tenant: spread ownTenantWhere(this.scope) into its where.',
+    });
   }
 
   const insert = INSERT.exec(statement)?.[1];
 
   if (insert !== undefined) {
-    return confined(code, use, { method: insert, pattern: TENANT_OF_ROW })
+    return namesTenant(code, use, insert)
       ? undefined
       : 'An insert names no tenant: spread tenantScopeOf(this.scope) into the row it writes.';
   }
@@ -71,17 +68,19 @@ function unconfinedStatement(code: string, use: AccessorUse): string | undefined
   const read = READ.exec(statement)?.[1];
 
   if (read !== undefined) {
-    return confined(code, use, { method: read, pattern: CONDITION })
-      ? undefined
-      : 'A read reaches the model with no tenant condition: spread tenantWhere(this.scope) into its where.';
+    return unconfinedWhere(code, use, {
+      method: read,
+      pattern: CONDITION,
+      absent: 'A read reaches the model with no tenant condition: spread tenantWhere(this.scope) into its where.',
+    });
   }
 
   return 'The client is used other than through a statement this rule can judge (held in a variable, a transaction).';
 }
 
-/** The helper is written in the statement, or in a local the arguments of the call name. */
-function confined(code: string, { statement, offset }: AccessorUse, { method, pattern }: Guard): boolean {
+/** The row names its tenant, in the statement or in a local the arguments of the call name. */
+function namesTenant(code: string, { statement, offset }: AccessorUse, method: string): boolean {
   const call = new RegExp(`\\.${method}\\s*\\(`);
 
-  return pattern.test(statement) || declaredInArguments(code, { statement, call, at: offset }, pattern);
+  return TENANT_OF_ROW.test(statement) || declaredInArguments(code, { statement, call, at: offset }, TENANT_OF_ROW);
 }

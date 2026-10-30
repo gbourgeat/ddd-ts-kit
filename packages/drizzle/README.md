@@ -610,7 +610,10 @@ statement instead of one written by hand:
 .where(and(eq(invoices.id, state.id), eq(invoices.version, expected), ownTenantCondition(invoices.tenantId, this.scope)))
 ```
 
-Inserts spread `tenantScopeOf(this.scope)`. A read model of tenant data passes `tenant: { scope,
+The condition stays a direct argument of `where` or of `and`, an `or` beside it,
+`and(tenantCondition(...), or(a, b))`: under an `or`, a `not` or a `sql` template it holds for one
+branch alone, and `tenancy/scoped-statement` of the CLI reports it. Inserts spread
+`tenantScopeOf(this.scope)`. A read model of tenant data passes `tenant: { scope,
 column: table.tenantId }` to `DrizzleReadModelTable` and `DrizzleReadModelStore`.
 
 **Row-level security**, the second line: the policies (one per command: a select sees the reach of

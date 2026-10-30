@@ -11,7 +11,8 @@ export interface TenantWhere {
  * tenants of an elevation; work that names no tenant is refused (`NoCurrentTenantError`). The
  * one way a repository of a tenant-scoped project reads (`tenancy/scoped-statement`): `findUnique`
  * reaches a row by its key, which the tenant is never part of. Writes use `ownTenantWhere`,
- * which an elevation does not widen.
+ * which an elevation does not widen. The spread stays at the top of the `where`, an `OR` beside
+ * it: under an `OR`, a `NOT` or a relation it holds for one branch alone.
  */
 export function tenantWhere(scope: ExecutionScope): TenantWhere {
   const reach = tenantReachOf(scope);

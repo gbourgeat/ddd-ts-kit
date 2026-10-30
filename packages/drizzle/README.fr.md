@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c08abec48ed9ea50 -->
+<!-- translation-of: README.md sha256:262bc6a4dfeddf99 -->
 
 # @ddd-ts-kit/drizzle
 
@@ -625,8 +625,10 @@ chaque instruction, au lieu d'une condition écrite à la main :
 .where(and(eq(invoices.id, state.id), eq(invoices.version, expected), ownTenantCondition(invoices.tenantId, this.scope)))
 ```
 
-Les insertions étalent `tenantScopeOf(this.scope)`. Un modèle de lecture de données d'un
-*tenant* passe `tenant: { scope, column: table.tenantId }` à `DrizzleReadModelTable` et à
+La condition reste un argument direct de `where` ou de `and`, un `or` à côté d'elle,
+`and(tenantCondition(...), or(a, b))` : sous un `or`, un `not` ou un gabarit `sql`, elle ne vaut
+que pour une branche, et `tenancy/scoped-statement` de la CLI le signale. Les insertions étalent
+`tenantScopeOf(this.scope)`. Un modèle de lecture de données d'un *tenant* passe `tenant: { scope, column: table.tenantId }` à `DrizzleReadModelTable` et à
 `DrizzleReadModelStore`.
 
 **Sécurité au niveau des lignes** (row-level security), la seconde ligne : les politiques (une

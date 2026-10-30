@@ -1,7 +1,11 @@
 import type { SourceFile } from '../model/source-file';
 import { accessorUses, type AccessorUse } from './accessor-uses';
+import { chainLinks } from './chain-links';
 import { declaredInArguments } from './declared-in-arguments';
 import { declaredWith } from './declared-with';
+import { isOrLink } from './is-or-link';
+import { spreadsAtTop } from './spreads-at-top';
+import { unconfinedWhere } from './unconfined-where';
 
 /** What confines a read to the tenants of the work. */
 const CONDITION = /(?<![\w$])(?:tenantWhere|ownTenantWhere)\s*\(/;
@@ -25,14 +29,11 @@ const READ =
 const HANDED_TO_INSERT = /insertIgnoringConflict\s*\(\s*[\w$.]*$/;
 const INSERT_IGNORING_CONFLICT = /insertIgnoringConflict\s*\(/;
 
+const NOT_A_CONJUNCT =
+  'The tenant condition is no conjunct of the statement: spread the helper into the last where of the query builder (a later where resets it) or an andWhere after it, and group alternatives beside it in `new Brackets(...)`, never in an orWhere at its top.';
+
 const UNJUDGED =
   'The manager is used other than through a statement this rule can judge (held in a variable, a transaction).';
-
-/** What a statement on the manager has to carry: the method that found it, and the helper its arguments must name. */
-interface Guard {
-  readonly method: string;
-  readonly pattern: RegExp;
-}
 
 /** What a TypeORM adapter of tenant data reaches without the helpers, judged statement by statement on the manager. */
 export function typeormUnscoped(file: SourceFile): readonly { offset: number; message: string }[] {
@@ -79,9 +80,11 @@ function unconfinedStatement(code: string, use: AccessorUse): string | undefined
   const write = WRITE.exec(statement)?.[1];
 
   if (write !== undefined) {
-    return confined(code, use, { method: write, pattern: OWN_CONDITION })
-      ? undefined
-      : 'A write names no tenant: spread ownTenantWhere(this.scope) into its criteria.';
+    return unconfinedWhere(code, use, {
+      method: write,
+      pattern: OWN_CONDITION,
+      absent: 'A write names no tenant: spread ownTenantWhere(this.scope) into its criteria.',
+    });
   }
 
   if (INSERT.test(statement)) {
@@ -93,9 +96,11 @@ function unconfinedStatement(code: string, use: AccessorUse): string | undefined
   const read = READ.exec(statement)?.[1];
 
   if (read !== undefined) {
-    return confined(code, use, { method: read, pattern: CONDITION })
-      ? undefined
-      : 'A read reaches the entity with no tenant condition: spread tenantWhere(this.scope) into its where.';
+    return unconfinedWhere(code, use, {
+      method: read,
+      pattern: CONDITION,
+      absent: 'A read reaches the entity with no tenant condition: spread tenantWhere(this.scope) into its where.',
+    });
   }
 
   return UNJUDGED;
@@ -103,11 +108,12 @@ function unconfinedStatement(code: string, use: AccessorUse): string | undefined
 
 /**
  * A query builder: an insert names the tenant in the row it is given, a delete or an update
- * carries the own condition in its where, a select the condition of a read, inline or in the
- * local the where is given.
+ * carries the own condition in its where, a select the condition of a read, spread at the top of
+ * the last where or an andWhere after it, since a where resets what comes before it, inline or
+ * in the local it is given, and no orWhere stands beside them.
  */
 function unconfinedBuilder(code: string, use: AccessorUse): string | undefined {
-  const { statement, offset } = use;
+  const { statement, offset: at } = use;
 
   if (/\.insert\s*\(\s*\)/.test(statement)) {
     return insertNamesTenant(code, use)
@@ -117,13 +123,28 @@ function unconfinedBuilder(code: string, use: AccessorUse): string | undefined {
 
   const writes = /\.(?:delete|update)\s*\(/.test(statement);
   const pattern = writes ? OWN_CONDITION : CONDITION;
+  const links = chainLinks(statement, 0);
+  const reading = { code, at, helper: pattern };
 
-  const inWhere = ['where', 'andWhere'].some((method) =>
-    declaredWith(code, { statement, method, at: offset }, pattern),
-  );
+  const conjunct = links
+    .slice(
+      Math.max(
+        links.findLastIndex(({ method }) => method === 'where'),
+        0,
+      ),
+    )
+    .filter(({ method }) => method === 'where' || method === 'andWhere')
+    .some(({ argumentsText }) => spreadsAtTop(argumentsText, reading));
 
-  if (pattern.test(statement) || inWhere) {
+  if (conjunct && !links.some(isOrLink)) {
     return undefined;
+  }
+
+  if (
+    pattern.test(statement) ||
+    ['where', 'andWhere'].some((method) => declaredWith(code, { statement, method, at }, pattern))
+  ) {
+    return NOT_A_CONJUNCT;
   }
 
   return writes
@@ -138,11 +159,4 @@ function insertNamesTenant(code: string, { statement, offset }: AccessorUse): bo
     declaredInArguments(code, { statement, call: INSERT, at: offset }, TENANT_OF_ROW) ||
     declaredWith(code, { statement, method: 'values', at: offset }, TENANT_OF_ROW)
   );
-}
-
-/** The helper is written in the statement, or in a local the arguments of the call name. */
-function confined(code: string, { statement, offset }: AccessorUse, { method, pattern }: Guard): boolean {
-  const call = new RegExp(`\\.${method}\\s*\\(`);
-
-  return pattern.test(statement) || declaredInArguments(code, { statement, call, at: offset }, pattern);
 }

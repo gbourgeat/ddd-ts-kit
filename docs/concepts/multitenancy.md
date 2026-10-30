@@ -105,6 +105,17 @@ checker reporting a statement that reaches a table straight from the executor, t
 manager, a row reached by its key alone, a read model store built without its tenant. The three others
 are wired by hand from the packages for now; `init` refuses them and says what to add.
 
+The tenant condition holds for every row only as a conjunct of the statement. SQL binds `and`
+before `or`, so an alternative written beside the condition is outside it. Alternatives go in a
+group and-ed with the condition, and the rule reports any other form:
+
+| ORM | The tenant condition | Alternatives |
+|---|---|---|
+| Knex | no `.orWhere*` or `.or` at the top of a statement of `tenantTable`, `ownTenantTable` or `whereTenant`, no `clearWhere()` or `clear('where')`: the helpers also refuse them when the statement is built (`UngroupedOrError`, `ClearedTenantConditionError`), and hold the text of a `whereRaw`, or a `knex.raw` given to a where, as one conjunct in parentheses. An `orHaving` applies after the where, and is free | `.where((either) => either.where(a).orWhere(b))` |
+| Drizzle | a direct argument of `where` or of `and`, never under `or`, `not` or a `sql` template | `.where(and(tenantCondition(column, scope), or(a, b)))` |
+| Prisma | spread at the top of the `where` or of its `AND`, never under `OR`, `NOT` or a relation | `where: { ...tenantWhere(scope), OR: [a, b] }` |
+| TypeORM | spread at the top of the where; a where array is an `or` of its entries, so each one spreads it; no `orWhere` at the top of a query builder, and the condition in its last `where` or an `andWhere` after it, since a `where` resets what comes before it | `.andWhere(new Brackets((either) => either.where(a).orWhere(b)))` |
+
 A context whose tables belong to no tenant, because it decides who belongs to which, is declared
 so in the config rather than suppressed statement by statement: `"tenancy": "control-plane"`
 under `contexts.<name>`, a deviation recorded in `deviations` with its decision record. The rule
