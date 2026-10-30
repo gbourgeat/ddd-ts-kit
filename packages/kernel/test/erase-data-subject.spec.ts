@@ -203,6 +203,57 @@ describe('eraseDataSubject, the copies the contexts keep of the person', () => {
   });
 });
 
+describe('eraseDataSubject, the copies no tenant confines', () => {
+  it('erases them once, after the copies of the contexts, whatever the number of tenants, and reports them with the copies', async () => {
+    const order: string[] = [];
+    const tenants = (work: () => Promise<number>) => work().then((first) => work().then((second) => first + second));
+
+    const copyOf = (name: string, rows: number) => ({
+      name,
+      erase: async () => {
+        order.push(name);
+
+        return rows;
+      },
+    });
+
+    const erasure = await eraseDataSubject('patient-1', {
+      copies: [copyOf('identity.persons', 1)],
+      shared: [copyOf('platform.outbox', 2), copyOf('platform.background-jobs', 1)],
+      inEveryTenant: tenants,
+    });
+
+    expect(erasure.copies).toEqual({ 'identity.persons': 2, 'platform.outbox': 2, 'platform.background-jobs': 1 });
+    expect(order).toEqual(['identity.persons', 'identity.persons', 'platform.outbox', 'platform.background-jobs']);
+  });
+
+  it('takes a subject they alone reached for a run again, not for a mistyped id', async () => {
+    const shared = [{ name: 'platform.outbox', erase: () => Promise.resolve(1) }];
+
+    const erasure = await eraseDataSubject('patient-1', { shared, isKnown: () => Promise.resolve(false) });
+
+    expect(erasure.copies).toEqual({ 'platform.outbox': 1 });
+  });
+
+  it('runs on when one fails, then throws that failure: running again completes', async () => {
+    const reached: string[] = [];
+
+    const failing = { name: 'platform.outbox', erase: () => Promise.reject(new Error('outbox unreachable')) };
+
+    const next = {
+      name: 'platform.background-jobs',
+      erase: async () => {
+        reached.push('jobs');
+
+        return 0;
+      },
+    };
+
+    await expect(eraseDataSubject('patient-1', { shared: [failing, next] })).rejects.toThrow('outbox unreachable');
+    expect(reached).toEqual(['jobs']);
+  });
+});
+
 describe('inEachTenant', () => {
   it('runs the work once per tenant, in the context of the work given that tenant, and sums what it answers', async () => {
     const scope = new AsyncLocalStorageExecutionScope();

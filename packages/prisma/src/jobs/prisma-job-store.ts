@@ -174,6 +174,12 @@ export class PrismaJobStore<Tx extends PrismaRawQueries> implements JobStore {
     return count;
   }
 
+  async eraseSubject(subject: string): Promise<number> {
+    const { count } = await this.jobs().deleteMany({ where: { subject } });
+
+    return count;
+  }
+
   async stats(queue: string): Promise<JobStoreStats> {
     const jobs = this.jobs();
     // One after the other: a transaction client runs one query at a time anyway.

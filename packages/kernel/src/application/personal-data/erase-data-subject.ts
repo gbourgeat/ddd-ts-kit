@@ -3,6 +3,7 @@ import type { DataSubjectErasureReport } from './data-subject-erasure-report';
 import type { SubjectKeyStore } from '../ports/subject-key-store';
 import { isDataSubjectId } from './is-data-subject-id';
 import { NotADataSubjectIdError } from './not-a-data-subject-id-error';
+import type { PersonalDataCopy } from './personal-data-copy';
 import type { ProjectionToRebuild } from './projection-to-rebuild';
 import { UnknownDataSubjectError } from './unknown-data-subject-error';
 
@@ -54,19 +55,30 @@ function eraseKeyOf(subject: string, keys: SubjectKeyStore | undefined): Promise
   return keys === undefined ? Promise.resolve(false) : keys.erase(subject);
 }
 
-/** Every copy, in every tenant, one after the other: a copy that fails does not stop the next, and is thrown once everything ran. */
+/**
+ * Every copy, in every tenant, then those no tenant confines, one after the other: a copy that fails
+ * does not stop the next, and is thrown once everything ran.
+ */
 async function eraseCopies(subject: string, parts: DataSubjectErasure): Promise<ErasedCopies> {
-  const { copies = [], inEveryTenant = (work) => work() } = parts;
+  const { copies = [], shared = [], inEveryTenant = (work) => work() } = parts;
   const reached: Record<string, number> = {};
   const failures: unknown[] = [];
 
-  for (const copy of copies) {
+  const erase = async ({ name }: PersonalDataCopy, work: () => Promise<number>): Promise<void> => {
     try {
-      reached[copy.name] = await inEveryTenant(() => copy.erase(subject));
+      reached[name] = await work();
     } catch (error) {
-      reached[copy.name] = 0;
+      reached[name] = 0;
       failures.push(error);
     }
+  };
+
+  for (const copy of copies) {
+    await erase(copy, () => inEveryTenant(() => copy.erase(subject)));
+  }
+
+  for (const copy of shared) {
+    await erase(copy, () => copy.erase(subject));
   }
 
   return { reached, failures };

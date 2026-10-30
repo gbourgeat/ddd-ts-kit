@@ -4,31 +4,9 @@ import type { ContractRunner } from './contract-runner';
 import { ContractSuite } from './contract-suite';
 import { failureOf } from './failure-of';
 import { fullEnvelope } from './full-envelope';
+import { OutboxErasureSuite } from './outbox-store/outbox-erasure-suite';
+import type { OutboxStoreUnderContract } from './outbox-store/outbox-store-under-contract';
 import { tenantEnvelope } from './tenant-envelope';
-
-/**
- * The outbox store port of `@ddd-ts-kit/events`, restated structurally so that this package
- * does not depend on it. Any `OutboxStore` fits.
- */
-export interface OutboxStoreUnderContract {
-  append(events: readonly IntegrationEvent[]): Promise<void>;
-  claimBatch(
-    limit: number,
-    now: Date,
-  ): Promise<
-    {
-      readonly event: IntegrationEvent;
-      readonly status: string;
-      readonly attempts: number;
-      readonly lastErrorCode?: string;
-    }[]
-  >;
-  markPublished(ids: readonly string[], at: Date): Promise<void>;
-  markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void>;
-  retryDead(ids: readonly string[], now: Date): Promise<number>;
-  purgePublished(before: Date): Promise<number>;
-  stats(): Promise<{ readonly pending: number; readonly failed: number; readonly dead: number }>;
-}
 
 export interface OutboxStoreContractOptions {
   readonly name: string;
@@ -43,8 +21,14 @@ export interface OutboxStoreContractOptions {
   readonly carriesTenant?: boolean;
 }
 
+export type { OutboxStoreUnderContract };
+
 export function outboxStoreContract(runner: ContractRunner, options: OutboxStoreContractOptions): void {
   new OutboxStoreSuite(runner, options).describe(`${options.name} (outbox store contract)`);
+
+  new OutboxErasureSuite(runner, () => options.createStore(), options.leaseMs).describe(
+    `${options.name} (outbox store contract: the erasure of a person)`,
+  );
 }
 
 const NOW = new Date('2026-03-01T10:00:00.000Z');

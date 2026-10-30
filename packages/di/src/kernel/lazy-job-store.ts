@@ -20,6 +20,7 @@ export function lazyJobStore(resolve: Resolve): JobStore {
     find: (id) => store().find(id),
     retryDead: (ids, now) => store().retryDead(ids, now),
     purgeFinished: (before) => store().purgeFinished(before),
+    eraseSubject: (subject) => store().eraseSubject(subject),
     stats: (queue) => store().stats(queue),
   };
 }

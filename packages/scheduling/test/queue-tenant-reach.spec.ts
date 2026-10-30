@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { executionContext, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import { jobsOfSubject } from '../src';
 import { aQueueBench } from './support/a-queue-bench';
 import { CompileStatementsJob } from './support/statements-job';
 
@@ -57,5 +58,25 @@ describe('the jobs of a tenant', () => {
     expect(await scope.run(staffOver(['globex']), () => queue.find('job-1'))).toBe(undefined);
     expect((await scope.run(staffOver(['acme']), () => queue.find('job-1')))?.id).toBe('job-1');
     expect((await queue.find('job-1'))?.id).toBe('job-1');
+  });
+});
+
+describe('the jobs of a person', () => {
+  it('are one copy of that person: named by their subject, dropped once, whichever tenant enqueued them', async () => {
+    const { queue, scope, store, clock } = aQueueBench();
+    const options = { subject: 'cus-1' };
+
+    await scope.run(memberOf('acme'), () => queue.enqueue(CompileStatementsJob, FEBRUARY, options));
+    await scope.run(memberOf('globex'), () => queue.enqueue(CompileStatementsJob, FEBRUARY, options));
+    await scope.run(memberOf('acme'), () => queue.enqueue(CompileStatementsJob, FEBRUARY, { subject: 'cus-2' }));
+
+    const copy = jobsOfSubject(store);
+
+    expect(copy.name).toBe('platform.background-jobs');
+    expect(await copy.erase('cus-1')).toBe(2);
+
+    const left = await store.claim({ queue: 'billing', limit: 10, now: clock.now(), leaseMs: 1 });
+
+    expect(left.map(({ id }) => id)).toEqual(['job-3']);
   });
 });

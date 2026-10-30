@@ -61,5 +61,13 @@ export abstract class JobStore {
   /** Housekeeping: drops the jobs that succeeded or were cancelled before `before`. Dead jobs stay. */
   abstract purgeFinished(before: Date): Promise<number>;
 
+  /**
+   * The right to erasure: drops every job enqueued with this `subject`, whatever its status, payload
+   * and checkpoint with it. A waiting job never runs, a dead one is never put back, a running one
+   * learns it at its next heartbeat. Answers how many, none the second time. In the transaction of
+   * the caller, or once it committed for a store that cannot share it.
+   */
+  abstract eraseSubject(subject: string): Promise<number>;
+
   abstract stats(queue: string): Promise<JobStoreStats>;
 }

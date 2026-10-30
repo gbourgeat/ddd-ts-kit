@@ -1,6 +1,7 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import type { OutboxRecord } from './outbox-record';
 import type { OutboxStats } from './outbox-stats';
+import type { PersonalEvent } from './personal-event';
 
 /**
  * Where events wait between the commit of the command and their publication.
@@ -33,6 +34,14 @@ export abstract class OutboxStore {
 
   /** Housekeeping: drops the records published before `before`. Returns how many. */
   abstract purgePublished(before: Date): Promise<number>;
+
+  /**
+   * The right to erasure: in every record of these events that names `subject`, whatever its
+   * status, the fields its declaration lists are erased with `erasedPayloadOf`. A record waiting for
+   * the relay stays due, and goes out with what is left of it. Answers how many records changed, none
+   * the second time. Reads every record of these events: the purge of what was published bounds them.
+   */
+  abstract erasePersonalFields(subject: string, events: readonly PersonalEvent[]): Promise<number>;
 
   abstract stats(): Promise<OutboxStats>;
 }

@@ -142,6 +142,18 @@ export class InMemoryJobStore implements JobStore {
     return purged.length;
   }
 
+  async eraseSubject(subject: string): Promise<number> {
+    const held = [...this.jobs.values()].filter((job) => job.subject === subject);
+
+    await whenCommitted(async () => {
+      for (const job of held) {
+        this.jobs.delete(job.id);
+      }
+    });
+
+    return held.length;
+  }
+
   async stats(queue: string): Promise<JobStoreStats> {
     const jobs = [...this.jobs.values()].filter((job) => job.queue === queue);
     const counted = (status: string) => jobs.filter((job) => job.status === status).length;
