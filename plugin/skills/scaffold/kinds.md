@@ -38,7 +38,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) and wheth
 | `background-job` | `<ctx> <Name> --command <UseCase>` | `application/background/<name>.background-job.ts`, named `<ctx>.<name>` by its static `jobName`, its payload one field per input of the command (a `Date` as ISO text) and its static `payload` schema in the validation library of the stack, which the worker reads a stored payload with, spec through the queue of the test application that also shows a payload of an earlier shape dead (`INVALID_JOB_PAYLOAD`); `--di tsyringe` only |
 | `process` (`process-manager`) | `<ctx> <Name>` | `application/processes/<name>.process.ts`, its timeout job `application/background/<name>-timeout.background-job.ts`, specs (`givenProcess`); `--di tsyringe` only |
 | `integration-event` | `<ctx> <Aggregate> <Fact> [--version <n>]` | declaration in `published-language/`, publisher, spec |
-| `integration-handler` (`consumer`) | `<ctx> <upstream> <event-type>` | `application/integration/handlers/<name>.integration-handler.ts`, consumer `<ctx>.<name>`, spec |
+| `integration-handler` (`consumer`) | `<ctx> <upstream> <event-type>[@v<n>]` | `application/integration/handlers/<name>.integration-handler.ts`, consumer `<ctx>.<name>`, spec |
 | `acl` | `<ctx> <upstream-or-system>` | `infrastructure/anti-corruption/<name>.translator.ts`, spec |
 | `builder` | `<ctx> <Aggregate>` | `test/builders/` |
 | `test-world` | `<ctx> [Name]` | `test/worlds/<name>.world.ts`: `a<Name>World({ now, idPrefix, given })`, the test application (or the buses) with every fake of `test/fakes/`, each returned under the name of its port; the arrangement several specs share, the one the specs of `command`, `query` and `job` generated after it arrange through |

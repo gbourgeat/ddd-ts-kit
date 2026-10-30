@@ -1,24 +1,26 @@
 import type { Scope } from '../scope';
+import { declarationsOf, type FoundDeclaration } from './declarations-of';
 import type { EventDeclaration } from './event-declaration';
 
+/** An event type, at one version when the caller asks for one. */
+export type WantedEvent = { readonly type: string; readonly version?: number | undefined };
+
 /**
- * Looks for the declaration of `eventType` in the published language of an upstream of this
- * repository; the file of the one found is what the command builds on.
+ * Looks for the declaration of an event in the published language of an upstream of this
+ * repository, at its version when one is asked for, the newest otherwise; the file of the one
+ * found is what the command builds on.
  */
-export function findEventDeclaration(scope: Scope, upstream: string, eventType: string): EventDeclaration | undefined {
-  const directory = `${scope.config.contextsDir}/${upstream}/published-language`;
-
-  const declarations = scope.ws.list(directory).flatMap((name) => {
-    const file = `${directory}/${name}`;
-    const content = scope.ws.read(file) ?? '';
-
-    return content.includes(`type: '${eventType}'`)
-      ? declarationIn(content).map((declaration) => ({ file, declaration }))
-      : [];
-  });
+export function findEventDeclaration(
+  scope: Scope,
+  upstream: string,
+  wanted: WantedEvent,
+): EventDeclaration | undefined {
+  const declarations = declarationsOf(scope, upstream, wanted.type).filter(
+    ({ declaration }) => wanted.version === undefined || declaration.version === wanted.version,
+  );
 
   // A new consumer has no reason to start on an old contract.
-  const newest = declarations.reduce<(typeof declarations)[number] | undefined>(
+  const newest = declarations.reduce<FoundDeclaration | undefined>(
     (found, candidate) =>
       found === undefined || candidate.declaration.version > found.declaration.version ? candidate : found,
     undefined,
@@ -29,12 +31,4 @@ export function findEventDeclaration(scope: Scope, upstream: string, eventType: 
   }
 
   return newest?.declaration;
-}
-
-function declarationIn(content: string): EventDeclaration[] {
-  const definition = /export const (\w+) = defineIntegrationEvent\b/.exec(content)?.[1];
-  const typeName = /export type (\w+) = IntegrationEvent</.exec(content)?.[1];
-  const version = Number(/\bversion:\s*(\d+)/.exec(content)?.[1] ?? '1');
-
-  return definition === undefined || typeName === undefined ? [] : [{ definition, typeName, version }];
 }

@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:eb60560774489236 -->
+<!-- translation-of: commands.md sha256:3bf6412a57dfd51f -->
 
 # Quelle commande, quand
 
@@ -121,7 +121,7 @@ exemple, reste un `TODO(domain)` du schéma et de l'appel.
 |---|---|---|---|---|
 | `/ddd-ts-kit:integration-event` | un événement versionné dans le langage publié du producteur, son consommateur en aval | un contexte doit réagir à un autre | la déclaration, la publication par l'outbox, un gestionnaire idempotent | `npm run docs:generate` |
 | `npx ddd-ts-kit generate integration-event <context> <Aggregate> <Fact>` | déclare l'événement | dans la tranche amont | `published-language/*.integration-event.ts` et sa charge utile | `generate integration-handler` en aval |
-| `npx ddd-ts-kit generate integration-handler <context> <upstream> <eventType>` | le consommateur, nommé d'après l'événement, ou comme la conception l'appelle avec `--name <Name>` (le nom du consommateur suit) | dans la tranche aval | le gestionnaire, sa *spec*, son enregistrement | `npm run docs:generate` |
+| `npx ddd-ts-kit generate integration-handler <context> <upstream> <eventType>[@v<n>]` | le consommateur, nommé d'après l'événement, ou comme la conception l'appelle avec `--name <Name>` (le nom du consommateur suit) | dans la tranche aval | le gestionnaire, sa *spec*, son enregistrement | `npm run docs:generate` |
 | `npx ddd-ts-kit generate acl` ou `gateway` | une couche anticorruption, ou un besoin synchrone derrière un port | un aval qui ne doit pas prendre le modèle de l'amont | le port et son adaptateur | la note de la carte des contextes |
 
 ## Persistance
@@ -706,7 +706,7 @@ Kinds
   form <context> <UseCase> [--module <module>]
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]... [--module <module>]
-  integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: consumer)
+  integration-handler <context> <upstreamContext> <eventType>[@v<n>] [--version <n>] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: consumer)
   erasure-handler <context> [--module <module>]
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
   projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: projector)

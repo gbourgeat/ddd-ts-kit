@@ -36,7 +36,7 @@ export const projectionKind: Kind = {
 
     const eventType = request.args[2] ?? '';
     const publisher = publisherOf(scope, eventType);
-    const declaration = findEventDeclaration(scope, publisher.kebab, eventType);
+    const declaration = findEventDeclaration(scope, publisher.kebab, { type: eventType });
 
     if (declaration === undefined) {
       throw undeclaredEvent(publisher, eventType);
