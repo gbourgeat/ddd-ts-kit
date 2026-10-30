@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:d78e4fd41c0d786d -->
+<!-- translation-of: coding-agents.md sha256:42089ca22feb9c90 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -109,7 +109,12 @@ dès son premier appel : un chemin qui a oublié son *worktree* est refusé dans
 d'orchestre, dans un autre *worktree* et hors de tout projet sauf le répertoire temporaire, avec la
 consigne de nommer le fichier sous son *worktree*. Il lit toute la ligne de commande, chacune de ses commandes, pas
 seulement celle qui commence par `cd <worktree> &&` : un worker lance chaque commande ainsi, et
-celle qui écrit sans entrer dans son worktree est refusée avec cette consigne. Il ne suit un `cd`
+celle qui écrit sans entrer dans son worktree est refusée avec cette consigne : depuis un autre
+*checkout*, un worker ne fait que lire (`cat`, `ls`, `grep`, git qui lit, `git add` et `git commit`
+dans son propre *worktree*, le kit interrogé pour lister, décrire, rendre compte ou lire un
+*briefing*), quel que soit le programme. Une session ouverte au-dessus du projet tient son worker au
+projet que nomme sa commande, et un worker qui se tient dans son *worktree* y reste épinglé quand une
+commande commence dans un autre projet. Il ne suit un `cd`
 que lorsqu'il est certain (après `&&`, vers un répertoire qui existe), de sorte qu'une écriture
 après `cd dir;` ou un `cd` qui échoue est refusée plutôt que mal placée ; il lit un nom que le
 *shell* calcule (une variable, une substitution, une liste d'accolades), un lanceur (`nice`,

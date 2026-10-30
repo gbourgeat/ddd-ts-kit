@@ -522,6 +522,10 @@ const PATH_COMMANDS = {
   truncate: { valued: ['-s', '-r', '--size', '--reference'], changes: 'all' },
 };
 
+// The commands of the kit that write no file: what it lists, describes, explains and reports, the
+// acceptance read without `--lock`, a briefing, the place of a worker or a generator read without running it.
+const KIT_READS = new Set(['list', 'describe', 'explain', 'status', 'stories', 'story', 'story-check', 'todo']);
+
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -732,14 +736,15 @@ async function preBash(input) {
 }
 
 async function shellVerdict(input, command, cwd) {
-  // A leading `cd` out of every project leaves the command to be judged against the session's project.
-  const project = findProject(commandDirectory(command, cwd)) ?? findProject(cwd);
+  shell = await import('./shell-commands.mjs');
+  // A leading `cd` out of every project leaves the command to be judged against the session's project;
+  // a worker whose session stands in no project is judged in the project its command names.
+  const project = findProject(commandDirectory(command, cwd)) ?? findProject(cwd) ?? namedProject(input, command, cwd);
   await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
     return undefined;
   }
   const decision = project.mode === 'advise' ? 'ask' : 'deny';
-  shell = await import('./shell-commands.mjs');
   const commands = readCommands(project, command, cwd);
   if (!commands) {
     return isHeldToAWorktree(project, input) ? { decision, reason: UNREADABLE_COMMAND } : undefined;
@@ -753,6 +758,28 @@ async function shellVerdict(input, command, cwd) {
     ? workerCommandReason(project, input, { context, command, commands })
     : (builderStrayReason(project, input, commands) ?? sessionShellReason(input, commands));
   return refusal ? { decision, reason: refusal } : undefined;
+}
+
+// The project of the first place a worker's command names (a directory it moves to, a file it writes):
+// a session opened above a project still holds its worker to that project.
+function namedProject(input, command, cwd) {
+  if (!isWorkerAgent(input)) {
+    return undefined;
+  }
+  let commands;
+  try {
+    commands = shell.simpleCommands(command, cwd);
+  } catch {
+    return undefined;
+  }
+  const places = commands.flatMap((simple) => [
+    ...(['cd', 'pushd'].includes(shell.commandName(simple.words))
+      ? [{ place: shell.placeOf(simple.words[1] ?? shell.UNKNOWN, simple.directory) }]
+      : []),
+    ...writtenTargets(simple),
+    ...changedPaths(simple),
+  ]);
+  return places.map(({ place }) => place && findProject(place)).find(Boolean);
 }
 
 // The commands of a line and the places they write, read once here: the rules that follow read the
@@ -839,8 +866,8 @@ function isHeldToAWorktree(project, input) {
   return isWorkerAgent(input) && (workerScope(project, input) !== undefined || hasWorkerWorktree(project.root));
 }
 
-// A redirection, a writer of the tables, code the guard cannot read, a generator of the kit, which
-// writes files too, or a line the reader could not read to its end.
+// A redirection, a writer of the tables, a generator of the kit, a line the reader could not read to
+// its end, or any program but those that read: outside its worktree a worker reads only.
 function builderWrites(commands) {
   return (
     generates(commands, []) ||
@@ -849,28 +876,29 @@ function builderWrites(commands) {
         command.truncated ||
         writtenTargets(command).length > 0 ||
         changedPaths(command).length > 0 ||
-        runsCode(command),
+        !readsFromAnywhere(command),
     )
   );
 }
 
-// An interpreter, a shell, `source`, `make`, a package script or runner, a test runner, a program
-// named by its path: code the guard cannot read. The kit's own CLI, behind a runner or not, is
-// judged by what it is asked to do.
-function runsCode(command) {
-  const name = shell.commandName(command.words);
-  return (
-    (CODE_RUNNERS.has(name) ||
-      CODE_RUNNERS.has(name.replace(/[\d.]+$/, '')) ||
-      shell.SHELLS.has(name) ||
-      isProgramPath(command.words[0] ?? '', name)) &&
-    kitInvocations([command]).length === 0
-  );
+// A pure reader, git that reads (or versions in the worker's own worktree, which `workerGitReason`
+// decides first), or the kit asked what it knows.
+function readsFromAnywhere(command) {
+  if (shell.commandName(command.words) === 'git') {
+    const { subcommand, tail } = gitInvocation(command.words.slice(1), command.directory);
+    return readsAnywhere(subcommand, tail) || ['add', 'commit'].includes(subcommand);
+  }
+  return isPureReader(command) || kitInvocations([command]).some(kitReads);
 }
 
-// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`), but a pure reader's.
-function isProgramPath(word, name) {
-  return (/^\.{0,2}\//.test(word) || word.includes('node_modules/.bin/')) && !PURE_READERS.has(name);
+function kitReads({ subcommand, args }) {
+  if (subcommand === 'acceptance') {
+    return !args.includes('--lock');
+  }
+  if (['worker-scope', 'story-scope', 'generate', 'g'].includes(subcommand)) {
+    return args.some((arg) => /^--(?:dry-run|resume|help)\b/.test(arg));
+  }
+  return KIT_READS.has(subcommand);
 }
 
 // What no agent runs, then what waits for a place, a landing, a lock or a generator first.
@@ -1849,16 +1877,21 @@ function workerScope(project, input) {
 }
 
 // The worktree is recorded and compared by its real path: a link to it, or another spelling of it, is the same.
+// A worker whose session stands in a scoped worktree is pinned to it, even when its first command
+// starts in another project.
 function pinnedScope(project, input) {
   const current = namedContext(project);
-  const pin = stateFile('scope', findProject(input.cwd ?? process.cwd()) ?? project, input);
-  const pinned = readJson(pin);
+  const home = findProject(input.cwd ?? process.cwd()) ?? project;
+  const pin = stateFile('scope', home, input);
+  let pinned = readJson(pin);
   const worktree = realpathSync(project.root);
   if (!isPin(pinned)) {
-    if (current) {
-      writeState(pin, { context: current, worktree });
+    const own = current ? project : namedContext(home) && home;
+    if (!own) {
+      return undefined;
     }
-    return current && { context: current };
+    pinned = { context: namedContext(own), worktree: realpathSync(own.root) };
+    writeState(pin, pinned);
   }
   if (pinned.worktree !== worktree) {
     return current
@@ -3882,6 +3915,25 @@ function putsBack(project, command, paths) {
     !runsCode(command) &&
     touched.length > 0
   );
+}
+
+// An interpreter, a shell, `source`, `make`, a package script or runner, a test runner, a program
+// named by its path: code the guard cannot read. The kit's own CLI, behind a runner or not, is
+// judged by what it is asked to do.
+function runsCode(command) {
+  const name = shell.commandName(command.words);
+  return (
+    (CODE_RUNNERS.has(name) ||
+      CODE_RUNNERS.has(name.replace(/[\d.]+$/, '')) ||
+      shell.SHELLS.has(name) ||
+      isProgramPath(command.words[0] ?? '', name)) &&
+    kitInvocations([command]).length === 0
+  );
+}
+
+// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`), but a pure reader's.
+function isProgramPath(word, name) {
+  return (/^\.{0,2}\//.test(word) || word.includes('node_modules/.bin/')) && !PURE_READERS.has(name);
 }
 
 // A plain `git commit`: no `-a`, no paths of its own, so that it records the index alone.

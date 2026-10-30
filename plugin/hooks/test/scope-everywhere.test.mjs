@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import {
   bash,
@@ -477,6 +477,64 @@ test('before its pin, a builder commits in a worktree that holds a scope, not in
   assert.match(reason(run('pre-bash', bash(conductor, 'git add .', first))), /the conductor lands a branch/);
   const away = directory('no-repository');
   assert.match(reason(run('pre-bash', bash(conductor, `git -C ${away} commit -m x`, first))), /runs in/);
+});
+
+test('a builder whose session stands above the project is held by the places its command names', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const above = dirname(conductor);
+  const agent = builder('above', above);
+  for (const command of [
+    `echo x > ${worktree}/src/main.ts`,
+    `rm ${worktree}/src/main.ts`,
+    `cd ${worktree}; rm src/main.ts`,
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(above, command, agent))), 'deny', command);
+  }
+  assert.equal(
+    run('pre-bash', bash(above, `cd ${worktree} && echo x > src/contexts/billing/notes.md`, agent)).output,
+    undefined,
+  );
+  assert.equal(run('pre-bash', bash(above, 'ls', agent)).output, undefined);
+});
+
+test('a builder standing in its worktree stays held to it when a command starts in another project', () => {
+  const { worktree } = conductorWithWorker();
+  const other = project();
+  for (const [name, command] of [
+    ['first-other', `cd ${other} && rm ${worktree}/src/main.ts`],
+    ['option-other', `echo --cwd=${other} ; rm src/main.ts`],
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(worktree, command, builder(name, worktree)))), 'deny', command);
+  }
+});
+
+test('from the checkout of the conductor a builder reads, and whatever writes goes through its worktree', () => {
+  const { conductor, worktree, agent } = pinnedBuilder('any-program');
+  for (const command of [
+    `sort -o ${worktree}/src/main.ts /etc/hostname`,
+    `mkdir ${worktree}/src/platform/extra`,
+    `chmod 000 ${worktree}/src/main.ts`,
+    `git -C ${worktree} merge main`,
+    `git -C ${worktree} reset HEAD~1`,
+    `git -C ${worktree} rebase main`,
+    `git -C ${worktree} pull`,
+    `cd ${worktree}; sort -o src/main.ts /etc/hostname`,
+    'npx ddd-ts-kit check --baseline prune',
+  ]) {
+    const refused = run('pre-bash', bash(conductor, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /cd <worktree> && \.\.\./, command);
+  }
+  for (const command of [
+    `ls ${worktree}/src`,
+    `cat ${worktree}/package.json`,
+    `git -C ${worktree} status`,
+    'npx ddd-ts-kit list',
+    'npx ddd-ts-kit worker-scope billing --dry-run',
+    'npx ddd-ts-kit status --workers',
+  ]) {
+    assert.equal(run('pre-bash', bash(conductor, command, agent)).output, undefined, command);
+  }
 });
 
 test('a builder without a scope in a repository without one, and the other agents, keep their git', () => {
