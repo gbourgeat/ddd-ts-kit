@@ -214,6 +214,27 @@ function integritySpecs(name: string, create: () => Promise<ArchiveFixture>): vo
       expect(await sequencesOf(trail)).toEqual([{ id: 'january', sequence: 1 }]);
       expect(await trail.archivesOf(CHAIN)).toEqual([]);
     });
+
+    it('archives a text that is not well formed as it stored it: the file verifies', async () => {
+      const { trail } = await create();
+      const files = new InMemoryFileStorage();
+
+      await trail.record({
+        ...aRecord('january'),
+        occurredAt: JANUARY,
+        reason: 'x\ud800',
+        changes: { note: 'y\udc00' },
+      });
+
+      const [archive] = (await trail.archiveBefore(MARCH, { files, clock })).archives;
+
+      expect(archive).toMatchObject({ fromSequence: 1, toSequence: 1 });
+
+      expect(archive === undefined ? undefined : verifyArchive(await textOf(files, archive), archive)).toEqual({
+        valid: true,
+        entries: 1,
+      });
+    });
   });
 }
 

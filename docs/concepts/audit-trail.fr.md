@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:f43d9f9cf7b464fc -->
+<!-- translation-of: audit-trail.md sha256:c11e66d7890433d3 -->
 
 # Journal d'audit
 
@@ -220,7 +220,9 @@ rendez-vous appartient à ce dernier groupe.
 Chaque entrée stocke le hachage de la précédente et son propre hachage, calculé sur une forme
 canonique que n'importe quel programme, dans n'importe quel langage, peut recalculer. Modifier,
 supprimer ou réordonner une entrée rompt la chaîne à un endroit que la vérification nomme :
-contenu altéré, entrée manquante ou réordonnancement.
+contenu altéré, entrée manquante ou réordonnancement. Une entrée est hachée telle que le store la
+garde, un texte qui ne peut pas être stocké tel quel recevant un caractère de remplacement à sa
+place : une chaîne à laquelle personne n'a touché se vérifie toujours.
 
 ![Quatre entrées de la chaîne tenant:acme, chacune gardant le hachage de la précédente ; verifyChain signale une entrée modifiée, supprimée ou intervertie, et un point de contrôle copié ailleurs détecte une chaîne réécrite en entier](../assets/diagrams/audit-trail-hash-chain.fr.svg)
 

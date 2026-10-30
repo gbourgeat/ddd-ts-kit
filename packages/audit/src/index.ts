@@ -21,6 +21,7 @@ export { canonicalize } from './chain/canonicalize';
 export { GLOBAL_CHAIN, chainOfTenant } from './chain/chain-of-tenant';
 export { GENESIS_HASH } from './chain/genesis-hash';
 export { hashOf, type UnsealedEntry } from './chain/hash-of';
+export { wellFormed } from './chain/well-formed';
 export type { SealingOptions } from './chain/sealing-options';
 export type { AuditTrailOptions } from './trail/audit-trail-options';
 export { InMemoryAuditTrail } from './trail/in-memory-audit-trail';

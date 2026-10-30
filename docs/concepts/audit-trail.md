@@ -207,7 +207,8 @@ scheduling product, the reason of an appointment belongs to that last group.
 Each entry stores the hash of the previous one and its own hash, computed over a canonical form
 that any program in any language can recompute. Changing, removing or reordering an entry
 breaks the chain at a place the verification names: altered content, a missing entry, or a
-reordering.
+reordering. An entry is hashed as the store keeps it, a text that cannot be stored as it came
+having a replacement character in its place, so a chain nobody touched always verifies.
 
 ![Four entries of the chain tenant:acme, each holding the hash of the one before it; verifyChain reports a changed, removed or swapped entry, and a checkpoint copied elsewhere catches a chain rewritten as a whole](../assets/diagrams/audit-trail-hash-chain.svg)
 

@@ -21,6 +21,7 @@ import { emptyChain } from '../chain/empty-chain';
 import { headAfter } from '../chain/head-after';
 import { seal } from '../chain/seal';
 import { sealCheckpoint } from '../chain/seal-checkpoint';
+import { wellFormed } from '../chain/well-formed';
 import { comparing } from '../search/comparing';
 import { decodeCursor } from '../search/decode-cursor';
 import { encodeCursor } from '../search/encode-cursor';
@@ -49,7 +50,7 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader, ArchivableAu
   }
 
   async record(record: AuditRecord): Promise<void> {
-    const chain = (this.options.chainOf ?? chainOfTenant)(record);
+    const chain = wellFormed((this.options.chainOf ?? chainOfTenant)(record));
     const entry = seal(record, this.heads.get(chain) ?? emptyChain(chain));
 
     this.heads.set(chain, headAfter(entry));

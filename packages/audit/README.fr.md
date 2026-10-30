@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2e8a087727d82b23 -->
+<!-- translation-of: README.md sha256:2c9d46b62999495f -->
 
 # @ddd-ts-kit/audit
 
@@ -20,7 +20,7 @@ npm i typeorm          # seulement pour @ddd-ts-kit/audit/typeorm
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
 | `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | rien : le client de l'unité de travail de `@ddd-ts-kit/prisma` convient structurellement |
@@ -218,6 +218,12 @@ langage :
 - une propriété dont la valeur est `undefined` omise ;
 - `occurredAt` écrit en ISO 8601 UTC avec les millisecondes (`2026-03-01T10:00:00.000Z`) ;
 - les chaînes et les nombres tels que `JSON.stringify` les écrit.
+
+Une entrée est hachée telle qu'un store la garde. Un surrogate sans sa paire n'a pas d'encodage
+UTF-8 et PostgreSQL refuse NUL : chaque texte d'une entrée, les clés de `changes` et d'`extensions`
+et le nom de la chaîne compris, est donc scellé avec U+FFFD à leur place : ce qui est relu est ce
+qui a été haché, quoi que contienne un enregistrement. `wellFormed` donne cette forme, à un store
+écrit par vos soins aussi.
 
 La première entrée d'une chaîne a un `previousHash` égal à `GENESIS_HASH` (64 zéros).
 
