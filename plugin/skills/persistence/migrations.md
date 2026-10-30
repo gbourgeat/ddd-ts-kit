@@ -36,9 +36,9 @@ again on top.
    (`git checkout origin/main -- migrations/meta/_journal.json`) and run
    `npx ddd-ts-kit drizzle-generate --replay` (`--base <ref>`, `origin/main` by default). It
    refuses a migration whose SQL was edited by hand and puts the folder back: generate that one
-   again on top by hand and write the edit again. It refuses two migrations of a branch that
-   keep two schema changes apart rather than join them: generate them again one at a time, in
-   their order.
+   again on top by hand and write the edit again. When one branch holds two migrations generated
+   apart on purpose (a table, then a constraint once it is filled), the replay refuses them rather
+   than join them into one: generate them again one at a time, in their order.
 
 `persistence/migration-history` reports the forked or unordered history otherwise, which
 drizzle's migrator would skip silently.
