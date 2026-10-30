@@ -2592,7 +2592,7 @@ const HOOKS_LOCAL_GATE =
 const HOOK_ENVIRONMENT = /(?:^|[\s;&|(])(?:LEFTHOOK|HUSKY)=(?:0|false)(?![\w])/;
 const HOOK_SKIPPING_COMMANDS = new Set(['commit', 'push', 'merge', 'pull', 'rebase']);
 // Options of `git` that take their value as the next word, and those of `git commit` that do.
-const GIT_VALUED_OPTIONS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path']);
+const GIT_VALUED_OPTIONS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--config-env']);
 const COMMIT_VALUED_OPTIONS = new Set(['-m', '-F', '-C', '-c', '-t', '--message', '--file', '--author', '--date']);
 
 // A git command that skips the hooks of the project: `--no-verify` (and `-n` on a commit),
@@ -4360,13 +4360,18 @@ function git(project, args) {
 }
 
 function gitRun(project, args) {
-  // `-c core.fsmonitor=false`: a core.fsmonitor planted in the config never runs on the guard's own git.
-  return spawnSync('git', ['-c', 'core.fsmonitor=false', ...args], {
-    cwd: project.root,
-    encoding: 'utf8',
-    timeout: 5000,
-    maxBuffer: ANSWER_BYTES,
-  });
+  // A core.fsmonitor planted in the config never runs on the guard's own git, nor does a hook planted
+  // in the repository (the guard commits nothing), and its status writes no index.
+  return spawnSync(
+    'git',
+    ['-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', '--no-optional-locks', ...args],
+    {
+      cwd: project.root,
+      encoding: 'utf8',
+      timeout: 5000,
+      maxBuffer: ANSWER_BYTES,
+    },
+  );
 }
 
 function numstatChange(entry) {

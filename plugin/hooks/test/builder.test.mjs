@@ -25,6 +25,7 @@ import {
   directory,
   git,
   guard,
+  guardTemp,
   here,
   project,
   put,
@@ -610,4 +611,23 @@ test("a sub-agent never deletes, moves or resets the branch of another worker's 
   // Outside a git repository, there is no branch to hold.
   const loose = project();
   assert.equal(run('pre-bash', bash(loose, 'git branch -D main', builder('loose', { cwd: loose }))).output, undefined);
+});
+
+test("the guard's own git runs no program a repository plants in its config or its hooks", () => {
+  const root = committed();
+  // Without the CLI of the project, which runs git of its own: what runs here is the guard's git alone.
+  rmSync(join(root, 'node_modules'), { recursive: true, force: true });
+  worker(root);
+  const marker = join(guardTemp, 'planted-program-ran');
+  const program = join(root, '.git', 'planted.sh');
+  writeFileSync(program, `#!/bin/sh\ntouch ${marker}\nexit 1\n`, { mode: 0o755 });
+  git(root, 'config', 'core.fsmonitor', program);
+  writeFileSync(join(root, '.git/hooks/post-index-change'), `#!/bin/sh\ntouch ${marker}\n`, { mode: 0o755 });
+  const agent = builder('planted');
+  run('pre-bash', bash(root, 'git status', agent));
+  put(root, 'src/contexts/ordering/domain/order.ts', 'export const order = 1;\n');
+  utimesSync(join(root, 'package.json'), new Date(), new Date());
+  run('subagent-stop', { cwd: root, ...agent, stop_hook_active: false });
+  run('stop', { cwd: root });
+  assert.equal(existsSync(marker), false);
 });
