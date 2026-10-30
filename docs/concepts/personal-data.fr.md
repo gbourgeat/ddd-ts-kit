@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:4bff53cd653ced7d -->
+<!-- translation-of: personal-data.md sha256:63f2079db40470f1 -->
 
 # Les données personnelles dans un projet généré
 
@@ -90,7 +90,7 @@ La colonne du sujet nomme la personne concernée dont une ligne parle, un identi
 quand la ligne est la personne, la colonne qui tient l'id de la personne sinon. Elle n'est jamais une
 donnée personnelle elle-même, et le générateur refuse un sujet listé dans `--personal`. Les colonnes
 sont données par leur nom SQL, lettres minuscules, chiffres et tirets bas ; une colonne que la table
-générée garde pour elle (`id`, `version`, `registered_at`, `tenant_id`, les colonnes d'audit) est
+générée garde pour elle (`id`, `version`, `tenant_id`, les colonnes d'audit, le `registered_at` d'une table générée avant 0.100) est
 refusée, comme un projet sans dossier *privacy* (`init --force --privacy on`) ou sans paquet d'ORM qui
 livre l'effacement (`--orm none`, `--orm custom`).
 
@@ -215,7 +215,7 @@ dure ; une ligne dont la date est vide n'expire jamais. La déclaration gagne
 test. Remplissez cette colonne quand la relation prend fin (le contrat clos, le compte supprimé),
 dans le *mapper* de l'agrégat qui le sait.
 
-Ne comptez jamais une conservation depuis le début : `registered_at` date l'inscription, et une purge
+Ne comptez jamais une conservation depuis le début : `created_at` (ou le `registered_at` d'une table plus ancienne) date la création de la ligne, et une purge
 comptée depuis elle effacerait, chaque nuit et pour de bon, des personnes encore clientes. Le
 générateur la refuse, comme il refuse les autres colonnes que la table garde pour elle, une colonne
 personnelle, le sujet et une période qui n'est pas une unité positive ; une déclaration écrite à la

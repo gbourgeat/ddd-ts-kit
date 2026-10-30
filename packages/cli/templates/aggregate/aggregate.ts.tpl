@@ -1,8 +1,10 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
+{{#if birth.named}}
+import { {{birth.pascal}} } from '{{alias.context}}/domain/events/{{birth.kebab}}.event{{alias.ext}}';
+{{/if}}
 
 export interface {{name.pascal}}State {
-  readonly registeredAt: Date;
-  // TODO(domain): declare the rest of the state of {{name.pascal}} with value objects (a Money, a Period), not primitives.
+  // TODO(domain): declare the state of {{name.pascal}} with value objects (a Money, a Period), not primitives. When it was created is in the audit columns of its row; an instant a rule reads is a field named after its fact.
 }
 
 export class {{name.pascal}} extends AggregateRoot<string> {
@@ -23,9 +25,15 @@ export class {{name.pascal}} extends AggregateRoot<string> {
 {{#if refusals.classes}}
     // TODO(domain): take the facts known at birth as parameters, check each birth invariant and throw a DomainError of ../errors when one is violated.
 {{/if}}
-    const created = new {{name.pascal}}(id, { registeredAt: now });
+    const created = new {{name.pascal}}(id, {});
 
-    // TODO(domain): record the birth fact with `created.record(new {{name.pascal}}Created(id, now))` after `ddd-ts-kit generate domain-event {{context.kebab}} {{name.pascal}} Created`.
+{{#if birth.named}}
+    created.record(new {{birth.pascal}}(id, now));
+
+{{/if}}
+{{#unless birth.named}}
+    // TODO(domain): record the fact {{name.pascal}} is born with at `now`, the instant the handler takes from its Clock: `ddd-ts-kit generate domain-event {{context.kebab}} {{name.pascal}} <Fact>` writes the event, then `created.record(new {{name.pascal}}<Fact>(id, now));` here and, in its builder, an ingredient `<fact>At` passed to `create` (`generate builder {{context.kebab}} {{name.pascal}} --force` writes it). A new aggregate names it at once: `generate aggregate <context> <Name> --birth "<Fact>"`.
+{{/unless}}
     return created;
   }
 
@@ -34,10 +42,6 @@ export class {{name.pascal}} extends AggregateRoot<string> {
   }
 
   // TODO(domain): add one method per business intention (issue, cancel, ...): each guards its invariants, replaces `this.state` and records the event of what happened.
-
-  get registeredAt(): Date {
-    return this.state.registeredAt;
-  }
 
   toState(): {{name.pascal}}State {
     return { ...this.state };

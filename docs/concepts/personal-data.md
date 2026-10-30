@@ -89,7 +89,7 @@ The subject column names the data subject a row is about, an opaque identifier: 
 is the person, the column that holds the id of the person otherwise. It is never personal data
 itself, and the generator refuses a subject listed in `--personal`. The columns are given by their
 SQL names, lower case letters, digits and underscores; a column the generated table keeps for itself
-(`id`, `version`, `registered_at`, `tenant_id`, the audit columns) is refused, as is a project
+(`id`, `version`, `tenant_id`, the audit columns, the `registered_at` of a table generated before 0.100) is refused, as is a project
 without the privacy folder (`init --force --privacy on`) or without an ORM package that ships the
 erasure (`--orm none`, `--orm custom`).
 
@@ -210,7 +210,7 @@ date is empty never expires. The declaration gains `retention: { after: 'ended_a
 and the generated spec proves the purge on the test database. Fill that column when the relation
 ends (the contract closed, the account deleted), in the mapper of the aggregate that knows it.
 
-Never count a retention from the beginning: `registered_at` dates the registration, and a purge
+Never count a retention from the beginning: `created_at` (or the `registered_at` of an older table) dates the creation of the row, and a purge
 counted from it would erase, every night and for good, people who are still customers. The
 generator refuses it, as it refuses the other columns the table keeps for itself, a personal column,
 the subject and a period that is not one positive unit; a declaration written by hand takes the

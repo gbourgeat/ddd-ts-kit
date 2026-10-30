@@ -1,10 +1,11 @@
 import type { Name } from '../../naming';
 import { emit } from '../emit';
-import { eventNames } from '../event-names';
 import { named } from '../named';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { assertEventStore } from './assert-event-store';
+import { birthNames } from './birth-names';
+import { instantOf } from './instant-of';
 import { writeDomainEvent } from './write-domain-event';
 
 /** The fact an event-sourced aggregate is born with when `--birth` names none: its stream starts with it. */
@@ -18,8 +19,14 @@ const DEFAULT_BIRTH = 'Created';
 export function writeEventSourcedAggregate(scope: Scope, name: Name): void {
   assertEventStore(scope);
 
-  const names = eventNames(scope, name.pascal, scope.flags.birth ?? DEFAULT_BIRTH);
-  const event = { ...named(names.event), name: names.eventName, fact: names.fact.pascal };
+  const names = birthNames(scope, name, scope.flags.birth ?? DEFAULT_BIRTH);
+
+  const event = {
+    ...named(names.event),
+    name: names.eventName,
+    fact: names.fact.pascal,
+    instant: instantOf(names.fact),
+  };
 
   emit(scope, vars(scope, { name: named(name), aggregate: named(name), event }), [
     ['aggregate/event-sourced.aggregate.ts.tpl', `domain/aggregates/${name.kebab}.aggregate.ts`],

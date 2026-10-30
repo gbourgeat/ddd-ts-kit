@@ -141,7 +141,9 @@ test data a builder, an in-memory port a fake.
 One per aggregate in `test/builders/` (`generate builder`, written with the aggregate):
 valid defaults, methods named in the ubiquitous language (`paid()`, not
 `withStatus('PAID')`), built through the aggregate's public API so an invalid state cannot be
-built. A test states only what its rule depends on.
+built. A test states only what its rule depends on. Generated with `--birth "<Fact>"`
+(`generate aggregate <ctx> <Name> --birth "Invoice Issued"`), the builder takes the instant of
+the birth by its fact (`issuedAt(at)`) and the spec proves the event.
 
 ## End to end
 

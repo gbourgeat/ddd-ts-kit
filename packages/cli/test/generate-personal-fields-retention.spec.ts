@@ -92,7 +92,7 @@ describe('what --retention refuses before anything is written', () => {
     return result;
   };
 
-  it('a period that is not one, a column that is personal or the subject, a column of the table, registered_at, a retention alone', () => {
+  it('a period that is not one, a column that is personal or the subject, a column of the table, created_at and registered_at, a retention alone', () => {
     const root = initProject('--orm', 'knex');
 
     expectOk(
@@ -123,9 +123,12 @@ describe('what --retention refuses before anything is written', () => {
     expect(refused(root, ...PERSONAL, '--retention', 'version:3y').stderr).toContain('keeps for its own needs');
 
     // Counted from the registration, the nightly purge would erase people who are still customers.
-    expect(refused(root, ...PERSONAL, '--retention', 'registered_at:5y').stderr).toContain(
-      'never from its beginning: counted from registered_at, the nightly purge would erase people who are still customers',
+    expect(refused(root, ...PERSONAL, '--retention', 'created_at:5y').stderr).toContain(
+      'never from its beginning: counted from created_at (or the registered_at of an older table), the nightly purge would erase people who are still customers',
     );
+
+    // The column of the aggregates generated before 0.100: their tables still hold it.
+    expect(refused(root, ...PERSONAL, '--retention', 'registered_at:5y').stderr).toContain('keeps for its own needs');
 
     expect(refused(root, '--retention', 'ended_at:3y').stderr).toContain('go with --personal');
   });

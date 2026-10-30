@@ -7,7 +7,7 @@ import { Fake{{aggregate.pascal}}Repository } from '{{alias.context}}/test/fakes
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 
-const bornAt = new Date('2026-03-01T00:00:00.000Z');
+const now = new Date('2026-03-01T00:00:00.000Z');
 let born = 0;
 
 const expectations = {
@@ -15,7 +15,7 @@ const expectations = {
   createAggregate: () => {
     born += 1;
 
-    return {{aggregate.pascal}}.create(`{{aggregate.kebab}}-${born}`, bornAt);
+    return {{aggregate.pascal}}.create(`{{aggregate.kebab}}-${born}`, now);
   },
   // TODO(domain): add `mutate: (changed: {{aggregate.pascal}}) => changed.<a business method that records an event>(...)`, so that the suite proves an update is stored and a stale save is refused; the case stays pending until then.
   idOf: (subject: {{aggregate.pascal}}) => subject.id,

@@ -203,15 +203,6 @@ describe('generate aggregate --event-sourced --birth', () => {
     expect(unknown.code).not.toBe(0);
     expect(unknown.stderr).toContain('"Opened" uses "opened"');
   });
-
-  it('refuses --birth on an aggregate that is not event-sourced', () => {
-    const project = initProject('--context', 'incidents:core');
-
-    const refused = cli(project, 'generate', 'aggregate', 'incidents', 'Incident', '--birth', 'Triggered', ...TERMS);
-
-    expect(refused.code).not.toBe(0);
-    expect(refused.stderr).toContain('--birth names the birth event of an event-sourced aggregate');
-  });
 });
 
 describe('docs --stored-events', () => {

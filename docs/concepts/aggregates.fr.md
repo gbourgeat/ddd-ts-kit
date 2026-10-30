@@ -1,5 +1,5 @@
 [English](aggregates.md) · **Français**
-<!-- translation-of: aggregates.md sha256:0a18a408be2c7ea9 -->
+<!-- translation-of: aggregates.md sha256:ecae133d1df8d712 -->
 
 # Agrégats
 
@@ -80,7 +80,6 @@ export interface AppointmentState {
   readonly clientId: string;
   readonly slot: TimeSlot;
   readonly status: 'booked' | 'cancelled';
-  readonly registeredAt: Date;
 }
 
 export class Appointment extends AggregateRoot<string> {
@@ -91,8 +90,8 @@ export class Appointment extends AggregateRoot<string> {
     super(id);
   }
 
-  static book(id: string, booking: Omit<AppointmentState, 'status' | 'registeredAt'>, now: Date): Appointment {
-    const booked = new Appointment(id, { ...booking, status: 'booked', registeredAt: now });
+  static book(id: string, booking: Omit<AppointmentState, 'status'>, now: Date): Appointment {
+    const booked = new Appointment(id, { ...booking, status: 'booked' });
 
     booked.record(new AppointmentBooked(id, now, booking.practitionerId, booking.slot));
 
@@ -136,7 +135,11 @@ export class Appointment extends AggregateRoot<string> {
 
 Ici, la fabrique de naissance s'appelle `book`, dans la langue du contexte ; la référence la
 nomme `create` de façon générique ([ARCHITECTURE.md](../ARCHITECTURE.fr.md), section 4,
-« Agrégats »). Ce que cette forme garantit :
+« Agrégats »). L'instant de la naissance est l'`occurredAt` de `AppointmentBooked`, et la colonne
+d'audit `created_at` date la ligne : l'état ne garde un instant que si une règle le lit, nommé
+d'après son fait (`bookedAt`), comme l'écrit `generate aggregate --birth "Appointment Booked"`
+(`examples/scheduling` garde `registeredAt` tant que ses agrégats ne sont pas régénérés). Ce que
+cette forme garantit :
 
 - **Une seule porte d'entrée.** Constructeur privé, aucun *setter*, aucune propriété publique
   modifiable (`domain/aggregate-encapsulation`). L'état ne change que par `reschedule` et

@@ -7,7 +7,6 @@ import type { AuditStamp } from '@ddd-ts-kit/kernel';
 
 export interface {{aggregate.pascal}}Columns {
   id: string;
-  registeredAt: Date;
 {{#if personal.any}}
 {{personal.typeormRow}}
 {{/if}}

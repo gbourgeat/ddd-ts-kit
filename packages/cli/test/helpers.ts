@@ -280,7 +280,7 @@ function scaffoldShipping(step: Step, declared: boolean): void {
   step('generate', 'adr', 'Keep shipping in the same repository as billing');
 }
 
-/** A context name in several words, a repository created by its command, a query behind a parameterised route. */
+/** A context name in several words, an aggregate born with its fact, a repository created by its command, a query behind a parameterised route. */
 function scaffoldOrderFulfilment(step: Step, withHttp: boolean, grant: (role: string) => string[]): void {
   const terms = [
     'Purchase order=What a customer asked to receive',
@@ -289,7 +289,8 @@ function scaffoldOrderFulfilment(step: Step, withHttp: boolean, grant: (role: st
   ];
 
   step('generate', 'context', 'order-fulfilment', '--classification', 'generic', ...terms.flatMap(term));
-  step('generate', 'aggregate', 'order-fulfilment', 'PurchaseOrder');
+  // Born with its fact: the event, the record in create and the builder named after it, on every stack.
+  step('generate', 'aggregate', 'order-fulfilment', 'PurchaseOrder', '--birth', 'Purchase Order Placed');
   step('generate', 'builder', 'order-fulfilment', 'PurchaseOrder', '--force');
   step('generate', 'repository', 'order-fulfilment', 'PurchaseOrder', '--tenant-scoped');
 

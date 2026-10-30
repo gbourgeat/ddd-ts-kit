@@ -1,11 +1,12 @@
 import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import type { Scope } from '../scope';
+import { birthSpan } from './birth-span';
 
 /**
  * What the trace of a request says when its use case is a command, as far as its handler shows
  * it today: the span of the command and, when the handler saves through a repository, the span
- * of that save. A query gets no trace assertion.
+ * of that save, followed by the birth event of the aggregate it creates. A query gets no trace assertion.
  */
 export function tracedCommand(scope: Scope, name: Name): RenderContext & { readonly saved: string } {
   const handler = scope.ws.read(`${scope.dir}/application/commands/${name.kebab}/${name.kebab}.handler.ts`);
@@ -20,6 +21,9 @@ export function tracedCommand(scope: Scope, name: Name): RenderContext & { reado
 
   return {
     traced: true,
-    saved: repository === undefined ? '' : `, children: [{ name: 'repository ${repository}.save' }]`,
+    saved:
+      repository === undefined
+        ? ''
+        : `, children: [{ name: 'repository ${repository}.save' }${birthSpan(scope, handler)}]`,
   };
 }

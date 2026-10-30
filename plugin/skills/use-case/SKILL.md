@@ -62,6 +62,7 @@ Run the `Start with` commands of the slice row, or for a typical command:
 
 ```bash
 npx ddd-ts-kit generate test-world <ctx> --json   # once per context, before its first use case, again with --force when it gains a fake
+npx ddd-ts-kit generate aggregate <ctx> <Aggregate> --birth "<Fact>" --json   # a new aggregate, with the event it is born with
 npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> [--creates] --permission <aggregate>.<action> --grant <role> --json
 npx ddd-ts-kit generate error <ctx> <Refusal> <factory> --json        # one per refusal: its class, its code in <context>.codes.ts, a factory
 npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact recorded

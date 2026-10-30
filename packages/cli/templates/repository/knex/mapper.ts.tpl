@@ -4,7 +4,7 @@ import type { {{aggregate.pascal}}Columns, {{aggregate.pascal}}Row } from '{{ali
 export const {{aggregate.pascal}}Mapper = {
   toDomain(row: {{aggregate.pascal}}Row): {{aggregate.pascal}} {
     // TODO(domain): rebuild each value object of {{aggregate.pascal}}State from its columns.
-    const loaded = {{aggregate.pascal}}.rehydrate(row.id, { registeredAt: row.registered_at });
+    const loaded = {{aggregate.pascal}}.rehydrate(row.id, {});
 
     loaded.version = row.version;
 
@@ -16,13 +16,12 @@ export const {{aggregate.pascal}}Mapper = {
 {{#if personal.any}}
     return {
       id: saved.id,
-      registered_at: saved.toState().registeredAt,
       // What the table keeps of the person, as its personal fields declare it: written here once the aggregate carries it, empty until then.
 {{personal.nullColumns}}
     };
 {{/if}}
 {{#unless personal.any}}
-    return { id: saved.id, registered_at: saved.toState().registeredAt };
+    return { id: saved.id };
 {{/unless}}
   },
 };
