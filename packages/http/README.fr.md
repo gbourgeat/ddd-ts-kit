@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:313b907e9b6ead67 -->
+<!-- translation-of: README.md sha256:0c1ab5ca69b5b61c -->
 
 # @ddd-ts-kit/http
 
@@ -1260,7 +1260,8 @@ pas poser, et le cas d'usage applique toujours ses règles : un formulaire porte
 présentation, jamais une règle métier.
 
 Des indications qui nomment un champ que le corps ne contient pas, ou une consultation qui n'est
-pas une route `GET`, arrêtent `formRoutes` avec une `DeclarationError`. `formDocumentsOf(routes)`
+pas une route `GET`, arrêtent `formRoutes` avec une `DeclarationError`, tout comme une propriété
+dont le nom contient un point, puisqu'un champ est nommé par son chemin. `formDocumentsOf(routes)`
 donne chaque formulaire en entier, dans les deux formats, pour la documentation : un projet
 généré par la CLI les écrit dans `openapi/forms/<operationId>.json` à côté de son contrat.
 

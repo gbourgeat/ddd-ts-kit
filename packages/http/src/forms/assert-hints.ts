@@ -12,9 +12,22 @@ interface Hinted {
   readonly hints: FormHints;
 }
 
-/** Every field a hint names is a field of the body, every lookup a `GET` route: a typo stops the build, not a user. */
+/**
+ * Every field a hint names is a field of the body, every lookup a `GET` route: a typo stops the
+ * build, not a user. A field of a form is named by its path, whose segments a dot separates: a
+ * property with a dot in its name would read as a nested field and lose its schema.
+ */
 export function assertHints({ operation, body, hints }: Hinted, lookups: ReadonlyMap<string, FieldLookup>): void {
-  const known = new Set(pathsOf(body, '', 0));
+  const paths = pathsOf(body, [], 0);
+  const dotted = paths.flat().find((name) => name.includes('.'));
+
+  if (dotted !== undefined) {
+    throw new DeclarationError(
+      `The form of "${operation}" holds the property "${dotted}": a field of a form is named by its path, whose segments a dot separates. Rename the property.`,
+    );
+  }
+
+  const known = new Set(paths.map((path) => path.join('.')));
 
   const named = [
     ...Object.keys(hints.fields ?? {}),
@@ -39,15 +52,17 @@ export function assertHints({ operation, body, hints }: Hinted, lookups: Readonl
   }
 }
 
-/** The fields of the body and of its nested objects, dotted; a schema that holds itself is followed a few levels only. */
-function pathsOf(node: SchemaNode, prefix: string, depth: number): string[] {
+/** The fields of the body and of its nested objects, each as its segments; a schema that holds itself is followed a few levels only. */
+function pathsOf(node: SchemaNode, prefix: readonly string[], depth: number): (readonly string[])[] {
   if (depth > MAX_DEPTH) {
     return [];
   }
 
-  return node
-    .properties()
-    .flatMap(([name, child]) => [`${prefix}${name}`, ...pathsOf(child, `${prefix}${name}.`, depth + 1)]);
+  return node.properties().flatMap(([name, child]) => {
+    const path = [...prefix, name];
+
+    return [path, ...pathsOf(child, path, depth + 1)];
+  });
 }
 
 function fieldsOfGroup(group: FormGroupHint): string[] {
