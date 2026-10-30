@@ -2,6 +2,7 @@ import { outsideConcern } from '../layers/outside-concern';
 import type { Flaw } from '../model/flaw';
 import type { Layer } from '../model/layer';
 import type { Location } from '../model/location';
+import type { Project } from '../model/project';
 import type { ResolvedImport } from '../model/resolved-import';
 import type { Rule } from '../model/rule';
 import { bindingPlace } from '../support/binding-place';
@@ -9,7 +10,7 @@ import { describeTarget } from '../support/describe-target';
 import { inLayer } from '../support/in-layer';
 import { isDeclaredStyle } from '../support/is-declared-style';
 import { perFile } from '../support/per-file';
-import { VALIDATION_PACKAGES } from '../schemas/validation-packages';
+import { payloadSchemaPackagesOf } from '../../config/payload-schema-packages-of';
 import { isBackgroundJobFile } from '../scheduling/is-background-job-file';
 
 const INWARD: readonly Layer[] = ['domain', 'application', 'published-language'];
@@ -27,7 +28,7 @@ interface Wiring {
 export const layerApplicationInward: Rule = {
   id: 'layer/application-inward',
   description:
-    'application/ imports domain/, application/, published languages and the allowed kernel packages: never infrastructure/, presentation/, a framework or a driver. A background job (application/background/*.background-job.ts) also imports the validation library its payload schema is written with.',
+    'application/ imports domain/, application/, published languages and the allowed kernel packages: never infrastructure/, presentation/, a framework or a driver. A background job (application/background/*.background-job.ts) also imports @ddd-ts-kit/validation and the validation library of the stack, for the schema of its payload.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => {
@@ -39,7 +40,7 @@ export const layerApplicationInward: Rule = {
 
       const wiring: Wiring = {
         context: here.context,
-        allowed: allowedPackages(file.path, here, project.config.applicationAllowedPackages),
+        allowed: allowedPackages(file.path, here, project.config),
         binding: bindingPlace(project, here.context),
         declared: isDeclaredStyle(project),
       };
@@ -53,10 +54,14 @@ export const layerApplicationInward: Rule = {
 
 /**
  * A stored payload outlives the deploy that enqueued it, like the payload of an integration
- * event: a background job declares its schema with the validation library of the project.
+ * event: a background job declares its schema with the validation library of the stack.
  */
-function allowedPackages(path: string, here: Location, configured: readonly string[]): readonly string[] {
-  return isBackgroundJobFile(path, here) ? [...configured, ...VALIDATION_PACKAGES] : configured;
+function allowedPackages(path: string, here: Location, config: Project['config']): readonly string[] {
+  const configured = config.applicationAllowedPackages;
+
+  return isBackgroundJobFile(path, here)
+    ? [...configured, ...payloadSchemaPackagesOf(config.stack.validation)]
+    : configured;
 }
 
 function outward({ target, specifier }: ResolvedImport, wiring: Wiring): Flaw[] {

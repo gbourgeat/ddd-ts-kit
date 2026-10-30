@@ -14,6 +14,7 @@ import { source } from './source';
 const { ADAPTER, AGGREGATE, BILLING, COMMAND, HANDLER, MODULE, REPOSITORY_PORT, ROUTE } = PATHS;
 
 const PURGE_JOB = `${BILLING}/application/background/purge-drafts.background-job.ts`;
+const NESTED_JOB = `${BILLING}/application/reports/background/purge-drafts.background-job.ts`;
 
 export const LAYER_FIXTURES: readonly Fixture[] = [
   {
@@ -130,6 +131,19 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
     name: 'a background job importing a driver: only the validation library is allowed there',
     expect: { file: PURGE_JOB },
     files: purgeJob("import type { Knex } from 'knex';", 'export type K = Knex;'),
+  },
+  {
+    ruleId: 'layer/application-inward',
+    name: 'a background job importing a validation library other than the one of the stack',
+    expect: { file: PURGE_JOB },
+    files: purgeJob("import { IsString } from 'class-validator';", 'export { IsString };'),
+  },
+  {
+    ruleId: 'layer/application-inward',
+    name: 'a background job in a background folder deeper than application/background/',
+    expect: { file: NESTED_JOB },
+    also: ['tree/closed'],
+    files: purgeJobAt(NESTED_JOB),
   },
   {
     ruleId: 'layer/application-inward',
@@ -286,8 +300,12 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
 
 /** A background job and its payload schema in zod, the module file registering it, its spec. */
 function purgeJob(...imports: readonly string[]) {
+  return purgeJobAt(PURGE_JOB, ...imports);
+}
+
+function purgeJobAt(file: string, ...imports: readonly string[]) {
   return project({
-    [PURGE_JOB]: source(
+    [file]: source(
       "import { z } from 'zod';",
       "import type { BackgroundJob, BackgroundJobExecution, CommandBus } from '@ddd-ts-kit/kernel';",
       "import { zodSchema } from '@ddd-ts-kit/validation/zod';",
@@ -307,7 +325,7 @@ function purgeJob(...imports: readonly string[]) {
     ),
     [`${BILLING}/test/unit/purge-drafts.background-job.spec.ts`]: SAMPLES.SPEC,
     [MODULE]: source(
-      "import { PurgeDraftsBackgroundJob } from '@/contexts/billing/application/background/purge-drafts.background-job.js';",
+      `import { PurgeDraftsBackgroundJob } from '@/${file.replace(/^src\//, '').replace(/\.ts$/, '.js')}';`,
       '',
       'export function billingModule(platform: Platform): void {',
       '  platform.backgroundJobs.register(PurgeDraftsBackgroundJob, [platform.commands]);',

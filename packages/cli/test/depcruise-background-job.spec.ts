@@ -9,6 +9,7 @@ const BILLING = 'src/contexts/billing';
 const JOB = `${BILLING}/application/background/compile-statements.background-job.ts`;
 const NEXT_TO_IT = `${BILLING}/application/background/statements.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
+const NESTED = `${BILLING}/application/reports/background/statements.background-job.ts`;
 
 const SCHEMA_IMPORTS =
   "import { z } from 'zod';\nimport { zodSchema } from '@ddd-ts-kit/validation/zod';\nexport { z, zodSchema };\n";
@@ -29,19 +30,34 @@ describe('the dependency-cruiser file init writes, on a background job', () => {
       JSON.stringify({ compilerOptions: { module: 'esnext', moduleResolution: 'bundler' } }),
     );
 
-    write(root, JOB, `${SCHEMA_IMPORTS}import type { Knex } from 'knex';\nexport type K = Knex;\n`);
+    write(
+      root,
+      JOB,
+      `${SCHEMA_IMPORTS}import type { Knex } from 'knex';\nimport { IsString } from 'class-validator';\nexport type K = Knex;\nexport { IsString };\n`,
+    );
+
     write(root, NEXT_TO_IT, SCHEMA_IMPORTS);
     write(root, HANDLER, SCHEMA_IMPORTS);
+    write(root, NESTED, SCHEMA_IMPORTS);
   });
 
-  it('lets the job import the validation library of its payload schema, and nothing more', () => {
-    expect(violationsOf(root, JOB)).toEqual(['layer-application-inward: knex']);
+  it('lets the job import the validation library of the stack, and neither another one nor a driver', () => {
+    expect(violationsOf(root, JOB)).toEqual([
+      'layer-application-inward: class-validator',
+      'layer-application-inward: knex',
+    ]);
   });
 
   it('refuses that library to any other file of the application layer, next to the job or in a handler', () => {
     const refused = ['layer-application-inward: @ddd-ts-kit/validation/zod', 'layer-application-inward: zod'];
 
     expect([violationsOf(root, NEXT_TO_IT), violationsOf(root, HANDLER)]).toEqual([refused, refused]);
+  });
+
+  it('refuses it to a background job deeper than application/background/, as the checker does', () => {
+    const refused = ['layer-application-inward: @ddd-ts-kit/validation/zod', 'layer-application-inward: zod'];
+
+    expect(violationsOf(root, NESTED)).toEqual(refused);
   });
 });
 

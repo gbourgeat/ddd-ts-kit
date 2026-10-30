@@ -83,6 +83,8 @@ export interface Config {
   readonly domainAllowedPackages: readonly string[];
   readonly applicationAllowedPackages: readonly string[];
   readonly publishedLanguageAllowedPackages: readonly string[];
+  /** What a background job imports for the schema of its payload: `@ddd-ts-kit/validation` and the library of `stack.validation`. */
+  readonly payloadSchemaPackages: readonly string[];
   readonly limits: Limits;
   /** Files exempt from the count of `clean/one-export-per-file`, never from its file name check. */
   readonly onePerFile: OnePerFile;

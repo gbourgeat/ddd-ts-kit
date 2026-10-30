@@ -1,3 +1,4 @@
+import type { Config } from '../project/config';
 import type { ContextLocation } from '../project/location';
 import type { ImportTarget } from '../project/resolve-import';
 import type { Layer } from '../project/layer';
@@ -10,7 +11,6 @@ import { inLayer } from '../support/imports/in-layer';
 import { OUTSIDE_CONCERN_MESSAGE } from '../support/outside-concerns/outside-concern-message';
 import { outsideConcern } from '../support/outside-concerns/outside-concern';
 import { isBackgroundJobFile } from '../support/scheduling/is-background-job-file';
-import { VALIDATION_PACKAGES } from '../support/schemas/validation-packages';
 
 const INWARD: readonly Layer[] = ['domain', 'application', 'published-language'];
 
@@ -19,7 +19,7 @@ export const layerApplicationInward = defineRule<'package' | 'outsideConcern' | 
   type: 'problem',
   recommended: 'error',
   description:
-    'application/ imports domain/, application/, published languages and the allowed kernel packages: never infrastructure/, presentation/, a framework or a driver. A background job (application/background/*.background-job.ts) also imports the validation library its payload schema is written with.',
+    'application/ imports domain/, application/, published languages and the allowed kernel packages: never infrastructure/, presentation/, a framework or a driver. A background job (application/background/*.background-job.ts) also imports @ddd-ts-kit/validation and the validation library of the stack, for the schema of its payload.',
   messages: {
     outsideConcern: OUTSIDE_CONCERN_MESSAGE,
     package:
@@ -36,7 +36,7 @@ export const layerApplicationInward = defineRule<'package' | 'outsideConcern' | 
       return {};
     }
 
-    const allowed = allowedPackages(file.path, here, file.config.applicationAllowedPackages);
+    const allowed = allowedPackages(file.path, here, file.config);
     const declares = isDeclaredStyle(file);
 
     return importListener(file, ({ node, target, specifier }) => {
@@ -68,10 +68,12 @@ export const layerApplicationInward = defineRule<'package' | 'outsideConcern' | 
 
 /**
  * A stored payload outlives the deploy that enqueued it, like the payload of an integration
- * event: a background job declares its schema with the validation library of the project.
+ * event: a background job declares its schema with the validation library of the stack.
  */
-function allowedPackages(path: string, here: ContextLocation, configured: readonly string[]): readonly string[] {
-  return isBackgroundJobFile(path, here) ? [...configured, ...VALIDATION_PACKAGES] : configured;
+function allowedPackages(path: string, here: ContextLocation, config: Config): readonly string[] {
+  const configured = config.applicationAllowedPackages;
+
+  return isBackgroundJobFile(path, here) ? [...configured, ...config.payloadSchemaPackages] : configured;
 }
 
 function pointsOutward(here: ContextLocation, target: Extract<ImportTarget, { kind: 'file' }>): boolean {

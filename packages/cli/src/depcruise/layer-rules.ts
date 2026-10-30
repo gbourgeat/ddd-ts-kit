@@ -3,9 +3,9 @@ import type { CruiseRule } from './cruise-rule';
 import { escapePattern } from './escape-pattern';
 import { packagePatterns } from './package-patterns';
 import { testFiles } from './test-files';
-import { VALIDATION_PACKAGES } from '../check/schemas/validation-packages';
+import { payloadSchemaPackagesOf } from '../config/payload-schema-packages-of';
 
-/** A background job of a context, `application/background/*.background-job.ts`, past the layer. */
+/** A background job of a context, `application/background/*.background-job.ts` and no deeper, past the layer. */
 const BACKGROUND_JOB_FILE = '/background/[^/]+\\.background-job\\.ts$';
 
 export function layerRules(config: Config): CruiseRule[] {
@@ -53,7 +53,7 @@ function applicationInward(config: Config): CruiseRule {
       'application/ imports domain/, application/, the code list and the permission set of its context, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
     from: {
       path: `${contextOf(config)}/${inAnyModule('application')}/`,
-      pathNot: [...testFiles(config), BACKGROUND_JOB_FILE],
+      pathNot: [...testFiles(config), backgroundJobOf(config)],
     },
     to: { pathNot: [...inwardOf(config), ...packagePatterns(config.applicationAllowedPackages)] },
   };
@@ -64,19 +64,24 @@ function applicationInward(config: Config): CruiseRule {
  * with: a stored payload outlives the deploy that enqueued it, like the payload of an integration event.
  */
 function backgroundJobInward(config: Config): CruiseRule {
-  const allowed = [...config.applicationAllowedPackages, ...VALIDATION_PACKAGES];
+  const allowed = [...config.applicationAllowedPackages, ...payloadSchemaPackagesOf(config.stack.validation)];
 
   return {
     name: 'layer-application-inward',
     severity: 'error',
     comment:
-      'A background job (application/background/*.background-job.ts) imports what application/ imports, and the validation library its payload schema is written with. Depend on a port and let the composition root bind the adapter.',
+      'A background job (application/background/*.background-job.ts) imports what application/ imports, @ddd-ts-kit/validation and the validation library of the stack, for the schema of its payload. Depend on a port and let the composition root bind the adapter.',
     from: {
-      path: `${contextOf(config)}/${inAnyModule('application')}${BACKGROUND_JOB_FILE}`,
+      path: backgroundJobOf(config),
       pathNot: testFiles(config),
     },
     to: { pathNot: [...inwardOf(config), ...packagePatterns(allowed)] },
   };
+}
+
+/** Anchored at the layer: a `background/` folder deeper in it holds no background job. */
+function backgroundJobOf(config: Config): string {
+  return `${contextOf(config)}/${inAnyModule('application')}${BACKGROUND_JOB_FILE}`;
 }
 
 /** What every file of application/ may import inside the project. */

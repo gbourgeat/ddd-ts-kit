@@ -1,18 +1,5 @@
 import type { Config } from './config';
-import { isOneOf } from './is-one-of';
-import { VALIDATION_STACKS, type ValidationStack } from './stack';
-
-/**
- * An integration event is declared with a payload schema, so a published language needs
- * the declaration helper and the schema library of the project, and nothing else.
- */
-const SCHEMA_LIBRARIES: Readonly<Record<ValidationStack, readonly string[]>> = {
-  zod: ['zod'],
-  'class-validator': ['class-validator', 'class-transformer'],
-  typebox: ['typebox'],
-  'standard-schema': [],
-  none: [],
-};
+import { schemaLibrariesOf } from './schema-libraries-of';
 
 export type AllowedPackages = Pick<
   Config,
@@ -26,7 +13,7 @@ export type AllowedPackages = Pick<
  */
 export function defaultAllowedPackages(validation: string): AllowedPackages {
   const kernel = '@ddd-ts-kit/kernel';
-  const schemaLibraries = isOneOf(VALIDATION_STACKS, validation) ? SCHEMA_LIBRARIES[validation] : [];
+  const schemaLibraries = schemaLibrariesOf(validation);
 
   return {
     domainAllowedPackages: [kernel],

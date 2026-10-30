@@ -126,10 +126,11 @@ ruleTester.run('layer-domain-purity', layerDomainPurity, {
 
 ruleTester.run('layer-application-inward', layerApplicationInward, {
   valid: [
-    at(
-      BACKGROUND_JOB,
-      "import { z } from 'zod';\nimport { zodSchema } from '@ddd-ts-kit/validation/zod';\nimport { IsString } from 'class-validator';",
-    ),
+    at(BACKGROUND_JOB, "import { z } from 'zod';\nimport { zodSchema } from '@ddd-ts-kit/validation/zod';"),
+    at(BACKGROUND_JOB, "import { IsString } from 'class-validator';", {
+      ...SAMPLE_CONFIG,
+      stack: { validation: 'class-validator' },
+    }),
     at(HANDLER, "import type { Clock } from '@ddd-ts-kit/kernel';"),
     at(HANDLER, "import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js';"),
     at(HANDLER, "import type { PaymentGateway } from '../../ports/payment-gateway.port.js';"),
@@ -155,6 +156,17 @@ ruleTester.run('layer-application-inward', layerApplicationInward, {
     },
     {
       ...at(`${BILLING}/application/background/statements.ts`, "import { z } from 'zod';"),
+      errors: [{ messageId: 'package', data: { name: 'zod', context: 'billing' } }],
+    },
+    {
+      ...at(BACKGROUND_JOB, "import { IsString } from 'class-validator';\nimport * as v from 'valibot';"),
+      errors: [
+        { messageId: 'package', data: { name: 'class-validator', context: 'billing' } },
+        { messageId: 'package', data: { name: 'valibot', context: 'billing' } },
+      ],
+    },
+    {
+      ...at(`${BILLING}/application/reports/background/statements.background-job.ts`, "import { z } from 'zod';"),
       errors: [{ messageId: 'package', data: { name: 'zod', context: 'billing' } }],
     },
     {
