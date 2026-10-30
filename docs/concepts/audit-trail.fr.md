@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:f43d9f9cf7b464fc -->
+<!-- translation-of: audit-trail.md sha256:55f594f588d0f17f -->
 
 # Journal d'audit
 
@@ -220,7 +220,9 @@ rendez-vous appartient à ce dernier groupe.
 Chaque entrée stocke le hachage de la précédente et son propre hachage, calculé sur une forme
 canonique que n'importe quel programme, dans n'importe quel langage, peut recalculer. Modifier,
 supprimer ou réordonner une entrée rompt la chaîne à un endroit que la vérification nomme :
-contenu altéré, entrée manquante ou réordonnancement.
+contenu altéré, entrée manquante ou réordonnancement. Une entrée est hachée telle que le store la
+garde, un texte qui ne peut pas être stocké tel quel recevant un caractère de remplacement à sa
+place : une chaîne à laquelle personne n'a touché se vérifie toujours.
 
 ![Quatre entrées de la chaîne tenant:acme, chacune gardant le hachage de la précédente ; verifyChain signale une entrée modifiée, supprimée ou intervertie, et un point de contrôle copié ailleurs détecte une chaîne réécrite en entier](../assets/diagrams/audit-trail-hash-chain.fr.svg)
 
@@ -267,7 +269,13 @@ peut pas écrire. C'est l'ancrage : à intervalles réguliers, un point de contr
 hachage à une position donnée) part ailleurs, par exemple dans une autre base de données sous un
 autre rôle, un stockage objet avec verrouillage de rétention, un journal de transparence ou un
 horodatage signé. La vérification ultérieure compare la chaîne à ces points de contrôle. Une fin
-de chaîne tronquée ne se voit qu'en comparant avec un point de contrôle plus récent.
+de chaîne tronquée ne se voit qu'en comparant avec un point de contrôle plus récent : une chaîne
+qui s'arrête avant un point de contrôle qu'on lui donne ne se vérifie pas.
+
+Une vérification signale la première rupture et s'arrête là : au-delà, la chaîne ne prouve rien
+de ce qui suit. Qui a examiné une rupture reprend à l'entrée suivante. Une chaîne qui a des
+archives se vérifie depuis l'ancre de sa dernière archive, que l'appelant nomme : les entrées
+d'avant ont quitté la base.
 
 La vérification devrait s'exécuter selon une planification et alerter ; une chaîne que personne
 ne vérifie ne prouve rien en pratique.
@@ -282,7 +290,8 @@ de l'archive précédente ; écrites dans un fichier par plage ; enregistrées a
 dernière et l'empreinte du fichier ; puis supprimées, ce que la garde n'autorise que pour des
 entrées couvertes. Les entrées restées en base se rattachent à ce dernier hash, et chaque fichier
 se vérifie de nouveau seul, contre son enregistrement et l'archive qui le précède. Une chaîne qui
-ne se vérifie pas n'est pas archivée : une rupture est à examiner par quelqu'un.
+ne se vérifie pas n'est pas archivée, une rupture étant à examiner par quelqu'un, et n'arrête
+aucune autre chaîne : les autres sont archivées, puis les refus sont signalés ensemble.
 
 Un projet généré dont le journal est en base le fait le premier jour de chaque mois et garde douze
 mois entiers en ligne, par défaut avec un stockage objet et seulement sur demande avec un stockage

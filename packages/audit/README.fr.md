@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2e8a087727d82b23 -->
+<!-- translation-of: README.md sha256:1c49373595764ffb -->
 
 # @ddd-ts-kit/audit
 
@@ -20,7 +20,7 @@ npm i typeorm          # seulement pour @ddd-ts-kit/audit/typeorm
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`) et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
 | `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | rien : le client de l'unité de travail de `@ddd-ts-kit/prisma` convient structurellement |
@@ -219,6 +219,12 @@ langage :
 - `occurredAt` écrit en ISO 8601 UTC avec les millisecondes (`2026-03-01T10:00:00.000Z`) ;
 - les chaînes et les nombres tels que `JSON.stringify` les écrit.
 
+Une entrée est hachée telle qu'un store la garde. Un surrogate sans sa paire n'a pas d'encodage
+UTF-8 et PostgreSQL refuse NUL : chaque texte d'une entrée, les clés de `changes` et d'`extensions`
+et le nom de la chaîne compris, est donc scellé avec U+FFFD à leur place : ce qui est relu est ce
+qui a été haché, quoi que contienne un enregistrement. `wellFormed` donne cette forme, à un store
+écrit par vos soins aussi.
+
 La première entrée d'une chaîne a un `previousHash` égal à `GENESIS_HASH` (64 zéros).
 
 ## Brancher les sources
@@ -330,6 +336,12 @@ travail.
   plus ; le *middleware* écrit alors l'entrée `failed` hors de celle-ci, et relève l'échec du cas
   d'usage. Si cette écriture échoue elle aussi, l'appelant reçoit tout de même l'échec du cas
   d'usage, et `onLostRecord` en est informé.
+
+`logLostRecords(logger)` est un `onLostRecord` qui écrit une ligne `audit entry lost` dans le
+journal applicatif, au niveau `error` : la catégorie, l'action et le motif de l'entrée, le type et
+le code de l'échec, jamais son message, qui cite des données. Un projet généré avec le journal
+d'audit le passe à `auditMiddleware`, `auditedSubjectKeys`, `auditedPersonalDataExport` et
+`auditedPersonalDataRetention`, dans l'application et dans les scripts de `--privacy on`.
 
 ![CancelAppointment passe d'abord par l'autorisation : refusée, elle laisse une entrée authorization denied et n'ouvre aucune transaction ; autorisée, le middleware d'audit ouvre la transaction et le gestionnaire s'y exécute ; en cas de succès, l'entrée succeeded est écrite dans la même transaction et validée avec le changement, ou aucun des deux n'existe ; en cas d'échec, la transaction est annulée, puis l'entrée failed est écrite hors de celle-ci avec le code de l'erreur](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-transaction.fr.svg)
 
@@ -697,13 +709,13 @@ const outcome = await verifyChain(reader, { chain: 'tenant:acme' });
 // { valid: false, checked: 311, break: { kind: 'altered-content', chain: 'tenant:acme', position: 311, sequence: 312, entryId: '...' } }
 ```
 
-`verifyChain(entries | reader, { chain?, from?, to?, checkpoints? })` parcourt une chaîne dans
+`verifyChain(entries | reader, { chain?, from?, to?, checkpoints?, after? })` parcourt une chaîne dans
 l'ordre donné et signale le **premier** endroit où elle cesse de tenir :
 
 | Genre | Signification |
 |---|---|
 | `altered-content` | l'entrée ne se hache pas en son `hash`, ne se lie pas à l'entrée qui la précède, ou contredit un point de contrôle |
-| `missing-entry` | la séquence attendue n'est nulle part dans ce qui a été examiné (un trou, une tête manquante, une chaîne plus courte que `to`) |
+| `missing-entry` | la séquence attendue n'est nulle part dans ce qui a été examiné (un trou, une tête manquante, une chaîne plus courte que `to` ou que le dernier point de contrôle donné) |
 | `reordered` | la séquence attendue existe ailleurs, ou une position apparaît deux fois |
 
 `position` est l'indice parmi les entrées examinées de la chaîne, `sequence` la séquence qui y
@@ -711,7 +723,17 @@ l'ordre donné et signale le **premier** endroit où elle cesse de tenir :
 ne sont jamais triées d'abord : un fichier mélangé est signalé comme tel. Avec un lecteur, `chain`
 est obligatoire et la plage est lue page par page, puis tenue en mémoire : vérifiez les longues
 chaînes par plages (`from`, `to`). Une plage qui commence au-dessus de 1 fait confiance à l'entrée
-qui la précède.
+qui la précède. Une chaîne qui a des archives se vérifie
+[depuis l'ancre de la dernière](#archivage).
+
+Le parcours s'arrête à sa première rupture : au-delà, la chaîne ne prouve rien de ce qui suit, et
+après une entrée disparue ou déplacée, l'endroit où elle reprend serait une supposition. La
+rupture est la réponse, et qui l'a examinée reprend le parcours à l'entrée suivante, ce qui fait
+confiance à cette entrée :
+
+```ts
+await verifyChain(reader, { chain: 'tenant:acme', from: 313 });
+```
 
 ![Quatre entrées de la chaîne tenant:acme, chacune gardant le hachage de l'entrée précédente et le sien, la première liée au hachage d'origine ; une entrée modifiée est signalée comme altered-content, une entrée supprimée comme missing-entry, deux entrées interverties comme reordered ; une chaîne réécrite en entier redevient valide : c'est donc un point de contrôle copié là où le propriétaire du journal ne peut pas écrire qui le révèle](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-hash-chain.fr.svg)
 
@@ -737,7 +759,10 @@ Ajouter là le point de contrôle à l'outbox fait qu'il ne part que si l'entré
 annulée ensuite. L'endroit où vont les points de contrôle est le choix du projet : une autre base
 de données sous un autre rôle, un stockage d'objets avec verrou de rétention, un journal de
 transparence, un horodatage signé. Une fin tronquée (les dernières entrées supprimées) ne se voit
-qu'en comparant avec un point de contrôle ultérieur ou en demandant `to`.
+qu'en comparant avec un point de contrôle ultérieur ou en demandant `to` : une chaîne qui s'arrête
+avant le dernier point de contrôle donné est signalée `missing-entry` à la première position
+disparue, dans la limite de `to` quand il y en a un. Avec des entrées sans `chain`, une chaîne
+qu'un point de contrôle nomme et qu'aucune entrée ne porte est signalée de la même façon.
 
 ## Archivage
 
@@ -759,12 +784,14 @@ l'archive qui les précède ; elles sont écrites dans un fichier, un JSON canon
 l'archive est enregistrée dans `audit_archives` (plage, dernier hash, SHA-256 du fichier) ; puis
 les entrées sont supprimées. La garde de la table ne laisse passer un `DELETE` que pour des
 entrées qu'une archive couvre, et refuse toute modification des archives elles-mêmes. Une chaîne
-qui ne se vérifie pas est refusée avec `AuditArchiveRefusedError` et garde toutes ses entrées :
-une rupture est à examiner par l'opérateur, pas à enfouir dans un fichier. Le fichier est écrit,
-puis relu depuis le stockage et son empreinte vérifiée, avant la validation de la transaction : un
-stockage qui ne l'a pas gardé est refusé avec `AuditArchiveNotStoredError` et rien n'est supprimé ;
-un échec ensuite laisse un fichier qu'aucune archive ne nomme, que le passage suivant réécrit sous
-la même clé.
+qui ne se vérifie pas garde toutes ses entrées, une rupture étant à examiner par l'opérateur, pas à
+enfouir dans un fichier, et n'arrête aucune autre chaîne : chacune est tentée, puis
+`AuditArchiveRefusedError` dit ce qui a été refusé (`refusals`, chacun avec sa `chain` et son
+`chainBreak`) et ce que les autres ont archivé (`archives`). Le fichier est écrit, puis relu depuis
+le stockage et son empreinte vérifiée, avant la validation de la transaction : un stockage qui ne
+l'a pas gardé est refusé avec `AuditArchiveNotStoredError`, qui met fin au passage, et rien de
+cette chaîne n'est supprimé ; un échec ensuite laisse un fichier qu'aucune archive ne nomme, que
+le passage suivant réécrit sous la même clé.
 
 Ce que le journal prouvait reste démontrable :
 
@@ -773,8 +800,15 @@ const [first, second] = await trail.archivesOf('tenant:acme');
 verifyArchive(await textOf(files, second.fileKey), second, first);
 // { valid: true, entries: 1830 } : l'empreinte, la plage, chaque hash et chaque lien, le dernier hash
 await verifyChain(trail, { chain: 'tenant:acme', after: { chain: 'tenant:acme', sequence: second.toSequence, hash: second.lastHash } });
-// les entrées restées en base se rattachent à l'ancre de la dernière archive
+// { valid: true, checked: 1204 } : les entrées restées en base se rattachent à l'ancre de la dernière archive
 ```
+
+`after` dit où commence le parcours : à la position qui suit l'ancre, au hash de laquelle la
+première entrée doit se lier. Une chaîne qui a des archives se vérifie ainsi. Sa première entrée a
+quitté la base, donc `verifyChain(trail, { chain })` répond `missing-entry` à la séquence 1, comme
+pour une chaîne dont la tête a été supprimée : le parcours ne lit pas les archives de lui-même.
+Une ancre est ce que dit une ligne d'`audit_archives` tant que `verifyArchive` ne l'a pas prouvée
+contre son fichier : c'est donc l'appelant qui nomme celle à laquelle il se fie.
 
 `ArchiveAuditEntries(trail, files, clock, monthsOnline = 12)` est la tâche planifiée de la
 plateforme : chaque passage archive les entrées antérieures au premier jour du mois situé
@@ -893,8 +927,11 @@ Un nouveau store passe la même suite que ceux-ci :
 
 ```ts
 import { auditTrailContract } from '@ddd-ts-kit/audit/testing';
-auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail', createTrail: () => freshTrail(), tamper });
+auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail', createTrail: () => freshTrail(), tamper, cut });
 ```
+
+`tamper` et `cut` font ce que ferait quelqu'un qui a accès au stockage, réécrire une entrée ou
+retirer la fin d'une chaîne ; sans eux, la suite le vérifie sur ce qu'elle a lu.
 
 ## Interroger le journal
 

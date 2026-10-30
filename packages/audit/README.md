@@ -18,7 +18,7 @@ npm i typeorm          # only for @ddd-ts-kit/audit/typeorm
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (optional peer) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (optional peer) |
 | `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | nothing: the client of the unit of work of `@ddd-ts-kit/prisma` fits structurally |
@@ -213,6 +213,11 @@ form (`canonicalize`) is meant to be computed again by any program, in any langu
 - `occurredAt` written in ISO 8601 UTC with milliseconds (`2026-03-01T10:00:00.000Z`);
 - strings and numbers as `JSON.stringify` writes them.
 
+An entry is hashed as a store keeps it. A surrogate without its pair has no UTF-8 encoding and
+PostgreSQL refuses NUL, so every text of an entry, the keys of `changes` and `extensions` and the
+name of the chain included, is sealed with U+FFFD in their place: what is read back is what was
+hashed, whatever a record held. `wellFormed` gives that form, to a store of your own as well.
+
 The first entry of a chain has `previousHash` equal to `GENESIS_HASH` (64 zeros).
 
 ## Wiring the sources
@@ -319,6 +324,12 @@ that was then refused). Hence the arrangement: the middleware is installed **bef
   then writes the `failed` entry outside of it, and rethrows the failure of the use case. If
   that write fails too, the caller still receives the failure of the use case, and
   `onLostRecord` is told.
+
+`logLostRecords(logger)` is an `onLostRecord` that writes one `audit entry lost` line to the log,
+at level `error`: the category, the action and the reason of the entry, the type and the code of
+the failure, never its message, which quotes data. A project generated with the trail on passes
+it to `auditMiddleware`, `auditedSubjectKeys`, `auditedPersonalDataExport` and
+`auditedPersonalDataRetention`, in the application and in the scripts of `--privacy on`.
 
 ![CancelAppointment reaches authorization first: denied, it leaves one authorization denied entry and opens no transaction; allowed, the audit middleware opens the transaction and the handler runs in it; on success the succeeded entry is written in the same transaction and commits with the change, or neither exists; on failure the transaction rolls back, then the failed entry is written outside of it with the code of the error](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-transaction.svg)
 
@@ -669,20 +680,29 @@ const outcome = await verifyChain(reader, { chain: 'tenant:acme' });
 // { valid: false, checked: 311, break: { kind: 'altered-content', chain: 'tenant:acme', position: 311, sequence: 312, entryId: '...' } }
 ```
 
-`verifyChain(entries | reader, { chain?, from?, to?, checkpoints? })` walks a chain in the
+`verifyChain(entries | reader, { chain?, from?, to?, checkpoints?, after? })` walks a chain in the
 order given and reports the **first** place where it stops holding:
 
 | Kind | Meaning |
 |---|---|
 | `altered-content` | the entry does not hash to its `hash`, does not link to the entry before it, or disagrees with a checkpoint |
-| `missing-entry` | the expected sequence is nowhere in what was examined (a hole, a missing head, a chain shorter than `to`) |
+| `missing-entry` | the expected sequence is nowhere in what was examined (a hole, a missing head, a chain shorter than `to` or than the last checkpoint given) |
 | `reordered` | the expected sequence exists elsewhere, or a position appears twice |
 
 `position` is the index among the examined entries of the chain, `sequence` the sequence that
 was expected there. Given entries (an export), every chain found is verified, and the entries
 are never sorted first: a shuffled file is reported as such. Given a reader, `chain` is
 required and the range is read page by page, then held in memory: verify long chains by ranges
-(`from`, `to`). A range starting above 1 trusts the entry before it.
+(`from`, `to`). A range starting above 1 trusts the entry before it. A chain that has archives
+is verified [from the anchor of the last one](#archiving).
+
+The walk stops at its first break: past it the chain proves nothing of what comes next, and after
+an entry that is gone or out of place where it goes on would be a guess. The break is the answer,
+and whoever has looked at it walks on from the entry after it, which trusts that entry:
+
+```ts
+await verifyChain(reader, { chain: 'tenant:acme', from: 313 });
+```
 
 ![Four entries of the chain tenant:acme, each holding the hash of the entry before it and its own, the first linked to the genesis hash; a changed entry is reported as altered-content, a removed one as missing-entry, two swapped as reordered; a chain rewritten as a whole is valid again, so a checkpoint copied where the trail's owner cannot write is what shows it](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-hash-chain.svg)
 
@@ -706,7 +726,10 @@ the checkpoint to the outbox there makes it leave only if the entry commits; a h
 a remote service directly may anchor an entry whose transaction rolls back afterwards. Where
 the checkpoints go is the project's choice: another database under another role, an object
 store with retention lock, a transparency log, a signed timestamp. A truncated tail (the last
-entries removed) is only seen by comparing with a later checkpoint or by asking for `to`.
+entries removed) is only seen by comparing with a later checkpoint or by asking for `to`: a chain
+that stops before the last checkpoint given is reported `missing-entry` at the first position
+gone, inside `to` when there is one. Given entries without `chain`, a chain a checkpoint names and
+no entry holds is reported the same way.
 
 ## Archiving
 
@@ -727,12 +750,14 @@ archive and older than the date, without a hole, are verified from the anchor of
 before them; they are written to one file, one canonical JSON per line; the archive is recorded
 in `audit_archives` (range, last hash, SHA-256 of the file); then the entries are deleted. The
 guard of the table lets a `DELETE` through only for entries an archive covers, and refuses any
-change to the archives themselves. A chain that does not verify is refused with
-`AuditArchiveRefusedError` and keeps every entry: a break is for the operator to look at, not to
-bury in a file. The file is written, then read back from the storage and its digest checked,
-before the transaction commits: a storage that did not keep it is refused with
-`AuditArchiveNotStoredError` and nothing is removed; a failure afterwards leaves a file no archive
-names, which the next run writes again under the same key.
+change to the archives themselves. A chain that does not verify keeps every entry, a break being
+for the operator to look at, not to bury in a file, and stops no other chain: each one is tried,
+then `AuditArchiveRefusedError` says what was refused (`refusals`, each with its `chain` and its
+`chainBreak`) and what the others archived (`archives`). The file is written, then read back from
+the storage and its digest checked, before the transaction commits: a storage that did not keep it
+is refused with `AuditArchiveNotStoredError`, which ends the run, and nothing of that chain is
+removed; a failure afterwards leaves a file no archive names, which the next run writes again
+under the same key.
 
 What the trail proved stays provable:
 
@@ -741,8 +766,15 @@ const [first, second] = await trail.archivesOf('tenant:acme');
 verifyArchive(await textOf(files, second.fileKey), second, first);
 // { valid: true, entries: 1830 }: the digest, the range, every hash and link, the last hash
 await verifyChain(trail, { chain: 'tenant:acme', after: { chain: 'tenant:acme', sequence: second.toSequence, hash: second.lastHash } });
-// the entries left in the database link to the anchor of the last archive
+// { valid: true, checked: 1204 }: the entries left in the database link to the anchor of the last archive
 ```
+
+`after` says where the walk starts: at the position after the anchor, whose hash the first entry
+must link to. A chain that has archives is verified that way. Its first entry has left the
+database, so `verifyChain(trail, { chain })` answers `missing-entry` at sequence 1, as for a chain
+whose head was removed: the walk does not read the archives on its own. An anchor is what a row
+of `audit_archives` says until `verifyArchive` has proved it against its file, so the caller names
+the one it trusts.
 
 `ArchiveAuditEntries(trail, files, clock, monthsOnline = 12)` is the scheduled job of the
 platform: each run archives the entries older than the first day of the month `monthsOnline`
@@ -855,8 +887,11 @@ A new store passes the same suite as these:
 
 ```ts
 import { auditTrailContract } from '@ddd-ts-kit/audit/testing';
-auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail', createTrail: () => freshTrail(), tamper });
+auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail', createTrail: () => freshTrail(), tamper, cut });
 ```
+
+`tamper` and `cut` do what somebody with access to the storage does, rewrite an entry or remove the
+end of a chain; without them the suite checks that on what it read.
 
 ## Querying
 

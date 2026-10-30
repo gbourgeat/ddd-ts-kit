@@ -21,6 +21,7 @@ export { canonicalize } from './chain/canonicalize';
 export { GLOBAL_CHAIN, chainOfTenant } from './chain/chain-of-tenant';
 export { GENESIS_HASH } from './chain/genesis-hash';
 export { hashOf, type UnsealedEntry } from './chain/hash-of';
+export { wellFormed } from './chain/well-formed';
 export type { SealingOptions } from './chain/sealing-options';
 export type { AuditTrailOptions } from './trail/audit-trail-options';
 export { InMemoryAuditTrail } from './trail/in-memory-audit-trail';
@@ -70,6 +71,7 @@ export {
   type AuditedSubjectKeysOptions,
 } from './sources/audited-subject-keys';
 export type { AuthorizationDecision } from './sources/authorization-decision';
+export { logLostRecords } from './sources/log-lost-records';
 export { TenantAuditReader } from './tenancy/tenant-audit-reader';
 export type { ArchivableAuditTrail } from './archive/archivable-audit-trail';
 export type { ArchiveOptions } from './archive/archive-options';
@@ -79,5 +81,5 @@ export { archiveKeyOf } from './archive/archive-key-of';
 export type { AuditArchive } from './archive/audit-archive';
 export type { AuditArchiveReport } from './archive/audit-archive-report';
 export { AuditArchiveNotStoredError } from './archive/audit-archive-not-stored-error';
-export { AuditArchiveRefusedError } from './archive/audit-archive-refused-error';
+export { AuditArchiveRefusedError, type AuditArchiveRefusal } from './archive/audit-archive-refused-error';
 export { verifyArchive } from './archive/verify-archive';

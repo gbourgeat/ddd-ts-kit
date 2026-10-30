@@ -6,6 +6,7 @@ import {
   FixedClock,
   FixedExecutionScope,
   InMemoryFileStorage,
+  InMemoryLogger,
   PersonalDataCipher,
   SequentialIdGenerator,
   UnknownDataSubjectError,
@@ -60,7 +61,7 @@ let referral: StoredFile;
 
 beforeAll(async () => {
   database = await openTestDatabase();
-  audit = createAudit(database.persistence, { scope, clock, ids });
+  audit = createAudit(database.persistence, { scope, clock, ids }, new InMemoryLogger());
 
   const { database: context } = database.persistence;
 

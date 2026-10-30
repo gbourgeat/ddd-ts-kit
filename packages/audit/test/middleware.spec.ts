@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FixedExecutionScope,
   InMemoryCommandBus,
+  InMemoryLogger,
   InMemoryQueryBus,
   NoExecutionContextError,
   unitOfWorkMiddleware,
@@ -11,6 +12,7 @@ import {
   UNEXPECTED_ERROR,
   auditMiddleware,
   auditedFields,
+  logLostRecords,
   type AuditMiddlewareOptions,
   type AuditRecord,
   type AuditTrail,
@@ -190,6 +192,51 @@ describe('auditMiddleware when the trail fails, or without a unit of work', () =
     );
 
     expect(lost.map((record) => record?.reason)).toEqual(['APPOINTMENT_ALREADY_CANCELLED']);
+  });
+
+  it('writes the lost entry to the log, its action and the type of the failure, never the message of the failure', async () => {
+    const logger = new InMemoryLogger();
+
+    const down: AuditTrail = {
+      record: async () => Promise.reject(new Error('insert failed, params: ada@example.org')),
+    };
+
+    const commands = new InMemoryCommandBus()
+      .use(auditMiddleware(down, { ...aSource(), onLostRecord: logLostRecords(logger) }))
+      .register(CancelAppointmentCommand, {
+        execute: async () => Promise.reject(new AppointmentAlreadyCancelled('Already cancelled')),
+      });
+
+    await expect(commands.execute(new CancelAppointmentCommand(ada, 'apt-1'))).rejects.toThrow(
+      AppointmentAlreadyCancelled,
+    );
+
+    expect(logger.entries).toEqual([
+      {
+        level: 'error',
+        message: 'audit entry lost',
+        fields: {
+          errorType: 'Error',
+          category: 'command',
+          action: 'CancelAppointmentCommand',
+          reason: 'APPOINTMENT_ALREADY_CANCELLED',
+        },
+      },
+    ]);
+  });
+
+  it('writes a lost entry to the log when not even its record could be built', () => {
+    const logger = new InMemoryLogger();
+
+    logLostRecords(logger)(new NoExecutionContextError(), undefined);
+
+    expect(logger.entries).toEqual([
+      {
+        level: 'error',
+        message: 'audit entry lost',
+        fields: { errorType: 'NoExecutionContextError' },
+      },
+    ]);
   });
 
   it('records after the handler when it is given no unit of work', async () => {

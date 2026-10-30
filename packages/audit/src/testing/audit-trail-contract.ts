@@ -12,11 +12,15 @@ import { GENESIS_HASH } from '../chain/genesis-hash';
 import { hashOf } from '../chain/hash-of';
 import { verifyChain } from '../verify/verify-chain';
 import type { AuditTrailUnderContract } from './audit-trail-under-contract';
+import { CheckpointsSuite } from './checkpoints-suite';
+import { entriesOf } from './entries-of';
 import { aRecord } from './records/a-record';
 import { fullRecord } from './records/full-record';
 import { inTenant } from './records/in-tenant';
 import { JOURNAL } from './records/journal';
 import { later } from './records/later';
+import { recordAll } from './record-all';
+import { SealedTextsSuite } from './sealed-texts-suite';
 
 export interface AuditTrailContractOptions {
   readonly name: string;
@@ -27,11 +31,18 @@ export interface AuditTrailContractOptions {
    * with access to the storage would. When absent, tampering is only checked on what was read.
    */
   readonly tamper?: (entry: AuditEntry, action: string) => Awaitable<void>;
+  /**
+   * Removes the entries of this chain from this sequence on, behind the back of the trail. When
+   * absent, a chain cut at its tail is only checked on what was read.
+   */
+  readonly cut?: (chain: string, fromSequence: number) => Awaitable<void>;
 }
 
 /** What every audit trail, fake or real, guarantees to the sources and to the reader. */
 export function auditTrailContract(runner: ContractRunner, options: AuditTrailContractOptions): void {
   new AuditTrailSuite(runner, options).describe(`${options.name} (audit trail contract)`);
+  new CheckpointsSuite(runner, options).describe(`${options.name} (audit trail contract: checkpoints)`);
+  new SealedTextsSuite(runner, () => options.createTrail()).describe(`${options.name} (audit trail contract: texts)`);
 }
 
 const ALPHA = 'tenant:alpha';
@@ -255,18 +266,16 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
     });
   }
 
-  private async recordAll(records: readonly AuditRecord[]): Promise<void> {
-    for (const record of records) {
-      await this.subject.record(record);
-    }
+  private recordAll(records: readonly AuditRecord[]): Promise<void> {
+    return recordAll(this.subject, records);
   }
 
   private async all(): Promise<readonly AuditEntry[]> {
     return (await this.subject.search({}, offsetPage({ limit: 100 }))).items;
   }
 
-  private async entriesOf(chain: string): Promise<readonly AuditEntry[]> {
-    return (await this.subject.search({ chain }, offsetPage({ limit: 100, sort: BY_SEQUENCE }))).items;
+  private entriesOf(chain: string): Promise<readonly AuditEntry[]> {
+    return entriesOf(this.subject, chain);
   }
 
   private async sequencesOf(chain: string): Promise<number[]> {

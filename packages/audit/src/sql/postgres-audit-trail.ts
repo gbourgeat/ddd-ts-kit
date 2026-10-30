@@ -22,6 +22,7 @@ import { GENESIS_HASH } from '../chain/genesis-hash';
 import { headAfter } from '../chain/head-after';
 import { seal } from '../chain/seal';
 import { sealCheckpoint } from '../chain/seal-checkpoint';
+import { wellFormed } from '../chain/well-formed';
 import { decodeCursor } from '../search/decode-cursor';
 import { encodeCursor } from '../search/encode-cursor';
 import type { SearchOrder } from '../search/search-order';
@@ -200,7 +201,7 @@ function byChain(records: readonly AuditRecord[], chainOf: (record: AuditRecord)
   const chains = new Map<string, AuditRecord[]>();
 
   for (const record of records) {
-    const chain = chainOf(record);
+    const chain = wellFormed(chainOf(record));
 
     chains.set(chain, [...(chains.get(chain) ?? []), record]);
   }
