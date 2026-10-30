@@ -223,6 +223,6 @@ describe('merge-trunk: a preview, a branch up to date, and the refusals', () => 
 
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('a merge is in progress in this worktree.');
-    expect(goOn(root, '--continue').stderr).toContain('The merge in progress was not started by merge-trunk');
+    expect(goOn(root, '--continue').stderr).toContain('nothing records the base merge-trunk merged from');
   });
 });

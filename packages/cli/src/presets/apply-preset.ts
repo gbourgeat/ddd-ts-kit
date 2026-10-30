@@ -9,6 +9,7 @@ import type { RenderContext } from '../templating';
 import { renderTemplate } from '../templating';
 import type { Workspace } from '../workspace';
 import { applyWiring } from '../generate/apply-wiring';
+import { adapterOf } from './adapter-of';
 import { platformPath } from '../generate/platform-path';
 import { grantToSignedIn } from './grant-to-signed-in';
 import { layOutPrismaModels } from './lay-out-prisma-models';
@@ -129,13 +130,6 @@ function describeContext(scope: Scope, preset: Preset, rendering: Rendering): vo
     .replace('## Aggregates', `${design}## Aggregates`);
 
   scope.ws.update(file, text);
-}
-
-/** The prefix of the adapters the persistence of the project names its classes and files by: `Prisma`, `prisma`. */
-function adapterOf(config: Config): RenderContext {
-  const { orm } = config.stack;
-
-  return { pascal: `${orm.charAt(0).toUpperCase()}${orm.slice(1)}`, kebab: orm };
 }
 
 function scopeOf(ws: Workspace, config: Config, { context, preset }: PresetRequest): Scope {
