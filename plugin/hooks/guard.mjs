@@ -153,7 +153,7 @@ const JUDGE_AGENT = 'acceptance-judge';
 // What a command may do with the lock or a verdict outside the judge: read it, or run the kit
 // (`ddd-ts-kit` directly, or `npx ddd-ts-kit` seen through kitInvocations); `npx`/`pnpm` of anything
 // else can write, and `git` reads only through the subcommands of GIT_READS.
-const READING_PROGRAMS = new Set(['cat', 'ls', 'head', 'tail', 'grep', 'rg', 'wc', 'diff', 'jq', 'ddd-ts-kit']);
+const READING_PROGRAMS = new Set(['cat', 'ls', 'head', 'tail', 'grep', 'wc', 'diff', 'jq', 'ddd-ts-kit']);
 const GIT_READS = new Set(['log', 'show', 'diff', 'status', 'add', 'commit', 'ls-files']);
 // What touches no file: a command line moves to a worktree or checks a path before it reads or versions one.
 const NEUTRAL_PROGRAMS = new Set(['cd', 'pushd', 'popd', 'pwd', 'true', 'test', '[']);
@@ -2055,13 +2055,16 @@ function acceptanceFilesShellReason(project, input, { command, commands }) {
       command.includes(file) ||
       command.includes(file.split('/').pop()),
   );
+  // The lock and the verdicts, a folder that holds them, or a place only the shell knows on a line
+  // that names the acceptance.
   const governed =
-    written.some((path) => ACCEPTANCE_LOCK.test(path) || path.startsWith('test/acceptance/verdicts/')) ||
-    /acceptance\/verdicts|\.acceptance\.lock\.json/.test(command);
+    written.some(isAcceptanceRecord) ||
+    /acceptance\/verdicts|\.acceptance\.lock\.json/.test(command) ||
+    (writtenPlaces(commands).includes(undefined) && command.includes('acceptance'));
   if (!judging && held.length === 0 && !governed) {
     return undefined;
   }
-  if (!commands.some((simple) => isWriting(simple, held.length > 0))) {
+  if (!commands.some((simple) => isWriting(simple, { holding: held.length > 0, judging }))) {
     return undefined;
   }
   if (judging) {
@@ -2073,12 +2076,32 @@ function acceptanceFilesShellReason(project, input, { command, commands }) {
     : `${unnamed ? 'This command writes places only the shell knows: name each file. ' : ''}${lockedRegressionReason(project, spec, input)} A command may read it, version it or run it (\`npm test -- ${spec}\`).`;
 }
 
-// A command that writes, its redirections included: anything but a reader, or a test run or a read of a held spec.
-function isWriting(simple, holding) {
+function isAcceptanceRecord(path) {
   return (
-    !(readsOnly(simple.words) || (holding && (runsTests(simple) || readsAFile(simple)))) ||
+    ACCEPTANCE_LOCK.test(path) ||
+    path.startsWith('test/acceptance/verdicts/') ||
+    ['test', 'test/acceptance', 'test/acceptance/verdicts'].includes(path)
+  );
+}
+
+// A command that writes, its redirections and the places its writers name included: anything but a
+// reader, or a test run or a read of a held spec. The judge runs the kit only to read.
+function isWriting(simple, { holding, judging }) {
+  const reads = judging ? readsOnly(simple) && judgeReads(simple) : readsOnly(simple);
+  return (
+    !(reads || (holding && (runsTests(simple) || readsAFile(simple)))) ||
+    changedPaths(simple).length > 0 ||
     simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null')
   );
+}
+
+// What the judge runs reads: git only through the subcommands that read, the kit only to read.
+function judgeReads(simple) {
+  const invocations = kitInvocations([simple]);
+  if (invocations.length > 0) {
+    return invocations.every(kitReads);
+  }
+  return shell.commandName(simple.words) !== 'git' || isPureReader(simple);
 }
 
 // Whether the path a command writes is `file`, or a folder that holds it (`.../{}`: what `find` finds under a folder).
@@ -2101,7 +2124,7 @@ function writtenPlaces(commands) {
 }
 
 function foundPlaces(simple) {
-  if (!simple.found || readsOnly(simple.words) || isPureReader(simple)) {
+  if (!simple.found || readsOnly(simple) || isPureReader(simple)) {
     return [];
   }
   return simple.words
@@ -2128,14 +2151,20 @@ function expandGlob(place) {
 
 // A command that writes no file by itself, its redirections aside: a neutral one (`cd`, `test`), a reader,
 // `sed` without an in-place edit nor a script that writes, `awk` whose program writes nothing, `less` without a log.
-function readsOnly(words) {
+function readsOnly(simple) {
+  const { words } = simple;
   const name = shell.commandName(words);
   const args = words.slice(1);
+  if (name === 'rg') {
+    return !args.some((word) => word.startsWith('--pre'));
+  }
   if (NEUTRAL_PROGRAMS.has(name) || READING_PROGRAMS.has(name)) {
     return true;
   }
   if (name === 'git') {
-    return GIT_READS.has(gitInvocation(args, undefined).subcommand);
+    const { subcommand, tail } = gitInvocation(args, undefined);
+    const all = subcommand === 'commit' && tail.some((word) => /^-[^-]*a/.test(word) || word === '--all');
+    return GIT_READS.has(subcommand) && !all && !words.some(runsAProgramOfGit) && (simple.assigned ?? []).length === 0;
   }
   // `npx ddd-ts-kit ...`, `pnpm exec ddd-ts-kit ...`: a launcher of the kit reads the lock; `npx`
   // of anything else can write it.
@@ -3602,9 +3631,9 @@ function touchesWorktree(subcommand, tail) {
   return subcommand === 'stash' && !['list', 'show', 'drop', 'clear', 'branch'].includes(action);
 }
 
-// The file `git diff --output` and `git format-patch -o` write to, given spaced or joined.
+// The file `git diff`, `log` or `show --output` and `git format-patch -o` write to, given spaced or joined.
 function gitOutputFile(subcommand, tail) {
-  if (subcommand === 'diff') {
+  if (['diff', 'log', 'show'].includes(subcommand)) {
     return valuedTargets(tail, ['--output', '-o'])[0];
   }
   return subcommand === 'format-patch' ? valuedTargets(tail, ['-o', '--output-directory'])[0] : undefined;

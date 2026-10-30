@@ -767,7 +767,7 @@ const CODE_THE_GUARD_CANNOT_READ = [
   'npx vitest run',
   'vitest run',
   'git commit -m "feat(ordering): place an order"',
-  'git log --output=notes.txt',
+  'git log --output=src/contexts/ordering/notes.txt',
   'rg --pre ./x.sh Order src',
   'sort -o notes.txt notes.txt',
   'git branch scratch',

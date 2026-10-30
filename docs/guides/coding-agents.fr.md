@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:245a0f0692880d71 -->
+<!-- translation-of: coding-agents.md sha256:6cdd48553a03cb51 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -212,12 +212,16 @@ tandis qu'un `find -exec` est jugé sur les dossiers d'où il part, et que les l
 l'autre restent libres. La session elle-même peut en écrire une nouvelle version,
 que `acceptance` signale et sur laquelle l'agent `acceptance-judge` se prononce. Une commande qui
 écrit le verrou d'une acceptation ou un verdict (jugée par les endroits qu'elle écrit, un *glob*
-étendu, et non par son texte) est refusée : une commande peut changer de répertoire ou tester un
-chemin (`cd`, `pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `sed` sans `-i`,
-`awk`, `less`, `jq`), le versionner (`git add`, `commit`, `log`, `show`, `status`) ou lancer le kit
-(`ddd-ts-kit`, `npx ddd-ts-kit`) ; tout autre programme (un `npx` ou `pnpm` nu, `git
-checkout`/`stash`), ou une redirection vers un
-fichier, est une écriture, que seuls la CLI et cet agent font. Aucun *hook* ne tourne sur
+étendu, et non par son texte ; un dossier qui les contient, `test/acceptance` ou `test`, compte
+comme eux, et de même un endroit que seul le *shell* connaît sur une ligne qui nomme l'acceptation)
+est refusée : une commande peut changer de répertoire ou tester un chemin (`cd`, `pushd`, `popd`,
+`pwd`, `test`), lire le fichier (`cat`, `grep`, `rg` sans `--pre`, `sed` sans `-i`, `awk`, `less`,
+`jq`), le versionner (`git add`, `commit` sans `-a`, `log`, `show`, `status`, aucun avec
+`--output`) ou lancer le kit (`ddd-ts-kit`, `npx ddd-ts-kit`) ; tout autre programme (un `npx` ou
+`pnpm` nu, `git checkout`/`stash`), ou une redirection vers un fichier, est une écriture, que seuls
+la CLI et cet agent font. Le juge lui-même lit git sans ajouter ni *committer*, et ne lance le kit
+que pour lire (`acceptance` sans `--lock`, `list`, `describe`, `explain`, `status`, `story`,
+`stories`, `story-check`). Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt), et de ce qu'écrit un code qu'il ne peut pas lire, il ne compare que ce qui est noté plus haut : les autres fichiers ignorés par git et les endroits hors de ces *checkouts* ne sont pas énumérés, et l'état qu'il garde entre deux appels se trouve dans le projet, à portée d'un code qui vise la garde ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.

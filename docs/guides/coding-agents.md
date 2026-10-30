@@ -191,12 +191,16 @@ spec, and so does a write whose place only the shell knows (`xargs sed -i`, `cd 
 a `find -exec` is judged by the folders it starts from, and reads through either stay free. The
 session itself may write a new version,
 which `acceptance` reports and the `acceptance-judge` agent rules on. A command that writes the lock
-of an acceptance or a verdict (judged by the places it writes, a glob expanded, not by its text) is
-refused: a command may move or check a path (`cd`, `pushd`, `popd`, `pwd`, `test`), read the file
-(`cat`, `grep`, `sed` without `-i`, `awk`, `less`, `jq`), version it (`git add`, `commit`, `log`,
-`show`, `status`) or run the kit (`ddd-ts-kit`, `npx ddd-ts-kit`); any other program (a bare `npx`
-or `pnpm`, `git checkout`/`stash`), or a redirection to a file, is a write, which only the CLI and
-that agent make. No hook
+of an acceptance or a verdict (judged by the places it writes, a glob expanded, not by its text; a
+folder that holds them, `test/acceptance` or `test`, counts as them, and so does a place only the
+shell knows on a line that names the acceptance) is refused: a command may move or check a path
+(`cd`, `pushd`, `popd`, `pwd`, `test`), read the file (`cat`, `grep`, `rg` without `--pre`, `sed`
+without `-i`, `awk`, `less`, `jq`), version it (`git add`, `commit` without `-a`, `log`, `show`,
+`status`, none of them with `--output`) or run the kit (`ddd-ts-kit`, `npx ddd-ts-kit`); any other
+program (a bare `npx` or `pnpm`, `git checkout`/`stash`), or a redirection to a file, is a write,
+which only the CLI and that agent make. The judge itself reads git without adding or committing,
+and runs the kit only to read (`acceptance` without `--lock`, `list`, `describe`, `explain`,
+`status`, `story`, `stories`, `story-check`). No hook
 runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository), and of what code it cannot read writes, it compares only what is noted above: other git-ignored files and the places outside those checkouts are not enumerated, and the state it keeps between two calls lies in the project, within reach of code that aims at the guard; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
