@@ -1,5 +1,6 @@
 import { CliError } from '../../cli-error';
 import { knownCommit } from '../../commit/known-commit';
+import { refuseShallowHistory } from '../refuse-shallow-history';
 import { inProgressMerge } from './in-progress-merge';
 import type { MergeCheck } from './merge-check';
 import { mergeOfRecord } from './merge-of-record';
@@ -71,6 +72,10 @@ function listed(repo: MergeRepository, request: MergesToVerify, since: Since | u
       '--base is the base of one merge: a named commit, or the merge in progress, and none is in progress.',
       'Name the merge: `ddd-ts-kit verify-merge <merge commit> --base <commit>`.',
     );
+  }
+
+  if (since !== undefined) {
+    refuseShallowHistory(repo.top, { ours: 'HEAD', theirs: since.commit });
   }
 
   return [
