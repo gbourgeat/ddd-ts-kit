@@ -1,5 +1,5 @@
 import Fastify{{#if cache.rateLimit}}, { type FastifyInstance }{{/if}}{{#unless cache.rateLimit}}{{#unless rpc.none}}, { type FastifyInstance }{{/unless}}{{/unless}} from 'fastify';
-import { mountFastify, problemErrorHandler } from '@ddd-ts-kit/http/fastify';
+import { mountFastify, problemErrorHandler, problemNotFoundHandler } from '@ddd-ts-kit/http/fastify';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/fastify';
@@ -30,7 +30,8 @@ type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if cache.rate
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), the signed file links (with a storage the application serves), the routes of the
- * contexts, then the pages of the contract (with documentation on).{{#if rpc.orpc}} The same routes are served
+ * contexts, then the pages of the contract (with documentation on), and last the problem of a
+ * path no route serves.{{#if rpc.orpc}} The same routes are served
  * as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}{{#if rpc.trpc}} The same routes are served
  * as tRPC procedures under /trpc, for the typed client of the contract.{{/if}}
  */
@@ -40,6 +41,8 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 
   // Before any route: a body Fastify refuses and a failed hook are answered as problems, not with their message.
   app.setErrorHandler(problemErrorHandler({ logger: served.logger }));
+  // A path no route serves is answered 404 as a problem, not as `{ message, error, statusCode }`.
+  app.setNotFoundHandler(problemNotFoundHandler({ logger: served.logger }));
 
 {{#if cache.rateLimit}}
   answerReadiness(app, served);

@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:de1dca36a0fe257e -->
+<!-- translation-of: http-frameworks.md sha256:5de8a56934818c4e -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 
@@ -302,6 +302,10 @@ D'après [`packages/http/README.md`](../../packages/http/README.fr.md) et
   corps au-delà de `bodyLimit` (1 MiB par défaut) reçoit une réponse 413 `BODY_TOO_LARGE` et un
   JSON mal formé une réponse 400 `MALFORMED_BODY`, tous deux sous forme de problèmes, et
   `problemErrorHandler` de `@ddd-ts-kit/http/hono` répond à un middleware en échec.
+- Un chemin qu'aucune route ne sert reçoit un 404 `NOT_FOUND` sous forme de *problem* sur chaque
+  framework, journalisé comme un refus : de `problemNotFoundHandler` de `@ddd-ts-kit/http/express`,
+  `@ddd-ts-kit/http/fastify` et `@ddd-ts-kit/http/hono`, et de `ProblemExceptionFilter` sur NestJS,
+  que le `start-http-server.ts` généré installe ; sans eux, la page ou le texte du framework.
 - Les routes sont d'abord JSON. Un gestionnaire peut renvoyer une chaîne, des octets ou un flux
   avec son propre `content-type`. Un téléversement est déclaré sur son contrôleur et arrive en
   flux au gestionnaire (`multipart/form-data`, taille et types de médias dans le contrat) ; un

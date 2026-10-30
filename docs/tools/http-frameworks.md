@@ -288,6 +288,10 @@ From [`packages/http/README.md`](../../packages/http/README.md) and
   to stderr. On Hono the adapter reads the body: a body beyond `bodyLimit` (1 MiB by default) is
   answered 413 `BODY_TOO_LARGE` and malformed JSON 400 `MALFORMED_BODY`, both as problems, and
   `problemErrorHandler` of `@ddd-ts-kit/http/hono` answers a failed middleware.
+- A path no route serves is answered 404 `NOT_FOUND` as a problem on every framework, logged as
+  a refusal: by `problemNotFoundHandler` of `@ddd-ts-kit/http/express`, `@ddd-ts-kit/http/fastify`
+  and `@ddd-ts-kit/http/hono`, and by `ProblemExceptionFilter` on NestJS, which the generated
+  `start-http-server.ts` installs; without them, by the page or the text of the framework.
 - Routes are JSON first. A handler may answer a string, bytes or a stream with its own
   `content-type`. An upload is declared on its controller and streams to the handler
   (`multipart/form-data`, size and media types in the contract); a large download goes through a
