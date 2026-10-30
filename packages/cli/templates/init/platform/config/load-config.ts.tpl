@@ -45,6 +45,13 @@ const runJobsByDefault = false;
 export function loadConfig(variables: Variables): AppConfig {
   const env = new Environment(variables);
   const environment = env.oneOf('NODE_ENV', environments, 'development');
+{{#if authn.none}}
+
+  // The development header is believed where NODE_ENV says so, never by default.
+  if (env.optional('NODE_ENV') === undefined) {
+    env.problem('NODE_ENV must be development or test: the development header is believed there only');
+  }
+{{/if}}
 
   const config: AppConfig = {
     serviceName: env.optional('OTEL_SERVICE_NAME') ?? '{{project.name}}',

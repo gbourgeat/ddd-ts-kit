@@ -152,8 +152,14 @@ describe('authentication and authorization', () => {
     const root = initProject('--authn', 'none');
 
     expect(platform(root, 'auth/authentication/development-header-authenticator.ts')).toContain(
-      'must never run in production',
+      'runs in development and test only, never in production',
     );
+
+    expect(platform(root, 'config/load-config.ts')).toContain(
+      "env.problem('NODE_ENV must be development or test: the development header is believed there only');",
+    );
+
+    expect(platform(initProject(), 'config/load-config.ts')).not.toContain('development header');
 
     expect(platform(root, 'auth/authentication/security-schemes.ts')).toContain('developmentActor');
 

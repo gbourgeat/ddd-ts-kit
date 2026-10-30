@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:51d257df7f08952b -->
+<!-- translation-of: identity.md sha256:976089932cc53164 -->
 
 # Identité : Keycloak ou simple OIDC et JWT
 
@@ -244,8 +244,9 @@ par `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_AUDIENCE` et le facultatif
 le profil `identity`) et un fichier de realm avec le client de l'API, un client public avec
 l'octroi direct, ses *mappers* d'audience et de *tenant*, un rôle de realm et deux utilisateurs
 de démonstration, pour le développement local seulement. `init --authn none` écrit un
-authentificateur de développement qui fait confiance à l'en-tête `x-development-actor` et refuse
-d'être construit en production. Les *specs* de bout en bout générées signent leurs propres
+authentificateur de développement qui fait confiance à l'en-tête `x-development-actor`, en
+développement et en test seulement : l'application refuse de démarrer sans `NODE_ENV`, et avec
+`NODE_ENV=production`. Les *specs* de bout en bout générées signent leurs propres
 jetons dans le test. Chaque route déclare sa `security`, et le type de route refuse celle qui ne
 le fait pas (`authz/declared` dans la [référence de l'architecture](../ARCHITECTURE.fr.md)).
 
@@ -330,7 +331,7 @@ n'est pas exécuté contre un vrai Keycloak par le *pipeline* du kit. Voir
   rôles : un jeton qui ne porte que des portées donne un acteur sans rôle. Un fournisseur dont
   les jetons ne portent aucun *claim* de rôle a besoin d'un `toActor` qui les fait correspondre.
 - **Le realm généré et l'authentificateur de développement par en-tête sont pour un usage
-  local.** Le second lève une erreur en production, à dessein.
+  local.** Le second n'est construit que là où `NODE_ENV` dit `development` ou `test`, à dessein.
 - **L'authentification n'est pas l'autorisation.** Le *preset* remplit `actor.roles` ; ce qu'un
   rôle peut faire se décide dans la couche application. Voir
   [authentification et autorisation](../concepts/authentication-and-authorization.fr.md).
