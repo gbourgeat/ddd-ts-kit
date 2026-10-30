@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:108abf0fd40fe815 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:ab2bd6291f7cffae -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -152,8 +152,9 @@ tire son *tenant*. Avec `--authn keycloak`, le *preset* pose `tenantClaim: 'orga
 l'adaptateur du fournisseur tient à jour (le *client scope* `organization` ajouté au client). Une
 personne d'une seule organisation y travaille à chaque requête HTTP ; une personne de plusieurs
 les détient comme l'attribut `tenants`, et chaque requête HTTP nomme celle dans laquelle elle
-travaille avec `x-tenant-id` (refusée par un 403 si elle n'en est pas membre, `tenantFromHeader`
-puis `tenantFromClaim` dans `resolveTenant`). Retirée d'une organisation, elle la perd à son
+travaille avec `x-tenant-id` (refusée par un 403 si elle n'en est pas membre : le *preset* donne à
+la bordure HTTP de `http-boundary.ts` `resolveTenant: firstTenantOf(tenantFromHeader(), tenantFromClaim())`,
+quel que soit l'authentificateur). Retirée d'une organisation, elle la perd à son
 prochain jeton, et le contexte d'identité lui refuse déjà ses cas d'usage. Avec `--authn jwt`, le
 *preset* laisse une étape suivante : faire correspondre le *claim* qu'écrit votre fournisseur
 (`tenantClaim` quand c'est une liste ou un objet indexé par organisation, `toActor` sinon).

@@ -144,7 +144,8 @@ tenant from it. With `--authn keycloak` the preset sets `tenantClaim: 'organizat
 provider adapter keeps in line (the client scope `organization` added to the client). A person of
 one organisation works in it on every request; a person of several holds them as the `tenants`
 attribute, and each request names the one it works in with `x-tenant-id` (refused with 403 if
-they are not a member of it, `tenantFromHeader` then `tenantFromClaim` in `resolveTenant`).
+they are not a member of it: the preset gives the HTTP boundary of `http-boundary.ts`
+`resolveTenant: firstTenantOf(tenantFromHeader(), tenantFromClaim())`, whatever the authenticator).
 Removed from an organisation, they lose it at their next token, and the identity context already
 refuses them its use cases. With `--authn jwt` the preset leaves a next step: map the claim your
 provider writes (`tenantClaim` when it is a list or an object keyed by organisation, `toActor`
