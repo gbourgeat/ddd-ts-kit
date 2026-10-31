@@ -13,6 +13,7 @@ import { wire } from '../wire';
 import { backgroundJobVars } from './background/background-job-vars';
 import { specFamily } from './background/spec-family';
 import { readSentCommand } from './job/read-sent-command';
+import { worldArrangement } from './world/world-arrangement';
 
 /** `CompileReportBackgroundJob` and `compile-report-background-job` name the job `CompileReport`. */
 const ROLE_SUFFIX = /(?<=[a-z0-9])[-_]?background[-_]?job$/i;
@@ -36,10 +37,14 @@ export const backgroundJobKind: Kind = {
     const name = concept(scope, input, { what: 'background job', strip: ['job'] });
     const command = readSentCommand(scope, commandNamed(scope, name), 'background job');
 
+    const spec = specVars(scope, { protected: false });
+    const world = worldArrangement(scope, spec, { permission: command.isProtected ? 'authorization' : undefined });
+
     const context = vars(scope, {
       name: named(name),
-      spec: specVars(scope, { protected: false }),
+      spec,
       job: backgroundJobVars(scope, name, command),
+      world: world.vars,
     });
 
     emit(scope, context, [
@@ -51,6 +56,10 @@ export const backgroundJobKind: Kind = {
     ]);
 
     wire(scope, 'background-job', context);
+
+    if (world.hint !== undefined) {
+      scope.ws.note(world.hint);
+    }
   },
 };
 

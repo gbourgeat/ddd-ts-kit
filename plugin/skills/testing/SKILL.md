@@ -83,8 +83,9 @@ refusal is asserted by its code and its facts, never by a message or the class o
 
 ## Handler specs
 
-Generate the world of the context first (`generate test-world <ctx>`, below): a handler, query
-or job spec generated after it arranges through it, `arrange()` being one call of the world.
+Generate the world of the context first (`generate test-world <ctx>`, below): a handler, query,
+job, background job or process timeout spec generated after it arranges through it, `arrange()`
+being one call of the world.
 Generated before it, `arrange()` builds a test application from the platform test module, the
 context (`contextModule('<context>', declarations)` or its module) and the fakes, and under a
 container a comment says the world would shorten it. A world the generator cannot read (it looks

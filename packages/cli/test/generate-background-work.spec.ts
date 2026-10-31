@@ -75,11 +75,15 @@ describe('generate background-job, in the declared style', () => {
     const spec = read(root, JOB_SPEC);
 
     expect(spec).toContain(
-      'await application.as(clerk, () => application.jobQueue.enqueue(CompileStatementsBackgroundJob, {}));',
+      'await application.as(enqueuer, () => application.jobQueue.enqueue(CompileStatementsBackgroundJob, {}));',
     );
 
-    expect(spec).toContain("roles: { clerk: [billingPermissions['invoice.cancel']] }");
-    expect(spec).toContain("expect(sent[0]).toMatchObject({ actor: { id: 'clerk-1' } });");
+    expect(spec).toContain(
+      "const { holder: enqueuer, authorizer } = holdersOf(billingPermissions['invoice.cancel']);\nconst authorization = authorizationModule({ authorizer });",
+    );
+
+    expect(spec).toContain('expect(sent[0]).toMatchObject({ actor: { id: enqueuer.id } });');
+    expect(spec).not.toMatch(/RoleBasedAuthorizer|'clerk-1'/);
   });
 
   it('refuses a job without its command, and a command it cannot build', () => {

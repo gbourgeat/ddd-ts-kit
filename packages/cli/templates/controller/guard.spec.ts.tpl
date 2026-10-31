@@ -1,9 +1,10 @@
 import { describe, expect, it } from '{{tests.module}}';
+import { anActor } from '@ddd-ts-kit/auth/testing';
 import type { GuardRequest } from '@ddd-ts-kit/http';
 import { executionContext } from '@ddd-ts-kit/kernel';
 import { {{name.pascal}}Guard } from '{{alias.context}}/presentation/http/guards/{{name.kebab}}.guard{{alias.ext}}';
 
-const actor = { id: 'user-1', type: 'user', roles: [], attributes: {} } as const;
+const actor = anActor().build();
 const execution = executionContext({ correlationId: 'correlation-1', actor, origin: 'http' });
 
 const request: GuardRequest = {

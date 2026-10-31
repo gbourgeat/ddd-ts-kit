@@ -8,6 +8,7 @@ import { specVars } from '../spec-vars';
 import { vars } from '../vars';
 import { wire } from '../wire';
 import { specFamily } from './background/spec-family';
+import { worldArrangement } from './world/world-arrangement';
 
 export const processKind: Kind = {
   name: 'process',
@@ -25,9 +26,13 @@ export const processKind: Kind = {
 
     const name = concept(scope, request.args[1] ?? '', { what: 'process', strip: ['process', 'saga'] });
 
+    const spec = specVars(scope, { protected: false });
+    const world = worldArrangement(scope, spec);
+
     const context = vars(scope, {
       name: named(name),
-      spec: specVars(scope, { protected: false }),
+      spec,
+      world: world.vars,
       process: {
         name: `${scope.context.kebab}.${name.kebab}`,
         timeoutJob: `${scope.context.kebab}.${name.kebab}-timeout`,
@@ -45,5 +50,9 @@ export const processKind: Kind = {
     ]);
 
     wire(scope, 'process/timeout-job', context);
+
+    if (world.hint !== undefined) {
+      scope.ws.note(world.hint);
+    }
   },
 };
