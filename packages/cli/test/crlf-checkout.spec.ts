@@ -58,11 +58,7 @@ describe('a checkout with CRLF line ends', () => {
   });
 
   it('writes a generated document that changed with LF, as every file the kit writes', () => {
-    write(
-      root,
-      'docs/behaviour/README.md',
-      read(root, 'docs/behaviour/README.md').replace(/\r\n/g, '\r\n') + 'a stale line\r\n',
-    );
+    write(root, 'docs/behaviour/README.md', `${read(root, 'docs/behaviour/README.md')}a stale line\r\n`);
 
     expect(cli(root, 'docs', '--check').code).toBe(1);
     expect(cli(root, 'docs').code).toBe(0);
