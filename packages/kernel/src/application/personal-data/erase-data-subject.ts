@@ -24,7 +24,7 @@ interface Outcome {
 
 /**
  * The right to erasure of one data subject: destroys the key its personal values were sealed
- * with, so the stored events and snapshots read them as erased; erases every copy a context keeps
+ * with, so the stored events and what snapshots sealed read them as erased; erases every copy a context keeps
  * of the person in clear, in every tenant; then rebuilds every projection fed by the store, so no
  * read model keeps a clear copy. The copies and the rebuilds run even when the subject had no key
  * left, and even when the erasure of the key failed, since the key may be gone all the same (an

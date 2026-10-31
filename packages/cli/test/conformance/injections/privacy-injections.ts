@@ -7,6 +7,7 @@ const PERSON_FIELDS = `${IDENTITY}/infrastructure/persistence/person.personal-fi
 const BOOKED = 'src/contexts/scheduling/published-language/appointment-booked.v1.integration-event.ts';
 const OUTCOMES = 'src/contexts/analytics/application/projections/outcomes.projection.ts';
 const MAILER = 'src/contexts/notification/infrastructure/external/remote-mailer.adapter.ts';
+const SNAPSHOTS = 'src/contexts/scheduling/calendars/infrastructure/persistence/attendance-record-snapshots.mapper.ts';
 
 /** The privacy rules: what the example keeps of people is declared, erased where it is copied, and never logged. */
 export const PRIVACY_INJECTIONS: readonly Injection[] = [
@@ -65,6 +66,19 @@ export const PRIVACY_INJECTIONS: readonly Injection[] = [
         file: MAILER,
         from: '      operation: call.operation,\n',
         to: '      operation: call.operation,\n      address: call.operation,\n',
+      },
+    ],
+    checker: true,
+  },
+  {
+    rule: 'privacy/snapshot-sealed',
+    what: 'the snapshot of an attendance record reading the address of the patient in clear',
+    file: SNAPSHOTS,
+    changes: [
+      {
+        file: SNAPSHOTS,
+        from: "    noted: data.texts('noted'),\n",
+        to: "    noted: data.texts('noted'),\n    patientEmail: data.text('patientEmail'),\n",
       },
     ],
     checker: true,

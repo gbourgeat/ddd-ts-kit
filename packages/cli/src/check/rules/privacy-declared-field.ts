@@ -4,6 +4,7 @@ import type { Violation } from '../model/violation';
 import type { SourceFile } from '../model/source-file';
 import { type ColumnDefinition, columnDefinitionsIn } from '../privacy/column-definitions-in';
 import { declaresName } from '../privacy/declares-name';
+import { isSnapshotMapper } from '../privacy/is-snapshot-mapper';
 import { type PersonalDeclarationOf, personalDeclarationsOf } from '../privacy/personal-declarations-of';
 import { personalTermOf } from '../privacy/personal-term-of';
 import { prismaColumnsOf } from '../privacy/prisma-columns-of';
@@ -31,7 +32,8 @@ interface Kept {
  * files of the contexts (a Knex table, a Drizzle table, a TypeORM entity schema) and in the
  * models of `prisma/schema/` in the schema of a context. A key of an event mapper that the same
  * file seals with `personalData(subject, value)` is declared by that: it is read as `data.text('key')`
- * and is not a column. Silent with `stack.privacy` off.
+ * and is not a column; a snapshot mapper holds no column either, `privacy/snapshot-sealed` reads it.
+ * Silent with `stack.privacy` off.
  */
 export const privacyDeclaredField: Rule = {
   id: 'privacy/declared-field',
@@ -62,6 +64,7 @@ function keptColumns(project: Project): Kept[] {
     (file) =>
       !file.isTest &&
       !file.path.endsWith(SUFFIX) &&
+      !isSnapshotMapper(file) &&
       file.location.area === 'context' &&
       file.location.layer === 'infrastructure' &&
       file.location.inside[0] === 'persistence',

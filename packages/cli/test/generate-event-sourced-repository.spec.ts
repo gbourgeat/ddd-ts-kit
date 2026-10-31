@@ -53,6 +53,13 @@ describe('generate repository on an event-sourced aggregate', () => {
     },
   );
 
+  it('asks, in the TODO of the snapshots, that a personal value is sealed as the events do', () => {
+    const project = ledgerProject();
+
+    expect(cli(project, 'generate', 'repository', 'billing', 'Ledger').code).toBe(0);
+    expect(read(project, ADAPTER)).toContain('which seals a personal value with personalData as the events do');
+  });
+
   it('binds the adapter to the event store of the platform on a platform wired by hand, when a use case first needs it', () => {
     const project = ledgerProject('--di', 'manual', '--orm', 'knex');
 

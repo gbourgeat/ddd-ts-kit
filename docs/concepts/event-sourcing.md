@@ -457,7 +457,11 @@ if (stored !== undefined) {
 
 What an erasure reaches is exactly what loses the key:
 
-- the live streams and snapshots, at once;
+- the live streams, at once, and the snapshots for what their mapper sealed: a snapshot keeps what
+  `encode` writes, so a personal value goes through `personalData` there as in an event, and
+  `decode` reads it with `data.personalText` or `data.personalInstant`. A value a snapshot keeps in
+  clear outlives the erasure and is loaded back with the aggregate, until the next snapshot replaces
+  it; `privacy/snapshot-sealed` reports one by its name;
 - every backup of the events taken after the erasure, which holds the sealed values without
   their key;
 - a backup taken before the erasure holds both the sealed values and their key **when the key

@@ -306,6 +306,7 @@ config. A project that chose `off` hears nothing from them.
 | `privacy/erasure-reaches-copies` | a context that consumes an event carrying personal data and erases nothing when the person is erased |
 | `privacy/subject-is-opaque` | a subject that is personal data itself (an email as the key of a person) |
 | `privacy/no-personal-data-in-logs` | a call to the logger or the metrics that names a declared personal field |
+| `privacy/snapshot-sealed` | a value of a snapshot mapper named like personal data that no `personalData` seals |
 
 They read names, not contents, which is why each one says what it cannot see
 (`npx ddd-ts-kit explain privacy/declared-field`). A column that holds nothing of a person in a

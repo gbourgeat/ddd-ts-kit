@@ -8,7 +8,7 @@ export interface SnapshotPolicy<A, S> {
   readonly every: number;
   /** The version of the shape `encode` writes: a snapshot of another version is ignored, the stream replayed from its start. */
   readonly version: number;
-  /** The state to keep, as plain data. */
+  /** The state to keep, as plain data, a personal value sealed with `personalData` as in an event: an erasure reaches nothing else. */
   encode(aggregate: A): object;
   decode(data: StoredEventData): S;
 }

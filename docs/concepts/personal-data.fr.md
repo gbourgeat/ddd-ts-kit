@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:e83092790598620d -->
+<!-- translation-of: personal-data.md sha256:d93d7dfb1c040e96 -->
 
 # Les données personnelles dans un projet généré
 
@@ -316,6 +316,7 @@ met sa sévérité à `error` dans `rules` de la config. Un projet qui a choisi 
 | `privacy/erasure-reaches-copies` | un contexte qui consomme un événement portant des données personnelles et n'efface rien quand la personne est effacée |
 | `privacy/subject-is-opaque` | un sujet qui est lui-même une donnée personnelle (un email comme clé d'une personne) |
 | `privacy/no-personal-data-in-logs` | un appel au *logger* ou aux métriques qui nomme un champ personnel déclaré |
+| `privacy/snapshot-sealed` | une valeur d'un *mapper* de *snapshots* nommée comme une donnée personnelle qu'aucun `personalData` ne scelle |
 
 Elles lisent des noms, pas des contenus, c'est pourquoi chacune dit ce qu'elle ne voit pas
 (`npx ddd-ts-kit explain privacy/declared-field`). Une colonne qui ne tient rien d'une personne dans
