@@ -232,6 +232,67 @@ test('a text as tool input that holds no patch writes nothing', () => {
   assert.equal(run('post-write', text).output, undefined);
 });
 
+test('a patch header with an indent is read, by the patch tool, as text and through the shell', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const header of [
+    '  *** Add File: src/contexts/billing/x.ts',
+    '\t*** Update File: src/contexts/billing/x.ts',
+    '  *** Delete File: src/contexts/billing/x.ts',
+  ]) {
+    assert.match(
+      reason(run('pre-write', { ...patch(root, header, '+x'), ...agent })),
+      /another bounded context/,
+      header,
+    );
+    assert.match(
+      reason(run('pre-write', copilotPatch(root, [header, '+x'], agent))),
+      /another bounded context/,
+      header,
+    );
+  }
+  const lines = ['*** Begin Patch', '  *** Add File: src/contexts/billing/x.ts', '+x', '*** End Patch'];
+  const shell = codexShell(root, `apply_patch <<'EOF'\n${lines.join('\n')}\nEOF`, agent);
+  assert.match(reason(run('pre-bash', shell)), /another bounded context/);
+});
+
+test('a patch with CRLF lines is read as one with LF lines, its paths and its text', () => {
+  const root = project();
+  const agent = worker(root);
+  const crlf = (...lines) => ({
+    ...copilotPatch(root, [], agent),
+    tool_input: `${['*** Begin Patch', ...lines, '*** End Patch'].join('\r\n')}\r\n`,
+  });
+  assert.match(
+    reason(run('pre-write', crlf('*** Add File: src/contexts/billing/x.ts', '+x'))),
+    /src\/contexts\/billing\/x\.ts[^\r]*another bounded context/,
+  );
+  const moved = crlf(
+    '*** Update File: src/contexts/ordering/a.ts',
+    '*** Move to: src/contexts/billing/a.ts',
+    '@@',
+    '+export const a = 1;',
+  );
+  assert.match(reason(run('pre-write', moved)), /another bounded context/);
+  const inside = crlf('*** Add File: src/contexts/ordering/y.ts', '+export const y = 1;');
+  assert.equal(run('pre-write', inside).output, undefined);
+  const suppressed = crlf('*** Update File: src/contexts/ordering/ordering.module.ts', '+// eslint-disable-line');
+  assert.match(reason(run('pre-write', suppressed)), /a lint suppression/);
+});
+
+test('a patch line a host refuses to parse stays unread: a lower case header, a wider marker, an indented body', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const header of ['*** add file: src/contexts/billing/x.ts', '***  Add File: src/contexts/billing/x.ts']) {
+    assert.equal(run('pre-write', copilotPatch(root, [header, '+x'], agent)).output, undefined, header);
+  }
+  const indented = copilotPatch(root, [
+    '*** Update File: src/contexts/ordering/ordering.module.ts',
+    '  +// @ts-ignore',
+  ]);
+  assert.equal(run('pre-write', indented).output, undefined);
+});
+
 test('malformed input never blocks', () => {
   const result = spawnSync('node', [guard, 'pre-write'], { input: 'not json', encoding: 'utf8' });
   assert.equal(result.status, 0);

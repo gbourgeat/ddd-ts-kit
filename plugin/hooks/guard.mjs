@@ -1465,12 +1465,14 @@ function writesOf(input) {
 
 // The patch of Codex: `*** Add File:`, `*** Update File:` (and `*** Move to:`), `*** Delete File:`,
 // each followed by its lines, `+` added and `-` removed. Its paths are relative to the session. A
-// deleted file, and the file a move leaves, are writes that remove it (`deleted`).
+// deleted file, and the file a move leaves, are writes that remove it (`deleted`). Its lines end in
+// LF or CRLF and the three file headers may be indented, as the parser of Copilot takes them; an
+// indented `+` line, a lower case header or a wider marker, which that parser refuses, stay unread.
 function patchWrites(patch, cwd) {
   const writes = [];
   let current;
-  for (const line of patch.split('\n')) {
-    const header = /^\*\*\* (Add|Update|Delete) File: (.+)$/.exec(line);
+  for (const line of patch.split(/\r?\n/)) {
+    const header = /^\s*\*\*\* (Add|Update|Delete) File: (.+)$/.exec(line);
     const moved = /^\*\*\* Move to: (.+)$/.exec(line);
     if (header) {
       current = { file: resolve(cwd, header[2].trim()), added: [], removed: [], deleted: header[1] === 'Delete' };
