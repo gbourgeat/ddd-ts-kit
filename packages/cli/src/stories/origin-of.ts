@@ -5,7 +5,7 @@ import { CliError } from '../cli-error';
 const INTENTS_DIR = 'docs/architecture/intents';
 const INCIDENTS_DIR = 'docs/architecture/incidents';
 
-/** `Status: accepted` in the header of an intent: the product owner's acceptance, set in a pull request. */
+/** `Status: accepted` in the header of an intent: the product owner's acceptance, set in a pull request (a comment of the template says it too, and is not read). */
 const ACCEPTED = /\bStatus:\s*accepted\b/i;
 
 /**
@@ -31,7 +31,9 @@ export function originOf(root: string, from: string): string {
     throw new CliError(`${relative} is neither an intent nor an incident record.`, `Pass ${expected}.`);
   }
 
-  if (!ACCEPTED.test(fs.readFileSync(absolute, 'utf8').split(/^##\s/m)[0] ?? '')) {
+  const header = (fs.readFileSync(absolute, 'utf8').split(/^##\s/m)[0] ?? '').replace(/<!--[\s\S]*?-->/g, '');
+
+  if (!ACCEPTED.test(header)) {
     throw new CliError(
       `${relative} is not an accepted intent.`,
       'The product owner accepts an intent by setting `Status: accepted` in its header, in a pull request; a story starts from an accepted intent, or from an incident record.',

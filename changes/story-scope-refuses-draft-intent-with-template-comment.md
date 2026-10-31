@@ -1,0 +1,1 @@
+**`story-scope --from` refuses an intent whose status is `draft` even when the comment of the template says `Status: accepted`.** The gate reads the status line of the intent, no longer the comment copied from `intent-template.md`.
