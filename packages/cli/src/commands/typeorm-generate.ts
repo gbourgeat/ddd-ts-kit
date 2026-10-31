@@ -8,6 +8,7 @@ import {
   generateGuarded,
   hasDatabaseUrl,
   migrationName,
+  refuseOtherOrm,
   runOnInProcessDatabase,
   runOrmTool,
   schemasFirst,
@@ -35,6 +36,8 @@ const IN_PROCESS_ENV = { DATABASE_URL: '{url}', DATABASE_POOL_SIZE: '1' };
 export const typeormGenerateCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {});
   const root = args.projectRoot;
+
+  refuseOtherOrm(root, 'typeorm');
   const target = migrationTarget(args.positionals[0]);
 
   ensureDatabaseReachable();

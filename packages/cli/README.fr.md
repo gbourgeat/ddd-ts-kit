@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c88582ff43a965ed -->
+<!-- translation-of: README.md sha256:68d7243caa5c60a6 -->
 
 # ddd-ts-kit
 
@@ -110,7 +110,7 @@ les notes. La première fois, les notes nomment aussi chaque dépendance que la 
 point d'être écrite contredit, et l'option qui la garde (`package.json depends on fastify, and the
 project is written for --http express: pass --http fastify to keep it.`), en *dry run* compris :
 lancez d'abord `init --dry-run` sur un projet existant. Relancé plus tard, `init` garde la
-*stack* enregistrée dans la configuration.
+*stack* enregistrée dans la configuration : une valeur de drapeau qu'aucun choix n'accepte est refusée, et un drapeau qui diffère de l'enregistré est gardé tel quel, avec une note qui nomme `init --force`. `drizzle-generate`, `prisma-generate` et `typeorm-generate` refusent un projet d'un autre ORM et nomment son `db:generate`.
 
 Chaque fichier qu'écrivent `init` et `generate` reste dans le projet : un chemin qui en sort par
 un lien symbolique, à sa place ou au-dessus (un `docs/adr` ou un `.claude/settings.json` liés à un
@@ -611,7 +611,7 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> 
 
 `--events in-memory` avec un ORM est refusé sauf si `--allow-no-outbox "<reason>"` est donné :
 il enregistre une entrée `deviations` (`stack.events`) et écrit l'enregistrement de décision vers
-lequel elle pointe. La persistance générée des quatre ORM est écrite pour PostgreSQL ; `custom`
+lequel elle pointe ; `--allow-no-outbox` est refusé quand la *stack* garde l'*outbox* ou n'a pas d'ORM. La persistance générée des quatre ORM est écrite pour PostgreSQL ; `custom`
 démarre sur des adaptateurs en mémoire tenus aux suites de contrat, à vous de les remplacer. Les
 choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `logger` compris.
 

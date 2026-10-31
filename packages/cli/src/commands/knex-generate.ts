@@ -7,6 +7,7 @@ import {
   knexMigrationText,
   knexSchemaDifference,
   migrationsUnder,
+  refuseOtherOrm,
   requiredMigrationName,
   runOrmTool,
   writtenPaths,
@@ -29,6 +30,9 @@ const MIGRATION = /\.js$/;
 export const knexGenerateCommand: Command = (argv, io) => {
   const args = parseMigrationArguments(argv, { name: { type: 'string' }, custom: { type: 'boolean', default: false } });
   const root = args.projectRoot;
+
+  refuseOtherOrm(root, 'knex');
+
   const name = requiredMigrationName(args.text('name'));
 
   refuseLiveMigrations(root);

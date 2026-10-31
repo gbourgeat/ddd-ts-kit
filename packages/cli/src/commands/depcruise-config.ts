@@ -1,3 +1,4 @@
+import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import { DEPCRUISE_FILE } from '../depcruise/depcruise-file';
 import { renderCruiseFile } from '../depcruise/render-cruise-file';
@@ -13,6 +14,13 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
     check: { type: 'boolean', default: false },
     write: { type: 'boolean', default: false },
   });
+
+  if (args.flag('check') && args.flag('write')) {
+    throw new CliError(
+      '--check and --write cannot be combined.',
+      'Use `depcruise-config --check` to verify the file, or `depcruise-config --write` to write it.',
+    );
+  }
 
   const root = args.projectRoot;
   const expected = renderCruiseFile(readConfig(root).config);
