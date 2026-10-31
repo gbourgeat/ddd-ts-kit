@@ -1,4 +1,9 @@
-/** The subcommands the CLI runs that change nothing in the repository: no hook of the project has a reason to run there. */
+/**
+ * The subcommands the CLI runs that change nothing in the repository: no hook of the project has a
+ * reason to run there. `rev-parse`, `var` and `version` are not listed: they run no hook either, and
+ * `rev-parse --git-path hooks` is how `doctor` reads where the hooks of the repository are, which a
+ * `core.hooksPath` set for the run would answer instead.
+ */
 const READ_ONLY = new Set([
   'blame',
   'branch',
@@ -14,11 +19,8 @@ const READ_ONLY = new Set([
   'patch-id',
   'remote',
   'rev-list',
-  'rev-parse',
   'show',
   'status',
-  'var',
-  'version',
 ]);
 
 /** The options of git before its subcommand that take the next word as their value. */

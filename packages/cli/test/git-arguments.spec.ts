@@ -22,8 +22,15 @@ describe('the arguments of every git the CLI runs', () => {
     ]);
 
     expect(gitArguments(['--literal-pathspecs', 'diff', '--name-only'])).toContain('core.hooksPath=/dev/null');
-    expect(gitArguments(['-C', 'commit', 'rev-parse', 'HEAD'])).toContain('core.hooksPath=/dev/null');
+    expect(gitArguments(['-C', 'commit', 'cat-file', '-p', 'HEAD'])).toContain('core.hooksPath=/dev/null');
     expect(gitArguments(['--version'])).not.toContain('core.hooksPath=/dev/null');
+  });
+
+  it('leave the hooks path of the repository to rev-parse, which runs no hook and is how doctor reads where the hooks are', () => {
+    const repo = repository();
+
+    expect(gitArguments(['rev-parse', '--git-path', 'hooks'])).not.toContain('core.hooksPath=/dev/null');
+    expect(runGit(repo, ['rev-parse', '--git-path', 'hooks'])?.trim()).toBe('.git/hooks');
   });
 
   it('keep the hooks of the project on commit, merge and the other writes, which are its gates', () => {
