@@ -1703,7 +1703,8 @@ otherwise (under `agents.profile: "regulated"`, each line of the sandbox block t
 which makes each checkout and each worktree run its own lefthook and fail a commit, loudly,
 when its dependencies are missing; the fix is that line, or `init --force` for the whole file.
 The pre-commit hook under `git rev-parse --git-path hooks` must exist and come from lefthook;
-the fix is `npm run hooks:install`, once per clone. Then the guidance written once for the team
+the fix is `npm run hooks:install`, once per clone. Outside a git repository the hooks cannot be read: `doctor` then
+reports `hook git repository` as missing, which fails `--strict`, and `git init` comes first. Then the guidance written once for the team
 to own: `REVIEW.md`, the review policy, and under the regulated profile the two hooks of
 `.claude/hooks/`, are reported missing (`guidance`) and `init` writes them again without touching
 anything else.

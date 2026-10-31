@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:150ee9b0a5922064 -->
+<!-- translation-of: README.md sha256:953ffbcd2f8dfd0a -->
 
 # ddd-ts-kit
 
@@ -1815,7 +1815,8 @@ comme `permission hooks.<name>`), puis les *hooks* git. `lefthook.yml` doit port
 *worktree* son propre lefthook, et fait échouer un *commit*, bruyamment, quand ses dépendances
 manquent ; le correctif est cette ligne, ou `init --force` pour le fichier entier. Le *hook*
 pre-commit sous `git rev-parse --git-path hooks` doit exister et venir de lefthook ; le correctif
-est `npm run hooks:install`, une fois par clone. Puis la consigne écrite une fois pour que
+est `npm run hooks:install`, une fois par clone. Hors d'un dépôt git les *hooks* ne peuvent pas être lus : `doctor`
+signale alors `hook git repository` comme manquant, ce qui fait échouer `--strict`, et `git init` passe d'abord. Puis la consigne écrite une fois pour que
 l'équipe la possède : `REVIEW.md`, la politique de revue, et sous le profil réglementé les deux
 *hooks* de `.claude/hooks/`, sont signalés manquants (`guidance`) et `init` les écrit de nouveau
 sans toucher à rien d'autre.

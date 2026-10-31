@@ -3,6 +3,7 @@ import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from './helpers';
 import { git } from './support/git';
+import { installHooks } from './support/install-hooks';
 import { installKit } from './support/install-kit';
 import { jsonAt } from './support/json-at';
 
@@ -19,6 +20,7 @@ beforeEach(() => {
   root = path.join(tempDir('doctor'), 'shop');
   cli(root, 'init', '--context', 'billing:core', '--package-manager', 'npm');
   installKit(root);
+  installHooks(root);
 });
 
 describe('doctor', () => {
@@ -132,8 +134,22 @@ describe('doctor, on the git hooks', () => {
     expect(cli(root, 'doctor').stdout).toContain('  hook lefthook.yml: missing (the file init writes)');
   });
 
+  it('outside a git repository, says the hooks could not be read and that git init comes first, failing --strict', () => {
+    fs.rmSync(path.join(root, '.git'), { recursive: true });
+
+    const result = cli(root, 'doctor');
+
+    expect(result.stdout).toContain(
+      '  hook git repository: missing (no git repository here: the hooks could not be read; `git init` comes first)',
+    );
+
+    expect(result.stdout).toContain('fix: `git init`, then `npm run hooks:install` installs the hooks');
+    expect(result.stdout).not.toContain('The project has what ddd-ts-kit');
+    expect(cli(root, 'doctor', '--strict').code).toBe(1);
+  });
+
   it('in a clone, says the pre-commit hook is not installed or not from lefthook, without failing --strict', () => {
-    git(root, 'init', '--quiet');
+    fs.rmSync(path.join(root, '.git', 'hooks', 'pre-commit'));
 
     const missing = cli(root, 'doctor', '--strict');
 
