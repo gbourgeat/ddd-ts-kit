@@ -1,5 +1,5 @@
 [English](deploy-and-rollback.md) · **Français**
-<!-- translation-of: deploy-and-rollback.md sha256:1eb5c0b2531a1363 -->
+<!-- translation-of: deploy-and-rollback.md sha256:d1be6a5609a09073 -->
 
 # Déployer et revenir en arrière
 
@@ -19,7 +19,7 @@ scripts de cette page sont ceux du projet, et la page le dit là où cela compte
 
 | Pièce | Écrite par | Ce que c'est |
 |---|---|---|
-| l'image | le `Dockerfile` d'`init` | une construction en plusieurs étapes : `npm ci`, `npm run build` (les alias de `dist/` réécrits pour Node), puis une étape `node:24-slim` avec les seules dépendances de production, lancée sous `node`, sur le port 3000. `ENTRY` (un argument de construction, `dist/src/main.js` par défaut) choisit le processus : `dist/src/apps/worker/main.js` pour le *worker*, `dist/src/apps/<context>/main.js` pour un contexte lancé seul. Une image, plusieurs processus |
+| l'image | le `Dockerfile` d'`init` | une construction en plusieurs étapes : `npm ci`, `npm run build` (les alias de `dist/` réécrits pour Node), puis une étape `node:26-slim` avec les seules dépendances de production, lancée sous `node`, sur le port 3000. `ENTRY` (un argument de construction, `dist/src/main.js` par défaut) choisit le processus : `dist/src/apps/worker/main.js` pour le *worker*, `dist/src/apps/<context>/main.js` pour un contexte lancé seul. Une image, plusieurs processus |
 | les migrations | `npm run db:generate <what-it-does>` | `migrations/` (`prisma/migrations/` sur Prisma), appliquées par `npm run db:migrate` contre la base cible, comme une étape de la mise en production et jamais au démarrage du processus |
 | l'API | `src/main.ts` | le serveur HTTP, les bus, les consommateurs d'événements d'intégration et, avec `--events outbox`, le relais de l'outbox (`startOutboxRelay`, toutes les `OUTBOX_RELAY_INTERVAL_MS`) : les événements qu'une commande a stockés sont publiés par ce processus |
 | le *worker* | `npx ddd-ts-kit generate worker` | `src/apps/worker/main.ts` : les mêmes modules sans le serveur HTTP, les *jobs* planifiés démarrés quoi que dise `RUN_JOBS`, et `RUN_JOBS=false` par défaut pour l'API. Il ne fait tourner aucun relais de l'outbox : les événements que ses commandes stockent sont relayés par l'API |

@@ -357,13 +357,13 @@ against your version.
 
 ```dockerfile
 # Dockerfile of the sandbox: Node of the project, git, the agent
-FROM node:24-bookworm
+FROM node:26-bookworm
 RUN npm install --global @anthropic-ai/claude-code
 ```
 
 ```sh
 export ANTHROPIC_API_KEY=...   # becomes a provider: the sandbox never sees the key
-openshell sandbox create --name shop --from <your-registry>/ddd-agent:node24 \
+openshell sandbox create --name shop --from <your-registry>/ddd-agent:node26 \
   --cpu 4 --memory 8Gi --env VITEST_MAX_WORKERS=2
 
 # npm reaches the registry through node, git reaches its host through git-remote-https

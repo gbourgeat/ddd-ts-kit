@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:26ed13a5fc492ce2 -->
+<!-- translation-of: README.md sha256:37bd8b91749565fb -->
 
 # @ddd-ts-kit/kafka
 
@@ -34,7 +34,7 @@ librdkafka avec une API à promesses à la manière de KafkaJS, et c'est celle q
 Le prix est un module natif. Rien n'est compilé quand un binaire précompilé existe : le script
 d'installation du *package* en télécharge un (13 Mo, 30 Mo une fois installé) depuis les
 versions publiées du client sur GitHub. Des binaires précompilés existent pour Linux x64 et
-arm64 sur glibc et musl, macOS arm64 et Windows x64, pour Node 18 à 24. Vérifié ici : Ubuntu
+arm64 sur glibc et musl, macOS arm64 et Windows x64, pour Node 18 à 26. Vérifié ici : Ubuntu
 avec Node 24.21, et les images `node:24-alpine` et `node:24-bookworm-slim`, chacune sans
 compilateur, en cinq secondes environ.
 
