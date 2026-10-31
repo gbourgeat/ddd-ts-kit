@@ -23,4 +23,5 @@ export { requiredMigrationName } from './required-migration-name';
 export { knexMigrationText } from './knex-migration-text';
 export { knexSchemaDifference } from './knex-schema-difference';
 export { migrationsUnder } from './audit-guard/migrations-under';
+export { answeredAsJson } from './answered-as-json';
 export { writtenPaths } from './written-paths';

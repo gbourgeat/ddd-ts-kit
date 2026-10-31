@@ -38,7 +38,8 @@ function installEslint(messages: readonly Message[], meta: Readonly<Record<strin
       '  async loadFormatter(name) {',
       "    fs.writeFileSync('formatter.txt', name);",
       "    if (name === 'nope') throw Object.assign(new Error('There was a problem loading formatter'), { code: 'ERR_MODULE_NOT_FOUND' });",
-      '    return { format: (results) => `${name}: ${results[0].messages.length} problem(s)` };',
+      '    const asText = name !== "json" || fs.existsSync("json-as-text.flag");',
+      '    return { format: (results) => asText ? `${name}: ${results[0].messages.length} problem(s)` : JSON.stringify(results) };',
       '  }',
       '}',
       '',
@@ -158,6 +159,56 @@ describe('ddd-ts-kit lint', () => {
     expect(cli(root, 'lint', '--no-cache').code).toBe(0);
     expect(JSON.parse(read(root, 'cache.json'))).toEqual({});
     expect(exists(root, '.eslintcache/.cache_1')).toBe(true);
+  });
+});
+
+describe('ddd-ts-kit lint --json', () => {
+  it('answers the verdict and the JSON report of ESLint on one line, and nothing on stderr', () => {
+    installEslint([
+      { ruleId: 'max-depth', severity: 1 },
+      { ruleId: 'no-var', severity: 2 },
+    ]);
+
+    const result = cli(root, 'lint', 'src', '--json');
+
+    expect(result.code).toBe(1);
+    expect(result.stdout.split('\n')).toHaveLength(1);
+    expect(read(root, 'formatter.txt')).toBe('json');
+    expect(result.stderr).toBe('');
+
+    expect(result.json()).toEqual({
+      errors: 1,
+      warnings: 1,
+      inTransition: [],
+      report: [
+        {
+          filePath: 'src/a.ts',
+          messages: [
+            { ruleId: 'max-depth', severity: 1 },
+            { ruleId: 'no-var', severity: 2 },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('answers a clean run with zero counts and exit 0', () => {
+    installEslint([]);
+
+    const result = cli(root, 'lint', '--json');
+
+    expect(result.code).toBe(0);
+    expect(result.json()).toMatchObject({ errors: 0, warnings: 0 });
+  });
+
+  it('keeps the report as text when the json formatter of the project answers something else', () => {
+    installEslint([{ ruleId: 'no-var', severity: 2 }]);
+    write(root, 'json-as-text.flag', '');
+
+    const result = cli(root, 'lint', '--json');
+
+    expect(result.code).toBe(1);
+    expect(result.json()).toMatchObject({ errors: 1, warnings: 0, report: 'json: 1 problem(s)' });
   });
 });
 

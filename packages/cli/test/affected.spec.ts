@@ -171,7 +171,7 @@ describe('ddd-ts-kit affected', () => {
 
     expect(fs.readFileSync(precious, 'utf8')).toBe('kept\n');
     expect(head.code).toBe(2);
-    expect(head.stderr).toContain('fix: Name a branch, a tag or a commit: `--head origin/main`.');
+    expect(head.stderr).toContain('fix: Name a branch, a tag or a commit: `--head <branch, tag or commit>`.');
     expect(fs.existsSync(written)).toBe(false);
   });
 

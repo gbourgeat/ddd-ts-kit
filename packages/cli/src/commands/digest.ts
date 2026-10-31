@@ -1,3 +1,4 @@
+import { trunkExample } from '../commit/trunk-example';
 import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import { formatDigest, readDigest } from '../digest';
@@ -19,7 +20,7 @@ export const digestCommand: Command = (argv, io) => {
   if (base === undefined || base === '') {
     throw new CliError(
       'digest compares the branch with the commit it was cut from.',
-      'Name it: `ddd-ts-kit digest --base origin/main` (the base of the story or of the briefing).',
+      `Name it: \`ddd-ts-kit digest --base ${trunkExample(root)}\` (the base of the story or of the briefing).`,
     );
   }
 

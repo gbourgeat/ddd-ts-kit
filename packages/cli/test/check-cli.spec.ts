@@ -64,6 +64,9 @@ describe('check', () => {
   it('limits the rules with --rule and the files with paths', () => {
     const byRule = checkJsonOf(cli(root, 'check', '--rule', 'layer/domain-purity', '--json'));
     const byPath = checkJsonOf(cli(root, 'check', 'src/contexts/billing/application', ...LAYERS, '--json'));
+
+    write(root, 'src/contexts/shipping/clean.ts', 'export const shipped = 1;\n');
+
     const elsewhere = cli(root, 'check', 'src/contexts/shipping', ...LAYERS, '--json');
 
     expect(byRule.violations.map((violation) => violation.file)).toEqual([AGGREGATE]);

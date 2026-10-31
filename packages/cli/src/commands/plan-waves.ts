@@ -1,4 +1,5 @@
 import { CliError } from '../cli-error';
+import { resolvedTrunk } from '../commit/resolved-trunk';
 import { readConfig } from '../config';
 import { formatPlan } from '../plan/format-plan';
 import { planWaves } from '../plan/plan-waves';
@@ -38,7 +39,7 @@ export const planWavesCommand: Command = (argv, io) => {
   const plan = withReplay(
     root,
     rows,
-    planWaves(rows, { context, contexts: Object.keys(readConfig(root).config.contexts) }),
+    planWaves(rows, { context, contexts: Object.keys(readConfig(root).config.contexts), trunk: resolvedTrunk(root) }),
   );
 
   io.out(args.json ? stdoutJson(plan) : formatPlan(plan));

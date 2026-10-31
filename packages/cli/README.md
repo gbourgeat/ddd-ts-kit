@@ -688,7 +688,9 @@ pipelines call, `test:coverage` (every spec once, each context and layer held to
 with a letter or a digit (`npm run db:generate add-invoices`, on TypeORM
 `migrations/add-invoices`): `drizzle-generate`, `knex-generate`, `prisma-generate` and
 `typeorm-generate` refuse any other name before the ORM reads it, since a value that starts with a dash would be one of its
-options; `typeorm-generate` also refuses a folder outside the project.
+options; `typeorm-generate` also refuses a folder outside the project. With `--json` they answer
+`{ code, written, messages }` on one line: the exit code, the files of the migrations folder that are new
+or changed, and what the command said; the output of the ORM tool goes to stderr.
 
 `package.json` carries two compilers: `typescript ~6.0.3`, which the tools load as a library,
 and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck` call by path
@@ -1067,7 +1069,8 @@ ddd-ts-kit depcruise-config [--check | --write]
 Prints the dependency-cruiser configuration derived from `ddd-ts-kit.config.json`: layers,
 published languages, declared upstreams, allowed packages, cycles and orphans. `--write` saves
 it as `.dependency-cruiser.cjs`; `--check` exits 1 when the file is missing or stale, which is
-what `npm run depcruise` runs first. Edit the config, not the file.
+what `npm run depcruise` runs first. Edit the config, not the file. With `--json`, the print is
+`{ file, config }` and `--write` answers `{ file, written }`.
 
 ## value-objects
 
@@ -1348,8 +1351,9 @@ from its generator commands: `--aggregate <Name>`, `aggregate <context> <Name>` 
 `repository <context> <Name>`. Two batches of one context in one wave are said likely to touch the
 same files when they name the same aggregate; when one of them names none, the overlap is said to
 be unknown rather than guessed. Each batch of a context's worker comes with the command that briefs
-it, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>`, with its own
-`--worktree` and `--branch` when its wave holds another batch of that context; a batch of the
+it, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>` (without `--base` in a
+repository where `origin/main` does not resolve yet: the worker is then cut from the current branch),
+with its own `--worktree` and `--branch` when its wave holds another batch of that context; a batch of the
 conductor is built on the trunk; a person is briefed by hand. Then the merge order: by wave, and in
 a wave the batch that the most rows wait for, directly or not, first, and what runs before each
 merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge. With a context, only its rows
@@ -2154,6 +2158,9 @@ ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|gith
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
 
+A path that exists nowhere, or a folder that holds no TypeScript file under the source root, is a
+mistake of the caller: `check` refuses it (exit 2) in place of reporting a clean project.
+
 Each violation has a rule id, a severity, a file, a line, a message and a `fix`: one sentence
 saying what to do instead. Exit code 1 when there is at least one error. Suppose that the
 `Reminder` aggregate of the example application read the system clock in its domain: an `isDue()`
@@ -2501,7 +2508,8 @@ ddd-ts-kit check-file <path> [--content-from <file>] [--rule <id>]...
 
 Runs the per-file rules (layers, contexts, naming, events, language, purity, clean code, mocks,
 composition, suppressions) on one file without walking the project: meant for an editor or
-agent hook after each write. A file that is not a source of the project is ignored.
+agent hook after each write. A file that is not a source of the project is ignored; a path that
+exists nowhere is refused (exit 2), as for `check`.
 `--content-from <file>` judges the text of that file as the content of `<path>`, which need not
 exist yet: what a session is about to write, as the guard of the plugin reads it before the write
 under `"dependenciesBeforeWrite": true`. `--rule` narrows the rules; the baseline of the project
@@ -2521,6 +2529,9 @@ transition: a rule new in this version, whose documentation names the version in
 an error. Those are shown in the report and listed after it, one line per rule, without failing:
 an upgrade of the kit never turns a green lint red. Without ESLint installed it exits 2 and names
 the install. See [Quality baseline](../../docs/tools/quality-baseline.md#warnings-fail-the-lint).
+With `--json` ESLint reports in its JSON format and the command answers, on one line,
+`{ errors, warnings, inTransition, report }` (`report` is the JSON report of ESLint), with the same
+exit code and nothing on stderr.
 
 The command lints with the cache of ESLint, keyed by the content of each file (`.eslintcache/`,
 ignored by git): a second run on a tree that did not change lints the files that changed since.

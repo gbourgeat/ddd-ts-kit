@@ -53,7 +53,7 @@ describe('check-file', () => {
       ['layer/domain-purity', planned],
     ]);
 
-    expect(cli(root, 'check-file', planned).code).toBe(0);
+    expect(cli(root, 'check-file', planned).code).toBe(2);
 
     expect(cli(root, 'check-file', planned, '--content-from', 'tmp/discount.ts', '--rule', 'test/no-mocks').code).toBe(
       0,
@@ -77,7 +77,14 @@ describe('check-file', () => {
   it('ignores files that are not sources of the project', () => {
     expect(cli(root, 'check-file', 'package.json').stdout).toBe('0 errors, 0 warnings, 0 suppressions in 0 files.');
     expect(cli(root, 'check-file', 'scripts/openapi.ts').code).toBe(0);
-    expect(cli(root, 'check-file', 'src/missing.ts').code).toBe(0);
+  });
+
+  it('refuses a path that exists nowhere, unless the text it will hold is given', () => {
+    const missing = cli(root, 'check-file', 'src/contexts/billing/domain/servicess/x.ts');
+
+    expect(missing.code).toBe(2);
+    expect(missing.stderr).toContain('error: No such file: src/contexts/billing/domain/servicess/x.ts.');
+    expect(missing.stderr).toContain('--content-from');
   });
 
   it('answers well under 200 ms', () => {

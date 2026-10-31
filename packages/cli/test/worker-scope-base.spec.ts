@@ -173,7 +173,7 @@ describe('worker-scope --base', () => {
 
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('is the worktree of a worker (.ddd-ts-kit/worker.json is present)');
-    expect(refused.stderr).toContain('`--base origin/main`');
+    expect(refused.stderr).toContain('`--base <branch, tag or commit>`');
   });
 
   it('refuses a directory that exists and is not a worktree of the repository', () => {

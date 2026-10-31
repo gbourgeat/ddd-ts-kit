@@ -3,6 +3,7 @@ import path from 'node:path';
 import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import {
+  answeredAsJson,
   formatAsTheProject,
   knexMigrationText,
   knexSchemaDifference,
@@ -12,6 +13,7 @@ import {
   runOrmTool,
   writtenPaths,
 } from '../migration';
+import type { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
 import { parseMigrationArguments } from './parse-migration-arguments';
@@ -37,6 +39,14 @@ export const knexGenerateCommand: Command = (argv, io) => {
 
   refuseLiveMigrations(root);
 
+  return args.json
+    ? answeredAsJson({ root, folders: [FOLDER] }, io, (held) => generateMigration(args, name, held))
+    : generateMigration(args, name, io);
+};
+
+function generateMigration(args: Arguments, name: string, io: Io): number {
+  const root = args.projectRoot;
+
   if (args.flag('custom')) {
     return writeMigration({ root, name, fill: () => undefined }, io);
   }
@@ -58,7 +68,7 @@ export const knexGenerateCommand: Command = (argv, io) => {
   }
 
   return writeMigration({ root, name, fill: () => knexMigrationText(difference) }, io);
-};
+}
 
 interface MigrationToWrite {
   readonly root: string;

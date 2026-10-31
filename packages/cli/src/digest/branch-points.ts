@@ -1,3 +1,4 @@
+import { trunkExample } from '../commit/trunk-example';
 import { CliError } from '../cli-error';
 import { commitOf } from '../commit/commit-of';
 import { knownCommit } from '../commit/known-commit';
@@ -41,7 +42,7 @@ function forkPoint(root: string, base: string, head: string): string {
   const named = knownCommit(
     root,
     base,
-    'Fetch it first (`git fetch origin`), or name the base of the branch: `--base origin/main`.',
+    `Fetch it first (\`git fetch origin\`), or name the base of the branch: \`--base ${trunkExample(root)}\`.`,
   );
 
   const fork = runGit(root, ['merge-base', '--end-of-options', named, head])?.trim();
@@ -49,7 +50,7 @@ function forkPoint(root: string, base: string, head: string): string {
   if (fork === undefined || fork === '') {
     throw new CliError(
       `${base} shares no history with HEAD.`,
-      'Name the commit the branch was cut from: `--base origin/main`, or the base of the story or of the briefing.',
+      `Name the commit the branch was cut from: \`--base ${trunkExample(root)}\`, or the base of the story or of the briefing.`,
     );
   }
 

@@ -65,6 +65,35 @@ describe('ddd-ts-kit drizzle-generate, what it adds to a migration drizzle-kit w
   });
 });
 
+describe('ddd-ts-kit drizzle-generate --json', () => {
+  it('answers {code, written, messages} on one line, with what drizzle-kit printed among the messages', () => {
+    const root = projectWithDrizzleKit(
+      "const fs = require('node:fs'); fs.mkdirSync('migrations', { recursive: true }); fs.writeFileSync('migrations/0000_init.sql', 'CREATE TABLE \"t\" (\"id\" text);\\n'); console.log('Reading config file');",
+    );
+
+    const result = cli(root, 'drizzle-generate', '--name', 'init', '--json');
+
+    expect(result.code).toBe(0);
+    expect(result.stdout.split('\n')).toHaveLength(1);
+
+    expect(result.json()).toEqual({
+      code: 0,
+      written: ['migrations/0000_init.sql'],
+      messages: expect.arrayContaining([expect.stringContaining('Reading config file')]),
+    });
+
+    expect(result.stderr).toBe('');
+  });
+
+  it('keeps the exit code of a failure and says it in the answer', () => {
+    const root = projectWithDrizzleKit('process.exit(3);');
+    const result = cli(root, 'drizzle-generate', '--name', 'init', '--json');
+
+    expect(result.code).toBe(3);
+    expect(result.json()).toMatchObject({ code: 3, written: [] });
+  });
+});
+
 describe('ddd-ts-kit drizzle-generate', () => {
   it('runs drizzle-kit generate with the name of the migration, in the project root, and prints what it printed', () => {
     const root = projectWithDrizzleKit("console.log('Your SQL migration file is migrations/1_add-invoices.sql');");

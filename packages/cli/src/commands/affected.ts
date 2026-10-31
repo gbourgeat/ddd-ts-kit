@@ -1,3 +1,4 @@
+import { trunkExample } from '../commit/trunk-example';
 import { changedPaths } from '../affected/changed-paths';
 import { everything } from '../affected/everything';
 import { formatSelection } from '../affected/format-selection';
@@ -58,8 +59,8 @@ function selectionFor(root: string, config: Config, args: Arguments): Selection 
 
   const head = args.text('head') ?? 'HEAD';
 
-  refuseOption('base', base);
-  refuseOption('head', head);
+  refuseOption(root, 'base', base);
+  refuseOption(root, 'head', head);
 
   const changed = changedPaths(root, base, head);
 
@@ -69,11 +70,11 @@ function selectionFor(root: string, config: Config, args: Arguments): Selection 
 }
 
 /** A value git would read as one of its options: `--base=--output=<file>` once wrote the difference into that file. */
-function refuseOption(option: string, ref: string): void {
+function refuseOption(root: string, option: string, ref: string): void {
   if (ref.startsWith('-')) {
     throw new CliError(
       `${ref} is not a commit of this repository: no ref starts with a dash.`,
-      `Name a branch, a tag or a commit: \`--${option} origin/main\`.`,
+      `Name a branch, a tag or a commit: \`--${option} ${trunkExample(root)}\`.`,
     );
   }
 }

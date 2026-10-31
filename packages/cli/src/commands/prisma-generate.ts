@@ -1,4 +1,5 @@
 import {
+  answeredAsJson,
   ensureDatabaseReachable,
   generateGuarded,
   hasDatabaseUrl,
@@ -8,6 +9,7 @@ import {
   runOrmTool,
 } from '../migration';
 import type { Command } from './command';
+import type { Io } from './io';
 import { parseMigrationArguments } from './parse-migration-arguments';
 
 /**
@@ -27,17 +29,20 @@ export const prismaGenerateCommand: Command = (argv, io) => {
 
   const offline = !hasDatabaseUrl();
 
-  return generateGuarded(
-    {
-      root,
-      orm: 'prisma',
-      folder: 'prisma/migrations',
-      migration: /^migration\.sql$/,
-      generate: () =>
-        offline
-          ? offlinePrismaMigration({ root, folder: 'prisma/migrations', name, io })
-          : runOrmTool(root, 'prisma/build/index.js', ['migrate', 'dev', '--create-only', '--name', name]),
-    },
-    io,
-  );
+  const generate = (out: Io): number =>
+    generateGuarded(
+      {
+        root,
+        orm: 'prisma',
+        folder: 'prisma/migrations',
+        migration: /^migration\.sql$/,
+        generate: () =>
+          offline
+            ? offlinePrismaMigration({ root, folder: 'prisma/migrations', name, io: out })
+            : runOrmTool(root, 'prisma/build/index.js', ['migrate', 'dev', '--create-only', '--name', name]),
+      },
+      out,
+    );
+
+  return args.json ? answeredAsJson({ root, folders: ['prisma/migrations'] }, io, generate) : generate(io);
 };

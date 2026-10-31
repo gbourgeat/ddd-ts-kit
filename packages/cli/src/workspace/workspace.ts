@@ -91,7 +91,8 @@ export class Workspace {
     }
 
     try {
-      return fs.readFileSync(this.absolute(file), 'utf8');
+      // Read with any line end: a checkout under autocrlf holds the same text as one that does not.
+      return fs.readFileSync(this.absolute(file), 'utf8').replace(/\r\n/g, '\n');
     } catch {
       return undefined;
     }

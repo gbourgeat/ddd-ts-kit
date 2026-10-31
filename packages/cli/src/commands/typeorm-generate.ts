@@ -3,6 +3,7 @@ import path from 'node:path';
 import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import {
+  answeredAsJson,
   ensureDatabaseReachable,
   formatAsTheProject,
   generateGuarded,
@@ -17,6 +18,7 @@ import {
 } from '../migration';
 import { Arguments } from './arguments';
 import type { Command } from './command';
+import type { Io } from './io';
 
 const TYPEORM = 'typeorm/cli.js';
 
@@ -46,27 +48,31 @@ export const typeormGenerateCommand: Command = (argv, io) => {
 
   const dataSource = `dist/${readConfig(root).config.platformDir}/database/data-source.js`;
 
-  warnDroppedContextTables(root, io, 'typeorm');
+  const generate = (out: Io): number => {
+    warnDroppedContextTables(root, out, 'typeorm');
 
-  return generateGuarded(
-    {
-      root,
-      orm: 'typeorm',
-      folder: path.posix.dirname(target),
-      migration: /\.ts$/,
-      generate: () => generateMigration({ root, dataSource, target, offline }),
-      tidy: (written) => {
-        for (const file of written) {
-          const full = path.join(root, file);
+    return generateGuarded(
+      {
+        root,
+        orm: 'typeorm',
+        folder: path.posix.dirname(target),
+        migration: /\.ts$/,
+        generate: () => generateMigration({ root, dataSource, target, offline }),
+        tidy: (written) => {
+          for (const file of written) {
+            const full = path.join(root, file);
 
-          fs.writeFileSync(full, schemasFirst(typeOnlyImports(fs.readFileSync(full, 'utf8'))));
-        }
+            fs.writeFileSync(full, schemasFirst(typeOnlyImports(fs.readFileSync(full, 'utf8'))));
+          }
 
-        formatAsTheProject(root, written, io);
+          formatAsTheProject(root, written, out);
+        },
       },
-    },
-    io,
-  );
+      out,
+    );
+  };
+
+  return args.json ? answeredAsJson({ root, folders: [path.posix.dirname(target)] }, io, generate) : generate(io);
 };
 
 const TARGET_FIX =

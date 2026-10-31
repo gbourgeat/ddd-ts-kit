@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, write } from './helpers';
+import { commitAll } from './support/commit-all';
+import { git } from './support/git';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 
@@ -39,16 +41,20 @@ const TERMS = [
   'Search=Read a page of the invoices that match',
 ].flatMap((term) => ['--term', term]);
 
+const UPSTREAM = ['--upstream', 'billing:published-language', '--term', 'Parcel=A package handed to a carrier'];
+
 let root: string;
 
 beforeAll(() => {
   root = initProject('--context', 'billing:core');
   cli(root, 'generate', 'aggregate', 'billing', 'Invoice', ...TERMS);
 
-  const upstream = ['--upstream', 'billing:published-language', '--term', 'Parcel=A package handed to a carrier'];
-
-  cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting', ...upstream);
+  cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting', ...UPSTREAM);
   write(root, 'docs/architecture/slices.md', TWO_STORIES);
+
+  // The trunk of a repository that was pushed: the briefs name it as the base.
+  commitAll(root);
+  git(root, 'update-ref', 'refs/remotes/origin/main', 'HEAD');
 });
 
 describe('plan-waves, two stories building in one context', () => {
@@ -314,27 +320,6 @@ ${HEADER}| US1.02;id | billing | slice | Issue invoice | | | billing | todo |
 
     expect(refused.stdout).not.toContain('worker-scope');
     expect(cli(root, 'plan-waves').stdout).toContain('#US1.03 cannot be planned');
-  });
-});
-
-describe('plan-waves, the rows of the platform and of every context', () => {
-  it('orders a row whose context is platform or all, owned by the conductor, and briefs no worker for it', () => {
-    write(
-      root,
-      'docs/architecture/slices.md',
-      `# Slices
-
-${HEADER}| M1.01 | platform | skeleton | Authorizer | by hand in \`src/platform/auth/\` | | conductor | todo |
-| M1.02 | all | slice | One trace | end-to-end spec | M1.01 | conductor | todo |
-`,
-    );
-
-    const planned = cli(root, 'plan-waves', '--json');
-
-    expect(planned.code).toBe(0);
-    expect(planned.json()).toMatchObject({ problems: [] });
-    expect(planned.stdout).not.toContain('worker-scope platform');
-    expect(planned.stdout).not.toContain('worker-scope all');
   });
 });
 

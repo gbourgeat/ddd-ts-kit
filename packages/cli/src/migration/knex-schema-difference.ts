@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { isRecord } from '../init/is-record';
+import { toolStdio } from './tool-stdio';
 
 /** What `createTables` builds and the migrations of the project do not. */
 export interface KnexSchemaDifference {
@@ -159,7 +160,7 @@ export function knexSchemaDifference(root: string, schema: string): KnexSchemaDi
   try {
     const { status } = spawnSync(process.execPath, ['-e', COMPARE], {
       cwd: root,
-      stdio: 'inherit',
+      stdio: toolStdio(),
       env: { ...process.env, [RUN_VARIABLE]: JSON.stringify({ schema, answer }) },
     });
 

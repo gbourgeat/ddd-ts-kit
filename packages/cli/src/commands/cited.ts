@@ -1,3 +1,4 @@
+import { trunkExample } from '../commit/trunk-example';
 import { loadProject } from '../check/project/load-project';
 import { formatCitations } from '../citations/format-citations';
 import { formatRemovals } from '../citations/format-removals';
@@ -91,6 +92,6 @@ function knownRef(root: string, ref: string): string {
   return knownCommit(
     root,
     ref,
-    'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.',
+    `Fetch it first (\`git fetch origin\`), or pass a branch, a tag or a commit: \`--base ${trunkExample(root)}\`.`,
   );
 }

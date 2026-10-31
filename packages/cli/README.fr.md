@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b09da815ff1b6dcc -->
+<!-- translation-of: README.md sha256:22ed5ec81932d2fa -->
 
 # ddd-ts-kit
 
@@ -720,7 +720,9 @@ toute la base : typecheck, lint, `format:check`, `test:coverage`, tests de bout 
 commençant par une lettre ou un chiffre (`npm run db:generate add-invoices`, sous TypeORM
 `migrations/add-invoices`) : `drizzle-generate`, `knex-generate`, `prisma-generate` et
 `typeorm-generate` refusent tout autre nom avant que l'ORM ne le lise, puisqu'une valeur qui commence par un tiret serait l'une
-de ses options ; `typeorm-generate` refuse aussi un dossier hors du projet.
+de ses options ; `typeorm-generate` refuse aussi un dossier hors du projet. Avec `--json`, elles répondent
+`{ code, written, messages }` sur une ligne : le code de sortie, les fichiers du dossier de migrations
+nouveaux ou modifiés, et ce que la commande a dit ; la sortie de l'outil de l'ORM va sur stderr.
 
 `package.json` porte deux compilateurs : `typescript ~6.0.3`, que les outils chargent comme une
 bibliothèque, et `@typescript/native` (`npm:typescript@~7.0.2`), que `build` et `typecheck`
@@ -1130,7 +1132,8 @@ Affiche la configuration de dependency-cruiser dérivée de `ddd-ts-kit.config.j
 langages publiés, amonts déclarés, *packages* autorisés, cycles et orphelins. `--write` la
 sauvegarde sous `.dependency-cruiser.cjs` ; `--check` sort avec le code 1 quand le fichier
 manque ou est périmé, ce que `npm run depcruise` exécute en premier. Modifiez la configuration,
-pas le fichier.
+pas le fichier. Avec `--json`, l'affichage est `{ file, config }` et `--write` répond
+`{ file, written }`.
 
 ## value-objects
 
@@ -1428,8 +1431,9 @@ ses commandes de générateur : `--aggregate <Name>`, `aggregate <context> <Name
 `repository <context> <Name>`. Deux lots d'un contexte dans une vague sont dits susceptibles de
 toucher les mêmes fichiers quand ils nomment le même agrégat ; quand l'un d'eux n'en nomme aucun,
 le chevauchement est dit inconnu plutôt que deviné. Chaque lot du *worker* d'un contexte vient avec
-la commande qui le consigne, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>`,
-avec ses propres `--worktree` et `--branch` quand sa vague porte un autre lot de ce contexte ; un
+la commande qui le consigne, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>` (sans
+`--base` dans un dépôt où `origin/main` n'existe pas encore : le *worker* part alors de la branche
+courante), avec ses propres `--worktree` et `--branch` quand sa vague porte un autre lot de ce contexte ; un
 lot du chef d'orchestre se construit sur le tronc ; une personne reçoit sa consigne à la main.
 Puis l'ordre des fusions : par vague, et dans une vague d'abord le lot que le plus de lignes
 attendent, directement ou non, et ce qui se lance avant chaque fusion :
@@ -2299,6 +2303,10 @@ ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|gith
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
 
+Un chemin qui n'existe nulle part, ou un dossier sans fichier TypeScript sous la racine des
+sources, est une erreur de l'appelant : `check` le refuse (code 2) au lieu de déclarer le projet
+propre.
+
 Chaque violation a un identifiant de règle, une sévérité, un fichier, une ligne, un message et un
 `fix` : une phrase qui dit quoi faire à la place. Code de sortie 1 quand il y a au moins une
 erreur. Supposons que l'agrégat `Reminder` de l'application d'exemple lise l'horloge système dans
@@ -2679,7 +2687,7 @@ ddd-ts-kit check-file <path> [--content-from <file>] [--rule <id>]...
 Exécute les règles par fichier (couches, contextes, nommage, événements, langage, pureté, code
 propre, *mocks*, composition, désactivations) sur un fichier sans parcourir le projet : conçu pour
 un *hook* d'éditeur ou d'agent après chaque écriture. Un fichier qui n'est pas une source du
-projet est ignoré. `--content-from <file>` juge le texte de ce fichier comme le contenu de
+projet est ignoré ; un chemin qui n'existe nulle part est refusé (code 2), comme pour `check`. `--content-from <file>` juge le texte de ce fichier comme le contenu de
 `<path>`, qui n'a pas besoin d'exister encore : ce qu'une session s'apprête à écrire, comme la
 garde du *plugin* le lit avant l'écriture sous `"dependenciesBeforeWrite": true`. `--rule`
 restreint les règles ; la *baseline* du projet s'applique comme pour un fichier sur le disque.
@@ -2699,6 +2707,9 @@ nomme la version où elle devient une erreur. Ceux-là sont affichés dans le ra
 après lui, une ligne par règle, sans échouer : une mise à jour du kit ne fait jamais passer au
 rouge un lint vert. Sans ESLint installé, il sort en 2 et nomme l'installation. Voir
 [Base de qualité](../../docs/tools/quality-baseline.fr.md#un-avertissement-fait-échouer-le-lint).
+Avec `--json`, ESLint rapporte dans son format JSON et la commande répond, sur une ligne,
+`{ errors, warnings, inTransition, report }` (`report` est le rapport JSON d'ESLint), avec le même
+code de sortie et rien sur stderr.
 
 La commande linte avec le cache d'ESLint, indexé par le contenu de chaque fichier
 (`.eslintcache/`, ignoré par git) : une seconde exécution sur un arbre qui n'a pas changé ne
