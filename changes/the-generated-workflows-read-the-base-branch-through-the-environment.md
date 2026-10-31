@@ -1,1 +1,0 @@
-**The base branch of a pull request reaches a script of the generated and of the kit's own workflows through the environment, never through the text of the script.** The mutation job of `ci.yml` and `intent-to-spec` read it as `$BASE_REF`.

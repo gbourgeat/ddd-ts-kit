@@ -1,1 +1,0 @@
-**A file a worker writes is judged where it lands.** A link of its scope, or a folder of the path that is one, is the place it reaches, a link that points nowhere yet included; a link of the temp directory into a project is that place; and a file of its scope that has another name elsewhere (a hard link) is refused, by the editor tools and by the shell.

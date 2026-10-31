@@ -1,1 +1,0 @@
-**A project under the temp directory keeps the rules of its shell.** The temp directory is a free place for a redirection outside every project only: in a project cloned or checked out there, a redirection, `sed -i` or `tee` is judged as anywhere else.
