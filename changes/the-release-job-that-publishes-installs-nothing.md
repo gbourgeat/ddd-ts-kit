@@ -1,0 +1,1 @@
+**The job of the release workflow that publishes to npm installs and builds nothing.** A first job installs, builds and packs each package; the job that holds the publishing identity downloads those tarballs and publishes them.

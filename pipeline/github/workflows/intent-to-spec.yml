@@ -33,6 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # The credentials stay in the checkout: the story pushes its branch from it.
           # The merge commit and its first parent: the diff of the pull request on the trunk.
           fetch-depth: 2
           ref: ${{ github.event.pull_request.base.ref }}
@@ -46,12 +47,17 @@ jobs:
           echo "$accepted" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
           echo "count=$(printf '%s\n' "$accepted" | grep -c '^docs/' || true)" >> "$GITHUB_OUTPUT"
+      # The agent at a version of this file, and the plugin at the tag of the kit version the project
+      # depends on: nothing moves under a run that can push. npm carries the agent whatever the
+      # package manager of the project is.
       - name: Claude Code and the plugin
         if: steps.accepted.outputs.count != '0'
         run: |
-          npm install --global @anthropic-ai/claude-code
-          claude plugin marketplace add gbourgeat/ddd-ts-kit
-          claude plugin install ddd-ts-kit@ddd-ts-kit
+          npm install --global --no-audit --no-fund @anthropic-ai/claude-code@2.1.309
+          kit=$(node -p "JSON.parse(require('node:fs').readFileSync('node_modules/ddd-ts-kit/package.json', 'utf8')).version") \
+            || { echo "::error::ddd-ts-kit is not installed in node_modules: the plugin is loaded at the tag of the kit version the project depends on."; exit 1; }
+          git clone --quiet --depth 1 --branch "v$kit" https://github.com/gbourgeat/ddd-ts-kit.git "$RUNNER_TEMP/ddd-ts-kit" \
+            || { echo "::error::The kit has no tag v$kit to load the plugin from: depend on a released version of ddd-ts-kit."; exit 1; }
       - name: One story per accepted intent, headless, to its pull request
         if: steps.accepted.outputs.count != '0'
         env:
@@ -60,13 +66,15 @@ jobs:
           # token of an app or a person for the checks of the story to run on it.
           GH_TOKEN: ${{ secrets.INTENT_TO_SPEC_TOKEN || secrets.GITHUB_TOKEN }}
           ACCEPTED: ${{ steps.accepted.outputs.files }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           git config user.name 'intent-to-spec'
           git config user.email 'intent-to-spec@users.noreply.github.com'
-          git fetch --no-tags origin "${{ github.event.pull_request.base.ref }}"
+          git fetch --no-tags origin "$BASE_REF"
           printf '%s\n' "$ACCEPTED" | grep '^docs/' | while read -r intent; do
             code=$(basename "$intent" .md | tr '[:lower:]' '[:upper:]' | tr -c 'A-Z0-9-\n' '-')
             claude -p "/ddd-ts-kit:story $code --headless $intent" \
+              --plugin-dir "$RUNNER_TEMP/ddd-ts-kit/plugin" \
               --permission-mode acceptEdits \
               --output-format text
           done

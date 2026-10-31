@@ -198,3 +198,53 @@ describe('init --ci-extras intent-to-spec: the headless design pass of the story
     expect(elsewhere.message).toBe('--ci-extras intent-to-spec is a job of the GitHub pipeline, and --ci is gitlab.');
   });
 });
+
+describe('the workflows init writes for the Claude jobs, on the default package manager', () => {
+  const EVERYTHING = 'codeql,dependency-review,claude-review,claude-triage,intent-to-spec';
+
+  it('install the agent with npm at a version, and the plugin from the tag of the kit version the project uses', () => {
+    const root = initProject('--ci', 'both', '--ci-extras', EVERYTHING);
+    const workflow = read(root, '.github/workflows/intent-to-spec.yml');
+    const gitlab = read(root, CLAUDE_GITLAB);
+
+    expect(workflow).toMatch(
+      /^ {10}npm install --global --no-audit --no-fund @anthropic-ai\/claude-code@\d+\.\d+\.\d+$/m,
+    );
+
+    expect(gitlab).toMatch(
+      /^ {4}- npm install --global --no-audit --no-fund @anthropic-ai\/claude-code@\d+\.\d+\.\d+$/m,
+    );
+
+    expect(workflow).toContain('--branch "v$kit"');
+    expect(workflow).toContain('--plugin-dir "$RUNNER_TEMP/ddd-ts-kit/plugin"');
+    expect(workflow).not.toMatch(/marketplace add|pnpm install --global/);
+  });
+
+  it('read the base branch of a pull request from the environment, never from the text of a script', () => {
+    const root = initProject('--ci', 'github', '--ci-extras', EVERYTHING);
+
+    for (const file of ['ci.yml', 'intent-to-spec.yml']) {
+      const scripts = read(root, `.github/workflows/${file}`)
+        .split('\n')
+        .filter((line) => /(base_ref|base\.ref)/.test(line) && !/^\s*(if|ref|[A-Z_]+):/.test(line));
+
+      expect(scripts, file).toEqual([]);
+    }
+  });
+
+  it('keep no token in the checkout, and the Claude jobs ask for no identity token', () => {
+    const root = initProject('--ci', 'github', '--ci-extras', EVERYTHING);
+
+    for (const file of ['ci.yml', 'codeql.yml', 'pr-title.yml', 'claude-review.yml', 'claude-triage.yml']) {
+      const text = read(root, `.github/workflows/${file}`);
+      const checkouts = text.split('actions/checkout@').length - 1;
+
+      expect(checkouts, file).toBeGreaterThan(0);
+      expect(text.split('persist-credentials: false').length - 1, file).toBe(checkouts);
+    }
+
+    for (const file of ['claude-review.yml', 'claude-triage.yml']) {
+      expect(read(root, `.github/workflows/${file}`), file).not.toMatch(/^\s+id-token: write$/m);
+    }
+  });
+});

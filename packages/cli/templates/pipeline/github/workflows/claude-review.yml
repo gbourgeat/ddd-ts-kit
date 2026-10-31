@@ -6,7 +6,8 @@ name: Claude review
 # API tokens on every run. The model is reached with ANTHROPIC_API_KEY, a secret of the repository,
 # or through Amazon Bedrock, Google Vertex AI or Microsoft Foundry: uncomment the matching input
 # below and add the credential step of the provider before the action, as its documentation
-# (docs/cloud-providers.md of anthropics/claude-code-action) shows.
+# (docs/cloud-providers.md of anthropics/claude-code-action) shows; a provider reached with an
+# identity token needs `id-token: write` in the permissions of the job, which holds none otherwise.
 on:
   pull_request:
     types: [opened, ready_for_review, synchronize]
@@ -31,10 +32,10 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           # The whole history: the diff with the base and the story the branch names.
           fetch-depth: 0
       - name: The review policy and the story the branch names, when they exist

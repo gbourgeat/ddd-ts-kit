@@ -278,8 +278,16 @@ its own.
 **No secret.** The workflow publishes through trusted publishing (OIDC): each package names
 `release.yml` of this repository, in its `npm` environment, as its trusted publisher, and
 `npm publish` exchanges the identity token of the job for a token that lives for that one
-publication. The job keeps `id-token: write` and `environment: npm`, and needs npm 11.5.1 or
-later, which it checks. No `NPM_TOKEN` is stored anywhere.
+publication. The job that publishes keeps `id-token: write` and `environment: npm`, installs and
+builds nothing (a first job, without the identity, installs, builds and packs, and the publishing
+job publishes its tarballs), and needs npm 11.5.1 or later, which it checks. No `NPM_TOKEN` is stored anywhere.
+
+**The approval of the owner.** The publish job runs in the `npm` environment, which requires the
+approval of the owner of the repository: a run of `Release` stops before it publishes until the
+owner approves it in the Actions tab, and nothing reaches npm without that approval. Only an
+administrator of the repository creates a `v*` tag (a ruleset refuses it to everyone else), so a
+release starts from an administrator, then waits for the owner. The tarballs a run packs are kept a week: an approval later than that, or a run finished after it,
+runs the whole workflow again. Do not approve a run you did not expect.
 
 **A new package.** Trust is declared per package, and only for a package that exists on the
 registry. Before the first release that contains a package added to `packages/`, a maintainer

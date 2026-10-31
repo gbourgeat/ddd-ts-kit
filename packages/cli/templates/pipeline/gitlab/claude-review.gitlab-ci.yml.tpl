@@ -15,7 +15,7 @@
   variables:
     GIT_DEPTH: '0'
   before_script:
-    - npm install --global --no-audit --no-fund @anthropic-ai/claude-code
+    - npm install --global --no-audit --no-fund @anthropic-ai/claude-code@2.1.309
     - |
       post_note() {
         if [ -z "${CI_MERGE_REQUEST_IID:-}" ]; then echo "No merge request: the text stays in this log."; return 0; fi

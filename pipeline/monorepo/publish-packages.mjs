@@ -5,6 +5,9 @@
  * it again. A version with a pre-release part goes under the `next` tag, never under `latest`.
  * `--dry-run` packs and reports without publishing. `--registry <url>` publishes to another
  * registry than the one npm is configured for (GitHub Packages, which keeps no provenance).
+ * `--pack <directory>` only packs each package there, and publishes nothing; `--from <directory>`
+ * publishes those tarballs instead of the sources, so that the job which holds the publish
+ * identity installs and builds nothing.
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -14,6 +17,8 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 const [version, ...flags] = process.argv.slice(2);
 const dryRun = flags.includes('--dry-run');
 const registry = flags.includes('--registry') ? flags[flags.indexOf('--registry') + 1] : undefined;
+const packTo = flags.includes('--pack') ? path.resolve(flags[flags.indexOf('--pack') + 1] ?? '') : undefined;
+const packedIn = flags.includes('--from') ? path.resolve(flags[flags.indexOf('--from') + 1] ?? '') : undefined;
 const target = registry === undefined ? [] : ['--registry', registry, '--provenance=false'];
 
 process.exit(main());
@@ -60,19 +65,32 @@ function published(entry) {
     return false;
   }
 
-  if (onRegistry(entry)) {
+  if (packTo === undefined && onRegistry(entry)) {
     console.log(`${entry.name}@${version} is already on the registry: skipped.`);
 
     return true;
   }
 
+  if (packTo !== undefined) {
+    fs.mkdirSync(packTo, { recursive: true });
+
+    return (
+      spawnSync('npm', ['pack', '--pack-destination', packTo], { cwd: entry.directory, stdio: 'inherit' }).status === 0
+    );
+  }
+
   const tag = version.includes('-') ? 'next' : 'latest';
-  const run = spawnSync('npm', ['publish', '--tag', tag, ...target, ...(dryRun ? ['--dry-run'] : [])], {
+  const source = packedIn === undefined ? [] : [path.join(packedIn, tarballOf(entry))];
+  const run = spawnSync('npm', ['publish', ...source, '--tag', tag, ...target, ...(dryRun ? ['--dry-run'] : [])], {
     cwd: entry.directory,
     stdio: 'inherit',
   });
 
   return run.status === 0;
+}
+
+function tarballOf(entry) {
+  return `${entry.name.replace(/^@/, '').replace('/', '-')}-${entry.version}.tgz`;
 }
 
 function knownToRegistry(entry) {

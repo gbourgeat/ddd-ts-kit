@@ -18,7 +18,7 @@ const PNPM: Dialect = [
   [said(`${NPM} ci --omit=dev`), 'pnpm install --frozen-lockfile --prod'],
   [said(`${NPM} ci(?![\\w-])`), 'pnpm install --frozen-lockfile'],
   [said(`${NPM} audit --omit=dev --audit-level=high`), 'pnpm audit --prod --audit-level high'],
-  [said(`${NPM} (install|publish)(?![\\w-])`), 'pnpm $1'],
+  [said(`${NPM} (install(?! (?:--global|-g)\\b)|publish)(?![\\w-])`), 'pnpm $1'],
   [said(String.raw`package-lock\.json`), 'pnpm-lock.yaml'],
 ];
 

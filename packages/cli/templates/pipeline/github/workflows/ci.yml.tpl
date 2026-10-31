@@ -29,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           # A pull request is checked out as its merge commit, whose first parent is the base it is compared with.
           fetch-depth: 2
       - uses: ./.github/actions/setup
@@ -45,6 +46,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - run: npm run ci:typecheck
 
@@ -55,6 +58,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       # The cache of ESLint (`ddd-ts-kit lint` keys it by the content of each file): a pull request restores the one the
       # default branch wrote last for this lockfile and this config, and lints the files that changed since; the default
@@ -85,6 +90,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - name: Architecture rules
         run: npm run ci:arch:check -- --format github
@@ -98,6 +105,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - run: npm run ci:deadcode
 
@@ -108,6 +117,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - name: Unit specs, each context held to its coverage thresholds
         if: ${{ needs.install.outputs.scope != 'none' }}
@@ -132,6 +143,8 @@ jobs:
       DATABASE_URL: postgres://app:app@localhost:5432/app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - name: PostgreSQL
         if: ${{ needs.install.outputs.scope != 'none' }}
@@ -154,6 +167,8 @@ jobs:
       DATABASE_URL: postgres://app:app@localhost:5432/app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - name: PostgreSQL
         if: ${{ needs.install.outputs.scope != 'none' }}
@@ -171,6 +186,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - name: The production build
         run: npm run ci:build
@@ -185,6 +202,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
       - uses: ./.github/actions/setup
       - name: Production dependencies audit
@@ -208,6 +226,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -226,6 +246,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - name: Stryker on the domain and application layers of every context, each layer held to its "mutation" floor of ddd-ts-kit.config.json
         run: npm run test:mutation
@@ -247,6 +269,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           # The whole history: the files of the change are those since its merge base with the base branch.
           fetch-depth: 0
       - uses: ./.github/actions/setup
@@ -259,9 +282,11 @@ jobs:
           # The night runs without a base and writes no incremental file: its json report is the same object, which Stryker reads back.
           if [ -f reports/mutation/mutation.json ]; then cp reports/mutation/mutation.json reports/mutation/incremental.json; fi
       - name: Stryker on what the change touches, then the survivors of its files
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           mkdir -p reports/mutation
-          base=$(git merge-base "origin/${{ github.base_ref }}" HEAD)
+          base=$(git merge-base "origin/$BASE_REF" HEAD)
           DDD_TS_KIT_MUTATION_SINCE="$base" npm run --silent test:mutation | tee reports/mutation/changed.txt
           { echo '```'; cat reports/mutation/changed.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
