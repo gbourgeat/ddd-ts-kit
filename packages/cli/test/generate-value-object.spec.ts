@@ -46,7 +46,7 @@ describe('generate value-object, by the form the config says', () => {
     );
   });
 
-  it('writes a factory that returns a Result when the config says so, or says nothing', () => {
+  it('writes a factory that returns a Result when the config says so, or says nothing, its refusal asserted by its code', () => {
     for (const valueObjects of ['result', undefined]) {
       const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { stack: Record<string, unknown> };
 
@@ -60,9 +60,10 @@ describe('generate value-object, by the form the config says', () => {
       expect(vo).toContain('static create(value: string): Result<Currency, InvariantViolation> {');
       expect(vo).toContain("return err(new InvariantViolation('Currency must not be empty.'));");
 
-      expect(read(root, 'src/contexts/billing/test/unit/currency.vo.spec.ts')).toContain(
-        "const first = unwrap(Currency.create('sample'));",
-      );
+      const spec = read(root, 'src/contexts/billing/test/unit/currency.vo.spec.ts');
+
+      expect(spec).toContain("const first = unwrap(Currency.create('sample'));");
+      expect(spec).toContain("expectRefusal(Currency.create('  '), 'INVARIANT_VIOLATION');");
     }
   });
 
