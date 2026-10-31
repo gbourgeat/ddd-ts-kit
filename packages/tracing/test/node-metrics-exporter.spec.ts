@@ -54,10 +54,11 @@ async function startCollector(): Promise<Collector> {
 }
 
 describe('initTracing, given the endpoint of a collector', () => {
-  it('exports the metrics there on the interval of OTEL_METRIC_EXPORT_INTERVAL', async () => {
+  it('exports the metrics there on the interval of OTEL_METRIC_EXPORT_INTERVAL, OTEL_METRICS_EXPORTER unset', async () => {
     const collector = await startCollector();
 
     vi.stubEnv('OTEL_EXPORTER_OTLP_ENDPOINT', collector.url);
+    vi.stubEnv('OTEL_METRICS_EXPORTER', undefined);
     vi.stubEnv('OTEL_METRIC_EXPORT_INTERVAL', '50');
 
     const tracing = initTracing({ serviceName: 'billing', instrumentations: [] });
@@ -71,10 +72,11 @@ describe('initTracing, given the endpoint of a collector', () => {
     expect(body).toContain('use_case_total');
   });
 
-  it('exports them on the interval it is given, to the metrics endpoint when it is set', async () => {
+  it('exports them on the interval it is given, to the metrics endpoint when it is set, with OTEL_METRICS_EXPORTER=otlp', async () => {
     const collector = await startCollector();
 
     vi.stubEnv('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT', `${collector.url}/v1/metrics`);
+    vi.stubEnv('OTEL_METRICS_EXPORTER', 'otlp');
 
     const tracing = initTracing({ serviceName: 'billing', instrumentations: [], metricsExportIntervalMillis: 50 });
 

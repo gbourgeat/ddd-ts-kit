@@ -63,7 +63,9 @@ export interface InitTracingOptions {
    * `OTEL_METRIC_EXPORT_INTERVAL` variable is honoured, and by default the SDK's 60 seconds.
    * The metrics leave by OTLP/HTTP when `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` or
    * `OTEL_EXPORTER_OTLP_ENDPOINT` is set; with none of them, nothing is exported and the
-   * instruments of `openTelemetryMetrics` measure nothing.
+   * instruments of `openTelemetryMetrics` measure nothing. `OTEL_METRICS_EXPORTER=none` keeps
+   * the metrics in the process while the spans still leave; a value other than `otlp` (a list
+   * included) is read as `none`, since no other exporter is served.
    */
   readonly metricsExportIntervalMillis?: number;
   readonly enabled?: boolean;
@@ -147,7 +149,7 @@ function metricReadersOf(options: InitTracingOptions): IMetricReader[] {
   const fromEnvironment =
     process.env['OTEL_EXPORTER_OTLP_METRICS_ENDPOINT'] ?? process.env['OTEL_EXPORTER_OTLP_ENDPOINT'];
 
-  if (!fromEnvironment) {
+  if (!fromEnvironment || !exportsByOtlp()) {
     // An empty list, not none: left out, the SDK would export to localhost by default.
     return [];
   }
@@ -167,4 +169,11 @@ function intervalFromEnvironment(): number | undefined {
   const interval = Number(process.env['OTEL_METRIC_EXPORT_INTERVAL']);
 
   return Number.isFinite(interval) && interval > 0 ? interval : undefined;
+}
+
+/** `OTEL_METRICS_EXPORTER` unset, empty or `otlp`; `none` and every value not served say no. */
+function exportsByOtlp(): boolean {
+  const exporter = (process.env['OTEL_METRICS_EXPORTER'] ?? '').trim().toLowerCase();
+
+  return exporter === '' || exporter === 'otlp';
 }

@@ -89,6 +89,18 @@ describe('initTracing', () => {
   });
 });
 
+describe('initTracing, given an OTLP endpoint and OTEL_METRICS_EXPORTER', () => {
+  it.each(['none', 'prometheus', 'otlp,console'])('registers no metric reader for %s', async (exporter) => {
+    vi.stubEnv('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://127.0.0.1:1');
+    vi.stubEnv('OTEL_METRICS_EXPORTER', exporter);
+
+    const tracing = initTracing({ serviceName: 'billing', instrumentations: [] });
+
+    expect(metrics.getMeterProvider()).not.toBeInstanceOf(MeterProvider);
+    await tracing.shutdown();
+  });
+});
+
 describe('the instrumentations on by default', () => {
   const names = (settings?: Parameters<typeof defaultInstrumentations>[0]): string[] =>
     defaultInstrumentations(settings)

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0e444b27b81df58d -->
+<!-- translation-of: README.md sha256:245a0837a7083049 -->
 
 # @ddd-ts-kit/tracing
 
@@ -136,7 +136,11 @@ lecteur OTLP/HTTP périodique quand `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` ou
 `OTEL_EXPORTER_OTLP_ENDPOINT` est définie, les métriques partant toutes les
 `metricsExportIntervalMillis` millisecondes (sinon `OTEL_METRIC_EXPORT_INTERVAL`, sinon
 60 secondes) et une dernière fois à `shutdown()`. Sans aucune des deux variables, il n'en
-enregistre aucun et chaque instrument ne mesure rien, comme les spans n'exportent rien. Jaeger
+enregistre aucun et chaque instrument ne mesure rien, comme les spans n'exportent rien.
+`OTEL_METRICS_EXPORTER=none` n'en enregistre pas non plus, point d'accès défini ou non : les
+métriques restent dans le processus et les spans sortent toujours. Toute autre valeur que `otlp`
+(`prometheus`, `console`, une liste) est lue comme `none`, sans un mot au démarrage : le
+*package* ne sert aucun autre exportateur. Jaeger
 garde les traces, pas les métriques : les métriques vont à un stockage qui reçoit des métriques
 OTLP, un OpenTelemetry Collector devant Prometheus par exemple.
 

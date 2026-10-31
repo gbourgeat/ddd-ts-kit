@@ -131,7 +131,10 @@ called before, it measures nothing. `initTracing` registers that provider with a
 reader when `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` or `OTEL_EXPORTER_OTLP_ENDPOINT` is set, the
 metrics leaving every `metricsExportIntervalMillis` (else `OTEL_METRIC_EXPORT_INTERVAL`, else
 60 seconds) and once more at `shutdown()`. With neither variable, it registers none and every
-instrument measures nothing, as the spans export nothing. Jaeger keeps traces, not metrics: the
+instrument measures nothing, as the spans export nothing. `OTEL_METRICS_EXPORTER=none` registers
+no reader either, endpoint set or not: the metrics stay in the process and the spans still
+leave. Any other value than `otlp` (`prometheus`, `console`, a list) is read as `none`, without a
+word at start: the package serves no other exporter. Jaeger keeps traces, not metrics: the
 metrics go to a backend that takes OTLP metrics, an OpenTelemetry Collector in front of
 Prometheus for instance.
 
