@@ -615,10 +615,6 @@ test('from the checkout of the conductor a builder reads, and whatever writes go
     `git -C ${worktree} pull`,
     `cd ${worktree}; sort -o src/main.ts /etc/hostname`,
     'npx ddd-ts-kit check --baseline prune',
-    'npx ddd-ts-kit docs',
-    'npx ddd-ts-kit docs --check --stored-events',
-    'npx ddd-ts-kit lint --fix',
-    'npx ddd-ts-kit affected --base main --run test',
     'git -C /etc commit -m x',
   ]) {
     const refused = run('pre-bash', bash(conductor, command, agent));
@@ -632,6 +628,14 @@ test('from the checkout of the conductor a builder reads, and whatever writes go
     'npx ddd-ts-kit list',
     'npx ddd-ts-kit worker-scope billing --dry-run',
     'npx ddd-ts-kit status --workers',
+  ]) {
+    assert.equal(run('pre-bash', bash(conductor, command, agent)).output, undefined, command);
+  }
+});
+
+test('from the checkout of the conductor a builder runs the checks of the kit that write nothing', () => {
+  const { conductor, agent } = pinnedBuilder('kit-checks');
+  for (const command of [
     'npx ddd-ts-kit check',
     'npx ddd-ts-kit check --changed-since main --json',
     'npx ddd-ts-kit lint src/contexts/billing',
@@ -642,6 +646,14 @@ test('from the checkout of the conductor a builder reads, and whatever writes go
     'npx ddd-ts-kit affected --base main',
   ]) {
     assert.equal(run('pre-bash', bash(conductor, command, agent)).output, undefined, command);
+  }
+  for (const command of [
+    'npx ddd-ts-kit docs',
+    'npx ddd-ts-kit docs --check --stored-events',
+    'npx ddd-ts-kit lint --fix',
+    'npx ddd-ts-kit affected --base main --run test',
+  ]) {
+    assert.match(reason(run('pre-bash', bash(conductor, command, agent))), /cd <worktree> && \.\.\./, command);
   }
   assert.equal(decision(run('pre-bash', bash(conductor, 'npx ddd-ts-kit check --baseline write', agent))), 'deny');
 });

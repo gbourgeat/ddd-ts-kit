@@ -789,7 +789,7 @@ function quickRefusal({ project, file, written, replaced, deleted }, input) {
   }
   return (
     baselineFileReason(project, file) ??
-    scopeFileReason(project, file, input) ??
+    scopeFileReason(project, { place: file }, input) ??
     acceptanceReason(project, input, { file, written, replaced }) ??
     generatedFileReason(project, file) ??
     (isUnwrapping(project, file, input)
@@ -944,7 +944,7 @@ function sessionPlaceReason(input, { place, by, typed, below }) {
     return undefined;
   }
   return (
-    scopeFileReason(owner, place, input, below) ??
+    scopeFileReason(owner, { place, below }, input) ??
     lockedRegressionReason(owner, projectPath(owner, place), input) ??
     (testWriter
       ? testWriterScopeReason(owner, place, input)
@@ -2736,8 +2736,8 @@ function isPartOfSpec(project, path) {
 // the session of the worktree that holds it, and every sub-agent, change them in no way, nor
 // remove them with a folder above them (`below`: every file under the place, or 'untracked': those
 // git does not ignore).
-function scopeFileReason(project, file, input, below = false) {
-  const path = projectPath(project, file);
+function scopeFileReason(project, { place, below }, input) {
+  const path = projectPath(project, place);
   const held = [STORY_SCOPE, WORKER_SCOPE].find(
     (scope) =>
       existsSync(join(project.root, scope)) &&
@@ -3657,13 +3657,13 @@ function runsInlineCode({ words, heredoc, piped, redirects }) {
 }
 
 // The paths a command changes, each with what changes it.
-function changedPaths({ words, directory, expression }) {
-  const name = shell.commandName(words);
-  return tableWrites(name, words, directory, expression) ?? programWrites(name, words, directory) ?? [];
+function changedPaths(command) {
+  const name = shell.commandName(command.words);
+  return tableWrites(name, command) ?? programWrites(name, command.words, command.directory) ?? [];
 }
 
 // cp, mv, rm, dd, find -delete, patch and git: the writers whose targets the tables already read.
-function tableWrites(name, words, directory, expression) {
+function tableWrites(name, { words, directory, expression }) {
   const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
   if (name in PATH_COMMANDS) {
     const recursive = name === 'rm' && words.some((word) => /^(?:-[a-zA-Z]*[rR][a-zA-Z]*|--recursive)$/.test(word));
