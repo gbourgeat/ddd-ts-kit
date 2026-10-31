@@ -758,7 +758,7 @@ function writesVerdict(writes, input, pending) {
     refusalOf(writes, input, quickRefusal) ??
     cliVerdict(writes, input) ??
     pending() ??
-    writes.map(deviationOf).find(Boolean)
+    writes.map((written) => deviationOf(written, input)).find(Boolean)
   );
 }
 
@@ -813,11 +813,12 @@ function cliRefusal({ project, file, written, replaced }, input) {
   return storyCodeReason(project, file) ?? dependencyReason(project, { file, written, replaced }, input);
 }
 
-function deviationOf({ project, file, written, replaced, deleted }) {
+function deviationOf({ project, file, written, replaced, deleted }, input) {
   if (deleted) {
     return undefined;
   }
-  const deviation = governedFileReason(project, file) ?? escapeReason(written, replaced);
+  const deviation =
+    governedFileReason(project, file) ?? scriptsChangeReason(project, file, input) ?? escapeReason(written, replaced);
   return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
 
@@ -3143,6 +3144,69 @@ function governedFileReason(project, file) {
   return GOVERNED_FILES.some((pattern) => pattern.test(path))
     ? `${path} holds the rules or the pipeline. Changing it is a decision of the project owner: confirm it, and record the reason in docs/adr/ when it relaxes a rule.`
     : undefined;
+}
+
+// package.json is edited for its dependencies all day; its scripts are what the gates run. A change of
+// the `scripts` block is asked, read from the text the call leaves in the file; a text that is not
+// JSON, or a patch of Codex, whose result the guard does not rebuild, is asked too.
+function scriptsChangeReason(project, file, input) {
+  if (projectPath(project, file) !== 'package.json') {
+    return undefined;
+  }
+  const before = readText(file, '');
+  const after = textAfterWrite(toolInput(input), before);
+  const changed = after === undefined ? undefined : changedScripts(scriptsOf(before) ?? {}, scriptsOf(after));
+  if (changed?.length === 0) {
+    return undefined;
+  }
+  const what = changed
+    ? `changes the script${changed.length > 1 ? 's' : ''} ${changed.map((name) => `\`${name}\``).join(', ')}`
+    : 'leaves a package.json the guard cannot read the scripts of';
+  return `This edit ${what}: the scripts of package.json are what the gates and the pipeline run. Changing one is a decision of the project owner: confirm it, and record the reason in docs/adr/ when it relaxes a rule.`;
+}
+
+// The text of the file once the tool ran: Write and the create of Copilot give it whole; an edit is
+// applied to the current text, each one in turn. Undefined when the call gives neither (a patch).
+function textAfterWrite(tool, before) {
+  const whole = tool.content ?? tool.file_text;
+  if (typeof whole === 'string') {
+    return whole;
+  }
+  const edits = Array.isArray(tool.edits)
+    ? tool.edits
+    : [
+        {
+          old_string: tool.old_string ?? tool.old_str,
+          new_string: tool.new_string ?? tool.new_str,
+          replace_all: tool.replace_all,
+        },
+      ];
+  if (!edits.every(({ old_string, new_string }) => typeof old_string === 'string' && typeof new_string === 'string')) {
+    return undefined;
+  }
+  return edits.reduce(
+    (text, { old_string, new_string, replace_all }) =>
+      replace_all === true ? text.split(old_string).join(new_string) : text.replace(old_string, () => new_string),
+    before,
+  );
+}
+
+// The `scripts` of a manifest, `{}` when it has none, undefined when the text is not a JSON object.
+function scriptsOf(text) {
+  const manifest = parseJson(text);
+  if (!isRecord(manifest)) {
+    return undefined;
+  }
+  return isRecord(manifest.scripts) ? manifest.scripts : {};
+}
+
+// The names of the scripts added, removed or changed; undefined when the new text cannot be read.
+function changedScripts(before, after) {
+  if (after === undefined) {
+    return undefined;
+  }
+  const names = [...new Set([...Object.keys(before), ...Object.keys(after)])];
+  return names.filter((name) => JSON.stringify(before[name]) !== JSON.stringify(after[name]));
 }
 
 function escapeReason(written, replaced) {
