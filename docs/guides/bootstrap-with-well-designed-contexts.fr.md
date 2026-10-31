@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:5d89a7cc2b7d6d8e -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:b7b2d85758815ca0 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -157,7 +157,17 @@ la bordure HTTP de `http-boundary.ts` `resolveTenant: firstTenantOf(tenantFromHe
 quel que soit l'authentificateur). Retirée d'une organisation, ou son compte désactivé, elle la
 perd à son prochain jeton, et le contexte d'identité lui refuse déjà ses cas d'usage : les autres
 contextes lisent le jeton, et un jeton déjà émis vit jusqu'à son expiration (300 s dans le
-*realm* du kit). Un projet qui ne veut aucune fenêtre vérifie le compte à la bordure. Avec `--authn jwt`, le
+*realm* du kit). Un projet qui ne veut aucune fenêtre vérifie le compte à la bordure. Avec un
+journal d'audit, une commande du contexte qui a réussi sur une organisation (l'ouvrir, inviter,
+révoquer une invitation, retirer un membre, changer un rôle, accorder ou révoquer une délégation)
+s'écrit dans la chaîne de cette organisation (`platform/audit/organisation-of-command.ts`) : son
+propriétaire y lit qui l'a fait, quelle que soit l'organisation que nommait le jeton de cette
+personne. La décision de l'autorisation et une commande refusée ou en échec restent dans la chaîne
+du *tenant* du jeton : l'administrateur de l'organisation de la personne y lit ce qu'elle a
+demandé, ailleurs compris. Accepter ou décliner une invitation ne nomme que son jeton, si bien que
+ces commandes restent dans le *tenant* du jeton ; l'organisation rejointe lit `member.joined` dans
+sa propre chaîne, l'entrée de la livraison de ce fait, et une invitation déclinée n'y laisse rien.
+Avec `--authn jwt`, le
 *preset* laisse une étape suivante : faire correspondre le *claim* qu'écrit votre fournisseur
 (`tenantClaim` quand c'est une liste ou un objet indexé par organisation, `toActor` sinon).
 

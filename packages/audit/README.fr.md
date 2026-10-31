@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f7fc05e7e73e613c -->
+<!-- translation-of: README.md sha256:ae0c7b47e23927d7 -->
 
 # @ddd-ts-kit/audit
 
@@ -205,6 +205,14 @@ seule chaîne pour tout ferait attendre chaque commande du système sur le même
 de deux *tenants* n'est donné que par `occurredAt`, pas prouvé par un hachage. Passez `chainOf` à
 un journal pour en décider autrement (une chaîne par contexte délimité, une chaîne unique pour un
 petit système).
+
+Une commande peut agir sur un autre *tenant* que celui du travail : une personne d'`acme` qui
+ouvre une organisation, ou invite quelqu'un dans une autre dont elle est membre. `tenantOf(message)`
+d'`auditMiddleware` nomme ce *tenant*, et l'entrée du message, une fois qu'il a réussi, le prend
+pour `tenantId`, si bien qu'elle s'écrit dans sa chaîne, son `actor.tenantId` restant celui du
+jeton. Un échec, et la décision d'`auditDecisions`, restent dans le *tenant* du travail : ils
+enregistrent ce que l'appelant a demandé, et un appelant qui nomme un *tenant* où il ne peut pas
+agir n'écrit jamais dans sa chaîne, ni n'en ouvre une.
 
 ### Le hachage
 
