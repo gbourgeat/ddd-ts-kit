@@ -72,7 +72,7 @@ path). A field of another type, the `readonly string[]` of the products for one,
 |---|---|---|---|---|
 | `/ddd-ts-kit:start` | conducts steps 1 to 7 of the method, one per turn, and resumes from the plan | first, before any code; again to resume | `docs/architecture/plan.md` and the artefact of each step | the step its `Next:` line names |
 | `/ddd-ts-kit:bootstrap` | chooses the stack by criteria, runs `init`, creates the contexts | step 5, once the context map is drafted | the project and one `CONTEXT.md` per context | `/ddd-ts-kit:plan-slices` |
-| `npx ddd-ts-kit init [flags]` | writes the config, the platform, the pipeline, the agent rules | the bootstrap; `--dry-run` first to read what it writes | a project that passes `npm run verify` | `npm install`, `npm run verify` |
+| `npx ddd-ts-kit init [flags]` | writes the config, the platform, the pipeline, the agent rules; run again, it keeps the recorded stack: an invalid flag value is refused, a flag that differs from the record is noted and kept (`init --force` changes it) | the bootstrap; `--dry-run` first to read what it writes | a project that passes `npm run verify` | `npm install`, `npm run verify` |
 | `npx ddd-ts-kit init --preset identity`, `generate context <name> --preset identity` | writes a generic context whole instead of an empty one: accounts from the identity provider, organisations, members and roles, invitations, delegations ([why and which](bootstrap-with-well-designed-contexts.md)) | when `contexts.md` holds a generic identity context | the context, its specs, its adapters and its glossary, green at once | read its `## Design`, then the slices of the core |
 | `npx ddd-ts-kit status` | the next step of the plan, the slices by status and owner, what is left per context | at the start of every session | a short text, `--json` for data | the step or slice it names |
 
@@ -192,6 +192,14 @@ so the same command, with the meaning of the word, goes through:
 npx ddd-ts-kit generate command ordering CancelOrder --permission order.cancel --aggregate Order \
   --term "Cancel=To withdraw an order before it is shipped"
 ```
+
+The generator also refuses, before it writes, what the checker would report afterwards. A query named
+`List...` is refused: a read that takes criteria is a `Search<Things>`
+(`generate query <context> SearchInvoices --search --permission <aggregate>.<action>`). A fact that starts with its
+aggregate is refused by `generate domain-event`: `generate domain-event ordering Order "Order Confirmed"` would write
+`OrderOrderConfirmed`, so give `Confirmed` (`--allow-name` lets a name through that is right as typed). `--birth` and
+`--event-sourced` apply when the aggregate is created: on one that exists, the aggregate is kept, the event is not
+written, and a `note:` says so.
 
 The checker reports a violation with its rule id and a fix sentence. Here, a file of the
 `notification` context of the example application imports an aggregate of `scheduling`:

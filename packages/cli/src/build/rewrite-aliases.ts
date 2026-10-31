@@ -28,6 +28,10 @@ export interface RewriteRequest {
  * `.js` extension whether or not the sources write one, so that plain `node` runs the output. Nothing is written when one specifier cannot be rewritten.
  */
 export function rewriteAliases({ root, roots, suffix, project }: RewriteRequest): RewriteReport {
+  if (!fs.existsSync(path.join(root, project))) {
+    throw new CliError(`${project} does not exist.`, 'Name the tsconfig of the build with --project <file>.');
+  }
+
   const layout = buildLayoutOf({ root }, project);
 
   if (layout === undefined || !isDirectory(path.join(root, layout.outDir))) {

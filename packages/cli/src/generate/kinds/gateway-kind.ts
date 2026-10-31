@@ -56,9 +56,25 @@ function declaredUpstream(scope: Scope, upstream: string): string {
     return upstream;
   }
 
+  refuseCycle(scope, upstream);
+
   throw new CliError(
     `"${scope.context.kebab}" does not declare "${upstream}" as an upstream.`,
     `Declare the relationship first: add { "context": "${upstream}", "relationship": "customer-supplier" } to contexts.${scope.context.kebab}.upstreams, then run the command again.`,
+  );
+}
+
+/** Declaring the upstream the other context already depends on would close a cycle, which `context/no-cycle` reports. */
+function refuseCycle(scope: Scope, upstream: string): void {
+  const here = scope.context.kebab;
+
+  if (ownEntry(scope.config.contexts, upstream)?.upstreams.some((candidate) => candidate.context === here) !== true) {
+    return;
+  }
+
+  throw new CliError(
+    `"${upstream}" already has "${here}" as an upstream: a gateway of "${here}" to "${upstream}" closes the cycle ${here} -> ${upstream} -> ${here} (context/no-cycle).`,
+    `Keep the dependency in one direction: generate the gateway in "${upstream}" against "${here}", or let "${here}" react to an integration event of "${upstream}" (\`ddd-ts-kit generate integration-handler\`).`,
   );
 }
 

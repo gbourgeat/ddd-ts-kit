@@ -1,4 +1,5 @@
 import { eventNames, type EventNames } from '../event-names';
+import { refuseStutteringEvent } from '../refuse-stuttering-event';
 import type { Scope } from '../scope';
 import { writeDomainEvent } from './write-domain-event';
 
@@ -7,6 +8,7 @@ export function ensureDomainEvent(scope: Scope, aggregateInput: string, factInpu
   const names = eventNames(scope, aggregateInput, factInput);
 
   if (!scope.ws.exists(`${scope.dir}/domain/events/${names.event.kebab}.event.ts`)) {
+    refuseStutteringEvent(scope, names);
     writeDomainEvent(scope, names);
   }
 

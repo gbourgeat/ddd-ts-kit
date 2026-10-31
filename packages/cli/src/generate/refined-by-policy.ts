@@ -1,4 +1,4 @@
-import { filesUnder } from './files-under';
+import { filesWithoutModules } from './files-without-modules';
 import { permissionPattern } from './permission-pattern';
 import type { Scope } from './scope';
 
@@ -8,7 +8,7 @@ const POLICY_FILE = /^application\/authorization\/[^/]+\.policy\.ts$/;
 export function refinedByPolicy(scope: Scope, permission: string): boolean {
   const named = permissionPattern(scope, permission);
 
-  return filesUnder(scope.ws, scope.dir).some(
+  return filesWithoutModules(scope).some(
     (file) => POLICY_FILE.test(file) && named.test(scope.ws.read(`${scope.dir}/${file}`) ?? ''),
   );
 }

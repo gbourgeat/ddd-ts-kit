@@ -31,11 +31,13 @@ function installEslint(messages: readonly Message[], meta: Readonly<Record<strin
       '  static async outputFixes() {}',
       '  async lintFiles(patterns) {',
       "    fs.writeFileSync('asked.json', JSON.stringify({ patterns, fix: this.options.fix }));",
+      "    if (patterns.includes('nothere.ts')) throw Object.assign(new Error('No files matching'), { messageTemplate: 'file-not-found' });",
       "    return [{ filePath: 'src/a.ts', messages }];",
       '  }',
       '  getRulesMetaForResults() { return meta; }',
       '  async loadFormatter(name) {',
       "    fs.writeFileSync('formatter.txt', name);",
+      "    if (name === 'nope') throw Object.assign(new Error('There was a problem loading formatter'), { code: 'ERR_MODULE_NOT_FOUND' });",
       '    return { format: (results) => `${name}: ${results[0].messages.length} problem(s)` };',
       '  }',
       '}',
@@ -157,7 +159,9 @@ describe('ddd-ts-kit lint', () => {
     expect(JSON.parse(read(root, 'cache.json'))).toEqual({});
     expect(exists(root, '.eslintcache/.cache_1')).toBe(true);
   });
+});
 
+describe('ddd-ts-kit lint refuses with a next step', () => {
   it('refuses a project without ESLint, naming the install', () => {
     fs.rmSync(path.join(root, 'node_modules'), { recursive: true, force: true });
 
@@ -165,7 +169,31 @@ describe('ddd-ts-kit lint', () => {
 
     expect(result.code).toBe(2);
     expect(result.stderr).toContain('ESLint is not installed');
-    expect(result.stderr).toContain('npm ci');
+    expect(result.stderr).toContain('pnpm install --frozen-lockfile');
+  });
+
+  it('refuses a pattern that matches no file, with the next step and without a stack', () => {
+    installEslint([]);
+
+    const result = cli(root, 'lint', 'nothere.ts');
+
+    expect(result.code).toBe(2);
+
+    expect(result.stderr).toContain('error: No file matches nothere.ts.');
+    expect(result.stderr).toContain('fix: Name files or folders of the project');
+    expect(result.stderr).not.toContain('NoFilesFoundError');
+  });
+
+  it('refuses a formatter ESLint cannot load, with the next step and without a stack', () => {
+    installEslint([]);
+
+    const result = cli(root, 'lint', '--format', 'nope');
+
+    expect(result.code).toBe(2);
+
+    expect(result.stderr).toContain('error: ESLint has no formatter named "nope".');
+    expect(result.stderr).toContain('fix: Use one of its formatters');
+    expect(result.stderr).not.toContain('ERR_MODULE_NOT_FOUND');
   });
 
   it('prints the failure of ESLint itself and exits 2', () => {

@@ -15,6 +15,8 @@ interface Subject {
   /** The file name without `.ts`, and without the suffix of its role: a spec may carry either. */
   readonly base: string;
   readonly short: string;
+  /** The module of the model that holds the file: its spec sits in `test/unit/<module>/`. */
+  readonly module: string | undefined;
 }
 
 export const testSpecRequired: Rule = {
@@ -38,7 +40,8 @@ export const testSpecRequired: Rule = {
       }
 
       const directory = `${contextsDir}/${subject.context}/test/`;
-      const fix = `Create ${directory}unit/${subject.base}.spec.ts that names the expected behaviour in business language and exercises it without mocks.`;
+      const unit = subject.module === undefined ? 'unit' : `unit/${subject.module}`;
+      const fix = `Create ${directory}${unit}/${subject.base}.spec.ts that names the expected behaviour in business language and exercises it without mocks.`;
 
       return [{ line: 1, message: `${subject.name} has no spec in ${directory}.`, fix }];
     });
@@ -74,5 +77,6 @@ function subjectOf(file: SourceFile): Subject | undefined {
     name,
     base: name.slice(0, -'.ts'.length),
     short: name.slice(0, -suffix.length),
+    module: file.location.module,
   };
 }

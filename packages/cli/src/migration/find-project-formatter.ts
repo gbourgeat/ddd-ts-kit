@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { inProjectDialect } from '../package-manager/in-project-dialect';
 import { isRecord } from '../check/support/is-record';
 import type { ProjectFormatter } from './project-formatter';
 
@@ -39,7 +40,7 @@ export function findProjectFormatter(root: string): ProjectFormatter | string {
   const bin = binOf(path.join(root, 'node_modules', known.packageName), known.command);
 
   return bin === undefined
-    ? `the format script runs ${known.name}, which is not installed (run \`npm install\`)`
+    ? inProjectDialect(`the format script runs ${known.name}, which is not installed (run \`npm install\`)`, root)
     : { name: known.name, bin, args: known.args };
 }
 

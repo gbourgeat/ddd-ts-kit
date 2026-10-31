@@ -24,7 +24,7 @@ export function findUseCase(scope: Scope, name: Name, flags: KindFlags): UseCase
   requireFile(scope, {
     file: `${file(kind)}.ts`,
     what: `The ${kind} ${name.pascal}`,
-    createdBy: `ddd-ts-kit generate ${kind} ${scope.context.kebab} ${name.pascal}`,
+    createdBy: `ddd-ts-kit generate ${kind} ${scope.context.kebab} ${name.pascal}${isQuery ? '' : ' (--permission <aggregate>.<action> | --public)'}`,
   });
 
   return {

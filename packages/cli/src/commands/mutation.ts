@@ -49,7 +49,7 @@ function reportOf(root: string, file: string): MutationReport {
   if (report === undefined) {
     throw new CliError(
       `No mutation report at ${file}.`,
-      'Run `npm run test:mutation`, which runs Stryker on the domain layer of every context and writes the report, then this command; or name the report with --report <file>.',
+      'Run `npm run test:mutation`, which runs Stryker on the domain and application layers of every context and writes the report, then this command; or name the report with --report <file>.',
     );
   }
 

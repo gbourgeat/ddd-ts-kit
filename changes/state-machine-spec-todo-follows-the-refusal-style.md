@@ -1,0 +1,1 @@
+**The `TODO(domain)` of a generated state machine spec names the refusal the style produces.** Under `"stack.refusals": "named"` it no longer sends to an `<Aggregate>Error` class the project does not have, and says to use `generate error <context> <Refusal> <factory>`.

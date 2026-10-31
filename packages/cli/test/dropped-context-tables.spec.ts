@@ -108,7 +108,12 @@ describe('ddd-ts-kit typeorm-generate, before a migration that drops the tables 
   function projectWithEntities(index: string): string {
     const root = tempDir('typeorm-generate');
 
-    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ contexts: { ordering: { classification: 'core' } } }));
+    write(
+      root,
+      'ddd-ts-kit.config.json',
+      JSON.stringify({ contexts: { ordering: { classification: 'core' } }, stack: { orm: 'typeorm' } }),
+    );
+
     write(root, INDEX, index);
 
     write(

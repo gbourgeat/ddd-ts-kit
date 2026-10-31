@@ -85,8 +85,9 @@ describe('authorization and gateway kinds', () => {
       "builder.bind(InvoiceStatusContract).toValue({});\n    builder.bind(InvoiceStatusGateway).toClass(InProcessInvoiceStatusGateway, [InvoiceStatusContract]).as('gateway');",
     );
 
+    // shipping already depends on billing: declaring the reverse would close a cycle, so it is refused as one.
     expect(cli(root, 'generate', 'gateway', 'billing', 'shipping', 'Parcels').stderr).toContain(
-      'does not declare "shipping" as an upstream',
+      '"shipping" already has "billing" as an upstream',
     );
   });
 });
