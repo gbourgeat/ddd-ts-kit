@@ -1,3 +1,4 @@
+import { trunkExample } from '../commit/trunk-example';
 import path from 'node:path';
 import { CliError } from '../cli-error';
 import { runGit } from '../commit/run-git';
@@ -131,7 +132,7 @@ function baseOutsideStory(root: string, config: Config, base: string | undefined
   if (base === undefined && open !== undefined) {
     throw new CliError(
       `${root} is the worktree of the story ${open.story}: its branch would be the base of the new one.`,
-      'Run story-scope from the checkout of the trunk, or name the base: `--base origin/main`.',
+      `Run story-scope from the checkout of the trunk, or name the base: \`--base ${trunkExample(root)}\`.`,
     );
   }
 

@@ -1,5 +1,5 @@
 import { CliError } from '../cli-error';
-import { commitOf } from '../commit/commit-of';
+import { resolvedTrunk } from '../commit/resolved-trunk';
 import { readConfig } from '../config';
 import { formatPlan } from '../plan/format-plan';
 import { planWaves } from '../plan/plan-waves';
@@ -13,8 +13,6 @@ import type { Command } from './command';
 import { generate } from './generate';
 import type { Io } from './io';
 import { stdoutJson } from '../json/stdout-json';
-
-const TRUNK = 'origin/main';
 
 /**
  * Orders the rows of the slices file not done, of the project or of one context, in waves cut
@@ -41,18 +39,13 @@ export const planWavesCommand: Command = (argv, io) => {
   const plan = withReplay(
     root,
     rows,
-    planWaves(rows, { context, contexts: Object.keys(readConfig(root).config.contexts), trunk: trunkOf(root) }),
+    planWaves(rows, { context, contexts: Object.keys(readConfig(root).config.contexts), trunk: resolvedTrunk(root) }),
   );
 
   io.out(args.json ? stdoutJson(plan) : formatPlan(plan));
 
   return plan.problems.length === 0 ? 0 : 1;
 };
-
-/** The trunk the briefs name as `--base`: `origin/main` where it resolves, none in a repository that has no such ref (before its first push). */
-function trunkOf(root: string): string | undefined {
-  return commitOf(root, TRUNK) === undefined ? undefined : TRUNK;
-}
 
 /** The plan, once the rows can be ordered, with what the replay of its commands found: no waves while a worker would be refused. */
 function withReplay(root: string, rows: readonly Slice[], plan: WavePlan): WavePlan {

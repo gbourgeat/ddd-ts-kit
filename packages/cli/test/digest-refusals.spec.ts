@@ -11,7 +11,7 @@ describe('digest refuses, exit 2, what it cannot compare', () => {
 
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('error: digest compares the branch with the commit it was cut from.');
-    expect(refused.stderr).toContain('fix: Name it: `ddd-ts-kit digest --base origin/main`');
+    expect(refused.stderr).toContain('fix: Name it: `ddd-ts-kit digest --base <branch, tag or commit>`');
   });
 
   it('refuses a project outside a git repository', () => {

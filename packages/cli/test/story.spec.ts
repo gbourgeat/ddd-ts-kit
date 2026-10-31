@@ -135,7 +135,10 @@ describe('story-scope', () => {
 
     expect(elsewhere.code).not.toBe(0);
     expect(elsewhere.stderr).toContain(`US5 is already open in ${story}`);
-    expect(cli(story, 'story-scope', 'US6').stderr).toContain('is the worktree of the story US5');
+    const second = cli(story, 'story-scope', 'US6').stderr;
+
+    expect(second).toContain('is the worktree of the story US5');
+    expect(second).toContain('`--base <branch, tag or commit>`');
   });
 
   it('names the other stories open in the repository and the contexts they change', () => {

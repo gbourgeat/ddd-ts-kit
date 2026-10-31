@@ -1,3 +1,4 @@
+import { trunkExample } from '../commit/trunk-example';
 import { CliError } from '../cli-error';
 import { knownCommit } from '../commit/known-commit';
 import { type Config, readConfig } from '../config';
@@ -57,13 +58,18 @@ function reportOf(root: string, file: string): MutationReport {
 }
 
 function changedSince(root: string, since: string): ReadonlySet<string> {
-  const commit = knownCommit(root, since, 'Name a branch, a tag or a commit git knows: `--changed origin/main`.');
+  const commit = knownCommit(
+    root,
+    since,
+    `Name a branch, a tag or a commit git knows: \`--changed ${trunkExample(root)}\`.`,
+  );
+
   const changed = changedFiles(root, commit);
 
   if (changed === undefined) {
     throw new CliError(
       `The files changed since ${since} cannot be listed.`,
-      'The project is read with git: run the command in a repository and name a ref git knows, such as origin/main.',
+      `The project is read with git: run the command in a repository and name a ref git knows, such as ${trunkExample(root)}.`,
     );
   }
 

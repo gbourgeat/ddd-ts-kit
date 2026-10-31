@@ -1,3 +1,4 @@
+import { trunkExample } from '../commit/trunk-example';
 import { CliError } from '../cli-error';
 import { knownCommit } from '../commit/known-commit';
 import { readConfig } from '../config';
@@ -19,14 +20,14 @@ export const verifySliceCommand: Command = (argv, io) => {
   if (since === undefined) {
     throw new CliError(
       'verify-slice checks the files changed since the trunk of the slice.',
-      `Name it: \`ddd-ts-kit verify-slice ${context} --since origin/main\` (the trunk of your briefing).`,
+      `Name it: \`ddd-ts-kit verify-slice ${context} --since ${trunkExample(root)}\` (the trunk of your briefing).`,
     );
   }
 
   const sinceCommit = knownCommit(
     root,
     since,
-    'Fetch it first (`git fetch origin`), or name the trunk of your briefing: `--since origin/main`.',
+    `Fetch it first (\`git fetch origin\`), or name the trunk of your briefing: \`--since ${trunkExample(root)}\`.`,
   );
 
   const verification = verifySlice({ root, config, context, since, sinceCommit });

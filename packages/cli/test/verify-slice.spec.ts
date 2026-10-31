@@ -242,7 +242,7 @@ describe('verify-slice, on the merges of the branch and what it asks for', () =>
     const noScript = cli(root, 'verify-slice', 'billing', '--since', 'main');
 
     expect(noTrunk.code).toBe(2);
-    expect(noTrunk.stderr).toContain('--since origin/main');
+    expect(noTrunk.stderr).toContain('--since <branch, tag or commit>');
     expect(noScript.code).toBe(2);
     expect(noScript.stderr).toContain('init --force');
   });
