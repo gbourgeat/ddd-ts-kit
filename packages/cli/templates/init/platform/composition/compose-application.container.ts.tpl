@@ -24,9 +24,7 @@ import {
 {{/if}}
 {{/if}}
   EventBus,
-{{#if http.any}}
   ExecutionScope,
-{{/if}}
 {{#if files.http}}
   FileStorage,
 {{/if}}
@@ -239,6 +237,7 @@ export function composeApplication(
     metrics: container.resolve(Metrics),
     cache: container.resolve(Cache),
     clock: container.resolve(Clock),
+    scope: container.resolve(ExecutionScope),
   });
 
 {{#if audit.route}}

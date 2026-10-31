@@ -312,7 +312,9 @@ holds the data:
    value under a key derived from the key of its data subject in the `SubjectKeyStore`, the same
    keys that seal the stored events; `masked(field, { subject })` says whose each value is.
    Erasing a person is destroying their key: the masks become tokens nobody can recompute, the
-   entries stay, the hashes stay valid.
+   entries stay, the hashes stay valid. Without event sourcing `init` writes no key store and
+   `privacy:erase` destroys no key: a project that masks this way brings the store and its table,
+   and gives the store as `keys` to `eraseDataSubject`, or its masks stay recomputable.
 4. **Record the erasure itself.** The erasure leaves an entry per copy it reaches, and one for the
    key when there is an event store, with its actor and its date,
    which, plus the retention of the backups of the keys, is the day it is complete

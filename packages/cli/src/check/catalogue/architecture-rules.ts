@@ -11,6 +11,7 @@ import { privacyDeclaredField } from '../rules/privacy-declared-field';
 import { privacyErasureReachesCopies } from '../rules/privacy-erasure-reaches-copies';
 import { privacyEventPayloadDeclared } from '../rules/privacy-event-payload-declared';
 import { privacyNoPersonalDataInLogs } from '../rules/privacy-no-personal-data-in-logs';
+import { privacySnapshotSealed } from '../rules/privacy-snapshot-sealed';
 import { privacySubjectIsOpaque } from '../rules/privacy-subject-is-opaque';
 import { authzInApplication } from '../rules/authz-in-application';
 import { authzPolicyAsked } from '../rules/authz-policy-asked';
@@ -180,6 +181,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   privacyErasureReachesCopies,
   privacySubjectIsOpaque,
   privacyNoPersonalDataInLogs,
+  privacySnapshotSealed,
   aspectsOutsideIn,
   tracingPlatformOnly,
   tenancyScopedStatement,

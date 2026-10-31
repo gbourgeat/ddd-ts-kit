@@ -12,6 +12,11 @@ interface ErasedCopies {
   readonly failures: readonly unknown[];
 }
 
+interface Rebuilds {
+  readonly replayed: Readonly<Record<string, number>>;
+  readonly failures: readonly unknown[];
+}
+
 interface Outcome {
   readonly erasure: PromiseSettledResult<boolean>;
   readonly copies: ErasedCopies;
@@ -19,12 +24,13 @@ interface Outcome {
 
 /**
  * The right to erasure of one data subject: destroys the key its personal values were sealed
- * with, so the stored events and snapshots read them as erased; erases every copy a context keeps
+ * with, so the stored events and what snapshots sealed read them as erased; erases every copy a context keeps
  * of the person in clear, in every tenant; then rebuilds every projection fed by the store, so no
  * read model keeps a clear copy. The copies and the rebuilds run even when the subject had no key
  * left, and even when the erasure of the key failed, since the key may be gone all the same (an
- * audit entry that could not be written): the first failure is thrown once they are done, and
- * running the erasure again completes it. Only a mistyped id skips the rebuilds. A subject that is
+ * audit entry that could not be written). A copy or a rebuild that fails does not stop the next:
+ * the first failure is thrown once they are done, and running the erasure again completes it.
+ * Only a mistyped id skips the rebuilds. A subject that is
  * not an opaque identifier is refused before any key is touched: the audited keys write the
  * subject into the append-only trail, which never holds a name or an email. Give it the keys
  * wrapped by `auditedSubjectKeys` and the copies wrapped by `auditedPersonalDataErasure` of
@@ -43,11 +49,15 @@ export async function eraseDataSubject(subject: string, parts: DataSubjectErasur
     throw new UnknownDataSubjectError(subject);
   }
 
-  const rebuilt = await rebuildAll(parts.rebuilds ?? []);
+  const rebuilds = await rebuildAll(parts.rebuilds ?? []);
 
-  throwFirstFailure({ erasure, copies });
+  throwFirstFailure({ erasure, copies }, rebuilds);
 
-  return { erased: erasure.status === 'fulfilled' && erasure.value, copies: copies.reached, rebuilt };
+  return {
+    erased: erasure.status === 'fulfilled' && erasure.value,
+    copies: copies.reached,
+    rebuilt: rebuilds.replayed,
+  };
 }
 
 /** The key of the subject, when there is a store of keys at all: without one, no key was destroyed. */
@@ -101,22 +111,30 @@ async function isMistyped(
   return !(await isKnown(subject));
 }
 
-function throwFirstFailure({ erasure, copies }: Outcome): void {
+function throwFirstFailure({ erasure, copies }: Outcome, rebuilds: Rebuilds): void {
   if (erasure.status === 'rejected') {
     throw erasure.reason;
   }
 
-  if (copies.failures.length > 0) {
-    throw copies.failures[0];
+  const failures = [...copies.failures, ...rebuilds.failures];
+
+  if (failures.length > 0) {
+    throw failures[0];
   }
 }
 
-async function rebuildAll(projections: readonly ProjectionToRebuild[]): Promise<Record<string, number>> {
-  const rebuilt: Record<string, number> = {};
+/** Every projection, one after the other: a rebuild that fails does not leave the next with its clear copy. */
+async function rebuildAll(projections: readonly ProjectionToRebuild[]): Promise<Rebuilds> {
+  const replayed: Record<string, number> = {};
+  const failures: unknown[] = [];
 
   for (const projection of projections) {
-    rebuilt[projection.name] = (await projection.rebuild()).replayed;
+    try {
+      replayed[projection.name] = (await projection.rebuild()).replayed;
+    } catch (error) {
+      failures.push(error);
+    }
   }
 
-  return rebuilt;
+  return { replayed, failures };
 }

@@ -24,7 +24,7 @@ export class EventStore{{aggregate.pascal}}Repository implements {{aggregate.pas
       category: '{{context.kebab}}.{{aggregate.kebab}}',
       serializer: new EventSerializer<{{aggregate.pascal}}Event>({{aggregate.camel}}Events, { cipher }),
       rehydrate: (id, history) => {{aggregate.pascal}}.rehydrate(id, history),
-      // TODO(domain): when a stream grows long enough to slow a load, add `snapshots: { ...{{aggregate.camel}}Snapshots, store: snapshots, every: <n> }` (a SnapshotStore injected here, a snapshot mapper with its own shape version): see docs/concepts/event-sourcing.md of ddd-ts-kit.
+      // TODO(domain): when a stream grows long enough to slow a load, add `snapshots: { ...{{aggregate.camel}}Snapshots, store: snapshots, every: <n> }` (a SnapshotStore injected here, a snapshot mapper with its own shape version, which seals a personal value with personalData as the events do): see docs/concepts/event-sourcing.md of ddd-ts-kit.
     });
   }
 

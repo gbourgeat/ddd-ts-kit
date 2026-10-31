@@ -124,8 +124,8 @@ context of origin `cli` with the operator as actor, and runs `eraseDataSubject` 
    runner says `TODO(platform)`.
 
 It prints the report as JSON: whether a key was destroyed, the rows each context and the platform
-reached, the projections rebuilt. A copy that fails does not stop the others, and the first failure
-is thrown once everything ran: running the erasure again completes one that failed half way. An
+reached, the projections rebuilt. A copy or a rebuild that fails does not stop the others, and the
+first failure is thrown once everything ran: running the erasure again completes one that failed half way. An
 erasure that reached nothing is refused, exit code 1, and announced to nobody: the id is mistyped,
 its tenant is missing from the directory, or the person was erased already, and the entries of the
 audit trail say which. `--rerun` says it is expected: the exit code is 0 and the erasure is announced
@@ -306,6 +306,7 @@ config. A project that chose `off` hears nothing from them.
 | `privacy/erasure-reaches-copies` | a context that consumes an event carrying personal data and erases nothing when the person is erased |
 | `privacy/subject-is-opaque` | a subject that is personal data itself (an email as the key of a person) |
 | `privacy/no-personal-data-in-logs` | a call to the logger or the metrics that names a declared personal field |
+| `privacy/snapshot-sealed` | a value of a snapshot mapper named like personal data that no `personalData` seals |
 
 They read names, not contents, which is why each one says what it cannot see
 (`npx ddd-ts-kit explain privacy/declared-field`). A column that holds nothing of a person in a
@@ -332,6 +333,9 @@ with `personalData(subject, value)` is declared by that, and only a key stored i
   another one, and end with that process.
   The keys of the event store make the events of a backup unreadable once destroyed, which is why
   they live apart, with a shorter retention ([Event sourcing](event-sourcing.md#personal-data-crypto-shredding)).
+- **What a cache keeps.** An erasure does not reach the `Cache` port: a value a `cached` read keeps
+  of a person stays there until its time to live, once the row is gone. A read that answers a person
+  takes a `ttlMs` the retention of the project accepts, or is not cached.
 - **Logs and exports already handed over.** Nothing of the kit rewrites them; the log adapters mask
   credentials, not names ([Observability](observability.md#what-each-signal-may-carry)).
 - **A column no declaration names.** A rule reads the name of a column, not what a text field may

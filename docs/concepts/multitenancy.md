@@ -262,7 +262,8 @@ Three rules hold whatever the strategy:
 - **Caches, rate limits and locks.** A key of a shared store is confined to the tenant:
   `tenantCacheKey(scope, ...)`, `tenantKey(scope, ...)`, each segment percent-encoded so that
   two lists of segments never give one key. A key built without it is shared by every tenant,
-  which is right for platform data only.
+  which is right for platform data only. The `cached` aspect confines its own keys to the tenant of
+  the work, unless told `shared: true`.
 - **Logs, traces, error reports and the audit trail.** `logFieldsOf` writes `tenantId` on every
   line; the audit trail keeps one hash chain per tenant (`tenant:<id>`), so that a tenant's
   history can be handed over and verified alone. Its search is confined to the tenant of the work

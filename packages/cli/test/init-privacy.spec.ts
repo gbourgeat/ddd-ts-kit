@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir } from './helpers';
+import { REPO_ROOT, cli, exists, read, tempDir } from './helpers';
 import { initProject } from './support/init-project';
 import { readJson } from './support/read-json';
 import { textsAt } from './support/texts-at';
@@ -328,4 +328,15 @@ describe('what the event store hands the composition root', () => {
       "type Founded =\n  | 'scope'\n  | 'clock'\n  | 'ids'\n  | 'logger'\n  | 'metrics'\n  | 'errors'\n  | 'cache'\n  | 'jobs'\n  | 'audit'\n  | 'eventSourcing';",
     );
   });
+});
+
+describe('the masks of the audit trail in a generated project', () => {
+  it.each(['docs/concepts/audit-trail.md', 'packages/audit/README.md'])(
+    'says in %s that a mask outlives the erasure of a project without event sourcing',
+    (page) => {
+      const text = read(REPO_ROOT, page).replace(/\s+/g, ' ');
+
+      expect(text).toContain('Without event sourcing `init` writes no key store and `privacy:erase` destroys no key');
+    },
+  );
 });

@@ -1,5 +1,5 @@
 [English](cache-and-coordination.md) · **Français**
-<!-- translation-of: cache-and-coordination.md sha256:b0dbd8dd693475b1 -->
+<!-- translation-of: cache-and-coordination.md sha256:8ec58f0a0aedd57e -->
 
 # Cache et coordination : Redis, Dragonfly, Valkey
 
@@ -167,7 +167,7 @@ export abstract class CalendarGateway {
 declare const httpCalendars: CalendarGateway; // l'adaptateur qui appelle le contexte calendars
 declare const cache: Cache; // RedisCache avec plusieurs instances, InMemoryCache avec une seule
 
-// src/platform/ : cinq minutes de retard sont acceptables pour des horaires de travail.
+// src/platform/ : cinq minutes de retard sont acceptables pour des horaires de travail, par tenant.
 export const calendars = cached({
   key: (method, [practitionerId]) => (method === 'workingHoursOf' ? `working-hours:${String(practitionerId)}` : undefined),
   ttlMs: 5 * 60_000,
@@ -175,9 +175,17 @@ export const calendars = cached({
 })(httpCalendars, { kind: 'gateway', context: 'availability' });
 ```
 
-Des appels identiques et simultanés partagent un seul appel au contexte calendars ; un appel en
-échec n'est pas mis en cache ; un cache en panne vaut un défaut de cache. Avec un conteneur, le
-même aspect se pose sur la liaison : `.as('gateway').with(cached({ ... }))`.
+Des appels identiques et simultanés d'un même *tenant* partagent un seul appel au contexte
+calendars ; un appel en échec n'est pas mis en cache ; un cache en panne vaut un défaut de cache.
+Avec un conteneur, le même aspect se pose sur la liaison : `.as('gateway').with(cached({ ... }))`.
+
+Dans un projet multitenant, l'entrée appartient au *tenant* du travail : `cached` le lit dans le
+`scope` d'`installAspectRuntime`, que donne une racine de composition générée, et range la clé sous
+ce *tenant* comme le fait `tenantCacheKey`, si bien que l'exemple ci-dessus n'a pas besoin de
+*tenant* dans sa clé. Une lecture dont la réponse est la même pour tous les *tenants* le dit avec
+`shared: true`, et garde une seule entrée. Le travail qui ne nomme aucun *tenant*, un *job* global
+par exemple, garde la clé telle qu'elle est écrite et ne rencontre aucune entrée d'un *tenant*.
+Le travail sous une élévation (`acrossTenants`) ne lit ni n'écrit le cache : il exécute l'appel.
 
 **Limiteur de débit.** Une fenêtre glissante exacte : un membre d'ensemble trié par appel
 autorisé, décidé dans un seul script, si bien que des instances concurrentes ne peuvent pas

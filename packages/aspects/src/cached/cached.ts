@@ -1,4 +1,4 @@
-import { cacheKey, type Cache, type CacheKey } from '@ddd-ts-kit/kernel';
+import { cacheKey, tenantCacheKey, type Cache, type CacheKey } from '@ddd-ts-kit/kernel';
 import type { AdviceFactory } from '../aspect/advice-factory';
 import type { AspectKind } from '../aspect/aspect-kind';
 import type { Aspect } from '../aspect/aspect';
@@ -6,6 +6,8 @@ import { defineAspect } from '../aspect/define-aspect';
 import type { JoinPoint } from '../aspect/join-point';
 import { AspectNotAllowedError } from '../errors/aspect-not-allowed-error';
 import { cacheOr } from '../runtime/cache-or';
+import { isElevatedWork } from '../runtime/is-elevated-work';
+import { tenantScopeOfWork } from '../runtime/tenant-scope-of-work';
 
 export interface CachedOptions {
   /**
@@ -16,6 +18,11 @@ export interface CachedOptions {
   readonly ttlMs: number;
   /** Defaults to the cache of the aspect runtime. */
   readonly cache?: Cache;
+  /**
+   * One entry for every tenant, for a read whose answer does not depend on the tenant. By default
+   * the entry is confined to the tenant of the work.
+   */
+  readonly shared?: boolean;
   /** Kinds to wrap although they are refused by default: `repository`, `use-case`. */
   readonly allowKinds?: readonly AspectKind[];
 }
@@ -30,7 +37,10 @@ const REFUSED_KINDS: readonly AspectKind[] = ['repository', 'use-case'];
  * Answers a read from the cache when it was made recently. For read methods of gateways and
  * external adapters: select them with `when(forMethods('find*'), cached(...))`. Refuses to
  * wrap a repository or a use case unless `allowKinds` says so: an aggregate served from a
- * cache hides that it is stale. Concurrent identical calls share one underlying call;
+ * cache hides that it is stale. Work that names a tenant has its own entries, through the
+ * execution scope of the aspect runtime, unless `shared` says otherwise; work that names none
+ * keeps the key as written; work under an elevation (`acrossTenants`) neither reads nor writes the
+ * cache, since its answer may reach beyond one tenant. Concurrent identical calls of one tenant share one underlying call;
  * failures are not cached; a cache that fails is treated as a miss.
  */
 export function cached(options: CachedOptions): Aspect {
@@ -46,20 +56,21 @@ export function cachedAdvice(options: CachedOptions): AdviceFactory {
     return async ({ args, proceed }) => {
       const id = options.key(joinPoint.method, args);
 
-      if (id === undefined) {
+      if (id === undefined || isElevatedWork()) {
         return proceed();
       }
 
-      const entry: Entry = { cache: cacheOr(options.cache), key: keyOf(joinPoint, id), ttlMs: options.ttlMs };
+      const key = keyOf(joinPoint, id, options);
+      const entry: Entry = { cache: cacheOr(options.cache), key, ttlMs: options.ttlMs };
       const hit = await read(entry);
 
       if (hit !== undefined) {
         return hit.value;
       }
 
-      const pending = inFlight.get(id) ?? loading(entry, proceed).finally(() => inFlight.delete(id));
+      const pending = inFlight.get(key.name) ?? loading(entry, proceed).finally(() => inFlight.delete(key.name));
 
-      inFlight.set(id, pending);
+      inFlight.set(key.name, pending);
 
       return pending;
     };
@@ -84,8 +95,11 @@ interface Entry {
   readonly ttlMs: number;
 }
 
-function keyOf(joinPoint: JoinPoint, id: string): CacheKey<Cached> {
-  return cacheKey<Cached>('aspect', joinPoint.className, joinPoint.method, id);
+function keyOf(joinPoint: JoinPoint, id: string, { shared }: CachedOptions): CacheKey<Cached> {
+  const segments = ['aspect', joinPoint.className, joinPoint.method, id];
+  const scope = shared === true ? undefined : tenantScopeOfWork();
+
+  return scope === undefined ? cacheKey<Cached>(...segments) : tenantCacheKey<Cached>(scope, ...segments);
 }
 
 async function read({ cache, key }: Entry): Promise<Cached | undefined> {

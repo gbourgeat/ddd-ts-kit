@@ -257,6 +257,7 @@ export const notificationsModule = defineContextModule({
       );
 
     // a read of another context: how long may working hours be stale? the business says a minute
+    // the entries stay within the tenant of the work; a read meant for every tenant adds `shared: true`
     builder
       .bind(WorkingHours)
       .toClass(CalendarsWorkingHours)

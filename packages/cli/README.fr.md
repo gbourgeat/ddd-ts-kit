@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fc43d697c32552d3 -->
+<!-- translation-of: README.md sha256:80d40783a90a2a67 -->
 
 # ddd-ts-kit
 
@@ -2507,6 +2507,7 @@ règle.
 | `privacy/erasure-reaches-copies` | avec `stack.privacy` `on` : un contexte dont la couche application nomme un événement d'intégration d'un autre contexte qui déclare des données personnelles, et qui ne déclare aucun `PersonalDataErasure` ni ne traite `privacy.data-subject.erased` |
 | `privacy/subject-is-opaque` | avec `stack.privacy` `on` : le sujet d'une déclaration `personalFields` ou de l'option `personal` d'un événement qui est un mot du vocabulaire personnel ou l'un de ses champs personnels |
 | `privacy/no-personal-data-in-logs` | avec `stack.privacy` `on` : un appel au *logger* ou aux métriques, dans un contexte ou la plateforme, dont les arguments nomment un champ personnel déclaré |
+| `privacy/snapshot-sealed` | avec `stack.privacy` `on` : une valeur de `<aggregate>-snapshots.mapper.ts` nommée comme une donnée personnelle qu'aucun `personalData` ne scelle |
 | `authz/in-application` | `presentation/` : un test sur les rôles, `isAdmin`, l'import d'un autorisateur ou de `Access` ; `infrastructure/` : `authorize(` ou `check(` sur un autorisateur ou un accès, `ForbiddenError` ; `domain/` : tout import de `@ddd-ts-kit/auth`, des types d'acteur du kernel (`Actor`, `ActorContext`, `Session`, `ExecutionContext`, les messages autorisés), une lecture de `.roles` ou `.permissions` sur un acteur. La glu de requête HTTP de `@ddd-ts-kit/auth` (`actorOf`, `sessionOf`, `resolveSession`, `SessionAuthenticator`) est libre dans `presentation/`. `presentation/` et `infrastructure/` : l'import de `Requires`, `Public` ou `Policy` depuis `@ddd-ts-kit/kernel/declarations`, ou des ports `Access` et `PolicyAccess` depuis `@ddd-ts-kit/auth` ; ils sont libres dans `application/` |
 | `authz/actor-explicit` | dans `domain/` et `application/` : `ActorContext`, `ExecutionScope` (comme type ou comme valeur : la classe est le jeton d'une liste de dépendances), `AsyncLocalStorageExecutionScope`, `ScopedActorContext`, `AsyncLocalStorage` ; `.current()` ou `.require()` sur un contexte d'acteur ou sur quelque chose nommé `scope`, `scopes` ou `...executionScope` ; un import de `stampCreation`, `stampUpdate` ou `tenantScopeOf` |
 | `authz/fields-by-schema` | sous `application/queries/` : `roles.includes(`, `.some(`, `.every(`, `.find(`, `.indexOf(`, une comparaison avec un `role`, `isAdmin` |

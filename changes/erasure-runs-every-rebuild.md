@@ -1,0 +1,1 @@
+**`eraseDataSubject` runs every rebuild, whatever one of them does.** A rebuild that fails no longer stops those after it, so each healthy projection drops its clear copy in the same run. As for a copy, the first failure is thrown once everything ran, and running the erasure again completes it. See [Personal data](docs/concepts/personal-data.md).

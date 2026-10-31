@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:9684c7978f39f36a -->
+<!-- translation-of: multitenancy.md sha256:a8dbe5a8c46873fe -->
 
 # Multitenance
 
@@ -279,7 +279,8 @@ Trois règles tiennent quelle que soit la stratégie :
   *tenant* : `tenantCacheKey(scope, ...)`, `tenantKey(scope, ...)`, chaque segment encodé en
   pourcentage pour que deux listes de segments ne donnent jamais la même clé. Une clé construite
   sans eux est partagée par tous les *tenants*, ce qui ne convient qu'aux données de la
-  plateforme.
+  plateforme. L'aspect `cached` confine ses propres clés au *tenant* du travail, sauf s'il reçoit
+  `shared: true`.
 - **Journaux, traces, remontées d'erreurs et journal d'audit.** `logFieldsOf` écrit `tenantId`
   sur chaque ligne ; le journal d'audit garde une chaîne de hachage par *tenant* (`tenant:<id>`),
   pour que l'historique d'un *tenant* puisse être remis et vérifié seul. Sa recherche est

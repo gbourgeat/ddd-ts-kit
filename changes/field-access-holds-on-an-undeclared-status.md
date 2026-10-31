@@ -1,0 +1,3 @@
+**`withFieldAccess` holds on an answer of a status the route does not declare, and the documentation says what it reaches.** Such an answer falls under the rules of every response the route declares. The rules apply to the properties of the schema they are declared on: a nested object is restricted by the property that holds it, which leaves it out whole, since a schema nested in a validation library does not go through the wrapper of the kit. See [`@ddd-ts-kit/http`](packages/http/README.md).
+
+To move: a project that wrapped the schema of a nested object apart restricts the property that holds it instead.

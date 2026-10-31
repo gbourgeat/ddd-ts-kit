@@ -50,6 +50,7 @@ import { SHARED_KERNEL_FIXTURES } from './shared-kernel-fixtures';
 import { SCHEMA_FIXTURES } from './schema-fixtures';
 import { STANDARD_FIXTURES } from './standard-fixtures';
 import { PRIVACY_FIXTURES } from './privacy-fixtures';
+import { PRIVACY_SNAPSHOT_FIXTURES } from './privacy-snapshot-fixtures';
 import { TENANCY_FIXTURES } from './tenancy-fixtures';
 import { TEST_FIXTURES } from './test-fixtures';
 import { TRACING_FIXTURES } from './tracing-fixtures';
@@ -116,6 +117,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...NEST_CONTROLLERS_FIXTURES,
   ...TENANCY_FIXTURES,
   ...PRIVACY_FIXTURES,
+  ...PRIVACY_SNAPSHOT_FIXTURES,
   ...TEST_FIXTURES,
   ...TRACING_FIXTURES,
   ...TREE_FIXTURES,

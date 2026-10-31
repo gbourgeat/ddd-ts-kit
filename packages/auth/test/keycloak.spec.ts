@@ -247,6 +247,24 @@ describe('keycloakAuthenticator at the boundary', () => {
     });
   });
 
+  it.each(['ID', 'Refresh', 'Offline', 'bearer', 1])('refuses a token of the realm whose typ is %s', async (typ) => {
+    const credential = await signed({ ...userClaims(), typ });
+
+    await expect(authenticator().authenticate(credential)).rejects.toMatchObject({ reason: 'NOT_AN_ACCESS_TOKEN' });
+
+    await expect(authenticator().authenticateSession(credential)).rejects.toMatchObject({
+      reason: 'NOT_AN_ACCESS_TOKEN',
+    });
+  });
+
+  it('refuses a token of the realm that names no typ', async () => {
+    const { typ: _typ, ...untyped } = userClaims();
+
+    await expect(authenticator().authenticate(await signed(untyped))).rejects.toMatchObject({
+      reason: 'NOT_AN_ACCESS_TOKEN',
+    });
+  });
+
   it('refuses a token without exp, unless told that the expiry is not required', async () => {
     const { exp: _exp, ...withoutExpiry } = userClaims();
     const credential = await signed(withoutExpiry);

@@ -1125,8 +1125,12 @@ const options: ExecuteOptions = { ...boundary, fieldAccess: fieldDeciderOf({ acc
 - **A public cache policy**: an answer with a field some callers may not read differs per caller.
   When the routes are mounted, a `public` policy on such a route is refused unless its `vary`
   names `Authorization` or `Cookie`, whoever may call the route (see "HTTP caching").
-  The rules apply to the properties of the schema given to `withFieldAccess`; a nested object is
-  restricted by wrapping its own schema.
+  The rules apply to the properties of the schema given to `withFieldAccess`, not to what is
+  nested in them: a nested schema is written in the validation library, where the wrapper of the
+  kit does not go, so wrapping it apart reaches no answer. Restrict the property that holds the
+  nested object, which leaves it out whole, or answer the reserved value in a property of its own.
+- An answer of a status the route does not declare falls under the rules of every response the
+  route declares.
 - Without `fieldAccess` in the options, a restricted field is left out of every answer and
   refused in every body: nothing is shown by omission.
 - The rule `authz/fields-by-schema` of the checker and of the ESLint plugin refuses the

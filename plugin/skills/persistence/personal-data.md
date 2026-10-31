@@ -65,4 +65,5 @@ period the project reads from configuration and purges by itself is not a litera
 `privacy/declared-field` (a warning) reports a column named like personal data (`email`,
 `phone`, `birth_date`, `address`... plus `privacy.vocabulary` of the config) that no declaration
 of its context names, and `privacy/subject-is-opaque` a subject that is personal data itself:
-declare the column, or record why it holds nothing of a person.
+declare the column, or record why it holds nothing of a person. `privacy/snapshot-sealed` reports
+a value of `<aggregate>-snapshots.mapper.ts` in clear: seal it with `personalData`, as an event does.

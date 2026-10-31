@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:f9ec77314e83d3a8 -->
+<!-- translation-of: event-sourcing.md sha256:88099c791d20ad99 -->
 
 # Event sourcing, par agrégat
 
@@ -471,7 +471,12 @@ if (stored !== undefined) {
 
 Ce qu'atteint un effacement, c'est exactement ce qui perd la clé :
 
-- les flux et les *snapshots* vivants, immédiatement ;
+- les flux vivants, immédiatement, et les *snapshots* pour ce que leur *mapper* a scellé : un
+  *snapshot* garde ce qu'`encode` écrit, donc une valeur personnelle y passe par `personalData`
+  comme dans un événement, et `decode` la lit avec `data.personalText` ou `data.personalInstant`.
+  Une valeur qu'un *snapshot* garde en clair survit à l'effacement et est rechargée avec l'agrégat,
+  jusqu'à ce que le *snapshot* suivant la remplace ; `privacy/snapshot-sealed` la signale par son
+  nom ;
 - chaque sauvegarde des événements prise après l'effacement, qui contient les valeurs scellées
   sans leur clé ;
 - une sauvegarde prise avant l'effacement contient à la fois les valeurs scellées et leur clé

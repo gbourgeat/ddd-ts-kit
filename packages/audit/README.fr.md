@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e0af8cc84ecdc834 -->
+<!-- translation-of: README.md sha256:5e1b99cb7e74086d -->
 
 # @ddd-ts-kit/audit
 
@@ -695,7 +695,10 @@ jamais les données :
    masque chaque valeur sous une clé dérivée de la clé de sa personne concernée dans le
    `SubjectKeyStore` du kernel, les mêmes clés qui scellent les valeurs personnelles des
    événements stockés (HKDF du matériau, étiqueté pour le journal ; en mémoire, ou dans la table
-   `subject_keys` de chaque *package* de persistance). Chaque champ masqué doit dire à qui il
+   `subject_keys` que crée l'*event store* de chaque *package* de persistance). Sans *event
+   sourcing*, `init` n'écrit aucun magasin de clés et `privacy:erase` ne détruit aucune clé : un
+   projet qui masque ainsi apporte le magasin et sa table, et donne le magasin comme `keys` à
+   `eraseDataSubject`, sinon ses masques restent recalculables. Chaque champ masqué doit dire à qui il
    appartient, `masked('patientEmail', { subject: 'patientId' })` : le *middleware* refuse celui
    qui ne le dit pas, au câblage (`MissingDataSubjectError`), puisque l'acteur et la ressource
    d'une entrée sont rarement cette personne ; et ce sujet doit être un identifiant opaque (la

@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:58942512ddf6b3fd -->
+<!-- translation-of: audit-trail.md sha256:80499dfa7e0e05aa -->
 
 # Journal d'audit
 
@@ -333,7 +333,10 @@ chaîne ne contient jamais les données :
    concernée dans le `SubjectKeyStore`, les mêmes clés qui scellent les événements stockés ;
    `masked(field, { subject })` dit à qui appartient chaque valeur. Effacer une personne, c'est
    détruire sa clé : les masques deviennent des jetons que personne ne peut recalculer, les
-   entrées restent, les hachages restent valides.
+   entrées restent, les hachages restent valides. Sans *event sourcing*, `init` n'écrit aucun
+   magasin de clés et `privacy:erase` ne détruit aucune clé : un projet qui masque ainsi apporte le
+   magasin et sa table, et donne le magasin comme `keys` à `eraseDataSubject`, sinon ses masques
+   restent recalculables.
 4. **Enregistrer l'effacement lui-même.** L'effacement laisse une entrée par copie atteinte, et une
    pour la clé quand il y a un event store, avec son acteur et sa date, qui, plus la rétention des
    sauvegardes des clés, donne le jour où il est complet

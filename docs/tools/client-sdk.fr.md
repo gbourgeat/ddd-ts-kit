@@ -1,5 +1,5 @@
 [English](client-sdk.md) · **Français**
-<!-- translation-of: client-sdk.md sha256:db63cde7232af4a5 -->
+<!-- translation-of: client-sdk.md sha256:0a190a96c642ae63 -->
 
 # SDK client : un client typé à partir du contrat OpenAPI
 
@@ -394,6 +394,8 @@ consommateur recompilé et déployé avec le changement.
   est générée sans le type de son corps ; envoyez-la avec `fetch`.
 - Une réponse `default` ou une plage (`4XX`) n'est pas typée : le kit n'écrit ni l'une ni
   l'autre.
+- Un paramètre de chemin est un segment du chemin : une valeur vide, `.` et `..` lèvent une
+  `TypeError` avant tout envoi.
 - Les paramètres de *cookie* ne sont pas générés ; un schéma de sécurité par *cookie* l'est,
   envoyé comme un en-tête `Cookie`, que seul un appelant hors d'un navigateur peut poser. Un
   navigateur le supprime et envoie ses propres *cookies* : là, donnez un `fetch` qui appelle la

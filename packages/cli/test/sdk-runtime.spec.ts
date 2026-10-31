@@ -39,6 +39,27 @@ describe('a generated client, called', () => {
     expect(result).toMatchObject({ ok: true, status: 200, data: { lines: [] } });
   });
 
+  it.each(['', '.', '..', undefined])('refuses a path parameter that names no segment: %j', async (orderId) => {
+    const { api, sent } = client(() => json(200, { lines: [] }));
+
+    await expect(api['getOrder']?.({ path: { orderId } })).rejects.toThrow(TypeError);
+    expect(sent).toEqual([]);
+  });
+
+  it('sends a path parameter that only looks like a dot segment, encoded', async () => {
+    const { api, sent } = client(() => json(200, { lines: [] }));
+
+    await api['getOrder']?.({ path: { orderId: '...' } });
+    await api['getOrder']?.({ path: { orderId: '%2e%2e' } });
+    await api['getOrder']?.({ path: { orderId: 0 } });
+
+    expect(sent.map(({ url }) => url)).toEqual([
+      'https://shop.test/v1/orders/...',
+      'https://shop.test/v1/orders/%252e%252e',
+      'https://shop.test/v1/orders/0',
+    ]);
+  });
+
   it('sends a JSON body and every scheme of the alternative, the cookie among them', async () => {
     const { api, sent } = client(() => json(201, { id: 'o-1' }), { bearer: 'token', tenant: 'acme' });
 

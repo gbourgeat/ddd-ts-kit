@@ -376,6 +376,8 @@ deployed with the change.
 - Request bodies are JSON. A route of another media type (an upload) is generated without its
   body type; send it with `fetch`.
 - A `default` response or a range (`4XX`) is not typed: the kit writes neither.
+- A path parameter is one segment of the path: an empty value, `.` and `..` throw a `TypeError`
+  before anything is sent.
 - Cookie parameters are not generated; a cookie scheme is, sent as a `Cookie` header, which only
   a caller outside a browser can set. A browser drops it and sends its own cookies: there, give a
   `fetch` that calls the global one with `credentials: 'include'`, and no credential for that

@@ -47,6 +47,19 @@ on(customerRegisteredV1, (event) => contacts.upsert(event.payload.customerId, ev
     bad: `personalFields(TABLE, { subject: 'email', fields: ['display_name'], erasure: 'row' });`,
     good: `personalFields(TABLE, { subject: 'person_id', fields: ['email', 'display_name'], erasure: 'row' });`,
   },
+  'privacy/snapshot-sealed': {
+    why: `An erasure destroys the key of the person: what \`personalData\` sealed reads as erased everywhere at once, in the events and in the snapshots. A snapshot keeps what its \`encode\` writes, and \`encode\` over the state writes the values in clear: the erasure says the person is gone, the value stays in the store of snapshots, and the next load of the aggregate reads it back. Judged: \`<aggregate>-snapshots.mapper.ts\` in \`infrastructure/persistence/\`, the properties of the file and the names \`decode\` reads, so that a mapper whose \`encode\` answers the whole state is seen. A name of the personal vocabulary (\`privacy.vocabulary\` added, \`privacy.allow\` taken away) is reported unless a \`personalData\`, a \`PersonalValue\` type or a personal reader of the file seals it. A rule reads names: a value under a name the vocabulary does not hold is not seen. ${SILENT}`,
+    bad: `export const dossierSnapshots = {
+  version: 1,
+  encode: (dossier: Dossier): object => ({ email: dossier.email }),
+  decode: (data: StoredEventData) => ({ email: data.text('email') }),
+};`,
+    good: `export const dossierSnapshots = {
+  version: 2,
+  encode: (dossier: Dossier): object => ({ email: personalData(dossier.patientId, dossier.email) }),
+  decode: (data: StoredEventData) => ({ email: data.personalText('email') }),
+};`,
+  },
   'privacy/no-personal-data-in-logs': {
     why: `A log line is copied, shipped, indexed and kept for months by systems the erasure never reaches, and read by people the person never dealt with; a metric with a label per person does the same. The opaque id of the person is enough to follow a request. An approximation at the level of the text: a name among the arguments of a call to the logger or to the metrics (logger.info(...), this.log.warn(...), metrics.increment(...)), an identifier, a property or a key, compared with the personal fields of the personalFields declarations and of the personal option of the integration events, in the files of the contexts and of the platform. A declared field of one word outside the vocabulary (name, label) is left out, too common to judge; a value reached through a variable of another name is not seen. Silent without a declaration. ${SILENT}`,
     bad: `this.logger.info('invoice sent', { invoiceId: invoice.id, customerEmail: invoice.customerEmail });`,

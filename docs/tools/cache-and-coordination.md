@@ -157,7 +157,7 @@ export abstract class CalendarGateway {
 declare const httpCalendars: CalendarGateway; // the adapter that calls the calendars context
 declare const cache: Cache; // RedisCache with several instances, InMemoryCache with one
 
-// src/platform/: five minutes of staleness are acceptable for working hours.
+// src/platform/: five minutes of staleness are acceptable for working hours, per tenant.
 export const calendars = cached({
   key: (method, [practitionerId]) => (method === 'workingHoursOf' ? `working-hours:${String(practitionerId)}` : undefined),
   ttlMs: 5 * 60_000,
@@ -165,9 +165,16 @@ export const calendars = cached({
 })(httpCalendars, { kind: 'gateway', context: 'availability' });
 ```
 
-Concurrent identical calls share one call to the calendars context; a failed call is not cached;
-a cache that fails is a miss. With a container, the same aspect goes on the binding:
+Concurrent identical calls of one tenant share one call to the calendars context; a failed call is
+not cached; a cache that fails is a miss. With a container, the same aspect goes on the binding:
 `.as('gateway').with(cached({ ... }))`.
+
+In a multi-tenant project the entry belongs to the tenant of the work: `cached` reads it from the
+`scope` of `installAspectRuntime`, which a generated composition root gives, and files the key
+under that tenant as `tenantCacheKey` does, so the sample above needs no tenant in its key. A read
+whose answer is the same for every tenant says so with `shared: true`, and keeps one entry. Work
+that names no tenant, a global job for one, keeps the key as written and meets no entry of a tenant.
+Work under an elevation (`acrossTenants`) neither reads nor writes the cache: it runs the call.
 
 **Rate limiter.** An exact sliding window: one sorted-set member per allowed call, decided in
 one script, so concurrent instances cannot both take the last place. A refused call is not

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a9ec0fdc22ad8dd0 -->
+<!-- translation-of: README.md sha256:ed33dbde4ef4b458 -->
 
 # @ddd-ts-kit/http
 
@@ -1177,8 +1177,12 @@ const options: ExecuteOptions = { ...boundary, fieldAccess: fieldDeciderOf({ acc
   peuvent pas lire diffère selon l'appelant. Quand les routes sont montées, une politique
   `public` sur une telle route est refusée à moins que son `vary` ne nomme `Authorization` ou
   `Cookie`, quel que soit qui peut appeler la route (voir « Cache HTTP »). Les règles
-  s'appliquent aux propriétés du schéma donné à `withFieldAccess` ; un objet imbriqué se
-  restreint en enveloppant son propre schéma.
+  s'appliquent aux propriétés du schéma donné à `withFieldAccess`, pas à ce qui y est imbriqué :
+  un schéma imbriqué est écrit dans la bibliothèque de validation, où l'enveloppe du kit ne va pas,
+  et l'envelopper à part n'atteint aucune réponse. Restreignez la propriété qui porte l'objet
+  imbriqué, ce qui l'écarte en entier, ou répondez la valeur réservée dans une propriété à elle.
+- Une réponse d'un statut que la route ne déclare pas tombe sous les règles de toutes les réponses
+  que la route déclare.
 - Sans `fieldAccess` dans les options, un champ restreint est écarté de chaque réponse et refusé
   dans chaque corps : rien n'est montré par omission.
 - La règle `authz/fields-by-schema` du *checker* et du *plugin* ESLint refuse l'alternative

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8efdbbf3ec2a3cae -->
+<!-- translation-of: README.md sha256:45a52493f2ac63aa -->
 
 # @ddd-ts-kit/auth
 
@@ -571,7 +571,9 @@ const authenticator = keycloakAuthenticator({
 
 Il dérive l'émetteur (`<baseUrl>/realms/<realm>`) et le jeu de clés
 (`<issuer>/protocol/openid-connect/certs`, récupéré et mis en cache, rotation des clés suivie),
-et fait correspondre un jeton d'accès comme suit :
+refuse tout autre jeton du *realm* avec `NOT_AN_ACCESS_TOKEN` (un jeton d'accès dit `typ: Bearer`,
+un jeton d'identité non, quelle que soit son audience), et fait correspondre un jeton d'accès comme
+suit :
 
 | Champ | *Claim* |
 |---|---|

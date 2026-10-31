@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:c68a98faae498239 -->
+<!-- translation-of: personal-data.md sha256:d93d7dfb1c040e96 -->
 
 # Les données personnelles dans un projet généré
 
@@ -125,8 +125,8 @@ d'exécution d'origine `cli` avec l'opérateur pour acteur, et lance `eraseDataS
    main pour l'instant, là où le lanceur dit `TODO(platform)`.
 
 Il imprime le rapport en JSON : si une clé a été détruite, les lignes que chaque contexte et la
-plateforme ont atteintes, les projections reconstruites. Une copie qui échoue n'arrête pas les autres,
-et le premier échec est levé une fois que tout a tourné : relancer l'effacement achève celui qui a
+plateforme ont atteintes, les projections reconstruites. Une copie ou une reconstruction qui échoue
+n'arrête pas les autres, et le premier échec est levé une fois que tout a tourné : relancer l'effacement achève celui qui a
 échoué à mi-chemin. Un effacement qui n'a rien atteint est refusé, code de sortie 1, et annoncé à
 personne : l'id est mal saisi, son *tenant* manque à l'annuaire, ou la personne a déjà été effacée, et
 les entrées du journal d'audit disent lequel. `--rerun` dit que c'est attendu : le code de sortie est 0
@@ -316,6 +316,7 @@ met sa sévérité à `error` dans `rules` de la config. Un projet qui a choisi 
 | `privacy/erasure-reaches-copies` | un contexte qui consomme un événement portant des données personnelles et n'efface rien quand la personne est effacée |
 | `privacy/subject-is-opaque` | un sujet qui est lui-même une donnée personnelle (un email comme clé d'une personne) |
 | `privacy/no-personal-data-in-logs` | un appel au *logger* ou aux métriques qui nomme un champ personnel déclaré |
+| `privacy/snapshot-sealed` | une valeur d'un *mapper* de *snapshots* nommée comme une donnée personnelle qu'aucun `personalData` ne scelle |
 
 Elles lisent des noms, pas des contenus, c'est pourquoi chacune dit ce qu'elle ne voit pas
 (`npx ddd-ts-kit explain privacy/declared-field`). Une colonne qui ne tient rien d'une personne dans
@@ -344,6 +345,10 @@ clair est signalée.
   personne est mis en file avec `{ subject: personId }`. Les *jobs* gardés dans la mémoire d'un
   processus (`--queue memory`) sont hors de portée d'un script qui tourne dans un autre, et finissent
   avec ce processus.
+- **Ce qu'un cache garde.** Un effacement n'atteint pas le port `Cache` : une valeur qu'une lecture
+  `cached` garde d'une personne y reste jusqu'à son temps de vie, une fois la ligne disparue. Une
+  lecture qui répond une personne prend un `ttlMs` que la rétention du projet accepte, ou n'est pas
+  mise en cache.
 - **Les journaux et les exports déjà remis.** Rien du kit ne les réécrit ; les adaptateurs de journal
   masquent les secrets, pas les noms ([Observabilité](observability.fr.md#ce-que-chaque-signal-peut-porter)).
 - **Une colonne qu'aucune déclaration ne nomme.** Une règle lit le nom d'une colonne, pas ce qu'un

@@ -9,6 +9,7 @@ export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {
   'privacy/erasure-reaches-copies': 'warn',
   'privacy/subject-is-opaque': 'warn',
   'privacy/no-personal-data-in-logs': 'warn',
+  'privacy/snapshot-sealed': 'warn',
   'test/no-mocks': 'warn',
   'test/builder-required': 'warn',
   'clean/function-size': 'warn',
