@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { CLEAN_RULE_IDS } from '../src/check/catalogue/clean-rule-ids';
 import { ESLINT_ONLY_RULES } from '../src/check/catalogue/eslint-only-rules';
 import { KNOWN_RULE_IDS } from '../src/check/catalogue/known-rule-ids';
-import { RULE_IDS } from '../src/check/catalogue/rule-ids';
 import { changeConfig, checkJsonOf, errorFixOf, isRecord } from './check-support';
 import { cli, scaffoldEverything, tempDir, write, type CliResult } from './helpers';
 
@@ -43,10 +42,10 @@ describe('rules and explain', () => {
     expect(cli(tempDir('none'), 'rules').code).toBe(0);
   });
 
-  it('explains a rule with its reason and both examples', () => {
+  it('explains every rule it knows, the ones another tool decides included, with its reason and both examples', () => {
     const root = tempDir('explain');
 
-    for (const id of RULE_IDS) {
+    for (const id of KNOWN_RULE_IDS) {
       const { stdout, code } = cli(root, 'explain', id);
 
       expect(code, id).toBe(0);
@@ -90,6 +89,14 @@ describe('rules and explain', () => {
 
     expect(cli(root, 'explain', 'application/handler-shape', '--json').json()).toMatchObject({
       checkedBy: '@ddd-ts-kit/eslint-plugin',
+    });
+
+    expect(cli(root, 'explain', 'domain/no-generic-error', '--json').json()).toMatchObject({
+      id: 'domain/no-generic-error',
+      checkedBy: '@ddd-ts-kit/eslint-plugin',
+      why: expect.stringContaining('a stable code'),
+      bad: expect.stringContaining("throw new Error('Invoice already issued');"),
+      good: expect.stringContaining('throw InvoiceAlreadyIssued.forInvoice(this.id);'),
     });
 
     expect(refused.code).toBe(2);

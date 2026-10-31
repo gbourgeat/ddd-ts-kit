@@ -2,22 +2,24 @@ import type { RuleDoc } from '../model/rule-doc';
 
 export const LAYER_DOCS: Readonly<Record<string, RuleDoc>> = {
   'layer/domain-purity': {
-    why: 'The domain is the part of the system that has to survive a change of framework, database or transport. Every outside import ties a business rule to a technical choice and makes it impossible to test without that choice. Values that come from the outside world (ids, time, randomness) enter as parameters. The packages that apply a concern from outside (@ddd-ts-kit/aspects, audit, redis, scheduling, sentry, tracing) are refused whatever `domainAllowedPackages` says. The kernel itself is allowed, its entry @ddd-ts-kit/kernel/declarations is not: a declaration is wiring, and the domain declares nothing, neither a decorator on a class nor a dependency list. A repository port is a plain abstract class.',
+    why: 'The domain is the part of the system that has to survive a change of framework, database or transport. Every outside import ties a business rule to a technical choice and makes it impossible to test without that choice. Values that come from the outside world (ids, time, randomness) enter as parameters. The packages that apply a concern from outside (@ddd-ts-kit/aspects, audit, redis, scheduling, sentry, tracing) are refused whatever `domainAllowedPackages` says. The kernel itself is allowed, its entry @ddd-ts-kit/kernel/declarations is not: a declaration is wiring, and the domain declares nothing, neither a decorator on a class nor a dependency list. A repository port is a plain abstract class. An allowed package of the kit does not allow its entries for adapters, wiring and test doubles (@ddd-ts-kit/kernel/testing, @ddd-ts-kit/auth/jwt, /passport, /rebac, /di, /testing): the domain imports one only when `domainAllowedPackages` names that entry itself.',
     bad: `// domain/aggregates/invoice.aggregate.ts
 import { randomUUID } from 'node:crypto';
 import { IsEmail } from 'class-validator';
 import { Logged } from '@ddd-ts-kit/aspects/decorators';
-import { Repository } from '@ddd-ts-kit/kernel/declarations';`,
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { FixedClock } from '@ddd-ts-kit/kernel/testing';`,
     good: `// domain/aggregates/invoice.aggregate.ts
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Money } from '@/contexts/billing/domain/value-objects/money.vo';`,
   },
   'layer/application-inward': {
-    why: 'A use case orchestrates the domain and talks to the outside through ports. If it imports an adapter, a framework or a driver, the technical choice can no longer be replaced or faked, and the handler cannot be unit tested with plain fakes. Cross-cutting behaviour reaches a use case from outside: @ddd-ts-kit/aspects, audit, redis, scheduling, sentry and tracing are refused whatever `applicationAllowedPackages` says, their place is the composition root, a bus middleware or an adapter. The declarations of the kernel (@ddd-ts-kit/kernel/declarations) are part of the kernel and belong here: a handler, a job or a policy says what it is and names the ports it depends on, which are abstract classes, without knowing a container. A background job (application/background/*.background-job.ts), and no other file of the layer, also imports @ddd-ts-kit/validation and the validation library of the stack, no other, for the schema of its payload: the payload a queue keeps outlives the deploy that enqueued it, like the payload of an integration event, and the worker reads it with that schema before each run.',
+    why: 'A use case orchestrates the domain and talks to the outside through ports. If it imports an adapter, a framework or a driver, the technical choice can no longer be replaced or faked, and the handler cannot be unit tested with plain fakes. Cross-cutting behaviour reaches a use case from outside: @ddd-ts-kit/aspects, audit, redis, scheduling, sentry and tracing are refused whatever `applicationAllowedPackages` says, their place is the composition root, a bus middleware or an adapter. The declarations of the kernel (@ddd-ts-kit/kernel/declarations) are part of the kernel and belong here: a handler, a job or a policy says what it is and names the ports it depends on, which are abstract classes, without knowing a container. A background job (application/background/*.background-job.ts), and no other file of the layer, also imports @ddd-ts-kit/validation and the validation library of the stack, no other, for the schema of its payload: the payload a queue keeps outlives the deploy that enqueued it, like the payload of an integration event, and the worker reads it with that schema before each run. @ddd-ts-kit/auth is allowed for permissions and policies, not its adapters, its wiring or its test doubles (@ddd-ts-kit/auth/jwt, /passport, /rebac, /di, /testing, nor @ddd-ts-kit/kernel/testing): a use case imports one only when `applicationAllowedPackages` names that entry itself.',
     bad: `// application/commands/issue-invoice/issue-invoice.handler.ts
 import { PgInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/pg-invoice.repository';
 import { RedisCache } from '@ddd-ts-kit/redis';
-import { retry } from '@ddd-ts-kit/aspects';`,
+import { retry } from '@ddd-ts-kit/aspects';
+import { passportAuthenticator } from '@ddd-ts-kit/auth/passport';`,
     good: `// application/commands/issue-invoice/issue-invoice.handler.ts
 import { Cache, Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';

@@ -49,8 +49,9 @@ interface Head {
 
 /**
  * The test or the group `node` declares, when it is one: `it(title, fn)`, `describe.each(rows)(title, fn)`,
- * `test.todo(title)`, `xit(title, fn)`. Nothing for `it.each(rows)` alone, whose own call declares
- * the test, nor when `it` is a local of the file instead of the runner's.
+ * `test.todo(title)`, `xit(title, fn)`, also under an alias of the runner (`import { it as scenario }`).
+ * Nothing for `it.each(rows)` alone, whose own call declares the test, nor when `it` is a local of
+ * the file instead of the runner's.
  */
 export function testCall(
   sourceCode: Readonly<TSESLint.SourceCode>,
@@ -63,15 +64,16 @@ export function testCall(
   }
 
   const { root, modifiers } = head;
-  const kind = kindOf(root.name);
+  const runner = ambientName(sourceCode, root);
+  const kind = runner === undefined ? undefined : kindOf(runner);
 
-  if (kind === undefined || ambientName(sourceCode, root) !== root.name) {
+  if (runner === undefined || kind === undefined) {
     return undefined;
   }
 
   const [title, body] = node.arguments;
 
-  return { kind, root: root.name, modifiers, head: node.callee, title, body };
+  return { kind, root: runner, modifiers, head: node.callee, title, body };
 }
 
 /** The runner function and the modifiers a callee chains, or nothing when the chain holds anything else. */

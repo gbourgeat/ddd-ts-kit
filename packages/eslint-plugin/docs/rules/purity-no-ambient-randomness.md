@@ -39,6 +39,7 @@ None.
 
 - A wrapper around the forbidden access (a helper of the platform that calls `Date.now()`) is not seen here; the layer rules stop the import of that helper.
 - A local declaration that shadows the global (`const process = ...`) is not reported.
+- A member taken by destructuring (`const { env } = process`, `const { now } = Date`) and a `const` alias of the global (`const clock = Date; clock.now()`) are read; an alias through a `let`, a parameter or a property is not followed.
 
 ## With the CLI checker
 

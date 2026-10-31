@@ -26,6 +26,14 @@ ruleTester.run('test-no-only-no-skip', testNoOnlyNoSkip, {
       errors: [{ messageId: 'modifier', data: { what: 'it.only' } }],
     },
     {
+      ...at(SPEC, "import { it as scenario } from 'vitest';\nscenario.only('records the payment', () => {});"),
+      errors: [{ messageId: 'modifier', data: { what: 'it.only' } }],
+    },
+    {
+      ...at(SPEC, `${VITEST}const scenario = it;\nscenario.skip('records the payment', () => {});`),
+      errors: [{ messageId: 'modifier', data: { what: 'it.skip' } }],
+    },
+    {
       ...at(SPEC, `${VITEST}describe.skip('Invoice', () => {});`),
       errors: [{ messageId: 'modifier', data: { what: 'describe.skip' } }],
     },

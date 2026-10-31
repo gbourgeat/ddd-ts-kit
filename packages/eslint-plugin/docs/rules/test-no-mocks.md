@@ -43,6 +43,7 @@ None.
 ## Limits
 
 - Tests outside a context (`test/e2e`) are not judged.
+- `vi` and `jest` are read under an import alias (`import { vi as mocks } from 'vitest'`) and a `const` alias; a runner passed as a parameter is not followed.
 
 ## With the CLI checker
 

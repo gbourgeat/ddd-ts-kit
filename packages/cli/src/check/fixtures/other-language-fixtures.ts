@@ -222,7 +222,13 @@ export const OTHER_LANGUAGE_FIXTURES: readonly Fixture[] = [
     name: 'a table keyed by a type of a port of the context',
     expect: { file: INTEGRATION_HANDLER },
     files: named({
-      [PORT]: "export type CatalogState = 'draft' | 'issued';\n",
+      [PORT]: lines(
+        "export type CatalogState = 'draft' | 'issued';",
+        '',
+        'export abstract class CatalogReader {',
+        '  abstract stateOf(productId: string): Promise<CatalogState>;',
+        '}',
+      ),
       [INTEGRATION_HANDLER]: lines(
         "import type { CatalogState } from '@/contexts/billing/application/ports/catalog-reader.port.js';",
         READS_STATUS,

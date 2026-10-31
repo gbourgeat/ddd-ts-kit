@@ -13,6 +13,7 @@ The domain is the part of the system that must survive a change of framework, OR
 ## Reported
 
 - a package outside `domainAllowedPackages` (default: `@ddd-ts-kit/kernel`)
+- an entry of an allowed package of the kit that holds an adapter, the wiring of a container or test doubles (`@ddd-ts-kit/kernel/testing`, `@ddd-ts-kit/auth/jwt`, `/passport`, `/rebac`, `/di`, `/testing`), unless `domainAllowedPackages` names that entry itself
 - `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/s3`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the model
 - in a declared-style project (`stack.style: "declared"`): `@ddd-ts-kit/kernel/declarations`, even though `@ddd-ts-kit/kernel` is allowed, with a message of its own: the domain declares nothing
 - any Node built-in

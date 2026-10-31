@@ -1,5 +1,5 @@
 [English](layer-application-inward.md) · **Français**
-<!-- translation-of: layer-application-inward.md sha256:6e16bc8f73e2aef0 -->
+<!-- translation-of: layer-application-inward.md sha256:821d093b205975b2 -->
 
 # ddd-ts-kit/layer-application-inward
 
@@ -14,6 +14,7 @@ Les cas d'usage orchestrent le domaine par des ports. Un import d'un adaptateur,
 ## Signalé
 
 - un *package* hors de `applicationAllowedPackages`
+- un point d'entrée d'un *package* autorisé du kit qui contient un adaptateur, le câblage d'un conteneur ou des doublures de test (`@ddd-ts-kit/auth/jwt`, `/passport`, `/rebac`, `/di`, `/testing`, `@ddd-ts-kit/kernel/testing`), sauf si `applicationAllowedPackages` nomme ce point d'entrée lui-même
 - `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/s3`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` et `@ddd-ts-kit/tracing`, par n'importe quelle entrée (`.`, `/decorators`, `/testing`, `/node`, ...), avec un message propre : ils appliquent ou enregistrent une préoccupation depuis l'extérieur des cas d'usage
 - tout module natif de Node
 - `infrastructure/`, `presentation/` ou le fichier de module du même contexte

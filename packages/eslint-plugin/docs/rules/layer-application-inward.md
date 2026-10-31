@@ -13,6 +13,7 @@ Use cases orchestrate the domain through ports. An import of an adapter, a drive
 ## Reported
 
 - a package outside `applicationAllowedPackages`
+- an entry of an allowed package of the kit that holds an adapter, the wiring of a container or test doubles (`@ddd-ts-kit/auth/jwt`, `/passport`, `/rebac`, `/di`, `/testing`, `@ddd-ts-kit/kernel/testing`), unless `applicationAllowedPackages` names that entry itself
 - `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/s3`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the use cases
 - any Node built-in
 - `infrastructure/`, `presentation/` or the module file of the same context

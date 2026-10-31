@@ -1,5 +1,5 @@
 [English](purity-no-system-clock.md) · **Français**
-<!-- translation-of: purity-no-system-clock.md sha256:41b999b764a83a88 -->
+<!-- translation-of: purity-no-system-clock.md sha256:c65cf44ae7b01eb5 -->
 
 # ddd-ts-kit/purity-no-system-clock
 
@@ -46,6 +46,7 @@ Aucune.
 
 - Une enveloppe autour de l'accès interdit (un auxiliaire de la plateforme qui appelle `Date.now()`) n'est pas vue ici ; les règles de couche arrêtent l'import de cet auxiliaire.
 - Une déclaration locale qui masque la globale (`const process = ...`) n'est pas signalée.
+- Un membre pris par déstructuration (`const { env } = process`, `const { now } = Date`) et un alias `const` de la globale (`const clock = Date; clock.now()`) sont lus ; un alias par un `let`, un paramètre ou une propriété n'est pas suivi.
 
 ## Avec le checker de la CLI
 

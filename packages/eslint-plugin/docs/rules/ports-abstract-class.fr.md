@@ -1,5 +1,5 @@
 [English](ports-abstract-class.md) · **Français**
-<!-- translation-of: ports-abstract-class.md sha256:1ebb5cd851088e2c -->
+<!-- translation-of: ports-abstract-class.md sha256:63f489319286169f -->
 
 # ddd-ts-kit/ports-abstract-class
 
@@ -18,6 +18,7 @@ Un port est une classe abstraite qui n'a que des membres abstraits. La classe es
 - un membre `private`, `protected` ou `#`
 - une méthode avec un corps, une propriété avec un initialiseur, un membre qui n'est pas `abstract`
 - une `interface` exportée : un port se déclare comme une classe abstraite
+- un fichier de port qui ne déclare aucune classe, un type ou un jeton seul
 
 Incorrect :
 
@@ -55,7 +56,7 @@ export abstract class InvoiceRepository extends Repository<Invoice> {}
 
 Un port peut en étendre un autre : le `Repository<A>` du noyau, ou un port du même contexte. Un membre est permis en plus des membres abstraits : `static readonly tokenKey = '<package>.<Port>'`, un littéral de chaîne qui donne au port une seule identité quand son *package* est chargé deux fois. Une valeur qui n'est pas un port (des réglages, une connexion à la base de données) se type de la même façon, par une classe abstraite aux propriétés `abstract readonly`.
 
-Un alias `type` exporté n'est pas signalé : la forme des données qui transitent par le port peut être un type. Une interface non exportée est laissée tranquille aussi.
+Un alias `type` exporté à côté de la classe n'est pas signalé : la forme des données qui transitent par le port peut être un type. Une interface non exportée est laissée tranquille aussi. Un fichier sans classe ni interface exportée est signalé une fois, à sa première ligne.
 
 ## Options
 

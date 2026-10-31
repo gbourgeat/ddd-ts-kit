@@ -7,9 +7,17 @@ import { describeTarget } from '../support/imports/describe-target';
 import { importListener } from '../support/imports/import-listener';
 import { inLayer } from '../support/imports/in-layer';
 import { OUTSIDE_CONCERN_MESSAGE } from '../support/outside-concerns/outside-concern-message';
-import { outsideConcern } from '../support/outside-concerns/outside-concern';
+import { judgePackage } from '../support/outside-concerns/judge-package';
+import { OUTER_ENTRY_MESSAGE } from '../support/outside-concerns/outer-entry';
 
-type MessageId = 'package' | 'declarations' | 'outsideConcern' | 'builtin' | 'upstreamContract' | 'outerLayer';
+type MessageId =
+  | 'package'
+  | 'entry'
+  | 'declarations'
+  | 'outsideConcern'
+  | 'builtin'
+  | 'upstreamContract'
+  | 'outerLayer';
 
 export const layerDomainPurity = defineRule<MessageId>({
   id: 'layer/domain-purity',
@@ -19,6 +27,7 @@ export const layerDomainPurity = defineRule<MessageId>({
     'domain/ imports only its own domain/, the shared kernel and the allowed kernel packages: no framework, ORM, validation library or Node built-in.',
   messages: {
     outsideConcern: OUTSIDE_CONCERN_MESSAGE,
+    entry: OUTER_ENTRY_MESSAGE,
     package:
       'The domain imports the package "{{name}}". Remove the import: express the need as plain TypeScript or as a port (an abstract class) in application/ports, and keep decorators and schemas of "{{name}}" in infrastructure or presentation.',
     declarations: `The domain imports "${DECLARATIONS_ENTRY}": the domain declares nothing. Aggregates, entities, value objects, events, services and repository ports carry no decorator and no dependency list. Remove the import: put the decorator on the class of application/ or infrastructure/ that plays the role, and keep ports as abstract classes in domain/repositories and application/ports.`,
@@ -43,12 +52,10 @@ export const layerDomainPurity = defineRule<MessageId>({
       if (declares && specifier === DECLARATIONS_ENTRY) {
         report({ node, messageId: 'declarations' });
       } else if (target.kind === 'package') {
-        const concern = outsideConcern(target.name);
+        const judgment = judgePackage('The domain', { name: target.name, specifier }, allowed);
 
-        if (concern !== undefined) {
-          report({ node, messageId: 'outsideConcern', data: { importer: 'The domain', specifier, ...concern } });
-        } else if (!allowed.includes(target.name)) {
-          report({ node, messageId: 'package', data: { name: target.name } });
+        if (judgment !== undefined) {
+          report({ node, ...judgment });
         }
       } else if (target.kind === 'builtin') {
         report({ node, messageId: 'builtin', data: { name: specifier } });

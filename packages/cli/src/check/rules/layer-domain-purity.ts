@@ -1,4 +1,5 @@
 import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry';
+import { outerEntry } from '../layers/outer-entry';
 import { outsideConcern } from '../layers/outside-concern';
 import type { Flaw } from '../model/flaw';
 import type { ImportTarget } from '../model/import-target';
@@ -61,7 +62,9 @@ function impure({ target, specifier }: ResolvedImport, context: string, allowed:
   }
 
   if (allowed.includes(target.name)) {
-    return [];
+    const entry = outerEntry('The domain', { name: target.name, specifier }, allowed);
+
+    return entry === undefined ? [] : [entry];
   }
 
   const fix = `Remove the import: express the need as plain TypeScript or as a port in application/ports, and keep decorators and schemas of "${target.name}" in infrastructure or presentation.`;

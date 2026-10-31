@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { Finding } from '../model/finding';
 import type { Rule } from '../model/rule';
 import type { SourceFile } from '../model/source-file';
@@ -18,7 +19,7 @@ const SHAPE_FIX =
 export const portsAbstractClass: Rule = {
   id: 'ports/abstract-class',
   description:
-    'A port is an abstract class with abstract members only: no constructor, no body, no initializer, no private or protected member; a port file declares no interface.',
+    'A port is an abstract class with abstract members only: no constructor, no body, no initializer, no private or protected member; a port file declares one abstract class and no interface.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => {
@@ -27,9 +28,14 @@ export const portsAbstractClass: Rule = {
       }
 
       const classes = file.structure.classes.filter((shape) => shape.depth === 0);
+      const declaredAsInterface = interfaces(file);
+
+      if (classes.length === 0 && declaredAsInterface.length === 0) {
+        return [noClass(file)];
+      }
 
       return [
-        ...interfaces(file),
+        ...declaredAsInterface,
         ...classes.flatMap((shape) => [
           ...concrete(shape),
           ...bodies(shape),
@@ -50,6 +56,17 @@ function interfaces(file: SourceFile): Finding[] {
       message: `The port ${match[1] ?? ''} is declared as an interface.`,
       fix: `Declare the port as an abstract class: it is also its injection token. Write \`export abstract class ${match[1] ?? 'Port'}\` with abstract members, and name the class in dependency lists and bindings.`,
     }));
+}
+
+/** A port written as a type or a set of functions is no contract a container can bind. */
+function noClass(file: SourceFile): Finding {
+  const name = path.posix.basename(file.path);
+
+  return {
+    line: 1,
+    message: `The port file ${name} declares no abstract class.`,
+    fix: 'Declare the port as `export abstract class` with abstract members: it is the contract and the injection token at once; a data shape that travels through the port may stay a `type` beside it.',
+  };
 }
 
 function concrete(shape: ClassShape): Finding[] {
