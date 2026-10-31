@@ -457,6 +457,23 @@ commence après une porte verte est une revue de conception.
 
 ![Où tournent les vérifications : à chaque écriture de fichier dans une session d'agent, sur les fichiers indexés avant un commit, et dans le pipeline de la pull request, dont le job gate est la vérification requise ; la revue humaine vient après une porte verte et juge la conception](../assets/diagrams/team-workflow-checks.fr.svg)
 
+## Un projet dans un dossier d'un dépôt plus large
+
+`ddd-ts-kit init` écrit ses fichiers dans le dossier où il tourne. Dans un monorepo, ce dossier est
+`apps/api`, pas la racine du dépôt git, et certains outils ne lisent leurs fichiers qu'à la racine : GitHub
+lit `.github/workflows/` et `.github/dependabot.yml`, GitLab lit `.gitlab-ci.yml`, et lefthook lit
+`lefthook.yml` et installe ses hooks pour tout le dépôt. Les copies sous `apps/api` ne tournent jamais. `init`
+affiche alors une note qui le dit, et `ddd-ts-kit doctor` rapporte un constat `hook project folder` ; le kit ne
+déplace rien.
+
+- Déplacez ces fichiers à la racine du dépôt, et donnez à chaque job GitHub `working-directory: apps/api` (ou
+  `defaults.run.working-directory`), à chaque job GitLab un `cd apps/api` ; pointez aussi vers le dossier les
+  chemins du cache et des artefacts.
+- Avec pnpm, `allowBuilds` et `strictDepBuilds` vont dans le `pnpm-workspace.yaml` de la racine de
+  l'espace de travail, le seul que pnpm y lit : un `pnpm install` lancé à la racine échoue sur
+  `ERR_PNPM_IGNORED_BUILDS` quand ils restent dans `apps/api`.
+- Lancez `ddd-ts-kit check`, `verify` et les générateurs depuis `apps/api`, puisque le projet y est.
+
 ## Accueillir un nouvel arrivant en une journée
 
 | Quand | Quoi | Pourquoi |

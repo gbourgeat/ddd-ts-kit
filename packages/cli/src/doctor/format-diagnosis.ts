@@ -1,4 +1,5 @@
 import type { Stack } from '../config';
+import { subfolderSentence } from '../init/subfolder-sentence';
 import { inDialect } from '../package-manager/in-dialect';
 import type { DoctorFinding } from './doctor-finding';
 
@@ -33,7 +34,7 @@ function projectLines(findings: readonly DoctorFinding[], version: string, manag
     `Compared with what ddd-ts-kit ${version} writes:`,
     ...findings.map(lineOf),
     '',
-    ...[...fixesOf(findings), ...folderFixesOf(findings), ...hookFixesOf(findings)].map((fix) =>
+    ...[...fixesOf(findings), ...folderFixesOf(findings), ...hookFixesOf(findings, manager)].map((fix) =>
       inDialect(fix, manager),
     ),
     ...installScriptFixesOf(findings, manager),
@@ -140,7 +141,7 @@ function folderFixesOf(findings: readonly DoctorFinding[]): string[] {
 }
 
 /** Written for npm, said in the dialect of the project by the caller. */
-function hookFixesOf(findings: readonly DoctorFinding[]): string[] {
+function hookFixesOf(findings: readonly DoctorFinding[], manager: Stack['packageManager']): string[] {
   const hooks = findings.filter((finding) => finding.area === 'hook');
   const fixes: string[] = [];
 
@@ -158,6 +159,12 @@ function hookFixesOf(findings: readonly DoctorFinding[]): string[] {
 
   if (hooks.some((finding) => finding.name === 'lefthook.yml')) {
     fixes.push('fix: `npx ddd-ts-kit init` writes lefthook.yml; then `npm run hooks:install`.');
+  }
+
+  const folder = hooks.find((finding) => finding.name === 'project folder')?.found;
+
+  if (folder !== undefined) {
+    fixes.push(`fix: ${subfolderSentence(folder, manager)}`);
   }
 
   if (hooks.some((finding) => finding.name === 'git repository')) {
