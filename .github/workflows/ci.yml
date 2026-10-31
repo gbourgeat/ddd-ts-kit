@@ -7,7 +7,7 @@ on:
     # A pull request in draft runs the fast checks only; marking it ready runs the whole of them (ready_for_review).
     types: [opened, synchronize, reopened, ready_for_review]
   schedule:
-    # Every night, everything, on both Node lines: a pull request runs the unit specs of the packages its change reaches.
+    # Every night, everything, on every Node line: a pull request runs the unit specs of the packages its change reaches.
     - cron: '0 3 * * *'
   # The run of the night on demand (`gh workflow run ci.yml --ref <branch>`): before a tag, or to try a change of the night jobs.
   workflow_dispatch:
@@ -65,7 +65,7 @@ jobs:
           case "$HEAD_REF" in release/*) release=true ;; esac
           case "$TITLE" in 'chore(release)'*) release=true ;; esac
           if [ "$release" = true ]; then STACKS=all; fi
-          # The slow proofs (pnpm, Node 22 for the alias runs, the intermediate states of the first minute, the coverage gate on
+          # The slow proofs (pnpm, Node 22 and 24 for the alias runs, the intermediate states of the first minute, the coverage gate on
           # its ten stacks, the pairs, the migrations) are the night's and the release's: the trunk and the other pull requests keep the rest.
           deep=false
           case "$EVENT" in schedule|workflow_dispatch) deep=true ;; esac
@@ -166,7 +166,7 @@ jobs:
         run: npm run ci:arch
 
   unit:
-    name: Unit tests (Node 24, coverage floors)
+    name: Unit tests (Node 26, coverage floors)
     needs: install
     runs-on: ubuntu-26.04
     timeout-minutes: 25
@@ -240,7 +240,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           node-version: 22
-      - name: The same specs on the oldest supported Node (coverage is measured once, on Node 24)
+      - name: The same specs on the oldest supported Node (coverage is measured once, on Node 26)
         if: ${{ needs.install.outputs.scope != 'none' }}
         env:
           FILTERS: ${{ needs.install.outputs.filters }}
@@ -256,8 +256,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Both Node lines at night and on the pull request of a release; every other run, the trunk included, runs the newest one.
-        node: ${{ fromJSON(needs.install.outputs.deep == 'true' && '[22, 24]' || '[24]') }}
+        # Every Node line at night and on the pull request of a release; every other run, the trunk included, runs the newest one.
+        node: ${{ fromJSON(needs.install.outputs.deep == 'true' && '[22, 24, 26]' || '[26]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

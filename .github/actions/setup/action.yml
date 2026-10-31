@@ -4,7 +4,7 @@ description: Node, the dependencies of the lockfile and the built packages, each
 inputs:
   node-version:
     description: The Node.js release line of the job.
-    default: '24'
+    default: '26'
   build:
     description: Whether the job needs the built packages (dist/).
     default: 'true'

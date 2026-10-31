@@ -22,7 +22,7 @@ stages:
 
 variables:
   AST_ENABLE_MR_PIPELINES: 'true'
-  NODE_VERSION: '24'
+  NODE_VERSION: '26'
   # Behind the dependency proxy of a group, a registry that rate-limits is never asked twice:
   # POSTGRES_IMAGE: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/postgres:18
   POSTGRES_IMAGE: postgres:18
@@ -188,9 +188,10 @@ unit-oldest:
 alias:
   extends: .built
   stage: test
+  # The two lines whose cache a job fills (the install job: the default; unit-oldest: 22). GitHub's deep runs add Node 24.
   parallel:
     matrix:
-      - NODE_VERSION: ['22', '24']
+      - NODE_VERSION: ['22', '26']
   script:
     # The import alias at run time on this Node: every stack built, run compiled with plain node, from sources under tsx and vitest.
     - npm run ci:test:alias
