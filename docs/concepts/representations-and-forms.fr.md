@@ -1,5 +1,5 @@
 [English](representations-and-forms.md) · **Français**
-<!-- translation-of: representations-and-forms.md sha256:06bd3607b6ea8710 -->
+<!-- translation-of: representations-and-forms.md sha256:5a9a6ef36f9a9e2c -->
 
 # Représentations, accès aux champs et formulaires décrits par le serveur
 
@@ -119,8 +119,8 @@ jamais une vérification.
   avec son propre schéma de corps.
 - Une liste en flux ne peut plus être refusée une fois son premier élément écrit : un échec
   ultérieur coupe court la réponse, et il est signalé comme une faute.
-- L'accès aux champs juge les champs du schéma sur lequel il est déclaré ; un objet imbriqué se
-  restreint par son propre schéma. Un schéma partagé garde les marques, quel que soit celui des
+- L'accès aux champs juge les propriétés du schéma sur lequel il est déclaré, pas ce qui y est
+  imbriqué : un objet imbriqué se restreint par la propriété qui le porte, en entier. Un schéma partagé garde les marques, quel que soit celui des
   deux qui enveloppe l'autre (`sharedSchema(name, withFieldAccess(...))` ou
   `withFieldAccess(sharedSchema(...), ...)`) ; un schéma construit à partir d'un schéma marqué par
   un autre moyen (une partie qui en est prise, la composition propre d'une bibliothèque) est une

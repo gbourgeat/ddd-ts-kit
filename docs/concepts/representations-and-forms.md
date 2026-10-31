@@ -108,8 +108,8 @@ the client, never a check.
   its own.
 - A streamed list cannot be refused once its first item is written: a failure later cuts the
   response short, and is reported as a fault.
-- Field access judges the fields of the schema it is declared on; a nested object is restricted
-  through its own schema. A shared schema keeps the marks whichever wraps the other
+- Field access judges the properties of the schema it is declared on, not what is nested in them:
+  a nested object is restricted by the property that holds it, whole. A shared schema keeps the marks whichever wraps the other
   (`sharedSchema(name, withFieldAccess(...))` or `withFieldAccess(sharedSchema(...), ...)`); a
   schema built from a marked one by another means (a part picked from it, a library's own
   composition) is a new shape and is marked again. Each requirement is one decision per distinct element of the answer,

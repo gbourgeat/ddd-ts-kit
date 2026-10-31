@@ -7,6 +7,7 @@ import { assertWritable } from '../field-access/assert-writable';
 import { fieldAccess } from '../field-access/field-access';
 import { FieldJudge } from '../field-access/field-judge';
 import { FieldTree } from '../field-access/field-tree';
+import { responseFields } from '../field-access/response-fields';
 import { visibleBody } from '../field-access/visible-body';
 import { NotAcceptableError } from '../representation/not-acceptable-error';
 import { PROBLEM_SHAPE } from '../representation/problem-shape';
@@ -182,7 +183,7 @@ function requestContext(
 
 /** The answer without the fields its schema reserves to callers this one is not. */
 async function visibleOutput(route: Route, result: RouteOutput, judge: FieldJudge): Promise<RouteOutput> {
-  const tree = FieldTree.of(fieldAccess.of(route.responses[result.status]?.body));
+  const tree = responseFields(route, result.status);
 
   return tree.isEmpty() ? result : { ...result, body: await visibleBody(result.body, tree, judge) };
 }
