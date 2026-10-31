@@ -551,8 +551,9 @@ const authenticator = keycloakAuthenticator({
 ```
 
 It derives the issuer (`<baseUrl>/realms/<realm>`) and the key set
-(`<issuer>/protocol/openid-connect/certs`, fetched and cached, rotated keys followed), and maps
-an access token as follows:
+(`<issuer>/protocol/openid-connect/certs`, fetched and cached, rotated keys followed), refuses
+any other token of the realm with `NOT_AN_ACCESS_TOKEN` (an access token says `typ: Bearer`, an ID
+token does not, whatever its audience), and maps an access token as follows:
 
 | Field | Claim |
 |---|---|

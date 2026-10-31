@@ -194,7 +194,8 @@ subject and the issue instant; the instants from `iat` and `exp`, multi-factor f
 a claim you name, the locale and time zone from `locale` and `zoneinfo`, the granted scopes from
 `scope` (or `scp`), which the `HasScope` guard of `@ddd-ts-kit/http` reads at the edge.
 
-**The Keycloak preset** maps an access token as follows.
+**The Keycloak preset** maps an access token as follows. Any other token of the realm, an ID token
+whatever its audience, is refused with `NOT_AN_ACCESS_TOKEN`: an access token says `typ: Bearer`.
 
 ![The claims of a Keycloak access token on the left, the fields of the actor and of the session on the right, and which claim fills which field; the token itself is kept nowhere](../assets/diagrams/identity-keycloak-claims.svg)
 

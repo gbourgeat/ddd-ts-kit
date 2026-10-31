@@ -8,9 +8,17 @@ import { tenancyOfClaim } from './tenancy-of-claim';
 
 const DEFAULT_TENANT_CLAIM = 'tenant_id';
 const DEFAULT_GROUPS_CLAIM = 'groups';
+const ACCESS_TOKEN_TYPE = 'Bearer';
 
-/** The actor of an access token issued by Keycloak. The token itself is never kept. */
+/**
+ * The actor of an access token issued by Keycloak, the one kind of token of a realm whose `typ`
+ * claim says `Bearer`. The token itself is never kept.
+ */
 export function keycloakActorOf(claims: Claims, options: KeycloakClaimOptions): Actor {
+  if (claims['typ'] !== ACCESS_TOKEN_TYPE) {
+    throw new InvalidCredentialError('NOT_AN_ACCESS_TOKEN');
+  }
+
   const id = claims['sub'];
 
   if (typeof id !== 'string' || id === '') {

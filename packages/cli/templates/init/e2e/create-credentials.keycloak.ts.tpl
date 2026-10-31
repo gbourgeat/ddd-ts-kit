@@ -44,6 +44,7 @@ interface Signing {
 
 function tokenOf(actor: TestActor, { key, issuer }: Signing): Promise<string> {
   const claims = {
+    typ: 'Bearer',
     realm_access: { roles: actor.roles ?? [] },
     preferred_username: actor.id,
     sid: 'session-of-' + actor.id,

@@ -24,7 +24,8 @@ export interface KeycloakAuthenticatorOptions extends KeycloakClaimOptions {
 /**
  * A `JwtAuthenticator` for the access tokens of a Keycloak realm: issuer and key set derived
  * from the realm, realm roles and the roles of `clientId` as `roles`, `preferred_username`,
- * `email` and `groups` as attributes, `sid` as session id.
+ * `email` and `groups` as attributes, `sid` as session id. Any other token of the realm, an ID
+ * token whatever its audience, is refused.
  */
 export function keycloakAuthenticator(options: KeycloakAuthenticatorOptions): JwtAuthenticator {
   const {

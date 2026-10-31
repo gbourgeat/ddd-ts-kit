@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:9df041bd5ef2a3a4 -->
+<!-- translation-of: identity.md sha256:27716bebf37fe76a -->
 
 # Identité : Keycloak ou simple OIDC et JWT
 
@@ -206,7 +206,9 @@ que vous nommez, la langue et le fuseau horaire de `locale` et `zoneinfo`, les p
 accordées de `scope` (ou `scp`), que lit à la frontière la garde `HasScope` de
 `@ddd-ts-kit/http`.
 
-**Le *preset* Keycloak** fait correspondre un jeton d'accès comme suit.
+**Le *preset* Keycloak** fait correspondre un jeton d'accès comme suit. Tout autre jeton du *realm*,
+un jeton d'identité quelle que soit son audience, est refusé avec `NOT_AN_ACCESS_TOKEN` : un jeton
+d'accès dit `typ: Bearer`.
 
 ![Les claims d'un jeton d'accès Keycloak à gauche, les champs de l'acteur et de la session à droite, et quel claim remplit quel champ ; le jeton lui-même n'est conservé nulle part](../assets/diagrams/identity-keycloak-claims.fr.svg)
 

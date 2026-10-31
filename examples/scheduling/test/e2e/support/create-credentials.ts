@@ -68,6 +68,7 @@ function tokenOf(actor: TestActor, { key, issuer }: Signing): Promise<string> {
 /** The claims a realm writes: its roles, its session, and the mappers this application asks for (tenant, impersonator). */
 function claimsOf(actor: TestActor): Record<string, unknown> {
   return {
+    typ: 'Bearer',
     realm_access: { roles: actor.roles ?? [] },
     preferred_username: actor.id,
     sid: 'session-of-' + actor.id,
