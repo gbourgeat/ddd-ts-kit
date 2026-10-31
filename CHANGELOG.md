@@ -4,6 +4,54 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.104.0
+
+**A role folder holds its role files and nothing else: a barrel, a JavaScript file and a port with no abstract class are reported.** `naming/suffix` no longer lets an `index.ts` through in a role folder that has a suffix, alias or not; `tree/closed` reports a `.js`, `.mjs`, `.cjs`, `.jsx`, `.tsx`, `.mts` or `.cts` file anywhere in a context, which no rule read; `ports/abstract-class`, in `ddd-ts-kit check` and in ESLint, reports a port file that declares no class at all, such as `export type InvoiceRepository = { ... }` or a token alone.
+
+To move: import each file of a role folder by its own path and delete its `index.ts`; write a `.js` file of a context in TypeScript, or delete it if a build wrote it; declare each port as `export abstract class` with abstract members.
+
+**`layer/application-inward` and `layer/domain-purity` read the entry imported, not only its package.** An allow-list that names `@ddd-ts-kit/auth` or `@ddd-ts-kit/kernel` let every entry of the package through, so a handler could import `@ddd-ts-kit/auth/passport` or `/jwt` and an aggregate the test doubles of `@ddd-ts-kit/kernel/testing` with no report from `ddd-ts-kit check` or ESLint. The entries of the kit that hold an adapter, the wiring of a container or test doubles (`@ddd-ts-kit/auth/jwt`, `/passport`, `/rebac`, `/di`, `/testing`, `@ddd-ts-kit/kernel/testing`) are now reported in `domain/` and `application/`, unless the allow-list names that entry itself.
+
+To move: move the import to `infrastructure/` or `src/platform` (an adapter, the wiring) or to a test (a test double); or name the entry in `domainAllowedPackages` or `applicationAllowedPackages`, with its deviation recorded.
+
+**ESLint reads `<module>/<module>.module.ts` as a module file, as `ddd-ts-kit check` does.** The module file of a module of the model was read as a file at the root of its context: `clean/function-size` reported its `register` past 30 lines, which a generated project with a large module failed on in its own lint, and `events/consumer-idempotent` did not see a bare `subscribe` there. Every rule of the plugin now reads it as the module file of the context.
+
+**`ddd-ts-kit explain` gives a reason and both examples for every rule, the ones ESLint or the formatter decides included.** The 19 rules of `@ddd-ts-kit/eslint-plugin` that `ddd-ts-kit check` does not judge, `domain/no-generic-error` among them, and `clean/formatted`, which Biome decides, printed their description and the tool that checks them, and nothing else. They now print why the rule exists, a bad and a good example, then the tool that checks them; under `--json` they carry `why`, `bad` and `good` beside `checkedBy`.
+
+**`domain/no-generic-error` names the step of the form of the project, and `generate error` refuses a refusal named after another class of the context.** Under `"stack.refusals": "named"`, which `init` writes, the message sent to `generate error <context> <Concept> <refusal>`, the step of `factories`, which the named form refuses; it now says `generate error <context> <Refusal> for<Subject>`. `generate error billing Invoice forOverdue` wrote a refusal class `Invoice` beside the aggregate `Invoice`; it now stops and asks for a name of what is refused.
+
+**`domain/no-generic-error`, the `purity/*` rules, `test/no-mocks` and `test/no-only-no-skip` read the obvious variants of what they forbid.** `throw new TypeError(..)` and the other errors of the language, and an error thrown through a `const` (`const failure = new Error(..); throw failure;`), are reported by `domain/no-generic-error`; `const { env } = process`, `const { now } = Date` and `const { random } = Math` by the `purity/*` rules, in ESLint and in `ddd-ts-kit check`, and a `const` alias of the global (`const clock = Date; clock.now()`) in ESLint; `vi`, `jest` and `it` under an import alias (`import { vi as mocks, it as scenario } from 'vitest'`) by `test/no-mocks` and `test/no-only-no-skip`, and by every rule of the plugin that reads a test.
+
+To move: throw a refusal of the context where a `TypeError` or a `RangeError` was thrown in `domain/` or `application/`; take what a destructuring read from `process`, `Date`, `Math` or `crypto` from a port (`Clock`, `IdGenerator`, a configuration value); replace the mocks and the `.only` or `.skip` an alias hid, as for the runner under its own name.
+
+**`describe` names the lines of `CONTEXT.md` that people write, and a worker reads no more.** Its `language:` line reads `src/contexts/<context>/CONTEXT.md:1-76 (4 terms)`, and `describe --json` carries `docHead`, the last of those lines. The briefing of `worker-scope`, the `context-builder` agent and the `use-case` skill read `CONTEXT.md` above its generated `## Reference`, then `describe` once, instead of reading the same facts twice.
+
+**`plan-waves` orders a row whose Context is `platform` (the work of `src/platform/`) or `all` (a slice across every context).** Both names are accepted without a declared context and refused as the name of a context by `generate context` and `init --context`, the `plan-slices` skill documents them, and no worker brief is written for such a row: the conductor owns it. The slices of the scheduling example (M1.10, M1.38, M1.39) are planned again.
+
+**The session preamble names `pnpm exec ddd-ts-kit` on a pnpm project, not `npx ddd-ts-kit`.** The commands it suggests are the ones `AGENTS.md` documents and the allow list of `.claude/settings.json` permits, so none asks for a permission. An npm project keeps `npx`.
+
+**`story` no longer prints `met` beside an open box for a story with no specification, and `measures` no longer says "Measures of none".** The acceptance phases say `not evaluated: no specification`, and a repository with no branch to read is titled `Measures of the repository (no branch)`.
+
+**`story` no longer ticks "origin recorded" and "report" on the untouched template.** A `From:` or `Built with:` line, or the `npm run verify` line of `### Verification`, that still holds a `<placeholder>` is not written, and the close gate stays shut until the story skill fills it.
+
+**`story-scope --from` refuses an intent whose status is `draft` even when the comment of the template says `Status: accepted`.** The gate reads the status line of the intent, no longer the comment copied from `intent-template.md`.
+
+**The `use-case` skill names the command that prints the spec titles of a slice.** Before the pull request it reads `npx ddd-ts-kit digest --base <trunk>`, which lists the titles under `New spec titles`, instead of asking for a section of the behaviour page with no way to read one.
+
+**The briefing of `worker-scope` asks a worker for `describe <context>` as text and for the `todos` each generator prints.** It named `describe --json`, which says the same in more size, and a `next` place that no generator prints. It now says what the `parallel-work` briefing template says.
+
+**`check` and `check-file` refuse a path that exists nowhere, and `check` a folder that holds no TypeScript file to read.** A mistyped or moved path used to read as "0 errors" with exit 0, which the skills take as the proof that a file is clean; it is now an error naming the path, with exit 2. `check-file --content-from` still accepts a path that is not written yet. `lint` of a pattern that matches no file already answered with one sentence and no stack.
+
+To move: a hook or a script that called `check-file` on a path that may not exist yet passes the text with `--content-from`.
+
+**A checkout with CRLF line ends passes `check` and `docs --check` on code nobody edited.** Under `core.autocrlf=true` (Git for Windows, WSL 2 clones) `clean/braces` reported every multi-line body and `docs --check` listed every generated page as stale, with nothing to commit after `ddd-ts-kit docs`. Files are now read with any line end, and a file the kit writes again is written with LF, as before. `init` writes no `.gitattributes` and `doctor` does not ask for one: reading with any line end covers the gates.
+
+**`--json` now holds on `lint`, `drizzle-generate`, `knex-generate`, `prisma-generate`, `typeorm-generate` and `depcruise-config`, as `--help` says of every command.** `lint --json` answers `{ errors, warnings, inTransition, report }` on one line, `report` being the JSON report of ESLint; the four `*-generate` commands answer `{ code, written, messages }` and send the output of the ORM tool to stderr; `depcruise-config --json` answers `{ file, config }` (and `{ file, written }` with `--write`). A spec holds every command of the table to one line of JSON.
+
+**`cited`, `digest`, `verify-slice`, `mutation`, `affected` and `story-scope` give `origin/main` as the example of a ref only where it resolves.** In a repository with no remote their refusals now say `<branch, tag or commit>`, as `plan-waves` and `worker-scope` do, instead of a ref the next command would refuse.
+
+**`plan-waves` prints `--base origin/main` only when that ref resolves.** In a repository with no remote (before its first push) the briefs it prints left out a base that `worker-scope` refused, and the refusal repeated it as its example. The briefs now carry no `--base` there (`worker-scope` cuts from the current branch), and the refusals of `worker-scope` say `--base <branch, tag or commit>`.
+
 ## 0.103.0
 
 **A `merge-trunk` stopped half way can be continued with `merge-trunk --continue`.** The state of the merge is written as soon as the merge starts and after each step, not only at the first stop for a person, so a merge killed on the automatic path no longer needs a plain `git commit`, which skips the steps merge-trunk runs (regenerate, the migrations replay). A merge in progress that holds no state is now refused with `npx ddd-ts-kit merge-trunk --abort` named first.

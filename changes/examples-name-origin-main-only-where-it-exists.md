@@ -1,1 +1,0 @@
-**`cited`, `digest`, `verify-slice`, `mutation`, `affected` and `story-scope` give `origin/main` as the example of a ref only where it resolves.** In a repository with no remote their refusals now say `<branch, tag or commit>`, as `plan-waves` and `worker-scope` do, instead of a ref the next command would refuse.

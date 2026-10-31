@@ -1,1 +1,0 @@
-**The session preamble names `pnpm exec ddd-ts-kit` on a pnpm project, not `npx ddd-ts-kit`.** The commands it suggests are the ones `AGENTS.md` documents and the allow list of `.claude/settings.json` permits, so none asks for a permission. An npm project keeps `npx`.
