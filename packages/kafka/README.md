@@ -31,7 +31,7 @@ librdkafka with a promise API in the manner of KafkaJS, which is what this packa
 The price is a native addon. Nothing is compiled when a prebuilt binary exists: the install
 script of the package downloads one (13 MB, 30 MB installed) from the GitHub releases of the
 client. Prebuilt binaries exist for Linux x64 and arm64 on glibc and musl, macOS arm64 and
-Windows x64, for Node 18 to 24. Verified here: Ubuntu with Node 24.21, and the images
+Windows x64, for Node 18 to 26. Verified here: Ubuntu with Node 24.21, and the images
 `node:24-alpine` and `node:24-bookworm-slim`, each without a compiler, in about five seconds.
 
 What it asks of CI and of images:

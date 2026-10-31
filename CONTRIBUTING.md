@@ -227,8 +227,8 @@ as a draft until the branch is final: a draft runs the fast checks only, and mar
 whole CI. A pull request that changes documents alone, the website, the plugin text or the example
 generates no project; one that touches anything under `packages/` or `pipeline/`, or the root
 configuration, generates a cover of 16 stacks in which every value of every flag
-appears. The trunk generates every stack, installs on npm and runs the alias on Node 24; the night and
-the pull request of a release (title `chore(release)` or branch `release/*`) add pnpm, Node 22, the
+appears. The trunk generates every stack, installs on npm and runs the alias on Node 26; the night and
+the pull request of a release (title `chore(release)` or branch `release/*`) add pnpm, Node 22 and 24, the
 intermediate states of the first minute, the coverage gate on ten stacks, the pairs and the migrations.
 
 Workflows pin each action to a commit, with its version in a comment; Dependabot proposes the

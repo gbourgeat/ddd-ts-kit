@@ -1,18 +1,18 @@
 # syntax=docker/dockerfile:1
 
-FROM node:24-slim AS build
+FROM node:26-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:24-slim AS dependencies
+FROM node:26-slim AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-FROM node:24-slim
+FROM node:26-slim
 # The entry point: the whole application, or one context run alone (--build-arg ENTRY=dist/src/apps/<context>/main.js).
 ARG ENTRY=dist/src/main.js
 ENV NODE_ENV=production

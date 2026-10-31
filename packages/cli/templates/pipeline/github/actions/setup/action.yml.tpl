@@ -4,7 +4,7 @@ description: Node, then the dependencies of the lockfile, restored from the cach
 inputs:
   node-version:
     description: The Node.js release line the pipeline runs on.
-    default: '24'
+    default: '26'
 
 runs:
   using: composite
