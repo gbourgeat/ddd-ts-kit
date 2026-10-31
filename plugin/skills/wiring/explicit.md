@@ -49,3 +49,12 @@ module holds (its handlers, consumers, reactions, jobs, permissions and routes),
   `generate module`.
 - Never a `composition/` folder in `extraDirectories` for this: `tree/closed` accepts the module
   file of a declared module, and nothing else at the root of a module.
+
+## A container the kit does not wire
+
+InversifyJS and Awilix are not values of `stack.di`. When a team insists on one, read "Using
+InversifyJS or Awilix anyway" in `docs/tools/dependency-injection.md` first: `--di manual`, the
+container in `<context>.module.ts` only, never in `domain/` or `application/`, every adapter still
+through `platform.adapter`. `generate` keeps writing `new`: move what it wrote into the container
+each time, since neither the compiler nor `check` reports the second instance. Without such a
+wish, do not propose one.
