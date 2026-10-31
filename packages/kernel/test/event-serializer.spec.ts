@@ -179,6 +179,16 @@ describe('crypto-shredding', () => {
     expect(() => before.personal('born', domainOf)).toThrow('no domain');
   });
 
+  it('hands over the values of one subject by their path, its key looked up in the key store', async () => {
+    const cipher = new PersonalDataCipher(keys);
+
+    const sealed = await cipher.seal(
+      storedDataOf({ note: personalData('a11', 'Asthma'), other: personalData('b11', 'Flu') }),
+    );
+
+    expect(await cipher.valuesOf('a11', sealed)).toEqual({ values: { note: 'Asthma' }, unreadable: [] });
+  });
+
   it('refuses to store or to read personal data without a cipher', async () => {
     const bare = new EventSerializer<AccountEvent>(accountEvents);
     const sealed = await serializer.serialize(new AccountOpened('a9', AT, 'Alan'));
