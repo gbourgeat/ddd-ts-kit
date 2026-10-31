@@ -39,6 +39,20 @@ ruleTester.run('layer-domain-purity', layerDomainPurity, {
   ],
   invalid: [
     { ...at(AGGREGATE, "import { z } from 'zod';"), errors: [{ messageId: 'package', data: { name: 'zod' } }] },
+    {
+      ...at(AGGREGATE, "import { FixedClock } from '@ddd-ts-kit/kernel/testing';"),
+      errors: [
+        {
+          messageId: 'entry',
+          data: {
+            importer: 'The domain',
+            specifier: '@ddd-ts-kit/kernel/testing',
+            what: 'test doubles',
+            name: '@ddd-ts-kit/kernel',
+          },
+        },
+      ],
+    },
     { ...at(AGGREGATE, "import type { Request } from 'express';"), errors: [{ messageId: 'package' }] },
     {
       ...at(AGGREGATE, "import { Logged } from '@ddd-ts-kit/aspects/decorators';"),
@@ -132,6 +146,11 @@ ruleTester.run('layer-application-inward', layerApplicationInward, {
       stack: { validation: 'class-validator' },
     }),
     at(HANDLER, "import type { Clock } from '@ddd-ts-kit/kernel';"),
+    at(HANDLER, "import { Permission } from '@ddd-ts-kit/auth';"),
+    at(HANDLER, "import type { RelationTuple } from '@ddd-ts-kit/auth/rebac';", {
+      ...SAMPLE_CONFIG,
+      applicationAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/auth', '@ddd-ts-kit/auth/rebac'],
+    }),
     at(HANDLER, "import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js';"),
     at(HANDLER, "import type { PaymentGateway } from '../../ports/payment-gateway.port.js';"),
     at(HANDLER, "import type { ProductListedV1 } from '@/contexts/catalog/published-language/index.js';"),
@@ -152,6 +171,24 @@ ruleTester.run('layer-application-inward', layerApplicationInward, {
       errors: [
         { messageId: 'package', data: { name: 'zod', context: 'billing' } },
         { messageId: 'package', data: { name: '@ddd-ts-kit/validation', context: 'billing' } },
+      ],
+    },
+    {
+      ...at(
+        HANDLER,
+        "import { passportAuthenticator } from '@ddd-ts-kit/auth/passport';\nimport { jwtAuthenticator } from '@ddd-ts-kit/auth/jwt';",
+      ),
+      errors: [
+        {
+          messageId: 'entry',
+          data: {
+            importer: 'The application layer',
+            specifier: '@ddd-ts-kit/auth/passport',
+            what: 'an authentication adapter',
+            name: '@ddd-ts-kit/auth',
+          },
+        },
+        { messageId: 'entry' },
       ],
     },
     {

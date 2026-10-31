@@ -1,5 +1,5 @@
 [English](layer-domain-purity.md) · **Français**
-<!-- translation-of: layer-domain-purity.md sha256:1679008c7a72c6d4 -->
+<!-- translation-of: layer-domain-purity.md sha256:bba4b3cedef2b3ae -->
 
 # ddd-ts-kit/layer-domain-purity
 
@@ -14,6 +14,7 @@ Le domaine est la partie du système qui doit survivre à un changement de frame
 ## Signalé
 
 - un *package* hors de `domainAllowedPackages` (par défaut : `@ddd-ts-kit/kernel`)
+- un point d'entrée d'un *package* autorisé du kit qui contient un adaptateur, le câblage d'un conteneur ou des doublures de test (`@ddd-ts-kit/kernel/testing`, `@ddd-ts-kit/auth/jwt`, `/passport`, `/rebac`, `/di`, `/testing`), sauf si `domainAllowedPackages` nomme ce point d'entrée lui-même
 - `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/s3`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` et `@ddd-ts-kit/tracing`, par n'importe quelle entrée (`.`, `/decorators`, `/testing`, `/node`, ...), avec un message propre : ils appliquent ou enregistrent une préoccupation depuis l'extérieur du modèle
 - dans un projet de style déclaré (`stack.style: "declared"`) : `@ddd-ts-kit/kernel/declarations`, même si `@ddd-ts-kit/kernel` est permis, avec un message propre : le domaine ne déclare rien
 - tout module natif de Node
