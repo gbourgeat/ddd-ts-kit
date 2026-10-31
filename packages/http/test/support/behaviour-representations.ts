@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Representations, type ErrorContext } from '../../src';
+import { until } from '@ddd-ts-kit/testing/e2e';
 import { catalogRoutes, failingExportRoute } from './catalog';
 import type { RunningServer, StartServer } from './running-server';
 
@@ -76,8 +77,6 @@ export function answersInSeveralMediaTypes(start: StartServer): void {
   });
 }
 
-async function waitFor(condition: () => boolean): Promise<void> {
-  for (let attempt = 0; attempt < 50 && !condition(); attempt += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
+function waitFor(condition: () => boolean): Promise<void> {
+  return until(condition, { timeoutMs: 500, intervalMs: 10 });
 }
