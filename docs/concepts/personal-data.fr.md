@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:c68a98faae498239 -->
+<!-- translation-of: personal-data.md sha256:b6aad77d1c86dd69 -->
 
 # Les données personnelles dans un projet généré
 
@@ -344,6 +344,10 @@ clair est signalée.
   personne est mis en file avec `{ subject: personId }`. Les *jobs* gardés dans la mémoire d'un
   processus (`--queue memory`) sont hors de portée d'un script qui tourne dans un autre, et finissent
   avec ce processus.
+- **Ce qu'un cache garde.** Un effacement n'atteint pas le port `Cache` : une valeur qu'une lecture
+  `cached` garde d'une personne y reste jusqu'à son temps de vie, une fois la ligne disparue. Une
+  lecture qui répond une personne prend un `ttlMs` que la rétention du projet accepte, ou n'est pas
+  mise en cache.
 - **Les journaux et les exports déjà remis.** Rien du kit ne les réécrit ; les adaptateurs de journal
   masquent les secrets, pas les noms ([Observabilité](observability.fr.md#ce-que-chaque-signal-peut-porter)).
 - **Une colonne qu'aucune déclaration ne nomme.** Une règle lit le nom d'une colonne, pas ce qu'un

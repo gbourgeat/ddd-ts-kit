@@ -22,6 +22,6 @@ TODO(domain): the processors and the third parties that receive personal data (m
 
 ## What the code does not purge
 
-`npm run privacy:erase` reaches the declared copies, the records of the outbox of the events listed above and the jobs enqueued with the person as `subject`. It does not reach what the code cannot name: a message already delivered to a broker or a consumer, a field of a payload that no `personal` option lists, a job that holds a person in its payload and names no `subject`. The jobs `events.purge-published` and `jobs.purge-finished` drop what the platform is done with past `OUTBOX_RETENTION_DAYS` and `BACKGROUND_JOBS_RETENTION_DAYS`; dead events and dead jobs wait for an operator.
+`npm run privacy:erase` reaches the declared copies, the records of the outbox of the events listed above and the jobs enqueued with the person as `subject`. It does not reach what the code cannot name: a message already delivered to a broker or a consumer, a field of a payload that no `personal` option lists, a job that holds a person in its payload and names no `subject`, a value a `cached` read keeps of a person, until its time to live. The jobs `events.purge-published` and `jobs.purge-finished` drop what the platform is done with past `OUTBOX_RETENTION_DAYS` and `BACKGROUND_JOBS_RETENTION_DAYS`; dead events and dead jobs wait for an operator.
 
 TODO(domain): how long the backups, the logs, the files and the archives of the audit trail keep personal data, and who deletes them.

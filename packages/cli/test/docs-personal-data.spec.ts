@@ -54,6 +54,12 @@ describe('docs: the register of personal data', () => {
     expect(register).toContain('## Purposes and lawful basis\n\nTODO(domain):');
   });
 
+  it('says that a value a cached read keeps of a person lasts its time to live', () => {
+    expect(read(initProject(), REGISTER)).toContain(
+      'a value a `cached` read keeps of a person, until its time to live',
+    );
+  });
+
   it('is not written with --privacy off', () => {
     expect(exists(initProject('--privacy', 'off'), REGISTER)).toBe(false);
   });

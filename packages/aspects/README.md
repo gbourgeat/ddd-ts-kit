@@ -251,7 +251,8 @@ constructor: the decorators read them from the aspect runtime when a call is mad
 **Privacy.** The rule is the one of tracing: an entry, a label or an error raised by this
 package carries names from the code (class, method, context, kind), a duration, the class of
 an error and its short `code`. Never an argument, a result or the message of a caught error:
-they quote data. Errors are rethrown untouched.
+they quote data. Errors are rethrown untouched. What `cached` keeps is the answer itself: an
+erasure does not reach the cache, so what it holds of a person lasts its `ttlMs`.
 
 **`timeout` and cancellation.** With `signal: true` the method is handed an `AbortSignal` as its
 last declared parameter, aborted when the time is up. Declare `signal?: AbortSignal` last,

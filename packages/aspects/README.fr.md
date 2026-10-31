@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a4a2bed894dcc4b6 -->
+<!-- translation-of: README.md sha256:6d77c8c1ece92421 -->
 
 # @ddd-ts-kit/aspects
 
@@ -259,7 +259,9 @@ dans le *runtime* des aspects au moment d'un appel.
 **Confidentialité.** La règle est celle du traçage : une entrée, un libellé ou une erreur levée
 par ce *package* porte des noms issus du code (classe, méthode, contexte, genre), une durée, la
 classe d'une erreur et son `code` court. Jamais un argument, un résultat ou le message d'une
-erreur capturée : ils citent des données. Les erreurs sont relancées intactes.
+erreur capturée : ils citent des données. Les erreurs sont relancées intactes. Ce que `cached`
+garde est la réponse elle-même : un effacement n'atteint pas le cache, donc ce qu'il tient d'une
+personne dure son `ttlMs`.
 
 **`timeout` et l'annulation.** Avec `signal: true`, la méthode reçoit un `AbortSignal` comme
 dernier paramètre déclaré, interrompu quand le temps est écoulé. Déclarez `signal?: AbortSignal`

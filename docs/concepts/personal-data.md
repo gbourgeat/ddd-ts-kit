@@ -332,6 +332,9 @@ with `personalData(subject, value)` is declared by that, and only a key stored i
   another one, and end with that process.
   The keys of the event store make the events of a backup unreadable once destroyed, which is why
   they live apart, with a shorter retention ([Event sourcing](event-sourcing.md#personal-data-crypto-shredding)).
+- **What a cache keeps.** An erasure does not reach the `Cache` port: a value a `cached` read keeps
+  of a person stays there until its time to live, once the row is gone. A read that answers a person
+  takes a `ttlMs` the retention of the project accepts, or is not cached.
 - **Logs and exports already handed over.** Nothing of the kit rewrites them; the log adapters mask
   credentials, not names ([Observability](observability.md#what-each-signal-may-carry)).
 - **A column no declaration names.** A rule reads the name of a column, not what a text field may
