@@ -11,6 +11,7 @@ export const invoices = new EntitySchema<InvoiceRow>({
     id: { type: 'text', primary: true },
     amount: { type: 'int' },
     status: { type: 'text' },
+    details: { type: 'jsonb', nullable: true },
     version: { type: 'int' },
     ...tenantColumn(),
     ...auditColumns(),

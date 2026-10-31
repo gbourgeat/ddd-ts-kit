@@ -139,6 +139,11 @@ migration of a project that becomes multi-tenant: the events not published yet g
 the database served, or keep none and are refused by tenant-scoped consumers if it is left out), and `new KnexOutboxStore(context, { schema: 'messaging', tenant: true })` writes
 it. A table that has the column is read back either way.
 
+A `jsonb` column of your own takes `jsonColumn(value)`: `pg` writes a JavaScript array as a PostgreSQL array
+literal and a string as it is, so a list or a string fails with `22P02` where Drizzle, Prisma and TypeORM
+serialize it. `jsonColumn` answers the JSON text of any value (an object, a list, a string; `null` for an absent
+one), so the mapper line `details: jsonColumn(state.details)` gives the same result on the four ORMs.
+
 One schema per bounded context: `schemaNameOf('order-management')` gives `order_management`,
 to pass to `knex.schema.createSchemaIfNotExists`, `knex.schema.withSchema` and
 `.withSchema(...)` on queries. Contexts never join each other's tables.
