@@ -5,6 +5,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     ignore:
       # typescript-eslint and dependency-cruiser need the TypeScript 6 API; the native
@@ -52,6 +54,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: ci
     groups:

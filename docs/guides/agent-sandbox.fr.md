@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:d681447640a4df6a -->
+<!-- translation-of: agent-sandbox.md sha256:248da6f8de6842e5 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -110,7 +110,9 @@ manque. Chacun s'explique à l'agent :
 
 - `production-gate.mjs` tourne avant chaque commande `Bash`. Une commande qui nomme
   l'environnement de production du projet (les mots de `PRODUCTION_ENVIRONMENTS` en tête du
-  fichier, `production` par défaut) avec une action de mise en production (`RELEASE_ACTIONS` :
+  fichier, `production` par défaut, lu entre des séparateurs quelconques : `deploy-production` et
+  `deploy_production` le nomment comme `deploy:production`, `non-production` et `pre-production`
+  non) avec une action de mise en production (`RELEASE_ACTIONS` :
   `deploy`, `migrate`, `rollback`) est bloquée, code de sortie 2, avec la raison que l'agent lit :
   la commande ne tourne qu'une fois qu'une personne a approuvé la mise en production, d'après la
   liste de contrôle de l'équipe, en posant `RELEASE_APPROVAL="<approbateur> <id du changement>"`

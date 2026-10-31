@@ -107,7 +107,8 @@ itself to the agent:
 
 - `production-gate.mjs` runs before every `Bash` command. A command that names the production
   environment of the project (the words of `PRODUCTION_ENVIRONMENTS` at the top of the file,
-  `production` by default) together with a release action (`RELEASE_ACTIONS`: `deploy`,
+  `production` by default, read between any separators: `deploy-production` and `deploy_production`
+  name it as `deploy:production` does, `non-production` and `pre-production` do not) together with a release action (`RELEASE_ACTIONS`: `deploy`,
   `migrate`, `rollback`) is blocked, exit code 2, with the reason the agent reads: the command
   runs only once a person approved the release, after the release checklist of the team, by
   setting `RELEASE_APPROVAL="<approver> <change id>"` in the environment of the session; the

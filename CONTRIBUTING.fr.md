@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:3cee6c67dadb9b0f -->
+<!-- translation-of: CONTRIBUTING.md sha256:59daca66bce218a0 -->
 
 # Contribuer
 
@@ -296,9 +296,19 @@ release de correctif du kit, pas une version à lui.
 **Aucun secret.** Le workflow publie par la publication de confiance (trusted publishing,
 OIDC) : chaque package désigne `release.yml` de ce dépôt, dans son environnement `npm`, comme
 son éditeur de confiance, et `npm publish` échange le jeton d'identité du job contre un jeton
-qui ne vit que le temps de cette publication. Le job garde `id-token: write` et
-`environment: npm`, et a besoin de npm 11.5.1 ou ultérieur, ce qu'il vérifie. Aucun
+qui ne vit que le temps de cette publication. Le job qui publie garde `id-token: write` et
+`environment: npm`, n'installe ni ne construit rien (un premier job, sans l'identité, installe,
+construit et empaquette, et le job de publication publie ses archives), et a besoin de npm 11.5.1
+ou ultérieur, ce qu'il vérifie. Aucun
 `NPM_TOKEN` n'est stocké nulle part.
+
+**L'approbation du propriétaire.** Le job de publication s'exécute dans l'environnement `npm`, qui
+exige l'approbation du propriétaire du dépôt : un run de `Release` s'arrête avant de publier
+jusqu'à ce que le propriétaire l'approuve dans l'onglet Actions, et rien n'atteint npm sans cette
+approbation. Seul un administrateur du dépôt crée une étiquette `v*` (un *ruleset* la refuse à
+tout autre), si bien qu'une release part d'un administrateur, puis attend le propriétaire.
+Les archives qu'un run empaquette sont gardées une semaine : une approbation plus tardive, ou un
+run terminé après ce délai, relance tout le workflow. N'approuvez pas un run que vous n'attendiez pas.
 
 **Un nouveau package.** La confiance se déclare package par package, et seulement pour un
 package qui existe sur le registre. Avant la première version publiée qui contient un package

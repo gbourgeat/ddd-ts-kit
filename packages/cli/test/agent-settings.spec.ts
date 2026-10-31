@@ -77,7 +77,15 @@ const ASKED = [
   'Edit(./knip.json)',
   'Edit(./lefthook.yml)',
   'Edit(./.gitlab-ci.yml)',
+  'Edit(./.gitlab/**)',
   'Edit(./.github/workflows/**)',
+  'Edit(./.github/actions/**)',
+  'Edit(./.github/scripts/**)',
+  'Edit(./.github/dependabot.yml)',
+  'Edit(./renovate.json)',
+  'Edit(./stryker.config.mjs)',
+  'Edit(./pnpm-workspace.yaml)',
+  'Edit(./.claude/hooks/**)',
   'Edit(./.claude/settings.json)',
   'Edit(./.github/copilot/settings.json)',
   'Edit(./migrations/**)',
@@ -261,7 +269,7 @@ describe('agent settings of the files that reach production', () => {
     expect(permissions(root, 'ask')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 67 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 75 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);
