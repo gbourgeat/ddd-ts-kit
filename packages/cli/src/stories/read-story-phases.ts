@@ -201,8 +201,8 @@ function markersLeft(ws: Workspace, story: string): number {
   }
 }
 
-/** The evidence of the verification, under the report: `### Verification` naming the whole gate. */
-const VERIFICATION = /^###\s+Verification\s*$[^]*?npm run verify/m;
+/** The evidence of the verification, under the report: `### Verification` naming the whole gate, its result pasted. */
+const VERIFICATION = /^###\s+Verification\s*$[^]*?npm run verify(?![^\n]*<[^<>\n]+>)/m;
 
 function reportPhase({ ws, story, specification }: StoryFacts): StoryPhase {
   const report = specification === undefined ? undefined : sectionOf(ws.read(specification) ?? '', 'Report');
@@ -217,7 +217,7 @@ function reportPhase({ ws, story, specification }: StoryFacts): StoryPhase {
         ? 'no `## Report` in the specification'
         : verified
           ? 'written, with its verification'
-          : 'written, without `### Verification` naming `npm run verify`',
+          : 'written, without `### Verification` naming `npm run verify` and its result',
     next: `Write \`## Report\` in docs/architecture/stories/${story}.md: each provisional decision, each compromise, each amendment of the acceptance, what is left, then \`### Digest\` with what \`npx ddd-ts-kit digest --base <base>\` prints, then \`### Verification\` with the last lines of \`npm run verify\`, of the acceptance run and of \`story-check\`, and \`not verified:\` for what could not run; it is the body of the pull request.`,
     gate: 'close',
   };

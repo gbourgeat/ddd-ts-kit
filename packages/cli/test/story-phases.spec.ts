@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Slice } from '../src/progress/slice';
 import { readStoryPhases } from '../src/stories/read-story-phases';
@@ -70,6 +72,21 @@ describe('the phases of a story, read from its files', () => {
         ['rows', true, '2 rows in docs/architecture/slices.md'],
         ['built', true, '2 of 2 done'],
         ['passing', false, expect.stringContaining(NO_ACCEPTANCE)],
+      ]),
+    );
+  });
+});
+
+describe('the phases of a story whose files hold only the template', () => {
+  const template = readFileSync(path.resolve(__dirname, '../../../plugin/skills/story/story-template.md'), 'utf8');
+
+  it('does not take the placeholders of the template for a written origin or a pasted verification', () => {
+    const phases = phasesOf({ [SPECIFICATION]: template.replaceAll('<code>', 'US5') }, []);
+
+    expect(phases).toEqual(
+      expect.arrayContaining([
+        ['origin', false, '`## Origin` has no written `From:` nor `Built with:` line'],
+        ['report', false, 'written, without `### Verification` naming `npm run verify` and its result'],
       ]),
     );
   });
