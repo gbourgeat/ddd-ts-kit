@@ -1,5 +1,5 @@
 [English](closing-the-loop.md) · **Français**
-<!-- translation-of: closing-the-loop.md sha256:62e99f04a46296c1 -->
+<!-- translation-of: closing-the-loop.md sha256:88c0d5df978c75ca -->
 
 # Boucler la boucle : d'une métrique sortie de sa bande à la prochaine story
 
@@ -41,7 +41,7 @@ exportateur, lisez donc les noms là une fois avant d'écrire les requêtes.
 | Rupture | Ce que le kit émet | Requête (Prometheus) | Bande de départ |
 |---|---|---|---|
 | un cas d'usage échoue plus qu'avant | `use_case_total{message, kind, outcome, error_code}` depuis `metricsMiddleware` de `@ddd-ts-kit/aspects`, une série par classe de commande ou de requête | `sum by (message) (rate(use_case_total{outcome="failure"}[5m])) / sum by (message) (rate(use_case_total[5m]))` | le ratio par message contre sa ligne de base sur 30 jours ; un refus métier est un échec avec son `error_code`, si bien qu'un message qui refuse par conception (un créneau déjà pris) lit le ratio sans les codes que le métier attend |
-| le relais de l'outbox s'est arrêté | aucune jauge dans cette version : le relais ne fait que réclamer les enregistrements en attente ; le script lit la table `outbox` | `SELECT extract(epoch FROM now() - min(created_at)) FROM outbox WHERE status = 'pending'` (l'âge du plus ancien enregistrement en attente, en secondes ; `outbox.<schema>` là où le projet l'a mise) | au-dessus de trois fois l'intervalle du relais, tenu sur deux relevés |
+| le relais de l'outbox s'est arrêté | aucune jauge dans cette version : le relais ne fait que réclamer les enregistrements en attente ; le script lit la table `outbox` | `SELECT extract(epoch FROM now() - min(created_at)) FROM messaging.outbox WHERE status = 'pending'` (l'âge du plus ancien enregistrement en attente, en secondes ; `<schéma>.outbox` là où le projet l'a mise) | au-dessus de trois fois l'intervalle du relais, tenu sur deux relevés |
 | un *job* a cessé de tourner | `scheduled_job_runs_total{job, context, status, error_code}` depuis `@ddd-ts-kit/scheduling`, `status="succeeded"` pour une exécution qui a tourné | `increase(scheduled_job_runs_total{job="notifications.send-reminders", status="succeeded"}[2h]) == 0 or absent(scheduled_job_runs_total{job="notifications.send-reminders", status="succeeded"})` (deux intervalles d'un *job* horaire) | aucun succès pendant deux intervalles, ce qui attrape toutes les façons dont un *job* s'arrête, là où une alerte sur les échecs ne le fait pas |
 
 `dependency_call_total{class, method, kind, context, outcome}` (l'aspect `timed`) et
