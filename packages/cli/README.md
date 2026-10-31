@@ -864,7 +864,9 @@ Next, in this order: the language of the context first, then the business decisi
   `--authz rbac`, the id of the permission under the role `system` of `platform/auth/roles/roles.ts`,
   the role `createAuthorizer` gives every system actor (`systemRole`) and no other: a user token
   that names `system` among its roles does not hold it; `--authz abac`, a
-  `permit('system-<job>', [permission], ({ actor }) => actor.id === 'system:<job>')` rule in
+  `permit('system-<job>', [permission], ({ actor }) => isSystem(actor) && actor.id === 'system:<job>')`
+  rule, `isSystem` of the kernel imported, so that a token whose subject reads `system:<job>` does
+  not stand for the job, in
   `platform/auth/attributes/attribute-policies.ts`; `--authz rebac`, the tuple
   `context:<context>#operator@system:<job>` in `platform/auth/relationships/relate-system-actors.ts`,
   written to the tuple store when the application starts, as long as the schema still lets a

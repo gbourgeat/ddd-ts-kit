@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1fd532fbd0e65c27 -->
+<!-- translation-of: README.md sha256:4e44264062530ed3 -->
 
 # ddd-ts-kit
 
@@ -904,7 +904,9 @@ Next, in this order: the language of the context first, then the business decisi
   permission sous le rôle `system` de `platform/auth/roles/roles.ts`, le rôle que `createAuthorizer`
   donne à chaque acteur système (`systemRole`) et à nul autre : un jeton d'utilisateur qui nomme
   `system` parmi ses rôles ne le détient pas ; `--authz abac`, une règle
-  `permit('system-<job>', [permission], ({ actor }) => actor.id === 'system:<job>')` dans
+  `permit('system-<job>', [permission], ({ actor }) => isSystem(actor) && actor.id === 'system:<job>')`,
+  `isSystem` du noyau importé, pour qu'un jeton dont le sujet se lit `system:<job>` ne passe pas
+  pour le *job*, dans
   `platform/auth/attributes/attribute-policies.ts` ; `--authz rebac`, le tuple
   `context:<context>#operator@system:<job>` dans `platform/auth/relationships/relate-system-actors.ts`,
   écrit dans le magasin de tuples au démarrage de l'application, tant que le schéma laisse encore

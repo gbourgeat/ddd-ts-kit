@@ -8,6 +8,7 @@ import { platformPath } from '../../platform-path';
 
 const REGION = 'system-grants';
 const SYSTEM_OPERATES = /operator:\s*\[[^\]]*'system'/;
+const IS_SYSTEM_IMPORT = "import { isSystem } from '@ddd-ts-kit/kernel';";
 
 export interface SystemGrant {
   /** The generator wrote the grant in the authorization model of the platform. */
@@ -23,8 +24,8 @@ interface Placement {
   /** What names the grant in the file, however the line was laid out there. */
   readonly anchor: string;
   readonly check: string;
-  /** The import the line needs, added to the file when it does not have it. */
-  readonly needs?: string;
+  /** The imports the line needs, each added to the file when it does not have it. */
+  readonly needs?: readonly string[];
   /** The same grant as 0.5 wrote it, the permission by its id: a file that holds it already has the grant. */
   readonly writtenBefore?: RegExp;
 }
@@ -58,16 +59,17 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
         file: platformPath(scope, 'auth/roles/roles.ts'),
         line: `${read.written},`,
         anchor: `${read.written},`,
-        needs: read.importLine,
+        needs: [read.importLine],
         writtenBefore: new RegExp(`'${escapeRegExp(permission)}',`),
         check: `check this grant: the role \`system\`, which every system actor holds, now gives \`${actor}\` the permission \`${permission}\` its command requires.`,
       };
     case 'abac':
       return {
         file: platformPath(scope, 'auth/attributes/attribute-policies.ts'),
-        line: `permit('system-${job}', [${read.written}], ({ actor }) => actor.id === '${actor}'),`,
+        // The id alone could be the subject of a token: the actor must be a system actor too.
+        line: `permit('system-${job}', [${read.written}], ({ actor }) => isSystem(actor) && actor.id === '${actor}'),`,
         anchor: `'system-${job}',`,
-        needs: read.importLine,
+        needs: [read.importLine, IS_SYSTEM_IMPORT],
         writtenBefore: new RegExp(`'system-${escapeRegExp(job)}',\\s*\\['${escapeRegExp(permission)}'\\]`),
         check: `check this rule: it permits \`${actor}\`, and nobody else, the permission \`${permission}\` its command requires.`,
       };
@@ -117,5 +119,7 @@ function withGrant(content: string | undefined, { line, needs, writtenBefore }: 
 
   const inserted = content === undefined ? undefined : insertInRegion(content, REGION, line);
 
-  return inserted === undefined || needs === undefined ? inserted : withImport(inserted, needs);
+  return inserted === undefined
+    ? undefined
+    : (needs ?? []).reduce((source, line) => withImport(source, line), inserted);
 }
