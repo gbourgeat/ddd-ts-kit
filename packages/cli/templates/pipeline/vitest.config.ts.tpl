@@ -20,6 +20,8 @@ const UNIT_PROJECT: TestProjectInlineConfiguration = {
     name: 'unit',
     include: ['{{config.sourceRoot}}/**/*.spec.ts', 'test/architecture/**/*.spec.ts'],
     exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],
+    // The unit specs share no state: each worker runs them in one module graph, the declarations of a context evaluated once rather than once per spec file. `isolate: true` gives each file its own graph again.
+    isolate: false,
   },
 };
 
