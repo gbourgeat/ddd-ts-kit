@@ -237,7 +237,8 @@ managers:
     matrix:
       - DDD_TS_KIT_PACKAGE_MANAGER: [npm, pnpm]
   script:
-    - corepack enable
+    # The package manager a generated project pins: pnpm then follows the release each project pins (pmOnFail: download).
+    - npm install --global pnpm@12.11.2
     # Installed for real from the packed kit and held to verify: every kind generated on the default stack and a heavy one;
     # from the first minute, the quick start of the README and the other proven stacks.
     - npm run ci:test:managers

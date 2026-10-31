@@ -1,11 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { inDialect } from '../src/package-manager/in-dialect';
 import { PINNED_PACKAGE_MANAGERS } from '../src/package-manager/pinned-package-managers';
-import { cli, exists, read } from './helpers';
+import { cli, exists, read, REPO_ROOT } from './helpers';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
 import { textsAt } from './support/texts-at';
+
+const inRepository = (file: string): string => fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
 
 const MANAGERS = ['npm', 'pnpm'] as const;
 
@@ -134,6 +138,13 @@ describe('init --package-manager', () => {
     }
 
     expect(read(pnpm, 'Dockerfile').split(line)).toHaveLength(3);
+  });
+
+  it('pins in the pipelines of the kit the release of pnpm that init writes as packageManager', () => {
+    for (const file of ['.github/workflows/ci.yml', '.github/workflows/release.yml', '.gitlab-ci.yml']) {
+      expect(inRepository(file), file).toContain(`npm install --global ${PINNED_PACKAGE_MANAGERS.pnpm}`);
+      expect(inRepository(file), file).not.toContain('corepack');
+    }
   });
 
   it('tells pnpm that no dependency runs a build script unless allowed by name, as under npm: without it pnpm refuses to install', () => {
