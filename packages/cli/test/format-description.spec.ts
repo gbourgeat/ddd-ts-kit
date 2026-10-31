@@ -49,6 +49,12 @@ function described(overrides: Partial<ContextDescription> = {}): ContextDescript
 }
 
 describe('a context as describe prints it for a reader', () => {
+  it('names the lines of CONTEXT.md people write, above its generated Reference', () => {
+    expect(formatDescription(described({ docHead: 76 }))).toContain(
+      '  language: src/contexts/billing/CONTEXT.md:1-76 (1 term)',
+    );
+  });
+
   it('says what is not written and what it does not hold', () => {
     expect(formatDescription(described()).split('\n').slice(0, 6)).toEqual([
       'billing [core]',

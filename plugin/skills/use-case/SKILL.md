@@ -27,8 +27,8 @@ allowed-tools:
 
 Context: `$0`. Use case: `$ARGUMENTS`
 
-One use case, one context, one commit. Read `src/contexts/$0/CONTEXT.md` and the row of
-`docs/architecture/slices.md` when there is one; do not browse the tree
+One use case, one context, one commit. Read `src/contexts/$0/CONTEXT.md` above its `## Reference` and the row of
+`docs/architecture/slices.md` when there is one; never browse the tree
 (`npx ddd-ts-kit describe $0` says what exists: use cases, routes, events, ports).
 A single file is skill `ddd-ts-kit:scaffold`.
 

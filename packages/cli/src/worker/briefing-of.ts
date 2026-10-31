@@ -56,7 +56,7 @@ export function briefingOf(place: WorkerPlace): string {
     '',
     `Contracts you consume (read-only): ${contractsOf(place)}`,
     '',
-    `Read first, and only: ${directory}/CONTEXT.md, then`,
+    `Read first, and only: ${directory}/CONTEXT.md above its \`## Reference\`, then`,
     `\`npx ddd-ts-kit describe ${context}\`. Then the \`todos\` places each generator prints.`,
     '',
     ...stepLines(place),

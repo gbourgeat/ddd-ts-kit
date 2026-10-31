@@ -273,6 +273,7 @@ describe('worker-scope, on slices, an existing worktree and other places', () =>
 
     expect(briefing).toContain('`npx ddd-ts-kit describe shipping`. Then the `todos` places each generator prints.');
     expect(briefing).not.toContain('describe shipping --json');
+    expect(briefing).toContain('CONTEXT.md above its `## Reference`, then');
   });
 
   it('says what to do outside a git repository', () => {

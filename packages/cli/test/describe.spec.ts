@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, EXPLICIT_STACK, scaffoldEverything, tempDir } from './helpers';
 import { jsonAt } from './support/json-at';
@@ -157,6 +159,16 @@ describe.each(STYLES)('describe, in a %s project, beyond its use cases and event
     });
 
     expect(JSON.stringify(shipping)).not.toContain(root);
+  });
+
+  it('gives the last line of the CONTEXT.md people write, above its Reference', () => {
+    const context = cli(root, 'describe', 'billing', '--json').json();
+    const doc = fs.readFileSync(path.join(root, 'src/contexts/billing/CONTEXT.md'), 'utf8').split('\n');
+    const head = doc.findIndex((line) => line === '## Reference');
+
+    expect(head).toBeGreaterThan(0);
+    expect(context).toMatchObject({ docHead: head });
+    expect(cli(root, 'describe', 'billing').stdout).toContain(`CONTEXT.md:1-${head} (`);
   });
 
   it('prints the same facts as text', () => {
