@@ -31,7 +31,9 @@ paths:
 - Retry, timeout and cache go on the binding (`ownPolicy(retry(...), timeout(...))`) or, when the policy is part of what the adapter is, as decorators of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`). Kinds `external` and `gateway` get the default policy of the platform otherwise. `ownPolicy` is the helper of `{{alias.platform}}/resilience/own-policy{{alias.ext}}`, which `generate adapter` writes when the platform does not have it yet.
 {{/if}}
 - A repository only persists: no `pullEvents()`, no dispatcher (`domain-events/dispatched-on-save`). A removal that announces an event takes the aggregate, not its id.
+{{#if eventSourcing.on}}
 - The repository adapter of an event-sourced aggregate delegates to `EventSourcedRepository` of the kernel. Its stored events are declared in `persistence/<aggregate>-events.mapper.ts` with `defineStoredEvent` and a named type of their data; a change of that type is a new version with its upcaster, never an edit (`event-sourcing/upcaster-required`, against `stored-events.lock.json`, which `ddd-ts-kit docs --stored-events` writes once the shape of a version is final; `docs --check` fails while a version is unrecorded). Every named type the data reaches is declared in the codec file too.
+{{/if}}
 - Infrastructure faults are plain errors (a 5xx, reported from outside); business refusals are `DomainError`s raised by the domain.
 - Every adapter passes the contract suite of the fake of its port (`test/integration/*.contract.spec.ts`).
 - Method: `/ddd-ts-kit:persistence`. Create with `npx ddd-ts-kit generate repository|adapter|gateway|acl ... --json`.
