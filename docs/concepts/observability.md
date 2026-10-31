@@ -164,6 +164,12 @@ produce a duration histogram (`<name>_duration_ms`) and a total counter (`<name>
 Both add `outcome` (`success` or `failure`); the counter also carries `error_code` on a failure
 that has one.
 
+Gauges give a depth: the outbox relay sets `outbox_pending`, `outbox_failed` and
+`outbox_dead` from `store.stats()` after each tick, and the worker of the background jobs sets
+`jobs_waiting`, `jobs_running` and `jobs_dead` for each queue, labelled `queue`, at most once per
+poll. A generated project binds the port to `openTelemetryMetrics()` of the tracing package, and
+the series leave by OTLP with the spans when `OTEL_EXPORTER_OTLP_ENDPOINT` is set.
+
 The rule that matters most for metrics is cardinality: **a label value comes from a small
 closed set, never an identifier**. A label holding an appointment id creates one time series
 per appointment and takes the metrics backend down. Identifiers belong to logs and traces.

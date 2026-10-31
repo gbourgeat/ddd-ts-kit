@@ -9,7 +9,7 @@ composition root, and one user action reads as one trace.
 ```
 npm i @ddd-ts-kit/tracing @opentelemetry/api
 # for the Node bootstrap (@ddd-ts-kit/tracing/node)
-npm i @opentelemetry/sdk-node @opentelemetry/resources @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http
+npm i @opentelemetry/sdk-node @opentelemetry/resources @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http @opentelemetry/sdk-metrics @opentelemetry/exporter-metrics-otlp-http
 # for the test harness (@ddd-ts-kit/tracing/testing)
 npm i -D @opentelemetry/sdk-trace @opentelemetry/context-async-hooks
 ```
@@ -109,6 +109,35 @@ Auto-instrumentation patches `http` and the database drivers when they are loade
 first statement of the file: keep the call in its own module and import that module first (as
 above), or preload it with `node --import ./dist/platform/observability/tracing.js`. Packages published as ES
 modules also need the `@opentelemetry/instrumentation` loader hook.
+
+### Metrics
+
+`openTelemetryMetrics()` is the `Metrics` port of the kernel on the OpenTelemetry metrics API:
+`counter(name)` is a counter, `histogram(name)` a histogram, `gauge(name)` a synchronous gauge
+that keeps the last value set, each created once per name. The labels become the attributes of
+the measurement, an undefined label left out.
+
+```ts
+// platform/observability/create-metrics.ts
+import type { Metrics } from '@ddd-ts-kit/kernel';
+import { openTelemetryMetrics } from '@ddd-ts-kit/tracing';
+
+export function createMetrics(): Metrics {
+  return openTelemetryMetrics({ meterName: 'clinic-api' });
+}
+```
+
+It takes its meter from the global meter provider when it is called, so after `initTracing`:
+called before, it measures nothing. `initTracing` registers that provider with a periodic OTLP/HTTP
+reader when `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` or `OTEL_EXPORTER_OTLP_ENDPOINT` is set, the
+metrics leaving every `metricsExportIntervalMillis` (else `OTEL_METRIC_EXPORT_INTERVAL`, else
+60 seconds) and once more at `shutdown()`. With neither variable, it registers none and every
+instrument measures nothing, as the spans export nothing. `OTEL_METRICS_EXPORTER=none` registers
+no reader either, endpoint set or not: the metrics stay in the process and the spans still
+leave. Any other value than `otlp` (`prometheus`, `console`, a list) is read as `none`, without a
+word at start: the package serves no other exporter. Jaeger keeps traces, not metrics: the
+metrics go to a backend that takes OTLP metrics, an OpenTelemetry Collector in front of
+Prometheus for instance.
 
 ## What a trace looks like
 

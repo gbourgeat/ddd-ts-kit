@@ -75,7 +75,7 @@ describe('integration events', () => {
     const root = initProject();
 
     const relay =
-      'const relay = startOutboxRelay({\n  store: persistence.outbox,\n  publisher: application.eventBus,\n  intervalMs: config.outboxRelayIntervalMs,\n  logger: application.logger,\n});';
+      'const relay = startOutboxRelay({\n  store: persistence.outbox,\n  publisher: application.eventBus,\n  intervalMs: config.outboxRelayIntervalMs,\n  logger: application.logger,\n  metrics: application.metrics,\n});';
 
     expect(read(root, 'src/main.ts')).toContain(relay);
     expect(read(root, 'src/main.ts')).toContain('events: inProcessEvents(),');

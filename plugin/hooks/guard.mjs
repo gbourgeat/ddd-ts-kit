@@ -4521,14 +4521,16 @@ function runsCode(command) {
     (CODE_RUNNERS.has(name) ||
       CODE_RUNNERS.has(name.replace(/[\d.]+$/, '')) ||
       shell.SHELLS.has(name) ||
-      isProgramPath(command.words[0] ?? '')) &&
+      isProgramPath(command.words[0])) &&
     kitInvocations([command]).length === 0
   );
 }
 
-// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`).
+// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`). A command
+// with no word (a redirection alone) names none: read as text, its absent word is no path.
 function isProgramPath(word) {
-  return /^\.{0,2}\//.test(word) || word.includes('node_modules/.bin/');
+  const text = String(word);
+  return /^\.{0,2}\//.test(text) || text.includes('node_modules/.bin/');
 }
 
 // A plain `git commit`: no `-a`, no paths of its own, so that it records the index alone.

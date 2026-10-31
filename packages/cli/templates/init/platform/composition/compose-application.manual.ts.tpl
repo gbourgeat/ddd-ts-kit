@@ -146,6 +146,7 @@ export interface Application {
   /** Where another context, or a test, listens to what this application publishes. */
   readonly eventSubscriber: IntegrationEventSubscriber;
   readonly logger: Logger;
+  readonly metrics: Platform['metrics'];
   /** Runs a job at once, for a test: `jobs.runNow('<context>.<job>')`. */
   readonly jobs: JobScheduler;
 {{#if cache.rateLimit}}
@@ -234,6 +235,7 @@ export function composeApplication(
     eventSubscriber: platform.subscriber,
 {{/unless}}
     logger,
+    metrics,
     jobs: platform.jobs,
 {{#if cache.rateLimit}}
     rateLimiter: platform.rateLimiter,

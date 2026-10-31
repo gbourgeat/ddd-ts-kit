@@ -154,6 +154,18 @@ describe('the tracing configuration init writes', () => {
 
     expect(read(initProject(), '.env.example')).toContain('# TRACE_CONSUMERS=continue');
   });
+
+  it('says how to keep the metrics in the process while the spans still leave', () => {
+    const root = initProject();
+
+    expect(read(root, '.env.example')).toContain(
+      'This keeps the metrics in the process, the spans still leave:\n# OTEL_METRICS_EXPORTER=none\n',
+    );
+
+    expect(read(root, 'README.md')).toContain(
+      '| `OTEL_METRICS_EXPORTER` | `none` keeps the metrics in the process, the spans still leave;',
+    );
+  });
 });
 
 describe('a generated command handler', () => {

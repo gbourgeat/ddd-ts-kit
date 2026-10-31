@@ -9,4 +9,6 @@ export interface QueueState {
   /** The claim in progress and the launch of what it claimed, which `stop` waits for. */
   filling: Promise<void> | undefined;
   cancelSleep: (() => void) | undefined;
+  /** When its depth was last set as gauges, in milliseconds since the epoch. */
+  measuredAt: number;
 }
