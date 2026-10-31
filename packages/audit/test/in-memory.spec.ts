@@ -29,6 +29,12 @@ auditTrailContract(runner, {
   },
 });
 
+// A store of its own may give no way to cut its tail: the contract runs without it too.
+archivableAuditTrailContract(runner, {
+  name: 'InMemoryAuditTrail, given no way to cut its tail',
+  createTrail: () => new InMemoryAuditTrail(),
+});
+
 archivableAuditTrailContract(runner, {
   name: 'InMemoryAuditTrail',
   createTrail: () => {

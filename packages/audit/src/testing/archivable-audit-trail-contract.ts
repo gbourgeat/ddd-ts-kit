@@ -105,6 +105,7 @@ class ArchivableAuditTrailSuite extends ContractSuite<AuditTrailUnderContract & 
 
       const { cut } = this.options;
 
+      // A store that gives no way to cut its tail behind its back: the cut is not checked.
       if (cut === undefined) {
         return;
       }
