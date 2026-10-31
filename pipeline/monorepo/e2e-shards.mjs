@@ -35,17 +35,14 @@ export const ELSEWHERE = [
  * night: the first-minute sweeps fell from about 660 to 151 and 234 s, proven-stacks grew from 362 to
  * 469 s, and the coverage gate runs on one stack, counted 60 s), each file given, longest first, to
  * the runner with the most room. The fourth runner ended at 1,047 s against 330 s for the first; the
- * runners now end at 550, 546, 547, 550 seconds.
+ * runners ended at 550, 546, 547, 550 seconds; with a stack of each container of the kit, counted
+ * 30 s each, at 568, 566, 561, 559.
  */
 export const SHARDS = [
   {
     // With NestJS on Nest controllers and Passport.
     'proven-stacks.spec.ts': 530,
     'event-sourced.spec.ts': 38,
-    'violations.spec.ts': 20,
-    // Every route generator on Nest controllers, one project.
-    'nest-controllers.spec.ts': 14,
-    'client-sdk.spec.ts': 9,
   },
   {
     'preset-identity.spec.ts': 314,
@@ -54,6 +51,7 @@ export const SHARDS = [
     'zero-violation.spec.ts': 62,
     'preset-identity-generated.spec.ts': 42,
     'error-reporting.spec.ts': 24,
+    'violations.spec.ts': 20,
     'manual-module.spec.ts': 14,
     // A copy of the example application, merge-trunk run in two of its worktrees.
     'merge-trunk-example.spec.ts': 3,
@@ -66,6 +64,8 @@ export const SHARDS = [
     'coverage-gate.spec.ts': 60,
     'file-uploads.spec.ts': 34,
     // A repository that declares personal columns, with the erasure of its context, installed as published.
+    // Every route generator on Nest controllers, one project.
+    'nest-controllers.spec.ts': 14,
     'personal-fields.spec.ts': 13,
     'platform-error-mapper.spec.ts': 2,
   },
@@ -78,6 +78,7 @@ export const SHARDS = [
     'service-composition.spec.ts': 16,
     'error-rule-violations.spec.ts': 16,
     'dev-reload.spec.ts': 11,
+    'client-sdk.spec.ts': 9,
   },
 ];
 
