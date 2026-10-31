@@ -163,7 +163,12 @@ describe('a failed statement', () => {
     errors.report(new DatabaseError('invalid input syntax for type integer: "ada@example.org"'), report);
     await errors.flush(2_000);
 
-    expect(server.events.map((event) => event.exception?.values?.map(({ value }) => value))).toEqual([
+    // The transport sends the two events in no fixed order: the one with a cause has two exceptions, sort on that.
+    const chains = server.events
+      .map((event) => event.exception?.values?.map(({ value }) => value) ?? [])
+      .toSorted((one, other) => other.length - one.length);
+
+    expect(chains).toEqual([
       ['duplicate key value violates unique constraint "people_pkey"', QUOTED_FORMS[0]?.sent],
       ['invalid input syntax for type integer: "[redacted]"'],
     ]);
