@@ -10,8 +10,10 @@
  * `@opentelemetry/instrumentation` loader hook; CommonJS packages and Node built-ins
  * do not.
  */
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { defaultResource, type Resource, resourceFromAttributes } from '@opentelemetry/resources';
+import { type IMetricReader, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import {
   BatchSpanProcessor,
@@ -56,11 +58,21 @@ export interface InitTracingOptions {
   readonly allowedAttributes?: readonly string[];
   /** Run after the built-in scrubbing processors and before the exporter. */
   readonly extraSpanProcessors?: readonly SpanProcessor[];
+  /**
+   * How often the metrics leave, in milliseconds. Without it, the standard
+   * `OTEL_METRIC_EXPORT_INTERVAL` variable is honoured, and by default the SDK's 60 seconds.
+   * The metrics leave by OTLP/HTTP when `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` or
+   * `OTEL_EXPORTER_OTLP_ENDPOINT` is set; with none of them, nothing is exported and the
+   * instruments of `openTelemetryMetrics` measure nothing. `OTEL_METRICS_EXPORTER=none` keeps
+   * the metrics in the process while the spans still leave; a value other than `otlp` (a list
+   * included) is read as `none`, since no other exporter is served.
+   */
+  readonly metricsExportIntervalMillis?: number;
   readonly enabled?: boolean;
 }
 
 export interface TracingHandle {
-  /** Flushes pending spans. Call it on SIGTERM, before the process exits. */
+  /** Flushes pending spans and metrics. Call it on SIGTERM, before the process exits. */
   shutdown(): Promise<void>;
 }
 
@@ -73,6 +85,7 @@ export function initTracing(options: InitTracingOptions): TracingHandle {
     serviceName: options.serviceName,
     resource: resourceOf(options),
     spanProcessors: spanProcessorsOf(options),
+    metricReaders: metricReadersOf(options),
     instrumentations: options.instrumentations ?? [instrumentationsOf(options)],
     ...(options.sampleRatio === undefined
       ? {}
@@ -130,4 +143,37 @@ function exporterFor(options: InitTracingOptions): OTLPTraceExporter | undefined
 
   // The exporter reads the variables itself and appends `/v1/traces` where the spec says so.
   return fromEnvironment ? new OTLPTraceExporter() : undefined;
+}
+
+function metricReadersOf(options: InitTracingOptions): IMetricReader[] {
+  const fromEnvironment =
+    process.env['OTEL_EXPORTER_OTLP_METRICS_ENDPOINT'] ?? process.env['OTEL_EXPORTER_OTLP_ENDPOINT'];
+
+  if (!fromEnvironment || !exportsByOtlp()) {
+    // An empty list, not none: left out, the SDK would export to localhost by default.
+    return [];
+  }
+
+  const interval = options.metricsExportIntervalMillis ?? intervalFromEnvironment();
+
+  // The exporter reads the variables itself and appends `/v1/metrics` where the spec says so.
+  return [
+    new PeriodicExportingMetricReader({
+      exporter: new OTLPMetricExporter(),
+      ...(interval === undefined ? {} : { exportIntervalMillis: interval }),
+    }),
+  ];
+}
+
+function intervalFromEnvironment(): number | undefined {
+  const interval = Number(process.env['OTEL_METRIC_EXPORT_INTERVAL']);
+
+  return Number.isFinite(interval) && interval > 0 ? interval : undefined;
+}
+
+/** `OTEL_METRICS_EXPORTER` unset, empty or `otlp`; `none` and every value not served say no. */
+function exportsByOtlp(): boolean {
+  const exporter = (process.env['OTEL_METRICS_EXPORTER'] ?? '').trim().toLowerCase();
+
+  return exporter === '' || exporter === 'otlp';
 }

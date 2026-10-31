@@ -11,7 +11,11 @@ export interface QueueWorkerOptions {
   readonly scope: ExecutionScope;
   /** Default: writes nothing. */
   readonly logger?: Logger;
-  /** Default: measures nothing. */
+  /**
+   * Default: measures nothing. Given, it also receives the depth of each queue from
+   * `store.stats()`, as the gauges `jobs_waiting`, `jobs_running` and `jobs_dead` labelled with
+   * the `queue`, at most once per poll interval.
+   */
   readonly metrics?: Metrics;
   /** Default: the timers of the runtime. */
   readonly timers?: JobTimers;

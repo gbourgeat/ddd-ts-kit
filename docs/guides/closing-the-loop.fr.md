@@ -1,5 +1,5 @@
 [English](closing-the-loop.md) · **Français**
-<!-- translation-of: closing-the-loop.md sha256:88c0d5df978c75ca -->
+<!-- translation-of: closing-the-loop.md sha256:5e527ea629ba4b03 -->
 
 # Boucler la boucle : d'une métrique sortie de sa bande à la prochaine story
 
@@ -41,7 +41,7 @@ exportateur, lisez donc les noms là une fois avant d'écrire les requêtes.
 | Rupture | Ce que le kit émet | Requête (Prometheus) | Bande de départ |
 |---|---|---|---|
 | un cas d'usage échoue plus qu'avant | `use_case_total{message, kind, outcome, error_code}` depuis `metricsMiddleware` de `@ddd-ts-kit/aspects`, une série par classe de commande ou de requête | `sum by (message) (rate(use_case_total{outcome="failure"}[5m])) / sum by (message) (rate(use_case_total[5m]))` | le ratio par message contre sa ligne de base sur 30 jours ; un refus métier est un échec avec son `error_code`, si bien qu'un message qui refuse par conception (un créneau déjà pris) lit le ratio sans les codes que le métier attend |
-| le relais de l'outbox s'est arrêté | aucune jauge dans cette version : le relais ne fait que réclamer les enregistrements en attente ; le script lit la table `outbox` | `SELECT extract(epoch FROM now() - min(created_at)) FROM messaging.outbox WHERE status = 'pending'` (l'âge du plus ancien enregistrement en attente, en secondes ; `<schéma>.outbox` là où le projet l'a mise) | au-dessus de trois fois l'intervalle du relais, tenu sur deux relevés |
+| le relais de l'outbox s'est arrêté | `outbox_pending`, `outbox_failed` et `outbox_dead`, des jauges que le relais de `main.ts` pose depuis `store.stats()` après chaque passage ; aucune jauge ne donne l'âge du plus ancien enregistrement en attente, que le script lit dans la table `outbox` | `min_over_time(outbox_pending[15m]) > 0 or outbox_dead > 0` (un arriéré qui ne s'est jamais vidé, ou un enregistrement qui a épuisé ses tentatives) ; l'âge : `SELECT extract(epoch FROM now() - min(created_at)) FROM messaging.outbox WHERE status = 'pending'` (en secondes ; `<schéma>.outbox` là où le projet l'a mise) | un enregistrement mort tout de suite ; un âge au-dessus de trois fois l'intervalle du relais, tenu sur deux relevés |
 | un *job* a cessé de tourner | `scheduled_job_runs_total{job, context, status, error_code}` depuis `@ddd-ts-kit/scheduling`, `status="succeeded"` pour une exécution qui a tourné | `increase(scheduled_job_runs_total{job="notifications.send-reminders", status="succeeded"}[2h]) == 0 or absent(scheduled_job_runs_total{job="notifications.send-reminders", status="succeeded"})` (deux intervalles d'un *job* horaire) | aucun succès pendant deux intervalles, ce qui attrape toutes les façons dont un *job* s'arrête, là où une alerte sur les échecs ne le fait pas |
 
 `dependency_call_total{class, method, kind, context, outcome}` (l'aspect `timed`) et
@@ -149,8 +149,8 @@ diagnose, et rien de ce qu'il écrit dans le canal ne remplace le compte rendu d
   les écrit en une journée.
 - Pas de *runbook* : un retour arrière dépend de la plateforme cible ; le kit s'arrête à l'image.
 - Pas de répondeur de canal : l'identité, le canal et les outils sont ceux de la plateforme.
-- Pas de jauge pour l'âge du plus ancien enregistrement en attente de l'outbox dans cette
-  version : le script lit la table.
+- Pas de jauge pour l'âge du plus ancien enregistrement en attente de l'outbox : les jauges
+  donnent la profondeur, le script lit l'âge dans la table.
 - Aucune fusion décidée par un constat : le palier propose ouvre une *pull request* ou lance un
   *runbook* approuvé d'avance ; une personne accepte l'intention et un responsable du code
   approuve la correction.

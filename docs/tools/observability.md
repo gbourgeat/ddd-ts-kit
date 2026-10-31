@@ -12,7 +12,7 @@ generated project until you write the adapter.
 
 ## What the kit emits, and what you choose
 
-![The API process binds four things: traces leave over OTLP/HTTP through an optional collector to Jaeger or Grafana Tempo, log lines leave on the standard output for your log pipeline, error reports go to Sentry or GlitchTip, and metrics go nowhere until you write an adapter of the Metrics port](../assets/diagrams/observability-tools-signals.svg)
+![The API process binds four things: traces leave over OTLP/HTTP through an optional collector to Jaeger or Grafana Tempo, log lines leave on the standard output for your log pipeline, error reports go to Sentry or GlitchTip, and metrics leave over OTLP/HTTP from openTelemetryMetrics to a store that takes OTLP metrics](../assets/diagrams/observability-tools-signals.svg)
 
 Read the drawing from left to right. Each box on the left is an adapter the platform binds once,
 in `src/platform/`; no file of a bounded context knows any of them. Each box on the right is a
@@ -222,70 +222,33 @@ GlitchTip 6.2.6 behind the `errors` profile, for development.
 
 **Metrics**: the kernel defines the `Metrics` port (counters, histograms, gauges, with label
 values from a small closed set) and the aspects package records durations and outcomes through
-it. A generated project binds a `NoopMetrics` behind a `TODO(platform)`. A search of the
-repository finds no Prometheus or OpenTelemetry metrics exporter, and the tracing bootstrap
-turns off runtime and host metrics.
+it. `openTelemetryMetrics()` of `@ddd-ts-kit/tracing` is its adapter on the OpenTelemetry
+metrics API, and a generated project binds it in `create-metrics.ts`: `initTracing` registers
+the meter provider with an OTLP/HTTP reader when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, and the
+metrics leave with the spans. The tracing bootstrap turns off runtime and host metrics.
 
-What is measured, once an adapter is bound: `use_case_duration_ms` and `use_case_total` from
-`metricsMiddleware` on the buses (labels `message`, `kind` and `outcome`, plus `error_code` on
-the counter), `dependency_call_duration_ms` and `dependency_call_total` from the `timed` aspect
-on the adapters it wraps (the prefix is its `name` option), and `cache_errors_total` from
-`RedisCache`. An adapter of the port is three methods. This one sits on
-the OpenTelemetry metrics API; it compiles against the packages of the workspace, and was not
-run against a backend for this page:
+What is measured: `use_case_duration_ms` and `use_case_total` from `metricsMiddleware` on the
+buses (labels `message`, `kind` and `outcome`, plus `error_code` on the counter),
+`dependency_call_duration_ms` and `dependency_call_total` from the `timed` aspect on the
+adapters it wraps (the prefix is its `name` option), `cache_errors_total` from `RedisCache`,
+the gauges `outbox_pending`, `outbox_failed` and `outbox_dead` from an `OutboxRelay` given the
+metrics, and `jobs_waiting`, `jobs_running` and `jobs_dead` per `queue` from a `QueueWorker`
+given them. A project that Prometheus scrapes instead registers its own meter provider before
+the adapter takes its meter; this sample compiles against the packages of the workspace, and was
+not run against a backend for this page:
 
 <!-- checked sample -->
 ```ts
-import { Metrics, type Counter, type Gauge, type Histogram } from '@ddd-ts-kit/kernel';
-import type { Meter } from '@opentelemetry/api';
+import type { Metrics } from '@ddd-ts-kit/kernel';
+import { metrics as openTelemetry } from '@opentelemetry/api';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { MeterProvider } from '@opentelemetry/sdk-metrics';
-
-/** The Metrics port on OpenTelemetry instruments. Asking twice for a name answers the same series. */
-export class OpenTelemetryMetrics implements Metrics {
-  private readonly counters = new Map<string, Counter>();
-  private readonly histograms = new Map<string, Histogram>();
-  private readonly gauges = new Map<string, Gauge>();
-
-  constructor(private readonly meter: Meter) {}
-
-  counter(name: string): Counter {
-    return once(this.counters, name, () => {
-      const instrument = this.meter.createCounter(name);
-
-      return { increment: (labels, by = 1) => instrument.add(by, labels) };
-    });
-  }
-
-  histogram(name: string): Histogram {
-    return once(this.histograms, name, () => {
-      const instrument = this.meter.createHistogram(name);
-
-      return { record: (value, labels) => instrument.record(value, labels) };
-    });
-  }
-
-  gauge(name: string): Gauge {
-    return once(this.gauges, name, () => {
-      const instrument = this.meter.createGauge(name);
-
-      return { set: (value, labels) => instrument.record(value, labels) };
-    });
-  }
-}
-
-function once<T>(made: Map<string, T>, name: string, make: () => T): T {
-  const existing = made.get(name) ?? make();
-
-  made.set(name, existing);
-
-  return existing;
-}
+import { openTelemetryMetrics } from '@ddd-ts-kit/tracing';
 
 // src/platform/observability/create-metrics.ts: /metrics on port 9464, for Prometheus to scrape.
-const provider = new MeterProvider({ readers: [new PrometheusExporter({ port: 9464 })] });
+openTelemetry.setGlobalMeterProvider(new MeterProvider({ readers: [new PrometheusExporter({ port: 9464 })] }));
 
-export const metrics: Metrics = new OpenTelemetryMetrics(provider.getMeter('scheduling'));
+export const metrics: Metrics = openTelemetryMetrics({ meterName: 'scheduling' });
 ```
 
 Label values come from a small closed set (`MetricLabels` of the kernel): never an identifier,
@@ -306,9 +269,9 @@ assembles the same foundations in `create-platform.ts`) and `errors.ts` only wit
 ```ts
 import { StdoutLogger } from '@ddd-ts-kit/aspects';
 import { kernelModule } from '@ddd-ts-kit/di';
-import { AsyncLocalStorageExecutionScope, NoopMetrics } from '@ddd-ts-kit/kernel';
+import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { initSentry } from '@ddd-ts-kit/sentry';
-import { traceApplication, traceLogFields } from '@ddd-ts-kit/tracing';
+import { openTelemetryMetrics, traceApplication, traceLogFields } from '@ddd-ts-kit/tracing';
 
 declare const sentryDsn: string;
 
@@ -318,8 +281,8 @@ export const kernel = kernelModule({
   // One scope for the buses, the logger and the spans: the correlation id is the same in all three.
   executionScope,
   logger: new StdoutLogger({ fields: () => traceLogFields(executionScope) }),
-  // TODO(platform): an adapter of the port, such as the one above.
-  metrics: new NoopMetrics(),
+  // On the meter provider initTracing registered: exported by OTLP with the spans.
+  metrics: openTelemetryMetrics({ meterName: 'scheduling' }),
   // Buses and jobs report through it; app.stop() flushes it.
   errorReporter: initSentry({ dsn: sentryDsn }),
   // Spans around every use case, adapter, event, consumer and job.

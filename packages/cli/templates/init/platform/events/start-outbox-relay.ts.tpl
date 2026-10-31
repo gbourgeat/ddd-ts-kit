@@ -1,6 +1,6 @@
 import { OutboxRelay, type OutboxStore{{#if events.wakeable}}, type RelaySignal{{/if}} } from '@ddd-ts-kit/events';
 {{#if errors.none}}
-import { SystemClock, type IntegrationEventPublisher, type Logger } from '@ddd-ts-kit/kernel';
+import { SystemClock, type IntegrationEventPublisher, type Logger, type Metrics } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if errors.sentry}}
 import {
@@ -10,6 +10,7 @@ import {
   type ErrorReporter,
   type IntegrationEventPublisher,
   type Logger,
+  type Metrics,
 } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if broker.kafka}}
@@ -24,6 +25,8 @@ export interface OutboxRelayOptions {
   /** How many times a publication is tried before its record is declared dead; left out, the default of the relay. */
   readonly maxAttempts?: number;
   readonly logger: Logger;
+  /** Where the depth of the outbox goes after each tick (`outbox_pending`, `outbox_failed`, `outbox_dead`); left out (the tests), nowhere. */
+  readonly metrics?: Metrics;
 {{#if errors.sentry}}
   /** Where an event whose publication the relay declares dead is reported; left out (the tests), nowhere. */
   readonly errors?: ErrorReporter;
@@ -48,6 +51,7 @@ export function startOutboxRelay(options: OutboxRelayOptions): RunningRelay {
     publisher: options.publisher,
     clock: new SystemClock(),
     ...(options.maxAttempts === undefined ? {} : { maxAttempts: options.maxAttempts }),
+    ...(options.metrics === undefined ? {} : { metrics: options.metrics }),
 {{#if broker.kafka}}
     // The events of one aggregate leave in the order they were stored, under the key Kafka orders them by: it takes a single running relay.
     ordering: 'per-key',

@@ -191,6 +191,8 @@ MINIO_PORT=9000
 # Traces: start Jaeger with `docker compose --profile observability up -d jaeger`, then open http://127.0.0.1:16686
 # Without an endpoint no span leaves the process.
 # OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
+# The metrics leave with the spans, every OTEL_METRIC_EXPORT_INTERVAL milliseconds (60000 by default). This keeps the metrics in the process, the spans still leave:
+# OTEL_METRICS_EXPORTER=none
 # Share of the traces kept, 0 to 1, decided where a trace starts; left out, every trace is kept.
 # TRACE_SAMPLE_RATIO=1
 # continue: a consumed event stays in the trace of the request that published it. link: each delivery starts its own trace, linked to it.

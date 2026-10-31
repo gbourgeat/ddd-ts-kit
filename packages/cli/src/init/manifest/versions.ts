@@ -66,6 +66,8 @@ export const VERSIONS: Readonly<Record<string, string>> = {
   '@opentelemetry/sdk-node': '^0.300.0',
   '@opentelemetry/auto-instrumentations-node': '^0.82.0',
   '@opentelemetry/exporter-trace-otlp-http': '^0.300.0',
+  '@opentelemetry/exporter-metrics-otlp-http': '^0.300.0',
+  '@opentelemetry/sdk-metrics': '^3.0.0',
   '@opentelemetry/resources': '^3.0.0',
   '@opentelemetry/sdk-trace': '^3.0.0',
   '@opentelemetry/context-async-hooks': '^3.0.0',

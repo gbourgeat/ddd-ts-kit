@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:a3184460588f04af -->
+<!-- translation-of: observability.md sha256:d4f00bce802059cd -->
 
 # Observabilité : backends de traçage, *loggers* et suivi des erreurs
 
@@ -14,7 +14,7 @@ qui ne fait rien tant que vous n'écrivez pas l'adaptateur.
 
 ## Ce qu'émet le kit, et ce que vous choisissez
 
-![Le processus de l'API lie quatre choses : les traces partent en OTLP/HTTP, par un Collector facultatif, vers Jaeger ou Grafana Tempo, les lignes de journal partent sur la sortie standard vers votre pipeline de journaux, les rapports d'erreur vont à Sentry ou à GlitchTip, et les métriques ne vont nulle part tant que vous n'écrivez pas un adaptateur du port Metrics](../assets/diagrams/observability-tools-signals.fr.svg)
+![Le processus de l'API lie quatre choses : les traces partent en OTLP/HTTP, par un Collector facultatif, vers Jaeger ou Grafana Tempo, les lignes de journal partent sur la sortie standard vers votre pipeline de journaux, les rapports d'erreur vont à Sentry ou à GlitchTip, et les métriques partent en OTLP/HTTP depuis openTelemetryMetrics vers un stockage qui reçoit des métriques OTLP](../assets/diagrams/observability-tools-signals.fr.svg)
 
 Lisez le schéma de gauche à droite. Chaque boîte de gauche est un adaptateur que la plateforme lie
 une fois, dans `src/platform/` ; aucun fichier d'un contexte délimité (bounded context) n'en
@@ -232,71 +232,35 @@ actif. `init --errors sentry` génère le câblage (`src/platform/observability/
 
 **Métriques** : le noyau définit le port `Metrics` (compteurs, histogrammes, jauges, avec des
 valeurs d'étiquette tirées d'un petit ensemble fermé) et le *package* aspects enregistre des
-durées et des issues par lui. Un projet généré lie un `NoopMetrics` derrière un
-`TODO(platform)`. Une recherche dans le dépôt ne trouve aucun exportateur de métriques
-Prometheus ou OpenTelemetry, et l'amorçage du traçage désactive les métriques d'exécution et
-d'hôte.
+durées et des issues par lui. `openTelemetryMetrics()` de `@ddd-ts-kit/tracing` est son
+adaptateur sur l'API de métriques d'OpenTelemetry, et un projet généré le lie dans
+`create-metrics.ts` : `initTracing` enregistre le fournisseur de métriques avec un lecteur
+OTLP/HTTP quand `OTEL_EXPORTER_OTLP_ENDPOINT` est définie, et les métriques sortent avec les
+traces. L'amorçage du traçage désactive les métriques d'exécution et d'hôte.
 
-Ce qui est mesuré, une fois un adaptateur lié : `use_case_duration_ms` et `use_case_total` par
-`metricsMiddleware` sur les bus (étiquettes `message`, `kind` et `outcome`, plus `error_code` sur
-le compteur), `dependency_call_duration_ms` et `dependency_call_total` par l'aspect `timed` sur
-les adaptateurs qu'il enveloppe (le préfixe est son option `name`), et `cache_errors_total` par
-`RedisCache`. Un adaptateur du port tient en trois méthodes. Celui-ci repose sur l'API de
-métriques d'OpenTelemetry ; il compile contre les *packages* du *workspace*, et n'a pas été
-exécuté contre un backend pour cette page :
+Ce qui est mesuré : `use_case_duration_ms` et `use_case_total` par `metricsMiddleware` sur les
+bus (étiquettes `message`, `kind` et `outcome`, plus `error_code` sur le compteur),
+`dependency_call_duration_ms` et `dependency_call_total` par l'aspect `timed` sur les
+adaptateurs qu'il enveloppe (le préfixe est son option `name`), `cache_errors_total` par
+`RedisCache`, les jauges `outbox_pending`, `outbox_failed` et `outbox_dead` par un
+`OutboxRelay` qui reçoit les métriques, et `jobs_waiting`, `jobs_running` et `jobs_dead` par
+`queue` par un `QueueWorker` qui les reçoit. Un projet que Prometheus vient lire enregistre à la
+place son propre fournisseur de métriques avant que l'adaptateur prenne son *meter* ; cet
+exemple compile contre les *packages* du *workspace*, et n'a pas été exécuté contre un backend
+pour cette page :
 
 <!-- checked sample -->
 ```ts
-import { Metrics, type Counter, type Gauge, type Histogram } from '@ddd-ts-kit/kernel';
-import type { Meter } from '@opentelemetry/api';
+import type { Metrics } from '@ddd-ts-kit/kernel';
+import { metrics as openTelemetry } from '@opentelemetry/api';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { MeterProvider } from '@opentelemetry/sdk-metrics';
-
-/** Le port Metrics sur des instruments OpenTelemetry. Demander deux fois un nom renvoie la même série. */
-export class OpenTelemetryMetrics implements Metrics {
-  private readonly counters = new Map<string, Counter>();
-  private readonly histograms = new Map<string, Histogram>();
-  private readonly gauges = new Map<string, Gauge>();
-
-  constructor(private readonly meter: Meter) {}
-
-  counter(name: string): Counter {
-    return once(this.counters, name, () => {
-      const instrument = this.meter.createCounter(name);
-
-      return { increment: (labels, by = 1) => instrument.add(by, labels) };
-    });
-  }
-
-  histogram(name: string): Histogram {
-    return once(this.histograms, name, () => {
-      const instrument = this.meter.createHistogram(name);
-
-      return { record: (value, labels) => instrument.record(value, labels) };
-    });
-  }
-
-  gauge(name: string): Gauge {
-    return once(this.gauges, name, () => {
-      const instrument = this.meter.createGauge(name);
-
-      return { set: (value, labels) => instrument.record(value, labels) };
-    });
-  }
-}
-
-function once<T>(made: Map<string, T>, name: string, make: () => T): T {
-  const existing = made.get(name) ?? make();
-
-  made.set(name, existing);
-
-  return existing;
-}
+import { openTelemetryMetrics } from '@ddd-ts-kit/tracing';
 
 // src/platform/observability/create-metrics.ts : /metrics sur le port 9464, que Prometheus vient lire.
-const provider = new MeterProvider({ readers: [new PrometheusExporter({ port: 9464 })] });
+openTelemetry.setGlobalMeterProvider(new MeterProvider({ readers: [new PrometheusExporter({ port: 9464 })] }));
 
-export const metrics: Metrics = new OpenTelemetryMetrics(provider.getMeter('scheduling'));
+export const metrics: Metrics = openTelemetryMetrics({ meterName: 'scheduling' });
 ```
 
 Les valeurs d'étiquette viennent d'un petit ensemble fermé (`MetricLabels` du noyau) : jamais un
@@ -319,9 +283,9 @@ modifient `http` et les pilotes au moment où ils sont chargés.
 ```ts
 import { StdoutLogger } from '@ddd-ts-kit/aspects';
 import { kernelModule } from '@ddd-ts-kit/di';
-import { AsyncLocalStorageExecutionScope, NoopMetrics } from '@ddd-ts-kit/kernel';
+import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { initSentry } from '@ddd-ts-kit/sentry';
-import { traceApplication, traceLogFields } from '@ddd-ts-kit/tracing';
+import { openTelemetryMetrics, traceApplication, traceLogFields } from '@ddd-ts-kit/tracing';
 
 declare const sentryDsn: string;
 
@@ -331,8 +295,8 @@ export const kernel = kernelModule({
   // Une seule portée pour les bus, le logger et les spans : l'identifiant de corrélation est le même dans les trois.
   executionScope,
   logger: new StdoutLogger({ fields: () => traceLogFields(executionScope) }),
-  // TODO(platform): un adaptateur du port, comme celui ci-dessus.
-  metrics: new NoopMetrics(),
+  // Sur le fournisseur de métriques qu'initTracing a enregistré : exporté par OTLP avec les traces.
+  metrics: openTelemetryMetrics({ meterName: 'scheduling' }),
   // Les bus et les jobs signalent par lui ; app.stop() le vide.
   errorReporter: initSentry({ dsn: sentryDsn }),
   // Des spans autour de chaque cas d'usage, adaptateur, événement, consommateur et job.

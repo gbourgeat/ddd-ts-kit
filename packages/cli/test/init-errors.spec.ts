@@ -189,7 +189,10 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
       "    onFailure: (failure) => {\n      options.logger.error('outbox relay failure', { ...failure });\n      deadLetters.onFailure(failure);\n    },",
     );
 
-    expect(read(root, 'src/main.ts')).toContain('  logger: application.logger,\n  errors,\n});');
+    expect(read(root, 'src/main.ts')).toContain(
+      '  logger: application.logger,\n  metrics: application.metrics,\n  errors,\n});',
+    );
+
     expect(read(root, 'src/main.ts')).toContain('    events: createEventProvider(),\n    errors,\n');
     expect(platform(root, 'events/create-event-provider.ts')).not.toContain('DeadLetterReports');
     expect(exists(reported('--orm', 'none'), 'src/platform/events/start-outbox-relay.ts')).toBe(false);
@@ -324,7 +327,7 @@ describe('the other entry points of a project that reports', () => {
 
       expect(service.split('\n')[3]).toBe("import { errors } from '@/platform/observability/errors';");
       expect(service).toContain('    events: inProcessEvents(),\n    errors,\n');
-      expect(service).toContain('  logger: application.logger,\n  errors,\n});');
+      expect(service).toContain('  logger: application.logger,\n  metrics: application.metrics,\n  errors,\n});');
     },
   );
 

@@ -1,4 +1,5 @@
-import { trace } from '@opentelemetry/api';
+import { metrics, trace } from '@opentelemetry/api';
+import { MeterProvider } from '@opentelemetry/sdk-metrics';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -31,7 +32,9 @@ describe('initTracing', () => {
     await tracing.shutdown();
   });
 
-  it('starts an SDK with the tracker and the scrubbing processors installed', async () => {
+  it('starts an SDK with the tracker and the scrubbing processors installed, and no metric reader without an endpoint', async () => {
+    vi.stubEnv('OTEL_EXPORTER_OTLP_ENDPOINT', undefined);
+    vi.stubEnv('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT', undefined);
     const exporter = new InMemorySpanExporter();
     const processor = new SimpleSpanProcessor({ exporter });
 
@@ -45,6 +48,9 @@ describe('initTracing', () => {
     });
 
     configureTracing({ maxSpansPerName: 1 });
+
+    // No reader, no provider: the API keeps its own, whose instruments measure nothing.
+    expect(metrics.getMeterProvider()).not.toBeInstanceOf(MeterProvider);
 
     const gateway = traceDependency({ ping: async (): Promise<void> => {} }, { kind: 'gateway', className: 'Ping' });
 
@@ -80,6 +86,18 @@ describe('initTracing', () => {
       'service.version': '1.2.3',
       'deployment.environment.name': 'test',
     });
+  });
+});
+
+describe('initTracing, given an OTLP endpoint and OTEL_METRICS_EXPORTER', () => {
+  it.each(['none', 'prometheus', 'otlp,console'])('registers no metric reader for %s', async (exporter) => {
+    vi.stubEnv('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://127.0.0.1:1');
+    vi.stubEnv('OTEL_METRICS_EXPORTER', exporter);
+
+    const tracing = initTracing({ serviceName: 'billing', instrumentations: [] });
+
+    expect(metrics.getMeterProvider()).not.toBeInstanceOf(MeterProvider);
+    await tracing.shutdown();
   });
 });
 

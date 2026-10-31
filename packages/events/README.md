@@ -689,7 +689,14 @@ not guarantee.
 
 ### What to monitor on the outbox
 
-`store.stats()` gives `{ pending, failed, dead }`; expose them as gauges.
+`store.stats()` gives `{ pending, failed, dead }`. A relay given `metrics` (the kernel `Metrics`
+port) sets them after each tick as the gauges `outbox_pending`, `outbox_failed` and
+`outbox_dead`; the `startOutboxRelay` of a generated project passes the metrics of the
+application.
+
+```ts
+const relay = new OutboxRelay({ store, publisher: broker, clock, metrics });
+```
 
 | Signal | Meaning | Reaction |
 |---|---|---|

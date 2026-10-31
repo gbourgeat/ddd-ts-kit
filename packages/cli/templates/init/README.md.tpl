@@ -151,7 +151,8 @@ configuration, the storage, and `composeApplication` of `{{config.platformDir}}/
 | `LOG_FORMAT` | `json` (the default, everywhere) or `pretty` (a developer's terminal) |
 {{/unless}}
 | `LOG_SCRUB_MESSAGES` | `true` writes `[message removed]` for the message of every logged error that is not a `DomainError` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | where spans go; left out, none leaves the process. `docker compose --profile observability up -d jaeger`, then `http://127.0.0.1:4318`, and the traces are on `http://127.0.0.1:16686` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | where spans and metrics go; left out, none leaves the process. `docker compose --profile observability up -d jaeger`, then `http://127.0.0.1:4318`, and the traces are on `http://127.0.0.1:16686` (Jaeger keeps no metrics) |
+| `OTEL_METRICS_EXPORTER` | `none` keeps the metrics in the process, the spans still leave; left out or `otlp`, they leave with the spans, every `OTEL_METRIC_EXPORT_INTERVAL` milliseconds (60000 by default) |
 | `TRACE_SAMPLE_RATIO` | the share of traces kept, 0 to 1; left out, every trace |
 | `TRACE_CONSUMERS` | `continue` (the default): a consumed event stays in the trace of the request that published it; `link`: each delivery starts a trace linked to it |
 

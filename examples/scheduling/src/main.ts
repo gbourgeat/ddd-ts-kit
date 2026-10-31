@@ -52,6 +52,7 @@ const relay = startOutboxRelay({
   ),
   intervalMs: config.outboxRelayIntervalMs,
   logger: application.logger,
+  metrics: application.metrics,
   errors,
   wakeOn: redis.relaySignal,
 });
