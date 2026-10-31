@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:4464e56d3f5ed198 -->
+<!-- translation-of: CONTRIBUTING.md sha256:5480edec4edf46a1 -->
 
 # Contribuer
 
@@ -26,7 +26,9 @@ une règle. Cette page dit comment commencer, puis les règles que suit chaque c
    de la mesure dans [l'enregistrement de décision de la mesure](docs/adr/0001-lines-left-out-of-the-coverage-measure.fr.md),
    jamais déplacée sur une ligne déjà exécutée. Les *hooks* du plugin sont tenus à 100 % de leurs lignes, branches
    et fonctions (`npm run test:plugin`) : une branche qu'aucun test n'atteint le fait échouer, et
-   une branche qu'aucune entrée de *hook* ne peut atteindre est retirée.
+   une branche qu'aucune entrée de *hook* ne peut atteindre est retirée. Le tableau nomme le fichier,
+   pas la branche : `node pipeline/monorepo/uncovered-branches.mjs coverage/plugin.lcov` nomme chaque
+   branche que le passage n'a pas prise, depuis le lcov qu'il a écrit.
 4. **Ouvrir une pull request.** Son titre est un sujet de commit conventionnel ; son modèle
    demande ce qui change, pourquoi, et comment cela a été vérifié. Chaque pull request est relue
    par le mainteneur.

@@ -139,6 +139,9 @@ architecture:
   stage: test
   script:
     - npm run ci:arch
+  # The coverage table names the file under its floor, not the branch: the lcov the run wrote names it (#723).
+  after_script:
+    - node pipeline/monorepo/uncovered-branches.mjs coverage/plugin.lcov
 
 deadcode:
   extends: .built

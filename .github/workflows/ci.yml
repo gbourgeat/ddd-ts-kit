@@ -164,6 +164,10 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Rule fixtures (check --self), dependency graph, the guard and the affected selection
         run: npm run ci:arch
+      # The coverage table names the file under its floor, not the branch: the lcov the run wrote names it (#723).
+      - name: The branches of the plugin hooks no spec took
+        if: failure()
+        run: node pipeline/monorepo/uncovered-branches.mjs coverage/plugin.lcov
 
   unit:
     name: Unit tests (Node 24, coverage floors)
