@@ -24,7 +24,10 @@ export function organisationsAsAuditChains(scope: Scope, rendering: RenderContex
 
   const file = `${scope.config.platformDir}/audit/organisation-of-command.ts`;
 
-  scope.ws.create(file, renderTemplate('presets/identity/platform/organisation-of-command.ts.tpl', rendering));
+  // Written once: `init --force` rewires `create-audit.ts` and keeps what the team made of this file.
+  if (!scope.ws.exists(file)) {
+    scope.ws.create(file, renderTemplate('presets/identity/platform/organisation-of-command.ts.tpl', rendering));
+  }
 
   if (!current.includes(COMMANDS)) {
     scope.ws.note(
