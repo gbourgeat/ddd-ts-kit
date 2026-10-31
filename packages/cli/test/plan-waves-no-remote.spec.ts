@@ -22,7 +22,7 @@ function projectWithPlan(): string {
 }
 
 const briefOf = (root: string): unknown =>
-  jsonAt(cli(root, 'plan-waves', '--json').json(), 'waves', 0, 'batches', 0, 'brief');
+  jsonAt(cli(root, 'plan-waves', '--json').json(), 'waves', '0', 'batches', '0', 'brief');
 
 describe('plan-waves, the base of a brief', () => {
   it('names no base in a repository with no remote, and the refusal of worker-scope says what to pass', () => {
