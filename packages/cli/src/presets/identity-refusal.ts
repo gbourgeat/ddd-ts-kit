@@ -1,3 +1,4 @@
+import { isKitContainer } from '../config';
 import type { Config } from '../config';
 import type { PresetRefusal } from './preset-refusal';
 
@@ -28,10 +29,10 @@ const NEEDED: readonly {
 export function identityRefusal(config: Config): PresetRefusal | undefined {
   const { style, di } = config.stack;
 
-  if (style === 'explicit' && di === 'tsyringe') {
+  if (style === 'explicit' && isKitContainer(di)) {
     return {
-      message: 'The identity preset is not written for "stack.style": "explicit" with "stack.di": "tsyringe".',
-      fix: 'In the explicit style it is written for --di manual and --di nest, whose module file lists every binding; on tsyringe, keep --style declared, which init writes by default (docs/guides/bootstrap-with-well-designed-contexts.md says why).',
+      message: `The identity preset is not written for "stack.style": "explicit" with "stack.di": "${di}".`,
+      fix: 'In the explicit style it is written for --di manual and --di nest, whose module file lists every binding; on this container, keep --style declared, which init writes by default (docs/guides/bootstrap-with-well-designed-contexts.md says why).',
     };
   }
 

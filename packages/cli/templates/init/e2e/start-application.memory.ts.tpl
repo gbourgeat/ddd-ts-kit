@@ -13,18 +13,18 @@ import {
 {{#unless httpCache.varnish}}
 import type { IntegrationEvent, IntegrationEventSubscriber, JobScheduler } from '@ddd-ts-kit/kernel';
 {{/unless}}
-{{#if di.tsyringe}}
+{{#if di.container}}
 import { defineContextModule } from '@ddd-ts-kit/di';
 {{/if}}
 import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
 import { relationTuples } from '{{alias.platform}}/auth/relationships/relation-tuples{{alias.ext}}';
 {{/if}}
-{{#if di.tsyringe}}
+{{#if di.container}}
 import { composeApplication, everyContext } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 import type { ContextSelection } from '{{alias.platform}}/composition/context-selection{{alias.ext}}';
 {{/if}}
-{{#unless di.tsyringe}}
+{{#unless di.container}}
 import { composeApplication, everyContext } from '{{alias.platform}}/composition/compose-application{{alias.ext}}';
 {{/unless}}
 {{#if broker.provided}}
@@ -258,7 +258,7 @@ function eventsOf(config: AppConfig): EventProvider {
  * (an identity provider, a payment service) is answered by its fake of `test/fakes/` here, where
  * the preset or the person who adds it binds it, so that its handlers settle instead of retrying.
  */
-{{#if di.tsyringe}}
+{{#if di.container}}
 function contextsOfTheRun(): ContextSelection {
   const fakes = defineContextModule({
     name: 'end-to-end-fakes',
@@ -271,7 +271,7 @@ function contextsOfTheRun(): ContextSelection {
   return { ...everyContext, modules: [...everyContext.modules, fakes] };
 }
 {{/if}}
-{{#unless di.tsyringe}}
+{{#unless di.container}}
 function contextsOfTheRun(): typeof everyContext {
   return everyContext.map((module): (typeof everyContext)[number] => {
     // ddd-ts-kit:e2e-fakes

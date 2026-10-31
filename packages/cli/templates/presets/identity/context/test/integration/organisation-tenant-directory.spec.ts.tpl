@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from '{{tests.module}}';
-{{#if di.tsyringe}}
+{{#if di.container}}
 import { contextModule, kernelModule } from '@ddd-ts-kit/di';
-import { createApplication } from '@ddd-ts-kit/di/tsyringe';
+import { createApplication } from '{{di.entry}}';
 {{/if}}
-{{#if di.tsyringe}}
+{{#if di.container}}
 import {
   FixedClock,
   FixedExecutionScope,
@@ -14,10 +14,10 @@ import {
   type ScheduledJob,
 } from '@ddd-ts-kit/kernel';
 {{/if}}
-{{#unless di.tsyringe}}
+{{#unless di.container}}
 import { FixedClock, FixedExecutionScope, executionContext, type Actor } from '@ddd-ts-kit/kernel';
 {{/unless}}
-{{#if di.tsyringe}}
+{{#if di.container}}
 import { Scheduled } from '@ddd-ts-kit/kernel/declarations';
 {{/if}}
 import { {{preset.adapter.pascal}}OrganisationRepository } from '{{alias.context}}/infrastructure/persistence/{{preset.adapter.kebab}}-organisation.repository{{alias.ext}}';
@@ -68,7 +68,7 @@ describe('{{preset.adapter.pascal}}OrganisationTenantDirectory', () => {
     await organisations.save(anOrganisation().identifiedBy('globex').build());
     expect(await directory.tenants()).toEqual(['acme', 'globex']);
   });
-{{#if di.tsyringe}}
+{{#if di.container}}
 
   it('gives an organisation opened after the boot its run of a per-tenant job', async () => {
     const { organisations, directory } = arrange();

@@ -44,6 +44,8 @@ export const GENERATED_FAMILIES: readonly GeneratedFamily[] = [
     family: 'container',
     members: {
       tsyringe: { di: 'tsyringe', http: 'express' },
+      inversify: { di: 'inversify', http: 'express' },
+      awilix: { di: 'awilix', http: 'express' },
       manual: { di: 'manual', http: 'express' },
       nest: { di: 'nest', http: 'nest' },
     },

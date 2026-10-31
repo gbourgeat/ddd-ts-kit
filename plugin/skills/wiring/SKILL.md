@@ -53,7 +53,7 @@ first:
   one adapter, so the simulated one and the remote one take turns; nothing picks one per
   environment.
 
-## Declared style (default with tsyringe)
+## Declared style (default on the containers of the kit)
 
 A class says what it is on its own file, and that is its registration. There is no
 `<context>.module.ts`.

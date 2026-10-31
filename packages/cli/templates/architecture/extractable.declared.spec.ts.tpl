@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll } from '@ddd-ts-kit/auth/testing';
 import { type ContextModule } from '@ddd-ts-kit/di';
-import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
+import { createTestApplication } from '{{di.entry}}';
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports

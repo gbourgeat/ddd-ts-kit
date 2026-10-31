@@ -48,7 +48,7 @@ function housekeepingFiles(config: Config): InitFile[] {
   return [
     platformFile(config, 'jobs/housekeeping.ts'),
     platformFile(config, 'jobs/days-before.ts'),
-    ...when(family === 'tsyringe', [platformFile(config, 'jobs/housekeeping.module.ts', family)]),
+    ...when(family === 'container', [platformFile(config, 'jobs/housekeeping.module.ts', family)]),
   ];
 }
 
@@ -65,7 +65,7 @@ function fileStorageFiles(config: Config): InitFile[] {
   return [
     file('config/read-files.ts', storage),
     file('files/open-files.ts', storage),
-    ...(family === 'tsyringe'
+    ...(family === 'container'
       ? [
           file('files/bind-files.ts', family),
           file('files/files.module.ts', family),

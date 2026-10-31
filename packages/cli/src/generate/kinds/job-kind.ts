@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../config';
 import { CliError } from '../../cli-error';
 import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
@@ -107,7 +108,7 @@ function writeJob(scope: Scope, name: Name, context: RenderContext): void {
   emit(scope, context, [
     ['job/job.ts.tpl', `application/scheduling/${name.kebab}.job.ts`],
     [
-      `job/job.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`,
+      `job/job.spec.${onKitContainer(scope.config) ? 'container' : 'buses'}.ts.tpl`,
       `test/unit/${name.kebab}.job.spec.ts`,
     ],
   ]);

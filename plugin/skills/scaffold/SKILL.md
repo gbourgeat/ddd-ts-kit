@@ -54,7 +54,7 @@ skill `ddd-ts-kit:use-case`; events between contexts, skill `ddd-ts-kit:integrat
 
 ## What the generator settles for you
 
-- **Registration.** In the declared style (the default with tsyringe) the class carries its
+- **Registration.** In the declared style (the default on the containers of the kit) the class carries its
   decorator, and the declarations of its layer (`application/application.declarations.ts`)
   and `<context>.declarations.ts`, which re-exports them, are rewritten; never edit them.
   In the explicit style the binding is added between the markers of `<context>.module.ts`.

@@ -1,7 +1,8 @@
+import { onKitContainer } from '../config';
 import type { Config } from '../config';
 import { isDeclared } from './is-declared';
 
-export type WiringFamily = 'declared' | 'tsyringe' | 'manual';
+export type WiringFamily = 'declared' | 'container' | 'manual';
 
 /**
  * How the contexts of the project are wired: by their declarations, by a module file of
@@ -13,5 +14,5 @@ export function wiringFamily(config: Config): WiringFamily {
     return 'declared';
   }
 
-  return config.stack.di === 'tsyringe' ? 'tsyringe' : 'manual';
+  return onKitContainer(config) ? 'container' : 'manual';
 }
