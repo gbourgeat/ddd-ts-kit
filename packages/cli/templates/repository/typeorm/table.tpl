@@ -14,7 +14,7 @@ export const {{aggregate.tableCamel}} = new EntitySchema<{{aggregate.pascal}}Row
 {{#if personal.any}}
 {{personal.typeormTable}}
 {{/if}}
-    // TODO(domain): add one column per field of {{aggregate.pascal}}State (and to {{aggregate.pascal}}Columns of {{aggregate.kebab}}-row.schema.ts), with the type and the constraints the storage must enforce; then run `npm run build && npm run db:generate migrations/<what-it-does>`.
+    // TODO(domain): add one column per field of {{aggregate.pascal}}State (and to {{aggregate.pascal}}Columns of {{aggregate.kebab}}-row.schema.ts), with the type and the constraints the storage must enforce; then run `npm run build && npm run db:generate migrations/<what-it-does>`. A jsonb field is typed with a named interface or `object`, never `Record<string, unknown>`, which the insert and the update of TypeORM refuse to compile.
     version: { type: 'int' },
     ...tenantColumn(),
     ...auditColumns(),
@@ -32,7 +32,7 @@ export const {{aggregate.tableCamel}} = new EntitySchema<{{aggregate.pascal}}Row
 {{#if personal.any}}
 {{personal.typeormTable}}
 {{/if}}
-    // TODO(domain): add one column per field of {{aggregate.pascal}}State (and to {{aggregate.pascal}}Columns of {{aggregate.kebab}}-row.schema.ts), with the type and the constraints the storage must enforce; then run `npm run build && npm run db:generate migrations/<what-it-does>`.
+    // TODO(domain): add one column per field of {{aggregate.pascal}}State (and to {{aggregate.pascal}}Columns of {{aggregate.kebab}}-row.schema.ts), with the type and the constraints the storage must enforce; then run `npm run build && npm run db:generate migrations/<what-it-does>`. A jsonb field is typed with a named interface or `object`, never `Record<string, unknown>`, which the insert and the update of TypeORM refuse to compile.
     version: { type: 'int' },
     ...auditColumns(),
   },
