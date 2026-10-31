@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../config';
 import { CliError } from '../../cli-error';
 import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
@@ -201,7 +202,7 @@ function registerSimulated(scope: Scope, context: RenderContext, port: string): 
 
   if (isBound(scope, port)) {
     scope.ws.note(`${port} is already bound in ${module}: bind Simulated${port} in its place, with .as('external').`);
-  } else if (scope.config.stack.di === 'tsyringe') {
+  } else if (onKitContainer(scope.config)) {
     wire(scope, 'adapter/simulated', context);
   } else {
     scope.ws.note(
@@ -235,7 +236,7 @@ function register(scope: Scope, context: RenderContext, { port, kind, decorated 
     scope.ws.note(
       `${port} is already bound in ${module}: bind Remote${port} in its place when the outside system is ready, with .as('${kind}').`,
     );
-  } else if (scope.config.stack.di === 'tsyringe') {
+  } else if (onKitContainer(scope.config)) {
     wire(scope, 'adapter', context);
     writeOwnPolicy(scope, context);
   } else {

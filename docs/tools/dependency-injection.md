@@ -1,17 +1,16 @@
 **English** · [Français](dependency-injection.fr.md)
 
-# Dependency injection: tsyringe with declarations, NestJS, manual wiring
+# Dependency injection: the containers of the kit, NestJS, manual wiring
 
 **Summary.** Clean Architecture needs one thing from dependency injection: a single place, the
 composition root, where adapters are bound to ports. This kit offers three ways to write that
-place. With tsyringe and `@ddd-ts-kit/di`, classes declare what they are and the context is
-assembled from the declarations, with wiring errors found before anything is instantiated.
-With NestJS, the framework's container does the job and contexts are wired explicitly. With
+place. With `@ddd-ts-kit/di`, on tsyringe, InversifyJS or Awilix, classes declare what they are
+and the context is assembled from the declarations, with wiring errors found before anything is
+instantiated. With NestJS, the framework's container does the job and contexts are wired explicitly. With
 manual wiring, a function builds the objects by hand. All three keep `domain/` and
 `application/` free of any container; they differ in how much is checked for you and in how
-much the kit can generate. InversifyJS and Awilix, which the kit does not wire for you, are
-compared with these three below, with measures, and the page says what to do when a team insists
-on one technology.
+much the kit can generate. The containers are compared below, with measures, and the page says
+what to do when a team insists on one technology.
 
 ## What is being decided
 
@@ -119,7 +118,7 @@ choice of the adapter stays in the composition root.
 
 The three styles bind the same classes. Only the place where the binding is written changes.
 
-**Declared (tsyringe and `@ddd-ts-kit/di`).** Each class carries its declaration; the context is
+**Declared (`@ddd-ts-kit/di`).** Each class carries its declaration; the context is
 assembled from the classes themselves. `ddd-ts-kit docs` writes, in the generated file of the
 context, the list each constructor receives, and `contextModule` turns the declarations into
 bindings:
@@ -184,7 +183,7 @@ classes: `contextModule('appointments', appointments)` after
 only re-exports the generated declarations of each layer of the context, where the
 `injected` statements are, one file per layer (`application/application.declarations.ts`).
 
-**Explicit (tsyringe and `@ddd-ts-kit/di`).** Every binding is a statement of
+**Explicit (`@ddd-ts-kit/di`).** Every binding is a statement of
 `<context>.module.ts`, with the list of what each constructor takes. No decorator is needed:
 
 <!-- checked sample -->
@@ -374,7 +373,7 @@ fakes, `npx ddd-ts-kit generate test-world <context>` writes that arrangement on
 
 ## Comparison
 
-| | tsyringe + `@ddd-ts-kit/di` | NestJS container | Manual wiring |
+| | `@ddd-ts-kit/di` | NestJS container | Manual wiring |
 |---|---|---|---|
 | Who assembles a context | the kit, from declarations (generated barrel or discovery) or from an explicit module | as generated, the same `<context>Module(platform)` function as manual wiring; Nest providers by factory when you bind in Nest modules yourself | a `<context>Module(platform)` function in `<context>.module.ts`: plain calls to constructors, registrations between markers |
 | Style available (`stack.style`) | `declared` or `explicit`, mixable | `explicit` only | `explicit` only |
@@ -385,7 +384,7 @@ fakes, `npx ddd-ts-kit generate test-world <context>` writes that arrangement on
 | Errors found before start | duplicate binding, unbound dependency, cycle, duplicate handler, consumer or job, undeclared authorization, and more (`WiringError` with a code) | Nest's own resolution errors at bootstrap | the compiler, for constructors; nothing for a forgotten handler |
 | Cross-cutting hook | `instrumentation` of `kernelModule` (tracing, from outside), `around(kinds, ...)` in a module for every binding of a kind, `.with(...)` or the `aspects` of a declaration for one binding | call the wrappers in the provider factory | call the wrappers by hand |
 | Test application | `createTestApplication` with `fake(Port, instance)` | Nest testing module, or `createTestBuses` | `createTestBuses` |
-| Extra runtime dependencies | `tsyringe`, `reflect-metadata` | the Nest packages | none |
+| Extra runtime dependencies | `tsyringe` and `reflect-metadata`, `inversify` and `reflect-metadata`, or `awilix` | the Nest packages | none |
 
 ## The underlying libraries, checked on 2026-10-31
 
@@ -400,25 +399,34 @@ fakes, `npx ddd-ts-kit generate test-world <context>` writes that arrangement on
   never reflected, no tsyringe decorator appears in your code, and `reflect-metadata` is
   imported by the package only because tsyringe demands it. The surface exposed to tsyringe's
   future is therefore small, and the wiring checks are the kit's own. It is still a dependency
-  on a quiet project: a team for which that is unacceptable has the two other options, at the
-  cost stated below.
+  on a quiet project: a team for which that is unacceptable has `--di inversify` or
+  `--di awilix`, which change the registry and nothing else.
 - **NestJS** (MIT): `@nestjs/core` 12.3.2, published 2026-10-27, about 23 million downloads a
   week, Node 20 or later, actively released.
 - **InversifyJS** (MIT): `inversify` 8.2.3, published 2026-07-23, about 3.7 million downloads a
   week, commits in October 2026 (`inversify/monorepo`), 11 open issues.
 - **Awilix** (MIT): `awilix` 13.0.5, published 2026-06-15, about 830,000 downloads a week, Node 20
   or later, commits in October 2026, 7 open issues.
-- **What the kit does with these two**: nothing. Neither has an adapter here; using one means
-  `stack.di: manual` semantics from the kit's point of view, as the next section details.
+- **What the kit does with these two**: the same as with tsyringe. `--di inversify` and
+  `--di awilix` put one of them under `@ddd-ts-kit/di`, as a registry. The suite of the package
+  runs on all three.
 
 ## Five ways to wire, compared and measured
 
-This section sets the three options above against the two other containers a TypeScript team is
-most likely to ask for. InversifyJS and Awilix are not values of `stack.di`: the CLI generates
-nothing for them, and a project that wants one runs on `--di manual`
-([Using InversifyJS or Awilix anyway](#using-inversifyjs-or-awilix-anyway)). What follows says
-what that choice gives and what it costs. Everything marked as measured was compiled and run on
-2026-10-31.
+InversifyJS and Awilix are the two containers a TypeScript team is most likely to ask for beside
+tsyringe, and each can be used in two ways that should not be confused:
+
+- **Under the kit, `--di inversify` or `--di awilix`.** `@ddd-ts-kit/di` keeps its declarations,
+  its generators and its checks, and only the registry underneath changes. The code of the
+  project is the code of a project on tsyringe: `createApplication` comes from another entry point,
+  and nobody writes `bind()` or `register()`. The gain is to stop depending on tsyringe.
+- **By hand, on `--di manual`.** The team writes the API of the container in its module files, and
+  gives up what the kit generates and checks
+  ([Writing their API by hand](#writing-the-api-of-inversifyjs-or-awilix-by-hand)).
+
+What follows says what each gives and what it costs. Everything marked as measured was compiled
+and run on 2026-10-31. Unless a column says "under the kit", InversifyJS and Awilix are used by
+hand, because that is where they differ: under the kit they behave as tsyringe does.
 
 ### Why these two
 
@@ -474,9 +482,9 @@ container.register({ bookAppointmentHandler: asClass(BookAppointmentHandler).sin
 
 ### The grid
 
-| | `@ddd-ts-kit/di` on tsyringe | NestJS | Manual | InversifyJS | Awilix |
+| | `@ddd-ts-kit/di`, on tsyringe, InversifyJS or Awilix | NestJS | Manual | InversifyJS by hand | Awilix by hand |
 |---|---|---|---|---|---|
-| A value of `stack.di` | yes, the default | yes, with `--http nest` only | yes | no: on `--di manual` | no: on `--di manual` |
+| The flag | `--di tsyringe`, the default, `--di inversify`, `--di awilix` | `--di nest`, with `--http nest` only | `--di manual` | `--di manual` | `--di manual` |
 | What the generators write | every binding, declared or explicit | the hand-wired family: `new` in the module file | `new` in the module file | `new` beside your container, to move by hand | `new` beside your container, to move by hand |
 | Token | the port class | the port class | none: a variable | the port class | a string, the key of the cradle |
 | How a dependency is named | a list, generated or written, held to the constructor by the compiler | `inject`, a list nothing holds to the factory | the arguments of `new` | a list held to the function by the compiler; or `@inject` | a key of the cradle; or the name of the parameter in classic mode |
@@ -488,7 +496,7 @@ container.register({ bookAppointmentHandler: asClass(BookAppointmentHandler).sin
 | Object per request | singleton or transient; the actor, the tenant and the correlation id go through `ExecutionScope` | `Scope.REQUEST` | by hand | `inRequestScope`: per call to `get`, not per HTTP request | `createScope` and `.scoped()`: its strongest point |
 | Closing a resource | `onStop` of a module | `onModuleDestroy` | by hand | `onDeactivation`, run by `unbindAll` | `.disposer()`, run by `dispose` |
 | Minified bundle | yes, with the barrel; never with discovery | yes, its optional packages left external | yes | yes | yes with functions; classic fails (below) |
-| Project health, 2026-10-31 | low activity (tsyringe) | active | no dependency | active | active |
+| Project health, 2026-10-31 | low activity for tsyringe, active for the two others | active | no dependency | active | active |
 
 ### When a wiring mistake is found
 
@@ -498,7 +506,7 @@ and run; a seventh case without a mistake passed everywhere. The earlier the bet
 then **start** (before anything is served), **first resolve**, **first call** (the handler runs
 and breaks), and **never** (nothing says anything).
 
-| Mistake | `@ddd-ts-kit/di` | NestJS, factories | Manual | InversifyJS, lists | InversifyJS, decorators | Awilix, functions | Awilix, classic |
+| Mistake | `@ddd-ts-kit/di`, on any of the three | NestJS, factories | Manual | InversifyJS by hand, lists | InversifyJS by hand, decorators | Awilix by hand, functions | Awilix by hand, classic |
 |---|---|---|---|---|---|---|---|
 | A port bound to nothing | start | start | compile | first resolve | first resolve | first resolve | first resolve |
 | Two dependencies swapped | compile | first call | compile | compile | first call | compile | cannot happen: by name |
@@ -512,7 +520,8 @@ Three readings:
 - **Manual wiring is the strictest column.** It finds all six at compile time, because a variable
   must exist before it is passed. What it gives up lies elsewhere: a handler never registered,
   and a wrapper forgotten around an adapter, which no compiler sees.
-- **InversifyJS with lists is the strictest of the two containers,** and its decorators give part
+- **The kit's column is the same on the three containers,** since these checks are its own.
+- **By hand, InversifyJS with lists is the stricter of the two,** and its decorators give part
   of that up: an `@inject` that names the wrong port compiles. Its errors name what is wrong
   (`Ambiguous bindings found for service`, `Circular dependency found: A -> B -> A`).
 - **Awilix does not tie `register` to the type of the container**: `createContainer<Cradle>()`
@@ -534,6 +543,15 @@ the recipe below does so.
 | Awilix, functions | 102 ms | 109 ms | 36 ms | 123 / 32 KiB | 10.1 MiB | 78 MiB | 55 ns | 211 ns |
 | Awilix, classic | 101 ms | 108 ms | fails | 118 / 32 KiB | 10.0 MiB | 77 MiB | 58 ns | 215 ns |
 | NestJS, factories | 202 ms | 218 ms | 80 ms | 425 / 109 KiB | 17.3 MiB | 104 MiB | 58 ns | 5,447 ns |
+
+The same application under the kit, one container per row, taken in a series of its own on the
+same day (manual wiring starts in 84 ms there, 3 ms under the first series):
+
+| `@ddd-ts-kit/di` on | Start, 91 bindings | Start, 346 bindings | Start, minified bundle | Bundle, minified / gzip | Heap | Resident memory | Resolve a singleton | Build three transient classes |
+|---|---|---|---|---|---|---|---|---|
+| tsyringe | 120 ms | 130 ms | 37 ms | 146 / 40 KiB | 10.5 MiB | 85 MiB | 235 ns | 1,415 ns |
+| InversifyJS | 149 ms | 161 ms | 42 ms | 204 / 51 KiB | 12.3 MiB | 84 MiB | 198 ns | 1,289 ns |
+| Awilix | 128 ms | 137 ms | 43 ms | 211 / 61 KiB | 11.2 MiB | 86 MiB | 179 ns | 1,190 ns |
 
 | What is installed | Packages | On disk |
 |---|---|---|
@@ -567,8 +585,12 @@ What to take from it:
 - **Speed decides nothing.** The gap between the fastest and the slowest singleton is 0.2
   microseconds per message, against a millisecond for a query. The kit is the slowest here because
   each resolve checks the binding and watches for a cycle.
-- **InversifyJS starts in the time of the kit, without its checks.** Awilix starts 23 ms sooner.
-  In a minified bundle, where the loading of files is gone, the three are level at 35 to 36 ms.
+- **By hand, InversifyJS starts in the time of the kit, without its checks.** Awilix starts 23 ms
+  sooner. In a minified bundle, where the loading of files is gone, the three are level at 35 to
+  36 ms.
+- **Under the kit, the choice costs milliseconds at start and nothing after.** Awilix adds 8 ms to
+  tsyringe and InversifyJS 29 ms; both resolve a little faster than tsyringe. Between the two,
+  Awilix starts sooner, takes a quarter of the disk and needs no `reflect-metadata`.
 - **NestJS is the only one with a cost to plan for**: 77 ms more than the kit at each start, 44 ms
   more in a minified bundle, about 7 MiB more heap and three times the bundle. It is the price of
   a framework that is there for other reasons, and it matters on a function started per request.
@@ -578,14 +600,16 @@ What to take from it:
 - **`@inject()` needs the legacy mode.** Under standard decorators `tsc` refuses it (`TS1206`) and
   `tsx` fails to run it; `@injectable()` alone works in both modes. In legacy mode it ran under
   `tsc`, `tsx` and swc, with no `emitDecoratorMetadata`. InversifyJS imports `reflect-metadata`
-  itself.
+  itself. None of this concerns `--di inversify`: the kit never uses its decorators.
+- **Under the kit, InversifyJS refuses a promise bound to a port**, at its first resolution: its
+  `get` is synchronous. tsyringe and Awilix hand it over. Bind what the promise gave.
 
 ## Selection criteria
 
 1. **Do you want the declared style?** One decorator per class, no module file, no
    dependency list: a generated barrel, which also registers what each constructor takes, kept
-   current by the generator (`declarations/barrel-current`). Only tsyringe gives
-   it, and it is its default: the CLI refuses `--style declared` with `--di manual` and
+   current by the generator (`declarations/barrel-current`). Only `@ddd-ts-kit/di`
+   gives it, on any of its three containers, and it is their default: the CLI refuses `--style declared` with `--di manual` and
    `--di nest`, which default to `explicit`. `--di nest` goes with `--http nest` and the
    reverse.
 2. **Is NestJS already the framework?** Then its container is there anyway
@@ -622,10 +646,11 @@ From [`packages/di/README.md`](../../packages/di/README.md),
   `discovery`, with or without a broker. `--assembly` is refused with `--style explicit`.
 - **Proven end to end by the CLI** (`proven-stacks.spec.ts`, as its README lists them):
   generated projects in the declared style (the default stack; with ReBAC and RabbitMQ; with
-  knex and discovery, alone and behind NATS), in the explicit style on tsyringe (the default
-  stack; with ReBAC and RabbitMQ), and with `--di manual` (with ABAC and knex; with Fastify,
-  knex, RabbitMQ and Redis). No generated NestJS project appears in that list: NestJS stacks
-  are generated and held to `check` and to the type check, not installed and run.
+  knex and discovery, alone and behind NATS), in the explicit style (the default stack; with ReBAC
+  and RabbitMQ), on InversifyJS and on Awilix (the default stack at each pull request; the
+  explicit style, ReBAC and RabbitMQ, knex and discovery, Prisma, TypeORM and the identity preset
+  at night and before a release), with `--di manual` (with ABAC and knex; with Fastify, knex, RabbitMQ and Redis), and one NestJS
+  stack (its controllers, class-validator, Passport).
 - **Test application** with fixed clock, sequential identifiers, in-memory buses and fakes
   bound under the port class.
 
@@ -668,7 +693,7 @@ alone: constructing the objects by hand is the composition root.
 
 ## Recommendation by situation
 
-![A decision tree: NestJS already the framework leads to its container; a policy against low-activity dependencies or a very small service leads to manual wiring; otherwise tsyringe with the declared style, assembled from a barrel when the application is bundled, and with an explicit module for a context whose wiring is unusual](../assets/diagrams/dependency-injection-choosing.svg)
+![A decision tree: NestJS already the framework leads to its container; a very small service leads to manual wiring; otherwise `@ddd-ts-kit/di` with the declared style, on tsyringe or, under a policy against low-activity dependencies, on Awilix, assembled from a barrel when the application is bundled, and with an explicit module for a context whose wiring is unusual](../assets/diagrams/dependency-injection-choosing.svg)
 
 ### By need of the project
 
@@ -676,31 +701,36 @@ alone: constructing the objects by hand is the composition root.
 |---|---|
 | New project on Express or Fastify | tsyringe with the declared style and a barrel: the default, the most generated, the most checked |
 | Unusual wiring in one context (factories, conditional bindings) | the same, with an explicit module for that context, or `include` in a mixed module |
-| Serverless or bundled deployment | tsyringe, `contextModule` with the barrel; avoid discovery |
+| Serverless or bundled deployment | `@ddd-ts-kit/di`, `contextModule` with the barrel, on any of its containers; avoid discovery |
 | Existing NestJS application | NestJS container, explicit style, providers by factory |
-| A policy against low-activity dependencies, or a very small service | manual wiring, knowing which start-time checks are given up |
-| The same policy, in a team that will not write the wiring by hand | InversifyJS with lists on `--di manual`: active, its lists checked by the compiler; below for the price |
+| A policy against low-activity dependencies | `--di awilix`, or `--di inversify` if the team knows it: everything the default gives, on an active project, for 8 and 29 ms at start |
+| A very small service | manual wiring, knowing which start-time checks are given up |
 | Every invocation starts a process, each millisecond counted | manual wiring in a minified bundle: 24 ms, against 36 for the kit and 80 for NestJS |
 | Many objects that live for one request | `ExecutionScope` first: it already carries the actor, the tenant and the correlation id. Beyond that, Awilix with `createScope` on `--di manual` |
 
 ### By affinity: the team insists on a technology
 
 A team that knows a tool well has a real reason to keep it. The table says what to do, and what
-that choice keeps and pays. Without such an affinity, take neither InversifyJS nor Awilix: on the
-mistakes above, the kit's own wiring never finds one later than InversifyJS with lists or Awilix
-with functions, and manual wiring finds all of them at compile time.
+that choice keeps and pays. First ask what is wanted of the tool: its presence in the dependencies
+is `--di inversify` or `--di awilix`, and costs next to nothing; its API in your code is the
+hand-written path, and costs the generators and the checks. Written by hand, neither container
+finds a mistake sooner than the kit, and manual wiring finds all six at compile time.
 
 | The team wants | Do this | It keeps | It pays |
 |---|---|---|---|
 | tsyringe | `--di tsyringe`, the default; `@injectable()` and `@inject()` of tsyringe stay out of your code | everything in this page | the habit of its decorators: dependencies are listed, never reflected |
 | NestJS | `--http nest`, which brings `--di nest`; providers by factory | its modules, lifecycle and testing module | the declared style, the checks of `createApplication`, a list of `inject` nothing holds to the factory, 77 ms at each start |
-| InversifyJS | `--di manual`, bindings with lists in `<context>.module.ts`, no decorator in `application/` | its binding API, lists the compiler checks, errors that name a cycle or a double binding, `onDeactivation` | the generators, which write `new` beside it; the checks of `createApplication`; a move by hand after each `generate` |
-| Awilix | `--di manual`, functions over a typed cradle in `<context>.module.ts`; classic mode only if identifiers are never minified | the cradle, `createScope`, `.disposer()`, `container.registrations` to resolve everything at start | the same, and a port bound twice or an incomplete adapter that compiles |
+| InversifyJS, as a dependency | `--di inversify` | everything in this page, and the native container at `application.container` | no `bind()` in your code, 29 ms at each start, a promise bound to a port refused |
+| InversifyJS, its API in your code | `--di manual`, bindings with lists in `<context>.module.ts`, no decorator in `application/` | its binding API, lists the compiler checks, errors that name a cycle or a double binding, `onDeactivation` | the generators, which write `new` beside it; the checks of `createApplication`; a move by hand after each `generate` |
+| Awilix, as a dependency | `--di awilix` | everything in this page, and the native container at `application.container` | no `register()` in your code, 8 ms at each start |
+| Awilix, its API in your code | `--di manual`, functions over a typed cradle in `<context>.module.ts`; classic mode only if identifiers are never minified | the cradle, `createScope`, `.disposer()`, `container.registrations` to resolve everything at start | the same as InversifyJS by hand, and a port bound twice or an incomplete adapter that compiles |
 | No container at all | `--di manual`, as generated | every mistake above at compile time, no dependency | the checks of `createApplication`, wrappers applied by hand |
 
-## Using InversifyJS or Awilix anyway
+## Writing the API of InversifyJS or Awilix by hand
 
-Tried on a project generated by 0.105.0 with `--di manual --http express`, one context, one
+For a team that wants `bind()` or `register()` in its own code; otherwise `--di inversify` and
+`--di awilix` do the wiring. Tried on a project generated by 0.105.0 with
+`--di manual --http express`, one context, one
 repository, one command. With either container in place of the generated lines, `typecheck`,
 `ddd-ts-kit check`, `ddd-ts-kit lint` and dependency-cruiser pass, and a command sent through the
 composed application reaches its handler. The samples are not compiled by the pipeline of this

@@ -315,7 +315,7 @@ a GraphQL API: the route declaration models request and response JSON over REST.
 | High request volume, pino already in place, plugin encapsulation wanted | Fastify |
 | A service that may move to Bun, Deno or an edge runtime, or a team at home with Web standard requests | Hono (proven on Node only) |
 | An existing Nest application adopting the kit context by context | NestJS, explicit style, routes of the kit for the contexts and native Nest for the rest |
-| A new project, Nest chosen "because it has structure" | reconsider: the structure here comes from the kit's tree and rules; Express or Fastify with tsyringe keeps the declared style |
+| A new project, Nest chosen "because it has structure" | reconsider: the structure here comes from the kit's tree and rules; Express or Fastify on a container of `@ddd-ts-kit/di` keeps the declared style |
 | No HTTP at all (worker, consumer) | `none` |
 
 Changing later is a change of mount in the composition root and of the platform's server

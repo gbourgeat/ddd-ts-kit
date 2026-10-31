@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../config';
 import type { Config } from '../../config';
 import type { InitFile } from './init-file';
 import { WITH_DATABASE } from '../../stack/with-database';
@@ -86,5 +87,5 @@ export function persistenceFiles(config: Config): InitFile[] {
 
 /** The script that lists the routes and the hand-wired architecture test compose the application without a database to reach. */
 function composesWithoutConnecting(config: Config): boolean {
-  return config.stack.http !== 'none' || config.stack.di !== 'tsyringe';
+  return config.stack.http !== 'none' || !onKitContainer(config);
 }

@@ -24,6 +24,6 @@ export function privacyFiles(config: Config): InitFile[] {
     file('run-export.ts'),
     file('run-purge.ts'),
     ...(config.stack.events === 'outbox' ? [platformFile(config, 'privacy/personal-events.ts')] : []),
-    ...(family === 'tsyringe' ? [file('privacy.module.ts')] : []),
+    ...(family === 'container' ? [file('privacy.module.ts')] : []),
   ];
 }

@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:eaf5d9c1916cc7f8 -->
+<!-- translation-of: http-frameworks.md sha256:e39de8ff86ccbdb9 -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 
@@ -332,7 +332,7 @@ réponse sur REST.
 | Fort volume de requêtes HTTP, pino déjà en place, encapsulation par *plugins* voulue | Fastify |
 | Un service qui pourrait passer à Bun, Deno ou un environnement edge, ou une équipe à l'aise avec les requêtes du standard Web | Hono (prouvé sur Node seulement) |
 | Une application Nest existante qui adopte le kit contexte par contexte | NestJS, style explicite, routes du kit pour les contextes et Nest natif pour le reste |
-| Un nouveau projet, Nest choisi « parce qu'il a de la structure » | à reconsidérer : ici la structure vient de l'arborescence et des règles du kit ; Express ou Fastify avec tsyringe gardent le style déclaré |
+| Un nouveau projet, Nest choisi « parce qu'il a de la structure » | à reconsidérer : ici la structure vient de l'arborescence et des règles du kit ; Express ou Fastify sur un conteneur de `@ddd-ts-kit/di` gardent le style déclaré |
 | Aucun HTTP (*worker*, consommateur) | `none` |
 
 Changer plus tard, c'est changer de montage dans la racine de composition et le fichier serveur

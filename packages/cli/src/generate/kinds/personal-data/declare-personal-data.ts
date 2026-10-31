@@ -84,7 +84,7 @@ function writeExport(scope: Scope, context: RenderContext, names: PersonalNames)
 
 /** The port on tsyringe, or the factory of the hand-wired platform, listed once in the file of the platform the script reads. */
 function listIn(scope: Scope, context: RenderContext, list: 'copies' | 'exports'): void {
-  const family = wiringFamily(scope.config) === 'manual' ? 'manual' : 'tsyringe';
+  const family = wiringFamily(scope.config) === 'manual' ? 'manual' : 'container';
 
   applyWiring(
     scope.ws,

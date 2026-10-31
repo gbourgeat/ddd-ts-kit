@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../config';
 import { declaredRoleOf } from '../../declared';
 import { classesOf } from '../declarations/classes-of';
 import type { Finding } from '../model/finding';
@@ -43,7 +44,7 @@ export const authzDeclared: Rule = {
   },
   /** Modules wired by hand list their use cases in an authorization map: every command and query has to be in it. */
   acrossProject(project) {
-    if (project.config.stack.di === 'tsyringe' || isDeclaredStyle(project)) {
+    if (onKitContainer(project.config) || isDeclaredStyle(project)) {
       return [];
     }
 

@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../../config';
 import { toName } from '../../../naming';
 import type { Scope } from '../../scope';
 import { filesUnder } from '../../files-under';
@@ -37,7 +38,7 @@ const FAKE_SUFFIX = '.fake.ts';
 export function contextFakes(scope: Scope): ContextFakes {
   const ports = declaredPorts(scope);
   // Only a container checks that a fake stands for something it binds: the buses take any fake.
-  const inUse = scope.config.stack.di === 'tsyringe' ? portsInUse(scope, [...ports.values()]) : new Set(ports.keys());
+  const inUse = onKitContainer(scope.config) ? portsInUse(scope, [...ports.values()]) : new Set(ports.keys());
   const directory = `${scope.dir}/test/fakes`;
 
   const classes = classesOf(scope);

@@ -84,7 +84,7 @@ function explain(scope: Scope, upstream: string, name: Name): void {
 
   const where: Readonly<Record<string, string>> = {
     declared: `${name.pascal}Contract is bound to an empty value in ${platformPath(scope, 'composition/platform.module.ts')} and in ${platformPath(scope, 'composition/platform-test.module.ts')}: bind the implementation ${upstream} gives of it there.`,
-    tsyringe: `${name.pascal}Contract is bound to an empty value in ${context.kebab}.module.ts: bind the implementation ${upstream} gives of it there.`,
+    container: `${name.pascal}Contract is bound to an empty value in ${context.kebab}.module.ts: bind the implementation ${upstream} gives of it there.`,
     manual: `Instantiate InProcess${name.pascal}Gateway in ${context.kebab}.module.ts, with the implementation of ${name.pascal}Contract the platform hands over, and give it to the handlers that need it.`,
   };
 

@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../../config';
 import { specifierOf } from '../../../alias';
 import type { RenderContext } from '../../../templating';
 import type { Name } from '../../../naming';
@@ -86,7 +87,7 @@ function needsOf(scope: Scope, { repository, idPrefix, permission, fake, perTena
 
 /** Under a container the world replaces the whole arrangement; on the buses, one line of it. */
 function isContainer(scope: Scope): boolean {
-  return scope.config.stack.di === 'tsyringe';
+  return onKitContainer(scope.config);
 }
 
 /** Why a spec arranges without the world: there is none, it could not be read, or it lacks what the spec needs. */

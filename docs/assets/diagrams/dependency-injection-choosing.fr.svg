@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 548" width="960" height="548" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">Choisir comment câbler l'application</title>
-  <desc id="desc">Un arbre de décision. Si NestJS est déjà le framework, utilisez son conteneur, dans le style explicite, avec des providers par fabrique. Sinon, sous une politique contre les dépendances peu actives ou pour un service de quelques classes, câblez à la main et renoncez aux vérifications au démarrage. Sinon, utilisez tsyringe et @ddd-ts-kit/di dans le style déclaré, avec un module explicite pour un contexte au câblage inhabituel. Une application passée par un bundler ou serverless assemble chaque contexte depuis son barrel généré ; sinon le barrel est le défaut et la découverte l'alternative.</desc>
+  <desc id="desc">Un arbre de décision. Si NestJS est déjà le framework, utilisez son conteneur, dans le style explicite, avec des providers par fabrique. Sinon, pour un service de quelques classes, câblez à la main et renoncez aux vérifications au démarrage. Sinon, utilisez @ddd-ts-kit/di dans le style déclaré, sur tsyringe ou, sous une politique contre les dépendances peu actives, sur Awilix, avec un module explicite pour un contexte au câblage inhabituel. Une application passée par un bundler ou serverless assemble chaque contexte depuis son barrel généré ; sinon le barrel est le défaut et la découverte l'alternative.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -20,8 +20,8 @@
   <text x="254" y="151" font-size="13" fill="#1f2328">non</text>
   <!-- Q2 -->
   <rect x="32" y="164" width="420" height="64" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
-  <text x="242" y="191" font-size="14" fill="#1f2328" text-anchor="middle">Une politique contre les dépendances peu actives,</text>
-  <text x="242" y="211" font-size="14" fill="#1f2328" text-anchor="middle">ou un service de quelques classes ?</text>
+  <text x="242" y="191" font-size="14" fill="#1f2328" text-anchor="middle">Un service de quelques classes,</text>
+  <text x="242" y="211" font-size="14" fill="#1f2328" text-anchor="middle">sans besoin des vérifications au démarrage ?</text>
   <line x1="454" y1="196" x2="518" y2="196" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="484" y="188" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
   <rect x="520" y="164" width="408" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
@@ -31,8 +31,8 @@
   <text x="254" y="251" font-size="13" fill="#1f2328">non</text>
   <!-- tsyringe -->
   <rect x="32" y="264" width="420" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
-  <text x="242" y="291" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">tsyringe et @ddd-ts-kit/di</text>
-  <text x="242" y="313" font-size="13" fill="#1f2328" text-anchor="middle">style déclaré : le défaut, le plus généré et vérifié</text>
+  <text x="242" y="291" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">@ddd-ts-kit/di, style déclaré</text>
+  <text x="242" y="313" font-size="13" fill="#1f2328" text-anchor="middle">sur tsyringe, ou sur Awilix sous une politique de dépendances</text>
   <line x1="454" y1="296" x2="518" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
   <rect x="520" y="264" width="408" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="724" y="291" font-size="13" fill="#1f2328" text-anchor="middle">un contexte avec fabriques ou liaisons conditionnelles :</text>
