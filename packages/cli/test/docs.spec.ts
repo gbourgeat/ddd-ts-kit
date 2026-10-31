@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers';
+import { report } from './reports';
 import { initProject } from './support/init-project';
 
 let root: string;
@@ -106,7 +107,7 @@ describe('docs, around what people wrote and what is missing', () => {
       ),
     );
 
-    const result = cli(root, 'docs', '--json').json() as { updated: string[]; created: string[] };
+    const result = report(cli(root, 'docs', '--json'));
 
     expect(result.updated).toEqual(['src/contexts/billing/CONTEXT.md']);
     expect(result.created).toEqual([]);

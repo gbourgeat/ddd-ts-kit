@@ -2,9 +2,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { KINDS } from '../src/generate/kinds';
 import { MODULE_OPTION } from '../src/generate/usage-of';
 import { cli, DEFAULT_STACK, tempDir, write } from './helpers';
+import { report } from './reports';
 import { initFlags } from './support/init-flags';
 import { jsonAt } from './support/json-at';
-import { stringsAt } from './support/strings-at';
 
 /** The module each context of the project declares: billing and its downstream shipping are both divided. */
 const MODULE_OF: Record<string, string> = { billing: 'invoices', shipping: 'parcels' };
@@ -170,8 +170,8 @@ interface DryRun {
 function inModule(root: string, context: string, args: readonly string[]): DryRun {
   const module = MODULE_OF[context] ?? '';
   const result = cli(root, 'generate', ...args, '--allow-name', '--dry-run', '--json');
-  const said = result.code === 0 ? result.json() : {};
-  const files = [...stringsAt(said, 'created'), ...stringsAt(said, 'updated')];
+  const said = result.code === 0 ? report(result) : { created: [], updated: [] };
+  const files = [...said.created, ...said.updated];
   const prefix = `src/contexts/${context}`;
 
   return {

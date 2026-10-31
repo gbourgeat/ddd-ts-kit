@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from './helpers';
+import { report } from './reports';
 import { jobProject } from './support/job-project';
 
 const BILLING = 'src/contexts/billing';
@@ -87,7 +88,7 @@ describe('jobs in list and in the documentation', () => {
       read(bare, `${BILLING}/CONTEXT.md`).replace(/## Scheduled jobs[\s\S]*?(?=## Relationships)/, ''),
     );
 
-    const result = cli(bare, 'docs', '--json').json() as { notes: string[]; updated: string[] };
+    const result = report(cli(bare, 'docs', '--json'));
 
     expect(result.notes).toEqual([]);
     expect(result.updated).toEqual([]);

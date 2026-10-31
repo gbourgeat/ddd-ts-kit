@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, exists, read, tempDir, walk } from './helpers';
+import { report, type Report } from './reports';
 import { explicitProject } from './support/explicit-project';
 import { NPM } from './support/npm';
 import { VERSION } from '../src/version';
@@ -14,17 +15,8 @@ const FLAGS = [...NPM, '--agent-profile', 'regulated'];
 const HOOKS = ['.claude/hooks/change-reference.mjs', '.claude/hooks/production-gate.mjs'];
 const SETTINGS = '.claude/settings.json';
 
-interface Report {
-  readonly created: string[];
-  readonly skipped: string[];
-  readonly unwritable: string[];
-  readonly notes: string[];
-}
-
 function reportOf(stdout: string): Report {
-  const parsed: Report = JSON.parse(stdout);
-
-  return parsed;
+  return report({ json: (): unknown => JSON.parse(stdout) });
 }
 
 /** A directory named `shop`, so that two projects of these specs get the same name and the same files. */

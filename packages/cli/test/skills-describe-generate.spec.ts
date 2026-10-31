@@ -27,12 +27,23 @@ describe('the skills, on what generate prints', () => {
     expect(naming).toEqual([]);
   });
 
-  it('give the output of every kind with the keys generate --json prints', () => {
+  it('give the output of every kind with the keys generate --json prints, a list that holds nothing left out', () => {
     const root = initProject('--context', 'billing:core');
-    const printed = cli(root, 'generate', 'value-object', 'billing', 'Money', '--term', 'Money=An amount', '--json');
-    const keys = Object.keys(printed.json() as object).join(', ');
 
-    expect(read('plugin/skills/scaffold/kinds.md')).toContain(`Output of every kind: \`{ ${keys} }\``);
+    const keysOf = (...args: string[]): string[] =>
+      Object.keys(cli(root, 'generate', ...args, '--json').json() as object);
+
+    const listed = /Output of every kind under `--json`: `\{ ([\w, ]+) \}`/.exec(
+      read('plugin/skills/scaffold/kinds.md'),
+    );
+
+    const printed = [
+      ...keysOf('value-object', 'billing', 'Money', '--term', 'Money=An amount', '--dry-run'),
+      ...keysOf('port', 'billing', 'PaymentGateway'),
+    ];
+
+    expect(printed).toEqual(expect.arrayContaining(['dryRun', 'root', 'created', 'todos']));
+    expect(listed?.[1]?.split(', ')).toEqual(expect.arrayContaining([...new Set(printed)]));
   });
 
   it('look up the arguments of one kind with generate <kind> --help, not the whole reference', () => {

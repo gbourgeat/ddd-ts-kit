@@ -2,8 +2,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { KINDS } from '../src/generate/kinds';
 import { SHARED_WRITES } from '../src/generate/shared-writes';
 import { cli, exists, EXPLICIT_STACK, scaffoldEverything, tempDir, type StackFlags } from './helpers';
+import { report } from './reports';
 import { jsonAt } from './support/json-at';
-import { stringsAt } from './support/strings-at';
 import { commitAll } from './support/commit-all';
 
 const SHARED_KINDS = [
@@ -146,7 +146,7 @@ describe.each([
   it.each(runs)('%s stays inside its context and the end-to-end specs', (...args) => {
     const planned = cli(root, 'generate', ...args, '--local-only', '--dry-run', '--json');
 
-    const written = [...stringsAt(planned.json(), 'created'), ...stringsAt(planned.json(), 'updated')];
+    const written = [...report(planned).created, ...report(planned).updated];
 
     expect(planned.stderr).toBe('');
     expect(planned.code).toBe(0);
@@ -247,7 +247,7 @@ describe.each([
 
     expect(local.code).toBe(0);
 
-    expect(stringsAt(local.json(), 'created')).toEqual([
+    expect(report(local).created).toEqual([
       'src/contexts/billing/domain/value-objects/currency.vo.ts',
       'src/contexts/billing/test/unit/currency.vo.spec.ts',
     ]);

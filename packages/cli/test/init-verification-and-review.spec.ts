@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readConfig } from '../src/config';
 import { generatedFilesNamed } from '../src/review';
 import { cli, read, write } from './helpers';
+import { report } from './reports';
 import { initProject } from './support/init-project';
 import { NPM } from './support/npm';
 
@@ -77,11 +78,11 @@ describe('the review policy init writes', () => {
 
     write(root, 'REVIEW.md', '# Ours\n');
 
-    const forced = cli(root, 'init', ...NPM, '--force', '--json').json();
+    const forced = report(cli(root, 'init', ...NPM, '--force', '--json'));
 
     expect(read(root, 'REVIEW.md')).toBe('# Ours\n');
-    expect(forced).toMatchObject({ created: expect.not.arrayContaining(['REVIEW.md']) });
-    expect(forced).toMatchObject({ updated: expect.not.arrayContaining(['REVIEW.md']) });
+    expect(forced.created).not.toContain('REVIEW.md');
+    expect(forced.updated).not.toContain('REVIEW.md');
   });
 
   it('names the generated files from the list digest lists apart, and says how to list those of a branch', () => {

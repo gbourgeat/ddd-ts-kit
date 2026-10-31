@@ -201,9 +201,19 @@ function read(file) {
   }
 }
 
+/** The report of a run, each path joined to the `root` it is written from (`--json` says a shared directory once). */
 function parse(text) {
   try {
-    return JSON.parse(text);
+    const { root = '', ...result } = JSON.parse(text);
+    const whole = (files) => files?.map((file) => `${root}${file}`);
+
+    return {
+      ...result,
+      created: whole(result.created),
+      updated: whole(result.updated),
+      deleted: whole(result.deleted),
+      todos: result.todos?.map((todo) => ({ ...todo, file: `${root}${todo.file}` })),
+    };
   } catch {
     return undefined;
   }

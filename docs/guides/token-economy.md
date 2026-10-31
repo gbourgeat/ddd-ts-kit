@@ -91,47 +91,46 @@ an aggregate": ask it to run the generator and fill the three decisions it lists
 npx ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order --json
 ```
 
-answers, abbreviated and laid out here for reading (the CLI prints it on one line). Each place
-of `todos` gives the first words of its `TODO(domain)`, whose whole sentence is in the file at that
-line; a step on a line the command changed, written in no file, also gives its whole `text`:
+answers, abbreviated and laid out here for reading (the CLI prints it on one line). The directory
+every path shares is said once, as `root`, and each path is written from it; a list that holds
+nothing is left out, and `dryRun` appears under `--dry-run` only. Each place of `todos` gives the
+first words of its `TODO(domain)`, whose whole sentence is in the file at that line; a step on a
+line the command changed, written in no file, also gives its whole `text`:
 
 ```json
 {
-  "dryRun": false,
+  "root": "src/",
   "created": [
-    "src/contexts/ordering/ordering.permissions.ts",
-    "src/contexts/ordering/application/commands/place-order/place-order.command.ts",
-    "src/contexts/ordering/application/commands/place-order/place-order.handler.ts",
-    "src/contexts/ordering/test/unit/place-order.handler.spec.ts",
-    "src/contexts/ordering/application/application.declarations.ts"
+    "contexts/ordering/ordering.permissions.ts",
+    "contexts/ordering/application/commands/place-order/place-order.command.ts",
+    "contexts/ordering/application/commands/place-order/place-order.handler.ts",
+    "contexts/ordering/test/unit/place-order.handler.spec.ts",
+    "contexts/ordering/application/application.declarations.ts"
   ],
   "updated": [
-    "src/platform/auth/authorization/role.ts",
-    "src/platform/auth/roles/roles.ts",
-    "src/contexts/ordering/ordering.declarations.ts",
-    "src/contexts/ordering/CONTEXT.md"
+    "platform/auth/authorization/role.ts",
+    "platform/auth/roles/roles.ts",
+    "contexts/ordering/ordering.declarations.ts",
+    "contexts/ordering/CONTEXT.md"
   ],
-  "deleted": [],
-  "skipped": [],
-  "unwritable": [],
   "todos": [
     {
-      "file": "src/contexts/ordering/application/commands/place-order/place-order.command.ts",
+      "file": "contexts/ordering/application/commands/place-order/place-order.command.ts",
       "line": 7,
       "gist": "declare the input of \"place order\" as a constructor with the actor..."
     },
     {
-      "file": "src/contexts/ordering/application/commands/place-order/place-order.handler.ts",
+      "file": "contexts/ordering/application/commands/place-order/place-order.handler.ts",
       "line": 12,
       "gist": "\"place order\" changes Orders that exist and writes nothing until you decide..."
     },
     {
-      "file": "src/contexts/ordering/test/unit/place-order.handler.spec.ts",
+      "file": "contexts/ordering/test/unit/place-order.handler.spec.ts",
       "line": 36,
       "gist": "replace each entry below by a test named after the business behaviour..."
     },
     {
-      "file": "src/platform/auth/roles/roles.ts",
+      "file": "platform/auth/roles/roles.ts",
       "line": 15,
       "gist": "check this grant",
       "text": "check this grant: the role customer now holds ordering:order.place."

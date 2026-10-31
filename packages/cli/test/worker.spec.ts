@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cli, exists, read } from './helpers';
+import { report } from './reports';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
@@ -113,7 +114,7 @@ describe('generate worker, run again and refused', () => {
     const again = cli(root, 'generate', 'worker', '--json');
 
     expect(again.code).toBe(0);
-    expect(stringsAt(again.json(), 'skipped')).toEqual([WORKER]);
+    expect(report(again).skipped).toEqual([WORKER]);
 
     expect(
       [
