@@ -149,14 +149,18 @@ function huggedFunction(statement: string, group: Group, indent: string): string
   ];
 }
 
-/** A call and nothing else: `isSystem(actor)`, not `isSystem(actor) && actor.id === id`, which the formatter opens argument by argument. */
+/**
+ * A call, or a chain of calls, and nothing else: `isSystem(actor)`, `expect(a).toEqual(b)`, not
+ * `isSystem(actor) && actor.id === id`, which the formatter opens argument by argument. Outside its
+ * brackets the body is names and dots only, and it ends on the arguments of its last call.
+ */
 function isOneCall(body: string): boolean {
-  const call = lastGroup(body);
+  const depths = nesting(body);
 
-  return (
-    call !== undefined &&
-    body[call.open] === '(' &&
-    call.close === body.length - 1 &&
-    /^[\w.]+$/.test(body.slice(0, call.open))
-  );
+  const outside = body
+    .split('')
+    .filter((char, index) => depths[index] === 0 && !'([{)]}'.includes(char))
+    .join('');
+
+  return /^[\w.]+$/.test(outside) && lastGroup(body)?.close === body.length - 1 && body.endsWith(')');
 }
