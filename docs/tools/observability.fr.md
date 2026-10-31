@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:b52c6eaae89502ad -->
+<!-- translation-of: observability.md sha256:d4f00bce802059cd -->
 
 # Observabilité : backends de traçage, *loggers* et suivi des erreurs
 
@@ -283,9 +283,9 @@ modifient `http` et les pilotes au moment où ils sont chargés.
 ```ts
 import { StdoutLogger } from '@ddd-ts-kit/aspects';
 import { kernelModule } from '@ddd-ts-kit/di';
-import { AsyncLocalStorageExecutionScope, NoopMetrics } from '@ddd-ts-kit/kernel';
+import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { initSentry } from '@ddd-ts-kit/sentry';
-import { traceApplication, traceLogFields } from '@ddd-ts-kit/tracing';
+import { openTelemetryMetrics, traceApplication, traceLogFields } from '@ddd-ts-kit/tracing';
 
 declare const sentryDsn: string;
 
@@ -295,8 +295,8 @@ export const kernel = kernelModule({
   // Une seule portée pour les bus, le logger et les spans : l'identifiant de corrélation est le même dans les trois.
   executionScope,
   logger: new StdoutLogger({ fields: () => traceLogFields(executionScope) }),
-  // TODO(platform): un adaptateur du port, comme celui ci-dessus.
-  metrics: new NoopMetrics(),
+  // Sur le fournisseur de métriques qu'initTracing a enregistré : exporté par OTLP avec les traces.
+  metrics: openTelemetryMetrics({ meterName: 'scheduling' }),
   // Les bus et les jobs signalent par lui ; app.stop() le vide.
   errorReporter: initSentry({ dsn: sentryDsn }),
   // Des spans autour de chaque cas d'usage, adaptateur, événement, consommateur et job.

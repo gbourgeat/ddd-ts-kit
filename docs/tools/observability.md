@@ -269,9 +269,9 @@ assembles the same foundations in `create-platform.ts`) and `errors.ts` only wit
 ```ts
 import { StdoutLogger } from '@ddd-ts-kit/aspects';
 import { kernelModule } from '@ddd-ts-kit/di';
-import { AsyncLocalStorageExecutionScope, NoopMetrics } from '@ddd-ts-kit/kernel';
+import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { initSentry } from '@ddd-ts-kit/sentry';
-import { traceApplication, traceLogFields } from '@ddd-ts-kit/tracing';
+import { openTelemetryMetrics, traceApplication, traceLogFields } from '@ddd-ts-kit/tracing';
 
 declare const sentryDsn: string;
 
@@ -281,8 +281,8 @@ export const kernel = kernelModule({
   // One scope for the buses, the logger and the spans: the correlation id is the same in all three.
   executionScope,
   logger: new StdoutLogger({ fields: () => traceLogFields(executionScope) }),
-  // TODO(platform): an adapter of the port, such as the one above.
-  metrics: new NoopMetrics(),
+  // On the meter provider initTracing registered: exported by OTLP with the spans.
+  metrics: openTelemetryMetrics({ meterName: 'scheduling' }),
   // Buses and jobs report through it; app.stop() flushes it.
   errorReporter: initSentry({ dsn: sentryDsn }),
   // Spans around every use case, adapter, event, consumer and job.
