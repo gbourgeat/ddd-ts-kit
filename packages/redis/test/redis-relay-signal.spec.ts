@@ -1,3 +1,4 @@
+import type { Redis } from 'ioredis';
 import { afterAll, describe, expect, it } from 'vitest';
 import { Command, InMemoryCommandBus, InMemoryEventBus, SystemClock, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { InMemoryOutboxStore, OutboxRelay, type RelaySignal } from '@ddd-ts-kit/events';
@@ -16,16 +17,28 @@ const issued = (id: string): IntegrationEvent => ({
   payload: {},
 });
 
+/**
+ * Waits until a connection listens on `channel`: publish/subscribe drops what is published before the
+ * subscription is live, and PUBLISH answers how many connections received the message. That one message
+ * reaches the listeners too: the caller waits for them and forgets it.
+ */
+async function listening(publisher: Redis, channel: string): Promise<void> {
+  while ((await publisher.publish(channel, '')) === 0) {
+    await sleep(10);
+  }
+}
+
 describe.each(SERVERS)('RedisRelaySignal, %s', (_name, start) => {
   const redis = serverOf(start);
 
   it('wakes the listeners of another process, and only those of its channel', async () => {
     const channel = aNamespace();
+    const elsewhereChannel = aNamespace();
 
     const [here, there, elsewhere] = [
       new RedisRelaySignal(connect(redis.url), { channel }),
       new RedisRelaySignal(connect(redis.url), { channel }),
-      new RedisRelaySignal(connect(redis.url), { channel: aNamespace() }),
+      new RedisRelaySignal(connect(redis.url), { channel: elsewhereChannel }),
     ];
 
     const woken: string[] = [];
@@ -33,7 +46,10 @@ describe.each(SERVERS)('RedisRelaySignal, %s', (_name, start) => {
     there.subscribe(() => void woken.push('there'));
     there.subscribe(() => void woken.push('there too'));
     elsewhere.subscribe(() => void woken.push('elsewhere'));
-    await sleep(100);
+    await listening(connect(redis.url), channel);
+    await listening(connect(redis.url), elsewhereChannel);
+    await expect.poll(() => woken.length).toBe(3);
+    woken.length = 0;
 
     await here.notify();
 
@@ -53,7 +69,9 @@ describe.each(SERVERS)('RedisRelaySignal, %s', (_name, start) => {
     const first = there.subscribe(() => void woken.push('first'));
 
     there.subscribe(() => void woken.push('second'));
-    await sleep(100);
+    await listening(connect(redis.url), channel);
+    await expect.poll(() => woken.length).toBe(2);
+    woken.length = 0;
 
     first.unsubscribe();
     await here.notify();
@@ -81,7 +99,7 @@ describe.each(SERVERS)('RedisRelaySignal, %s', (_name, start) => {
     const relay = new OutboxRelay({ store, publisher: bus, clock: new SystemClock(), wakeOn });
 
     relay.start({ intervalMs: 60_000 });
-    await sleep(150);
+    await listening(connect(redis.url), channel);
 
     const commands = new InMemoryCommandBus()
       .use(relayWakeUpMiddleware(inTheApi))
