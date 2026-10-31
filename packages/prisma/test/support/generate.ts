@@ -34,6 +34,7 @@ model Invoice {
   id        String   @id
   amount    Int
   status    String
+  details   Json?
   version   Int
   tenantId  String   @map("tenant_id")
   createdAt DateTime @map("created_at") @db.Timestamptz(3)

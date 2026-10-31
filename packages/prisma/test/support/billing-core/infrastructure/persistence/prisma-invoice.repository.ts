@@ -6,7 +6,7 @@ import { Invoice, type InvoiceState } from '../../domain/invoice';
 import type { InvoiceRepository } from '../../domain/repositories/invoice.repository';
 import { statusOf } from './status-of';
 
-type VersionedInvoice = InvoiceState & { version: number };
+type VersionedInvoice = Omit<InvoiceState, 'details'> & { details?: Prisma.InputJsonValue; version: number };
 
 /**
  * The repository a consuming project would write: no transaction in sight, every statement
@@ -38,7 +38,13 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
-      const state = { ...invoice.state, version: next };
+      const { details, ...columns } = invoice.state;
+
+      const state = {
+        ...columns,
+        ...(details === undefined ? {} : { details: details as Prisma.InputJsonValue }),
+        version: next,
+      };
 
       return expected === 0 ? this.insert(state) : (await this.update(state, expected)).count;
     });

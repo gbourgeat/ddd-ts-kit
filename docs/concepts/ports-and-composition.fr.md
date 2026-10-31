@@ -1,9 +1,5 @@
 [English](ports-and-composition.md) · **Français**
-<<<<<<< HEAD
 <!-- translation-of: ports-and-composition.md sha256:d2188a547c96ca8e -->
-=======
-<!-- translation-of: ports-and-composition.md sha256:3e57b4d00cb100e4 -->
->>>>>>> origin/main
 
 # Ports et composition
 

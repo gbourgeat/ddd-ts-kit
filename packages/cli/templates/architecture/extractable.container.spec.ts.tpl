@@ -2,11 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll } from '@ddd-ts-kit/auth/testing';
 import { type ContextModule } from '@ddd-ts-kit/di';
-<<<<<<< HEAD:packages/cli/templates/architecture/extractable.container.spec.ts.tpl
 import { createTestApplication } from '{{di.entry}}';
-=======
-import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
->>>>>>> origin/main:packages/cli/templates/architecture/extractable.tsyringe.spec.ts.tpl
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports

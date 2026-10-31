@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:745d1dc95dfa6c7a -->
+<!-- translation-of: README.md sha256:355c4fab9083575d -->
 
 # ddd-ts-kit
 
@@ -1366,7 +1366,8 @@ ddd-ts-kit todo [<context>] [--brief]
 `status` affiche la ligne `Next:` de `docs/architecture/plan.md`, les lignes de
 `docs/architecture/slices.md` par statut et par responsable, et par contexte les `TODO(domain)`,
 `TODO(platform)` et `it.todo` restants, puis ceux hors des contextes. Un fichier manquant n'est
-pas une erreur. Quand le plan est à l'étape 7 (la construction), la ligne `Next:` est déduite des lignes (la prochaine ligne prête sur le tronc, ou `7 build done` quand toutes sont faites) et la ligne du plan est affichée à côté, `planNext` dans `--json`. Chaque ligne qui n'est pas faite dit si elle peut commencer : prête sur le tronc
+pas une erreur ; un `ddd-ts-kit.config.json` manquant en est une : avant `init`, `status` refuse avec le
+code 2, nomme `init` et n'imprime aucune demi-réponse. Quand le plan est à l'étape 7 (la construction), la ligne `Next:` est déduite des lignes (la prochaine ligne prête sur le tronc, ou `7 build done` quand toutes sont faites) et la ligne du plan est affichée à côté, `planNext` dans `--json`. Chaque ligne qui n'est pas faite dit si elle peut commencer : prête sur le tronc
 quand toutes ses dépendances sont faites, prête sur une branche quand chaque dépendance non faite
 est une ligne confiée à un *worker* dont le *worktree* a des *commits* d'avance sur sa base (les
 `rows` de son `.ddd-ts-kit/worker.json`, tels que `status --workers` les lit), et en attente
@@ -1816,7 +1817,8 @@ comme `permission hooks.<name>`), puis les *hooks* git. `lefthook.yml` doit port
 *worktree* son propre lefthook, et fait échouer un *commit*, bruyamment, quand ses dépendances
 manquent ; le correctif est cette ligne, ou `init --force` pour le fichier entier. Le *hook*
 pre-commit sous `git rev-parse --git-path hooks` doit exister et venir de lefthook ; le correctif
-est `npm run hooks:install`, une fois par clone. Puis la consigne écrite une fois pour que
+est `npm run hooks:install`, une fois par clone. Hors d'un dépôt git les *hooks* ne peuvent pas être lus : `doctor`
+signale alors `hook git repository` comme manquant, ce qui fait échouer `--strict`, et `git init` passe d'abord. Puis la consigne écrite une fois pour que
 l'équipe la possède : `REVIEW.md`, la politique de revue, et sous le profil réglementé les deux
 *hooks* de `.claude/hooks/`, sont signalés manquants (`guidance`) et `init` les écrit de nouveau
 sans toucher à rien d'autre.

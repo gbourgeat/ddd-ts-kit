@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from './helpers';
+import { installHooks } from './support/install-hooks';
 import { installKit } from './support/install-kit';
 import { jsonAt } from './support/json-at';
 
@@ -10,6 +11,7 @@ function installed(manager: 'npm' | 'pnpm', http: string): string {
 
   cli(root, 'init', '--package-manager', manager, '--http', http);
   installKit(root);
+  installHooks(root);
 
   return root;
 }

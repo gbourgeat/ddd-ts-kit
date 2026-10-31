@@ -492,7 +492,8 @@ package. `init --database mongodb` is accepted with `--orm custom` although the 
 - **Knex.** The payload is serialized with `JSON.stringify`; MariaDB would return it as text. The same goes for a
   `jsonb` column of your own: `pg` writes a JavaScript array as a PostgreSQL array literal and a string as it is, so
   an array or a string fails with `22P02 invalid input syntax for type json` where Drizzle, Prisma and TypeORM
-  serialize it. The mapper writes `JSON.stringify(value)` for such a value (an object passes either way).
+  serialize it. `jsonColumn(value)` of `@ddd-ts-kit/knex` answers the JSON text the column reads, whatever the value: the
+  mapper writes it for such a value (an object passes either way).
 - **Drizzle.** Never name a table in raw SQL: interpolate the table object so the schema
   qualification follows (persistence skill). The audit package notes that Drizzle prints the
   parameters of a failed statement in its error message: log the code, not the message.

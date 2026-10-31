@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { inRange } from '../src/doctor/in-range';
 import { nodeFindings } from '../src/doctor/node-findings';
 import { cli, read, tempDir, write } from './helpers';
+import { installHooks } from './support/install-hooks';
 import { installKit } from './support/install-kit';
 import { jsonAt } from './support/json-at';
 
@@ -70,6 +71,7 @@ describe('doctor, on the Node of the checkout', () => {
     root = path.join(tempDir('doctor-node'), 'shop');
     cli(root, 'init', '--context', 'billing:core', '--package-manager', 'npm');
     installKit(root);
+    installHooks(root);
   });
 
   it('fails --strict on a Node engines.node refuses, and names the fix', () => {
