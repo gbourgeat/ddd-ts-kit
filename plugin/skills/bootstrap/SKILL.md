@@ -20,7 +20,7 @@ allowed-tools:
   - Bash(pnpm exec ddd-ts-kit generate context *)
   - Bash(pnpm exec ddd-ts-kit docs)
   - Bash(pnpm exec ddd-ts-kit list *)
-  - Bash(corepack enable)
+  - Bash(npm install --global pnpm)
   - Bash(pnpm install)
   - Bash(pnpm run verify)
   - Bash(pnpm run docs:generate)
@@ -98,7 +98,7 @@ names, or with the owner's reason to change the stack under `## Decisions`.
 
 A project is on pnpm unless `--package-manager npm` was chosen: every command below is said for
 pnpm, and reads `npm run <script>` and `npx ddd-ts-kit <command>` on npm. pnpm is pinned in
-`package.json` and provided by corepack (`corepack enable`, once per machine). A red `verify`
+`package.json` and installed by npm (`npm install --global pnpm`, once per machine; pnpm then runs the release it pins). A red `verify`
 on a project nothing was generated in is a bug of the kit: report it, do not patch the project.
 
 No `--context` here: contexts come next, with their language.

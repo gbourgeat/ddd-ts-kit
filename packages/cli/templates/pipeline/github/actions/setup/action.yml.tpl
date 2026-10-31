@@ -15,10 +15,11 @@ runs:
         # The newest patch of the release line, not the one the image of the runner holds: a security
         # release of Node reaches the next run.
         check-latest: true
-{{#if pm.corepack}}
+{{#if pm.pinned}}
     - name: The package manager package.json pins
       shell: bash
-      run: corepack enable
+      run: |
+        npm install --global "$(node -p "require('./package.json').packageManager")"
 {{/if}}
     # One install per lockfile, shared by every job and every run. The key holds the lockfile and
     # package.json: a hit is what a fresh install of that lockfile gives, and a manifest that left

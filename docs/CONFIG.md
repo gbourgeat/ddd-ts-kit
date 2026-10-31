@@ -469,7 +469,7 @@ written before the choice existed, when the kit wrote npm commands. Nothing chan
 pipelines and the notes keep saying `npm run` and `npx`. To move it to pnpm:
 `npx ddd-ts-kit init --force --package-manager pnpm` records the key, pins pnpm in the
 `packageManager` field of `package.json` and rewrites the files `init` owns in its dialect; then
-`corepack enable`, `pnpm install` (which writes `pnpm-lock.yaml`) and `pnpm run verify`.
+`npm install --global pnpm` (pnpm then runs the release the project pins), `pnpm install` (which writes `pnpm-lock.yaml`) and `pnpm run verify`.
 
 The eleventh and the twelfth: without `stack.representations` the project is read as `json`, and
 without `stack.forms` as `off`, because such a file was written before either existed. Nothing

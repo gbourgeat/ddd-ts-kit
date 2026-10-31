@@ -165,7 +165,8 @@ nowhere (`--errors none`), JSON lines on the standard output (`--logger stdout`)
 
 **Package manager.** `pnpm` unless `--package-manager npm`: every script, pipeline, hook, the
 Dockerfile, the guidance and the agent permissions are written in the dialect of the one chosen,
-recorded under `stack.packageManager`. pnpm is pinned in `package.json` and provided by corepack;
+recorded under `stack.packageManager`. pnpm is pinned in `package.json` and installed by npm at that release (`npm install --global pnpm`,
+then pnpm runs the release the project pins; Node 25 and later ship no corepack);
 `pnpm-workspace.yaml` says that no dependency runs a build script unless allowed by name. Both are
 proven by a real install of a generated project, its build and its `verify`. The kit is installed
 from the registry either way.
