@@ -11,7 +11,7 @@ describe('the generated TypeORM schema', () => {
       cli(root, 'generate', 'repository', 'billing', 'Order', ...tenant);
 
       expect(read(root, 'src/contexts/billing/infrastructure/persistence/billing.schema.ts')).toContain(
-        'A jsonb field is typed with a named interface or `object`, never `Record<string, unknown>`',
+        'A jsonb field is typed `JsonDocument` of `@ddd-ts-kit/typeorm` or a named interface, never `Record<string, unknown>`',
       );
     }
   });

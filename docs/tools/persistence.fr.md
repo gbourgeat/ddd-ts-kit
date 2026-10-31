@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:ef6df5c6c1ae41e0 -->
+<!-- translation-of: persistence.md sha256:419593a8e753bdc2 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -512,7 +512,7 @@ la ligne d'usage de `--help` ne le mentionne pas.
   d'index partiel dans le langage de schéma ; `stats()` fait trois requêtes SQL.
 - **TypeORM.** Un `EntitySchema` est statique : les types de colonnes suivent le `dialect` que
   vous passez. `synchronize: true` est réservé aux tests.
-  Un champ `jsonb` du type `Columns` est une interface nommée ou `object` : `Record<string, unknown>` ne compile pas dans
+  Un champ `jsonb` du type `Columns` est `JsonDocument` de `@ddd-ts-kit/typeorm` ou une interface nommée : `Record<string, unknown>` ne compile pas dans
   `insertIgnoringConflict` et `update` générés, car `QueryDeepPartialEntity` de TypeORM le refuse.
 - **Knex.** Le contenu (payload) est sérialisé avec `JSON.stringify` ; MariaDB le rendrait sous
   forme de texte. Il en va de même d'une colonne `jsonb` du projet : `pg` écrit un tableau JavaScript comme un
