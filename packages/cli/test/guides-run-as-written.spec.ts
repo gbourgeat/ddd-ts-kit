@@ -3,7 +3,7 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ERRORS_DOCS } from '../src/check/explain/errors-docs';
 import { STANDARD_DOCS } from '../src/check/explain/standard-docs';
-import { cli, read, REPO_ROOT, tempDir, write } from './helpers';
+import { cli, exists, read, REPO_ROOT, tempDir, write } from './helpers';
 
 const page = (file: string): string => fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
 
@@ -146,5 +146,22 @@ describe('guides, the examples of explain, in a project init wrote', () => {
     const result = cli(root, 'check', '--json');
 
     expect(JSON.stringify(result.json())).not.toMatch(/governance\/recorded-deviation|config\/rule-off-everywhere/);
+  });
+});
+
+describe('guides, deploy-and-rollback, on the observability a generated project has', () => {
+  const tree = tempDir('guides-deploy');
+
+  it('promises no metric the platform does not emit, and names the file init writes', () => {
+    expect(cli(tree, 'init').code).toBe(0);
+    expect(read(tree, 'src/platform/observability/create-metrics.ts')).toContain('return new NoopMetrics();');
+    expect(exists(tree, '.env.example')).toBe(true);
+    expect(exists(tree, 'docker')).toBe(false);
+
+    for (const file of ['docs/guides/deploy-and-rollback.md', 'docs/guides/deploy-and-rollback.fr.md']) {
+      expect(page(file), file).not.toMatch(/docker\/\.env/);
+      expect(page(file), file).toContain('create-metrics.ts');
+      expect(page(file), file).toContain('store.stats()');
+    }
   });
 });
