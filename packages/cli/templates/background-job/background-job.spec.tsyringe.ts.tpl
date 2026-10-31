@@ -1,34 +1,56 @@
 import { describe, expect, it } from '{{tests.module}}';
+{{#unless job.protected}}
+{{#unless world.through}}
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
+{{/unless}}
+import { anActor } from '@ddd-ts-kit/auth/testing';
+{{/unless}}
+{{#if job.protected}}
+import { authorizationModule } from '@ddd-ts-kit/auth/di';
+import { holdersOf } from '@ddd-ts-kit/auth/testing';
+{{/if}}
+{{#unless world.through}}
 {{spec.diPlain}}
 {{spec.contextImports}}
-import type { Actor, Message } from '@ddd-ts-kit/kernel';
+{{/unless}}
+import type { Message } from '@ddd-ts-kit/kernel';
 import { earlierVersionOf } from '@ddd-ts-kit/testing';
+{{#unless world.through}}
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
+{{/unless}}
 {{job.permissionsImport}}
 import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
 {{job.specImport}}
+{{#if world.through}}
+{{world.import}}
+{{/if}}
+{{#if job.protected}}
 
-const clerk: Actor = { id: 'clerk-1', type: 'user', roles: ['clerk'], attributes: {} };
+const { holder: enqueuer, authorizer } = holdersOf({{job.granted}});
+const authorization = authorizationModule({ authorizer });
+{{/if}}
+{{#unless job.protected}}
 
-const authorization = authorizationModule({
-  authorizer: new RoleBasedAuthorizer({ roles: { clerk: [{{job.granted}}] } }),
-});
+const enqueuer = anActor().build();
+{{#unless world.through}}
+const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: {} }) });
+{{/unless}}
+{{/unless}}
 
 describe('{{name.title}}, once enqueued', () => {
   it('sends {{job.commandWords}}{{job.asActor}}', async () => {
-    const { application, sent } = {{spec.await}}arrange();
+    const { application, sent } = {{world.await}}arrange();
 
 {{#if job.hasPayload}}
     const payload: {{name.pascal}}Payload = {
 {{job.payloadSample}}
     };
 
-    await application.as(clerk, () => application.jobQueue.enqueue({{name.pascal}}BackgroundJob, payload));
+    await application.as(enqueuer, () => application.jobQueue.enqueue({{name.pascal}}BackgroundJob, payload));
 {{/if}}
 {{#unless job.hasPayload}}
-    await application.as(clerk, () => application.jobQueue.enqueue({{name.pascal}}BackgroundJob, {}));
+    await application.as(enqueuer, () => application.jobQueue.enqueue({{name.pascal}}BackgroundJob, {}));
 {{/unless}}
 
     expect(await application.backgroundJobs.runDue()).toMatchObject([{ job: '{{job.name}}', outcome: 'succeeded' }]);
@@ -36,15 +58,15 @@ describe('{{name.title}}, once enqueued', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]).toBeInstanceOf({{job.command}}Command);
 {{#if job.protected}}
-    expect(sent[0]).toMatchObject({ actor: { id: 'clerk-1' } });
+    expect(sent[0]).toMatchObject({ actor: { id: enqueuer.id } });
 {{/if}}
   });
 
   it('never runs a payload enqueued in an earlier shape: the job is dead with INVALID_JOB_PAYLOAD', async () => {
-    const { application, sent } = {{spec.await}}arrange();
+    const { application, sent } = {{world.await}}arrange();
     const earlierVersion = earlierVersionOf({{name.pascal}}BackgroundJob);
 
-    await application.as(clerk, () => application.jobQueue.enqueue(earlierVersion, {{job.misfit}}));
+    await application.as(enqueuer, () => application.jobQueue.enqueue(earlierVersion, {{job.misfit}}));
 
     await expect(application.backgroundJobs.runDue()).rejects.toMatchObject({
       code: 'INVALID_JOB_PAYLOAD',
@@ -60,7 +82,14 @@ describe('{{name.title}}, once enqueued', () => {
   it.todo('resumes from its checkpoint after an interrupted attempt');
 });
 
-{{spec.async}}function arrange() {
+{{#unless world.through}}
+{{world.comment}}
+{{/unless}}
+{{world.async}}function arrange() {
+{{#if world.through}}
+  const { application } = await {{world.builder}}({{world.options}});
+{{/if}}
+{{#unless world.through}}
 {{#if spec.assembles}}
   const context = {{spec.context}};
 
@@ -68,6 +97,7 @@ describe('{{name.title}}, once enqueued', () => {
   const application = createTestApplication({
     modules: [{{spec.modules}}],
   });
+{{/unless}}
 
   const sent: Message[] = [];
 

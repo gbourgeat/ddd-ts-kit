@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:ead93ecaba9313e8 -->
+<!-- translation-of: test-runners.md sha256:341966c28b8dca66 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -427,7 +427,7 @@ export default defineConfig(({ mode }) => ({
   resolve: { tsconfigPaths: true },
   test: {
     projects: [
-      { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },
+      { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS], isolate: false } },
       { extends: true, test: { name: 'integration', include: [INTEGRATION_SPECS] } },
     ],
     // ce qui est mesuré et le plancher de chaque couche : lus dans ddd-ts-kit.config.json
@@ -440,6 +440,14 @@ export default defineConfig(({ mode }) => ({
   (`maxWorkers: '50%'`) : une machine de développement les partage avec l'éditeur et les agents
   de code. `VITEST_MAX_WORKERS` fixe un autre nombre, pour un bac à sable plafonné sous les cœurs
   de son hôte ;
+- le projet `unit` tourne sans isolation (`isolate: false`) : ses *specs* ne partagent aucun état,
+  donc chaque *worker* évalue les modules d'un contexte une fois au lieu d'une fois par fichier de
+  *spec*, quatre à huit fois plus vite sur un projet généré de 33 fichiers de *specs* unitaires, et
+  l'exemple passe ses 251 fichiers de *specs* unitaires dans les deux cas (39 s isolé, 9 s sans).
+  Le budget d'un fichier laisse de côté le chargement de ses modules, il garde donc son sens. Un
+  module du projet qui garde un état d'un fichier de *spec* au suivant demande un graphe par
+  fichier : `isolate: true` dans le projet `unit` le rend. Le projet d'intégration et Jest gardent
+  leur isolation ;
 - une configuration de bout en bout séparée qui démarre toute l'application sur un port libre,
   sur un PostgreSQL dans le processus, sauf si une URL de base de données est donnée ;
 - des rapports JUnit et Cobertura pour GitLab, le rapporteur Actions pour GitHub ;

@@ -18,9 +18,6 @@ const OPTIONAL_STEPS = /\{\{#if (?:pm\.corepack|orm\.prisma|sdk\.on)\}\}\n[\s\S]
 /** An opt-in job of `--ci-extras`, innermost first: the source of a pipeline is what a project gets without any. */
 const EXTRA_BLOCK = /\{\{#if extras\.\w+\}\}\n(?:(?!\{\{#if)[\s\S])*?\{\{\/if\}\}\n/g;
 
-const UNIT_PROJECT_OF_THE_SOURCE =
-  "{\n  extends: true,\n  test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED] },\n};";
-
 /**
  * The CLI ships its own copy of the pipeline assets so that the published package is
  * self-contained. These tests are what keeps a copy from drifting: a template equals its
@@ -105,12 +102,7 @@ describe('pipeline templates', () => {
       .replaceAll(/^[ \t]*\{\{(?:#if decorators\.standard|\/if|#unless persistence\.hasDatabase|\/unless)\}\}\n/gm, '')
       .replace(", 'test/architecture/**/*.spec.ts'", '')
       .replaceAll('{{config.contextsDir}}', 'src/contexts')
-      .replaceAll('{{config.sourceRoot}}', 'src')
-      // With the architecture specs the unit project no longer fits one line: the formatter gives it several.
-      .replace(
-        "{\n  extends: true,\n  test: {\n    name: 'unit',\n    include: ['src/**/*.spec.ts'],\n    exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],\n  },\n};",
-        UNIT_PROJECT_OF_THE_SOURCE,
-      );
+      .replaceAll('{{config.sourceRoot}}', 'src');
 
     expect(rendered).toBe(source('vitest.config.ts'));
   });
@@ -293,6 +285,16 @@ describe('init --ci', () => {
     for (const config of [vitest, jest]) {
       expect(config).not.toMatch(/statements|thresholds|coverageThreshold:|exclude: \['.*(domain|infrastructure)/);
     }
+  });
+
+  it('runs the unit specs of a Vitest project without isolation, the integration specs and Jest with it, and says the way back', () => {
+    const vitest = read(initProject(), 'vitest.config.ts');
+    const unit = vitest.slice(vitest.indexOf('const UNIT_PROJECT'), vitest.indexOf('const INTEGRATION_PROJECT'));
+
+    expect(unit).toContain('    isolate: false,\n');
+    expect(unit).toContain('`isolate: true` gives each file its own graph again.');
+    expect(vitest.match(/isolate/g)).toHaveLength(2);
+    expect(read(initProject('--tests', 'jest'), 'jest.config.js')).not.toContain('isolate');
   });
 });
 

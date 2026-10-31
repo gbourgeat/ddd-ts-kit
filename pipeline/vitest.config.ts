@@ -11,7 +11,13 @@ const WORKERS = process.env.CI ? {} : { maxWorkers: '50%' };
 
 const UNIT_PROJECT: TestProjectInlineConfiguration = {
   extends: true,
-  test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED] },
+  test: {
+    name: 'unit',
+    include: ['src/**/*.spec.ts'],
+    exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],
+    // The unit specs share no state: each worker runs them in one module graph, the declarations of a context evaluated once rather than once per spec file. `isolate: true` gives each file its own graph again.
+    isolate: false,
+  },
 };
 
 const INTEGRATION_PROJECT: TestProjectInlineConfiguration = {

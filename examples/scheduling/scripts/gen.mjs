@@ -15,18 +15,19 @@ process.exit(run.status ?? 1);
 
 function summaryOf(text) {
   try {
-    const result = JSON.parse(text);
+    // A list that holds nothing is left out, and the paths are written from the directory they share, `root`.
+    const { root = '', created = [], updated = [], todos = [], notes = [], error } = JSON.parse(text);
 
-    if (result.created === undefined) {
+    if (error !== undefined) {
       return undefined;
     }
 
     const lines = [
       `ok: ${process.argv.slice(2).join(' ')}`,
-      `created (${result.created.length}): ${result.created.join(' ')}`,
-      `updated (${result.updated.length}): ${result.updated.join(' ')}`,
-      ...result.todos.map((todo) => `next ${todo.file}:${todo.line} ${todo.gist ?? todo.text}`),
-      ...result.notes.map((note) => `note: ${note}`),
+      `created (${created.length}): ${created.map((file) => `${root}${file}`).join(' ')}`,
+      `updated (${updated.length}): ${updated.map((file) => `${root}${file}`).join(' ')}`,
+      ...todos.map((todo) => `next ${root}${todo.file}:${todo.line} ${todo.gist ?? todo.text}`),
+      ...notes.map((note) => `note: ${note}`),
     ];
 
     return lines.join('\n') + '\n';

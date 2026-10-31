@@ -1,7 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-{{#if valueObjects.throwing}}
 import { expectRefusal } from '@ddd-ts-kit/testing';
-{{/if}}
 {{#if valueObjects.result}}
 import { unwrap } from '@ddd-ts-kit/kernel';
 {{/if}}
@@ -27,9 +25,7 @@ describe('{{name.title}}', () => {
     expectRefusal(() => {{name.pascal}}.create('  '), 'INVARIANT_VIOLATION');
 {{/if}}
 {{#if valueObjects.result}}
-    const result = {{name.pascal}}.create('  ');
-
-    expect(result.ok).toBe(false);
+    expectRefusal({{name.pascal}}.create('  '), 'INVARIANT_VIOLATION');
 {{/if}}
   });
 

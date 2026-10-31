@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cli, read } from './helpers';
+import { report } from './reports';
 import { initProject } from './support/init-project';
-import { jsonAt } from './support/json-at';
 
 const SHARED = 'src/contexts/billing/presentation/http/shared';
 
@@ -44,7 +44,7 @@ describe('generate schema', () => {
     const result = cli(root, 'generate', 'schema', 'shared-kernel', 'Money', '--json');
 
     expect(result.code).toBe(0);
-    expect(jsonAt(result.json(), 'created')).toEqual(['src/shared-kernel/presentation/money.schema.ts']);
+    expect(report(result).created).toEqual(['src/shared-kernel/presentation/money.schema.ts']);
 
     expect(read(root, 'src/shared-kernel/presentation/money.schema.ts')).toContain(
       "export const moneySchema = sharedSchema(\n  'Money',\n  customSchema<Record<string, unknown>>(",

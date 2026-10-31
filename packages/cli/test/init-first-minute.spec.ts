@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { cli, exists, EXPLICIT_STACK, read, tempDir, walk, write } from './helpers';
+import { report } from './reports';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
@@ -101,7 +102,7 @@ describe('the helper an adapter states its own policy with', () => {
   ])('joins a %s platform with the first adapter that names it, and is left alone by the next', (_style, flags) => {
     const root = initProject(...flags, '--context', 'billing:core');
 
-    expect(stringsAt(adapter(root, 'PaymentGateway').json(), 'created')).toContain(OWN_POLICY);
+    expect(report(adapter(root, 'PaymentGateway')).created).toContain(OWN_POLICY);
 
     expect(read(root, OWN_POLICY)).toContain(
       "import { adaptersWithOwnPolicy } from '@/platform/resilience/adapters-with-own-policy';",
@@ -109,9 +110,9 @@ describe('the helper an adapter states its own policy with', () => {
 
     write(root, OWN_POLICY, `${read(root, OWN_POLICY)}// kept\n`);
 
-    const second = adapter(root, 'TaxRates', '--decorators').json();
+    const second = report(adapter(root, 'TaxRates', '--decorators'));
 
-    expect([...stringsAt(second, 'created'), ...stringsAt(second, 'updated')]).not.toContain(OWN_POLICY);
+    expect([...second.created, ...second.updated]).not.toContain(OWN_POLICY);
     expect(read(root, OWN_POLICY)).toContain('// kept');
   });
 

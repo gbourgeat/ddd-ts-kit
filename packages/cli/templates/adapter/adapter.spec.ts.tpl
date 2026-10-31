@@ -26,7 +26,7 @@ class Unwired{{name.pascal}} extends Remote{{name.pascal}} {
   }
 }
 
-describe('Remote{{name.pascal}}', () => {
+describe('The remote {{name.words}}', () => {
   {{#if adapter.decorated}}
   it('sends again a call the outside system failed, and answers once it succeeds', async () => {
     const fakes = createAspectFakes();
@@ -39,13 +39,8 @@ describe('Remote{{name.pascal}}', () => {
     expect(await pending).toBe('answered');
     expect(adapter.calls).toBe(2);
   });
-  {{/if}}
-  {{#unless adapter.decorated}}
-  it('is an adapter of the port, built without argument until its transport is written', () => {
-    expect(new Remote{{name.pascal}}()).toBeInstanceOf(Remote{{name.pascal}});
-  });
-  {{/unless}}
 
+  {{/if}}
   it('refuses to send a call as long as its transport is not written, and names the operation', async () => {
     const adapter = new Unwired{{name.pascal}}();
 

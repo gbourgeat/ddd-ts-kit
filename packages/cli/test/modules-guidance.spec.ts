@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { checkJsonOf } from './check-support';
 import { cli, exists, read, write } from './helpers';
+import { report } from './reports';
 import { BILLING, projectWithModule } from './support/project-with-module';
 
 /** The credit note, an aggregate and its use case written in the module invoices, which the guidance specs build on. */
@@ -62,7 +63,7 @@ describe('what guides the move into modules, and what refuses it', () => {
       '--json',
     );
 
-    const places = (generated.json() as { todos: { file: string }[] }).todos.map((todo) => todo.file);
+    const places = report(generated).todos.map((todo) => todo.file);
 
     expect(generated.code).toBe(0);
     expect(places.filter((file) => file.includes('/application/'))).not.toEqual([]);

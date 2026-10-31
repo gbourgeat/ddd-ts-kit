@@ -13,9 +13,14 @@ import {
   WORLD_IMPORT,
 } from './support/billing-world-project';
 
+const REMIND_LATER = ['generate', 'background-job', 'billing', 'RemindInvoices', '--command', 'CancelInvoice'];
+const DUNNING = ['generate', 'process', 'billing', 'Dunning', '--term', 'Dunning=Reminding until paid'];
+
 interface Generated {
   readonly root: string;
-  readonly notes: Readonly<Record<'before' | 'command' | 'query' | 'search' | 'job', string[]>>;
+  readonly notes: Readonly<
+    Record<'before' | 'command' | 'query' | 'search' | 'job' | 'background' | 'process', string[]>
+  >;
 }
 
 let declared: Generated | undefined;
@@ -41,6 +46,8 @@ function generateAroundTheWorld(): Generated {
       query: run('generate', 'query', 'billing', 'GetInvoice', '--permission', 'invoice.view').notes,
       search: run(...SEARCH).notes,
       job: run(...REMIND).notes,
+      background: run(...REMIND_LATER).notes,
+      process: run(...DUNNING).notes,
     },
   };
 }
@@ -142,6 +149,28 @@ describe('a query and a job, on a container, after the world of their context', 
     expect(hint(notes.job)).toEqual([]);
   });
 
+  it('enqueues a background job as a holder of the permission of its command, through the world', () => {
+    const spec = read(root, `${UNIT}/remind-invoices.background-job.spec.ts`);
+
+    expect(spec).toContain(
+      "const { holder: enqueuer, authorizer } = holdersOf(billingPermissions['invoice.cancel']);\nconst authorization = authorizationModule({ authorizer });",
+    );
+
+    expect(spec).toContain('  const { application } = await aBillingWorld({ modules: [authorization] });');
+    expect(spec).toContain('expect(sent[0]).toMatchObject({ actor: { id: enqueuer.id } });');
+    expect(spec).not.toMatch(/createTestApplication|RoleBasedAuthorizer|platformTestModule/);
+    expect(hint(notes.background)).toEqual([]);
+  });
+
+  it('runs the timeout of a process through the world', () => {
+    const spec = read(root, `${UNIT}/dunning-timeout.background-job.spec.ts`);
+
+    expect(spec).toContain('  const { application } = await aBillingWorld();\n\n  return application;');
+    expect(spec).toContain('    const application = await arrange();');
+    expect(spec).not.toMatch(/createTestApplication|RoleBasedAuthorizer|platformTestModule/);
+    expect(hint(notes.process)).toEqual([]);
+  });
+
   it('writes no world nobody asked for', () => {
     const fresh = billingProject('specs-world-not-written');
 
@@ -227,6 +256,17 @@ describe('the specs of billing, wired by hand, after its world', () => {
 
     expect(read(root, `${UNIT}/remind-overdue.job.spec.ts`)).toContain(
       '  const { commandBus } = await aBillingWorld();',
+    );
+
+    run(...REMIND_LATER);
+    run(...DUNNING);
+
+    expect(read(root, `${UNIT}/remind-invoices.background-job.spec.ts`)).toContain(
+      '  const { commandBus, clock, ids, executionScope } = await aBillingWorld();',
+    );
+
+    expect(read(root, `${UNIT}/dunning-timeout.background-job.spec.ts`)).toContain(
+      '  const { commandBus, clock, ids, executionScope, unitOfWork } = await aBillingWorld();',
     );
   });
 });

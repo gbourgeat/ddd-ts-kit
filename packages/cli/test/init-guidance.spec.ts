@@ -258,6 +258,21 @@ describe('the rule files and the README init writes', () => {
     }
   });
 
+  it('tells of event sourcing in the rule files of the layers, and in the instructions of Copilot, only once it is on', () => {
+    const off = initProject(...NPM);
+    const on = initProject(...NPM, '--event-sourcing', 'on');
+
+    for (const layer of ['domain', 'application', 'infrastructure']) {
+      expect(read(off, `.claude/rules/${layer}.md`), layer).not.toMatch(/event-sourc/i);
+      expect(read(off, `.github/instructions/${layer}.instructions.md`), layer).not.toMatch(/event-sourc/i);
+      expect(read(on, `.claude/rules/${layer}.md`), layer).toMatch(/event-sourced/);
+    }
+
+    expect(read(on, '.claude/rules/domain.md')).toContain(
+      'chosen per aggregate (`generate aggregate <context> <Name> --event-sourced`)',
+    );
+  });
+
   it('names the rules of the ports and of the jobs where they apply', () => {
     const root = initProject(...NPM);
     const rule = (name: string): string => read(root, `.claude/rules/${name}.md`);

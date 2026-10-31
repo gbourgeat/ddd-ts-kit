@@ -1,0 +1,3 @@
+**The rule files of the domain, application and infrastructure layers tell of event sourcing only in a project that turned it on.** With `eventSourcing: "off"`, the default, `.claude/rules/domain.md`, `application.md` and `infrastructure.md` and their Copilot copies under `.github/instructions/` leave out the paragraphs on event-sourced aggregates, the event store and `EventSourcedRepository`, which an agent read in every session for an option the project refuses. `init --force --event-sourcing on` writes them.
+
+To move: nothing to do; a project already generated keeps the paragraphs until it runs `init --force`.

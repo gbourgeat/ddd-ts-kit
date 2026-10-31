@@ -2,13 +2,14 @@ import { exitCodeOf, type WorkspaceReport } from '../workspace';
 import type { Arguments } from './arguments';
 import type { Io } from './io';
 import { stdoutJson } from '../json/stdout-json';
+import { jsonReport } from './json-report';
 
 /** Prints what a command wrote (or would write), then where the next human decisions are, one line each; answers its exit code. */
 export function printReport(io: Io, args: Arguments, report: WorkspaceReport): number {
   const dryRun = args.flag('dry-run');
 
   if (args.json) {
-    io.out(stdoutJson({ dryRun, ...report }));
+    io.out(stdoutJson(jsonReport(report, dryRun)));
 
     return exitCodeOf(report);
   }
