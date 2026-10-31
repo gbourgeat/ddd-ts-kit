@@ -125,7 +125,9 @@ taken on another machine, or whose holder cannot be read, is taken over a minute
 the config: the contexts and their upstreams, the rules, the limits, the deviations and every
 other key stay as written, and the stack changes only where a flag names a choice
 (`init --force --logger pino` changes the logger; a combination the recorded stack cannot take
-is refused as for a new project). The composition root, the proof that each context wires alone
+is refused as for a new project). The flags of the first `init` may be passed again with `--force`:
+a preset is applied once, so `--preset identity` finds its context written, leaves it as the team
+has it, and says so in a note. The composition root, the proof that each context wires alone
 and the registry of permissions are rewritten from their templates, then the declared contexts
 are wired into them again, and the erasure of each context is listed again in the copies of the
 privacy folder; what another generator had added to a file of the platform (the value of a
