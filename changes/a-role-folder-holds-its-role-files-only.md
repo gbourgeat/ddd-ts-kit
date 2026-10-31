@@ -1,0 +1,3 @@
+**A role folder holds its role files and nothing else: a barrel, a JavaScript file and a port with no abstract class are reported.** `naming/suffix` no longer lets an `index.ts` through in a role folder that has a suffix, alias or not; `tree/closed` reports a `.js`, `.mjs`, `.cjs`, `.jsx`, `.tsx`, `.mts` or `.cts` file anywhere in a context, which no rule read; `ports/abstract-class`, in `ddd-ts-kit check` and in ESLint, reports a port file that declares no class at all, such as `export type InvoiceRepository = { ... }` or a token alone.
+
+To move: import each file of a role folder by its own path and delete its `index.ts`; write a `.js` file of a context in TypeScript, or delete it if a build wrote it; declare each port as `export abstract class` with abstract members.

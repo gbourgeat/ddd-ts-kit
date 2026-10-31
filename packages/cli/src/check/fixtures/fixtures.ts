@@ -43,6 +43,7 @@ import { NEST_FIXTURES } from './nest-fixtures';
 import { OUTBOX_FIXTURES } from './outbox-fixtures';
 import { PERSISTENCE_FIXTURES } from './persistence-fixtures';
 import { PORTS_FIXTURES } from './ports-fixtures';
+import { ROLE_FOLDER_FIXTURES } from './role-folder-fixtures';
 import { PURITY_FIXTURES } from './purity-fixtures';
 import { SCHEDULING_FIXTURES } from './scheduling-fixtures';
 import { SHARED_KERNEL_FIXTURES } from './shared-kernel-fixtures';
@@ -118,6 +119,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...TEST_FIXTURES,
   ...TRACING_FIXTURES,
   ...TREE_FIXTURES,
+  ...ROLE_FOLDER_FIXTURES,
   ...VALUE_OBJECT_FILE_FIXTURES,
   ...MODEL_FUNCTION_FIXTURES,
 ];

@@ -17,6 +17,7 @@ A port is an abstract class with abstract members only. The class is the contrac
 - a `private`, `protected` or `#` member
 - a method with a body, a property with an initializer, a member that is not `abstract`
 - an exported `interface`: a port is declared as an abstract class
+- a port file that declares no class at all, a type or a token alone
 
 Incorrect:
 
@@ -54,7 +55,7 @@ export abstract class InvoiceRepository extends Repository<Invoice> {}
 
 A port may extend another one: the kernel `Repository<A>`, or a port of the same context. One member is allowed besides the abstract ones: `static readonly tokenKey = '<package>.<Port>'`, a string literal that gives the port one identity when its package is loaded twice. A value that is not a port (settings, a database handle) is typed the same way, by an abstract class with `abstract readonly` properties.
 
-An exported `type` alias is not reported: the shape of the data that travels through the port may be a type. An interface that is not exported is left alone too.
+An exported `type` alias beside the class is not reported: the shape of the data that travels through the port may be a type. An interface that is not exported is left alone too. A file with neither a class nor an exported interface is reported once, on its first line.
 
 ## Options
 
