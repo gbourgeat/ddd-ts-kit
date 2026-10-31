@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/testing",
-  "version": "0.105.0",
+  "version": "0.106.0",
   "description": "Readable tests without mocks: test data builders, given/when/then scenarios and contract suites shared by fakes and real adapters.",
   "keywords": [
     "ddd",
@@ -77,13 +77,13 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.105.0"
+    "@ddd-ts-kit/kernel": "0.106.0"
   },
   "devDependencies": {
-    "@ddd-ts-kit/aspects": "0.105.0",
-    "@ddd-ts-kit/events": "0.105.0",
+    "@ddd-ts-kit/aspects": "0.106.0",
+    "@ddd-ts-kit/events": "0.106.0",
     "@faker-js/faker": "^10.6.0",
-    "@ddd-ts-kit/scheduling": "0.105.0"
+    "@ddd-ts-kit/scheduling": "0.106.0"
   },
   "peerDependencies": {
     "@faker-js/faker": ">=9.0.0"
