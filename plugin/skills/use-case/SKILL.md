@@ -200,7 +200,7 @@ When the story has an acceptance spec, run `npm run test:e2e -- test/acceptance/
 scenario naming this row that now passes fails the run, asking to remove its `pending(...)`;
 remove it, and nothing else of the scenario. One that still fails on what this row should do
 means the slice is not done. A scenario that seems wrong is never changed to pass: skill
-`ddd-ts-kit:testing`, "Acceptance of a story".
+`ddd-ts-kit:testing`, `acceptance.md`.
 
 The slice runs only when the started application can do it, which `verify-slice` and the specs on
 fakes do not start: before it is `done`, run
