@@ -150,6 +150,40 @@ describe('init --preset identity', () => {
   });
 });
 
+describe('the tenant of a request in a project with the identity preset and tenants', () => {
+  const BOUNDARY = 'src/platform/auth/authentication/http-boundary.ts';
+
+  it('lets each request name the organisation it works in, among those of the person', () => {
+    const RESOLVER = 'resolveTenant: firstTenantOf(tenantFromHeader(), tenantFromClaim()),';
+    const keycloak = initProject('--authn', 'keycloak', '--tenancy', 'shared-table', '--preset', 'identity');
+    const jwt = initProject('--tenancy', 'shared-table', '--orm', 'knex', '--errors', 'sentry', '--preset', 'identity');
+    const alone = initProject('--authn', 'keycloak', '--preset', 'identity');
+
+    expect(read(keycloak, BOUNDARY)).toContain(RESOLVER);
+    expect(read(keycloak, BOUNDARY)).toContain('readonly resolveTenant: TenantResolver;');
+    expect(read(jwt, BOUNDARY)).toContain(RESOLVER);
+    expect(read(alone, BOUNDARY)).not.toContain('resolveTenant');
+  });
+
+  it('keeps the resolver of a boundary that names the tenant of a request already', () => {
+    const cached = initProject('--tenancy', 'shared-table', '--http-cache', 'varnish', '--preset', 'identity');
+
+    expect(read(cached, BOUNDARY)).toContain('resolveTenant: tenantFromHeader(),');
+    expect(read(cached, BOUNDARY)).not.toContain('firstTenantOf');
+  });
+
+  it('leaves a boundary the team rewrote alone, with what to add', () => {
+    const root = initProject('--tenancy', 'shared-table', '--orm', 'knex');
+    const rewritten = 'export { httpBoundary } from "./elsewhere";\n';
+
+    fs.writeFileSync(path.join(root, BOUNDARY), rewritten);
+    const result = cli(root, 'generate', 'context', 'people', '--preset', 'identity', '--json');
+
+    expect(read(root, BOUNDARY)).toBe(rewritten);
+    expect(result.stdout).toContain('name the organisation each request works in');
+  });
+});
+
 describe('the passing line of check in the guide of a project with the identity preset and tenants', () => {
   it.each(['drizzle', 'knex', 'prisma'])('is what check prints on the fresh project (%s)', (orm) => {
     const root = initProject('--tenancy', 'shared-table', '--orm', orm, '--preset', 'identity');

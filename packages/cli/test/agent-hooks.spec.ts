@@ -3,41 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, exists, read, tempDir, write } from './helpers';
+import { commitAll } from './support/commit-all';
 import { initProject } from './support/init-project';
 import { installKit } from './support/install-kit';
 import { NPM } from './support/npm';
 import { readJson } from './support/read-json';
-import { commitAll } from './support/commit-all';
-
-const SETTINGS = '.claude/settings.json';
-const GATE = '.claude/hooks/production-gate.mjs';
-const REFERENCE = '.claude/hooks/change-reference.mjs';
-
-interface HookRun {
-  readonly status: number | null;
-  readonly stdout: string;
-  readonly stderr: string;
-}
-
-/** Runs a hook the way Claude Code does: the JSON of the tool call on its standard input. */
-function runHook(root: string, hook: string, input: unknown, env: Record<string, string> = {}): HookRun {
-  const { status, stdout, stderr } = spawnSync(process.execPath, [path.join(root, hook)], {
-    cwd: root,
-    input: JSON.stringify(input),
-    encoding: 'utf8',
-    env: { ...process.env, RELEASE_APPROVAL: '', ...env },
-  });
-
-  return { status, stdout, stderr };
-}
-
-const bash = (command: string): unknown => ({ tool_name: 'Bash', tool_input: { command } });
-
-const edit = (root: string, file: string): unknown => ({
-  tool_name: 'Edit',
-  cwd: root,
-  tool_input: { file_path: path.join(root, file) },
-});
+import { bash, GATE, REFERENCE, runHook, runLate, SETTINGS } from './support/regulated-hooks';
 
 describe('the production gate of the regulated profile', () => {
   const root = initProject(...NPM, '--agent-profile', 'regulated');
@@ -127,6 +98,10 @@ describe('the production gate of the regulated profile', () => {
     expect(runHook(root, GATE, bash('pnpm run deploy-non-prod'), configured).status).toBe(0);
     expect(runHook(root, GATE, bash('fly deploy --app api-pre-prod'), configured).status).toBe(0);
   });
+});
+
+describe('the production gate of the regulated profile, on the commands it lets through', () => {
+  const root = initProject(...NPM, '--agent-profile', 'regulated');
 
   it('lets every other command through, and reads the environments and actions of the team', () => {
     expect(runHook(root, GATE, bash('npm run db:migrate')).status).toBe(0);
@@ -153,84 +128,22 @@ describe('the production gate of the regulated profile', () => {
       encoding: 'utf8',
     });
 
-    expect(unreadable.status).toBe(0);
-  });
-});
-
-describe('the change reference of the regulated profile', () => {
-  const root = initProject(...NPM, '--agent-profile', 'regulated');
-
-  it('is registered on the Edit and Write tools, and asks for a change reference on a migration or the containers, without blocking', () => {
-    expect(readJson(root, SETTINGS)).toMatchObject({
-      hooks: {
-        PreToolUse: expect.arrayContaining([
-          {
-            matcher: 'Edit|Write',
-            hooks: [
-              {
-                type: 'command',
-                command: 'node "$CLAUDE_PROJECT_DIR/.claude/hooks/change-reference.mjs"',
-                timeout: 10,
-              },
-            ],
-          },
-        ]),
-      },
-    });
-
-    for (const file of [
-      'migrations/0001_add_invoices.sql',
-      'prisma/migrations/20260101_init/migration.sql',
-      'docker/varnish/default.vcl',
-      'Dockerfile',
-      'docker-compose.yml',
-    ]) {
-      const asked = runHook(root, REFERENCE, edit(root, file));
-
-      expect(asked.status, file).toBe(0);
-
-      expect(JSON.parse(asked.stdout)).toEqual({
-        hookSpecificOutput: {
-          hookEventName: 'PreToolUse',
-          permissionDecision: 'ask',
-          permissionDecisionReason: expect.stringContaining(
-            `change-reference: ${file} is a migration or part of the containers`,
-          ),
-        },
-      });
-
-      expect(asked.stdout).toContain('record it as the trailer `Change: <id>` of the commit that holds this file');
-    }
+    expect(unreadable.status).toBe(2);
+    expect(unreadable.stderr).toContain('the input is not JSON');
   });
 
-  it('says nothing for any other file, another tool, a file outside the project or an unreadable input', () => {
-    expect(runHook(root, REFERENCE, edit(root, 'src/contexts/billing/domain/invoice.ts')).stdout).toBe('');
-    expect(runHook(root, REFERENCE, edit(root, 'docs/migrations-plan.md')).stdout).toBe('');
+  it.each([null, 'x', 7])('refuses an input that is JSON but no object: %s', (scalar) => {
+    const run = runHook(root, GATE, scalar);
 
-    expect(
-      runHook(root, REFERENCE, { tool_name: 'Read', cwd: root, tool_input: { file_path: 'Dockerfile' } }).stdout,
-    ).toBe('');
+    expect(run.status).toBe(2);
+    expect(run.stderr).toContain('the input is not a JSON object');
+  });
 
-    expect(
-      runHook(root, REFERENCE, {
-        tool_name: 'Edit',
-        cwd: root,
-        tool_input: { file_path: '/elsewhere/migrations/a.sql' },
-      }).stdout,
-    ).toBe('');
+  it('waits for an input that arrives late, and judges it', async () => {
+    const late = await runLate(root, GATE, JSON.stringify(bash('pnpm run deploy:production')), 300);
 
-    expect(
-      runHook(root, REFERENCE, { tool_name: 'Write', tool_input: { file_path: 'docker-compose.yml' } }).stdout,
-    ).toContain('"ask"');
-
-    const unreadable = spawnSync(process.execPath, [path.join(root, REFERENCE)], {
-      cwd: root,
-      input: '{',
-      encoding: 'utf8',
-    });
-
-    expect(unreadable.status).toBe(0);
-    expect(unreadable.stdout).toBe('');
+    expect(late.status).toBe(2);
+    expect(late.stderr).toContain('no approval is set');
   });
 });
 
@@ -271,7 +184,7 @@ describe('the hooks of the regulated profile, under init again and doctor', () =
     expect(result.code).toBe(1);
 
     expect(result.stdout).toContain(
-      '  permission hooks.change-reference: missing (a PreToolUse hook on Edit|Write running node "$CLAUDE_PROJECT_DIR/.claude/hooks/change-reference.mjs")',
+      '  permission hooks.change-reference: missing (a PreToolUse hook on Edit|Write|MultiEdit running node "$CLAUDE_PROJECT_DIR/.claude/hooks/change-reference.mjs")',
     );
 
     expect(result.stdout).not.toContain('hooks.production-gate');

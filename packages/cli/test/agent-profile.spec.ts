@@ -119,6 +119,47 @@ describe('init --agent-profile regulated, and the install of the stack', () => {
     expect(jsonAt(sandboxOf(pnpm), 'network', 'allowedDomains')).toEqual(['registry.npmjs.org']);
   });
 
+  it('reports a sandbox emptied of its content: a wildcard host, credential lists that deny something else or hold a bare text', () => {
+    const root = initProject(...NPM, '--agent-profile', 'regulated');
+    const settings = readJson(root, SETTINGS) as Record<string, unknown>;
+
+    write(
+      root,
+      SETTINGS,
+      JSON.stringify({
+        ...settings,
+        sandbox: {
+          ...sandboxOf(root),
+          network: { allowedDomains: ['*', 'registry.npmjs.org'] },
+          credentials: {
+            files: ['~/.npmrc', { path: '/nowhere', mode: 'deny' }],
+            envVars: [{ name: 'X', mode: 'deny' }],
+          },
+        },
+      }),
+    );
+
+    const doctor = cli(root, 'doctor');
+
+    expect(doctor.stdout).toContain('permission sandbox.network.allowedDomains: missing');
+    expect(doctor.stdout).toContain('permission sandbox.credentials.files: missing (4 denied)');
+    expect(doctor.stdout).toContain('permission sandbox.credentials.envVars: missing (9 denied)');
+    expect(cli(initProject(...NPM, '--agent-profile', 'regulated'), 'doctor').stdout).not.toContain('sandbox.');
+  });
+
+  it.each([
+    ['defaultMode', { defaultMode: 'bypassPermissions' }, 'permission permissions.defaultMode'],
+    ['Bash(*)', { allow: ['Bash(*)'] }, 'permission permissions.allow'],
+    ['Bash', { allow: ['Bash'] }, 'permission permissions.allow'],
+  ])('reports a regulated project whose permissions have no gate left: %s', (_, change, line) => {
+    const root = initProject(...NPM, '--agent-profile', 'regulated');
+    const settings = readJson(root, SETTINGS) as { permissions: Record<string, unknown> };
+
+    write(root, SETTINGS, JSON.stringify({ ...settings, permissions: { ...settings.permissions, ...change } }));
+
+    expect(cli(root, 'doctor').stdout).toContain(line);
+  });
+
   it('adds the entries of a stack chosen later to the lists a project already holds, and doctor names a missing one', () => {
     const root = initProject(...NPM, '--orm', 'drizzle', '--agent-profile', 'regulated');
     const settings = readJson(root, SETTINGS) as Record<string, unknown>;

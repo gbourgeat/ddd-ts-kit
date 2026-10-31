@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bb30072fb47eb5e2 -->
+<!-- translation-of: README.md sha256:2be6d72d28a74fb9 -->
 
 # @ddd-ts-kit/auth
 
@@ -369,7 +369,8 @@ Quand une politique affine la permission d'un cas d'usage, la garde enveloppe au
 gestionnaire, en dernier sur le bus et à l'intérieur de l'unité de travail : un gestionnaire qui
 rend la main sans interroger `Access` sur cette permission voit son résultat refusé par
 `PolicyNotAskedError` et sa modification annulée, puisque la règle de la politique n'a jamais été
-appliquée. Un bus à vous exécute cette partie autour de son gestionnaire, avec
+appliquée ; celui qui répond par un succès alors qu'aucune question sur elle
+n'a été accordée, par `PolicyDenialIgnoredError` (un `Result` en échec ou une exception est son propre refus). Un bus à vous exécute cette partie autour de son gestionnaire, avec
 `.aroundHandler((message, next, info) => resolve(UseCaseGuard).within?.(message, next, info) ?? next())`.
 Sans le conteneur, `policiesAskedMiddleware({ map, refined })` fait la même vérification. Seules
 les questions posées à `PolicyAccess` sont vues : un projet qui lie son propre `Access` passe
@@ -862,7 +863,12 @@ export const authorizer = new PolicyBasedAuthorizer({
 
 Un `forbid` qui correspond l'emporte sur tous les `permit` ; sans `permit` qui corresponde, la
 réponse est non. Les conditions se composent avec `anyOf`, `allOf` et `not`, et voient
-`{ actor, permission, resource?, attributes, context, now }`.
+`{ actor, permission, resource?, attributes, context, now }`. Un élément que le port ne tient pas
+ne répond aucun attribut, et une règle qui en compare un avec rien peut le laisser passer :
+`known('amount')` tient quand le port a répondu chaque attribut nommé, de sorte qu'un `forbid`
+refuse un élément dont il ne sait rien
+(`forbid('invoice.no-void-of-an-unknown-invoice', [voiding], not(known('amount')))`) et qu'un
+`permit` exige ce qu'il lit.
 
 `explain` nomme ce que l'on sait de l'élément, par nom d'attribut et jamais par valeur, puis
 chaque politique qui porte sur la permission et si elle a tenu. Pourquoi un responsable ne peut

@@ -9,6 +9,7 @@ export interface InvitationColumns {
   readonly role: MemberRole;
   readonly token_hash: string;
   readonly invited_by: string;
+  readonly delegation_id: string | null;
   readonly issued_at: Date;
   readonly expires_at: Date;
   readonly status: InvitationStatus;

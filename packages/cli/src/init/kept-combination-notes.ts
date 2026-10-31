@@ -21,7 +21,7 @@ function auditWithoutOrm(file: string): string {
 
 /** Where the file is written: in its folder, or flat where a version before the folders put it and --force keeps it. */
 function auditFile(config: Config, flat: Relocation): string {
-  const inFolder = `${config.platformDir}/audit/create-audit`;
+  const inFolder = `${config.platformDir}/audit/create-audit-trail`;
 
   return `${flat.moved.get(inFolder) ?? inFolder}.ts`;
 }

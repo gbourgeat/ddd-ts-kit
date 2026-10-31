@@ -22,6 +22,7 @@ export * from './personal-data-export-document';
 export * from './personal-data-export-format';
 export * from './personal-data-purge-report';
 export * from './personal-data-record';
+export * from './personal-data-record-event';
 export * from './personal-data-value';
 export * from './personal-data-value-of';
 export * from './personal-fields';

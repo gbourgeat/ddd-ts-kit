@@ -90,6 +90,7 @@ model {{context.pascal}}Invitation {
   role           {{context.pascal}}MemberRole
   tokenHash      String                            @unique @map("token_hash")
   invitedBy      String                            @map("invited_by")
+  delegationId   String?                           @map("delegation_id")
   issuedAt       DateTime                          @map("issued_at") @db.Timestamptz(3)
   expiresAt      DateTime                          @map("expires_at") @db.Timestamptz(3)
   status         {{context.pascal}}InvitationStatus

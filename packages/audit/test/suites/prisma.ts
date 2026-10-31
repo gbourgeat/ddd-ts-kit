@@ -7,9 +7,10 @@ import { auditTablesSql } from '../../src/sql/audit-tables-sql';
 import { databaseError } from '../../src/prisma/database-error';
 import { PrismaAuditTrail, auditGuardStatements } from '../../src/prisma';
 import type { AuditTrailOptions } from '../../src';
-import { auditTrailContract } from '../../src/testing';
+import { archivableAuditTrailContract, auditTrailContract } from '../../src/testing';
 import { PrismaClient } from '../generated/client/client';
 import { archiveGuardSpecs, archiveSpecs, type ArchiveFixture } from '../support/archive-specs';
+import { sqlArchiveFixture } from '../support/archive-fixture';
 import { startPostgres, type TestPostgres } from '../support/postgres';
 import { AUDIT_DDL_PATH } from '../support/prisma/generate';
 import { sqlTrailSpecs } from '../support/sql-trail-specs';
@@ -107,6 +108,20 @@ auditTrailContract(runner, {
   },
 });
 
+archivableAuditTrailContract(runner, {
+  name: 'PrismaAuditTrail in a schema of its own',
+  createTrail: async () => {
+    current = await fixture();
+
+    return current.trail;
+  },
+  cut: async (chain, fromSequence) => {
+    await current.run('alter table $table disable trigger "audit_entries_no_rewrite"');
+    await current.run(`delete from $table where "chain" = '${chain}' and "sequence" >= ${fromSequence}`);
+    await current.run('alter table $table enable trigger "audit_entries_no_rewrite"');
+  },
+});
+
 sqlTrailSpecs({ name: 'PrismaAuditTrail', real: REAL_SERVER, create: fixture });
 
 describe('auditPrismaModels', () => {
@@ -194,7 +209,7 @@ async function tampered(current: SqlTrailFixture, id: string): Promise<void> {
 async function archiveFixture(): Promise<ArchiveFixture> {
   const created = await fixture();
 
-  return { trail: created.trail, tamper: (id) => tampered(created, id), run: created.run };
+  return sqlArchiveFixture(created.trail, (id) => tampered(created, id), created.run);
 }
 
 archiveSpecs('PrismaAuditTrail', archiveFixture);

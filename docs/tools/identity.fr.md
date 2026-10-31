@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:51d257df7f08952b -->
+<!-- translation-of: identity.md sha256:9df041bd5ef2a3a4 -->
 
 # Identité : Keycloak ou simple OIDC et JWT
 
@@ -244,8 +244,9 @@ par `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_AUDIENCE` et le facultatif
 le profil `identity`) et un fichier de realm avec le client de l'API, un client public avec
 l'octroi direct, ses *mappers* d'audience et de *tenant*, un rôle de realm et deux utilisateurs
 de démonstration, pour le développement local seulement. `init --authn none` écrit un
-authentificateur de développement qui fait confiance à l'en-tête `x-development-actor` et refuse
-d'être construit en production. Les *specs* de bout en bout générées signent leurs propres
+authentificateur de développement qui fait confiance à l'en-tête `x-development-actor`, en
+développement et en test seulement : l'application refuse de démarrer sans `NODE_ENV`, et avec
+`NODE_ENV=production`. Les *specs* de bout en bout générées signent leurs propres
 jetons dans le test. Chaque route déclare sa `security`, et le type de route refuse celle qui ne
 le fait pas (`authz/declared` dans la [référence de l'architecture](../ARCHITECTURE.fr.md)).
 
@@ -326,11 +327,18 @@ n'est pas exécuté contre un vrai Keycloak par le *pipeline* du kit. Voir
   *claim* `organization` : elles sont les `tenants` de l'acteur, et chaque requête HTTP nomme
   celui dans lequel elle travaille (`x-tenant-id`) ; une requête sans lui ne travaille dans aucun
   *tenant*.
+- **Un client n'envoie pas `x-tenant-id` pour une organisation dont la personne n'est pas encore
+  membre.** La bordure tient chaque requête authentifiée aux *tenants* de son jeton, donc un
+  en-tête qui nomme l'organisation d'une invitation pas encore acceptée, ou d'une organisation sur
+  le point d'être ouverte, est refusé par un 403 sur chaque route. Les routes du contexte
+  d'identité qui viennent avant une appartenance (provisionner le compte, accepter ou décliner une
+  invitation, ouvrir une organisation) ne travaillent dans aucun *tenant* : appelez-les sans
+  l'en-tête, puis avec lui une fois que le jeton suivant nomme l'organisation.
 - **Une portée n'est pas un rôle.** La correspondance par défaut ne lit jamais `scope` comme des
   rôles : un jeton qui ne porte que des portées donne un acteur sans rôle. Un fournisseur dont
   les jetons ne portent aucun *claim* de rôle a besoin d'un `toActor` qui les fait correspondre.
 - **Le realm généré et l'authentificateur de développement par en-tête sont pour un usage
-  local.** Le second lève une erreur en production, à dessein.
+  local.** Le second n'est construit que là où `NODE_ENV` dit `development` ou `test`, à dessein.
 - **L'authentification n'est pas l'autorisation.** Le *preset* remplit `actor.roles` ; ce qu'un
   rôle peut faire se décide dans la couche application. Voir
   [authentification et autorisation](../concepts/authentication-and-authorization.fr.md).

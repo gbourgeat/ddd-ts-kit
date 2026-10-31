@@ -34,6 +34,7 @@ export function auditFiles(config: Config): InitFile[] {
 
   return [
     file('create-audit.ts'),
+    file('create-audit-trail.ts'),
     file('audited-events.ts'),
     ...when(hasModule, [file('audit.module.ts', family)]),
     ...when(

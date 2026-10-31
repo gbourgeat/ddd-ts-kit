@@ -3,7 +3,16 @@ import { exists, read, write } from './helpers';
 import { git } from './support/git';
 import { initProject } from './support/init-project';
 
-const ENVIRONMENT_FILES = ['.env', '.env.local', '.env.production', '.env.development.local', '.env.test'];
+const ENVIRONMENT_FILES = [
+  '.env',
+  '.env.local',
+  '.env.production',
+  '.env.development.local',
+  '.env.test',
+  '.env.staging',
+  '.env.ci',
+  '.envrc',
+];
 
 describe('the files init keeps out of version control and out of the image', () => {
   it('ignores every environment file but the example, which is tracked', () => {
@@ -30,7 +39,7 @@ describe('the files init keeps out of version control and out of the image', () 
   it('leaves every environment file but the example out of the build context of the image', () => {
     const lines = read(initProject(), '.dockerignore').split('\n');
 
-    expect(lines).toEqual(expect.arrayContaining(['.env', '.env.*', '!.env.example']));
+    expect(lines).toEqual(expect.arrayContaining(['.env', '.envrc', '.env.*', '!.env.example']));
     expect(lines.indexOf('!.env.example')).toBeGreaterThan(lines.indexOf('.env.*'));
   });
 });

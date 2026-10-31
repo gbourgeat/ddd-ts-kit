@@ -1,3 +1,5 @@
+import { ERASED_PERSONAL_DATA } from './erased-personal-data';
+import { isErasedValue } from './is-erased-value';
 import { isStoredData } from './is-stored-data';
 import { isStoredList } from './is-stored-list';
 import type { StoredData } from './stored-data';
@@ -15,8 +17,13 @@ export class StoredEventData {
     private readonly where: string,
   ) {}
 
+  /** A text; a personal value whose subject was erased reads `ERASED_PERSONAL_DATA`. */
   text(field: string): string {
     const value = this.data[field];
+
+    if (isErasedValue(value)) {
+      return ERASED_PERSONAL_DATA;
+    }
 
     if (typeof value !== 'string') {
       throw this.unreadable(field, 'a text');
@@ -60,12 +67,50 @@ export class StoredEventData {
     return date;
   }
 
+  /** A date that may be absent; a personal date whose subject was erased reads as absent. */
   optionalInstant(field: string): Date | undefined {
-    return this.optionalText(field) === undefined ? undefined : this.instant(field);
+    return this.optionalText(field) === undefined || this.isErased(field) ? undefined : this.instant(field);
+  }
+
+  /**
+   * Whether the field held a personal value whose subject was erased: the key that sealed it is
+   * gone. Told by what the cipher opens such a value into, an `ErasedValue`, never by its text: a
+   * text that reads `[erased]` is a text.
+   */
+  isErased(field: string): boolean {
+    return isErasedValue(this.data[field]);
+  }
+
+  /**
+   * A personal value, read by `read` from its text (a value object, a parsed code), or `undefined`
+   * when the field is absent or its subject was erased. `read` never sees `ERASED_PERSONAL_DATA`,
+   * so a value that is not free text keeps the aggregate readable after an erasure.
+   */
+  personal<T>(field: string, read: (text: string) => T): T | undefined {
+    const text = this.optionalText(field);
+
+    return text === undefined || this.isErased(field) ? undefined : read(text);
+  }
+
+  /** A personal text, or `undefined` when it is absent or its subject was erased. */
+  personalText(field: string): string | undefined {
+    return this.personal(field, (text) => text);
+  }
+
+  /**
+   * A personal date, kept as its ISO text, or `undefined` when it is absent or its subject was
+   * erased. A text that is no date is an `UnreadableEventError`, as with `instant`.
+   */
+  personalInstant(field: string): Date | undefined {
+    return this.personal(field, () => this.instant(field));
   }
 
   texts(field: string): string[] {
     return this.list(field).map((item, index) => {
+      if (isErasedValue(item)) {
+        return ERASED_PERSONAL_DATA;
+      }
+
       if (typeof item !== 'string') {
         throw this.unreadable(`${field}[${index}]`, 'a text');
       }

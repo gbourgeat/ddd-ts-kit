@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:936866eb0732a440 -->
+<!-- translation-of: authorization-in-practice.md sha256:b5d6f1204a330384 -->
 
 # L'autorisation en pratique
 
@@ -332,6 +332,11 @@ adaptateur pour un service dédié est le sujet de
   cas d'usage dont une politique affine la permission quand il ne nomme jamais cette permission
   dans une question à `Access`, et à l'exécution le module d'autorisation refuse son résultat
   par `PolicyNotAskedError`, à l'intérieur de l'unité de travail, si bien que rien n'est validé.
+  Une décision demandée puis laissée de côté est rattrapée des deux mêmes façons : la règle
+  signale un `decide` écrit comme une instruction à part entière, et le module refuse le résultat
+  d'un gestionnaire qui répond par un succès alors qu'aucune question sur la permission n'a été
+  accordée (`PolicyDenialIgnoredError`) ; un `Result` en échec ou une exception reste le
+  refus du gestionnaire.
   Les générateurs écrivent la question : un cas d'usage généré une fois qu'une politique affine
   sa permission reçoit `Access` et l'interroge sur le message, avec un `TODO(domain)` pour
   l'interroger plutôt sur l'élément chargé.

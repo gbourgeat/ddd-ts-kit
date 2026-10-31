@@ -20,5 +20,8 @@ of the kit; what follows is what a session writes.
   one destroys its key in the `SubjectKeyStore`, then rebuilds the projections that hold a clear
   copy. An event-sourced context has no erasure handler: the key destroyed erases its sealed
   values. The erasure of the tables beside it is in [personal-data.md](personal-data.md).
+  `decode` reads a sealed value with `data.personalText`, `data.personalInstant` or
+  `data.personal(field, ValueObject.of)`, which answer `undefined` once the subject is erased:
+  a date or a value object read otherwise refuses `[erased]` and the aggregate no longer loads.
 - Keep the keys in a store of their own in production, with a shorter backup retention than the
   events.

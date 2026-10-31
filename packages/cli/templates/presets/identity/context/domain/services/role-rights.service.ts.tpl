@@ -1,5 +1,6 @@
 import type { Delegation } from '{{alias.context}}/domain/aggregates/delegation.aggregate{{alias.ext}}';
-import type { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
+import type { Invitation } from '{{alias.context}}/domain/aggregates/invitation.aggregate{{alias.ext}}';
+import { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 import { OrganisationRights } from '{{alias.context}}/domain/value-objects/organisation-rights.vo{{alias.ext}}';
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
@@ -42,6 +43,27 @@ export class RoleRightsService {
     const lent = activeAt(held).flatMap((given) => given.rights);
 
     return OrganisationRights.of(organisationId, accountId, [...GRANTED[held.member.role], ...lent]);
+  }
+
+  /**
+   * Whether the account that issued `invitation`, as it holds at `now` (`held`), may still issue it:
+   * a current membership in a role at or above the one of the invitation, and the right to invite
+   * from where it came when issued: the delegation the invitation names, still active, or else
+   * the role. Removed, deactivated, demoted, or the delegation ended or revoked, its pending
+   * invitations are withdrawn: they let nobody in.
+   */
+  mayStillIssue(invitation: Invitation, held: HeldRights): boolean {
+    const { role, delegationId } = invitation;
+
+    if (!held.member?.isActive || !Member.mayAppoint(role, held.member.role)) {
+      return false;
+    }
+
+    if (delegationId === undefined) {
+      return GRANTED[held.member.role].includes(MemberRight.InviteMembers);
+    }
+
+    return activeAt(held).some((given) => given.id === delegationId && given.rights.includes(MemberRight.InviteMembers));
   }
 
   /** The delegation `right` is used under, when the role of the member does not grant it: what the facts it leads to name. */

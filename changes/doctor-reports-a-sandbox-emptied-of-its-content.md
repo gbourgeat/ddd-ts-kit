@@ -1,0 +1,3 @@
+**`doctor` reports a regulated sandbox whose lists no longer hold what the profile writes.** A `sandbox.network.allowedDomains` that lets every host through (`*`), and a `sandbox.credentials.files` or `envVars` that denies other paths or variables than the ones of the profile, were passed because the lists were only checked for being non-empty. Each entry of the profile must now be there; a project may list more.
+
+`doctor` also refuses, under the regulated profile, a `permissions.defaultMode` of `bypassPermissions` and an allow rule `Bash(*)` or `Bash`: with either, the sandbox has no gate left.

@@ -229,7 +229,8 @@ configured by `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_AUDIENCE` and the opti
 `identity` profile) and a realm file with the API client, a public client with the direct
 grant, its audience and tenant mappers, a realm role and two demo users, for local development
 only. `init --authn none` writes a development authenticator that trusts the
-`x-development-actor` header and refuses to be built in production. The generated end-to-end
+`x-development-actor` header, in development and test only: the application refuses to start
+without `NODE_ENV`, and with `NODE_ENV=production`. The generated end-to-end
 specs sign their own tokens in the test. Every route declares
 its `security`, and the route type refuses one that does not (`authz/declared` in the
 [architecture reference](../ARCHITECTURE.md)).
@@ -306,11 +307,17 @@ against a local server, not run against a real Keycloak by the pipeline of the k
 - **Several organizations per user give no default tenant** with the `organization` claim: they
   are the `tenants` of the actor, and each request names the one it works in (`x-tenant-id`);
   one without it works in no tenant.
+- **A client sends no `x-tenant-id` for an organisation the person is not a member of yet.** The
+  edge holds every authenticated request to the tenants of its token, so a header naming the
+  organisation of an invitation not yet accepted, or one about to be opened, is refused with 403
+  on every route. The routes of the identity context that come before a membership (provisioning
+  the account, accepting or declining an invitation, opening an organisation) work in no tenant:
+  call them without the header, then with it once the next token names the organisation.
 - **A scope is not a role.** The default mapping never reads `scope` as roles: a token that
   carries only scopes gives an actor with no role. A provider whose tokens carry no role claim
   needs a `toActor` that maps them.
 - **The generated realm and the development header authenticator are for local use.** The
-  second throws in production by design.
+  second is built only where `NODE_ENV` says `development` or `test`, by design.
 - **Authentication is not authorization.** The preset fills `actor.roles`; what a role may do
   is decided in the application layer. See
   [authentication and authorization](../concepts/authentication-and-authorization.md).

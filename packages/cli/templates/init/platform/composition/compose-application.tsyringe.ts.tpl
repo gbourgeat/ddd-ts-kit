@@ -217,13 +217,11 @@ export function composeApplication(
       eventSourcingModule(foundations.eventSourcing),
 {{/if}}
       guard,
-{{#if audit.on}}
-{{#if audit.archive}}
+{{#if audit.sql}}
       auditModule(foundations.audit, { jobs: options.platformJobs !== false }),
 {{/if}}
-{{#unless audit.archive}}
+{{#if audit.memory}}
       auditModule(foundations.audit),
-{{/unless}}
 {{/if}}
 {{#if files.any}}
       filesModule(options.files ?? new InMemoryFileStorage(), { jobs: options.platformJobs !== false }),

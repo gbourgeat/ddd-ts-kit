@@ -2,6 +2,8 @@ export * from './appended';
 export * from './assert-stream-reach';
 export * from './define-stored-event';
 export * from './erased-personal-data';
+export * from './erased-value';
+export * from './is-erased-value';
 export * from './event-envelope';
 export * from './event-stream-tenant-error';
 export * from './event-to-append';

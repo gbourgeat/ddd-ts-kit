@@ -151,7 +151,7 @@ KEYCLOAK_AUDIENCE={{project.name}}-api
 {{/if}}
 {{#if authn.none}}
 
-# Authentication is the development header (x-development-actor: <id>;roles=<a>,<b>): the application refuses to start with NODE_ENV=production.
+# Authentication is the development header (x-development-actor: <id>;roles=<a>,<b>): the application starts with NODE_ENV=development or test only, never without it.
 {{/if}}
 {{#if errors.sentry}}
 

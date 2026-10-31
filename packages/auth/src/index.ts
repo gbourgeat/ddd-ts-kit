@@ -4,6 +4,7 @@ export { InvalidCredentialError } from './errors/invalid-credential-error';
 export { ListingNotSupportedError } from './errors/listing-not-supported-error';
 export { MissingActorError } from './errors/missing-actor-error';
 export { UNAUTHORIZED, UnauthenticatedError } from './errors/unauthenticated-error';
+export { PolicyDenialIgnoredError } from './errors/policy-denial-ignored-error';
 export { PolicyNotAskedError } from './errors/policy-not-asked-error';
 export { UndeclaredUseCaseError } from './errors/undeclared-use-case-error';
 export { definePermissions, type PermissionDeclaration, type PermissionSet } from './permissions/define-permissions';
@@ -44,7 +45,7 @@ export type { PolicyContext } from './policies/policy-context';
 export { RoleBasedAuthorizer, type RoleBasedAuthorizerOptions } from './rbac/role-based-authorizer';
 export { tenantOfContext } from './rbac/tenant-of-context';
 export { forbid, permit, type AttributePolicy } from './abac/attribute-policy';
-export { allOf, anyOf, not, type Condition } from './abac/condition';
+export { allOf, anyOf, known, not, type Condition } from './abac/condition';
 export { PolicyBasedAuthorizer, type PolicyBasedAuthorizerOptions } from './abac/policy-based-authorizer';
 export {
   SignedInGrantsAuthorizer,

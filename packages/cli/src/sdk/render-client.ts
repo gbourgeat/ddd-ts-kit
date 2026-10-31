@@ -29,7 +29,7 @@ export function connect(options: ClientOptions<SchemeName>): Connection {
   return openConnection(options, SCHEMES);
 }
 
-/** ${document.title} ${document.version}, every operation of its contract as a method. */
+${docComment(`${document.title} ${document.version}, every operation of its contract as a method.`, '').join('\n')}
 export interface Client {
 ${document.operations.map(method).join('\n')}
 }

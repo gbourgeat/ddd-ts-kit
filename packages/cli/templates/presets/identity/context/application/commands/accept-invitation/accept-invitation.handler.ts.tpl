@@ -5,6 +5,7 @@ import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 {{#unless style.declared}}
 import type { CommandHandler } from '@ddd-ts-kit/kernel';
 {{/unless}}
+import type { Invitation } from '{{alias.context}}/domain/aggregates/invitation.aggregate{{alias.ext}}';
 import { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 {{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
@@ -14,11 +15,14 @@ import { MemberError } from '{{alias.context}}/domain/errors/member.error{{alias
 {{#if refusals.named}}
 import { AlreadyMember } from '{{alias.context}}/domain/errors/already-member.error{{alias.ext}}';
 import { UnknownAccount } from '{{alias.context}}/domain/errors/unknown-account.error{{alias.ext}}';
+import { InvitationWithdrawn } from '{{alias.context}}/domain/errors/invitation-withdrawn.error{{alias.ext}}';
 import { UnknownInvitation } from '{{alias.context}}/domain/errors/unknown-invitation.error{{alias.ext}}';
 {{/if}}
 import type { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
+import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
 import type { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
+import { RoleRightsService } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
 {{#if style.declared}}
 import { AcceptInvitationCommand } from '{{alias.context}}/application/commands/accept-invitation/accept-invitation.command{{alias.ext}}';
 {{/if}}
@@ -35,12 +39,16 @@ export class AcceptInvitationHandler implements CommandHandler<AcceptInvitationC
     private readonly invitationRepository: InvitationRepository,
     private readonly memberRepository: MemberRepository,
     private readonly accountRepository: AccountRepository,
+    private readonly delegationRepository: DelegationRepository,
     private readonly tokens: InvitationTokens,
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
   ) {}
 
-  /** The person the invitation was sent to, signed in, answers with its token: they join in the role it names. */
+  /**
+   * The person the invitation was sent to, signed in, answers with its token: they join in the
+   * role it names, while the account that issued it may still invite in that role.
+   */
   async execute({ actor, token }: AcceptInvitationCommand): Promise<string> {
     const invitation = await this.invitationRepository.findByTokenHash(this.tokens.digestOf(token));
     const account = await this.accountRepository.findById(actor.id);
@@ -79,6 +87,7 @@ export class AcceptInvitationHandler implements CommandHandler<AcceptInvitationC
 {{/unless}}
     }
 
+    await this.assertIssuerMayStillInvite(invitation, now);
     await this.invitationRepository.save(invitation);
 
     await this.memberRepository.save(
@@ -86,5 +95,23 @@ export class AcceptInvitationHandler implements CommandHandler<AcceptInvitationC
     );
 
     return invitation.id;
+  }
+
+  /** Removed, deactivated, demoted or no longer lent the right to invite, the issuer lets nobody in with what they issued before. */
+  private async assertIssuerMayStillInvite(invitation: Invitation, now: Date): Promise<void> {
+    const { organisationId, invitedBy } = invitation;
+    const member = await this.memberRepository.findOf(organisationId, invitedBy);
+    const lent = await this.delegationRepository.findUnendedTo(organisationId, invitedBy);
+
+    if (new RoleRightsService().mayStillIssue(invitation, { member, lent, now })) {
+      return;
+    }
+
+{{#if refusals.named}}
+    throw InvitationWithdrawn.forInvitation(invitation.id);
+{{/if}}
+{{#unless refusals.named}}
+    throw InvitationError.withdrawn(invitation.id);
+{{/unless}}
   }
 }

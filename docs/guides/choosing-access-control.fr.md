@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:704628229005d17b -->
+<!-- translation-of: choosing-access-control.md sha256:56f609f6ba48a51b -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
@@ -286,6 +286,7 @@ import {
   ResourceAttributes,
   allOf,
   forbid,
+  known,
   not,
   permit,
   type AttributePolicy,
@@ -300,14 +301,19 @@ declare const billingPermissions: PermissionSet<'billing', 'invoice.read' | 'inv
 declare const clock: Clock;
 
 // platform/auth/attributes/attribute-policies.ts
-const sameDepartment: Condition = ({ actor, attributes }) => actor.attributes['department'] === attributes['department'];
+const sameDepartment: Condition = ({ actor, attributes }) => {
+  const department = actor.attributes['department'];
+
+  return department !== undefined && department === attributes['department'];
+};
 const large: Condition = ({ attributes }) => Number(attributes['amount']) > 10_000;
 const approvedTwice: Condition = ({ attributes }) => attributes['approvals'] === 2;
 
 export const attributePolicies: readonly AttributePolicy[] = [
   permit('administrators-do-everything', ['*'], ({ actor }) => actor.roles.includes('admin')),
-  permit('read-own-department', [billingPermissions['invoice.read']], sameDepartment),
+  permit('read-own-department', [billingPermissions['invoice.read']], allOf(known('department'), sameDepartment)),
   permit('managers-void', [billingPermissions['invoice.void']], ({ actor }) => actor.attributes['manager'] === true),
+  forbid('no-void-of-an-unknown-invoice', [billingPermissions['invoice.void']], not(known('amount', 'approvals'))),
   forbid('no-large-void-without-four-eyes', [billingPermissions['invoice.void']], allOf(large, not(approvedTwice))),
 ];
 
@@ -338,6 +344,20 @@ export const authorizer = new PolicyBasedAuthorizer({
 Un responsable du service financier annule une facture de 12 000 approuvée une fois : le permit
 `managers-void` correspond, mais le forbid `no-large-void-without-four-eyes` aussi, et la réponse
 est `EXPLICIT_DENY`.
+
+Une projection est cohérente à terme : juste après la création d'une facture, et chaque fois que
+sa ligne manque, le port répond `undefined` et chaque règle lit des attributs qui ne sont pas là.
+Écrite naïvement, une telle règle échoue ouverte : `Number(undefined) > 10_000` est faux, donc le
+forbid ne tient pour une facture d'aucun montant, et `undefined === undefined` met un acteur sans
+service dans le même service qu'une facture inconnue. Chaque règle exige donc les faits qu'elle
+lit : un `permit` qui lit un attribut de la ressource l'exige (`known('department')`), un fait dont
+un `forbid` a besoin est refusé quand il manque (`no-void-of-an-unknown-invoice`), et une
+comparaison avec un attribut de l'acteur exige que l'acteur l'ait (`sameDepartment`). L'autorisateur
+ne peut pas le faire à la place des règles : le bus interroge aussi sur le contexte d'un cas
+d'usage, qu'aucune projection ne tient. Pour la même raison, un `forbid(..., not(known(...)))`
+refuse chaque vérification de sa permission qui ne porte sur aucun élément, une exigence sans
+`resource:` comprise : donnez à un tel cas d'usage une permission à lui, jamais une que garde une
+règle sur des faits connus.
 
 Les listes : un prédicat n'est pas une requête, donc `Access.scope` lève
 `ListingNotSupportedError` en ABAC pur. Donnez au port de lecture la même condition sous forme de
@@ -449,6 +469,19 @@ export class TupleDocumentGrants implements DocumentGrants {
   }
 }
 ```
+
+**Un tuple ne nomme aucun tenant.** `context:ordering operator user:olivia` tient quel que soit
+le *tenant* dans lequel le travail s'exécute : les tuples, le schéma et `RelationBasedAuthorizer`
+ne connaissent aucun *tenant*. Un élément est atteint par son propre identifiant, que deux
+*tenants* ne partagent jamais quand il est généré (un UUID), donc un tuple sur lui donne un élément
+d'un *tenant*. Le contexte, la ressource d'un cas d'usage sur aucun élément, est le même objet dans
+chaque *tenant* : avec des *tenants*, l'opérateur du contexte dans un *tenant* l'opère dans tous,
+et de même une personne qui appartient à deux *tenants* avec un statut différent dans chacun. Avec
+des *tenants*, gardez les relations pour les éléments, et décidez *tenant* par *tenant* ce que
+permet un cas d'usage sur aucun élément : par des rôles avec la vérification du *tenant*
+(préréglage 1, posé en premier comme dans le modèle combiné ci-dessous), ou sur un objet qui nomme
+le *tenant* (un type `tenant` avec son `operator`, les éléments l'atteignant par une relation
+`parent`), jamais sur le contexte.
 
 Les listes viennent par construction : `listAccessible` répond les identifiants que l'acteur
 atteint, que le port de lecture transforme en `id in (...)`. La recherche elle-même nomme quand
