@@ -205,4 +205,22 @@ describe('OutboxRelay with per-key ordering, when the head of a key goes away', 
 
     expect(publisher.delivered).toEqual(['a-1', 'a-2']);
   });
+
+  it('keeps the order of a key the aborted tick never reached', async () => {
+    const clock = new FixedClock(at);
+    const store = new ForgetfulStore({ leaseMs: 60_000 });
+    const publisher = new RecoveringPublisher({ 'a-1': 1 });
+    const relay = new OutboxRelay({ store, publisher, clock, ordering: 'per-key', keyOf: orderIdOf });
+
+    await store.append([event('a-1'), event('b-1')]);
+    await expect(relay.tick()).rejects.toBeInstanceOf(StoreUnavailable);
+
+    await store.append([event('b-2')]);
+    await relay.tick();
+    expect(publisher.delivered).toEqual([]);
+    clock.advance(60_000);
+    await relay.tick();
+
+    expect(publisher.delivered).toEqual(['a-1', 'b-1', 'b-2']);
+  });
 });
