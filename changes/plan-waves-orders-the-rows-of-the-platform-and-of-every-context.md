@@ -1,0 +1,1 @@
+**`plan-waves` orders a row whose Context is `platform` (the work of `src/platform/`) or `all` (a slice across every context).** Both names are accepted without a declared context, the `plan-slices` skill documents them, and no worker brief is written for such a row: the conductor owns it. The slices of the scheduling example (M1.10, M1.38, M1.39) are planned again.
