@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import {
   bash,
@@ -430,3 +430,55 @@ test('a config or a CLI in a folder others may write is never the project of a s
   run('session', { cwd: inner });
   assert.equal(existsSync(marker), false);
 });
+
+test('session start says first that a merge of merge-trunk waits for --continue or --abort', () => {
+  const left = (count) => ({
+    report: { branch: 'feat/x', trunk: { ref: 'main' }, forYou: Array.from({ length: count }, () => ({})) },
+  });
+  const lines = (state) =>
+    briefingOf(mergingProject(state))
+      .split('\n')
+      .filter((line) => line.startsWith('Merge in'));
+  assert.equal(
+    lines(left(2))[0],
+    'Merge in progress: feat/x <- main, 2 paths left for you when it stopped: `pnpm exec ddd-ts-kit merge-trunk --continue` or `--abort`.',
+  );
+  assert.match(lines(left(1))[0], /, 1 path left/);
+  assert.match(lines({ report: { branch: 'feat/x', trunk: { ref: 'main' } } })[0], /, 0 paths left/);
+  assert.match(lines({ report: { branch: 'feat/x' } })[0], /feat\/x <- undefined/);
+});
+
+test('session start names only --abort for a merge that merge-trunk did not start, or whose state is unreadable', () => {
+  for (const state of [undefined, { report: 'x' }]) {
+    const briefing = briefingOf(mergingProject(state));
+    assert.match(
+      briefing,
+      /Merge in progress, not started by merge-trunk: .*`pnpm exec ddd-ts-kit merge-trunk --abort`/,
+    );
+  }
+});
+
+test('session start says nothing of a merge when none is in progress, in the checkout or in a linked worktree', () => {
+  assert.doesNotMatch(briefingOf(committed()), /Merge in progress/);
+  const root = mergingProject(undefined);
+  const linked = join(root, '.worktrees', 'side');
+  git(root, 'worktree', 'add', '--quiet', '-b', 'side', linked);
+  put(linked, '.gitignore', 'node_modules\n');
+  assert.doesNotMatch(briefingOf(linked), /Merge in progress/);
+  const gitDir = spawnSync('git', ['rev-parse', '--git-dir'], { cwd: linked, encoding: 'utf8' }).stdout.trim();
+  writeFileSync(join(resolve(linked, gitDir), 'MERGE_HEAD'), 'x\n');
+  assert.match(briefingOf(linked), /Merge in progress/);
+});
+
+// A merge half done: MERGE_HEAD in the git directory, and the state merge-trunk kept in the kit folder.
+function mergingProject(state) {
+  const root = committed();
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout;
+  writeFileSync(join(root, '.git', 'MERGE_HEAD'), head);
+  if (state !== undefined) {
+    put(root, '.ddd-ts-kit/merge.json', JSON.stringify(state));
+  }
+  return root;
+}
+
+const briefingOf = (root) => run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;

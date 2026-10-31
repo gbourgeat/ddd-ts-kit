@@ -1631,6 +1631,7 @@ function projectBriefing(project, input) {
     'Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.',
     'Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).',
     'Read `npx ddd-ts-kit list` (text; `--json` for a script) and the CONTEXT.md of one context instead of browsing the tree.',
+    ...mergeNotice(project),
     ...configNotice(project),
     ...(project.mode === 'off' ? [] : versionGap(project)),
     ...planPointer(project.root),
@@ -1655,6 +1656,35 @@ function projectBriefing(project, input) {
 // The commands of the preamble in the dialect of the project: the runner its settings allow and its AGENTS.md names.
 function inRunnerOf(project, line) {
   return project.packageManager === 'pnpm' ? line.replaceAll('npx ddd-ts-kit', 'pnpm exec ddd-ts-kit') : line;
+}
+
+// A merge half done: MERGE_HEAD in the git directory of this checkout, and what merge-trunk kept of it.
+// Said first, so that a resumed session does not generate or commit on top of it.
+function mergeNotice(project) {
+  const gitDir = gitDirOf(project.root);
+  if (!gitDir || !existsSync(join(gitDir, 'MERGE_HEAD'))) {
+    return [];
+  }
+  const report = readJson(join(project.root, '.ddd-ts-kit', 'merge.json'))?.report;
+  if (!report || typeof report !== 'object') {
+    return [
+      'Merge in progress, not started by merge-trunk: finish it with git, or undo it with `npx ddd-ts-kit merge-trunk --abort`.',
+    ];
+  }
+  const left = Array.isArray(report.forYou) ? report.forYou.length : 0;
+  return [
+    `Merge in progress: ${quoted(report.branch).slice(1, -1)} <- ${quoted(report.trunk?.ref).slice(1, -1)}, ${left} ${left === 1 ? 'path' : 'paths'} left for you when it stopped: \`npx ddd-ts-kit merge-trunk --continue\` or \`--abort\`.`,
+  ];
+}
+
+// The git directory of the checkout holding the root (its own in a linked worktree), read from .git.
+function gitDirOf(root) {
+  const top = repositoryTop(root);
+  if (!top) {
+    return undefined;
+  }
+  const dotGit = join(top, '.git');
+  return isDirectory(dotGit) ? dotGit : resolve(top, /^gitdir:\s*(.+)$/m.exec(readText(dotGit, ''))?.[1] ?? '');
 }
 
 // What the guard could not take of the config as written: a mode it does not know, a file too large.
@@ -1849,11 +1879,10 @@ function resumeLine({ branch, context, worktree, progress }, workers) {
 // its common directory, each with the path of its checkout.
 function hasWorkerWorktree(root) {
   const top = repositoryTop(root);
-  if (!top) {
+  const gitDir = gitDirOf(root);
+  if (!top || !gitDir) {
     return false;
   }
-  const dotGit = join(top, '.git');
-  const gitDir = isDirectory(dotGit) ? dotGit : resolve(top, /^gitdir:\s*(.+)$/m.exec(readText(dotGit, ''))?.[1] ?? '');
   const common = resolve(gitDir, readText(join(gitDir, 'commondir'), '.').trim());
   const prefix = relative(top, root);
   let names;

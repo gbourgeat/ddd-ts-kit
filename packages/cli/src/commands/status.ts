@@ -1,4 +1,6 @@
 import { readConfig } from '../config';
+import { mergeInProgress } from '../merge/merge-in-progress';
+import { inDialect } from '../package-manager/in-dialect';
 import { formatProgress } from '../progress/format-progress';
 import { readProgress } from '../progress/read-progress';
 import { formatWorkers } from '../worker/format-workers';
@@ -28,9 +30,16 @@ export const statusCommand: Command = (argv, io) => {
   }
 
   const rows = { onBranches: rowsOnBranches(workers), landed: landedRows(workers) };
-  const progress = readProgress(new Workspace(root, false), readConfig(root).config, rows);
+  const { config } = readConfig(root);
+  const progress = readProgress(new Workspace(root, false), config, rows);
+  const merge = mergeInProgress(root);
+  const line = merge === undefined ? undefined : inDialect(merge, config.stack.packageManager);
 
-  io.out(args.json ? stdoutJson(progress) : formatProgress(progress));
+  io.out(
+    args.json
+      ? stdoutJson(line === undefined ? progress : { mergeInProgress: line, ...progress })
+      : `${line === undefined ? '' : `${line}\n\n`}${formatProgress(progress)}`,
+  );
 
   return 0;
 };
