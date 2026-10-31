@@ -1,3 +1,4 @@
+import { inLineEndOfDisk } from './in-line-end-of-disk';
 import { cannotWrite } from './cannot-write';
 import type { DiskWrites } from './disk-writes';
 import type { RealPath } from './real-path-of';
@@ -27,7 +28,7 @@ export function writtenOf(
   return planned.filter(({ file, content }) => {
     const writable = dryRun
       ? !cannotWrite(absolute(file))
-      : writeIfAllowed(absolute(file), content, { disk, real: real.get(file) });
+      : writeIfAllowed(absolute(file), inLineEndOfDisk(absolute(file), content), { disk, real: real.get(file) });
 
     if (!writable) {
       unwritten.push(file);

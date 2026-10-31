@@ -74,7 +74,7 @@ function defectOfBody(code: string, body: number): Defect | undefined {
 
   const inside = code.slice(body + 1, matchingBracket(code, body));
 
-  return inside.trim() === '' || (/^[ \t]*\n/.test(inside) && /\n[ \t]*$/.test(inside)) ? undefined : 'inline';
+  return inside.trim() === '' || (/^[ \t]*\r?\n/.test(inside) && /\n[ \t]*$/.test(inside)) ? undefined : 'inline';
 }
 
 function startsItsLine(code: string, at: number): boolean {
