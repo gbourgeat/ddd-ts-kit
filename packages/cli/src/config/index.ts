@@ -1,4 +1,5 @@
 export { addContextToConfigText } from './add-context-to-config-text';
+export { isKitContainer, onKitContainer } from './kit-container';
 export { DERIVED_CONFIG_KEYS } from './derived-config-keys';
 export { KNOWN_CONFIG_KEYS } from './known-config-keys';
 export { KNOWN_STACK_KEYS } from './known-stack-keys';

@@ -63,7 +63,7 @@ and the stack trace.
 ```
 ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--validation zod|class-validator|typebox|standard-schema|none]
-                [--di tsyringe|nest|manual] [--tests vitest|jest]
+                [--di tsyringe|inversify|awilix|nest|manual] [--tests vitest|jest]
                 [--orm drizzle|knex|prisma|typeorm|custom|none]
                 [--database postgres|mysql|sqlite|none]
                 [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
@@ -161,7 +161,8 @@ on class-validator, `--routes nest`), `vitest`,
 `drizzle` on `postgres`, `outbox` when there is an ORM, `swagger`, `github`, `jwt`, `rbac`, no broker,
 the cache in the process, files in a local directory (`--storage local`), the audit trail `on` when there is an ORM, the requests of a data subject answered (`--privacy on`) when there is an ORM, no event store (`--event-sourcing off`), unexpected failures reported
 nowhere (`--errors none`), JSON lines on the standard output (`--logger stdout`), and the
-`declared` style with a `barrel` wherever the declarations are read: with `--di tsyringe`.
+`declared` style with a `barrel` wherever the declarations are read: with `--di tsyringe`,
+`inversify` or `awilix`, which generate the same code on another container underneath.
 
 **Package manager.** `pnpm` unless `--package-manager npm`: every script, pipeline, hook, the
 Dockerfile, the guidance and the agent permissions are written in the dialect of the one chosen,
@@ -203,7 +204,7 @@ composition root assembles it in one line. In the `explicit` style every binding
 module file of the context: `builder.bind(Port).toClass(Adapter, [Ports])`,
 `builder.command(Message).requires(...).handledBy(Handler, [Ports])`, `builder.job(name, schedule)`.
 `--style declared` is refused with `--di manual` and `--di nest`: the declarations are plain
-metadata, and only `@ddd-ts-kit/di` (on tsyringe) turns them into bindings.
+metadata, and only `@ddd-ts-kit/di` turns them into bindings.
 `--assembly` says how a declared context reaches the composition root: `barrel` (the default) is
 generated files, `<context>.declarations.ts` at the root of the context re-exporting the
 declarations of each layer, static, followed by a bundler, by knip and by dependency-cruiser; `discovery` writes `await discoverContext(...)` instead, with the knip entry
@@ -2579,7 +2580,7 @@ the process, without a container:
   them, pass `check` and `docs --check` as generated.
 - `typecheck.spec.ts`: the 36 of them the workspace can compile (jest, prisma and typeorm
   apart) type-check against the sources of the workspace packages.
-- `proven-stacks.spec.ts`: the eight projects of `PROVEN` are installed as a published kit would be and held to
+- `proven-stacks.spec.ts`: the projects of `PROVEN` are installed as a published kit would be and held to
   everything their own pipeline runs: `check` with zero violation and zero warning, ESLint with the
   preset (the test first reads from `eslint --print-config` that the rules of ports, scheduling,
   file shape and layout are on), dependency-cruiser with the generated configuration, knip, their

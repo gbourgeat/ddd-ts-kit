@@ -47,7 +47,7 @@ every merge and on every push.
   conduct the work step by step, agents for parallel work and review, and a hook that checks each
   TypeScript file the agent writes and names the broken rule at once.
 - **Your stack, not ours.** Express, Fastify, Hono or NestJS; zod, class-validator, TypeBox or any
-  Standard Schema library; tsyringe, NestJS or manual wiring; Drizzle, Knex, Prisma or TypeORM;
+  Standard Schema library; tsyringe, InversifyJS, Awilix, NestJS or manual wiring; Drizzle, Knex, Prisma or TypeORM;
   RabbitMQ, Kafka, NATS JetStream or Redis Streams; JWT or Keycloak; roles, attributes or
   relationships.
 - **Production concerns built in.** Transactional outbox and idempotent consumers, a permission
@@ -259,7 +259,7 @@ host runs.
 | [`@ddd-ts-kit/s3`](packages/s3) | file storage on AWS S3, MinIO, OVHcloud, Scaleway or Cloudflare R2 |
 | [`@ddd-ts-kit/http`](packages/http) | routes declared once, mounted on Express, Fastify, Hono or NestJS; RFC 9457 errors; OpenAPI 3.1; HTTP caching |
 | [`@ddd-ts-kit/validation`](packages/validation) | one `Schema` port over zod, class-validator, TypeBox and Standard Schema |
-| [`@ddd-ts-kit/di`](packages/di) | context modules on tsyringe, port classes as tokens, a test application with fakes |
+| [`@ddd-ts-kit/di`](packages/di) | context modules on tsyringe, InversifyJS or Awilix, port classes as tokens, a test application with fakes |
 | [`@ddd-ts-kit/pino`](packages/pino), [`winston`](packages/winston) | the kernel `Logger` port on pino or winston |
 | [`@ddd-ts-kit/sentry`](packages/sentry) | the kernel `ErrorReporter` port on Sentry or GlitchTip |
 | [`@ddd-ts-kit/tracing`](packages/tracing) | OpenTelemetry wired once by the platform |

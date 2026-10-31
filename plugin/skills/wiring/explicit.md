@@ -32,7 +32,7 @@ module holds (its handlers, consumers, reactions, jobs, permissions and routes),
 - `npx ddd-ts-kit generate module <context> <module>` writes the file and its composition (re-run
   it for a module declared before); `generate <kind> ... --module <module>` then writes the
   registration there.
-- On tsyringe the file exports `{ register(builder), onStart({ resolve }) }`, called from
+- On a container of the kit the file exports `{ register(builder), onStart({ resolve }) }`, called from
   `register` and `onStart` of the context. Wired by hand it exports `registerHandlers`,
   `registerReactions`, `registerJobs`, `useCases()` and `routes(platform)`, called from the
   functions of the same names.
@@ -52,9 +52,11 @@ module holds (its handlers, consumers, reactions, jobs, permissions and routes),
 
 ## A container the kit does not wire
 
-InversifyJS and Awilix are not values of `stack.di`. When a team insists on one, read "Using
-InversifyJS or Awilix anyway" in `docs/tools/dependency-injection.md` first: `--di manual`, the
-container in `<context>.module.ts` only, never in `domain/` or `application/`, every adapter still
+`--di inversify` and `--di awilix` need nothing of this file: they generate the code of tsyringe,
+and `createApplication` comes from another entry point. This section is for a team that wants to
+write `bind()` or `register()` itself; read "Writing the API of InversifyJS or Awilix by hand" in
+`docs/tools/dependency-injection.md` first: `--di manual`, the container in
+`<context>.module.ts` only, never in `domain/` or `application/`, every adapter still
 through `platform.adapter`. `generate` keeps writing `new`: move what it wrote into the container
 each time, since neither the compiler nor `check` reports the second instance. Without such a
 wish, do not propose one.

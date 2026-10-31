@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../../config';
 import type { Scope } from '../../scope';
 
 /**
@@ -5,6 +6,6 @@ import type { Scope } from '../../scope';
  * tsyringe, through a queue and a worker built on the test buses where the platform is wired by
  * hand (the explicit module of a Nest or manual project).
  */
-export function specFamily(scope: Scope): 'tsyringe' | 'buses' {
-  return scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses';
+export function specFamily(scope: Scope): 'container' | 'buses' {
+  return onKitContainer(scope.config) ? 'container' : 'buses';
 }

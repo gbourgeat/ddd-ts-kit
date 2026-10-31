@@ -5,7 +5,7 @@ import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilienc
 /**
  * What goes around every adapter that leaves the process (`external`, `gateway`) and states no
  * policy of its own: retries with backoff, and a time limit for each attempt. `forKinds` is the
- * filter: a platform wired by hand gives every adapter to it, the tsyringe module only those two kinds.
+ * filter: a platform wired by hand gives every adapter to it, the module of the platform only those two kinds.
  */
 export function defaultPolicy(settings: ResilienceSettings): Aspect {
   const policy = when(

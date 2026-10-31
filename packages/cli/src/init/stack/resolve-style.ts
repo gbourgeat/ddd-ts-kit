@@ -1,19 +1,19 @@
-import { ASSEMBLIES, DEPENDENCY_STATEMENTS, STYLES } from '../../config';
+import { ASSEMBLIES, DEPENDENCY_STATEMENTS, isKitContainer, STYLES } from '../../config';
 import { CliError } from '../../cli-error';
 import { choose } from './choose';
 import type { StackOptions } from './stack-options';
 
 /**
  * A class declares what it is wherever something reads the declarations: `@ddd-ts-kit/di`, on
- * tsyringe. Hand wiring and a NestJS container read none of them, so their contexts keep a
+ * one of its containers. Hand wiring and a NestJS container read none of them, so their contexts keep a
  * module file. A declared context is assembled from its barrel or by discovery, with or
  * without a broker: its subscriber is the one of its name either way. A new declared project
  * states dependencies in constructor signatures; an explicit one lists them in its module file.
  */
 export function resolveStyle(options: StackOptions, di: string): Record<'style' | 'assembly' | 'dependencies', string> {
-  const style = choose(STYLES, options.style, 'style') ?? (di === 'tsyringe' ? 'declared' : 'explicit');
+  const style = choose(STYLES, options.style, 'style') ?? (isKitContainer(di) ? 'declared' : 'explicit');
 
-  if (style === 'declared' && di !== 'tsyringe') {
+  if (style === 'declared' && !isKitContainer(di)) {
     throw new CliError(
       `--style declared cannot be combined with --di ${di}.`,
       'The declarations of @ddd-ts-kit/kernel/declarations are turned into bindings by @ddd-ts-kit/di (contextModule, discoverContext), which runs on tsyringe: use --di tsyringe, or keep --style explicit, where every binding is written in <context>.module.ts.',

@@ -100,7 +100,7 @@ configuration, the storage, and `composeApplication` of `{{config.platformDir}}/
   parameter typed by a port class names what is injected (`private readonly clock: Clock`), the
   ports of the kernel included (`Clock`, `IdGenerator`, `CommandBus`, `UnitOfWork`... of
   `@ddd-ts-kit/kernel`).
-{{#if di.tsyringe}}
+{{#if di.container}}
 - **Three modules, then the contexts.** `kernelModule({...})` binds the ports of the kernel to what
   this platform chose (one execution scope, one clock, the two buses with their middlewares);
   `platformModule` (`{{config.platformDir}}/composition/platform.module.ts`) rebinds what needs the storage{{#if broker.external}}, the broker{{/if}}{{#if cache.redis}} or the Redis protocol server{{/if}}
@@ -108,7 +108,7 @@ configuration, the storage, and `composeApplication` of `{{config.platformDir}}/
   module binds the guard both buses ask first. Replacing a provider happens in the platform module
   and nowhere else.
 {{/if}}
-{{#unless di.tsyringe}}
+{{#unless di.container}}
 - **One `Platform`, handed to each context.** `createPlatform` (`{{config.platformDir}}/composition/create-platform.ts`)
   builds the buses, the clock, the storage and the event ports once; the module file of a context
   receives it and registers its handlers, adapters and jobs on it. Replacing a provider happens
