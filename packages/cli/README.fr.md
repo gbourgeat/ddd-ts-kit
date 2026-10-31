@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c3ab1cc13ce27ad9 -->
+<!-- translation-of: README.md sha256:6292ce920a5dc657 -->
 
 # ddd-ts-kit
 
@@ -988,7 +988,9 @@ Next, in this order: the language of the context first, then the business decisi
   aussi ; un mot technique passe quand un terme du glossaire le tient
   (`--term "Scoring model=<meaning>"` laisse passer `ScoringModel`), parce que le langage du
   métier l'emporte. `--allow-name` passe outre les trois vérifications ; `check` signalera tout de même ce
-  que le glossaire ne définit pas. Seuls les genres dont l'usage montre `--term` le prennent
+  que le glossaire ne définit pas. Un nom que Windows réserve à un périphérique (`CON`,
+  `PRN`, `AUX`, `NUL`, `COM1` à `COM9`, `LPT1` à `LPT9`, quelle que soit la casse) est refusé pour un contexte et
+  pour un concept, car ses fichiers ne s'y extraient pas ; `--allow-name` laisse passer un concept. Seuls les genres dont l'usage montre `--term` le prennent
   (`heldToGlossary` dans `generate --help --json`, une ligne de `generate <kind> --help`) ; les
   autres (`port`, `adapter`, `repository`, `route`, `representation`...) nomment ce qu'une
   commande antérieure a nommé ou le nom du concept qu'ils servent, et refusent `--term`, en

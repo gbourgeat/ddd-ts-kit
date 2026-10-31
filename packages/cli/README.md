@@ -939,7 +939,9 @@ Next, in this order: the language of the context first, then the business decisi
   not read as past tense are refused too; a technical word passes when a term of the glossary
   holds it (`--term "Scoring model=<meaning>"` lets `ScoringModel` through), because the language
   of the business wins. `--allow-name` overrides the three checks; `check`
-  will still report what the glossary does not define. Only the kinds whose usage shows `--term`
+  will still report what the glossary does not define. A name Windows reserves for a device (`CON`,
+  `PRN`, `AUX`, `NUL`, `COM1` to `COM9`, `LPT1` to `LPT9`, whatever the case) is refused for a context and
+  for a concept, since its files cannot be checked out there; `--allow-name` lets a concept through. Only the kinds whose usage shows `--term`
   take it (`heldToGlossary` in `generate --help --json`, a line of `generate <kind> --help`); the
   others (`port`, `adapter`, `repository`, `route`, `representation`...) name what an earlier
   command named or what the concept they serve is called, and refuse `--term`, naming the kinds

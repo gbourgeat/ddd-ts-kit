@@ -27,6 +27,7 @@ export const domainErrorKind: Kind = {
     const name = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, request.args[1] ?? '', {
       what: 'domain error',
       strip: ['error'],
+      allowReserved: scope.flags.allowName,
     });
 
     const code = request.flags.code ?? name.constant;
