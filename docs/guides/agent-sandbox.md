@@ -101,6 +101,10 @@ The managed settings live outside the repository (`managed-settings.json`, deplo
 platform team): `init` prints them as a block to paste, with the version left for the team to
 set. Pair the profile with level 1 for the load of the machine.
 
+One limit stays: the hooks run outside the sandbox and the guard of the plugin runs what the
+`node_modules` of the project holds, so a dependency runs there with the rights of the developer,
+and a project that cannot trust its dependencies does its installs by hand or reviews them.
+
 The two hooks are small Node scripts `init` writes once under `.claude/hooks/` (no `jq`, nothing
 to install), registered under `hooks.PreToolUse` of `.claude/settings.json`, owned by the team
 from then on, and reported by `doctor` when a file or a registration is missing. Each explains
