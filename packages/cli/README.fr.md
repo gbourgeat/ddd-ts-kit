@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:139a01ecf343c2e2 -->
+<!-- translation-of: README.md sha256:150ee9b0a5922064 -->
 
 # ddd-ts-kit
 
@@ -181,7 +181,8 @@ style `declared` avec un `barrel` partout où les déclarations sont lues : avec
 **Gestionnaire de paquets.** `pnpm` sauf `--package-manager npm` : chaque script, *pipeline*,
 *hook*, le Dockerfile, les consignes et les permissions des agents sont écrits dans le dialecte
 de celui qui est choisi, enregistré sous `stack.packageManager`. pnpm est épinglé dans
-`package.json` et fourni par corepack ; `pnpm-workspace.yaml` dit qu'aucune dépendance n'exécute
+`package.json` et installé par npm à cette version (`npm install --global pnpm`, puis pnpm exécute la
+version qu'épingle le projet ; Node 25 et suivants ne livrent plus corepack) ; `pnpm-workspace.yaml` dit qu'aucune dépendance n'exécute
 de script de build sans être autorisée par son nom. Les deux sont prouvés par une installation
 réelle d'un projet généré, son build et son `verify`. Le kit est installé depuis le registre dans
 les deux cas.

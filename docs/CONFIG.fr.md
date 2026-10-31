@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:4d3e54847741532f -->
+<!-- translation-of: CONFIG.md sha256:f69556744bc65295 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -487,7 +487,7 @@ La dixième : sans `stack.packageManager`, le projet est lu comme `npm`, parce q
 les scripts, les *pipelines* et les notes continuent de dire `npm run` et `npx`. Pour le faire
 passer à pnpm : `npx ddd-ts-kit init --force --package-manager pnpm` enregistre la clé, épingle
 pnpm dans le champ `packageManager` de `package.json` et réécrit dans son dialecte les fichiers
-dont `init` est propriétaire ; puis `corepack enable`, `pnpm install` (qui écrit
+dont `init` est propriétaire ; puis `npm install --global pnpm` (pnpm exécute ensuite la version qu'épingle le projet), `pnpm install` (qui écrit
 `pnpm-lock.yaml`) et `pnpm run verify`.
 
 La onzième et la douzième : sans `stack.representations`, le projet est lu comme `json`, et sans

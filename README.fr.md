@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:216c9c34e5f2b098 -->
+<!-- translation-of: README.md sha256:de36f100578609bf -->
 
 <div align="center">
 
@@ -149,8 +149,8 @@ pnpm run verify           # types, lint, format, tests, e2e, architecture, graph
 ```
 
 `init` sans option prend Express, zod, tsyringe, Drizzle sur PostgreSQL, Vitest et pnpm, que
-corepack fournit à la version qu'épingle le `package.json` (`corepack enable`, une fois par
-machine). Le projet est vert dès ce premier `verify`, avant une ligne de code métier, et le
+npm installe (`npm install --global pnpm`, une fois par machine ; pnpm exécute ensuite la version
+qu'épingle le projet ; Node 25 et suivants ne livrent plus corepack). Le projet est vert dès ce premier `verify`, avant une ligne de code métier, et le
 reste à chaque étape. Ensuite, le langage omniprésent d'abord, le code ensuite :
 
 ```bash

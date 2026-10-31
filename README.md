@@ -142,7 +142,8 @@ pnpm run verify           # types, lint, format, tests, e2e, architecture, impor
 ```
 
 `init` without a flag takes Express, zod, tsyringe, Drizzle on PostgreSQL, Vitest and pnpm,
-which corepack provides at the release `package.json` pins (`corepack enable`, once per machine).
+which npm installs at the release `package.json` pins (`npm install --global pnpm`, once per machine,
+and pnpm then runs the release the project pins; Node 25 and later ship no corepack).
 The project is green from that first `verify`, before a line of business code, and stays so at
 every step. Then, the ubiquitous language first, code second:
 
