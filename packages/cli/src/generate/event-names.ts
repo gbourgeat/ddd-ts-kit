@@ -13,6 +13,7 @@ export interface EventNames {
 /** The names of a domain event, from its aggregate and the fact that happened to it. */
 export function eventNames(scope: Scope, aggregateInput: string, factInput: string): EventNames {
   const aggregate = concept(scope, aggregateInput, { what: 'aggregate' });
+
   const fact = concept(scope, factInput, { what: 'fact', strip: ['event'] });
 
   assertPastFact(fact, scope.flags.allowName);

@@ -11,6 +11,11 @@ describe('The lifecycle of {{aggregate.article}} {{aggregate.words}}', () => {
 {{machine.cases}}
 {{/if}}
 
+{{#if refusals.named}}
+  // TODO(domain): once `refused` names a refusal of its own (`ddd-ts-kit generate error {{context.kebab}} <Refusal> <factory>`), expect its code here; add a case per guard.
+{{/if}}
+{{#unless refusals.named}}
   // TODO(domain): once `refused` names a refusal of {{aggregate.pascal}}Error, expect its code here; add a case per guard.
+{{/unless}}
   it.todo('refuses each forbidden transition with the refusal of the aggregate');
 });

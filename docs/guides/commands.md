@@ -193,6 +193,14 @@ npx ddd-ts-kit generate command ordering CancelOrder --permission order.cancel -
   --term "Cancel=To withdraw an order before it is shipped"
 ```
 
+The generator also refuses, before it writes, what the checker would report afterwards. A query named
+`List...` is refused: a read that takes criteria is a `Search<Things>`
+(`generate query <context> SearchInvoices --search --permission <aggregate>.<action>`). A fact that starts with its
+aggregate is refused by `generate domain-event`: `generate domain-event ordering Order "Order Confirmed"` would write
+`OrderOrderConfirmed`, so give `Confirmed` (`--allow-name` lets a name through that is right as typed). `--birth` and
+`--event-sourced` apply when the aggregate is created: on one that exists, the aggregate is kept, the event is not
+written, and a `note:` says so.
+
 The checker reports a violation with its rule id and a fix sentence. Here, a file of the
 `notification` context of the example application imports an aggregate of `scheduling`:
 

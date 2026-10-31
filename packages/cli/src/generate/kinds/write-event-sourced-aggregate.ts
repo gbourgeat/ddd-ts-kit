@@ -28,8 +28,21 @@ export function writeEventSourcedAggregate(scope: Scope, name: Name): void {
     instant: instantOf(names.fact),
   };
 
-  emit(scope, vars(scope, { name: named(name), aggregate: named(name), event }), [
+  const context = vars(scope, { name: named(name), aggregate: named(name), event });
+
+  const [created] = emit(scope, context, [
     ['aggregate/event-sourced.aggregate.ts.tpl', `domain/aggregates/${name.kebab}.aggregate.ts`],
+  ]);
+
+  if (created !== true) {
+    scope.ws.note(
+      `--event-sourced applies when the aggregate is created, like --birth: ${name.pascal} was kept as it is, so nothing event-sourced is written for it. Replace it with --force, or change it by hand.`,
+    );
+
+    return;
+  }
+
+  emit(scope, context, [
     ['aggregate/event-sourced.events.mapper.ts.tpl', `infrastructure/persistence/${name.kebab}-events.mapper.ts`],
     ['builder/event-sourced.builder.ts.tpl', `test/builders/${name.kebab}.builder.ts`],
     ['aggregate/event-sourced.aggregate.spec.ts.tpl', `test/unit/${name.kebab}.aggregate.spec.ts`],
