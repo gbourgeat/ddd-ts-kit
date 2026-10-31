@@ -1,1 +1,0 @@
-**The fix of `test/spec-required` names `test/unit/<module>/` for a file of a module of the model.** It used to name `test/unit/`, and the spec created there was reported by `module/complete` as a file outside every module.

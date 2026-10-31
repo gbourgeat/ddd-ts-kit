@@ -1,1 +1,0 @@
-**The end-to-end sweeps over every stack remove each project once its case has ended.** A case of `first-minute-*` kept its project, with a copy of every package of the kit, until the whole file had run, so the disk of a runner grew with the number of stacks and the shard ended on `ENOSPC`. This changes the tests of the kit only.

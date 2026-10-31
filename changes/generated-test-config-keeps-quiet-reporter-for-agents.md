@@ -1,3 +1,0 @@
-**The generated Vitest config keeps the reporters Vitest picks itself, and the Jest config asks for `summary` under a coding agent.** The explicit `reporters: ['default', ...]` replaced the terse reporter Vitest chooses when `AI_AGENT` or `CLAUDECODE` is set; the budget reporter is now added after `configDefaults.reporters`. A person sees no change.
-
-To move: in `vitest.config.ts` write `reporters: [...configDefaults.reporters, '@ddd-ts-kit/testing/budget/vitest']` and import `configDefaults` from `vitest/config`; in `jest.config.js` use `'summary'` in place of `'default'` when `process.env.AI_AGENT` is set.

@@ -1,1 +1,0 @@
-**`generate query` refuses a name that starts with `List` and names the `Search<Things>` form.** `generate query billing ListInvoices` used to ask for a `List` term in the glossary and, once given, wrote files that `naming/search-not-list` reported. It now stops first: `SearchInvoices`, with `--term "Search=..."` when the glossary lacks the word. The use-case skill says the same.
