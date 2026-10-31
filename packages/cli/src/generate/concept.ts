@@ -8,7 +8,10 @@ import { spokenInLanguage } from './spoken-in-language';
  * holds, and spoken in the ubiquitous language of the context. The terms given with `--term` join the glossary first.
  */
 export function concept(scope: Scope, input: string, role: ConceptRole): Name {
-  const name = parseConceptName(input, role.what, { strip: role.strip ?? [] });
+  const name = parseConceptName(input, role.what, {
+    strip: role.strip ?? [],
+    allowReserved: role.allowReserved ?? scope.flags.allowName,
+  });
 
   const alongside = (role.alongside ?? []).map(({ words, what, label }) => ({
     name: parseConceptName(words, what),

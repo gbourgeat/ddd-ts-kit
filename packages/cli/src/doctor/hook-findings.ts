@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { runGit } from '../commit/run-git';
+import { subfolderOf } from '../init/subfolder-of';
 import type { DoctorFinding } from './doctor-finding';
 
 /** The line of lefthook.yml that makes each checkout run its own lefthook, and fail without its dependencies. */
@@ -17,7 +18,7 @@ const SECRETS_JOB =
  * read: that is a finding, since `hooks:install` fails there too.
  */
 export function hookFindings(root: string): DoctorFinding[] {
-  return [...configFindings(root), ...installedFindings(root)];
+  return [...configFindings(root), ...installedFindings(root), ...subfolderFindings(root)];
 }
 
 function configFindings(root: string): DoctorFinding[] {
@@ -35,6 +36,23 @@ function configFindings(root: string): DoctorFinding[] {
       ? []
       : [{ area: 'hook', name: 'lefthook.yml secrets', problem: 'missing', expected: SECRETS_JOB } as const]),
   ];
+}
+
+/** The project is a folder of a larger repository: GitHub, GitLab and lefthook read their files at the top. */
+function subfolderFindings(root: string): DoctorFinding[] {
+  const folder = subfolderOf(root);
+
+  return folder === undefined
+    ? []
+    : [
+        {
+          area: 'hook',
+          name: 'project folder',
+          problem: 'written otherwise',
+          expected: 'lefthook.yml, .github/ and .gitlab-ci.yml at the top of the git repository',
+          found: folder,
+        },
+      ];
 }
 
 /** Git reads its hooks from `git rev-parse --git-path hooks`: shared by every worktree, or core.hooksPath. */

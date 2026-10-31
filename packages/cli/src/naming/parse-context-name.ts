@@ -1,5 +1,6 @@
 import { CliError } from '../cli-error';
 import type { Name } from './name';
+import { refuseWindowsReserved } from './refuse-windows-reserved';
 import { readName } from './read-name';
 
 const FIX =
@@ -12,6 +13,8 @@ export function parseContextName(input: string): Name {
   if (!/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(name.kebab)) {
     throw new CliError(`"${input}" is not a valid context name.`, FIX);
   }
+
+  refuseWindowsReserved(name, 'context');
 
   return name;
 }

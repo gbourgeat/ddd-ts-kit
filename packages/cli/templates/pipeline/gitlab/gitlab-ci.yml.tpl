@@ -253,6 +253,10 @@ mutation_changed:
   extends: .node
   stage: test
   needs: [install]
+  # The image with git, as install: the files of the change are read from the difference with the target branch.
+  image: node:24-bookworm
+  # A reading, not a gate: a night without a report or a runner that fails leaves the merge request open.
+  allow_failure: true
   # A merge request: the report of the last night is reused for what the change leaves alone, and the survivors of the files it touched are listed. A reading, not a gate: the floor is held by the night.
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"

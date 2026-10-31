@@ -8,6 +8,7 @@ export function existingAggregate(scope: Scope, input: string): Name {
   const aggregate = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, input, {
     what: 'aggregate',
     strip: ['repository', 'builder'],
+    allowReserved: true,
   });
 
   requireFile(scope, {

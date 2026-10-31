@@ -489,6 +489,8 @@ package. `init --database mongodb` is accepted with `--orm custom` although the 
   `stats()` is three queries.
 - **TypeORM.** An `EntitySchema` is static: column types follow the `dialect` you pass.
   `synchronize: true` is for tests only.
+  A `jsonb` field of the `Columns` type is `JsonDocument` of `@ddd-ts-kit/typeorm` or a named interface:
+  `Record<string, unknown>` does not compile in the generated `insertIgnoringConflict` and `update`: `QueryDeepPartialEntity` of TypeORM refuses it.
 - **Knex.** The payload is serialized with `JSON.stringify`; MariaDB would return it as text. The same goes for a
   `jsonb` column of your own: `pg` writes a JavaScript array as a PostgreSQL array literal and a string as it is, so
   an array or a string fails with `22P02 invalid input syntax for type json` where Drizzle, Prisma and TypeORM
