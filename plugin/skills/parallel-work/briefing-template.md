@@ -41,7 +41,7 @@ and put each line in your report as a note for the conductor, who corrects the d
 
 Contracts you consume (read-only): src/contexts/<upstream>/published-language/
 
-Read first, and only: src/contexts/<context>/CONTEXT.md, then
+Read first, and only: src/contexts/<context>/CONTEXT.md above its `## Reference`, then
 `npx ddd-ts-kit describe <context>`. Then the `todos` places each generator prints.
 
 For each slice: generate with --local-only --json, fill the TODO(domain) markers, replace every it.todo

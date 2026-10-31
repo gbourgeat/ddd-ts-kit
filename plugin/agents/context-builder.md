@@ -86,7 +86,8 @@ install of its package manager), never an install that names a package.
 
 ## Read little
 
-1. `src/contexts/<context>/CONTEXT.md`: the purpose, the glossary, what exists.
+1. `src/contexts/<context>/CONTEXT.md` above its `## Reference` (`describe` prints the lines on its
+   `language:` line): the purpose and the glossary. The Reference says what `describe` says.
 2. `npx ddd-ts-kit describe <context>`, once: use cases, routes, events, ports,
    dependencies. Never browse the tree.
 3. The contracts named in the briefing, in the upstream's `published-language/`.

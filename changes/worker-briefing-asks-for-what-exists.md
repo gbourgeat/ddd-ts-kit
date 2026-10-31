@@ -1,0 +1,1 @@
+**The briefing of `worker-scope` asks a worker for `describe <context>` as text and for the `todos` each generator prints.** It named `describe --json`, which says the same in more size, and a `next` place that no generator prints. It now says what the `parallel-work` briefing template says.

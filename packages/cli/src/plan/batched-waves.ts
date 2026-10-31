@@ -1,6 +1,7 @@
 import type { Slice } from '../progress/slice';
 import { storyOf } from '../story/story-of';
 import { aggregatesOf } from './aggregates-of';
+import { RESERVED_CONTEXTS } from './plan-problems';
 import type { Batch, PlannedRow, WaitedRow, Wave } from './wave-plan';
 
 /** Past this many rows, an agent runs out of turns or context before its report. */
@@ -117,7 +118,7 @@ function briefOf(
   drafts: readonly Draft[],
   { batch, trunk }: { batch: string; trunk?: string | undefined },
 ): string | null {
-  if (draft.owner !== draft.context) {
+  if (draft.owner !== draft.context || RESERVED_CONTEXTS.includes(draft.context)) {
     return null;
   }
 

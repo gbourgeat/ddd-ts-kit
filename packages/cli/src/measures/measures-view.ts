@@ -4,7 +4,7 @@ import type { StoryMeasures } from './story-measures';
 
 /** What `ddd-ts-kit measures` prints. */
 export interface MeasuresView {
-  /** The branch read, or `none` outside a git repository. */
+  /** The branch read, or `none` outside a git repository or before the first commit. */
   readonly branch: string;
   readonly since?: string;
   readonly stories: readonly StoryMeasures[];

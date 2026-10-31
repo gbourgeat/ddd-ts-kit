@@ -6,7 +6,7 @@ import { storyLineOf } from './story-line-of';
 /** The measures as text: one line per story, then the medians and the shares of the period. */
 export function formatMeasures(view: MeasuresView): string {
   const period = view.since === undefined ? '' : ` since ${view.since}`;
-  const head = `Measures of ${view.branch}${period}: ${count(view.summary.stories, 'story', 'stories')}, ${view.summary.closed} closed (merged on this branch).`;
+  const head = `Measures of ${view.branch === 'none' ? 'the repository (no branch)' : view.branch}${period}: ${count(view.summary.stories, 'story', 'stories')}, ${view.summary.closed} closed (merged on this branch).`;
   const notComputed = view.notComputed.map((measure) => `Not computed: ${measure}.`);
 
   if (view.stories.length === 0) {

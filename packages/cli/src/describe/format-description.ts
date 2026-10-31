@@ -67,7 +67,7 @@ function headingLines(context: ContextDescription): string[] {
   return [
     `${context.name} [${context.classification}]${context.deployable ? ' (deployable alone)' : ''}`,
     `  purpose: ${context.purpose === '' ? 'not written' : context.purpose}`,
-    `  language: ${context.doc} (${context.glossary.length} term${context.glossary.length === 1 ? '' : 's'})`,
+    `  language: ${context.doc}${context.docHead === undefined ? '' : `:1-${context.docHead}`} (${context.glossary.length} term${context.glossary.length === 1 ? '' : 's'})`,
     `  upstreams: ${relations(context.upstreams)}`,
     `  downstreams: ${relations(context.downstreams)}`,
   ];

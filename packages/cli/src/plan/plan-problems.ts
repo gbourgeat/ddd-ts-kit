@@ -15,7 +15,10 @@ export function planProblems(
   contexts?: readonly string[],
 ): PlanProblem[] {
   return [
-    ...badRows(planned, contexts === undefined ? undefined : [...contexts, ...createdContexts(rows)]),
+    ...badRows(
+      planned,
+      contexts === undefined ? undefined : [...contexts, ...createdContexts(rows), ...RESERVED_CONTEXTS],
+    ),
     ...duplicated(rows, planned),
     ...unknownDependencies(rows, planned),
     ...ownerless(planned),
@@ -25,6 +28,12 @@ export function planProblems(
 
 /** What an id is: a code, then at most one number (`US1.02`, `M1.03`, `12`), nothing a shell reads. */
 const NAME = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
+
+/**
+ * What a row names as its context when it belongs to no bounded context: `platform`, the work of
+ * `src/platform/`, and `all`, a slice that crosses every context. The conductor owns them.
+ */
+export const RESERVED_CONTEXTS: readonly string[] = ['platform', 'all'];
 
 /** The contexts a row creates (`generate context billing ...`): their rows are legitimate before the config declares them. */
 function createdContexts(rows: readonly Slice[]): string[] {

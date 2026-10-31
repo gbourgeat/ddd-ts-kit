@@ -1649,7 +1649,12 @@ function projectBriefing(project, input) {
   }
   const reminder = project.mode === 'off' ? undefined : commitReminder(project, input, { repeat: true });
 
-  return reminder ? [...lines, reminder] : lines;
+  return (reminder ? [...lines, reminder] : lines).map((line) => inRunnerOf(project, line));
+}
+
+// The commands of the preamble in the dialect of the project: the runner its settings allow and its AGENTS.md names.
+function inRunnerOf(project, line) {
+  return project.packageManager === 'pnpm' ? line.replaceAll('npx ddd-ts-kit', 'pnpm exec ddd-ts-kit') : line;
 }
 
 // What the guard could not take of the config as written: a mode it does not know, a file too large.

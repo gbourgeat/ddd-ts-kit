@@ -3,7 +3,7 @@ import { cli, exists, read } from './helpers';
 import { initProject } from './support/init-project';
 
 describe('the name of a bounded context', () => {
-  it.each(['shared-kernel', 'platform', 'utils', 'test', 'domain', 'application', 'shared', 'common', 'core'])(
+  it.each(['shared-kernel', 'platform', 'all', 'utils', 'test', 'domain', 'application', 'shared', 'common', 'core'])(
     'is refused as %s by generate context, nothing written',
     (name) => {
       const root = initProject('--context', 'billing:core', '--audit', 'off');

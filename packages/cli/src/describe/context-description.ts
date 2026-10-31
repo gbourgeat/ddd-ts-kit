@@ -15,6 +15,8 @@ export interface ContextDescription {
   readonly purpose: string;
   readonly deployable: boolean;
   readonly doc: string;
+  /** The last line of the part of `doc` people write, above its generated `## Reference`; absent when `doc` has no such section. */
+  readonly docHead?: number;
   readonly glossary: readonly string[];
   readonly upstreams: readonly Upstream[];
   readonly downstreams: readonly Upstream[];

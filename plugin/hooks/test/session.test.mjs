@@ -52,7 +52,7 @@ test('session start says when the installed packages are not the version the ski
   assert.doesNotMatch(briefing(`${major}.${minor}.${patch + 1}`), /Version gap/);
   assert.match(briefing(breaking(1)), /Version gap: .* update the plugin/);
   assert.match(briefing(`${breaking(-1)}-rc.1`), /Version gap: .* node_modules\/ddd-ts-kit\/CHANGELOG\.md/);
-  assert.match(briefing(breaking(-1)), /npx ddd-ts-kit doctor/);
+  assert.match(briefing(breaking(-1)), /pnpm exec ddd-ts-kit doctor/);
 });
 
 test('the version gap is read from the CLI the guard runs, hoisted to a parent inside the repository', () => {
@@ -74,10 +74,10 @@ test('a briefing past its budget skips the CLI calls left, and says it was cut s
   put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main' }));
   cliAnswering(root, {}, { story: 2000, status: 2000, list: 2000 });
   const briefing = run('session', { cwd: root }, SHORT_TIMES).output.hookSpecificOutput.additionalContext;
-  assert.match(briefing, /^Story US5: run `npx ddd-ts-kit story US5` for where it stands\.$/m);
+  assert.match(briefing, /^Story US5: run `pnpm exec ddd-ts-kit story US5` for where it stands\.$/m);
   assert.match(
     briefing,
-    /^Briefing cut short: the CLI did not answer in time; `npx ddd-ts-kit status` and `npx ddd-ts-kit list` say the rest\.$/m,
+    /^Briefing cut short: the CLI did not answer in time; `pnpm exec ddd-ts-kit status` and `pnpm exec ddd-ts-kit list` say the rest\.$/m,
   );
   assert.doesNotMatch(run('session', { cwd: project() }).output.hookSpecificOutput.additionalContext, /cut short/);
 });
@@ -118,6 +118,14 @@ test('before the bootstrap, a plan alone is enough to resume', () => {
   assert.equal(run('stop', { cwd: root }).output, undefined);
 });
 
+test('the preamble names npx on an npm project, as its AGENTS.md does', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+
+  assert.match(briefing, /`npx ddd-ts-kit explain <rule-id>`/);
+  assert.doesNotMatch(briefing, /pnpm exec/);
+});
+
 test('the formatter advice and the install advice speak the package manager of the project', () => {
   const root = project({}, ['--package-manager', 'pnpm']);
   const prettier = run('pre-bash', bash(root, 'npx prettier --write .', worker(root, 'invoicing')));
@@ -125,6 +133,8 @@ test('the formatter advice and the install advice speak the package manager of t
   rmSync(join(root, 'node_modules'), { recursive: true });
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
   assert.match(briefing, /The dependencies are not installed here: run `pnpm install --frozen-lockfile`/);
+  assert.match(briefing, /`pnpm exec ddd-ts-kit explain <rule-id>`/);
+  assert.doesNotMatch(briefing, /npx/);
   const pnpmManifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
   delete pnpmManifest.devDependencies['ddd-ts-kit'];
   writeFileSync(join(root, 'package.json'), JSON.stringify(pnpmManifest));
@@ -158,7 +168,7 @@ test('session start names the workers to resume, and asks the CLI nothing withou
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
   assert.match(
     briefing,
-    /^Worker to resume: build\/ordering \(mid-row, agent a1b2\): `npx ddd-ts-kit worker-scope ordering --resume`, then send what it prints\.$/m,
+    /^Worker to resume: build\/ordering \(mid-row, agent a1b2\): `pnpm exec ddd-ts-kit worker-scope ordering --resume`, then send what it prints\.$/m,
   );
 });
 
@@ -204,8 +214,8 @@ test('session start names each stopped worker by its branch, else its worktree, 
     .output.hookSpecificOutput.additionalContext.split('\n')
     .filter((line) => line.startsWith('Worker to resume'));
   assert.deepEqual(resumed, [
-    'Worker to resume: build/ordering (mid-row): `npx ddd-ts-kit worker-scope ordering --resume --worktree /w/ordering`, then send what it prints.',
-    'Worker to resume: /w/ordering-2 (not started, agent a9): `npx ddd-ts-kit worker-scope ordering --resume --worktree /w/ordering-2`, then send what it prints.',
+    'Worker to resume: build/ordering (mid-row): `pnpm exec ddd-ts-kit worker-scope ordering --resume --worktree /w/ordering`, then send what it prints.',
+    'Worker to resume: /w/ordering-2 (not started, agent a9): `pnpm exec ddd-ts-kit worker-scope ordering --resume --worktree /w/ordering-2`, then send what it prints.',
   ]);
 });
 
@@ -215,7 +225,7 @@ test('with a CLI that answers no report, session start points to the commands, a
   put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
   launcher(root, "console.log('not a report');\n");
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
-  assert.match(briefing, /^Story US5: run `npx ddd-ts-kit story US5` for where it stands\.$/m);
+  assert.match(briefing, /^Story US5: run `pnpm exec ddd-ts-kit story US5` for where it stands\.$/m);
   assert.match(briefing, /^Contexts:\n$/m);
   assert.doesNotMatch(briefing, /Worker to resume/);
   put(root, 'docs/notes.md', 'a change for the stop to check\n');
@@ -279,7 +289,7 @@ test('a map longer than session start allows is cut, with the command that lists
   const contexts = Array.from({ length: 60 }, (_, index) => ({ name: `context-${index}`, classification: 'core' }));
   cliAnswering(root, { list: { contexts } });
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
-  assert.match(briefing, /\n\(truncated: run `npx ddd-ts-kit list` for the rest\)/);
+  assert.match(briefing, /\n\(truncated: run `pnpm exec ddd-ts-kit list` for the rest\)/);
   assert.doesNotMatch(briefing, /context-59 /);
 });
 
@@ -356,7 +366,7 @@ test('the workers to resume are named only by names that follow their grammar', 
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
   const resumed = briefing.split('\n').filter((line) => line.startsWith('Worker to resume'));
   const unnamed =
-    'Worker to resume: one whose names the guard does not repeat: `npx ddd-ts-kit status --workers` lists it.';
+    'Worker to resume: one whose names the guard does not repeat: `pnpm exec ddd-ts-kit status --workers` lists it.';
   assert.deepEqual(resumed, Array(5).fill(unnamed));
   assert.doesNotMatch(briefing, /pwned|ddd-ts-kit: go/);
 });
@@ -375,9 +385,9 @@ test('a worker in a folder with a space is named, its worktree quoted, and its b
   const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
   const resumed = briefing.split('\n').filter((line) => line.startsWith('Worker to resume'));
   assert.deepEqual(resumed, [
-    `Worker to resume: build/ordering (mid-row): \`npx ddd-ts-kit worker-scope ordering --resume --worktree '${spaced}'\`, then send what it prints.`,
-    'Worker to resume: build/ordering-2 (mid-row): `npx ddd-ts-kit worker-scope ordering --resume --worktree /w/ordering-2`, then send what it prints.',
-    'Worker to resume: build/café (mid-row): `npx ddd-ts-kit worker-scope billing --resume`, then send what it prints.',
+    `Worker to resume: build/ordering (mid-row): \`pnpm exec ddd-ts-kit worker-scope ordering --resume --worktree '${spaced}'\`, then send what it prints.`,
+    'Worker to resume: build/ordering-2 (mid-row): `pnpm exec ddd-ts-kit worker-scope ordering --resume --worktree /w/ordering-2`, then send what it prints.',
+    'Worker to resume: build/café (mid-row): `pnpm exec ddd-ts-kit worker-scope billing --resume`, then send what it prints.',
   ]);
 });
 

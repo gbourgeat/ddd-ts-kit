@@ -262,7 +262,7 @@ describe('story', () => {
     const unsourced = cli(story, 'story', '--gate', 'close');
 
     expect(unsourced.code).toBe(1);
-    expect(unsourced.stdout).toMatch(/\[ \] origin recorded +`## Origin` has no `From:` line/);
+    expect(unsourced.stdout).toMatch(/\[ \] origin recorded +`## Origin` has no written `From:` line/);
     expect(unsourced.stdout).toContain('Next: Write `## Origin` in docs/architecture/stories/US5.md');
 
     write(
