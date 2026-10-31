@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:07891610d1e3b32c -->
+<!-- translation-of: README.md sha256:ec01d14e8781b5f8 -->
 
 # ddd-ts-kit
 
@@ -720,7 +720,9 @@ toute la base : typecheck, lint, `format:check`, `test:coverage`, tests de bout 
 commençant par une lettre ou un chiffre (`npm run db:generate add-invoices`, sous TypeORM
 `migrations/add-invoices`) : `drizzle-generate`, `knex-generate`, `prisma-generate` et
 `typeorm-generate` refusent tout autre nom avant que l'ORM ne le lise, puisqu'une valeur qui commence par un tiret serait l'une
-de ses options ; `typeorm-generate` refuse aussi un dossier hors du projet.
+de ses options ; `typeorm-generate` refuse aussi un dossier hors du projet. Avec `--json`, elles répondent
+`{ code, written, messages }` sur une ligne : le code de sortie, les fichiers du dossier de migrations
+nouveaux ou modifiés, et ce que la commande a dit ; la sortie de l'outil de l'ORM va sur stderr.
 
 `package.json` porte deux compilateurs : `typescript ~6.0.3`, que les outils chargent comme une
 bibliothèque, et `@typescript/native` (`npm:typescript@~7.0.2`), que `build` et `typecheck`
@@ -1130,7 +1132,8 @@ Affiche la configuration de dependency-cruiser dérivée de `ddd-ts-kit.config.j
 langages publiés, amonts déclarés, *packages* autorisés, cycles et orphelins. `--write` la
 sauvegarde sous `.dependency-cruiser.cjs` ; `--check` sort avec le code 1 quand le fichier
 manque ou est périmé, ce que `npm run depcruise` exécute en premier. Modifiez la configuration,
-pas le fichier.
+pas le fichier. Avec `--json`, l'affichage est `{ file, config }` et `--write` répond
+`{ file, written }`.
 
 ## value-objects
 
@@ -2702,6 +2705,9 @@ nomme la version où elle devient une erreur. Ceux-là sont affichés dans le ra
 après lui, une ligne par règle, sans échouer : une mise à jour du kit ne fait jamais passer au
 rouge un lint vert. Sans ESLint installé, il sort en 2 et nomme l'installation. Voir
 [Base de qualité](../../docs/tools/quality-baseline.fr.md#un-avertissement-fait-échouer-le-lint).
+Avec `--json`, ESLint rapporte dans son format JSON et la commande répond, sur une ligne,
+`{ errors, warnings, inTransition, report }` (`report` est le rapport JSON d'ESLint), avec le même
+code de sortie et rien sur stderr.
 
 La commande linte avec le cache d'ESLint, indexé par le contenu de chaque fichier
 (`.eslintcache/`, ignoré par git) : une seconde exécution sur un arbre qui n'a pas changé ne

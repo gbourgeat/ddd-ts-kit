@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { ormToolEntry } from './audit-guard/orm-tool-entry';
+import { toolStdio } from './tool-stdio';
 import type { ToolStep } from './tool-step';
 
 /** The variable that carries the steps to the process that serves the database. */
@@ -54,7 +55,7 @@ export function runOnInProcessDatabase(root: string, steps: readonly ToolStep[])
   return (
     spawnSync(process.execPath, ['-e', SERVER], {
       cwd: root,
-      stdio: 'inherit',
+      stdio: toolStdio(),
       env: { ...process.env, [STEPS_VARIABLE]: JSON.stringify(resolved) },
     }).status ?? 1
   );

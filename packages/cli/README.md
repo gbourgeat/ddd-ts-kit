@@ -688,7 +688,9 @@ pipelines call, `test:coverage` (every spec once, each context and layer held to
 with a letter or a digit (`npm run db:generate add-invoices`, on TypeORM
 `migrations/add-invoices`): `drizzle-generate`, `knex-generate`, `prisma-generate` and
 `typeorm-generate` refuse any other name before the ORM reads it, since a value that starts with a dash would be one of its
-options; `typeorm-generate` also refuses a folder outside the project.
+options; `typeorm-generate` also refuses a folder outside the project. With `--json` they answer
+`{ code, written, messages }` on one line: the exit code, the files of the migrations folder that are new
+or changed, and what the command said; the output of the ORM tool goes to stderr.
 
 `package.json` carries two compilers: `typescript ~6.0.3`, which the tools load as a library,
 and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck` call by path
@@ -1067,7 +1069,8 @@ ddd-ts-kit depcruise-config [--check | --write]
 Prints the dependency-cruiser configuration derived from `ddd-ts-kit.config.json`: layers,
 published languages, declared upstreams, allowed packages, cycles and orphans. `--write` saves
 it as `.dependency-cruiser.cjs`; `--check` exits 1 when the file is missing or stale, which is
-what `npm run depcruise` runs first. Edit the config, not the file.
+what `npm run depcruise` runs first. Edit the config, not the file. With `--json`, the print is
+`{ file, config }` and `--write` answers `{ file, written }`.
 
 ## value-objects
 
@@ -2525,6 +2528,9 @@ transition: a rule new in this version, whose documentation names the version in
 an error. Those are shown in the report and listed after it, one line per rule, without failing:
 an upgrade of the kit never turns a green lint red. Without ESLint installed it exits 2 and names
 the install. See [Quality baseline](../../docs/tools/quality-baseline.md#warnings-fail-the-lint).
+With `--json` ESLint reports in its JSON format and the command answers, on one line,
+`{ errors, warnings, inTransition, report }` (`report` is the JSON report of ESLint), with the same
+exit code and nothing on stderr.
 
 The command lints with the cache of ESLint, keyed by the content of each file (`.eslintcache/`,
 ignored by git): a second run on a tree that did not change lints the files that changed since.

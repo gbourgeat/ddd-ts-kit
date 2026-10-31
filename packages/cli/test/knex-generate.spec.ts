@@ -246,3 +246,18 @@ describe('generate repository', () => {
     expect(generated.stdout).toContain(`The table reaches no database until \`${command}\``);
   });
 });
+
+describe.runIf(INSTALLED)('knex-generate --json', () => {
+  it('answers {code, written, messages} on one line under --json, the output of knex on stderr', () => {
+    const root = knexProject(ORDERS);
+    const result = generate(root, 'backfill-notes', '--custom', '--json');
+
+    expect(result.code).toBe(0);
+    expect(result.stdout.split('\n')).toHaveLength(1);
+
+    expect(result.json()).toMatchObject({
+      code: 0,
+      written: [expect.stringMatching(/^migrations\/.*backfill-notes\.js$/)],
+    });
+  }, 180_000);
+});

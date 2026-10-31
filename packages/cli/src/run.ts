@@ -51,7 +51,7 @@ import { refuseWindowsShell } from './refuse-windows-shell';
 import { VERSION } from './version';
 import { stdoutJson } from './json/stdout-json';
 
-const COMMANDS: Readonly<Record<string, Command>> = {
+export const COMMANDS: Readonly<Record<string, Command>> = {
   affected: affectedCommand,
   init: initCommand,
   generate: generateCommand,

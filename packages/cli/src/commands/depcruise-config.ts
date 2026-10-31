@@ -22,16 +22,15 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
     );
   }
 
-  const root = args.projectRoot;
-  const expected = renderCruiseFile(readConfig(root).config);
-  const ws = new Workspace(root, false);
+  const ws = new Workspace(args.projectRoot, false);
+  const expected = renderCruiseFile(readConfig(args.projectRoot).config);
 
   if (args.flag('write')) {
-    return writeCruiseFile(ws, expected, io);
+    return writeCruiseFile(ws, expected, { io, json: args.json });
   }
 
   if (!args.flag('check')) {
-    io.out(expected.trimEnd());
+    io.out(printed(expected, args.json));
 
     return 0;
   }
@@ -51,7 +50,12 @@ export const depcruiseConfigCommand: Command = (argv, io) => {
   return current ? 0 : 1;
 };
 
-function writeCruiseFile(ws: Workspace, expected: string, io: Io): number {
+/** The configuration as the file would hold it, or, under --json, with the name of the file. */
+function printed(expected: string, json: boolean): string {
+  return json ? stdoutJson({ file: DEPCRUISE_FILE, config: expected }) : expected.trimEnd();
+}
+
+function writeCruiseFile(ws: Workspace, expected: string, { io, json }: { io: Io; json: boolean }): number {
   // A derived file, written again whatever it holds: not a replacement --force decides on.
   ws.update(DEPCRUISE_FILE, expected);
 
@@ -60,7 +64,7 @@ function writeCruiseFile(ws: Workspace, expected: string, io: Io): number {
   if (report.unwritable.length > 0) {
     tellUnwritable(io, report);
   } else {
-    io.out(`written  ${DEPCRUISE_FILE}`);
+    io.out(json ? stdoutJson({ file: DEPCRUISE_FILE, written: true }) : `written  ${DEPCRUISE_FILE}`);
   }
 
   return exitCodeOf(report);

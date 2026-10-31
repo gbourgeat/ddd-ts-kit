@@ -7,7 +7,8 @@ import { lintCacheOf } from '../lint/lint-cache-of';
 import { type LintAnswer, parseLintAnswer } from '../lint/parse-lint-answer';
 import type { LintRun } from '../lint/lint-run';
 import { formatVerdict } from '../lint/format-verdict';
-import { lintVerdict } from '../lint/lint-verdict';
+import { lintVerdict, type LintVerdict } from '../lint/lint-verdict';
+import { stdoutJson } from '../json/stdout-json';
 import { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
@@ -15,7 +16,8 @@ import type { Io } from './io';
 /**
  * `lint` and `ci:lint` of a generated project: the ESLint of the project, with its cache unless
  * `--no-cache` asks for every file again, failing on an error or a warning, but on a warning of a
- * rule of the kit in transition, which it reports apart.
+ * rule of the kit in transition, which it reports apart. `--json` asks ESLint for its JSON report
+ * and answers `{ errors, warnings, inTransition, report }` on one line.
  */
 export const lintCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
@@ -32,7 +34,7 @@ export const lintCommand: Command = (argv, io) => {
     {
       root,
       patterns: args.positionals,
-      format: args.text('format') ?? 'stylish',
+      format: args.json ? 'json' : (args.text('format') ?? 'stylish'),
       fix: args.flag('fix'),
       cache: args.flag('no-cache') ? undefined : lintCacheOf(root),
     },
@@ -45,6 +47,28 @@ export const lintCommand: Command = (argv, io) => {
 
   const verdict = lintVerdict(answer);
 
+  printVerdict({ answer, verdict, json: args.json }, io);
+
+  return verdict.errors > 0 || verdict.warnings > 0 ? 1 : 0;
+};
+
+function printVerdict(
+  { answer, verdict, json }: { answer: LintAnswer; verdict: LintVerdict; json: boolean },
+  io: Io,
+): void {
+  if (json) {
+    io.out(
+      stdoutJson({
+        errors: verdict.errors,
+        warnings: verdict.warnings,
+        inTransition: verdict.inTransition,
+        report: reportOf(answer.report),
+      }),
+    );
+
+    return;
+  }
+
   if (answer.report.trim() !== '') {
     io.out(answer.report.trimEnd());
   }
@@ -52,9 +76,16 @@ export const lintCommand: Command = (argv, io) => {
   for (const line of formatVerdict(verdict)) {
     io.err(line);
   }
+}
 
-  return verdict.errors > 0 || verdict.warnings > 0 ? 1 : 0;
-};
+/** The report of the JSON formatter of ESLint as a value; the text itself when a formatter of the project answered otherwise. */
+function reportOf(report: string): unknown {
+  try {
+    return JSON.parse(report);
+  } catch {
+    return report;
+  }
+}
 
 function refuseWithoutEslint(root: string): void {
   try {

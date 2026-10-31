@@ -3,7 +3,9 @@ import { join } from 'node:path';
 import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import { withGeneratorLock } from '../generator-lock';
+import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder';
 import {
+  answeredAsJson,
   appendAuditGuard,
   auditGuardStatementsOf,
   generateAndRead,
@@ -47,7 +49,16 @@ function generateMigration(args: Arguments, io: Io): number {
   const root = args.projectRoot;
 
   refuseOtherOrm(root, 'drizzle');
-  const interactive = process.stdin.isTTY && process.stdout.isTTY;
+
+  if (args.json) {
+    return answeredAsJson({ root, folders: [drizzleOutFolder(root)] }, io, (held) => migrate(args, held, false));
+  }
+
+  return migrate(args, io, process.stdin.isTTY && process.stdout.isTTY);
+}
+
+function migrate(args: Arguments, io: Io, interactive: boolean): number {
+  const root = args.projectRoot;
 
   if (args.flag('replay')) {
     refuseNamedReplay(args);
