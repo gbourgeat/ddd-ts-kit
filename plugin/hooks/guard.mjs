@@ -618,6 +618,8 @@ const WINDOWS = process.platform === 'win32';
 const HOOK_SELECTION = /^LEFTHOOK_(?:EXCLUDE|SKIP)=/;
 // The most of a file of state, a scope file or a plan the guard reads: past it, it is not read.
 const STATE_BYTES = 16 * 1024 * 1024;
+// What the guard reads of one file to compare it, and copies to hold it, within the 5 s of its hook.
+const HASHED_FILE_BYTES = 16 * 1024 * 1024;
 // The agents of the plugin that only read: they write their findings in their answer.
 const READ_ONLY_AGENTS = ['architecture-reviewer', 'domain-explorer', 'story-verifier'];
 // How the record of a trial is appended: created if missing, never through a link under its name.
@@ -4390,9 +4392,13 @@ function holdChanges(project, input, { worktree: before, script }) {
   }
   const all = differences(project, outside, { before, now });
   const rewritten = script ? all.filter(isRewrittenByTools) : [];
-  const changed = all.filter((path) => !rewritten.includes(path));
+  const uncopied = all.filter((path) => !rewritten.includes(path) && hasNoCopy(project, before.changes[path]));
+  const changed = all.filter((path) => !rewritten.includes(path) && !uncopied.includes(path));
   if (rewritten.length > 0) {
     notice = [notice, rewrittenNotice(script, rewritten)].filter(Boolean).join('\n');
+  }
+  if (uncopied.length > 0) {
+    notice = [notice, uncopiedNotice(uncopied)].filter(Boolean).join('\n');
   }
   if (changed.length > 0) {
     const file = stateFile('outside', project, input);
@@ -4408,6 +4414,16 @@ function holdChanges(project, input, { worktree: before, script }) {
 // What Biome, ESLint and the generators of the kit rewrite: code, JSON and the documents.
 function isRewrittenByTools(path) {
   return FORMATTED_FILE.test(path) || path.startsWith('docs/');
+}
+
+// A file already changed before the command is held to the copy the note kept: there is none of a
+// file past the bound, or of one the guard cannot read, so it cannot be put back, and is said instead.
+function hasNoCopy(project, entry) {
+  return Boolean(entry?.hash) && !existsSync(join(project.root, GUARD_HELD, entry.hash));
+}
+
+function uncopiedNotice(paths) {
+  return `ddd-ts-kit: your last command left files changed outside your scope, and already changed before it: ${paths.join(', ')}. They are not held: the guard keeps no copy of a file past ${HASHED_FILE_BYTES / (1024 * 1024)} MiB, which it compares by its size and time, nor of one it cannot read. Leave them out of your commits and name them in your report, for the conductor.`;
 }
 
 function rewrittenNotice(script, paths) {
@@ -4649,13 +4665,17 @@ function putBackStep(project, { now, since }, [path, target]) {
   return { command: entry.added ? `git rm -f -- ${path}` : `git checkout HEAD -- ${path}` };
 }
 
-// A file that is not a regular one (a link to a device, a FIFO) has a hash of its kind, never read.
+// A file that is not a regular one (a link to a device, a FIFO) has a hash of its kind, never read;
+// one past the bound a hash of its size and time, never read nor kept.
 function contentHash(file, keep) {
   const stat = statSync(file, { throwIfNoEntry: false });
   if (stat === undefined) {
     return null;
   }
-  const content = stat.isFile() ? readBounded(file, Number.POSITIVE_INFINITY, null).content : undefined;
+  const { content, tooLarge } = stat.isFile() ? readBounded(file, HASHED_FILE_BYTES, null) : {};
+  if (tooLarge !== undefined) {
+    return createHash('sha256').update(`past the bound: ${stat.size}:${stat.mtimeMs}`).digest('hex');
+  }
   if (content === undefined) {
     return createHash('sha256').update(`not a file: ${stat.mode}`).digest('hex');
   }

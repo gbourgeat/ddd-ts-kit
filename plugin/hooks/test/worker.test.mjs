@@ -3,7 +3,17 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  truncateSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import {
@@ -670,6 +680,57 @@ test('the content of a shared file already changed is kept once, not rewritten a
   utimesSync(held, old, old);
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
   assert.equal(statSync(held).mtimeMs, old.getTime());
+});
+
+test('a shared file past the bound is compared by its size and time, unread, with no copy kept', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'large', agent_id: 'builder-6' };
+  const large = join(root, 'dump.sql');
+  const bound = 16 * 1024 * 1024;
+  writeFileSync(large, 'Changed by the conductor.\n');
+  truncateSync(large, bound + 1);
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  assert.equal(existsSync(join(root, '.ddd-ts-kit/guard/held')), false);
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  truncateSync(large, bound + 2);
+  const said = run('pre-bash', bash(root, 'npm test', agent)).output.hookSpecificOutput;
+  assert.equal(said.permissionDecision, undefined);
+  assert.match(
+    said.additionalContext,
+    /left files changed outside your scope, and already changed before it: dump\.sql\./,
+  );
+  assert.match(said.additionalContext, /the guard keeps no copy of a file past 16 MiB/);
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  const later = new Date(Date.now() + 3600 * 1000);
+  utimesSync(large, later, later);
+  assert.match(run('pre-bash', bash(root, 'npm test', agent)).output.hookSpecificOutput.additionalContext, /dump\.sql/);
+});
+
+test('a shared file the guard cannot read has no copy either: its change is said, not held', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'device', agent_id: 'builder-8' };
+  symlinkSync('/dev/null', join(root, 'device'));
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  rmSync(join(root, 'device'));
+  writeFileSync(join(root, 'device'), 'Rewritten by the worker.\n');
+  const said = run('pre-bash', bash(root, 'npm test', agent)).output.hookSpecificOutput;
+  assert.equal(said.permissionDecision, undefined);
+  assert.match(said.additionalContext, /already changed before it: device\..*nor of one it cannot read/);
+});
+
+test('a shared file at the bound is read and kept as any other, and held to its content', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'bound', agent_id: 'builder-7' };
+  const file = join(root, 'dump.sql');
+  writeFileSync(file, '');
+  truncateSync(file, 16 * 1024 * 1024);
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  assert.equal(readdirSync(join(root, '.ddd-ts-kit/guard/held')).length, 1);
+  writeFileSync(file, 'Rewritten by the worker.\n');
+  assert.match(
+    reason(run('pre-bash', bash(root, 'npm test', agent))),
+    /`cp \.ddd-ts-kit\/guard\/held\/[0-9a-f]{64} dump\.sql`/,
+  );
 });
 
 test('a shared file deleted before the code of a worker ran, and made again by it, is to be removed again', () => {

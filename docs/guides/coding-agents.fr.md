@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:8c69f4fa6fe69766 -->
+<!-- translation-of: coding-agents.md sha256:a7488f3a6ef80360 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -166,7 +166,9 @@ du *worktree* changé hors du périmètre, supprimé ou commité compris, arrêt
 qu'il soit remis en état par la commande que la garde nomme : son contenu commité (`git checkout
 <commit> -- <path>`, puis `git commit` quand un commit l'a changé), le contenu qu'il avait avant la
 commande quand il était déjà modifié (gardé sous `.ddd-ts-kit/guard/held/`), `git mv` en retour
-pour un renommage, `rm` pour un nouveau fichier. Un fichier laissé modifié dans l'arbre de travail
+pour un renommage, `rm` pour un nouveau fichier. Un fichier de plus de 16 Mio est comparé par sa
+taille et sa date, sans être lu, et aucune copie n'en est gardée : déjà modifié avant la commande, il
+est dit, sans retenir le *worker*, qui le nomme dans son rapport. Un fichier laissé modifié dans l'arbre de travail
 du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) ou
 un changement de ces paquets est dit une fois, pour le chef d'orchestre, qui seul sait s'il l'a fait.
 Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerate`, `docs:generate`,

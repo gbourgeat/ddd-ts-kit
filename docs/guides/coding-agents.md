@@ -154,7 +154,9 @@ that does not answer in full compares nothing, and the guard says so. A file of 
 worker until it is put back with the command the guard names: its committed content (`git checkout
 <commit> -- <path>`, then `git commit` when a commit changed it), the content it had before the
 command when it was already changed (kept under `.ddd-ts-kit/guard/held/`), `git mv` back for a
-rename, `rm` for a new file. A file left changed in the working tree of the session's checkout (not
+rename, `rm` for a new file. A file past 16 MiB is compared by its size and time, unread, and no copy
+of it is kept: already changed before the command, it is said, not held, and the worker names it in
+its report. A file left changed in the working tree of the session's checkout (not
 one the conductor commits or merges meanwhile) or a change of those packages is said once, for the
 conductor, who alone knows whether it made it. What the project's own scripts (`npm run format`,
 `lint:fix`, `regenerate`, `docs:generate`, `openapi:generate`, `events:generate`, not run in another
