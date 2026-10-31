@@ -29,6 +29,8 @@ import { keepFlatPlatform } from '../platform-folders';
 import { ignoreWorktrees } from './ignore-worktrees';
 import { isTeamFile } from './is-team-file';
 import { forcedNote } from './forced-note';
+import { subfolderOf } from './subfolder-of';
+import { subfolderSentence } from './subfolder-sentence';
 import { keptCombinationNotes } from './kept-combination-notes';
 import { keptFlagNotes } from './stack/kept-flag-notes';
 import { keptOrMerged } from './kept-or-merged';
@@ -134,6 +136,7 @@ function closingNotes(root: string, report: WorkspaceReport, options: InitOption
 
   return [
     ...unwritable,
+    ...subfolderNote(root, config),
     ...(options.force ? [forcedNote(report, options.dryRun)] : []),
     ...(created
       ? [
@@ -143,6 +146,17 @@ function closingNotes(root: string, report: WorkspaceReport, options: InitOption
         ]
       : []),
   ];
+}
+
+/** A project in a folder of a larger repository: the files read at the top only are said, nothing is moved. */
+function subfolderNote(root: string, config: Config): string[] {
+  const folder = subfolderOf(root);
+
+  return folder === undefined
+    ? []
+    : [
+        `This project is in ${folder}, not at the top of the git repository: ${subfolderSentence(folder, config.stack.packageManager)}`,
+      ];
 }
 
 /**

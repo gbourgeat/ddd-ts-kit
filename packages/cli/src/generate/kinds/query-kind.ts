@@ -80,7 +80,7 @@ function queryVariant(scope: Scope): QueryVariant {
  * before a glossary refusal sends the user to a term that would lead to the same files.
  */
 function refuseListQuery(input: string): void {
-  const name = parseConceptName(input, 'use case', { strip: ['query', 'handler'] });
+  const name = parseConceptName(input, 'use case', { strip: ['query', 'handler'], allowReserved: true });
   const [first, ...rest] = name.words.split(' ');
 
   if (first !== 'list') {

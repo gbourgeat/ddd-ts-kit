@@ -9,7 +9,7 @@ import type { Scope } from '../scope';
  * the fact of any domain event (past tense, glossary).
  */
 export function birthNames(scope: Scope, aggregate: Name, input: string): EventNames {
-  const typed = parseConceptName(input, 'fact', { strip: ['event'] });
+  const typed = parseConceptName(input, 'fact', { strip: ['event'], allowReserved: true });
 
   return eventNames(scope, aggregate.pascal, withoutSubject(typed, aggregate).pascal);
 }

@@ -254,6 +254,10 @@ jobs:
   mutation-changed:
     name: Mutation score of the change
     needs: install
+    # gh run list and gh run download read the runs of the workflow: contents alone is refused on a private repository.
+    permissions:
+      contents: read
+      actions: read
     # A pull request: the report of the last night is reused for what the change leaves alone, and the survivors of the files it touched are listed. A reading, not a gate: the floor is held by the night.
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-26.04
