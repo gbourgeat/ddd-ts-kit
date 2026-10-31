@@ -9,8 +9,10 @@ what their token says (`PUT /accounts/me`) and refreshed at each later one. No p
 of the provider is stored here. The email address of an account is always the one of the token,
 never one a client sends, and one the provider verified (`email_verified`): an invitation is
 matched on it. A deactivated account leaves every organisation and ends every delegation in the
-same unit of work, so that it holds no right anywhere while its last token lives; the last owner
-of an organisation appoints another owner before deactivating.
+same unit of work; the last owner of an organisation appoints another owner before deactivating.
+This context refuses the account at once, the other contexts at its next token: they read the
+token, and a token already issued lives until it expires (300 s in the realm of the kit). A
+project that wants no window checks the account at the edge.
 
 **Organisations, members and roles.** An organisation is opened under its slug, which is its
 identity for good, and its opener is its first owner. A member holds one role, `owner`, `admin`

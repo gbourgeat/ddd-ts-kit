@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:ab2bd6291f7cffae -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:5d89a7cc2b7d6d8e -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -154,8 +154,10 @@ personne d'une seule organisation y travaille à chaque requête HTTP ; une pers
 les détient comme l'attribut `tenants`, et chaque requête HTTP nomme celle dans laquelle elle
 travaille avec `x-tenant-id` (refusée par un 403 si elle n'en est pas membre : le *preset* donne à
 la bordure HTTP de `http-boundary.ts` `resolveTenant: firstTenantOf(tenantFromHeader(), tenantFromClaim())`,
-quel que soit l'authentificateur). Retirée d'une organisation, elle la perd à son
-prochain jeton, et le contexte d'identité lui refuse déjà ses cas d'usage. Avec `--authn jwt`, le
+quel que soit l'authentificateur). Retirée d'une organisation, ou son compte désactivé, elle la
+perd à son prochain jeton, et le contexte d'identité lui refuse déjà ses cas d'usage : les autres
+contextes lisent le jeton, et un jeton déjà émis vit jusqu'à son expiration (300 s dans le
+*realm* du kit). Un projet qui ne veut aucune fenêtre vérifie le compte à la bordure. Avec `--authn jwt`, le
 *preset* laisse une étape suivante : faire correspondre le *claim* qu'écrit votre fournisseur
 (`tenantClaim` quand c'est une liste ou un objet indexé par organisation, `toActor` sinon).
 

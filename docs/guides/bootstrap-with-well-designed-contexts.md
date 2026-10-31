@@ -146,8 +146,10 @@ one organisation works in it on every request; a person of several holds them as
 attribute, and each request names the one it works in with `x-tenant-id` (refused with 403 if
 they are not a member of it: the preset gives the HTTP boundary of `http-boundary.ts`
 `resolveTenant: firstTenantOf(tenantFromHeader(), tenantFromClaim())`, whatever the authenticator).
-Removed from an organisation, they lose it at their next token, and the identity context already
-refuses them its use cases. With `--authn jwt` the preset leaves a next step: map the claim your
+Removed from an organisation, or with their account deactivated, they lose it at their next
+token, and the identity context already refuses them its use cases: the other contexts read the
+token, and a token already issued lives until it expires (300 s in the realm of the kit). A
+project that wants no window checks the account at the edge. With `--authn jwt` the preset leaves a next step: map the claim your
 provider writes (`tenantClaim` when it is a list or an object keyed by organisation, `toActor`
 otherwise).
 
