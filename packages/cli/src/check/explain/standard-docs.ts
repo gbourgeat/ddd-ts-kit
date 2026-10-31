@@ -37,9 +37,9 @@ export class PinoLogger implements Logger {}`,
   'governance/recorded-deviation': {
     why: 'The architecture can be changed deliberately, not case by case. A suppression, a lowered severity or a widened list that points to no decision is indistinguishable from a shortcut, and gets copied. The decision record says why, for what scope and until when, so the exception can be reviewed today and removed later.',
     bad: `// eslint-disable-next-line no-console -- needed for the demo
-"rules": { "test/spec-required": "off" }`,
+"rules": { "test/spec-required": { "severity": "off", "files": ["src/contexts/billing/infrastructure/**"] } }`,
     good: `// eslint-disable-next-line no-console -- ADR-0004: startup banner read by operations
-"rules": { "test/spec-required": "off" },
+"rules": { "test/spec-required": { "severity": "off", "files": ["src/contexts/billing/infrastructure/**"] } },
 "deviations": [{ "what": "rules.test/spec-required", "adr": "0009", "reason": "Generated adapters are covered by the contract suite." }]
 // docs/adr/0004-startup-banner.md, docs/adr/0009-no-spec-for-generated-adapters.md`,
   },
