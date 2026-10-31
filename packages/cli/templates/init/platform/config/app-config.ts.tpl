@@ -36,6 +36,15 @@ export interface AppConfig {
   {{#if persistence.needsUrl}}
   readonly databaseUrl: string;
   {{/if}}
+  {{#if orm.prisma}}
+  /**
+   * How long a unit of work waits for its transaction, every connection being busy
+   * (`DATABASE_TRANSACTION_WAIT_MS`), and how long the transaction may run
+   * (`DATABASE_TRANSACTION_TIMEOUT_MS`): Prisma bounds both, beyond which the unit of work is
+   * answered 503.
+   */
+  readonly databaseTransaction: { readonly waitMs: number; readonly timeoutMs: number };
+  {{/if}}
   {{#if events.outbox}}
   readonly outboxRelayIntervalMs: number;
   {{/if}}

@@ -14,6 +14,36 @@ describe('the HTTP server init writes answers what fails at its edge', () => {
     expect(server).toContain(installed);
   });
 
+  it.each([
+    ['express', 'app.use(problemNotFoundHandler({ logger: served.logger }));'],
+    ['fastify', 'app.setNotFoundHandler(problemNotFoundHandler({ logger: served.logger }));'],
+    ['hono', 'app.notFound(problemNotFoundHandler({ logger: served.logger }));'],
+  ])('answers a path no route of %s serves 404 as a problem, as the filter of Nest does', (http, installed) => {
+    const server = read(initProject('--http', http), 'src/platform/http/start-http-server.ts');
+
+    expect(server).toContain(installed);
+  });
+
+  it('answers a path no route serves on Express after every route, before the handler of errors', () => {
+    const server = read(initProject('--docs-ui', 'scalar'), 'src/platform/http/start-http-server.ts');
+
+    expect(server.indexOf('mountExpress(app, withDocumentation(')).toBeLessThan(
+      server.indexOf('app.use(problemNotFoundHandler('),
+    );
+
+    expect(server.indexOf('app.use(problemNotFoundHandler(')).toBeLessThan(
+      server.indexOf('app.use(problemErrorHandler('),
+    );
+  });
+
+  it('fails the start on Express when the port cannot be bound, instead of answering a server that serves nothing', () => {
+    const server = read(initProject(), 'src/platform/http/start-http-server.ts');
+
+    expect(server).toContain(
+      'const server = app.listen(port, (error) => (error === undefined ? resolve(server) : reject(error)));',
+    );
+  });
+
   it('answers a failed limit of the callers as a problem, on Express and on Nest', () => {
     const express = read(initProject('--cache', 'redis'), 'src/platform/http/start-http-server.ts');
     const nest = read(initProject('--http', 'nest', '--cache', 'redis'), 'src/platform/http/start-http-server.ts');

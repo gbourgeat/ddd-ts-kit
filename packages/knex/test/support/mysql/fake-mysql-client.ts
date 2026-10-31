@@ -25,6 +25,9 @@ export class FakeMySqlClient extends ClientMySQL2 {
   /** What the header of the next answers says was written. */
   affectedRows = 1;
 
+  /** The rows a select is answered with. */
+  rows: readonly object[] = [];
+
   _driver(): object {
     return {};
   }
@@ -43,7 +46,10 @@ export class FakeMySqlClient extends ClientMySQL2 {
 
   _query(_connection: object, query: Query): Promise<Query> {
     this.statements.push({ sql: query.sql, bindings: query.bindings ?? [] });
-    query.response = [{ affectedRows: this.affectedRows, insertId: 0, warningStatus: 0 }, []];
+
+    query.response = /^\s*select\b/i.test(query.sql)
+      ? [this.rows, []]
+      : [{ affectedRows: this.affectedRows, insertId: 0, warningStatus: 0 }, []];
 
     return Promise.resolve(query);
   }

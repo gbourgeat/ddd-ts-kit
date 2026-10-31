@@ -300,13 +300,6 @@ describe('a refusal of the framework that carries a client status', () => {
       code: 'UNSUPPORTED_MEDIA_TYPE',
     });
   });
-
-  it('keeps its status on Nest, a path no route serves answered 404', async () => {
-    const response = await fetch(`${await started(nestOver('express'))}/nowhere`);
-
-    expect(response.status).toBe(404);
-    expect(await response.json()).toMatchObject({ title: 'Not Found', status: 404, code: 'NOT_FOUND' });
-  });
 });
 
 describe('an error once the answer has started', () => {

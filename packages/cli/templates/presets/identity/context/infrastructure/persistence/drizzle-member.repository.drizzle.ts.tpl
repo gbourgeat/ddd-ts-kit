@@ -1,5 +1,5 @@
 import { and, count, eq, isNull } from 'drizzle-orm';
-import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
+import { optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
@@ -66,7 +66,11 @@ export class DrizzleMemberRepository implements MemberRepository {
   private insert(state: VersionedMember) {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
 
-    return executorOf(this.database).insert(members).values(row).onConflictDoNothing().returning({ id: members.id });
+    return executorOf(this.database)
+      .insert(members)
+      .values(row)
+      .onConflictDoNothing({ target: primaryKeyOf(members) })
+      .returning({ id: members.id });
   }
 
   private update(state: VersionedMember, expected: number) {

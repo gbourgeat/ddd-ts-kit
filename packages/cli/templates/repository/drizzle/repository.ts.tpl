@@ -1,9 +1,9 @@
 import { and, eq } from 'drizzle-orm';
 {{#if tenant.scoped}}
-import { optimisticUpdate, ownTenantCondition, tenantCondition } from '@ddd-ts-kit/drizzle/postgres';
+import { optimisticUpdate, ownTenantCondition, primaryKeyOf, tenantCondition } from '@ddd-ts-kit/drizzle/postgres';
 {{/if}}
 {{#unless tenant.scoped}}
-import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
+import { optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
 {{/unless}}
 {{#if tenant.scoped}}
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
@@ -63,8 +63,9 @@ export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal
     const row = { ...state, {{#if tenant.scoped}}...tenantScopeOf(this.scope), {{/if}}...stampCreation(this.scope, this.clock) };
 
     const insertion = this.database.executor().insert({{aggregate.tableCamel}}).values(row);
+    const ignoringTheKey = insertion.onConflictDoNothing({ target: primaryKeyOf({{aggregate.tableCamel}}) });
 
-    return insertion.onConflictDoNothing().returning({ id: {{aggregate.tableCamel}}.id });
+    return ignoringTheKey.returning({ id: {{aggregate.tableCamel}}.id });
   }
 
   private update(state: Versioned{{aggregate.pascal}}, expected: number) {

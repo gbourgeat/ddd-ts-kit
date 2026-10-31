@@ -90,6 +90,16 @@ export class BrokerLink {
     return client;
   }
 
+  /**
+   * Asks the cluster for its topics, whatever there is to declare: a cluster out of reach fails
+   * with `BROKER_UNAVAILABLE`, at startup rather than at the first record.
+   */
+  async reach(): Promise<void> {
+    const admin = await this.admin();
+
+    await this.answered(admin.listTopics());
+  }
+
   /** Creates the topics that do not exist yet. An existing topic is never altered. */
   async declare(topics: readonly TopicDescription[]): Promise<void> {
     const missing = topics.filter((topic) => !this.known.has(topic.name));

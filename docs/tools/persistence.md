@@ -271,6 +271,27 @@ concurrent one, a deadlock (`40P01`) or a serialization failure (`40001`, Prisma
 whichever statement it chose: `TransactionConflictError`, a `ConcurrencyError` whose `cause` is
 the error of the driver, never an unexpected error.
 
+A save that takes a value another row holds under a unique constraint (an email, a number) is
+not a lost update: running it again is refused again. The four ORM answer it alike, on an
+insert and on an update: `UniqueViolationError`, a `ConflictError` (code `CONFLICT`, 409) whose
+`cause` is the error of the driver (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`, `SQLITE_CONSTRAINT_PRIMARYKEY`, a raw `SQLITE_CONSTRAINT` whose message names a unique key,
+`P2002`), raised by `optimisticUpdate`. The first save ignores a conflict on the id alone
+(`ON CONFLICT (id) DO NOTHING`); on Prisma, whose `skipDuplicates` names no target,
+`rowsCreated` looks the id up when nothing was written. A handler that has a business answer
+for the taken value (`EMAIL_TAKEN`) catches `UniqueViolationError` and raises its own refusal.
+On MySQL, which has no conflict target and whose `INSERT IGNORE` skips that row too,
+`insertIgnoringConflict` of Knex and of TypeORM asks whether a row holds the id when nothing was
+written, and raises `UniqueViolationError` when none does, as `rowsCreated` does on Prisma.
+
+A unit of work the database cannot serve in time is answered 503, not 500: Prisma bounds the
+wait for a transaction (`maxWait`) and its run (`timeout`), Knex the wait for a connection
+(`acquireConnectionTimeout`, 60 seconds), and beyond them the unit of work rejects with
+`TransactionTimeoutError` (code `SERVICE_UNAVAILABLE`), nothing committed. A generated project on
+Prisma reads both limits from `DATABASE_TRANSACTION_WAIT_MS` and
+`DATABASE_TRANSACTION_TIMEOUT_MS`, 10 and 30 seconds by default (a caller gives up near 30
+seconds, and a connection held longer sheds no load); Drizzle and TypeORM wait for a
+connection of their pool and bound no transaction, so they have no such setting.
+
 ![Two transactions load invoice inv-1 at version 3; the first update matches version 3 and writes version 4; the second update still expects version 3, writes no row and fails with ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.svg)
 
 The fake of the unit specs and the real adapter keep that promise alike: the same

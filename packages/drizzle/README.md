@@ -233,7 +233,7 @@ import { and, eq } from 'drizzle-orm';
 import { integer, text, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { contextSchema, DrizzleContext, optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
+import { contextSchema, DrizzleContext, optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
 
 // The aggregate and its port of the previous sample, reduced to their shape.
 type OrderStatus = 'open' | 'placed';
@@ -291,7 +291,7 @@ export class DrizzleOrderRepository implements OrderRepository {
       const row = OrderMapper.toRow(order, next);
       const written =
         expected === 0
-          ? await db.insert(orders).values(row).onConflictDoNothing().returning({ id: orders.id })
+          ? await db.insert(orders).values(row).onConflictDoNothing({ target: primaryKeyOf(orders) }).returning({ id: orders.id })
           : await db
               .update(orders)
               .set(row)
@@ -316,8 +316,16 @@ with a relational schema (`drizzle(url, { schema })`), declare `Database` as
 
 | `expected` | Statement | No row written means |
 |---|---|---|
-| `0`: never saved | `INSERT ... ON CONFLICT DO NOTHING` | the id is taken |
+| `0`: never saved | `INSERT ... ON CONFLICT (id) DO NOTHING` | the id is taken |
 | `n` | `UPDATE ... SET version = n + 1 WHERE id = ... AND version = n` | another transaction saved it since it was read |
+
+The conflict target is the primary key alone, as the table declares it
+(`onConflictDoNothing({ target: primaryKeyOf(orders) })`, the id, or every column of a key that
+holds the tenant): without
+it, PostgreSQL also skips a row that takes a value another row holds under a unique constraint
+(an email), and the save reads as a lost update. Named, that row is refused by the database,
+and `optimisticUpdate` raises `UniqueViolationError` (code `CONFLICT`, 409), as for an update
+that takes such a value.
 
 ## Audit columns, tenant scoping and pages
 
@@ -342,6 +350,7 @@ import {
   DrizzleContext,
   optimisticUpdate,
   ownTenantCondition,
+  primaryKeyOf,
   tenantColumn,
   tenantCondition,
 } from '@ddd-ts-kit/drizzle/postgres';
@@ -421,7 +430,9 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
     // tenant_id from the work in progress, created_* and updated_* from its actor and the Clock
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
 
-    return this.database.executor().insert(invoices).values(row).onConflictDoNothing().returning({ id: invoices.id });
+    const insertion = this.database.executor().insert(invoices).values(row);
+
+    return insertion.onConflictDoNothing({ target: primaryKeyOf(invoices) }).returning({ id: invoices.id });
   }
 
   private update(state: VersionedInvoice, expected: number) {

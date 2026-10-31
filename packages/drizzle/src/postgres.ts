@@ -15,6 +15,7 @@ export * from './postgres/outbox/tenant-outbox-table';
 export * from './postgres/outbox/processed-events-table';
 export * from './postgres/outbox/drizzle-outbox-store';
 export * from './postgres/outbox/drizzle-processed-event-store';
+export * from './postgres/sql/primary-key-of';
 export * from './postgres/columns/audit-columns';
 export * from './postgres/columns/tenant-column';
 export * from './postgres/read-model/read-model-columns';

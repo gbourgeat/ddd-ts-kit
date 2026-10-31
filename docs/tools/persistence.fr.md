@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:16685c2dddac667b -->
+<!-- translation-of: persistence.md sha256:182bef0fcd3fc617 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -279,6 +279,29 @@ leur transaction pour une transaction concurrente, sur un interblocage (`40P01`)
 sérialisation (`40001`, `P2034` de Prisma), quelle que soit l'instruction choisie :
 `TransactionConflictError`, une `ConcurrencyError` dont la `cause` est l'erreur du pilote, jamais
 une erreur inattendue.
+
+Un enregistrement qui prend une valeur qu'une autre ligne détient sous une contrainte d'unicité
+(un e-mail, un numéro) n'est pas une mise à jour perdue : le relancer est refusé de nouveau. Les
+quatre ORM y répondent de même, sur une insertion comme sur une mise à jour :
+`UniqueViolationError`, une `ConflictError` (code `CONFLICT`, 409) dont la `cause` est l'erreur
+du pilote (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`, `SQLITE_CONSTRAINT_PRIMARYKEY`, un `SQLITE_CONSTRAINT` brut dont le message nomme une clé unique, `P2002`), levée par
+`optimisticUpdate`. Le premier enregistrement n'ignore qu'un conflit sur l'id
+(`ON CONFLICT (id) DO NOTHING`) ; sur Prisma, dont `skipDuplicates` ne nomme aucune cible,
+`rowsCreated` cherche l'id quand rien n'a été écrit. Un *handler* qui a une réponse métier pour
+la valeur prise (`EMAIL_TAKEN`) attrape `UniqueViolationError` et lève son propre refus. Sur
+MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` écarte aussi cette ligne,
+`insertIgnoringConflict` de Knex et de TypeORM demande si une ligne détient l'id quand rien n'a
+été écrit, et lève `UniqueViolationError` quand aucune ne le détient, comme `rowsCreated` sur
+Prisma.
+
+Une unité de travail que la base ne peut pas servir à temps reçoit un 503, pas un 500 : Prisma
+borne l'attente d'une transaction (`maxWait`) et sa durée (`timeout`), Knex l'attente d'une
+connexion (`acquireConnectionTimeout`, 60 secondes), et au-delà l'unité de travail est rejetée
+par `TransactionTimeoutError` (code `SERVICE_UNAVAILABLE`), rien n'étant validé. Un projet
+généré sur Prisma lit les deux limites dans `DATABASE_TRANSACTION_WAIT_MS` et
+`DATABASE_TRANSACTION_TIMEOUT_MS`, 10 et 30 secondes par défaut (un appelant abandonne vers 30
+secondes, et une connexion tenue plus longtemps ne déleste rien) ; Drizzle et TypeORM attendent
+une connexion de leur *pool* et ne bornent aucune transaction, ils n'ont donc pas ce réglage.
 
 ![Deux transactions chargent la facture inv-1 à la version 3 ; la première mise à jour correspond à la version 3 et écrit la version 4 ; la seconde attend toujours la version 3, n'écrit aucune ligne et échoue avec ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.fr.svg)
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:10583fb39225256f -->
+<!-- translation-of: README.md sha256:4461838007dbf1d5 -->
 
 # @ddd-ts-kit/kernel
 
@@ -32,7 +32,7 @@ avec une bibliothèque.
 
 | Thème | Exports |
 |---|---|
-| Domaine | `Entity`, `AggregateRoot` (version, événements enregistrés), `ValueObject`, `DomainEvent`, `DomainError` avec un `code` stable, `ConceptError` (les erreurs d'un concept, chacune construite par une fabrique statique : voir « Erreurs du domaine »), `DomainRefusal` (une classe par refus, construite par des fabriques statiques), `FactualRefusal`, `isRefusal`, `CodeOf`, `RefusalOf`, `Refusal`, `RefusalFacts`, le générique `InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`, `PreconditionFailedError`, `Result` avec `ok`, `err`, `unwrap` |
+| Domaine | `Entity`, `AggregateRoot` (version, événements enregistrés), `ValueObject`, `DomainEvent`, `DomainError` avec un `code` stable, `ConceptError` (les erreurs d'un concept, chacune construite par une fabrique statique : voir « Erreurs du domaine »), `DomainRefusal` (une classe par refus, construite par des fabriques statiques), `FactualRefusal`, `isRefusal`, `CodeOf`, `RefusalOf`, `Refusal`, `RefusalFacts`, le générique `InvariantViolation`, `NotFoundError`, `ConflictError` (et `UniqueViolationError`, une valeur qu'une contrainte d'unicité garde déjà détenue), `ConcurrencyError`, `PreconditionFailedError`, `Result` avec `ok`, `err`, `unwrap` |
 | Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository` (classes abstraites : chacune est son propre jeton d'injection), `UseCase`, `DependencyKind` (les rôles que déclare une liaison, lus par di, le traçage et les aspects : `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `domain-event-handler`, `job`) |
 | Bus | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, les `InMemoryCommandBus` et `InMemoryQueryBus` en processus (`register(type, handler, { context })` nomme le contexte délimité dans `MessageInfo`), `unitOfWorkMiddleware` |
 | Événements | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (les deux à la fois), `EventSubscribers` (l'abonné de chaque contexte délimité), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus` (exécute chaque gestionnaire d'un événement, puis rejette avec une `AggregateError` des échecs ; avec `{ failures: 'as-thrown' }`, la valeur par défaut d'une prochaine version mineure, l'échec d'un seul gestionnaire est relancé tel quel, avec son `code`), `EventBusFailures`, `DomainEventDispatcher`, `IntegrationEventCallback` et `DomainEventCallback` (les fonctions que reçoivent un abonné et un distributeur), `executionContextOfEvent`, `inEventScope`, `scopedPublisher`, `EventDelivery` (ce qu'un fournisseur dit d'une livraison : tentative, dernière tentative, transport, source, consommateur), `messagingSystemOf` |

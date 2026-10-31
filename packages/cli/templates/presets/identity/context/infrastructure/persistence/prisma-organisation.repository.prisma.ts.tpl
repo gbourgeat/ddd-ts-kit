@@ -1,4 +1,4 @@
-import { optimisticUpdate } from '@ddd-ts-kit/prisma';
+import { optimisticUpdate, rowsCreated } from '@ddd-ts-kit/prisma';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
@@ -34,16 +34,19 @@ export class PrismaOrganisationRepository implements OrganisationRepository {
   async save(saved: Organisation): Promise<void> {
     await optimisticUpdate(saved, async ({ expected, next }) => {
       const state = { ...OrganisationMapper.toRow(saved), version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.count;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).count;
     });
   }
 
-  private insert(state: VersionedOrganisation): Promise<{ count: number }> {
+  private async insert(state: VersionedOrganisation): Promise<number> {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
+    const created = await organisationsOf(this.database).createMany({ data: [row], skipDuplicates: true });
 
-    return organisationsOf(this.database).createMany({ data: [row], skipDuplicates: true });
+    return rowsCreated(created, {
+      id: state.id,
+      holders: () => organisationsOf(this.database).count({ where: { id: state.id } }),
+    });
   }
 
   private update(state: VersionedOrganisation, expected: number): Promise<{ count: number }> {

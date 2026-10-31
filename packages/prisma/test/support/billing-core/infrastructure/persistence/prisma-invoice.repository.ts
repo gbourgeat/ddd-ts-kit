@@ -1,5 +1,5 @@
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate, ownTenantWhere, tenantWhere } from '../../../../../src';
+import { optimisticUpdate, ownTenantWhere, rowsCreated, tenantWhere } from '../../../../../src';
 import type { Prisma } from '../../../../generated/client/client';
 import type { Database } from '../../../platform/database/database';
 import { Invoice, type InvoiceState } from '../../domain/invoice';
@@ -39,16 +39,20 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { ...invoice.state, version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.count;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).count;
     });
   }
 
-  private insert(state: VersionedInvoice): Promise<Prisma.BatchPayload> {
+  /** `skipDuplicates` skips a row that takes any unique value: `rowsCreated` tells a taken key from another value. */
+  private async insert(state: VersionedInvoice): Promise<number> {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
+    const created = await this.database.client().invoice.createMany({ data: [row], skipDuplicates: true });
 
-    return this.database.client().invoice.createMany({ data: [row], skipDuplicates: true });
+    return rowsCreated(created, {
+      id: state.id,
+      holders: () => this.database.client().invoice.count({ where: { id: state.id, ...tenantWhere(this.scope) } }),
+    });
   }
 
   private update(state: VersionedInvoice, expected: number): Promise<Prisma.BatchPayload> {

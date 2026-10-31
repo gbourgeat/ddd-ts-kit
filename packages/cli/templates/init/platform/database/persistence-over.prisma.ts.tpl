@@ -26,6 +26,7 @@ import { createPrismaUnitOfWork, PrismaOutboxStore, PrismaProcessedEventStore } 
 {{/unless}}
 {{/unless}}
 import type { PrismaClient } from '{{alias.generated}}/prisma/client{{alias.ext}}';
+import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 
 /** The schema of the messaging tables{{#if queue.processTable}} and of the background work{{/if}}, as prisma/schema/schema.prisma names it. */
@@ -35,9 +36,16 @@ const MESSAGING_SCHEMA = 'messaging';
 const EVENT_STORE_SCHEMA = 'event_store';
 {{/if}}
 
-/** One object is the unit of work and what repositories query through; the stores are told how to reach their model. */
-export function persistenceOver(client: PrismaClient): Persistence {
-  const unitOfWork = createPrismaUnitOfWork(client);
+/**
+ * One object is the unit of work and what repositories query through; the stores are told how to reach their model.
+ * `transaction` bounds the wait and the run of each transaction (`maxWait`, `timeout`); left out, the defaults of
+ * Prisma apply (2 and 5 seconds), as in the tests.
+ */
+export function persistenceOver(client: PrismaClient, transaction?: AppConfig['databaseTransaction']): Persistence {
+  const unitOfWork = createPrismaUnitOfWork(
+    client,
+    transaction === undefined ? undefined : { maxWait: transaction.waitMs, timeout: transaction.timeoutMs },
+  );
 
   return {
     unitOfWork,

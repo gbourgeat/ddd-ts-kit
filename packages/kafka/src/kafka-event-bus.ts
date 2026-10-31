@@ -120,14 +120,17 @@ export class KafkaEventBus implements EventBus {
   }
 
   /**
-   * Creates the topics of the published types and of the subscriptions made so far, then
-   * resolves once those subscriptions have their partitions. Idempotent.
+   * Asks the cluster for its topics, creates those of the published types and of the
+   * subscriptions made so far, then resolves once those subscriptions have their partitions.
+   * Idempotent. A cluster out of reach rejects with `BROKER_UNAVAILABLE`, even with nothing to
+   * create.
    */
   async assertTopology(): Promise<void> {
     if (this.closed) {
       throw new EventBusClosedError();
     }
 
+    await this.link.reach();
     await this.link.declare(this.describeTopology().topics);
     await this.consumption.started();
   }

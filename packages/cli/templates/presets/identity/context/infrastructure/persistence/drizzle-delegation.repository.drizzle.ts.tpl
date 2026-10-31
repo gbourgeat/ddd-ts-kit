@@ -1,5 +1,5 @@
 import { and, eq, isNull, or } from 'drizzle-orm';
-import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
+import { optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
@@ -59,7 +59,11 @@ export class DrizzleDelegationRepository implements DelegationRepository {
   private insert(state: VersionedDelegation) {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
 
-    return executorOf(this.database).insert(delegations).values(row).onConflictDoNothing().returning({ id: delegations.id });
+    return executorOf(this.database)
+      .insert(delegations)
+      .values(row)
+      .onConflictDoNothing({ target: primaryKeyOf(delegations) })
+      .returning({ id: delegations.id });
   }
 
   private update(state: VersionedDelegation, expected: number) {
