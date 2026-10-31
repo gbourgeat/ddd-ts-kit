@@ -7,7 +7,7 @@ const NAME_PROPERTY =
 
 /**
  * The name a domain event class gives itself: `extends NamedDomainEvent('...')` or `static readonly eventName = '...'`, which its
- * `readonly name` and its reactions read, or as 0.5 wrote it, `readonly name = '...'`.
+ * `readonly name` and its reactions read, or `readonly name = '...'` alone, the member the `DomainEvent` contract of the kernel asks.
  */
 export function domainEventNames(file: SourceFile): StringRecord[] {
   return file.scan.strings.filter((literal) =>

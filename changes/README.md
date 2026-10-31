@@ -12,12 +12,16 @@ A file holds the entry as `CHANGELOG.md` shows it: it opens with the change in b
 detail, then `To move:` when a project has to act.
 
 ```md
-**`ddd-ts-kit lint` shows a rule of the kit in transition without failing on it.** ...
+**`ddd-ts-kit lint` names the file of each finding it reports.** ...
 
 To move: ...
 ```
 
 The CI checks a pull request (`node pipeline/monorepo/changes.mjs --check --base <ref>`): it has no
 edit of `CHANGELOG.md` and no new `version` of `plugin/.claude-plugin/plugin.json`, a change under
-`plugin/` comes with a file here, and each file opens with its summary in bold. The release is the
-pull request that sets the version, and writes both.
+`plugin/` comes with a file here, and each file opens with its summary in bold. A file is read in
+`CHANGELOG.md`, at the root of the repository, and in the CLI package that copies it: a link names
+its page from the root (`docs/concepts/personal-data.md`, never `../docs/...`) and leads to a file
+that exists, and a package of the kit is named as it is published, the name of its `package.json`
+(`ddd-ts-kit` for the CLI, `@ddd-ts-kit/eslint-plugin`). The release is the pull request that sets
+the version, and writes both.

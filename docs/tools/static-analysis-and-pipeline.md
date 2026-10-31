@@ -166,7 +166,7 @@ What every project gets, tool by tool, is on the [quality baseline](quality-base
   glossary or a cycle in the context map are not facts of one file.
 - **Cost of a false positive.** A heuristic rule (noise comments, commented-out code) defaults
   to a warning; structural rules default to errors. The `lint` and `ci:lint` scripts fail on
-  both (`ddd-ts-kit lint`, but for a rule of the kit in transition, shown without failing): a warning says what kind of finding it is, not that it may stay.
+  both (`ddd-ts-kit lint`): a warning says what kind of finding it is, not that it may stay.
 
 Put together, a generated project runs each analyzer at the moment its cost allows:
 
@@ -314,7 +314,7 @@ and on a laptop, `npm run ci:arch`, which runs both.
 | Redundant runs | cancelled by concurrency groups | cancelled by interruptible jobs |
 | Gates | the same `ci:*` scripts | the same `ci:*` scripts |
 | Lint and architecture findings | annotations on the pull request (`check --format github`) | Code Quality reports (`check --format gitlab` writes the report directly; ESLint through its GitLab formatter) |
-| A lint warning | fails the lint job (`ci:lint` runs `ddd-ts-kit lint`; a rule of the kit in transition is shown without failing) | fails the lint job, and is in the Code Quality report |
+| A lint warning | fails the lint job (`ci:lint` runs `ddd-ts-kit lint`) | fails the lint job, and is in the Code Quality report |
 | The reason of a rule, for the reviewer | `check --format github --explain`: each annotation ends with it | `check --format gitlab --explain`: each issue ends with it, the fingerprints unchanged |
 | Test reports | the Vitest reporter for Actions, coverage as an artifact | JUnit and Cobertura reports in the merge request |
 | Secrets scan | gitleaks | gitleaks |

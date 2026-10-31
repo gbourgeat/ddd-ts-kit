@@ -42,6 +42,14 @@ export const FLAG_NOTES: readonly Note[] = [
     ],
   },
   {
+    name: '--dry-run',
+    command: 'docs',
+    lines: [
+      'docs names each generated file it would create, update or delete, and writes none; --check',
+      'compares instead, and exits 1 on a change',
+    ],
+  },
+  {
     name: '--force',
     command: 'init',
     lines: [

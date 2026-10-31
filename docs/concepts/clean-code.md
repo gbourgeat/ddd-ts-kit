@@ -351,8 +351,8 @@ it('refuses to cancel an appointment that starts in less than 24 hours', () => {
 
 A file reads like a newspaper article: the intention at the top, the details below. In a class:
 static factories, then public methods, then private methods, each private method placed after
-its first caller. In a module: the exported function first, its helpers after it in the order
-they are called. Rule `clean/stepdown`.
+its first caller. In a module: the exported function first, each helper below the function that
+first calls it. Rule `clean/stepdown`.
 
 ```ts
 export class Appointment extends AggregateRoot {

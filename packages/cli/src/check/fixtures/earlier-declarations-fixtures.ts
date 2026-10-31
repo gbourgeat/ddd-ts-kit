@@ -31,9 +31,8 @@ export const EARLIER_DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'the declarations of the role folders of 0.85 and 0.86, current and not moved yet: a warning, until a later minor version',
+    name: 'the declarations of the role folders of 0.85 and 0.86, current and not moved yet: an error, which docs moves',
     expect: { file: BARREL },
-    severity: 'warn',
     files: withoutFile(
       withoutFile(declaredProject(DECLARED_CONTEXT, ROLE_FOLDER_DECLARATIONS), APPLICATION_DECLARATIONS),
       `${BILLING}/infrastructure/infrastructure.declarations.ts`,
@@ -41,9 +40,8 @@ export const EARLIER_DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/barrel-current',
-    name: 'the single declarations file of 0.84, current and not moved yet: a warning, until a later minor version',
+    name: 'the single declarations file of 0.84, current and not moved yet: an error, which docs moves',
     expect: { file: BARREL },
-    severity: 'warn',
     files: singleFile(SINGLE_FILE_DECLARATIONS),
   },
   {

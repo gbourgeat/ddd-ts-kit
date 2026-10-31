@@ -4,11 +4,12 @@ const path = require('node:path');
 const PACKAGES = 'packages';
 const SOURCE = `^${PACKAGES}/([^/]+)/src/`;
 const TEST_FILES = [`^${PACKAGES}/[^/]+/test/`, '\\.(spec|test)\\.[cm]?ts$'];
-/** Tests whose purpose is to hold two packages to the same behaviour: they read both sources. */
+/** Tests whose purpose is to hold two packages, or the architecture reference, to the same behaviour: they read both sources. */
 const CROSS_PACKAGE_PINS = [
   `^${PACKAGES}/eslint-plugin/test/classification\\.spec\\.ts$`,
   `^${PACKAGES}/cli/test/alias-boundaries\\.spec\\.ts$`,
   `^${PACKAGES}/cli/test/payload-schema-packages-parity\\.spec\\.ts$`,
+  `^${PACKAGES}/cli/test/architecture-reference\\.spec\\.ts$`,
 ];
 
 /** @type {import('dependency-cruiser').IConfiguration} */

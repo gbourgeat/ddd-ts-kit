@@ -1,6 +1,6 @@
 import { barrelFile } from './barrel-file';
 
-/** A layout of the declarations an earlier version of the generator wrote, accepted while it is current. */
+/** A layout of the declarations an earlier version of the generator wrote, read so that `docs` moves it. */
 export type EarlierLayout = 'single-file' | 'role-folders';
 
 /** What a finding, a note or a warning says of a context that keeps an earlier layout. */
@@ -17,7 +17,7 @@ export function earlierLayoutNotice(context: string, layout: EarlierLayout): Ear
       : 'still keeps its declarations in one file per role folder (application/commands/commands.declarations.ts), as the generator wrote them in 0.85 and 0.86';
 
   return {
-    message: `"${context}" ${kept}: they are current, so this version accepts them, and a later minor version reports them as an error.`,
+    message: `"${context}" ${kept}: a context declares its role files in the <layer>.declarations.ts of each layer now.`,
     fix: `Run \`npx ddd-ts-kit docs\` (or any \`generate\`, or \`npm run dev\`), which writes the <layer>.declarations.ts of each layer${layout === 'role-folders' ? ', deletes those of the role folders' : ''} and rewrites ${barrelFile(context)} as their summary, and commit the result.`,
   };
 }

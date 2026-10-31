@@ -173,6 +173,67 @@ test('reports a link that leads nowhere, a missing anchor, and a French page tha
   ]);
 });
 
+/** A page whose shapes its French page changes: an inline one of the prose, and a fenced JSON block whose comment is translated. */
+const SHAPED_ENGLISH = [
+  '**English** · [Français](guide.fr.md)',
+  '',
+  '# Guide',
+  '',
+  '`--json` prints `{ next, planNext, slices }`, then',
+  '`{ status, client?: { status } }`.',
+  '',
+  '```json',
+  '// what init writes',
+  '{ "stack": { "orm": "drizzle" } }',
+  '```',
+  '',
+].join('\n');
+const SHAPED_FRENCH = [
+  '# Guide',
+  '',
+  '`--json` affiche `{ next, slices }`, puis `{ status, client?: { status } }`.',
+  '',
+  '```json',
+  '// ce qu’écrit init',
+  '{ "stack": { "orm": "prisma" } }',
+  '```',
+  '',
+].join('\n');
+
+test('a JSON shape is code: the French page holds the same inline shapes and JSON blocks as its English page', () => {
+  const root = translated(SHAPED_ENGLISH, SHAPED_FRENCH);
+
+  assert.deepEqual(check(root), [
+    'docs/guide.fr.md: holds the JSON shape `{ next, slices }` where docs/guide.md holds `{ next, planNext, slices }`: a shape is code, the same in both pages',
+    'docs/guide.fr.md: holds the JSON shape `{ "stack": { "orm": "prisma" } }` where docs/guide.md holds `{ "stack": { "orm": "drizzle" } }`: a shape is code, the same in both pages',
+  ]);
+
+  fs.writeFileSync(
+    path.join(root, 'docs/guide.fr.md'),
+    fs
+      .readFileSync(path.join(root, 'docs/guide.fr.md'), 'utf8')
+      .replace('{ next, slices }', '{ next, planNext, slices }')
+      .replace('prisma', 'drizzle'),
+  );
+  assert.deepEqual(check(root), []);
+});
+
+test('a shape only one of the two pages holds is reported on the French page, as missing or as extra', () => {
+  const english = SHAPED_ENGLISH.replace('{ "stack": { "orm": "drizzle" } }', '[]');
+  const french = SHAPED_FRENCH.replace('{ next, slices }', '{ next, planNext, slices }').replace(
+    '{ "stack": { "orm": "prisma" } }',
+    '[]',
+  );
+
+  assert.deepEqual(check(translated(english, french.replace(', puis `{ status, client?: { status } }`', ''))), [
+    'docs/guide.fr.md: lacks the JSON shape `{ status, client?: { status } }` of docs/guide.md: a shape is code, the same in both pages',
+  ]);
+
+  assert.deepEqual(check(translated(english, `${french}\nVoir \`{ extra }\`.\n`)), [
+    'docs/guide.fr.md: holds the JSON shape `{ extra }`, which docs/guide.md does not: a shape is code, the same in both pages',
+  ]);
+});
+
 test('the anchors are the slugs GitHub gives headings, accents kept and repeats numbered', () => {
   assert.equal(githubSlug('In an application of `@ddd-ts-kit/di`'), 'in-an-application-of-ddd-ts-kitdi');
   assert.equal(githubSlug('Événements du domaine : la boîte'), 'événements-du-domaine--la-boîte');

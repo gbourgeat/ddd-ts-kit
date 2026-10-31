@@ -23,32 +23,30 @@ describe('a context still declared in the single file of 0.84', () => {
   const summary = `${BILLING}/billing.declarations.ts`;
   const application = `${BILLING}/application/application.declarations.ts`;
 
-  it('is a warning for check and docs --check, which pass, and generate --local-only leaves it alone', () => {
+  it('is an error for check, a move for docs --check, and generate --local-only leaves it alone', () => {
     const single = toSingleFile('billing');
 
     const checked = cli(root, 'check', '--rule', 'declarations/barrel-current', '--json');
 
-    expect(checked.code).toBe(0);
+    expect(checked.code).toBe(1);
 
     expect(checked.json()).toMatchObject({
-      errors: 0,
-      violations: [{ ruleId: 'declarations/barrel-current', severity: 'warn', file: summary }],
+      errors: 1,
+      violations: [{ ruleId: 'declarations/barrel-current', severity: 'error', file: summary }],
     });
 
-    expect(cli(root, 'check', '--rule', 'declarations/barrel-current').stdout).toContain(
-      'a later minor version reports them as an error',
-    );
+    const said = cli(root, 'check', '--rule', 'declarations/barrel-current').stdout;
+
+    expect(said).toContain('"billing" still keeps all its declarations in billing.declarations.ts');
+    expect(said).toContain('a context declares its role files in the <layer>.declarations.ts of each layer now');
+    expect(said).toContain('Run `npx ddd-ts-kit docs`');
 
     const docs = cli(root, 'docs', '--check');
 
-    expect(docs.code).toBe(0);
-    expect(docs.stdout).toContain('The generated documentation is up to date.');
-
-    expect(docs.stdout).toContain(
-      `warning  ${summary}: "billing" still keeps all its declarations in billing.declarations.ts`,
-    );
-
-    expect(docs.stdout).toContain('Run `npx ddd-ts-kit docs`');
+    expect(docs.code).toBe(1);
+    expect(docs.stdout).toContain(`stale  ${application}`);
+    expect(docs.stdout).toContain('Run `ddd-ts-kit docs` and commit the result.');
+    expect(read(root, summary)).toBe(single);
 
     const local = cli(root, 'generate', 'port', 'shipping', 'CarrierRates', '--local-only');
 
@@ -97,12 +95,12 @@ describe('a context still declared in the single file of 0.84', () => {
     expect(read(root, summary)).toContain('void-invoice.handler');
 
     expect(cli(root, 'check', '--rule', 'declarations/barrel-current', '--json').json()).toMatchObject({
-      errors: 0,
-      warnings: 1,
+      errors: 1,
+      warnings: 0,
     });
   });
 
-  it('moves to the declarations of the layers on docs, and the warning goes', () => {
+  it('moves to the declarations of the layers on docs, and the error goes', () => {
     const moved = cli(root, 'docs');
 
     expect(moved.stdout).toMatch(new RegExp(`created\\s+${application}`));
@@ -120,25 +118,26 @@ describe('a context still declared in the files of its role folders, as 0.85 and
   const summary = `${BILLING}/billing.declarations.ts`;
   const commands = `${BILLING}/application/commands/commands.declarations.ts`;
 
-  it('is a warning for check and docs --check, which pass, and generate --local-only leaves it alone', () => {
+  it('is an error for check, a move for docs --check, and generate --local-only leaves it alone', () => {
     toRoleFolders('billing');
 
     const checked = cli(root, 'check', '--rule', 'declarations/barrel-current', '--json');
 
-    expect(checked.code).toBe(0);
+    expect(checked.code).toBe(1);
 
     expect(checked.json()).toMatchObject({
-      errors: 0,
-      violations: [{ ruleId: 'declarations/barrel-current', severity: 'warn', file: summary }],
+      errors: 1,
+      violations: [{ ruleId: 'declarations/barrel-current', severity: 'error', file: summary }],
     });
+
+    expect(cli(root, 'check', '--rule', 'declarations/barrel-current').stdout).toContain(
+      '"billing" still keeps its declarations in one file per role folder',
+    );
 
     const docs = cli(root, 'docs', '--check');
 
-    expect(docs.code).toBe(0);
-
-    expect(docs.stdout).toContain(
-      `warning  ${summary}: "billing" still keeps its declarations in one file per role folder`,
-    );
+    expect(docs.code).toBe(1);
+    expect(docs.stdout).toContain(`stale  ${commands}`);
 
     const local = cli(root, 'generate', 'port', 'shipping', 'ParcelTracking', '--local-only');
 
@@ -189,8 +188,8 @@ describe('a context still declared in the files of its role folders, as 0.85 and
     expect(read(root, commands)).toContain('reopen-invoice.handler');
 
     expect(cli(root, 'check', '--rule', 'declarations/barrel-current', '--json').json()).toMatchObject({
-      errors: 0,
-      warnings: 1,
+      errors: 1,
+      warnings: 0,
     });
   });
 
@@ -200,7 +199,7 @@ describe('a context still declared in the files of its role folders, as 0.85 and
     expect(moved.stdout).toMatch(new RegExp(`deleted\\s+${commands}`));
     expect(fs.existsSync(path.join(root, commands))).toBe(false);
     expect(read(root, summary)).toContain("export * from '@/contexts/billing/application/application.declarations';");
-    expect(cli(root, 'check', '--rule', 'declarations/barrel-current', '--json').json()).toMatchObject({ warnings: 0 });
+    expect(cli(root, 'check', '--rule', 'declarations/barrel-current', '--json').json()).toMatchObject({ errors: 0 });
   });
 });
 

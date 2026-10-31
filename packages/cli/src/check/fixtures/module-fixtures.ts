@@ -89,9 +89,9 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'module/complete',
-    name: 'a module where 0.86 and 0.87 put it, under domain/',
+    name: 'a module where 0.86 and 0.87 put it, under domain/: an error, whatever the severity of the rule',
     expect: { file: `${BILLING}/domain/invoices` },
-    severity: 'warn',
+    severity: 'error',
     files: project(
       { [`${BILLING}/domain/invoices/events/invoice-issued.event.ts`]: 'export const invoiceIssued = 1;\n' },
       withModules({ invoices: {} }),

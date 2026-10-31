@@ -445,7 +445,7 @@ entrée :
 | `category` | `data-access` |
 | `action` | `personal-data:erase` (`SUBJECT_ERASURE_ACTION`) |
 | `outcome` | `succeeded`, ou `failed` quand le stockage a levé une erreur, avec le `code` d'une `DomainError` ou `UNEXPECTED_ERROR` comme `reason` |
-| `resource` | `{ type: 'data-subject', id: <personne> }` |
+| `resource` | `{ type: 'data-subject', id: <subject> }` |
 | `changes` | `{ keyDestroyed: true }`, ou `{ keyDestroyed: false }` quand la personne n'avait plus de clé |
 | acteur, *tenant*, session, corrélation, origine | le scope d'exécution |
 
@@ -519,7 +519,7 @@ entrée :
 | `category` | `data-access` |
 | `action` | `personal-data:export` (`PERSONAL_DATA_EXPORT_ACTION`) |
 | `outcome` | `succeeded`, ou `failed` quand le port a levé une erreur, avec le `code` d'une `DomainError` ou `UNEXPECTED_ERROR` comme `reason` |
-| `resource` | `{ type: 'data-subject', id: <personne> }` |
+| `resource` | `{ type: 'data-subject', id: <subject> }` |
 | `context` | le `name` du port : le contexte borné |
 | `changes` | `{ records: <n> }`, le nombre d'enregistrements lus, `0` quand le contexte ne garde rien de la personne |
 | acteur, *tenant*, session, corrélation, origine | le scope d'exécution |

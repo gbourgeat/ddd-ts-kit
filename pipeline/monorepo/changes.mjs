@@ -39,6 +39,8 @@ function main(args) {
 
       return show.status === 0 ? show.stdout : undefined;
     },
+    exists: (file) => fs.existsSync(path.join(ROOT, file)),
+    packages: packageNames(ROOT),
   });
 
   for (const problem of problems) {
@@ -64,13 +66,25 @@ function changedSince(base) {
 /**
  * What keeps a pull request off the shared lines: CHANGELOG.md and the version of the plugin are
  * written by the release only, a change of the plugin says what it changes in a file of changes/,
- * and that file opens with its bold summary.
+ * and that file opens with its bold summary, links to pages from the root, where CHANGELOG.md
+ * reads it, and names the packages of the kit as they are published.
  */
 export function problemsOf(changed, files) {
   const fragments = changed.filter(isFragment);
   const shared = changed.includes(RELEASE_MARK) ? [] : sharedLinesWritten(changed, fragments, files);
 
-  return [...shared, ...fragments.filter((fragment) => !opensInBold(files.read(fragment))).map(withoutSummary)];
+  return [
+    ...shared,
+    ...fragments.flatMap((fragment) => {
+      const text = files.read(fragment);
+
+      return [
+        ...(opensInBold(text) ? [] : [withoutSummary(fragment)]),
+        ...unresolvedLinks(fragment, text, files.exists),
+        ...unknownPackages(fragment, text, files.packages),
+      ];
+    }),
+  ];
 }
 
 /** Outside the release: an edit of CHANGELOG.md, a new version of the plugin, a change of the plugin without its file. */
@@ -100,6 +114,53 @@ function sharedLinesWritten(changed, fragments, { read, readAtBase }) {
 
 function opensInBold(text) {
   return text.trimStart().startsWith('**');
+}
+
+/** A link of the text read from the root, as CHANGELOG.md and the CLI package that copies it read it: a page outside the repository, or one that is not there. */
+function unresolvedLinks(fragment, text, exists) {
+  return [...text.matchAll(/\]\(([^)\s]+)\)/g)]
+    .map((match) => match[1])
+    .filter((target) => !/^(?:[a-z]+:|#)/i.test(target))
+    .flatMap((target) => {
+      const file = path.posix.normalize(target.split('#')[0]);
+
+      if (file.startsWith('../') || file.startsWith('/')) {
+        return [
+          `${fragment} links to ${target}, outside the repository: the file is read in CHANGELOG.md, at the root, so a link names its page from the root (${file.replace(/^(?:\.\.\/|\/)+/, '')}, not ${target}).`,
+        ];
+      }
+
+      return exists(file)
+        ? []
+        : [
+            `${fragment} links to ${target}, which is no file of the repository read from its root, where CHANGELOG.md reads it.`,
+          ];
+    });
+}
+
+/** A scoped name of the kit (`@ddd-ts-kit/<name>`, its subpath left out) that no package of packages/ is published as. */
+function unknownPackages(fragment, text, packages) {
+  const named = new Set(
+    [...text.matchAll(/@ddd-ts-kit\/([a-z][a-z0-9-]*)/g)].map((match) => `@ddd-ts-kit/${match[1]}`),
+  );
+
+  return [...named]
+    .filter((name) => !packages.includes(name))
+    .map(
+      (name) =>
+        `${fragment} names ${name}, which no package of packages/ is published as: write the name of its package.json (the CLI is ddd-ts-kit).`,
+    );
+}
+
+/** The names the packages of packages/ are published under. */
+function packageNames(root) {
+  const directory = path.join(root, 'packages');
+
+  return fs
+    .readdirSync(directory)
+    .map((name) => path.join(directory, name, 'package.json'))
+    .filter((manifest) => fs.existsSync(manifest))
+    .map((manifest) => JSON.parse(fs.readFileSync(manifest, 'utf8')).name);
 }
 
 function withoutSummary(fragment) {
