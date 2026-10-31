@@ -1,0 +1,1 @@
+**`story` no longer prints `met` beside an open box for a story with no specification, and `measures` no longer says "Measures of none".** The acceptance phases say `not evaluated: no specification`, and a repository with no branch to read is titled `Measures of the repository (no branch)`.

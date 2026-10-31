@@ -90,4 +90,13 @@ describe('the phases of a story whose files hold only the template', () => {
       ]),
     );
   });
+
+  it('does not say `met` beside an open box for a story that has no specification and no row', () => {
+    expect(phasesOf({}, [])).toEqual(
+      expect.arrayContaining([
+        ['acceptance', false, 'not evaluated: no specification'],
+        ['passing', false, 'not evaluated: no specification'],
+      ]),
+    );
+  });
 });

@@ -145,7 +145,12 @@ function acceptancePhase({ story, acceptance }: StoryFacts, gate: 'written' | 'p
     id,
     title,
     met: acceptance !== undefined && left.length === 0,
-    detail: left.length === 0 ? 'met' : `${left.length} left: ${left[0]?.message ?? ''}`,
+    detail:
+      acceptance === undefined
+        ? 'not evaluated: no specification'
+        : left.length === 0
+          ? 'met'
+          : `${left.length} left: ${left[0]?.message ?? ''}`,
     next: next(story),
     gate: storyGate,
   };
