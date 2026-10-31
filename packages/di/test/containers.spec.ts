@@ -10,11 +10,13 @@ abstract class Other {}
 const PORT: Token<unknown> = Port;
 const OTHER: Token<unknown> = Other;
 
-describe.each<[string, () => Container]>([
+const EVERY_CONTAINER: readonly [string, () => Container][] = [
   ['tsyringe', tsyringeContainer],
   ['InversifyJS', inversifyContainer],
   ['Awilix', awilixContainer],
-])('the container %s', (_, newContainer) => {
+];
+
+describe.each(EVERY_CONTAINER)('the container %s', (_, newContainer) => {
   it('knows what is bound and what is not', () => {
     const container = newContainer();
 
@@ -86,6 +88,33 @@ describe.each<[string, () => Container]>([
     expect(container.resolve(PORT)).toEqual({ other: { name: 'dependency' } });
   });
 
+  it('lets the error of a factory through as it was thrown', () => {
+    const container = newContainer();
+    const failure = new Error('cannot connect');
+
+    container.bindFactory(
+      PORT,
+      () => {
+        throw failure;
+      },
+      'singleton',
+    );
+
+    expect(() => container.resolve(PORT)).toThrow(failure);
+  });
+
+  it('shares nothing between two containers', () => {
+    const first = newContainer();
+    const second = newContainer();
+
+    first.bindFactory(PORT, () => ({}), 'singleton');
+
+    expect(second.isBound(PORT)).toBe(false);
+    expect(first.native).not.toBe(second.native);
+  });
+});
+
+describe.each(EVERY_CONTAINER)('the container %s, on a binding replaced', (_, newContainer) => {
   it('resolves the most recent binding, whatever the kinds', () => {
     const container = newContainer();
 
@@ -110,29 +139,35 @@ describe.each<[string, () => Container]>([
     expect(container.resolve(PORT)).toEqual({ name: 'second' });
   });
 
-  it('lets the error of a factory through as it was thrown', () => {
+  it('replaces a singleton already built by another factory', () => {
     const container = newContainer();
-    const failure = new Error('cannot connect');
 
-    container.bindFactory(
-      PORT,
-      () => {
-        throw failure;
-      },
-      'singleton',
-    );
+    container.bindFactory(PORT, () => ({ name: 'first' }), 'singleton');
+    container.resolve(PORT);
+    container.bindFactory(PORT, () => ({ name: 'second' }), 'singleton');
 
-    expect(() => container.resolve(PORT)).toThrow(failure);
+    expect(container.resolve(PORT)).toEqual({ name: 'second' });
   });
 
-  it('shares nothing between two containers', () => {
-    const first = newContainer();
-    const second = newContainer();
+  it('replaces a singleton already built by a transient', () => {
+    const container = newContainer();
 
-    first.bindFactory(PORT, () => ({}), 'singleton');
+    container.bindFactory(PORT, () => ({ name: 'first' }), 'singleton');
+    container.resolve(PORT);
+    container.bindFactory(PORT, () => ({ name: 'second' }), 'transient');
 
-    expect(second.isBound(PORT)).toBe(false);
-    expect(first.native).not.toBe(second.native);
+    expect(container.resolve(PORT)).toEqual({ name: 'second' });
+  });
+
+  it('builds anew a singleton bound again after a transient replaced it', () => {
+    const container = newContainer();
+
+    container.bindFactory(PORT, () => ({ name: 'first' }), 'singleton');
+    container.resolve(PORT);
+    container.bindFactory(PORT, () => ({ name: 'second' }), 'transient');
+    container.bindFactory(PORT, () => ({ name: 'third' }), 'singleton');
+
+    expect(container.resolve(PORT)).toEqual({ name: 'third' });
   });
 });
 

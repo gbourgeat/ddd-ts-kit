@@ -16,6 +16,6 @@ export function eventSourcingFiles(config: Config): InitFile[] {
 
   return [
     platformFile(config, 'event-sourcing/create-event-sourcing.ts'),
-    ...when(familyOf(config) === 'tsyringe', [platformFile(config, 'event-sourcing/event-sourcing.module.ts')]),
+    ...when(familyOf(config) === 'container', [platformFile(config, 'event-sourcing/event-sourcing.module.ts')]),
   ];
 }

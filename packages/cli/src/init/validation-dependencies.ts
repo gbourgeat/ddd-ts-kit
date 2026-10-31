@@ -8,6 +8,8 @@ const LIBRARIES: Readonly<Record<string, readonly string[]>> = {
 };
 
 const VALIDATION_PACKAGE = '@ddd-ts-kit/validation';
+/** The containers that bring `reflect-metadata` with them: Awilix has no need of it. */
+const BRINGS_METADATA: ReadonlySet<string> = new Set(['tsyringe', 'inversify']);
 /** What knip counts as used by NestJS itself, whose validation pipe loads them. */
 const LOADED_BY_NEST = ['class-validator', 'class-transformer'];
 
@@ -22,7 +24,7 @@ export function validationDependencies(config: Config): string[] {
   const { validation, di, http } = config.stack;
   const nest = http === 'nest';
   const library = (LIBRARIES[validation] ?? []).filter((name) => !nest || !LOADED_BY_NEST.includes(name));
-  const metadata = validation === 'class-validator' && di !== 'tsyringe' && !nest ? ['reflect-metadata'] : [];
+  const metadata = validation === 'class-validator' && !BRINGS_METADATA.has(di) && !nest ? ['reflect-metadata'] : [];
 
   return [VALIDATION_PACKAGE, ...library, ...metadata];
 }

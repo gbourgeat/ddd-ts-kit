@@ -40,7 +40,7 @@ function relist(ws: Workspace, config: Config, { context, names, adapter, list }
     return;
   }
 
-  const family = wiringFamily(config) === 'manual' ? 'manual' : 'tsyringe';
+  const family = wiringFamily(config) === 'manual' ? 'manual' : 'container';
   const scoped = source.includes('scope: ExecutionScope)');
   const vars = { ...contextVars(config, context), personal: { names: { ...names } }, tenant: { scoped } };
 

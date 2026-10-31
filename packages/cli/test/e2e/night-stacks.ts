@@ -1,4 +1,5 @@
-import { DEFAULT_STACK, type StackFlags } from '../helpers';
+import { DEFAULT_STACK, EXPLICIT_STACK, type StackFlags } from '../helpers';
+import { DISCOVERED_ON_KNEX, REBAC_ON_RABBITMQ } from './stacks';
 
 /**
  * The stacks that the workspace cannot run (their ORM is not installed at its root, or their client
@@ -26,6 +27,24 @@ export const PROVEN_AT_NIGHT: readonly (readonly [string, StackFlags])[] = [
     'declared on TypeORM, shared tables, the jobs in the database, the audit trail',
     { ...DEFAULT_STACK, orm: 'typeorm', tenancy: 'shared-table', queue: 'database', audit: 'on' },
   ],
+];
+
+const onContainer = (di: string, name: string): readonly (readonly [string, StackFlags])[] => [
+  [`the default stack in the explicit style, on ${name}`, { ...EXPLICIT_STACK, di }],
+  [`declared, relationships and RabbitMQ, on ${name}`, { ...REBAC_ON_RABBITMQ, di }],
+  [`declared, discovered on knex, on ${name}`, { ...DISCOVERED_ON_KNEX, di }],
+  [`declared on Prisma, on ${name}`, { ...DEFAULT_STACK, orm: 'prisma', di }],
+  [`declared on TypeORM, on ${name}`, { ...DEFAULT_STACK, orm: 'typeorm', di }],
+];
+
+/**
+ * What a pull request proves of the two other containers of the kit is the default stack, declared,
+ * and the suite of `@ddd-ts-kit/di` on each. These join `proven-stacks.spec.ts` at night and before a
+ * release, every kind generated, so that a stack on them is held to the same test as on tsyringe.
+ */
+export const ON_CONTAINERS_AT_NIGHT: readonly (readonly [string, StackFlags])[] = [
+  ...onContainer('inversify', 'InversifyJS'),
+  ...onContainer('awilix', 'Awilix'),
 ];
 
 /** At night, and before a release, the proven stacks include those the workspace cannot run. */

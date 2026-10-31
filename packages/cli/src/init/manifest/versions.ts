@@ -59,6 +59,8 @@ export const VERSIONS: Readonly<Record<string, string>> = {
   '@trpc/server': '^11.19.0',
   typebox: '^1.3.37',
   tsyringe: '^4.10.0',
+  inversify: '^8.2.3',
+  awilix: '^13.0.5',
   'reflect-metadata': '^0.2.2',
   '@opentelemetry/api': '^1.10.0',
   '@opentelemetry/sdk-node': '^0.300.0',

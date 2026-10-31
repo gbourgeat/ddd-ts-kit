@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../../config';
 import { specifierOf } from '../../../alias';
 import { barrelFile, routesFile } from '../../../declared';
 import { fitStatement } from '../../../layout';
@@ -21,7 +22,7 @@ export function serviceSelection(scope: Scope): ServiceSelection {
   const module = assembledContext(scope, `${directory}/`);
   const inContext = (file: string): string => specifierOf(config, `${config.contextsDir}/${context.kebab}/${file}`);
 
-  if (config.stack.di !== 'tsyringe') {
+  if (!onKitContainer(config)) {
     return { selection: argument(`[${module}]`), imports: moduleImports(scope, inContext).join('\n') };
   }
 

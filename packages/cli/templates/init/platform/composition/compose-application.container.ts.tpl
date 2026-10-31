@@ -8,7 +8,7 @@ import { Authenticator } from '@ddd-ts-kit/auth';
 {{/unless}}
 {{/if}}
 import { kernelModule, type Application as Container, type ContextModule, type JobsOptions } from '@ddd-ts-kit/di';
-import { createApplication } from '@ddd-ts-kit/di/tsyringe';
+import { createApplication } from '{{di.entry}}';
 {{#if events.outbox}}
 import { OutboxPublisher } from '@ddd-ts-kit/events';
 {{/if}}

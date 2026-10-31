@@ -30,7 +30,7 @@ export function auditFiles(config: Config): InitFile[] {
   }
 
   // On tsyringe the module also binds the store and subscribes it; by hand it only wires the read side.
-  const hasModule = family === 'tsyringe' || http !== 'none';
+  const hasModule = family === 'container' || http !== 'none';
 
   return [
     file('create-audit.ts'),

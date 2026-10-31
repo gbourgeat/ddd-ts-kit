@@ -8,11 +8,11 @@ paths:
 # Tests
 
 - `test/unit/`: aggregates, value objects and domain services without any double, given / when / then on the recorded facts; handlers with the fakes of `test/fakes/`.
-{{#if di.tsyringe}}
+{{#if di.container}}
 - A handler spec goes through the test application, `createTestApplication({ modules, fakes: [fake(Port, aFake)] })`: it asserts the stored state, the facts announced with the save and heard at the end of the command (`application.domainEvents`), `application.eventBus.published`, and the refusal (`FORBIDDEN`) of an actor without the permission.
 - A job spec runs the job by its name, `await application.jobs.runNow('<context>.<job>')`, and asserts the command it sent as its system actor.
 {{/if}}
-{{#unless di.tsyringe}}
+{{#unless di.container}}
 - A handler spec goes through the buses of `createTestBuses()`, the fake repository wrapped by `dispatching(...)`: it asserts the stored state, the facts announced with the save and heard at the end of the command (`domainEvents`), `publishedEvents()`, and the refusal (`FORBIDDEN`) of an actor without the permission.
 - A job spec runs the job with an occurrence, `await job.run(occurrence)`, and asserts the command it sent as its system actor.
 {{/unless}}

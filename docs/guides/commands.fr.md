@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:365e79ae82e51e19 -->
+<!-- translation-of: commands.md sha256:d03d48546991d6a2 -->
 
 # Quelle commande, quand
 
@@ -267,7 +267,7 @@ avec la commande qu'elle donne.
 Usage
   ddd-ts-kit init [--http express|fastify|hono|nest|none]
                   [--validation zod|class-validator|typebox|standard-schema|none]
-                  [--di tsyringe|nest|manual] [--tests vitest|jest]
+                  [--di tsyringe|inversify|awilix|nest|manual] [--tests vitest|jest]
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]

@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../config';
 import type { Name } from '../../naming';
 import type { Output } from '../emit';
 import type { Scope } from '../scope';
@@ -19,7 +20,7 @@ export function queryOutputs(scope: Scope, name: Name, variant: QueryVariant): O
     [`query/${variant}reader.in-memory.ts.tpl`, `infrastructure/persistence/${reader}.ts`],
     [`query/${variant}reader.fake.ts.tpl`, `test/fakes/${name.kebab}-reader.fake.ts`],
     [
-      `query/${variant}handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`,
+      `query/${variant}handler.spec.${onKitContainer(scope.config) ? 'container' : 'buses'}.ts.tpl`,
       `test/unit/${name.kebab}.handler.spec.ts`,
     ],
     ...(variant === '' ? [] : [['query/search.reader.spec.ts.tpl', `test/integration/${reader}.spec.ts`] as const]),
