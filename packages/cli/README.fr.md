@@ -69,7 +69,7 @@ commande et la pile d'appels.
 ```
 ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--validation zod|class-validator|typebox|standard-schema|none]
-                [--di tsyringe|nest|manual] [--tests vitest|jest]
+                [--di tsyringe|inversify|awilix|nest|manual] [--tests vitest|jest]
                 [--orm drizzle|knex|prisma|typeorm|custom|none]
                 [--database postgres|mysql|sqlite|none]
                 [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
@@ -176,7 +176,8 @@ kit (des contrôleurs Nest avec `--http nest` sur class-validator, `--routes nes
 `jwt`, `rbac`, aucun *broker*, le cache dans le processus, les fichiers dans un répertoire local
 (`--storage local`), le journal d'audit `on` quand il y a un ORM, les demandes d'une personne concernée traitées (`--privacy on`) quand il y a un ORM, pas d'event store (`--event-sourcing off`), les échecs inattendus remontés
 nulle part (`--errors none`), des lignes JSON sur la sortie standard (`--logger stdout`), et le
-style `declared` avec un `barrel` partout où les déclarations sont lues : avec `--di tsyringe`.
+style `declared` avec un `barrel` partout où les déclarations sont lues : avec `--di tsyringe`,
+`inversify` ou `awilix`, qui génèrent le même code sur un autre conteneur.
 
 **Gestionnaire de paquets.** `pnpm` sauf `--package-manager npm` : chaque script, *pipeline*,
 *hook*, le Dockerfile, les consignes et les permissions des agents sont écrits dans le dialecte
@@ -222,7 +223,7 @@ la racine de composition l'assemble en une ligne. Dans le style `explicit`, chaq
 écrite dans le fichier de module du contexte : `builder.bind(Port).toClass(Adapter, [Ports])`,
 `builder.command(Message).requires(...).handledBy(Handler, [Ports])`, `builder.job(name, schedule)`.
 `--style declared` est refusé avec `--di manual` et `--di nest` : les déclarations sont de simples
-métadonnées, et seul `@ddd-ts-kit/di` (sur tsyringe) les transforme en liaisons.
+métadonnées, et seul `@ddd-ts-kit/di` les transforme en liaisons.
 `--assembly` dit comment un contexte déclaré rejoint la racine de composition : `barrel` (par
 défaut) est fait de fichiers générés, `<context>.declarations.ts` à la racine du contexte qui
 réexporte les déclarations de chaque couche, statiques, que suivent un bundler, knip et

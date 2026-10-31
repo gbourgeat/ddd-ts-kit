@@ -51,7 +51,7 @@ chaque push.
   revue, et un hook qui vérifie chaque fichier TypeScript que l'agent écrit et nomme aussitôt
   la règle enfreinte.
 - **Votre stack, pas la nôtre.** Express, Fastify, Hono ou NestJS ; zod, class-validator, TypeBox
-  ou toute bibliothèque Standard Schema ; tsyringe, NestJS ou un câblage manuel ; Drizzle, Knex,
+  ou toute bibliothèque Standard Schema ; tsyringe, InversifyJS, Awilix, NestJS ou un câblage manuel ; Drizzle, Knex,
   Prisma ou TypeORM ; RabbitMQ, Kafka, NATS JetStream ou Redis Streams ; JWT ou Keycloak ;
   rôles, attributs ou relations.
 - **Les exigences de la production, intégrées.** Outbox transactionnelle et consommateurs
@@ -269,7 +269,7 @@ liste les skills et dit ce que chaque hôte exécute.
 | [`@ddd-ts-kit/s3`](packages/s3) | stockage de fichiers sur AWS S3, MinIO, OVHcloud, Scaleway ou Cloudflare R2 |
 | [`@ddd-ts-kit/http`](packages/http) | des routes déclarées une fois, montées sur Express, Fastify, Hono ou NestJS ; erreurs RFC 9457 ; OpenAPI 3.1 ; cache HTTP |
 | [`@ddd-ts-kit/validation`](packages/validation) | un seul port `Schema` au-dessus de zod, class-validator, TypeBox et Standard Schema |
-| [`@ddd-ts-kit/di`](packages/di) | des modules de contexte sur tsyringe, les classes de port comme jetons, une application de test avec des fakes |
+| [`@ddd-ts-kit/di`](packages/di) | des modules de contexte sur tsyringe, InversifyJS ou Awilix, les classes de port comme jetons, une application de test avec des fakes |
 | [`@ddd-ts-kit/pino`](packages/pino), [`winston`](packages/winston) | le port `Logger` du kernel sur pino ou winston |
 | [`@ddd-ts-kit/sentry`](packages/sentry) | le port `ErrorReporter` du kernel sur Sentry ou GlitchTip |
 | [`@ddd-ts-kit/tracing`](packages/tracing) | OpenTelemetry câblé une fois par la plateforme |

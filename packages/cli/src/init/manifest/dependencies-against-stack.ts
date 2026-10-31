@@ -27,7 +27,7 @@ export const CLUES: readonly Clue[] = [
       arktype: 'standard-schema',
     },
   },
-  { flag: '--di', key: 'di', packages: { tsyringe: 'tsyringe', '@nestjs/core': 'nest' } },
+  { flag: '--di', key: 'di', packages: { tsyringe: 'tsyringe', inversify: 'inversify', awilix: 'awilix', '@nestjs/core': 'nest' } },
   { flag: '--tests', key: 'tests', packages: { vitest: 'vitest', jest: 'jest' } },
   {
     flag: '--orm',

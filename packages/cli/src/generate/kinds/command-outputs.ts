@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../config';
 import type { Name } from '../../naming';
 import type { Output } from '../emit';
 import type { Scope } from '../scope';
@@ -10,7 +11,7 @@ export function commandOutputs(scope: Scope, name: Name): Output[] {
     ['command/command.ts.tpl', `${folder}/${name.kebab}.command.ts`],
     ['command/handler.ts.tpl', `${folder}/${name.kebab}.handler.ts`],
     [
-      `command/handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`,
+      `command/handler.spec.${onKitContainer(scope.config) ? 'container' : 'buses'}.ts.tpl`,
       `test/unit/${name.kebab}.handler.spec.ts`,
     ],
   ];

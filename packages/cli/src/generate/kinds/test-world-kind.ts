@@ -1,3 +1,4 @@
+import { onKitContainer } from '../../config';
 import { CliError } from '../../cli-error';
 import { toName } from '../../naming';
 import { emit } from '../emit';
@@ -29,7 +30,7 @@ export const testWorldKind: Kind = {
     }
 
     const { fakes, leftOut } = contextFakes(scope);
-    const stack = scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses';
+    const stack = onKitContainer(scope.config) ? 'container' : 'buses';
 
     emit(scope, vars(scope, { world: worldVars(scope, name, fakes) }), [
       [`test-world/world.${stack}.ts.tpl`, `test/worlds/${name.kebab}.world.ts`],
@@ -37,7 +38,7 @@ export const testWorldKind: Kind = {
 
     if (fakes.length === 0) {
       scope.ws.note(
-        `${scope.dir}/test/fakes/ holds no fake the world can build: it gives the ${stack === 'tsyringe' ? 'test application' : 'buses'} alone. Generate a port or a repository (each comes with its fake), then run again with --force.`,
+        `${scope.dir}/test/fakes/ holds no fake the world can build: it gives the ${stack === 'container' ? 'test application' : 'buses'} alone. Generate a port or a repository (each comes with its fake), then run again with --force.`,
       );
     }
 

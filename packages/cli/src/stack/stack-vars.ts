@@ -1,4 +1,5 @@
-import { QUEUE_ORMS, type Config } from '../config';
+import { onKitContainer, QUEUE_ORMS, type Config } from '../config';
+import { diEntry } from '../generate/di-imports';
 import type { RenderContext } from '../templating';
 import { aliasVars } from './alias-vars';
 import { auditVars } from './audit-vars';
@@ -27,7 +28,11 @@ export function stackVars(config: Config): RenderContext {
     decorators: { legacy, standard: !legacy },
     ...edgeVars(config),
     validation: one(validation, ['zod', 'class-validator', 'typebox', 'standard-schema', 'none']),
-    di: one(di, ['tsyringe', 'nest', 'manual']),
+    di: {
+      ...one(di, ['tsyringe', 'inversify', 'awilix', 'nest', 'manual']),
+      container: onKitContainer(config),
+      entry: diEntry(config),
+    },
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
     events: eventVars(config),
     authn: authenticationVars(config),

@@ -304,7 +304,11 @@ export const PROVEN: readonly (readonly [string, StackFlags])[] = [
   ['declared, relationships and RabbitMQ, GitLab pipeline', REBAC_ON_RABBITMQ],
   ['declared, discovered instead of listed in a barrel', DISCOVERED_ON_KNEX],
   ['declared, discovered behind NATS, failures reported to Sentry or GlitchTip', REPORTED_BEHIND_NATS],
+  ['the default stack, declared, on InversifyJS', { ...DEFAULT_STACK, di: 'inversify' }],
+  ['the default stack, declared, on Awilix', { ...DEFAULT_STACK, di: 'awilix' }],
   ['the default stack in the explicit style', EXPLICIT_STACK],
+  ['the default stack in the explicit style, on InversifyJS', { ...EXPLICIT_STACK, di: 'inversify' }],
+  ['the default stack in the explicit style, on Awilix', { ...EXPLICIT_STACK, di: 'awilix' }],
   ['explicit, relationships and RabbitMQ, GitLab pipeline', EXPLICIT_REBAC_ON_RABBITMQ],
   ['explicit, attribute policies on knex, wired by hand', ABAC_ON_KNEX_BY_HAND],
   [

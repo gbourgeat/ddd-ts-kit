@@ -30,8 +30,8 @@ export function authFiles(config: Config): InitFile[] {
   const file = (name: PlatformFile, variant?: string): InitFile => platformFile(config, name, variant);
 
   return [
-    familyOf(config) === 'tsyringe'
-      ? file('auth/authorization/authorization.ts', 'tsyringe')
+    familyOf(config) === 'container'
+      ? file('auth/authorization/authorization.ts', 'container')
       : file('auth/authorization/use-case-protection.ts'),
     file('auth/authorization/create-authorizer.ts', authz),
     file('auth/authorization/access-policies.ts'),

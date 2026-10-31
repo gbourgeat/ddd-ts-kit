@@ -17,7 +17,7 @@ export function wirings(
   const family = wiringFamily(scope.config);
 
   return Object.entries(targetsOf(scope, family, holding)).flatMap(([target, file]) => {
-    const template = [family, ...(family === 'manual' ? [] : ['on-tsyringe'])]
+    const template = [family, ...(family === 'manual' ? [] : ['on-container'])]
       .map((variant) => `${base}${target}.${variant}.tpl`)
       .find(templateExists);
 
@@ -34,7 +34,7 @@ function targetsOf(scope: Scope, family: WiringFamily, holding: string | undefin
   }
 
   return {
-    ...(family === 'tsyringe' ? { wiring: module } : {}),
+    ...(family === 'container' ? { wiring: module } : {}),
     routes: `${dir}/${routesFile(context.kebab)}`,
     platform: platformPath(scope, 'composition/platform.module.ts'),
     'platform-test': platformPath(scope, 'composition/platform-test.module.ts'),

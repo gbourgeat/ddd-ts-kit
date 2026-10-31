@@ -54,7 +54,7 @@ export const INIT_REFUSALS: readonly DeclaredRefusal[] = [
     refusal: /^--style declared cannot be combined with --di (nest|manual)\.$/,
     example: { style: 'declared', di: 'manual' },
     kind: 'decided',
-    why: 'the declarations are turned into bindings by @ddd-ts-kit/di, on tsyringe; the other containers read a module file',
+    why: 'the declarations are turned into bindings by @ddd-ts-kit/di, on its containers; these two read a module file',
   },
   {
     refusal:
@@ -64,7 +64,7 @@ export const INIT_REFUSALS: readonly DeclaredRefusal[] = [
     why: 'an explicit context is assembled by its module file, which lists what each class is given',
   },
   {
-    refusal: /^--http nest cannot be combined with --di (tsyringe|manual)\.$/,
+    refusal: /^--http nest cannot be combined with --di (tsyringe|inversify|awilix|manual)\.$/,
     example: { http: 'nest', di: 'manual' },
     kind: 'decided',
     why: 'NestJS brings its container and its HTTP server together',
@@ -180,7 +180,8 @@ export const IDENTITY_PRESET_REFUSALS: readonly DeclaredRefusal[] = [
     why: IDENTITY_TEMPLATES,
   },
   {
-    refusal: /^The identity preset is not written for "stack\.style": "explicit" with "stack\.di": "tsyringe"\.$/,
+    refusal:
+      /^The identity preset is not written for "stack\.style": "explicit" with "stack\.di": "(tsyringe|inversify|awilix)"\.$/,
     example: { style: 'explicit', di: 'tsyringe' },
     kind: 'not yet',
     why: 'in the explicit style its module file is written for the manual and the NestJS containers',

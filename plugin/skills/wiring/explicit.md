@@ -32,7 +32,7 @@ module holds (its handlers, consumers, reactions, jobs, permissions and routes),
 - `npx ddd-ts-kit generate module <context> <module>` writes the file and its composition (re-run
   it for a module declared before); `generate <kind> ... --module <module>` then writes the
   registration there.
-- On tsyringe the file exports `{ register(builder), onStart({ resolve }) }`, called from
+- On a container of the kit the file exports `{ register(builder), onStart({ resolve }) }`, called from
   `register` and `onStart` of the context. Wired by hand it exports `registerHandlers`,
   `registerReactions`, `registerJobs`, `useCases()` and `routes(platform)`, called from the
   functions of the same names.

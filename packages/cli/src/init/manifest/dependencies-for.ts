@@ -39,6 +39,8 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
     TRACE_ASSERTIONS,
   ],
   'di:tsyringe': [['@ddd-ts-kit/di', 'tsyringe', 'reflect-metadata'], []],
+  'di:inversify': [['@ddd-ts-kit/di', 'inversify', 'reflect-metadata'], []],
+  'di:awilix': [['@ddd-ts-kit/di', 'awilix'], []],
   // By hand the platform builds the job scheduler itself; on tsyringe the kernel module of @ddd-ts-kit/di brings it.
   'di:manual': [['@ddd-ts-kit/scheduling'], []],
   'di:nest': [['@ddd-ts-kit/scheduling'], []],

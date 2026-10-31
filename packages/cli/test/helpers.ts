@@ -1,3 +1,4 @@
+import { isKitContainer } from '../src/config';
 import fs from 'node:fs';
 import path from 'node:path';
 import { run } from '../src/run';
@@ -107,9 +108,9 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
 
 type Step = (...args: string[]) => void;
 
-/** The style `init` gives a stack that does not name one: declared wherever the declarations are read, on tsyringe. */
+/** The style `init` gives a stack that does not name one: declared wherever the declarations are read, on the containers of the kit. */
 export function isDeclared(stack: StackFlags): boolean {
-  return (stack.style ?? (stack.di === 'tsyringe' ? 'declared' : 'explicit')) === 'declared';
+  return (stack.style ?? (isKitContainer(stack.di) ? 'declared' : 'explicit')) === 'declared';
 }
 
 /** The default stack with every binding written in a module file, as before the declared style. */

@@ -404,10 +404,10 @@ which no module binds.` (`UNBOUND_DEPENDENCY`).
 | Ajouter une dépendance | ajouter le paramètre du constructeur | ajouter le paramètre, et le port à la liste de l'instruction |
 | Lire le câblage d'un contexte | réparti dans les classes ; `ddd-ts-kit describe <context>` le rassemble | un seul fichier |
 | Valeurs, fabriques, liaisons conditionnelles | inexprimables par un décorateur : écrites dans un module | natif |
-| Conteneurs | seul `@ddd-ts-kit/di` (sur tsyringe) transforme les déclarations en liaisons | tsyringe, providers NestJS ou câblage manuel |
+| Conteneurs | seul `@ddd-ts-kit/di` (sur tsyringe, InversifyJS ou Awilix) transforme les déclarations en liaisons | ces trois-là, providers NestJS ou câblage manuel |
 | Domaine | ne porte aucun décorateur, dans un style comme dans l'autre | idem |
 
-Le style déclaré est celui par défaut avec tsyringe ; le style explicite reste disponible, et les
+Le style déclaré est celui par défaut sur ces trois conteneurs ; le style explicite reste disponible, et les
 deux se mélangent dans une même application et même dans un même module. Les déclarations sont
 des métadonnées : un décorateur n'instancie rien et n'importe aucun conteneur, c'est pourquoi la
 couche application peut les porter. Le domaine ne déclare rien (`declarations/role-declared`).

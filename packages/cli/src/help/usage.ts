@@ -8,7 +8,7 @@ export const EVERY_COMMAND =
 export const USAGE = `Usage
   ddd-ts-kit init [--http express|fastify|hono|nest|none]
                   [--validation zod|class-validator|typebox|standard-schema|none]
-                  [--di tsyringe|nest|manual] [--tests vitest|jest]
+                  [--di tsyringe|inversify|awilix|nest|manual] [--tests vitest|jest]
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]

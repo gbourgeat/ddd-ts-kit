@@ -391,10 +391,10 @@ which no module binds.` (`UNBOUND_DEPENDENCY`).
 | Adding a dependency | add the constructor parameter | add the parameter, and the port to the list of the statement |
 | Reading the wiring of a context | spread over the classes; `ddd-ts-kit describe <context>` gathers it | one file |
 | Values, factories, conditional bindings | not expressible by a decorator: written in a module | native |
-| Containers | only `@ddd-ts-kit/di` (on tsyringe) turns declarations into bindings | tsyringe, NestJS providers or manual wiring |
+| Containers | only `@ddd-ts-kit/di` (on tsyringe, InversifyJS or Awilix) turns declarations into bindings | these three, NestJS providers or manual wiring |
 | Domain | carries no decorator in either style | same |
 
-The declared style is the default with tsyringe; the explicit style remains available and the
+The declared style is the default on these three containers; the explicit style remains available and the
 two mix in one application and even in one module. Declarations are metadata: a decorator
 instantiates nothing and imports no container, which is why the application layer may carry
 them. The domain declares nothing (`declarations/role-declared`).
