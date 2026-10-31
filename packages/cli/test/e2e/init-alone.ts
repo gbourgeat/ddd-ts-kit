@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import { cli, exists, type StackFlags, tempDir } from '../helpers';
+import { cli, exists, removeTempDir, type StackFlags, tempDir } from '../helpers';
 import { initFlags } from '../support/init-flags';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
@@ -18,16 +18,21 @@ import { NATIVE_COMPILER } from './type-errors';
 export function initAloneIsGreen(stack: StackFlags, contexts: readonly string[]): void {
   const root = tempDir('init-alone');
 
-  expect(cli(root, 'init', ...initFlags(stack), ...contexts).code).toBe(0);
+  try {
+    expect(cli(root, 'init', ...initFlags(stack), ...contexts).code).toBe(0);
 
-  installAsPublished(root);
-  expectNoFinding(root);
+    installAsPublished(root);
+    expectNoFinding(root);
 
-  // Not a finding, and still a remark: a pattern of its configuration that matches nothing, a note it no longer needs.
-  expect(runIn(root, { command: 'sh', args: ['-c', `${bin('knip')} 2>&1`] })).toBe('');
-  expect(runSpecs(root, stack.tests)).toMatch(allPassed(stack.tests));
+    // Not a finding, and still a remark: a pattern of its configuration that matches nothing, a note it no longer needs.
+    expect(runIn(root, { command: 'sh', args: ['-c', `${bin('knip')} 2>&1`] })).toBe('');
+    expect(runSpecs(root, stack.tests)).toMatch(allPassed(stack.tests));
 
-  documentsAreCurrent(root);
+    documentsAreCurrent(root);
+  } finally {
+    // The case has ended: its project, with a copy of every package of the kit, goes now and not with the file.
+    removeTempDir(root);
+  }
 }
 
 /** The documents of a project compared with what its own scripts generate, from the build the pipeline makes once. */

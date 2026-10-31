@@ -37,7 +37,7 @@ jobs:
         run: npm run ci:test:pairwise
       - name: PostgreSQL
         run: sh pipeline/github/scripts/start-postgres.sh
-      - name: The first migration of each ORM generated, guarded and applied
+      - name: The migrations of each ORM generated, guarded, applied and replayed on a fresh database
         env:
           DDD_TS_KIT_MIGRATIONS_SERVER: postgres://app:app@localhost:5432
         run: npm run ci:test:migrations

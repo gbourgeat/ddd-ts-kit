@@ -12,7 +12,7 @@ export function addComposeService(ws: Workspace, name: string, service: string):
 
   const volumes = compose.indexOf('\nvolumes:');
   const head = (volumes === -1 ? compose : compose.slice(0, volumes)).trimEnd();
-  const tail = volumes === -1 ? '\n' : `\n${compose.slice(volumes)}`;
+  const tail = volumes === -1 ? '' : compose.slice(volumes);
 
   ws.update(COMPOSE, `${head}\n${service.trimEnd()}\n${tail}`);
 }

@@ -13,7 +13,8 @@ export function knipVars(config: Config): RenderContext {
   const ignored = ignoredDependencies(config);
 
   return {
-    apps: config.worker || Object.values(config.contexts).some((context) => context.deployable),
+    // Last, where `generate service` and `generate worker` add it.
+    appsEntry: hasApps(config) ? `,\n    "${config.sourceRoot}/apps/*/main.ts"` : '',
     e2eEntry: when(',\n    "test/e2e/**/*.ts"'),
     // The data source the TypeORM CLI loads to run the migrations: no source file imports it.
     toolEntry: config.stack.orm === 'typeorm' ? `,\n    "${config.platformDir}/database/data-source.ts"` : '',
@@ -28,6 +29,10 @@ export function knipVars(config: Config): RenderContext {
     ignores: ignored.length > 0,
     ignored: JSON.stringify(ignored),
   };
+}
+
+function hasApps(config: Config): boolean {
+  return config.worker || Object.values(config.contexts).some((context) => context.deployable);
 }
 
 /** The configuration files of the runner of the specs: the unit one, the end-to-end one with an HTTP stack, the mutation one. */

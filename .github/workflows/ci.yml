@@ -398,7 +398,7 @@ jobs:
       - uses: ./.github/actions/setup
       - name: PostgreSQL
         run: sh pipeline/github/scripts/start-postgres.sh
-      - name: Drizzle, Prisma and TypeORM, installed for real, generate their first migration and apply it
+      - name: The four ORM, installed for real, run the database lines of their README, add a table, replay on a fresh database
         run: npm run ci:test:migrations
 
   managers:

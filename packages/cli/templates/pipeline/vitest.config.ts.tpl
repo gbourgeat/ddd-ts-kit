@@ -5,7 +5,7 @@ import { decorators } from '@ddd-ts-kit/testing/vitest';
 {{#if decorators.legacy}}
 import { decoratorCoverage } from '@ddd-ts-kit/testing/vitest';
 {{/if}}
-import { defineConfig, type TestProjectInlineConfiguration } from 'vitest/config';
+import { configDefaults, defineConfig, type TestProjectInlineConfiguration } from 'vitest/config';
 
 const INTEGRATION_SPECS = '{{config.contextsDir}}/*/test/integration/**/*.spec.ts';
 const INTEGRATION_MODE = 'integration';
@@ -56,7 +56,8 @@ export default defineConfig(({ mode }) => ({
     passWithNoTests: mode === INTEGRATION_MODE,
     ...WORKERS,
     // Each spec file is held to the time budget of its level ("budget" in ddd-ts-kit.config.json, the reference when it is absent): the slowest named at the end of the run, a file over its budget fails it.
-    reporters: ['default', '@ddd-ts-kit/testing/budget/vitest'],
+    // The reporters Vitest picks itself (a terse one under a coding agent), and the budget one after them.
+    reporters: [...configDefaults.reporters, '@ddd-ts-kit/testing/budget/vitest'],
     {{#if assembly.discovery}}
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.
     server: { deps: { inline: ['@ddd-ts-kit/di'] } },
