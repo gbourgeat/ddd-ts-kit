@@ -1,6 +1,9 @@
-import { NoopMetrics, type Metrics } from '@ddd-ts-kit/kernel';
+import type { Metrics } from '@ddd-ts-kit/kernel';
+import { openTelemetryMetrics } from '@ddd-ts-kit/tracing';
 
-// TODO(platform): answer an adapter of the kernel Metrics port (OpenTelemetry, Prometheus) here; until then the series of the bus middlewares and of `timed` are measured by nothing.
+// On the meter provider `initTracing` registered (`tracing.ts`, imported first by main.ts): the
+// series leave by OTLP with the spans when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, and are measured
+// by nothing when it is not, nor in the tests.
 export function createMetrics(): Metrics {
-  return new NoopMetrics();
+  return openTelemetryMetrics({ meterName: 'scheduling' });
 }

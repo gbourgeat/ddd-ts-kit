@@ -6,6 +6,7 @@ import {
   type ErrorReporter,
   type IntegrationEventPublisher,
   type Logger,
+  type Metrics,
 } from '@ddd-ts-kit/kernel';
 
 export interface OutboxRelayOptions {
@@ -16,6 +17,8 @@ export interface OutboxRelayOptions {
   /** How many times a publication is tried before its record is declared dead; left out, the default of the relay. */
   readonly maxAttempts?: number;
   readonly logger: Logger;
+  /** Where the depth of the outbox goes after each tick (`outbox_pending`, `outbox_failed`, `outbox_dead`); left out (the tests), nowhere. */
+  readonly metrics?: Metrics;
   /** Where an event whose publication the relay declares dead is reported; left out (the tests), nowhere. */
   readonly errors?: ErrorReporter;
   /** Wakes the relay as soon as an event is stored; the interval stays as the safety net. */
@@ -34,6 +37,7 @@ export function startOutboxRelay(options: OutboxRelayOptions): RunningRelay {
     publisher: options.publisher,
     clock: new SystemClock(),
     ...(options.maxAttempts === undefined ? {} : { maxAttempts: options.maxAttempts }),
+    ...(options.metrics === undefined ? {} : { metrics: options.metrics }),
     ...(options.wakeOn === undefined ? {} : { wakeOn: options.wakeOn }),
     // Codes only reach this hook, never messages: it is safe to log as is.
     onFailure: (failure) => {

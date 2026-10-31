@@ -72,6 +72,7 @@ export interface Application {
   /** Where another context, or a test, listens to what this application publishes. */
   readonly eventSubscriber: IntegrationEventSubscriber;
   readonly logger: Logger;
+  readonly metrics: Metrics;
   /** What the HTTP server asks before anything else: on the Redis protocol server, or in the memory of the process without one. */
   readonly rateLimiter: RateLimiter;
 
@@ -201,6 +202,7 @@ function running(composed: Composed): Application {
     // Behind a broker a listener has queues of its own, under its own name.
     eventSubscriber: options.events.forConsumer('observer'),
     logger,
+    metrics: container.resolve(Metrics),
     rateLimiter: container.resolve(RateLimiter),
     ready: () => options.redis?.ready() ?? Promise.resolve(true),
     container,
