@@ -668,7 +668,10 @@ personal data be erased. The two coexist as long as the chain never holds the da
 3. **Crypto-shredding for erasure.** `subjectMasker(keys)` masks each value under a key derived
    from the key of its data subject in the `SubjectKeyStore` of the kernel, the same keys that seal
    the personal values of the stored events (HKDF of the material, labelled for the trail; in
-   memory, or in the `subject_keys` table of every persistence package). Each masked field has to
+   memory, or in the `subject_keys` table the event store of every persistence package creates).
+   Without event sourcing `init` writes no key store and `privacy:erase` destroys no key: a project
+   that masks this way brings the store and its table, and gives the store as `keys` to
+   `eraseDataSubject`, or its masks stay recomputable. Each masked field has to
    say whose it is, `masked('patientEmail', { subject: 'patientId' })`: the middleware refuses one
    that does not, at wiring time (`MissingDataSubjectError`), since the actor and the resource of
    an entry are rarely that person; and that subject has to be an opaque identifier (the grammar of

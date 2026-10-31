@@ -1,0 +1,1 @@
+**The audit pages say when an erasure reaches the masks of `subjectMasker`.** Without event sourcing `init` writes no key store and `privacy:erase` destroys no key: a project that masks this way brings the store and its table, and gives the store as `keys` to `eraseDataSubject`. See [The audit trail](docs/concepts/audit-trail.md).
