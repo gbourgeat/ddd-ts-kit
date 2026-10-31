@@ -1,5 +1,5 @@
 import { onKitContainer, QUEUE_ORMS, type Config } from '../config';
-import { diEntry } from '../generate/di-imports';
+import { diEntry } from '../generate/di-entry';
 import type { RenderContext } from '../templating';
 import { aliasVars } from './alias-vars';
 import { auditVars } from './audit-vars';

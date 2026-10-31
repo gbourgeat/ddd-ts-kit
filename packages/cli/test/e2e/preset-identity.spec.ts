@@ -16,6 +16,8 @@ import { typeErrors } from './type-errors';
  */
 const FLAVOURS: readonly (readonly [string, readonly string[]])[] = [
   ['drizzle, zod, rbac', []],
+  ['drizzle, zod, rbac, on InversifyJS', ['--di', 'inversify']],
+  ['drizzle, zod, rbac, on Awilix', ['--di', 'awilix']],
   [
     'knex, class-validator, rebac, shared tables, keycloak',
     [

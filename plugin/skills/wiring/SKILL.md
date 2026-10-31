@@ -25,6 +25,7 @@ first:
 - under `stack.http: nest`, read [nest.md](nest.md) first: the rest of Nest's request pipeline
   (controllers, guards, pipes, exception filters, interceptors) stays out of every context
   (`nest/no-parallel-pipeline`), and the file says where each tool of Nest goes;
+- for a container the kit does not wire, read [explicit.md](explicit.md) first;
 - under `stack.dependencies: listed`, or when `declarations/barrel-current` reports declarations
   an earlier version wrote, read [earlier-layouts.md](earlier-layouts.md) first.
 

@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:eaf5d9c1916cc7f8 -->
+<!-- translation-of: http-frameworks.md sha256:e39de8ff86ccbdb9 -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 

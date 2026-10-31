@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:de36f100578609bf -->
+<!-- translation-of: README.md sha256:7846147987534100 -->
 
 <div align="center">
 

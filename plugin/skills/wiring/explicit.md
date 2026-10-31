@@ -49,3 +49,14 @@ module holds (its handlers, consumers, reactions, jobs, permissions and routes),
   `generate module`.
 - Never a `composition/` folder in `extraDirectories` for this: `tree/closed` accepts the module
   file of a declared module, and nothing else at the root of a module.
+
+## A container the kit does not wire
+
+`--di inversify` and `--di awilix` need nothing of this file: they generate the code of tsyringe,
+and `createApplication` comes from another entry point. This section is for a team that wants to
+write `bind()` or `register()` itself; read "Writing the API of InversifyJS or Awilix by hand" in
+`docs/tools/dependency-injection.md` first: `--di manual`, the container in
+`<context>.module.ts` only, never in `domain/` or `application/`, every adapter still
+through `platform.adapter`. `generate` keeps writing `new`: move what it wrote into the container
+each time, since neither the compiler nor `check` reports the second instance. Without such a
+wish, do not propose one.

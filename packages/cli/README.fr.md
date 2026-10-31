@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:150ee9b0a5922064 -->
+<!-- translation-of: README.md sha256:745d1dc95dfa6c7a -->
 
 # ddd-ts-kit
 
@@ -2758,7 +2758,7 @@ conteneur :
 - `typecheck.spec.ts` : les 36 d'entre elles que le *workspace* sait compiler (jest, prisma et
   typeorm à part) passent la vérification de types contre les sources des *packages* du
   *workspace*.
-- `proven-stacks.spec.ts` : les huit projets de `PROVEN` sont installés comme le serait un kit
+- `proven-stacks.spec.ts` : les projets de `PROVEN` sont installés comme le serait un kit
   publié et tenus à tout ce qu'exécute leur propre *pipeline* : `check` avec zéro violation et
   zéro avertissement, ESLint avec le preset (le test lit d'abord dans `eslint --print-config` que
   les règles des ports, de la planification, de la forme des fichiers et de la disposition sont

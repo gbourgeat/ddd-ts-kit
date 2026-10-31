@@ -40,7 +40,7 @@ export const ELSEWHERE = [
 export const SHARDS = [
   {
     // With NestJS on Nest controllers and Passport.
-    'proven-stacks.spec.ts': 469,
+    'proven-stacks.spec.ts': 830,
     'event-sourced.spec.ts': 38,
     'violations.spec.ts': 20,
     // Every route generator on Nest controllers, one project.

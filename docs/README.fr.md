@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:489307aacf9094be -->
+<!-- translation-of: README.md sha256:a75c0e383aecf343 -->
 
 # Documentation
 
@@ -93,7 +93,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Validation](tools/validation.fr.md) | zod, class-validator, TypeBox ou une bibliothèque Standard Schema ; les schémas partagés |
 | [Paires de contrat](tools/contract-pairs.fr.md) | quel framework avec quelle bibliothèque de validation, selon l'équipe : les quatre paires prouvées de bout en bout, mesurées ; oRPC et tRPC comme seconde porte, pas comme paire |
 | [Représentations et formulaires](tools/representations-and-forms.fr.md) | XML et CSV sans bibliothèque, et pourquoi ; les moteurs de rendu JSON Forms pour React, Angular et Vue, et les alternatives |
-| [Injection de dépendances](tools/dependency-injection.fr.md) | tsyringe avec les déclarations du kit, NestJS, ou un câblage manuel |
+| [Injection de dépendances](tools/dependency-injection.fr.md) | les déclarations du kit sur tsyringe, InversifyJS ou Awilix, NestJS, ou un câblage manuel, comparés et mesurés |
 | [Persistance](tools/persistence.fr.md) | Drizzle, Knex, Prisma ou TypeORM ; PostgreSQL face aux autres |
 | [Brokers de messages](tools/message-brokers.fr.md) | en processus, RabbitMQ, Kafka, NATS JetStream ou Redis Streams |
 | [Cache et coordination](tools/cache-and-coordination.fr.md) | Redis, Dragonfly ou Valkey ; ce que le verrou garantit et ne garantit pas |

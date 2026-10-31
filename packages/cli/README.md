@@ -2576,7 +2576,7 @@ the process, without a container:
   them, pass `check` and `docs --check` as generated.
 - `typecheck.spec.ts`: the 36 of them the workspace can compile (jest, prisma and typeorm
   apart) type-check against the sources of the workspace packages.
-- `proven-stacks.spec.ts`: the eight projects of `PROVEN` are installed as a published kit would be and held to
+- `proven-stacks.spec.ts`: the projects of `PROVEN` are installed as a published kit would be and held to
   everything their own pipeline runs: `check` with zero violation and zero warning, ESLint with the
   preset (the test first reads from `eslint --print-config` that the rules of ports, scheduling,
   file shape and layout are on), dependency-cruiser with the generated configuration, knip, their

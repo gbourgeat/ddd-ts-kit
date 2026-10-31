@@ -1,11 +1,7 @@
 import type { Config } from '../config';
+import { diEntry } from './di-entry';
 
 const FROM_THE_ENTRY = new Set(['createApplication', 'createTestApplication']);
-
-/** The entry point of `@ddd-ts-kit/di` that makes the applications of the project, the one of its container. */
-export function diEntry(config: Config): string {
-  return `@ddd-ts-kit/di/${config.stack.di}`;
-}
 
 /** The import lines of `names`: what makes an application comes from the entry of the container, the rest from the package. */
 export function diImports(config: Config, names: readonly string[]): string {
