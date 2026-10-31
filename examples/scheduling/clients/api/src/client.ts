@@ -14,7 +14,7 @@ export function connect(options: ClientOptions<SchemeName>): Connection {
   return openConnection(options, SCHEMES);
 }
 
-/** scheduling 0.105.0, every operation of its contract as a method. */
+/** scheduling 0.106.0, every operation of its contract as a method. */
 export interface Client {
   /**
    * Search appointments: `GET /appointments`.

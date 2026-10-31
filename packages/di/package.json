@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/di",
-  "version": "0.105.0",
+  "version": "0.106.0",
   "description": "Port classes and context modules on top of tsyringe, InversifyJS or Awilix, for projects without a heavy framework.",
   "keywords": [
     "ddd",
@@ -57,8 +57,8 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.105.0",
-    "@ddd-ts-kit/scheduling": "0.105.0"
+    "@ddd-ts-kit/kernel": "0.106.0",
+    "@ddd-ts-kit/scheduling": "0.106.0"
   },
   "peerDependencies": {
     "awilix": "^13.0.5",

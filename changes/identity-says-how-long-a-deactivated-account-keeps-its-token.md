@@ -1,3 +1,0 @@
-**The identity preset says what a deactivated account can still do, and for how long.** The comment of `DeactivateAccountHandler`, the design of the identity context (its `CONTEXT.md`) and the guide [Bootstrap with well-designed contexts](docs/guides/bootstrap-with-well-designed-contexts.md) said that a deactivated account holds no right anywhere. The identity context refuses it at once; the other contexts read the token, so they refuse it at its next token, and a token already issued lives until it expires (300 s in the Keycloak realm the kit writes). They now say so, and that a project that wants no window checks the account at the edge.
-
-A project already generated keeps the old comment and design text.
