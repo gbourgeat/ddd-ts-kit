@@ -29,8 +29,6 @@ const REGENERATE =
 interface Judged {
   readonly file: string;
   readonly flaw: Flaw | undefined;
-  /** Set on a layout an earlier version wrote, current but not moved yet: a warning whatever the severity of the rule. */
-  readonly severity?: 'warn';
 }
 
 export const declarationsBarrelCurrent: Rule = {
@@ -48,15 +46,7 @@ export const declarationsBarrelCurrent: Rule = {
     return project.contextsOnDisk
       .filter((context) => ownEntry(project.config.contexts, context) !== undefined)
       .flatMap((context) => judge(project, context))
-      .flatMap(({ file, flaw, severity }) => {
-        if (flaw === undefined) {
-          return [];
-        }
-
-        const violation = report({ file, line: 1 }, flaw.message, flaw.fix);
-
-        return [severity === undefined ? violation : { ...violation, severity }];
-      });
+      .flatMap(({ file, flaw }) => (flaw === undefined ? [] : [report({ file, line: 1 }, flaw.message, flaw.fix)]));
   },
 };
 
@@ -84,7 +74,7 @@ function judge(project: Project, context: string): Judged[] {
   return judgeDeclarations(project, { context, directory, entries, sources, modules, specifierOf: specifierOfFile });
 }
 
-/** With a barrel: the declarations of each layer and their summary, or a layout an earlier version wrote while it is current. */
+/** With a barrel: the declarations of each layer and their summary, or the layout an earlier version wrote, to move. */
 function judgeDeclarations(project: Project, declared: DeclaredContext): Judged[] {
   const { context, directory, entries, modules } = declared;
   const { files } = contextDeclarations(declared);
@@ -107,10 +97,7 @@ function judgeDeclarations(project: Project, declared: DeclaredContext): Judged[
   // Two role files of one name stay an error in any layout: the summary would not compile.
   return layout === undefined
     ? judged
-    : [
-        { file: `${directory}/${barrelFile(context)}`, flaw: earlierLayoutNotice(context, layout), severity: 'warn' },
-        ...twins(declared),
-      ];
+    : [{ file: `${directory}/${barrelFile(context)}`, flaw: earlierLayoutNotice(context, layout) }, ...twins(declared)];
 }
 
 /**

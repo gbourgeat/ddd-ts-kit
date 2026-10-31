@@ -33,12 +33,7 @@ const formatter = await eslint.loadFormatter(format).catch((error) =>
   error?.code === 'ERR_MODULE_NOT_FOUND' ? stop('formatter') : Promise.reject(error),
 );
 const report = await formatter.format(results, { cwd: root, rulesMeta });
-const transitions = Object.fromEntries(
-  Object.entries(rulesMeta).flatMap(([id, meta]) =>
-    typeof meta?.docs?.transition === 'string' ? [[id, meta.docs.transition]] : [],
-  ),
-);
 const messages = results.flatMap((result) => result.messages.map(({ ruleId, severity }) => ({ ruleId, severity })));
 
-process.stdout.write(JSON.stringify({ report, messages, transitions }));
+process.stdout.write(JSON.stringify({ report, messages }));
 `;

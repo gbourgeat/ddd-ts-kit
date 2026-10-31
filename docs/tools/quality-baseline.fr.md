@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:b10c79988addc643 -->
+<!-- translation-of: quality-baseline.md sha256:b8437c763bee62d9 -->
 
 # Base de qualité
 
@@ -144,16 +144,11 @@ enfreinte, et ni l'une ni l'autre n'est laissée de côté. Un nouveau projet n'
 `init` n'écrit aucun fichier de désactivations : le premier avertissement se voit le jour où il
 est écrit.
 
-**Une règle du kit en transition** est la seule exception. Une règle qu'ajoute une version
-ultérieure, ou ce qu'une règle juge de plus, arrive en avertissement pendant une version mineure
-et devient une erreur à la suivante ([CONTRIBUTING.md](../../CONTRIBUTING.fr.md)) ; sa
-documentation nomme cette version, et le CHANGELOG de la version qui l'apporte nomme la règle.
-`ddd-ts-kit lint` affiche ses avertissements dans le rapport, puis une ligne par règle
-(`ddd-ts-kit/<rule>: 2 warning(s), not counted while the rule is new; it becomes an error in
-0.28.0: fix them before upgrading to it.`), et n'échoue pas sur eux : une mise à jour du kit ne
-fait jamais passer au rouge un lint vert, et les constats sont corrigés ou consignés avant la
-version qui fait de la règle une erreur. Un simple `eslint . --max-warnings 0` les compterait,
-c'est pourquoi les scripts lancent la commande du kit. Le *hook* d'avant *commit* lance ESLint sur les fichiers indexés sans la
+**Une règle qu'ajoute une version ultérieure**, ou ce qu'une règle juge de plus, n'a pas
+d'exception : elle arrive à sa sévérité, une erreur pour une règle qui prévient un problème, et
+ses avertissements font échouer le lint comme les autres ([CONTRIBUTING.md](../../CONTRIBUTING.fr.md)).
+Le CHANGELOG de la version qui l'apporte nomme la règle avec une ligne `To move:`, et
+`ddd-ts-kit check --rule <id>` liste les fichiers à reprendre avant la montée de version. Le *hook* d'avant *commit* lance ESLint sur les fichiers indexés sans la
 limite : il affiche un avertissement sans arrêter le *commit* ; `verify` et le *pipeline*
 l'arrêtent.
 

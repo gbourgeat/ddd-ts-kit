@@ -10,7 +10,7 @@ import { EARLIER_MODULE_LAYERS } from './module-layers';
  * into a module is never lost from what the kit writes about its context.
  */
 export function roleFoldersOf(ws: Workspace, { directory, modules }: ContextTree, folder: string): string[] {
-  // Where a module holds the folder today, and, for one minor version, where 0.86 and 0.87 put it.
+  // Where a module holds the folder today, and where 0.86 and 0.87 put it, which context-layout moves.
   const placed = modules
     .flatMap((module) => [intoModule(module, folder), earlierPlace(module, folder)])
     .filter((candidate) => candidate !== folder);

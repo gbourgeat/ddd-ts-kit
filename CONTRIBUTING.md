@@ -114,19 +114,17 @@ restarted a desktop. Two things bound them:
   `.claude/settings.json` asks before any edit of them, whatever the permission mode.
 - A new check rule comes with a passing and a failing fixture, a `fix` sentence and an
   `explain` entry.
-- A change that makes the checks report what they did not (a new rule, a rule that judges more
-  files, a lower limit) never turns a green project red in a patch or a minor version: what it
-  adds reaches projects as a warning first, and becomes an error one minor version later. A new
-  rule takes `warn` as its default (`default-severities.ts` for `ddd-ts-kit check`, `recommended:
-  'warn'` for the ESLint rule, with `transition: '<next minor version>'` in its definition); a
-  rule that judges more reports what it adds under a rule id of
-  its own, a warning, merged into the rule at the next minor version. Its file of `changes/` says
-  it, and the one that makes it an error says it again: what the rule reports, the fix, and `ddd-ts-kit check --rule <id>` to list
-  the files to take up before it blocks. A project builds while it upgrades; a rule that lands
-  as an error stops its main branch and every branch cut from it. A generated project fails its
-  lint on a warning (`ddd-ts-kit lint`), so the `transition` of an ESLint rule is what keeps the
-  promise: that command shows the warnings of a rule in transition without failing on them. The
-  next minor version sets `recommended: 'error'` and removes `transition`.
+- Before 1.0, a rule that prevents a problem is an error at once: a new rule takes `error` as its
+  default (nothing in `default-severities.ts` for `ddd-ts-kit check`, `recommended: 'error'` for
+  the ESLint rule), and so does what a rule judges more. There is no warning first and no version
+  in which it becomes an error later: a rule left a warning to soften an upgrade is one that a
+  project learns to ignore. A rule is `warn` only when what it reports may be right and a reader
+  settles it (`privacy/*`, which reads names, or `tree/documented-paths`). Its file of `changes/` is
+  breaking: it says what the rule reports, the fix, and a `To move:` line with
+  `ddd-ts-kit check --rule <id>` to list the files to take up. A layout or a form an earlier
+  version wrote is reported the same way, as an error, with the command that moves it
+  (`ddd-ts-kit context-layout`, `ddd-ts-kit docs`); the kit reads it only so that this command
+  can move it.
 - A new template compiles as generated and carries `TODO(domain)` markers only where business
   knowledge is needed.
 - Runtime packages keep third-party libraries behind optional peer dependencies and subpath

@@ -1,12 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { readConfig, type Config } from '../config';
-import { barrelFile, earlierLayoutNotice, generatedDrift } from '../declared';
+import { generatedDrift } from '../declared';
 import { readContexts } from '../docs/read-contexts';
 import { describeOnDisk } from '../docs/describe-on-disk';
 import { writeBehaviour } from '../docs/write-behaviour';
 import { writeDocs } from '../docs/write-docs';
-import type { KeptContext } from '../generate/refresh-barrels';
 import { STORED_EVENTS_LOCK } from '../check/event-sourcing/stored-events-lock-file';
 import { emptilyRecordedStoredEvents } from '../docs/emptily-recorded-stored-events';
 import { formerlyRecordedStoredEvents } from '../docs/formerly-recorded-stored-events';
@@ -34,11 +33,11 @@ export const docsCommand: Command = (argv, io) => {
   const check = args.flag('check');
 
   if (args.flag('behaviour')) {
-    return behaviourOnly(io, args, { ws, config, kept: [] });
+    return behaviourOnly(io, args, { ws, config });
   }
 
-  // A check writes nothing: a context still declared as an earlier version wrote it is only warned about.
-  const kept = writeDocs(ws, config, { earlier: check ? 'keep' : 'move' });
+  // A context still declared as an earlier version wrote it is moved: a check reports the files the move would write.
+  writeDocs(ws, config);
 
   if (args.flag('stored-events')) {
     recordStoredEvents(ws, config);
@@ -50,14 +49,12 @@ export const docsCommand: Command = (argv, io) => {
     return printReport(io, args, ws.commit(args.flag('dry-run')));
   }
 
-  return reportCheck(io, args, { ws, config, kept });
+  return reportCheck(io, args, { ws, config });
 };
 
 interface DocsRun {
   readonly ws: Workspace;
   readonly config: Config;
-  /** The contexts still declared in the single file of 0.84: a warning, not a failure, in this version. */
-  readonly kept: readonly KeptContext[];
 }
 
 /**
@@ -84,7 +81,7 @@ function behaviourOnly(io: Io, args: Arguments, run: DocsRun): number {
 }
 
 /** `docs --check`: the generated files that would change, and the stored-event versions not recorded yet or recorded by 0.82.0 or earlier; 0 when there is none. */
-function reportCheck(io: Io, args: Arguments, { ws, config, kept }: DocsRun): number {
+function reportCheck(io: Io, args: Arguments, { ws, config }: DocsRun): number {
   const report = ws.commit(true);
   const stale = [...report.created, ...report.updated, ...report.deleted];
   const drift = Object.fromEntries(stale.flatMap((file) => driftOf(ws.root, ws, file)));
@@ -96,36 +93,15 @@ function reportCheck(io: Io, args: Arguments, { ws, config, kept }: DocsRun): nu
   const ok =
     stale.length === 0 && unrecorded.length === 0 && formerlyRecorded.length === 0 && emptilyRecorded.length === 0;
 
-  const warnings = kept.map((context) => earlierLayoutWarning(config, context));
-
   if (args.json) {
-    io.out(stdoutJson({ ok, stale, drift, unrecorded, formerlyRecorded, emptilyRecorded, warnings }));
+    io.out(stdoutJson({ ok, stale, drift, unrecorded, formerlyRecorded, emptilyRecorded }));
   } else if (ok) {
-    io.out(['The generated documentation is up to date.', ...warningLines(warnings)].join('\n'));
+    io.out('The generated documentation is up to date.');
   } else {
-    io.out(
-      [...staleLines(stale, drift, { unrecorded, formerlyRecorded, emptilyRecorded }), ...warningLines(warnings)].join(
-        '\n',
-      ),
-    );
+    io.out(staleLines(stale, drift, { unrecorded, formerlyRecorded, emptilyRecorded }).join('\n'));
   }
 
   return ok ? 0 : 1;
-}
-
-/** A context still declared as an earlier version wrote it, as `docs --check` warns about it. */
-interface EarlierLayoutWarning {
-  readonly file: string;
-  readonly message: string;
-  readonly fix: string;
-}
-
-function earlierLayoutWarning(config: Config, { context, layout }: KeptContext): EarlierLayoutWarning {
-  return { file: `${config.contextsDir}/${context}/${barrelFile(context)}`, ...earlierLayoutNotice(context, layout) };
-}
-
-function warningLines(warnings: readonly EarlierLayoutWarning[]): string[] {
-  return warnings.flatMap(({ file, message, fix }) => ['', `warning  ${file}: ${message}`, `  ${fix}`]);
 }
 
 /** The versions of stored events `docs --check` holds against the lock. */

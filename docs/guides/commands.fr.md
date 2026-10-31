@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:3728ae9d6d4e8b59 -->
+<!-- translation-of: commands.md sha256:eb5c8fec940d0d9f -->
 
 # Quelle commande, quand
 
@@ -429,8 +429,7 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    name, a lockfile changed since the install, an override no longer needed or a denied
                    install script
   lint             the ESLint of the project (lint and ci:lint run it): fails on an error, and on a warning
-                   as on an error, but on one of a rule of the kit in transition, a new rule that becomes an
-                   error in the version it names, whose warnings are listed apart; --format and --fix as ESLint
+                   as on an error; --format and --fix as ESLint
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready

@@ -1,12 +1,7 @@
 import type { LintVerdict } from './lint-verdict';
 
-/** The lines `ddd-ts-kit lint` adds after the report of ESLint: why it fails, and what is left to fix before an upgrade. */
-export function formatVerdict({ errors, warnings, inTransition }: LintVerdict): string[] {
-  const transition = inTransition.map(
-    ({ ruleId, until, warnings: count }) =>
-      `${ruleId}: ${count} warning(s), not counted while the rule is new; it becomes an error in ${until}: fix them before upgrading to it.`,
-  );
-
+/** The lines `ddd-ts-kit lint` adds after the report of ESLint: why it fails. */
+export function formatVerdict({ errors, warnings }: LintVerdict): string[] {
   const failure =
     warnings > 0
       ? [
@@ -14,5 +9,5 @@ export function formatVerdict({ errors, warnings, inTransition }: LintVerdict): 
         ]
       : [];
 
-  return [...transition, ...(errors > 0 ? [`${errors} error(s).`] : []), ...failure];
+  return [...(errors > 0 ? [`${errors} error(s).`] : []), ...failure];
 }
