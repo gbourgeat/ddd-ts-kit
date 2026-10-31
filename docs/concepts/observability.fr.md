@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:f7439426f3d2ba56 -->
+<!-- translation-of: observability.md sha256:3669583810338561 -->
 
 # Observabilité
 
@@ -174,6 +174,13 @@ sources produisent un histogramme de durée (`<name>_duration_ms`) et un compteu
 
 Les deux ajoutent `outcome` (`success` ou `failure`) ; le compteur porte aussi `error_code` lors
 d'un échec qui en a un.
+
+Des jauges donnent une profondeur : le relais de l'outbox pose `outbox_pending`, `outbox_failed`
+et `outbox_dead` depuis `store.stats()` après chaque passage, et le *worker* des *jobs*
+d'arrière-plan pose `jobs_waiting`, `jobs_running` et `jobs_dead` pour chaque file, étiquetées
+`queue`, au plus une fois par relevé. Un projet généré lie le port à `openTelemetryMetrics()` du
+paquet de traçage, et les séries sortent par OTLP avec les traces quand
+`OTEL_EXPORTER_OTLP_ENDPOINT` est définie.
 
 La règle qui compte le plus pour les métriques est la cardinalité : **la valeur d'une étiquette
 vient d'un petit ensemble fermé, jamais d'un identifiant**. Une étiquette qui porte un

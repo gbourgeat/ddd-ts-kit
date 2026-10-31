@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:21da91496561b469 -->
+<!-- translation-of: README.md sha256:24f8981f367f8137 -->
 
 # @ddd-ts-kit/scheduling
 
@@ -708,6 +708,11 @@ tentative restante. `StoredJobQueue` lit la charge utile avec le même schéma l
 file : celle qui ne lui convient pas lève `InvalidEnqueuedPayloadError` (`INVALID_ENQUEUED_PAYLOAD`)
 et rien n'est stocké. Un store à
 vous passe `jobStoreContract` de `@ddd-ts-kit/testing/contracts`, avec son unité de travail.
+
+Un *worker* qui reçoit `metrics` pose aussi la profondeur de chaque file qu'il consomme depuis
+`store.stats(queue)`, comme les jauges `jobs_waiting`, `jobs_running` et `jobs_dead` étiquetées
+`queue`, après avoir rempli la file et au plus une fois par `pollIntervalMs` ; sans `metrics` le
+store n'est pas interrogé.
 
 ## Gestionnaires de processus
 

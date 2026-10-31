@@ -152,7 +152,7 @@ describe('guides, the examples of explain, in a project init wrote', () => {
 describe('guides, deploy-and-rollback, on the observability a generated project has', () => {
   const tree = tempDir('guides-deploy');
 
-  it('promises no metric the platform does not emit, and names the file init writes', () => {
+  it('names the metrics the platform emits and the file init writes them from', () => {
     expect(cli(tree, 'init').code).toBe(0);
 
     expect(read(tree, 'src/platform/observability/create-metrics.ts')).toContain(
@@ -166,6 +166,9 @@ describe('guides, deploy-and-rollback, on the observability a generated project 
       expect(page(file), file).not.toMatch(/docker\/\.env/);
       expect(page(file), file).toContain('create-metrics.ts');
       expect(page(file), file).toContain('store.stats()');
+      expect(page(file), file).toMatch(/`openTelemetryMetrics\(\)` (of|de) `@ddd-ts-kit\/tracing`/);
+      expect(page(file), file).toMatch(/`outbox_pending`, `outbox_failed` (and|et) `outbox_dead`/);
+      expect(page(file), file).not.toContain('TODO(platform)');
     }
   });
 });

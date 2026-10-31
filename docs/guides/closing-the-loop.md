@@ -38,7 +38,7 @@ so read the names there once before writing the queries.
 | Breach | What the kit emits | Query (Prometheus) | Starting band |
 |---|---|---|---|
 | a use case fails more than it did | `use_case_total{message, kind, outcome, error_code}` from `metricsMiddleware` of `@ddd-ts-kit/aspects`, one series per command or query class | `sum by (message) (rate(use_case_total{outcome="failure"}[5m])) / sum by (message) (rate(use_case_total[5m]))` | the ratio per message against its 30-day baseline; a business refusal is a failure with its `error_code`, so a message that refuses by design (a slot already taken) reads the ratio without the codes the business expects |
-| the outbox relay stalled | no gauge in this version: the relay only claims pending records; the script reads the `outbox` table | `SELECT extract(epoch FROM now() - min(created_at)) FROM messaging.outbox WHERE status = 'pending'` (the age of the oldest pending record, in seconds; `<schema>.outbox` where the project put it) | above the relay's interval times three, sustained over two polls |
+| the outbox relay stalled | `outbox_pending`, `outbox_failed` and `outbox_dead`, gauges the relay of `main.ts` sets from `store.stats()` after each tick; no gauge gives the age of the oldest pending record, which the script reads in the `outbox` table | `min_over_time(outbox_pending[15m]) > 0 or outbox_dead > 0` (a backlog that never drained, or a record that exhausted its attempts); the age: `SELECT extract(epoch FROM now() - min(created_at)) FROM messaging.outbox WHERE status = 'pending'` (in seconds; `<schema>.outbox` where the project put it) | a dead record at once; an age above the relay's interval times three, sustained over two polls |
 | a job stopped running | `scheduled_job_runs_total{job, context, status, error_code}` from `@ddd-ts-kit/scheduling`, `status="succeeded"` for a run that ran | `increase(scheduled_job_runs_total{job="notifications.send-reminders", status="succeeded"}[2h]) == 0 or absent(scheduled_job_runs_total{job="notifications.send-reminders", status="succeeded"})` (two intervals of an hourly job) | no success for two intervals, which catches every way a job stops, where an alert on failures does not |
 
 `dependency_call_total{class, method, kind, context, outcome}` (the `timed` aspect) and
@@ -140,8 +140,8 @@ replaces the record in the repository.
   and the platform; this page gives the queries and the shape, and a team writes them in a day.
 - No runbook: a rollback depends on the target platform; the kit stops at the image.
 - No channel responder: the identity, the channel and the tools are the platform's.
-- No gauge for the age of the oldest pending outbox record in this version: the script reads
-  the table.
+- No gauge for the age of the oldest pending outbox record: the gauges give the depth, the
+  script reads the age in the table.
 - No merge decided by a finding: the propose tier opens a pull request or runs a runbook
   approved before; a person accepts the intent and a code owner approves the fix.
 

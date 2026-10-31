@@ -683,6 +683,10 @@ reads the payload with the same schema where it is enqueued: one that does not f
 `InvalidEnqueuedPayloadError` (`INVALID_ENQUEUED_PAYLOAD`) and nothing is stored. A store of your own passes
 `jobStoreContract` of `@ddd-ts-kit/testing/contracts`, with its unit of work.
 
+A worker given `metrics` also sets the depth of each queue it consumes from `store.stats(queue)`,
+as the gauges `jobs_waiting`, `jobs_running` and `jobs_dead` labelled `queue`, after it fills
+the queue and at most once per `pollIntervalMs`; without `metrics` the store is not asked.
+
 ## Process managers
 
 `StoredProcessRunner` is the `ProcessRunner` of the kernel: `new StoredProcessRunner({ store,

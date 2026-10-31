@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:902a26aedf229889 -->
+<!-- translation-of: README.md sha256:e41558a4d69093e2 -->
 
 # @ddd-ts-kit/events
 
@@ -726,7 +726,14 @@ ce qu'il ne garantit pas.
 
 ### Ce qu'il faut surveiller sur l'outbox
 
-`store.stats()` donne `{ pending, failed, dead }` ; exposez-les comme des jauges.
+`store.stats()` donne `{ pending, failed, dead }`. Un relais qui reçoit `metrics` (le port
+`Metrics` du noyau) les pose après chaque passage comme les jauges `outbox_pending`,
+`outbox_failed` et `outbox_dead` ; le `startOutboxRelay` d'un projet généré lui passe les
+métriques de l'application.
+
+```ts
+const relay = new OutboxRelay({ store, publisher: broker, clock, metrics });
+```
 
 | Signal | Sens | Réaction |
 |---|---|---|

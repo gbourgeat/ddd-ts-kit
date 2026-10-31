@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:22b81551feed5823 -->
+<!-- translation-of: README.md sha256:0e444b27b81df58d -->
 
 # @ddd-ts-kit/tracing
 
@@ -11,7 +11,7 @@ l'utilisateur se lit comme une seule trace.
 ```
 npm i @ddd-ts-kit/tracing @opentelemetry/api
 # pour le démarrage Node (@ddd-ts-kit/tracing/node)
-npm i @opentelemetry/sdk-node @opentelemetry/resources @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http
+npm i @opentelemetry/sdk-node @opentelemetry/resources @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-trace-otlp-http @opentelemetry/sdk-metrics @opentelemetry/exporter-metrics-otlp-http
 # pour le banc de test (@ddd-ts-kit/tracing/testing)
 npm i -D @opentelemetry/sdk-trace @opentelemetry/context-async-hooks
 ```
@@ -112,6 +112,33 @@ sont évalués avant la première instruction du fichier : gardez l'appel dans s
 importez ce module en premier (comme ci-dessus), ou préchargez-le avec
 `node --import ./dist/platform/observability/tracing.js`. Les *packages* publiés en modules ES ont aussi besoin
 du *hook* de chargement `@opentelemetry/instrumentation`.
+
+### Métriques
+
+`openTelemetryMetrics()` est le port `Metrics` du noyau sur l'API de métriques d'OpenTelemetry :
+`counter(name)` est un compteur, `histogram(name)` un histogramme, `gauge(name)` une jauge
+synchrone qui garde la dernière valeur posée, chacun créé une fois par nom. Les étiquettes
+deviennent les attributs de la mesure, une étiquette indéfinie laissée de côté.
+
+```ts
+// platform/observability/create-metrics.ts
+import type { Metrics } from '@ddd-ts-kit/kernel';
+import { openTelemetryMetrics } from '@ddd-ts-kit/tracing';
+
+export function createMetrics(): Metrics {
+  return openTelemetryMetrics({ meterName: 'clinic-api' });
+}
+```
+
+Il prend son *meter* au fournisseur de métriques global au moment où il est appelé, donc après
+`initTracing` : appelé avant, il ne mesure rien. `initTracing` enregistre ce fournisseur avec un
+lecteur OTLP/HTTP périodique quand `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` ou
+`OTEL_EXPORTER_OTLP_ENDPOINT` est définie, les métriques partant toutes les
+`metricsExportIntervalMillis` millisecondes (sinon `OTEL_METRIC_EXPORT_INTERVAL`, sinon
+60 secondes) et une dernière fois à `shutdown()`. Sans aucune des deux variables, il n'en
+enregistre aucun et chaque instrument ne mesure rien, comme les spans n'exportent rien. Jaeger
+garde les traces, pas les métriques : les métriques vont à un stockage qui reçoit des métriques
+OTLP, un OpenTelemetry Collector devant Prometheus par exemple.
 
 ## À quoi ressemble une trace
 
