@@ -26,8 +26,8 @@ its repository are classes the generators wrote; the command bus comes from the 
 
 What is left to you is the business: the `TODO(domain)` places. Filled in, the domain and
 application part of this slice reads as follows, in one block here where the generators write
-one file per class (the refusal comes from `generate error ordering OrderEmpty onPlacement`, the
-event from `generate domain-event ordering Order Placed`):
+one file per class (the refusal comes from `generate error ordering OrderEmpty onPlacement --term "Empty=Holding no product"`,
+the glossary of the context not yet defining `Empty`; the event from `generate domain-event ordering Order Placed`):
 
 <!-- checked sample -->
 ```ts

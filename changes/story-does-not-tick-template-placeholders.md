@@ -1,1 +1,0 @@
-**`story` no longer ticks "origin recorded" and "report" on the untouched template.** A `From:` or `Built with:` line, or the `npm run verify` line of `### Verification`, that still holds a `<placeholder>` is not written, and the close gate stays shut until the story skill fills it.

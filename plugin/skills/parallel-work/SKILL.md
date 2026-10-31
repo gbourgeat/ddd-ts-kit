@@ -209,7 +209,7 @@ branch (step 6): the run goes on.
 
 Each agent commits its rows. Then bring the trunk into the branch: `npx ddd-ts-kit merge-trunk
 --cwd <worktree>`, resolve what it stops on keeping both sides, `--continue` (skill
-`ddd-ts-kit:quality-gate`, "Bring the trunk in").
+`ddd-ts-kit:quality-gate`, `merge-trunk.md`).
 A worker under the sandbox of the regulated profile cannot reach the database: `db:migrate` and a spec that names a `DATABASE_URL` are run by the owner or the CI, not by the worker. Its working migration it generates itself: with `DATABASE_URL` unset, `db:generate` of Prisma and TypeORM runs on PostgreSQL in process (it exits 3 only when `DATABASE_URL` names a server that does not answer).
 
 ### Review the batch
@@ -218,7 +218,7 @@ Then one review of the batch (`architecture-reviewer`, `--changed-since <base>`)
 verify` on the merged branch, then the branch merges or opens its pull request. The blocking
 findings of the review are fixed on the branch; each non-blocking one is settled at once or
 written, before the merge, as the `TODO(review)` line the review gives (skill
-`ddd-ts-kit:quality-gate`, "Review remarks"). `check --changed-since` sees the files of the
+`ddd-ts-kit:quality-gate`, `review-remarks.md`). `check --changed-since` sees the files of the
 branch only: a cycle, an unused export or a rule broken by what the trunk
 gained meanwhile shows only in `verify` on the whole tree. A host without the
 agents of the plugin (Codex) runs one session per worktree, its briefing as the first prompt:
