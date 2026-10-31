@@ -87,6 +87,7 @@ const relay = startOutboxRelay({
   {{/unless}}
   intervalMs: config.outboxRelayIntervalMs,
   logger: application.logger,
+  metrics: application.metrics,
   {{#if errors.sentry}}
   errors,
   {{/if}}

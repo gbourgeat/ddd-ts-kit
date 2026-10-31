@@ -19,6 +19,8 @@ const BASE = [
   '@opentelemetry/resources',
   '@opentelemetry/auto-instrumentations-node',
   '@opentelemetry/exporter-trace-otlp-http',
+  '@opentelemetry/sdk-metrics',
+  '@opentelemetry/exporter-metrics-otlp-http',
 ];
 
 const BASE_DEV = ['ddd-ts-kit', 'tsx', '@types/node', '@ddd-ts-kit/testing', '@faker-js/faker'];

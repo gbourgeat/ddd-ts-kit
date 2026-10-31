@@ -142,6 +142,7 @@ export interface Application {
   /** Where another context, or a test, listens to what this application publishes. */
   readonly eventSubscriber: IntegrationEventSubscriber;
   readonly logger: Logger;
+  readonly metrics: Metrics;
   /** Runs a job at once, for a test: `jobs.runNow('<context>.<job>')`. */
   readonly jobs: JobScheduler;
 {{#if cache.rateLimit}}
@@ -372,6 +373,7 @@ function running({ container, options, contexts }: Composed): Application {
     eventSubscriber: container.resolve(IntegrationEventSubscriber),
 {{/unless}}
     logger,
+    metrics: container.resolve(Metrics),
     jobs: container.resolve(JobScheduler),
 {{#if cache.rateLimit}}
     rateLimiter: container.resolve(RateLimiter),

@@ -154,7 +154,11 @@ describe('guides, deploy-and-rollback, on the observability a generated project 
 
   it('promises no metric the platform does not emit, and names the file init writes', () => {
     expect(cli(tree, 'init').code).toBe(0);
-    expect(read(tree, 'src/platform/observability/create-metrics.ts')).toContain('return new NoopMetrics();');
+
+    expect(read(tree, 'src/platform/observability/create-metrics.ts')).toContain(
+      'return openTelemetryMetrics({ meterName: ',
+    );
+
     expect(exists(tree, '.env.example')).toBe(true);
     expect(exists(tree, 'docker')).toBe(false);
 
