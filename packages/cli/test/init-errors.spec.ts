@@ -291,6 +291,15 @@ describe('a local GlitchTip', () => {
     );
 
     expect(readme).toContain('tracing first, error reporting second\n(`src/platform/observability/errors.ts`)');
+
+    expect(readme).toContain(
+      '| `SENTRY_SCRUB_MESSAGES` | `true` removes the message of every reported error that is not a `DomainError`: for a tracker hosted by a third party. Left out, the message is sent with the values a failed statement quotes redacted |',
+    );
+
+    expect(readme).toContain(
+      'no tenant, no\nvalue a failed statement quotes. The message of the error is sent, the statement it quotes with\nits values redacted:',
+    );
+
     expect(read(initProject(), 'README.md')).not.toContain('Error reporting');
   });
 });

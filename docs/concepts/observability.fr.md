@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:f7439426f3d2ba56 -->
+<!-- translation-of: observability.md sha256:00d1914814cd7521 -->
 
 # Observabilité
 
@@ -260,7 +260,7 @@ problème dans l'outil de suivi ouvre la trace dans le *backend* de traçage.
 | *span* | classe, méthode, contexte, sorte, classe d'erreur, code d'erreur du domaine ; sur la racine : identifiant de corrélation, origine | arguments, résultats, messages d'erreur, URL avec des valeurs de requête, quoi que ce soit sur l'acteur |
 | métrique | des noms tirés du code, l'issue, le code d'erreur | des identifiants, quels qu'ils soient |
 | ligne de journal | ce qui précède, plus l'identifiant de l'acteur, l'identifiant du *tenant*, les identifiants de corrélation et de trace | des secrets d'authentification (masqués par les adaptateurs), des contenus de messages ; les messages d'erreur sont gardés par défaut et peuvent être nettoyés |
-| remontée d'erreur | l'erreur avec sa pile, l'origine, l'opération, les identifiants de corrélation et de trace, l'identifiant de l'acteur | courriel, nom, adresse, corps des requêtes HTTP, variables locales ; le *tenant* seulement sur demande |
+| remontée d'erreur | l'erreur avec son type, son code et sa pile, son message où les valeurs que cite une requête SQL en échec sont masquées, l'origine, l'opération, les identifiants de corrélation et de trace, l'identifiant de l'acteur | courriel, nom, adresse, corps des requêtes HTTP, variables locales, les valeurs que cite une requête SQL en échec ; le *tenant* seulement sur demande |
 
 L'asymétrie est voulue. Rien de personnel ne devient un attribut de *span*, parce que les traces
 sont exportées largement et échantillonnées par des outils que personne n'audite ; les
@@ -268,7 +268,13 @@ identifiants de l'acteur et du *tenant* restent dans les champs des journaux, do
 conservation appartient au projet. Les messages des erreurs inattendues sont le premier endroit
 où fuient les données personnelles (un pilote cite la ligne qu'il a refusée), c'est pourquoi les
 *spans* les écartent toujours et que les adaptateurs du *logger* et de l'outil de suivi des
-erreurs proposent de les écarter.
+erreurs proposent de les écarter. L'outil de suivi des erreurs garde le message par défaut, car
+c'est pour lui qu'on lit une *issue*, et y masque les valeurs que cite une requête SQL en échec
+(les paramètres de Drizzle, la clé d'une contrainte violée, la ligne qu'un contrôle a refusée,
+une valeur que le serveur n'a pas su lire, les arguments d'un appel que Prisma a refusé) tandis
+que la requête reste ; `SENTRY_SCRUB_MESSAGES=true` (`scrubMessages: true` d'`initSentry`)
+écarte le message de chaque erreur qui n'est pas une `DomainError`, pour un outil de suivi
+hébergé par un tiers.
 
 ## Limites, et quand ne pas l'utiliser
 

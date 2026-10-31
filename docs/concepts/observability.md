@@ -243,13 +243,18 @@ trace in the tracing backend.
 | span | class, method, context, kind, error class, domain error code; on the root: correlation id, origin | arguments, results, error messages, URLs with query values, anything about the actor |
 | metric | names from the code, outcome, error code | identifiers of any kind |
 | log line | the above, plus actor id, tenant id, correlation and trace ids | credentials (redacted by the adapters), payloads; error messages are kept by default and can be scrubbed |
-| error report | the error with its stack, origin, operation, correlation and trace ids, actor id | email, name, address, request bodies, local variables; the tenant only on request |
+| error report | the error with its type, code and stack, its message with the values a failed statement quotes redacted, origin, operation, correlation and trace ids, actor id | email, name, address, request bodies, local variables, the values a failed statement quotes; the tenant only on request |
 
 The asymmetry is deliberate. Nothing personal becomes a span attribute, because traces are
 exported widely and sampled by tools nobody audits; the actor and tenant ids stay in log
 fields, where retention is the project's own. Messages of unexpected errors are the first place
 where personal data leaks (a driver quotes the row it refused), which is why spans drop them
-always and the logger and error tracker adapters offer to drop them.
+always and the logger and error tracker adapters offer to drop them. The error tracker keeps the
+message by default, since it is what an issue is read for, and redacts in it the values a failed
+statement quotes (the parameters of Drizzle, the key of a violated constraint, the row a check
+refused, a value the server could not read, the arguments of a call Prisma refused) while the
+statement stays; `SENTRY_SCRUB_MESSAGES=true` (`scrubMessages: true` of `initSentry`) drops the
+message of every error that is not a `DomainError`, for a tracker hosted by a third party.
 
 ## Limits and when not to use it
 

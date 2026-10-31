@@ -3,6 +3,7 @@ import { addBreadcrumb, getIsolationScope, type ErrorEvent } from '@sentry/node'
 import { afterEach, describe, expect, it } from 'vitest';
 import { scrubEvent, scrubRequest } from '../src';
 import { aTracker, type Tracker } from './support/a-tracker';
+import { DatabaseError, QUOTED_FORMS } from './support/failed-statements';
 import { LedgerUnavailable } from './support/ledger-unavailable';
 import { UniqueViolation } from './support/unique-violation';
 
@@ -101,13 +102,70 @@ describe('what leaves the process by default', () => {
     expect(frames.filter((frame) => 'vars' in frame)).toEqual([]);
   });
 
-  it('keeps the message of every error: it is what the tracker is read for', async () => {
+  it('keeps the message of every error, it is what the tracker is read for, without the values a statement quotes', async () => {
     const { server, errors } = await tracking();
 
     errors.report(leaking(), report);
+    errors.report(new Error('the ledger did not answer'), report);
     await errors.flush(2_000);
 
-    expect(server.events[0]?.exception?.values?.[0]?.value).toBe('Key (email)=(ada@example.org) already exists');
+    expect(server.events.map((event) => event.exception?.values?.[0]?.value)).toEqual([
+      'Key (email)=([redacted]) already exists',
+      'the ledger did not answer',
+    ]);
+  });
+});
+
+describe('a failed statement', () => {
+  it.each(QUOTED_FORMS)('keeps its statement and loses the values it quotes: $name', ({ written, sent }) => {
+    const event: ErrorEvent = { type: undefined, exception: { values: [{ type: 'Error', value: written }] } };
+
+    expect(scrubEvent(event, {}, { scrubMessages: false }).exception?.values?.[0]?.value).toBe(sent);
+  });
+
+  it('loses them in every exception of the event, in what an integration copied of the error and in a coloured message', () => {
+    const coloured = `\u001b[31m${QUOTED_FORMS[5]?.written ?? ''}\u001b[39m`;
+
+    const event: ErrorEvent = {
+      type: undefined,
+      message: QUOTED_FORMS[1]?.written ?? '',
+      exception: {
+        values: [
+          { type: 'error', value: QUOTED_FORMS[0]?.written ?? '' },
+          { type: 'X', value: coloured },
+        ],
+      },
+      extra: { query: 'insert into people values ($1, $2)', parameters: ['ada@example.org', 3] },
+      contexts: {
+        QueryFailedError: { detail: 'Key (email)=(ada@example.org) already exists.', params: ['ada@example.org'] },
+        nested: { rows: [{ detail: 'Failing row contains (ada@example.org, -1).' }], code: 23505, none: null },
+      },
+    };
+
+    const sent = JSON.stringify(scrubEvent(event, {}, { scrubMessages: false }));
+
+    expect(sent).not.toContain('ada@example.org');
+    expect(sent).not.toContain('hunter2');
+    expect(sent).toContain('insert into people values ($1, $2)');
+    expect(sent).toContain('"code":23505');
+  });
+
+  it('reaches the tracker as its statement, without the values of the error or of its cause', async () => {
+    const { server, errors } = await tracking();
+
+    const cause = new DatabaseError(
+      'duplicate key value violates unique constraint "people_pkey"',
+      'Key (email)=(ada@example.org) already exists.',
+    );
+
+    errors.report(new Error(QUOTED_FORMS[0]?.written, { cause }), report);
+    errors.report(new DatabaseError('invalid input syntax for type integer: "ada@example.org"'), report);
+    await errors.flush(2_000);
+
+    expect(server.events.map((event) => event.exception?.values?.map(({ value }) => value))).toEqual([
+      ['duplicate key value violates unique constraint "people_pkey"', QUOTED_FORMS[0]?.sent],
+      ['invalid input syntax for type integer: "[redacted]"'],
+    ]);
   });
 });
 
@@ -195,12 +253,18 @@ describe('the scrubbers alone', () => {
           { type: 'LedgerUnavailable', value: 'The ledger is closed' },
           { type: 'UniqueViolation', value: 'Key (email)=(ada@example.org) already exists' },
           { type: 'AggregateError', value: 'two steps failed' },
+          { type: 'Error' },
         ],
       },
     };
 
     const values = scrubEvent(event, { originalException: gathered }, { scrubMessages: true }).exception?.values;
 
-    expect(values?.map(({ value }) => value)).toEqual(['The ledger is closed', SCRUBBED_MESSAGE, SCRUBBED_MESSAGE]);
+    expect(values?.map(({ value }) => value)).toEqual([
+      'The ledger is closed',
+      SCRUBBED_MESSAGE,
+      SCRUBBED_MESSAGE,
+      SCRUBBED_MESSAGE,
+    ]);
   });
 });

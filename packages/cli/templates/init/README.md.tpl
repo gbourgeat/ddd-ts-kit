@@ -246,7 +246,7 @@ Unexpected failures go to an error tracker through the kernel `ErrorReporter`, b
 | `SENTRY_DSN` | where the events go. Empty or absent: the application starts and reports nothing. Anything else than a URL refuses the start |
 | `SENTRY_ENVIRONMENT` | the environment issues are filed under; `NODE_ENV` when left out |
 | `SENTRY_RELEASE` | the release issues are attached to; none when left out |
-| `SENTRY_SCRUB_MESSAGES` | `true` removes the message of every reported error that is not a `DomainError`: for a tracker hosted by a third party |
+| `SENTRY_SCRUB_MESSAGES` | `true` removes the message of every reported error that is not a `DomainError`: for a tracker hosted by a third party. Left out, the message is sent with the values a failed statement quotes redacted |
 
 | Reported | Not reported |
 |---|---|
@@ -268,8 +268,9 @@ Unexpected failures go to an error tracker through the kernel `ErrorReporter`, b
 One failure is one report: the first boundary that sees an error reports it, the others recognise
 it. Each report carries the trace id of the active span, which opens the trace in the tracing
 backend. What leaves the process is scrubbed first: no request body, header, cookie or query
-string, no local variable, no breadcrumb, no email or name (the actor id only), no tenant. The
-message of the error is sent: `scrubMessages: true` in `{{config.platformDir}}/observability/errors.ts` removes
+string, no local variable, no breadcrumb, no email or name (the actor id only), no tenant, no
+value a failed statement quotes. The message of the error is sent, the statement it quotes with
+its values redacted: `scrubMessages: true` in `{{config.platformDir}}/observability/errors.ts` removes
 it for everything that is not a `DomainError`, which is the setting for a tracker hosted by a
 third party. The README of `@ddd-ts-kit/sentry` has the full table and the other options
 (`sampleRate`, `tagTenant`, `beforeSend`).

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4cfe61cbcd2680cf -->
+<!-- translation-of: README.md sha256:06e7cc03f587f4f6 -->
 
 # @ddd-ts-kit/sentry
 
@@ -255,7 +255,8 @@ par l'exportateur du kit.
 | *tenant* | non envoyé | `tagTenant: true` |
 | variables locales | jamais | |
 | fil d'Ariane (breadcrumbs) | aucun n'est enregistré automatiquement : ni console, ni appel sortant | `Sentry.addBreadcrumb` là où le projet le décide |
-| message de l'exception | envoyé | `scrubMessages: true` le retire pour chaque erreur qui n'est pas une `DomainError` |
+| message de l'exception | envoyé, les valeurs que cite une requête SQL en échec masquées | `scrubMessages: true` le retire pour chaque erreur qui n'est pas une `DomainError` |
+| valeurs que cite une requête SQL en échec | jamais, dans un message, une cause ou ce qu'une intégration a copié de l'erreur (`extra`, contextes) : la requête reste, paramètres positionnels compris | |
 
 **Messages.** Le message est la première chose qu'on lit dans un outil de suivi des erreurs, et
 le premier endroit où fuient des données personnelles : un pilote cite la ligne qu'il a refusée.
@@ -267,6 +268,17 @@ autres. Activez-le quand l'outil de suivi est hébergé par un tiers ou quand le
 assez sensibles pour qu'aucun opérateur ne doive les y lire. Les *loggers* du kit
 (`StdoutLogger`, `@ddd-ts-kit/pino`, `@ddd-ts-kit/winston`) prennent l'option sous le même nom,
 avec la même règle et le même marqueur, `SCRUBBED_MESSAGE` du noyau.
+
+**Valeurs d'une requête SQL en échec.** Quoi que dise `scrubMessages`, `scrubEvent` remplace par
+`[redacted]` chaque valeur que cite un pilote, et garde la requête, qui est le signal : les
+paramètres que Drizzle écrit après `params:` dans une `DrizzleQueryError` ; la clé d'une
+contrainte d'unicité ou de clé étrangère violée (`Key (email)=([redacted]) already exists.`, dans
+un message ou un `detail`) ; la ligne qu'une contrainte `not null` ou `check` a refusée
+(`Failing row contains ([redacted]).`) ; une valeur que PostgreSQL n'a pas su lire
+(`invalid input syntax for type integer: "[redacted]"`) ; les arguments que Prisma affiche d'un
+appel qu'il refuse ; un champ nommé `parameters`, `params` ou `bindings` qu'une intégration a
+copié de l'erreur. Knex sur PostgreSQL cite `$1`, et TypeORM le message du serveur, dont les
+formes sont celles ci-dessus.
 
 `beforeSend` s'exécute en dernier, sur l'événement nettoyé, et peut l'écarter en renvoyant
 `null`.

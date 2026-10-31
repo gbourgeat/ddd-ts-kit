@@ -243,7 +243,8 @@ spans themselves are exported once, by the exporter of the kit.
 | tenant | not sent | `tagTenant: true` |
 | local variables | never | |
 | breadcrumbs | none is recorded automatically: no console, no outgoing call | `Sentry.addBreadcrumb` where the project decides |
-| exception message | sent | `scrubMessages: true` removes it for every error that is not a `DomainError` |
+| exception message | sent, the values a failed statement quotes redacted | `scrubMessages: true` removes it for every error that is not a `DomainError` |
+| values a failed statement quotes | never, in a message, a cause or what an integration copied of the error (`extra`, contexts): the statement stays, placeholders included | |
 
 **Messages.** The message is the first thing read in an error tracker, and the first place
 where personal data leaks: a driver quotes the row it refused. The default keeps it, because an
@@ -254,6 +255,16 @@ and trace remain for the others. Turn it on when the tracker is hosted by a thir
 when the data is sensitive enough that no operator should read it there. The loggers of the
 kit (`StdoutLogger`, `@ddd-ts-kit/pino`, `@ddd-ts-kit/winston`) take the option under the same
 name, with the same rule and the same marker, `SCRUBBED_MESSAGE` of the kernel.
+
+**Values of a failed statement.** Whatever `scrubMessages` says, `scrubEvent` replaces by
+`[redacted]` each value a driver quotes, and keeps the statement, which is the signal: the
+parameters Drizzle writes after `params:` in a `DrizzleQueryError`; the key of a violated unique
+or foreign key constraint (`Key (email)=([redacted]) already exists.`, in a message or a
+`detail`); the row a not-null or a check constraint refused (`Failing row contains
+([redacted]).`); a value PostgreSQL could not read (`invalid input syntax for type integer:
+"[redacted]"`); the arguments Prisma renders of a call it refused; a field named `parameters`,
+`params` or `bindings` that an integration copied of the error. Knex on PostgreSQL quotes `$1`,
+and TypeORM the message of the server, whose forms are the ones above.
 
 `beforeSend` runs last, on the scrubbed event, and may drop it by answering `null`.
 
