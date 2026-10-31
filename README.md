@@ -130,7 +130,9 @@ moment of a project.
 ## What the agent runs
 
 Behind each step, the agent types the commands of the CLI: you see them in its session, you may
-type them yourself, and the pipeline runs the same ones. A new project starts with:
+type them yourself, and the pipeline runs the same ones. `init` creates no repository: in a new
+directory, run `git init` first, or the git hooks of the bootstrap have nowhere to go. A new project
+starts with:
 
 ```bash
 mkdir orders-api && cd orders-api

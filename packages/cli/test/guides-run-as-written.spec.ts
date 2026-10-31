@@ -183,3 +183,14 @@ describe('guides, the README, on the command that reads the plan', () => {
     );
   });
 });
+
+describe('guides, the bootstrap, in the order that works in a fresh directory', () => {
+  it('says git init before the steps that need a repository, in the skill and the README', () => {
+    const skill = page('plugin/skills/bootstrap/SKILL.md');
+
+    expect(skill.indexOf('`git init` comes first')).toBeGreaterThan(skill.indexOf('## 3. Create the project'));
+    expect(skill.indexOf('`git init` comes first')).toBeLessThan(skill.indexOf('## 5. Prove it and commit'));
+    expect(page('README.md').replace(/\s+/g, ' ')).toContain('in a new directory, run `git init` first');
+    expect(page('README.fr.md').replace(/\s+/g, ' ')).toContain("lancez d'abord `git init`");
+  });
+});

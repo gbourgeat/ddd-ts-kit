@@ -57,6 +57,9 @@ the command under `## Decisions` of the plan.
 
 ## 3. Create the project
 
+`init` creates no repository: in a fresh directory `git init` comes first, by the owner (this skill
+runs no `git init`), or `hooks:install` of step 5 fails.
+
 ```bash
 npx ddd-ts-kit@latest init <flags> --dry-run --json   # read `created`, `skipped`, `unwritable` and `notes`
 npx ddd-ts-kit@latest init <flags> --json             # its `notes` end with the two commands to run next
@@ -155,8 +158,7 @@ hooks.
 
 Report the real output. Propose the commits (skill `ddd-ts-kit:commit-discipline`): one for
 the bare project (`chore: bootstrap the project`), then one per context
-(`feat(<context>): declare the context and its language`). `init` creates no
-repository: in a fresh directory `git init` comes first, by the owner. Then `pnpm run infra:up` and
+(`feat(<context>): declare the context and its language`). Then `pnpm run infra:up` and
 `pnpm run dev` when the owner wants to see it run; the API documentation is on `/docs`.
 
 ## 6. Hand over

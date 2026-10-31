@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4c9e831518c63821 -->
+<!-- translation-of: README.md sha256:216c9c34e5f2b098 -->
 
 <div align="center">
 
@@ -137,7 +137,9 @@ de chaque moment d'un projet.
 ## Ce que l'agent exécute
 
 Derrière chaque étape, l'agent tape les commandes de la CLI : vous les voyez dans sa session,
-vous pouvez les taper vous-même, et le pipeline lance les mêmes. Un nouveau projet commence par :
+vous pouvez les taper vous-même, et le pipeline lance les mêmes. `init` ne crée pas de dépôt : dans un
+nouveau répertoire, lancez d'abord `git init`, sinon les hooks git du bootstrap n'ont nulle part où aller.
+Un nouveau projet commence par :
 
 ```bash
 mkdir orders-api && cd orders-api
