@@ -13,6 +13,7 @@ export * from './unit-of-work/create-prisma-unit-of-work';
 export * from './event-sourcing/create-prisma-event-sourcing';
 export * from './tenancy/tenant-where';
 export * from './tenancy/own-tenant-where';
+export * from './repository/rows-created';
 export * from './outbox/prisma-json-input';
 export * from './outbox/prisma-outbox-delegate';
 export * from './outbox/prisma-raw-queries';

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:87192420045846d2 -->
+<!-- translation-of: README.md sha256:26ed13a5fc492ce2 -->
 
 # @ddd-ts-kit/kafka
 
@@ -219,8 +219,10 @@ process.on('SIGTERM', async () => {
 ## Topologie
 
 `bus.describeTopology()` renvoie les *topics* et les groupes sous forme de données, pour une
-revue ou un document généré ; `bus.assertTopology()` crée les *topics* qui n'existent pas et se
-résout une fois que les consommateurs ont leurs partitions. Pour `forConsumer('billing')` abonné
+revue ou un document généré ; `bus.assertTopology()` demande au cluster ses *topics*, crée ceux
+qui n'existent pas et se résout une fois que les consommateurs ont leurs partitions. Un cluster
+hors d'atteinte le rejette avec `BROKER_UNAVAILABLE`, même pour un service qui ne publie et ne
+s'abonne encore à rien : un service échoue au démarrage, jamais à son premier enregistrement. Pour `forConsumer('billing')` abonné
 à `ordering.order.placed` :
 
 | Objet | Nom | Propriétés |

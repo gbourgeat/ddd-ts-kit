@@ -211,8 +211,10 @@ process.on('SIGTERM', async () => {
 ## Topology
 
 `bus.describeTopology()` returns the topics and the groups as data, for a review or a
-generated document; `bus.assertTopology()` creates the topics that do not exist and resolves
-once the consumers have their partitions. For `forConsumer('billing')` subscribed to
+generated document; `bus.assertTopology()` asks the cluster for its topics, creates those that
+do not exist and resolves once the consumers have their partitions. A cluster out of reach
+rejects it with `BROKER_UNAVAILABLE`, even for a service that publishes and subscribes to
+nothing yet: a service fails at startup, never at its first record. For `forConsumer('billing')` subscribed to
 `ordering.order.placed`:
 
 | Object | Name | Properties |

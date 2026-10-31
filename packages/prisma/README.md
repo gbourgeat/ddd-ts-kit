@@ -243,8 +243,16 @@ A command handler does not call `run` itself: the command bus does it, and a dec
 integration event handler is run in a unit of work too. A script, or a consumer wired by hand,
 calls it as above.
 
-`createPrismaUnitOfWork(prisma, { timeout: 15_000, isolationLevel: 'RepeatableRead' })`
-forwards the options of `$transaction`.
+`createPrismaUnitOfWork(prisma, { maxWait: 10_000, timeout: 15_000, isolationLevel: 'RepeatableRead' })`
+forwards the options of `$transaction`: `maxWait`, how long `run` waits for a transaction while
+every connection of the pool is busy (2 seconds by default), and `timeout`, how long the
+transaction may run (5 seconds by default). Beyond either, Prisma answers `P2028`, and the unit
+of work rejects with `TransactionTimeoutError` of the kernel (code `SERVICE_UNAVAILABLE`,
+answered 503): nothing committed, the request may succeed later. A generated project reads both
+from `DATABASE_TRANSACTION_WAIT_MS` and `DATABASE_TRANSACTION_TIMEOUT_MS`, 10 and 30 seconds by
+default: not more, since a caller gives up near 30 seconds, and a connection held for an answer
+nobody reads sheds no load. Knex, Drizzle and TypeORM bound no transaction
+in time: they need no such setting.
 
 `run` is built on `withinUnitOfWork` of the kernel. The domain events of the aggregates saved
 inside it wait until `work` has returned, then are dispatched inside the transaction, before
@@ -286,7 +294,7 @@ export abstract class InvoiceRepository extends Repository<Invoice> {}
 // contexts/billing-core/infrastructure/persistence/prisma-invoice.repository.ts
 import type { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { optimisticUpdate, PrismaContext } from '@ddd-ts-kit/prisma';
+import { optimisticUpdate, PrismaContext, rowsCreated } from '@ddd-ts-kit/prisma';
 
 @Repository(InvoiceRepository)
 export class PrismaInvoiceRepository implements InvoiceRepository {
@@ -311,12 +319,15 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const row = { ...invoice.state, version: next };
-      const written =
-        expected === 0
-          ? await invoices.createMany({ data: [row], skipDuplicates: true })
-          : await invoices.updateMany({ where: { id: invoice.id, version: expected }, data: row });
 
-      return written.count;
+      if (expected === 0) {
+        const created = await invoices.createMany({ data: [row], skipDuplicates: true });
+
+        // skipDuplicates skips a row that takes any unique value: rowsCreated tells a taken id from another value.
+        return rowsCreated(created, { id: invoice.id, holders: () => invoices.count({ where: { id: invoice.id } }) });
+      }
+
+      return (await invoices.updateMany({ where: { id: invoice.id, version: expected }, data: row })).count;
     });
   }
 }
@@ -343,6 +354,7 @@ interface TransactionClient {
   readonly invoice: {
     findUnique(args: { where: { id: string } }): Promise<InvoiceRow | null>;
     createMany(args: { data: InvoiceRow[]; skipDuplicates: boolean }): Promise<{ count: number }>;
+    count(args: { where: { id: string } }): Promise<number>;
     updateMany(args: { where: { id: string; version: number }; data: InvoiceRow }): Promise<{ count: number }>;
   };
 }
@@ -363,7 +375,12 @@ instead.
 statement wrote no row, and moves `invoice.version` on otherwise. Use `createMany` and
 `updateMany` for the guarded write: they return a count, where `create` and `update` throw,
 and a thrown unique violation aborts the surrounding PostgreSQL transaction. `upsert` cannot
-carry the version guard.
+carry the version guard. `skipDuplicates` names no conflict target: it skips the row of an
+aggregate that takes a value another row holds under a unique constraint (an email) as it
+skips a taken id. `rowsCreated` tells them apart: when nothing was written and no row holds
+the id, it raises `UniqueViolationError` (code `CONFLICT`, 409), what the other ORM answer, and
+a statement the database refuses for a unique value (`P2002`) is raised the same by
+`optimisticUpdate`.
 
 ![Two transactions load invoice inv-1 at version 3; A saves first, its update matches version 3 and the row moves to version 4; B saves after, its update still expects version 3, matches no row, and optimisticUpdate throws ConcurrencyError with the code CONCURRENCY_CONFLICT; the transaction of B rolls back](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/persistence-optimistic-concurrency.svg)
 
@@ -445,7 +462,7 @@ it, and `generate repository` writes them this way.
 ```ts
 import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { optimisticUpdate, ownTenantWhere, tenantWhere } from '@ddd-ts-kit/prisma';
+import { optimisticUpdate, ownTenantWhere, rowsCreated, tenantWhere } from '@ddd-ts-kit/prisma';
 
 @Repository(InvoiceRepository)
 export class PrismaInvoiceRepository implements InvoiceRepository {
@@ -465,16 +482,19 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { ...InvoiceMapper.toRow(invoice), version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.count;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).count;
     });
   }
 
-  private insert(state: VersionedInvoice): Promise<Prisma.BatchPayload> {
+  private async insert(state: VersionedInvoice): Promise<number> {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
+    const created = await this.database.client().invoice.createMany({ data: [row], skipDuplicates: true });
 
-    return this.database.client().invoice.createMany({ data: [row], skipDuplicates: true });
+    return rowsCreated(created, {
+      id: state.id,
+      holders: () => this.database.client().invoice.count({ where: { id: state.id, ...tenantWhere(this.scope) } }),
+    });
   }
 
   private update(state: VersionedInvoice, expected: number): Promise<Prisma.BatchPayload> {
@@ -998,8 +1018,9 @@ What Prisma does not allow, and what the package does about it:
   outer transaction, and `claimBatch` called inside a unit of work claims in that unit of
   work.
 - **Interactive transactions are bounded in time**: 5 seconds by default, then Prisma rolls
-  back. Pass `timeout` to `createPrismaUnitOfWork` for long commands. They also hold a
-  connection for their whole duration.
+  back, and a transaction that waits more than 2 seconds for a connection never starts. Pass
+  `timeout` and `maxWait` to `createPrismaUnitOfWork` for long commands and bursts. They also
+  hold a connection for their whole duration.
 - **A bare `null` is refused in a `Json` field**, and the sentinels that express it live in the
   generated client. The stores leave a `null` payload out, so it is stored as SQL `NULL` and
   read back as `null`; the field is therefore `Json?`. What may have to be set back to `null`

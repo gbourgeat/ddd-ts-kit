@@ -7,7 +7,7 @@ import { statusTitle } from './status-title';
 
 export function toProblem(error: unknown, mapper: ErrorMapper, requestId: string): Problem {
   if (!(error instanceof DomainError)) {
-    return internalProblem(requestId);
+    return serverFaultProblem(error, mapper, requestId);
   }
 
   const status = mapper.statusOf(error.code);
@@ -79,6 +79,22 @@ function exposedFacts(error: DomainError): { facts?: RefusalFacts } {
   const facts = error.exposedFacts;
 
   return Object.keys(facts).length === 0 ? {} : { facts };
+}
+
+/**
+ * A fault of the infrastructure whose code the mapping answers with a status of a server
+ * (`SERVICE_UNAVAILABLE` 503 for a unit of work the database could not serve in time) keeps
+ * that status and its code; any other is a 500. Nothing of its message either way.
+ */
+function serverFaultProblem(error: unknown, mapper: ErrorMapper, requestId: string): Problem {
+  const code: unknown = error instanceof Error ? Reflect.get(error, 'code') : undefined;
+  const status = typeof code === 'string' ? mapper.mapping[code] : undefined;
+
+  if (typeof code !== 'string' || status === undefined || status < 500) {
+    return internalProblem(requestId);
+  }
+
+  return { ...internalProblem(requestId), status, title: statusTitle(status), code };
 }
 
 // The message of an unexpected error quotes data and internals: it never leaves the process.

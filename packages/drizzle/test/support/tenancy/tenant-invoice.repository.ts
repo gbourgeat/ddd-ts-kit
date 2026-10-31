@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { FixedClock, stampCreation, stampUpdate, tenantScopeOf, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate, ownTenantCondition, tenantCondition } from '../../../src/postgres';
+import { optimisticUpdate, ownTenantCondition, primaryKeyOf, tenantCondition } from '../../../src/postgres';
 import type { Database } from '../platform/database/database';
 import { Invoice, type InvoiceState } from '../billing-core/domain/invoice';
 import type { InvoiceRepository } from '../billing-core/domain/repositories/invoice.repository';
@@ -52,7 +52,12 @@ export class TenantInvoiceRepository implements InvoiceRepository {
   private insert(state: VersionedInvoice) {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, clock) };
 
-    return this.database.executor().insert(invoices).values(row).onConflictDoNothing().returning({ id: invoices.id });
+    return this.database
+      .executor()
+      .insert(invoices)
+      .values(row)
+      .onConflictDoNothing({ target: primaryKeyOf(invoices) })
+      .returning({ id: invoices.id });
   }
 
   private update(state: VersionedInvoice, expected: number) {

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0c1ab5ca69b5b61c -->
+<!-- translation-of: README.md sha256:8874b7d49d8a67de -->
 
 # @ddd-ts-kit/http
 
@@ -625,8 +625,11 @@ Valeurs par défaut : `VALIDATION_FAILED` 422 (avec `issues`, chemins préfixés
 perdue ou un interblocage : le client renvoie la requête), `INVARIANT_VIOLATION` 422,
 `UNAUTHORIZED` 401, `FORBIDDEN` 403, `NOT_ACCEPTABLE` 406, `PRECONDITION_FAILED` 412,
 `UNSUPPORTED_MEDIA_TYPE` 415 (un corps ou un fichier d'un type que la route ne prend pas),
-`PRECONDITION_REQUIRED` 428, et pour les fichiers `FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413. Un
-code du domaine sans correspondance répond 422 (`fallbackStatus` du second argument le change).
+`PRECONDITION_REQUIRED` 428, et pour les fichiers `FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413, et
+`SERVICE_UNAVAILABLE` 503 (une unité de travail que la base n'a pas pu servir à temps,
+`TransactionTimeoutError` : le client réessaie plus tard). Une erreur qui n'est pas une
+`DomainError` répond 500 `INTERNAL_ERROR`, sauf si son `code` correspond à un statut de serveur,
+comme `SERVICE_UNAVAILABLE` : elle garde ce statut et ce code, rien de son message. Un code du domaine sans correspondance répond 422 (`fallbackStatus` du second argument le change).
 
 <!-- checked sample -->
 ```ts
@@ -1272,7 +1275,7 @@ généré par la CLI les écrit dans `openapi/forms/<operationId>.json` à côt�
 import express from 'express';
 import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
 import type { Logger } from '@ddd-ts-kit/kernel';
-import { mountExpress, problemErrorHandler } from '@ddd-ts-kit/http/express';
+import { mountExpress, problemErrorHandler, problemNotFoundHandler } from '@ddd-ts-kit/http/express';
 
 declare const routes: readonly Route[]; // defineRoutes(...), controllerRoutes(...)
 declare const options: ExecuteOptions;
@@ -1281,6 +1284,7 @@ declare const logger: Logger;
 const app = express();
 app.use(express.json()); // obligatoire : l'adaptateur n'analyse pas les corps
 mountExpress(app, routes, options); // un express.Router() convient aussi
+app.use(problemNotFoundHandler({ logger })); // après les routes : un chemin qu'aucune ne sert
 app.use(problemErrorHandler({ logger })); // en dernier : ce qu'Express refuse avant une route
 app.listen(3000);
 ```
@@ -1297,6 +1301,9 @@ chaque framework, pour que sa validation décide. Sans lui, le gestionnaire fina
 hors production, et écrit l'erreur sur stderr, corps cité compris. Le gestionnaire écrit dans
 `logger` le type de l'erreur (`entity.parse.failed`), le statut et l'identifiant de la requête,
 jamais le message ni le corps : un refus comme avertissement, une panne comme erreur.
+`problemNotFoundHandler`, après les routes, répond à un chemin qu'aucune route ne sert un 404
+`NOT_FOUND` sous forme de *problem*, journalisé en `info` (pas un avertissement par sonde d'un scanner), au lieu de la page HTML
+`Cannot GET /path` d'Express.
 
 ## Fastify 5
 
@@ -1305,7 +1312,7 @@ jamais le message ni le corps : un refus comme avertissement, une panne comme er
 import Fastify from 'fastify';
 import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
 import type { Logger } from '@ddd-ts-kit/kernel';
-import { fastifyRoutes, mountFastify, problemErrorHandler } from '@ddd-ts-kit/http/fastify';
+import { fastifyRoutes, mountFastify, problemErrorHandler, problemNotFoundHandler } from '@ddd-ts-kit/http/fastify';
 
 declare const routes: readonly Route[];
 declare const options: ExecuteOptions;
@@ -1313,6 +1320,7 @@ declare const logger: Logger;
 
 const app = Fastify();
 app.setErrorHandler(problemErrorHandler({ logger })); // en premier : ce que Fastify refuse avant une route
+app.setNotFoundHandler(problemNotFoundHandler({ logger })); // un chemin qu'aucune route ne sert
 mountFastify(app, routes, options);
 // ou, comme plugin :
 await app.register(fastifyRoutes(routes, options), { prefix: '/api' });
@@ -1327,7 +1335,8 @@ de `{ statusCode, code, error, message }`, qui porte au client le message d'une 
 inattendue. Installez-le avant de monter les routes. L'analyseur de Fastify refuse un corps JSON
 vide, qu'Express et Hono transmettent comme absent : `mountFastify` enregistre les routes dans un
 contexte à elles où un corps vide les atteint comme absent, tout autre corps lu par l'analyseur
-JSON de Fastify.
+JSON de Fastify. `problemNotFoundHandler` répond à un chemin qu'aucune route ne sert un 404
+`NOT_FOUND` sous forme de *problem*, au lieu de `{ message, error, statusCode }`.
 
 ## Hono 4
 
@@ -1337,7 +1346,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
 import type { Logger } from '@ddd-ts-kit/kernel';
-import { mountHono, problemErrorHandler } from '@ddd-ts-kit/http/hono';
+import { mountHono, problemErrorHandler, problemNotFoundHandler } from '@ddd-ts-kit/http/hono';
 
 declare const routes: readonly Route[];
 declare const options: ExecuteOptions;
@@ -1345,6 +1354,7 @@ declare const logger: Logger;
 
 const app = new Hono();
 app.onError(problemErrorHandler({ logger })); // un middleware qui lève une erreur, répondu en problem
+app.notFound(problemNotFoundHandler({ logger })); // un chemin qu'aucune route ne sert, répondu 404 en problem
 mountHono(app, routes, { ...options, bodyLimit: 2 * 1024 * 1024 }); // bodyLimit : 1 Mio par défaut
 serve({ fetch: app.fetch, port: 3000 });
 ```
@@ -1360,7 +1370,8 @@ requête HTTP, avec les limites que déclare leur route, et une réponse en flux
 est envoyée en flux. Un middleware placé devant les routes qui lève une erreur reçoit sa réponse
 sous forme de *problem* de `problemErrorHandler`, un 500 `INTERNAL_ERROR` ou le statut d'une
 `HTTPException` avec les en-têtes de sa réponse, journalisé comme sur Express, au lieu d'un texte
-avec l'erreur écrite sur stderr. Une requête HTTP porte `HonoRaw`
+avec l'erreur écrite sur stderr, et un chemin qu'aucune route ne sert reçoit un 404 `NOT_FOUND`
+de `problemNotFoundHandler`, au lieu du texte `404 Not Found`. Une requête HTTP porte `HonoRaw`
 comme requête brute (ses en-têtes sous forme d'objet, que lisent les authentificateurs du kit,
 et le `Context` de Hono), et un paramètre de chaîne de requête répété est une liste, comme sur
 Express et Fastify. L'adaptateur n'importe rien de Hono à l'exécution, et `node:stream` pour les

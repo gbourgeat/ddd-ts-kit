@@ -8,10 +8,10 @@ import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@dd
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 {{/if}}
 {{#if tenant.scoped}}
-import { optimisticUpdate, ownTenantWhere, tenantWhere } from '@ddd-ts-kit/prisma';
+import { optimisticUpdate, ownTenantWhere, rowsCreated, tenantWhere } from '@ddd-ts-kit/prisma';
 {{/if}}
 {{#unless tenant.scoped}}
-import { optimisticUpdate } from '@ddd-ts-kit/prisma';
+import { optimisticUpdate, rowsCreated } from '@ddd-ts-kit/prisma';
 {{/unless}}
 import type { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate{{alias.ext}}';
 {{#if style.declared}}
@@ -55,17 +55,20 @@ export class Prisma{{aggregate.pascal}}Repository implements {{aggregate.pascal}
   async save(saved: {{aggregate.pascal}}): Promise<void> {
     await optimisticUpdate(saved, async ({ expected, next }) => {
       const state = { ...{{aggregate.pascal}}Mapper.toRow(saved), version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.count;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).count;
     });
   }
 
   /** The row is written in the tenant of the work: `tenantScopeOf` names it, `tenantWhere` finds it again. */
-  private insert(state: Versioned{{aggregate.pascal}}): Promise<{ count: number }> {
+  private async insert(state: Versioned{{aggregate.pascal}}): Promise<number> {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
+    const created = await this.database.client().{{context.camel}}{{aggregate.pascal}}.createMany({ data: [row], skipDuplicates: true });
 
-    return this.database.client().{{context.camel}}{{aggregate.pascal}}.createMany({ data: [row], skipDuplicates: true });
+    return rowsCreated(created, {
+      id: state.id,
+      holders: () => this.database.client().{{context.camel}}{{aggregate.pascal}}.count({ where: { id: state.id, ...tenantWhere(this.scope) } }),
+    });
   }
 
   private update(state: Versioned{{aggregate.pascal}}, expected: number): Promise<{ count: number }> {
@@ -89,18 +92,21 @@ export class Prisma{{aggregate.pascal}}Repository implements {{aggregate.pascal}
     await optimisticUpdate(saved, async ({ expected, next }) => {
       const state = { ...{{aggregate.pascal}}Mapper.toRow(saved), version: next };
 
-      const written =
-        expected === 0
-          ? await table.createMany({
-              data: [{ ...state, ...stampCreation(this.scope, this.clock) }],
-              skipDuplicates: true,
-            })
-          : await table.updateMany({
-              where: { id: saved.id, version: expected },
-              data: { ...state, ...stampUpdate(this.scope, this.clock) },
-            });
+      if (expected === 0) {
+        const created = await table.createMany({
+          data: [{ ...state, ...stampCreation(this.scope, this.clock) }],
+          skipDuplicates: true,
+        });
 
-      return written.count;
+        return rowsCreated(created, { id: saved.id, holders: () => table.count({ where: { id: saved.id } }) });
+      }
+
+      const updated = await table.updateMany({
+        where: { id: saved.id, version: expected },
+        data: { ...state, ...stampUpdate(this.scope, this.clock) },
+      });
+
+      return updated.count;
     });
   }
 }

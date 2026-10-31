@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { TransactionTimeoutError } from '@ddd-ts-kit/kernel';
 import {
   BulkheadFullError,
   CircuitOpenError,
@@ -99,6 +100,10 @@ describe('retry', () => {
     expect(isTransient(new PairNotQuoted())).toBe(false);
     expect(isTransient(new CircuitOpenError('Gateway.quote', new Date(0)))).toBe(false);
     expect(isTransient(new BulkheadFullError('Gateway.quote'))).toBe(false);
+  });
+
+  it('holds that a unit of work the database could not serve in time is transient: a later attempt may get a connection', () => {
+    expect(isTransient(new TransactionTimeoutError({ code: 'P2028' }))).toBe(true);
   });
 
   it('refuses a number of attempts that makes no call', () => {

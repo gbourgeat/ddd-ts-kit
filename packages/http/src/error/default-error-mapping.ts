@@ -14,4 +14,6 @@ export const DEFAULT_ERROR_MAPPING: ErrorMapping = {
   FILE_NOT_FOUND: 404,
   FILE_TOO_LARGE: 413,
   UNSUPPORTED_MEDIA_TYPE: 415,
+  // A unit of work the database could not serve in time (`TransactionTimeoutError`): try again later.
+  SERVICE_UNAVAILABLE: 503,
 };

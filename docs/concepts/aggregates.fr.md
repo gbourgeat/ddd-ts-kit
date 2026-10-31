@@ -1,5 +1,5 @@
 [English](aggregates.md) · **Français**
-<!-- translation-of: aggregates.md sha256:ecae133d1df8d712 -->
+<!-- translation-of: aggregates.md sha256:3fe2cd3e8eabedbf -->
 
 # Agrégats
 
@@ -352,7 +352,10 @@ lève sinon un conflit de concurrence (la `ConcurrencyError` du noyau, code
 signale le conflit. Aucun verrou n'est tenu pendant que l'utilisateur réfléchit. Un
 interblocage ou un échec de sérialisation que la base de données lève n'importe où dans la
 transaction mène au même résultat : l'unité de travail est rejetée par une
-`TransactionConflictError`, une `ConcurrencyError` dont la `cause` est l'erreur du pilote.
+`TransactionConflictError`, une `ConcurrencyError` dont la `cause` est l'erreur du pilote. Un
+enregistrement que la base refuse pour une valeur qu'une autre ligne détient sous une contrainte
+d'unicité (un e-mail) n'en est pas un : il lève `UniqueViolationError`, une `ConflictError` (code
+`CONFLICT`), puisque le relancer est refusé de nouveau.
 
 ![Les requêtes HTTP A et B chargent toutes deux le rendez-vous a-1 en version 3 ; la mise à jour de A, gardée par la version 3, écrit une ligne et le fait passer en version 4 ; celle de B, avec la même garde, n'écrit aucune ligne et lève une ConcurrencyError](../assets/diagrams/aggregates-optimistic-concurrency.fr.svg)
 

@@ -1,0 +1,3 @@
+**A project generated on Express fails at start when its port cannot be bound.** Express 5 hands the error of `listen` to its callback, which the generated `start-http-server.ts` ignored: on a port already in use the process logged `listening` on port 0, served nothing and stayed up until its signal. The start now rejects with the error of `listen` (`EADDRINUSE`), as on Fastify, Hono and Nest, and the process exits before it logs `listening`.
+
+To move: in `src/platform/http/start-http-server.ts`, `listen` takes `(resolve, reject)` and calls `app.listen(port, (error) => (error === undefined ? resolve(server) : reject(error)))`.

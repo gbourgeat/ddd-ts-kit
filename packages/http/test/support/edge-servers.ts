@@ -13,9 +13,21 @@ import {
   NoCurrentTenantError,
   type InMemoryLogger,
 } from '@ddd-ts-kit/kernel';
-import { mountExpress, problemErrorHandler as expressErrorHandler } from '../../src/express';
-import { mountFastify, problemErrorHandler as fastifyErrorHandler } from '../../src/fastify';
-import { mountHono, problemErrorHandler as honoErrorHandler } from '../../src/hono';
+import {
+  mountExpress,
+  problemErrorHandler as expressErrorHandler,
+  problemNotFoundHandler as expressNotFoundHandler,
+} from '../../src/express';
+import {
+  mountFastify,
+  problemErrorHandler as fastifyErrorHandler,
+  problemNotFoundHandler as fastifyNotFoundHandler,
+} from '../../src/fastify';
+import {
+  mountHono,
+  problemErrorHandler as honoErrorHandler,
+  problemNotFoundHandler as honoNotFoundHandler,
+} from '../../src/hono';
 import { createRoutesModule, ProblemExceptionFilter } from '../../src/nest';
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
@@ -106,6 +118,7 @@ export const startExpress: Start = async (logger) => {
   raiseOn(app);
   app.use(express.json());
   mountExpress(app, EDGE_ROUTES);
+  app.use(expressNotFoundHandler(logger === undefined ? {} : { logger }));
   app.use(expressErrorHandler(logger === undefined ? {} : { logger }));
 
   return listening(app.listen(0, '127.0.0.1'));
@@ -115,6 +128,7 @@ export const startFastify: Start = async (logger) => {
   const app = Fastify({ bodyLimit: 1024 });
 
   app.setErrorHandler(fastifyErrorHandler(logger === undefined ? {} : { logger }));
+  app.setNotFoundHandler(fastifyNotFoundHandler(logger === undefined ? {} : { logger }));
 
   app.addHook('onRequest', async (request) => {
     const raised = RAISED[request.url];
@@ -135,6 +149,7 @@ export const startHono: Start = async (logger) => {
   const app = new Hono();
 
   app.onError(honoErrorHandler(logger === undefined ? {} : { logger }));
+  app.notFound(honoNotFoundHandler(logger === undefined ? {} : { logger }));
 
   for (const [path, raised] of Object.entries(HONO_RAISED)) {
     app.use(path, () => {

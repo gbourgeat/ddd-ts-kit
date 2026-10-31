@@ -62,6 +62,13 @@ DATABASE_URL=mysql://app:app@localhost:3306/app
 DATABASE_URL=file:./data/app.sqlite
 {{/if}}
 {{/if}}
+{{#if orm.prisma}}
+# How long a unit of work waits for its transaction, and how long the transaction may run, beyond
+# which it is answered 503. Not more: a caller gives up near 30 s, and a connection held for an
+# answer nobody reads sheds no load.
+DATABASE_TRANSACTION_WAIT_MS=10000
+DATABASE_TRANSACTION_TIMEOUT_MS=30000
+{{/if}}
 {{#if events.outbox}}
 OUTBOX_RELAY_INTERVAL_MS=500
 {{/if}}

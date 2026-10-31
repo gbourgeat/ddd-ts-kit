@@ -4,7 +4,7 @@ import { serve, type ServerType } from '@hono/node-server';
 import { getConnInfo } from '@hono/node-server/conninfo';
 {{/if}}
 import { Hono } from 'hono';
-import { mountHono, problemErrorHandler } from '@ddd-ts-kit/http/hono';
+import { mountHono, problemErrorHandler, problemNotFoundHandler } from '@ddd-ts-kit/http/hono';
 {{#if rpc.orpc}}
 import { orpcRouter } from '@ddd-ts-kit/http/orpc';
 import { RPCHandler } from '@orpc/server/fetch';
@@ -35,7 +35,8 @@ type Served = Pick<Application, 'routes' | 'boundary' | 'logger'{{#if cache.rate
 /**
  * Serves, in this order: the readiness probe and the limit of each caller (with a Redis protocol
  * server), the signed file links (with a storage the application serves), the routes of the
- * contexts, then the pages of the contract (with documentation on).{{#if rpc.orpc}} The same routes are served
+ * contexts, then the pages of the contract (with documentation on), and last the problem of a
+ * path no route serves.{{#if rpc.orpc}} The same routes are served
  * as oRPC procedures under /rpc, for the typed client of the contract.{{/if}}{{#if rpc.trpc}} The same routes are served
  * as tRPC procedures under /trpc, for the typed client of the contract.{{/if}}
  */
@@ -44,6 +45,8 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 
   // A failed middleware is answered as a problem, not as a text with the error written to stderr.
   app.onError(problemErrorHandler({ logger: served.logger }));
+  // A path no route serves is answered 404 as a problem, not as the text of Hono.
+  app.notFound(problemNotFoundHandler({ logger: served.logger }));
 
 {{#if cache.rateLimit}}
   answerReadiness(app, served);
