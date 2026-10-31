@@ -24,6 +24,33 @@ describe('redaction', () => {
     expect(sink.text()).not.toContain('value-of-');
   });
 
+  it('hides them whatever their case, in the fields of a line, of a child and read at each line', () => {
+    const sink = new MemorySink();
+
+    const logger = createWinstonLogger({
+      transports: [memoryTransport(sink)],
+      fields: () => ({ ID_TOKEN: 'ambient-secret' }),
+    });
+
+    logger.child({ ClientSecret: 'bound-secret' }).info('signed in', {
+      AUTHORIZATION: 'Bearer line-secret',
+      Password: 'line-secret',
+      headers: { Authorization: 'Bearer nested-secret', 'X-Api-Key': 'nested-secret', accept: 'text/html' },
+    });
+
+    expect(sink.records()).toMatchObject([
+      {
+        ID_TOKEN: REDACTED,
+        ClientSecret: REDACTED,
+        AUTHORIZATION: REDACTED,
+        Password: REDACTED,
+        headers: { Authorization: REDACTED, 'X-Api-Key': REDACTED, accept: 'text/html' },
+      },
+    ]);
+
+    expect(sink.text()).not.toMatch(/-secret/);
+  });
+
   it('hides them in the fields of a child and in the fields read at each line', () => {
     const sink = new MemorySink();
 
@@ -50,6 +77,17 @@ describe('redaction', () => {
     });
 
     expect(sink.records()).toMatchObject([{ iban: REDACTED, bank: { iban: REDACTED, password: REDACTED } }]);
+  });
+
+  it('hides a key the project adds whatever its case', () => {
+    const sink = new MemorySink();
+
+    createWinstonLogger({ transports: [memoryTransport(sink)], redact: ['iban'] }).info('transfer', {
+      IBAN: 'FR76',
+      bank: { Iban: 'FR76' },
+    });
+
+    expect(sink.records()).toMatchObject([{ IBAN: REDACTED, bank: { Iban: REDACTED } }]);
   });
 
   it('leaves what lies deeper, and the fields it was given, as they are', () => {

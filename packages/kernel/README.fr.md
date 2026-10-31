@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4461838007dbf1d5 -->
+<!-- translation-of: README.md sha256:69a13e25d984cf10 -->
 
 # @ddd-ts-kit/kernel
 
@@ -1309,8 +1309,9 @@ second appel se résout aussi.
 seuil (par défaut `debug`, chaque entrée), des champs lus à chaque entrée, des champs ajoutés à
 chaque entrée. Ses `entries` contiennent ce qu'écrit un *logger* : une erreur passée en champ est
 enregistrée sous forme de sa description. `CREDENTIAL_KEYS` et `REDACTED` sont les noms de champs
-et le marqueur avec lesquels les adaptateurs pino et winston masquent ; `StdoutLogger` et
-`InMemoryLogger` ne masquent rien.
+et le marqueur avec lesquels `StdoutLogger` et les adaptateurs pino et winston masquent, et
+`isCredentialKey(name)` la comparaison qu'ils partagent, sans tenir compte de la casse ;
+`InMemoryLogger` ne masque rien.
 
 ### Metrics
 

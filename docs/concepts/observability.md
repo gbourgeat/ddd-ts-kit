@@ -242,7 +242,7 @@ trace in the tracing backend.
 |---|---|---|
 | span | class, method, context, kind, error class, domain error code; on the root: correlation id, origin | arguments, results, error messages, URLs with query values, anything about the actor |
 | metric | names from the code, outcome, error code | identifiers of any kind |
-| log line | the above, plus actor id, tenant id, correlation and trace ids | credentials (redacted by the adapters), payloads; error messages are kept by default and can be scrubbed |
+| log line | the above, plus actor id, tenant id, correlation and trace ids | credentials (redacted by the three loggers of the kit, `stdout`, pino and winston, whatever the case of the key), payloads; error messages are kept by default and can be scrubbed |
 | error report | the error with its type, code and stack, its message with the values a failed statement quotes redacted, origin, operation, correlation and trace ids, actor id | email, name, address, request bodies, local variables, the values a failed statement quotes; the tenant only on request |
 
 The asymmetry is deliberate. Nothing personal becomes a span attribute, because traces are
@@ -272,8 +272,9 @@ message of every error that is not a `DomainError`, for a tracker hosted by a th
 - **Asynchronous logging can lose the last lines** of a process killed without a handler. The
   pino adapter documents the trade-off and keeps synchronous writes by default.
 - **The privacy rule is a convention of the kit's own aspects and adapters.** A message you
-  write yourself, or a field you add, is yours to keep clean. Redaction matches key names
-  exactly and one level deep.
+  write yourself, or a field you add, is yours to keep clean. Redaction matches the names of
+  `CREDENTIAL_KEYS` whatever their case, at the top of a line and one level below, never deeper
+  nor inside a list.
 - **Observability does not replace tests or the audit trail**, and it costs: spans, lines and
   series are stored and billed. Start with the middleware-level signals and add detail where an
   incident showed it was missing.

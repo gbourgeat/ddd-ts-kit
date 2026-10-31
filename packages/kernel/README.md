@@ -1262,8 +1262,9 @@ winston, whose flush ends the logger, drops it. A second call resolves too.
 `InMemoryLogger` takes `{ level?, fields?, base?, scrubMessages? }` like a real adapter: a
 threshold (default `debug`, every entry), fields read at each entry, fields added to every
 entry. Its `entries` hold what a logger writes: an error passed as a field is recorded as its
-description. `CREDENTIAL_KEYS` and `REDACTED` are the field names and the marker the pino and
-winston adapters redact with; `StdoutLogger` and `InMemoryLogger` redact nothing.
+description. `CREDENTIAL_KEYS` and `REDACTED` are the field names and the marker `StdoutLogger`
+and the pino and winston adapters redact with, and `isCredentialKey(name)` the comparison they
+share, without case; `InMemoryLogger` redacts nothing.
 
 ### Metrics
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8fe829429d03f69b -->
+<!-- translation-of: README.md sha256:79337761513e4993 -->
 
 # @ddd-ts-kit/pino
 
@@ -229,11 +229,16 @@ d'une ligne, d'un enfant et de `fields` de la même façon. La valeur de ces cl�
 `[redacted]`, au premier niveau d'une ligne et un niveau en dessous (`headers.authorization`,
 `body.password`) :
 
-`password`, `authorization`, `cookie`, `set-cookie`, `token`, `secret`, `apiKey`, `api_key`,
-`access_token`, `refresh_token`, `accessToken`, `refreshToken`, `client_secret`
+`password`, `passwd`, `authorization`, `cookie`, `set-cookie`, `token`, `secret`, `apiKey`,
+`api_key`, `x-api-key`, `access_token`, `refresh_token`, `id_token`, `accessToken`,
+`refreshToken`, `idToken`, `client_secret`, `clientSecret`, `client-secret`, `private_key`,
+`privateKey`
 
-`redact: ['iban', 'ssn']` complète la liste. Les noms sont comparés exactement, casse comprise,
-et rien n'est cherché plus profond qu'un niveau : journalisez la partie que vous visez, pas une
+Ces noms sont comparés quelle que soit leur casse (`Authorization`, `X-Api-Key`), par
+`isCredentialKey` du noyau. `redact: ['iban', 'ssn']` complète la liste : un nom ajouté est
+comparé tel qu'il est écrit au premier niveau d'une ligne, quelle que soit sa casse un niveau en
+dessous, car pino désigne une clé du premier niveau par son chemin. Rien n'est cherché plus
+profond qu'un niveau, ni dans une liste : journalisez la partie que vous visez, pas une
 requête HTTP entière.
 
 **Une erreur passée en champ** (`logger.error('payment failed', { error })` : la `LogValue` du

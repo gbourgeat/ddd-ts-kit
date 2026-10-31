@@ -220,11 +220,16 @@ logger of the port.
 `fields` alike. The value of these keys is replaced by `[redacted]`, at the top of a line and
 one level below (`headers.authorization`, `body.password`):
 
-`password`, `authorization`, `cookie`, `set-cookie`, `token`, `secret`, `apiKey`, `api_key`,
-`access_token`, `refresh_token`, `accessToken`, `refreshToken`, `client_secret`
+`password`, `passwd`, `authorization`, `cookie`, `set-cookie`, `token`, `secret`, `apiKey`,
+`api_key`, `x-api-key`, `access_token`, `refresh_token`, `id_token`, `accessToken`,
+`refreshToken`, `idToken`, `client_secret`, `clientSecret`, `client-secret`, `private_key`,
+`privateKey`
 
-`redact: ['iban', 'ssn']` adds to the list. Names are matched exactly, case included, and
-nothing is looked for deeper than one level: log the part you mean, not a whole request.
+These names are matched whatever their case (`Authorization`, `X-Api-Key`), by
+`isCredentialKey` of the kernel. `redact: ['iban', 'ssn']` adds to the list: an added name is
+matched as it is written at the top of a line, whatever its case one level below, since pino
+names a key at the top by its path. Nothing is looked for deeper than one level, nor inside a
+list: log the part you mean, not a whole request.
 
 **An error passed as a field** (`logger.error('payment failed', { error })`: the `LogValue` of
 the port admits an `Error`) is written as `describeError` of the kernel describes it, the same

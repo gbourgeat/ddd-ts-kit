@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:00d1914814cd7521 -->
+<!-- translation-of: observability.md sha256:49fdac84a7e12446 -->
 
 # Observabilité
 
@@ -259,7 +259,7 @@ problème dans l'outil de suivi ouvre la trace dans le *backend* de traçage.
 |---|---|---|
 | *span* | classe, méthode, contexte, sorte, classe d'erreur, code d'erreur du domaine ; sur la racine : identifiant de corrélation, origine | arguments, résultats, messages d'erreur, URL avec des valeurs de requête, quoi que ce soit sur l'acteur |
 | métrique | des noms tirés du code, l'issue, le code d'erreur | des identifiants, quels qu'ils soient |
-| ligne de journal | ce qui précède, plus l'identifiant de l'acteur, l'identifiant du *tenant*, les identifiants de corrélation et de trace | des secrets d'authentification (masqués par les adaptateurs), des contenus de messages ; les messages d'erreur sont gardés par défaut et peuvent être nettoyés |
+| ligne de journal | ce qui précède, plus l'identifiant de l'acteur, l'identifiant du *tenant*, les identifiants de corrélation et de trace | des secrets d'authentification (masqués par les trois *loggers* du kit, `stdout`, pino et winston, quelle que soit la casse de la clé), des contenus de messages ; les messages d'erreur sont gardés par défaut et peuvent être nettoyés |
 | remontée d'erreur | l'erreur avec son type, son code et sa pile, son message où les valeurs que cite une requête SQL en échec sont masquées, l'origine, l'opération, les identifiants de corrélation et de trace, l'identifiant de l'acteur | courriel, nom, adresse, corps des requêtes HTTP, variables locales, les valeurs que cite une requête SQL en échec ; le *tenant* seulement sur demande |
 
 L'asymétrie est voulue. Rien de personnel ne devient un attribut de *span*, parce que les traces
@@ -296,7 +296,8 @@ hébergé par un tiers.
   synchrones par défaut.
 - **La règle de confidentialité est une convention des aspects et des adaptateurs du kit.** Un
   message que vous écrivez vous-même, ou un champ que vous ajoutez, est à vous de garder propre.
-  Le masquage compare les noms de clés exactement, et sur un seul niveau.
+  Le masquage compare les noms de `CREDENTIAL_KEYS` quelle que soit leur casse, au premier niveau
+  d'une ligne et un niveau en dessous, jamais plus profond ni dans une liste.
 - **L'observabilité ne remplace ni les tests ni le journal d'audit**, et elle a un coût : les
   *spans*, les lignes et les séries sont stockés et facturés. Commencez par les signaux des
   *middlewares* et ajoutez du détail là où un incident a montré qu'il manquait.

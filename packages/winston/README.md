@@ -163,11 +163,14 @@ for long. Three things are done in the adapter, so that no call site has to reme
 `fields` alike. The value of these keys is replaced by `[redacted]`, at the top of a line and
 one level below (`headers.authorization`, `body.password`):
 
-`password`, `authorization`, `cookie`, `set-cookie`, `token`, `secret`, `apiKey`, `api_key`,
-`access_token`, `refresh_token`, `accessToken`, `refreshToken`, `client_secret`
+`password`, `passwd`, `authorization`, `cookie`, `set-cookie`, `token`, `secret`, `apiKey`,
+`api_key`, `x-api-key`, `access_token`, `refresh_token`, `id_token`, `accessToken`,
+`refreshToken`, `idToken`, `client_secret`, `clientSecret`, `client-secret`, `private_key`,
+`privateKey`
 
-`redact: ['iban', 'ssn']` adds to the list. Names are matched exactly, case included, and
-nothing is looked for deeper than one level: log the part you mean, not a whole request. The
+`redact: ['iban', 'ssn']` adds to the list. Names are matched whatever their case
+(`Authorization`, `X-Api-Key`), as `isCredentialKey` of the kernel does, and nothing is looked
+for deeper than one level, nor inside a list: log the part you mean, not a whole request. The
 objects you pass are never written to: a nested one is copied when a key has to be hidden.
 
 **An error passed as a field** (`logger.error('payment failed', { error })`: the `LogValue` of

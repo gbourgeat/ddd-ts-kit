@@ -1,6 +1,6 @@
 import { PassThrough } from 'node:stream';
 import { describe, expect, it } from 'vitest';
-import { DomainError, FixedClock, LOG_LEVELS, SCRUBBED_MESSAGE } from '@ddd-ts-kit/kernel';
+import { CREDENTIAL_KEYS, DomainError, FixedClock, LOG_LEVELS, REDACTED, SCRUBBED_MESSAGE } from '@ddd-ts-kit/kernel';
 import { StdoutLogger } from '../src';
 
 class OrderAlreadyPaid extends DomainError {
@@ -103,6 +103,73 @@ describe('StdoutLogger', () => {
         logError: 'unserializable fields',
       },
     ]);
+  });
+});
+
+describe('StdoutLogger, on credentials', () => {
+  it('hides every credential key at the top of an entry and one level below, as pino and winston do', () => {
+    const lines: string[] = [];
+    const credentials = Object.fromEntries(CREDENTIAL_KEYS.map((key) => [key, `value-of-${key}`]));
+
+    new StdoutLogger({ clock, write: (line) => lines.push(line) }).info('signed in', {
+      ...credentials,
+      headers: credentials,
+      userId: 'user-1',
+    });
+
+    const hidden = Object.fromEntries(CREDENTIAL_KEYS.map((key) => [key, REDACTED]));
+
+    expect(written(lines)).toMatchObject([{ ...hidden, headers: hidden, userId: 'user-1' }]);
+    expect(lines.join('')).not.toContain('value-of-');
+  });
+
+  it('hides them whatever their case, in the fields of a line, of a child and read at each entry', () => {
+    const lines: string[] = [];
+
+    const logger = new StdoutLogger({
+      clock,
+      write: (line) => lines.push(line),
+      base: { Secret: 'base-secret' },
+      fields: () => ({ ID_TOKEN: 'ambient-secret' }),
+    });
+
+    logger.child({ ClientSecret: 'bound-secret' }).info('signed in', {
+      AUTHORIZATION: 'Bearer line-secret',
+      headers: { Authorization: 'Bearer nested-secret', 'X-Api-Key': 'nested-secret', accept: 'text/html' },
+    });
+
+    expect(written(lines)).toMatchObject([
+      {
+        Secret: REDACTED,
+        ID_TOKEN: REDACTED,
+        ClientSecret: REDACTED,
+        AUTHORIZATION: REDACTED,
+        headers: { Authorization: REDACTED, 'X-Api-Key': REDACTED, accept: 'text/html' },
+      },
+    ]);
+
+    expect(lines.join('')).not.toMatch(/-secret/);
+  });
+
+  it('leaves what lies deeper, and the fields it was given, as they are', () => {
+    const lines: string[] = [];
+    const request = { headers: { authorization: 'Bearer abc' } };
+
+    new StdoutLogger({ clock, write: (line) => lines.push(line) }).info('received', {
+      request,
+      headers: request.headers,
+      users: [{ password: 'in-a-list' }],
+    });
+
+    expect(written(lines)).toMatchObject([
+      {
+        request: { headers: { authorization: 'Bearer abc' } },
+        headers: { authorization: REDACTED },
+        users: [{ password: 'in-a-list' }],
+      },
+    ]);
+
+    expect(request.headers.authorization).toBe('Bearer abc');
   });
 });
 

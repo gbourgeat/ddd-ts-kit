@@ -73,7 +73,7 @@ A hosted backend that accepts OTLP is a third option; none was evaluated here.
 | Output | JSON lines on the standard output | JSON lines, optional pretty format in development, pino transports | JSON lines, winston formats and transports |
 | Cost of a line, as measured in the kit's READMEs | not stated | about 3 microseconds | about 7 microseconds, more with each format |
 | Buffering | none | none by default; an asynchronous mode buffers 4 KiB and can lose the last lines of a killed process | none in the adapter |
-| Redaction of credentials | none (the aspects README says so); `scrubMessages` removes the message of errors that are not a `DomainError` | compiled by pino | a pass over top-level values |
+| Redaction of credentials | the keys of the kernel, whatever their case, at the top and one level below; `scrubMessages` removes the message of errors that are not a `DomainError` | compiled by pino | a pass over top-level values |
 | Chosen by | `init --logger stdout` (the default) | `init --logger pino` | `init --logger winston` |
 | Take it when | JSON on stdout is all you need | volume matters, the framework already speaks pino (Fastify), or you want its transports | the team already runs winston transports and formats (rotating files, syslog, a vendor transport) |
 
