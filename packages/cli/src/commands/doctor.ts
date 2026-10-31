@@ -1,4 +1,6 @@
 import { readConfig } from '../config';
+import { mergeInProgress } from '../merge/merge-in-progress';
+import { inDialect } from '../package-manager/in-dialect';
 import { diagnose } from '../doctor/diagnose';
 import type { DoctorFinding } from '../doctor/doctor-finding';
 import { formatDiagnosis } from '../doctor/format-diagnosis';
@@ -39,11 +41,13 @@ export const doctorCommand: Command = (argv, io) => {
   const root = args.projectRoot;
   const { config } = readConfig(root);
   const findings = diagnose(root, config);
+  const merge = mergeInProgress(root);
+  const line = merge === undefined ? undefined : inDialect(merge, config.stack.packageManager);
 
   io.out(
     args.json
-      ? stdoutJson({ version: VERSION, findings })
-      : formatDiagnosis(findings, VERSION, config.stack.packageManager),
+      ? stdoutJson({ ...(line === undefined ? {} : { mergeInProgress: line }), version: VERSION, findings })
+      : `${line === undefined ? '' : `${line}\n\n`}${formatDiagnosis(findings, VERSION, config.stack.packageManager)}`,
   );
 
   return args.flag('strict') && findings.some((finding) => STRICT_PROBLEMS[finding.area].has(finding.problem)) ? 1 : 0;

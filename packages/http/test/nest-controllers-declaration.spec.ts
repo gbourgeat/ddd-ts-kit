@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Body, Controller, Module, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Module, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { describe, expect, it } from 'vitest';
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
@@ -195,16 +195,30 @@ describe('a Nest controller the kit refuses to serve', () => {
   });
 
   it('starts next to the plain Nest controllers of the platform, with the security schemes of the application', async () => {
-    class Health {}
+    class Health {
+      check(): { status: string } {
+        return { status: 'ok' };
+      }
+    }
+
     class Platform {}
 
     Controller('health')(Health);
+    Reflect.decorate([Get()], Health.prototype, 'check', { value: Health.prototype.check });
     Module({ controllers: [Health] })(Platform);
 
     const served = createControllersModule([controllerWith([])], { imports: [Platform], security: ['apiKey'] });
     const app = await NestFactory.create(served, { logger: false, abortOnError: false });
 
-    await app.init();
-    await app.close();
+    await app.listen(0, '127.0.0.1');
+
+    try {
+      const answer = await fetch(`${await app.getUrl()}/health`);
+
+      expect(answer.status).toBe(200);
+      expect(await answer.json()).toEqual({ status: 'ok' });
+    } finally {
+      await app.close();
+    }
   });
 });

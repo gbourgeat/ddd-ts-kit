@@ -15,3 +15,4 @@ export type { RequestOptions } from './e2e/request-options';
 export type { RunningServer } from './e2e/running-server';
 export { settled, type PendingCount, type PendingWork, type SettledOptions } from './e2e/settled';
 export { startTestServer, type TestServer, type TestServerOptions } from './e2e/start-test-server';
+export { until } from './e2e/until';

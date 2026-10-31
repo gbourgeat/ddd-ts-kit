@@ -53,6 +53,11 @@ describe('pipeline templates', () => {
     expect(read(initProject('--package-manager', 'pnpm'), 'lefthook.yml')).toContain('ddd-ts-kit verify-merge --warn');
   });
 
+  it('prints the output of a hook job only when it fails', () => {
+    expect(template('lefthook.yml')).toContain('\noutput:\n  - failure\n');
+    expect(read(initProject('--package-manager', 'pnpm'), 'lefthook.yml')).toContain('\noutput:\n  - failure\n');
+  });
+
   it('the setup action of the GitHub pipeline is the source, plus the step that asks corepack for pnpm and the one that generates the Prisma client', () => {
     expect(template('github/actions/setup/action.yml.tpl').replaceAll(OPTIONAL_STEPS, '')).toBe(
       source('github/actions/setup/action.yml'),

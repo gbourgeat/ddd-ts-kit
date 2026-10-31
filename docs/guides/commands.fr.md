@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:911a3ac8e29f60d0 -->
+<!-- translation-of: commands.md sha256:365e79ae82e51e19 -->
 
 # Quelle commande, quand
 
@@ -77,7 +77,7 @@ exemple, reste un `TODO(domain)` du schéma et de l'appel.
 | `/ddd-ts-kit:bootstrap` | choisit la *stack* selon des critères, lance `init`, crée les contextes | étape 5, une fois la carte des contextes esquissée | le projet et un `CONTEXT.md` par contexte | `/ddd-ts-kit:plan-slices` |
 | `npx ddd-ts-kit init [flags]` | écrit la configuration, la plateforme, le *pipeline*, les règles de l'agent ; relancé, il garde la *stack* enregistrée : une valeur de drapeau invalide est refusée, un drapeau qui diffère de l'enregistré est noté et gardé (`init --force` le change) | l'amorçage ; `--dry-run` d'abord pour lire ce qu'il écrit | un projet qui passe `npm run verify` | `npm install`, `npm run verify` |
 | `npx ddd-ts-kit init --preset identity`, `generate context <name> --preset identity` | écrit un contexte générique en entier au lieu d'un contexte vide : les comptes venus du fournisseur d'identité, les organisations, les membres et les rôles, les invitations, les délégations ([pourquoi et lesquels](bootstrap-with-well-designed-contexts.fr.md)) | quand `contexts.md` contient un contexte générique d'identité | le contexte, ses *specs*, ses adaptateurs et son glossaire, verts d'emblée | lire sa section `## Design`, puis les tranches du cœur |
-| `npx ddd-ts-kit status` | la prochaine étape du plan, les tranches par statut et par responsable, ce qui reste par contexte | au début de chaque session | un texte court, `--json` pour des données | l'étape ou la tranche qu'il nomme |
+| `npx ddd-ts-kit status` | la prochaine étape du plan, les tranches par statut et par responsable, ce qui reste par contexte | au début de chaque session | un texte court, `--json` pour des données ; un *merge* laissé en cours est sa première ligne | l'étape ou la tranche qu'il nomme, ou `merge-trunk --continue` ou `--abort` |
 
 ## Modéliser le domaine
 
@@ -288,10 +288,10 @@ Usage
   ddd-ts-kit generate [<kind>] --help [--json]
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
-  ddd-ts-kit status [--workers]
+  ddd-ts-kit status [--workers | --ready]
   ddd-ts-kit doctor [--strict]
   ddd-ts-kit todo [<context>] [--brief]
-  ddd-ts-kit plan-waves [<context>]
+  ddd-ts-kit plan-waves [<context>] [--ready]
   ddd-ts-kit story-check <code> [--strict]
   ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
@@ -444,7 +444,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    would leave conflicted now, dependencies not installed, its report), a state line (rows
                    committed, the row under way, files uncommitted, markers, last verify-slice, and the
                    worker-scope --resume command of a stopped one), then the contexts and the files more than
-                   one worker holds
+                   one worker holds; --ready lists instead the rows not started whose dependencies are
+                   done, the others counted in one line
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the
@@ -486,7 +487,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    the rows that generate what it builds on, and each command that builds on a file a
                    row it does not wait for generates (missing-dependency); a row in progress, whose
                    commands may have run and whose worker may have added a term, counts for none, its
-                   refusals listed apart
+                   refusals listed apart; --ready keeps the first wave, whose dependencies are done, and
+                   counts the later waves in one line
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left

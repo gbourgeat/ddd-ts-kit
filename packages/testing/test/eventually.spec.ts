@@ -1,6 +1,6 @@
 import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
-import { eventually } from '../src/e2e';
+import { eventually, until } from '../src/e2e';
 
 describe('eventually', () => {
   it('returns what the assertion returns once it passes', async () => {
@@ -66,5 +66,23 @@ describe('eventually', () => {
     ).catch((error: unknown) => error);
 
     expect(failure).toMatchObject({ message: 'Still failing after 20 ms: { behind: 2 }', cause: { behind: 2 } });
+  });
+});
+
+describe('until', () => {
+  it('returns once the condition holds, a promise of a boolean included', async () => {
+    let attempts = 0;
+
+    await until(async () => (attempts += 1) >= 3, { intervalMs: 1 });
+
+    expect(attempts).toBe(3);
+  });
+
+  it('fails when the condition never holds in time', async () => {
+    const failure: unknown = await until(() => false, { timeoutMs: 20, intervalMs: 5 }).catch(
+      (error: unknown) => error,
+    );
+
+    expect(failure).toMatchObject({ message: 'Still failing after 20 ms: The condition was not met' });
   });
 });

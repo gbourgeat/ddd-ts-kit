@@ -3,6 +3,10 @@ min_version: 2.0.0
 # without its dependencies fails the commit instead of skipping the checks.
 lefthook: node_modules/.bin/lefthook
 
+# A hook that passes says nothing: a job prints its output only when it fails.
+output:
+  - failure
+
 pre-commit:
   parallel: true
   jobs:

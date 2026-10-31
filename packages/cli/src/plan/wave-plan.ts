@@ -12,6 +12,15 @@ export interface WavePlan {
   readonly otherStories: readonly OtherStoryRow[];
   /** What the generator refused, replayed, in rows in progress: said, not counted, their commands may have run already. */
   readonly started: readonly StartedRefusal[];
+  /** With `--ready` only: what the waves after the first hold, counted and not listed. */
+  readonly later?: LaterWaves;
+}
+
+/** The waves, the batches and the rows `--ready` leaves out. */
+export interface LaterWaves {
+  readonly waves: number;
+  readonly batches: number;
+  readonly rows: number;
 }
 
 /** What keeps the plan from being followed as written: its rows cannot be ordered, or a worker following one is refused. */

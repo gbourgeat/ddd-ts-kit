@@ -1281,7 +1281,7 @@ each `CONTEXT.md`.
 ## status, todo
 
 ```
-ddd-ts-kit status [--workers]
+ddd-ts-kit status [--workers | --ready]
 ddd-ts-kit todo [<context>] [--brief]
 ```
 
@@ -1340,7 +1340,7 @@ twelve words at most), the file holding the rest, a quarter of the size mid-slic
 ## plan-waves
 
 ```
-ddd-ts-kit plan-waves [<context>]
+ddd-ts-kit plan-waves [<context>] [--ready]
 ```
 
 Orders the rows of `docs/architecture/slices.md` that are not `done`, for a build split between
