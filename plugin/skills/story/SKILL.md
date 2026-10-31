@@ -173,7 +173,7 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
    does not match the design or a `D<n>`; it fixes nothing. Settle each mismatch it reports as
    a finding above: fixed, or a decision. A host without the agents of the plugin skips it, and
    the report says "not verified: the story-verifier agent, not available on this host".
-3. `npm run verify`, `npx ddd-ts-kit acceptance $0 --gate passing`, `npx ddd-ts-kit todo`, and
+3. `npm run verify`, `npx ddd-ts-kit acceptance $0 --gate passing`, `npx ddd-ts-kit todo --brief`, and
    `npx ddd-ts-kit story-check $0`: every row done, no marker of its own left.
 
 ## 8. The report, then the pull request

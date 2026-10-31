@@ -192,7 +192,7 @@ marker as you resolve it.
 
 ```bash
 npx ddd-ts-kit verify-slice <ctx> --since <trunk>   # regenerate, rules on the changed files, specs of <ctx>, paths to stage
-npx ddd-ts-kit todo <ctx>    # every TODO(domain) and it.todo left, as file:line, the Prisma file of <ctx> included
+npx ddd-ts-kit todo <ctx> --brief    # every TODO(domain) and it.todo left, as file:line, the Prisma file of <ctx> included
 npx ddd-ts-kit check --commit-size
 ```
 
