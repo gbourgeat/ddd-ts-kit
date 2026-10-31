@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:953ffbcd2f8dfd0a -->
+<!-- translation-of: README.md sha256:bfa0909487e6264c -->
 
 # ddd-ts-kit
 
@@ -1365,7 +1365,8 @@ ddd-ts-kit todo [<context>] [--brief]
 `status` affiche la ligne `Next:` de `docs/architecture/plan.md`, les lignes de
 `docs/architecture/slices.md` par statut et par responsable, et par contexte les `TODO(domain)`,
 `TODO(platform)` et `it.todo` restants, puis ceux hors des contextes. Un fichier manquant n'est
-pas une erreur. Quand le plan est à l'étape 7 (la construction), la ligne `Next:` est déduite des lignes (la prochaine ligne prête sur le tronc, ou `7 build done` quand toutes sont faites) et la ligne du plan est affichée à côté, `planNext` dans `--json`. Chaque ligne qui n'est pas faite dit si elle peut commencer : prête sur le tronc
+pas une erreur ; un `ddd-ts-kit.config.json` manquant en est une : avant `init`, `status` refuse avec le
+code 2, nomme `init` et n'imprime aucune demi-réponse. Quand le plan est à l'étape 7 (la construction), la ligne `Next:` est déduite des lignes (la prochaine ligne prête sur le tronc, ou `7 build done` quand toutes sont faites) et la ligne du plan est affichée à côté, `planNext` dans `--json`. Chaque ligne qui n'est pas faite dit si elle peut commencer : prête sur le tronc
 quand toutes ses dépendances sont faites, prête sur une branche quand chaque dépendance non faite
 est une ligne confiée à un *worker* dont le *worktree* a des *commits* d'avance sur sa base (les
 `rows` de son `.ddd-ts-kit/worker.json`, tels que `status --workers` les lit), et en attente
