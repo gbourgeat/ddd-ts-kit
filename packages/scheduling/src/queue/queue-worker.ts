@@ -121,6 +121,7 @@ export class QueueWorker {
       active: new Set<Promise<BackgroundJobRun>>(),
       filling: undefined,
       cancelSleep: undefined,
+      measuredAt: Number.NEGATIVE_INFINITY,
     });
   }
 
@@ -148,6 +149,7 @@ export class QueueWorker {
   private async fillOrSleep(queue: QueueState): Promise<void> {
     try {
       await this.fill(queue);
+      await this.measure(queue);
     } catch (error) {
       this.recorder.fault(queue.name, error);
       this.sleep(queue);
@@ -182,6 +184,25 @@ export class QueueWorker {
         return;
       }
     }
+  }
+
+  /** The depth of the queue as gauges, when the worker has metrics, at most once per poll interval. */
+  private async measure(queue: QueueState): Promise<void> {
+    const { metrics, store, clock, pollIntervalMs = 1_000 } = this.options;
+    const now = clock.now().getTime();
+
+    if (metrics === undefined || now - queue.measuredAt < pollIntervalMs) {
+      return;
+    }
+
+    queue.measuredAt = now;
+
+    const { waiting, running, dead } = await store.stats(queue.name);
+    const labels = { queue: queue.name };
+
+    metrics.gauge('jobs_waiting').set(waiting, labels);
+    metrics.gauge('jobs_running').set(running, labels);
+    metrics.gauge('jobs_dead').set(dead, labels);
   }
 
   private claimed(queue: QueueState, limit = queue.concurrency): Promise<ClaimedJob[]> {
