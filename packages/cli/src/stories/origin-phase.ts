@@ -2,10 +2,10 @@ import type { Workspace } from '../workspace';
 import { sectionOf } from './section-of';
 import type { StoryPhase } from './story-phase';
 
-/** The lines `## Origin` holds: where the story came from, and the versions it was built under. */
+/** The lines `## Origin` holds: where the story came from, and the versions it was built under. A line that still holds a `<placeholder>` of the template is not written. */
 const ORIGIN_LINES = [
-  { name: 'From:', pattern: /^\s*[-*]?\s*From:/m },
-  { name: 'Built with:', pattern: /^\s*[-*]?\s*Built with:/m },
+  { name: 'From:', pattern: /^\s*[-*]?\s*From:(?![^\n]*<[^<>\n]+>)/m },
+  { name: 'Built with:', pattern: /^\s*[-*]?\s*Built with:(?![^\n]*<[^<>\n]+>)/m },
 ] as const;
 
 /**
@@ -27,7 +27,7 @@ export function originPhase(ws: Workspace, story: string, specification: string 
         ? 'no `## Origin` in the specification'
         : missing.length === 0
           ? 'written'
-          : `\`## Origin\` has no ${missing.map(({ name }) => `\`${name}\``).join(' nor ')} line`,
+          : `\`## Origin\` has no written ${missing.map(({ name }) => `\`${name}\``).join(' nor ')} line`,
     next: `Write \`## Origin\` in docs/architecture/stories/${story}.md: \`- From:\` the intent, the ticket or the incident the story comes from, \`- Built with:\` the versions of the kit and the plugin, the base and its commit, \`- Policies in force:\` the skills loaded at phase 3.`,
     gate: 'close',
   };

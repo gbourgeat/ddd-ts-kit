@@ -119,6 +119,8 @@ missing. Rows with no path between them can be built in parallel.
   one row per module.
 - `--grant <role>` is written only when `stack.authz` is `rbac`. On `rebac` or `abac` the right
   is decided by the relationship schema or a policy, never by `--grant`: the generator refuses it.
+- `Context` is a context of the project; `platform` (the work of `src/platform/`) and `all` (a slice
+  across every context) are the two names for a row that belongs to none, owned by the conductor.
 - `Owner` is `conductor`, the name of a context (one worker per context) or a person.
 - `Status` is `todo`, `in progress`, `done`. A row is `done` when the started application does
   what it says, not when the specs on fakes pass: `check` must report no `authz/granted`,

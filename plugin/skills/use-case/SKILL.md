@@ -27,8 +27,8 @@ allowed-tools:
 
 Context: `$0`. Use case: `$ARGUMENTS`
 
-One use case, one context, one commit. Read `src/contexts/$0/CONTEXT.md` and the row of
-`docs/architecture/slices.md` when there is one; do not browse the tree
+One use case, one context, one commit. Read `src/contexts/$0/CONTEXT.md` above its `## Reference` and the row of
+`docs/architecture/slices.md` when there is one; never browse the tree
 (`npx ddd-ts-kit describe $0` says what exists: use cases, routes, events, ports).
 A single file is skill `ddd-ts-kit:scaffold`.
 
@@ -211,8 +211,8 @@ starts. A warning of `authz/granted` left on purpose (the grant comes with a lat
 in the report and the row stays `in progress`.
 
 Then one commit for the slice (skill `ddd-ts-kit:commit-discipline`), and its row marked in
-`slices.md` when you are the conductor. Before the pull request, read `docs/behaviour/<ctx>.md`
-as the reviewer will: under the heading of the use case, each rule line of the row has its title,
-apart from what the kit generated, and `Rows of the plan` counts them. Report in a few lines: the rules encoded and where,
+`slices.md` when you are the conductor. Before the pull request, read as the reviewer will, `npx ddd-ts-kit digest --base <trunk>`:
+under `New spec titles`, each rule line of the row has its title, apart from what the kit generated
+(`docs/behaviour/<ctx>.md`: a range, not the page). Report in a few lines: the rules encoded and where,
 test results, contract changes. A marker `todo` still lists in the slice means not done:
 report it as an open question. No file contents in the report.

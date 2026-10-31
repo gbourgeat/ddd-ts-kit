@@ -1,6 +1,7 @@
 import type { Slice } from '../progress/slice';
 import { storyOf } from '../story/story-of';
 import { aggregatesOf } from './aggregates-of';
+import { RESERVED_CONTEXTS } from './plan-problems';
 import type { Batch, PlannedRow, WaitedRow, Wave } from './wave-plan';
 
 /** Past this many rows, an agent runs out of turns or context before its report. */
@@ -111,7 +112,7 @@ function waitedRow(id: string, planned: readonly Slice[]): WaitedRow[] {
  * context in one wave run side by side: each gets a worktree and a branch named after its id.
  */
 function briefOf(draft: Draft, drafts: readonly Draft[], batch: string): string | null {
-  if (draft.owner !== draft.context) {
+  if (draft.owner !== draft.context || RESERVED_CONTEXTS.includes(draft.context)) {
     return null;
   }
 

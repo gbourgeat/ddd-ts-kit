@@ -268,6 +268,14 @@ describe('worker-scope, on slices, an existing worktree and other places', () =>
     );
   });
 
+  it('asks the worker for what exists: describe as text, and the todos each generator prints', () => {
+    const briefing = String(jsonAt(cli(root, 'worker-scope', 'shipping', '--dry-run', '--json').json(), 'briefing'));
+
+    expect(briefing).toContain('`npx ddd-ts-kit describe shipping`. Then the `todos` places each generator prints.');
+    expect(briefing).not.toContain('describe shipping --json');
+    expect(briefing).toContain('CONTEXT.md above its `## Reference`, then');
+  });
+
   it('says what to do outside a git repository', () => {
     const plain = path.join(path.dirname(root), 'plain');
 

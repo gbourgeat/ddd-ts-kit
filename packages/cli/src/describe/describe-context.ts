@@ -30,6 +30,7 @@ export function describeContext(ws: Workspace, config: Config, facts: ContextFac
 
   return {
     ...identityOf(facts, directory),
+    ...docHeadOf(ws, `${directory}/CONTEXT.md`),
     useCases,
     routes: readRoutes(sources, useCases),
     consumedEvents: readConsumedEvents(sources),
@@ -45,6 +46,13 @@ export function describeContext(ws: Workspace, config: Config, facts: ContextFac
     processes: facts.processes,
     contracts: contractsOf(ws, config),
   };
+}
+
+/** The lines of CONTEXT.md above its generated `## Reference`: the rest prints what `describe` prints. */
+function docHeadOf(ws: Workspace, doc: string): { docHead?: number } {
+  const reference = (ws.read(doc) ?? '').split('\n').findIndex((line) => /^## Reference\s*$/.test(line));
+
+  return reference > 0 ? { docHead: reference } : {};
 }
 
 /** Where the facts of the context are read from: its directory, its modules, its module file and its declarations. */

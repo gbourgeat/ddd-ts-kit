@@ -1,0 +1,1 @@
+**The `use-case` skill names the command that prints the spec titles of a slice.** Before the pull request it reads `npx ddd-ts-kit digest --base <trunk>`, which lists the titles under `New spec titles`, instead of asking for a section of the behaviour page with no way to read one.

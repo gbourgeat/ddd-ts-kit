@@ -177,3 +177,23 @@ describe('story-scope --from and --kind', () => {
     );
   });
 });
+
+describe('story-scope --from with the template of the intent skill', () => {
+  it('refuses the template of the intent skill with Status: draft, whose comment says Status: accepted', () => {
+    const template = fs.readFileSync(
+      path.resolve(__dirname, '../../../plugin/skills/story/intent-template.md'),
+      'utf8',
+    );
+
+    write(
+      root,
+      'docs/architecture/intents/from-template.md',
+      template.replace(/^Author: .*/m, 'Author: Ann (PO). Status: draft.'),
+    );
+
+    const draft = cli(root, 'story-scope', 'US8', '--from', 'docs/architecture/intents/from-template.md', '--dry-run');
+
+    expect(draft.code).not.toBe(0);
+    expect(draft.stderr).toContain('is not an accepted intent.');
+  });
+});

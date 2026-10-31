@@ -87,12 +87,12 @@ describe('ddd-ts-kit measures: without history', () => {
 
     const text = cli(bare, 'measures', '--by-author').stdout;
 
-    expect(text).toContain('Measures of none: 1 story, 0 closed');
+    expect(text).toContain('Measures of the repository (no branch): 1 story, 0 closed');
     expect(text).toContain('  US9  not committed  design open  build open  lead open');
     expect(text).toContain('  unknown  1 story, 0 closed, lead open');
 
     expect(cli(bare, 'measures', '--since', '2026-01-01').stdout).toContain(
-      'Measures of none since 2026-01-01: 0 stories',
+      'Measures of the repository (no branch) since 2026-01-01: 0 stories',
     );
 
     fs.rmSync(path.join(bare, 'docs'), { recursive: true });
@@ -100,7 +100,7 @@ describe('ddd-ts-kit measures: without history', () => {
     expect(cli(bare, 'measures').stdout).toContain('No story file in docs/architecture/stories/ for this period.');
 
     expect(cli(bare, 'measures', '--since', '2026-01-01').stdout).toContain(
-      'Measures of none since 2026-01-01: 0 stories',
+      'Measures of the repository (no branch) since 2026-01-01: 0 stories',
     );
   });
 });

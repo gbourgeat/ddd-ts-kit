@@ -1,5 +1,5 @@
 [English](slices.md) · **Français**
-<!-- translation-of: slices.md sha256:2c47dce4e68268b3 -->
+<!-- translation-of: slices.md sha256:888529b1288a9485 -->
 
 # Tranches
 
@@ -21,7 +21,7 @@ sur des agrégats différents).
 | M1.07 | scheduling | contract | Export des rendez-vous (contrat de lecture, source d'une reconstruction) | `gateway analytics scheduling AppointmentExport` | M1.01 | conductor | done |
 | M1.08 | scheduling | skeleton | Politiques du préavis du patient | `policy scheduling PatientCancelsUntilNotice --permission appointment.cancel`, `policy scheduling PatientReschedulesUntilNotice --permission appointment.reschedule` | M1.01 | conductor | done |
 | M1.09 | all | skeleton | Le travail déclenché par le temps | `command scheduling ExpireUnconfirmedAppointments --aggregate Appointment --permission appointment.expire` et `job scheduling ExpireUnconfirmedAppointments --every 5m --command ExpireUnconfirmedAppointments` ; la même paire pour `identity ExpireDelegations` (5m), `notification SendDueReminders` (15m), `analytics VerifyOccupancy` (cron `0 3 * * *`, Europe/Paris ; retiré après la livraison, voir la note de M1.37) | M1.01, M1.02, M1.03 | conductor | done |
-| M1.10 | platform | skeleton | Tuples de relation persistants, schéma des relations, rôles combinés aux relations, prise d'identité en lecture seule | à la main dans `src/platform/auth/` (aucun générateur) et `adr "Combine token roles with relationships in one authorizer"` | | platform | todo |
+| M1.10 | platform | skeleton | Tuples de relation persistants, schéma des relations, rôles combinés aux relations, prise d'identité en lecture seule | à la main dans `src/platform/auth/` (aucun générateur) et `adr "Combine token roles with relationships in one authorizer"` | | conductor | todo |
 | M1.11 | identity | slice | Enregistrer une personne | `command identity RegisterPerson --aggregate Person --permission person.register` ; `route identity RegisterPerson --method PUT --path /people/me` | M1.02, M1.04 | identity | todo |
 | M1.12 | identity | slice | Ouvrir un cabinet | `command identity OpenPractice --aggregate Practice --permission practice.open` ; `route identity OpenPractice --method POST --path /practices` | M1.02, M1.04 | identity | todo |
 | M1.13 | identity | slice | Ajouter un membre, retirer un membre | `command identity AddMember --aggregate Practice --permission member.add` ; `route ... --method POST --path /practices/:practiceId/members` ; `command identity RemoveMember --aggregate Practice --permission member.remove` ; `route ... --method DELETE --path /practices/:practiceId/members/:personId` | M1.12 | identity | todo |
