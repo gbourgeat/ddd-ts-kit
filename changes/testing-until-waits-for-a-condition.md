@@ -1,1 +1,0 @@
-**`until` joins `eventually` in `@ddd-ts-kit/testing/e2e`.** `until(condition, { timeoutMs, intervalMs })` waits for a condition that returns a boolean (a counter, a list) with the same polling as `eventually`, and fails with the same message when the time is up. The test support of the brokers and of the HTTP adapters now reads it instead of keeping a loop of its own.

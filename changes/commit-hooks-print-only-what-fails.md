@@ -1,3 +1,0 @@
-**The commit hooks print only what fails.** The `lefthook.yml` that `init` writes sets `output: [failure]`: a commit that passes prints one line of lefthook instead of the frame, the output and the summary of every job (3,800 characters for a commit of eleven files), and a job that fails still prints its findings with their fix. The warnings of `check` and the note that `gitleaks` is not installed no longer show on a passing commit; `ddd-ts-kit check` and `verify` still print them.
-
-To move: a project already generated keeps the `lefthook.yml` it has (`init --force` leaves the pipeline definitions it wrote once); add `output:` with `  - failure` under `min_version` to get the quiet commit.

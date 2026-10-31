@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/redis",
-  "version": "0.104.0",
+  "version": "0.105.0",
   "description": "Adapters of the kernel ports on the Redis protocol (Redis, Dragonfly, Valkey): cache, distributed lock, rate limiter, relay wake-up signal, a background job store, and an integration event provider on Redis Streams.",
   "keywords": [
     "ddd",
@@ -48,12 +48,12 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.104.0",
-    "@ddd-ts-kit/scheduling": "0.104.0"
+    "@ddd-ts-kit/kernel": "0.105.0",
+    "@ddd-ts-kit/scheduling": "0.105.0"
   },
   "peerDependencies": {
     "ioredis": "^5.0.0 || ^6.0.0",
-    "@ddd-ts-kit/testing": "0.104.0"
+    "@ddd-ts-kit/testing": "0.105.0"
   },
   "peerDependenciesMeta": {
     "@ddd-ts-kit/testing": {
@@ -62,8 +62,8 @@
   },
   "devDependencies": {
     "ioredis": "^6.0.0",
-    "@ddd-ts-kit/events": "0.104.0",
-    "@ddd-ts-kit/testing": "0.104.0",
+    "@ddd-ts-kit/events": "0.105.0",
+    "@ddd-ts-kit/testing": "0.105.0",
     "wasmoon-lua5.1": "1.18.12"
   }
 }

@@ -1,1 +1,0 @@
-**Under `--value-objects result`, the generated spec of a value object asserts the code of the refusal, as it does with throwing factories.** `refuses an empty value with a coded error` reads `expectRefusal(InvoiceNumber.create('  '), 'INVARIANT_VIOLATION')` on the `Result`, where it asserted only that `ok` was false. A spec already generated keeps its assertion.
