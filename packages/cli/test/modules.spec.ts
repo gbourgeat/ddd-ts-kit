@@ -14,6 +14,11 @@ function withoutModule(text: string): string {
   ).replaceAll(`${BILLING}/test/unit/invoices/`, `${BILLING}/test/unit/`);
 }
 
+/** The JSON of `describe` without `docHead`, the last line of the part of CONTEXT.md people write. */
+function withoutDocHead(text: string): string {
+  return text.replace(/"docHead":\d+,?/, '');
+}
+
 /** Every role folder of the layers of billing, relative to the context. */
 function roleFoldersOfBilling(root: string): string[] {
   return MODULE_LAYERS.flatMap((layer) =>
@@ -50,7 +55,8 @@ describe('a whole context moved into a module of its model', () => {
     expect(after).toContain(`${BILLING}/invoices/application/commands/issue-invoice`);
     expect(after).toContain(`${BILLING}/invoices/domain/repositories/invoice.repository.ts`);
     expect(after).toContain(`${BILLING}/invoices/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts`);
-    expect(withoutModule(after)).toBe(before.describe);
+    // The move adds the row of the module to CONTEXT.md, so the line where its Reference starts (`docHead`) moves down.
+    expect(withoutDocHead(withoutModule(after))).toBe(withoutDocHead(before.describe));
   });
 
   it('keeps the files that are one per context at the level of the context', () => {
