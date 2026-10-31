@@ -26,6 +26,7 @@ export { tracedBackgroundJob } from './jobs/traced-background-job';
 export { DROPPED_SPANS_ATTRIBUTE } from './local-root/admit-dependency-span';
 export { CORRELATION_ID_ATTRIBUTE, ORIGIN_ATTRIBUTE } from './local-root/correlate';
 export { LocalRootTracker } from './local-root/local-root-tracker';
+export { openTelemetryMetrics, type OpenTelemetryMetricsOptions } from './metrics/open-telemetry-metrics';
 export { AttributeAllowList, type AttributeAllowListOptions } from './processors/attribute-allow-list';
 export { DEFAULT_ALLOWED_ATTRIBUTES } from './processors/default-allowed-attributes';
 export type { EndedSpan } from './processors/ended-span';
