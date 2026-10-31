@@ -160,6 +160,12 @@ ruleTester.run('events-consumer-idempotent', eventsConsumerIdempotent, {
       errors: [{ messageId: 'subscription', data: { missing: '`consumer`', context: 'billing' } }],
     },
     {
+      ...at(`${BILLING}/invoicing/invoicing.module.ts`, "events.subscribe('billing.invoice.paid', handle);", {
+        contexts: { billing: { classification: 'core', upstreams: [], modules: { invoicing: {} } } },
+      }),
+      errors: [{ messageId: 'directSubscribe' }],
+    },
+    {
       ...at(
         MODULE,
         'resolve(IntegrationEventSubscriber).subscribe(ProductListedHandler.eventType, (event) => resolve(ProductListedHandler).handle(event));',
