@@ -1418,7 +1418,12 @@ function hostOf(input) {
   return input.tool_name === 'apply_patch' || 'turn_id' in input ? 'codex' : 'claude';
 }
 
+// A tool that takes a free text, the `apply_patch` of Copilot, has that text as its input: it is
+// read where the patches of the other hosts are.
 function toolInput(input) {
+  if (typeof input.tool_input === 'string') {
+    return { input: input.tool_input };
+  }
   if (input.tool_input && typeof input.tool_input === 'object') {
     return input.tool_input;
   }

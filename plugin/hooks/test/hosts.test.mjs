@@ -161,6 +161,77 @@ test('Copilot: its own hook format is read, a relative path included, and answer
   assert.equal(decision(skipped), 'ask');
 });
 
+test('Copilot: a patch given as the text of the tool input is judged before the write, as Codex has it', () => {
+  const root = project();
+  const refused = run(
+    'pre-write',
+    copilotPatch(root, [
+      '*** Add File: src/contexts/ordering/domain/aggregates/order.aggregate.ts',
+      '+export class Order {}',
+    ]),
+  );
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /order\.aggregate\.ts is a new file of a generated role.*generate aggregate/);
+  assert.equal(run('pre-write', copilotPatch(root, ['*** Add File: notes.md', '+x'])).output, undefined);
+});
+
+// A call of `apply_patch` as Copilot CLI hands it to a hook of a plugin: the tool takes a free text, so
+// `tool_input` is the patch itself, under the name of its editor tool.
+function copilotPatch(root, lines, extra = {}) {
+  return {
+    hook_event_name: 'PreToolUse',
+    session_id: 'copilot-session',
+    timestamp: '2026-10-31T22:21:43.968Z',
+    cwd: root,
+    tool_name: 'Edit',
+    tool_input: ['*** Begin Patch', ...lines, '*** End Patch'].join('\n'),
+    ...extra,
+  };
+}
+
+test('Copilot: a patch given as text is held to the scope of a worker', () => {
+  const root = project();
+  const agent = worker(root);
+  const outside = copilotPatch(root, ['*** Add File: src/contexts/billing/x.ts', '+export const x = 1;'], agent);
+  const refused = run('pre-write', outside);
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /another bounded context/);
+  const inside = copilotPatch(root, ['*** Add File: src/contexts/ordering/y.ts', '+export const y = 1;'], agent);
+  assert.equal(run('pre-write', inside).output, undefined);
+});
+
+test('Copilot: a file patched by a text input is checked after the write', () => {
+  const root = project();
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const result = run(
+    'post-write',
+    copilotPatch(
+      root,
+      ['*** Update File: src/contexts/ordering/domain/services/pricing.service.ts', '+import express'],
+      {
+        hook_event_name: 'PostToolUse',
+      },
+    ),
+  );
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /layer\/domain-purity/);
+});
+
+test('a text as tool input that holds no patch writes nothing', () => {
+  const root = project();
+  const text = {
+    cwd: root,
+    tool_name: 'Edit',
+    tool_input: 'src/contexts/ordering/domain/aggregates/order.aggregate.ts',
+  };
+  assert.equal(run('pre-write', text).output, undefined);
+  assert.equal(run('post-write', text).output, undefined);
+});
+
 test('malformed input never blocks', () => {
   const result = spawnSync('node', [guard, 'pre-write'], { input: 'not json', encoding: 'utf8' });
   assert.equal(result.status, 0);
