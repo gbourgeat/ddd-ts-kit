@@ -1,5 +1,5 @@
 [English](first-slice.md) · **Français**
-<!-- translation-of: first-slice.md sha256:bdd479713b2d2e74 -->
+<!-- translation-of: first-slice.md sha256:a1e74f75eb644138 -->
 
 # Une tranche, de bout en bout
 
@@ -29,7 +29,8 @@ de commandes vient de la plateforme qu'a écrite `init`.
 Ce qui vous reste, c'est le métier : les endroits `TODO(domain)`. Une fois remplie, la partie
 domaine et application de cette tranche se lit ainsi, en un seul bloc ici, là où les
 générateurs écrivent un fichier par classe (le refus vient de
-`generate error ordering OrderEmpty onPlacement`, l'événement de
+`generate error ordering OrderEmpty onPlacement --term "Empty=Holding no product"`, le glossaire
+du contexte ne définissant pas encore `Empty` ; l'événement de
 `generate domain-event ordering Order Placed`) :
 
 <!-- checked sample -->

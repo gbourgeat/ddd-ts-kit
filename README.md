@@ -105,8 +105,9 @@ the `AGENTS.md` and the rules by layer that the bootstrap writes still guide any
 
 Follow these steps in order: it is the supported path, and the tools are built to hold it. Each
 step is a skill of the plugin (`/ddd-ts-kit:<skill>`), or a command, and leaves a file the next
-one reads. `/ddd-ts-kit:start` conducts steps 1 to 7 one at a time, and `npx ddd-ts-kit status`
-says at any time which step is next.
+one reads. `/ddd-ts-kit:start` conducts steps 1 to 7 one at a time, and, once `init` has written the
+project (step 5), `npx ddd-ts-kit status` says at any time which step is next: before that,
+`/ddd-ts-kit:start` reads `docs/architecture/plan.md`.
 
 | # | Step | Skill or command | Produces |
 |---|---|---|---|
@@ -129,7 +130,9 @@ moment of a project.
 ## What the agent runs
 
 Behind each step, the agent types the commands of the CLI: you see them in its session, you may
-type them yourself, and the pipeline runs the same ones. A new project starts with:
+type them yourself, and the pipeline runs the same ones. `init` creates no repository: in a new
+directory, run `git init` first, or the git hooks of the bootstrap have nowhere to go. A new project
+starts with:
 
 ```bash
 mkdir orders-api && cd orders-api
