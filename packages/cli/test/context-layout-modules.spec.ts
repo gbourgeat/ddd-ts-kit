@@ -25,11 +25,11 @@ beforeAll(() => {
 });
 
 describe('a context whose module sits where 0.86 and 0.87 put it', () => {
-  it('is read, and module/complete warns about it, naming the command that moves it', () => {
+  it('is read, and module/complete reports it as an error whatever its severity, naming the command that moves it', () => {
     const checked = checkJsonOf(cli(root, 'check', '--rule', 'module/complete', '--json'));
 
     expect(checked.violations.map(({ file, severity }) => `${severity} ${file}`)).toContain(
-      `warn ${BILLING}/domain/invoices`,
+      `error ${BILLING}/domain/invoices`,
     );
 
     expect(cli(root, 'check', '--rule', 'module/complete').stdout).toContain('npx ddd-ts-kit context-layout billing');

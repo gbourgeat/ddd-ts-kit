@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:65a6317b6ad0b127 -->
+<!-- translation-of: modules.md sha256:bf7134766637e9d5 -->
 
 # Modules du modèle
 
@@ -274,8 +274,9 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 ### Depuis la disposition de 0.86 et 0.87
 
 0.86 et 0.87 mettaient un module sous `domain/<module>/` et `application/<module>/`, et laissaient ses
-adaptateurs, ses routes et ses *specs* organisés par technique. Cette version lit encore cette
-disposition, et `module/complete` la signale ; les générateurs refusent d'écrire dans un tel
+adaptateurs, ses routes et ses *specs* organisés par technique. Cette version ne lit cette
+disposition que pour la déplacer : `module/complete` la signale en erreur, quelle que soit sa
+sévérité ; les générateurs refusent d'écrire dans un tel
 contexte tant qu'il n'est pas déplacé. `npx ddd-ts-kit context-layout [<context>...] [--dry-run]`
 le déplace : chaque module dans son dossier, et chaque adaptateur, route et *spec* resté au niveau
 du contexte dans le module de ce qu'il importe (une *spec* dans le module du fichier dont elle

@@ -21,7 +21,7 @@ npx ddd-ts-kit docs
 ## Declarations written by 0.84 to 0.86
 
 A context still declared as an earlier version wrote it (the single `<context>.declarations.ts`
-of 0.84, or one `<folder>.declarations.ts` per role folder as 0.85 and 0.86 wrote them) is a
-warning of `declarations/barrel-current` in this version and an error in a later one.
+of 0.84, or one `<folder>.declarations.ts` per role folder as 0.85 and 0.86 wrote them) is an
+error of `declarations/barrel-current`.
 `npx ddd-ts-kit docs` moves it to one `<layer>.declarations.ts` per layer, and the moved files are
 committed together.

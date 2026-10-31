@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">A class reads from top to bottom: the stepdown rule</title>
-  <desc id="desc">The file appointment.aggregate.ts lists its static factories first, then its public intentions, then its private helpers, each placed below the method that calls it first. The first screen tells what an appointment can do; the details come after, in calling order.</desc>
+  <desc id="desc">The file appointment.aggregate.ts lists its static factories first, then its public intentions, then its private helpers, each placed below the method that calls it first. The first screen tells what an appointment can do; the details come after, each below its first caller.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -38,5 +38,5 @@
   <text x="678" y="254" font-size="13" fill="#1f2328">stops here.</text>
   <path d="M656,322 H664 V410 H656" fill="none" stroke="#5f6b73" stroke-width="1.5"/>
   <text x="678" y="358" font-size="14" font-weight="600" fill="#1f2328">Then the details,</text>
-  <text x="678" y="378" font-size="13" fill="#1f2328">in the order they are called.</text>
+  <text x="678" y="378" font-size="13" fill="#1f2328">each below its first caller.</text>
 </svg>

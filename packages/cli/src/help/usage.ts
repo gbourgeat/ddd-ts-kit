@@ -50,7 +50,7 @@ export const USAGE = `Usage
   ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
   ddd-ts-kit merge-trunk [--trunk <git-ref>] [--since <commit>] [--to-land] [--dry-run]
   ddd-ts-kit merge-trunk --continue [--accept-lost] | --abort
-  ddd-ts-kit docs [--check] [--stored-events] [--behaviour]
+  ddd-ts-kit docs [--check] [--dry-run] [--stored-events] [--behaviour]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]

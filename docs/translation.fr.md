@@ -1,5 +1,5 @@
 [English](translation.md) · **Français**
-<!-- translation-of: translation.md sha256:7f27b359c56fc68b -->
+<!-- translation-of: translation.md sha256:094a072318e77087 -->
 
 # La documentation en français
 
@@ -81,7 +81,7 @@ retirée, espaces changées en traits d'union (`## Règles de l'agrégat` devien
 
 | Commande | Ce qu'elle fait |
 |---|---|
-| `node pipeline/monorepo/translations.mjs --check` | chaque problème de la documentation française, un par ligne, code de sortie 1 s'il y en a : une page sans sélecteur, une page française absente ou en retard, un lien qui ne mène nulle part, une ancre qu'aucun titre ne porte, une page française qui renvoie à une page anglaise dont la jumelle française existe, un schéma sans son dessin français, un schéma mal formé. `npm run docs:translations` la lance, et le job `docs` de la CI aussi |
+| `node pipeline/monorepo/translations.mjs --check` | chaque problème de la documentation française, un par ligne, code de sortie 1 s'il y en a : une page sans sélecteur, une page française absente ou en retard, un lien qui ne mène nulle part, une ancre qu'aucun titre ne porte, une page française qui renvoie à une page anglaise dont la jumelle française existe, un schéma sans son dessin français, un schéma mal formé, une forme JSON que les deux pages ne partagent pas (le code en ligne de la prose qui commence par `{`, ou un bloc JSON délimité, ses commentaires mis à part), qu'un tampon ne lit pas. `npm run docs:translations` la lance, et le job `docs` de la CI aussi |
 | `node pipeline/monorepo/translations.mjs --check <pages...>` | la même chose, pour ces pages seulement (chemins anglais ou français) et les schémas qu'elles montrent |
 | `node pipeline/monorepo/translations.mjs --stamp <page anglaise>` | écrit ou met à jour le sélecteur et la ligne `translation-of` de la page française ; elle ne crée rien d'autre |
 | `node pipeline/monorepo/translations.mjs --stale` | les pages françaises dont la page anglaise a changé depuis leur dernier tampon |

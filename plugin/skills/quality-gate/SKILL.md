@@ -57,9 +57,7 @@ that new finding is expected, never a conflict between the two. Never Prettier n
 `npx biome` (without `--no`, it can fetch an unrelated package of that name); the guard refuses
 both to a worker.
 
-`npm run lint` (`ddd-ts-kit lint`) fails on a warning as on an error: fix it the same way. A rule
-of the kit in transition is listed apart without failing: fix its warnings too, before the
-version it names makes them errors. An
+`npm run lint` (`ddd-ts-kit lint`) fails on a warning as on an error: fix it the same way. An
 entry of `eslint-suppressions.json` is a finding the project recorded: once it is fixed the lint
 fails until `npx eslint . --prune-suppressions` removes it; adding one (`--suppress-all`,
 `--suppress-rule`) is a suppression.

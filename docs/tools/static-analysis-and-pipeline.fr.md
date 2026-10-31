@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:224852b8bbe3de34 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:db565cb471c19c25 -->
 
 # L'analyse statique et le pipeline
 
@@ -172,7 +172,7 @@ Ce que reçoit chaque projet, outil par outil, est sur la page du
   fichier.
 - **Le coût d'un faux positif.** Une règle heuristique (commentaires de bruit, code commenté) est
   par défaut un avertissement ; les règles structurelles sont par défaut des erreurs. Les scripts
-  `lint` et `ci:lint` échouent sur les deux (`ddd-ts-kit lint`, sauf pour une règle du kit en transition, affichée sans échouer) : un avertissement dit de quelle
+  `lint` et `ci:lint` échouent sur les deux (`ddd-ts-kit lint`) : un avertissement dit de quelle
   sorte est le constat, pas qu'il peut rester.
 
 Mis bout à bout, un projet généré fait tourner chaque analyseur au moment que son coût permet :
@@ -328,7 +328,7 @@ et sur un poste de travail, `npm run ci:arch`, qui lance les deux.
 | Exécutions redondantes | annulées par des groupes de concurrence | annulées par des *jobs* interruptibles |
 | Portes | les mêmes scripts `ci:*` | les mêmes scripts `ci:*` |
 | Constats de lint et d'architecture | des annotations sur la *pull request* (`check --format github`) | des rapports Code Quality (`check --format gitlab` écrit directement le rapport ; ESLint par son formateur GitLab) |
-| Un avertissement de lint | fait échouer le *job* de lint (`ci:lint` lance `ddd-ts-kit lint` ; une règle du kit en transition est affichée sans échouer) | fait échouer le *job* de lint, et figure dans le rapport Code Quality |
+| Un avertissement de lint | fait échouer le *job* de lint (`ci:lint` lance `ddd-ts-kit lint`) | fait échouer le *job* de lint, et figure dans le rapport Code Quality |
 | La raison d'une règle, pour qui relit | `check --format github --explain` : chaque annotation se termine par elle | `check --format gitlab --explain` : chaque problème se termine par elle, les empreintes inchangées |
 | Rapports de tests | le *reporter* Vitest pour Actions, la couverture comme artefact | des rapports JUnit et Cobertura dans la *merge request* |
 | Recherche de secrets | gitleaks | gitleaks |

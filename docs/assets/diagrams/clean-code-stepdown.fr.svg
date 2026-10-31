@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">Une classe se lit de haut en bas : la règle de lecture en descente</title>
-  <desc id="desc">Le fichier appointment.aggregate.ts présente d'abord ses fabriques statiques, puis ses intentions publiques, puis ses méthodes privées, chacune placée sous la méthode qui l'appelle en premier. Le premier écran dit ce que peut faire un rendez-vous ; les détails suivent, dans l'ordre des appels.</desc>
+  <desc id="desc">Le fichier appointment.aggregate.ts présente d'abord ses fabriques statiques, puis ses intentions publiques, puis ses méthodes privées, chacune placée sous la méthode qui l'appelle en premier. Le premier écran dit ce que peut faire un rendez-vous ; les détails suivent, chacun sous son premier appelant.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -38,5 +38,5 @@
   <text x="678" y="254" font-size="13" fill="#1f2328">s'arrête là.</text>
   <path d="M656,322 H664 V410 H656" fill="none" stroke="#5f6b73" stroke-width="1.5"/>
   <text x="678" y="358" font-size="14" font-weight="600" fill="#1f2328">Puis les détails,</text>
-  <text x="678" y="378" font-size="13" fill="#1f2328">dans l'ordre des appels.</text>
+  <text x="678" y="378" font-size="13" fill="#1f2328">chacun sous son premier appelant.</text>
 </svg>

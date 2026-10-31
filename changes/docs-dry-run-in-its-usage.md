@@ -1,0 +1,1 @@
+**`ddd-ts-kit docs --help` names `--dry-run`.** The flag already listed the generated files `docs` would create, update or delete without writing them; the usage of the command, its note, the commands guide and the CLI README now say so. A spec holds the usage of each command to the flags its parser accepts.

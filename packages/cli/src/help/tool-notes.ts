@@ -162,8 +162,7 @@ export const TOOL_NOTES: readonly Note[] = [
     command: 'lint',
     lines: [
       'the ESLint of the project (lint and ci:lint run it): fails on an error, and on a warning',
-      'as on an error, but on one of a rule of the kit in transition, a new rule that becomes an',
-      'error in the version it names, whose warnings are listed apart; --format and --fix as ESLint',
+      'as on an error; --format and --fix as ESLint',
     ],
   },
 ];

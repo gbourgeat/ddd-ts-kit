@@ -34,16 +34,16 @@ describe('the code list and the permission set of a context', () => {
 describe('a project that keeps them where 0.86 and 0.87 wrote them', () => {
   beforeAll(() => toEarlierLayout());
 
-  it('is warned about by tree/closed, which passes, and names the command that moves them', () => {
+  it('is an error of tree/closed, which names the command that moves them', () => {
     const checked = cli(root, 'check', '--rule', 'tree/closed', '--json');
 
-    expect(checked.code).toBe(0);
+    expect(checked.code).toBe(1);
 
     expect(checked.json()).toMatchObject({
-      errors: 0,
+      errors: 2,
       violations: [
-        { ruleId: 'tree/closed', severity: 'warn', file: EARLIER_PERMISSIONS },
-        { ruleId: 'tree/closed', severity: 'warn', file: EARLIER_CODES },
+        { ruleId: 'tree/closed', severity: 'error', file: EARLIER_PERMISSIONS },
+        { ruleId: 'tree/closed', severity: 'error', file: EARLIER_CODES },
       ],
     });
 

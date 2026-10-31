@@ -15,9 +15,8 @@ import type { Io } from './io';
 
 /**
  * `lint` and `ci:lint` of a generated project: the ESLint of the project, with its cache unless
- * `--no-cache` asks for every file again, failing on an error or a warning, but on a warning of a
- * rule of the kit in transition, which it reports apart. `--json` asks ESLint for its JSON report
- * and answers `{ errors, warnings, inTransition, report }` on one line.
+ * `--no-cache` asks for every file again, failing on an error or a warning. `--json` asks ESLint
+ * for its JSON report and answers `{ errors, warnings, report }` on one line.
  */
 export const lintCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
@@ -61,7 +60,6 @@ function printVerdict(
       stdoutJson({
         errors: verdict.errors,
         warnings: verdict.warnings,
-        inTransition: verdict.inTransition,
         report: reportOf(answer.report),
       }),
     );

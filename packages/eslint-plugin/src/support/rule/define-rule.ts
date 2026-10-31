@@ -27,8 +27,6 @@ export interface RuleDefinition<MessageIds extends string, Options extends reado
   readonly type: 'problem' | 'suggestion';
   readonly description: string;
   readonly recommended: 'error' | 'warn';
-  /** A new rule, or what a rule judges more, is a warning first: the version in which it becomes an error. */
-  readonly transition?: string;
   readonly messages: Readonly<Record<MessageIds, string>>;
   readonly schema?: readonly JSONSchema.JSONSchema4[];
   readonly defaultOptions?: Options;
@@ -73,10 +71,10 @@ export function defineRule<MessageIds extends string, Options extends readonly u
 }
 
 function docsOfDefinition<MessageIds extends string, Options extends readonly unknown[]>(
-  { description, id, recommended, transition }: RuleDefinition<MessageIds, Options>,
+  { description, id, recommended }: RuleDefinition<MessageIds, Options>,
   name: string,
 ): RuleDocs {
-  return { description, ruleId: id, name, recommended, ...(transition === undefined ? {} : { transition }) };
+  return { description, ruleId: id, name, recommended };
 }
 
 function reporter<MessageIds extends string, Options extends readonly unknown[]>(

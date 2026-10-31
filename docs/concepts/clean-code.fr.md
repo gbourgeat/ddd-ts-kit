@@ -1,5 +1,5 @@
 [English](clean-code.md) · **Français**
-<!-- translation-of: clean-code.md sha256:fa470fa512533632 -->
+<!-- translation-of: clean-code.md sha256:fe7ffff153e95ca8 -->
 
 # Le code propre, tel que le kit l'applique
 
@@ -361,7 +361,7 @@ it('refuses to cancel an appointment that starts in less than 24 hours', () => {
 Un fichier se lit comme un article de journal : l'intention en haut, les détails en dessous.
 Dans une classe : les fabriques statiques, puis les méthodes publiques, puis les méthodes
 privées, chaque méthode privée placée après son premier appelant. Dans un module : la fonction
-exportée d'abord, ses fonctions auxiliaires ensuite, dans l'ordre où elles sont appelées. Règle
+exportée d'abord, chaque fonction auxiliaire sous celle qui l'appelle la première. Règle
 `clean/stepdown`.
 
 ```ts
