@@ -49,9 +49,8 @@ lookups of the port, the columns, the mapper.
 - **Optimistic concurrency** on the aggregate's `version`: a conflicting save raises
   `ConcurrencyError`. A deadlock or a serialization failure anywhere in the transaction
   rejects the unit of work with `TransactionConflictError`, a `ConcurrencyError`: retry the
-  command, never map the driver error by hand. A save that takes a value a unique constraint
-  keeps (an email) raises `UniqueViolationError` (code `CONFLICT`), not a lost update: never
-  retry it; catch it in the handler when the business has its own refusal (`EMAIL_TAKEN`).
+  command, never map the driver error by hand. A taken unique value (an email) raises
+  `UniqueViolationError` (`CONFLICT`), never retried; the handler turns it into its own refusal.
 - **Audit and tenant columns are standard**: `created_at`, `created_by`, `updated_at`,
   `updated_by`, and `tenant_id` with `--tenant-scoped`, stamped by the adapter from the
   `ExecutionScope` and the `Clock` through the kernel helpers. The domain does not know them.
