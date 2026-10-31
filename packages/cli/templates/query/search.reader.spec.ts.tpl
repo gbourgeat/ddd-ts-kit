@@ -6,7 +6,7 @@ import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.k
 const LINES = [{ id: '{{name.kebab}}-1' }, { id: '{{name.kebab}}-2' }, { id: '{{name.kebab}}-3' }];
 const [first, second, third] = LINES;
 
-describe('InMemory{{name.pascal}}Reader', () => {
+describe('The reader of {{name.words}}', () => {
   it('shows only what the access scope covers: everything, nothing, some identifiers, a filter', async () => {
     const reader = new Fake{{name.pascal}}Reader(LINES);
     const some = await reader.search({ kind: 'ids', ids: ['{{name.kebab}}-2'] }, offsetPage());

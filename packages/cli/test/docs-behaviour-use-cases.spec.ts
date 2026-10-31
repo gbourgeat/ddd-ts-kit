@@ -63,12 +63,12 @@ describe('The page of a context, one heading per use case', () => {
     );
   });
 
-  it('leaves a spec that fits no use case under its directory, and on the page of the application what serves none', () => {
+  it('leaves a spec that fits no use case under its directory, headed in words, and on the page of the application what serves none', () => {
     expect(page('billing')).toContain(
-      '## Integration specs\n\n### invoice.repository (contract), in integration\n\n`integration/invoice.repository.contract.spec.ts`\n\n- **Invoice repository**\n  - finds what it saved\n',
+      '## Integration specs\n\n### Invoice repository (contract)\n\n`integration/invoice.repository.contract.spec.ts`\n\n- **Invoice repository**\n  - finds what it saved\n',
     );
 
-    expect(page('application')).toContain('### journey-billing (end to end), in e2e');
+    expect(page('application')).toContain('### Journey billing (end to end)\n');
     expect(page('application')).toContain('- `#US1.09 AC2` a customer reads the invoice');
     expect(page('application')).not.toContain('cancel-invoice');
     expect(page('application')).not.toContain('a customer cancels an unpaid invoice');
@@ -164,7 +164,35 @@ describe('The page of a context, a spec whose name holds a word of every object'
 
     const page = behaviourPages(root)('billing');
 
-    expect(page).toContain('### invoice.constructor, in unit\n');
-    expect(page).toContain('### invoice.toString, in unit\n');
+    expect(page).toContain('### Invoice constructor\n');
+    expect(page).toContain('### Invoice to string\n');
+  });
+});
+
+describe('The page of a context, a spec that fits no use case headed in the words of its name', () => {
+  const root = behaviourProject({
+    [`${UNIT}/refund-invoice.policy.spec.ts`]: specOf('Who may refund an invoice', ['lets the accountant refund']),
+    [`${UNIT}/invoicing/not-banned.guard.spec.ts`]: specOf('Who may pass the not banned guard', [
+      'refuses a banned caller',
+    ]),
+  });
+
+  it('heads a policy no use case requires and a guard as the model is headed, the module folder named, the directory left to its section', () => {
+    expect(behaviourPages(root)('billing')).toContain(
+      [
+        '## Unit specs',
+        '',
+        '### Not banned (guard), in invoicing',
+        '',
+        '`unit/invoicing/not-banned.guard.spec.ts`',
+        '',
+        '- **Who may pass the not banned guard**',
+        '  - refuses a banned caller',
+        '',
+        '### Refund invoice (policy)',
+        '',
+        '`unit/refund-invoice.policy.spec.ts`',
+      ].join('\n'),
+    );
   });
 });

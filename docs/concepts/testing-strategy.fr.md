@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:1ee5c50e17194438 -->
+<!-- translation-of: testing-strategy.md sha256:917c2134a6c0ccd3 -->
 
 # Stratégie de test
 
@@ -678,7 +678,8 @@ contexte, lus comme une spécification : un titre par cas d'usage, dans les mots
 *handler* (`Cancel invoice (command)`), qui réunit les règles de son *handler*, de sa *policy*, de son
 contrôleur ou de sa route, de sa *spec* de bout en bout et de ses scénarios d'acceptation ; un titre
 par partie du modèle (`Slot (value object), in calendars`) et par réaction ; les *specs* qui
-n'entrent dans aucun sous leur répertoire. Sous chaque titre viennent d'abord les règles écrites
+n'entrent dans aucun sous leur répertoire, titrées en mots elles aussi (`Not banned (guard)`). Sous
+chaque titre viennent d'abord les règles écrites
 pour le projet, puis les titres qu'un *template* de *spec* du kit a écrits, mot pour mot (`Generated
 by the kit`), pour qu'un relecteur lise ce que le projet a ajouté ; une règle planifiée (`it.todo`)
 vient en dernier, et elle comme une *spec* mise de côté sont dites comme telles. Un titre qui cite la

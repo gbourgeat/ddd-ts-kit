@@ -16,7 +16,7 @@ const request: GuardRequest = {
   context: { requestId: 'request-1', execution, raw: undefined },
 };
 
-describe('{{name.pascal}}Guard', () => {
+describe('Who may pass the {{name.words}} guard', () => {
   it('refuses a caller with 403', () => {
     expect(() => new {{name.pascal}}Guard().check(request)).toThrow(expect.objectContaining({ code: 'FORBIDDEN' }));
   });

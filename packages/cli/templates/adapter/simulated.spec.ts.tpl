@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { Simulated{{name.pascal}} } from '{{alias.context}}/infrastructure/external/simulated-{{name.kebab}}.adapter{{alias.ext}}';
 
-describe('Simulated{{name.pascal}}', () => {
+describe('The simulated {{name.words}}', () => {
   it('is built with nothing from the environment: it reaches nothing outside the process', () => {
     expect(() => new Simulated{{name.pascal}}()).not.toThrow();
   });

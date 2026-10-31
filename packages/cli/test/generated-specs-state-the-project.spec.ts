@@ -20,6 +20,20 @@ beforeAll(() => {
   run('generate', 'acl', 'billing', 'Carrier');
   run('generate', 'domain-service', 'billing', 'InvoiceNumbering', '--term', 'Numbering=Giving an invoice its number');
   run('generate', 'guard', 'billing', 'NotBanned');
+  run('generate', 'port', 'billing', 'ExchangeRates');
+  run('generate', 'adapter', 'billing', 'ExchangeRates', '--kind', 'simulated');
+
+  run(
+    'generate',
+    'query',
+    'billing',
+    'SearchInvoices',
+    '--permission',
+    'invoice.search',
+    '--search',
+    '--term',
+    'Search=To find',
+  );
 });
 
 describe('A spec the kit generates, what it asserts', () => {
@@ -60,5 +74,16 @@ describe('A spec the kit generates, what it asserts', () => {
 
     expect(spec).not.toContain("import { given } from '@ddd-ts-kit/testing';");
     expect(spec).toContain("it.todo('changes state and records a fact for each business intention');");
+  });
+});
+
+describe('A spec the kit generates, its title', () => {
+  it.each([
+    ['unit/not-banned.guard.spec.ts', 'Who may pass the not banned guard'],
+    ['integration/remote-tax-calculator.adapter.spec.ts', 'The remote tax calculator'],
+    ['integration/simulated-exchange-rates.adapter.spec.ts', 'The simulated exchange rates'],
+    ['integration/in-memory-search-invoices-reader.repository.spec.ts', 'The reader of search invoices'],
+  ])('names what %s holds in words, never by its class', (file, title) => {
+    expect(read(root, `${BILLING}/${file}`)).toContain(`describe('${title}'`);
   });
 });

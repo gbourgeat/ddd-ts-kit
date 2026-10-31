@@ -26,7 +26,7 @@ class Unwired{{name.pascal}} extends Remote{{name.pascal}} {
   }
 }
 
-describe('Remote{{name.pascal}}', () => {
+describe('The remote {{name.words}}', () => {
   {{#if adapter.decorated}}
   it('sends again a call the outside system failed, and answers once it succeeds', async () => {
     const fakes = createAspectFakes();
