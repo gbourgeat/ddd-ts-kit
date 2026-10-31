@@ -75,8 +75,8 @@ default:
       - node_modules/
     policy: pull
   before_script:
-{{#if pm.corepack}}
-    - corepack enable
+{{#if pm.pinned}}
+    - npm install --global "$(node -p "require('./package.json').packageManager")"
 {{/if}}
     - test -d node_modules || npm ci
 {{#if orm.prisma}}

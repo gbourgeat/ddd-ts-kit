@@ -13,7 +13,7 @@ const template = (file: string): string => pipelineAsset('template', file);
 
 /** Without the architecture specs the unit project of the source is shorter: the formatter lays it out on fewer lines. */
 /** What a template adds for one package manager, one ORM or the clients of the contract, between its tags. */
-const OPTIONAL_STEPS = /\{\{#if (?:pm\.corepack|orm\.prisma|sdk\.on)\}\}\n[\s\S]*?\{\{\/if\}\}\n/g;
+const OPTIONAL_STEPS = /\{\{#if (?:pm\.pinned|orm\.prisma|sdk\.on)\}\}\n[\s\S]*?\{\{\/if\}\}\n/g;
 
 /** An opt-in job of `--ci-extras`, innermost first: the source of a pipeline is what a project gets without any. */
 const EXTRA_BLOCK = /\{\{#if extras\.\w+\}\}\n(?:(?!\{\{#if)[\s\S])*?\{\{\/if\}\}\n/g;
@@ -55,7 +55,7 @@ describe('pipeline templates', () => {
     expect(read(initProject('--package-manager', 'pnpm'), 'lefthook.yml')).toContain('\noutput:\n  - failure\n');
   });
 
-  it('the setup action of the GitHub pipeline is the source, plus the step that asks corepack for pnpm and the one that generates the Prisma client', () => {
+  it('the setup action of the GitHub pipeline is the source, plus the step that installs pnpm and the one that generates the Prisma client', () => {
     expect(template('github/actions/setup/action.yml.tpl').replaceAll(OPTIONAL_STEPS, '')).toBe(
       source('github/actions/setup/action.yml'),
     );
@@ -77,7 +77,7 @@ describe('pipeline templates', () => {
     );
   });
 
-  it('the GitLab pipeline differs only by the architecture report, which the checker now writes itself, by the line that asks corepack for pnpm and by the one that generates the Prisma client', () => {
+  it('the GitLab pipeline differs only by the architecture report, which the checker now writes itself, by the line that installs pnpm and by the one that generates the Prisma client', () => {
     const expected = source('gitlab/.gitlab-ci.yml').replace(
       '    - npm run --silent ci:arch:check -- --format json > reports/arch.json || true\n    - node .gitlab/arch-to-codequality.mjs reports/arch.json reports/gl-code-quality-arch.json\n',
       '    - npm run --silent ci:arch:check -- --format gitlab > reports/gl-code-quality-arch.json\n',

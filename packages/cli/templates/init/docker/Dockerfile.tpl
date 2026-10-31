@@ -2,21 +2,21 @@
 
 FROM node:24-slim AS build
 WORKDIR /app
-{{#if pm.corepack}}
-# corepack provides the release of the package manager that package.json pins.
-RUN corepack enable
-{{/if}}
 COPY package.json package-lock.json{{#if pm.pnpm}} pnpm-workspace.yaml{{/if}} ./
+{{#if pm.pinned}}
+# npm installs the release of pnpm that package.json pins: Node 25 and later ship no corepack.
+RUN npm install --global "$(node -p "require('./package.json').packageManager")"
+{{/if}}
 RUN npm ci
 COPY . .
 RUN npm run build
 
 FROM node:24-slim AS dependencies
 WORKDIR /app
-{{#if pm.corepack}}
-RUN corepack enable
-{{/if}}
 COPY package.json package-lock.json{{#if pm.pnpm}} pnpm-workspace.yaml{{/if}} ./
+{{#if pm.pinned}}
+RUN npm install --global "$(node -p "require('./package.json').packageManager")"
+{{/if}}
 RUN npm ci --omit=dev
 
 FROM node:24-slim

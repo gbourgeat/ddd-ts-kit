@@ -59,7 +59,7 @@ function withPrismaSchemaKept(ws: Workspace, config: Config, scripts: Record<str
     : scripts;
 }
 
-/** corepack reads `packageManager`: an existing project that pins another release keeps it, and is told. */
+/** pnpm reads `packageManager`: an existing project that pins another release keeps it, and is told. */
 function pinPackageManager(ws: Workspace, manifest: Record<string, unknown>, { config, force }: ManifestRequest): void {
   const pinned = PINNED_PACKAGE_MANAGERS[config.stack.packageManager];
 

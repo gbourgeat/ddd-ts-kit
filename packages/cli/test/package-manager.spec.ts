@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { inDialect } from '../src/package-manager/in-dialect';
+import { PINNED_PACKAGE_MANAGERS } from '../src/package-manager/pinned-package-managers';
 import { cli, exists, read } from './helpers';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
@@ -111,22 +112,28 @@ describe('init --package-manager', () => {
       expect(read(root, '.claude/settings.json')).toContain(`Bash(${run} verify)`);
 
       for (const text of manager === 'npm' ? [] : everything) {
-        expect(text).not.toMatch(/(?<![\w@/.-])(npm (run|ci|test|install|start)|npx)\b/);
+        expect(text).not.toMatch(/(?<![\w@/.-])(npm (run|ci|test|install(?! --global)|start)|npx)\b/);
         expect(text).not.toContain('package-lock.json');
       }
     },
   );
 
-  it('gives pnpm the release corepack provides, in package.json, in the pipelines and in the image; npm comes with Node', () => {
+  it('installs pnpm by npm at the release package.json pins, in the pipelines and in the image, and asks corepack for nothing', () => {
     const npm = initProject('--package-manager', 'npm', '--ci', 'both');
     const pnpm = initProject('--package-manager', 'pnpm', '--ci', 'both');
+    const line = 'npm install --global "$(node -p "require(\'./package.json\').packageManager")"';
 
     expect(readJson(npm, 'package.json')).not.toHaveProperty('packageManager');
+    expect(readJson(pnpm, 'package.json')).toHaveProperty('packageManager', PINNED_PACKAGE_MANAGERS.pnpm);
 
     for (const file of ['.github/actions/setup/action.yml', '.gitlab-ci.yml', 'Dockerfile']) {
       expect(read(npm, file), file).not.toContain('corepack');
-      expect(read(pnpm, file), file).toContain('corepack enable');
+      expect(read(npm, file), file).not.toContain('npm install --global');
+      expect(read(pnpm, file), file).not.toContain('corepack enable');
+      expect(read(pnpm, file), file).toContain(line);
     }
+
+    expect(read(pnpm, 'Dockerfile').split(line)).toHaveLength(3);
   });
 
   it('tells pnpm that no dependency runs a build script unless allowed by name, as under npm: without it pnpm refuses to install', () => {
