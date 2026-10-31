@@ -6,6 +6,31 @@ import { defineRoute, executeRoute, formDocumentsOf, formRoutes, type Route } fr
 import { as, bookingForm } from './support/booking';
 
 describe('the edges of a form', () => {
+  it('is written for the documentation in the order of the operations, whatever the order of the routes', async () => {
+    const formNamed = (operationId: string): Route =>
+      defineRoute(
+        {
+          method: 'POST',
+          path: `/${operationId}`,
+          operationId,
+          summary: operationId,
+          request: { body: zodSchema(z.object({ note: z.string() })) },
+          responses: { 204: { description: 'ok' } },
+          security: false,
+          form: {},
+        },
+        () => ({ status: 204 }),
+      );
+
+    const documents = await formDocumentsOf([
+      formNamed('cancelVisit'),
+      formNamed('amendVisit'),
+      formNamed('bookVisit'),
+    ]);
+
+    expect(documents.map((document) => document.operation)).toEqual(['amendVisit', 'bookVisit', 'cancelVisit']);
+  });
+
   it('takes options, a widget and a format from its hints, and a condition on several values', async () => {
     const route = defineRoute(
       {
