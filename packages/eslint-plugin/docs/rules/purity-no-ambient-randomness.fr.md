@@ -1,5 +1,5 @@
 [English](purity-no-ambient-randomness.md) · **Français**
-<!-- translation-of: purity-no-ambient-randomness.md sha256:e417e1fca369697c -->
+<!-- translation-of: purity-no-ambient-randomness.md sha256:840bfb0683120f9d -->
 
 # ddd-ts-kit/purity-no-ambient-randomness
 
@@ -40,6 +40,7 @@ Aucune.
 
 - Une enveloppe autour de l'accès interdit (un auxiliaire de la plateforme qui appelle `Date.now()`) n'est pas vue ici ; les règles de couche arrêtent l'import de cet auxiliaire.
 - Une déclaration locale qui masque la globale (`const process = ...`) n'est pas signalée.
+- Un membre pris par déstructuration (`const { env } = process`, `const { now } = Date`) et un alias `const` de la globale (`const clock = Date; clock.now()`) sont lus ; un alias par un `let`, un paramètre ou une propriété n'est pas suivi.
 
 ## Avec le checker de la CLI
 

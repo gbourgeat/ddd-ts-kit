@@ -13,6 +13,8 @@ An expected business failure has a name and a stable code that presentation maps
 ## Reported
 
 - `throw new Error(...)` and `throw Error(...)`
+- the other errors of the language: `TypeError`, `RangeError`, `ReferenceError`, `SyntaxError`, `EvalError`, `URIError`, `AggregateError`
+- one of them thrown through a `const` (`const failure = new Error('x'); throw failure;`) or built under a `const` alias of its class (`const Failure = Error`)
 
 The message names the step that writes the refusal in the form of the project: `generate error <context> <Refusal> for<Subject>` under `"stack.refusals": "named"`, `generate error <context> <Concept> <refusal>` under `factories` and `classes`.
 
@@ -36,7 +38,7 @@ None.
 
 ## Limits
 
-- Only the global `Error` is reported: `TypeError` and friends are left to review.
+- An error built under a `let`, passed as a parameter or returned by a function before it is thrown is not followed.
 - A generic error returned in a `Result` (`err(new Error())`) or rejected (`Promise.reject`) is not seen.
 
 ## With the CLI checker

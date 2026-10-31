@@ -1,5 +1,5 @@
 [English](test-no-mocks.md) · **Français**
-<!-- translation-of: test-no-mocks.md sha256:b60a08dea89be978 -->
+<!-- translation-of: test-no-mocks.md sha256:27b7e66c3cea9b14 -->
 
 # ddd-ts-kit/test-no-mocks
 
@@ -44,6 +44,7 @@ Aucune.
 ## Limites
 
 - Les tests hors d'un contexte (`test/e2e`) ne sont pas jugés.
+- `vi` et `jest` sont lus sous un alias d'import (`import { vi as mocks } from 'vitest'`) et un alias `const` ; un lanceur passé en paramètre n'est pas suivi.
 
 ## Avec le checker de la CLI
 

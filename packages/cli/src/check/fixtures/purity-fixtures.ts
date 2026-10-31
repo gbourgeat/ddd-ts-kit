@@ -81,4 +81,30 @@ export const PURITY_FIXTURES: readonly Fixture[] = [
       ),
     ),
   },
+  {
+    ruleId: 'purity/no-environment',
+    name: 'process.env destructured in a handler',
+    expect: { file: HANDLER },
+    files: project(
+      handler(
+        "export class IssueInvoiceHandler {\n  currency(): string {\n    const { env } = process;\n\n    return env['CURRENCY'] ?? '';\n  }\n}\n",
+      ),
+    ),
+  },
+  {
+    ruleId: 'purity/no-system-clock',
+    name: 'Date.now destructured in a handler',
+    expect: { file: HANDLER },
+    files: project(
+      handler(
+        'export class IssueInvoiceHandler {\n  stamp(): number {\n    const { now } = Date;\n\n    return now();\n  }\n}\n',
+      ),
+    ),
+  },
+  {
+    ruleId: 'purity/no-ambient-randomness',
+    name: 'Math.random destructured in an aggregate',
+    expect: { file: AGGREGATE },
+    files: project(aggregate('const { random } = Math;\nexport class Invoice {\n  readonly draw = random();\n}\n')),
+  },
 ];

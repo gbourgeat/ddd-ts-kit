@@ -8,6 +8,10 @@ export const purityNoSystemClock = definePurityRule({
     { pattern: /(?<![\w$.])new\s+Date\s*(?:\(\s*\)|(?![\s(\w$.<]))/g, what: 'new Date() without argument' },
     { pattern: /(?<![\w$.])Date\s*\.\s*now(?![\w$])/g, what: 'Date.now()' },
     { pattern: /(?<![\w$.])performance\s*\.\s*now(?![\w$])/g, what: 'performance.now()' },
+    {
+      pattern: /\{[^{}]*\bnow\b[^{}]*\}\s*=\s*(?:Date|performance)(?![\w$.])/g,
+      what: 'now, destructured from the clock',
+    },
   ],
   modules: [],
   fix: 'Receive the instant as a parameter in the domain, and take it from the Clock port (`this.clock.now()`) in a handler, so that a test fixes time with FixedClock.',

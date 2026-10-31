@@ -8,7 +8,12 @@ export const purityNoEnvironment = definePurityRule({
       pattern: /(?<![\w$.])process\s*\.\s*(?:env|argv|cwd|exit|stdout|stderr|stdin)(?![\w$])/g,
       what: 'The process object',
     },
+    {
+      pattern: /\{[^{}]*\b(?:env|argv|cwd|exit|stdout|stderr|stdin)\b[^{}]*\}\s*=\s*process(?![\w$.])/g,
+      what: 'The process object, destructured',
+    },
     { pattern: /(?<![\w$.])console\s*\.\s*[a-zA-Z]+/g, what: 'console' },
+    { pattern: /\{[^{}]*\}\s*=\s*console(?![\w$.])/g, what: 'console, destructured' },
     { pattern: /(?<![\w$.])fetch\s*\(/g, what: 'fetch()' },
     { pattern: /(?<![\w$.])new\s+(?:XMLHttpRequest|WebSocket|EventSource)(?![\w$])/g, what: 'A network client' },
   ],

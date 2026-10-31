@@ -11,6 +11,11 @@ export const purityNoAmbientRandomness = definePurityRule({
       what: 'The random source of crypto',
     },
     { pattern: /(?<![\w$.])randomUUID\s*\(/g, what: 'randomUUID()' },
+    {
+      pattern:
+        /\{[^{}]*\b(?:random|randomUUID|getRandomValues|randomBytes|randomInt)\b[^{}]*\}\s*=\s*(?:Math|crypto)(?![\w$.])/g,
+      what: 'A random source, destructured',
+    },
   ],
   modules: [
     'uuid',

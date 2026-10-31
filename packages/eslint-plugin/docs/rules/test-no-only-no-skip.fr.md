@@ -1,5 +1,5 @@
 [English](test-no-only-no-skip.md) · **Français**
-<!-- translation-of: test-no-only-no-skip.md sha256:f7350957fb15faab -->
+<!-- translation-of: test-no-only-no-skip.md sha256:0f9a49cfc5f76ea6 -->
 
 # ddd-ts-kit/test-no-only-no-skip
 
@@ -48,7 +48,7 @@ Aucune.
 
 ## Limites
 
-- Une fonction du lanceur renommée (`const only = it.only`) ou tirée de `it.extend(...)` n'est pas suivie.
+- Le lanceur est lu sous un alias d'import (`import { it as scenario } from 'vitest'`) et un alias `const` (`const scenario = it`) ; un modificateur pris à part (`const only = it.only`) ou un lanceur tiré de `it.extend(...)` n'est pas suivi.
 - Une condition constante sans être un littéral (`const NEVER = false; it.skipIf(!NEVER)`) est lue comme une condition.
 
 ## Avec le checker de la CLI
