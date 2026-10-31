@@ -6,6 +6,9 @@ import type { ContractRunner } from './contract-runner';
 import { ContractSuite } from './contract-suite';
 import { failureOf } from './failure-of';
 
+/** What a JSON column holds, as a row type states it: an object, a list, a string, a number or a boolean; SQL NULL is no value. */
+export type JsonColumnValue = object | string | number | boolean;
+
 export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id extends string | number> {
   readonly name: string;
   /** A fresh, empty repository; called before each test. */
@@ -24,6 +27,11 @@ export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id exten
    * case of the unique value is not run.
    */
   readonly createAggregateTaking?: (holder: A) => A;
+  /**
+   * A new valid aggregate with an id of its own that keeps `value` in a JSON column (`jsonb`). Optional: without
+   * it, the case of the JSON column is not run. The contract hands it an object, a list and a string.
+   */
+  readonly createAggregateKeepingJson?: (value: JsonColumnValue) => A;
   idOf(aggregate: A): Id;
   /** A plain-data view of the business state (not of `version`), compared with `toEqual`. */
   stateOf(aggregate: A): unknown;
@@ -54,6 +62,7 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
     this.ignoresWhatWasNotSaved();
     this.refusesToOverwriteAnUnseenChange();
     this.refusesATakenUniqueValue();
+    this.keepsAnyJsonValue();
   }
 
   private findsWhatWasSaved(): void {
@@ -196,6 +205,27 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
         this.expect(codeOf(failure)).toBe('CONFLICT');
         this.expect(await this.subject.findById(this.options.idOf(taker))).toBe(undefined);
         this.expect(this.options.stateOf(await this.reload(holder))).toEqual(this.options.stateOf(holder));
+      },
+    );
+  }
+
+  private keepsAnyJsonValue(): void {
+    const { createAggregateKeepingJson } = this.options;
+
+    if (createAggregateKeepingJson === undefined) {
+      return;
+    }
+
+    this.it(
+      'keeps an object, a list and a string in a JSON column, and reads each back as it was written',
+      async () => {
+        for (const value of [{ a: 1, b: [2, { c: 3 }] }, [1, { a: 2 }, 'x'], 'plain']) {
+          const aggregate = createAggregateKeepingJson(value);
+
+          await this.subject.save(aggregate);
+
+          this.expect(this.options.stateOf(await this.reload(aggregate))).toEqual(this.options.stateOf(aggregate));
+        }
       },
     );
   }

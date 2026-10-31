@@ -211,12 +211,12 @@ describe('guides, persistence, a jsonb column on Knex', () => {
     const mapper = walk(root).find((file) => file.endsWith('order.mapper.ts')) ?? '';
 
     expect(read(root, mapper)).toContain(
-      'A `jsonb` column holding an array or a string takes `JSON.stringify(value)` on Knex',
+      'A `jsonb` column holding an array or a string takes `jsonColumn(value)` of `@ddd-ts-kit/knex` on Knex',
     );
 
     for (const file of ['docs/tools/persistence.md', 'docs/tools/persistence.fr.md']) {
       expect(page(file), file).toContain('22P02');
-      expect(page(file), file).toContain('`JSON.stringify(value)`');
+      expect(page(file), file).toContain('`jsonColumn(value)`');
     }
   });
 });

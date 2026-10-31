@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1c144cd7c3e0fb65 -->
+<!-- translation-of: README.md sha256:d577cd6cc05f6dfa -->
 
 # @ddd-ts-kit/knex
 
@@ -145,6 +145,12 @@ que la base servait, ou n'en gardent aucun et sont refusés par les consommateur
 *tenant* si on l'omet), et
 `new KnexOutboxStore(context, { schema: 'messaging', tenant: true })` l'écrit. Une table qui a la
 colonne est relue dans les deux cas.
+
+Une colonne `jsonb` du projet prend `jsonColumn(value)` : `pg` écrit un tableau JavaScript comme un littéral de
+tableau PostgreSQL et une chaîne telle quelle, donc une liste ou une chaîne échoue avec `22P02` là où Drizzle,
+Prisma et TypeORM la sérialisent. `jsonColumn` répond le texte JSON de n'importe quelle valeur (un objet, une
+liste, une chaîne ; `null` pour une valeur absente), si bien que la ligne de mapper
+`details: jsonColumn(state.details)` donne le même résultat sur les quatre ORM.
 
 Un schéma par contexte délimité : `schemaNameOf('order-management')` donne `order_management`, à
 passer à `knex.schema.createSchemaIfNotExists`, à `knex.schema.withSchema` et à

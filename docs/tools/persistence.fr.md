@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:dc431dd2959b4fe0 -->
+<!-- translation-of: persistence.md sha256:6f44d80439880d75 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -515,8 +515,9 @@ la ligne d'usage de `--help` ne le mentionne pas.
 - **Knex.** Le contenu (payload) est sérialisé avec `JSON.stringify` ; MariaDB le rendrait sous
   forme de texte. Il en va de même d'une colonne `jsonb` du projet : `pg` écrit un tableau JavaScript comme un
   littéral de tableau PostgreSQL et une chaîne telle quelle, donc un tableau ou une chaîne échoue avec
-  `22P02 invalid input syntax for type json` là où Drizzle, Prisma et TypeORM le sérialisent. Le mapper écrit
-  `JSON.stringify(value)` pour une telle valeur (un objet passe dans les deux cas).
+  `22P02 invalid input syntax for type json` là où Drizzle, Prisma et TypeORM le sérialisent. `jsonColumn(value)` de `@ddd-ts-kit/knex`
+  répond le texte JSON que la colonne lit, quelle que soit la valeur : le mapper l'écrit pour une telle valeur
+  (un objet passe dans les deux cas).
 - **Drizzle.** Ne nommez jamais une table dans du SQL brut : interpolez l'objet de table pour que
   la qualification par le schéma suive (*skill* persistence). Le *package* d'audit note que
   Drizzle imprime les paramètres d'une instruction échouée dans son message d'erreur : journalisez

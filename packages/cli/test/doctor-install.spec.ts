@@ -3,6 +3,7 @@ import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { VERSION } from '../src/version';
 import { cli, tempDir, write } from './helpers';
+import { installHooks } from './support/install-hooks';
 import { installKit } from './support/install-kit';
 import { jsonAt } from './support/json-at';
 
@@ -12,6 +13,7 @@ function project(manager: 'npm' | 'pnpm'): string {
   const directory = path.join(tempDir(`doctor-install-${manager}`), 'shop');
 
   cli(directory, 'init', '--context', 'billing:core', '--package-manager', manager);
+  installHooks(directory);
 
   return directory;
 }

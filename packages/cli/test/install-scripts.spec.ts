@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from './helpers';
 import { initProject } from './support/init-project';
+import { installHooks } from './support/install-hooks';
 import { installKit } from './support/install-kit';
 import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
@@ -133,6 +134,7 @@ function installedStack(manager: 'npm' | 'pnpm'): string {
 
   cli(root, 'init', '--package-manager', manager, ...STACK);
   installKit(root);
+  installHooks(root);
 
   if (manager === 'pnpm') {
     const store = 'node_modules/.pnpm/prisma@7.10.1/node_modules';
@@ -236,6 +238,7 @@ describe('doctor, on the install scripts the stack needs', () => {
 
     cli(root, 'init', ...NPM, ...STACK);
     installKit(root);
+    installHooks(root);
     setManifest(root, (manifest) => ({ ...manifest, allowScripts: undefined }));
 
     expect(findingsOf(root)).toEqual([]);
