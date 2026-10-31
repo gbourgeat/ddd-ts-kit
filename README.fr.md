@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2230ff6e17f1553e -->
+<!-- translation-of: README.md sha256:4c9e831518c63821 -->
 
 <div align="center">
 
@@ -113,7 +113,8 @@ l'`AGENTS.md` et les règles par couche qu'écrit l'amorçage guident tout de m�
 Suivez ces étapes dans l'ordre : c'est le chemin pris en charge, et les outils sont faits pour
 le tenir. Chaque étape est une skill du plugin (`/ddd-ts-kit:<skill>`), ou une commande, et
 laisse un fichier que la suivante lit. `/ddd-ts-kit:start` conduit les étapes 1 à 7 une à une,
-et `npx ddd-ts-kit status` dit à tout moment quelle étape vient ensuite.
+et, une fois le projet écrit par `init` (étape 5), `npx ddd-ts-kit status` dit à tout moment quelle
+étape vient ensuite : avant, `/ddd-ts-kit:start` lit `docs/architecture/plan.md`.
 
 | # | Étape | Skill ou commande | Produit |
 |---|---|---|---|

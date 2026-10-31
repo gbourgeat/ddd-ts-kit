@@ -105,8 +105,9 @@ the `AGENTS.md` and the rules by layer that the bootstrap writes still guide any
 
 Follow these steps in order: it is the supported path, and the tools are built to hold it. Each
 step is a skill of the plugin (`/ddd-ts-kit:<skill>`), or a command, and leaves a file the next
-one reads. `/ddd-ts-kit:start` conducts steps 1 to 7 one at a time, and `npx ddd-ts-kit status`
-says at any time which step is next.
+one reads. `/ddd-ts-kit:start` conducts steps 1 to 7 one at a time, and, once `init` has written the
+project (step 5), `npx ddd-ts-kit status` says at any time which step is next: before that,
+`/ddd-ts-kit:start` reads `docs/architecture/plan.md`.
 
 | # | Step | Skill or command | Produces |
 |---|---|---|---|

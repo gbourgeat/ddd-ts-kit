@@ -165,3 +165,21 @@ describe('guides, deploy-and-rollback, on the observability a generated project 
     }
   });
 });
+
+describe('guides, the README, on the command that reads the plan', () => {
+  it('says status answers once init wrote the project, and the command refuses before it', () => {
+    const empty = tempDir('guides-status');
+    const refused = cli(empty, 'status');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('No ddd-ts-kit.config.json');
+
+    expect(page('README.md').replace(/\s+/g, ' ')).toContain(
+      'once `init` has written the project (step 5), `npx ddd-ts-kit status`',
+    );
+
+    expect(page('README.fr.md').replace(/\s+/g, ' ')).toContain(
+      'une fois le projet écrit par `init` (étape 5), `npx ddd-ts-kit status`',
+    );
+  });
+});
