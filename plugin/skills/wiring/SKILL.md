@@ -25,6 +25,7 @@ first:
 - under `stack.http: nest`, read [nest.md](nest.md) first: the rest of Nest's request pipeline
   (controllers, guards, pipes, exception filters, interceptors) stays out of every context
   (`nest/no-parallel-pipeline`), and the file says where each tool of Nest goes;
+- for a container the kit does not wire, read [explicit.md](explicit.md) first;
 - under `stack.dependencies: listed`, or when `declarations/barrel-current` reports declarations
   an earlier version wrote, read [earlier-layouts.md](earlier-layouts.md) first.
 
@@ -119,15 +120,6 @@ Controllers, guards, request mappers and serializers are declared classes too (`
 context exports them and registers what each constructor takes, and the composition root mounts
 every controller with `controllerRoutes(resolve(DeclaredEdges).of('controller'), { resolve })`.
 No file lists the routes of a declared context.
-
-## A container the kit does not wire
-
-InversifyJS and Awilix are not values of `stack.di`. When a team insists on one, read "Using
-InversifyJS or Awilix anyway" in `docs/tools/dependency-injection.md` first: `--di manual`, the
-container in `<context>.module.ts` only, never in `domain/` or `application/`, every adapter still
-through `platform.adapter`. `generate` keeps writing `new`: move what it wrote into the container
-each time, since neither the compiler nor `check` reports the second instance. Without such a
-wish, do not propose one.
 
 ## Tests
 
