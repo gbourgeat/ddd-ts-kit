@@ -173,7 +173,9 @@ reports each line as a note, never edits `docs/`. A worker's `verify-slice` and 
 `npx ddd-ts-kit cited --removed-since <base>` name what a slice removes that another row's
 design still cites: correct those documents at the merge.
 Launch the `context-builder` agents of different contexts in one message so they run
-together, without the isolation option (the worktree already exists). In one context, launch
+together, without the isolation option (the worktree already exists): each runs every command from
+its worktree (`cd <worktree> && ...`), as its briefing says, since the guard reads a command against
+the scope of the worktree it runs in. In one context, launch
 the next row's agent once the previous one reported. The guard warns each `context-builder`
 twice before its turn limit (finish the slice under way, then stop, commit what passed and
 report) and records its runs in its worktree; a session start names the workers to resume.

@@ -3,8 +3,8 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
-  appendFileSync,
   closeSync,
+  constants,
   existsSync,
   fstatSync,
   globSync,
@@ -13,13 +13,15 @@ import {
   openSync,
   readdirSync,
   readFileSync,
+  readlinkSync,
   realpathSync,
   rmSync,
   statSync,
   writeFileSync,
+  writeSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { linkedFolder, removeKitFile, writeKitFile } from './kit-files.mjs';
 
 const CONFIG = 'ddd-ts-kit.config.json';
@@ -32,6 +34,8 @@ const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
 // The worktree of a story one session takes to its pull request; its code waits for the build gate.
 const STORY_SCOPE = '.ddd-ts-kit/story.json';
+// The names `find` may find a scope file by: the files and the kit's folder that holds them.
+const SCOPE_NAMES = ['story.json', 'worker.json', '.ddd-ts-kit'];
 // Where the worktrees of a project live, inside it, ignored by git and by every tool.
 const WORKTREES_DIR = '.worktrees';
 // How long the guard keeps what `stories --json` said before reading it again.
@@ -152,7 +156,7 @@ const JUDGE_AGENT = 'acceptance-judge';
 // What a command may do with the lock or a verdict outside the judge: read it, or run the kit
 // (`ddd-ts-kit` directly, or `npx ddd-ts-kit` seen through kitInvocations); `npx`/`pnpm` of anything
 // else can write, and `git` reads only through the subcommands of GIT_READS.
-const READING_PROGRAMS = new Set(['cat', 'ls', 'head', 'tail', 'grep', 'rg', 'wc', 'diff', 'jq', 'ddd-ts-kit']);
+const READING_PROGRAMS = new Set(['cat', 'ls', 'head', 'tail', 'grep', 'wc', 'diff', 'jq', 'ddd-ts-kit']);
 const GIT_READS = new Set(['log', 'show', 'diff', 'status', 'add', 'commit', 'ls-files']);
 // What touches no file: a command line moves to a worktree or checks a path before it reads or versions one.
 const NEUTRAL_PROGRAMS = new Set(['cd', 'pushd', 'popd', 'pwd', 'true', 'test', '[']);
@@ -419,6 +423,32 @@ const GIT_READING_FORMS = {
   remote: [undefined, 'show', 'get-url'],
   tag: [undefined],
 };
+// What a worker's git may name of the refs: the options of push, fetch, tag, checkout and switch
+// that take a value, those of push that name other refs than its branch, those of tag that list,
+// those of checkout and switch that create a branch or leave it.
+const PUSH_VALUED = ['-o', '--push-option', '--repo', '--receive-pack', '--exec'];
+const PUSH_OTHER_REFS =
+  /^--(?:force|force-with-lease|force-if-includes|delete|all|branches|mirror|tags|follow-tags|prune)(?:=|$)/;
+const FETCH_VALUED = [
+  '-o',
+  '--server-option',
+  '--depth',
+  '--deepen',
+  '-j',
+  '--jobs',
+  '--upload-pack',
+  '--refmap',
+  '--filter',
+  '--negotiation-tip',
+];
+const TAG_VALUED = ['-m', '--message', '-F', '--file', '-u', '--local-user', '--cleanup'];
+const TAG_LISTS = /^(?:-l|--list|-v|--verify|--contains|--no-contains|--points-at|--merged|--no-merged)(?:=|$)/;
+const SWITCH_VALUED = ['-b', '-B', '-c', '-C', '--create', '--force-create', '--orphan', '--conflict'];
+const CHECKOUT_PATHS = /^(?:--ours|--theirs|-p|--patch|--pathspec-from-file(?:=.*)?)$/;
+const SWITCH_CREATES = {
+  checkout: /^(?:-[a-zA-Z]*[bB]|--orphan|--detach)$/,
+  switch: /^(?:-[a-zA-Z]*[cCd]|--create|--force-create|--orphan|--detach)$/,
+};
 // The options of `git branch` that delete, move, copy or reset a branch, and those that change its settings.
 const BRANCH_DELETES = ['-d', '-D', '--delete'];
 const BRANCH_MOVES = ['-m', '-M', '--move', '-c', '-C', '--copy'];
@@ -529,6 +559,63 @@ const PATH_COMMANDS = {
   truncate: { valued: ['-s', '-r', '--size', '--reference'], changes: 'all' },
 };
 
+// The commands of the kit that write no file: what it lists, describes, explains and reports, its
+// checks (`check` without `--baseline`, `lint` without `--fix`, `docs --check` without
+// `--stored-events`, `affected` without `--run`), the acceptance read without `--lock`, a briefing,
+// the place of a worker or a generator read without running it.
+const KIT_READS = new Set([
+  'list',
+  'describe',
+  'explain',
+  'status',
+  'stories',
+  'story',
+  'story-check',
+  'todo',
+  'check',
+  'lint',
+  'rules',
+  'docs',
+  'verify-merge',
+  'cited',
+  'affected',
+]);
+// The options by which a check of the kit writes: the baseline, a fix, the record of the stored events, a script run.
+const KIT_WRITING_OPTIONS = /^--(?:baseline|fix|stored-events|run)(?:=|$)/;
+
+// The variables of the environment by which git runs a program or reads settings given to it.
+const GIT_PROGRAM_VARIABLES =
+  /^GIT_(?:EXTERNAL_DIFF|CONFIG\w*|PAGER|EDITOR|SEQUENCE_EDITOR|SSH\w*|ASKPASS|PROXY_COMMAND|EXEC_PATH)=/;
+// The options of a package runner or of node that take a value: that value launches nothing.
+const LAUNCHER_VALUED = [
+  '-r',
+  '--require',
+  '--import',
+  '--loader',
+  '-p',
+  '--package',
+  '-c',
+  '--call',
+  '-C',
+  '--dir',
+  '--prefix',
+  '--filter',
+  '-w',
+  '--workspace',
+];
+// The folders of the programs of the system: a reader named by its path there is that reader.
+const SYSTEM_PROGRAMS = ['/bin', '/usr/bin', '/sbin', '/usr/sbin'];
+const WINDOWS = process.platform === 'win32';
+// The variables of lefthook that leave hooks or their commands out.
+const HOOK_SELECTION = /^LEFTHOOK_(?:EXCLUDE|SKIP)=/;
+// The most of a file of state, a scope file or a plan the guard reads: past it, it is not read.
+const STATE_BYTES = 16 * 1024 * 1024;
+// The agents of the plugin that only read: they write their findings in their answer.
+const READ_ONLY_AGENTS = ['architecture-reviewer', 'domain-explorer', 'story-verifier'];
+// How the record of a trial is appended: created if missing, never through a link under its name.
+const RECORD_APPEND = constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | constants.O_NOFOLLOW;
+// The variables that move where the shell finds a path, a directory or a program, or git its repository.
+const PLACE_VARIABLES = /^(?:TMPDIR|CDPATH|HOME|GIT_DIR|GIT_WORK_TREE|PATH)=/;
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -602,7 +689,7 @@ async function preWrite(input) {
     await countBuilderCall(input, first && findProject(dirname(first.file)));
   }
   const verdict =
-    strayFileVerdict(input) ?? writesVerdict(judgedWrites(writesOf(input)), input, () => pendingOfWriter(input));
+    strayFileVerdict(input) ?? writesVerdict(judgedWrites(writesOf(input), input), input, () => pendingOfWriter(input));
   if (verdict?.decision !== 'deny') {
     noteCrossings(input);
   }
@@ -657,9 +744,9 @@ function pendingOfWriter(input) {
 }
 
 // The writes of a call in a project the guard judges, each with its project.
-function judgedWrites(writes) {
+function judgedWrites(writes, input) {
   return writes
-    .map((written) => ({ ...written, project: findProject(dirname(written.file)) }))
+    .map((written) => ({ ...written, project: withPinnedMode(findProject(dirname(written.file)), input) }))
     .filter(({ project }) => project && project.mode !== 'off');
 }
 
@@ -692,7 +779,8 @@ function refusalOf(writes, input, check) {
 // read without it) are judged before the write; the others are left to the check after it, and said.
 function cliVerdict(writes, input) {
   const judged = writes.filter(
-    ({ project, file }) => /\.(ts|mts|cts)$/.test(file) || insideContexts(project, projectPath(project, file)),
+    ({ project, file, deleted }) =>
+      !deleted && (/\.(ts|mts|cts)$/.test(file) || insideContexts(project, projectPath(project, file))),
   );
   const verdict = refusalOf(judged.slice(0, CLI_WRITE_FILES), input, cliRefusal);
   if (!verdict && judged.length > CLI_WRITE_FILES) {
@@ -701,12 +789,19 @@ function cliVerdict(writes, input) {
   return verdict;
 }
 
-function quickRefusal({ project, file, written, replaced }, input) {
+// A file a patch removes is judged as `rm` judges it: the baseline and the scope of a worker hold it.
+function quickRefusal({ project, file, written, replaced, deleted }, input) {
+  if (deleted) {
+    return baselineFileReason(project, file) ?? workerScopeReason(project, file, input);
+  }
   return (
     baselineFileReason(project, file) ??
+    scopeFileReason(project, { place: file }, input) ??
     acceptanceReason(project, input, { file, written, replaced }) ??
     generatedFileReason(project, file) ??
-    (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
+    (isUnwrapping(project, file, input)
+      ? undefined
+      : (workerScopeReason(project, file, input) ?? linkReason(project, file, input))) ??
     strayWriteReason(project, input) ??
     testWriterScopeReason(project, file, input) ??
     worktreeCodeReason(project, file) ??
@@ -718,7 +813,10 @@ function cliRefusal({ project, file, written, replaced }, input) {
   return storyCodeReason(project, file) ?? dependencyReason(project, { file, written, replaced }, input);
 }
 
-function deviationOf({ project, file, written, replaced }) {
+function deviationOf({ project, file, written, replaced, deleted }) {
+  if (deleted) {
+    return undefined;
+  }
   const deviation = governedFileReason(project, file) ?? escapeReason(written, replaced);
   return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
@@ -739,14 +837,18 @@ async function preBash(input) {
 }
 
 async function shellVerdict(input, command, cwd) {
-  // A leading `cd` out of every project leaves the command to be judged against the session's project.
-  const project = findProject(commandDirectory(command, cwd)) ?? findProject(cwd);
+  shell = await import('./shell-commands.mjs');
+  // A leading `cd` out of every project leaves the command to be judged against the session's project;
+  // a worker whose session stands in no project is judged in the project its command names.
+  const project = withPinnedMode(
+    findProject(commandDirectory(command, cwd)) ?? findProject(cwd) ?? namedProject(input, command, cwd),
+    input,
+  );
   await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
     return undefined;
   }
   const decision = project.mode === 'advise' ? 'ask' : 'deny';
-  shell = await import('./shell-commands.mjs');
   const commands = readCommands(project, command, cwd);
   if (!commands) {
     return isHeldToAWorktree(project, input) ? { decision, reason: UNREADABLE_COMMAND } : undefined;
@@ -760,6 +862,28 @@ async function shellVerdict(input, command, cwd) {
     ? workerCommandReason(project, input, { context, command, commands })
     : (builderStrayReason(project, input, commands) ?? sessionShellReason(input, commands));
   return refusal ? { decision, reason: refusal } : undefined;
+}
+
+// The project of the first place a worker's command names (a directory it moves to, a file it writes):
+// a session opened above a project still holds its worker to that project.
+function namedProject(input, command, cwd) {
+  if (!isWorkerAgent(input)) {
+    return undefined;
+  }
+  let commands;
+  try {
+    commands = shell.simpleCommands(command, cwd);
+  } catch {
+    return undefined;
+  }
+  const places = commands.flatMap((simple) => [
+    ...(['cd', 'pushd'].includes(shell.commandName(simple.words))
+      ? [{ place: shell.placeOf(simple.words[1] ?? shell.UNKNOWN, simple.directory) }]
+      : []),
+    ...writtenTargets(simple),
+    ...changedPaths(simple),
+  ]);
+  return places.map(({ place }) => place && findProject(place)).find(Boolean);
 }
 
 // The commands of a line and the places they write, read once here: the rules that follow read the
@@ -779,6 +903,10 @@ function readCommands(project, command, cwd) {
 // held to the paths of a test. What a redirection, `sed -i` or `tee` types in a file is held as the
 // editor tools are; what a command only moves, deletes or restores is not.
 function sessionShellReason(input, commands) {
+  const reading = readOnlyReason(input, commands);
+  if (reading) {
+    return reading;
+  }
   for (const command of commands) {
     const typed = writtenTargets(command).map((target) => ({ ...target, typed: true }));
     for (const target of [...typed, ...changedPaths(command)]) {
@@ -791,7 +919,27 @@ function sessionShellReason(input, commands) {
   return undefined;
 }
 
-function sessionPlaceReason(input, { place, by, typed }) {
+// The reviewer, the explorer and the verifier of the plugin change no file of a project, by any tool:
+// nor its work tree by git, whose index alone they may stage.
+function readOnlyReason(input, commands) {
+  if (!READ_ONLY_AGENTS.some((name) => String(input.agent_type ?? '').includes(name))) {
+    return undefined;
+  }
+  for (const command of commands) {
+    const written = [...writtenTargets(command), ...changedPaths(command)].find(
+      ({ place }) => place !== undefined && findProject(place) !== undefined,
+    );
+    const { subcommand, tail } = gitInvocation(command.words.slice(1), command.directory);
+    const git = shell.commandName(command.words) === 'git' && !readsAnywhere(subcommand, tail) && subcommand !== 'add';
+    if (written || git) {
+      const by = written ? `${written.by} changes ${written.place}` : `\`git ${subcommand}\` changes the work tree`;
+      return `A read-only agent changes no file of a project: ${by}. Read with \`git show <ref>:<path>\` and \`git diff\`, and write what you find in your answer. ${FREE_OUTPUT}`;
+    }
+  }
+  return undefined;
+}
+
+function sessionPlaceReason(input, { place, by, typed, below }) {
   const testWriter = isTestWriter(input);
   if (place === undefined) {
     return testWriter
@@ -803,6 +951,7 @@ function sessionPlaceReason(input, { place, by, typed }) {
     return undefined;
   }
   return (
+    scopeFileReason(owner, { place, below }, input) ??
     lockedRegressionReason(owner, projectPath(owner, place), input) ??
     (testWriter
       ? testWriterScopeReason(owner, place, input)
@@ -813,20 +962,32 @@ function sessionPlaceReason(input, { place, by, typed }) {
   );
 }
 
-// Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: the patch
-// fed to that command is judged the same way a write through the editor tool is. A here-document that
-// only holds the text of a patch for another command (`cat <<EOF > notes.md`) is no patch.
+// Codex applies a patch through `apply_patch` in its shell tool as well as its patch tool: each patch
+// the line holds (a here-document, an argument) is judged the same way a write through the editor tool
+// is; a patch the command does not hold (read from a file, a pipe) cannot be judged and is refused. A
+// here-document that only holds the text of a patch for another command (`cat <<EOF > notes.md`) is no patch.
 async function codexPatchVerdict(input, command, cwd) {
-  if (hostOf(input) !== 'codex' || !/^\s*\*\*\* Begin Patch/m.test(command)) {
+  if (hostOf(input) !== 'codex') {
     return undefined;
   }
   shell = await import('./shell-commands.mjs');
-  if (!shell.simpleCommands(command, cwd).some(({ words }) => shell.commandName(words) === 'apply_patch')) {
+  const project = findProject(cwd);
+  const commands = readCommands(project ?? { root: cwd }, command, cwd);
+  if (!commands?.some(({ words }) => shell.commandName(words) === 'apply_patch')) {
     return undefined;
   }
-  const start = command.indexOf('*** Begin Patch');
-  const writes = patchWrites(command.slice(start, command.indexOf('*** End Patch', start)), cwd);
-  return writesVerdict(judgedWrites(writes), input, () => undefined);
+  const patches = command.split('*** Begin Patch').slice(1);
+  if (patches.length === 0) {
+    return !project || project.mode === 'off'
+      ? undefined
+      : {
+          decision: project.mode === 'advise' ? 'ask' : 'deny',
+          reason:
+            "apply_patch is judged when the command holds the patch: give it as a here-document (`apply_patch <<'EOF'` ... `EOF`), not from a file or a pipe.",
+        };
+  }
+  const writes = patches.flatMap((patch) => patchWrites(patch.split('*** End Patch')[0], cwd));
+  return writesVerdict(judgedWrites(writes, input), input, () => undefined);
 }
 
 // A context-builder keeps the working directory of its session, so the scope of a worker is found
@@ -846,8 +1007,8 @@ function isHeldToAWorktree(project, input) {
   return isWorkerAgent(input) && (workerScope(project, input) !== undefined || hasWorkerWorktree(project.root));
 }
 
-// A redirection, a writer of the tables, code the guard cannot read, a generator of the kit, which
-// writes files too, or a line the reader could not read to its end.
+// A redirection, a writer of the tables, a generator of the kit, a line the reader could not read to
+// its end, or any program but those that read: outside its worktree a worker reads only.
 function builderWrites(commands) {
   return (
     generates(commands, []) ||
@@ -856,44 +1017,49 @@ function builderWrites(commands) {
         command.truncated ||
         writtenTargets(command).length > 0 ||
         changedPaths(command).length > 0 ||
-        runsCode(command),
+        !readsFromAnywhere(command),
     )
   );
 }
 
-// An interpreter, a shell, `source`, `make`, a package script or runner, a test runner, a program
-// named by its path: code the guard cannot read. The kit's own CLI, behind a runner or not, is
-// judged by what it is asked to do.
-function runsCode(command) {
-  const name = shell.commandName(command.words);
-  return (
-    (CODE_RUNNERS.has(name) ||
-      CODE_RUNNERS.has(name.replace(/[\d.]+$/, '')) ||
-      shell.SHELLS.has(name) ||
-      isProgramPath(command.words[0] ?? '', name)) &&
-    kitInvocations([command]).length === 0
-  );
+// A pure reader, git that reads (or versions in the worker's own worktree, which `workerGitReason`
+// decides first), or the kit asked what it knows.
+function readsFromAnywhere(command) {
+  if (shell.commandName(command.words) === 'git') {
+    const { subcommand, tail } = gitInvocation(command.words.slice(1), command.directory);
+    return readsAnywhere(subcommand, tail) || ['add', 'commit'].includes(subcommand);
+  }
+  return isPureReader(command) || kitInvocations([command]).some(kitReads);
 }
 
-// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`), but a pure reader's.
-function isProgramPath(word, name) {
-  return (/^\.{0,2}\//.test(word) || word.includes('node_modules/.bin/')) && !PURE_READERS.has(name);
+function kitReads({ subcommand, args }) {
+  if (subcommand === 'acceptance') {
+    return !args.includes('--lock');
+  }
+  if (['worker-scope', 'story-scope', 'generate', 'g'].includes(subcommand)) {
+    return args.some((arg) => /^--(?:dry-run|resume|help)\b/.test(arg));
+  }
+  return (
+    KIT_READS.has(subcommand) &&
+    !args.some((arg) => KIT_WRITING_OPTIONS.test(arg)) &&
+    (subcommand !== 'docs' || args.includes('--check'))
+  );
 }
 
 // What no agent runs, then what waits for a place, a landing, a lock or a generator first.
 async function preparingReason(project, input, { command, commands }) {
   return (
     baselineWriteReason(project, commands) ??
-    (await hooksSkippedReason(input, command)) ??
-    (await gitConfigReason(input, command)) ??
-    (await otherBranchReason(input, command)) ??
-    (await workerPlaceReason(input, command)) ??
-    (await landingReason(input, command)) ??
+    hooksSkippedReason(commands) ??
+    gitConfigReason(input, commands) ??
+    otherBranchReason(input, commands) ??
+    workerPlaceReason(input, commands) ??
+    landingReason(input, commands) ??
     workerGitReason(project, input, commands) ??
-    oneSideMergeReason(project, input, command) ??
-    (await acceptanceLockingReason(input, command)) ??
+    oneSideMergeReason(project, input, commands) ??
+    acceptanceLockingReason(input, commands) ??
     acceptanceFilesShellReason(project, input, { command, commands }) ??
-    (await generatorPlaceReason(project, input, command))
+    generatorPlaceReason(project, commands)
   );
 }
 
@@ -916,6 +1082,7 @@ function workerCommandReason(project, input, { context, command, commands }) {
     workingMigrationReason(command) ??
     formatterReason(project, commands) ??
     unknownProgramReason(commands) ??
+    placeVariableReason(commands) ??
     (pending ? undefined : fileChangeReason(project, input, commands)) ??
     unreadReason(commands);
   if (!refusal && !pending) {
@@ -937,6 +1104,15 @@ function unreadReason(commands) {
     : `A quote, a substitution or a here-document of this command never closes, so the guard cannot read what follows it: close it, or write separate commands. ${REPORT_TO_CONDUCTOR}`;
 }
 
+// The variables by which the shell and git find their places: set by a worker, the places the guard
+// reads would no longer be the places written.
+function placeVariableReason(commands) {
+  const variable = commands.flatMap(exportedVariables).find((word) => PLACE_VARIABLES.test(word));
+  return variable
+    ? `A worker sets no \`${variable.split('=')[0]}\`: it changes where the shell or git read and write, and the guard reads the places of a command by their values when the session started. ${EDIT_WITH_TOOLS}`
+    : undefined;
+}
+
 // A command whose program word holds a variable or a substitution runs a name only the shell
 // computes, which the guard cannot judge; `eval` of such a text leaves the same unreadable word.
 function unknownProgramReason(commands) {
@@ -951,7 +1127,7 @@ function unknownProgramReason(commands) {
 }
 
 function postWrite(input) {
-  const all = writesOf(input);
+  const all = writesOf(input).filter(({ deleted }) => !deleted);
   // Biome lays out every written file, which is quick; the check, which is not, reads the first ones.
   formatWrites(all);
   const writes = all.slice(0, POST_WRITE_FILES);
@@ -1078,9 +1254,24 @@ function changedAtStop(places, input) {
     return undefined;
   }
   const told = settleNote(project, input, false) ?? heldChangeReason(project, input, [])?.reason;
-  const said = [notice, told].filter(Boolean).join('\n');
+  const said = [notice, told, branchOutsideReason(project, input)].filter(Boolean).join('\n');
   notice = undefined;
   return said || undefined;
+}
+
+// What the branch of a worker holds outside its scope since the base its scope file records: its
+// commits since then, what the trunk brought in left out, and what stays uncommitted. A scope file
+// that records no base leaves the commits uncompared, as the guard fails open.
+function branchOutsideReason(project, input) {
+  const base = readJson(join(project.root, WORKER_SCOPE))?.baseCommit;
+  if (typeof base !== 'string' || !/^[0-9a-f]{7,64}$/.test(base)) {
+    return undefined;
+  }
+  const outside = worktreeOutside(project, input);
+  const paths = [...committedSince(project, base, outside).keys(), ...Object.keys(snapshot(project, outside).changes)];
+  return paths.length === 0
+    ? undefined
+    : `Your branch holds files outside your scope since its base ${base.slice(0, 12)}: ${[...new Set(paths)].join(', ')}. Take them out of your branch (\`git checkout ${base.slice(0, 12)} -- <path>\` or \`git rm\` for a new file, then \`git commit\`), or name them in your report for the conductor. ${REPORT_TO_CONDUCTOR}`;
 }
 
 function releasePin(pin) {
@@ -1267,7 +1458,8 @@ function writesOf(input) {
 }
 
 // The patch of Codex: `*** Add File:`, `*** Update File:` (and `*** Move to:`), `*** Delete File:`,
-// each followed by its lines, `+` added and `-` removed. Its paths are relative to the session.
+// each followed by its lines, `+` added and `-` removed. Its paths are relative to the session. A
+// deleted file, and the file a move leaves, are writes that remove it (`deleted`).
 function patchWrites(patch, cwd) {
   const writes = [];
   let current;
@@ -1275,23 +1467,31 @@ function patchWrites(patch, cwd) {
     const header = /^\*\*\* (Add|Update|Delete) File: (.+)$/.exec(line);
     const moved = /^\*\*\* Move to: (.+)$/.exec(line);
     if (header) {
-      current = header[1] === 'Delete' ? undefined : { file: resolve(cwd, header[2].trim()), added: [], removed: [] };
+      current = { file: resolve(cwd, header[2].trim()), added: [], removed: [], deleted: header[1] === 'Delete' };
       writes.push(current);
     } else if (moved && current) {
+      writes.push({ file: current.file, added: [], removed: [], deleted: true });
       current.file = resolve(cwd, moved[1].trim());
     } else if (current && /^[+-]/.test(line)) {
       (line.startsWith('+') ? current.added : current.removed).push(line.slice(1));
     }
   }
 
-  return writes
-    .filter(Boolean)
-    .map(({ file, added, removed }) => ({ file, written: added.join('\n'), replaced: removed.join('\n') }));
+  return writes.map(({ file, added, removed, deleted }) => ({
+    file,
+    written: added.join('\n'),
+    replaced: removed.join('\n'),
+    ...(deleted ? { deleted } : {}),
+  }));
 }
 
+// Up to a folder another user may write: a config there, the shared temp dir above all, is no project.
 function findProject(from) {
   let directory = resolve(from);
   for (;;) {
+    if (!isOwnFolder(directory)) {
+      return undefined;
+    }
     if (existsSync(join(directory, CONFIG))) {
       return describeProject(directory);
     }
@@ -1341,24 +1541,37 @@ function readProject(root) {
   };
 }
 
-// The config as an object of JSON, read through one descriptor and never above CONFIG_BYTES; one
-// that cannot be read or parsed is the defaults.
+// The config as an object of JSON, never read above CONFIG_BYTES; one that cannot be read or parsed
+// is the defaults.
 function readConfig(path) {
+  const { content, tooLarge } = readBounded(path, CONFIG_BYTES);
+  if (tooLarge !== undefined) {
+    return { config: {}, tooLarge };
+  }
+  const config = parseJson(content ?? '');
+  return { config: isRecord(config) ? config : {} };
+}
+
+// The content of a regular file, read through one descriptor that never waits (a FIFO opens at
+// once) and never past `limit` bytes: the file measured is the file read. A device, a FIFO, a folder
+// or a file that cannot be opened has no content.
+function readBounded(path, limit, encoding = 'utf8') {
+  let descriptor;
+  let read = {};
   try {
-    const descriptor = openSync(path, 'r');
-    try {
-      const size = fstatSync(descriptor).size;
-      if (size > CONFIG_BYTES) {
-        return { config: {}, tooLarge: size };
-      }
-      const config = JSON.parse(readFileSync(descriptor, 'utf8'));
-      return { config: isRecord(config) ? config : {} };
-    } finally {
-      closeSync(descriptor);
+    descriptor = openSync(path, constants.O_RDONLY | constants.O_NONBLOCK);
+    const stat = fstatSync(descriptor);
+    if (stat.isFile()) {
+      read = stat.size > limit ? { tooLarge: stat.size } : { content: readFileSync(descriptor, encoding) };
     }
   } catch {
-    return { config: {} };
+    // Missing, or not readable by this user: no content.
+  } finally {
+    if (descriptor !== undefined) {
+      closeSync(descriptor);
+    }
   }
+  return read;
 }
 
 function isRecord(value) {
@@ -1408,11 +1621,8 @@ function commitLimits(configured) {
 }
 
 function readJson(path) {
-  try {
-    return JSON.parse(readFileSync(path, 'utf8'));
-  } catch {
-    return undefined;
-  }
+  const { content } = readBounded(path, STATE_BYTES);
+  return content === undefined ? undefined : parseJson(content);
 }
 
 function projectBriefing(project, input) {
@@ -1656,6 +1866,9 @@ function hasWorkerWorktree(root) {
 function repositoryTop(from) {
   let directory = resolve(from);
   for (;;) {
+    if (!isOwnFolder(directory)) {
+      return undefined;
+    }
     if (existsSync(join(directory, '.git'))) {
       return directory;
     }
@@ -1666,6 +1879,15 @@ function repositoryTop(from) {
   }
 }
 
+// A folder that only this user or the system writes: owned by this user or by root, and not writable
+// by others. A folder not made yet is no other user's. Windows has no such owner: every folder is.
+function isOwnFolder(directory) {
+  const stat = statSync(directory, { throwIfNoEntry: false });
+  return (
+    WINDOWS || stat === undefined || ((stat.mode & 0o002) === 0 && (stat.uid === 0 || stat.uid === process.getuid()))
+  );
+}
+
 function isDirectory(path) {
   try {
     return statSync(path).isDirectory();
@@ -1674,13 +1896,10 @@ function isDirectory(path) {
   }
 }
 
-// The text of a file, or `otherwise` when it cannot be read: missing, a folder, or not readable by this user.
+// The text of a file, or `otherwise` when it cannot be read: missing, a folder, a device, larger than
+// the guard reads, or not readable by this user.
 function readText(path, otherwise) {
-  try {
-    return readFileSync(path, 'utf8');
-  } catch {
-    return otherwise;
-  }
+  return readBounded(path, STATE_BYTES).content ?? otherwise;
 }
 
 function contextMap(project) {
@@ -1856,16 +2075,21 @@ function workerScope(project, input) {
 }
 
 // The worktree is recorded and compared by its real path: a link to it, or another spelling of it, is the same.
+// A worker whose session stands in a scoped worktree is pinned to it, even when its first command
+// starts in another project.
 function pinnedScope(project, input) {
   const current = namedContext(project);
-  const pin = stateFile('scope', findProject(input.cwd ?? process.cwd()) ?? project, input);
-  const pinned = readJson(pin);
+  const home = findProject(input.cwd ?? process.cwd()) ?? project;
+  const pin = stateFile('scope', home, input);
+  let pinned = readJson(pin);
   const worktree = realpathSync(project.root);
   if (!isPin(pinned)) {
-    if (current) {
-      writeState(pin, { context: current, worktree });
+    const own = current ? project : namedContext(home) && home;
+    if (!own) {
+      return undefined;
     }
-    return current && { context: current };
+    pinned = { context: namedContext(own), worktree: realpathSync(own.root), mode: own.mode };
+    writeState(pin, pinned);
   }
   if (pinned.worktree !== worktree) {
     return current
@@ -1875,6 +2099,20 @@ function pinnedScope(project, input) {
   return current === pinned.context
     ? { context: current }
     : { context: pinned.context, changed: scopeChangedReason(pinned, current) };
+}
+
+// A worker's guard keeps the mode of its first call in its worktree: a config there that turns the
+// guard off, or grows past what the guard reads, does not lift it, and its change is compared as any
+// other change outside the scope.
+function withPinnedMode(project, input) {
+  if (project?.mode !== 'off' || !isWorkerAgent(input)) {
+    return project;
+  }
+  const pinned = readJson(stateFile('scope', findProject(input.cwd ?? process.cwd()) ?? project, input));
+  if (isPin(pinned) && pinned.worktree === realOf(project.root) && ['advise', 'enforce'].includes(pinned.mode)) {
+    project.mode = pinned.mode;
+  }
+  return project;
 }
 
 // The context the scope file of the worktree names, or the environment of the guard.
@@ -1987,13 +2225,16 @@ function acceptanceFilesShellReason(project, input, { command, commands }) {
       command.includes(file) ||
       command.includes(file.split('/').pop()),
   );
+  // The lock and the verdicts, a folder that holds them, or a place only the shell knows on a line
+  // that names the acceptance.
   const governed =
-    written.some((path) => ACCEPTANCE_LOCK.test(path) || path.startsWith('test/acceptance/verdicts/')) ||
-    /acceptance\/verdicts|\.acceptance\.lock\.json/.test(command);
+    written.some(isAcceptanceRecord) ||
+    /acceptance\/verdicts|\.acceptance\.lock\.json/.test(command) ||
+    (writtenPlaces(commands).includes(undefined) && command.includes('acceptance'));
   if (!judging && held.length === 0 && !governed) {
     return undefined;
   }
-  if (!commands.some((simple) => isWriting(simple, held.length > 0))) {
+  if (!commands.some((simple) => isWriting(simple, { holding: held.length > 0, judging }))) {
     return undefined;
   }
   if (judging) {
@@ -2005,12 +2246,32 @@ function acceptanceFilesShellReason(project, input, { command, commands }) {
     : `${unnamed ? 'This command writes places only the shell knows: name each file. ' : ''}${lockedRegressionReason(project, spec, input)} A command may read it, version it or run it (\`npm test -- ${spec}\`).`;
 }
 
-// A command that writes, its redirections included: anything but a reader, or a test run or a read of a held spec.
-function isWriting(simple, holding) {
+function isAcceptanceRecord(path) {
   return (
-    !(readsOnly(simple.words) || (holding && (runsTests(simple) || readsAFile(simple)))) ||
+    ACCEPTANCE_LOCK.test(path) ||
+    path.startsWith('test/acceptance/verdicts/') ||
+    ['test', 'test/acceptance', 'test/acceptance/verdicts'].includes(path)
+  );
+}
+
+// A command that writes, its redirections and the places its writers name included: anything but a
+// reader, or a test run or a read of a held spec. The judge runs the kit only to read.
+function isWriting(simple, { holding, judging }) {
+  const reads = judging ? readsOnly(simple) && judgeReads(simple) : readsOnly(simple);
+  return (
+    !(reads || (holding && (runsTests(simple) || readsAFile(simple)))) ||
+    changedPaths(simple).length > 0 ||
     simple.redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null')
   );
+}
+
+// What the judge runs reads: git only through the subcommands that read, the kit only to read.
+function judgeReads(simple) {
+  const invocations = kitInvocations([simple]);
+  if (invocations.length > 0) {
+    return invocations.every(kitReads);
+  }
+  return shell.commandName(simple.words) !== 'git' || isPureReader(simple);
 }
 
 // Whether the path a command writes is `file`, or a folder that holds it (`.../{}`: what `find` finds under a folder).
@@ -2033,7 +2294,7 @@ function writtenPlaces(commands) {
 }
 
 function foundPlaces(simple) {
-  if (!simple.found || readsOnly(simple.words) || isPureReader(simple)) {
+  if (!simple.found || readsOnly(simple) || isPureReader(simple)) {
     return [];
   }
   return simple.words
@@ -2046,28 +2307,35 @@ function foundPlaces(simple) {
 function writtenProjectPaths(project, commands) {
   const paths = new Set();
   for (const place of writtenPlaces(commands).filter((written) => written !== undefined)) {
-    for (const file of expandGlob(place)) {
+    for (const file of expandGlob(project, place)) {
       paths.add(projectPath(project, file));
     }
   }
   return [...paths];
 }
 
-function expandGlob(place) {
+// A pattern is walked inside the project only: one that starts outside it stays as written.
+function expandGlob(project, place) {
   // A pattern matching nothing (globSync returns []) writes no file, so it protects nothing.
-  return /[*?[]/.test(place) ? globSync(place) : [place];
+  return /[*?[]/.test(place) && place.startsWith(`${project.root}${sep}`) ? globSync(place) : [place];
 }
 
 // A command that writes no file by itself, its redirections aside: a neutral one (`cd`, `test`), a reader,
 // `sed` without an in-place edit nor a script that writes, `awk` whose program writes nothing, `less` without a log.
-function readsOnly(words) {
+function readsOnly(simple) {
+  const { words } = simple;
   const name = shell.commandName(words);
   const args = words.slice(1);
+  if (name === 'rg') {
+    return !args.some((word) => word.startsWith('--pre'));
+  }
   if (NEUTRAL_PROGRAMS.has(name) || READING_PROGRAMS.has(name)) {
     return true;
   }
   if (name === 'git') {
-    return GIT_READS.has(gitInvocation(args, undefined).subcommand);
+    const { subcommand, tail } = gitInvocation(args, undefined);
+    const all = subcommand === 'commit' && tail.some((word) => /^-[^-]*a/.test(word) || word === '--all');
+    return GIT_READS.has(subcommand) && !all && !words.some(runsAProgramOfGit) && simple.assigned.length === 0;
   }
   // `npx ddd-ts-kit ...`, `pnpm exec ddd-ts-kit ...`: a launcher of the kit reads the lock; `npx`
   // of anything else can write it.
@@ -2181,12 +2449,11 @@ function isUnwrapping(project, file, input) {
   );
 }
 
-async function acceptanceLockingReason(input, command) {
-  if (!input.agent_type || !command.includes('acceptance')) {
+function acceptanceLockingReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const locking = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  const locking = kitInvocations(commands).some(
     ({ subcommand, args }) => subcommand === 'acceptance' && args.includes('--lock'),
   );
   return locking
@@ -2227,27 +2494,15 @@ function worktreeCodeReason(project, file) {
 
 // A generator of code run where the code may not be written yet: before the build gate of a
 // story, in the main checkout of the trunk, in a worktree without its own install.
-async function generatorPlaceReason(project, input, command) {
-  return (
-    (await storyGeneratorReason(project, input, command)) ?? (await worktreeGeneratorReason(project, input, command))
-  );
+function generatorPlaceReason(project, commands) {
+  return storyGeneratorReason(project, commands) ?? worktreeGeneratorReason(project, commands);
 }
 
 // A fix writes its spec first: the generators of test files stay open before its lock.
-async function storyGeneratorReason(project, input, command) {
+function storyGeneratorReason(project, commands) {
   const aside =
     fixOf(project) === undefined ? ['acceptance', 'adr'] : ['acceptance', 'adr', 'builder', 'test-world', 'e2e'];
-  return (await writesCode(input, command, aside)) ? storyBuildReason(project) : undefined;
-}
-
-// A command that runs a generator of the kit writing the code of a context: any kind but those
-// given, its help and its dry run aside.
-async function writesCode(input, command, aside) {
-  if (!command.includes('generate') && !/\bg\b/.test(command)) {
-    return false;
-  }
-  shell = await import('./shell-commands.mjs');
-  return generates(shell.simpleCommands(command, input.cwd ?? process.cwd()), aside);
+  return generates(commands, aside) ? storyBuildReason(project) : undefined;
 }
 
 // A run of a generator of the kit among `commands`, any kind but those given, its help and its dry run aside.
@@ -2262,10 +2517,8 @@ function generates(commands, aside) {
   );
 }
 
-async function worktreeGeneratorReason(project, input, command) {
-  return (await writesCode(input, command, ['acceptance', 'adr', 'context', 'module']))
-    ? worktreePlaceReason(project)
-    : undefined;
+function worktreeGeneratorReason(project, commands) {
+  return generates(commands, ['acceptance', 'adr', 'context', 'module']) ? worktreePlaceReason(project) : undefined;
 }
 
 function worktreePlaceReason(project) {
@@ -2486,33 +2739,56 @@ function isPartOfSpec(project, path) {
     );
 }
 
+// The scope file of a story or of a worker, and the kit's folder that holds it, are the conductor's:
+// the session of the worktree that holds it, and every sub-agent, change them in no way, nor
+// remove them with a folder above them (`below`: every file under the place, or 'untracked': those
+// git does not ignore).
+function scopeFileReason(project, { place, below }, input) {
+  const path = projectPath(project, place);
+  const held = [STORY_SCOPE, WORKER_SCOPE].find(
+    (scope) =>
+      existsSync(join(project.root, scope)) &&
+      (path === scope || path === dirname(scope) || (holdsFile(path, scope) && reachesScope(project, scope, below))),
+  );
+  const own = input.agent_type || findProject(input.cwd ?? process.cwd())?.root === project.root;
+  return held && own
+    ? `${held} is a shared file of this worktree, its scope: the conductor writes it with \`story-scope\` or \`worker-scope\`, and it holds the gates of the work done here. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
+}
+
+// `git check-ignore` answers 1 for a file it does not ignore; out of a repository, git cleans nothing.
+function reachesScope(project, scope, below) {
+  return below === 'untracked' ? gitRun(project, ['check-ignore', '--quiet', scope]).status === 1 : below;
+}
+
 function baselineFileReason(project, file) {
   return BASELINE_FILE.test(projectPath(project, file)) ? `ddd-ts-kit-baseline.json: ${BASELINE_OWNER}` : undefined;
 }
 
 const HOOKS_LOCAL_GATE =
   'the hooks of the project (pre-commit, commit-msg, pre-push) are the local gate of the pipeline: they run the checks before a change leaves the machine. An agent never skips them; fix what the hook reports instead. If the hook itself is broken, report it to the project owner, who can skip it in a terminal.';
-const HOOK_ENVIRONMENT = /(?:^|[\s;&|(])(?:LEFTHOOK|HUSKY)=(?:0|false)(?![\w])/;
-const HOOK_SKIPPING_COMMANDS = new Set(['commit', 'push', 'merge', 'pull', 'rebase']);
+const HOOK_ENVIRONMENT = /^(?:LEFTHOOK|HUSKY)=(?:0|false)$/;
+const HOOK_SKIPPING_COMMANDS = new Set(['commit', 'push', 'merge', 'pull', 'rebase', 'am', 'cherry-pick', 'revert']);
 // Options of `git` that take their value as the next word, and those of `git commit` that do.
-const GIT_VALUED_OPTIONS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path']);
+const GIT_VALUED_OPTIONS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--config-env']);
 const COMMIT_VALUED_OPTIONS = new Set(['-m', '-F', '-C', '-c', '-t', '--message', '--file', '--author', '--date']);
 
 // A git command that skips the hooks of the project: `--no-verify` (and `-n` on a commit),
 // `-c core.hooksPath=...`, or `LEFTHOOK=0` / `HUSKY=0` set for the command.
-async function hooksSkippedReason(input, command) {
-  if (!/\bgit\b/.test(command)) {
-    return undefined;
-  }
-  shell = await import('./shell-commands.mjs');
-  const gits = shell
-    .simpleCommands(command, input.cwd ?? process.cwd())
-    .filter(({ words }) => shell.commandName(words) === 'git');
+function hooksSkippedReason(commands) {
+  const gits = commands.filter(({ words }) => shell.commandName(words) === 'git');
   if (gits.length === 0) {
     return undefined;
   }
-  if (HOOK_ENVIRONMENT.test(command)) {
+  const variables = commands.flatMap(exportedVariables);
+  if (variables.some((word) => HOOK_ENVIRONMENT.test(word))) {
     return `LEFTHOOK=0 or HUSKY=0 turns the hooks off for a git command: ${HOOKS_LOCAL_GATE}`;
+  }
+  if (variables.some((word) => HOOK_SELECTION.test(word))) {
+    return `${variables.find((word) => HOOK_SELECTION.test(word)).split('=')[0]} skips hooks of the project: ${HOOKS_LOCAL_GATE}`;
+  }
+  if (variables.some((word) => /^GIT_CONFIG_(?:KEY_\d+|PARAMETERS)=.*core\.hookspath/i.test(word))) {
+    return `a setting of core.hooksPath in the environment points git at other hooks: ${HOOKS_LOCAL_GATE}`;
   }
   for (const { words } of gits) {
     const skipped = hooksSkippedBy(words);
@@ -2535,13 +2811,16 @@ function hooksSkippedBy(words) {
 }
 
 function optionPointsAtHooks(word, next) {
-  const configured = word === '-c' ? next : /^--config-env=(.*)$/.exec(word)?.[1];
+  const configured = word === '-c' || word === '--config-env' ? next : /^--config-env=(.*)$/.exec(word)?.[1];
   return configured !== undefined && /^core\.hookspath\b/i.test(configured);
 }
 
 function hooksSkippedBySubcommand(subcommand, rest) {
   if (subcommand === 'config' && rest.some((word) => /^core\.hookspath$/i.test(word))) {
     return '`git config core.hooksPath` points git at other hooks';
+  }
+  if (subcommand === 'commit-tree') {
+    return '`git commit-tree` makes a commit without the hooks';
   }
   if (!HOOK_SKIPPING_COMMANDS.has(subcommand)) {
     return undefined;
@@ -2567,13 +2846,12 @@ function hooksSkippedBySubcommand(subcommand, rest) {
 // (fsmonitor, pager, editor, sshCommand, hooksPath, an alias, a diff or filter driver, gpg).
 // A sub-agent never deletes, moves or resets a branch checked out in another worktree of the
 // repository: the branch of another worker, or the trunk of the conductor.
-async function otherBranchReason(input, command) {
-  if (!input.agent_type || !/\bbranch\b/.test(command)) {
+function otherBranchReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
   const cwd = input.cwd ?? process.cwd();
-  for (const simple of shell.simpleCommands(command, cwd)) {
+  for (const simple of commands) {
     const names = rewrittenBranches(simple.words);
     const taken =
       names.length > 0 ? names.find((name) => otherWorktreeBranches(simple.directory ?? cwd).has(name)) : undefined;
@@ -2622,15 +2900,22 @@ function otherWorktreeBranches(directory) {
 }
 
 const DANGEROUS_CONFIG = [
-  /^core\.fsmonitor$/i,
-  /^core\.pager$/i,
-  /^core\.editor$/i,
-  /^core\.sshcommand$/i,
-  /^core\.hookspath$/i,
+  /^core\.(?:fsmonitor|pager|editor|sshcommand|hookspath|attributesfile|gitproxy|askpass)$/i,
   /^alias\./i,
-  /^diff\..+\.command$/i,
+  /^diff\.external$/i,
+  /^diff\..+\.(?:command|textconv)$/i,
+  /^merge\..+\.driver$/i,
   /^filter\./i,
-  /^gpg\.program$/i,
+  /^gpg\.(?:.+\.)?program$/i,
+  /^include(?:if\..+)?\.path$/i,
+  /^credential\.(?:.+\.)?helper$/i,
+  /^sequence\.editor$/i,
+  /^interactive\.difffilter$/i,
+  /^pager\./i,
+  /^(?:merge|diff)tool\./i,
+  /^protocol\./i,
+  /^remote\..+\.(?:uploadpack|receivepack)$/i,
+  /^uploadpack\.packobjectshook$/i,
 ];
 const CONFIG_READS = new Set(['--get', '--get-all', '--get-regexp', '--get-urlmatch', '-l', '--list', '--list-all']);
 const CONFIG_WRITES = new Set([
@@ -2658,15 +2943,15 @@ const CONFIG_VERBS = new Map([
 
 // A sub-agent never sets the git configuration (shared by every checkout of the repository) nor
 // passes a dangerous `-c key=value`; it reads the config with `--get` or `--list`.
-async function gitConfigReason(input, command) {
-  if (!input.agent_type || !/\bgit\b/.test(command)) {
+function gitConfigReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const gits = shell
-    .simpleCommands(command, input.cwd ?? process.cwd())
-    .filter(({ words }) => shell.commandName(words) === 'git');
-  for (const { words } of gits) {
+  const variable = commands.flatMap(exportedVariables).find((word) => GIT_PROGRAM_VARIABLES.test(word));
+  if (variable) {
+    return `\`${variable.split('=')[0]}\` hands git a program or settings to run it: a sub-agent sets none. ${REPORT_TO_CONDUCTOR}`;
+  }
+  for (const { words } of commands.filter((simple) => shell.commandName(simple.words) === 'git')) {
     const reason = gitConfigKeyReason(words);
     if (reason) {
       return reason;
@@ -2675,8 +2960,17 @@ async function gitConfigReason(input, command) {
   return undefined;
 }
 
+// The variables a command sets for itself, and those `export`, `declare` or `typeset` set for the rest of the line.
+function exportedVariables({ words, assigned }) {
+  return ['export', 'declare', 'typeset'].includes(shell.commandName(words)) ? [...assigned, ...words] : assigned;
+}
+
 function gitConfigKeyReason(words) {
-  const inline = words.find((word, index) => words[index - 1] === '-c' && isDangerousConfig(word.split('=')[0]));
+  const inline = words
+    .map((word, index) =>
+      ['-c', '--config-env'].includes(words[index - 1]) ? word : /^--config-env=(.*)$/.exec(word)?.[1],
+    )
+    .find((setting) => setting !== undefined && isDangerousConfig(setting.split('=')[0]));
   if (inline) {
     const key = inline.split('=')[0];
     return `\`git -c ${key}\` runs a command in every checkout of the repository. ${REPORT_TO_CONDUCTOR}`;
@@ -2779,7 +3073,13 @@ function recordTrial(project, { file, ...outcome }) {
     const directory = join(resolve(project.root, common.stdout.trim()), 'ddd-ts-kit');
     mkdirSync(directory, { recursive: true });
     const entry = { at: new Date().toISOString(), file: projectPath(project, file), ...outcome };
-    appendFileSync(join(directory, 'before-write.jsonl'), `${JSON.stringify(entry)}\n`, { mode: 0o600 });
+    // Appended through no link: a link put under the name of the record is never followed.
+    const descriptor = openSync(join(directory, 'before-write.jsonl'), RECORD_APPEND, 0o600);
+    try {
+      writeSync(descriptor, `${JSON.stringify(entry)}\n`);
+    } finally {
+      closeSync(descriptor);
+    }
   } catch {
     // The record serves the verdict of the trial, never the write.
   }
@@ -2848,12 +3148,11 @@ function commandDirectory(command, cwd) {
 
 // `worker-scope` adds a worktree and a branch: the conductor's to place, from the trunk. A sub-agent
 // reads a briefing (`--dry-run`) or where a worker stands (`--resume`): both create nothing.
-async function workerPlaceReason(input, command) {
-  if (!input.agent_type || !/(?:worker|story)-scope/.test(command)) {
+function workerPlaceReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const preparing = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  const preparing = kitInvocations(commands).some(
     ({ subcommand, args }) =>
       (subcommand === 'worker-scope' && !args.some((arg) => /^--(?:dry-run|resume)\b/.test(arg))) ||
       (subcommand === 'story-scope' && !args.includes('--dry-run')),
@@ -2866,12 +3165,11 @@ async function workerPlaceReason(input, command) {
 // `merge-trunk --to-land` gives the working migrations of a branch their real names just before its
 // squash merge: the conductor's step. A sub-agent brings the trunk in with `merge-trunk` alone,
 // however it launches the CLI.
-async function landingReason(input, command) {
-  if (!input.agent_type || !command.includes('--to-land')) {
+function landingReason(input, commands) {
+  if (!input.agent_type) {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
-  const landing = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  const landing = kitInvocations(commands).some(
     ({ subcommand, args }) => subcommand === 'merge-trunk' && args.includes('--to-land'),
   );
   return landing
@@ -2897,8 +3195,74 @@ function workerGitReason(project, input, commands) {
     if (!readsAnywhere(subcommand, tail) && !isOwnCheckout(own, moved)) {
       return `\`git ${subcommand}\` runs in ${moved ?? 'a place only the shell knows'}, not in your worktree: only the conductor lands a branch or moves its checkout. Run it as \`cd <worktree> && ...\`, and report to the conductor that the branch is ready.`;
     }
+    const branch = () => workerBranch(own ?? findProject(moved).root);
+    if (leavesOwnBranch(subcommand, tail, { moved, branch })) {
+      const where = branch() === undefined ? 'its own branch' : `its branch \`${branch()}\``;
+      return `\`git ${subcommand}\`: a worker's git keeps to ${where}: it pushes that branch alone, without force nor deletion, fetches into no ref, makes no tag, and checks out no other branch nor creates one; the trunk and the other refs are the conductor's. ${REPORT_TO_CONDUCTOR}`;
+    }
   }
   return undefined;
+}
+
+// The branch of a worker: the one its scope file records, else the one its worktree has checked out.
+function workerBranch(root) {
+  const recorded = named(readJson(join(root, WORKER_SCOPE))?.branch, GIT_REF);
+  return recorded ?? named(git({ root }, ['symbolic-ref', '--quiet', '--short', 'HEAD'])?.trim(), GIT_REF);
+}
+
+// A push of another ref than the worker's branch, forced or deleting; a fetch into a ref; a tag; a
+// checkout or a switch to another branch, a new one or none. `branch` is read only when a ref is named.
+function leavesOwnBranch(subcommand, tail, { moved, branch }) {
+  if (subcommand === 'fetch') {
+    return shell
+      .operands(tail, FETCH_VALUED)
+      .slice(1)
+      .some((spec) => spec.includes(':'));
+  }
+  if (subcommand === 'tag') {
+    return shell.operands(tail, TAG_VALUED).length > 0 && !tail.some((word) => TAG_LISTS.test(word));
+  }
+  if (subcommand === 'push') {
+    return (
+      tail.some((word) => PUSH_OTHER_REFS.test(word) || /^-[a-zA-Z46]*[fd]/.test(word)) ||
+      shell
+        .operands(tail, PUSH_VALUED)
+        .slice(1)
+        .some((spec) => !pushesOwnBranch(spec, branch))
+    );
+  }
+  if (subcommand === 'checkout' || subcommand === 'switch') {
+    const target = switchTarget(subcommand, tail, moved);
+    return (
+      tail.some((word) => SWITCH_CREATES[subcommand].test(word)) ||
+      (target !== undefined && ![branch(), `refs/heads/${branch()}`].includes(target))
+    );
+  }
+  return false;
+}
+
+// A refspec of a push that names the worker's branch as its destination, or the current branch alone.
+function pushesOwnBranch(spec, branch) {
+  const [source, destination] = spec.split(':');
+  if (spec.startsWith('+') || source === '') {
+    return false;
+  }
+  const target = destination ?? source;
+  return (
+    (destination === undefined && ['HEAD', '@'].includes(target)) ||
+    [branch(), `refs/heads/${branch()}`].includes(target)
+  );
+}
+
+// The branch a checkout or a switch moves to: for a checkout, its one operand that names no file of
+// the tree, unless an option gives paths (`--ours`, `--theirs`, `--patch`, `--pathspec-from-file`).
+function switchTarget(subcommand, tail, moved) {
+  const named = shell.operands(tail, SWITCH_VALUED);
+  if (subcommand === 'switch') {
+    return named[0];
+  }
+  const paths = tail.includes('--') || tail.some((word) => CHECKOUT_PATHS.test(word));
+  return paths || named.length !== 1 || existsSync(resolve(moved, named[0])) ? undefined : named[0];
 }
 
 // The worktree a worker is pinned to, or the one its command stands in, before its first call is over.
@@ -2956,7 +3320,7 @@ function readsAnywhere(subcommand, tail) {
 // node (`.../cli/dist/bin.js`, `.../ddd-ts-kit/dist/bin.js`) or the kit script of a project.
 function kitInvocations(commands) {
   return commands.flatMap(({ words }) => {
-    const at = words.findIndex(isKitLauncher);
+    const at = launcherAt(words);
     if (at === -1) {
       return [];
     }
@@ -2965,6 +3329,25 @@ function kitInvocations(commands) {
     const index = rest.findIndex((word, position) => !word.startsWith('-') && rest[position - 1] !== '--cwd');
     return index === -1 ? [] : [{ subcommand: rest[index], args: rest.slice(index + 1) }];
   });
+}
+
+// The launcher is the program, or the first operand of a package runner or of node without inline
+// code: a word among the arguments of another program launches nothing.
+function launcherAt(words) {
+  if (words.length > 0 && isKitLauncher(words[0])) {
+    return 0;
+  }
+  const name = shell.commandName(words);
+  const skipped = SCRIPT_MANAGERS.includes(name) && ['exec', 'dlx', 'x'].includes(words[1]) ? 2 : 1;
+  const runs = ['npx', 'pnpx', 'bunx', 'node', 'nodejs', 'pnpm', 'yarn'].includes(name) || skipped === 2;
+  if (!runs || words.slice(1).some((word) => INLINE_CODE.node.test(word))) {
+    return -1;
+  }
+  const [first] = shell.operands(words.slice(skipped), LAUNCHER_VALUED);
+  const node = name === 'node' || name === 'nodejs';
+  return first !== undefined && isKitLauncher(first) && (!node || first.includes('/'))
+    ? words.indexOf(first, skipped)
+    : -1;
 }
 
 function isKitLauncher(word) {
@@ -2979,28 +3362,48 @@ function isKitLauncher(word) {
 // Taking one side of a merge erases what the other side added without a conflict: a sub-agent
 // resolves each hunk instead. A derived file outside the sources (openapi/, the context map) is
 // taken from either side and regenerated, so only the sources and the tests are held.
-function oneSideMergeReason(project, input, command) {
+function oneSideMergeReason(project, input, commands) {
   if (!input.agent_type) {
     return undefined;
   }
-  const merging = [...command.matchAll(/\bgit\s+(?:-[Cc]\s+\S+\s+)*(?:merge|pull)\b([^;&|]*)/g)].some(([, args]) =>
-    /(?:^|\s)(?:-X\s*|--strategy-option[= ]\s*)(?:ours|theirs)\b|(?:^|\s)(?:-s\s*|--strategy[= ]\s*)ours\b/.test(args),
-  );
-  const directory = commandDirectory(command, input.cwd ?? process.cwd());
-  const takingASide = [...command.matchAll(/\bgit\s+(?:-[Cc]\s+\S+\s+)*(?:checkout|restore)\b([^;&|]*)/g)].some(
-    ([, args]) => /(?:^|\s)--(?:ours|theirs)\b/.test(args) && heldPaths(project, directory, args),
-  );
-  return merging || takingASide
+  const taken = commands.some(({ words, directory }) => {
+    const { subcommand, tail, moved } = gitInvocation(words.slice(1), directory);
+    if (shell.commandName(words) !== 'git') {
+      return false;
+    }
+    if (['merge', 'pull', 'rebase', 'cherry-pick', 'revert'].includes(subcommand)) {
+      return takesOneSide(tail);
+    }
+    return (
+      ['checkout', 'restore'].includes(subcommand) &&
+      tail.some((word) => /^--(?:ours|theirs)$/.test(word)) &&
+      heldPaths(project, moved, tail)
+    );
+  });
+  return taken
     ? 'Taking one side of a merge (`-X theirs`, `-X ours`, `-s ours`, `checkout` or `restore --theirs/--ours` on a source or a test) erases what the other side added, without a conflict to show it. Bring the trunk in with `npx ddd-ts-kit merge-trunk`: it settles the derived files itself; resolve each hunk it leaves keeping the intent of both sides, `git add` the file, then `npx ddd-ts-kit merge-trunk --continue`, which commits only once no line, row or test is lost.'
     : undefined;
 }
 
-// A path under the source root or the tests, or the whole tree.
+// `-X ours|theirs`, `-Xtheirs`, `--strategy-option[=]theirs`, `-s ours`, `--strategy[=]ours`.
+function takesOneSide(tail) {
+  return tail.some((word, index) => {
+    const next = tail[index + 1];
+    const option = /^(?:-X|--strategy-option=?)(.*)$/.exec(word);
+    const strategy = /^(?:-s|--strategy=?)(.*)$/.exec(word);
+    return (
+      (option !== null && /^(?:ours|theirs)$/.test(option[1] || next)) ||
+      (strategy !== null && (strategy[1] || next) === 'ours')
+    );
+  });
+}
+
+// A path under the source root or the tests, or the whole tree; a place only the shell knows may be either.
 function heldPaths(project, directory, args) {
-  return args
-    .split(/\s+/)
-    .filter((token) => token !== '' && !token.startsWith('-'))
-    .map((token) => projectPath(project, resolve(directory, token.replace(/^["']|["']$/g, ''))))
+  return shell
+    .operands(args)
+    .map((word) => shell.placeOf(word, directory))
+    .map((place) => (place === undefined ? '' : projectPath(project, place)))
     .some(
       (path) =>
         path === '' ||
@@ -3167,20 +3570,25 @@ function writtenTargets(command) {
       at(target, `the redirection \`${operator} ${target.replaceAll(shell.UNKNOWN, '$(...)')}\``),
     );
 
-  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))].filter(
-    ({ place }) => place === undefined || !isFreePlace(place),
-  );
+  // A place of the temp directory that is a link elsewhere is the place it reaches; a device is itself.
+  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))]
+    .map((target) =>
+      target.place !== undefined && !target.place.startsWith('/dev/') && isFreePlace(target.place)
+        ? { ...target, place: realPlace(target.place) }
+        : target,
+    )
+    .filter(({ place }) => place === undefined || !isFreePlace(place) || findProject(place) !== undefined);
 }
 
 // The only absolute places a worker writes outside its scope: the null and standard devices and
-// the system temporary directory (os.tmpdir() or $TMPDIR). Everything else is judged.
+// the system temporary directory (os.tmpdir() or $TMPDIR) outside every project. Everything else is judged.
 function isFreePlace(place) {
   if (['/dev/null', '/dev/stdout', '/dev/stderr'].includes(place)) {
     return true;
   }
   return [tmpdir(), process.env.TMPDIR]
     .filter((dir) => typeof dir === 'string' && dir !== '')
-    .map((dir) => resolve(dir))
+    .flatMap((dir) => [resolve(dir), realOf(resolve(dir))])
     .some((dir) => place === dir || place.startsWith(`${dir}/`));
 }
 
@@ -3198,6 +3606,7 @@ function shellWriteReason(project, input, { place, by }) {
   const refusal =
     generatedFileReason(project, place) ??
     workerScopeReason(project, place, input) ??
+    linkReason(project, place, input) ??
     handWrittenRoleReason(project, place);
 
   return refusal ? `${by}: ${refusal} ${FREE_OUTPUT}` : undefined;
@@ -3255,28 +3664,54 @@ function runsInlineCode({ words, heredoc, piped, redirects }) {
 }
 
 // The paths a command changes, each with what changes it.
-function changedPaths({ words, directory }) {
-  const name = shell.commandName(words);
-  return tableWrites(name, words, directory) ?? programWrites(name, words, directory) ?? [];
+function changedPaths(command) {
+  const name = shell.commandName(command.words);
+  return tableWrites(name, command) ?? programWrites(name, command.words, command.directory) ?? [];
 }
 
 // cp, mv, rm, dd, find -delete, patch and git: the writers whose targets the tables already read.
-function tableWrites(name, words, directory) {
+function tableWrites(name, { words, directory, expression }) {
   const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
   if (name in PATH_COMMANDS) {
-    return pathOperands(name, words.slice(1)).map((word) => at(word, name));
+    const recursive = name === 'rm' && words.some((word) => /^(?:-[a-zA-Z]*[rR][a-zA-Z]*|--recursive)$/.test(word));
+    return pathOperands(name, words.slice(1)).map((word) => ({
+      ...at(word, name),
+      below: recursive || (word.endsWith('/{}') && findReachesScope(expression)),
+    }));
   }
   if (name === 'dd') {
     return words.filter((word) => word.startsWith('of=')).map((word) => at(word.slice(3), 'dd'));
   }
   if (name === 'find' && words.includes('-delete')) {
     const roots = words.slice(1, shell.firstExpression(words));
-    return (roots.length > 0 ? roots : ['.']).map((root) => at(`${root}/{}`, 'find -delete'));
+    const below = findReachesScope(words.slice(shell.firstExpression(words)));
+    return (roots.length > 0 ? roots : ['.']).map((root) => ({ ...at(`${root}/{}`, 'find -delete'), below }));
   }
   if (name === 'patch' && !words.includes('--dry-run')) {
     return [{ place: undefined, by: 'patch' }];
   }
   return name === 'git' ? gitChangedPaths(words.slice(1), directory) : undefined;
+}
+
+// Whether what `find` finds can be a scope file or its folder: the names its `-name` and `-iname`
+// tests ask, when the expression is their plain conjunction; any other expression can find them.
+function findReachesScope(expression = []) {
+  if (expression.some((word) => ['-o', '-or', '!', '-not', '(', ','].includes(word))) {
+    return true;
+  }
+  const patterns = expression.flatMap((word, index) =>
+    ['-name', '-iname'].includes(word) ? expression.slice(index + 1, index + 2) : [],
+  );
+  return patterns.every((pattern) => SCOPE_NAMES.some((name) => namedBy(pattern, name)));
+}
+
+// A name a pattern of `find` matches, ignoring case; a bracket expression may match any.
+function namedBy(pattern, name) {
+  const glob = pattern
+    .replace(/[.+^${}()|\\]/g, '\\$&')
+    .replaceAll('*', '.*')
+    .replaceAll('?', '.');
+  return pattern.includes('[') || new RegExp(`^${glob}$`, 'i').test(name);
 }
 
 // The writers the cp and mv tables miss: an editor that rewrites in place, a downloader, an archive
@@ -3452,7 +3887,9 @@ function gitChangedPaths(args, directory) {
   }
   if (subcommand === 'clean' && !tail.some((word) => /^(-[a-zA-Z]*n|--dry-run)$/.test(word))) {
     const named = shell.operands(tail, ['-e', '--exclude']);
-    return (named.length > 0 ? named : ['.']).map(at);
+    // `-x` and `-X` remove ignored files, `-d` enters the folders git does not track.
+    const below = tail.some((word) => /^-[a-zA-Z]*[xX]/.test(word)) || untrackedBy(tail, /^-[a-zA-Z]*d/);
+    return (named.length > 0 ? named : ['.']).map((word) => ({ ...at(word), below }));
   }
   const checking = tail.some((word) => /^--(check|stat|numstat|summary|cached)$/.test(word));
 
@@ -3470,7 +3907,11 @@ function forcedGitWrite(subcommand, tail, at) {
     return [{ place: undefined, by: `git ${subcommand}` }];
   }
   if (touchesWorktree(subcommand, tail)) {
-    return [at('.')];
+    // `--all` stashes the ignored files too, `--include-untracked` those git does not ignore.
+    const below =
+      tail.some((word) => /^(?:-[a-zA-Z]*a[a-zA-Z]*|--all)$/.test(word)) ||
+      untrackedBy(tail, /^(?:-[a-zA-Z]*u[a-zA-Z]*|--include-untracked)$/);
+    return [{ ...at('.'), below }];
   }
   if (subcommand === 'worktree' && tail[0] === 'add') {
     return [at(shell.operands(tail.slice(1), ['-b', '-B']).at(-1) ?? '.')];
@@ -3482,6 +3923,11 @@ function forcedGitWrite(subcommand, tail, at) {
   return out === undefined ? undefined : [at(out)];
 }
 
+// 'untracked' when a word gives the option: the files git does not ignore are taken.
+function untrackedBy(tail, option) {
+  return tail.some((word) => option.test(word)) ? 'untracked' : false;
+}
+
 // stash writes the work tree unless it only reads it (list, show), and checkout-index with -a or -f.
 function touchesWorktree(subcommand, tail) {
   if (subcommand === 'checkout-index') {
@@ -3491,9 +3937,9 @@ function touchesWorktree(subcommand, tail) {
   return subcommand === 'stash' && !['list', 'show', 'drop', 'clear', 'branch'].includes(action);
 }
 
-// The file `git diff --output` and `git format-patch -o` write to, given spaced or joined.
+// The file `git diff`, `log` or `show --output` and `git format-patch -o` write to, given spaced or joined.
 function gitOutputFile(subcommand, tail) {
-  if (subcommand === 'diff') {
+  if (['diff', 'log', 'show'].includes(subcommand)) {
     return valuedTargets(tail, ['--output', '-o'])[0];
   }
   return subcommand === 'format-patch' ? valuedTargets(tail, ['-o', '--output-directory'])[0] : undefined;
@@ -3539,7 +3985,53 @@ function outsideScope(project, input, place) {
     return !isFreePlace(place);
   }
 
-  return owner.root !== project.root || workerScopeReason(project, place, input) !== undefined;
+  return (
+    owner.root !== project.root ||
+    (workerScopeReason(project, place, input) ?? linkReason(project, place, input)) !== undefined
+  );
+}
+
+// A file of a worker's scope is the file it reaches: through a link, or a folder of its path that is
+// one, it is judged where it lands; a file that has another name (a hard link) may be written there too.
+function linkReason(project, place, input) {
+  const scope = workerScope(project, input);
+  if (!scope) {
+    return undefined;
+  }
+  const path = projectPath(project, place);
+  const real = relative(realpathSync(project.root), realPlace(place)).split(sep).join('/');
+  if (real !== path) {
+    const away = real.startsWith('../');
+    return away || contextScopeReason(project, real, scope.context)
+      ? `${path} is a link to ${away ? realPlace(place) : real}, outside your scope: a worker writes through no link that leaves it. ${REPORT_TO_CONDUCTOR}`
+      : undefined;
+  }
+  return statSync(place, { throwIfNoEntry: false })?.nlink > 1
+    ? `${path} has another name elsewhere (a hard link): writing it changes that file too. A worker writes only files of its scope that have one name. ${REPORT_TO_CONDUCTOR}`
+    : undefined;
+}
+
+// Where a write lands: the real path of the place, its links followed, a link that points nowhere yet
+// followed to where it would create its file.
+function realPlace(place, depth = 0) {
+  try {
+    return realpathSync(place);
+  } catch {
+    // Not there: a link that points nowhere yet, or a file to create under its real folder.
+  }
+  const target = linkTarget(place);
+  if (target !== undefined && depth < 8) {
+    return realPlace(resolve(dirname(place), target), depth + 1);
+  }
+  return join(realPlace(dirname(place), depth), basename(place));
+}
+
+function linkTarget(place) {
+  try {
+    return readlinkSync(place);
+  } catch {
+    return undefined;
+  }
 }
 
 // The code a worker's command runs (inline code, a script, a shell fed on its input, a test or a
@@ -3568,23 +4060,36 @@ function sanctionedScripts(commands) {
 }
 
 // `npm run <script>`, `pnpm <script>`, `yarn run <script>`... of a sanctioned script, as `<manager> run <script>`.
+// A script run in another folder (`--prefix`, `-C`, `--dir`, `--filter`) is no tool of this project.
 function scriptRun({ words }) {
   const manager = shell.commandName(words);
+  if (words.some((word) => /^(?:--prefix|-C|--dir|--filter|-F|-w|--workspace)(?:=|$)/.test(word))) {
+    return undefined;
+  }
   const [first, second] = shell.operands(words.slice(1), VALUED_MANAGER_OPTIONS);
   const script = ['run', 'run-script'].includes(first) ? second : manager === 'npm' ? undefined : first;
   return SCRIPT_MANAGERS.includes(manager) && SANCTIONED_SCRIPTS.has(script) ? `${manager} run ${script}` : undefined;
 }
 
-// A program that only reads, whatever its arguments, and git that only reads (without `--output`,
-// which writes a file): it runs no code of the project.
-function isPureReader({ words }) {
+// A program that only reads, whatever its arguments, named by its name or by its path in a folder of
+// the system (a program named `cat` elsewhere is another program), and git that only reads: without `--output`, which writes a file, nor a
+// setting given to the command, nor an option that hands the files to a program (`grep -O`,
+// `--ext-diff`). It runs no code of the project.
+function isPureReader({ words, assigned }) {
   const name = shell.commandName(words);
+  if (words[0]?.includes('/') && !SYSTEM_PROGRAMS.includes(dirname(words[0]))) {
+    return false;
+  }
   if (name !== 'git') {
     return PURE_READERS.has(name);
   }
   const { subcommand, tail } = gitInvocation(words.slice(1));
   const reads = subcommand === 'branch' ? listsBranches(tail) : GIT_READ_ONLY.has(subcommand);
-  return reads && !words.some((word) => word.startsWith('--output'));
+  return reads && assigned.length === 0 && !words.some(runsAProgramOfGit);
+}
+
+function runsAProgramOfGit(word) {
+  return word === '-c' || word === '-O' || /^(?:--output|--config-env|--ext-diff|--open-files-in-pager|-O.)/.test(word);
 }
 
 // `git branch` reads with no operand or when it lists, and with none of the options that write.
@@ -3802,8 +4307,26 @@ function committedSince(checkout, from, outside) {
   return paths;
 }
 
-// The other parents of the merges on the first-parent line from `from` to HEAD.
+// The other parents of the merges on the first-parent line from `from` to HEAD that the trunk holds:
+// a branch of the worker merged back is the worker's own work. Without a trunk apart from the branch
+// checked out, every side is taken as the trunk's.
 function mergedSides(checkout, from) {
+  const trunk = trunkOf(checkout);
+  return allMergedSides(checkout, from).filter(
+    (side) => trunk === undefined || gitRun(checkout, ['merge-base', '--is-ancestor', side, trunk]).status === 0,
+  );
+}
+
+// The trunk of the repository, the one origin/HEAD names, else main or master, when it is not the
+// branch checked out.
+function trunkOf(checkout) {
+  const current = git(checkout, ['symbolic-ref', '--quiet', 'HEAD'])?.trim();
+  return ['refs/remotes/origin/HEAD', 'refs/heads/main', 'refs/heads/master'].find(
+    (ref) => ref !== current && git(checkout, ['rev-parse', '--verify', '--quiet', ref]) !== undefined,
+  );
+}
+
+function allMergedSides(checkout, from) {
   return gitFields(
     checkout,
     ['rev-list', '--first-parent', '--merges', '--parents', '--end-of-options', `${from}..HEAD`],
@@ -3891,6 +4414,25 @@ function putsBack(project, command, paths) {
   );
 }
 
+// An interpreter, a shell, `source`, `make`, a package script or runner, a test runner, a program
+// named by its path: code the guard cannot read. The kit's own CLI, behind a runner or not, is
+// judged by what it is asked to do.
+function runsCode(command) {
+  const name = shell.commandName(command.words);
+  return (
+    (CODE_RUNNERS.has(name) ||
+      CODE_RUNNERS.has(name.replace(/[\d.]+$/, '')) ||
+      shell.SHELLS.has(name) ||
+      isProgramPath(command.words[0] ?? '')) &&
+    kitInvocations([command]).length === 0
+  );
+}
+
+// A word that names a program by its path (`./scripts/seed.sh`, `node_modules/.bin/vitest`).
+function isProgramPath(word) {
+  return /^\.{0,2}\//.test(word) || word.includes('node_modules/.bin/');
+}
+
 // A plain `git commit`: no `-a`, no paths of its own, so that it records the index alone.
 function isGitCommit(command) {
   const { subcommand, tail } = gitInvocation(command.words.slice(1));
@@ -3959,12 +4501,15 @@ function putBackStep(project, { now, since }, [path, target]) {
   return { command: entry.added ? `git rm -f -- ${path}` : `git checkout HEAD -- ${path}` };
 }
 
+// A file that is not a regular one (a link to a device, a FIFO) has a hash of its kind, never read.
 function contentHash(file, keep) {
-  let content;
-  try {
-    content = readFileSync(file);
-  } catch {
+  const stat = statSync(file, { throwIfNoEntry: false });
+  if (stat === undefined) {
     return null;
+  }
+  const content = stat.isFile() ? readBounded(file, Number.POSITIVE_INFINITY, null).content : undefined;
+  if (content === undefined) {
+    return createHash('sha256').update(`not a file: ${stat.mode}`).digest('hex');
   }
   const hash = createHash('sha256').update(content).digest('hex');
   if (keep && !existsSync(join(keep, hash))) {
@@ -4128,13 +4673,18 @@ function git(project, args) {
 }
 
 function gitRun(project, args) {
-  // `-c core.fsmonitor=false`: a core.fsmonitor planted in the config never runs on the guard's own git.
-  return spawnSync('git', ['-c', 'core.fsmonitor=false', ...args], {
-    cwd: project.root,
-    encoding: 'utf8',
-    timeout: 5000,
-    maxBuffer: ANSWER_BYTES,
-  });
+  // A core.fsmonitor planted in the config never runs on the guard's own git, nor does a hook planted
+  // in the repository (the guard commits nothing), and its status writes no index.
+  return spawnSync(
+    'git',
+    ['-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', '--no-optional-locks', ...args],
+    {
+      cwd: project.root,
+      encoding: 'utf8',
+      timeout: 5000,
+      maxBuffer: ANSWER_BYTES,
+    },
+  );
 }
 
 function numstatChange(entry) {
@@ -4142,26 +4692,12 @@ function numstatChange(entry) {
   return { path: path.join('\t'), lines: (Number(added) || 0) + (Number(deleted) || 0) };
 }
 
-// Sized and read through one descriptor: the file measured is the file counted. A file that cannot be
-// opened, a broken link among them, counts no line.
+// Read within its bound: a file larger, or that cannot be opened (a broken link, a device), counts no line.
 function lineCount(file) {
-  let descriptor;
-  try {
-    descriptor = openSync(file, 'r');
-
-    return fstatSync(descriptor).size > COUNTED_FILE_BYTES
-      ? 0
-      : readFileSync(descriptor, 'utf8')
-          .split('\n')
-          .filter((line, index, all) => index < all.length - 1 || line !== '').length;
-  } catch {
-    // Counted below, as no line.
-  } finally {
-    if (descriptor !== undefined) {
-      closeSync(descriptor);
-    }
-  }
-  return 0;
+  const { content } = readBounded(file, COUNTED_FILE_BYTES);
+  return content === undefined
+    ? 0
+    : content.split('\n').filter((line, index, all) => index < all.length - 1 || line !== '').length;
 }
 
 function isDerived(project, path) {

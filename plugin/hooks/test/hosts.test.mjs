@@ -215,3 +215,35 @@ test('a host that sends no working directory has the guard read the directory it
   put(root, 'src/contexts/ordering/domain/services/pricing.service.ts', "import express from 'express';\n");
   assert.equal(runFrom(root, 'stop', {}).output.decision, 'block');
 });
+
+test('Codex: every patch of a line is judged, a delete and a move included, and one the command does not hold is refused', () => {
+  const root = project();
+  put(root, 'ddd-ts-kit-baseline.json', '{}');
+  const begin = '*** Begin Patch';
+  const end = '*** End Patch';
+  const generated = ['*** Add File: openapi/openapi.yaml', '+x'];
+  const harmless = ['*** Add File: notes.md', '+x'];
+  const second = `apply_patch <<'EOF'\n${[begin, ...harmless, end].join('\n')}\nEOF\napply_patch <<'EOF'\n${[begin, ...generated, end].join('\n')}\nEOF`;
+  assert.match(reason(run('pre-bash', codexShell(root, second))), /openapi\/openapi\.yaml is generated/);
+  const argument = `apply_patch '${[begin, ...generated, end].join('\n')}'`;
+  assert.match(reason(run('pre-bash', codexShell(root, argument))), /openapi\/openapi\.yaml is generated/);
+  for (const command of ['apply_patch < /tmp/change.patch', 'cat /tmp/change.patch | apply_patch']) {
+    assert.match(reason(run('pre-bash', codexShell(root, command))), /holds the patch/, command);
+  }
+  for (const sections of [
+    ['*** Delete File: ddd-ts-kit-baseline.json'],
+    ['*** Update File: ddd-ts-kit-baseline.json', '*** Move to: old-baseline.json', '-{}', '+{}'],
+  ]) {
+    assert.match(reason(run('pre-write', patch(root, ...sections))), /ddd-ts-kit-baseline\.json/);
+  }
+  put(root, 'openapi/openapi.yaml', 'x\n');
+  assert.equal(run('pre-write', patch(root, '*** Delete File: openapi/openapi.yaml')).output, undefined);
+  assert.equal(run('post-write', patch(root, '*** Delete File: src/contexts/ordering/gone.ts')).output, undefined);
+  assert.equal(
+    run('pre-bash', codexShell(directory('no-project'), 'apply_patch < /tmp/change.patch')).output,
+    undefined,
+  );
+  const asked = run('pre-bash', codexShell(project({ guard: 'advise' }), 'apply_patch < /tmp/p'));
+  assert.match(asked.output.systemMessage, /holds the patch/);
+  assert.equal(run('pre-bash', codexShell(project({ guard: 'off' }), 'apply_patch < /tmp/p')).output, undefined);
+});

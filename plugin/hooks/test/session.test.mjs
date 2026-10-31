@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { test } from 'node:test';
 import {
@@ -14,6 +14,7 @@ import {
   committed,
   directory,
   git,
+  guardTemp,
   here,
   installed,
   installedVersion,
@@ -24,6 +25,7 @@ import {
   run,
   SHORT_TIMES,
   worker,
+  write,
 } from './support.mjs';
 
 test('session start hands the workflow and the context map over as additional context', () => {
@@ -396,3 +398,25 @@ function plantedCli(root, marker, bin = 'bin.mjs') {
   const source = `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(marker)}, 'ran');\n`;
   installed(root, { name: 'ddd-ts-kit', bin: { 'ddd-ts-kit': bin }, source });
 }
+
+test('a config or a CLI in a folder others may write is never the project of a session, nor its CLI', () => {
+  const marker = join(guardTemp, 'stranger-cli-ran');
+  const stranger = `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(marker)}, process.argv.slice(2).join(' '));\n`;
+  const shared = directory('shared');
+  writeFileSync(join(shared, 'ddd-ts-kit.config.json'), '{}');
+  installed(shared, { name: 'ddd-ts-kit', bin: { 'ddd-ts-kit': 'bin.mjs' }, source: stranger });
+  chmodSync(shared, 0o777);
+  const below = join(shared, 'victim', 'sub');
+  mkdirSync(below, { recursive: true });
+  run('session', { cwd: below });
+  run('post-write', write(join(shared, 'victim', 'a.ts')));
+  const top = directory('shared-top');
+  mkdirSync(join(top, '.git'));
+  installed(top, { name: 'ddd-ts-kit', bin: { 'ddd-ts-kit': 'bin.mjs' }, source: stranger });
+  chmodSync(top, 0o777);
+  const inner = join(top, 'project');
+  mkdirSync(inner);
+  writeFileSync(join(inner, 'ddd-ts-kit.config.json'), '{}');
+  run('session', { cwd: inner });
+  assert.equal(existsSync(marker), false);
+});

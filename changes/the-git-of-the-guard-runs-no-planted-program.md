@@ -1,0 +1,1 @@
+**The guard's own git runs no program a repository plants.** The git the runs of a builder start reads no `core.fsmonitor` of the config, as the git of the guard already did, and neither runs a hook planted in the repository: both run with no hooks and `--no-optional-locks`, so that a `git status` of the guard writes no index.

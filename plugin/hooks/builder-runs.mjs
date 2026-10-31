@@ -242,8 +242,18 @@ function modifiedAt(file) {
   }
 }
 
+// Neither a core.fsmonitor planted in the config nor a hook planted in the repository runs on this git.
 function git(directory, args) {
-  const run = spawnSync('git', args, { cwd: directory, encoding: 'utf8', timeout: 3000, maxBuffer: ANSWER_BYTES });
+  const run = spawnSync(
+    'git',
+    ['-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', '--no-optional-locks', ...args],
+    {
+      cwd: directory,
+      encoding: 'utf8',
+      timeout: 3000,
+      maxBuffer: ANSWER_BYTES,
+    },
+  );
   return run.status === 0 ? run.stdout : undefined;
 }
 
