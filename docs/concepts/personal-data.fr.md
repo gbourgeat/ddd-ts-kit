@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:b6aad77d1c86dd69 -->
+<!-- translation-of: personal-data.md sha256:e83092790598620d -->
 
 # Les données personnelles dans un projet généré
 
@@ -125,8 +125,8 @@ d'exécution d'origine `cli` avec l'opérateur pour acteur, et lance `eraseDataS
    main pour l'instant, là où le lanceur dit `TODO(platform)`.
 
 Il imprime le rapport en JSON : si une clé a été détruite, les lignes que chaque contexte et la
-plateforme ont atteintes, les projections reconstruites. Une copie qui échoue n'arrête pas les autres,
-et le premier échec est levé une fois que tout a tourné : relancer l'effacement achève celui qui a
+plateforme ont atteintes, les projections reconstruites. Une copie ou une reconstruction qui échoue
+n'arrête pas les autres, et le premier échec est levé une fois que tout a tourné : relancer l'effacement achève celui qui a
 échoué à mi-chemin. Un effacement qui n'a rien atteint est refusé, code de sortie 1, et annoncé à
 personne : l'id est mal saisi, son *tenant* manque à l'annuaire, ou la personne a déjà été effacée, et
 les entrées du journal d'audit disent lequel. `--rerun` dit que c'est attendu : le code de sortie est 0

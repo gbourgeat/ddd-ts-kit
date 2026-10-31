@@ -124,8 +124,8 @@ context of origin `cli` with the operator as actor, and runs `eraseDataSubject` 
    runner says `TODO(platform)`.
 
 It prints the report as JSON: whether a key was destroyed, the rows each context and the platform
-reached, the projections rebuilt. A copy that fails does not stop the others, and the first failure
-is thrown once everything ran: running the erasure again completes one that failed half way. An
+reached, the projections rebuilt. A copy or a rebuild that fails does not stop the others, and the
+first failure is thrown once everything ran: running the erasure again completes one that failed half way. An
 erasure that reached nothing is refused, exit code 1, and announced to nobody: the id is mistyped,
 its tenant is missing from the directory, or the person was erased already, and the entries of the
 audit trail say which. `--rerun` says it is expected: the exit code is 0 and the erasure is announced
