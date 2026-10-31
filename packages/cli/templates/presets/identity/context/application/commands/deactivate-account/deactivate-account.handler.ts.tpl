@@ -39,10 +39,12 @@ export class DeactivateAccountHandler implements CommandHandler<DeactivateAccoun
 
   /**
    * A person deactivates their own account, which leaves every organisation it belongs to and ends
-   * every delegation it gave or received there, in the same unit of work: a deactivated account
-   * holds no right anywhere, whatever its token says until it expires. The last owner of an
-   * organisation is refused: they appoint another owner first. The provider is asked to disable
-   * the person once it is committed (`application/integration/handlers/`).
+   * every delegation it gave or received there, in the same unit of work. This context refuses the
+   * account at once; the other contexts read the token, so they refuse it at its next token: a
+   * token already issued lives until it expires (300 s in the realm of the kit). A project that
+   * wants no window checks the account at the edge. The last owner of an organisation is refused:
+   * they appoint another owner first. The provider is asked to disable the person once it is
+   * committed (`application/integration/handlers/`).
    */
   async execute({ actor }: DeactivateAccountCommand): Promise<string> {
     const account = await this.accountRepository.findById(actor.id);

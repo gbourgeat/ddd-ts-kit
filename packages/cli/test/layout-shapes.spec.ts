@@ -146,6 +146,28 @@ describe('a statement broken after its operator', () => {
     ]);
   });
 
+  it('keeps the function on the line of the call when it answers a chain of calls, as it does for one call', () => {
+    const assertion = `.thenState((account) => expect([account.email.value, account.displayName.value]).toEqual(['ada@lovelace.test', 'Countess']));`;
+
+    expect(fitStatement(assertion, '      ')).toEqual([
+      '      .thenState((account) =>',
+      "        expect([account.email.value, account.displayName.value]).toEqual(['ada@lovelace.test', 'Countess']),",
+      '      );',
+    ]);
+  });
+
+  it('opens every argument when the function a call receives last answers a condition, even one that starts with a call', () => {
+    const grant = `permit('system-billing.cancel-stale-invoices', [billingPermissions['invoice.cancel']], ({ actor }) => isSystem(actor) && actor.id === 'system:billing.cancel-stale-invoices'),`;
+
+    expect(fitStatement(grant, '  ')).toEqual([
+      '  permit(',
+      "    'system-billing.cancel-stale-invoices',",
+      "    [billingPermissions['invoice.cancel']],",
+      "    ({ actor }) => isSystem(actor) && actor.id === 'system:billing.cancel-stale-invoices',",
+      '  ),',
+    ]);
+  });
+
   it('leaves on its line a call with no argument or a statement with no bracket to open', () => {
     const empty = `await platform.${LONG}Service.someVeryLongMethodNameThatGoesOnAndOn${LONG}AndStillGoesOn${LONG}();`;
     const bare = `${LONG}.${LONG}.${LONG}.${LONG}.${LONG}.${LONG}.value;`;

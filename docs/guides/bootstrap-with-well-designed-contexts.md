@@ -146,8 +146,19 @@ one organisation works in it on every request; a person of several holds them as
 attribute, and each request names the one it works in with `x-tenant-id` (refused with 403 if
 they are not a member of it: the preset gives the HTTP boundary of `http-boundary.ts`
 `resolveTenant: firstTenantOf(tenantFromHeader(), tenantFromClaim())`, whatever the authenticator).
-Removed from an organisation, they lose it at their next token, and the identity context already
-refuses them its use cases. With `--authn jwt` the preset leaves a next step: map the claim your
+Removed from an organisation, or with their account deactivated, they lose it at their next
+token, and the identity context already refuses them its use cases: the other contexts read the
+token, and a token already issued lives until it expires (300 s in the realm of the kit). A
+project that wants no window checks the account at the edge. With an audit trail, a command of
+the context that succeeded on an organisation (opening it, inviting, revoking an invitation,
+removing a member, changing a role, granting or revoking a delegation) is written in the chain of
+that organisation (`platform/audit/organisation-of-command.ts`): its owner reads there who did it,
+whatever organisation that person's token named. The decision of the authorization and a refused
+or failed command stay in the chain of the tenant of the token: the admin of a person's own
+organisation reads there what that person asked, elsewhere included. Accepting or declining an
+invitation names its token only, so those commands stay in the tenant of the token; the
+organisation joined reads `member.joined` in its own chain, the entry of the delivery of that
+fact, and a declined invitation leaves nothing there. With `--authn jwt` the preset leaves a next step: map the claim your
 provider writes (`tenantClaim` when it is a list or an object keyed by organisation, `toActor`
 otherwise).
 

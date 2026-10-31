@@ -104,6 +104,7 @@ function sandboxFindings(config: Config, settings: unknown): DoctorFinding[] {
     ['enabled', sandbox['enabled'] === true, 'true'],
     ['failIfUnavailable', sandbox['failIfUnavailable'] === true, 'true'],
     ['allowUnsandboxedCommands', sandbox['allowUnsandboxedCommands'] === false, 'false'],
+    ['autoAllowBashIfSandboxed', sandbox['autoAllowBashIfSandboxed'] === false, 'false'],
     ['filesystem.allowWrite', holds(sandbox['filesystem'], 'allowWrite', install.writes), install.writes.join(', ')],
     [
       'network.allowedDomains',

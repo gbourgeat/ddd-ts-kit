@@ -201,6 +201,14 @@ offboarded tenant leaves chains that still verify. The price: the order between 
 tenants is given by `occurredAt` only, not proven by a hash. Pass `chainOf` to a trail to
 decide otherwise (one chain per bounded context, a single chain for a small system).
 
+A command can act on a tenant other than the one of the work: a person of `acme` who opens an
+organisation, or invites someone into another one they belong to. `tenantOf(message)` of
+`auditMiddleware` names that tenant, and the entry of the message, once it succeeded, takes it
+as its `tenantId`, so it is written in its chain, its `actor.tenantId` still that of the token.
+A failure, and the decision of `auditDecisions`, stay in the tenant of the work: they record what
+the caller asked, and a caller who names a tenant it cannot act in never writes to its chain, nor
+opens one.
+
 ### The hash
 
 `hash` is the SHA-256, in lower-case hexadecimal, of the canonical form of the entry without

@@ -36,6 +36,15 @@ export interface AuditMiddlewareOptions extends AuditSource {
   readonly masker?: AuditMasker;
 
   /**
+   * The tenant whose chain receives the entry of a message that succeeded, when the message acts
+   * on a tenant other than the one of the work: an identity command on an organisation the token
+   * does not name, say. `undefined` keeps the tenant of the work, and so does every entry of a
+   * failure: a caller who names a tenant it cannot act in never writes to its chain, nor opens
+   * one, as a refusal is recorded in the tenant of the caller's credential.
+   */
+  readonly tenantOf?: (message: Message) => string | undefined;
+
+  /**
    * Told when the entry of a failure could not be written. The failure of the use case is
    * what the caller receives, never the failure of its audit.
    */
@@ -176,14 +185,24 @@ class MessageAudit {
       ...(this.options.masker === undefined ? {} : { masker: this.options.masker }),
     });
 
-    return auditRecordOf(this.options, {
-      category: info.kind,
-      action: info.name,
+    return this.inTheTenantNamed(
       outcome,
-      ...(reason === undefined ? {} : { reason }),
-      ...(resource === undefined ? {} : { resource }),
-      ...(context === undefined ? {} : { context }),
-      ...(changes === undefined ? {} : { changes }),
-    });
+      auditRecordOf(this.options, {
+        category: info.kind,
+        action: info.name,
+        outcome,
+        ...(reason === undefined ? {} : { reason }),
+        ...(resource === undefined ? {} : { resource }),
+        ...(context === undefined ? {} : { context }),
+        ...(changes === undefined ? {} : { changes }),
+      }),
+    );
+  }
+
+  /** A message that succeeded is written in the tenant it acts on, when `tenantOf` names one. */
+  private inTheTenantNamed(outcome: AuditOutcome, record: AuditRecord): AuditRecord {
+    const named = outcome === 'succeeded' ? this.options.tenantOf?.(this.sending.message) : undefined;
+
+    return named === undefined ? record : { ...record, tenantId: named };
   }
 }

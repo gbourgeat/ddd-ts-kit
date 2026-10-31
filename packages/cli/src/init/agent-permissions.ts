@@ -95,6 +95,8 @@ export const GENERATED_FILES: readonly string[] = [
 // one outright. Then the files that hold the rules and the pipeline: changing one is a decision of
 // the project owner; `GOVERNED_FILES` of the guard of the plugin names most of the same pipeline and gate
 // files, and not `.github/copilot/settings.json`. The review policy holds a rule of the project too.
+// `package.json` is not here: it is edited for its dependencies all day, and a rule cannot say "its
+// scripts"; the guard of the plugin asks when an edit changes its `scripts` block, which the gates run.
 // Before them, --force, which replaces files of the project with the templates of the kit: the person
 // decides, the allow rule of generate notwithstanding.
 const ASK: readonly string[] = [

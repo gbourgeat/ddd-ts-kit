@@ -486,7 +486,11 @@ It implements the whole port, held by `loggerContract` like the pino and winston
   a circular object), on an entry or on a child, give the entry without them, marked
   `logError: "unserializable fields"`.
 
-It redacts no credential: `@ddd-ts-kit/pino` and `@ddd-ts-kit/winston` do.
+It hides credentials as `@ddd-ts-kit/pino` and `@ddd-ts-kit/winston` do: the value of every
+key of `CREDENTIAL_KEYS` of the kernel, whatever its case (`isCredentialKey`), is written
+`[redacted]` at the top of an entry and one level below (`headers.authorization`), in the fields
+of a line, of a child, of `base` and of `fields`. Nothing deeper, nor inside a list. The objects
+passed are never written to.
 
 ## What wrapping guarantees
 

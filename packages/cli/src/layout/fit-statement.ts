@@ -130,14 +130,15 @@ function endsWithLiteral(statement: string, group: Group, last: string): boolean
 
 const FUNCTION_ANSWERING_A_CALL = /^(?:async )?(?:\w+|\([^()]*\)) =>(?= [\w.]+\()/;
 
-/** The function a call receives last, when it answers a call and the line fits up to its arrow: the formatter moves what it answers to a line of its own. */
+/** The function a call receives last, when it answers one call and the line fits up to its arrow: the formatter moves what it answers to a line of its own. */
 function huggedFunction(statement: string, group: Group, indent: string): string[] | undefined {
   const last = splitTopLevel(statement.slice(group.open + 1, group.close)).at(-1) ?? '';
   const start = group.close - last.length;
   const head = FUNCTION_ANSWERING_A_CALL.exec(last)?.[0];
   const isLastArgument = statement[group.open] === '(' && statement.slice(start, group.close) === last;
+  const answersOneCall = head !== undefined && isOneCall(last.slice(head.length).trim());
 
-  if (head === undefined || !isLastArgument || indent.length + start + head.length > LINE_WIDTH) {
+  if (head === undefined || !answersOneCall || !isLastArgument || indent.length + start + head.length > LINE_WIDTH) {
     return undefined;
   }
 
@@ -146,4 +147,20 @@ function huggedFunction(statement: string, group: Group, indent: string): string
     ...fitStatement(`${last.slice(head.length).trim()},`, `${indent}${STEP}`),
     `${indent}${statement.slice(group.close)}`,
   ];
+}
+
+/**
+ * A call, or a chain of calls, and nothing else: `isSystem(actor)`, `expect(a).toEqual(b)`, not
+ * `isSystem(actor) && actor.id === id`, which the formatter opens argument by argument. Outside its
+ * brackets the body is names and dots only, and it ends on the arguments of its last call.
+ */
+function isOneCall(body: string): boolean {
+  const depths = nesting(body);
+
+  const outside = body
+    .split('')
+    .filter((char, index) => depths[index] === 0 && !'([{)]}'.includes(char))
+    .join('');
+
+  return /^[\w.]+$/.test(outside) && lastGroup(body)?.close === body.length - 1 && body.endsWith(')');
 }

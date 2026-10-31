@@ -14,8 +14,8 @@ export interface LogSettings {
 }
 
 /**
- * JSON lines on the standard output, credentials not redacted (`init --logger pino` or
- * `--logger winston` redacts them and has a pretty format). Every entry carries
+ * JSON lines on the standard output, the credential keys of the kernel redacted whatever
+ * their case (`init --logger pino` or `--logger winston` has a pretty format). Every entry carries
  * what the execution scope knows of the work in progress (correlation id, origin, actor,
  * tenant) and the ids of the active trace, so a request is followed from its log lines to its
  * spans and to its audit entries. `stop()` of the application flushes it, last.

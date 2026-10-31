@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:66161809130bd108 -->
+<!-- translation-of: agent-sandbox.md sha256:7d4c361a12f8631f -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -86,6 +86,7 @@ ligne apporte, en termes de contrôle :
 | `sandbox.enabled: true` | `.claude/settings.json` | chaque commande *shell* de l'agent tourne dans le bac à sable (bubblewrap et socat sous Linux) : elle écrit où le bac à sable l'autorise et joint le réseau par son *proxy* |
 | `sandbox.failIfUnavailable: true` | projet | sur une machine sans bac à sable, la session s'arrête au démarrage au lieu de lancer les commandes hors bac à sable : aucune dégradation silencieuse |
 | `sandbox.allowUnsandboxedCommands: false` | projet | l'agent ne peut pas lancer une commande hors du bac à sable (la demande `dangerouslyDisableSandbox` est ignorée) : aucune nouvelle tentative en contournant le contrôle |
+| `sandbox.autoAllowBashIfSandboxed: false` | projet | une commande n'est pas lancée du seul fait qu'elle tourne dans le bac à sable : la clé vaut `true` par défaut, et une règle `ask` sur `Bash` sans contenu est alors sautée pour chaque commande du bac à sable, si bien que la liste d'autorisations ne serait plus une barrière ; les règles `deny` et les règles `ask` limitées à un contenu tiennent dans les deux cas (documentation de Claude Code, lue le 2026-10-31) |
 | `sandbox.network.allowedDomains: ["registry.npmjs.org", "<hôte git>", ...]` | projet | une commande joint le registre des paquets, l'hôte git du projet (lu dans `repository` de `package.json`, sinon dans le *remote* `origin` ; ajoutez votre miroir si vous en tenez un) et les hôtes d'où les scripts d'installation de la pile téléchargent (plus bas), et rien d'autre : aucune exfiltration par `curl`, aucun paquet d'un hôte inconnu |
 | `sandbox.filesystem.allowWrite` : les caches qu'écrit l'installation de la pile | projet | une commande n'écrit que le projet, le répertoire temporaire et ces caches : `~/.npm` avec npm, le *store* et le cache de pnpm, `~/.cache/prisma` avec Prisma (plus bas) |
 | `sandbox.credentials.files` : `~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure` refusés | projet | une commande ne peut pas lire les clés du développeur : une injection de *prompt* ne peut pas les envoyer |

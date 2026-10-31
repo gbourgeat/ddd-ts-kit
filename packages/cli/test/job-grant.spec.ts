@@ -26,8 +26,9 @@ describe('generate job, the grant of its system actor', () => {
     const root = project('--authz', 'abac');
     const generated = report(cli(root, ...EVERY_QUARTER));
 
+    // Laid out as the formatter of the project does: an arrow that answers a condition opens every argument.
     const rule =
-      "  permit(\n    'system-billing.cancel-stale-invoices',\n    [billingPermissions['invoice.cancel']],\n    ({ actor }) => actor.id === 'system:billing.cancel-stale-invoices',\n  ),";
+      "  permit(\n    'system-billing.cancel-stale-invoices',\n    [billingPermissions['invoice.cancel']],\n    ({ actor }) => isSystem(actor) && actor.id === 'system:billing.cancel-stale-invoices',\n  ),";
 
     expect(read(root, `${AUTH}/attributes/attribute-policies.ts`)).toContain(
       `  // ddd-ts-kit:system-grants\n${rule}\n  // /ddd-ts-kit:system-grants`,
@@ -35,8 +36,7 @@ describe('generate job, the grant of its system actor', () => {
 
     expect(generated.todos.find((todo) => todo.gist.startsWith('check this rule'))).toMatchObject({
       file: `${AUTH}/attributes/attribute-policies.ts`,
-      // The rule takes several lines: the step points at the one that names it.
-      line: 18,
+      line: 19,
     });
 
     expect(read(root, JOB)).not.toContain('grant the system actor');
@@ -130,6 +130,35 @@ describe('generate job, the grant of its system actor', () => {
     ).toBe(0);
 
     expect(read(root, `${AUTH}/roles/roles.ts`).match(/billingPermissions\['invoice\.cancel'\],/g)).toHaveLength(1);
+  });
+});
+
+describe('generate job, the ABAC rule of its system actor', () => {
+  it('reads the actor as a system actor, not its id alone, which a token could carry, and imports isSystem once', () => {
+    const root = project('--authz', 'abac');
+
+    const another = [
+      'generate',
+      'job',
+      'billing',
+      'CancelOverdueInvoices',
+      '--every',
+      '1h',
+      '--command',
+      'CancelInvoice',
+    ];
+
+    expect(cli(root, ...EVERY_QUARTER).code).toBe(0);
+    expect(cli(root, ...another, '--term', 'Overdue=Unpaid after its due date').code).toBe(0);
+
+    const policies = read(root, `${AUTH}/attributes/attribute-policies.ts`);
+
+    expect(policies.match(/isSystem\(actor\) && actor\.id === 'system:billing\.[a-z-]+'/g)).toEqual([
+      "isSystem(actor) && actor.id === 'system:billing.cancel-stale-invoices'",
+      "isSystem(actor) && actor.id === 'system:billing.cancel-overdue-invoices'",
+    ]);
+
+    expect(policies.match(/import \{ isSystem \} from '@ddd-ts-kit\/kernel';/g)).toHaveLength(1);
   });
 });
 

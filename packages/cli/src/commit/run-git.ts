@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { CliError } from '../cli-error';
+import { gitArguments } from './git-arguments';
 
 /** A history can print far more than the 1 MB spawnSync allows by default; the merge takes the same room. */
 const MAX_BUFFER = 256 * 1024 * 1024;
@@ -15,7 +16,7 @@ export function runGit(
   args: readonly string[],
   environment?: Readonly<Record<string, string>>,
 ): string | undefined {
-  const run = spawnSync('git', [...args], {
+  const run = spawnSync('git', gitArguments(args), {
     cwd: directory,
     ...(environment === undefined ? {} : { env: { ...process.env, ...environment } }),
     encoding: 'utf8',

@@ -31,6 +31,10 @@ describe('init --logger', () => {
       'return new StdoutLogger({\n    level,\n    base: { service, environment },\n    scrubMessages,\n    fields: () => traceLogFields(scope),\n  });',
     );
 
+    expect(stdout).toContain(
+      ' * JSON lines on the standard output, the credential keys of the kernel redacted whatever\n * their case',
+    );
+
     expect(pino).toContain('return createPinoLogger({ ...settings, fields: () => traceLogFields(scope) });');
     expect(winston).toContain('return createWinstonLogger({ ...settings, fields: () => traceLogFields(scope) });');
 

@@ -23,6 +23,33 @@ describe('redaction', () => {
     expect(sink.text()).not.toContain('value-of-');
   });
 
+  it('hides them whatever their case, in the fields of a line, of a child and read at each line', () => {
+    const sink = new MemorySink();
+
+    const logger = createPinoLogger({
+      destination: sink.stream,
+      fields: () => ({ ID_TOKEN: 'ambient-secret' }),
+    });
+
+    logger.child({ ClientSecret: 'bound-secret' }).info('signed in', {
+      AUTHORIZATION: 'Bearer line-secret',
+      Password: 'line-secret',
+      headers: { Authorization: 'Bearer nested-secret', 'X-Api-Key': 'nested-secret', accept: 'text/html' },
+    });
+
+    expect(sink.records()).toMatchObject([
+      {
+        ID_TOKEN: REDACTED,
+        ClientSecret: REDACTED,
+        AUTHORIZATION: REDACTED,
+        Password: REDACTED,
+        headers: { Authorization: REDACTED, 'X-Api-Key': REDACTED, accept: 'text/html' },
+      },
+    ]);
+
+    expect(sink.text()).not.toMatch(/-secret/);
+  });
+
   it('hides them in the fields of a child and in the fields read at each line', () => {
     const sink = new MemorySink();
 
@@ -72,6 +99,20 @@ describe('redaction', () => {
     new PinoLogger(instance).info('transfer', { iban: 'FR76', owner: { password: 'p' } });
 
     expect(sink.records()).toMatchObject([{ iban: REDACTED, owner: { password: REDACTED } }]);
+  });
+
+  it('hides a key the project adds whatever its case one level below, and as it is written at the top', () => {
+    const sink = new MemorySink();
+
+    createPinoLogger({ destination: sink.stream, redact: ['iban'] }).info('transfer', {
+      iban: 'FR76',
+      IBAN: 'written',
+      bank: { IBAN: 'FR76', Iban: 'FR76' },
+    });
+
+    expect(sink.records()).toMatchObject([
+      { iban: REDACTED, IBAN: 'written', bank: { IBAN: REDACTED, Iban: REDACTED } },
+    ]);
   });
 });
 

@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { gitArguments } from '../../commit/git-arguments';
 
 /** Answers whether an entry below the directory walked, relative to the root, is one git ignores. */
 export type Ignored = (entry: string, isDirectory: boolean) => boolean;
@@ -14,7 +15,7 @@ export type Ignored = (entry: string, isDirectory: boolean) => boolean;
 export function gitIgnored(root: string, directory: string): Ignored {
   const run = spawnSync(
     'git',
-    ['ls-files', '-z', '--others', '--ignored', '--exclude-standard', '--directory', '--', directory],
+    gitArguments(['ls-files', '-z', '--others', '--ignored', '--exclude-standard', '--directory', '--', directory]),
     { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 28 },
   );
 

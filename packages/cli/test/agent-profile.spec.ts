@@ -34,6 +34,7 @@ describe('init --agent-profile regulated', () => {
       enabled: true,
       failIfUnavailable: true,
       allowUnsandboxedCommands: false,
+      autoAllowBashIfSandboxed: false,
       filesystem: { allowWrite: ['~/.npm'] },
       network: { allowedDomains: ['registry.npmjs.org'] },
       credentials: {
@@ -241,6 +242,7 @@ describe('init --agent-profile regulated, and the hosts and keys of the project'
       enabled: true,
       failIfUnavailable: true,
       allowUnsandboxedCommands: false,
+      autoAllowBashIfSandboxed: false,
       network: { allowedDomains: ['registry.npmjs.org', 'jfrog.acme.io'] },
     });
 
@@ -296,7 +298,14 @@ describe('init --agent-profile, in the config and under doctor', () => {
 
     const settings = readJson(root, SETTINGS) as Record<string, unknown>;
 
-    write(root, SETTINGS, JSON.stringify({ ...settings, sandbox: { enabled: true, allowUnsandboxedCommands: true } }));
+    write(
+      root,
+      SETTINGS,
+      JSON.stringify({
+        ...settings,
+        sandbox: { enabled: true, allowUnsandboxedCommands: true, autoAllowBashIfSandboxed: true },
+      }),
+    );
 
     const result = cli(root, 'doctor', '--strict');
 
@@ -304,6 +313,7 @@ describe('init --agent-profile, in the config and under doctor', () => {
     expect(result.stdout).not.toContain('sandbox.enabled');
     expect(result.stdout).toContain('  permission sandbox.failIfUnavailable: missing (true)');
     expect(result.stdout).toContain('  permission sandbox.allowUnsandboxedCommands: missing (false)');
+    expect(result.stdout).toContain('  permission sandbox.autoAllowBashIfSandboxed: missing (false)');
 
     expect(result.stdout).toContain(
       '  permission sandbox.network.allowedDomains: missing (the npm registry and the git host)',
@@ -319,6 +329,7 @@ describe('init --agent-profile, in the config and under doctor', () => {
 
     expect(kept.code).toBe(1);
     expect(kept.stdout).toContain('  permission sandbox.allowUnsandboxedCommands: missing (false)');
+    expect(kept.stdout).toContain('  permission sandbox.autoAllowBashIfSandboxed: missing (false)');
     expect(kept.stdout).not.toContain('sandbox.failIfUnavailable');
 
     const current = readJson(root, SETTINGS) as Record<string, unknown>;
@@ -326,7 +337,10 @@ describe('init --agent-profile, in the config and under doctor', () => {
     write(
       root,
       SETTINGS,
-      JSON.stringify({ ...current, sandbox: { ...sandboxOf(root), allowUnsandboxedCommands: false } }),
+      JSON.stringify({
+        ...current,
+        sandbox: { ...sandboxOf(root), allowUnsandboxedCommands: false, autoAllowBashIfSandboxed: false },
+      }),
     );
 
     expect(cli(root, 'doctor', '--strict').code).toBe(0);

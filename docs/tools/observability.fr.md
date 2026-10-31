@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:d4f00bce802059cd -->
+<!-- translation-of: observability.md sha256:e62e1ac4381cd9c6 -->
 
 # Observabilité : backends de traçage, *loggers* et suivi des erreurs
 
@@ -79,7 +79,7 @@ Un backend hébergé qui accepte OTLP est une troisième option ; aucun n'a ét�
 | Sortie | des lignes JSON sur la sortie standard | des lignes JSON, un format lisible facultatif en développement, les transports de pino | des lignes JSON, les formats et transports de winston |
 | Coût d'une ligne, tel que mesuré dans les README du kit | non indiqué | environ 3 microsecondes | environ 7 microsecondes, plus avec chaque format |
 | Mise en tampon | aucune | aucune par défaut ; un mode asynchrone met 4 Kio en tampon et peut perdre les dernières lignes d'un processus tué | aucune dans l'adaptateur |
-| Masquage des secrets | aucun (le README d'aspects le dit) ; `scrubMessages` retire le message des erreurs qui ne sont pas une `DomainError` | compilé par pino | un passage sur les valeurs de premier niveau |
+| Masquage des secrets | les clés du noyau, quelle que soit leur casse, au premier niveau et un niveau en dessous ; `scrubMessages` retire le message des erreurs qui ne sont pas une `DomainError` | compilé par pino | un passage sur les valeurs de premier niveau |
 | Choisi par | `init --logger stdout` (le défaut) | `init --logger pino` | `init --logger winston` |
 | Prenez-le quand | du JSON sur stdout est tout ce qu'il vous faut | le volume compte, le framework parle déjà pino (Fastify), ou vous voulez ses transports | l'équipe exploite déjà des transports et formats winston (fichiers tournants, syslog, transport d'un éditeur) |
 

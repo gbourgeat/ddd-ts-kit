@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a80e8497a8f60609 -->
+<!-- translation-of: README.md sha256:bc4f0653dd403f2d -->
 
 # @ddd-ts-kit/winston
 
@@ -172,11 +172,14 @@ ligne, d'un enfant et de `fields` de la même façon. La valeur de ces clés est
 `[redacted]`, au premier niveau d'une ligne et un niveau en dessous (`headers.authorization`,
 `body.password`) :
 
-`password`, `authorization`, `cookie`, `set-cookie`, `token`, `secret`, `apiKey`, `api_key`,
-`access_token`, `refresh_token`, `accessToken`, `refreshToken`, `client_secret`
+`password`, `passwd`, `authorization`, `cookie`, `set-cookie`, `token`, `secret`, `apiKey`,
+`api_key`, `x-api-key`, `access_token`, `refresh_token`, `id_token`, `accessToken`,
+`refreshToken`, `idToken`, `client_secret`, `clientSecret`, `client-secret`, `private_key`,
+`privateKey`
 
-`redact: ['iban', 'ssn']` complète la liste. Les noms sont comparés exactement, casse comprise,
-et rien n'est cherché plus profond qu'un niveau : journalisez la partie que vous visez, pas une
+`redact: ['iban', 'ssn']` complète la liste. Les noms sont comparés quelle que soit leur casse
+(`Authorization`, `X-Api-Key`), comme le fait `isCredentialKey` du noyau, et rien n'est cherché
+plus profond qu'un niveau, ni dans une liste : journalisez la partie que vous visez, pas une
 requête HTTP entière. Les objets que vous passez ne sont jamais modifiés : un objet imbriqué est
 copié quand une clé doit être masquée.
 

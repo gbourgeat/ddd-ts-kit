@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { gitArguments } from '../commit/git-arguments';
 
 /** Directories never copied when the project is not a git repository. */
 const NOT_COPIED = new Set(['node_modules', '.git', 'dist', 'coverage', '.worktrees']);
@@ -24,7 +25,7 @@ export function copyOfProject(root: string): string {
  * copy never holds what one points at, wherever it points (a key of the home folder, say).
  */
 function sourceFiles(root: string): string[] {
-  const listed = spawnSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], {
+  const listed = spawnSync('git', gitArguments(['ls-files', '--cached', '--others', '--exclude-standard', '-z']), {
     cwd: root,
     encoding: 'utf8',
     maxBuffer: 1 << 28,

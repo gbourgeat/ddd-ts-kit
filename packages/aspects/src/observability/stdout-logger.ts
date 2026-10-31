@@ -8,6 +8,7 @@ import {
   type Logger,
 } from '@ddd-ts-kit/kernel';
 import { clockOr } from '../runtime/clock-or';
+import { withoutCredentials } from './without-credentials';
 
 export interface StdoutLoggerOptions {
   /** Entries below it are not written. Default `info`. */
@@ -40,7 +41,8 @@ interface Header {
 
 /**
  * The `Logger` port as JSON lines: one object per entry with `time`, `level`, `message`, then
- * the fields. What a container platform collects as it is.
+ * the fields, the value of every credential key hidden at the top and one level below. What a
+ * container platform collects as it is.
  */
 export class StdoutLogger implements Logger {
   constructor(private readonly options: StdoutLoggerOptions = {}) {}
@@ -101,7 +103,9 @@ export class StdoutLogger implements Logger {
 
   private serialized(header: Header, fields: LogFields): string {
     try {
-      const written = describeErrorFields({ ...this.options.base, ...this.ambientFields(), ...fields }, this.options);
+      const written = withoutCredentials(
+        describeErrorFields({ ...this.options.base, ...this.ambientFields(), ...fields }, this.options),
+      );
 
       return JSON.stringify({ ...header, ...written, ...header });
     } catch {

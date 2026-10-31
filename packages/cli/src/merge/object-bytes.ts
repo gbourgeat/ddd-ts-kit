@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { gitArguments } from '../commit/git-arguments';
 
 /** The header of an object `cat-file --batch` found; anything else (`<name> missing`) has no content. */
 const FOUND = /^[0-9a-f]{40,64} (\S+) (\d+)$/;
@@ -10,7 +11,7 @@ const FOUND = /^[0-9a-f]{40,64} (\S+) (\d+)$/;
 export function objectBytes(top: string, names: readonly string[]): Map<string, Buffer> {
   const wanted = [...new Set(names)].filter((name) => !name.includes('\n'));
 
-  const output = spawnSync('git', ['cat-file', '--batch'], {
+  const output = spawnSync('git', gitArguments(['cat-file', '--batch']), {
     cwd: top,
     input: wanted.map((name) => `${name}\n`).join(''),
     maxBuffer: 1 << 30,

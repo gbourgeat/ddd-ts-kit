@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a5f6bf95f6b2cf9b -->
+<!-- translation-of: README.md sha256:aa5ccaed6b2c7aa2 -->
 
 # @ddd-ts-kit/aspects
 
@@ -503,7 +503,11 @@ Il implémente tout le port, tenu par `loggerContract` comme les adaptateurs pin
   lus ni sérialisés (un accesseur qui lève, un objet circulaire), sur une entrée ou sur un
   enfant, donnent l'entrée sans eux, marquée `logError: "unserializable fields"`.
 
-Il ne masque aucun secret d'authentification : `@ddd-ts-kit/pino` et `@ddd-ts-kit/winston`, si.
+Il masque les secrets d'authentification comme `@ddd-ts-kit/pino` et `@ddd-ts-kit/winston` : la
+valeur de chaque clé de `CREDENTIAL_KEYS` du noyau, quelle que soit sa casse (`isCredentialKey`),
+est écrite `[redacted]` au premier niveau d'une entrée et un niveau en dessous
+(`headers.authorization`), dans les champs d'une ligne, d'un enfant, de `base` et de `fields`.
+Rien de plus profond, ni dans une liste. Les objets passés ne sont jamais modifiés.
 
 ## Ce que garantit l'enveloppement
 
