@@ -31,7 +31,7 @@ export function originOf(root: string, from: string): string {
     throw new CliError(`${relative} is neither an intent nor an incident record.`, `Pass ${expected}.`);
   }
 
-  const header = (fs.readFileSync(absolute, 'utf8').split(/^##\s/m)[0] ?? '').replace(/<!--[\s\S]*?-->/g, '');
+  const header = withoutComments(fs.readFileSync(absolute, 'utf8').split(/^##\s/m)[0] ?? '');
 
   if (!ACCEPTED.test(header)) {
     throw new CliError(
@@ -41,4 +41,19 @@ export function originOf(root: string, from: string): string {
   }
 
   return relative;
+}
+
+/** The text with its HTML comments taken out, one pass after another until none is left, and an unclosed one to the end. */
+function withoutComments(text: string): string {
+  let current = text;
+  let previous = '';
+
+  while (current !== previous) {
+    previous = current;
+    current = current.replace(/<!--[\s\S]*?-->/g, '');
+  }
+
+  const unclosed = current.indexOf('<!--');
+
+  return unclosed === -1 ? current : current.slice(0, unclosed);
 }
