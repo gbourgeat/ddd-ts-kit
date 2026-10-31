@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:dc43236d8a631700 -->
+<!-- translation-of: ARCHITECTURE.md sha256:5ccb6133e3c7d7ea -->
 
 # Référence de l'architecture
 
@@ -1078,7 +1078,8 @@ config sans la clé. Une fabrique prend les faits du refus en paramètres typés
 seul objet typé, écrit le message et donne les deux à `refusal(message, facts)`. Une classe peut
 avoir plusieurs fabriques, une par endroit d'où l'on voit le refus, toutes sous son unique code.
 `ddd-ts-kit generate error <context> <Refusal> <factory>` écrit la classe, son entrée dans la
-liste, la fabrique et son cas de *spec*, chacun s'il manque. Le refus d'un objet-valeur du noyau
+liste, la fabrique et son cas de *spec*, chacun s'il manque ; il refuse un `<Refusal>` qui nomme une
+autre classe du contexte, comme son agrégat `Invoice`. Le refus d'un objet-valeur du noyau
 partagé s'y écrit avec `generate error shared-kernel <Refusal> <factory>` : son code rejoint la
 liste du noyau partagé, `SharedKernelCodes` de `shared-kernel.codes.ts`.
 

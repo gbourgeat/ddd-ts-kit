@@ -1037,7 +1037,8 @@ factory takes the facts of the refusal as typed parameters, more than three as o
 writes the message and gives both to `refusal(message, facts)`. A class may have several
 factories, one per place the refusal is seen from, all under its one code.
 `ddd-ts-kit generate error <context> <Refusal> <factory>` writes the class, its entry in the
-list, the factory and its spec case, each when absent. A refusal of a value object of the shared
+list, the factory and its spec case, each when absent; it refuses a `<Refusal>` that names another
+class of the context, such as its aggregate `Invoice`. A refusal of a value object of the shared
 kernel is written there with `generate error shared-kernel <Refusal> <factory>`: its code goes
 to the list of the shared kernel, `SharedKernelCodes` of `shared-kernel.codes.ts`.
 

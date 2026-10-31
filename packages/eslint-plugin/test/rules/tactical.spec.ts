@@ -5,7 +5,7 @@ import { domainNoGenericError } from '../../src/rules/domain-no-generic-error';
 import { domainValueObjectImmutability } from '../../src/rules/domain-value-object-immutability';
 import { eventsNameFormat } from '../../src/rules/events-name-format';
 import { testNoMocks } from '../../src/rules/test-no-mocks';
-import { at, BILLING, ruleTester } from '../support/rule-tester';
+import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
 const ENTITY = `${BILLING}/domain/entities/invoice-line.entity.ts`;
@@ -143,6 +143,20 @@ ruleTester.run('domain-no-generic-error', domainNoGenericError, {
       errors: [{ messageId: 'generic', data: { context: 'billing' } }],
     },
     { ...at(COMMAND_HANDLER, "throw Error('not found');"), errors: [{ messageId: 'generic' }] },
+    {
+      ...at(AGGREGATE, "throw new Error('Invoice already issued');", {
+        ...SAMPLE_CONFIG,
+        stack: { refusals: 'factories' },
+      }),
+      errors: [{ messageId: 'generic', data: { context: 'billing' } }],
+    },
+    {
+      ...at(AGGREGATE, "throw new Error('Invoice already issued');", {
+        ...SAMPLE_CONFIG,
+        stack: { refusals: 'named' },
+      }),
+      errors: [{ messageId: 'genericNamed', data: { context: 'billing' } }],
+    },
     {
       ...at(VALUE_OBJECT, "if (cents < 0) throw new globalThis.Error('negative');"),
       errors: [{ messageId: 'generic' }],

@@ -14,6 +14,8 @@ An expected business failure has a name and a stable code that presentation maps
 
 - `throw new Error(...)` and `throw Error(...)`
 
+The message names the step that writes the refusal in the form of the project: `generate error <context> <Refusal> for<Subject>` under `"stack.refusals": "named"`, `generate error <context> <Concept> <refusal>` under `factories` and `classes`.
+
 Incorrect:
 
 ```ts

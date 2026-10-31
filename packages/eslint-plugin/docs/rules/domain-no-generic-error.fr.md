@@ -1,5 +1,5 @@
 [English](domain-no-generic-error.md) · **Français**
-<!-- translation-of: domain-no-generic-error.md sha256:49dbe62589dd0c83 -->
+<!-- translation-of: domain-no-generic-error.md sha256:f949f3ac527c8518 -->
 
 # ddd-ts-kit/domain-no-generic-error
 
@@ -14,6 +14,8 @@ Un échec métier attendu a un nom et un code stable que la présentation fait c
 ## Signalé
 
 - `throw new Error(...)` et `throw Error(...)`
+
+Le message nomme l'étape qui écrit le refus dans la forme du projet : `generate error <context> <Refusal> for<Subject>` sous `"stack.refusals": "named"`, `generate error <context> <Concept> <refusal>` sous `factories` et `classes`.
 
 Incorrect :
 
