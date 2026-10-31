@@ -12,6 +12,7 @@ import { addFactory } from './add-factory';
 import { addSpecCase } from './add-spec-case';
 import { codesList, type CodesList } from './codes-list';
 import { namedRefusalCode } from './named-refusal-code';
+import { refuseTakenClassName } from './refuse-taken-class-name';
 
 export interface NamedRefusal {
   readonly refusal: Name;
@@ -41,6 +42,8 @@ interface CodesFile {
  * Its words are judged after its code: a code taken or of the kit says more precisely what to rename.
  */
 export function writeNamedRefusal(scope: Scope, asked: NamedRefusal): void {
+  refuseTakenClassName(scope, asked.refusal);
+
   const codes = codesFile(scope);
 
   const code = namedRefusalCode(scope, {

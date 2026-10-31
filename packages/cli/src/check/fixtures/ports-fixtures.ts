@@ -158,6 +158,7 @@ const TOKEN_CONSTANT: readonly Fixture[] = [
     ruleId: 'ports/no-token-constant',
     name: 'a token declared with token()',
     expect: { file: PORT },
+    also: ['ports/abstract-class'],
     files: project({
       [PORT]: source(
         "import { token } from '@ddd-ts-kit/kernel';",

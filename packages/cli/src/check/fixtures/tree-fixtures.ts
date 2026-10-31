@@ -108,8 +108,6 @@ export const TREE_FIXTURES: readonly Fixture[] = [
       ...aggregate('export class Invoice {}\n'),
       [`${BILLING}/domain/errors/invoice-already-issued.error.ts`]:
         'export class InvoiceAlreadyIssuedError extends Error {}\n',
-      [`${BILLING}/domain/errors/index.ts`]:
-        "export * from '@/contexts/billing/domain/errors/invoice-already-issued.error.js';\n",
       [`${BILLING}/presentation/http/invoice.dto.ts`]: 'export interface InvoiceDto { readonly id: string }\n',
     }),
   },

@@ -47,7 +47,7 @@ None.
 
 ## Limits
 
-- A runner function renamed (`const only = it.only`) or taken from `it.extend(...)` is not followed.
+- The runner is read under an import alias (`import { it as scenario } from 'vitest'`) and a `const` alias (`const scenario = it`); a modifier taken apart (`const only = it.only`) or a runner taken from `it.extend(...)` is not followed.
 - A condition that is constant without being a literal (`const NEVER = false; it.skipIf(!NEVER)`) is read as a condition.
 
 ## With the CLI checker

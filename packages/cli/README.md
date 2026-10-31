@@ -2539,7 +2539,9 @@ ddd-ts-kit explain <rule-id>
 ```
 
 `rules` lists the ids, descriptions and current severities, and says which ones ESLint checks.
-`explain` prints the rule, why it exists, a bad and a good example, and the suppression syntax.
+`explain` prints the rule, why it exists, a bad and a good example, and the suppression syntax;
+for a rule ESLint or the formatter decides, the same reason and examples, then the tool that
+checks it (`checkedBy` under `--json`).
 
 ## Development
 

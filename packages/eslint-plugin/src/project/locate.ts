@@ -63,10 +63,15 @@ const MODULE_TEST_FOLDERS: readonly string[] = ['unit', 'integration'];
  * A module of the model is one folder of the context holding its layers (`<module>/domain/...`),
  * one folder of the test folders of its specs (`test/unit/<module>/...`), or, as 0.86 and 0.87 laid it out,
  * one folder under domain/ and application/: left out, the rest of the path is what it would be
- * without modules, so every role keeps its place.
+ * without modules, so every role keeps its place. At its root, `<module>.module.ts` registers what
+ * the module holds in the explicit style: a part of the module file of the context, read as one.
  */
 function moduleLocation(modules: readonly string[], context: string, parts: readonly string[]): Location | undefined {
-  const placed = inFolderOfModule(modules, parts) ?? inTestFolder(modules, parts) ?? inEarlierPlace(modules, parts);
+  const placed =
+    moduleFile(modules, parts) ??
+    inFolderOfModule(modules, parts) ??
+    inTestFolder(modules, parts) ??
+    inEarlierPlace(modules, parts);
 
   return placed === undefined ? undefined : { area: 'context', context, ...placed };
 }
@@ -76,6 +81,15 @@ interface InModule {
   readonly layer: Layer;
   readonly inside: readonly string[];
   readonly module: string;
+}
+
+/** `<module>/<module>.module.ts`. */
+function moduleFile(modules: readonly string[], parts: readonly string[]): InModule | undefined {
+  const [module = '', file, ...rest] = parts;
+
+  return modules.includes(module) && file === `${module}.module.ts` && rest.length === 0
+    ? { layer: 'module', inside: [], module }
+    : undefined;
 }
 
 /** `<module>/<layer>/...`. */

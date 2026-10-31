@@ -9,24 +9,31 @@ import { isPortFile } from '../support/ports/is-port-file';
 const PORT =
   'A port is an abstract class with abstract members only: the class is the contract and the injection token at once.';
 
-export const portsAbstractClass = defineRule<'concrete' | 'member' | 'interface'>({
+export const portsAbstractClass = defineRule<'concrete' | 'member' | 'interface' | 'noClass'>({
   id: 'ports/abstract-class',
   type: 'problem',
   recommended: 'error',
   description:
-    'A port is an abstract class with abstract members only: no constructor, no private or protected member, no body, no initializer.',
+    'A port is an abstract class with abstract members only: no constructor, no private or protected member, no body, no initializer; a port file declares one abstract class.',
   messages: {
     concrete: `{{className}} is declared in a port file but is not abstract. ${PORT} Write \`export abstract class {{className}}\` and move what it implements to an adapter in infrastructure/ that \`implements {{className}}\`.`,
     member: `{{className}} has {{what}}. ${PORT} Keep \`abstract\` method signatures and \`abstract readonly\` properties here (and \`static readonly tokenKey\` when the port is published in a package), and move the rest to the adapter.`,
     interface:
       '{{name}} is an interface in a port file. Declare the port as an abstract class: it is also its injection token. Write `export abstract class {{name}}` with `abstract` members; a data shape that travels through the port may stay a `type`.',
+    noClass:
+      'This port file declares no abstract class. Declare the port as `export abstract class` with `abstract` members: it is the contract and the injection token at once; a data shape that travels through the port may stay a `type` beside it.',
   },
   create({ file, report }) {
     if (!isPortFile(file.config, file.path)) {
       return {};
     }
 
+    // A port written as a type or a set of functions is no contract a container can bind.
+    let declared = false;
+
     const judge = (node: TSESTree.ClassDeclaration | TSESTree.ClassExpression): void => {
+      declared = true;
+
       if (!node.abstract) {
         report({ node: node.id ?? node, messageId: 'concrete', data: { className: className(node) } });
       }
@@ -43,8 +50,15 @@ export const portsAbstractClass = defineRule<'concrete' | 'member' | 'interface'
     return {
       ClassDeclaration: judge,
       ClassExpression: judge,
-      'ExportNamedDeclaration > TSInterfaceDeclaration': (node: TSESTree.TSInterfaceDeclaration) =>
-        report({ node: node.id, messageId: 'interface', data: { name: node.id.name } }),
+      'ExportNamedDeclaration > TSInterfaceDeclaration': (node: TSESTree.TSInterfaceDeclaration) => {
+        declared = true;
+        report({ node: node.id, messageId: 'interface', data: { name: node.id.name } });
+      },
+      'Program:exit': (node: TSESTree.Program) => {
+        if (!declared) {
+          report({ node, messageId: 'noClass' });
+        }
+      },
     };
   },
 });

@@ -1,3 +1,4 @@
+import { outerEntry } from '../layers/outer-entry';
 import { outsideConcern } from '../layers/outside-concern';
 import type { Flaw } from '../model/flaw';
 import type { Layer } from '../model/layer';
@@ -88,7 +89,9 @@ function outsidePackage(name: string, specifier: string, { allowed, binding }: W
   }
 
   if (allowed.includes(name)) {
-    return [];
+    const entry = outerEntry('The application layer', { name, specifier }, allowed);
+
+    return entry === undefined ? [] : [entry];
   }
 
   const fix = `Declare a port in application/ports, an abstract class named after the need, implement it with "${name}" in infrastructure/, and bind it in ${binding}.`;

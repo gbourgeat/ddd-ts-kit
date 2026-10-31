@@ -6,6 +6,8 @@ import { ESLINT_ONLY_RULES } from '../src/check/catalogue/eslint-only-rules';
 import { KNOWN_RULE_IDS } from '../src/check/catalogue/known-rule-ids';
 import { RULE_IDS } from '../src/check/catalogue/rule-ids';
 import { RULES } from '../src/check/catalogue/rules';
+import { DELEGATED_RULES } from '../src/check/catalogue/delegated-rules';
+import { DELEGATED_DOCS } from '../src/check/explain/delegated-docs';
 import { RULE_DOCS } from '../src/check/explain/rule-docs';
 import { FIXTURES } from '../src/check/fixtures/fixtures';
 import { runFixture } from '../src/check/fixtures/run-fixture';
@@ -72,6 +74,16 @@ describe('rule catalogue', () => {
     }
   });
 
+  it('explains every rule another tool decides with a reason and both examples, and no other', () => {
+    expect(Object.keys(DELEGATED_DOCS).sort()).toEqual(DELEGATED_RULES.map((rule) => rule.id).sort());
+
+    for (const [id, doc] of Object.entries(DELEGATED_DOCS)) {
+      expect(doc.why.split('. ').length, id).toBeGreaterThanOrEqual(2);
+      expect(doc.bad, id).toBeTruthy();
+      expect(doc.good, id).toBeTruthy();
+    }
+  });
+
   it('keeps one module per rule, named after its id', () => {
     const modules = fs.readdirSync(path.join(REPO_ROOT, 'packages/cli/src/check/rules'));
 
@@ -86,7 +98,7 @@ describe('rule catalogue', () => {
 
     const refusing = ['ports/no-token-constant', 'ports/abstract-class'];
 
-    const shown = Object.entries(RULE_DOCS).flatMap(([id, doc]) =>
+    const shown = Object.entries({ ...RULE_DOCS, ...DELEGATED_DOCS }).flatMap(([id, doc]) =>
       refusing.includes(id) ? [doc.good] : [doc.why, doc.bad, doc.good],
     );
 

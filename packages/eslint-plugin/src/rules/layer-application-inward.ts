@@ -9,12 +9,13 @@ import { describeTarget } from '../support/imports/describe-target';
 import { importListener } from '../support/imports/import-listener';
 import { inLayer } from '../support/imports/in-layer';
 import { OUTSIDE_CONCERN_MESSAGE } from '../support/outside-concerns/outside-concern-message';
-import { outsideConcern } from '../support/outside-concerns/outside-concern';
+import { judgePackage } from '../support/outside-concerns/judge-package';
+import { OUTER_ENTRY_MESSAGE } from '../support/outside-concerns/outer-entry';
 import { isBackgroundJobFile } from '../support/scheduling/is-background-job-file';
 
 const INWARD: readonly Layer[] = ['domain', 'application', 'published-language'];
 
-export const layerApplicationInward = defineRule<'package' | 'outsideConcern' | 'builtin' | 'outward'>({
+export const layerApplicationInward = defineRule<'package' | 'entry' | 'outsideConcern' | 'builtin' | 'outward'>({
   id: 'layer/application-inward',
   type: 'problem',
   recommended: 'error',
@@ -22,6 +23,7 @@ export const layerApplicationInward = defineRule<'package' | 'outsideConcern' | 
     'application/ imports domain/, application/, published languages and the allowed kernel packages: never infrastructure/, presentation/, a framework or a driver. A background job (application/background/*.background-job.ts) also imports @ddd-ts-kit/validation and the validation library of the stack, for the schema of its payload.',
   messages: {
     outsideConcern: OUTSIDE_CONCERN_MESSAGE,
+    entry: OUTER_ENTRY_MESSAGE,
     package:
       'The application layer imports the package "{{name}}". Declare a port (an abstract class) in application/ports named after the need, implement it with "{{name}}" in infrastructure/, and bind it in {{context}}.module.ts (in the declared style, declare the adapter with `@Adapter`).',
     builtin:
@@ -46,16 +48,10 @@ export const layerApplicationInward = defineRule<'package' | 'outsideConcern' | 
       }
 
       if (target.kind === 'package') {
-        const concern = outsideConcern(target.name);
+        const judgment = judgePackage('The application layer', { name: target.name, specifier }, allowed);
 
-        if (concern !== undefined) {
-          report({
-            node,
-            messageId: 'outsideConcern',
-            data: { importer: 'The application layer', specifier, ...concern },
-          });
-        } else if (!allowed.includes(target.name)) {
-          report({ node, messageId: 'package', data: { name: target.name, context: here.context } });
+        if (judgment !== undefined) {
+          report({ node, messageId: judgment.messageId, data: { ...judgment.data, context: here.context } });
         }
       } else if (target.kind === 'builtin') {
         report({ node, messageId: 'builtin', data: { name: specifier } });

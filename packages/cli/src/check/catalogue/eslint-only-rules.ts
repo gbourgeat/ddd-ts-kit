@@ -14,7 +14,8 @@ export const ESLINT_ONLY_RULES: readonly { readonly id: string; readonly descrip
   },
   {
     id: 'domain/no-generic-error',
-    description: 'domain/ and application/ never `throw new Error(...)`: a business failure is a DomainError subclass.',
+    description:
+      'domain/ and application/ never `throw new Error(...)`, nor another error of the language, directly or through a `const`: a business failure is a DomainError subclass.',
   },
   {
     id: 'errors/through-factory',

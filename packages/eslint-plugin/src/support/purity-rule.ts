@@ -52,6 +52,7 @@ export function purityRule(rule: Purity) {
         'CallExpression:exit': (node: TSESTree.CallExpression) =>
           used(node, rule.calls.includes(ambient(node.callee)) ? `${ambient(node.callee)}()` : undefined),
         NewExpression: (node) => used(node, forbiddenConstruction(rule, ambient(node.callee), node.arguments.length)),
+        VariableDeclarator: destructuringListener(rule, ambient, used),
       };
     },
   });
@@ -122,6 +123,48 @@ function forbiddenMember(rule: Purity, object: string, property: string | undefi
   }
 
   return members.length === 0 || members.includes(property) ? `${object}.${property}` : undefined;
+}
+
+/** `const { env } = process` reads `process.env` as surely as the member expression does. */
+function destructuringListener(
+  rule: Purity,
+  ambient: (node: TSESTree.Node) => string,
+  used: Reporters['used'],
+): (node: TSESTree.VariableDeclarator) => void {
+  return (node) => {
+    const source = node.init === null ? '' : ambient(node.init);
+
+    for (const [property, name] of destructured(node)) {
+      used(property, forbiddenMember(rule, source, name));
+    }
+  };
+}
+
+/** The properties a declarator takes out of its value by name, `env` of `const { env } = process`. */
+function destructured(node: TSESTree.VariableDeclarator): [TSESTree.Property, string][] {
+  if (node.id.type !== AST_NODE_TYPES.ObjectPattern) {
+    return [];
+  }
+
+  return node.id.properties.flatMap((property): [TSESTree.Property, string][] => {
+    if (property.type !== AST_NODE_TYPES.Property) {
+      return [];
+    }
+
+    const name = keyName(property);
+
+    return name === undefined ? [] : [[property, name]];
+  });
+}
+
+function keyName(property: TSESTree.Property): string | undefined {
+  if (property.key.type === AST_NODE_TYPES.Identifier && !property.computed) {
+    return property.key.name;
+  }
+
+  return property.key.type === AST_NODE_TYPES.Literal && typeof property.key.value === 'string'
+    ? property.key.value
+    : undefined;
 }
 
 function forbiddenConstruction(rule: Purity, callee: string, argumentCount: number): string | undefined {

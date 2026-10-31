@@ -5,6 +5,7 @@ import { at, BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester';
 
 const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
+const WITH_MODULE = { contexts: { billing: { classification: 'core', upstreams: [], modules: { invoicing: {} } } } };
 const body = (lines: number): string => Array.from({ length: lines }, (_, index) => `  step${index}();`).join('\n');
 
 ruleTester.run('clean-function-size', cleanFunctionSize, {
@@ -19,6 +20,7 @@ ruleTester.run('clean-function-size', cleanFunctionSize, {
     { code: 'function wide(a: A, b: B, c: C, d: D): void {}', options: [{ maxParameters: 4 }] },
     at('src/a.ts', 'function wide(a: A, b: B, c: C, d: D): void {}', { limits: { maxParameters: 4 } }),
     at(`${BILLING}/billing.module.ts`, `export function register(): void {\n${body(40)}\n}`),
+    at(`${BILLING}/invoicing/invoicing.module.ts`, `export function register(): void {\n${body(40)}\n}`, WITH_MODULE),
     `describe('an invoice', () => {\n${body(40)}\n});`,
     `describe.each([1, 2])('an invoice %s', () => {\n${body(40)}\n});`,
     `describe.skip('an invoice', () => {\n${body(40)}\n});`,

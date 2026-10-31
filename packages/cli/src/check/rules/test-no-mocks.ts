@@ -2,7 +2,11 @@ import type { Rule } from '../model/rule';
 import { inContext } from '../support/in-context';
 import { perFile } from '../support/per-file';
 
-const MOCK_CALL = /(?<![\w$.])(vi|jest)\s*\.\s*(mock|doMock|unstable_mockModule|fn|spyOn|mocked)(?![\w$])/g;
+const MOCK_CALL = /(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*(mock|doMock|unstable_mockModule|fn|spyOn|mocked)(?![\w$])/g;
+
+/** `vi as mocks` in the braces of an import: the runner under another name. */
+const RUNNER_ALIAS = /(?<![\w$.])(vi|jest)\s+as\s+([A-Za-z_$][\w$]*)/g;
+const IMPORT_BRACES = /\bimport\s+(?:type\s+)?\{([^{}]*)\}/g;
 
 const MOCKING_LIBRARIES = new Set([
   'sinon',
@@ -32,11 +36,15 @@ export const testNoMocks: Rule = {
         return [];
       }
 
-      const calls = [...file.scan.code.matchAll(MOCK_CALL)].map((match) => ({
-        line: file.scan.lineAt(match.index),
-        message: `The test uses ${match[1] ?? ''}.${match[2] ?? ''}.`,
-        fix: FIX,
-      }));
+      const runners = runnersOf(file.scan.code);
+
+      const calls = [...file.scan.code.matchAll(MOCK_CALL)].flatMap((match) => {
+        const runner = runners.get(match[1] ?? '');
+
+        return runner === undefined
+          ? []
+          : [{ line: file.scan.lineAt(match.index), message: `The test uses ${runner}.${match[2] ?? ''}.`, fix: FIX }];
+      });
 
       const libraries = file.imports.flatMap(({ target, line }) => {
         if (target.kind !== 'package' || !MOCKING_LIBRARIES.has(target.name)) {
@@ -50,3 +58,12 @@ export const testNoMocks: Rule = {
     });
   },
 };
+
+/** The names the mocking runners go by in the file, to the runner: `vi` and `jest`, and their import aliases. */
+function runnersOf(code: string): ReadonlyMap<string, string> {
+  const aliases = [...code.matchAll(IMPORT_BRACES)].flatMap(([, braces = '']) =>
+    [...braces.matchAll(RUNNER_ALIAS)].map(([, runner = '', alias = '']) => [alias, runner] as const),
+  );
+
+  return new Map([['vi', 'vi'], ['jest', 'jest'], ...aliases]);
+}

@@ -90,6 +90,8 @@ const PATHS = [
   'src/contexts/billing/jobs/nightly.ts',
   'src/contexts/billing/other.module.ts',
   'src/contexts/scheduling/calendars/domain/aggregates/calendar.aggregate.ts',
+  'src/contexts/scheduling/calendars/calendars.module.ts',
+  'src/contexts/scheduling/calendars/waitlist.module.ts',
   'src/contexts/scheduling/waitlist/application/commands/join-waitlist/join-waitlist.handler.ts',
   'src/contexts/scheduling/waitlist/presentation/http/calendars/join-waitlist/join-waitlist.controller.ts',
   'src/contexts/scheduling/test/unit/calendars/calendar.aggregate.spec.ts',

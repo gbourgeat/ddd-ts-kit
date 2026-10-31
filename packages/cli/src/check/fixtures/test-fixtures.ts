@@ -103,6 +103,15 @@ export const TEST_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'test/no-mocks',
+    name: 'a test using vi.fn under an import alias',
+    expect: { file: HANDLER_SPEC },
+    files: project({
+      [HANDLER]: 'export class IssueInvoiceHandler {}\n',
+      [HANDLER_SPEC]: "import { it, vi as mocks } from 'vitest';\nconst save = mocks.fn();\nit.todo(String(save));\n",
+    }),
+  },
+  {
+    ruleId: 'test/no-mocks',
     name: 'a test importing a mocking library',
     expect: { file: HANDLER_SPEC },
     files: project({

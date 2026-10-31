@@ -26,7 +26,7 @@ export const namingSuffix: Rule = {
 
       const name = path.posix.basename(file.path);
 
-      if (name === 'index.ts' || namedByTheKit(project, file, file.location.context)) {
+      if (namedByTheKit(project, file, file.location.context)) {
         return [];
       }
 
@@ -72,6 +72,13 @@ function withoutSuffix(name: string, location: ContextLocation): Flaw | undefine
 
   if (role === undefined || role.suffixes.length === 0 || role.files?.includes(name) === true) {
     return undefined;
+  }
+
+  if (name === 'index.ts') {
+    return {
+      message: `"index.ts" is a barrel in ${directory}/: a role folder holds its role files and nothing else.`,
+      fix: `Delete it and import each file of ${directory}/ by its own path; a context exposes what others read through published-language/ only.`,
+    };
   }
 
   if (role.suffixes.some((suffix) => name.endsWith(suffix) && name.length > suffix.length)) {

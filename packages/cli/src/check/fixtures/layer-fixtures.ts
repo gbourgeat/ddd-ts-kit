@@ -104,6 +104,7 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
       },
     ),
   },
+
   {
     ruleId: 'layer/application-inward',
     name: 'domain, kernel and a declared published language are allowed',
@@ -171,6 +172,7 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
       ),
     ),
   },
+
   {
     ruleId: 'layer/application-inward',
     name: 'the Redis adapter in a handler, even listed in applicationAllowedPackages',

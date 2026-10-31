@@ -44,6 +44,17 @@ ruleTester.run('ports-abstract-class', portsAbstractClass, {
   ],
   invalid: [
     {
+      ...at(REPOSITORY_PORT, 'export type InvoiceRepository = { save(): Promise<void> };'),
+      errors: [{ messageId: 'noClass' }],
+    },
+    {
+      ...at(
+        PORT,
+        "import { token } from '@ddd-ts-kit/kernel';\nexport const PAYMENT_GATEWAY = token('billing.PaymentGateway');",
+      ),
+      errors: [{ messageId: 'noClass' }],
+    },
+    {
       ...at(PORT, 'export class PaymentGateway {}'),
       errors: [{ messageId: 'concrete', data: { className: 'PaymentGateway' } }],
     },

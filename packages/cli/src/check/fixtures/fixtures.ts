@@ -31,6 +31,7 @@ import { IMPORTS_FIXTURES } from './imports-fixtures';
 import { LANGUAGE_FIXTURES } from './language-fixtures';
 import { VOCABULARY_FIXTURES } from './vocabulary-fixtures';
 import { OTHER_LANGUAGE_FIXTURES } from './other-language-fixtures';
+import { LAYER_ENTRY_FIXTURES } from './layer-entry-fixtures';
 import { LAYER_FIXTURES } from './layer-fixtures';
 import { LAYOUT_FIXTURES } from './layout-fixtures';
 import { LIFECYCLE_FIXTURES } from './lifecycle-fixtures';
@@ -42,6 +43,7 @@ import { NEST_FIXTURES } from './nest-fixtures';
 import { OUTBOX_FIXTURES } from './outbox-fixtures';
 import { PERSISTENCE_FIXTURES } from './persistence-fixtures';
 import { PORTS_FIXTURES } from './ports-fixtures';
+import { ROLE_FOLDER_FIXTURES } from './role-folder-fixtures';
 import { PURITY_FIXTURES } from './purity-fixtures';
 import { SCHEDULING_FIXTURES } from './scheduling-fixtures';
 import { SHARED_KERNEL_FIXTURES } from './shared-kernel-fixtures';
@@ -98,6 +100,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...VOCABULARY_FIXTURES,
   ...OTHER_LANGUAGE_FIXTURES,
   ...LAYER_FIXTURES,
+  ...LAYER_ENTRY_FIXTURES,
   ...LAYOUT_FIXTURES,
   ...LIFECYCLE_FIXTURES,
   ...MODULE_FIXTURES,
@@ -116,6 +119,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...TEST_FIXTURES,
   ...TRACING_FIXTURES,
   ...TREE_FIXTURES,
+  ...ROLE_FOLDER_FIXTURES,
   ...VALUE_OBJECT_FILE_FIXTURES,
   ...MODEL_FUNCTION_FIXTURES,
 ];

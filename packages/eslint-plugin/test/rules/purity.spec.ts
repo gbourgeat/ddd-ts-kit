@@ -16,6 +16,8 @@ ruleTester.run('purity-no-system-clock', purityNoSystemClock, {
     at(AGGREGATE, 'function elapsed(clock: { now(): number }) { return clock.now(); }'),
     at(AGGREGATE, 'const text = "Date.now()"; // new Date()'),
     at(AGGREGATE, 'const parsed = Date.parse(raw);'),
+    at(AGGREGATE, 'const { parse } = Date;'),
+    at(AGGREGATE, 'let clock = Date;\nclock = FixedDate;\nclock.now();'),
   ],
   invalid: [
     {
@@ -35,6 +37,14 @@ ruleTester.run('purity-no-system-clock', purityNoSystemClock, {
     { ...at(HANDLER, 'const started = globalThis.Date.now();'), errors: [{ messageId: 'used' }] },
     { ...at(HANDLER, "const read = Date['now'];"), errors: [{ messageId: 'used' }] },
     { ...at(HANDLER, 'const stamps = ids.map(() => new Date());'), errors: [{ messageId: 'used' }] },
+    {
+      ...at(AGGREGATE, 'const { now } = Date;'),
+      errors: [{ messageId: 'used', data: { what: 'Date.now', layer: 'domain' } }],
+    },
+    {
+      ...at(AGGREGATE, 'const clock = Date;\nconst started = clock.now();'),
+      errors: [{ messageId: 'used', data: { what: 'Date.now', layer: 'domain' } }],
+    },
   ],
 });
 
@@ -45,6 +55,7 @@ ruleTester.run('purity-no-ambient-randomness', purityNoAmbientRandomness, {
     at(ADAPTER, "import { randomUUID } from 'node:crypto';\nexport const ids = { next: () => randomUUID() };"),
     at(AGGREGATE, 'function pick(random: () => number) { return random(); }'),
     at(AGGREGATE, 'const dice = { random: () => 4 };\ndice.random();'),
+    at(AGGREGATE, 'const { [key]: picked, ...others } = Math;'),
   ],
   invalid: [
     {
@@ -64,6 +75,15 @@ ruleTester.run('purity-no-ambient-randomness', purityNoAmbientRandomness, {
       errors: [{ messageId: 'used' }],
     },
     { ...at(HANDLER, "const { ulid } = require('ulid');"), errors: [{ messageId: 'imported' }] },
+    {
+      ...at(AGGREGATE, 'const { random } = Math;'),
+      errors: [{ messageId: 'used', data: { what: 'Math.random', layer: 'domain' } }],
+    },
+    { ...at(AGGREGATE, 'const maths = Math;\nconst draw = maths.random();'), errors: [{ messageId: 'used' }] },
+    {
+      ...at(AGGREGATE, "const { 'random': draw } = Math;"),
+      errors: [{ messageId: 'used', data: { what: 'Math.random', layer: 'domain' } }],
+    },
   ],
 });
 
@@ -97,5 +117,11 @@ ruleTester.run('purity-no-environment', purityNoEnvironment, {
     { ...at(HANDLER, "import axios from 'axios';"), errors: [{ messageId: 'imported' }] },
     { ...at(HANDLER, "const { spawn } = await import('child_process');"), errors: [{ messageId: 'imported' }] },
     { ...at(HANDLER, 'const out = globalThis.process.stdout;'), errors: [{ messageId: 'used' }] },
+    {
+      ...at(HANDLER, 'const { env } = process;'),
+      errors: [{ messageId: 'used', data: { what: 'process.env', layer: 'application' } }],
+    },
+    { ...at(HANDLER, "const { log: write } = console;\nwrite('x');"), errors: [{ messageId: 'used' }] },
+    { ...at(HANDLER, 'const running = process;\nconst url = running.env.URL;'), errors: [{ messageId: 'used' }] },
   ],
 });

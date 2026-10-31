@@ -10,6 +10,9 @@ import { OPEN_DIRECTORIES } from './open-directories';
 import { roleOf } from './role-of';
 import { ownEntry } from '../../config/values/own-entry';
 
+/** JavaScript, and TypeScript in another form than `.ts`: code no rule of the tree reads. */
+const OTHER_CODE = /\.(?:[mc]?js|jsx|tsx|[mc]ts)$/;
+
 interface Placed {
   readonly context: string;
   /** True when the classes of the project declare themselves: the context then has generated declarations, at its root and in its layers. */
@@ -40,7 +43,11 @@ export function strayEntry(entry: string, config: Config): Flaw | undefined {
     return undefined;
   }
 
-  return entry.endsWith('/') ? strayDirectory(placed) : straySource(placed);
+  if (entry.endsWith('/')) {
+    return strayDirectory(placed);
+  }
+
+  return OTHER_CODE.test(placed.inside) ? notTypeScript(placed.inside) : straySource(placed);
 }
 
 /** A dot-directory of a context (the `.claude/` a sandbox leaves) is written by a tool: it is no part of the tree. */
@@ -125,6 +132,16 @@ function straySource(placed: Placed): Flaw | undefined {
   return {
     message: `"${inside}" is not in a role directory.`,
     fix: `Move it one level down into the directory of its role (for example ${directory.split('/')[0] ?? directory}/<role>/), so that its suffix and its tests can be checked.`,
+  };
+}
+
+/** A source no rule reads: the checker, ESLint and the compiler of the project read `.ts` files only. */
+function notTypeScript(inside: string): Flaw {
+  const name = path.posix.basename(inside);
+
+  return {
+    message: `"${inside}" is a source that is not a .ts file.`,
+    fix: `Write it in TypeScript, ${name.replace(OTHER_CODE, '.ts')}, in the directory of its role, or delete it if a build wrote it: a context holds .ts files only, the build writes to dist/.`,
   };
 }
 

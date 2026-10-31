@@ -2,7 +2,7 @@ import type { RuleDoc } from '../model/rule-doc';
 
 export const PORTS_DOCS: Readonly<Record<string, RuleDoc>> = {
   'ports/abstract-class': {
-    why: 'A port is a contract and, at once, the injection token under which its adapter is bound: the abstract class names the dependency and carries its type. A port that holds a body, a constructor, an initializer or a hidden member is no longer a contract: a fake or a plain object cannot stand for it, and the container refuses to bind it. An interface vanishes at run time and cannot be a token, so a port file declares none. One exception is a member: `static readonly tokenKey`, the identity of a port a published package exposes. Checked in domain/repositories/*.repository.ts and application/ports/*.port.ts.',
+    why: 'A port is a contract and, at once, the injection token under which its adapter is bound: the abstract class names the dependency and carries its type. A port that holds a body, a constructor, an initializer or a hidden member is no longer a contract: a fake or a plain object cannot stand for it, and the container refuses to bind it. An interface vanishes at run time and cannot be a token, so a port file declares none, and a port file that declares no abstract class at all (a type, a token) is reported too. One exception is a member: `static readonly tokenKey`, the identity of a port a published package exposes. Checked in domain/repositories/*.repository.ts and application/ports/*.port.ts.',
     bad: `// application/ports/payment-gateway.port.ts
 export interface PaymentGateway { charge(invoiceId: string): Promise<void> }
 export abstract class Mailer {
