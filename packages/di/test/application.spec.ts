@@ -1,6 +1,8 @@
+import { createApplication as onTsyringe } from '../src/tsyringe';
 import { describe, expect, it } from 'vitest';
 import { Clock } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, tokenIdentity, type BindingInfo, type ContextModule } from '../src';
+import { defineContextModule, tokenIdentity, type BindingInfo, type ContextModule } from '../src';
+import { createApplication } from './support/on-container';
 import { EpochClock } from './support/shop/epoch-clock';
 import { InMemoryStock } from './support/shop/in-memory-stock';
 import { platform } from './support/shop/platform.module';
@@ -104,7 +106,7 @@ describe('createApplication', () => {
   });
 
   it('exposes the tsyringe container, where a port is registered under its identity and never under its class', () => {
-    const app = createApplication({ modules: [platform, shop] });
+    const app = onTsyringe({ modules: [platform, shop] });
 
     expect(app.container.isRegistered(tokenIdentity(Clock))).toBe(true);
     expect(app.container.resolve<Clock>(tokenIdentity(Clock))).toBe(app.resolve(Clock));

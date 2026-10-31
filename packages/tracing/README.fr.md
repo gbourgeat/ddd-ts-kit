@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:22b81551feed5823 -->
+<!-- translation-of: README.md sha256:942355f04f965cc0 -->
 
 # @ddd-ts-kit/tracing
 
@@ -63,7 +63,8 @@ export const tracing = initTracing({ serviceName: 'clinic-api' });
 ```ts
 // main.ts
 import { tracing } from '@/platform/observability/tracing'; // premier import, voir « Ordre de chargement »
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { traceApplication, tracedPublisher, tracedRoutes } from '@ddd-ts-kit/tracing';
 
 const app = createApplication({

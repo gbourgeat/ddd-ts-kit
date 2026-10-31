@@ -1,16 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, FixedClock, InMemoryLock, JobScheduler, type Lock, type ScheduledJob } from '@ddd-ts-kit/kernel';
 import { Scheduled, type ScheduledOptions } from '@ddd-ts-kit/kernel/declarations';
-import {
-  contextModule,
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  fake,
-  kernelModule,
-  override,
-  type BindingInfo,
-} from '../src';
+import { contextModule, defineContextModule, fake, kernelModule, override, type BindingInfo } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import * as billing from './fixtures/contexts/billing/billing.declarations';
 import { RecordingJobScheduler } from './support/fakes/recording-job-scheduler';
 import { wiringFailure } from './support/failure';

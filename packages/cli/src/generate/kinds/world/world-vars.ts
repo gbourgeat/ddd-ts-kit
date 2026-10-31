@@ -4,6 +4,7 @@ import type { Name } from '../../../naming';
 import type { RenderContext } from '../../../templating';
 import { assembledContext } from '../../assembled-context';
 import { contextImports } from '../../context-imports';
+import { diImports } from '../../di-imports';
 import { isDeclared } from '../../is-declared';
 import type { Scope } from '../../scope';
 import type { ContextFake } from './context-fakes';
@@ -65,7 +66,7 @@ function diImport(scope: Scope, withFakes: boolean): string {
     'type Override',
   ];
 
-  return `import { ${names.join(', ')} } from '@ddd-ts-kit/di';`;
+  return diImports(names);
 }
 
 /** A list on one line when it fits, one entry per line otherwise, as the formatter lays it out. */

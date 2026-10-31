@@ -1,5 +1,5 @@
 [English](dependency-injection.md) · **Français**
-<!-- translation-of: dependency-injection.md sha256:4e633a3e0186046a -->
+<!-- translation-of: dependency-injection.md sha256:141ba2f9645fd7e6 -->
 
 # Injection de dépendances : tsyringe avec déclarations, NestJS, câblage manuel
 
@@ -127,7 +127,8 @@ déclarations en liaisons :
 ```ts
 import { AuthorizedCommand, Clock, IdGenerator, type Actor } from '@ddd-ts-kit/kernel';
 import { CommandHandler, Repository, injected } from '@ddd-ts-kit/kernel/declarations';
-import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // les classes du premier exemple, réduites à leur forme
 declare class Appointment {
@@ -191,7 +192,8 @@ nécessaire :
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, Clock, IdGenerator, type Actor } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // les classes du premier exemple, sans leurs décorateurs
 declare class Appointment {
@@ -306,7 +308,8 @@ un *fake* lié sous la classe du port, une horloge figée et des identifiants s�
 ```ts
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { AuthorizedCommand, Clock, IdGenerator, type Actor, type CommandHandler } from '@ddd-ts-kit/kernel';
-import { createTestApplication, defineContextModule, fake } from '@ddd-ts-kit/di';
+import { defineContextModule, fake } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { expect, it } from 'vitest';
 
 // le port, la commande et le gestionnaire du premier exemple, en quelques lignes

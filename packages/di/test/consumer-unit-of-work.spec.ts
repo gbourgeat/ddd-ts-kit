@@ -9,15 +9,8 @@ import {
   UnitOfWork,
   type IntegrationEvent,
 } from '@ddd-ts-kit/kernel';
-import {
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  fake,
-  kernelModule,
-  overrideForTests,
-  type ContextModule,
-} from '../src';
+import { defineContextModule, fake, kernelModule, overrideForTests, type ContextModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { RecordingSubscriber } from './support/fakes/recording-subscriber';
 import { ReleasingProcessedEvents } from './support/fakes/releasing-processed-events';
 import { TransactionalJournal } from './support/fakes/transactional-journal';

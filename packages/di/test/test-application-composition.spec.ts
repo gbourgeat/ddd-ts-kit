@@ -14,14 +14,8 @@ import {
   SequentialIdGenerator,
 } from '@ddd-ts-kit/kernel';
 import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
-import {
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  kernelModule,
-  overrideForTests,
-  type Application,
-} from '../src';
+import { defineContextModule, kernelModule, overrideForTests, type Application } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { createTestKernel } from '../src/testing/create-test-kernel';
 import { testApplicationOf } from '../src/testing/test-application-of';
 import type { Resolve } from '../src/wiring/resolve';

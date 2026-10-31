@@ -1,15 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CommandBus, InMemoryEventBus } from '@ddd-ts-kit/kernel';
-import {
-  contextModule,
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  fake,
-  kernelModule,
-  type Application,
-  type BindingAspect,
-} from '../src';
+import { contextModule, defineContextModule, fake, kernelModule, type Application, type BindingAspect } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { TransactionalJournal } from './support/fakes/transactional-journal';
 import { TransactionalUnitOfWork } from './support/fakes/transactional-unit-of-work';
 import {

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:87eba9ed236712b2 -->
+<!-- translation-of: README.md sha256:ef7bf1d3df6d16c2 -->
 
 # @ddd-ts-kit/nats
 
@@ -120,7 +120,8 @@ export class InvoiceOnOrderPlacedIntegrationHandler {
 <!-- checked sample -->
 ```ts
 // main.ts
-import { contextModule, createApplication, kernelModule, type ContextModule, type DeclaredSource } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule, type ContextModule, type DeclaredSource } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { Clock } from '@ddd-ts-kit/kernel';
 import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
 import type { NatsEventBus } from '@ddd-ts-kit/nats';

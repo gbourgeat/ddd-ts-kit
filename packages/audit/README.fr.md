@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f7fc05e7e73e613c -->
+<!-- translation-of: README.md sha256:e57eb686bae77e9b -->
 
 # @ddd-ts-kit/audit
 
@@ -589,7 +589,8 @@ d'audit doit se placer entre les deux, le bus est donc fourni par les options :
 ```ts
 // src/main.ts
 import { AuditTrail, InMemoryCommandBus, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
-import { UseCaseGuard, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { UseCaseGuard, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AuditMasker, auditDecisions, auditMiddleware } from '@ddd-ts-kit/audit';
 

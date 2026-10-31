@@ -2,14 +2,8 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Clock, CommandBus, IdGenerator, type Actor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import {
-  createApplication,
-  createTestApplication,
-  fake,
-  kernelModule,
-  tokenIdentity,
-  type ContextModule,
-} from '../src';
+import { fake, kernelModule, tokenIdentity, type ContextModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { discoverContext } from '../src/discovery';
 import { decoratorModes, removeCompiled } from './support/decorator-modes';
 
@@ -224,7 +218,6 @@ for (const mode of decoratorModes(FIXTURES)) {
 
       expect(app.resolve(copy.Clock)).toBe(clock);
       expect(app.resolve(Clock)).toBe(clock);
-      expect(app.container.isRegistered(tokenIdentity(copy.Clock))).toBe(true);
       expect(faked.get(IdGenerator).next()).toBe('from-the-copy');
     });
   });

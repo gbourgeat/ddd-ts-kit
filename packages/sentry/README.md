@@ -40,7 +40,8 @@ reportProcessFailures(errors); // uncaughtException and unhandledRejection: repo
 import { tracing } from '@/platform/observability/tracing'; // first
 import { errors } from '@/platform/observability/errors'; // second
 import { DeadLetterReports, ExecutionScope } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { reportHttpErrors } from '@ddd-ts-kit/http';
 import { RabbitMqEventBus } from '@ddd-ts-kit/rabbitmq';
 

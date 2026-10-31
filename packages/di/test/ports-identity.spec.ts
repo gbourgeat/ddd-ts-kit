@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, CommandBus, FixedClock, QueryBus } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, describeToken, kernelModule, tokenIdentity } from '../src';
+import { defineContextModule, describeToken, kernelModule, tokenIdentity } from '../src';
+import { createApplication } from './support/on-container';
 import { wiringFailure } from './support/failure';
 import { EpochClock } from './support/shop/epoch-clock';
 

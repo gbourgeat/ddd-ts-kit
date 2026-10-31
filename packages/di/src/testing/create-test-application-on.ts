@@ -31,6 +31,7 @@ import { describeToken } from '@ddd-ts-kit/kernel/declarations';
 import { JobStore, QueueWorker, StoredProcessRunner } from '@ddd-ts-kit/scheduling';
 import type { Application } from '../application/application';
 import { assemble } from '../application/assemble';
+import type { Container } from '../application/container';
 import { override, type Override } from '../application/override';
 import { passEveryMessage } from '../authorization/pass-every-message';
 import { UseCaseGuard } from '../authorization/use-case-guard';
@@ -55,7 +56,10 @@ import type { TestKernel } from './test-kernel';
  * declared with `builder.on(...)` receive events once `start()` was awaited. Every use case is
  * allowed unless a listed module binds the use case guard, as an authorization module does.
  */
-export function createTestApplication(options: TestApplicationOptions): TestApplication {
+export function createTestApplicationOn<Native>(
+  container: Container<Native>,
+  options: TestApplicationOptions,
+): TestApplication<Native> {
   const declared = collectWiring(options.modules);
   const fakes = options.fakes ?? [];
 
@@ -65,7 +69,7 @@ export function createTestApplication(options: TestApplicationOptions): TestAppl
   const dispatching = <T extends object>(repository: T): T => dispatchingOnSave(repository, () => kernel.domainEvents);
   const wiring = { ...declared, kindAspects: [...declared.kindAspects, repositoriesAround(dispatching)] };
 
-  const application: Application = assemble(wiring, {
+  const application: Application<Native> = assemble(container, wiring, {
     modules: options.modules,
     overrides: [...kernelOverrides(kernel), ...guardOverride(wiring), ...fakes.map(savingFake(wiring, dispatching))],
     ...(options.authorization === undefined ? {} : { authorization: options.authorization }),

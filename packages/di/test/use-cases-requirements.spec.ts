@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CommandBus } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule, override } from '../src';
+import { defineContextModule, kernelModule, override } from '../src';
+import { createApplication } from './support/on-container';
 import { wiringFailure } from './support/failure';
 import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
 import { PlaceOrderHandler } from './support/ordering/application/commands/place-order/place-order.handler';

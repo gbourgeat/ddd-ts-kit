@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/di",
   "version": "0.105.0",
-  "description": "Port classes and context modules on top of tsyringe, for projects without a heavy framework.",
+  "description": "Port classes and context modules on top of tsyringe, InversifyJS or Awilix, for projects without a heavy framework.",
   "keywords": [
     "ddd",
     "domain-driven-design",
@@ -10,6 +10,8 @@
     "typescript",
     "dependency-injection",
     "tsyringe",
+    "inversify",
+    "awilix",
     "ioc"
   ],
   "license": "MIT",
@@ -37,6 +39,18 @@
     "./discovery": {
       "types": "./dist/discovery.d.ts",
       "default": "./dist/discovery.js"
+    },
+    "./tsyringe": {
+      "types": "./dist/tsyringe.d.ts",
+      "default": "./dist/tsyringe.js"
+    },
+    "./inversify": {
+      "types": "./dist/inversify.d.ts",
+      "default": "./dist/inversify.js"
+    },
+    "./awilix": {
+      "types": "./dist/awilix.d.ts",
+      "default": "./dist/awilix.js"
     }
   },
   "files": [
@@ -47,11 +61,29 @@
     "@ddd-ts-kit/scheduling": "0.105.0"
   },
   "peerDependencies": {
-    "tsyringe": "^4.10.0",
-    "reflect-metadata": ">=0.2.0"
+    "awilix": "^13.0.5",
+    "inversify": "^8.2.3",
+    "reflect-metadata": ">=0.2.0",
+    "tsyringe": "^4.10.0"
+  },
+  "peerDependenciesMeta": {
+    "awilix": {
+      "optional": true
+    },
+    "inversify": {
+      "optional": true
+    },
+    "reflect-metadata": {
+      "optional": true
+    },
+    "tsyringe": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "tsyringe": "^4.10.0",
-    "reflect-metadata": "^0.2.2"
+    "awilix": "^13.0.5",
+    "inversify": "^8.2.3",
+    "reflect-metadata": "^0.2.2",
+    "tsyringe": "^4.10.0"
   }
 }

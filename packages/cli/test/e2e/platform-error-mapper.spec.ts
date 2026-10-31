@@ -12,7 +12,7 @@ const SPEC = 'src/platform/composition/platform-error-mapper.spec.ts';
 const MAPPED = 'UNAUTHENTICATED';
 
 const SPEC_SOURCE = `import { ErrorMapper } from '@ddd-ts-kit/http';
-import { createTestApplication } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { expect, it } from 'vitest';
 import { platformErrorMapper } from '@/platform/composition/platform-error-mapper';
 import { platformTestModule } from '@/platform/composition/platform-test.module';

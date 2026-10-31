@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:9961fde35a794394 -->
+<!-- translation-of: ARCHITECTURE.md sha256:a94163fc6c62ae4c -->
 
 # Référence de l'architecture
 
@@ -1472,7 +1472,8 @@ la place est signalée (`test/helper-placed`).
 ```ts
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';
+import { fake, type ContextModule } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { Command } from '@ddd-ts-kit/kernel';
 import { expect, it } from 'vitest';
 

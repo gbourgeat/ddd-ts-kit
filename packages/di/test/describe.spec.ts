@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, FixedClock } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule, override } from '../src';
+import { kernelModule, override } from '../src';
+import { createApplication } from './support/on-container';
 import { billingModule } from './support/billing/billing.module';
 import { orderingModule } from './support/ordering/ordering.module';
 

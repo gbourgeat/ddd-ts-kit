@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ConflictError, UnitOfWork } from '@ddd-ts-kit/kernel';
-import { createTestApplication, fake } from '@ddd-ts-kit/di';
+import { fake } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { ForbiddenError } from '../src';
 import { authorizationModule } from '../src/di';
 import { InMemoryRelationTupleStore, RelationBasedAuthorizer, SchemaCheckedTupleStore } from '../src/rebac';

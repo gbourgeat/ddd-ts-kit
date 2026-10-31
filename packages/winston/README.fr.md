@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ab7605c80e1a9d8d -->
+<!-- translation-of: README.md sha256:a80e8497a8f60609 -->
 
 # @ddd-ts-kit/winston
 
@@ -50,7 +50,8 @@ export function createLogger(scope: ExecutionScope, settings: LogSettings): Wins
 import { tracing } from '@/platform/observability/tracing'; // en premier
 import { createLogger } from '@/platform/observability/create-logger';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 const scope = new AsyncLocalStorageExecutionScope();
 const logger = createLogger(scope, config.log);

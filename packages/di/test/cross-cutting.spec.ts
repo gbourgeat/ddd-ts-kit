@@ -25,14 +25,8 @@ import {
   executionContext,
   type Actor,
 } from '@ddd-ts-kit/kernel';
-import {
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  kernelModule,
-  type BindingAspect,
-  type BindingAspectInfo,
-} from '../src';
+import { defineContextModule, kernelModule, type BindingAspect, type BindingAspectInfo } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: {} };
 const bob: Actor = { id: 'bob', type: 'user', roles: [], attributes: {} };

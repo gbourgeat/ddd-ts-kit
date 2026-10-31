@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, type ContextModule } from '@ddd-ts-kit/di';
+import { contextModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 // ddd-ts-kit:imports
 import * as identityDeclarations from '@/contexts/identity/identity.declarations';

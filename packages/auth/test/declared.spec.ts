@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
-import { contextModule, createTestApplication } from '@ddd-ts-kit/di';
+import { contextModule } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import {
   Access,
   AuthorizationMap,
