@@ -2158,8 +2158,8 @@ ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|gith
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
 
-A path that exists nowhere is a mistake of the caller: `check` refuses it (exit 2) in place of
-reporting a clean project.
+A path that exists nowhere, or a folder that holds no TypeScript file under the source root, is a
+mistake of the caller: `check` refuses it (exit 2) in place of reporting a clean project.
 
 Each violation has a rule id, a severity, a file, a line, a message and a `fix`: one sentence
 saying what to do instead. Exit code 1 when there is at least one error. Suppose that the

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4d29ea90e908880e -->
+<!-- translation-of: README.md sha256:27d07df1b003a558 -->
 
 # ddd-ts-kit
 
@@ -2303,8 +2303,9 @@ ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|gith
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
 
-Un chemin qui n'existe nulle part est une erreur de l'appelant : `check` le refuse (code 2) au lieu
-de déclarer le projet propre.
+Un chemin qui n'existe nulle part, ou un dossier sans fichier TypeScript sous la racine des
+sources, est une erreur de l'appelant : `check` le refuse (code 2) au lieu de déclarer le projet
+propre.
 
 Chaque violation a un identifiant de règle, une sévérité, un fichier, une ligne, un message et un
 `fix` : une phrase qui dit quoi faire à la place. Code de sortie 1 quand il y a au moins une

@@ -19,6 +19,7 @@ import { formatCheck, type CheckFormat } from '../engine/format-check';
 import { runCheck } from '../engine/run-check';
 import { summarize } from '../engine/summarize';
 import { explanationsOf } from '../explain/explanations-of';
+import type { Project } from '../model/project';
 import type { Violation } from '../model/violation';
 import { loadLooseProject } from '../project/load-loose-project';
 import { loadProject } from '../project/load-project';
@@ -98,11 +99,14 @@ function checkProject(args: Arguments, rules: readonly string[]): CheckResult {
 
   refuseMissingPaths(args);
 
-  const result = withBaseline(root, runCheck(loadProject(root), { rules }), rules);
+  const project = loadProject(root);
+  const result = withBaseline(root, runCheck(project, { rules }), rules);
 
   const scopes = args.positionals.map((entry) =>
     toPosix(path.relative(root, path.resolve(cwd, entry))).replace(/\/$/, ''),
   );
+
+  refuseScopeWithoutSources(project, args.positionals, scopes);
 
   const ref = args.text('changed-since');
   const changed = ref === undefined ? undefined : changedFiles(root, knownCommit(root, ref, CHANGED_SINCE_FIX));
@@ -122,6 +126,27 @@ function refuseMissingPaths(args: Arguments): void {
     throw new CliError(
       `No such path: ${missing.join(', ')}.`,
       'Name a file or a folder of the project (`ddd-ts-kit check src`), or leave the path out to check the whole project.',
+    );
+  }
+}
+
+/**
+ * A path that exists but holds no source the checker reads would report "0 errors" like a clean one.
+ * Only a path asked for is judged: `check` alone on a project with no context yet reads its sources
+ * and reports them, which is not the same as being asked about a place that has none.
+ */
+function refuseScopeWithoutSources(project: Project, asked: readonly string[], scopes: readonly string[]): void {
+  const empty = asked.filter(
+    (_, index) =>
+      !project.files.some(
+        (file) => scopes[index] === '' || file.path === scopes[index] || file.path.startsWith(`${scopes[index]}/`),
+      ),
+  );
+
+  if (empty.length > 0) {
+    throw new CliError(
+      `${empty.join(', ')} holds nothing to check.`,
+      `The checker reads the TypeScript files (*.ts) under ${project.config.sourceRoot}/: name one of them or a folder that holds some, or leave the path out to check the whole project.`,
     );
   }
 }

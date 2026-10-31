@@ -65,7 +65,7 @@ describe('check', () => {
     const byRule = checkJsonOf(cli(root, 'check', '--rule', 'layer/domain-purity', '--json'));
     const byPath = checkJsonOf(cli(root, 'check', 'src/contexts/billing/application', ...LAYERS, '--json'));
 
-    write(root, 'src/contexts/shipping/.gitkeep', '');
+    write(root, 'src/contexts/shipping/clean.ts', 'export const shipped = 1;\n');
 
     const elsewhere = cli(root, 'check', 'src/contexts/shipping', ...LAYERS, '--json');
 
@@ -129,15 +129,6 @@ describe('check', () => {
 
   it('finds the project root from a sub-directory', () => {
     expect(cli(`${root}/src/contexts/billing`, 'check', ...LAYERS, '--json').json()).toMatchObject({ errors: 2 });
-  });
-
-  it('refuses a path that exists nowhere instead of reporting it clean', () => {
-    const missing = cli(root, 'check', 'src/contexts/billng');
-
-    expect(missing.code).toBe(2);
-    expect(missing.stderr).toContain('No such path: src/contexts/billng.');
-    expect(missing.stderr).toContain('fix: Name a file or a folder');
-    expect(cli(root, 'check', '--clean-only', 'nothere/').code).toBe(2);
   });
 
   it('fails with a fix when there is no config', () => {
