@@ -3,7 +3,7 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ERRORS_DOCS } from '../src/check/explain/errors-docs';
 import { STANDARD_DOCS } from '../src/check/explain/standard-docs';
-import { cli, exists, read, REPO_ROOT, tempDir, write } from './helpers';
+import { cli, exists, read, REPO_ROOT, tempDir, walk, write } from './helpers';
 
 const page = (file: string): string => fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
 
@@ -192,5 +192,31 @@ describe('guides, the bootstrap, in the order that works in a fresh directory', 
     expect(skill.indexOf('`git init` comes first')).toBeLessThan(skill.indexOf('## 5. Prove it and commit'));
     expect(page('README.md').replace(/\s+/g, ' ')).toContain('in a new directory, run `git init` first');
     expect(page('README.fr.md').replace(/\s+/g, ' ')).toContain("lancez d'abord `git init`");
+  });
+});
+
+describe('guides, persistence, a jsonb column on Knex', () => {
+  it('is told in the mapper TODO and the page, where the other ORM serialize it', () => {
+    const root = tempDir('guides-knex-json');
+
+    expect(cli(root, 'init', '--orm', 'knex').code).toBe(0);
+
+    expect(
+      cli(root, 'generate', 'context', 'ordering', '--classification', 'core', '--term', 'Order=A request').code,
+    ).toBe(0);
+
+    expect(cli(root, 'generate', 'aggregate', 'ordering', 'Order').code).toBe(0);
+    expect(cli(root, 'generate', 'repository', 'ordering', 'Order').code).toBe(0);
+
+    const mapper = walk(root).find((file) => file.endsWith('order.mapper.ts')) ?? '';
+
+    expect(read(root, mapper)).toContain(
+      'A `jsonb` column holding an array or a string takes `JSON.stringify(value)` on Knex',
+    );
+
+    for (const file of ['docs/tools/persistence.md', 'docs/tools/persistence.fr.md']) {
+      expect(page(file), file).toContain('22P02');
+      expect(page(file), file).toContain('`JSON.stringify(value)`');
+    }
   });
 });
