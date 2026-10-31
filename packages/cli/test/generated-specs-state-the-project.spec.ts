@@ -49,6 +49,15 @@ describe('A spec the kit generates, what it asserts', () => {
     );
   });
 
+  it('runs both branches of the stub of a guard, so test:coverage is green right after generate guard', () => {
+    const spec = read(root, `${BILLING}/unit/not-banned.guard.spec.ts`);
+
+    expect(spec).toContain("it('refuses a caller with 403'");
+    expect(spec).toContain("it('lets through a caller the stub does not refuse'");
+    expect(spec).toContain("anActor().named('').build()");
+    expect(spec).toContain('expect(refusalOf(request)).toBeUndefined()');
+  });
+
   it('holds the remote adapter to what it does as long as its transport is not written, and no more', () => {
     const spec = read(root, `${BILLING}/integration/remote-tax-calculator.adapter.spec.ts`);
 
