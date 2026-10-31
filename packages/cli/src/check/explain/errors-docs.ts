@@ -3,24 +3,16 @@ import type { RuleDoc } from '../model/rule-doc';
 export const ERRORS_DOCS: Readonly<Record<string, RuleDoc>> = {
   'errors/code-unique': {
     why: 'The code is the identity of a refusal for everything outside the domain: the HTTP mapper gives it a status, the OpenAPI document lists it, the audit trail and the span record it as the reason, a client branches on it and a test asserts it. Nothing downstream knows the class or the factory. Two refusals of one context under one code are therefore one refusal for every reader, whatever their messages say. The code is checked per context, since each context owns its language: the same code in two contexts is allowed, and the error mapper of the application gives it one status. Every form is read: the first argument of `refusal(..)` in a factory of a concept class, the `readonly code` field of a class per error, and under "stack.refusals": "named" the values of <context>.codes.ts, the code list of the context, where two keys under one value are reported. Judged under "stack.refusals": "factories" and "named": a project whose config does not say was written when an error was a class, and keeps working untouched.',
-    bad: `export class AppointmentError extends ConceptError {
-  static slotTaken(calendarId: string) {
-    return AppointmentError.refusal('BOOKING_REFUSED', 'The slot is already held.', { calendarId });
-  }
-
-  static outsideAvailability(startsAt: Date) {
-    return AppointmentError.refusal('BOOKING_REFUSED', 'The calendar takes no appointment then.', { startsAt });
-  }
-}`,
-    good: `export class AppointmentError extends ConceptError {
-  static slotTaken(calendarId: string) {
-    return AppointmentError.refusal('SLOT_TAKEN', 'The slot is already held.', { calendarId });
-  }
-
-  static outsideAvailability(startsAt: Date) {
-    return AppointmentError.refusal('OUTSIDE_AVAILABILITY', 'The calendar takes no appointment then.', { startsAt });
-  }
-}`,
+    bad: `// appointment.codes.ts
+export const AppointmentCodes = {
+  SlotTaken: 'BOOKING_REFUSED',
+  OutsideAvailability: 'BOOKING_REFUSED',
+} as const;`,
+    good: `// appointment.codes.ts
+export const AppointmentCodes = {
+  SlotTaken: 'SLOT_TAKEN',
+  OutsideAvailability: 'OUTSIDE_AVAILABILITY',
+} as const;`,
   },
   'errors/code-listed': {
     why: 'Under "stack.refusals": "named" a refusal is a class of its own, `SlotTaken`, and its code is what everything outside the domain knows it by: the error mapper gives it a status, the OpenAPI document and the client list it, a test asserts it. The codes of a context are therefore one closed list, <context>.codes.ts, `export const SchedulingCodes = { SlotTaken: \'SLOT_TAKEN\' } as const`, and each class reads its code from it under its own name, `readonly code = SchedulingCodes.SlotTaken`: the list is the contract of the context in one file, two refusals cannot drift to one code unseen, and the type of each code stays its own literal. Reported: a refusal class (a class of domain/errors/ that extends DomainRefusal, abstract ones aside) without a code, with a code written another way (a string literal, another entry, the list of another context), a context with refusal classes and no codes.ts, a class whose name the list does not hold; in codes.ts, a list missing or not `as const`, a key that names no refusal class of the context (a code nothing raises), and a value that is not a string literal in constant case. The value is usually the name of the class in constant case, but need not be: a migrated project keeps its codes, since the code is the contract. Judged under "stack.refusals": "named" only.',

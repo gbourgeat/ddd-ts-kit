@@ -1,6 +1,6 @@
 /**
  * A file a context holds once, whatever its modules: at the root of the context, named after it,
- * and, until a later minor version, still read where 0.86 and 0.87 wrote it, in a role folder.
+ * and still read where 0.86 and 0.87 wrote it, in a role folder, so that `context-layout` moves it.
  */
 export interface ContextFile {
   /** The file at the root of the context, relative to it: `billing.codes.ts`. */

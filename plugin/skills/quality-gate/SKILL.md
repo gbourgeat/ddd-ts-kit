@@ -44,7 +44,7 @@ The size and message of the commit are skill `ddd-ts-kit:commit-discipline`.
 |---|---|---|
 | after each write | nothing: the guard runs `check-file` and returns the violations | none |
 | while iterating | `npx ddd-ts-kit verify-slice <context> --since <base>`: regenerate, the rules on the changed files, the specs of the context, the files near the size limit and the paths of the slice to stage (the pages of `docs/behaviour/` and the schema of the ORM the generator changed for the context included), in one run; a path it leaves out is never staged with the slice | seconds |
-| before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left but `TODO(review)`), `npx ddd-ts-kit check --commit-size` | under a minute |
+| before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context> --brief` (nothing left but `TODO(review)`), `npx ddd-ts-kit check --commit-size` | under a minute |
 | to bring the trunk into the branch | `npx ddd-ts-kit merge-trunk`: one merge commit from the branch's own diff, derived files settled, `verify-merge` on the result before its commit; on a stop, resolve each hunk keeping both sides, `git add`, `merge-trunk --continue` ("Bring the trunk in" below) | seconds |
 | after a merge made otherwise | `npx ddd-ts-kit verify-merge`: each line, row done or test the merge lost, to restore from its side; it exits 1 on one (the pre-push hook and `verify-slice` run it too, and only warn in this version) | a second |
 | before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in; each non-blocking remark of the review written as a `TODO(review)` or settled | everything |
@@ -57,9 +57,7 @@ that new finding is expected, never a conflict between the two. Never Prettier n
 `npx biome` (without `--no`, it can fetch an unrelated package of that name); the guard refuses
 both to a worker.
 
-`npm run lint` (`ddd-ts-kit lint`) fails on a warning as on an error: fix it the same way. A rule
-of the kit in transition is listed apart without failing: fix its warnings too, before the
-version it names makes them errors. An
+`npm run lint` (`ddd-ts-kit lint`) fails on a warning as on an error: fix it the same way. An
 entry of `eslint-suppressions.json` is a finding the project recorded: once it is fixed the lint
 fails until `npx eslint . --prune-suppressions` removes it; adding one (`--suppress-all`,
 `--suppress-rule`) is a suppression.
@@ -78,59 +76,15 @@ first three.
 
 ## Bring the trunk in
 
-When the rows of a branch are committed, before its review and its merge: bring the trunk into
-the branch with `npx ddd-ts-kit merge-trunk` (`--cwd <worktree>` from outside it), never
-`git merge` alone. It computes the
-merge from the newest commit of the branch the trunk holds (a first row already squash-merged, a
-branch it was stacked on), settles the derived files (the `package.json` of a client at the higher
-of both versions), generated regions and registries, the rows
-of `slices.md`, the drizzle-kit journal and the lockfile itself, and leaves each source or test
-hunk in a merge in progress with what each side did there (exit 1). Resolve each hunk keeping
-both sides, never by taking one side of a source file or a test (`-X theirs`, `-X ours`,
-`checkout --theirs` erase the other side without a conflict, and the guard refuses them to a
-sub-agent), `git add` it, then `npx ddd-ts-kit merge-trunk --continue`: it replays the
-migrations, regenerates, runs `verify-merge` on the result and commits only once no line, row
-or test is lost (a removal decided on purpose: `--continue --accept-lost`; `--abort` undoes, and restores the derived files the kit regenerated). On Prisma it also runs `npm run db:client` when the merge changed a schema, so the test database is current. When the trunk moved since the merge started, `--continue` says so: it concludes the commit of the first run, so run `merge-trunk` again after it.
-Under the sandbox, a trunk that changes the settings of the project (`.claude/settings.json`) or
-another path the session cannot write is the owner's merge: `merge-trunk` stops with nothing
-changed and exit 3, naming the paths; hand the owner the same command to run from a terminal
-outside the sandbox, and do not merge by hand or reset the worktree.
+When the rows of a branch are committed and the trunk moved, before its review and its merge, read [merge-trunk.md](merge-trunk.md) first: `npx ddd-ts-kit merge-trunk` only, never `git merge` alone; resolve each hunk it stops on keeping both sides, then `--continue`.
 
 ## Review remarks
 
-A review sorts its findings: a blocking one is fixed before the merge; a non-blocking one is
-settled at once, or written before the merge as `TODO(review): #<row id> <remark>` at the line it is
-about, by whoever fixes the branch (the `architecture-reviewer` agent gives the line and its
-`file:line`, and never writes it), never left in the body of a pull request. A slice may merge with `TODO(review)` markers; a story or a
-milestone is closed only when `npx ddd-ts-kit story-check <code>` exits 0: every marker of its
-own handled, or dismissed by a decision record (`npx ddd-ts-kit generate adr "<title>"`,
-quoting the remark without its marker) with the marker deleted in the same commit. A marker is
-the story's when its text names one of its rows (the `#<row id>` above), else when the commit that
-wrote its line does (its `Slice: <row id>` trailer, else its message), else, not committed, when
-the worker whose worktree holds it was briefed on one of its rows. One that belongs to no row
-blocks only when no other open story has a row in its context; otherwise `story-check` lists it
-without blocking: settle it, or name its row in it. `--strict` blocks on every marker of the
-story's contexts. The rule of two: a finding that repeats one already recorded for the project
-(the same rule id, or the same remark on the same layer, in an earlier
-`docs/architecture/reviews/*.md` or as a `TODO(review)` marker) is written as one line under
-`## Mistakes seen here` of `AGENTS.md`, or as the config change when a rule of the kit covers
-it, in the commit that settles it; the reviewer gives the line.
+For the findings of a review, a `TODO(review)` marker or the closing of a story, read [review-remarks.md](review-remarks.md) first: a blocking finding is fixed before the merge, a non-blocking one is settled at once or written as `TODO(review): #<row id> <remark>`.
 
 ## Coverage
 
-`npm run test:coverage` fails with `Coverage for <rate> (<measured>%) does not meet
-"<contexts>/<context>/<layer>/**/*.ts" threshold (<floor>%)`: that layer of that context holds
-code no spec runs. The thresholds are the `coverage` key of `ddd-ts-kit.config.json` (the
-reference when absent: domain 90/85/90/90, application 85/80/85/85, presentation 80/70/80/80,
-infrastructure 70/60/70/70, as statements/branches/functions/lines).
-
-- Read the uncovered lines in the report, write the spec of the behaviour that reaches them
-  (`/ddd-ts-kit:testing`), or delete the code when nothing can reach it.
-- Never add `exclude`, `include` or `thresholds` to the runner config, a `--coverage.*` flag to a
-  script, or a `v8 ignore` / `istanbul ignore` comment: `test/coverage-governed` reports them.
-- Lowering a threshold is a decision of the team: change the rate in the config and record it
-  with `npx ddd-ts-kit generate adr "<title>" --deviation coverage.<layer>.<rate> --reason "<why>"`.
-  Raising one is free.
+When `npm run test:coverage` fails on a threshold, read [coverage.md](coverage.md) first: write the spec that reaches the lines, never an `exclude` or a `v8 ignore`.
 
 ## Read a violation
 

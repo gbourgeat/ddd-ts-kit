@@ -74,10 +74,8 @@ describe('ddd-ts-kit lint', () => {
     expect(JSON.parse(read(root, 'asked.json'))).toEqual({ patterns: ['.'], fix: false });
   });
 
-  it('fails on an error, whatever the transitions', () => {
-    installEslint([{ ruleId: 'ddd-ts-kit/clean-new', severity: 2 }], {
-      'ddd-ts-kit/clean-new': { docs: { transition: '0.28.0' } },
-    });
+  it('fails on an error', () => {
+    installEslint([{ ruleId: 'ddd-ts-kit/clean-new', severity: 2 }]);
 
     const result = cli(root, 'lint', '--fix');
 
@@ -86,44 +84,22 @@ describe('ddd-ts-kit lint', () => {
     expect(JSON.parse(read(root, 'asked.json'))).toMatchObject({ fix: true });
   });
 
-  it('shows the warnings of a rule of the kit in transition without failing on them, with the version that makes it an error', () => {
+  it('fails on a warning of a rule of the kit as on any other, whatever its documentation says of a later version', () => {
     installEslint(
       [
         { ruleId: 'ddd-ts-kit/clean-new', severity: 1 },
         { ruleId: 'ddd-ts-kit/clean-new', severity: 1 },
       ],
-      { 'ddd-ts-kit/clean-new': { docs: { transition: '0.28.0' } }, 'max-depth': {} },
+      { 'ddd-ts-kit/clean-new': { docs: { transition: '0.28.0' } } },
     );
 
     const result = cli(root, 'lint');
 
-    expect(result.code).toBe(0);
+    expect(result.code).toBe(1);
 
     expect(result.stderr).toBe(
-      'ddd-ts-kit/clean-new: 2 warning(s), not counted while the rule is new; it becomes an error in 0.28.0: fix them before upgrading to it.',
+      '2 warning(s) fail the lint, as an error does: fix each one, or raise its rule to error and record the existing findings (docs/tools/quality-baseline.md, "Warnings fail the lint").',
     );
-  });
-
-  it('names the rules in transition one after the other, by their id', () => {
-    installEslint(
-      [
-        { ruleId: 'ddd-ts-kit/test-shape', severity: 1 },
-        { ruleId: 'ddd-ts-kit/clean-new', severity: 1 },
-      ],
-      {
-        'ddd-ts-kit/test-shape': { docs: { transition: '0.90.0' } },
-        'ddd-ts-kit/clean-new': { docs: { transition: '0.28.0' } },
-      },
-    );
-
-    const result = cli(root, 'lint');
-
-    expect(result.code).toBe(0);
-
-    expect(result.stderr.split('\n').map((line) => line.split(':')[0])).toEqual([
-      'ddd-ts-kit/clean-new',
-      'ddd-ts-kit/test-shape',
-    ]);
   });
 
   it('keeps the cache of ESLint next to the project, keyed by content, and drops it when the lint changed', () => {
@@ -179,7 +155,6 @@ describe('ddd-ts-kit lint --json', () => {
     expect(result.json()).toEqual({
       errors: 1,
       warnings: 1,
-      inTransition: [],
       report: [
         {
           filePath: 'src/a.ts',

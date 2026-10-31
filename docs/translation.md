@@ -75,7 +75,7 @@ becomes `#règles-de-lagrégat`).
 
 | Command | What it does |
 |---|---|
-| `node pipeline/monorepo/translations.mjs --check` | every problem of the French documentation, one line each, exit 1 if any: a page without switcher, a missing or stale French page, a link that leads nowhere, an anchor no heading has, a French page that links to an English page whose French sibling exists, a diagram without its French drawing, a malformed diagram. `npm run docs:translations` runs it, and the `docs` job of the CI too |
+| `node pipeline/monorepo/translations.mjs --check` | every problem of the French documentation, one line each, exit 1 if any: a page without switcher, a missing or stale French page, a link that leads nowhere, an anchor no heading has, a French page that links to an English page whose French sibling exists, a diagram without its French drawing, a malformed diagram, a JSON shape the two pages do not share (inline code of the prose that opens with `{`, or a fenced JSON block, its comments left out), which a stamp does not read. `npm run docs:translations` runs it, and the `docs` job of the CI too |
 | `node pipeline/monorepo/translations.mjs --check <pages...>` | the same, for these pages only (English or French paths) and the diagrams they show |
 | `node pipeline/monorepo/translations.mjs --stamp <english page>` | writes or refreshes the switcher and the `translation-of` line of the French page; it creates nothing else |
 | `node pipeline/monorepo/translations.mjs --stale` | the French pages whose English page changed since they were stamped |

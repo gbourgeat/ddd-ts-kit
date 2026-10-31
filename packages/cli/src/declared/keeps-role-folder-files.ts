@@ -12,8 +12,7 @@ const NOTHING_DECLARED = 'export {};\n';
  * the context is exactly what that generator would write for the role files and constructors of
  * today, and none other is there. `read` gives the text of a file relative to the context. A
  * context whose role files all sit directly in their layer is written the same in both layouts:
- * it keeps none. This version accepts it with a warning (`earlierLayoutNotice`), so that
- * upgrading the kit fails no gate; a later minor version refuses it.
+ * it keeps none. `check` reports it once (`earlierLayoutNotice`) and `docs` moves it.
  */
 export function keepsRoleFolderFiles(declared: DeclaredContext, read: (entry: string) => string | undefined): boolean {
   const { context, entries, modules } = declared;

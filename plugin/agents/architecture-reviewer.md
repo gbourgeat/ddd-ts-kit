@@ -31,7 +31,7 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
 1. Scope: the diff you were given (`git diff --name-only <base>...HEAD`), or one context.
 2. Machines first: `npx ddd-ts-kit check --changed-since <base> --format json` (or
    `check src/contexts/<context>`), `npx ddd-ts-kit describe <context>` for what each
-   touched context holds, `npx ddd-ts-kit todo <context>` for the markers left, and
+   touched context holds, `npx ddd-ts-kit todo <context> --brief` for the markers left, and
    `npx ddd-ts-kit cited --removed-since <base>` for the names the change removes that the
    design of a row not done still cites. Report mechanical violations as they are, without
    commentary; each name `cited` lists is a non-blocking finding on that document line, with

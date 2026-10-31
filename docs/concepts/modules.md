@@ -262,8 +262,8 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 ### From the layout of 0.86 and 0.87
 
 0.86 and 0.87 put a module under `domain/<module>/` and `application/<module>/`, and left its adapters,
-routes and specs organised by technique. This version still reads that layout, and
-`module/complete` warns about it; the generators refuse to write in such a context until it is
+routes and specs organised by technique. This version reads that layout only to move it:
+`module/complete` reports it as an error, whatever its severity; the generators refuse to write in such a context until it is
 moved. `npx ddd-ts-kit context-layout [<context>...] [--dry-run]` moves it: each module to its
 folder, and each adapter, route and spec left at the level of the context to the module of what
 it imports (a spec to the module of the file it is named after; a file that imports nothing of a

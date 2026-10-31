@@ -21,10 +21,52 @@ test('a change of the plugin with its file of changes/ passes, without one it is
   assert.match(missing, /reaches the plugin: say what it changes for a user in changes\/<what-it-does>\.md/);
 });
 
-/** The files of a pull request as `read` and `readAtBase` give them: the plugin manifest at 0.80.0 on the base. */
+/**
+ * The files of a pull request as `read` and `readAtBase` give them: the plugin manifest at 0.80.0 on the base,
+ * the pages that exist from the root, and the packages of packages/ by their names.
+ */
 function files(contents = {}, base = { [MANIFEST]: '{ "version": "0.80.0" }' }) {
-  return { read: (file) => contents[file] ?? '', readAtBase: (file) => base[file] };
+  return {
+    read: (file) => contents[file] ?? '',
+    readAtBase: (file) => base[file],
+    exists: (file) => ['docs/proposals/privacy-by-design.md', 'packages/cli/README.md'].includes(file),
+    packages: ['ddd-ts-kit', '@ddd-ts-kit/eslint-plugin', '@ddd-ts-kit/kernel'],
+  };
 }
+
+test('a file of changes/ links to a page from the root of the repository, where CHANGELOG.md reads it', () => {
+  const fragment = (link) => ({ 'changes/a.md': `**A.** See [the proposal](${link}).` });
+
+  assert.deepEqual(problemsOf(['changes/a.md'], files(fragment('docs/proposals/privacy-by-design.md#part-2'))), []);
+  assert.deepEqual(problemsOf(['changes/a.md'], files(fragment('https://example.org/x.md'))), []);
+  assert.deepEqual(problemsOf(['changes/a.md'], files(fragment('#the-section'))), []);
+
+  const [outside] = problemsOf(['changes/a.md'], files(fragment('../docs/proposals/privacy-by-design.md')));
+
+  assert.match(outside, /changes\/a\.md links to \.\.\/docs\/proposals\/privacy-by-design\.md, outside the repository/);
+  assert.match(outside, /docs\/proposals\/privacy-by-design\.md, not \.\.\/docs/);
+
+  const [nowhere] = problemsOf(['changes/a.md'], files(fragment('docs/concepts/gone.md')));
+
+  assert.match(nowhere, /changes\/a\.md links to docs\/concepts\/gone\.md, which is no file of the repository/);
+});
+
+test('a file of changes/ names a package of the kit by the name it is published under', () => {
+  const named = (text) => ({ 'changes/a.md': `**A.** ${text}` });
+
+  assert.deepEqual(
+    problemsOf(
+      ['changes/a.md'],
+      files(named('Update `ddd-ts-kit`, `@ddd-ts-kit/eslint-plugin` and `@ddd-ts-kit/kernel/testing`.')),
+    ),
+    [],
+  );
+
+  const [unknown] = problemsOf(['changes/a.md'], files(named('Update `@ddd-ts-kit/cli` to this version.')));
+
+  assert.match(unknown, /changes\/a\.md names @ddd-ts-kit\/cli, which no package of packages\/ is published as/);
+  assert.match(unknown, /the CLI is ddd-ts-kit/);
+});
 
 test('CHANGELOG.md and the version of the plugin are left to the release', () => {
   const bumped = { [MANIFEST]: '{ "version": "0.81.0" }', 'changes/a.md': '**A.**' };

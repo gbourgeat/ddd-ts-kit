@@ -110,7 +110,7 @@ built. A law catches the bound or the symmetry an example misses.
 
 ## 4. The acceptance, before any code
 
-Skill `ddd-ts-kit:testing`, "Acceptance of a story": `npx ddd-ts-kit generate acceptance $0`, one
+Skill `ddd-ts-kit:testing`, `acceptance.md`: `npx ddd-ts-kit generate acceptance $0`, one
 or more scenarios per criterion wrapped in `pending(...)`, `npm run test:e2e -- test/acceptance`
 to see each fail on an assertion, `npm run format` and `npm run lint -- test/acceptance/<spec>`
 on the spec (`--lock` refuses a spec that fails them, and a locked spec is not touched again),
@@ -158,12 +158,12 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
 
 1. Bring the trunk in: commit, `git fetch`, then `npx ddd-ts-kit merge-trunk --trunk <base>`,
    resolve what it stops on keeping both sides, `--continue` (skill `ddd-ts-kit:quality-gate`,
-   "Bring the trunk in"); on exit 3, hand the owner the command it prints and wait.
+   `merge-trunk.md`); on exit 3, hand the owner the command it prints and wait.
    A migration to generate (Prisma, TypeORM) or a spec against a real database exits 3 under the sandbox too (no setting reaches the database): the owner or the CI runs it.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
    fixed, the others settled or written as the `TODO(review)` line the reviewer gives, and each
    line it gives for `## Mistakes seen here` of `AGENTS.md` (the rule of two) committed in this
-   branch: skill `ddd-ts-kit:quality-gate`, "Review remarks". Keep the review: append `## Findings`
+   branch: skill `ddd-ts-kit:quality-gate`, `review-remarks.md`. Keep the review: append `## Findings`
    to `docs/architecture/reviews/$0.md`, one line per finding with its pass (the rule id or the
    principle the reviewer named), its `file:line` and its outcome, `fixed in <commit>`,
    `written as TODO(review)` or `dismissed by ADR-<n>`; the record outlives the pull request.
@@ -173,7 +173,7 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
    does not match the design or a `D<n>`; it fixes nothing. Settle each mismatch it reports as
    a finding above: fixed, or a decision. A host without the agents of the plugin skips it, and
    the report says "not verified: the story-verifier agent, not available on this host".
-3. `npm run verify`, `npx ddd-ts-kit acceptance $0 --gate passing`, `npx ddd-ts-kit todo`, and
+3. `npm run verify`, `npx ddd-ts-kit acceptance $0 --gate passing`, `npx ddd-ts-kit todo --brief`, and
    `npx ddd-ts-kit story-check $0`: every row done, no marker of its own left.
 
 ## 8. The report, then the pull request

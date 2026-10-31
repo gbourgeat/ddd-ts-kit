@@ -138,15 +138,11 @@ and the non-null assertion in a spec): the editor and the report still tell a ju
 from a broken rule, and neither is left behind. A new project has none, and `init` writes no
 suppressions file: the first warning is seen the day it is written.
 
-**A rule of the kit in transition** is the one exception. A rule a later version adds, or what a
-rule judges more, lands as a warning for one minor version and becomes an error at the next
-([CONTRIBUTING.md](../../CONTRIBUTING.md)); its documentation names that version, and the
-CHANGELOG of the version that brings it names the rule. `ddd-ts-kit lint` shows its warnings in
-the report, then one line per rule (`ddd-ts-kit/<rule>: 2 warning(s), not counted while the rule
-is new; it becomes an error in 0.28.0: fix them before upgrading to it.`), and does not fail on
-them: an upgrade of the kit never turns a green lint red, and the findings are fixed or recorded
-before the version that makes the rule an error. Plain `eslint . --max-warnings 0` would count
-them, which is why the scripts run the kit's command. The hook before a commit runs ESLint on the staged files without the limit,
+**A rule a later version adds**, or what a rule judges more, has no exception: it lands at its
+severity, an error for a rule that prevents a problem, and its warnings fail the lint as the others
+do ([CONTRIBUTING.md](../../CONTRIBUTING.md)). The CHANGELOG of the version that brings it names
+the rule with a `To move:` line, and `ddd-ts-kit check --rule <id>` lists the files to take up
+before the upgrade. The hook before a commit runs ESLint on the staged files without the limit,
 so it shows a warning without stopping the commit; `verify` and the pipeline stop it.
 
 A project made by an earlier version keeps its own scripts: `init` adds a script a project

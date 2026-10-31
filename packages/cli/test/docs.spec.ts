@@ -59,7 +59,7 @@ describe('docs', () => {
     }
   });
 
-  it('names the stale file and exits 1 with --check, then repairs it', () => {
+  it('names the stale file and exits 1 with --check, previews the repair with --dry-run, then repairs it', () => {
     const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as {
       contexts: Record<string, { upstreams: unknown[] }>;
     };
@@ -77,6 +77,13 @@ describe('docs', () => {
       ok: false,
       stale: expect.arrayContaining(['src/contexts/billing/CONTEXT.md']),
     });
+
+    const map = read(root, 'docs/context-map.md');
+    const previewed = cli(root, 'docs', '--dry-run');
+
+    expect(previewed.code).toBe(0);
+    expect(previewed.stdout).toContain('would update docs/context-map.md');
+    expect(read(root, 'docs/context-map.md')).toBe(map);
 
     expect(cli(root, 'docs').stdout).toContain('updated      docs/context-map.md');
     expect(read(root, 'docs/context-map.md')).toContain('  billing -->|conformist| order_fulfilment');

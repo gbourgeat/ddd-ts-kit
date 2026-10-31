@@ -22,9 +22,7 @@ export const treeClosed: Rule = {
       const earlier = earlierContextFile(entry, project.config, entries);
 
       if (earlier !== undefined) {
-        const violation = report({ file: entry, line: 1 }, earlier.flaw.message, earlier.flaw.fix);
-
-        return [earlier.severity === 'warn' ? { ...violation, severity: earlier.severity } : violation];
+        return [report({ file: entry, line: 1 }, earlier.message, earlier.fix)];
       }
 
       const flaw = strayEntry(entry, project.config);

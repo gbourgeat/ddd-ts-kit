@@ -22,8 +22,8 @@ of this page are the project's, and the page says so where it matters.
 | the worker | `npx ddd-ts-kit generate worker` | `src/apps/worker/main.ts`: the same modules without the HTTP server, the jobs by time started whatever `RUN_JOBS` says, and `RUN_JOBS=false` by default for the API. It runs no outbox relay: the events its commands store are relayed by the API |
 | a context as a service | `npx ddd-ts-kit generate service <context>` | `src/apps/<context>/main.ts`, its jobs with it and out of the whole application, none of the platform: the same image with another `ENTRY`, the same `DEPLOYMENT_NAME` in every container ([when to extract microservices](when-to-extract-microservices.md)) |
 | the readiness route | the HTTP start of `src/platform/http/`, with `--cache redis` only | `GET /health/ready` answers 200 when Redis is reachable and 503 otherwise, before the rate limiter and every route. Without Redis the kit writes no health route: a platform that probes one needs a route the project adds. No liveness route is written |
-| the OpenTelemetry export | `src/platform/observability/` | spans to `OTEL_EXPORTER_OTLP_ENDPOINT` (none leaves the process when it is unset), `TRACE_SAMPLE_RATIO`, and the metrics every use case and every adapter call emit, `use_case_*` and `dependency_call_*`, with the gauges of the outbox and the jobs ([observability](../concepts/observability.md)) |
-| the configuration | `src/platform/config/` | environment variables read once at start (`docker/.env.example` lists them): a wrong one stops the process before it listens, not at the first request. Behind a load balancer, `TRUST_PROXY` names the proxies believed when they give the caller in `X-Forwarded-For` (a number of hops, or their addresses); left out, none is, and every caller shares the address of the balancer, and one window of the rate limit |
+| the OpenTelemetry export | `src/platform/observability/` | spans to `OTEL_EXPORTER_OTLP_ENDPOINT` (none leaves the process when it is unset), `TRACE_SAMPLE_RATIO`, and the metrics of every use case and every adapter call, `use_case_*` and `dependency_call_*`, which reach the `Metrics` port of the kernel: `createMetrics()` answers a no-op adapter until the `TODO(platform)` of `create-metrics.ts` binds OpenTelemetry or Prometheus, so nothing is measured before then. No gauge of the outbox or the jobs is emitted: the depth of the outbox is `store.stats()` or the SQL of [closing the loop](closing-the-loop.md) ([observability](../concepts/observability.md)) |
+| the configuration | `src/platform/config/` | environment variables read once at start (`.env.example`, at the root of the project, lists them): a wrong one stops the process before it listens, not at the first request. Behind a load balancer, `TRUST_PROXY` names the proxies believed when they give the caller in `X-Forwarded-For` (a number of hops, or their addresses); left out, none is, and every caller shares the address of the balancer, and one window of the rate limit |
 
 `docker-compose.yml` and `npm run infra:up` are the local infrastructure of a developer, not a
 deployment.
@@ -51,7 +51,7 @@ deployment.
 |---|---|---|
 | migrate | `npm run db:migrate` with `DATABASE_URL` of the target | a migration fails: nothing is deployed |
 | deploy | the platform's: the image tag of the pipeline run that built it | an instance never answers ready |
-| status | the readiness route, the outbox depth and the `use_case_*` error rate of the new version | a value is out of its band |
+| status | the readiness route, the outbox depth (`store.stats()`, or the SQL of [closing the loop](closing-the-loop.md)) and, once a `Metrics` adapter is bound, the `use_case_*` error rate of the new version | a value is out of its band |
 
 ## What a rollback of each piece means
 

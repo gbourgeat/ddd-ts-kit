@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:59daca66bce218a0 -->
+<!-- translation-of: CONTRIBUTING.md sha256:4464e56d3f5ed198 -->
 
 # Contribuer
 
@@ -121,22 +121,18 @@ bout prend 2,5 à 7 Go, et plusieurs à la fois (plusieurs sessions de code, un 
   fichiers, quel que soit le mode de permission.
 - Une nouvelle règle de vérification vient avec une fixture qui passe et une fixture qui
   échoue, une phrase `fix` et une entrée `explain`.
-- Un changement qui fait signaler aux contrôles ce qu'ils ne signalaient pas (une nouvelle
-  règle, une règle qui juge plus de fichiers, une limite abaissée) ne fait jamais passer au rouge
-  un projet vert dans une version de correctif ou une version mineure : ce qu'il ajoute arrive
-  d'abord dans les projets comme un avertissement, et devient une erreur une version mineure
-  plus tard. Une nouvelle règle prend `warn` par défaut (`default-severities.ts` pour
-  `ddd-ts-kit check`, `recommended: 'warn'` pour la règle ESLint, avec
-  `transition: '<version mineure suivante>'` dans sa définition) ; une règle qui juge davantage
-  signale ce qu'elle ajoute sous un identifiant de règle à part, en avertissement, fondu dans la
-  règle à la version mineure suivante. Son fichier de `changes/` le dit, et celui qui en fait une erreur le redit : ce que la règle signale, la correction, et
-  `ddd-ts-kit check --rule <id>` pour lister les fichiers à reprendre avant qu'elle ne bloque. Un
-  projet continue de construire pendant qu'il monte de version ; une règle qui arrive en erreur
-  arrête sa branche principale et toutes les branches qui en partent. Un projet généré fait
-  échouer son lint sur un avertissement (`ddd-ts-kit lint`) : c'est la `transition` d'une règle
-  ESLint qui tient la promesse, puisque cette commande affiche les avertissements d'une règle en
-  transition sans échouer sur eux. La version mineure suivante passe `recommended: 'error'` et
-  retire `transition`.
+- Avant 1.0, une règle qui prévient un problème est une erreur tout de suite : une nouvelle règle
+  prend `error` par défaut (rien dans `default-severities.ts` pour `ddd-ts-kit check`,
+  `recommended: 'error'` pour la règle ESLint), et ce qu'une règle juge de plus aussi. Il n'y a
+  pas d'avertissement d'abord, ni de version où elle deviendrait une erreur plus tard : une règle
+  laissée en avertissement pour adoucir une montée de version est une règle qu'un projet apprend
+  à ignorer. Une règle n'est `warn` que lorsque ce qu'elle signale peut être juste et qu'un lecteur
+  tranche (`privacy/*`, qui lit des noms, ou `tree/documented-paths`). Son fichier de `changes/`
+  est un changement cassant : il dit ce que la règle signale, la correction, et une ligne
+  `To move:` avec `ddd-ts-kit check --rule <id>` pour lister les fichiers à reprendre. Une
+  disposition ou une forme qu'une version antérieure a écrite est signalée de la même façon, en
+  erreur, avec la commande qui la déplace (`ddd-ts-kit context-layout`, `ddd-ts-kit docs`) ; le
+  kit ne la lit que pour que cette commande puisse la déplacer.
 - Un nouveau template compile tel qu'il est généré et ne porte de marqueurs `TODO(domain)` que
   là où une connaissance du métier est nécessaire.
 - Les packages d'exécution gardent les bibliothèques tierces derrière des dépendances pairs

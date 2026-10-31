@@ -1,5 +1,5 @@
 [English](deploy-and-rollback.md) · **Français**
-<!-- translation-of: deploy-and-rollback.md sha256:a42efae151984df6 -->
+<!-- translation-of: deploy-and-rollback.md sha256:1eb5c0b2531a1363 -->
 
 # Déployer et revenir en arrière
 
@@ -25,8 +25,8 @@ scripts de cette page sont ceux du projet, et la page le dit là où cela compte
 | le *worker* | `npx ddd-ts-kit generate worker` | `src/apps/worker/main.ts` : les mêmes modules sans le serveur HTTP, les *jobs* planifiés démarrés quoi que dise `RUN_JOBS`, et `RUN_JOBS=false` par défaut pour l'API. Il ne fait tourner aucun relais de l'outbox : les événements que ses commandes stockent sont relayés par l'API |
 | un contexte en service | `npx ddd-ts-kit generate service <context>` | `src/apps/<context>/main.ts`, ses *jobs* avec lui et hors de l'application entière, aucun *job* de la plateforme : la même image avec un autre `ENTRY`, le même `DEPLOYMENT_NAME` dans chaque conteneur ([quand extraire des microservices](when-to-extract-microservices.fr.md)) |
 | la route de disponibilité | le démarrage HTTP de `src/platform/http/`, avec `--cache redis` seulement | `GET /health/ready` répond 200 quand Redis est joignable et 503 sinon, avant le limiteur de débit et toute route. Sans Redis le kit n'écrit aucune route de santé : une plateforme qui en sonde une a besoin d'une route que le projet ajoute. Aucune route de vivacité (*liveness*) n'est écrite |
-| l'export OpenTelemetry | `src/platform/observability/` | les traces vers `OTEL_EXPORTER_OTLP_ENDPOINT` (rien ne sort du processus quand elle n'est pas définie), `TRACE_SAMPLE_RATIO`, et les métriques qu'émettent chaque cas d'usage et chaque appel d'adaptateur, `use_case_*` et `dependency_call_*`, avec les jauges de l'outbox et des *jobs* ([observabilité](../concepts/observability.fr.md)) |
-| la configuration | `src/platform/config/` | des variables d'environnement lues une fois au démarrage (`docker/.env.example` les liste) : une variable fausse arrête le processus avant qu'il écoute, pas à la première requête. Derrière un répartiteur de charge, `TRUST_PROXY` nomme les proxys crus quand ils donnent l'appelant dans `X-Forwarded-For` (un nombre de sauts, ou leurs adresses) ; sans elle, aucun ne l'est, et tous les appelants partagent l'adresse du répartiteur, et une seule fenêtre de la limite de débit |
+| l'export OpenTelemetry | `src/platform/observability/` | les traces vers `OTEL_EXPORTER_OTLP_ENDPOINT` (rien ne sort du processus quand elle n'est pas définie), `TRACE_SAMPLE_RATIO`, et les métriques de chaque cas d'usage et de chaque appel d'adaptateur, `use_case_*` et `dependency_call_*`, qui atteignent le port `Metrics` du noyau : `createMetrics()` répond un adaptateur sans effet tant que le `TODO(platform)` de `create-metrics.ts` ne lie pas OpenTelemetry ou Prometheus, donc rien n'est mesuré avant. Aucune jauge de l'outbox ni des *jobs* n'est émise : la profondeur de l'outbox est `store.stats()` ou le SQL de [boucler la boucle](closing-the-loop.fr.md) ([observabilité](../concepts/observability.fr.md)) |
+| la configuration | `src/platform/config/` | des variables d'environnement lues une fois au démarrage (`.env.example`, à la racine du projet, les liste) : une variable fausse arrête le processus avant qu'il écoute, pas à la première requête. Derrière un répartiteur de charge, `TRUST_PROXY` nomme les proxys crus quand ils donnent l'appelant dans `X-Forwarded-For` (un nombre de sauts, ou leurs adresses) ; sans elle, aucun ne l'est, et tous les appelants partagent l'adresse du répartiteur, et une seule fenêtre de la limite de débit |
 
 `docker-compose.yml` et `npm run infra:up` sont l'infrastructure locale d'un développeur, pas un
 déploiement.
@@ -56,7 +56,7 @@ déploiement.
 |---|---|---|
 | migrer | `npm run db:migrate` avec la `DATABASE_URL` de la cible | une migration échoue : rien n'est déployé |
 | déployer | celle de la plateforme : l'étiquette d'image de l'exécution du *pipeline* qui l'a construite | une instance ne répond jamais disponible |
-| lire l'état | la route de disponibilité, la profondeur de l'outbox et le taux d'erreur `use_case_*` de la nouvelle version | une valeur sort de sa bande |
+| lire l'état | la route de disponibilité, la profondeur de l'outbox (`store.stats()`, ou le SQL de [boucler la boucle](closing-the-loop.fr.md)) et, une fois un adaptateur `Metrics` lié, le taux d'erreur `use_case_*` de la nouvelle version | une valeur sort de sa bande |
 
 ## Ce que signifie revenir en arrière pour chaque pièce
 

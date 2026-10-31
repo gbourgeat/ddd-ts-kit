@@ -433,7 +433,7 @@ export async function adaReadsTheQuarterlyReport(): Promise<void> {
 
 Un cas d'usage nomme l'élément sur lequel sa permission est vérifiée, dans le `resource` de son
 exigence (`{ type: 'document', id: command.documentId }`). Les générateurs écrivent le contexte
-(`{ type: 'context', id: '<contexte>' }`) avec un `TODO(domain)` qui nomme l'élément, car le contexte
+(`{ type: 'context', id: '<context>' }`) avec un `TODO(domain)` qui nomme l'élément, car le contexte
 n'est la bonne ressource que pour un cas d'usage sur aucun élément (en déclarer un, lancer une
 recherche dont la portée restreint les identifiants). Le schéma écrit par `init` ne dérive sur le
 type `context` que les permissions qu'aucun élément ne dérive : une permission modélisée sur un
