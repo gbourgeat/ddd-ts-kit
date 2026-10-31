@@ -58,7 +58,8 @@ const TOOLING: Readonly<Record<string, InitFile[]>> = {
   ],
   knex: [
     ['knexfile.js', 'init/platform/database/knexfile.js.tpl'],
-    ['migrations/00000000000000_initial.js', 'init/platform/database/migration.knex.js.tpl'],
+    // The folder, with no migration yet: `db:migrate` applies nothing instead of failing on a project that has generated none.
+    ['migrations/.gitkeep', 'init/platform/database/gitkeep'],
   ],
   prisma: [
     [PRISMA_MAIN_SCHEMA, 'init/platform/database/schema.prisma.tpl'],

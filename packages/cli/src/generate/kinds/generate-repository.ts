@@ -3,6 +3,7 @@ import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
 import { named } from '../named';
+import { WITH_DATABASE } from '../../stack/with-database';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { wire } from '../wire';
@@ -37,12 +38,31 @@ export function generateRepository(scope: Scope, aggregate: Name): RenderContext
 
   declareStorage(scope, context);
   wire(scope, 'repository', context);
+  noteTheMigration(scope);
 
   scope.ws.note(
     `Fake${aggregate.pascal}Repository (test/fakes) and ${adapter.prefix}${aggregate.pascal}Repository pass the same repositoryContract (test/integration): handlers are tested with the fake.`,
   );
 
   return context;
+}
+
+/** The specs pass on the in-process database, which builds from the schema: nothing else says that a deployed one lacks the table. */
+function noteTheMigration(scope: Scope): void {
+  const { orm } = scope.config.stack;
+
+  if (!WITH_DATABASE.includes(orm)) {
+    return;
+  }
+
+  const generate =
+    orm === 'typeorm'
+      ? 'npm run build && npm run db:generate migrations/<what-it-does>'
+      : 'npm run db:generate <what-it-does>';
+
+  scope.ws.note(
+    `The table reaches no database until \`${generate}\` writes its migration and \`npm run db:migrate\` applies it: the specs pass before that, on the in-process database.`,
+  );
 }
 
 const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex', 'prisma', 'typeorm'];

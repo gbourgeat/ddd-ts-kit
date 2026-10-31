@@ -75,12 +75,18 @@ lookups of the port, the columns, the mapper.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of
   the port.
-- **Migrations** are generated from the schema with the ORM's own tool, named by what they
-  do (`npm run db:generate add-invoices`, which writes `<timestamp>_add-invoices`; it refuses
+- **Migrations** are generated from the schema, named by what they do
+  (`npm run db:generate add-invoices`, which writes `<timestamp>_add-invoices`; it refuses
   to run without the name; under drizzle-kit a rename is never left for it to guess, since
   without a terminal it fails: add then drop in a later migration, or `-- <name> --custom`;
   never under `script` or another pseudo-terminal, where it waits), applied with
   `npm run db:migrate`, committed, forward-only, and compatible with the version still running.
+  A table of `generate repository` reaches no database until then, on the four ORM: the specs
+  pass before it, on the in-process database. `db:migrate` reads `DATABASE_URL` from the shell,
+  else from `.env`. Under TypeORM it builds first, `db:generate` does not:
+  `npm run build && npm run db:generate migrations/add-invoices`. Under Knex the steps are the
+  same, and a migration holds its SQL and never calls `createTables`; what `db:generate` does not
+  write there is in [migrations.md](migrations.md).
   Under drizzle-kit, `drizzle-generate` (what `db:generate` runs) formats the snapshot and journal it wrote with the project's formatter, and
   warns when the SQL changes a primary key in an order that fails, which
   `persistence/primary-key-order` reports until fixed: reorder it (old key dropped first) or

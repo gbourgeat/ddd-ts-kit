@@ -44,6 +44,20 @@ export const TOOL_NOTES: readonly Note[] = [
     ],
   },
   {
+    name: 'knex-generate',
+    command: 'knex-generate',
+    lines: [
+      'the db:generate of a Knex project, which has no schema diff: compares the compiled',
+      'createTables with the migrations replayed, both on PostgreSQL in process (no server), and',
+      'writes the tables, columns and indexes the migrations lack, as SQL held in the migration,',
+      'which then replays on a fresh database whatever createTables becomes; what it cannot',
+      'write (a column or an object changed under its name, something dropped) and a statement',
+      'that changes rows or removes something are listed in the migration as a TODO(domain);',
+      'nothing differs, nothing is written; --custom writes the empty migration of knex, to fill',
+      'by hand; a word after the name is refused',
+    ],
+  },
+  {
     name: 'error-factories',
     command: 'error-factories',
     lines: [
