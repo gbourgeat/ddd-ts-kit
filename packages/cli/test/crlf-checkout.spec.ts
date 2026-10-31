@@ -57,7 +57,7 @@ describe('a checkout with CRLF line ends', () => {
     expect(result.code).toBe(0);
   });
 
-  it('writes a generated document again with the line end it has on disk', () => {
+  it('writes a generated document that changed with LF, as every file the kit writes', () => {
     write(
       root,
       'docs/behaviour/README.md',
@@ -70,7 +70,7 @@ describe('a checkout with CRLF line ends', () => {
     const text = fs.readFileSync(path.join(root, 'docs/behaviour/README.md'), 'utf8');
 
     expect(text).not.toContain('a stale line');
-    expect(text.replace(/\r\n/g, '')).not.toContain('\n');
+    expect(text).not.toContain('\r');
     expect(cli(root, 'docs', '--check').code).toBe(0);
   });
 });
