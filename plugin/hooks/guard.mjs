@@ -252,6 +252,14 @@ const WORKING_MIGRATION = /(^|\/)migrations\/(.+\/)?\d+[_-]working[_-][\w-]*(\.(
 // The models of one context on Prisma, `prisma/schema/<context>.prisma`: its worker changes a column
 // with the mapper; `prisma/schema/schema.prisma` (the client, the datasource, the platform) is shared.
 const PRISMA_CONTEXT_SCHEMA = /^prisma\/schema\/([a-z][a-z0-9-]*)\.prisma$/;
+// The tools of VS Code that write a file named by `filePath`, by the names its chat gives its hooks.
+const VS_CODE_WRITERS = new Set([
+  'create_file',
+  'replace_string_in_file',
+  'multi_replace_string_in_file',
+  'insert_edit_into_file',
+  'edit_notebook_file',
+]);
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
 const UNREADABLE_COMMAND = `The guard could not read this command, and a worker runs none it cannot read: write it as shorter, separate commands. ${REPORT_TO_CONDUCTOR}`;
 const UNCOMPARED_NOTE =
@@ -610,6 +618,8 @@ const WINDOWS = process.platform === 'win32';
 const HOOK_SELECTION = /^LEFTHOOK_(?:EXCLUDE|SKIP)=/;
 // The most of a file of state, a scope file or a plan the guard reads: past it, it is not read.
 const STATE_BYTES = 16 * 1024 * 1024;
+// What the guard reads of one file to compare it, and copies to hold it, within the 5 s of its hook.
+const HASHED_FILE_BYTES = 16 * 1024 * 1024;
 // The agents of the plugin that only read: they write their findings in their answer.
 const READ_ONLY_AGENTS = ['architecture-reviewer', 'domain-explorer', 'story-verifier'];
 // How the record of a trial is appended: created if missing, never through a link under its name.
@@ -1418,7 +1428,12 @@ function hostOf(input) {
   return input.tool_name === 'apply_patch' || 'turn_id' in input ? 'codex' : 'claude';
 }
 
+// A tool that takes a free text, the `apply_patch` of Copilot, has that text as its input: it is
+// read where the patches of the other hosts are.
 function toolInput(input) {
+  if (typeof input.tool_input === 'string') {
+    return { input: input.tool_input };
+  }
   if (input.tool_input && typeof input.tool_input === 'object') {
     return input.tool_input;
   }
@@ -1450,22 +1465,46 @@ function writesOf(input) {
   if (patch) {
     return patchWrites(patch, cwd);
   }
-  const file = tool.file_path ?? tool.path;
-  if (typeof file !== 'string') {
-    return [];
+
+  return editsOf(input).map((edit) => ({ file: edit.file, written: writtenText(edit), replaced: replacedText(edit) }));
+}
+
+// What a call of an editor tool edits, as many as the files it names, each with its `file`. VS Code
+// keeps no matcher, so these hooks run on its readers too, and `read_file` has a `filePath`: that
+// field is read for the tools that write. Its `replacements` name their file one by one: those of
+// one file are that file's `edits`, as those of a MultiEdit are.
+function editsOf(input) {
+  const tool = toolInput(input);
+  const cwd = input.cwd ?? process.cwd();
+  const writer = VS_CODE_WRITERS.has(input.tool_name);
+  if (writer && Array.isArray(tool.replacements)) {
+    return replacementsByFile(tool.replacements, cwd);
+  }
+  const file = tool.file_path ?? tool.path ?? (writer ? tool.filePath : undefined);
+
+  return typeof file === 'string' ? [{ ...tool, file: resolve(cwd, file) }] : [];
+}
+
+function replacementsByFile(replacements, cwd) {
+  const files = new Map();
+  for (const replacement of replacements.filter((named) => typeof named?.filePath === 'string')) {
+    const file = resolve(cwd, replacement.filePath);
+    files.set(file, [...(files.get(file) ?? []), replacement]);
   }
 
-  return [{ file: resolve(cwd, file), written: writtenText(tool), replaced: replacedText(tool) }];
+  return [...files].map(([file, edits]) => ({ file, edits }));
 }
 
 // The patch of Codex: `*** Add File:`, `*** Update File:` (and `*** Move to:`), `*** Delete File:`,
 // each followed by its lines, `+` added and `-` removed. Its paths are relative to the session. A
-// deleted file, and the file a move leaves, are writes that remove it (`deleted`).
+// deleted file, and the file a move leaves, are writes that remove it (`deleted`). Its lines end in
+// LF or CRLF and the three file headers may be indented, as the parser of Copilot takes them; an
+// indented `+` line, a lower case header or a wider marker, which that parser refuses, stay unread.
 function patchWrites(patch, cwd) {
   const writes = [];
   let current;
-  for (const line of patch.split('\n')) {
-    const header = /^\*\*\* (Add|Update|Delete) File: (.+)$/.exec(line);
+  for (const line of patch.split(/\r?\n/)) {
+    const header = /^\s*\*\*\* (Add|Update|Delete) File: (.+)$/.exec(line);
     const moved = /^\*\*\* Move to: (.+)$/.exec(line);
     if (header) {
       current = { file: resolve(cwd, header[2].trim()), added: [], removed: [], deleted: header[1] === 'Delete' };
@@ -3154,7 +3193,7 @@ function scriptsChangeReason(project, file, input) {
     return undefined;
   }
   const before = readText(file, '');
-  const after = textAfterWrite(toolInput(input), before);
+  const after = textAfterWrite(editsOf(input).find((edit) => edit.file === file) ?? {}, before);
   const changed = after === undefined ? undefined : changedScripts(scriptsOf(before) ?? {}, scriptsOf(after));
   if (changed?.length === 0) {
     return undefined;
@@ -3165,30 +3204,32 @@ function scriptsChangeReason(project, file, input) {
   return `This edit ${what}: the scripts of package.json are what the gates and the pipeline run. Changing one is a decision of the project owner: confirm it, and record the reason in docs/adr/ when it relaxes a rule.`;
 }
 
-// The text of the file once the tool ran: Write and the create of Copilot give it whole; an edit is
-// applied to the current text, each one in turn. Undefined when the call gives neither (a patch).
+// The text of the file once the tool ran: Write and the creates of Copilot and VS Code give it whole;
+// an edit is applied to the current text, each one in turn. Undefined when the call gives neither: a
+// patch, or the `code` of VS Code, a sketch of the change that the host merges into the file.
 function textAfterWrite(tool, before) {
   const whole = tool.content ?? tool.file_text;
   if (typeof whole === 'string') {
     return whole;
   }
-  const edits = Array.isArray(tool.edits)
-    ? tool.edits
-    : [
-        {
-          old_string: tool.old_string ?? tool.old_str,
-          new_string: tool.new_string ?? tool.new_str,
-          replace_all: tool.replace_all,
-        },
-      ];
-  if (!edits.every(({ old_string, new_string }) => typeof old_string === 'string' && typeof new_string === 'string')) {
+  const edits = (Array.isArray(tool.edits) ? tool.edits : [tool]).map(replacementOf);
+  if (!edits.every(({ from, to }) => typeof from === 'string' && typeof to === 'string')) {
     return undefined;
   }
   return edits.reduce(
-    (text, { old_string, new_string, replace_all }) =>
-      replace_all === true ? text.split(old_string).join(new_string) : text.replace(old_string, () => new_string),
+    (text, { from, to, everywhere }) =>
+      everywhere === true ? text.split(from).join(to) : text.replace(from, () => to),
     before,
   );
+}
+
+// The text an edit replaces and the text it leaves, in the fields of each host.
+function replacementOf(edit) {
+  return {
+    from: edit.old_string ?? edit.old_str ?? edit.oldString,
+    to: edit.new_string ?? edit.new_str ?? edit.newString,
+    everywhere: edit.replace_all,
+  };
 }
 
 // The `scripts` of a manifest, `{}` when it has none, undefined when the text is not a JSON object.
@@ -3216,15 +3257,24 @@ function escapeReason(written, replaced) {
     : undefined;
 }
 
-// The fields of Claude Code (`content`, `new_string`, `edits`), then those of Copilot (`file_text`, `new_str`).
+// The fields of Claude Code (`content`, `new_string`, `edits`), of Copilot (`file_text`, `new_str`)
+// and of VS Code (`newString`, `code`).
 function writtenText(tool) {
-  const edits = Array.isArray(tool.edits) ? tool.edits.map((edit) => edit.new_string ?? '') : [];
-  return [tool.content ?? '', tool.new_string ?? '', tool.file_text ?? '', tool.new_str ?? '', ...edits].join('\n');
+  const edits = Array.isArray(tool.edits) ? tool.edits.map((edit) => edit.new_string ?? edit.newString ?? '') : [];
+  return [
+    tool.content ?? '',
+    tool.new_string ?? '',
+    tool.file_text ?? '',
+    tool.new_str ?? '',
+    tool.newString ?? '',
+    tool.code ?? '',
+    ...edits,
+  ].join('\n');
 }
 
 function replacedText(tool) {
-  const edits = Array.isArray(tool.edits) ? tool.edits.map((edit) => edit.old_string ?? '') : [];
-  return [tool.old_string ?? '', tool.old_str ?? '', ...edits].join('\n');
+  const edits = Array.isArray(tool.edits) ? tool.edits.map((edit) => edit.old_string ?? edit.oldString ?? '') : [];
+  return [tool.old_string ?? '', tool.old_str ?? '', tool.oldString ?? '', ...edits].join('\n');
 }
 
 function count(text, pattern) {
@@ -4342,9 +4392,13 @@ function holdChanges(project, input, { worktree: before, script }) {
   }
   const all = differences(project, outside, { before, now });
   const rewritten = script ? all.filter(isRewrittenByTools) : [];
-  const changed = all.filter((path) => !rewritten.includes(path));
+  const uncopied = all.filter((path) => !rewritten.includes(path) && hasNoCopy(project, before.changes[path]));
+  const changed = all.filter((path) => !rewritten.includes(path) && !uncopied.includes(path));
   if (rewritten.length > 0) {
     notice = [notice, rewrittenNotice(script, rewritten)].filter(Boolean).join('\n');
+  }
+  if (uncopied.length > 0) {
+    notice = [notice, uncopiedNotice(uncopied)].filter(Boolean).join('\n');
   }
   if (changed.length > 0) {
     const file = stateFile('outside', project, input);
@@ -4360,6 +4414,16 @@ function holdChanges(project, input, { worktree: before, script }) {
 // What Biome, ESLint and the generators of the kit rewrite: code, JSON and the documents.
 function isRewrittenByTools(path) {
   return FORMATTED_FILE.test(path) || path.startsWith('docs/');
+}
+
+// A file already changed before the command is held to the copy the note kept: there is none of a
+// file past the bound, or of one the guard cannot read, so it cannot be put back, and is said instead.
+function hasNoCopy(project, entry) {
+  return Boolean(entry?.hash) && !existsSync(join(project.root, GUARD_HELD, entry.hash));
+}
+
+function uncopiedNotice(paths) {
+  return `ddd-ts-kit: your last command left files changed outside your scope, and already changed before it: ${paths.join(', ')}. They are not held: the guard keeps no copy of a file past ${HASHED_FILE_BYTES / (1024 * 1024)} MiB, which it compares by its size and time, nor of one it cannot read. Leave them out of your commits and name them in your report, for the conductor.`;
 }
 
 function rewrittenNotice(script, paths) {
@@ -4601,13 +4665,17 @@ function putBackStep(project, { now, since }, [path, target]) {
   return { command: entry.added ? `git rm -f -- ${path}` : `git checkout HEAD -- ${path}` };
 }
 
-// A file that is not a regular one (a link to a device, a FIFO) has a hash of its kind, never read.
+// A file that is not a regular one (a link to a device, a FIFO) has a hash of its kind, never read;
+// one past the bound a hash of its size and time, never read nor kept.
 function contentHash(file, keep) {
   const stat = statSync(file, { throwIfNoEntry: false });
   if (stat === undefined) {
     return null;
   }
-  const content = stat.isFile() ? readBounded(file, Number.POSITIVE_INFINITY, null).content : undefined;
+  const { content, tooLarge } = stat.isFile() ? readBounded(file, HASHED_FILE_BYTES, null) : {};
+  if (tooLarge !== undefined) {
+    return createHash('sha256').update(`past the bound: ${stat.size}:${stat.mtimeMs}`).digest('hex');
+  }
   if (content === undefined) {
     return createHash('sha256').update(`not a file: ${stat.mode}`).digest('hex');
   }

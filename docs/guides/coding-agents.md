@@ -154,7 +154,9 @@ that does not answer in full compares nothing, and the guard says so. A file of 
 worker until it is put back with the command the guard names: its committed content (`git checkout
 <commit> -- <path>`, then `git commit` when a commit changed it), the content it had before the
 command when it was already changed (kept under `.ddd-ts-kit/guard/held/`), `git mv` back for a
-rename, `rm` for a new file. A file left changed in the working tree of the session's checkout (not
+rename, `rm` for a new file. A file past 16 MiB is compared by its size and time, unread, and no copy
+of it is kept: already changed before the command, it is said, not held, and the worker names it in
+its report. A file left changed in the working tree of the session's checkout (not
 one the conductor commits or merges meanwhile) or a change of those packages is said once, for the
 conductor, who alone knows whether it made it. What the project's own scripts (`npm run format`,
 `lint:fix`, `regenerate`, `docs:generate`, `openapi:generate`, `events:generate`, not run in another
@@ -234,7 +236,9 @@ runs on every tool call: an ordinary session starts no more processes than befor
 Each agent gets what its host runs. The skills work in all three. The six agents are sub-agents
 of Claude Code; Codex loads no agent from a plugin, and one session per worktree takes the place
 of `context-builder`. The hook runs wherever the host runs the hooks of a plugin: it reads the
-patches of Codex and the tool calls of Copilot as well as those of Claude Code. Codex cannot put
+patches of Codex, the tool calls of Copilot and the editor tools of VS Code as well as those of
+Claude Code. VS Code keeps no matcher, so there each hook of an event runs on every tool, and a
+read stays a read. Codex cannot put
 a question to the user, so what Claude Code asks the project owner is said to the user there,
 and left to the checks of the pipeline.
 

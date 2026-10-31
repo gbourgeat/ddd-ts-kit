@@ -161,6 +161,263 @@ test('Copilot: its own hook format is read, a relative path included, and answer
   assert.equal(decision(skipped), 'ask');
 });
 
+test('Copilot: a patch given as the text of the tool input is judged before the write, as Codex has it', () => {
+  const root = project();
+  const refused = run(
+    'pre-write',
+    copilotPatch(root, [
+      '*** Add File: src/contexts/ordering/domain/aggregates/order.aggregate.ts',
+      '+export class Order {}',
+    ]),
+  );
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /order\.aggregate\.ts is a new file of a generated role.*generate aggregate/);
+  assert.equal(run('pre-write', copilotPatch(root, ['*** Add File: notes.md', '+x'])).output, undefined);
+});
+
+// A call of `apply_patch` as Copilot CLI hands it to a hook of a plugin: the tool takes a free text, so
+// `tool_input` is the patch itself, under the name of its editor tool.
+function copilotPatch(root, lines, extra = {}) {
+  return {
+    hook_event_name: 'PreToolUse',
+    session_id: 'copilot-session',
+    timestamp: '2026-10-31T22:21:43.968Z',
+    cwd: root,
+    tool_name: 'Edit',
+    tool_input: ['*** Begin Patch', ...lines, '*** End Patch'].join('\n'),
+    ...extra,
+  };
+}
+
+test('Copilot: a patch given as text is held to the scope of a worker', () => {
+  const root = project();
+  const agent = worker(root);
+  const outside = copilotPatch(root, ['*** Add File: src/contexts/billing/x.ts', '+export const x = 1;'], agent);
+  const refused = run('pre-write', outside);
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /another bounded context/);
+  const inside = copilotPatch(root, ['*** Add File: src/contexts/ordering/y.ts', '+export const y = 1;'], agent);
+  assert.equal(run('pre-write', inside).output, undefined);
+});
+
+test('Copilot: a file patched by a text input is checked after the write', () => {
+  const root = project();
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const result = run(
+    'post-write',
+    copilotPatch(
+      root,
+      ['*** Update File: src/contexts/ordering/domain/services/pricing.service.ts', '+import express'],
+      {
+        hook_event_name: 'PostToolUse',
+      },
+    ),
+  );
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /layer\/domain-purity/);
+});
+
+test('a text as tool input that holds no patch writes nothing', () => {
+  const root = project();
+  const text = {
+    cwd: root,
+    tool_name: 'Edit',
+    tool_input: 'src/contexts/ordering/domain/aggregates/order.aggregate.ts',
+  };
+  assert.equal(run('pre-write', text).output, undefined);
+  assert.equal(run('post-write', text).output, undefined);
+});
+
+test('a patch header with an indent is read, by the patch tool, as text and through the shell', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const header of [
+    '  *** Add File: src/contexts/billing/x.ts',
+    '\t*** Update File: src/contexts/billing/x.ts',
+    '  *** Delete File: src/contexts/billing/x.ts',
+  ]) {
+    assert.match(
+      reason(run('pre-write', { ...patch(root, header, '+x'), ...agent })),
+      /another bounded context/,
+      header,
+    );
+    assert.match(
+      reason(run('pre-write', copilotPatch(root, [header, '+x'], agent))),
+      /another bounded context/,
+      header,
+    );
+  }
+  const lines = ['*** Begin Patch', '  *** Add File: src/contexts/billing/x.ts', '+x', '*** End Patch'];
+  const shell = codexShell(root, `apply_patch <<'EOF'\n${lines.join('\n')}\nEOF`, agent);
+  assert.match(reason(run('pre-bash', shell)), /another bounded context/);
+});
+
+test('a patch with CRLF lines is read as one with LF lines, its paths and its text', () => {
+  const root = project();
+  const agent = worker(root);
+  const crlf = (...lines) => ({
+    ...copilotPatch(root, [], agent),
+    tool_input: `${['*** Begin Patch', ...lines, '*** End Patch'].join('\r\n')}\r\n`,
+  });
+  assert.match(
+    reason(run('pre-write', crlf('*** Add File: src/contexts/billing/x.ts', '+x'))),
+    /src\/contexts\/billing\/x\.ts[^\r]*another bounded context/,
+  );
+  const moved = crlf(
+    '*** Update File: src/contexts/ordering/a.ts',
+    '*** Move to: src/contexts/billing/a.ts',
+    '@@',
+    '+export const a = 1;',
+  );
+  assert.match(reason(run('pre-write', moved)), /another bounded context/);
+  const inside = crlf('*** Add File: src/contexts/ordering/y.ts', '+export const y = 1;');
+  assert.equal(run('pre-write', inside).output, undefined);
+  const suppressed = crlf('*** Update File: src/contexts/ordering/ordering.module.ts', '+// eslint-disable-line');
+  assert.match(reason(run('pre-write', suppressed)), /a lint suppression/);
+});
+
+test('a patch line a host refuses to parse stays unread: a lower case header, a wider marker, an indented body', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const header of ['*** add file: src/contexts/billing/x.ts', '***  Add File: src/contexts/billing/x.ts']) {
+    assert.equal(run('pre-write', copilotPatch(root, [header, '+x'], agent)).output, undefined, header);
+  }
+  const indented = copilotPatch(root, [
+    '*** Update File: src/contexts/ordering/ordering.module.ts',
+    '  +// @ts-ignore',
+  ]);
+  assert.equal(run('pre-write', indented).output, undefined);
+});
+
+test('VS Code: its editor tools are judged before the write, each by its fields', () => {
+  const root = project();
+  const file = join(root, 'src/contexts/ordering/domain/aggregates/order.aggregate.ts');
+  const created = run('pre-write', vsCode(root, 'create_file', { filePath: file, content: 'export class Order {}' }));
+  assert.equal(decision(created), 'deny');
+  assert.match(reason(created), /order\.aggregate\.ts is a new file of a generated role.*generate aggregate/);
+  const module = join(root, 'src/contexts/ordering/ordering.module.ts');
+  const skipped = { filePath: module, oldString: "it('pays')", newString: "it.skip('pays')" };
+  assert.match(reason(run('pre-write', vsCode(root, 'replace_string_in_file', skipped))), /a skipped or focused test/);
+  const inserted = { filePath: module, code: '// @ts-ignore', explanation: 'x' };
+  assert.match(reason(run('pre-write', vsCode(root, 'insert_edit_into_file', inserted))), /a compiler diagnostic/);
+  const moved = {
+    filePath: module,
+    oldString: '// @ts-ignore\nconst a = 1;',
+    newString: '// @ts-ignore\nconst b = 1;',
+  };
+  assert.equal(run('pre-write', vsCode(root, 'replace_string_in_file', moved)).output, undefined);
+});
+
+// A call of a tool of VS Code as its chat hands it to a hook: its own name, its own fields, no matcher applied.
+function vsCode(root, tool_name, tool_input) {
+  return {
+    timestamp: '2026-10-31T22:21:43.968Z',
+    hook_event_name: 'PreToolUse',
+    session_id: 'vscode-session',
+    cwd: root,
+    tool_name,
+    tool_input,
+    tool_use_id: 'call-1',
+  };
+}
+
+test('VS Code: every editor tool is held to the scope of a worker, each file of a call', () => {
+  const root = project();
+  const agent = worker(root);
+  const outside = join(root, 'src/contexts/billing/x.ts');
+  const inside = join(root, 'src/contexts/ordering/y.ts');
+  const edit = { oldString: 'a', newString: 'b' };
+  for (const [name, tool] of Object.entries({
+    create_file: { filePath: outside, content: 'x' },
+    replace_string_in_file: { filePath: outside, ...edit },
+    insert_edit_into_file: { filePath: outside, code: 'x' },
+    edit_notebook_file: { filePath: outside, cellId: 'c', newCode: 'x', editType: 'edit' },
+    multi_replace_string_in_file: {
+      replacements: [
+        { filePath: inside, ...edit },
+        { filePath: outside, ...edit },
+      ],
+    },
+  })) {
+    assert.match(reason(run('pre-write', { ...vsCode(root, name, tool), ...agent })), /another bounded context/, name);
+  }
+  const scoped = { replacements: [{ filePath: inside, ...edit }, null, { oldString: 'no file' }] };
+  assert.equal(
+    run('pre-write', { ...vsCode(root, 'multi_replace_string_in_file', scoped), ...agent }).output,
+    undefined,
+  );
+  assert.equal(run('pre-write', vsCode(root, 'multi_replace_string_in_file', { replacements: 'x' })).output, undefined);
+});
+
+test('VS Code: the replacements of one file are one write, so each other file has its turn before the check', () => {
+  const root = project();
+  put(root, 'src/contexts/ordering/domain/services/clean.service.ts', 'export class Clean {}\n');
+  const clean = join(root, 'src/contexts/ordering/domain/services/clean.service.ts');
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const broken = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  const edit = { oldString: 'a', newString: 'b' };
+  const replacements = [
+    ...Array.from({ length: 6 }, () => ({ filePath: clean, ...edit })),
+    { filePath: broken, ...edit },
+  ];
+  const result = run('post-write', vsCode(root, 'multi_replace_string_in_file', { replacements }));
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /layer\/domain-purity/);
+  assert.doesNotMatch(result.stderr, /more written file/);
+});
+
+test('VS Code: a file written by an editor tool is checked after the write', () => {
+  const root = project();
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const filePath = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  const input = { filePath, oldString: 'a', newString: 'b' };
+  const result = run('post-write', vsCode(root, 'replace_string_in_file', input));
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /layer\/domain-purity/);
+});
+
+test('VS Code: with no matcher the write hooks run on every tool, and a read stays a read', () => {
+  const root = project();
+  const agent = worker(root);
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const broken = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  const generated = join(root, 'src/contexts/ordering/domain/aggregates/order.aggregate.ts');
+  for (const [name, tool] of Object.entries({
+    read_file: { filePath: broken, startLine: 1, endLine: 2 },
+    copilot_viewImage: { filePath: generated },
+    run_notebook_cell: { filePath: generated, cellId: 'c' },
+  })) {
+    assert.equal(run('pre-write', vsCode(root, name, tool)).output, undefined, name);
+    assert.equal(
+      run('pre-write', {
+        ...vsCode(root, name, { ...tool, filePath: join(root, 'src/contexts/billing/x.ts') }),
+        ...agent,
+      }).output,
+      undefined,
+      name,
+    );
+    const after = run('post-write', vsCode(root, name, tool));
+    assert.equal(after.status, 0, name);
+    assert.equal(after.stderr, '', name);
+  }
+});
+
 test('malformed input never blocks', () => {
   const result = spawnSync('node', [guard, 'pre-write'], { input: 'not json', encoding: 'utf8' });
   assert.equal(result.status, 0);

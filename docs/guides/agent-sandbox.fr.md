@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:190a27d8f8b02f1f -->
+<!-- translation-of: agent-sandbox.md sha256:8330bc5661c652b1 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -103,6 +103,11 @@ ligne apporte, en termes de contrôle :
 Les réglages gérés vivent hors du dépôt (`managed-settings.json`, déployé par l'équipe
 plateforme) : `init` les affiche comme un bloc à coller, la version laissée à l'équipe. Associez
 le profil au niveau 1 pour la charge de la machine.
+
+Une limite demeure : les *hooks* tournent en dehors du bac à sable et la garde du plugin exécute ce
+que contient le `node_modules` du projet, si bien qu'une dépendance y tourne avec les droits du
+développeur, et un projet qui ne peut pas se fier à ses dépendances fait ses installations à la main
+ou les relit.
 
 Les deux *hooks* sont de petits scripts Node qu'`init` écrit une fois sous `.claude/hooks/` (pas
 de `jq`, rien à installer), enregistrés sous `hooks.PreToolUse` de `.claude/settings.json`,

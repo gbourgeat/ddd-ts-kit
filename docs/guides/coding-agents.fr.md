@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:729ed0f216396380 -->
+<!-- translation-of: coding-agents.md sha256:a7488f3a6ef80360 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -166,7 +166,9 @@ du *worktree* changé hors du périmètre, supprimé ou commité compris, arrêt
 qu'il soit remis en état par la commande que la garde nomme : son contenu commité (`git checkout
 <commit> -- <path>`, puis `git commit` quand un commit l'a changé), le contenu qu'il avait avant la
 commande quand il était déjà modifié (gardé sous `.ddd-ts-kit/guard/held/`), `git mv` en retour
-pour un renommage, `rm` pour un nouveau fichier. Un fichier laissé modifié dans l'arbre de travail
+pour un renommage, `rm` pour un nouveau fichier. Un fichier de plus de 16 Mio est comparé par sa
+taille et sa date, sans être lu, et aucune copie n'en est gardée : déjà modifié avant la commande, il
+est dit, sans retenir le *worker*, qui le nomme dans son rapport. Un fichier laissé modifié dans l'arbre de travail
 du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) ou
 un changement de ces paquets est dit une fois, pour le chef d'orchestre, qui seul sait s'il l'a fait.
 Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerate`, `docs:generate`,
@@ -259,8 +261,10 @@ configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le f
 Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les six
 agents sont des sous-agents de Claude Code ; Codex ne charge aucun agent depuis un plugin, et une
 session par worktree tient le rôle de `context-builder`. Le hook tourne partout où l'hôte exécute
-les hooks d'un plugin : il lit les patchs de Codex et les appels d'outils de Copilot aussi bien
-que ceux de Claude Code. Codex ne sait pas poser de question à l'utilisateur : ce que Claude Code
+les hooks d'un plugin : il lit les patchs de Codex, les appels d'outils de Copilot et les outils
+d'édition de VS Code aussi bien que ceux de Claude Code. VS Code ne garde aucun *matcher* : chaque
+hook d'un événement y tourne sur chaque outil, et une lecture reste une lecture. Codex ne sait pas
+poser de question à l'utilisateur : ce que Claude Code
 soumet au propriétaire du projet y est signalé à l'utilisateur, et laissé aux vérifications du
 pipeline.
 
