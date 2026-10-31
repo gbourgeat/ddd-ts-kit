@@ -13,16 +13,8 @@ import {
   systemActor,
   type Actor,
 } from '@ddd-ts-kit/kernel';
-import {
-  UseCaseDeclarations,
-  UseCaseGuard,
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  fake,
-  kernelModule,
-  override,
-} from '../src';
+import { UseCaseDeclarations, UseCaseGuard, defineContextModule, fake, kernelModule, override } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { wiringFailure } from './support/failure';
 
 const issueInvoice = { id: 'billing:invoice.issue' };

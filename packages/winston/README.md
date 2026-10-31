@@ -47,7 +47,8 @@ export function createLogger(scope: ExecutionScope, settings: LogSettings): Wins
 import { tracing } from '@/platform/observability/tracing'; // first
 import { createLogger } from '@/platform/observability/create-logger';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 const scope = new AsyncLocalStorageExecutionScope();
 const logger = createLogger(scope, config.log);

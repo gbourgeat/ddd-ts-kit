@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DomainEventDispatcher } from '@ddd-ts-kit/kernel';
-import { contextModule, createApplication, createTestApplication, kernelModule } from '../src';
+import { contextModule, kernelModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import * as ledger from './fixtures/contexts/ledger/ledger.declarations';
 
 const { Balances, BalancesProjection, MoneyMoved } = ledger;

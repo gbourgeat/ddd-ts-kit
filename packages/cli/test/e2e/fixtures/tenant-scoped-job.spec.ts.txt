@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { contextModule, createTestApplication } from '@ddd-ts-kit/di';
+import { contextModule } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import {
   ExecutionScope,
   FixedClock,

@@ -60,7 +60,8 @@ export const tracing = initTracing({ serviceName: 'clinic-api' });
 ```ts
 // main.ts
 import { tracing } from '@/platform/observability/tracing'; // first import, see "Load order"
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { traceApplication, tracedPublisher, tracedRoutes } from '@ddd-ts-kit/tracing';
 
 const app = createApplication({

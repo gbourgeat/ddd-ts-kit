@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
+import { contextModule, fake } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import {

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryJobStore } from '@ddd-ts-kit/scheduling';
 import { lazyJobStore } from '../src/kernel/lazy-job-store';
-import { createApplication, kernelModule } from '../src';
+import { kernelModule } from '../src';
+import { createApplication } from './support/on-container';
 
 describe('the lazy job store of the kernel module', () => {
   it('erases the jobs of a subject in the bound job store', async () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, FixedClock, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, fake, override } from '../src';
+import { defineContextModule, fake, override } from '../src';
+import { createApplication } from './support/on-container';
 import { CancelOrder } from './support/ordering/application/commands/cancel-order/cancel-order.command';
 import { CancelOrderHandler } from './support/ordering/application/commands/cancel-order/cancel-order.handler';
 import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4cfe61cbcd2680cf -->
+<!-- translation-of: README.md sha256:5e6c1313bbd64086 -->
 
 # @ddd-ts-kit/sentry
 
@@ -43,7 +43,8 @@ reportProcessFailures(errors); // uncaughtException et unhandledRejection : remo
 import { tracing } from '@/platform/observability/tracing'; // en premier
 import { errors } from '@/platform/observability/errors'; // en second
 import { DeadLetterReports, ExecutionScope } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { reportHttpErrors } from '@ddd-ts-kit/http';
 import { RabbitMqEventBus } from '@ddd-ts-kit/rabbitmq';
 

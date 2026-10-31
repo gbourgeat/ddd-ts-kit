@@ -1409,7 +1409,8 @@ a world, as none imports a test file (`not-to-test` of the import graph). A help
 ```ts
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';
+import { fake, type ContextModule } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { Command } from '@ddd-ts-kit/kernel';
 import { expect, it } from 'vitest';
 

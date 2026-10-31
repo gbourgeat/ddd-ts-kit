@@ -1,9 +1,10 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:71efe072ac709cad -->
+<!-- translation-of: README.md sha256:20506c82266f06d4 -->
 
 # @ddd-ts-kit/di
 
-Des modules de contexte au-dessus de [tsyringe](https://github.com/microsoft/tsyringe), pour les
+Des modules de contexte au-dessus de [tsyringe](https://github.com/microsoft/tsyringe),
+d'[InversifyJS](https://inversify.io) ou d'[Awilix](https://github.com/jeffijoe/awilix), pour les
 projets qui veulent l'injection de dépendances sans un framework lourd.
 
 Un port est une classe abstraite, et c'est par cette classe que l'on injecte. Une classe dit ce
@@ -14,11 +15,25 @@ déclaré dans une même application.
 
 ```
 npm i @ddd-ts-kit/di tsyringe reflect-metadata
+npm i @ddd-ts-kit/di inversify reflect-metadata
+npm i @ddd-ts-kit/di awilix
 ```
 
-`reflect-metadata` est importé par ce *package* avant le chargement de tsyringe (tsyringe refuse
-de se charger sans lui), si bien que vous ne l'importez pas vous-même. Aucun décorateur du kit
-n'en a besoin : les dépendances sont nommées, jamais déduites par réflexion.
+Une ligne sur les trois. `createApplication` et `createTestApplication` viennent du point d'entrée
+du conteneur, `@ddd-ts-kit/di/tsyringe`, `@ddd-ts-kit/di/inversify` ou `@ddd-ts-kit/di/awilix` ;
+tout le reste vient de `@ddd-ts-kit/di`, quel que soit le conteneur. Le kit se sert du conteneur
+comme d'un registre : les vérifications du graphe, les bus et le cycle de vie sont les siens, et
+les mêmes sur les trois. `application.container` est le conteneur sous-jacent, un port y étant lié
+sous `tokenIdentity(port)`. Sur InversifyJS, dont le `get` est synchrone, une promesse liée à un
+port est refusée à sa première résolution.
+
+`reflect-metadata` est importé par le point d'entrée tsyringe avant le chargement de tsyringe
+(tsyringe refuse de se charger sans lui), et par InversifyJS lui-même, si bien que vous ne
+l'importez pas vous-même. Aucun décorateur du kit n'en a besoin : les dépendances sont nommées,
+jamais obtenues par réflexion.
+
+Pour faire tourner le kit sur un autre conteneur, implémentez `Container` et appelez
+`createApplicationOn` et `createTestApplicationOn`, tous deux de `@ddd-ts-kit/di`.
 
 ![Comment les classes d'un contexte délimité deviennent une application en marche : le contexte déclare ses ports et ses classes (ou écrit un module explicite), un module est fait par contexte par contextModule, discoverContext ou defineContextModule, et createApplication enregistre les modules, vérifie le graphe entier, lie tout dans un conteneur enfant et ne démarre rien ; puis un appel à part, app.start, abonne les consommateurs et démarre les jobs](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/di-assembly.fr.svg)
 
@@ -37,7 +52,8 @@ la même chose sans fichier de module.
 ```ts
 // src/main.ts : une application entière dans un seul fichier, à lire de haut en bas.
 import { Clock, Command, CommandBus, IdGenerator, type CommandHandler } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // Un port : une classe abstraite. Elle type le paramètre et sert de clé au conteneur.
 export abstract class StockGateway {
@@ -105,7 +121,8 @@ et tourne sur un kernel déterministe, une horloge figée et des identifiants `i
 // src/contexts/ordering/test/unit/place-order.handler.spec.ts
 import { expect, it } from 'vitest';
 import { Command } from '@ddd-ts-kit/kernel';
-import { createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';
+import { fake, type ContextModule } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // Ce que la spec importe du contexte, déclaré ici pour que l'exemple compile seul.
 declare abstract class StockGateway {
@@ -276,7 +293,8 @@ C'est tout le contexte. Il s'assemble en une ligne, de l'une de deux manières.
 ```ts
 // main.ts, par découverte : aucun fichier du contexte ne nomme ses classes
 import { CommandBus } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { discoverContext } from '@ddd-ts-kit/di/discovery';
 
 const billing = await discoverContext('billing', new URL('./contexts/billing/', import.meta.url));
@@ -287,7 +305,8 @@ const invoiceId = await app.resolve(CommandBus).execute(new IssueInvoice(actor, 
 
 ```ts
 // main.ts, par liste : un barrel généré par contexte, et rien d'autre
-import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import * as billing from '@/contexts/billing/billing.declarations';
 
 const app = createApplication({ modules: [kernelModule(), platformModule, contextModule('billing', billing)] });
@@ -304,7 +323,8 @@ classe, une ligne qui dit ce que prend un constructeur, et un module fait à par
 ```ts
 import { Command, CommandBus, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler, Gateway, Public, injected } from '@ddd-ts-kit/kernel/declarations';
-import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // application/ports/stock.port.ts : un port n'est jamais décoré.
 export abstract class StockGateway {
@@ -452,7 +472,8 @@ son constructeur comme toute autre dépendance, et `resolve` renvoie chacun, typ
 
 <!-- checked sample -->
 ```ts
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // Une valeur : une classe abstraite aux propriétés abstract readonly.
 export abstract class PaymentSettings {
@@ -774,7 +795,8 @@ d'abonnement.
 ```ts
 // main.ts
 import { CommandBus } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 const app = createApplication({ modules: [kernelModule(), platformModule, orderingModule, billingModule] });
 await app.start();
@@ -784,7 +806,8 @@ process.on('SIGTERM', () => void app.stop());
 
 ```ts
 // contexts/ordering/test/unit/place-order.handler.spec.ts
-import { createTestApplication, fake } from '@ddd-ts-kit/di';
+import { fake } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 
 it('places an order and announces it', async () => {
   const orders = new InMemoryOrderRepository();
@@ -883,7 +906,8 @@ Un module qui possède une ressource l'ouvre dans `onStart` et la ferme dans `on
 
 <!-- checked sample -->
 ```ts
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 interface Pool {
   query(sql: string): Promise<unknown>;
@@ -1040,7 +1064,8 @@ composition complète :
 ```ts
 // main.ts
 import { EventSubscribers, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { discoverContext } from '@ddd-ts-kit/di/discovery';
 import { RabbitMqEventBus } from '@ddd-ts-kit/rabbitmq';
 
@@ -1345,7 +1370,7 @@ s'est exécuté.
 vérification, et `overrideForTests(app, Port, value)` remplace une liaison sur une application
 existante ; appelez-le avant le premier `resolve`, puisqu'un singleton déjà construit garde ce
 qu'il a reçu. Une substitution remplace la liaison, peut tenir lieu d'un module qui n'est pas
-chargé, et n'est pas décorée. Chaque application possède un conteneur enfant tsyringe
+chargé, et n'est pas décorée. Chaque application possède un conteneur à elle
 (`app.container`), si bien que deux tests ne partagent jamais d'instances.
 
 ## Vérifications
@@ -1607,12 +1632,13 @@ Un `BindingAspect` est `(instance, { kind?, className, context, token }) => inst
 `aspects(...)` construit un hook `decorate`. Le hook `decorate` vient autour des aspects d'une
 liaison.
 
-## Le conteneur tsyringe
+## Le conteneur sous-jacent
 
-`app.container` est le conteneur enfant tsyringe de l'application, pour l'interopérabilité. Un
-port y est enregistré sous `tokenIdentity(port)`, un symbole, jamais sous la classe : tsyringe
-essaierait de construire une classe qu'on lui demande, et une classe abstraite n'est pas l'un de
-ses jetons.
+`app.container` est le conteneur de l'application, pour l'interopérabilité, typé par le point
+d'entrée qui l'a créée : un conteneur enfant de tsyringe, un `Container` d'InversifyJS, un
+`AwilixContainer`. Un port y est lié sous `tokenIdentity(port)`, un symbole, jamais sous la classe :
+tsyringe essaierait de construire une classe qu'on lui demande, et une classe abstraite n'est pas
+l'un de ses jetons. Sur tsyringe :
 
 ```ts
 import { tokenIdentity } from '@ddd-ts-kit/di';

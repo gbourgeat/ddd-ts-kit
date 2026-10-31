@@ -7,9 +7,8 @@ import {
   QueryBus,
   type MessageInfo,
 } from '@ddd-ts-kit/kernel';
-import { describeToken, tokenIdentity, type BindingAspect, type Token } from '@ddd-ts-kit/kernel/declarations';
+import { describeToken, type BindingAspect, type Token } from '@ddd-ts-kit/kernel/declarations';
 import { QueueWorker } from '@ddd-ts-kit/scheduling';
-import { container as rootContainer, instanceCachingFactory } from 'tsyringe';
 import { DeclaredPolicies } from '../authorization/declared-policies';
 import { declarationsOf } from '../authorization/declarations-of';
 import { passEveryMessage } from '../authorization/pass-every-message';
@@ -34,6 +33,7 @@ import type { ApplicationOptions } from './application-options';
 import type { Application } from './application';
 import { BackgroundJobLifecycle } from './background-job-lifecycle';
 import type { BindingInfo } from './binding-info';
+import type { Container } from './container';
 import { ConsumerSubscriptions } from './consumer-subscriptions';
 import { isHandlerRegistry } from './is-handler-registry';
 import { JobLifecycle } from './job-lifecycle';
@@ -46,8 +46,8 @@ const BUS_OF: Readonly<Record<MessageInfo['kind'], Token<unknown>>> = {
   query: QueryBus,
 };
 
-export class ContainerApplication implements Application {
-  readonly container = rootContainer.createChildContainer();
+export class ContainerApplication<Native = unknown> implements Application<Native> {
+  readonly container: Native;
 
   private readonly overridden = new TokenSet();
 
@@ -64,10 +64,13 @@ export class ContainerApplication implements Application {
   private readonly backgroundJobLifecycle: BackgroundJobLifecycle;
 
   constructor(
+    private readonly bindings: Container<Native>,
     private readonly wiring: Wiring,
     private readonly options: ApplicationOptions,
     effectiveJobs: readonly EffectiveJob[],
   ) {
+    this.container = bindings.native;
+
     const ports = { resolve: this.resolve, isBound: (target: Token<unknown>) => this.isBound(target) };
 
     this.consumerSubscriptions = new ConsumerSubscriptions(wiring.consumptions, ports);
@@ -115,7 +118,7 @@ export class ContainerApplication implements Application {
     this.resolving.push(target);
 
     try {
-      return this.container.resolve<T>(tokenIdentity(target));
+      return this.bindings.resolve(target);
     } finally {
       this.resolving.pop();
     }
@@ -186,7 +189,7 @@ export class ContainerApplication implements Application {
   }
 
   private isBound(target: Token<unknown>): boolean {
-    return this.container.isRegistered(tokenIdentity(target));
+    return this.bindings.isBound(target);
   }
 
   private unboundError(target: Token<unknown>): WiringError {
@@ -197,7 +200,7 @@ export class ContainerApplication implements Application {
   }
 
   private provide<T>(target: Token<T>, value: T): void {
-    this.container.register(tokenIdentity(target), { useValue: value });
+    this.bindings.bindValue(target, value);
   }
 
   private register(binding: Binding): void {
@@ -215,11 +218,7 @@ export class ContainerApplication implements Application {
       return decorate === undefined ? instance : decorate(instance, info);
     };
 
-    // tsyringe refuses Lifecycle.Singleton on factory providers; its caching factory
-    // is the supported way to get one instance per container.
-    this.container.register(tokenIdentity(binding.token), {
-      useFactory: binding.lifetime === 'singleton' ? instanceCachingFactory(create) : create,
-    });
+    this.bindings.bindFactory(binding.token, create, binding.lifetime);
   }
 
   private aspectsAround({ kind }: Binding): BindingAspect[] {
@@ -233,7 +232,7 @@ export class ContainerApplication implements Application {
   }
 
   private registerValue(target: Token<unknown>, value: unknown): void {
-    // tsyringe resolves the most recent registration of a token.
+    // The most recent binding of a token wins, in every container.
     this.provide(target, value);
     this.overridden.add(target);
   }

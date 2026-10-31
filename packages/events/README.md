@@ -274,7 +274,8 @@ export const messagingModule = defineContextModule({
 <!-- checked sample -->
 ```ts
 // main.ts
-import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { Clock, ExecutionScope, Logger, scopedPublisher, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import {
   createEventRegistry,

@@ -4,7 +4,8 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { Clock } from '@ddd-ts-kit/kernel';
 import { Edge, injected } from '@ddd-ts-kit/kernel/declarations';
-import { DeclaredEdges, contextModule, createApplication, kernelModule } from '../src';
+import { DeclaredEdges, contextModule, kernelModule } from '../src';
+import { createApplication } from './support/on-container';
 import { discoverContext } from '../src/discovery';
 import { wiringRejection } from './support/rejection';
 

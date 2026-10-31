@@ -7,7 +7,8 @@ import {
   Repository,
   type DomainEvent,
 } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule, type Application } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule, type Application } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { resetTracingConfiguration, traceApplication } from '../src';
 import { expectSpanTree, installTestTracing, type TestTracing } from '../src/testing';
 

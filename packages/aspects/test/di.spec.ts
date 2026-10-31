@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  kernelModule,
-  type Decorate,
-} from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule, type Decorate } from '@ddd-ts-kit/di';
+import { createApplication, createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { Cache, Clock, InMemoryLogger, InMemoryMetrics, Logger, Metrics } from '@ddd-ts-kit/kernel';
 import {
   aspects,

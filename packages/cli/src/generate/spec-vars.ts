@@ -1,6 +1,7 @@
 import type { RenderContext } from '../templating';
 import { assembledContext } from './assembled-context';
 import { contextImports } from './context-imports';
+import { diImports } from './di-imports';
 import { isDeclared } from './is-declared';
 import type { Scope } from './scope';
 
@@ -17,8 +18,7 @@ export function specVars(scope: Scope, access: RenderContext): RenderContext {
   const declared = isDeclared(scope.config);
   const hosted = ['platformTestModule', declared ? 'context' : assembledContext(scope, '../../')];
 
-  const fromDi = (names: readonly string[]): string =>
-    `import { ${[...(listed ? ['contextModule'] : []), ...names].join(', ')} } from '@ddd-ts-kit/di';`;
+  const fromDi = (names: readonly string[]): string => diImports([...(listed ? ['contextModule'] : []), ...names]);
 
   return {
     diWithFake: fromDi(['createTestApplication', 'fake']),

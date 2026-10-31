@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9aea6521e0bff4e9 -->
+<!-- translation-of: README.md sha256:d22af54bf265554f -->
 
 # @ddd-ts-kit/redis
 
@@ -163,7 +163,8 @@ export async function logStartup(): Promise<void> {
 ```ts
 // src/main.ts
 import { Cache, Lock, Metrics, RateLimiter } from '@ddd-ts-kit/kernel';
-import { contextModule, createApplication, defineContextModule, kernelModule, type DeclaredSource } from '@ddd-ts-kit/di';
+import { contextModule, defineContextModule, kernelModule, type DeclaredSource } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { RedisCache, RedisLock, RedisRateLimiter, type RedisConnection } from '@ddd-ts-kit/redis';
 
 declare const redis: RedisConnection; // connectRedis(config.redisUrl), plus haut

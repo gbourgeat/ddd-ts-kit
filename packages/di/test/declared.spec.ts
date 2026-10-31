@@ -1,14 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CommandBus, DomainEventDispatcher, FixedClock, systemActor, type Actor } from '@ddd-ts-kit/kernel';
-import {
-  DeclaredPolicies,
-  contextModule,
-  createApplication,
-  createTestApplication,
-  fake,
-  kernelModule,
-  type BindingInfo,
-} from '../src';
+import { DeclaredPolicies, contextModule, fake, kernelModule, type BindingInfo } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import * as billing from './fixtures/contexts/billing/billing.declarations';
 import { permissions } from './fixtures/contexts/billing/application/authorization/billing.permissions';
 import { InvoiceIssued } from './fixtures/contexts/billing/domain/events/invoice-issued.event';

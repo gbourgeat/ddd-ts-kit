@@ -9,15 +9,8 @@ import {
   executionContext,
   type Actor,
 } from '@ddd-ts-kit/kernel';
-import {
-  WiringError,
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  fake,
-  kernelModule,
-  override,
-} from '@ddd-ts-kit/di';
+import { WiringError, defineContextModule, fake, kernelModule, override } from '@ddd-ts-kit/di';
+import { createApplication, createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import {
   AuthorizationSetupError,
   ForbiddenError,

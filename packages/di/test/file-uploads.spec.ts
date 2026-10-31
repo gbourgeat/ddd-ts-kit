@@ -13,7 +13,8 @@ import {
   TenantFileKeys,
   type StoredFile,
 } from '@ddd-ts-kit/kernel';
-import { createTestApplication, defineContextModule } from '../src';
+import { defineContextModule } from '../src';
+import { createTestApplication } from './support/on-container';
 
 const PDF = Buffer.from('%PDF-1.7\n%%EOF\n');
 

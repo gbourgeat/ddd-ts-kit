@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Clock } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, describeToken, override, overrideForTests } from '../src';
+import { defineContextModule, describeToken, override, overrideForTests } from '../src';
+import { createApplication } from './support/on-container';
 import { wiringFailure } from './support/failure';
 import { EpochClock } from './support/shop/epoch-clock';
 import { platform } from './support/shop/platform.module';

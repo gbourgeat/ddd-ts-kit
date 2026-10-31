@@ -7,7 +7,8 @@ import {
   NoopErrorReporter,
   type ErrorReport,
 } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '../src';
+import { defineContextModule, fake, kernelModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { lazyErrorReporter } from '../src/kernel/lazy-error-reporter';
 import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
 import { OrderRepository } from './support/ordering/domain/repositories/order.repository';
