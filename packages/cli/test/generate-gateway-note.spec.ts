@@ -6,6 +6,7 @@ describe.each(['tsyringe', 'inversify', 'awilix'])('a gateway in the explicit st
     const root = tempDir('gateway-note');
 
     cli(root, 'init', '--di', di, '--style', 'explicit', '--context', 'billing:core');
+
     cli(
       root,
       'generate',
@@ -20,6 +21,7 @@ describe.each(['tsyringe', 'inversify', 'awilix'])('a gateway in the explicit st
     const made = cli(root, 'generate', 'gateway', 'shipping', 'billing', 'InvoiceStatus');
 
     expect(made.code, made.stderr).toBe(0);
+
     expect(`${made.stdout}${made.stderr}`).toContain(
       'InvoiceStatusContract is bound to an empty value in shipping.module.ts: bind the implementation',
     );
