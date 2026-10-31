@@ -6,6 +6,9 @@ import type { ContractRunner } from './contract-runner';
 import { ContractSuite } from './contract-suite';
 import { failureOf } from './failure-of';
 
+/** What a JSON column holds, as a row type states it: an object, a list, a string, a number or a boolean; SQL NULL is no value. */
+export type JsonColumnValue = object | string | number | boolean;
+
 export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id extends string | number> {
   readonly name: string;
   /** A fresh, empty repository; called before each test. */
@@ -28,7 +31,7 @@ export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id exten
    * A new valid aggregate with an id of its own that keeps `value` in a JSON column (`jsonb`). Optional: without
    * it, the case of the JSON column is not run. The contract hands it an object, a list and a string.
    */
-  readonly createAggregateKeepingJson?: (value: unknown) => A;
+  readonly createAggregateKeepingJson?: (value: JsonColumnValue) => A;
   idOf(aggregate: A): Id;
   /** A plain-data view of the business state (not of `version`), compared with `toEqual`. */
   stateOf(aggregate: A): unknown;

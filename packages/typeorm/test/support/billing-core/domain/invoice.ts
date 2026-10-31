@@ -1,12 +1,13 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
+import type { JsonDocument } from '../../../../src';
 import { InvoiceAlreadyIssued } from './errors/invoice-already-issued';
 
 export interface InvoiceState {
   id: string;
   amount: number;
   status: 'draft' | 'issued';
-  /** Free-form details kept in a JSON column: an object, a list, a string. */
-  details?: unknown;
+  /** Free-form details kept in a JSON column: an object, a list, a string. TypeORM types `null` out of it. */
+  details?: JsonDocument;
 }
 
 export class Invoice extends AggregateRoot {
@@ -14,9 +15,9 @@ export class Invoice extends AggregateRoot {
 
   private status: 'draft' | 'issued';
 
-  private details: unknown;
+  private details: JsonDocument | undefined;
 
-  private constructor(id: string, amount: number, status: 'draft' | 'issued', details?: unknown) {
+  private constructor(id: string, amount: number, status: 'draft' | 'issued', details?: JsonDocument) {
     super(id);
     this.amount = amount;
     this.status = status;
@@ -31,7 +32,7 @@ export class Invoice extends AggregateRoot {
     return new Invoice(state.id, state.amount, state.status, state.details ?? undefined);
   }
 
-  static draftWithDetails(id: string, amount: number, details: unknown): Invoice {
+  static draftWithDetails(id: string, amount: number, details: JsonDocument): Invoice {
     return new Invoice(id, amount, 'draft', details);
   }
 
