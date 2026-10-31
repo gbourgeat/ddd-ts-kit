@@ -27,6 +27,8 @@ export interface SlicesProgress {
   readonly landedNotDone: readonly { readonly id: string; readonly commit: string }[];
   /** The stories and milestones whose rows are all done while markers of their own keep them open (`story-check`). */
   readonly unclosed: readonly UnclosedStory[];
+  /** With `--ready` only: the rows not done that `rows` leaves out because they cannot start on the trunk now. */
+  readonly notShown?: number;
 }
 
 /** A story or a milestone whose rows are all done, that `story-check` refuses to close. */

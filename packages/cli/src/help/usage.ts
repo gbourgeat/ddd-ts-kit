@@ -29,10 +29,10 @@ export const USAGE = `Usage
   ddd-ts-kit generate [<kind>] --help [--json]
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
-  ddd-ts-kit status [--workers]
+  ddd-ts-kit status [--workers | --ready]
   ddd-ts-kit doctor [--strict]
   ddd-ts-kit todo [<context>] [--brief]
-  ddd-ts-kit plan-waves [<context>]
+  ddd-ts-kit plan-waves [<context>] [--ready]
   ddd-ts-kit story-check <code> [--strict]
   ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]

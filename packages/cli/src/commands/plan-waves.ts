@@ -3,6 +3,7 @@ import { resolvedTrunk } from '../commit/resolved-trunk';
 import { readConfig } from '../config';
 import { formatPlan } from '../plan/format-plan';
 import { planWaves } from '../plan/plan-waves';
+import { readyNow } from '../plan/ready-now';
 import { replayPlan } from '../plan/replay-plan';
 import type { WavePlan } from '../plan/wave-plan';
 import { readSlices, SLICES_FILE } from '../progress/read-slices';
@@ -20,10 +21,11 @@ import { stdoutJson } from '../json/stdout-json';
  * merges. Exits 1, without waves, while a cycle, an unknown dependency, a row without owner or a row whose id or context is not one a command can carry
  * keeps the rows from being ordered, or while a planned command, replayed in a copy of the
  * project, introduces a name the glossary of its context does not hold or is refused by the
- * generator for any other reason.
+ * generator for any other reason. With `--ready`, only the first wave, whose dependencies are all done,
+ * and the later ones counted.
  */
 export const planWavesCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, {});
+  const args = Arguments.parse(argv, { ready: { type: 'boolean', default: false } });
   const root = args.projectRoot;
   const rows = readSlices(new Workspace(root, false));
 
@@ -42,7 +44,9 @@ export const planWavesCommand: Command = (argv, io) => {
     planWaves(rows, { context, contexts: Object.keys(readConfig(root).config.contexts), trunk: resolvedTrunk(root) }),
   );
 
-  io.out(args.json ? stdoutJson(plan) : formatPlan(plan));
+  const shown = args.flag('ready') ? readyNow(plan) : plan;
+
+  io.out(args.json ? stdoutJson(shown) : formatPlan(shown));
 
   return plan.problems.length === 0 ? 0 : 1;
 };
