@@ -81,7 +81,8 @@ Extension is declaration merging in one file of `src/platform/`
 
 Infrastructure and the platform: audit columns, tenant scoping, log fields, the correlation
 id and the tenant on published events. A key of a shared store (cache, rate limit, lock) in a
-multi-tenant project is confined with `tenantCacheKey` or `tenantKey`; a job states
+multi-tenant project is confined with `tenantCacheKey` or `tenantKey`; `cached` confines
+its own, `shared: true` for a read meant for every tenant; a job states
 `tenancy: 'global'` or `'per-tenant'`; platform staff read across tenants through
 `acrossTenants`, audited, never through a role. Use cases receive what they need as data of the command or query
 (skill `ddd-ts-kit:access-control`). The domain sees none of it.

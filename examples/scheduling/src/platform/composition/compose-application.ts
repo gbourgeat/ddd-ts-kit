@@ -135,6 +135,7 @@ export function composeApplication(
     metrics: container.resolve(Metrics),
     cache: container.resolve(Cache),
     clock: container.resolve(Clock),
+    scope: container.resolve(ExecutionScope),
   });
 
   return running({ container, foundations, options, contexts });

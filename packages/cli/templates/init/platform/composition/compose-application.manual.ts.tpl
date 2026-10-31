@@ -173,9 +173,9 @@ export function composeApplication(
   selection: readonly ContextModule[] = everyContext,
 ): Application {
   const platform = createPlatform(persistence, options);
-  const { logger, metrics, cache, clock } = platform;
+  const { logger, metrics, cache, clock, scope } = platform;
 
-  installAspectRuntime({ logger, metrics, cache, clock });
+  installAspectRuntime({ logger, metrics, cache, clock, scope });
 {{#if platformJobs.any}}
   registerPlatformJobs(platform, options);
 {{/if}}

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:aa5ccaed6b2c7aa2 -->
+<!-- translation-of: README.md sha256:a4a2bed894dcc4b6 -->
 
 # @ddd-ts-kit/aspects
 
@@ -253,7 +253,7 @@ dans le *runtime* des aspects au moment d'un appel.
 | `retry({ attempts, backoff?, retryOn?, sleep? })` | rappelle après un échec | jamais après une `DomainError`, un circuit ouvert ou une cloison pleine (`isTransient`) ; 100 ms doublés jusqu'à 30 s avec gigue complète | rien : il n'enregistre rien |
 | `timeout(ms, { signal?, scheduler? })` | rejette avec `TimeoutError` (`TIMEOUT`) | l'appel sous-jacent continue de s'exécuter, sauf avec `signal: true` | le message ne nomme que la classe et la méthode |
 | `circuitBreaker({ failureThreshold, resetAfterMs, halfOpenMax?, scope?, isFailure?, onStateChange?, clock? })` | refuse les appels avec `CircuitOpenError` (`CIRCUIT_OPEN`) après des échecs consécutifs, puis laisse passer des appels d'essai | un circuit par instance et par méthode ; une `DomainError` n'est pas un échec ; un appel d'essai | `onStateChange` reçoit la classe, la méthode, le contexte et les deux états |
-| `cached({ key, ttlMs, cache?, allowKinds? })` | répond à une lecture répétée depuis le port `Cache` | refuse les genres `repository` et `use-case` ; un appel dont la clé est `undefined` n'est pas mis en cache ; les échecs ne sont pas mis en cache ; des appels identiques simultanés partagent un seul appel ; un cache défaillant vaut un défaut de cache | la clé est construite par le projet à partir des arguments et ne va qu'au cache |
+| `cached({ key, ttlMs, cache?, shared?, allowKinds? })` | répond à une lecture répétée depuis le port `Cache` | refuse les genres `repository` et `use-case` ; une entrée appartient au *tenant* du travail sauf avec `shared: true`, le travail qui ne nomme aucun *tenant* garde la clé telle qu'elle est écrite, et le travail sous une élévation (`acrossTenants`) ne lit ni n'écrit le cache ; un appel dont la clé est `undefined` n'est pas mis en cache ; les échecs ne sont pas mis en cache ; des appels identiques simultanés d'un même *tenant* partagent un seul appel ; un cache défaillant vaut un défaut de cache | la clé est construite par le projet à partir des arguments et ne va qu'au cache |
 | `bulkhead({ maxConcurrent, maxQueued?, scope? })` | borne les appels qui s'exécutent en même temps, refuse au-delà avec `BulkheadFullError` (`BULKHEAD_FULL`) | pas de file d'attente ; un compartiment par instance et par méthode | rien |
 
 **Confidentialité.** La règle est celle du traçage : une entrée, un libellé ou une erreur levée
@@ -346,7 +346,8 @@ export function warnWhenSlow(thresholdMs: number, logger: Logger, clock: Clock):
 import { allOf, cached, forKinds, forMethods, when } from '@ddd-ts-kit/aspects';
 
 // Le seul endroit où les arguments sont lus : construire la clé à partir d'un identifiant, jamais de données personnelles.
-// `undefined` laisse l'appel hors du cache. La clé de cache contient aussi la classe et la méthode.
+// `undefined` laisse l'appel hors du cache. La clé de cache contient aussi la classe et la méthode, et le
+// tenant du travail : `shared: true` garde une seule entrée pour une lecture destinée à tous les tenants.
 const key = (_method: string, [id]: readonly unknown[]): string | undefined => (typeof id === 'string' ? id : undefined);
 
 export const cacheReads = when(allOf(forKinds('gateway', 'external'), forMethods('find*')), cached({ key, ttlMs: 60_000 }));
@@ -415,11 +416,13 @@ après l'échec d'un gestionnaire, sans plus aucun événement à diffuser. Pose
 
 `logged`, `timed` et `cached` ont besoin d'un *logger*, de métriques et d'un cache. Ils les
 prennent dans leurs options, ou dans le *runtime* que la racine de composition installe une fois
-avec `installAspectRuntime({ logger, metrics, cache, clock, scheduler })`. Le *runtime* est lu au
-moment d'un appel, jamais quand une classe est décorée ou une instance enveloppée, si bien que
-l'ordre des instructions de `main.ts` n'a pas d'importance. Un collaborateur manquant lève
-`AspectRuntimeError`, qui le nomme. L'horloge et le planificateur valent par défaut ceux du
-système. `Scheduler` est le port de ce *package* pour « exécuter ceci plus tard »
+avec `installAspectRuntime({ logger, metrics, cache, clock, scheduler, scope })`. Le *runtime* est
+lu au moment d'un appel, jamais quand une classe est décorée ou une instance enveloppée, si bien
+que l'ordre des instructions de `main.ts` n'a pas d'importance. Un collaborateur manquant lève
+`AspectRuntimeError`, qui le nomme. `scope` est l'`ExecutionScope` de l'application, où `cached`
+lit le *tenant* du travail : une racine de composition générée le donne, et un *runtime* sans lui
+laisse les clés telles qu'elles sont écrites, donc une racine multitenant écrite à la main doit le
+donner aussi. L'horloge et le planificateur valent par défaut ceux du système. `Scheduler` est le port de ce *package* pour « exécuter ceci plus tard »
 (`schedule(work, delayMs)`), une classe abstraite comme les ports du noyau : `systemScheduler`
 est sa valeur par défaut, `ManualScheduler` de `./testing` celle d'une *spec*.
 

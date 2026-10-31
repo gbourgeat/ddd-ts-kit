@@ -1,5 +1,5 @@
 [English](resilience.md) · **Français**
-<!-- translation-of: resilience.md sha256:2187b9c2ca19723a -->
+<!-- translation-of: resilience.md sha256:4f861fdf6a95bb0f -->
 
 # Résilience
 
@@ -276,6 +276,7 @@ export const notificationsModule = defineContextModule({
       );
 
     // une lecture d'un autre contexte : combien de temps les heures d'ouverture peuvent-elles être périmées ? le métier dit une minute
+    // les entrées restent dans le tenant du travail ; une lecture destinée à tous les tenants ajoute `shared: true`
     builder
       .bind(WorkingHours)
       .toClass(CalendarsWorkingHours)
