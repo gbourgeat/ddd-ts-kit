@@ -418,8 +418,9 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
+      # pnpm then follows the release each project pins (pmOnFail: download).
       - name: The package manager a generated project pins
-        run: corepack enable
+        run: npm install --global pnpm@12.11.2
       # Packed once for the whole job: each spec file packed the 26 packages again.
       - name: The kit as npm packs it, once, for every project this job installs
         run: echo "DDD_TS_KIT_PACKED_KIT=$(node pipeline/monorepo/pack-kit.mjs "$RUNNER_TEMP/packed-kit")" >> "$GITHUB_ENV"

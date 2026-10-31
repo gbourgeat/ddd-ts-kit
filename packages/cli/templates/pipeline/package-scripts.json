@@ -20,7 +20,7 @@
     "ci:build": "npm run build"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.2",
+    "@biomejs/biome": "2.6.3",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@ddd-ts-kit/eslint-plugin": "^0.105.0",

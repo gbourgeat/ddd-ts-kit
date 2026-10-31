@@ -49,6 +49,20 @@ describe('A spec the kit generates, what it asserts', () => {
     );
   });
 
+  it('holds the guard to refusing everybody until it is written, one branch and one test, so test:coverage is green right after generate guard', () => {
+    const guard = read(root, 'src/contexts/billing/presentation/http/guards/not-banned.guard.ts');
+    const spec = read(root, `${BILLING}/unit/not-banned.guard.spec.ts`);
+
+    expect(guard).toContain(
+      "check(_request: GuardRequest): void {\n    throw new ForbiddenError('The caller may not use these routes');\n  }",
+    );
+
+    expect(guard).not.toContain('if (');
+    expect(spec).toContain("it('refuses a caller with 403'");
+    expect(spec).toContain("it.todo('lets through the caller it is written for')");
+    expect(spec).not.toMatch(/lets through a caller the stub|refusalOf|named\(''\)/);
+  });
+
   it('holds the remote adapter to what it does as long as its transport is not written, and no more', () => {
     const spec = read(root, `${BILLING}/integration/remote-tax-calculator.adapter.spec.ts`);
 

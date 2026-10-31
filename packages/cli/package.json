@@ -36,6 +36,9 @@
     "provenance": true
   },
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "bin": {
     "ddd-ts-kit": "./dist/bin.js",
     "ddd-ts-kit-refresh-declarations": "./dist/refresh-declarations.js"

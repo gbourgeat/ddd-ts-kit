@@ -29,8 +29,9 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: The package managers a generated project pins
-        run: corepack enable
+      # pnpm then follows the release each project pins (pmOnFail: download).
+      - name: The package manager a generated project pins
+        run: npm install --global pnpm@12.11.2
       - name: Each stack installed, then green from its first minute to its first use case
         run: npm run ci:test:stacks-at-night
       - name: Every pair of capability values, generated whole and type-checked

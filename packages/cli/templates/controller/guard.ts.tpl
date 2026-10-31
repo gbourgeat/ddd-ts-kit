@@ -5,10 +5,8 @@ import { ForbiddenError, Guard, type GuardRequest } from '@ddd-ts-kit/http';
 export class {{name.pascal}}Guard implements Guard {
   readonly documents = { errors: ['FORBIDDEN'] };
 
-  check({ actor }: GuardRequest): void {
-    // TODO(domain): replace this refusal of everybody by the control: a role, a membership read from the path, a key of the request.
-    if (actor.id !== '') {
-      throw new ForbiddenError('The caller may not use these routes');
-    }
+  // TODO(domain): a guard refuses everybody until it is written. Replace this refusal by the control, read from `actor` and `params` of the request: a role of the caller, a membership read from the path, a key of the request.
+  check(_request: GuardRequest): void {
+    throw new ForbiddenError('The caller may not use these routes');
   }
 }

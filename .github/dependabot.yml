@@ -17,6 +17,11 @@ updates:
       # package.json), not the newest release: a major is raised by hand with it.
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
+      # TypeORM accepts better-sqlite3 12 only (`peerDependencies`): with 13 at the root, npm nests it
+      # under packages/knex and the sqlite specs of knex and typeorm find no module. Raised by hand
+      # when TypeORM accepts the next major.
+      - dependency-name: better-sqlite3
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: chore
       include: scope
