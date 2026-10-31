@@ -8,7 +8,7 @@ The rules are in `AGENTS.md`, which every coding agent reads, and by layer in `.
 ```bash
 npm install
 npm run verify          # every gate of the pipeline: green before the first line of business code
-cp .env.example .env
+cp -n .env.example .env # init wrote .env already; a fresh clone of the repository copies it
 {{#if database.server}}
 npm run infra:up        # the database, in Docker; for Jaeger: docker compose --profile observability up -d --wait
 {{/if}}

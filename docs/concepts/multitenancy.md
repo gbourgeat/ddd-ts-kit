@@ -370,6 +370,11 @@ A purge that a project wants confined runs per tenant instead, in contexts of th
 
 ## Limits and when not to use it
 
+- **A relationship holds in every tenant.** A tuple of ReBAC names no tenant: one on an element
+  reaches that element alone, its id shared by no other tenant, but one on the context of a use
+  case (`context:ordering operator user:olivia`) holds in every tenant the person works in.
+  Decide per tenant what a use case on no element allows, by roles with the tenant check or on an
+  object that names the tenant ([Choosing access control](../guides/choosing-access-control.md#preset-3-relationships-zanzibar)).
 - **One tenant per unit of work.** A request that must write to two tenants is two units of
   work, on purpose: one transaction never spans tenants. On database per tenant, work of another
   tenant run inside an open unit of work is refused (`CrossTenantUnitOfWorkError`); on shared

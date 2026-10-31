@@ -20,6 +20,7 @@ export const {{context.pascal}}Codes = {
   InvitationExpired: 'INVITATION_EXPIRED',
   InvitationNotPending: 'INVITATION_NOT_PENDING',
   InvitationNotAddressedToAccount: 'INVITATION_ADDRESSED_TO_ANOTHER',
+  InvitationWithdrawn: 'INVITATION_WITHDRAWN',
   UnknownDelegation: 'DELEGATION_NOT_FOUND',
   DelegationNotActive: 'DELEGATION_NOT_ACTIVE',
   DelegationToOneself: 'DELEGATION_TO_ONESELF',

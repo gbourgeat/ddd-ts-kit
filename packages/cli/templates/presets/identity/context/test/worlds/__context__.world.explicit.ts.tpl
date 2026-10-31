@@ -232,7 +232,7 @@ function registerInvitations({ buses, repositories, ports, access }: Wired): voi
 
   commandBus.register(
     AcceptInvitationCommand,
-    new AcceptInvitationHandler(invitations, members, accounts, ports.tokens, ids, clock),
+    new AcceptInvitationHandler(invitations, members, accounts, delegations, ports.tokens, ids, clock),
   );
 
   commandBus.register(

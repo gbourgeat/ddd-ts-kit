@@ -25,6 +25,8 @@ export interface InvitationState {
   /** The digest of the token sent to the person: the token itself is never stored. */
   readonly tokenHash: string;
   readonly invitedBy: string;
+  /** The delegation that lent the right to invite, when the role of the inviter did not grant it. */
+  readonly delegationId: string | undefined;
   readonly issuedAt: Date;
   readonly expiresAt: Date;
   readonly status: InvitationStatus;
@@ -56,7 +58,7 @@ export class Invitation extends AggregateRoot<string> {
     const expiresAt = new Date(now.getTime() + VALIDITY_MS);
     const pending = { status: InvitationStatus.Pending, issuedAt: now, expiresAt, answeredAt: undefined };
     const { organisationId, email, role, tokenHash, invitedBy, delegationId } = terms;
-    const issued = new Invitation(id, { organisationId, email, role, tokenHash, invitedBy, ...pending });
+    const issued = new Invitation(id, { organisationId, email, role, tokenHash, invitedBy, delegationId, ...pending });
     const under = delegationId === undefined ? {} : { delegationId };
 
     issued.record(new InvitationIssued(id, now, { organisationId, email: email.value, role, expiresAt, ...under }));
@@ -106,6 +108,16 @@ export class Invitation extends AggregateRoot<string> {
 
   get role(): MemberRole {
     return this.state.role;
+  }
+
+  /** The account that issued it: the invitation holds while that account may still invite in its role (`RoleRightsService.mayStillIssue`). */
+  get invitedBy(): string {
+    return this.state.invitedBy;
+  }
+
+  /** The delegation it was issued under: it holds while that delegation does, whatever else is lent to the inviter. */
+  get delegationId(): string | undefined {
+    return this.state.delegationId;
   }
 
   get status(): InvitationStatus {

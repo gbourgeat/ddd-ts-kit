@@ -5,6 +5,7 @@ import {
   allOf,
   anyOf,
   forbid,
+  known,
   not,
   permit,
   type Condition,
@@ -185,5 +186,58 @@ describe('conditions', () => {
     expect(allOf(yes, no)(input)).toBe(false);
     expect(not(no)(input)).toBe(true);
     expect(allOf(anyOf(no, yes), not(no))(input)).toBe(true);
+  });
+});
+
+describe('rules written over the facts they read', () => {
+  const clock = new FixedClock(MORNING);
+  const unknown = { type: 'invoice', id: 'inv-new' };
+  const clerkOfNoDepartment: Actor = { id: 'eve', type: 'user', roles: [], attributes: {} };
+
+  it('lets an element the port does not hold yet through rules that compare what is missing', async () => {
+    const authorizer = new PolicyBasedAuthorizer({ policies, clock, attributes: invoices() });
+
+    expect(await authorizer.check({ actor: legalManager, permission: voiding, resource: unknown })).toEqual({
+      allowed: true,
+    });
+
+    expect(await authorizer.check({ actor: clerkOfNoDepartment, permission: read, resource: unknown })).toEqual({
+      allowed: true,
+    });
+  });
+
+  it('refuses it once each rule demands its facts: a forbid on what is not known, a permit on what is', async () => {
+    const departmentOfBoth: Condition = ({ actor, attributes }) => {
+      const department = actor.attributes['department'];
+
+      return department !== undefined && department === attributes['department'];
+    };
+
+    const careful = new PolicyBasedAuthorizer({
+      policies: [
+        permit('invoice.read-own-department', [read], allOf(known('department'), departmentOfBoth)),
+        permit('invoice.managers-void', [voiding], isManager),
+        forbid('invoice.no-void-of-an-unknown-invoice', [voiding], not(known('amount'))),
+        forbid('invoice.no-large-void', [voiding], isLarge),
+      ],
+      clock,
+      attributes: invoices(),
+    });
+
+    expect(await careful.check({ actor: legalManager, permission: voiding, resource: unknown })).toEqual({
+      allowed: false,
+      reason: 'EXPLICIT_DENY',
+    });
+
+    expect(await careful.check({ actor: clerkOfNoDepartment, permission: read, resource: unknown })).toEqual({
+      allowed: false,
+      reason: 'NO_MATCHING_POLICY',
+    });
+
+    expect(await careful.check({ actor: legalManager, permission: voiding, resource: first })).toEqual({
+      allowed: true,
+    });
+
+    expect(await careful.check({ actor: salesClerk, permission: read, resource: first })).toEqual({ allowed: true });
   });
 });

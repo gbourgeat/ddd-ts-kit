@@ -57,6 +57,26 @@ export const AUTHZ_POLICY_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'authz/policy-asked',
+    name: 'a handler that keeps the decision on the permission and stops on a denial',
+    expect: 'pass',
+    files: withPolicy(
+      declaredHandler(
+        "    const decision = await this.access.decide(command.actor, billingPermissions['invoice.issue'], command);\n\n    if (!decision.allowed) {\n      return;\n    }\n\n    await this.invoices.save(command);",
+      ),
+    ),
+  },
+  {
+    ruleId: 'authz/policy-asked',
+    name: 'a handler that asks the permission with decide and drops the decision',
+    expect: { file: HANDLER },
+    files: withPolicy(
+      declaredHandler(
+        "    await this.access.decide(command.actor, billingPermissions['invoice.issue'], command);\n    await this.invoices.save(command);",
+      ),
+    ),
+  },
+  {
+    ruleId: 'authz/policy-asked',
     name: 'a handler still carrying the TODO(domain) the generator left where the policy is asked',
     expect: 'pass',
     files: withPolicy(
@@ -104,7 +124,7 @@ export const AUTHZ_POLICY_FIXTURES: readonly Fixture[] = [
       [COMMAND]: 'export class IssueInvoiceCommand {}\n',
       [POLICY]: DEFINED_POLICY,
       ...handler(
-        "export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<void> {\n    await this.access.decide(command.actor, billingPermissions['invoice.issue'], command);\n  }\n}\n",
+        "export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<boolean> {\n    return (await this.access.decide(command.actor, billingPermissions['invoice.issue'], command)).allowed;\n  }\n}\n",
       ),
     }),
   },

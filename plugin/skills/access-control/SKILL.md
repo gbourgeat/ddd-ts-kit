@@ -91,7 +91,7 @@ A policy is a named, pure, unit-tested class in `application/authorization/*.pol
 (`@Policy(permission, { name: '<context>.<name>' })`); the handler loads the aggregate and
 asks `Access.authorize(command.actor, permission, appointment)`, the loaded aggregate named after its concept. Every
 handler of a use case requiring that permission must ask it: `authz/policy-asked` reports one that
-does not, and at run time its result is refused with `PolicyNotAskedError` and rolled back. The
+does not or drops the decision of a `decide`, and at run time its result is refused with `PolicyNotAskedError`, or with `PolicyDenialIgnoredError` when it answers a success with no question on it allowed, and rolled back. The
 generators write the question about the message; replace the message by the loaded aggregate. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
 the aggregate.
 

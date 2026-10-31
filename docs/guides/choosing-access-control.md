@@ -280,6 +280,7 @@ import {
   ResourceAttributes,
   allOf,
   forbid,
+  known,
   not,
   permit,
   type AttributePolicy,
@@ -294,14 +295,19 @@ declare const billingPermissions: PermissionSet<'billing', 'invoice.read' | 'inv
 declare const clock: Clock;
 
 // platform/auth/attributes/attribute-policies.ts
-const sameDepartment: Condition = ({ actor, attributes }) => actor.attributes['department'] === attributes['department'];
+const sameDepartment: Condition = ({ actor, attributes }) => {
+  const department = actor.attributes['department'];
+
+  return department !== undefined && department === attributes['department'];
+};
 const large: Condition = ({ attributes }) => Number(attributes['amount']) > 10_000;
 const approvedTwice: Condition = ({ attributes }) => attributes['approvals'] === 2;
 
 export const attributePolicies: readonly AttributePolicy[] = [
   permit('administrators-do-everything', ['*'], ({ actor }) => actor.roles.includes('admin')),
-  permit('read-own-department', [billingPermissions['invoice.read']], sameDepartment),
+  permit('read-own-department', [billingPermissions['invoice.read']], allOf(known('department'), sameDepartment)),
   permit('managers-void', [billingPermissions['invoice.void']], ({ actor }) => actor.attributes['manager'] === true),
+  forbid('no-void-of-an-unknown-invoice', [billingPermissions['invoice.void']], not(known('amount', 'approvals'))),
   forbid('no-large-void-without-four-eyes', [billingPermissions['invoice.void']], allOf(large, not(approvedTwice))),
 ];
 
@@ -332,6 +338,19 @@ export const authorizer = new PolicyBasedAuthorizer({
 A manager of the finance department voids an invoice of 12 000 approved once: the
 `managers-void` permit matches, but so does the `no-large-void-without-four-eyes` forbid, and
 the answer is `EXPLICIT_DENY`.
+
+A projection is eventually consistent: right after an invoice is created, and whenever its row is
+missing, the port answers `undefined` and every rule reads attributes that are not there. Written
+naively, such a rule fails open: `Number(undefined) > 10_000` is false, so the forbid does not
+hold for an invoice of any amount, and `undefined === undefined` makes an actor without a
+department of the same department as an unknown invoice. So each rule demands the facts it reads:
+a `permit` that reads an attribute of the resource requires it (`known('department')`), a fact a
+`forbid` needs is refused when it is missing (`no-void-of-an-unknown-invoice`), and a comparison
+with an attribute of the actor demands that the actor has it (`sameDepartment`). The authorizer
+cannot do it for the rules: the bus asks about the context of a use case too, which no projection
+holds. For the same reason, a `forbid(..., not(known(...)))` refuses every check of its permission
+that carries no element, a requirement without `resource:` included: give such a use case a
+permission of its own, never one a rule over known facts guards.
 
 Lists: a predicate is not a query, so `Access.scope` throws `ListingNotSupportedError` under pure
 ABAC. Give the read port the same condition as a filter (the department of the actor), or list
@@ -441,6 +460,17 @@ export class TupleDocumentGrants implements DocumentGrants {
   }
 }
 ```
+
+**A tuple names no tenant.** `context:ordering operator user:olivia` holds whatever tenant the
+work runs in: the tuples, the schema and `RelationBasedAuthorizer` know no tenant. An element is
+reached by its own id, which no two tenants share when it is generated (a UUID), so a tuple on it
+gives one element of one tenant. The context, the resource of a use case on no element, is the
+same object in every tenant: with tenants, the operator of the context in one tenant operates it
+in all of them, and so does a person who belongs to two tenants with a different standing in each.
+With tenants, keep the relationships for the elements, and decide what a use case on no element
+allows tenant by tenant: by roles with the tenant check (preset 1, layered first as in the
+combined model below), or on an object that names the tenant (a type `tenant` with its
+`operator`, the elements reaching it by a `parent` relation), never on the context.
 
 Lists come by construction: `listAccessible` answers the ids the actor reaches, which the read
 port turns into `id in (...)`. The search itself still names a resource in its requirement, an

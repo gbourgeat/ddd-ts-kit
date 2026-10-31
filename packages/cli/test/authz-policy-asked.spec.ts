@@ -95,3 +95,42 @@ describe('authz/policy-asked beyond the decorated use cases', () => {
     expect(found).toEqual([]);
   });
 });
+
+describe('authz/policy-asked on a decision the handler drops', () => {
+  const askingWith = (body: string): Readonly<Record<string, string>> => ({
+    [MAP]: `export const requirements = [requires(IssueInvoiceCommand, ${ISSUE})];\n`,
+    [POLICY]: definedPolicy(ISSUE),
+    [COMMAND]: 'export class IssueInvoiceCommand {}\n',
+    [HANDLER]: `export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<unknown> {\n${body}\n  }\n}\n`,
+  });
+
+  it('reports a decision on the permission that is a statement of its own, behind await, void or nothing', () => {
+    const dropped = [
+      `    await this.access.decide(command.actor, ${ISSUE}, command);`,
+      `    void this.access.decideOn({ actor: command.actor, permission: ${ISSUE}, subject: command });`,
+      `    if (command) {\n      this.access.decide(command.actor, ${ISSUE}, command)\n    }`,
+      `    await this.access.decide(command.actor, ${ISSUE}, command)\n    await this.invoices.save(command)`,
+      `    if (command) this.access.decide(command.actor, ${ISSUE}, command);`,
+    ];
+
+    for (const body of dropped) {
+      expect(policyAskedIn(askingWith(body)).map(({ message }) => message)).toEqual([
+        `IssueInvoiceHandler asks Access about ${ISSUE}, which IssueInvoiceCommand requires and a policy refines, and drops the decision: a denied one does not stop the change.`,
+      ]);
+    }
+  });
+
+  it('reads a decision kept, returned or read on the spot, and one on another permission, as no drop', () => {
+    const kept = [
+      `    const decision = await this.access.decide(command.actor, ${ISSUE}, command);\n    return decision.allowed;`,
+      `    return await this.access.decide(command.actor, ${ISSUE}, command);`,
+      `    return (await this.access.decide(command.actor, ${ISSUE}, command)).allowed;`,
+      `    const decision = await this.access\n      .decide(command.actor, ${ISSUE}, command)\n      .then((answer) => answer);\n    return decision;`,
+      `    await this.access.authorize(command.actor, ${ISSUE}, command);\n    await this.access.decide(command.actor, billingPermissions['invoice.read'], command);`,
+    ];
+
+    for (const body of kept) {
+      expect(policyAskedIn(askingWith(body))).toEqual([]);
+    }
+  });
+});

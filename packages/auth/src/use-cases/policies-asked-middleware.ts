@@ -1,5 +1,6 @@
 import type { BusMiddleware } from '@ddd-ts-kit/kernel';
 import { recordingAskedPermissions } from '../authorization/asked-permissions';
+import { PolicyDenialIgnoredError } from '../errors/policy-denial-ignored-error';
 import { PolicyNotAskedError } from '../errors/policy-not-asked-error';
 import type { Permission } from '../permissions/permission';
 import type { AuthorizationMap } from './authorization-map';
@@ -13,7 +14,11 @@ export interface PoliciesAskedMiddlewareOptions {
 /**
  * Refuses the result of a handler that never asked `Access` about the permission of its use case
  * when a policy refines it: the bus checked the permission without the element, and the rule of
- * the policy would be skipped. Install it with `aroundHandler` of the bus, inside the unit of
+ * the policy would be skipped. Refuses as well the result of a handler
+ * that answered with a success when no question on that permission was allowed (every answer
+ * denied, or failed and caught): a handler that stops with a failed `Result` (`err(...)`) or a
+ * throw is let through with its own refusal, and one that skips the elements it was denied and
+ * applies the others passes. Install it with `aroundHandler` of the bus, inside the unit of
  * work, so that the refusal rolls the change back and a middleware that answers in place of the
  * handler is not judged. Only the questions put to `PolicyAccess` are seen.
  */
@@ -33,6 +38,15 @@ export function policiesAskedMiddleware({ map, refined }: PoliciesAskedMiddlewar
       throw new PolicyNotAskedError(info, declaration.permission.id);
     }
 
+    if (asked.get(declaration.permission.id) !== true && !isFailedResult(result)) {
+      throw new PolicyDenialIgnoredError(info, declaration.permission.id);
+    }
+
     return result;
   };
+}
+
+/** A `Result` of the kernel that failed (`err(...)`): the handler stopped with a refusal of its own. */
+function isFailedResult(answer: unknown): boolean {
+  return typeof answer === 'object' && answer !== null && Reflect.get(answer, 'ok') === false && 'error' in answer;
 }

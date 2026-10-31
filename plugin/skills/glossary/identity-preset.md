@@ -41,6 +41,7 @@ only the business terms beyond them. A spec of the CLI keeps this page equal to 
 | Oneself | The member who acts, as the other party of their own act: no one delegates to oneself |
 | Pending | Said of an invitation issued and not yet accepted, declined, revoked or expired: the only state in which it is answered |
 | Expire | For an invitation, to pass its week unanswered: it is accepted or declined no more |
+| Withdrawn | Said of a pending invitation whose issuer may no longer invite in its role (removed, deactivated, demoted or no longer lent the right): it lets nobody in |
 | Verified | Said of an email address the identity provider confirmed belongs to the person: an account is provisioned with it only then |
 | Taken | Said of a slug an organisation holds already: two organisations never share one |
 | Active | Said of a delegation granted and not ended yet: neither revoked nor past its period |

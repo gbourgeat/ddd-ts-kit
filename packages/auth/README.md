@@ -359,7 +359,8 @@ being the port of `@ddd-ts-kit/di` the module binds.
 When a policy refines the permission of a use case, the guard also wraps its handler, last on the
 bus and inside the unit of work: a handler that returns without asking `Access` about that
 permission has its result refused with `PolicyNotAskedError` and its change rolled back, since the
-rule of the policy was never applied. A bus of your own runs that part around its handler, with
+rule of the policy was never applied; one that answers with a success when no question on it was
+allowed, with `PolicyDenialIgnoredError` (a failed `Result` or a throw is its own refusal). A bus of your own runs that part around its handler, with
 `.aroundHandler((message, next, info) => resolve(UseCaseGuard).within?.(message, next, info) ?? next())`.
 Without the container, `policiesAskedMiddleware({ map, refined })` is the same check. Only the
 questions put to `PolicyAccess` are seen: a project that binds its own `Access` passes
@@ -829,7 +830,11 @@ export const authorizer = new PolicyBasedAuthorizer({
 
 A matching `forbid` wins over every `permit`; with no matching `permit` the answer is no.
 Conditions compose with `anyOf`, `allOf` and `not`, and see `{ actor, permission, resource?,
-attributes, context, now }`.
+attributes, context, now }`. An element the port does not hold answers no attribute, and a rule
+that compares one with nothing can let it through: `known('amount')` holds when the port answered
+every attribute named, so that a `forbid` refuses an element it knows nothing of
+(`forbid('invoice.no-void-of-an-unknown-invoice', [voiding], not(known('amount')))`) and a `permit`
+demands what it reads.
 
 `explain` names what is known of the element, by attribute name and never by value, then each
 policy that bears on the permission and whether it held. Why a manager may not void a large

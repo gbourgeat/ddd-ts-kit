@@ -195,7 +195,7 @@ function registerInvitations({ commands, ids, clock }: Platform, adapters: Adapt
   const own = { context: '{{context.kebab}}' };
 
   commands.register(InviteMemberCommand, new InviteMemberHandler(invitations, members, delegations, tokens, access, ids, clock), own);
-  commands.register(AcceptInvitationCommand, new AcceptInvitationHandler(invitations, members, accounts, tokens, ids, clock), own);
+  commands.register(AcceptInvitationCommand, new AcceptInvitationHandler(invitations, members, accounts, delegations, tokens, ids, clock), own);
   commands.register(DeclineInvitationCommand, new DeclineInvitationHandler(invitations, accounts, tokens, clock), own);
   commands.register(RevokeInvitationCommand, new RevokeInvitationHandler(invitations, members, delegations, access, clock), own);
 }

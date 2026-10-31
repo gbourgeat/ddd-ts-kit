@@ -82,6 +82,11 @@ export const IDENTITY_TERMS: readonly GlossaryRow[] = [
   },
   { term: 'Expire', meaning: 'For an invitation, to pass its week unanswered: it is accepted or declined no more' },
   {
+    term: 'Withdrawn',
+    meaning:
+      'Said of a pending invitation whose issuer may no longer invite in its role (removed, deactivated, demoted or no longer lent the right): it lets nobody in',
+  },
+  {
     term: 'Verified',
     meaning:
       'Said of an email address the identity provider confirmed belongs to the person: an account is provisioned with it only then',

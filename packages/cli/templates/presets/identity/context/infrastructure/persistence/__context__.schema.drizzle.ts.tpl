@@ -69,6 +69,7 @@ export const invitations = {{context.camel}}Schema.table(
     role: text('role').$type<MemberRole>().notNull(),
     tokenHash: text('token_hash').notNull().unique(),
     invitedBy: text('invited_by').notNull(),
+    delegationId: text('delegation_id'),
     issuedAt: instant('issued_at').notNull(),
     expiresAt: instant('expires_at').notNull(),
     status: text('status').$type<InvitationStatus>().notNull(),
