@@ -1,11 +1,14 @@
 import { CliError } from '../cli-error';
 import type { Name } from './name';
+import { refuseWindowsReserved } from './refuse-windows-reserved';
 import { splitWords } from './split-words';
 import { toName } from './to-name';
 
 export interface NameOptions {
   /** Role suffixes the generator adds itself, removed when the caller typed them. */
   readonly strip?: readonly string[];
+  /** `--allow-name`: a name Windows reserves for a device is let through. */
+  readonly allowReserved?: boolean;
 }
 
 /**
@@ -20,7 +23,11 @@ export function parseConceptName(input: string, what: string, options: NameOptio
     );
   }
 
-  return toName(withoutRole(splitWords(input), options.strip ?? []).join(' '));
+  const name = toName(withoutRole(splitWords(input), options.strip ?? []).join(' '));
+
+  refuseWindowsReserved(name, what, options.allowReserved);
+
+  return name;
 }
 
 function withoutRole(words: readonly string[], roles: readonly string[]): readonly string[] {
