@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import type { BaselineMove } from './baseline-move';
 import { BASELINE_FILE } from './read-baseline';
+import { gitArguments } from '../../commit/git-arguments';
 
 /**
  * The files git sees renamed since the baseline was last committed, staged and committed renames
@@ -21,5 +22,5 @@ export function renamedFiles(root: string): BaselineMove[] {
 }
 
 function git(root: string, args: readonly string[]): string {
-  return execFileSync('git', [...args], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  return execFileSync('git', gitArguments(args), { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }

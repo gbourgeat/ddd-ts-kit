@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { gitArguments } from '../../commit/git-arguments';
 
 /** The revision that stands for the index plus the working tree: the result of a merge in progress. */
 export const WORKTREE = ':worktree';
@@ -46,7 +47,13 @@ function readIfFile(absolute: string): Buffer | undefined {
 function fromGit(top: string, revision: string, paths: readonly string[]): Map<string, Buffer> {
   const wanted = paths.filter((file) => !file.includes('\n'));
   const input = wanted.map((file) => `${revision}:${file}\n`).join('');
-  const output = spawnSync('git', ['cat-file', '--batch'], { cwd: top, input, maxBuffer: 1 << 30 }).stdout;
+
+  const output = spawnSync('git', gitArguments(['cat-file', '--batch']), {
+    cwd: top,
+    input,
+    maxBuffer: 1 << 30,
+  }).stdout;
+
   const contents = new Map<string, Buffer>();
   let at = 0;
 

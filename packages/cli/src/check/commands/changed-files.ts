@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { CliError } from '../../cli-error';
+import { gitArguments } from '../../commit/git-arguments';
 
 /**
  * The files changed since `commit`, the commit a ref the caller checked names, relative to the
@@ -23,7 +24,7 @@ export function changedFiles(root: string, commit: string): Set<string> {
 }
 
 function gitLines(root: string, args: readonly string[]): string[] {
-  return execFileSync('git', [...args], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+  return execFileSync('git', gitArguments(args), { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line !== '');
