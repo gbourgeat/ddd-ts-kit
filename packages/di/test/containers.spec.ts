@@ -110,6 +110,37 @@ describe.each<[string, () => Container]>([
     expect(container.resolve(PORT)).toEqual({ name: 'second' });
   });
 
+  it('replaces a singleton already built by another factory', () => {
+    const container = newContainer();
+
+    container.bindFactory(PORT, () => ({ name: 'first' }), 'singleton');
+    container.resolve(PORT);
+    container.bindFactory(PORT, () => ({ name: 'second' }), 'singleton');
+
+    expect(container.resolve(PORT)).toEqual({ name: 'second' });
+  });
+
+  it('replaces a singleton already built by a transient', () => {
+    const container = newContainer();
+
+    container.bindFactory(PORT, () => ({ name: 'first' }), 'singleton');
+    container.resolve(PORT);
+    container.bindFactory(PORT, () => ({ name: 'second' }), 'transient');
+
+    expect(container.resolve(PORT)).toEqual({ name: 'second' });
+  });
+
+  it('builds anew a singleton bound again after a transient replaced it', () => {
+    const container = newContainer();
+
+    container.bindFactory(PORT, () => ({ name: 'first' }), 'singleton');
+    container.resolve(PORT);
+    container.bindFactory(PORT, () => ({ name: 'second' }), 'transient');
+    container.bindFactory(PORT, () => ({ name: 'third' }), 'singleton');
+
+    expect(container.resolve(PORT)).toEqual({ name: 'third' });
+  });
+
   it('lets the error of a factory through as it was thrown', () => {
     const container = newContainer();
     const failure = new Error('cannot connect');

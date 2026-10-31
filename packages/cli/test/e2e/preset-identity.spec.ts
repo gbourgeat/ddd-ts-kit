@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, read, tempDir } from '../helpers';
 import { expectNoFinding } from './expect-no-finding';
 import { installAsPublished } from './install-as-published';
+import { DEEP } from './night-stacks';
 import { generatePrismaClient } from './generate-prisma-client';
 import { bin, findingsOf, runIn } from './run-in';
 import { allPassed, FAILED_COUNT, runSpecs } from './run-specs';
@@ -16,8 +17,12 @@ import { typeErrors } from './type-errors';
  */
 const FLAVOURS: readonly (readonly [string, readonly string[]])[] = [
   ['drizzle, zod, rbac', []],
-  ['drizzle, zod, rbac, on InversifyJS', ['--di', 'inversify']],
-  ['drizzle, zod, rbac, on Awilix', ['--di', 'awilix']],
+  ...(DEEP
+    ? ([
+        ['drizzle, zod, rbac, on InversifyJS', ['--di', 'inversify']],
+        ['drizzle, zod, rbac, on Awilix', ['--di', 'awilix']],
+      ] as const)
+    : []),
   [
     'knex, class-validator, rebac, shared tables, keycloak',
     [

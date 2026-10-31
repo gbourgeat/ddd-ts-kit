@@ -3,7 +3,6 @@ import { exists, isDeclared, read, scaffoldEverything, tempDir } from '../helper
 import { buildAndCheckDocuments } from './build-and-check-documents';
 import { expectNoFinding } from './expect-no-finding';
 import { failsWithoutASpec, pipelineRunsHoldTheThresholds, runWithCoverage } from './coverage-gate';
-import { generatePrismaClient } from './generate-prisma-client';
 import { installAsPublished } from './install-as-published';
 import { DEEP } from './night-stacks';
 import { bin, runIn } from './run-in';
@@ -34,11 +33,6 @@ describe.runIf(SLOW).each(PROVEN.map(([label, stack], index) => [label, stack, D
     beforeAll(() => {
       root = tempDir('proven');
       scaffoldEverything(root, stack);
-
-      if (stack.orm === 'prisma') {
-        generatePrismaClient(root);
-      }
-
       installAsPublished(root);
     }, 120_000);
 

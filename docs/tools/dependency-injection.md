@@ -647,9 +647,9 @@ From [`packages/di/README.md`](../../packages/di/README.md),
 - **Proven end to end by the CLI** (`proven-stacks.spec.ts`, as its README lists them):
   generated projects in the declared style (the default stack; with ReBAC and RabbitMQ; with
   knex and discovery, alone and behind NATS), in the explicit style (the default stack; with ReBAC
-  and RabbitMQ), on InversifyJS and on Awilix (the default stack in both styles, ReBAC and
-  RabbitMQ, knex and discovery, Prisma, TypeORM, and the identity preset), with
-  `--di manual` (with ABAC and knex; with Fastify, knex, RabbitMQ and Redis), and one NestJS
+  and RabbitMQ), on InversifyJS and on Awilix (the default stack at each pull request; the
+  explicit style, ReBAC and RabbitMQ, knex and discovery, Prisma, TypeORM and the identity preset
+  at night and before a release), with `--di manual` (with ABAC and knex; with Fastify, knex, RabbitMQ and Redis), and one NestJS
   stack (its controllers, class-validator, Passport).
 - **Test application** with fixed clock, sequential identifiers, in-memory buses and fakes
   bound under the port class.

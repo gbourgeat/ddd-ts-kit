@@ -10,8 +10,8 @@ strategic artefacts or the existing code, and write that reason down. Flags and 
 |---|---|---|
 | `--http` | a framework already in `package.json`; `none` when the system exposes no API | `express` |
 | `--validation` | a library already in `package.json`; `class-validator` with NestJS habits | `zod` |
-| `--di` | `nest` with `--http nest` and only then; `manual` only on request | `tsyringe` |
-| `--style`, `--assembly` | `declared` with `tsyringe` (no module file to maintain); `explicit` otherwise | `declared`, `barrel` |
+| `--di` | `nest` with `--http nest` and only then; `awilix` or `inversify` under a policy against low-activity dependencies, or when the team already uses one; `manual` only on request | `tsyringe` |
+| `--style`, `--assembly` | `declared` on `tsyringe`, `awilix` or `inversify` (no module file to maintain); `explicit` otherwise | `declared`, `barrel` |
 | `--tests` | a runner already configured | `vitest` |
 | `--orm`, `--database` | an ORM already in `package.json`; `none` only when nothing is stored | `drizzle`, `postgres` |
 | `--events` | never chosen: `outbox` as soon as there is an ORM (`in-memory` with one needs `--allow-no-outbox "<reason>"`, a recorded deviation) | `outbox` |

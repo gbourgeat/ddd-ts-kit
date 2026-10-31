@@ -1,5 +1,5 @@
 [English](dependency-injection.md) · **Français**
-<!-- translation-of: dependency-injection.md sha256:fc77b8e7699f2bb2 -->
+<!-- translation-of: dependency-injection.md sha256:7f8dd0964aeb8c90 -->
 
 # Injection de dépendances : les conteneurs du kit, NestJS, câblage manuel
 
@@ -668,8 +668,8 @@ D'après [`packages/di/README.md`](../../packages/di/README.fr.md),
   énumère) : des projets générés dans le style déclaré (la *stack* par défaut ; avec ReBAC et
   RabbitMQ ; avec knex et la découverte, seule et derrière NATS), dans le style explicite (la
   *stack* par défaut ; avec ReBAC et RabbitMQ), sur InversifyJS et sur Awilix (la *stack* par défaut
-  dans les deux styles, ReBAC et RabbitMQ, knex et la découverte, Prisma, TypeORM, et le preset
-  identity), avec `--di manual` (avec ABAC et knex ; avec Fastify, knex, RabbitMQ et Redis), et une
+  à chaque *pull request* ; le style explicite, ReBAC et RabbitMQ, knex et la découverte, Prisma,
+  TypeORM et le preset identity la nuit et avant une release), avec `--di manual` (avec ABAC et knex ; avec Fastify, knex, RabbitMQ et Redis), et une
   *stack* NestJS (ses contrôleurs, class-validator, Passport).
 - **Application de test** avec horloge fixe, identifiants séquentiels, bus en mémoire et *fakes*
   liés sous la classe du port.
