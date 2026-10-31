@@ -287,7 +287,79 @@ function pageProblems(root, english) {
     ...frenchHeadProblems(root, english, frenchText),
     ...linkProblems(root, french, frenchText),
     ...diagramPlacementProblems(root, english, { english: text, french: frenchText }),
+    ...shapeProblems(english, { english: text, french: frenchText }),
   ];
+}
+
+/**
+ * A JSON shape is code, which a translation leaves as it is, and which the stamp does not read:
+ * the inline code of the prose that opens with `{` (`{ next, planNext, slices }`) and the fenced
+ * JSON blocks, their comments left out, are the same in a page and its French page. What is left
+ * on each side once the shapes they share are taken out is reported, in the order of the page.
+ */
+function shapeProblems(english, texts) {
+  const french = frenchOf(english);
+  const theirs = [...jsonShapesOf(texts.english)];
+  const ours = jsonShapesOf(texts.french).filter((shape) => {
+    const at = theirs.indexOf(shape);
+
+    if (at === -1) {
+      return true;
+    }
+
+    theirs.splice(at, 1);
+    return false;
+  });
+  const reported = Math.max(ours.length, theirs.length);
+
+  return Array.from({ length: reported }, (_, index) => {
+    const [held, wanted] = [ours[index], theirs[index]];
+
+    if (held === undefined) {
+      return `${french}: lacks the JSON shape \`${wanted}\` of ${english}: a shape is code, the same in both pages`;
+    }
+
+    return wanted === undefined
+      ? `${french}: holds the JSON shape \`${held}\`, which ${english} does not: a shape is code, the same in both pages`
+      : `${french}: holds the JSON shape \`${held}\` where ${english} holds \`${wanted}\`: a shape is code, the same in both pages`;
+  });
+}
+
+/** The JSON shapes of a page, its whitespace collapsed: inline ones of the prose, then the fenced JSON blocks without their comments. */
+function jsonShapesOf(text) {
+  const prose = proseLines(text)
+    .map(({ raw }) => raw)
+    .join('\n');
+  const inline = [...prose.matchAll(/(`+)(\{[^`]*?\})\1/g)].map((match) => match[2]);
+  const fenced = jsonBlocksOf(text).map((block) => block.replace(/(^|\s)\/\/.*$/gm, '$1'));
+
+  return [...inline, ...fenced].map((shape) => shape.replace(/\s+/g, ' ').trim());
+}
+
+/** The bodies of the fenced blocks of a page whose language is JSON. */
+function jsonBlocksOf(text) {
+  const blocks = [];
+  let open;
+
+  for (const content of text.split('\n')) {
+    const marker = /^\s{0,3}(`{3,}|~{3,})\s*(\S*)/.exec(content);
+
+    if (open === undefined) {
+      open = marker === null ? undefined : { fence: marker[1], json: /^json[c5]?$/i.test(marker[2]), lines: [] };
+    } else if (
+      marker !== null &&
+      marker[1][0] === open.fence[0] &&
+      marker[1].length >= open.fence.length &&
+      content.trim() === marker[1]
+    ) {
+      blocks.push(...(open.json ? [open.lines.join('\n')] : []));
+      open = undefined;
+    } else {
+      open.lines.push(content);
+    }
+  }
+
+  return blocks;
 }
 
 function englishHeadProblems(english, text) {

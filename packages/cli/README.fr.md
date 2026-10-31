@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d0b1c2cbb139fab5 -->
+<!-- translation-of: README.md sha256:3de139ab81ec646f -->
 
 # ddd-ts-kit
 
@@ -2238,7 +2238,7 @@ next: resolve each hunk, `git add <file>`, then `npx ddd-ts-kit merge-trunk --co
 ```
 
 `--json` affiche le même rapport :
-`{ status, branch, trunk: { ref, commit }, base: { commit, evidence, landedAs?, unlanded?, notOnTrunk? }, conflicts: { plainMerge, ownDiff, automatic, forYou }, automatic: [{ file, kind, how }], forYou: [{ file, kind, why, hunks, ours: { branch, rows, change }, theirs: { ref, commits, change }, advice }], migrations, regenerate: { status, output? }, lostLines: { errors, warnings, accepted } | null, leftOut, stop?, commit?, next }`,
+`{ status, branch, trunk: { ref, commit }, base: { commit, evidence, landedAs?, unlanded?, notOnTrunk? }, conflicts: { plainMerge, ownDiff, automatic, forYou }, automatic: [{ file, kind, how }], forYou: [{ file, kind, why, hunks, ours: { branch, rows, change }, theirs: { ref, commits, change }, advice }], migrations, regenerate: { status, output? }, client?: { status, output? }, trunkMoved?: { merged, now }, lostLines: { errors, warnings, accepted } | null, leftOut, stop?, commit?, next }`,
 `status` valant `up-to-date`, `dry-run`, `stopped` ou `committed` et `evidence` `option`,
 `landed`, `recorded` ou `merge-base`. La garde du *plugin* refuse `--to-land` à un sous-agent :
 poser une branche est l'étape du chef d'orchestre, juste avant sa fusion en *squash*.

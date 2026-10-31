@@ -1295,7 +1295,7 @@ are all done while markers of its own keep it open gets a line of its own (only 
 may keep such a story open are blamed, one git call per file), with the command that lists them:
 `story M1: every row done, 3 markers left: npx ddd-ts-kit story-check M1` (see
 [story-check](#story-check)). `--json` prints
-`{ next, slices, remaining }`: `next` and `slices` are `null` when their file is missing,
+`{ next, planNext, slices, remaining }`: `next` and `slices` are `null` when their file is missing,
 `slices` holds `{ file, rows, byStatus, byOwner, duplicates, unscoped, unclosed }`, `unclosed`
 being `[{ story, markers, command }]`, a row not done carrying
 `ready: 'trunk' | 'branch' | 'waiting'` and `waitingFor` (its dependencies not done), and
