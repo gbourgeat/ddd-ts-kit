@@ -9,7 +9,7 @@
 
 .claude:
   # The image with git: the diff of the merge request is read from the repository.
-  image: node:24-bookworm
+  image: node:26-bookworm
   interruptible: true
   allow_failure: true
   variables:

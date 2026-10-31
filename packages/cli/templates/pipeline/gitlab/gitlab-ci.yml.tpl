@@ -48,7 +48,7 @@ variables:
 {{#if extras.gitlabSecurity}}
   AST_ENABLE_MR_PIPELINES: 'true'
 {{/if}}
-  NODE_IMAGE: node:24-bookworm-slim
+  NODE_IMAGE: node:26-bookworm-slim
   # Behind the dependency proxy of a group, a registry that rate-limits is never asked twice:
   # POSTGRES_IMAGE: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/postgres:18
   POSTGRES_IMAGE: postgres:18
@@ -105,7 +105,7 @@ install:
   extends: .node
   stage: install
   # The image with git: what a merge request covers is read from the difference with its target.
-  image: node:24-bookworm
+  image: node:26-bookworm
   cache:
     key:
       files:
