@@ -10,6 +10,7 @@ abstract class Other {}
 const PORT: Token<unknown> = Port;
 const OTHER: Token<unknown> = Other;
 
+<<<<<<< HEAD
 const EVERY_CONTAINER: readonly [string, () => Container][] = [
   ['tsyringe', tsyringeContainer],
   ['InversifyJS', inversifyContainer],
@@ -17,6 +18,13 @@ const EVERY_CONTAINER: readonly [string, () => Container][] = [
 ];
 
 describe.each(EVERY_CONTAINER)('the container %s', (_, newContainer) => {
+=======
+describe.each<[string, () => Container]>([
+  ['tsyringe', tsyringeContainer],
+  ['InversifyJS', inversifyContainer],
+  ['Awilix', awilixContainer],
+])('the container %s', (_, newContainer) => {
+>>>>>>> origin/main
   it('knows what is bound and what is not', () => {
     const container = newContainer();
 
@@ -88,6 +96,7 @@ describe.each(EVERY_CONTAINER)('the container %s', (_, newContainer) => {
     expect(container.resolve(PORT)).toEqual({ other: { name: 'dependency' } });
   });
 
+<<<<<<< HEAD
   it('lets the error of a factory through as it was thrown', () => {
     const container = newContainer();
     const failure = new Error('cannot connect');
@@ -115,6 +124,8 @@ describe.each(EVERY_CONTAINER)('the container %s', (_, newContainer) => {
 });
 
 describe.each(EVERY_CONTAINER)('the container %s, on a binding replaced', (_, newContainer) => {
+=======
+>>>>>>> origin/main
   it('resolves the most recent binding, whatever the kinds', () => {
     const container = newContainer();
 
@@ -139,6 +150,7 @@ describe.each(EVERY_CONTAINER)('the container %s, on a binding replaced', (_, ne
     expect(container.resolve(PORT)).toEqual({ name: 'second' });
   });
 
+<<<<<<< HEAD
   it('replaces a singleton already built by another factory', () => {
     const container = newContainer();
 
@@ -168,6 +180,31 @@ describe.each(EVERY_CONTAINER)('the container %s, on a binding replaced', (_, ne
     container.bindFactory(PORT, () => ({ name: 'third' }), 'singleton');
 
     expect(container.resolve(PORT)).toEqual({ name: 'third' });
+=======
+  it('lets the error of a factory through as it was thrown', () => {
+    const container = newContainer();
+    const failure = new Error('cannot connect');
+
+    container.bindFactory(
+      PORT,
+      () => {
+        throw failure;
+      },
+      'singleton',
+    );
+
+    expect(() => container.resolve(PORT)).toThrow(failure);
+  });
+
+  it('shares nothing between two containers', () => {
+    const first = newContainer();
+    const second = newContainer();
+
+    first.bindFactory(PORT, () => ({}), 'singleton');
+
+    expect(second.isBound(PORT)).toBe(false);
+    expect(first.native).not.toBe(second.native);
+>>>>>>> origin/main
   });
 });
 

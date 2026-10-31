@@ -8,7 +8,11 @@ import { Authenticator } from '@ddd-ts-kit/auth';
 {{/unless}}
 {{/if}}
 import { kernelModule, type Application as Container, type ContextModule, type JobsOptions } from '@ddd-ts-kit/di';
+<<<<<<< HEAD:packages/cli/templates/init/platform/composition/compose-application.container.ts.tpl
 import { createApplication } from '{{di.entry}}';
+=======
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
+>>>>>>> origin/main:packages/cli/templates/init/platform/composition/compose-application.tsyringe.ts.tpl
 {{#if events.outbox}}
 import { OutboxPublisher } from '@ddd-ts-kit/events';
 {{/if}}

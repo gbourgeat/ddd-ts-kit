@@ -18,7 +18,11 @@ export function specVars(scope: Scope, access: RenderContext): RenderContext {
   const declared = isDeclared(scope.config);
   const hosted = ['platformTestModule', declared ? 'context' : assembledContext(scope, '../../')];
 
+<<<<<<< HEAD
   const fromDi = (names: readonly string[]): string => diImports(scope.config, [...(listed ? ['contextModule'] : []), ...names]);
+=======
+  const fromDi = (names: readonly string[]): string => diImports([...(listed ? ['contextModule'] : []), ...names]);
+>>>>>>> origin/main
 
   return {
     diWithFake: fromDi(['createTestApplication', 'fake']),

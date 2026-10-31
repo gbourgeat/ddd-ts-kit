@@ -66,7 +66,11 @@ function diImport(scope: Scope, withFakes: boolean): string {
     'type Override',
   ];
 
+<<<<<<< HEAD
   return diImports(scope.config, names);
+=======
+  return diImports(names);
+>>>>>>> origin/main
 }
 
 /** A list on one line when it fits, one entry per line otherwise, as the formatter lays it out. */

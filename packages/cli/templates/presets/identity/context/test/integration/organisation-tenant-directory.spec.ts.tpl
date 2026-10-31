@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from '{{tests.module}}';
+<<<<<<< HEAD
 {{#if di.container}}
 import { contextModule, kernelModule } from '@ddd-ts-kit/di';
 import { createApplication } from '{{di.entry}}';
+=======
+{{#if di.tsyringe}}
+import { contextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
+>>>>>>> origin/main
 {{/if}}
 {{#if di.container}}
 import {

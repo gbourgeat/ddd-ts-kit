@@ -2,7 +2,11 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, fake } from '@ddd-ts-kit/di';
+<<<<<<< HEAD
 import { createTestApplication } from '{{di.entry}}';
+=======
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
+>>>>>>> origin/main
 import type { Actor } from '@ddd-ts-kit/kernel';
 import * as {{context.camel}}Declarations from '{{alias.context}}/{{context.kebab}}.declarations{{alias.ext}}';
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
