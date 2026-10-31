@@ -38,6 +38,7 @@ import { writeOverrides } from './manifest/write-overrides';
 import { writeInstallScripts } from './manifest/write-install-scripts';
 import { recordAgentProfile } from './record-agent-profile';
 import { recordNoOutbox } from './record-no-outbox';
+import { runGit } from '../commit/run-git';
 import { refuseUnprojectedRoot } from './refuse-unprojected-root';
 import { resolveStack, type StackOptions } from './stack/resolve-stack';
 import { templateVars } from './template-vars';
@@ -113,13 +114,21 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
 
   const report = ws.commit(options.dryRun);
 
-  report.notes.push(...keptFlags, ...keptCombinationNotes(config, flat), ...closingNotes(report, options, config));
+  report.notes.push(
+    ...keptFlags,
+    ...keptCombinationNotes(config, flat),
+    ...closingNotes(root, report, options, config),
+  );
 
   return report;
 }
 
+/** `init` creates no repository, and the git hooks and the first commit need one. */
+const NO_REPOSITORY =
+  'This directory is no git repository: `git init` comes first, by the owner, before `hooks:install` and the first commit.';
+
 /** What the person does next: write what a sandbox kept from being written, then install and verify a new project. */
-function closingNotes(report: WorkspaceReport, options: InitOptions, config: Config): string[] {
+function closingNotes(root: string, report: WorkspaceReport, options: InitOptions, config: Config): string[] {
   const unwritable = report.unwritable.length > 0 ? [unwritableNote(report.unwritable, options)] : [];
   const created = !options.dryRun && report.created.includes('package.json');
 
@@ -130,6 +139,7 @@ function closingNotes(report: WorkspaceReport, options: InitOptions, config: Con
       ? [
           inDialect('Run `npm install`, then `npm run verify`.', config.stack.packageManager),
           inDialect(NEXT_STEP, config.stack.packageManager),
+          ...(runGit(root, ['rev-parse', '--git-dir']) === undefined ? [NO_REPOSITORY] : []),
         ]
       : []),
   ];

@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { cli, exists, EXPLICIT_STACK, read, tempDir, walk, write } from './helpers';
 import { initProject } from './support/init-project';
@@ -180,6 +181,20 @@ describe('what init says to do next', () => {
     expect(next).toContain('`/ddd-ts-kit:start`');
     expect(next).toContain('`pnpm exec ddd-ts-kit status` says which step is next');
     expect(notes.indexOf(next)).toBe(notes.indexOf('Run `pnpm install`, then `pnpm run verify`.') + 1);
+  });
+
+  it('says git init comes first in a directory that is no repository, and says nothing in one that is', () => {
+    const said = (root: string): boolean =>
+      stringsAt(cli(root, 'init', '--json').json(), 'notes').some((note) =>
+        note.startsWith('This directory is no git repository: `git init` comes first'),
+      );
+
+    const repository = tempDir('note');
+
+    execFileSync('git', ['init', '-q', repository]);
+
+    expect(said(tempDir('note'))).toBe(true);
+    expect(said(repository)).toBe(false);
   });
 });
 

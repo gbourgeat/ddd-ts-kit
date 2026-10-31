@@ -16,7 +16,7 @@ refuses it. If a test reveals a defect or an untestable design, stop and report 
 
 ## Read little
 
-`src/contexts/<context>/CONTEXT.md`, then `npx ddd-ts-kit todo <context>` for every
+`src/contexts/<context>/CONTEXT.md`, then `npx ddd-ts-kit todo <context> --brief` for every
 `it.todo` left as `file:line` (`describe <context>` for what exists), then only the
 unit under test, its generated spec and the builders, fakes and worlds it uses. A missing
 spec, builder or fake is generated (`npx ddd-ts-kit generate builder ...`), not typed; so is
@@ -45,7 +45,7 @@ the arrangement several specs share (`npx ddd-ts-kit generate test-world <contex
 
 ## Finish
 
-`npm test -- <context>`, `npx ddd-ts-kit todo <context>` (no `it.todo` left), `npm run lint` (the shape
+`npm test -- <context>`, `npx ddd-ts-kit todo <context> --brief` (no `it.todo` left), `npm run lint` (the shape
 of the tests: `test/title-states-a-rule`, `test/no-logic`, `test/assertion-present`, `test/refusal-by-code`) and
 `npx ddd-ts-kit check --rule test/spec-required --rule test/no-mocks --rule test/helper-placed`. Report in a few
 lines: the behaviours now covered, the result, each behaviour you could not cover and why,

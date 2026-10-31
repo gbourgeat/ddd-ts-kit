@@ -147,69 +147,15 @@ the birth by its fact (`issuedAt(at)`) and the spec proves the event.
 
 ## End to end
 
-`npx ddd-ts-kit generate e2e <ctx> <UseCase>` writes the three baseline cases of a route:
-401 without a credential, 403 without the permission, the documented status with it. Add
-the business scenario; assert what a client observes (responses, published events), never
-the database. What happens after the answer (the outbox relayed, the handlers it reaches) is
-asserted once `await application.settled()` has resolved, never after a fixed delay: it fails
-naming what is still pending. An outside system that answers nowhere in a test run is answered by its fake, bound in `contextsOfTheRun()` of `test/e2e/support/start-application.ts` (the identity preset binds `FakeIdentityProviderAdmin` there); without it the outbox retries and `settled()` fails. A use case no route reaches, sent by an integration event
-handler, gets the same command: its spec publishes the upstream event, built from its
-declaration, with `await application.publish([event])`, then awaits `settled()`; pass
-`--event <eventType>` when handlers of several events send it. A use case only a job
-(`generate job`) starts gets `await application.runJob('<context>.<job>')` instead, then
-`settled()`. `runJob` throws on a per-tenant job that reached no tenant (`JobRun.tenants` is `0`):
-open a tenant first (an organisation), after `reset()`. On an ORM, each spec opens a copy of the PostgreSQL
-cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
-creates its tables there.
-
-A spec past 350 lines (`clean/file-size`) is split by behaviour into parts named after it:
-`test/e2e/place-order-refusals.e2e.spec.ts` beside `test/e2e/place-order.e2e.spec.ts`. With a
-journey across use cases, `test/e2e/journey-<name>.e2e.spec.ts`, it is the only end-to-end spec
-the guard lets you create by hand. What the specs of one context share (signing a person in, a
-world) goes in `test/e2e/support/<context>/`, never copied into each spec.
+For an end-to-end spec (`npx ddd-ts-kit generate e2e <ctx> <UseCase>`), read [end-to-end.md](end-to-end.md) first: the baseline cases, `settled()`, `publish`, `runJob`.
 
 ## Acceptance of a story, before its code
 
-The criteria are written first, in `docs/architecture/stories/<story>.md` under
-`## Acceptance criteria`, one item each: `- AC1: <what a client observes>`. Then
-`npx ddd-ts-kit generate acceptance <story>` writes `test/acceptance/<story>.acceptance.spec.ts`,
-an `it.todo` per criterion. Each becomes one or more scenarios through the API only
-(`test/acceptance-black-box`): routes, answers, problem documents, integration events. Title:
-the rows that make it pass, then the criterion, `'#US5.02 AC1 a customer places an order'`.
-Body wrapped in `pending(...)` of `@ddd-ts-kit/testing/e2e`: run
-`npm run test:e2e -- test/acceptance` and see each fail on an assertion (a scenario that passes or
-throws a `TypeError` fails the run). `npx ddd-ts-kit acceptance <story> --gate written` names
-what is left; once nothing is, `npx ddd-ts-kit acceptance <story> --lock`, and commit the spec and
-its lock together, before any code of the story.
-
-The slice that satisfies a scenario removes `pending(...)` in its commit, nothing else. A locked
-scenario is never changed to make code pass. When one seems wrong, compare it with its criterion:
-
-| What is wrong | Do |
-|---|---|
-| the code | fix the code; the scenario stays |
-| the specification changed | change the criterion in the story file, then its scenarios |
-| the scenario does not say what its criterion says | fix it |
-
-Then launch the `ddd-ts-kit:acceptance-judge` agent on each change `npx ddd-ts-kit acceptance
-<story>` reports (its subject and fingerprint): it compares the locked version, the new one, the
-criterion and the owner's answers, and writes `Verdict: amend` or `refuse`. `--lock` refuses
-every changed criterion, and every scenario changed while its criteria were not, without an
-`amend` verdict on that very version; the verdicts become amendments the owner validates. A
-`refuse` means restore it (git). Nobody but the judge writes a verdict, and a sub-agent never
-changes a scenario nor locks: the guard refuses all three. A host without the agents of the
-plugin asks the owner to write the verdict.
+For the acceptance spec of a story, read [acceptance.md](acceptance.md) first: criteria, `pending(...)`, `--lock`, and what to do with a scenario that seems wrong. A locked scenario is never changed to make code pass.
 
 ## A fix, before its code
 
-A defect is repaired by skill `ddd-ts-kit:fix` (`/ddd-ts-kit:fix <code>`), the proof first: the
-spec that reproduces it, at the level of the defect (an aggregate spec, a handler spec, a case
-of a contract suite, an end-to-end scenario), named after it (`'#FIX-412 refuses ...'`), run
-once to fail on an assertion, listed under `## Regression` of its story file and locked with
-`npx ddd-ts-kit acceptance <code> --lock` before any code. Format and lint the spec first (`--lock` refuses a spec that fails the formatter or the linter of
-the project). A locked regression spec is never changed to make the fix pass: the guard refuses a
-sub-agent, and a spec that is wrong is rewritten by the session of the fix and judged against the
-`## Statement` of the fix, as a scenario is against its criterion.
+A defect is repaired by skill `ddd-ts-kit:fix` (`/ddd-ts-kit:fix <code>`): the spec that reproduces it is written, run to fail, locked and committed before any code, and never changed to make the fix pass.
 
 ## Shape
 
