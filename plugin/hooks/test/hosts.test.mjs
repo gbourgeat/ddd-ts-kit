@@ -293,6 +293,131 @@ test('a patch line a host refuses to parse stays unread: a lower case header, a 
   assert.equal(run('pre-write', indented).output, undefined);
 });
 
+test('VS Code: its editor tools are judged before the write, each by its fields', () => {
+  const root = project();
+  const file = join(root, 'src/contexts/ordering/domain/aggregates/order.aggregate.ts');
+  const created = run('pre-write', vsCode(root, 'create_file', { filePath: file, content: 'export class Order {}' }));
+  assert.equal(decision(created), 'deny');
+  assert.match(reason(created), /order\.aggregate\.ts is a new file of a generated role.*generate aggregate/);
+  const module = join(root, 'src/contexts/ordering/ordering.module.ts');
+  const skipped = { filePath: module, oldString: "it('pays')", newString: "it.skip('pays')" };
+  assert.match(reason(run('pre-write', vsCode(root, 'replace_string_in_file', skipped))), /a skipped or focused test/);
+  const inserted = { filePath: module, code: '// @ts-ignore', explanation: 'x' };
+  assert.match(reason(run('pre-write', vsCode(root, 'insert_edit_into_file', inserted))), /a compiler diagnostic/);
+  const moved = {
+    filePath: module,
+    oldString: '// @ts-ignore\nconst a = 1;',
+    newString: '// @ts-ignore\nconst b = 1;',
+  };
+  assert.equal(run('pre-write', vsCode(root, 'replace_string_in_file', moved)).output, undefined);
+});
+
+// A call of a tool of VS Code as its chat hands it to a hook: its own name, its own fields, no matcher applied.
+function vsCode(root, tool_name, tool_input) {
+  return {
+    timestamp: '2026-10-31T22:21:43.968Z',
+    hook_event_name: 'PreToolUse',
+    session_id: 'vscode-session',
+    cwd: root,
+    tool_name,
+    tool_input,
+    tool_use_id: 'call-1',
+  };
+}
+
+test('VS Code: every editor tool is held to the scope of a worker, each file of a call', () => {
+  const root = project();
+  const agent = worker(root);
+  const outside = join(root, 'src/contexts/billing/x.ts');
+  const inside = join(root, 'src/contexts/ordering/y.ts');
+  const edit = { oldString: 'a', newString: 'b' };
+  for (const [name, tool] of Object.entries({
+    create_file: { filePath: outside, content: 'x' },
+    replace_string_in_file: { filePath: outside, ...edit },
+    insert_edit_into_file: { filePath: outside, code: 'x' },
+    edit_notebook_file: { filePath: outside, cellId: 'c', newCode: 'x', editType: 'edit' },
+    multi_replace_string_in_file: {
+      replacements: [
+        { filePath: inside, ...edit },
+        { filePath: outside, ...edit },
+      ],
+    },
+  })) {
+    assert.match(reason(run('pre-write', { ...vsCode(root, name, tool), ...agent })), /another bounded context/, name);
+  }
+  const scoped = { replacements: [{ filePath: inside, ...edit }, null, { oldString: 'no file' }] };
+  assert.equal(
+    run('pre-write', { ...vsCode(root, 'multi_replace_string_in_file', scoped), ...agent }).output,
+    undefined,
+  );
+  assert.equal(run('pre-write', vsCode(root, 'multi_replace_string_in_file', { replacements: 'x' })).output, undefined);
+});
+
+test('VS Code: the replacements of one file are one write, so each other file has its turn before the check', () => {
+  const root = project();
+  put(root, 'src/contexts/ordering/domain/services/clean.service.ts', 'export class Clean {}\n');
+  const clean = join(root, 'src/contexts/ordering/domain/services/clean.service.ts');
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const broken = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  const edit = { oldString: 'a', newString: 'b' };
+  const replacements = [
+    ...Array.from({ length: 6 }, () => ({ filePath: clean, ...edit })),
+    { filePath: broken, ...edit },
+  ];
+  const result = run('post-write', vsCode(root, 'multi_replace_string_in_file', { replacements }));
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /layer\/domain-purity/);
+  assert.doesNotMatch(result.stderr, /more written file/);
+});
+
+test('VS Code: a file written by an editor tool is checked after the write', () => {
+  const root = project();
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const filePath = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  const input = { filePath, oldString: 'a', newString: 'b' };
+  const result = run('post-write', vsCode(root, 'replace_string_in_file', input));
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /layer\/domain-purity/);
+});
+
+test('VS Code: with no matcher the write hooks run on every tool, and a read stays a read', () => {
+  const root = project();
+  const agent = worker(root);
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const broken = join(root, 'src/contexts/ordering/domain/services/pricing.service.ts');
+  const generated = join(root, 'src/contexts/ordering/domain/aggregates/order.aggregate.ts');
+  for (const [name, tool] of Object.entries({
+    read_file: { filePath: broken, startLine: 1, endLine: 2 },
+    copilot_viewImage: { filePath: generated },
+    run_notebook_cell: { filePath: generated, cellId: 'c' },
+  })) {
+    assert.equal(run('pre-write', vsCode(root, name, tool)).output, undefined, name);
+    assert.equal(
+      run('pre-write', {
+        ...vsCode(root, name, { ...tool, filePath: join(root, 'src/contexts/billing/x.ts') }),
+        ...agent,
+      }).output,
+      undefined,
+      name,
+    );
+    const after = run('post-write', vsCode(root, name, tool));
+    assert.equal(after.status, 0, name);
+    assert.equal(after.stderr, '', name);
+  }
+});
+
 test('malformed input never blocks', () => {
   const result = spawnSync('node', [guard, 'pre-write'], { input: 'not json', encoding: 'utf8' });
   assert.equal(result.status, 0);

@@ -234,7 +234,9 @@ runs on every tool call: an ordinary session starts no more processes than befor
 Each agent gets what its host runs. The skills work in all three. The six agents are sub-agents
 of Claude Code; Codex loads no agent from a plugin, and one session per worktree takes the place
 of `context-builder`. The hook runs wherever the host runs the hooks of a plugin: it reads the
-patches of Codex and the tool calls of Copilot as well as those of Claude Code. Codex cannot put
+patches of Codex, the tool calls of Copilot and the editor tools of VS Code as well as those of
+Claude Code. VS Code keeps no matcher, so there each hook of an event runs on every tool, and a
+read stays a read. Codex cannot put
 a question to the user, so what Claude Code asks the project owner is said to the user there,
 and left to the checks of the pipeline.
 

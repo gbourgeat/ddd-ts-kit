@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:729ed0f216396380 -->
+<!-- translation-of: coding-agents.md sha256:8c69f4fa6fe69766 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -259,8 +259,10 @@ configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le f
 Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les six
 agents sont des sous-agents de Claude Code ; Codex ne charge aucun agent depuis un plugin, et une
 session par worktree tient le rôle de `context-builder`. Le hook tourne partout où l'hôte exécute
-les hooks d'un plugin : il lit les patchs de Codex et les appels d'outils de Copilot aussi bien
-que ceux de Claude Code. Codex ne sait pas poser de question à l'utilisateur : ce que Claude Code
+les hooks d'un plugin : il lit les patchs de Codex, les appels d'outils de Copilot et les outils
+d'édition de VS Code aussi bien que ceux de Claude Code. VS Code ne garde aucun *matcher* : chaque
+hook d'un événement y tourne sur chaque outil, et une lecture reste une lecture. Codex ne sait pas
+poser de question à l'utilisateur : ce que Claude Code
 soumet au propriétaire du projet y est signalé à l'utilisateur, et laissé aux vérifications du
 pipeline.
 

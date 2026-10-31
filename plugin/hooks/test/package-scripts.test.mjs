@@ -66,6 +66,41 @@ test('the edits of a MultiEdit and the fields of Copilot are applied to the file
   assert.equal(created.output, undefined);
 });
 
+test('the editor tools of VS Code are applied to the file as well, each replacement in turn on its own file', () => {
+  const root = project();
+  const file = join(root, 'package.json');
+  const manifest = { name: 'shop', scripts: { lint: 'eslint .', test: 'vitest' }, version: '1.0.0' };
+  put(root, 'package.json', JSON.stringify(manifest, null, 2));
+  const created = { filePath: file, content: JSON.stringify({ ...manifest, scripts: { lint: 'true' } }) };
+  assert.match(
+    reason(run('pre-write', vsCodeCall(root, 'create_file', created))),
+    /changes the scripts `lint`, `test`/,
+  );
+  const same = { filePath: file, content: JSON.stringify({ ...manifest, version: '2.0.0' }) };
+  assert.equal(run('pre-write', vsCodeCall(root, 'create_file', same)).output, undefined);
+  const changed = { filePath: file, oldString: '"vitest"', newString: '"true"' };
+  const replaced = run('pre-write', vsCodeCall(root, 'replace_string_in_file', changed));
+  assert.match(reason(replaced), /changes the script `test`/);
+  const named = { filePath: file, oldString: '"name": "shop"', newString: '"name": "store"' };
+  assert.equal(run('pre-write', vsCodeCall(root, 'replace_string_in_file', named)).output, undefined);
+  put(root, 'other.json', JSON.stringify(manifest, null, 2));
+  const other = { filePath: join(root, 'other.json'), oldString: '"eslint ."', newString: '"true"' };
+  const elsewhere = [named, other];
+  const multi = (replacements) => vsCodeCall(root, 'multi_replace_string_in_file', { replacements });
+  assert.equal(run('pre-write', multi(elsewhere)).output, undefined);
+  const note = { filePath: file, oldString: '"version": "1.0.0"', newString: '"version": "1.0.0", "note": "x"' };
+  const turned = { filePath: file, oldString: '"note": "x"', newString: '"scripts": { "lint": "true" }' };
+  assert.equal(run('pre-write', multi([note])).output, undefined);
+  assert.equal(run('pre-write', multi([turned])).output, undefined);
+  assert.match(reason(run('pre-write', multi([note, other, turned]))), /changes the scripts `lint`, `test`/);
+  const inserted = run('pre-write', vsCodeCall(root, 'insert_edit_into_file', { filePath: file, code: '"x": 1' }));
+  assert.match(reason(inserted), /cannot read the scripts/);
+});
+
+function vsCodeCall(root, tool_name, tool_input) {
+  return { cwd: root, session_id: 'vscode-session', tool_name, tool_input };
+}
+
 test('a package.json the guard cannot read the scripts of is asked, and so is a patch it does not rebuild', () => {
   const root = project();
   const file = join(root, 'package.json');
