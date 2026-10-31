@@ -192,7 +192,7 @@ describe('platform-folders, on a project generated before the folders of the pla
 
     flatten(root);
 
-    expect(cli(root, 'generate', 'query', 'billing', 'ListInvoices', '--allow-name', '--public').code).toBe(0);
+    expect(cli(root, 'generate', 'query', 'billing', 'SearchInvoices', '--allow-name', '--public').code).toBe(0);
 
     const written = Object.entries(sources(root)).filter(([, content]) =>
       FLAT.some(([placed]) => content.includes(`platform/${placed}'`) || content.includes(`platform/${placed}.js'`)),

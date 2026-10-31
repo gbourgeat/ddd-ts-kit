@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:64936572412e5140 -->
+<!-- translation-of: commands.md sha256:bcd00f1d61a82094 -->
 
 # Quelle commande, quand
 
@@ -195,6 +195,14 @@ si bien que la même commande, avec le sens du mot, passe :
 npx ddd-ts-kit generate command ordering CancelOrder --permission order.cancel --aggregate Order \
   --term "Cancel=To withdraw an order before it is shipped"
 ```
+
+Le générateur refuse aussi, avant d'écrire, ce que le *checker* signalerait ensuite. Une requête nommée
+`List...` est refusée : une lecture qui prend des critères est une `Search<Things>`
+(`generate query <context> SearchInvoices --search --permission <aggregate>.<action>`). Un fait qui commence par son
+agrégat est refusé par `generate domain-event` : `generate domain-event ordering Order "Order Confirmed"` écrirait
+`OrderOrderConfirmed`, donnez `Confirmed` (`--allow-name` laisse passer un nom juste tel que saisi). `--birth` et
+`--event-sourced` valent à la création de l'agrégat : sur un agrégat qui existe, il est conservé, l'événement n'est
+pas écrit, et une `note:` le dit.
 
 Le *checker* signale une violation avec son identifiant de règle et une phrase de correction. Ici,
 un fichier du contexte `notification` de l'application d'exemple importe un agrégat de
