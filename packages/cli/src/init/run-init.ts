@@ -18,7 +18,7 @@ import { setUpSdk } from '../sdk';
 import { readTemplate, renderTemplate, type RenderContext } from '../templating';
 import { VERSION } from '../version';
 import { Workspace, type DiskWrites, type WorkspaceReport } from '../workspace';
-import { applyPreset } from '../presets/apply-preset';
+import { addPresets } from './add-presets';
 import { presetNamed } from '../presets/preset-named';
 import { addContext } from './add-context';
 import { existingName } from './existing-name';
@@ -211,14 +211,6 @@ function presetContexts(config: Config, options: InitOptions): string[] {
   return (options.presets ?? [])
     .filter((name) => !named.has(name) && ownEntry(config.contexts, name) === undefined)
     .map((name) => `${name}:${presetNamed(name).classification}`);
-}
-
-/** Each preset is written into the context of its name, which `addContexts` declared. */
-function addPresets(ws: Workspace, config: Config, names: readonly string[]): Config {
-  return names.reduce(
-    (current, name) => applyPreset(ws, current, { context: name, preset: presetNamed(name) }),
-    config,
-  );
 }
 
 /**

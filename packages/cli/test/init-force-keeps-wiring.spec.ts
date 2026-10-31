@@ -288,3 +288,18 @@ describe('init --force keeps what the team wrote where the generators write', ()
     expect(forced.stdout).not.toContain('could not keep');
   });
 });
+
+describe('init --force with the flags of the first init', () => {
+  it('applies a preset once: its context stays as written and a note says so', () => {
+    const flags = ['--orm', 'knex', '--authn', 'keycloak', '--tenancy', 'shared-table', '--privacy', 'on'];
+    const root = initProject(...flags, '--preset', 'identity');
+
+    commitAll(root);
+
+    const forced = ok(cli(root, 'init', ...flags, '--preset', 'identity', '--force'));
+
+    expect(forced.stdout).toContain('the identity preset is already applied: its context is yours');
+    expect(git(root, 'diff')).toBe('');
+    expect(git(root, 'status', '--short')).toBe('');
+  });
+});
