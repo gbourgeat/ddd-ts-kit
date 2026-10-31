@@ -3,6 +3,7 @@ import {
   generateGuarded,
   hasDatabaseUrl,
   offlinePrismaMigration,
+  refuseOtherOrm,
   requiredMigrationName,
   runOrmTool,
 } from '../migration';
@@ -17,6 +18,9 @@ import { parseMigrationArguments } from './parse-migration-arguments';
 export const prismaGenerateCommand: Command = (argv, io) => {
   const args = parseMigrationArguments(argv, { name: { type: 'string' } });
   const root = args.projectRoot;
+
+  refuseOtherOrm(root, 'prisma');
+
   const name = requiredMigrationName(args.text('name'));
 
   ensureDatabaseReachable();

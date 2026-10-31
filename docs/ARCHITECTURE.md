@@ -18,6 +18,9 @@ A system is a set of **bounded contexts**. Each one owns a model, a vocabulary a
   `ddd-ts-kit describe <context> --json` gives the same facts as data. `ddd-ts-kit docs` also
   writes `docs/behaviour/<context>.md`, what the tests of the context state, read from the titles
   of its specs.
+- A context is named after a business capability in kebab-case: never `shared-kernel`, a technical grouping
+  (`shared`, `common`, `core`, `utils`, `platform`...) when it is the whole name (`core-banking` is fine) nor the name of a layer or a folder of a context (`domain`, `test`...);
+  `generate context` refuses these names, since no other kind could write into such a context.
 - Every context is classified: `core` (differentiating, gets the best design effort),
   `supporting` (needed, not differentiating) or `generic` (buy or keep trivial).
 - Relationships are declared in `ddd-ts-kit.config.json`, never implied by an import. A

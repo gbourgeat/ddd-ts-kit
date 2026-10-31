@@ -30,6 +30,7 @@ import { ignoreWorktrees } from './ignore-worktrees';
 import { isTeamFile } from './is-team-file';
 import { forcedNote } from './forced-note';
 import { keptCombinationNotes } from './kept-combination-notes';
+import { keptFlagNotes } from './stack/kept-flag-notes';
 import { keptOrMerged } from './kept-or-merged';
 import { writeManifest } from './manifest/write-manifest';
 import { dependenciesAgainstStack } from './manifest/dependencies-against-stack';
@@ -78,6 +79,7 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
 
   const ws = new Workspace(root, options.force, disk);
   const config = { ...recordNoOutbox(ws, resolveStack(root, options), options.allowNoOutbox), initVersion: VERSION };
+  const keptFlags = keptFlagNotes(root, options);
 
   const projectName = existingName(root) ?? (toName(path.basename(path.resolve(root))).kebab || 'app');
   const flat = keepFlatPlatform(ws, config);
@@ -111,7 +113,7 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
 
   const report = ws.commit(options.dryRun);
 
-  report.notes.push(...keptCombinationNotes(config, flat), ...closingNotes(report, options, config));
+  report.notes.push(...keptFlags, ...keptCombinationNotes(config, flat), ...closingNotes(report, options, config));
 
   return report;
 }

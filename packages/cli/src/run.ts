@@ -1,4 +1,5 @@
 import type { Command } from './commands/command';
+import { inProjectDialect } from './package-manager/in-project-dialect';
 import type { Io } from './commands/io';
 import { acceptanceCommand } from './commands/acceptance';
 import { affectedCommand } from './commands/affected';
@@ -176,7 +177,9 @@ function internalError(argv: readonly string[], error: unknown, io: Io): number 
 
 /** Prints a mistake of the caller with its fix; a refused argument is answered with the usage of its command or kind. */
 function refused(error: CliError, argv: readonly string[], io: Io): number {
-  const fix = (error instanceof ArgumentsError ? usageFor(argv) : undefined) ?? error.fix;
+  const fix =
+    (error instanceof ArgumentsError ? usageFor(argv) : undefined) ??
+    inProjectDialect(error.fix, workingDirectoryOf(argv));
 
   if (argv.includes('--json')) {
     io.out(stdoutJson({ error: { message: error.message, fix } }));
@@ -185,6 +188,13 @@ function refused(error: CliError, argv: readonly string[], io: Io): number {
   }
 
   return error.exitCode;
+}
+
+/** Where the command runs: `--cwd`, else the working directory. */
+function workingDirectoryOf(argv: readonly string[]): string {
+  const asked = argv.indexOf('--cwd');
+
+  return (asked === -1 ? undefined : argv[asked + 1]) ?? process.cwd();
 }
 
 /** The command line with its command under its canonical name; `help <command> ...` read as `<command> ... --help`. */

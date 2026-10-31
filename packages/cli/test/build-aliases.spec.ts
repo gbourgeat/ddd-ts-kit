@@ -161,7 +161,16 @@ describe('ddd-ts-kit build-aliases, its refusals and its options', () => {
 
     expect(missing.code).toBe(2);
     expect(missing.stderr).toContain('tsconfig.other.json names no output directory that exists.');
-    expect(cli(root, 'build-aliases', '--project', 'tsconfig.absent.json').code).toBe(2);
+    const absent = cli(root, 'build-aliases', '--project', 'tsconfig.absent.json');
+
+    expect(absent.code).toBe(2);
+    expect(absent.stderr).toContain('tsconfig.absent.json does not exist.');
+
+    write(root, 'tsconfig.broken.json', '{ not json');
+
+    expect(cli(root, 'build-aliases', '--project', 'tsconfig.broken.json').stderr).toContain(
+      'tsconfig.broken.json names no output directory that exists.',
+    );
 
     execFileSync(process.execPath, [NATIVE_COMPILER, '-p', 'tsconfig.other.json'], { cwd: root, stdio: 'pipe' });
 

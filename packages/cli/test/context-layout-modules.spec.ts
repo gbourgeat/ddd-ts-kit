@@ -46,14 +46,14 @@ describe('a context whose module sits where 0.86 and 0.87 put it', () => {
     const refused = cli(root, 'move-to-module', 'billing', 'invoices', 'domain/aggregates');
 
     expect(refused.code).not.toBe(0);
-    expect(refused.stderr).toContain('npx ddd-ts-kit context-layout billing');
+    expect(refused.stderr).toContain('pnpm exec ddd-ts-kit context-layout billing');
   });
 
   it('is refused by the generators until it is moved: its new files would sit apart from their module', () => {
     const refused = cli(root, 'generate', 'value-object', 'billing', 'Rebate', '--module', 'invoices', '--allow-name');
 
     expect(refused.code).not.toBe(0);
-    expect(refused.stderr).toContain('npx ddd-ts-kit context-layout billing');
+    expect(refused.stderr).toContain('pnpm exec ddd-ts-kit context-layout billing');
   });
 
   it('moves to the tree of today on context-layout, adapters, routes and specs told by their imports', () => {

@@ -16,14 +16,23 @@ const entry = createRequire(path.join(root, 'package.json')).resolve('eslint');
 const { ESLint } = await import(pathToFileURL(entry).href);
 const withCache = cache === undefined ? {} : { cache: true, cacheLocation: cache, cacheStrategy: 'content' };
 const eslint = new ESLint({ cwd: root, fix, ...withCache });
-const results = await eslint.lintFiles(patterns.length === 0 ? ['.'] : patterns);
+const stop = (refusal) => {
+  process.stdout.write(JSON.stringify({ refusal }));
+  process.exit(0);
+};
+const results = await eslint.lintFiles(patterns.length === 0 ? ['.'] : patterns).catch((error) =>
+  error?.messageTemplate === 'file-not-found' ? stop('no-files') : Promise.reject(error),
+);
 
 if (fix) {
   await ESLint.outputFixes(results);
 }
 
 const rulesMeta = eslint.getRulesMetaForResults(results);
-const report = await (await eslint.loadFormatter(format)).format(results, { cwd: root, rulesMeta });
+const formatter = await eslint.loadFormatter(format).catch((error) =>
+  error?.code === 'ERR_MODULE_NOT_FOUND' ? stop('formatter') : Promise.reject(error),
+);
+const report = await formatter.format(results, { cwd: root, rulesMeta });
 const transitions = Object.fromEntries(
   Object.entries(rulesMeta).flatMap(([id, meta]) =>
     typeof meta?.docs?.transition === 'string' ? [[id, meta.docs.transition]] : [],
