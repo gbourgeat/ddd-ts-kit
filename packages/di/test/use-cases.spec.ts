@@ -13,7 +13,8 @@ import {
   QueryBus,
   UnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule, overrideForTests, type BindingInfo } from '../src';
+import { defineContextModule, kernelModule, overrideForTests, type BindingInfo } from '../src';
+import { createApplication } from './support/on-container';
 import { wiringFailure } from './support/failure';
 import { CancelOrder } from './support/ordering/application/commands/cancel-order/cancel-order.command';
 import { CancelOrderHandler } from './support/ordering/application/commands/cancel-order/cancel-order.handler';

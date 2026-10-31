@@ -10,6 +10,7 @@ export async function createInvoicesTable(knex: Knex): Promise<void> {
     table.text('id').primary();
     table.integer('amount').notNullable();
     table.text('status').notNullable();
+    table.jsonb('details');
     table.integer('version').notNullable();
     tenantColumn(table);
     auditColumns(table);

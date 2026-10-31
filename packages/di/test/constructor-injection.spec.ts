@@ -4,15 +4,8 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { Adapter, injected } from '@ddd-ts-kit/kernel/declarations';
-import {
-  contextModule,
-  createApplication,
-  createTestApplication,
-  declaredTokens,
-  fake,
-  kernelModule,
-  type DeclaredSource,
-} from '../src';
+import { contextModule, declaredTokens, fake, kernelModule, type DeclaredSource } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { discoverContext } from '../src/discovery';
 import * as billing from './fixtures/contexts/billing/billing.declarations';
 import * as mistakes from './fixtures/contexts/wiring-mistakes';

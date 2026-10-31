@@ -89,7 +89,7 @@ limits, and a recommendation by situation.
 | [Validation](tools/validation.md) | zod, class-validator, TypeBox or a Standard Schema library; shared schemas |
 | [Contract pairs](tools/contract-pairs.md) | which framework with which validation library, by team: the four pairs proven end to end, measured; oRPC and tRPC as a second door, not a pair |
 | [Representations and forms](tools/representations-and-forms.md) | XML and CSV without a library, and why; JSON Forms renderers for React, Angular and Vue, and the alternatives |
-| [Dependency injection](tools/dependency-injection.md) | tsyringe with the kit's declarations, NestJS, or manual wiring |
+| [Dependency injection](tools/dependency-injection.md) | tsyringe with the kit's declarations, NestJS, or manual wiring; InversifyJS and Awilix compared and measured |
 | [Persistence](tools/persistence.md) | Drizzle, Knex, Prisma or TypeORM; PostgreSQL versus others |
 | [Message brokers](tools/message-brokers.md) | in-process, RabbitMQ, Kafka, NATS JetStream or Redis Streams |
 | [Cache and coordination](tools/cache-and-coordination.md) | Redis, Dragonfly or Valkey; what the lock does and does not guarantee |

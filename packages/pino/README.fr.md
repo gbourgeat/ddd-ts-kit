@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:79337761513e4993 -->
+<!-- translation-of: README.md sha256:4a8c6a1bc0e68219 -->
 
 # @ddd-ts-kit/pino
 
@@ -54,7 +54,8 @@ export function createLogger(scope: ExecutionScope, settings: LogSettings): Pino
 import { tracing } from '@/platform/observability/tracing'; // en premier
 import { createLogger } from '@/platform/observability/create-logger';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 const scope = new AsyncLocalStorageExecutionScope();
 const logger = createLogger(scope, config.log);

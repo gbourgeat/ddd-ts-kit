@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:49fdac84a7e12446 -->
+<!-- translation-of: observability.md sha256:85fcdd12c588a72a -->
 
 # Observabilité
 
@@ -71,7 +71,8 @@ Les trois points d'accroche, dans la racine de composition :
 
 <!-- checked sample -->
 ```ts
-import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import type { Route } from '@ddd-ts-kit/http';
 import { mountExpress } from '@ddd-ts-kit/http/express';
 import { ExecutionScope, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';

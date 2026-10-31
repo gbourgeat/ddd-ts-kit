@@ -81,7 +81,11 @@ export type { PersonalDataUnderContract } from './contracts/personal-data/person
 export { readModelStoreContract, type ReadModelStoreContractOptions } from './contracts/read-model-store-contract';
 export type { ReadModelStoreUnderContract } from './contracts/read-model/read-model-store-under-contract';
 export { SourceOfTruth } from './contracts/read-model/source-of-truth';
-export { repositoryContract, type RepositoryContractOptions } from './contracts/repository-contract';
+export {
+  repositoryContract,
+  type JsonColumnValue,
+  type RepositoryContractOptions,
+} from './contracts/repository-contract';
 export {
   tenantIsolationContract,
   type TenantIsolationContractOptions,

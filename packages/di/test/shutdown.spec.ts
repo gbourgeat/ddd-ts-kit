@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryErrorReporter, InMemoryLogger, Logger, NoopLogger } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '../src';
+import { defineContextModule, fake, kernelModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 
 /** What happened while the application stopped, in order. */
 type Journal = string[];

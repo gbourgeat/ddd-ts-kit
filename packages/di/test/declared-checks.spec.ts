@@ -1,14 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AuthorizedCommand, Clock, type Actor } from '@ddd-ts-kit/kernel';
-import {
-  UseCaseDeclarations,
-  UseCaseGuard,
-  contextModule,
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  kernelModule,
-} from '../src';
+import { UseCaseDeclarations, UseCaseGuard, contextModule, defineContextModule, kernelModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import * as billing from './fixtures/contexts/billing/billing.declarations';
 import * as mistakes from './fixtures/contexts/wiring-mistakes';
 import { permissions } from './fixtures/contexts/billing/application/authorization/billing.permissions';

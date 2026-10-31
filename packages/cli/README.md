@@ -1291,7 +1291,8 @@ ddd-ts-kit todo [<context>] [--brief]
 `status` prints the `Next:` line of `docs/architecture/plan.md`, the rows of
 `docs/architecture/slices.md` by status and by owner, and per context the `TODO(domain)`,
 `TODO(platform)` and `it.todo` left, then those outside the contexts. A missing file is not an
-error. When the plan sits at step 7 (the build) the `Next:` line is derived from the rows (the next row ready on the trunk, or `7 build done` once every row is done) and the line of the plan is printed beside it, `planNext` in `--json`. Each row not done says whether it can start: ready on the trunk when every dependency is
+error; a missing `ddd-ts-kit.config.json` is one: before `init`, `status` refuses with exit 2 and
+names `init`, and prints no half answer. When the plan sits at step 7 (the build) the `Next:` line is derived from the rows (the next row ready on the trunk, or `7 build done` once every row is done) and the line of the plan is printed beside it, `planNext` in `--json`. Each row not done says whether it can start: ready on the trunk when every dependency is
 done, ready on a branch when each dependency not done is a row briefed to a worker whose worktree
 has commits ahead of its base (the `rows` of its `.ddd-ts-kit/worker.json`, as `status --workers`
 reads them), and waiting otherwise, with the ids it waits for. A story or a milestone whose rows
@@ -1705,7 +1706,8 @@ otherwise (under `agents.profile: "regulated"`, each line of the sandbox block t
 which makes each checkout and each worktree run its own lefthook and fail a commit, loudly,
 when its dependencies are missing; the fix is that line, or `init --force` for the whole file.
 The pre-commit hook under `git rev-parse --git-path hooks` must exist and come from lefthook;
-the fix is `npm run hooks:install`, once per clone. Then the guidance written once for the team
+the fix is `npm run hooks:install`, once per clone. Outside a git repository the hooks cannot be read: `doctor` then
+reports `hook git repository` as missing, which fails `--strict`, and `git init` comes first. Then the guidance written once for the team
 to own: `REVIEW.md`, the review policy, and under the regulated profile the two hooks of
 `.claude/hooks/`, are reported missing (`guidance`) and `init` writes them again without touching
 anything else.

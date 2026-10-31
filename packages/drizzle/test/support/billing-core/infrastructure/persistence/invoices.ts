@@ -1,4 +1,4 @@
-import { index, integer, text } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, text } from 'drizzle-orm/pg-core';
 import { auditColumns, contextSchema, tenantColumn } from '../../../../../src/postgres';
 
 /** One schema per bounded context: `billing-core` owns `billing_core.invoices`. */
@@ -10,6 +10,7 @@ export const invoices = billing.table(
     id: text('id').primaryKey(),
     amount: integer('amount').notNull(),
     status: text('status').$type<'draft' | 'issued'>().notNull(),
+    details: jsonb('details'),
     version: integer('version').notNull(),
     ...tenantColumn(),
     ...auditColumns(),

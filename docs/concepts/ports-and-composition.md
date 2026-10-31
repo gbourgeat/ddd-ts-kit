@@ -300,7 +300,8 @@ adapter in the application and a fake in a test, and the handler does not change
 <!-- checked sample -->
 ```ts
 import { Query, QueryBus, type QueryHandler } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, fake, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication, createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 
 export abstract class PersonDirectoryContract {
   abstract byIds(personIds: readonly string[]): Promise<readonly { readonly personId: string; readonly displayName: string }[]>;

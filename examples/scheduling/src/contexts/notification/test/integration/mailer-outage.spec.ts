@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { contextModule, createTestApplication, defineContextModule, fake } from '@ddd-ts-kit/di';
+import { contextModule, defineContextModule, fake } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
 import { DeadLetterReports, ProcessedEventStore, UnitOfWork, systemActor } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';

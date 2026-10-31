@@ -328,7 +328,8 @@ A job is switched off, rescheduled or tuned by configuration, never by a code ch
 
 <!-- checked sample -->
 ```ts
-import { createApplication, type ContextModule } from '@ddd-ts-kit/di';
+import { type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 declare const modules: readonly ContextModule[];
 declare const config: { readonly jobs: { readonly reminders: { readonly enabled: boolean }; readonly ledgerCron: string } };
@@ -433,7 +434,8 @@ another observer), give the kernel module yours:
 <!-- checked sample -->
 ```ts
 import { Clock, ErrorReporter, ExecutionScope, IdGenerator, Lock, Logger, Metrics } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { InProcessJobScheduler, JobCheckpoints, reportFailedRuns } from '@ddd-ts-kit/scheduling';
 
 declare const platformModule: ContextModule, billingModule: ContextModule;
@@ -535,7 +537,8 @@ not involved, and the test application of `@ddd-ts-kit/di` never starts jobs by 
 
 <!-- checked sample -->
 ```ts
-import { contextModule, createTestApplication, fake, type DeclaredSource } from '@ddd-ts-kit/di';
+import { contextModule, fake, type DeclaredSource } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { expect } from 'vitest';
 
 // the barrel of the context, and the fake of its Mailer port

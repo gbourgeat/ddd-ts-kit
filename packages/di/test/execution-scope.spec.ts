@@ -12,7 +12,8 @@ import {
   type IntegrationEvent,
   type Session,
 } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, kernelModule } from '../src';
+import { defineContextModule, kernelModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
 import { orderingModule } from './support/ordering/ordering.module';
 import { orderPlaced } from './support/ordering/published-language/order-placed-event';

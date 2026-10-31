@@ -1,5 +1,5 @@
 [English](dependency-injection.md) · **Français**
-<!-- translation-of: dependency-injection.md sha256:4e633a3e0186046a -->
+<!-- translation-of: dependency-injection.md sha256:869e9647a085ade5 -->
 
 # Injection de dépendances : tsyringe avec déclarations, NestJS, câblage manuel
 
@@ -11,6 +11,8 @@ trouvées avant que quoi que ce soit ne soit instancié. Avec NestJS, le contene
 fait le travail et les contextes sont câblés explicitement. Avec le câblage manuel, une fonction
 construit les objets à la main. Les trois gardent `domain/` et `application/` libres de tout
 conteneur ; ils diffèrent par ce qui est vérifié pour vous et par ce que le kit peut générer.
+InversifyJS et Awilix, que le kit ne câble pas pour vous, sont comparés à ces trois-là plus bas,
+mesures à l'appui, et la page dit quoi faire quand une équipe tient à une technologie.
 
 ## Ce qui se décide
 
@@ -127,7 +129,8 @@ déclarations en liaisons :
 ```ts
 import { AuthorizedCommand, Clock, IdGenerator, type Actor } from '@ddd-ts-kit/kernel';
 import { CommandHandler, Repository, injected } from '@ddd-ts-kit/kernel/declarations';
-import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // les classes du premier exemple, réduites à leur forme
 declare class Appointment {
@@ -191,7 +194,8 @@ nécessaire :
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, Clock, IdGenerator, type Actor } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // les classes du premier exemple, sans leurs décorateurs
 declare class Appointment {
@@ -306,7 +310,8 @@ un *fake* lié sous la classe du port, une horloge figée et des identifiants s�
 ```ts
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { AuthorizedCommand, Clock, IdGenerator, type Actor, type CommandHandler } from '@ddd-ts-kit/kernel';
-import { createTestApplication, defineContextModule, fake } from '@ddd-ts-kit/di';
+import { defineContextModule, fake } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { expect, it } from 'vitest';
 
 // le port, la commande et le gestionnaire du premier exemple, en quelques lignes
@@ -386,10 +391,10 @@ fois, dans `test/worlds/` : voir [Mondes](../concepts/testing-strategy.fr.md#mon
 | Application de test | `createTestApplication` avec `fake(Port, instance)` | module de test de Nest, ou `createTestBuses` | `createTestBuses` |
 | Dépendances d'exécution en plus | `tsyringe`, `reflect-metadata` | les *packages* de Nest | aucune |
 
-## Les bibliothèques sous-jacentes, vérifiées le 2026-10-10
+## Les bibliothèques sous-jacentes, vérifiées le 2026-10-31
 
 - **tsyringe** (Microsoft, MIT) : dernière version npm 4.10.0, publiée le 2025-04-16 ; environ
-  14 millions de téléchargements par semaine. Le dépôt n'est pas archivé, mais ses derniers
+  21 millions de téléchargements par semaine. Le dépôt n'est pas archivé, mais ses derniers
   *commits* fonctionnels datent d'avril 2025 (le seul *commit* ultérieur, en septembre 2026,
   épingle des actions de CI), sa dernière étiquette de version publiée (release) sur GitHub est
   v4.4.0, de 2020, et 82 tickets sont ouverts. En clair : très utilisé, stable, en maintenance
@@ -402,12 +407,192 @@ fois, dans `test/worlds/` : voir [Mondes](../concepts/testing-strategy.fr.md#mon
   vérifications du câblage sont celles du kit. C'est malgré tout une dépendance envers un projet
   calme : une équipe pour qui c'est inacceptable a les deux autres options, au coût indiqué
   plus bas.
-- **NestJS** (MIT) : `@nestjs/core` 12.1.2, publié le 2026-09-30, environ 16 millions de
+- **NestJS** (MIT) : `@nestjs/core` 12.3.2, publié le 2026-10-27, environ 23 millions de
   téléchargements par semaine, Node 20 ou plus récent, publié activement.
-- **Alternatives non prises en charge par le kit**, pour le contexte seulement : InversifyJS
-  8.2.3 et Awilix 13.0.5 sont tous deux maintenus (versions publiées en 2026). Aucun n'a
-  d'adaptateur ici ; en utiliser un revient, du point de vue du kit, à la sémantique de
-  `stack.di: manual`.
+- **InversifyJS** (MIT) : `inversify` 8.2.3, publié le 2026-07-23, environ 3,7 millions de
+  téléchargements par semaine, des *commits* en octobre 2026 (`inversify/monorepo`), 11 tickets
+  ouverts.
+- **Awilix** (MIT) : `awilix` 13.0.5, publié le 2026-06-15, environ 830 000 téléchargements par
+  semaine, Node 20 ou plus récent, des *commits* en octobre 2026, 7 tickets ouverts.
+- **Ce que le kit fait de ces deux-là** : rien. Aucun n'a d'adaptateur ici ; en utiliser un
+  revient, du point de vue du kit, à la sémantique de `stack.di: manual`, comme le détaille la
+  section suivante.
+
+## Cinq façons de câbler, comparées et mesurées
+
+Cette section oppose les trois options ci-dessus aux deux autres conteneurs qu'une équipe
+TypeScript demandera le plus probablement. InversifyJS et Awilix ne sont pas des valeurs de
+`stack.di` : la CLI ne génère rien pour eux, et un projet qui en veut un tourne sur `--di manual`
+([Utiliser quand même InversifyJS ou Awilix](#utiliser-quand-même-inversifyjs-ou-awilix)). Ce qui
+suit dit ce que ce choix apporte et ce qu'il coûte. Tout ce qui est donné comme mesuré a été
+compilé et exécuté le 2026-10-31.
+
+### Pourquoi ces deux-là
+
+Trois conditions : une version publiée dans les douze derniers mois, plus de 500 000
+téléchargements par semaine, et un conteneur utilisable sans adopter un framework. Les chiffres
+ont été relevés le 2026-10-31.
+
+| Conteneur | Dernière version | Téléchargements par semaine | Verdict |
+|---|---|---|---|
+| **InversifyJS** 8.2.3 | 2026-07-23 | 3,7 millions | retenu : actif, le plus proche de tsyringe, et capable de se passer de décorateurs |
+| **Awilix** 13.0.5 | 2026-06-15 | 830 000 | retenu : actif, l'approche opposée, ni décorateur ni réflexion |
+| typed-inject 5.0.0 | 2024-12-13 | 5,5 millions | écarté : aucune version depuis 22 mois, et Stryker en dépend, si bien que ses téléchargements disent peu de qui le choisit |
+| injection-js 2.6.1 | 2025-10-22 | 1,8 million | écarté : l'injecteur d'Angular sorti d'Angular, et ng-packagr en dépend, la même remarque vaut donc |
+| TypeDI 0.10.0 | 2022-12-09 | 830 000 | écarté : aucune version depuis 2022 |
+| iti 0.8.0 | 2025-10-08 | 57 000 | écarté : trop peu d'utilisateurs |
+| `@tsed/di` 8.44.13 | 2026-10-29 | 38 000 | écarté : le conteneur du framework Ts.ED |
+| brandi 5.1.0 | 2026-01-15 | 31 000 | écarté : trop peu d'utilisateurs |
+| `@needle-di/core` 1.2.1 | 2026-09-04 | 28 000 | écarté : trop peu d'utilisateurs |
+
+### La même liaison dans chacun
+
+Les classes sont celles du premier exemple : seules les lignes qui les lient diffèrent.
+
+```ts
+// InversifyJS avec une liste : aucun décorateur, et le compilateur tient la liste aux paramètres de la fonction
+container
+  .bind(BookAppointmentHandler)
+  .toResolvedValue(
+    (appointments: AppointmentRepository, clock: Clock, ids: IdGenerator) =>
+      new BookAppointmentHandler(appointments, clock, ids),
+    [AppointmentRepository, Clock, IdGenerator],
+  );
+
+// InversifyJS tel que sa documentation l'écrit : des décorateurs sur la classe elle-même
+@injectable()
+class BookAppointmentHandler {
+  constructor(
+    @inject(AppointmentRepository) private readonly appointments: AppointmentRepository,
+    @inject(Clock) private readonly clock: Clock,
+    @inject(IdGenerator) private readonly ids: IdGenerator,
+  ) {}
+}
+
+// Awilix avec une fonction : le cradle est l'objet qui tient chaque inscription, par nom
+container.register({
+  bookAppointmentHandler: asFunction(
+    ({ appointments, clock, ids }: Cradle) => new BookAppointmentHandler(appointments, clock, ids),
+  ).singleton(),
+});
+
+// Awilix classic : aucune liste, les noms des paramètres du constructeur sont les jetons
+container.register({ bookAppointmentHandler: asClass(BookAppointmentHandler).singleton() });
+```
+
+### La grille
+
+| | `@ddd-ts-kit/di` sur tsyringe | NestJS | Manuel | InversifyJS | Awilix |
+|---|---|---|---|---|---|
+| Une valeur de `stack.di` | oui, le défaut | oui, avec `--http nest` seulement | oui | non : sur `--di manual` | non : sur `--di manual` |
+| Ce qu'écrivent les générateurs | chaque liaison, déclarée ou explicite | la famille câblée à la main : `new` dans le fichier du module | `new` dans le fichier du module | `new` à côté de votre conteneur, à déplacer à la main | `new` à côté de votre conteneur, à déplacer à la main |
+| Jeton | la classe du port | la classe du port | aucun : une variable | la classe du port | une chaîne, la clé du *cradle* |
+| Comment une dépendance est nommée | une liste, générée ou écrite, tenue au constructeur par le compilateur | `inject`, une liste que rien ne tient à la fabrique | les arguments de `new` | une liste tenue à la fonction par le compilateur ; ou `@inject` | une clé du *cradle* ; ou le nom du paramètre en mode classic |
+| Décorateurs dans vos classes | les déclarations du kit, ou aucun dans le style explicite | aucun avec des *providers* par fabrique | aucun | aucun avec des listes ; sinon `@injectable()` et `@inject()`, refusés dans `application/` et `domain/` | aucun |
+| Mode des décorateurs | standard ou legacy | legacy | non concerné | l'un ou l'autre avec des listes ; legacy avec `@inject()`, un décorateur de paramètre | non concerné |
+| Graphe vérifié avant le premier message | oui, avant que rien ne soit construit | oui, tout est construit au démarrage | par le compilateur | non : à chaque premier `get` | non : à chaque premier `resolve` |
+| Autorisation et gestionnaires en double au démarrage | oui (`WiringError`) | non | non | non | non |
+| Remplacer un port dans un test | `fake(Port, instance)` | module de test de Nest, ou `createTestBuses` | `new` et `createTestBuses` | un conteneur enfant, ou `rebind` ; les *specs* générées utilisent `new` | `createScope` et `register` ; les *specs* générées utilisent `new` |
+| Objet par requête | *singleton* ou transitoire ; l'acteur, le *tenant* et l'identifiant de corrélation passent par `ExecutionScope` | `Scope.REQUEST` | à la main | `inRequestScope` : par appel à `get`, pas par requête HTTP | `createScope` et `.scoped()` : son point fort |
+| Fermer une ressource | `onStop` d'un module | `onModuleDestroy` | à la main | `onDeactivation`, exécuté par `unbindAll` | `.disposer()`, exécuté par `dispose` |
+| *Bundle* minifié | oui, avec le *barrel* ; jamais avec la découverte | oui, ses *packages* optionnels laissés externes | oui | oui | oui avec des fonctions ; classic échoue (plus bas) |
+| Santé du projet, 2026-10-31 | activité faible (tsyringe) | actif | aucune dépendance | actif | actif |
+
+### Quand une erreur de câblage est trouvée
+
+La différence la plus utile, et celle qu'une liste de fonctionnalités cache. Six erreurs ont été
+écrites exprès dans une petite application, une fois par façon de câbler, puis chaque cas a été
+compilé par `tsc` 7 et exécuté ; un septième cas sans erreur a passé partout. Le plus tôt est le
+mieux : **compilation**, puis **démarrage** (avant de servir quoi que ce soit), **première
+résolution**, **premier appel** (le gestionnaire s'exécute et casse), et **jamais** (rien ne dit
+rien).
+
+| Erreur | `@ddd-ts-kit/di` | NestJS, fabriques | Manuel | InversifyJS, listes | InversifyJS, décorateurs | Awilix, fonctions | Awilix, classic |
+|---|---|---|---|---|---|---|---|
+| Un port lié à rien | démarrage | démarrage | compilation | première résolution | première résolution | première résolution | première résolution |
+| Deux dépendances interverties | compilation | premier appel | compilation | compilation | premier appel | compilation | impossible : par nom |
+| Une dépendance oubliée | compilation | premier appel | compilation | compilation | démarrage | compilation | un paramètre renommé : première résolution |
+| Un adaptateur à qui manque une méthode du port | compilation | premier appel | compilation | compilation | compilation | premier appel | premier appel |
+| Un port lié deux fois | démarrage | jamais : la dernière gagne | compilation | première résolution | première résolution | jamais : la dernière gagne | jamais : la dernière gagne |
+| Un cycle entre deux ports | démarrage | démarrage | compilation | première résolution | première résolution | première résolution | première résolution |
+
+Trois lectures :
+
+- **Le câblage manuel est la colonne la plus stricte.** Il trouve les six à la compilation, parce
+  qu'une variable doit exister avant d'être passée. Ce à quoi il renonce est ailleurs : un
+  gestionnaire jamais inscrit et une enveloppe oubliée autour d'un adaptateur, qu'aucun
+  compilateur ne voit.
+- **InversifyJS avec des listes est le plus strict des deux conteneurs,** et ses décorateurs en
+  abandonnent une partie : un `@inject` qui nomme le mauvais port compile. Ses erreurs nomment ce
+  qui ne va pas (`Ambiguous bindings found for service`, `Circular dependency found: A -> B -> A`).
+- **Awilix ne lie pas `register` au type du conteneur** : `createContainer<Cradle>()` type ce que
+  vous lisez, pas ce que vous écrivez, si bien qu'un adaptateur incomplet compile et qu'un second
+  `register` remplace le premier sans un mot.
+
+Résoudre chaque gestionnaire à la fin de la composition fait de chaque « première résolution » un
+« démarrage » : la recette plus bas le fait.
+
+### Ce que cela coûte, mesuré
+
+| Façon de câbler | Démarrage, 91 liaisons | Démarrage, 346 liaisons | Démarrage, *bundle* minifié | *Bundle*, minifié / gzip | Tas | Mémoire résidente | Résoudre un *singleton* | Construire trois classes transitoires |
+|---|---|---|---|---|---|---|---|---|
+| Manuel | 87 ms | 92 ms | 24 ms | 23 / 2 Kio | 8,7 Mio | 75 Mio | 43 ns | 46 ns |
+| tsyringe seul | 94 ms | 102 ms | 28 ms | 56 / 11 Kio | 9,3 Mio | 75 Mio | 88 ns | 227 ns |
+| `@ddd-ts-kit/di`, style explicite | 125 ms | 133 ms | 36 ms | 146 / 40 Kio | 10,6 Mio | 85 Mio | 236 ns | 1 378 ns |
+| InversifyJS, listes | 124 ms | 133 ms | 35 ms | 126 / 25 Kio | 11,2 Mio | 79 Mio | 59 ns | 110 ns |
+| InversifyJS, décorateurs | 124 ms | 135 ms | 36 ms | 130 / 27 Kio | 11,4 Mio | 78 Mio | 64 ns | 110 ns |
+| Awilix, fonctions | 102 ms | 109 ms | 36 ms | 123 / 32 Kio | 10,1 Mio | 78 Mio | 55 ns | 211 ns |
+| Awilix, classic | 101 ms | 108 ms | échoue | 118 / 32 Kio | 10,0 Mio | 77 Mio | 58 ns | 215 ns |
+| NestJS, fabriques | 202 ms | 218 ms | 80 ms | 425 / 109 Kio | 17,3 Mio | 104 Mio | 58 ns | 5 447 ns |
+
+| Ce qui est installé | *Packages* | Sur le disque |
+|---|---|---|
+| tsyringe et `reflect-metadata` | 3 | 1,1 Mo |
+| `@ddd-ts-kit/di` avec eux, kernel et scheduling compris (le kernel est dans chaque projet du kit) | 6 | 16 Mo |
+| InversifyJS | 8 | 6,9 Mo |
+| Awilix | 19 (sa seule dépendance, `fast-glob`, amène les autres) | 1,7 Mo |
+| NestJS (`core`, `common`, `rxjs`, `reflect-metadata`) | 22 | 18 Mo |
+
+Comment cela a été mesuré : un poste (Intel Core i7-12700H, 20 CPU logiques, 31 Go, Linux,
+Node.js 26.13.0), `@ddd-ts-kit/di` et `@ddd-ts-kit/kernel` 0.105.0, tsyringe 4.10.0, InversifyJS
+8.2.3, Awilix 13.0.5, `@nestjs/core` 12.3.2, `tsc` 7.0.2, esbuild 0.28.2. Un générateur écrit la
+même application une fois par façon de la câbler : cinq contextes de quatre ports avec leurs
+adaptateurs, un service et douze gestionnaires de commande de quatre dépendances chacun, trois
+ports partagés et une chaîne de trois classes transitoires, soit 91 liaisons et 60 gestionnaires ;
+puis vingt contextes, 346 liaisons et 240 gestionnaires. Chaque variante charge
+`@ddd-ts-kit/kernel`, comme chaque projet du kit ; aucune n'a de bus, de route ni de base de
+données, le chiffre est donc celui du conteneur. Le style déclaré n'a pas été mesuré.
+
+Un démarrage est un nouveau processus, de son lancement à sa sortie une fois chaque gestionnaire
+construit : 40 exécutions par variante prises à tour de rôle, sous `nice`, la médiane dans le
+tableau, le 90e centile à moins de 11 % d'elle ; un processus `node` vide prend 18 ms. Le *bundle*
+est esbuild avec `--bundle --minify` pour Node 22, les *packages* optionnels de Nest laissés
+externes. La mémoire est la médiane de 10 exécutions après deux passages forcés du ramasse-miettes,
+chaque gestionnaire construit. Une résolution est la médiane de 5 processus de cinq tours chacun,
+200 000 *singletons* et 50 000 graphes, dans une boucle asynchrone, comme l'est un message du bus :
+les 43 ns de la ligne manuelle sont cette boucle, une lecture dans une *map*, et rien d'autre.
+NestJS construit un graphe transitoire par son `resolve` asynchrone. La charge de la machine n'a
+jamais dépassé 2,03, et aucune exécution n'a échoué ni n'a été écartée.
+
+Ce qu'il faut en retenir :
+
+- **La vitesse ne décide de rien.** L'écart entre le *singleton* le plus rapide et le plus lent est
+  de 0,2 microseconde par message, contre une milliseconde pour une requête. Le kit est le plus
+  lent ici parce que chaque résolution vérifie la liaison et surveille les cycles.
+- **InversifyJS démarre dans le temps du kit, sans ses vérifications.** Awilix démarre 23 ms plus
+  tôt. Dans un *bundle* minifié, où le chargement des fichiers a disparu, les trois sont à égalité,
+  de 35 à 36 ms.
+- **NestJS est le seul dont le coût se prévoit** : 77 ms de plus que le kit à chaque démarrage,
+  44 ms de plus dans un *bundle* minifié, environ 7 Mio de tas en plus et trois fois le *bundle*.
+  C'est le prix d'un framework présent pour d'autres raisons, et il compte sur une fonction
+  démarrée à chaque requête.
+- **Awilix classic ne survit pas à un minificateur**, qui renomme les paramètres qu'il lit : `Could
+  not resolve 'e'`, à la première résolution. `--keep-names` n'y change rien. Sans identifiants
+  minifiés il fonctionne, sous `tsc`, `tsx` comme swc.
+- **`@inject()` demande le mode legacy.** Sous les décorateurs standard, `tsc` le refuse (`TS1206`)
+  et `tsx` échoue à l'exécuter ; `@injectable()` seul fonctionne dans les deux modes. En mode
+  legacy il a tourné sous `tsc`, `tsx` et swc, sans `emitDecoratorMetadata`. InversifyJS importe
+  `reflect-metadata` lui-même.
 
 ## Critères de choix
 
@@ -507,6 +692,8 @@ exécuté seul : construire les objets à la main, c'est cela la racine de compo
 
 ![Un arbre de décision : NestJS déjà en place comme framework mène à son conteneur ; une politique contre les dépendances peu actives ou un très petit service mène au câblage manuel ; sinon tsyringe dans le style déclaré, assemblé depuis un barrel quand l'application passe par un bundler, et avec un module explicite pour un contexte au câblage inhabituel](../assets/diagrams/dependency-injection-choosing.fr.svg)
 
+### Selon les besoins du projet
+
 | Situation | Choix |
 |---|---|
 | Nouveau projet sur Express ou Fastify | tsyringe dans le style déclaré avec un *barrel* : le défaut, le plus généré, le plus vérifié |
@@ -514,13 +701,124 @@ exécuté seul : construire les objets à la main, c'est cela la racine de compo
 | Déploiement serverless ou empaqueté | tsyringe, `contextModule` avec le *barrel* ; évitez la découverte |
 | Application NestJS existante | conteneur de NestJS, style explicite, *providers* par fabrique |
 | Une politique contre les dépendances peu actives, ou un très petit service | câblage manuel, en sachant à quelles vérifications au démarrage on renonce |
+| La même politique, dans une équipe qui n'écrira pas le câblage à la main | InversifyJS avec des listes sur `--di manual` : actif, ses listes vérifiées par le compilateur ; le prix est plus bas |
+| Chaque invocation démarre un processus, chaque milliseconde compte | câblage manuel dans un *bundle* minifié : 24 ms, contre 36 pour le kit et 80 pour NestJS |
+| Beaucoup d'objets qui vivent le temps d'une requête | `ExecutionScope` d'abord : il porte déjà l'acteur, le *tenant* et l'identifiant de corrélation. Au-delà, Awilix avec `createScope` sur `--di manual` |
+
+### Par affinité : l'équipe tient à une technologie
+
+Une équipe qui connaît bien un outil a une vraie raison de le garder. Le tableau dit quoi faire,
+ce que ce choix garde et ce qu'il paie. Sans une telle affinité, ne prenez ni InversifyJS ni
+Awilix : sur les erreurs ci-dessus, le câblage du kit n'en trouve jamais une plus tard
+qu'InversifyJS avec des listes ou Awilix avec des fonctions, et le câblage manuel les trouve toutes
+à la compilation.
+
+| L'équipe veut | Faites ceci | Elle garde | Elle paie |
+|---|---|---|---|
+| tsyringe | `--di tsyringe`, le défaut ; `@injectable()` et `@inject()` de tsyringe restent hors de votre code | tout ce que dit cette page | l'habitude de ses décorateurs : les dépendances sont listées, jamais obtenues par réflexion |
+| NestJS | `--http nest`, qui amène `--di nest` ; des *providers* par fabrique | ses modules, son cycle de vie et son module de test | le style déclaré, les vérifications de `createApplication`, une liste `inject` que rien ne tient à la fabrique, 77 ms à chaque démarrage |
+| InversifyJS | `--di manual`, des liaisons avec listes dans `<context>.module.ts`, aucun décorateur dans `application/` | son API de liaison, des listes que le compilateur vérifie, des erreurs qui nomment un cycle ou une double liaison, `onDeactivation` | les générateurs, qui écrivent `new` à côté de lui ; les vérifications de `createApplication` ; un déplacement à la main après chaque `generate` |
+| Awilix | `--di manual`, des fonctions sur un *cradle* typé dans `<context>.module.ts` ; le mode classic seulement si les identifiants ne sont jamais minifiés | le *cradle*, `createScope`, `.disposer()`, `container.registrations` pour tout résoudre au démarrage | la même chose, plus un port lié deux fois ou un adaptateur incomplet qui compilent |
+| Aucun conteneur | `--di manual`, tel que généré | chaque erreur ci-dessus à la compilation, aucune dépendance | les vérifications de `createApplication`, les enveloppes appliquées à la main |
+
+## Utiliser quand même InversifyJS ou Awilix
+
+Essayé sur un projet généré par 0.105.0 avec `--di manual --http express`, un contexte, un
+*repository*, une commande. Avec l'un ou l'autre conteneur à la place des lignes générées,
+`typecheck`, `ddd-ts-kit check`, `ddd-ts-kit lint` et dependency-cruiser passent, et une commande
+envoyée à travers l'application composée atteint son gestionnaire. Les exemples ne sont pas
+compilés par le *pipeline* de ce dépôt, qui ne dépend d'aucune des deux bibliothèques. Le contexte
+construit son conteneur dans son fichier de module, le seul fichier d'un contexte autorisé à
+connaître toutes les couches :
+
+```ts
+// contexts/billing/billing.module.ts
+function registerHandlers(platform: Platform): void {
+  const container = billingContainer(platform);
+
+  // ddd-ts-kit:handlers
+  platform.commands.register(IssueInvoiceCommand, container.get(IssueInvoiceHandler), { context: 'billing' });
+  // /ddd-ts-kit:handlers
+}
+
+function billingContainer(platform: Platform): Container {
+  const container = new Container({ defaultScope: 'Singleton' });
+
+  container
+    .bind(InvoiceRepository)
+    .toResolvedValue(() =>
+      platform.adapter(new InMemoryInvoiceRepository(), {
+        kind: 'repository',
+        context: 'billing',
+        token: 'InvoiceRepository',
+      }),
+    );
+
+  container
+    .bind(IssueInvoiceHandler)
+    .toResolvedValue((invoices: InvoiceRepository) => new IssueInvoiceHandler(invoices), [InvoiceRepository]);
+
+  return container;
+}
+```
+
+Avec Awilix, `billingContainer` déclare un *cradle* et inscrit des fonctions, et le gestionnaire
+vient de `container.resolve('issueInvoiceHandler')` :
+
+```ts
+interface BillingCradle {
+  invoiceRepository: InvoiceRepository;
+  issueInvoiceHandler: IssueInvoiceHandler;
+}
+
+function billingContainer(platform: Platform): AwilixContainer<BillingCradle> {
+  const container = createContainer<BillingCradle>({ injectionMode: InjectionMode.PROXY, strict: true });
+
+  container.register({
+    invoiceRepository: asFunction(() =>
+      platform.adapter(new InMemoryInvoiceRepository(), {
+        kind: 'repository',
+        context: 'billing',
+        token: 'InvoiceRepository',
+      }),
+    ).singleton(),
+    issueInvoiceHandler: asFunction(
+      ({ invoiceRepository }: BillingCradle) => new IssueInvoiceHandler(invoiceRepository),
+    ).singleton(),
+  });
+
+  return container;
+}
+```
+
+Demander le gestionnaire pendant que le module l'inscrit construit le graphe au démarrage : un port
+lié à rien ou un cycle arrête alors l'application avant qu'elle ne serve quoi que ce soit. Ce qui
+tient, et ce qu'il faut surveiller :
+
+- **Le conteneur reste dans le fichier du module.** Un conteneur importé dans `domain/` ou
+  `application/` est refusé (`layer/*`, par `check`, par le lint et par dependency-cruiser), si bien
+  que `@injectable()` sur un gestionnaire est refusé. Sur une classe d'`infrastructure/`, il passe.
+- **Chaque adaptateur passe toujours par `platform.adapter`.** C'est lui qui applique le traçage et
+  la résilience ; une liaison qui l'évite laisse un adaptateur non tracé, et rien ne le signale.
+- **`generate` continue d'écrire `new`, et rien ne vous prévient.** Le `generate command` suivant
+  sur ce module a ajouté son propre `new InMemoryInvoiceRepository()` entre les marqueurs, à côté
+  du conteneur : cela a compilé et `ddd-ts-kit check` n'a rien signalé, avec deux instances du
+  *repository* et l'état d'un adaptateur en mémoire partagé entre elles. Après chaque `generate`,
+  déplacez ce qu'il a écrit dans le conteneur.
+- **Un gestionnaire jamais inscrit reste invisible.** `check` ne le voit pas, comme avec le câblage
+  manuel : la première commande le trouve.
+- **Les *specs* ne passent pas par votre conteneur.** Une *spec* générée construit le gestionnaire
+  avec `new` et l'exécute sur `createTestBuses`. C'est ce qui la garde rapide ; cela veut aussi dire
+  qu'une *spec* unitaire ne trouve pas une erreur dans le conteneur.
 
 ## Sources
 
 - tsyringe : https://github.com/microsoft/tsyringe (*commits*, versions publiées et tickets lus
-  le 2026-10-10) ; entrée `tsyringe` du registre npm.
+  le 2026-10-31) ; entrée `tsyringe` du registre npm.
 - Documentation de NestJS, *providers* personnalisés : https://docs.nestjs.com/fundamentals/custom-providers
-- InversifyJS : https://inversify.io ; Awilix : https://github.com/jeffijoe/awilix
+- InversifyJS : https://inversify.io et https://github.com/inversify/monorepo ; Awilix :
+  https://github.com/jeffijoe/awilix ; entrées du registre npm et chiffres hebdomadaires de
+  https://api.npmjs.org/downloads, lus le 2026-10-31.
 - Notes de version de TypeScript 5.0, décorateurs :
   https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html
 - Robert C. Martin, Clean Architecture, Prentice Hall, 2017, chapitre 26 (« The Main

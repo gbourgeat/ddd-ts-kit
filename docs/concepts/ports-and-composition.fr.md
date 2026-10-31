@@ -1,5 +1,5 @@
 [English](ports-and-composition.md) · **Français**
-<!-- translation-of: ports-and-composition.md sha256:1364ceeba2847a3e -->
+<!-- translation-of: ports-and-composition.md sha256:3e57b4d00cb100e4 -->
 
 # Ports et composition
 
@@ -313,7 +313,8 @@ l'adaptateur dans l'application et un *fake* dans un test, et le gestionnaire ne
 <!-- checked sample -->
 ```ts
 import { Query, QueryBus, type QueryHandler } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, fake, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication, createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 
 export abstract class PersonDirectoryContract {
   abstract byIds(personIds: readonly string[]): Promise<readonly { readonly personId: string; readonly displayName: string }[]>;

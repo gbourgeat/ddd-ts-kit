@@ -294,7 +294,8 @@ no policy answers for: deny by default holds there too.
 
 ```ts
 // main.ts
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { JwtAuthenticator } from '@ddd-ts-kit/auth/jwt';

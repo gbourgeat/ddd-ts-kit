@@ -3,6 +3,7 @@ import { parseConfig, serializeConfig } from '../src/config';
 import { cli, read, tempDir, write } from './helpers';
 import { git } from './support/git';
 import { initProject } from './support/init-project';
+import { installHooks } from './support/install-hooks';
 import { installKit } from './support/install-kit';
 import { jsonAt } from './support/json-at';
 import { NPM } from './support/npm';
@@ -288,6 +289,8 @@ describe('init --agent-profile, in the config and under doctor', () => {
     const root = initProject(...NPM, '--agent-profile', 'regulated');
 
     installKit(root);
+
+    installHooks(root);
 
     expect(cli(root, 'doctor', '--strict').code).toBe(0);
 

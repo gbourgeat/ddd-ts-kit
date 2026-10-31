@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e2638cccf4898f12 -->
+<!-- translation-of: README.md sha256:831516864474490b -->
 
 # @ddd-ts-kit/rabbitmq
 
@@ -108,7 +108,8 @@ export class InvoiceOnOrderPlacedIntegrationHandler {
 <!-- checked sample -->
 ```ts
 // main.ts
-import { contextModule, createApplication, kernelModule, type ContextModule, type DeclaredSource } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule, type ContextModule, type DeclaredSource } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { Clock } from '@ddd-ts-kit/kernel';
 import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
 import type { RabbitMqEventBus } from '@ddd-ts-kit/rabbitmq';

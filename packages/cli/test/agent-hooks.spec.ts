@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { cli, exists, read, tempDir, write } from './helpers';
 import { commitAll } from './support/commit-all';
 import { initProject } from './support/init-project';
+import { installHooks } from './support/install-hooks';
 import { installKit } from './support/install-kit';
 import { NPM } from './support/npm';
 import { readJson } from './support/read-json';
@@ -172,6 +173,8 @@ describe('the hooks of the regulated profile, under init again and doctor', () =
 
     installKit(root);
 
+    installHooks(root);
+
     expect(cli(root, 'doctor', '--strict').code).toBe(0);
 
     const current = readJson(root, SETTINGS) as Record<string, unknown>;
@@ -197,6 +200,8 @@ describe('the hooks of the regulated profile, under init again and doctor', () =
     const regulated = initProject(...NPM, '--agent-profile', 'regulated');
 
     installKit(regulated);
+
+    installHooks(regulated);
     fs.rmSync(path.join(regulated, GATE));
 
     const missing = cli(regulated, 'doctor', '--strict');
@@ -212,6 +217,8 @@ describe('the hooks of the regulated profile, under init again and doctor', () =
     const plain = initProject(...NPM);
 
     installKit(plain);
+
+    installHooks(plain);
 
     expect(exists(plain, GATE)).toBe(false);
     expect(cli(plain, 'doctor', '--strict').code).toBe(0);

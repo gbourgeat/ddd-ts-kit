@@ -15,8 +15,6 @@ import {
 } from '@ddd-ts-kit/kernel';
 import {
   contextModule,
-  createApplication,
-  createTestApplication,
   defineContextModule,
   fake,
   kernelModule,
@@ -24,6 +22,7 @@ import {
   type Instrumentation,
   type WiringError,
 } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { Twice, Twin } from './fixtures/contexts/projection-mistakes';
 import * as reporting from './fixtures/contexts/reporting/reporting.declarations';
 import { TransactionalJournal } from './support/fakes/transactional-journal';

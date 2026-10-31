@@ -12,7 +12,7 @@ export const {{aggregate.pascal}}Mapper = {
   },
 
   toRow(saved: {{aggregate.pascal}}): {{aggregate.pascal}}Columns {
-    // TODO(domain): flatten each value object of {{aggregate.pascal}}State into its columns; nothing of the row type leaves this file. A `jsonb` column holding an array or a string takes `JSON.stringify(value)` on Knex, where the other ORM serialize it.
+    // TODO(domain): flatten each value object of {{aggregate.pascal}}State into its columns; nothing of the row type leaves this file. A `jsonb` column holding an array or a string takes `jsonColumn(value)` of `@ddd-ts-kit/knex` on Knex, where the other ORM serialize it.
 {{#if personal.any}}
     return {
       id: saved.id,

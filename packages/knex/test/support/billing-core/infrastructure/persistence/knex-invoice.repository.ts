@@ -2,6 +2,7 @@ import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionSc
 import {
   auditRow,
   insertIgnoringConflict,
+  jsonColumn,
   optimisticUpdate,
   tenantRow,
   type KnexContext,
@@ -11,7 +12,7 @@ import { Invoice, type InvoiceState } from '../../domain/invoice';
 import type { InvoiceRepository } from '../../domain/repositories/invoice.repository';
 import { invoicesOf } from './invoices-of';
 
-type VersionedInvoice = InvoiceState & { version: number };
+type VersionedInvoice = Omit<InvoiceState, 'details'> & { details?: string; version: number };
 
 /**
  * The repository a consuming project would write: no transaction in sight, every statement
@@ -42,7 +43,8 @@ export class KnexInvoiceRepository implements InvoiceRepository {
 
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
-      const state = { ...invoice.state, version: next };
+      const { details, ...columns } = invoice.state;
+      const state = { ...columns, ...(details === undefined ? {} : { details: jsonColumn(details) }), version: next };
 
       return expected === 0 ? this.insert(state) : this.update(state, expected);
     });

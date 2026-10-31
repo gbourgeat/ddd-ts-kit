@@ -136,7 +136,8 @@ of the adapter: `@Adapter(PaymentGateway, { kind: 'external', aspects: [retry({ 
 ```ts
 // main.ts
 import { Cache, Clock, Logger, Metrics } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { StdoutLogger, aspects, forKinds, installAspectRuntime, logged, retry, timed, timeout, when, type Aspect } from '@ddd-ts-kit/aspects';
 
 declare const tracing: Aspect; // below

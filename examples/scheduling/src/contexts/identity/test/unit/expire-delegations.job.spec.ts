@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
+import { contextModule, fake } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import * as identityDeclarations from '@/contexts/identity/identity.declarations';
 import type { Message } from '@ddd-ts-kit/kernel';
 import { platformTestModule } from '@/platform/composition/platform-test.module';

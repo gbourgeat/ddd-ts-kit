@@ -66,7 +66,7 @@ describe('a project before its first context', () => {
     const root = initProject();
 
     const rewritten = read(root, PROOF).replace(
-      "import { createTestApplication, type ContextModule } from '@ddd-ts-kit/di';",
+      "import { type ContextModule } from '@ddd-ts-kit/di';\nimport { createTestApplication } from '@ddd-ts-kit/di/tsyringe';",
       "import * as di from '@ddd-ts-kit/di';",
     );
 
@@ -75,7 +75,7 @@ describe('a project before its first context', () => {
     write(
       root,
       COMPOSITION,
-      read(root, COMPOSITION).replace('  createApplication,\n', '  contextModule,\n  createApplication,\n'),
+      read(root, COMPOSITION).replace('import { kernelModule,', 'import { contextModule, kernelModule,'),
     );
 
     context(root, 'billing');
@@ -84,7 +84,7 @@ describe('a project before its first context', () => {
       "// ddd-ts-kit:imports\nimport { contextModule } from '@ddd-ts-kit/di';\nimport * as billingDeclarations",
     );
 
-    expect(read(root, COMPOSITION).split('contextModule,\n')).toHaveLength(2);
+    expect(read(root, COMPOSITION).split('contextModule,')).toHaveLength(2);
   });
 });
 

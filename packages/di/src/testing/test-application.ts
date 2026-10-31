@@ -3,7 +3,7 @@ import type { Application } from '../application/application';
 import type { Resolve } from '../wiring/resolve';
 import type { TestKernel } from './test-kernel';
 
-export interface TestApplication extends Application, TestKernel {
+export interface TestApplication<Native = unknown> extends Application<Native>, TestKernel {
   /** `resolve` under the name a test reads better with: `app.get(OrderRepository)`. */
   readonly get: Resolve;
 

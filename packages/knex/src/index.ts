@@ -18,6 +18,7 @@ export * from './outbox/add-outbox-tenant-column';
 export * from './outbox/knex-outbox-store';
 export * from './outbox/knex-processed-event-store';
 export * from './columns/audit-columns';
+export * from './columns/json-column';
 export * from './columns/tenant-column';
 export * from './columns/audit-row';
 export * from './columns/tenant-row';
