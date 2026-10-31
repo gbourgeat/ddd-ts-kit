@@ -12,8 +12,6 @@ import { INJECTIONS } from './injections';
 import { lintInRounds } from './lint-in-rounds';
 import { NOT_APPLICABLE } from './not-applicable';
 
-const started = Date.now();
-
 /**
  * Slow, opt-in (DDD_TS_KIT_CONFORMANCE=1): the example application is the proof of the product.
  * Every rule of the catalogue is broken once in a copy of the example and has to be reported, on
@@ -95,8 +93,4 @@ describe.runIf(CONFORMANCE)('the rules of the catalogue, applied to the example 
     },
     60_000,
   );
-
-  it('reports its runtime', () => {
-    console.info(`conformance: ${((Date.now() - started) / 1000).toFixed(1)} s`);
-  });
 });

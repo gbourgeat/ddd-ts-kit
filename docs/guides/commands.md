@@ -74,7 +74,7 @@ path). A field of another type, the `readonly string[]` of the products for one,
 | `/ddd-ts-kit:bootstrap` | chooses the stack by criteria, runs `init`, creates the contexts | step 5, once the context map is drafted | the project and one `CONTEXT.md` per context | `/ddd-ts-kit:plan-slices` |
 | `npx ddd-ts-kit init [flags]` | writes the config, the platform, the pipeline, the agent rules; run again, it keeps the recorded stack: an invalid flag value is refused, a flag that differs from the record is noted and kept (`init --force` changes it) | the bootstrap; `--dry-run` first to read what it writes | a project that passes `npm run verify` | `npm install`, `npm run verify` |
 | `npx ddd-ts-kit init --preset identity`, `generate context <name> --preset identity` | writes a generic context whole instead of an empty one: accounts from the identity provider, organisations, members and roles, invitations, delegations ([why and which](bootstrap-with-well-designed-contexts.md)) | when `contexts.md` holds a generic identity context | the context, its specs, its adapters and its glossary, green at once | read its `## Design`, then the slices of the core |
-| `npx ddd-ts-kit status` | the next step of the plan, the slices by status and owner, what is left per context | at the start of every session | a short text, `--json` for data | the step or slice it names |
+| `npx ddd-ts-kit status` | the next step of the plan, the slices by status and owner, what is left per context | at the start of every session | a short text, `--json` for data; a merge left in progress is its first line | the step or slice it names, or `merge-trunk --continue` or `--abort` |
 
 ## Model the domain
 
@@ -282,10 +282,10 @@ Usage
   ddd-ts-kit generate [<kind>] --help [--json]
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
-  ddd-ts-kit status [--workers]
+  ddd-ts-kit status [--workers | --ready]
   ddd-ts-kit doctor [--strict]
   ddd-ts-kit todo [<context>] [--brief]
-  ddd-ts-kit plan-waves [<context>]
+  ddd-ts-kit plan-waves [<context>] [--ready]
   ddd-ts-kit story-check <code> [--strict]
   ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
@@ -438,7 +438,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    would leave conflicted now, dependencies not installed, its report), a state line (rows
                    committed, the row under way, files uncommitted, markers, last verify-slice, and the
                    worker-scope --resume command of a stopped one), then the contexts and the files more than
-                   one worker holds
+                   one worker holds; --ready lists instead the rows not started whose dependencies are
+                   done, the others counted in one line
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the
@@ -480,7 +481,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    the rows that generate what it builds on, and each command that builds on a file a
                    row it does not wait for generates (missing-dependency); a row in progress, whose
                    commands may have run and whose worker may have added a term, counts for none, its
-                   refusals listed apart
+                   refusals listed apart; --ready keeps the first wave, whose dependencies are done, and
+                   counts the later waves in one line
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left

@@ -32,7 +32,9 @@ function sliceLines(slices: SlicesProgress): string[] {
 
   const open = statuses
     .filter((status) => status !== SLICE_STATUS.done)
-    .flatMap((status) => [`  ${status}`, ...slices.rows.filter((row) => row.status === status).map(rowLine)]);
+    .map((status) => ({ status, rows: slices.rows.filter((row) => row.status === status) }))
+    .filter(({ rows }) => rows.length > 0)
+    .flatMap(({ status, rows }) => [`  ${status}`, ...rows.map(rowLine)]);
 
   const owners = Object.entries(slices.byOwner).map(
     ([owner, byStatus]) => `    ${owner}: ${counts(byStatus, statuses)}`,
@@ -57,9 +59,17 @@ function sliceLines(slices: SlicesProgress): string[] {
     ...slices.unclosed.map(unclosedLine),
     ...landedLines(slices),
     ...open,
+    ...notShownLines(slices),
     '  by owner',
     ...owners,
   ];
+}
+
+/** What `--ready` leaves out. */
+function notShownLines({ notShown }: SlicesProgress): string[] {
+  return notShown === undefined || notShown === 0
+    ? []
+    : [`  ${notShown} more not ready to start on the trunk (without --ready to list them)`];
 }
 
 function unclosedLine({ story, markers, command }: UnclosedStory): string {

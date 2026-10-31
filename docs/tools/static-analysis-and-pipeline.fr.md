@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:5add559e774b9094 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:db565cb471c19c25 -->
 
 # L'analyse statique et le pipeline
 
@@ -184,10 +184,14 @@ Les *hooks* du poste de travail sont dans le `lefthook.yml` qu'écrit `init`. Sa
 dépôt sont partagés par tous ses *worktrees*, et sans cette ligne ils lanceraient le lefthook du
 dernier *checkout* qui les a installés, ou sauteraient toutes les vérifications une fois ce
 *checkout* disparu. Un *worktree* sans ses dépendances fait désormais échouer le *commit*
-bruyamment ; `npx ddd-ts-kit doctor` signale une ligne ou un *hook* installé qui manque.
+bruyamment ; `npx ddd-ts-kit doctor` signale une ligne ou un *hook* installé qui manque. Le fichier pose `output: [failure]` : un *commit* qui passe affiche une ligne, et une
+tâche qui échoue affiche ses constats.
 
 ```yaml
 lefthook: node_modules/.bin/lefthook
+
+output:
+  - failure
 
 pre-commit:
   parallel: true

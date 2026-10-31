@@ -1,6 +1,7 @@
 import { SLICE_STATUS } from '../progress/slice';
 import type {
   Batch,
+  LaterWaves,
   OtherStoryRow,
   PlannedRow,
   PlanProblem,
@@ -44,16 +45,27 @@ export function formatPlan(plan: WavePlan): string {
     return [`Waves (${scope}): none, every row is done`, ...startedLines(plan.started)].join('\n');
   }
 
-  const rows = batches.reduce((count, batch) => count + batch.rows.length, 0);
+  const later = plan.later ?? { waves: 0, batches: 0, rows: 0 };
+  const rows = batches.reduce((count, batch) => count + batch.rows.length, later.rows);
 
   return [
-    `Waves (${scope}): ${rows} rows not done, ${plural(plan.waves.length, 'wave', 'waves')}, ${plural(batches.length, 'batch', 'batches')}`,
+    `Waves (${scope}): ${rows} rows not done, ${plural(plan.waves.length + later.waves, 'wave', 'waves')}, ${plural(batches.length + later.batches, 'batch', 'batches')}`,
     ...plan.waves.flatMap((wave) => waveLines(wave, plan.context)),
+    ...laterLines(later),
     ...otherStoriesLines(plan),
     `Merge order: ${plan.mergeOrder.join(', ')}`,
     BEFORE_EACH_MERGE,
     ...startedLines(plan.started),
   ].join('\n');
+}
+
+/** What `--ready` leaves out, on one line: it comes back once the first wave has merged. */
+function laterLines(later: LaterWaves): string[] {
+  return later.waves === 0
+    ? []
+    : [
+        `Later: ${plural(later.waves, 'wave', 'waves')}, ${plural(later.batches, 'batch', 'batches')}, ${plural(later.rows, 'row', 'rows')} (without --ready to list them; run plan-waves again once wave 1 has merged)`,
+      ];
 }
 
 function problemsHeading(problems: readonly PlanProblem[]): string {

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4ef5152c560895a0 -->
+<!-- translation-of: README.md sha256:139a01ecf343c2e2 -->
 
 # ddd-ts-kit
 
@@ -1357,7 +1357,7 @@ dans chaque `CONTEXT.md`.
 ## status, todo
 
 ```
-ddd-ts-kit status [--workers]
+ddd-ts-kit status [--workers | --ready]
 ddd-ts-kit todo [<context>] [--brief]
 ```
 
@@ -1420,7 +1420,7 @@ texte entier.
 ## plan-waves
 
 ```
-ddd-ts-kit plan-waves [<context>]
+ddd-ts-kit plan-waves [<context>] [--ready]
 ```
 
 Ordonne les lignes de `docs/architecture/slices.md` qui ne sont pas `done`, pour une construction
