@@ -439,7 +439,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    would leave conflicted now, dependencies not installed, its report), a state line (rows
                    committed, the row under way, files uncommitted, markers, last verify-slice, and the
                    worker-scope --resume command of a stopped one), then the contexts and the files more than
-                   one worker holds
+                   one worker holds; --ready lists instead the rows not started whose dependencies are
+                   done, the others counted in one line
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the
@@ -481,7 +482,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    the rows that generate what it builds on, and each command that builds on a file a
                    row it does not wait for generates (missing-dependency); a row in progress, whose
                    commands may have run and whose worker may have added a term, counts for none, its
-                   refusals listed apart
+                   refusals listed apart; --ready keeps the first wave, whose dependencies are done, and
+                   counts the later waves in one line
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left
