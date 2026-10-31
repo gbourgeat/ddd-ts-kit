@@ -39,6 +39,7 @@ describe('The remote {{name.words}}', () => {
     expect(await pending).toBe('answered');
     expect(adapter.calls).toBe(2);
   });
+
   {{/if}}
   it('refuses to send a call as long as its transport is not written, and names the operation', async () => {
     const adapter = new Unwired{{name.pascal}}();
