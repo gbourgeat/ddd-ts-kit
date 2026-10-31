@@ -24,7 +24,9 @@ how to start, then the rules every change follows.
    out in [the decision record of the measure](docs/adr/0001-lines-left-out-of-the-coverage-measure.md),
    never moved onto a line that already runs. The hooks of the plugin are held to 100
    percent of their lines, branches and functions (`npm run test:plugin`): a branch no test
-   reaches fails it, and a branch no hook input can reach is removed.
+   reaches fails it, and a branch no hook input can reach is removed. The table names the file,
+   not the branch: `node pipeline/monorepo/uncovered-branches.mjs coverage/plugin.lcov` names
+   each branch the run did not take, from the lcov the run wrote.
 4. **Open a pull request.** Its title is a conventional commit subject; its template asks what
    changes, why, and how it was verified. Every pull request is reviewed by the maintainer.
 
