@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:68d7243caa5c60a6 -->
+<!-- translation-of: README.md sha256:b09da815ff1b6dcc -->
 
 # ddd-ts-kit
 
@@ -2720,7 +2720,8 @@ ddd-ts-kit explain <rule-id>
 
 `rules` liste les identifiants, les descriptions et les sévérités actuelles, et dit lesquels
 ESLint vérifie. `explain` affiche la règle, pourquoi elle existe, un mauvais et un bon exemple,
-et la syntaxe de désactivation.
+et la syntaxe de désactivation ; pour une règle que décide ESLint ou le formateur, la même raison
+et les mêmes exemples, puis l'outil qui la vérifie (`checkedBy` sous `--json`).
 
 ## Développement
 

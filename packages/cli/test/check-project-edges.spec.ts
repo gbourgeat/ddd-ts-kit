@@ -10,6 +10,7 @@ import { DELEGATED_RULES } from '../src/check/catalogue/delegated-rules';
 import { rawConfig } from '../src/check/configuration/raw-config';
 import { unknownKeys } from '../src/check/configuration/unknown-keys';
 import { runnerSettings } from '../src/check/coverage/runner-settings';
+import { delegatedDoc } from '../src/check/explain/delegated-doc';
 import { documentedRule } from '../src/check/explain/documented-rule';
 import { explanationsOf } from '../src/check/explain/explanations-of';
 import { DecisionRecords } from '../src/check/governance/decision-records';
@@ -155,6 +156,7 @@ describe('the baseline of the checks', () => {
 describe('the explanation of a rule', () => {
   it('is a bug of the kit when a rule has none', () => {
     expect(() => documentedRule('nope/rule')).toThrow(/has no explanation/);
+    expect(() => delegatedDoc('nope/rule')).toThrow(/has no explanation/);
   });
 
   it('names the tool that checks a delegated rule', () => {
