@@ -1,5 +1,11 @@
+import { existsSync } from 'node:fs';
 import { DataSource } from 'typeorm';
 import { entities } from '{{alias.platform}}/database/schema{{alias.ext}}';
+
+// The TypeORM CLI reads no .env: `npm run db:migrate` finds DATABASE_URL there, and what the shell sets wins.
+if (existsSync('.env')) {
+  process.loadEnvFile('.env');
+}
 
 // Read by the TypeORM CLI only (`npm run db:generate migrations/<what-it-does>`, `npm run db:migrate`), once compiled.
 export default new DataSource({

@@ -18,9 +18,10 @@ export const AUDIT_SCHEMA = 'audit';
 {{/if}}
 
 /**
- * Every table of the application. The first migration (migrations/00000000000000_initial.js) and the
- * in-process database of the tests both call it; once a database is shared, a change of an
- * existing table goes into a migration of its own (`npm run db:generate <what-it-does>`).
+ * Every table of the application: what the in-process database of the tests runs, and what
+ * `npm run db:generate <what-it-does>` compares with the migrations, to write the difference into a
+ * new one. No migration calls it: a migration holds its SQL, and builds the same tables whatever
+ * this function becomes.
  */
 export const createTables = async (knex: Knex): Promise<void> => {
 {{#if tenancy.any}}

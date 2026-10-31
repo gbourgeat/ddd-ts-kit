@@ -1,1 +1,0 @@
-**A `ddd-ts-kit.config.json` nested more than 32 levels deep is refused with a message.** The command died on a raw `RangeError` when it tried to print such a value, and `digest` did on any commit that held one.

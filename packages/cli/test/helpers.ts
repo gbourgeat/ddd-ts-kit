@@ -1,7 +1,5 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { afterAll } from 'vitest';
 import { run } from '../src/run';
 import { grantOf } from './support/grant-of';
 import { refusalOf } from './support/refusal-of';
@@ -32,31 +30,7 @@ export function cli(cwd: string, ...args: string[]): CliResult {
   return { code, stdout, stderr: err.join('\n'), json: () => JSON.parse(stdout) as unknown };
 }
 
-const created: string[] = [];
-
-export function tempDir(label: string): string {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), `ddd-ts-kit-${label}-`));
-
-  created.push(directory);
-
-  return directory;
-}
-
-/**
- * The throwaway projects of a file are removed together: each holds a copy of every package of
- * the kit, and on a busy runner removing them one after the other outlasted the hook timeout of
- * the end-to-end run. A git process of a throwaway repository can still be writing its objects
- * when the file ends, hence the retries.
- */
-const CLEANUP_TIMEOUT = 600_000;
-
-afterAll(async () => {
-  await Promise.all(
-    created
-      .splice(0)
-      .map((directory) => fs.promises.rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })),
-  );
-}, CLEANUP_TIMEOUT);
+export { removeTempDir, tempDir } from './support/temp-dir';
 
 export function read(root: string, file: string): string {
   return fs.readFileSync(path.join(root, file), 'utf8');

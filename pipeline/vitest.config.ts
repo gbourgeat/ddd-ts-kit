@@ -1,6 +1,6 @@
 import { governedCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
 import { decorators } from '@ddd-ts-kit/testing/vitest';
-import { defineConfig, type TestProjectInlineConfiguration } from 'vitest/config';
+import { configDefaults, defineConfig, type TestProjectInlineConfiguration } from 'vitest/config';
 
 const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
 const INTEGRATION_MODE = 'integration';
@@ -35,7 +35,8 @@ export default defineConfig(({ mode }) => ({
     passWithNoTests: mode === INTEGRATION_MODE,
     ...WORKERS,
     // Each spec file is held to the time budget of its level ("budget" in ddd-ts-kit.config.json, the reference when it is absent): the slowest named at the end of the run, a file over its budget fails it.
-    reporters: ['default', '@ddd-ts-kit/testing/budget/vitest'],
+    // The reporters Vitest picks itself (a terse one under a coding agent), and the budget one after them.
+    reporters: [...configDefaults.reporters, '@ddd-ts-kit/testing/budget/vitest'],
     projects: [UNIT_PROJECT, INTEGRATION_PROJECT],
     coverage: {
       provider: 'v8',

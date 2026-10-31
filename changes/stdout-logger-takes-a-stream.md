@@ -1,1 +1,0 @@
-**`StdoutLogger` takes a `stream` option.** The lines go to that stream instead of the standard output, and `flush()` waits for it. A `write` of the project still receives each line and wins over `stream`.

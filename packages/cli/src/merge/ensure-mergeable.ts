@@ -27,7 +27,7 @@ export function ensureMergeable(top: string, mergeTrunkInProgress: boolean): voi
       `${waiting[1]} is in progress in this worktree.`,
       mergeTrunkInProgress && waiting[0] === 'MERGE_HEAD'
         ? 'It is the merge of merge-trunk: settle what it lists, then `npx ddd-ts-kit merge-trunk --continue`, or `npx ddd-ts-kit merge-trunk --abort`.'
-        : 'Finish it or abort it first (`git merge --abort`, `git rebase --abort`, `git cherry-pick --abort`), then merge-trunk again.',
+        : 'Finish it or abort it first (`npx ddd-ts-kit merge-trunk --abort` or `git merge --abort`, `git rebase --abort`, `git cherry-pick --abort`), then merge-trunk again.',
     );
   }
 

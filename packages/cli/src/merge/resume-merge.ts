@@ -20,10 +20,10 @@ export function resumeMerge(root: string, options: ContinueOptions): MergeReport
 
     throw new CliError(
       merging
-        ? 'The merge in progress was not started by merge-trunk: nothing records its base.'
+        ? 'A merge is in progress, and nothing records the base merge-trunk merged from.'
         : 'No merge of merge-trunk is in progress in this worktree.',
       merging
-        ? 'Finish it with git (`git commit`, then `npx ddd-ts-kit verify-merge`), or `git merge --abort` and run `npx ddd-ts-kit merge-trunk`.'
+        ? 'Undo it with `npx ddd-ts-kit merge-trunk --abort` and run `npx ddd-ts-kit merge-trunk` again; or, for a merge you made with git, finish it with `git commit`, then `npx ddd-ts-kit verify-merge`.'
         : 'Run `npx ddd-ts-kit merge-trunk` to start one.',
     );
   }
