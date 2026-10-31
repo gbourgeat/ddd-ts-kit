@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:7413c7ca96e82627 -->
+<!-- translation-of: coding-agents.md sha256:729ed0f216396380 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -58,14 +58,17 @@ routes de la *story* et les deux flux les plus proches, et rend compte de ce qui
 
 La description de chaque skill dit quand s'en servir en 320 caractères au plus, et les
 vingt-six en prennent 6 500 au plus ensemble ; celle d'un agent, 400 au plus. Claude Code charge
-la liste des skills dans chaque session dans la limite de 1 % de la fenêtre de contexte, environ
-2 000 tokens sur une fenêtre de 200k, et au-delà retire les descriptions des skills les moins
-invoquées, qui ne se déclenchent alors plus sur leurs mots-clés. La liste porte aussi
-`ddd-ts-kit:<nom>` pour chaque entrée (environ 660 caractères pour les vingt-six), et ce texte
-technique compte environ 3,5 caractères par token : (6 500 + 660) / 3,5 font environ 2 050
-tokens si les vingt-six étaient listées, mais `bootstrap`, `fix`, `intent`, `pull-request`,
-`start` et `story`, lancées par l'utilisateur seul (`disable-model-invocation`), ne le sont pas, ce qui laisse les vingt autres à environ 1 600
-tokens. Un test du plugin (`node --test plugin/skills/descriptions.test.mjs`) tient ces limites.
+la liste des skills dans chaque session dans la limite de 1 % de la fenêtre de contexte, comptés en
+caractères et non en tokens : 8 000 caractères sur une fenêtre de 200k, partagés avec toutes les
+autres skills de la session, celles de Claude Code et des autres plugins comprises. Au-delà, la
+liste raccourcit les descriptions des skills les moins invoquées, qui ne se déclenchent alors plus
+sur leurs mots-clés. `bootstrap`, `fix`, `intent`, `pull-request`, `start` et `story`, lancées par
+l'utilisateur seul (`disable-model-invocation`), ne sont pas listées ; les vingt autres prennent
+environ 5 600 caractères avec le `ddd-ts-kit:<nom>` que porte chaque entrée, soit environ 70 % des
+8 000 pour le kit seul. Elles tiennent seules ; à côté de beaucoup d'autres skills, les moins
+invoquées du kit perdent leur description, et se lancent encore par leur nom. Une part de 2 400
+caractères, qui les ferait toutes survivre dans une session chargée, réduirait chaque description
+au tiers de ce qu'il lui faut pour se déclencher : le kit accepte la perte. Un test du plugin (`node --test plugin/skills/descriptions.test.mjs`) tient ces limites.
 
 Le corps d'une skill est lu en entier dès qu'elle se charge : ce qu'une seule option de `stack`
 demande est donc rangé à côté. Le corps garde chaque règle et une ligne, « sous

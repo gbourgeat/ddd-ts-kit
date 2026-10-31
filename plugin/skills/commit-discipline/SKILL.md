@@ -71,7 +71,7 @@ Conventional commits, checked by commitlint at `commit-msg`:
 
 1. `git status --short` and read it by slice: one use-case folder, its route, its specs.
 2. `npx ddd-ts-kit check --changed-since HEAD`, `npx ddd-ts-kit docs --check`, and
-   `npx ddd-ts-kit todo <context>`: no marker left in the slice.
+   `npx ddd-ts-kit todo <context> --brief`: no marker left in the slice.
 3. Stage by path, never everything at once when several slices are pending:
    `git add src/contexts/<context>/application/commands/<use-case> <its route> <its specs> <the declarations of their layers> <CONTEXT.md>`.
 4. Read `git diff --cached --stat` and `npx ddd-ts-kit check --commit-size --staged`: one

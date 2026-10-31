@@ -1,17 +1,20 @@
 // The descriptions of the skills and agents stay short enough for the listing Claude Code loads
 // into every session. Its documentation (https://code.claude.com/docs/en/skills.md, "Skill
-// descriptions are cut short") says: "The budget scales at 1% of the model's context window.
-// When the listing overflows, Claude Code drops descriptions starting with the skills you invoke
-// least", and caps each entry at 1,536 characters. On a 200k window that budget is about 2,000
-// tokens. The listing holds more than the descriptions: each entry carries `ddd-ts-kit:<name>`
-// and its formatting, about 660 characters for the 26 skills, and this technical text (`authz/*`,
-// `it.todo`, `/ddd-ts-kit:story`) runs at about 3.5 characters per token, not 4. So 6,500
-// characters of descriptions are about (6,500 + 660) / 3.5 = 2,050 tokens if all 26 were listed;
-// the six skills with `disable-model-invocation: true` are not ("Description not in context"),
-// which leaves the 20 others at about 5,000 + 550 characters, some 1,600 tokens, under the budget
-// with room for another plugin. Past it, the least-invoked skills lose their description and stop
-// triggering on their keywords. The agents' descriptions are listed the same way in the Agent
-// tool, with no budget stated: 400 characters each. Run with `node --test`.
+// descriptions are cut short") caps each entry at 1,536 characters and says: "The budget scales
+// at 1% of the model's context window. When the listing overflows, Claude Code drops descriptions
+// starting with the skills you invoke least". The budget is in characters, not tokens (the
+// setting that fixes it reads "Fraction of the context window (in characters) reserved for the
+// skill listing", default 0.01), so on a 200k window it is 8,000 characters, and the listing is
+// shared with every other skill of the session, those of Claude Code included. The six skills
+// with `disable-model-invocation: true` are not listed ("Description not in context"); the 20
+// others take about 5,600 characters with their `ddd-ts-kit:<name>`, about 70 percent of 8,000
+// for the kit alone. A share that let them all survive next to other plugins (say 2,400
+// characters) would cut them to less than half, past what a description needs to trigger on its
+// keywords, so this is accepted: in a session that lists many skills, the least invoked of the
+// kit lose their description and stop triggering on their keywords, and are still run by name.
+// The test below holds the kit alone to the 8,000 characters, and the limits of 320 per skill and
+// 6,500 in total stay. The agents' descriptions are listed the same way in the Agent tool, with
+// no budget stated: 400 characters each. Run with `node --test`.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,6 +27,7 @@ const AGENTS = path.join(ROOT, 'plugin/agents');
 const MAX_SKILL = 320;
 const MAX_AGENT = 400;
 const MAX_SKILLS = 6500;
+const LISTING_BUDGET = 8000;
 
 test('every skill description is at most 320 characters', () => {
   assert.deepEqual(tooLong(skillDescriptions(), MAX_SKILL), [], `skill descriptions over ${MAX_SKILL} characters`);
@@ -41,6 +45,20 @@ test('the skill descriptions total at most 6,500 characters', () => {
   assert.ok(
     total <= MAX_SKILLS,
     `the ${descriptions.length} skill descriptions take ${total} characters, over ${MAX_SKILLS}; longest: ${longest.join(', ')}`,
+  );
+});
+
+test('the skills the model may invoke fit the 8,000 characters of the listing on their own', () => {
+  const listed = skillDescriptions().filter(({ listed: isListed }) => isListed);
+  const total = listed.reduce(
+    (sum, { name, description }) => sum + `ddd-ts-kit:${name}`.length + description.length,
+    0,
+  );
+
+  assert.ok(listed.length > 15, `too few listed skills read (${listed.length}): plugin/skills/ moved`);
+  assert.ok(
+    total <= LISTING_BUDGET,
+    `the ${listed.length} listed skills take ${total} characters, over ${LISTING_BUDGET}`,
   );
 });
 
@@ -65,6 +83,7 @@ function skillDescriptions() {
     .map((entry) => ({
       name: entry.name,
       description: descriptionOf(path.join(SKILLS, entry.name, 'SKILL.md')),
+      listed: !disabled(path.join(SKILLS, entry.name, 'SKILL.md')),
     }));
 }
 
@@ -73,6 +92,14 @@ function agentDescriptions() {
     .readdirSync(AGENTS)
     .filter((file) => file.endsWith('.md'))
     .map((file) => ({ name: file.replace(/\.md$/, ''), description: descriptionOf(path.join(AGENTS, file)) }));
+}
+
+/** Whether the front matter sets `disable-model-invocation`, which keeps the skill out of the listing. */
+function disabled(file) {
+  const text = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  const frontMatter = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(text)?.[1] ?? '';
+
+  return YAML.parse(frontMatter)?.['disable-model-invocation'] === true;
 }
 
 /** The `description` of the front matter, as YAML reads it, whatever the line endings of the checkout. */

@@ -65,7 +65,7 @@ first notice.
 Your report is your final message, in the form of the report below; never write a report file.
 
 Done when: every slice is committed, `npm run verify` is green in the worktree (the whole tree:
-`check --changed-since` sees your files only), and `npx ddd-ts-kit todo <context>` lists nothing but
+`check --changed-since` sees your files only), and `npx ddd-ts-kit todo <context> --brief` lists nothing but
 `TODO(review)` lines: those remarks of a review are followed by the conductor, leave them. A
 `TODO(review)` you write names its row first, `TODO(review): #<row id> <remark>`: `story-check`
 holds the story of that row open on it, and no other.
