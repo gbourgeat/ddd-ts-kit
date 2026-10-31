@@ -67,8 +67,8 @@ export function auditModule(audit: Audit): ContextModule {
         .handledBy(SearchAuditEntriesHandler, [AuditReader]);
 {{/unless}}
 {{/if}}
-
 {{#if audit.sql}}
+
       // Registered by the process that runs the jobs of the platform; a service of the deployment passes `jobs: false`.
       if (jobs) {
         builder
