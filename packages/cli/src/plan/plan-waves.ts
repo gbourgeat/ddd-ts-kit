@@ -14,6 +14,8 @@ export interface PlanRequest {
   readonly context: string | null;
   /** The contexts the config declares: a row of another one is a problem. Undefined: not checked. */
   readonly contexts?: readonly string[];
+  /** The ref the briefs name as `--base`; undefined when the repository has none that resolves: a brief then leaves `--base` out. */
+  readonly trunk?: string | undefined;
 }
 
 /**
@@ -32,7 +34,7 @@ export function planWaves(rows: readonly Slice[], request: PlanRequest): WavePla
   }
 
   const shown = planned.filter((row) => context === null || row.context === context);
-  const waves = batchedWaves({ rows: shown, planned, numbers: waveNumbers(planned) });
+  const waves = batchedWaves({ rows: shown, planned, numbers: waveNumbers(planned), trunk: request.trunk });
 
   return {
     file: SLICES_FILE,

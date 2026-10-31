@@ -6,7 +6,8 @@ import { runGit } from '../commit/run-git';
 import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file';
 import type { Config } from '../config';
 
-const FIX = 'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.';
+const FIX =
+  'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base <branch, tag or commit>`.';
 
 /** A base by the name the caller gave, which a briefing and a scope file keep, and the commit it names, which git is given. */
 export interface Base {
@@ -30,7 +31,7 @@ export function baseOf(root: string, config: Config, base: string | undefined): 
   if (worker !== undefined) {
     throw new CliError(
       `${root} is the worktree of a worker (${worker}): its branch ${current} would be the trunk of the new worker.`,
-      'Run worker-scope from the checkout of the trunk, or name the base: `--base origin/main`.',
+      'Run worker-scope from the checkout of the trunk, or name the base: `--base <branch, tag or commit>`.',
     );
   }
 

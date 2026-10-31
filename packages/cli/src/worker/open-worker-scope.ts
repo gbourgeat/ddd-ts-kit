@@ -239,7 +239,8 @@ function dependencyNotes(root: string, inside: string, { manager, install }: Dep
 
 /** The base of a worker briefed inside a story: `--base`, else the base of the story, with the commit it names. */
 function hereBase(root: string, name: string): Pick<Place, 'trunk' | 'baseCommit'> {
-  const fix = 'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.';
+  const fix =
+    'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base <branch, tag or commit>`.';
 
   return { trunk: name, baseCommit: knownCommit(root, name, fix) };
 }

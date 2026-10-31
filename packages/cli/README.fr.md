@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ec01d14e8781b5f8 -->
+<!-- translation-of: README.md sha256:4d29ea90e908880e -->
 
 # ddd-ts-kit
 
@@ -1431,8 +1431,9 @@ ses commandes de générateur : `--aggregate <Name>`, `aggregate <context> <Name
 `repository <context> <Name>`. Deux lots d'un contexte dans une vague sont dits susceptibles de
 toucher les mêmes fichiers quand ils nomment le même agrégat ; quand l'un d'eux n'en nomme aucun,
 le chevauchement est dit inconnu plutôt que deviné. Chaque lot du *worker* d'un contexte vient avec
-la commande qui le consigne, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>`,
-avec ses propres `--worktree` et `--branch` quand sa vague porte un autre lot de ce contexte ; un
+la commande qui le consigne, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>` (sans
+`--base` dans un dépôt où `origin/main` n'existe pas encore : le *worker* part alors de la branche
+courante), avec ses propres `--worktree` et `--branch` quand sa vague porte un autre lot de ce contexte ; un
 lot du chef d'orchestre se construit sur le tronc ; une personne reçoit sa consigne à la main.
 Puis l'ordre des fusions : par vague, et dans une vague d'abord le lot que le plus de lignes
 attendent, directement ou non, et ce qui se lance avant chaque fusion :

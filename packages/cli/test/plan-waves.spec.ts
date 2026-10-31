@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, write } from './helpers';
+import { commitAll } from './support/commit-all';
+import { git } from './support/git';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 
@@ -39,16 +41,20 @@ const TERMS = [
   'Search=Read a page of the invoices that match',
 ].flatMap((term) => ['--term', term]);
 
+const UPSTREAM = ['--upstream', 'billing:published-language', '--term', 'Parcel=A package handed to a carrier'];
+
 let root: string;
 
 beforeAll(() => {
   root = initProject('--context', 'billing:core');
   cli(root, 'generate', 'aggregate', 'billing', 'Invoice', ...TERMS);
 
-  const upstream = ['--upstream', 'billing:published-language', '--term', 'Parcel=A package handed to a carrier'];
-
-  cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting', ...upstream);
+  cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting', ...UPSTREAM);
   write(root, 'docs/architecture/slices.md', TWO_STORIES);
+
+  // The trunk of a repository that was pushed: the briefs name it as the base.
+  commitAll(root);
+  git(root, 'update-ref', 'refs/remotes/origin/main', 'HEAD');
 });
 
 describe('plan-waves, two stories building in one context', () => {

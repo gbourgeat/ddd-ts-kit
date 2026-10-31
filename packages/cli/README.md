@@ -1351,8 +1351,9 @@ from its generator commands: `--aggregate <Name>`, `aggregate <context> <Name>` 
 `repository <context> <Name>`. Two batches of one context in one wave are said likely to touch the
 same files when they name the same aggregate; when one of them names none, the overlap is said to
 be unknown rather than guessed. Each batch of a context's worker comes with the command that briefs
-it, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>`, with its own
-`--worktree` and `--branch` when its wave holds another batch of that context; a batch of the
+it, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>` (without `--base` in a
+repository where `origin/main` does not resolve yet: the worker is then cut from the current branch),
+with its own `--worktree` and `--branch` when its wave holds another batch of that context; a batch of the
 conductor is built on the trunk; a person is briefed by hand. Then the merge order: by wave, and in
 a wave the batch that the most rows wait for, directly or not, first, and what runs before each
 merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge. With a context, only its rows
