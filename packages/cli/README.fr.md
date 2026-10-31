@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e8c26c00de864334 -->
+<!-- translation-of: README.md sha256:8bed6d7da643857f -->
 
 # ddd-ts-kit
 
@@ -135,7 +135,10 @@ une minute après avoir été pris.
 garde la configuration : les contextes et leurs amonts, les règles, les limites, les dérogations
 et toute autre clé restent tels qu'ils sont écrits, et la *stack* ne change que là où une option
 nomme un choix (`init --force --logger pino` change le *logger* ; une combinaison que la *stack*
-enregistrée ne peut pas accepter est refusée comme pour un nouveau projet). La racine de
+enregistrée ne peut pas accepter est refusée comme pour un nouveau projet). Les options du
+premier `init` peuvent être passées de nouveau avec `--force` : un *preset* s'applique une seule fois,
+donc `--preset identity` trouve son contexte déjà écrit, le laisse tel que l'équipe l'a, et le dit dans
+une note. La racine de
 composition, la preuve que chaque contexte se câble seul et le registre des permissions sont
 réécrits depuis leurs *templates*, puis les contextes déclarés y sont câblés de nouveau, et l'effacement de chaque contexte est listé de
 nouveau dans les copies du dossier *privacy* ; ce qu'un autre générateur avait ajouté à un fichier de la plateforme (la valeur d'une *gateway*, les
