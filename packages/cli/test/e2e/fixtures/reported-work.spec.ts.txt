@@ -1,6 +1,7 @@
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { contextModule, createTestApplication, fake, type TestApplication } from '@ddd-ts-kit/di';
+import { contextModule, fake, type TestApplication } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { InMemoryOutboxStore, OutboxPublisher } from '@ddd-ts-kit/events';
 import { eventually } from '@ddd-ts-kit/testing/e2e';
 import { describe, expect, it } from 'vitest';
