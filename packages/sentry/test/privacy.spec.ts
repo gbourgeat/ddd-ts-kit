@@ -109,7 +109,8 @@ describe('what leaves the process by default', () => {
     errors.report(new Error('the ledger did not answer'), report);
     await errors.flush(2_000);
 
-    expect(server.events.map((event) => event.exception?.values?.[0]?.value)).toEqual([
+    // The transport sends the two events in no fixed order: what each one carries is the assertion.
+    expect(server.events.map((event) => event.exception?.values?.[0]?.value).toSorted()).toEqual([
       'Key (email)=([redacted]) already exists',
       'the ledger did not answer',
     ]);
