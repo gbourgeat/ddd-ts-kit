@@ -1,4 +1,4 @@
-import type { Clock, IntegrationEvent, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import type { Clock, IntegrationEvent, IntegrationEventPublisher, Metrics } from '@ddd-ts-kit/kernel';
 import type { OutboxRecord } from '../outbox/outbox-record';
 import type { OutboxStore } from '../outbox/outbox-store';
 import type { ClaimWindow } from './claim-window';
@@ -34,6 +34,11 @@ export interface OutboxRelayOptions {
   readonly ordering?: OutboxOrdering;
   /** The ordering key of an event, typically its aggregate id. No key: no ordering. */
   readonly keyOf?: (event: IntegrationEvent) => string | undefined;
+  /**
+   * After each tick, the depth of the store as the gauges `outbox_pending`, `outbox_failed` and
+   * `outbox_dead`, from `store.stats()`. Left out, the store is not asked.
+   */
+  readonly metrics?: Metrics;
 }
 
 export interface OutboxTickResult {
@@ -83,6 +88,8 @@ export class OutboxRelay {
 
   private readonly order: KeyOrder<OutboxRecord>;
 
+  private readonly metrics: Metrics | undefined;
+
   private timer: ReturnType<typeof setTimeout> | undefined;
 
   private running: Promise<unknown> | undefined;
@@ -105,6 +112,7 @@ export class OutboxRelay {
     this.onFailure = options.onFailure ?? (() => undefined);
     this.wakeOn = options.wakeOn;
     this.order = new KeyOrder(orderingKeyOf(options));
+    this.metrics = options.metrics;
   }
 
   async tick(): Promise<OutboxTickResult> {
@@ -124,6 +132,8 @@ export class OutboxRelay {
         await this.store.markPublished(tick.published, this.clock.now());
       }
     }
+
+    await this.measure();
 
     return { published: tick.published.length, failed: tick.failed };
   }
@@ -153,6 +163,18 @@ export class OutboxRelay {
     clearTimeout(this.timer);
     this.timer = undefined;
     await this.running;
+  }
+
+  private async measure(): Promise<void> {
+    if (this.metrics === undefined) {
+      return;
+    }
+
+    const { pending, failed, dead } = await this.store.stats();
+
+    this.metrics.gauge('outbox_pending').set(pending);
+    this.metrics.gauge('outbox_failed').set(failed);
+    this.metrics.gauge('outbox_dead').set(dead);
   }
 
   private async claim(): Promise<Tick> {
