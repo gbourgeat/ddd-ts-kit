@@ -146,6 +146,18 @@ describe('a statement broken after its operator', () => {
     ]);
   });
 
+  it('opens every argument when the function a call receives last answers a condition, even one that starts with a call', () => {
+    const grant = `permit('system-billing.cancel-stale-invoices', [billingPermissions['invoice.cancel']], ({ actor }) => isSystem(actor) && actor.id === 'system:billing.cancel-stale-invoices'),`;
+
+    expect(fitStatement(grant, '  ')).toEqual([
+      '  permit(',
+      "    'system-billing.cancel-stale-invoices',",
+      "    [billingPermissions['invoice.cancel']],",
+      "    ({ actor }) => isSystem(actor) && actor.id === 'system:billing.cancel-stale-invoices',",
+      '  ),',
+    ]);
+  });
+
   it('leaves on its line a call with no argument or a statement with no bracket to open', () => {
     const empty = `await platform.${LONG}Service.someVeryLongMethodNameThatGoesOnAndOn${LONG}AndStillGoesOn${LONG}();`;
     const bare = `${LONG}.${LONG}.${LONG}.${LONG}.${LONG}.${LONG}.value;`;

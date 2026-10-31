@@ -130,14 +130,15 @@ function endsWithLiteral(statement: string, group: Group, last: string): boolean
 
 const FUNCTION_ANSWERING_A_CALL = /^(?:async )?(?:\w+|\([^()]*\)) =>(?= [\w.]+\()/;
 
-/** The function a call receives last, when it answers a call and the line fits up to its arrow: the formatter moves what it answers to a line of its own. */
+/** The function a call receives last, when it answers one call and the line fits up to its arrow: the formatter moves what it answers to a line of its own. */
 function huggedFunction(statement: string, group: Group, indent: string): string[] | undefined {
   const last = splitTopLevel(statement.slice(group.open + 1, group.close)).at(-1) ?? '';
   const start = group.close - last.length;
   const head = FUNCTION_ANSWERING_A_CALL.exec(last)?.[0];
   const isLastArgument = statement[group.open] === '(' && statement.slice(start, group.close) === last;
+  const answersOneCall = head !== undefined && isOneCall(last.slice(head.length).trim());
 
-  if (head === undefined || !isLastArgument || indent.length + start + head.length > LINE_WIDTH) {
+  if (head === undefined || !answersOneCall || !isLastArgument || indent.length + start + head.length > LINE_WIDTH) {
     return undefined;
   }
 
@@ -146,4 +147,16 @@ function huggedFunction(statement: string, group: Group, indent: string): string
     ...fitStatement(`${last.slice(head.length).trim()},`, `${indent}${STEP}`),
     `${indent}${statement.slice(group.close)}`,
   ];
+}
+
+/** A call and nothing else: `isSystem(actor)`, not `isSystem(actor) && actor.id === id`, which the formatter opens argument by argument. */
+function isOneCall(body: string): boolean {
+  const call = lastGroup(body);
+
+  return (
+    call !== undefined &&
+    body[call.open] === '(' &&
+    call.close === body.length - 1 &&
+    /^[\w.]+$/.test(body.slice(0, call.open))
+  );
 }

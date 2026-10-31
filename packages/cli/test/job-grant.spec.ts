@@ -26,8 +26,9 @@ describe('generate job, the grant of its system actor', () => {
     const root = project('--authz', 'abac');
     const generated = report(cli(root, ...EVERY_QUARTER));
 
+    // Laid out as the formatter of the project does: an arrow that answers a condition opens every argument.
     const rule =
-      "  permit('system-billing.cancel-stale-invoices', [billingPermissions['invoice.cancel']], ({ actor }) =>\n    isSystem(actor) && actor.id === 'system:billing.cancel-stale-invoices',\n  ),";
+      "  permit(\n    'system-billing.cancel-stale-invoices',\n    [billingPermissions['invoice.cancel']],\n    ({ actor }) => isSystem(actor) && actor.id === 'system:billing.cancel-stale-invoices',\n  ),";
 
     expect(read(root, `${AUTH}/attributes/attribute-policies.ts`)).toContain(
       `  // ddd-ts-kit:system-grants\n${rule}\n  // /ddd-ts-kit:system-grants`,
@@ -35,7 +36,7 @@ describe('generate job, the grant of its system actor', () => {
 
     expect(generated.todos.find((todo) => todo.gist.startsWith('check this rule'))).toMatchObject({
       file: `${AUTH}/attributes/attribute-policies.ts`,
-      line: 18,
+      line: 19,
     });
 
     expect(read(root, JOB)).not.toContain('grant the system actor');
