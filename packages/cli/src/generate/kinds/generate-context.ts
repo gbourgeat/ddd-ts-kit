@@ -97,6 +97,7 @@ function refuseReservedName(context: Name): void {
 const GROUPING_NAMES: readonly string[] = [
   ...TECHNICAL_WORDS,
   'platform',
+  'all',
   'shared',
   'common',
   'core',
