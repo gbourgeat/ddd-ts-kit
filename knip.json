@@ -15,7 +15,8 @@
     ".": {
       "entry": ["pipeline/monorepo/*.mjs", "plugin/hooks/*.mjs"],
       "project": ["pipeline/monorepo/**/*.mjs", "plugin/**/*.mjs", "*.{js,cjs,mjs,ts}"],
-      "ignoreDependencies": ["@opentelemetry/exporter-prometheus", "@opentelemetry/sdk-metrics"]
+      "ignoreDependencies": ["@opentelemetry/exporter-prometheus", "@opentelemetry/sdk-metrics"],
+      "ignoreBinaries": ["mkfifo"]
     },
     "packages/*": {
       "project": ["src/**/*.ts", "test/**/*.ts"]

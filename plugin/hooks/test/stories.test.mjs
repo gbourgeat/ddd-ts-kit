@@ -12,6 +12,7 @@ import {
   cliAnswering,
   cliModule,
   decision,
+  directory,
   edit,
   git,
   launcher,
@@ -625,3 +626,71 @@ test('at stop in the worktree of a story, a done row that departed from its desi
   assert.equal(run('stop', { ...session, session_id: 'settled' }).output, undefined);
   assert.equal(run('stop', { ...session, stop_hook_active: true }).output, undefined);
 });
+
+test("the scope file of a story is the conductor's: the session of its worktree changes it in no way", () => {
+  const root = storyScoped();
+  for (const command of [
+    'rm .ddd-ts-kit/story.json',
+    'echo {} > .ddd-ts-kit/story.json',
+    'mv .ddd-ts-kit/story.json /tmp/story.json',
+    'rm -rf .ddd-ts-kit',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+  }
+  const written = run('pre-write', { cwd: root, ...write(join(root, '.ddd-ts-kit/story.json')) });
+  assert.equal(decision(written), 'deny');
+  assert.match(reason(written), /conductor/);
+  const conductor = directory('conductor');
+  assert.equal(run('pre-bash', bash(conductor, `rm ${root}/.ddd-ts-kit/story.json`)).output, undefined);
+  assert.equal(run('pre-bash', bash(root, 'cat .ddd-ts-kit/story.json')).output, undefined);
+});
+
+test('the scope file of a story is removed with no folder above it, by rm, find, git clean or git stash', () => {
+  const root = storyScoped();
+  for (const command of [
+    'rm -rf .',
+    'git clean -fdx',
+    'git clean -fdX',
+    'find .ddd-ts-kit -delete',
+    'find . -name story.json -delete',
+    'find .ddd-ts-kit -name story.json -exec rm {} +',
+    "find . -iname 'STORY.*' -delete",
+    "find . -name '*.orig' -o -name '*.rej' -delete",
+    "find . -name '[sw]*.json' -delete",
+    'git stash -u -a',
+    'git stash --all',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+  }
+  assert.match(
+    reason(run('pre-bash', bash(root, 'git clean -fdx'))),
+    /^ddd-ts-kit: git clean: \.ddd-ts-kit\/story\.json is a shared file/,
+  );
+  const elsewhere = ['git clean -f', 'git clean -fdx src', 'find src -delete', 'rm -rf src', 'rm a/{}'];
+  const otherNames = ["find . -name '*.orig' -delete", "find . -type f -name '*.rej' -exec rm {} +"];
+  for (const command of [...elsewhere, ...otherNames]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+});
+
+test('git clean -d and git stash -u reach the scope file of a story only when git does not ignore it', () => {
+  const root = storyScoped();
+  const untracked = ['git clean -fd', 'git stash -u', 'git stash push --include-untracked'];
+  for (const command of untracked) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, `out of a repository: ${command}`);
+  }
+  git(root, 'init', '--quiet');
+  for (const command of [...untracked, 'git stash']) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, `ignored by init: ${command}`);
+  }
+  writeFileSync(join(root, '.gitignore'), 'node_modules\n');
+  for (const command of untracked) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+  }
+});
+
+function storyScoped() {
+  const root = project();
+  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
+  return root;
+}

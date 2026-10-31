@@ -218,3 +218,61 @@ test('a core.fsmonitor planted in the config never runs on the git calls of the 
   run('stop', { cwd: root });
   assert.equal(existsSync(marker), false);
 });
+
+test('the hooks of the project and the steps of the conductor are read on the words of a command, however it is spelled', () => {
+  const root = committed();
+  for (const command of [
+    "g''it commit --no-verify -m x",
+    'g\\it commit --no-verify -m x',
+    'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x',
+    'X=/dev/null git --config-env core.hooksPath=X commit -m x',
+    'git am --no-verify x.patch',
+    'git commit-tree HEAD^{tree} -m x',
+    'LEFTHOOK_EXCLUDE=pre-commit git commit -m x',
+  ]) {
+    assert.match(reason(run('pre-bash', bash(root, command))), /hooks/, command);
+  }
+  const agent = worker(root, 'ordering');
+  for (const command of [
+    "npx ddd-ts-kit merge-trunk --to-la'nd'",
+    "npx ddd-ts-kit acceptan'ce' us1 --lock",
+    "npx ddd-ts-kit worker-sco'pe' billing",
+    'git --no-pager merge -X theirs main',
+    'git rebase -X theirs main',
+    'git cherry-pick -X theirs main',
+    'git merge --strategy-option theirs main',
+    'git merge -s ours main',
+    'git checkout --theirs "$FILE"',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, agent))), 'deny', command);
+  }
+  assert.equal(run('pre-bash', bash(root, 'echo LEFTHOOK=0 && git status')).output, undefined);
+  assert.equal(run('pre-bash', bash(root, 'git merge main', agent)).output, undefined);
+});
+
+test('the reviewer, the explorer and the verifier change no file of a project by the shell', () => {
+  const root = committed();
+  for (const agent of ['ddd-ts-kit:architecture-reviewer', 'ddd-ts-kit:domain-explorer', 'ddd-ts-kit:story-verifier']) {
+    const reader = { agent_type: agent };
+    for (const command of [
+      'echo x > src/main.ts',
+      'rm src/main.ts',
+      'git checkout -- src/main.ts',
+      'git checkout work/billing',
+      'git switch main',
+      'git stash',
+      'git reset --hard HEAD~1',
+    ]) {
+      assert.equal(decision(run('pre-bash', bash(root, command, reader))), 'deny', `${agent} ${command}`);
+    }
+    for (const command of [
+      'git show HEAD:src/main.ts',
+      'git diff main',
+      'cat src/main.ts > /dev/null',
+      'npm test',
+      'git add .',
+    ]) {
+      assert.equal(run('pre-bash', bash(root, command, reader)).output, undefined, `${agent} ${command}`);
+    }
+  }
+});

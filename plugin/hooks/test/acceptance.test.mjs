@@ -187,3 +187,65 @@ test('a sed script that only prints reads a verdict, and one given by -e that wr
   const writing = bash(root, `sed -n -e 1p -e 'w ${VERDICT}' /tmp/forged.md`);
   assert.equal(decision(run('pre-bash', writing)), 'deny');
 });
+
+test('a command writes the lock and the verdicts however it reaches them: a folder that holds them, a place only the shell knows, git that writes a file', () => {
+  const root = project();
+  put(root, 'test/acceptance/us5.acceptance.lock.json', '{}');
+  for (const command of [
+    'cd test/acceptance; cp /tmp/v verdicts/us5-x.md',
+    'cd test; cp /tmp/l acceptance/us5.acc*',
+    'd=test/acceptance; cp /tmp/v $d/verdicts/x.md',
+    'git restore -s HEAD~1 test/acceptance',
+    'git checkout HEAD~1 -- test/acceptance',
+    'rm -rf test/acceptance',
+    'mv test/acceptance /tmp/x',
+    'cp /tmp/x/* test/acceptance/',
+    'rsync -a /tmp/x/ test/acceptance/',
+    'tar -xf /tmp/x.tar -C test/acceptance',
+    'git log --output=test/acceptance/us5.acceptance.lock.json',
+    'git diff --output=test/acceptance/us5.acceptance.lock.json',
+    'git show --output=test/acceptance/verdicts/x.md',
+    'rg --pre ./x foo test/acceptance/us5.acceptance.lock.json',
+    'npx evil ddd-ts-kit status test/acceptance/us5.acceptance.lock.json',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+  }
+  for (const command of [
+    'rg foo test/acceptance/us5.acceptance.lock.json',
+    'git checkout -- .',
+    'npx ddd-ts-kit acceptance us5 --lock',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+});
+
+test('the acceptance judge reads, and runs the kit only to read', () => {
+  const root = project();
+  const judge = { agent_type: 'ddd-ts-kit:acceptance-judge' };
+  for (const command of [
+    'git log --output=src/main.ts',
+    'git diff --output=src/main.ts',
+    'git show --output=src/main.ts',
+    'git add -A',
+    'git commit -am x',
+    'npx ddd-ts-kit init --force',
+    'npx ddd-ts-kit generate aggregate ordering Thing',
+    'npx ddd-ts-kit merge-trunk',
+    'npx ddd-ts-kit worktree x',
+    'npx ddd-ts-kit check --baseline prune',
+    'rg --pre ./x foo .',
+    'node -e "1" ddd-ts-kit status',
+    'git -c diff.external=./x diff',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, judge))), 'deny', command);
+  }
+  for (const command of [
+    'git log -1',
+    'git show HEAD:test/acceptance/us5.acceptance.spec.ts',
+    'npx ddd-ts-kit acceptance US5',
+    'npx ddd-ts-kit story US5',
+    'rg -n Verdict test/acceptance',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, judge)).output, undefined, command);
+  }
+});

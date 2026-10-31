@@ -77,7 +77,9 @@ install of its package manager), never an install that names a package.
   the system temp directory stays free.
 - Your git changes your worktree only: run it as `cd <worktree> && ...`. From any other checkout
   it reads (`status`, `log`, `diff`), and the guard refuses the rest: the conductor lands your
-  branch, and no worker removes a worktree or writes a ref.
+  branch, and no worker removes a worktree or writes a ref by `update-ref`. Your git keeps to your
+  branch: push it alone (`git push -u origin <branch>`), without force nor deletion; no tag, no
+  fetch into a ref, no other branch checked out or created.
 - When you need something outside your scope (a field in an upstream contract, a new
   aggregate, a dependency, a platform binding): do not work around it and do not retry a
   refused write. Finish the slices that do not depend on it and put the need in your report.

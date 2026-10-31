@@ -84,16 +84,21 @@ a hand-written file where a generator exists, any edit of a generated contract a
 of the baseline of the errors (`check --baseline write` however the kit is launched, a package
 script included, or an edit of `ddd-ts-kit-baseline.json`:
 the project owner writes it, in a terminal), refuses a git command that skips the hooks of the
-project (`--no-verify`, `-n` on a commit, `-c core.hooksPath=...`, `LEFTHOOK=0` or `HUSKY=0`: the hooks are the local gate
-of the pipeline) and, to a sub-agent, a `git config` that sets a value or a `git -c` of a key that
+project (`--no-verify`, `-n` on a commit, `-c` or `--config-env` of `core.hooksPath` or its setting
+in the environment, `LEFTHOOK=0`, `HUSKY=0`, `LEFTHOOK_EXCLUDE`, `git commit-tree`: the hooks are the local gate
+of the pipeline; the words of a command are read as the shell gives them, quotes removed) and, to a sub-agent, a `git config` that sets a value or a `git -c` of a key that
 runs a command in every checkout (`core.fsmonitor`, `core.pager`, `core.editor`, `core.sshCommand`,
-an `alias.*`, a diff or filter driver), asks the
+an `alias.*`, a diff, merge or filter driver, `diff.external`, an `include.path`, a credential
+helper, a pager, a tool of `mergetool` or `difftool`, a `gpg` program, a `protocol.*`), given by
+`-c` or `--config-env`, or a variable of the environment that hands git a program or settings
+(`GIT_EXTERNAL_DIFF`, `GIT_PAGER`, `GIT_EDITOR`, `GIT_SSH_COMMAND`, `GIT_CONFIG_*`...), asks the
 project owner before a suppression, a skipped test or a change of the rules is written by the
 editor tools, checks
 every written file and returns the violations with their fix (the first five of a Codex patch, the
 others named as not checked; with `"dependenciesBeforeWrite": true`, on trial,
 it refuses before the write a new import that breaks a dependency rule), and refuses to finish while
-architecture errors remain (a check that does not end in time, or that answers more than the
+architecture errors remain in a tree with uncommitted changes (a clean tree is left to the
+pre-commit hook and the pipeline; a check that does not end in time, or that answers more than the
 64 MiB the guard reads, lets the session finish and says so;
 a session start past ten seconds of CLI calls skips the ones left and says it was cut short). With `"formatOnWrite": true` in the config (written by `init` for a new project), it first runs the Biome
 the project installed on the written file (the bin of its `@biomejs/biome` package, `format --write`, one file,
@@ -106,24 +111,40 @@ worktree is refused in the checkout of the conductor, in another worktree and ou
 but the temporary directory, and told to name the file under its worktree. It reads the
 whole command line, every command of it, not only one that starts with `cd <worktree> &&`: a worker
 runs every command that way, and one that writes without moving into its worktree is refused with
-that instruction. It follows a `cd` only when it is certain (after `&&`, into a directory that
-exists), so a write after `cd dir;` or a failed `cd` is refused rather than placed wrong; it reads a
+that instruction: from another checkout a worker only reads (`cat`, `ls`, `grep`, git that reads,
+`git add` and `git commit` in its own worktree, the kit asked to list, describe, report or read a
+briefing, and its checks that write nothing: `check` without `--baseline`, `lint` without `--fix`,
+`rules`, `docs --check` without `--stored-events`, `verify-merge`, `cited`, `affected` without
+`--run`), whatever the program. A session opened above the project holds its worker to the project
+its command names, and a worker standing in its worktree stays pinned to it when a command starts in
+another project. It follows a `cd` only when it is certain (after `&&`, into a directory that
+exists, and that no folder of `CDPATH` sends elsewhere), refuses a worker the variables that move
+where the shell or git find their places (`TMPDIR`, `CDPATH`, `HOME`, `GIT_DIR`, `GIT_WORK_TREE`,
+`PATH`, set for a command or exported), so a write after `cd dir;` or a failed `cd` is refused rather than placed wrong; it reads a
 name the shell computes (a variable, a substitution, a brace list), a wrapper (`nice`, `ionice`,
 `setsid`, `flock`, `busybox`, `su -c`, `env -S`), a package runner (`npx`, `npm exec`) and the
 command it runs; and it knows the writers the file tables miss (`>&`, a `sed` or `awk` script that
 writes, `vim`/`ed`, `rsync`, `curl -o`, `wget -O`, `tar -x`, `git stash`/`reset --hard`/`worktree
 add`/`checkout -f`, `eslint --fix`, `biome --write`). A worker's only free places outside its scope
-are `/dev/null`, the standard devices and the temporary directory (`$TMPDIR`); any other absolute
-place is refused. A command nested deeper than the reader follows (more than five shells or `eval`s)
+are `/dev/null`, the standard devices and the temporary directory (`$TMPDIR`) outside every project (a project cloned there keeps its rules); any other absolute
+place is refused. A file is judged where it lands: a link of the scope, or a folder of its path that
+is one, is the place it reaches, a link of the temporary directory into a project is that place, and
+a file of the scope that has another name elsewhere (a hard link) is refused. A command nested deeper than the reader follows (more than five shells or `eval`s, or more than 32
+wrappers and assignments before its program, which then names no program it knows)
 is refused rather than let through unread; so is, to a worker, a line that ends inside a quote or
 with a here-document that never closes, and a command the reader breaks on. Code it cannot read (inline code such as `node -e`, a
 script, a shell fed on its input, `make`, a package script or runner such as `npm test` or `npx`)
 runs, but before each command of a worker that runs some (every command but the pure readers:
-`cat`, `ls`, `grep`, `git log`, `git status`...), the guard notes the state outside the scope (the
+`cat`, `ls`, `grep`, `git log`, `git status`... named by their name, git without a setting given to
+the command nor an option that hands the files to a program such as `grep -O` or `--ext-diff`; the
+kit counts as the program, or as the first operand of `node` or of a package runner), the guard notes the state outside the scope (the
 `git status` and `HEAD` of the worktree, of the session's checkout when it is another, and the
 manifest and bin of the kit's CLI and of Biome in `node_modules`), and compares it at the worker's
 next call. A read leaves the note of the worktree standing, for what the command left running in the
-background, until a change or a new note. The worker's stop compares it one last time: the worker
+background, until a change or a new note. The worker's stop compares it one last time, with what its branch holds outside the scope since the
+base its scope file records (`baseCommit`: the commits since then, what the trunk brought in left
+out, and the uncommitted files; a scope file without a base leaves the commits uncompared, as the
+guard fails open): the worker
 goes on once to put a file back, and what stays is said to the conductor in `lastStop.outside` of
 `agent.json`, in its report, in `status --workers` and in `worker-scope --resume`. A `git status`
 that does not answer in full compares nothing, and the guard says so. A file of the worktree changed outside the scope, deleted or committed included, stops the
@@ -133,17 +154,27 @@ command when it was already changed (kept under `.ddd-ts-kit/guard/held/`), `git
 rename, `rm` for a new file. A file left changed in the working tree of the session's checkout (not
 one the conductor commits or merges meanwhile) or a change of those packages is said once, for the
 conductor, who alone knows whether it made it. What the project's own scripts (`npm run format`,
-`lint:fix`, `regenerate`, `docs:generate`, `openapi:generate`, `events:generate`), alone on the
-line, rewrite outside the scope among the files their tools rewrite (code, JSON, `docs/`) is said
+`lint:fix`, `regenerate`, `docs:generate`, `openapi:generate`, `events:generate`, not run in another
+folder by `--prefix`, `-C`, `--dir` or `--filter`), alone on the line, rewrite outside the scope among the files their tools rewrite (code, JSON, `docs/`) is said
 with the script that rewrote it, not held: the worker leaves it out of its commits. The scope is pinned at the worker's first
-call: a scope file removed or changed stops it until the conductor restores it. The kit's own
+call: a scope file removed or changed stops it until the conductor restores it, and the mode of the
+guard is pinned with it, so a config of the worktree that turns the guard off, or grows past what
+the guard reads, does not lift a worker, its change being compared as any other. A branch the worker
+merges into its own is its work: only what the trunk holds is the trunk's. The kit's own
 `merge-trunk` is not noted, and an install of the lockfile leaves the packages out of the note. It
-refuses a dependency change and another formatter than `npm run format`. A sub-agent is refused
+refuses a dependency change and another formatter than `npm run format`. The `architecture-reviewer`, the
+`domain-explorer` and the `story-verifier` change no file of a project by the shell, nor its work
+tree by git (they read with `git show` and `git diff`). A sub-agent is refused
 deleting, moving or resetting a branch checked out in another worktree (another worker's, or the
 trunk), short options bundled or long ones cut included. A worker's git changes its own worktree
-only: from any other checkout it reads (`status`, `log`, `diff`, `worktree list`, `fetch`...), so
-only the conductor lands a branch or moves its checkout, and no worker removes a worktree or writes
-a ref (`worktree remove`, `update-ref`). The same shell reading holds the `domain-test-writer` to
+only: from any other checkout it reads (`status`, `log`, `diff`, `worktree list`, `fetch` into no
+ref...), so only the conductor lands a branch or moves its checkout, and no worker removes a
+worktree or writes a ref by `update-ref` or `symbolic-ref`. In its worktree, its git keeps to its
+own branch, the one its scope file records (else the one checked out there): it pushes that branch
+alone (`git push`, `git push -u origin <branch>`, `HEAD:<branch>`), without `--force`, `-f`,
+`--force-with-lease`, a `+` refspec, a deletion (`:<ref>`, `--delete`, `-d`) nor `--all`,
+`--tags` or `--mirror`; it fetches into no ref (`git fetch origin main:main`), makes no tag, and
+checks out or switches to no other branch nor creates one (`-b`, `-c`, `--orphan`, `--detach`). The same shell reading holds the `domain-test-writer` to
 the paths of a test (a spec, the root `test/` or the test folders of a context, and a file it names:
 a place only the shell knows is refused to it), the code of a story to its build gate, and every
 session's hand-writing of a generated file or the baseline, each by the places a command writes
@@ -152,7 +183,10 @@ in. What a redirection, `sed -i` or `tee` types in a file is held as the editor 
 of a context in the main checkout of the trunk, a new file of a generated role. A generated file
 put back or deleted (`git checkout`, `git restore`, `git rm`, `rm`) stays free, since it is rebuilt
 after; so does what a session other than a worker or the test writer writes where only the shell
-knows. A Codex `apply_patch` sent through the shell is read as a patch.
+knows. A Codex `apply_patch` sent through the shell is read as a patch, each patch of the line,
+in a here-document or an argument; one the command does not hold (a file, a pipe) is refused. A
+file a patch deletes, or leaves by a move, is held as `rm` holds it (the baseline, the scope of a
+worker).
 For a `context-builder` (the agent of the plugin, `ddd-ts-kit:context-builder`: an agent of the project
 named `context-builder` without that prefix is held to the scope of its worktree, but neither counted nor
 recorded), it counts the tool calls inside those same hooks and warns the agent
@@ -166,7 +200,11 @@ names the workers to resume ([parallel work](parallel-work.md#when-an-agent-stop
 that write it in the main checkout of the trunk, and in a worktree of `.worktrees/` without its
 own `node_modules`: `npx ddd-ts-kit worktree <name>` opens the place to write it; a project
 started before is only told at session start. In the
-worktree of a story (`.ddd-ts-kit/story.json`), it refuses any code of a context until each row
+worktree of a story (`.ddd-ts-kit/story.json`, which the session there and every sub-agent change in
+no way, nor `.ddd-ts-kit/worker.json` in the worktree of a worker, a removal of a folder above it
+included: `rm -r`, a `find -delete` or `-exec rm` whose `-name` tests can find it, `git clean -x`
+or `-X`, `git stash --all`, and `git clean -d` or `git stash --include-untracked` when git does not
+ignore it), it refuses any code of a context until each row
 has its design review and the acceptance is written and locked, says the phase of the story at
 session start with where it meets the other open stories, says once per file when the session
 writes a file another open story changes, and refuses once to end the session before its report
@@ -177,13 +215,17 @@ spec, and so does a write whose place only the shell knows (`xargs sed -i`, `cd 
 a `find -exec` is judged by the folders it starts from, and reads through either stay free. The
 session itself may write a new version,
 which `acceptance` reports and the `acceptance-judge` agent rules on. A command that writes the lock
-of an acceptance or a verdict (judged by the places it writes, a glob expanded, not by its text) is
-refused: a command may move or check a path (`cd`, `pushd`, `popd`, `pwd`, `test`), read the file
-(`cat`, `grep`, `sed` without `-i`, `awk`, `less`, `jq`), version it (`git add`, `commit`, `log`,
-`show`, `status`) or run the kit (`ddd-ts-kit`, `npx ddd-ts-kit`); any other program (a bare `npx`
-or `pnpm`, `git checkout`/`stash`), or a redirection to a file, is a write, which only the CLI and
-that agent make. No hook
-runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository), and of what code it cannot read writes, it compares only what is noted above: other git-ignored files and the places outside those checkouts are not enumerated; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
+of an acceptance or a verdict (judged by the places it writes, a glob expanded, not by its text; a
+folder that holds them, `test/acceptance` or `test`, counts as them, and so does a place only the
+shell knows on a line that names the acceptance) is refused: a command may move or check a path
+(`cd`, `pushd`, `popd`, `pwd`, `test`), read the file (`cat`, `grep`, `rg` without `--pre`, `sed`
+without `-i`, `awk`, `less`, `jq`), version it (`git add`, `commit` without `-a`, `log`, `show`,
+`status`, none of them with `--output`) or run the kit (`ddd-ts-kit`, `npx ddd-ts-kit`); any other
+program (a bare `npx` or `pnpm`, `git checkout`/`stash`), or a redirection to a file, is a write,
+which only the CLI and that agent make. The judge itself reads git without adding or committing,
+and runs the kit only to read (`acceptance` without `--lock`, `list`, `describe`, `explain`,
+`status`, `story`, `stories`, `story-check`). No hook
+runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository, and no config nor CLI in a folder another user may write, the shared temp directory above all), and of what code it cannot read writes, it compares only what is noted above: other git-ignored files and the places outside those checkouts are not enumerated, and the state it keeps between two calls lies in the project, within reach of code that aims at the guard; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
 Each agent gets what its host runs. The skills work in all three. The six agents are sub-agents
@@ -254,7 +296,7 @@ rule id named here is unknown to the CLI, or when a skill has no row.
 | `document` | `docs --check` (`npm run docs:check`, the `docs` gate of the pipeline), `declarations/barrel-current`, `tree/context-doc`, `sdk --check` | |
 | `extract-service` | `context/extractable`, `context/published-language-only`, `imports/alias-only`, the per-context entry point `generate service` writes and its boot test | |
 | `deviation` | `governance/recorded-deviation`, `config/suppression-needs-reason`, `config/rule-off-everywhere`, the guard asks the owner before a suppression, a skipped test or a change of the rules | |
-| `quality-gate` | `npm run verify`, the `Stop` hook of the guard (it refuses to finish while architecture errors remain), the `gate` job of the pipeline | |
+| `quality-gate` | `npm run verify`, the `Stop` hook of the guard (it refuses to finish while architecture errors remain in uncommitted changes), the `gate` job of the pipeline | |
 | `commit-discipline` | `check --commit-size` (advice), commitlint in the `commit-msg` hook and the title check of the pipeline | the size is advised, never refused: a choice of the kit, kept |
 
 Two gaps belong to no skill: a secret in a diff is caught by gitleaks in the pipeline only, and

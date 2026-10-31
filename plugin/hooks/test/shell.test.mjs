@@ -3,8 +3,10 @@
 // and a text that only looks like a command is not.
 
 import assert from 'node:assert/strict';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { test } from 'node:test';
-import { bash, decision, project, reason, run, worker } from './support.mjs';
+import { bash, conductorWithWorker, decision, project, reason, run, worker } from './support.mjs';
 
 // Each runs `rm` on a file outside the scope of the worker, or writes one, however it is written.
 const HIDDEN_WRITES = [
@@ -205,4 +207,47 @@ test('without TMPDIR in the environment, the system temp directory stays free to
   const agent = worker(root);
   const noted = bash(root, 'echo x > "$TMPDIR/notes.txt" && echo y > "${TMPDIR:-/tmp}/more.txt"', agent);
   assert.equal(run('pre-bash', noted, { TMPDIR: undefined }).output, undefined);
+});
+
+test('a glob that starts outside the project is not walked, and a chain of wrappers longer than the guard reads names no program', () => {
+  const root = project();
+  const agent = worker(root);
+  const started = Date.now();
+  const outside = run('pre-bash', bash(root, 'rm /**/.cache src/main.ts', agent));
+  assert.equal(decision(outside), 'deny');
+  assert.match(reason(outside), /changes \/\*\*\/\.cache/, 'the pattern as written, not walked');
+  assert.ok(Date.now() - started < 20_000, 'answered without walking the disk');
+  const wrapped = run('pre-bash', bash(root, `${'nice '.repeat(40)}rm src/main.ts`, agent));
+  assert.equal(decision(wrapped), 'deny');
+  assert.match(reason(wrapped), /name only the shell knows/);
+  assert.equal(run('pre-bash', bash(root, `${'nice '.repeat(3)}ls`, agent)).output, undefined);
+});
+
+test('a worker sets none of the variables by which the shell or git find their places', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const command of [
+    'TMPDIR=. ; echo x > $TMPDIR/src/main.ts',
+    'HOME=. ; echo x > ~/src/main.ts',
+    'CDPATH=../.. cd src/contexts/ordering >/dev/null && touch x.ts',
+    'GIT_DIR=../other/.git git status',
+    'GIT_WORK_TREE=.. git checkout -- .',
+    'export PATH=./bin:$PATH; ls',
+  ]) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /sets no/, command);
+  }
+  assert.equal(run('pre-bash', bash(root, 'NODE_ENV=test ls', agent)).output, undefined);
+});
+
+test('a cd that CDPATH sends elsewhere leaves the place of what follows to the shell', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = { agent_type: 'ddd-ts-kit:context-builder', session_id: 'cdpath', agent_id: 'worker' };
+  mkdirSync(join(conductor, 'src/contexts/billing'), { recursive: true });
+  mkdirSync(join(worktree, 'src/contexts/billing'), { recursive: true });
+  const command = 'cd src/contexts/billing && touch invoice.ts';
+  assert.equal(run('pre-bash', bash(worktree, command, agent)).output, undefined);
+  const elsewhere = run('pre-bash', bash(worktree, command, agent), { CDPATH: conductor });
+  assert.equal(decision(elsewhere), 'deny');
 });

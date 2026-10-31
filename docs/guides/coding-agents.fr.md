@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:d78e4fd41c0d786d -->
+<!-- translation-of: coding-agents.md sha256:7413c7ca96e82627 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -86,16 +86,22 @@ modification d'un contrat généré et l'écriture de la *baseline* des erreurs 
 write`, quelle que soit la façon de lancer le kit, script de paquet compris, ou une modification
 de `ddd-ts-kit-baseline.json` : le propriétaire du projet l'écrit,
 dans un terminal), refuse une commande git qui saute les hooks du projet (`--no-verify`, `-n` sur un
-commit, `-c core.hooksPath=...`, `LEFTHOOK=0` ou `HUSKY=0` : les hooks sont la barrière locale du
-pipeline) et, à un sous-agent, un `git config` qui fixe une valeur ou un `git -c` d'une clé qui
+commit, `-c` ou `--config-env` de `core.hooksPath` ou son réglage dans l'environnement,
+`LEFTHOOK=0`, `HUSKY=0`, `LEFTHOOK_EXCLUDE`, `git commit-tree` : les hooks sont la barrière locale du
+pipeline ; les mots d'une commande sont lus tels que le *shell* les donne, guillemets ôtés) et, à un sous-agent, un `git config` qui fixe une valeur ou un `git -c` d'une clé qui
 lance une commande dans chaque *checkout* (`core.fsmonitor`, `core.pager`, `core.editor`,
-`core.sshCommand`, un `alias.*`, un pilote *diff* ou *filter*), demande l'avis du propriétaire du projet avant qu'une
+`core.sshCommand`, un `alias.*`, un pilote *diff*, *merge* ou *filter*, `diff.external`, un
+`include.path`, un assistant d'identifiants, un *pager*, un outil de `mergetool` ou `difftool`, un
+programme `gpg`, un `protocol.*`), donnée par `-c` ou `--config-env`, ou une variable
+d'environnement qui confie à git un programme ou des réglages (`GIT_EXTERNAL_DIFF`, `GIT_PAGER`,
+`GIT_EDITOR`, `GIT_SSH_COMMAND`, `GIT_CONFIG_*`...), demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit par les outils d'édition, vérifie chaque fichier
 écrit et renvoie les violations avec leur correction (les cinq premiers d'un *patch* de Codex,
 les autres nommés comme non vérifiés ; avec `"dependenciesBeforeWrite": true`, à
 l'essai, il refuse avant l'écriture un nouvel import qui enfreint une règle de dépendance), et
 refuse de terminer tant que des
-erreurs d'architecture restent (une vérification qui ne finit pas à temps, ou qui répond plus que
+erreurs d'architecture restent dans un arbre aux changements non *committés* (un arbre propre est
+laissé au *hook* de pre-commit et au *pipeline* ; une vérification qui ne finit pas à temps, ou qui répond plus que
 les 64 Mio que la garde lit, laisse la session terminer et le dit ; un début de session qui passe dix secondes d'appels à la CLI saute ceux qui
 restent et dit qu'il a été écourté). Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
 d'abord le Biome que le projet a installé sur le fichier écrit (le *bin* de son paquet
@@ -109,8 +115,18 @@ dès son premier appel : un chemin qui a oublié son *worktree* est refusé dans
 d'orchestre, dans un autre *worktree* et hors de tout projet sauf le répertoire temporaire, avec la
 consigne de nommer le fichier sous son *worktree*. Il lit toute la ligne de commande, chacune de ses commandes, pas
 seulement celle qui commence par `cd <worktree> &&` : un worker lance chaque commande ainsi, et
-celle qui écrit sans entrer dans son worktree est refusée avec cette consigne. Il ne suit un `cd`
-que lorsqu'il est certain (après `&&`, vers un répertoire qui existe), de sorte qu'une écriture
+celle qui écrit sans entrer dans son worktree est refusée avec cette consigne : depuis un autre
+*checkout*, un worker ne fait que lire (`cat`, `ls`, `grep`, git qui lit, `git add` et `git commit`
+dans son propre *worktree*, le kit interrogé pour lister, décrire, rendre compte ou lire un
+*briefing*, et ses contrôles qui n'écrivent rien : `check` sans `--baseline`, `lint` sans `--fix`,
+`rules`, `docs --check` sans `--stored-events`, `verify-merge`, `cited`, `affected` sans `--run`),
+quel que soit le programme. Une session ouverte au-dessus du projet tient son worker au
+projet que nomme sa commande, et un worker qui se tient dans son *worktree* y reste épinglé quand une
+commande commence dans un autre projet. Il ne suit un `cd`
+que lorsqu'il est certain (après `&&`, vers un répertoire qui existe, et qu'aucun dossier de
+`CDPATH` n'envoie ailleurs), refuse à un *worker* les variables qui déplacent l'endroit où le
+*shell* ou git trouvent leurs chemins (`TMPDIR`, `CDPATH`, `HOME`, `GIT_DIR`, `GIT_WORK_TREE`,
+`PATH`, données à une commande ou exportées), de sorte qu'une écriture
 après `cd dir;` ou un `cd` qui échoue est refusée plutôt que mal placée ; il lit un nom que le
 *shell* calcule (une variable, une substitution, une liste d'accolades), un lanceur (`nice`,
 `ionice`, `setsid`, `flock`, `busybox`, `su -c`, `env -S`), un exécuteur de paquet (`npx`,
@@ -118,19 +134,27 @@ après `cd dir;` ou un `cd` qui échoue est refusée plutôt que mal placée ; i
 manquent (`>&`, un script `sed` ou `awk` qui écrit, `vim`/`ed`, `rsync`, `curl -o`, `wget -O`,
 `tar -x`, `git stash`/`reset --hard`/`worktree add`/`checkout -f`, `eslint --fix`, `biome
 --write`). Les seuls endroits libres d'un worker hors de son périmètre sont `/dev/null`, les
-périphériques standard et le répertoire temporaire (`$TMPDIR`) ; tout autre chemin absolu est
-refusé. Une commande imbriquée plus profond que le lecteur ne suit (plus de cinq *shells* ou
+périphériques standard et le répertoire temporaire (`$TMPDIR`) hors de tout projet (un projet cloné là garde ses règles) ; tout autre chemin absolu est
+refusé. Un fichier est jugé là où il aboutit : un lien du périmètre, ou un dossier de son chemin qui en
+est un, est l'endroit qu'il atteint, un lien du répertoire temporaire vers un projet est cet
+endroit, et un fichier du périmètre qui porte un autre nom ailleurs (un lien physique) est refusé. Une commande imbriquée plus profond que le lecteur ne suit (plus de 32 lanceurs et affectations
+avant son programme, qui ne nomme alors aucun programme qu'il connaisse, ou plus de cinq *shells* ou
 `eval`) est refusée plutôt que laissée passer sans lecture ; de même, à un *worker*, une ligne qui
 finit dans une citation ou sur un *here-document* jamais fermé, et une commande sur laquelle le
 lecteur échoue. Le code qu'il ne peut pas lire (du code
 en ligne comme `node -e`, un script, un *shell* nourri par son entrée, `make`, un script ou un
 exécuteur de paquet comme `npm test` ou `npx`) s'exécute, mais avant chaque commande d'un *worker*
 qui en lance (toute commande sauf les pures lectures : `cat`, `ls`, `grep`, `git log`,
-`git status`...), la garde note l'état hors du périmètre (le `git status` et le `HEAD` du
+`git status`... nommées par leur nom, git sans réglage donné à la commande ni option qui confie
+les fichiers à un programme comme `grep -O` ou `--ext-diff` ; le kit compte comme le programme, ou
+comme premier opérande de `node` ou d'un exécuteur de paquet), la garde note l'état hors du périmètre (le `git status` et le `HEAD` du
 *worktree*, du *checkout* de la session quand c'en est un autre, et le manifeste et le *bin* de la
 CLI du kit et de Biome dans `node_modules`), et le compare à l'appel suivant du *worker*. Une lecture
 laisse en place la note du *worktree*, pour ce que la commande a laissé tourner en arrière-plan,
-jusqu'à un changement ou une nouvelle note. L'arrêt du *worker* la compare une dernière fois : le
+jusqu'à un changement ou une nouvelle note. L'arrêt du *worker* la compare une dernière fois, avec ce que sa branche contient hors du
+périmètre depuis la base que note son fichier de périmètre (`baseCommit` : les *commits* depuis,
+ce que le tronc a apporté mis à part, et les fichiers non *committés* ; un fichier de périmètre
+sans base laisse les *commits* non comparés, la garde laissant passer) : le
 *worker* continue une fois pour remettre un fichier en état, et ce qui reste est dit au chef
 d'orchestre dans `lastStop.outside` de `agent.json`, dans son rapport, dans `status --workers` et
 dans `worker-scope --resume`. Un `git status` qui ne répond pas en entier ne compare rien, et la
@@ -143,19 +167,31 @@ pour un renommage, `rm` pour un nouveau fichier. Un fichier laissé modifié dan
 du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) ou
 un changement de ces paquets est dit une fois, pour le chef d'orchestre, qui seul sait s'il l'a fait.
 Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerate`, `docs:generate`,
-`openapi:generate`, `events:generate`), seuls sur la ligne, réécrivent hors du périmètre parmi les
+`openapi:generate`, `events:generate`, sans être lancés dans un autre dossier par `--prefix`, `-C`,
+`--dir` ou `--filter`), seuls sur la ligne, réécrivent hors du périmètre parmi les
 fichiers que leurs outils réécrivent (code, JSON, `docs/`) est dit avec le script qui l'a réécrit,
 sans retenir le *worker* : il le laisse hors de ses commits. Le
 périmètre est fixé au premier appel du *worker* : un fichier de périmètre supprimé ou changé
-l'arrête jusqu'à ce que le chef d'orchestre le rétablisse. Le `merge-trunk` du kit n'est pas noté,
+l'arrête jusqu'à ce que le chef d'orchestre le rétablisse, et le mode de la garde est fixé avec lui :
+une config du *worktree* qui éteint la garde, ou qui dépasse ce que la garde lit, ne libère pas un
+*worker*, son changement étant comparé comme tout autre. Une branche que le *worker* fusionne dans la
+sienne est son travail : seul ce que le tronc contient est au tronc. Le `merge-trunk` du kit n'est pas noté,
 et une installation du *lockfile* laisse les paquets hors de la note. Il refuse un changement de
-dépendance et un autre formateur que `npm run format`. Un sous-agent ne peut ni supprimer, ni
+dépendance et un autre formateur que `npm run format`. L'`architecture-reviewer`, le
+`domain-explorer` et le `story-verifier` ne changent aucun fichier d'un projet par le *shell*, ni
+son arbre de travail par git (ils lisent avec `git show` et `git diff`). Un sous-agent ne peut ni supprimer, ni
 déplacer, ni réinitialiser une branche extraite dans un autre *worktree* (celle d'un autre
 *worker*, ou le tronc), options courtes groupées ou longues abrégées comprises. Le git d'un *worker*
 ne change que son propre *worktree* : depuis tout autre *checkout* il lit (`status`, `log`, `diff`,
-`worktree list`, `fetch`...), de sorte que seul le chef d'orchestre pose une branche ou déplace son
-*checkout*, et qu'aucun *worker* ne retire un *worktree* ni n'écrit une référence (`worktree remove`,
-`update-ref`). La même lecture
+`worktree list`, `fetch` vers aucune référence...), de sorte que seul le chef d'orchestre pose une
+branche ou déplace son *checkout*, et qu'aucun *worker* ne retire un *worktree* ni n'écrit une
+référence par `update-ref` ou `symbolic-ref`. Dans son *worktree*, son git s'en tient à sa propre
+branche, celle que note son fichier de périmètre (sinon celle qui y est extraite) : il pousse cette
+branche seule (`git push`, `git push -u origin <branche>`, `HEAD:<branche>`), sans `--force`, `-f`,
+`--force-with-lease`, *refspec* en `+`, suppression (`:<ref>`, `--delete`, `-d`) ni `--all`,
+`--tags` ou `--mirror` ; il ne récupère vers aucune référence (`git fetch origin main:main`), ne
+crée aucune étiquette, et n'extrait ni ne bascule vers une autre branche, ni n'en crée une (`-b`,
+`-c`, `--orphan`, `--detach`). La même lecture
 du *shell* tient le `domain-test-writer` aux chemins d'un test (une *spec*, le `test/` de la racine
 ou les dossiers de test d'un contexte, et un fichier qu'il nomme : un endroit que seul le *shell*
 connaît lui est refusé), le code d'une *story* à sa barrière
@@ -167,7 +203,10 @@ d'un contexte dans le *checkout* principal du tronc, un nouveau fichier d'un rô
 généré remis en état ou supprimé (`git checkout`, `git restore`, `git rm`, `rm`) reste libre, puisqu'il
 est reconstruit ensuite ; de même ce qu'une session autre qu'un *worker* ou le `domain-test-writer`
 écrit là où seul le *shell* sait. Un
-`apply_patch` de Codex envoyé par le *shell* est lu comme un *patch*.
+`apply_patch` de Codex envoyé par le *shell* est lu comme un *patch*, chaque *patch* de la ligne,
+dans un *here-document* ou un argument ; celui que la commande ne contient pas (un fichier, un
+*pipe*) est refusé. Un fichier qu'un *patch* supprime, ou quitte par un déplacement, est tenu comme
+`rm` le tient (la *baseline*, le périmètre d'un *worker*).
 Pour un `context-builder` (l'agent du *plugin*, `ddd-ts-kit:context-builder` : un agent du projet
 nommé `context-builder` sans ce préfixe est tenu à la portée de son *worktree*, mais ni compté ni
 enregistré), il compte les appels d'outils dans ces mêmes *hooks* et avertit
@@ -182,7 +221,11 @@ périmètre). Au démarrage de session, il nomme les *workers* à reprendre
 l'écrivent dans le *checkout* principal du tronc, et dans un *worktree* de `.worktrees/` sans son
 propre `node_modules` : `npx ddd-ts-kit worktree <name>` ouvre l'endroit où l'écrire ; un projet
 démarré avant en est seulement averti au démarrage de session. Dans le *worktree* d'une
-*story* (`.ddd-ts-kit/story.json`), il refuse tout code d'un contexte tant que chaque ligne n'a
+*story* (`.ddd-ts-kit/story.json`, que la session qui s'y tient et tout sous-agent ne changent
+d'aucune façon, pas plus que `.ddd-ts-kit/worker.json` dans le *worktree* d'un *worker*, y compris
+en supprimant un dossier au-dessus : `rm -r`, un `find -delete` ou `-exec rm` dont les tests
+`-name` peuvent le trouver, `git clean -x` ou `-X`, `git stash --all`, et `git clean -d` ou
+`git stash --include-untracked` quand git ne l'ignore pas), il refuse tout code d'un contexte tant que chaque ligne n'a
 pas sa revue de conception et que l'acceptation n'est pas écrite et verrouillée, dit la phase de
 la *story* au démarrage de session avec ses croisements avec les autres *stories* ouvertes, dit
 une fois par fichier quand la session écrit un fichier qu'une autre *story* ouverte change, et
@@ -196,14 +239,18 @@ tandis qu'un `find -exec` est jugé sur les dossiers d'où il part, et que les l
 l'autre restent libres. La session elle-même peut en écrire une nouvelle version,
 que `acceptance` signale et sur laquelle l'agent `acceptance-judge` se prononce. Une commande qui
 écrit le verrou d'une acceptation ou un verdict (jugée par les endroits qu'elle écrit, un *glob*
-étendu, et non par son texte) est refusée : une commande peut changer de répertoire ou tester un
-chemin (`cd`, `pushd`, `popd`, `pwd`, `test`), lire le fichier (`cat`, `grep`, `sed` sans `-i`,
-`awk`, `less`, `jq`), le versionner (`git add`, `commit`, `log`, `show`, `status`) ou lancer le kit
-(`ddd-ts-kit`, `npx ddd-ts-kit`) ; tout autre programme (un `npx` ou `pnpm` nu, `git
-checkout`/`stash`), ou une redirection vers un
-fichier, est une écriture, que seuls la CLI et cet agent font. Aucun *hook* ne tourne sur
+étendu, et non par son texte ; un dossier qui les contient, `test/acceptance` ou `test`, compte
+comme eux, et de même un endroit que seul le *shell* connaît sur une ligne qui nomme l'acceptation)
+est refusée : une commande peut changer de répertoire ou tester un chemin (`cd`, `pushd`, `popd`,
+`pwd`, `test`), lire le fichier (`cat`, `grep`, `rg` sans `--pre`, `sed` sans `-i`, `awk`, `less`,
+`jq`), le versionner (`git add`, `commit` sans `-a`, `log`, `show`, `status`, aucun avec
+`--output`) ou lancer le kit (`ddd-ts-kit`, `npx ddd-ts-kit`) ; tout autre programme (un `npx` ou
+`pnpm` nu, `git checkout`/`stash`), ou une redirection vers un fichier, est une écriture, que seuls
+la CLI et cet agent font. Le juge lui-même lit git sans ajouter ni *committer*, et ne lance le kit
+que pour lire (`acceptance` sans `--lock`, `list`, `describe`, `explain`, `status`, `story`,
+`stories`, `story-check`). Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
-panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt), et de ce qu'écrit un code qu'il ne peut pas lire, il ne compare que ce qui est noté plus haut : les autres fichiers ignorés par git et les endroits hors de ces *checkouts* ne sont pas énumérés ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
+panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt, ni une config ou une CLI dans un dossier qu'un autre utilisateur peut écrire, le répertoire temporaire partagé avant tout), et de ce qu'écrit un code qu'il ne peut pas lire, il ne compare que ce qui est noté plus haut : les autres fichiers ignorés par git et les endroits hors de ces *checkouts* ne sont pas énumérés, et l'état qu'il garde entre deux appels se trouve dans le projet, à portée d'un code qui vise la garde ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
 
 Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les six
@@ -279,7 +326,7 @@ ligne.
 | `document` | `docs --check` (`npm run docs:check`, la porte `docs` du *pipeline*), `declarations/barrel-current`, `tree/context-doc`, `sdk --check` | |
 | `extract-service` | `context/extractable`, `context/published-language-only`, `imports/alias-only`, le point d'entrée par contexte qu'écrit `generate service` et son test de démarrage | |
 | `deviation` | `governance/recorded-deviation`, `config/suppression-needs-reason`, `config/rule-off-everywhere`, la garde demande l'avis du propriétaire avant une désactivation, un test sauté ou un changement des règles | |
-| `quality-gate` | `npm run verify`, le *hook* `Stop` de la garde (il refuse de terminer tant que des erreurs d'architecture restent), le *job* `gate` du *pipeline* | |
+| `quality-gate` | `npm run verify`, le *hook* `Stop` de la garde (il refuse de terminer tant que des erreurs d'architecture restent dans les changements non *committés*), le *job* `gate` du *pipeline* | |
 | `commit-discipline` | `check --commit-size` (un conseil), commitlint dans le *hook* `commit-msg` et le contrôle du titre du *pipeline* | la taille est conseillée, jamais refusée : un choix du kit, conservé |
 
 Deux manques n'appartiennent à aucune *skill* : un secret dans un *diff* n'est attrapé que par

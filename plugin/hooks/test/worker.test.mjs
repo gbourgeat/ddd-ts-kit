@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import {
   bash,
@@ -301,8 +301,6 @@ const WORKER_COMMANDS_ALLOWED = [
   'git log --oneline -5',
   "git commit -F - <<'EOF'\nfeat(invoicing): issue an invoice\n\nA total > 0 is checked; rm -rf src is a sentence here.\nEOF",
   'git commit -m "feat(invoicing): echo > file is a message"',
-  'git checkout -b build/invoicing-2',
-  'git checkout main',
   'git checkout -- src/contexts/invoicing/CONTEXT.md',
   'git restore src/contexts/invoicing/CONTEXT.md',
   'git restore --staged package.json',
@@ -343,6 +341,8 @@ const WORKER_COMMANDS_ALLOWED = [
 ];
 
 const WORKER_COMMANDS_REFUSED = [
+  ['git checkout -b build/invoicing-2', /a worker's git keeps to its own branch/],
+  ['git checkout main', /a worker's git keeps to its own branch/],
   ["sed -i.bak -e 's/a/b/' src/main.ts", /`sed -i` editing src\/main\.ts: You build the context/],
   ['perl -pi -e "s/a/b/" src/main.ts', /`perl -i` editing src\/main\.ts/],
   ["perl -i -pe 's/a/b/' package.json", /`perl -i` editing package\.json/],
@@ -457,7 +457,7 @@ const UNKNOWN_WRITERS = [
   ['git checkout -f', /`git checkout` changes the whole project/],
   ['git checkout --pathspec-from-file=list HEAD~1', /`git checkout` changes files only the shell knows/],
   ['git reset --hard HEAD~1', /`git reset` changes the whole project/],
-  ['git switch -f main', /`git switch` changes the whole project/],
+  ['git switch -f main', /a worker's git keeps to its own branch/],
   ['git read-tree -u --reset HEAD', /`git read-tree` changes the whole project/],
   ['git checkout-index -f -a', /`git checkout-index` changes the whole project/],
   ['git worktree add .worktrees/evil', /`git worktree` changes \.worktrees\/evil/],
@@ -767,7 +767,7 @@ const CODE_THE_GUARD_CANNOT_READ = [
   'npx vitest run',
   'vitest run',
   'git commit -m "feat(ordering): place an order"',
-  'git log --output=notes.txt',
+  'git log --output=src/contexts/ordering/notes.txt',
   'rg --pre ./x.sh Order src',
   'sort -o notes.txt notes.txt',
   'git branch scratch',
@@ -964,6 +964,22 @@ test('what the sanctioned scripts of the project rewrite outside the scope is sa
   assert.match(reason(run('pre-bash', bash(root, 'git status', agent))), /outside your scope: src\/main\.ts\./);
 });
 
+test('a sanctioned script run in another folder is no tool of the project: what it changes is held', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'format', agent_id: 'elsewhere' };
+  for (const script of ['npm run format --prefix /tmp/elsewhere', 'pnpm -C /tmp/elsewhere run format']) {
+    assert.equal(run('pre-bash', bash(root, script, agent)).output, undefined, script);
+    writeFileSync(join(root, 'src/main.ts'), 'formatted elsewhere\n');
+    assert.match(
+      reason(run('pre-bash', bash(root, 'git status', agent))),
+      /outside your scope: src\/main\.ts\./,
+      script,
+    );
+    git(root, 'checkout', 'HEAD', '--', 'src/main.ts');
+    assert.equal(run('pre-bash', bash(root, 'git status', agent)).output, undefined, script);
+  }
+});
+
 test('every clean install the guard knows leaves the packages out of the note around it', () => {
   const root = committed();
   const manifest = join(root, 'node_modules/ddd-ts-kit/package.json');
@@ -1030,7 +1046,7 @@ test('inline code of the conductor is not watched', () => {
 test('the conductor and the other agents are not held to the scope of a worker', () => {
   const root = project({}, ['--package-manager', 'npm']);
   worker(root, 'invoicing');
-  const reviewer = { agent_type: 'ddd-ts-kit:architecture-reviewer' };
+  const reviewer = { agent_type: 'release-notes-writer' };
   for (const [command] of WORKER_COMMANDS_REFUSED) {
     assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
     assert.equal(run('pre-bash', bash(root, command, reviewer)).output, undefined, command);
@@ -1122,3 +1138,15 @@ function noted(root, input) {
     .slice(0, 16);
   return existsSync(join(root, '.ddd-ts-kit/guard', `before-run-${key}.json`));
 }
+
+test('a project under the temp directory keeps its rules for a redirection: the temp directory is free outside every project only', () => {
+  const root = project();
+  const agent = worker(root, 'ordering');
+  const temp = { TMPDIR: dirname(root) };
+  for (const command of ['echo x > src/main.ts', `echo x > ${root}/src/main.ts`]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, agent), temp)), 'deny', command);
+  }
+  assert.equal(decision(run('pre-bash', bash(root, 'echo x > openapi/openapi.yaml'), temp)), 'deny');
+  assert.equal(run('pre-bash', bash(root, 'echo x > src/contexts/ordering/notes.md', agent), temp).output, undefined);
+  assert.equal(run('pre-bash', bash(root, 'echo x > ../outside.txt', agent), temp).output, undefined);
+});

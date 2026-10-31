@@ -9,6 +9,8 @@ import { basename, resolve } from 'node:path';
 export const UNKNOWN = '\u0000';
 
 const DEPTH = 5;
+// The assignments, keywords and wrappers the reader takes off one command, at most.
+const LAYERS = 32;
 // `$((...))`: its body, between the two parentheses left, holds no separator of commands.
 const ARITHMETIC = /^\([^;&|`]*\)$/;
 // A here-document opened in a substitution: its delimiter, in either quote or bare; `<<<` opens none.
@@ -82,7 +84,9 @@ export function simpleCommands(text, directory, depth = 0) {
   for (const command of commands) {
     blocks += blockChange(command.words);
     const words = unwrapped(command.words);
-    found.push({ ...command, words, directory: current });
+    // The variables set for the command alone (`X=1 cmd`, `env X=1 cmd`), which the program reads.
+    const assigned = command.words.slice(0, command.words.length - words.length).filter(isAssignment);
+    found.push({ ...command, words, assigned, directory: current });
     current = movedTo(command, words, { current, stack, blocks });
     found.push(...nestedCommands(words, current, depth));
     const wrapped = wrappedTextOf(command.words);
@@ -95,7 +99,17 @@ export function simpleCommands(text, directory, depth = 0) {
 }
 
 function unreadMarker(truncated, directory, depth) {
-  return { words: [], redirects: [], heredoc: false, piped: false, directory, depth, ender: undefined, truncated };
+  return {
+    words: [],
+    assigned: [],
+    redirects: [],
+    heredoc: false,
+    piped: false,
+    directory,
+    depth,
+    ender: undefined,
+    truncated,
+  };
 }
 
 /** Where `cd`, `pushd` and `popd` leave the commands after them, `place` holding the directory and the `pushd` stack. */
@@ -108,8 +122,18 @@ function movedTo(command, words, place) {
   if (!isCertain(command, place.blocks)) {
     return undefined;
   }
-  // A `cd` that cannot be seen to land on an existing directory leaves the place to the shell.
-  return name === 'cd' && (next === undefined || !existsSync(next)) ? undefined : next;
+  // A `cd` that cannot be seen to land on an existing directory, or that CDPATH sends elsewhere,
+  // leaves the place to the shell.
+  return name === 'cd' && (next === undefined || !existsSync(next) || sentElsewhere(words[1], next)) ? undefined : next;
+}
+
+// A relative directory that a folder of CDPATH holds: the shell goes there, not where it is spelled.
+function sentElsewhere(target, next) {
+  const folders = (process.env.CDPATH ?? '').split(':').filter(Boolean);
+  return (
+    !/^(?:\.{0,2}\/|\.{1,2}$)/.test(target ?? '/') &&
+    folders.some((folder) => resolve(folder, target) !== next && existsSync(resolve(folder, target)))
+  );
 }
 
 function movedBy(name, words, { current, stack }) {
@@ -205,18 +229,26 @@ function changedDirectory(word, directory) {
   return word === '-' ? undefined : placeOf(word, directory);
 }
 
-/** Leading assignments, keywords and wrappers taken off: what is left starts with the program run. */
+/**
+ * Leading assignments, keywords and wrappers taken off: what is left starts with the program run.
+ * Past the layers the reader takes off, the program is one only the shell knows.
+ */
 function unwrapped(words) {
   let rest = words;
-  for (let next = unwrapOnce(rest); next !== rest; next = unwrapOnce(rest)) {
+  let next = unwrapOnce(rest);
+  for (let layer = 0; next !== rest; layer += 1) {
+    if (layer === LAYERS) {
+      return [UNKNOWN];
+    }
     rest = next;
+    next = unwrapOnce(rest);
   }
   return rest;
 }
 
 /** One leading assignment, keyword or wrapper taken off, or the words themselves when there is none. */
 function unwrapOnce(rest) {
-  if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
+  if (isAssignment(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
     return rest.slice(1);
   }
   const name = commandName(rest);
@@ -227,11 +259,15 @@ function unwrapOnce(rest) {
   return WRAPPERS[name].tail === 'unknown' && inner.length > 0 ? [...inner, UNKNOWN] : inner;
 }
 
+function isAssignment(word) {
+  return /^[A-Za-z_][A-Za-z0-9_]*=/.test(word);
+}
+
 /** The text a command hands to another to split, read at each layer of its wrappers (`nice npx ...`). */
 function wrappedTextOf(words) {
   let rest = words;
   let text = wrappedText(rest);
-  while (text === undefined && unwrapOnce(rest) !== rest) {
+  for (let layer = 0; text === undefined && layer < LAYERS && unwrapOnce(rest) !== rest; layer += 1) {
     rest = unwrapOnce(rest);
     text = wrappedText(rest);
   }
@@ -241,7 +277,7 @@ function wrappedTextOf(words) {
 /** The words after the options of a wrapper, its assignments (`env`), and its leading operand. */
 function afterOptions(words, { valued, skip }) {
   let index = 0;
-  while (index < words.length && (words[index].startsWith('-') || /^[A-Za-z_][A-Za-z0-9_]*=/.test(words[index]))) {
+  while (index < words.length && (words[index].startsWith('-') || isAssignment(words[index]))) {
     index += valued.includes(words[index]) ? 2 : 1;
   }
   if (skip === 'number') {
@@ -362,13 +398,16 @@ function findExecutions(words, directory) {
       const inner = words.slice(index + 1, end === -1 ? undefined : end);
       for (const root of roots.length > 0 ? roots : ['.']) {
         const found = inner.map((part) => part.replaceAll('{}', `${root}/{}`));
+        const program = unwrapped(found);
         executions.push({
-          words: unwrapped(found),
+          words: program,
+          assigned: found.slice(0, found.length - program.length).filter(isAssignment),
           redirects: [],
           heredoc: false,
           piped: false,
           directory,
           found: true,
+          expression: words.slice(firstExpression(words)),
         });
       }
     }
