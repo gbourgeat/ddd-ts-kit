@@ -75,7 +75,7 @@ applies to a project already initialised, without `--force`, and `--agent-profil
 it. With the profile, `.claude/settings.json` gains a `sandbox` block next to the permissions
 (a key the project already set is kept), and `init` prints the block of managed settings a
 project file cannot set, for the platform team to paste; `ddd-ts-kit doctor` reports a project
-whose settings lack a line of the block (`--strict` fails on it). What each line buys, in control
+whose settings lack a line of the block, or whose permissions leave no gate (`defaultMode` set to `bypassPermissions`, or an allow rule `Bash(*)` or `Bash`) (`--strict` fails on it). What each line buys, in control
 terms:
 
 | Line | Where | What it buys |
@@ -87,14 +87,14 @@ terms:
 | `sandbox.filesystem.allowWrite`: the caches the install of the stack writes | project | a command writes the project, the temporary directory and these caches only: `~/.npm` with npm, the store and the cache of pnpm, `~/.cache/prisma` with Prisma (below) |
 | `sandbox.credentials.files`: `~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure` denied | project | a command cannot read the keys of the developer: a prompt injection cannot send them |
 | `sandbox.credentials.envVars`: `GITHUB_TOKEN`, `GH_TOKEN`, `GITLAB_TOKEN`, `NPM_TOKEN`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`, `AZURE_CLIENT_SECRET` denied | project | the variables are unset before each sandboxed command: a token in the shell of the developer is not in the shell of the agent |
-| `permissions.deny: Read(./.env)`, `Read(./.env.local)`, `Read(./.env.*.local)`, `Read(./.env.production)`, `Read(./.env.development)`, `Read(./.env.test)` | project, written without the profile too | the secrets of the project stay out of the context of the agent: the sandbox covers shell commands only, not the Read tool, so a permission rule holds this one |
+| `permissions.deny: Read(./.env)`, `Read(./.env.local)`, `Read(./.env.*.local)`, `Read(./.env.production)`, `Read(./.env.development)`, `Read(./.env.test)`, `Read(./.env.staging)`, `Read(./.env.stage)`, `Read(./.env.prod)`, `Read(./.env.preview)`, `Read(./.env.ci)`, `Read(./.envrc)` | project, written without the profile too | the secrets of the project stay out of the context of the agent: the sandbox covers shell commands only, not the Read tool, so a permission rule holds this one |
 | `allowManagedPermissionRulesOnly: true` | managed settings | the permission rules of the organisation are the only ones: a project or a user file cannot widen them |
 | `permissions.disableBypassPermissionsMode: "disable"` | managed | the mode that skips every permission prompt is refused: no session runs without the gates |
 | `allowManagedHooksOnly: true` | managed | only the hooks of the organisation run; copy the hooks of the profile there, or a project file cannot keep them. A project cannot drop the production gate |
 | `strictKnownMarketplaces: [{ "source": "github", "repo": "gbourgeat/ddd-ts-kit" }]` | managed | plugins come from the marketplaces the organisation names (the kit's, or your mirror of it): no unreviewed skill |
 | `requiredMinimumVersion: "<version>"` | managed | a Claude Code older than the version named does not start: every session has the controls of that version |
 | `hooks.PreToolUse`: `production-gate.mjs` on `Bash` | project, `.claude/hooks/` | a command that names the production environment with a release action does not run without a named approval: the release authorisation of the change process, held at the moment the command would run |
-| `hooks.PreToolUse`: `change-reference.mjs` on `Edit\|Write` | project, `.claude/hooks/` | an edit of a migration or of the containers is confirmed by a person with a change reference in mind, recorded as the `Change:` trailer of the commit: the change ticket of the change process, on what reaches production otherwise than through the code |
+| `hooks.PreToolUse`: `change-reference.mjs` on `Edit\|Write\|MultiEdit` | project, `.claude/hooks/` | an edit of a migration or of the containers is confirmed by a person with a change reference in mind, recorded as the `Change:` trailer of the commit: the change ticket of the change process, on what reaches production otherwise than through the code |
 
 The managed settings live outside the repository (`managed-settings.json`, deployed by the
 platform team): `init` prints them as a block to paste, with the version left for the team to
@@ -116,8 +116,9 @@ itself to the agent:
   variable itself. The lists are edited in the file, or extended for one session by the
   variables `PRODUCTION_GATE_ENVIRONMENTS` and `PRODUCTION_GATE_ACTIONS` (comma-separated).
   Every other command passes untouched.
-- `change-reference.mjs` runs before every `Edit` and `Write`. A file under `migrations/` or
-  `prisma/migrations/`, under `docker/`, the `Dockerfile` or `docker-compose.yml` makes the hook
+- `change-reference.mjs` runs before every `Edit`, `MultiEdit` and `Write`. A file under
+  `migrations/` or `prisma/migrations/`, under a `docker/` folder, a `Dockerfile` or a
+  `docker-compose*.yml`, wherever it stands in the checkout or in a worktree of the project, makes the hook
   answer `permissionDecision: "ask"`: the person confirms the edit with a change reference in
   mind (the id of the change ticket or of the story), and the session records it as the trailer
   `Change: <id>` of the commit that holds the file (`git commit -m "<message>" -m "Change: <id>"`,

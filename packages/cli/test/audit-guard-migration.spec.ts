@@ -71,6 +71,35 @@ describe('the audit guard of a generated migration', () => {
   });
 });
 
+describe('a run that writes no migration', () => {
+  const rerun = (files: Record<string, string>): { root: string; out: string[] } => {
+    const root = tempDir('audit-guard-rerun');
+    const out: string[] = [];
+
+    fs.mkdirSync(path.join(root, 'migrations'));
+    Object.entries(files).forEach(([file, content]) => fs.writeFileSync(path.join(root, file), content));
+
+    appendAuditGuard(
+      { root, orm: 'drizzle', written: [], migrations: Object.keys(files) },
+      (schema) => GUARD.map((statement) => statement.replaceAll('"audit"', `"${schema}"`)),
+      { out: (text) => out.push(text), err: () => undefined },
+    );
+
+    return { root, out };
+  };
+
+  it('writes nothing to a migration of an earlier run, and names the one that lacks the guard with the way to add it', () => {
+    const { root, out } = rerun({
+      'migrations/0000_init.sql': DRIZZLE,
+      'migrations/0001_invoices.sql': 'CREATE TABLE "billing"."invoices" ("id" text);\n',
+    });
+
+    expect(fs.readFileSync(path.join(root, 'migrations/0000_init.sql'), 'utf8')).toBe(DRIZZLE);
+    expect(out.join('\n')).toContain('migrations/0000_init.sql: creates the audit trail without the guard');
+    expect(out.join('\n')).toContain('drizzle-generate --custom --name add-audit-guard');
+  });
+});
+
 describe('a migration TypeORM writes', () => {
   it('imports its types as types, which verbatimModuleSyntax asks of the build that compiles it', () => {
     expect(typeOnlyImports(TYPEORM).split('\n')[0]).toBe(

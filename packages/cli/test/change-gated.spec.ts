@@ -9,7 +9,7 @@ const HOOK_TEMPLATE = path.join(REPO_ROOT, 'packages/cli/templates/init/hooks/ch
 /** The `GATED` literal of the change-reference hook, each regular expression as the hook writes it. */
 function gatedOfTheHook(): string[] {
   const text = fs.readFileSync(HOOK_TEMPLATE, 'utf8');
-  const literal = text.match(/^const GATED = \[(.*)\];$/m)?.[1] ?? '';
+  const literal = text.match(/^const GATED = \[([\s\S]*?)\];$/m)?.[1] ?? '';
 
   return [...literal.matchAll(/\/((?:\\\/|[^/])+)\/[a-z]*/g)].map((match) => `/${match[1] ?? ''}/`);
 }
@@ -29,6 +29,9 @@ describe('the paths story-check reads a change reference for', () => {
       'Dockerfile',
       'docker-compose.yml',
       'docker-compose.yaml',
+      'docker-compose.override.yml',
+      '.worktrees/us1/Dockerfile',
+      'src/apps/billing/Dockerfile',
     ];
 
     const free = [

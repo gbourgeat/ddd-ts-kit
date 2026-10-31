@@ -3,8 +3,7 @@
 // that names the production environment of the project with a release action is blocked (exit 2,
 // the reason to the agent) unless RELEASE_APPROVAL names who approved the release and the change
 // it belongs to. Owned by the team: edit the lists below to your environments and actions.
-import { readFileSync } from 'node:fs';
-import process from 'node:process';
+import { readSync } from 'node:fs';
 
 // The words that name the production environment in a command, as a whole word, in any case. A word is
 // read between separators of any kind (a space, a colon, a dash, an underscore, a dot), so that
@@ -26,11 +25,42 @@ const words = (listed, variable) =>
     .filter((word) => word !== '')
     .concat(listed);
 
+// Reads all of stdin. A writer that is late leaves the pipe empty for a moment, which answers EAGAIN: wait for it.
+function readStdin() {
+  const chunks = [];
+  const buffer = Buffer.alloc(65536);
+
+  for (;;) {
+    try {
+      const count = readSync(0, buffer, 0, buffer.length, null);
+
+      if (count === 0) {
+        return Buffer.concat(chunks).toString('utf8');
+      }
+
+      chunks.push(Buffer.from(buffer.subarray(0, count)));
+    } catch (error) {
+      if (error.code === 'EOF') {
+        return Buffer.concat(chunks).toString('utf8');
+      }
+
+      if (error.code !== 'EAGAIN') {
+        throw new Error(`the input could not be read (${error.code ?? 'unknown error'})`, { cause: error });
+      }
+
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+    }
+  }
+}
+
+// The input of the hook, or why it cannot be judged: unreadable, not JSON, or JSON that is no object.
 function readInput() {
   try {
-    return JSON.parse(readFileSync(0, 'utf8'));
-  } catch {
-    return undefined;
+    const input = JSON.parse(readStdin());
+
+    return typeof input === 'object' && input !== null ? { input } : { failure: 'the input is not a JSON object' };
+  } catch (error) {
+    return { failure: error instanceof SyntaxError ? 'the input is not JSON' : error.message };
   }
 }
 
@@ -50,9 +80,16 @@ function named(command, list, others = []) {
 const otherEnvironments = (environments) =>
   environments.flatMap((word) => OTHER_ENVIRONMENT_PREFIXES.map((prefix) => `${prefix}-${word}`));
 
-const input = readInput();
+const { input, failure } = readInput();
 
-if (input === undefined || input.tool_name !== 'Bash' || typeof input.tool_input?.command !== 'string') {
+if (failure !== undefined) {
+  process.stderr.write(
+    `production-gate: ${failure}, so the command cannot be judged. Nothing was run. Run the command again.\n`,
+  );
+  process.exit(2);
+}
+
+if (input.tool_name !== 'Bash' || typeof input.tool_input?.command !== 'string') {
   process.exit(0);
 }
 

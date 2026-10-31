@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Io } from '../../commands/io';
+import { writeInsideProject } from '../../workspace/write-inside-project';
 import { auditSchemaCreated } from './audit-schema-created';
 import { GUARD_MARKER } from './guard-marker';
 import { guardedText, type GuardedOrm } from './guarded-text';
@@ -17,8 +18,10 @@ export interface MigrationsWritten {
 /**
  * Makes the audit trail append-only in the migration that creates it: the tools of Drizzle, Prisma
  * and TypeORM write no trigger, so the statements of the guard follow the creation of the tables,
- * once. A project whose migrations already hold them, or whose new migration creates no audit
- * table, is left as it is.
+ * once. A project whose migrations already hold them, or none of whose migrations creates an audit
+ * table, is left as it is. A migration of an earlier run is never rewritten, it may be applied
+ * already and its checksum is checked: when it lacks the guard, the notice names it and the way to
+ * add the guard in a new migration.
  */
 export function appendAuditGuard(
   migrations: MigrationsWritten,
@@ -36,10 +39,32 @@ export function appendAuditGuard(
     const schema = auditSchemaCreated(read(file));
 
     if (schema !== undefined) {
-      fs.writeFileSync(path.join(root, file), guardedText(orm, read(file), statementsOf(schema)));
+      writeInsideProject(root, file, guardedText(orm, read(file), statementsOf(schema)));
       io.out(`audit guard   ${file}: the entries and archives of the audit trail refuse UPDATE, DELETE and TRUNCATE`);
 
       return;
     }
   }
+
+  const earlier = migrations.migrations.filter(
+    (file) => !written.includes(file) && auditSchemaCreated(read(file)) !== undefined,
+  );
+
+  const unguarded = earlier.sort().at(-1);
+
+  if (unguarded !== undefined) {
+    io.out(
+      `audit guard   ${unguarded}: creates the audit trail without the guard that makes it append-only. ${howToGuard(orm)}`,
+    );
+  }
+}
+
+/** A migration of an earlier run may be applied already, and its checksum is checked: the guard goes in a new one. */
+function howToGuard(orm: GuardedOrm): string {
+  const migration =
+    orm === 'drizzle'
+      ? 'Generate an empty one with `npx ddd-ts-kit drizzle-generate --custom --name add-audit-guard`'
+      : 'Write a new one by hand';
+
+  return `It was left as it is, because it may be applied already: ${migration[0]?.toLowerCase()}${migration.slice(1)}, and put the statements of the guard of @ddd-ts-kit/audit in it.`;
 }

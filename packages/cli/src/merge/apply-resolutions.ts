@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { CliError } from '../cli-error';
+import { refuseLeaving } from '../workspace/refuse-leaving';
+import { writeInsideProject } from '../workspace/write-inside-project';
 import { gitProcess } from './git-process';
 import type { Resolution } from './resolution';
 
@@ -10,14 +12,14 @@ import type { Resolution } from './resolution';
  * gets the conflicts that could be settled, and keeps its stages.
  */
 export function applyResolutions(top: string, resolutions: readonly Resolution[]): void {
-  for (const { file, content } of resolutions) {
-    const absolute = path.join(top, file);
+  const changed = resolutions.filter(({ content }) => content !== undefined).map(({ file }) => file);
+  const real = refuseLeaving(top, changed, (file) => path.join(top, file));
 
+  for (const { file, content } of resolutions) {
     if (content === null) {
-      fs.rmSync(absolute, { force: true });
+      fs.rmSync(path.join(top, file), { force: true });
     } else if (content !== undefined) {
-      fs.mkdirSync(path.dirname(absolute), { recursive: true });
-      fs.writeFileSync(absolute, content);
+      writeInsideProject(top, file, content, real.get(file));
     }
   }
 

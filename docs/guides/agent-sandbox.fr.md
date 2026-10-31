@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:248da6f8de6842e5 -->
+<!-- translation-of: agent-sandbox.md sha256:66161809130bd108 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -78,7 +78,7 @@ s'applique à un projet déjà initialisé, sans `--force`, et `--agent-profile 
 le profil, `.claude/settings.json` gagne un bloc `sandbox` à côté des permissions (une clé que le
 projet avait déjà posée est gardée), et `init` affiche le bloc de réglages gérés qu'un fichier de
 projet ne peut pas poser, pour que l'équipe plateforme le colle ; `ddd-ts-kit doctor` signale un
-projet dont les réglages manquent d'une ligne du bloc (`--strict` échoue dessus). Ce que chaque
+projet dont les réglages manquent d'une ligne du bloc, ou dont les permissions ne laissent aucune garde (`defaultMode` à `bypassPermissions`, ou une règle d'autorisation `Bash(*)` ou `Bash`) (`--strict` échoue dessus). Ce que chaque
 ligne apporte, en termes de contrôle :
 
 | Ligne | Où | Ce qu'elle apporte |
@@ -90,14 +90,14 @@ ligne apporte, en termes de contrôle :
 | `sandbox.filesystem.allowWrite` : les caches qu'écrit l'installation de la pile | projet | une commande n'écrit que le projet, le répertoire temporaire et ces caches : `~/.npm` avec npm, le *store* et le cache de pnpm, `~/.cache/prisma` avec Prisma (plus bas) |
 | `sandbox.credentials.files` : `~/.ssh`, `~/.aws`, `~/.config/gcloud`, `~/.azure` refusés | projet | une commande ne peut pas lire les clés du développeur : une injection de *prompt* ne peut pas les envoyer |
 | `sandbox.credentials.envVars` : `GITHUB_TOKEN`, `GH_TOKEN`, `GITLAB_TOKEN`, `NPM_TOKEN`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`, `AZURE_CLIENT_SECRET` refusées | projet | les variables sont retirées avant chaque commande en bac à sable : un jeton dans le *shell* du développeur n'est pas dans celui de l'agent |
-| `permissions.deny: Read(./.env)`, `Read(./.env.local)`, `Read(./.env.*.local)`, `Read(./.env.production)`, `Read(./.env.development)`, `Read(./.env.test)` | projet, écrit aussi sans le profil | les secrets du projet restent hors du contexte de l'agent : le bac à sable ne couvre que les commandes *shell*, pas l'outil Read, donc une règle de permission tient celui-ci |
+| `permissions.deny: Read(./.env)`, `Read(./.env.local)`, `Read(./.env.*.local)`, `Read(./.env.production)`, `Read(./.env.development)`, `Read(./.env.test)`, `Read(./.env.staging)`, `Read(./.env.stage)`, `Read(./.env.prod)`, `Read(./.env.preview)`, `Read(./.env.ci)`, `Read(./.envrc)` | projet, écrit aussi sans le profil | les secrets du projet restent hors du contexte de l'agent : le bac à sable ne couvre que les commandes *shell*, pas l'outil Read, donc une règle de permission tient celui-ci |
 | `allowManagedPermissionRulesOnly: true` | réglages gérés | les règles de permission de l'organisation sont les seules : un fichier de projet ou d'utilisateur ne peut pas les élargir |
 | `permissions.disableBypassPermissionsMode: "disable"` | gérés | le mode qui saute chaque demande de permission est refusé : aucune session ne tourne sans les portes |
 | `allowManagedHooksOnly: true` | gérés | seuls les *hooks* de l'organisation tournent ; copiez-y les *hooks* du profil, sinon un fichier de projet ne peut pas les garder. Un projet ne peut pas retirer la porte de production |
 | `strictKnownMarketplaces: [{ "source": "github", "repo": "gbourgeat/ddd-ts-kit" }]` | gérés | les *plugins* viennent des *marketplaces* que l'organisation nomme (celle du kit, ou votre miroir) : aucun *skill* non relu |
 | `requiredMinimumVersion: "<version>"` | gérés | un Claude Code plus ancien que la version nommée ne démarre pas : chaque session a les contrôles de cette version |
 | `hooks.PreToolUse` : `production-gate.mjs` sur `Bash` | projet, `.claude/hooks/` | une commande qui nomme l'environnement de production avec une action de mise en production ne tourne pas sans approbation nommée : l'autorisation de mise en production du processus de changement, tenue au moment où la commande tournerait |
-| `hooks.PreToolUse` : `change-reference.mjs` sur `Edit\|Write` | projet, `.claude/hooks/` | une modification d'une migration ou des conteneurs est confirmée par une personne avec une référence de changement en tête, enregistrée comme *trailer* `Change:` du *commit* : le ticket de changement du processus, sur ce qui atteint la production autrement que par le code |
+| `hooks.PreToolUse` : `change-reference.mjs` sur `Edit\|Write\|MultiEdit` | projet, `.claude/hooks/` | une modification d'une migration ou des conteneurs est confirmée par une personne avec une référence de changement en tête, enregistrée comme *trailer* `Change:` du *commit* : le ticket de changement du processus, sur ce qui atteint la production autrement que par le code |
 
 Les réglages gérés vivent hors du dépôt (`managed-settings.json`, déployé par l'équipe
 plateforme) : `init` les affiche comme un bloc à coller, la version laissée à l'équipe. Associez
@@ -120,8 +120,9 @@ manque. Chacun s'explique à l'agent :
   quoi. L'agent est prévenu de ne pas poser la variable lui-même. Les listes se modifient dans le
   fichier, ou s'étendent pour une session par les variables `PRODUCTION_GATE_ENVIRONMENTS` et
   `PRODUCTION_GATE_ACTIONS` (séparées par des virgules). Toute autre commande passe telle quelle.
-- `change-reference.mjs` tourne avant chaque `Edit` et `Write`. Un fichier sous `migrations/` ou
-  `prisma/migrations/`, sous `docker/`, le `Dockerfile` ou `docker-compose.yml` fait répondre au
+- `change-reference.mjs` tourne avant chaque `Edit`, `MultiEdit` et `Write`. Un fichier sous
+  `migrations/` ou `prisma/migrations/`, sous un dossier `docker/`, un `Dockerfile` ou un
+  `docker-compose*.yml`, où qu'il soit dans le dépôt ou dans un *worktree* du projet, fait répondre au
   *hook* `permissionDecision: "ask"` : la personne confirme la modification avec une référence de
   changement en tête (l'identifiant du ticket de changement ou de la *story*), et la session
   l'enregistre comme *trailer* `Change: <id>` du *commit* qui porte le fichier

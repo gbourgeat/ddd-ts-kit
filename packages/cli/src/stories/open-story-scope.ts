@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { CliError } from '../cli-error';
 import { runGit } from '../commit/run-git';
@@ -6,6 +5,7 @@ import type { Config } from '../config';
 import { addWorktree } from '../worker/add-worktree';
 import { type Base, baseOf } from '../worker/base-of';
 import { ensureContainsBase } from '../worker/ensure-contains-base';
+import { writeInsideProject } from '../workspace/write-inside-project';
 import { installDependencies } from '../worker/install-dependencies';
 import { isWorktree } from '../worker/is-worktree';
 import { installNotes } from '../worker/install-notes';
@@ -185,10 +185,7 @@ function prepare(root: string, place: PreparedStory): ReturnType<typeof installD
     ...(from === undefined ? {} : { from }),
   };
 
-  const file = path.join(inside, STORY_SCOPE_FILE);
-
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(written, null, 2)}\n`);
+  writeInsideProject(inside, STORY_SCOPE_FILE, `${JSON.stringify(written, null, 2)}\n`);
 
   return created && place.install ? installDependencies(inside, config.stack.packageManager) : undefined;
 }

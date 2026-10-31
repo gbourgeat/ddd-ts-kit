@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ClientDocument } from '../src/sdk/client-document';
 import { clientFiles } from '../src/sdk/client-files';
+import { renderClient } from '../src/sdk/render-client';
 import type { Rpc } from '../src/sdk/rpc';
 import { readClientDocument } from '../src/sdk/read-client-document';
 import { SchemaTypes } from '../src/sdk/schema-types';
@@ -8,6 +9,15 @@ import { CLASHING_CONTRACT } from './support/clashing-contract';
 import { SHOP_CONTRACT } from './support/shop-contract';
 
 const SHOP = readClientDocument({ name: 'api', source: 'openapi/openapi.yaml' }, SHOP_CONTRACT);
+
+describe('the client of a contract whose title holds the end of a comment', () => {
+  it('keeps the title inside the comment of the client', () => {
+    const client = renderClient({ ...SHOP, title: 'x*/ globalThis.pwned = 1; /*' });
+
+    expect(client).toContain('/** x*\\/ globalThis.pwned = 1; /* ');
+    expect(client).not.toContain('x*/ globalThis');
+  });
+});
 
 describe('reading a contract for its client', () => {
   it('names each operation from its id, its method and path without one, each name once', () => {
