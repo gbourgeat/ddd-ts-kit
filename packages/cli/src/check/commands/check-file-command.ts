@@ -41,6 +41,13 @@ export const checkFileCommand: Command = (argv, io) => {
   const file = toPosix(path.relative(root, absolute));
   const contentFrom = args.text('content-from');
 
+  if (contentFrom === undefined && !fs.existsSync(absolute)) {
+    throw new CliError(
+      `No such file: ${target}.`,
+      'Name a file that exists (`ddd-ts-kit check-file src/contexts/billing/domain/services/x.ts`), or give the text it will hold with --content-from <file>.',
+    );
+  }
+
   const text =
     contentFrom === undefined ? undefined : fs.readFileSync(path.resolve(args.workingDirectory, contentFrom), 'utf8');
 

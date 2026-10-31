@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { CliError } from '../../cli-error';
 import { Arguments } from '../../commands/arguments';
@@ -78,6 +79,9 @@ function formatOf(args: Arguments): CheckFormat {
 /** The rules that judge a file on its own, on any directories: no project, no config. */
 function checkCleanliness(args: Arguments, rules: readonly string[]): CheckResult {
   const directories = args.positionals.length > 0 ? args.positionals : ['.'];
+
+  refuseMissingPaths(args);
+
   const selected = rules.length > 0 ? rules.filter((id) => CLEAN_RULE_IDS.includes(id)) : CLEAN_RULE_IDS;
 
   const project = loadLooseProject(
@@ -91,6 +95,9 @@ function checkCleanliness(args: Arguments, rules: readonly string[]): CheckResul
 function checkProject(args: Arguments, rules: readonly string[]): CheckResult {
   const cwd = args.workingDirectory;
   const root = findRoot(cwd);
+
+  refuseMissingPaths(args);
+
   const result = withBaseline(root, runCheck(loadProject(root), { rules }), rules);
 
   const scopes = args.positionals.map((entry) =>
@@ -105,6 +112,18 @@ function checkProject(args: Arguments, rules: readonly string[]): CheckResult {
   );
 
   return summarize(reported, result);
+}
+
+/** A path that exists nowhere is a slip of the caller; an empty report on it would read as clean. */
+function refuseMissingPaths(args: Arguments): void {
+  const missing = args.positionals.filter((entry) => !fs.existsSync(path.resolve(args.workingDirectory, entry)));
+
+  if (missing.length > 0) {
+    throw new CliError(
+      `No such path: ${missing.join(', ')}.`,
+      'Name a file or a folder of the project (`ddd-ts-kit check src`), or leave the path out to check the whole project.',
+    );
+  }
 }
 
 /** The errors the baseline of the project records stay quiet; a count it no longer reaches is judged when every rule ran. */

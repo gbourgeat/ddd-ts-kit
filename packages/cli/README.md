@@ -2154,6 +2154,9 @@ ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|gith
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
 
+A path that exists nowhere is a mistake of the caller: `check` refuses it (exit 2) in place of
+reporting a clean project.
+
 Each violation has a rule id, a severity, a file, a line, a message and a `fix`: one sentence
 saying what to do instead. Exit code 1 when there is at least one error. Suppose that the
 `Reminder` aggregate of the example application read the system clock in its domain: an `isDue()`
@@ -2501,7 +2504,8 @@ ddd-ts-kit check-file <path> [--content-from <file>] [--rule <id>]...
 
 Runs the per-file rules (layers, contexts, naming, events, language, purity, clean code, mocks,
 composition, suppressions) on one file without walking the project: meant for an editor or
-agent hook after each write. A file that is not a source of the project is ignored.
+agent hook after each write. A file that is not a source of the project is ignored; a path that
+exists nowhere is refused (exit 2), as for `check`.
 `--content-from <file>` judges the text of that file as the content of `<path>`, which need not
 exist yet: what a session is about to write, as the guard of the plugin reads it before the write
 under `"dependenciesBeforeWrite": true`. `--rule` narrows the rules; the baseline of the project

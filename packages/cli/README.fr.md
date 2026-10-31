@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:68d7243caa5c60a6 -->
+<!-- translation-of: README.md sha256:07891610d1e3b32c -->
 
 # ddd-ts-kit
 
@@ -2299,6 +2299,9 @@ ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|gith
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
 
+Un chemin qui n'existe nulle part est une erreur de l'appelant : `check` le refuse (code 2) au lieu
+de déclarer le projet propre.
+
 Chaque violation a un identifiant de règle, une sévérité, un fichier, une ligne, un message et un
 `fix` : une phrase qui dit quoi faire à la place. Code de sortie 1 quand il y a au moins une
 erreur. Supposons que l'agrégat `Reminder` de l'application d'exemple lise l'horloge système dans
@@ -2679,7 +2682,7 @@ ddd-ts-kit check-file <path> [--content-from <file>] [--rule <id>]...
 Exécute les règles par fichier (couches, contextes, nommage, événements, langage, pureté, code
 propre, *mocks*, composition, désactivations) sur un fichier sans parcourir le projet : conçu pour
 un *hook* d'éditeur ou d'agent après chaque écriture. Un fichier qui n'est pas une source du
-projet est ignoré. `--content-from <file>` juge le texte de ce fichier comme le contenu de
+projet est ignoré ; un chemin qui n'existe nulle part est refusé (code 2), comme pour `check`. `--content-from <file>` juge le texte de ce fichier comme le contenu de
 `<path>`, qui n'a pas besoin d'exister encore : ce qu'une session s'apprête à écrire, comme la
 garde du *plugin* le lit avant l'écriture sous `"dependenciesBeforeWrite": true`. `--rule`
 restreint les règles ; la *baseline* du projet s'applique comme pour un fichier sur le disque.
