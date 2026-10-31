@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:2d7b9a7e349d3ab5 -->
+<!-- translation-of: scheduled-jobs.md sha256:2d984222a14fb4e8 -->
 
 # Jobs planifiés
 
@@ -383,7 +383,7 @@ progressif en fait tourner deux pendant un moment.
 
 ### Les services et les *jobs* de la plateforme
 
-Les *jobs* de la plateforme elle-même (`audit.archive`, `privacy.purge-expired`,
+Les *jobs* de la plateforme elle-même (`audit.verify`, `audit.archive`, `privacy.purge-expired`,
 `files.purge-staged`, `events.purge-published`, `jobs.purge-finished`) appartiennent à l'application entière. Un service écrit par `generate
 service` se compose avec `platformJobs: false`, et son `jobSettings(env, '<context>')` ne garde que
 les réglages de ses propres *jobs* ; l'application entière laisse de côté les *jobs* des contextes

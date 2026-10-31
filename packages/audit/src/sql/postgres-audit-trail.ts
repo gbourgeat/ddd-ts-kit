@@ -16,6 +16,7 @@ import type { ArchivableAuditTrail } from '../archive/archivable-audit-trail';
 import type { ArchiveOptions } from '../archive/archive-options';
 import type { AuditArchive } from '../archive/audit-archive';
 import type { AuditArchiveReport } from '../archive/audit-archive-report';
+import { byChainName } from '../chain/by-chain-name';
 import type { ChainHead } from '../chain/chain-head';
 import { chainOfTenant } from '../chain/chain-of-tenant';
 import { GENESIS_HASH } from '../chain/genesis-hash';
@@ -117,6 +118,18 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader, ArchivableAu
 
   archivesOf(chain: string): Promise<readonly AuditArchive[]> {
     return archivesIn(this.session(), this.tables, chain);
+  }
+
+  async chainHeads(): Promise<readonly ChainHead[]> {
+    const rows = await this.session().query(sql`select "chain", "sequence", "hash" from ${this.tables.chains}`);
+
+    return rows
+      .map((row) => ({
+        chain: String(row['chain']),
+        sequence: Number(row['sequence']),
+        hash: String(row['hash']),
+      }))
+      .sort(byChainName);
   }
 
   /**

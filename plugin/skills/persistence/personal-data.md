@@ -48,7 +48,8 @@ behaviour.
   holds identifiers rather than a name or an email, and a personal field of an event is declared.
 - `npm run privacy:export -- <subject-id>` hands over one dated document (`exportDataSubject`,
   `PersonalDataExportDocument`), each export wrapped by `auditedPersonalDataExport` when the
-  trail is on, never the values in the entry.
+  trail is on, never the values in the entry. With event sourcing it holds what the event store
+  keeps sealed for the person too (`EventStorePersonalDataExport`, `platform.event-store.<event type>`).
 
 ## Retention
 

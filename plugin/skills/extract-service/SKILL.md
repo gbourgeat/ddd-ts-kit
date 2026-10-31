@@ -59,7 +59,7 @@ platform only: a hidden dependency on another context makes it fail.
    (every context but the extracted ones, listed in the `extracted` regions of the composition
    root), so its consumers, processes, jobs and routes run in the service only, and
    `everyContext` stays the full list for the contracts and the end-to-end tests. Its
-   scheduled jobs leave with it, the jobs of the platform (`audit.archive`,
+   scheduled jobs leave with it, the jobs of the platform (`audit.verify`, `audit.archive`,
    `privacy.purge-expired`, `events.purge-published`, `jobs.purge-finished`) stay with the whole application (the service composes with
    `platformJobs: false`), and every container shares one `DEPLOYMENT_NAME` while its
    `OTEL_SERVICE_NAME` stays its own. `test/architecture/hosting.spec.ts` composes both roots and

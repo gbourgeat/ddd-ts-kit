@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:76091dc86ada1168 -->
+<!-- translation-of: event-sourcing.md sha256:f9ec77314e83d3a8 -->
 
 # Event sourcing, par agrégat
 
@@ -389,6 +389,15 @@ toute façon. Le kit scelle plutôt les valeurs personnelles :
   du store PostgreSQL. `erase(subject)` supprime la clé, et un rejeu lit alors
   `ERASED_PERSONAL_DATA` (`[erased]`) à la place de chaque valeur scellée avec elle. Une clé
   ultérieure de la même personne n'ouvre jamais une valeur plus ancienne.
+- `decode` lit une valeur personnelle avec `data.personalText('reason')`, `data.personalInstant('bornOn')`
+  ou `data.personal('email', Email.of)` : chacune répond `undefined` une fois la personne effacée,
+  et `read` ne voit jamais `[erased]`. Une date ou un objet-valeur lu avec `data.instant` ou dans
+  `decode` lui-même refuserait `[erased]`, et l'agrégat ne se chargerait plus. Le champ de
+  l'événement qui porte une valeur personnelle admet donc son absence, et `data.isErased('reason')`
+  distingue une valeur effacée d'une valeur jamais donnée. Le chiffreur ouvre une valeur effacée en
+  `{ $erased: { key } }`, jamais en texte : un texte qu'une personne a saisi comme `[erased]` n'est
+  pas pris pour elle. Un upcaster lit les données avant leur décodage et voit cette forme : il
+  transmet une valeur personnelle telle quelle.
 - Une projection reconstruite après un effacement montre la valeur effacée ; une projection qui
   détient déjà la valeur en clair doit être reconstruite, ou appliquer un événement d'effacement
   qui lui est propre.
@@ -489,6 +498,14 @@ ensuite, puisque les deux stockages, séparés, ne partagent aucune transaction 
 ne peut pas être écrite, l'effacement échoue, et le relancer enregistre qu'il ne restait aucune
 clé, à une date ultérieure, de sorte que la date d'achèvement n'est jamais précoce
 ([`@ddd-ts-kit/audit`](../../packages/audit/README.fr.md#e-effacements-de-personnes-concernées)).
+
+Le droit d'accès lit les mêmes valeurs scellées. `EventStorePersonalDataExport` du kernel remet
+chaque valeur scellée avec une clé de la personne, ouverte, un enregistrement par événement sous
+`<name>.<type d'événement>`, chaque valeur nommée par son chemin dans les données ; `runExport`
+d'un projet généré la donne à `exportDataSubject` à côté des exports des contextes, comme
+`platform.event-store` ([Données personnelles](personal-data.fr.md#lexport-de-bout-en-bout)). Un
+flux porte le nom de son agrégat : l'export lit donc tout le store ; une fois la clé détruite, il
+ne répond rien.
 
 Ce qu'un contexte garde de la même personne en clair, les lignes de ses tables, n'est pas scellé :
 on le déclare une fois à côté du *mapper* (`personalFields` : la colonne sujet, les colonnes

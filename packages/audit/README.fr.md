@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0420fa7dbad0bf7a -->
+<!-- translation-of: README.md sha256:f7fc05e7e73e613c -->
 
 # @ddd-ts-kit/audit
 
@@ -20,7 +20,7 @@ npm i typeorm          # seulement pour @ddd-ts-kit/audit/typeorm
 
 | Point d'entrée | Contient | Importe |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataErasure`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, les sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`, `auditedSubjectKeys`, `auditedPersonalDataErasure`, `auditedPersonalDataExport`, `auditedPersonalDataRetention`), `logLostRecords` et `auditRecordOf`, `auditedFields`, `auditedProjection` et `masked`, le port `AuditMasker` et `hmacMasker`, `verifyChain`, `verifyTrail` et sa tâche `VerifyAuditTrail`, `TenantAuditReader`, les primitives de la chaîne (`canonicalize`, `hashOf`, `wellFormed`, `GENESIS_HASH`, `chainOfTenant`) ; réexportés depuis le noyau : `AuditEntry`, les ports `AuditTrail` et `AuditReader` et les types qu'ils nomment | le noyau seulement |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (pair optionnel) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (pair optionnel) |
 | `@ddd-ts-kit/audit/prisma` | `PrismaAuditTrail`, `auditPrismaModels`, `auditGuardStatements` | rien : le client de l'unité de travail de `@ddd-ts-kit/prisma` convient structurellement |
@@ -617,7 +617,7 @@ const app = createApplication({
 ```
 
 Un projet généré par la CLI avec `--audit on` (la valeur par défaut) a ce câblage sous
-`src/platform/audit/` : `create-audit.ts` construit le journal et ses sources, `audit.module.ts`
+`src/platform/audit/` : `create-audit-trail.ts` construit le store des entrées, `create-audit.ts` ses sources, `audit.module.ts`
 lie les deux ports, abonne les événements d'intégration sous le nom de consommateur `audit` et
 enregistre la requête protégée `SearchAuditEntriesQuery`, et
 `src/platform/buses/create-command-bus.ts` place le *middleware* d'audit entre la garde des cas
@@ -825,6 +825,31 @@ pour une chaîne dont la tête a été supprimée : le parcours ne lit pas les a
 Une ancre est ce que dit une ligne d'`audit_archives` tant que `verifyArchive` ne l'a pas prouvée
 contre son fichier : c'est donc l'appelant qui nomme celle à laquelle il se fie.
 
+`verifyTrail(trail)` vérifie chaque chaîne d'un journal qui archive, chacune de l'ancre de sa
+dernière archive à sa tête (`chainHeads()` : la séquence et le hash de sa dernière entrée), de
+sorte qu'une chaîne coupée à sa fin répond `missing-entry`. Les lignes des archives se suivent
+sans trou, et la tête reprend après la dernière : une tête en deçà, ou à sa fin avec un autre
+hash, répond `altered-content`. Avec `files`, le stockage où les archives ont été écrites, chaque
+archive de chaque chaîne est relue, la plus ancienne d'abord, et prouvée par `verifyArchive`
+contre celle d'avant : son empreinte, son intervalle, chaque entrée et chaque lien, son dernier
+hash. Un stockage qui ne rend pas un fichier est la rupture de cette seule chaîne
+(`unreadable-archive`). Sans `files`, une ancre est ce que dit sa ligne. Chaque chaîne s'arrête à
+sa propre rupture et les autres sont vérifiées quand même :
+
+```ts
+await verifyTrail(trail);
+// { valid: true, checked: 1204, breaks: [] }
+// { valid: false, checked: 1180, breaks: [{ kind: 'altered-content', chain: 'tenant:acme', position: 24, sequence: 4235, entryId: '...' }] }
+```
+
+`VerifyAuditTrail(trail, files?)` est la tâche planifiée de la plateforme qui l'exécute et échoue avec
+`AuditTrailBrokenError` (`breaks`, code `AUDIT_TRAIL_BROKEN`) sur une rupture : le planificateur
+journalise l'exécution échouée et la compte. Un projet généré avec le journal actif l'enregistre
+comme `audit.verify`, chaque nuit à 04:30 UTC, désactivée par `JOB_AUDIT_VERIFY_ENABLED=false`, et
+`npm run audit:verify` exécute la même vérification à la main. La tête est une ligne qu'écrit le
+rôle de l'application : elle montre une fin retirée dans le dos du journal, pas une chaîne
+réécrite en entier.
+
 `ArchiveAuditEntries(trail, files, clock, monthsOnline = 12)` est la tâche planifiée de la
 plateforme : chaque passage archive les entrées antérieures au premier jour du mois situé
 `monthsOnline` mois entiers plus tôt, en UTC, si bien qu'un passage manqué est rattrapé par le
@@ -926,17 +951,39 @@ celle du dehors, dans une transaction à elles.
 `audit_entries` lèvent le SQLSTATE `23001`, qui que ce soit qui les demande. Les triggers arrêtent
 les erreurs et les bogues de l'application ; un rôle propriétaire de la table peut les supprimer.
 L'application ne devrait donc pas posséder la table. Exécutez les migrations avec un rôle
-propriétaire et ne donnez au rôle de l'application que ce dont il a besoin :
+propriétaire, et ne donnez au rôle de l'application et au rôle qui archive que ce dont chacun a
+besoin :
 
 ```sql
 revoke all on all tables in schema "audit" from public;
-grant usage on schema "audit" to app;
+grant usage on schema "audit" to app, audit_archiver;
+-- l'application : ajoute, recherche, vérifie (audit.verify)
 grant select, insert on "audit"."audit_entries" to app;
 grant select, insert, update on "audit"."audit_chains" to app;
+grant select on "audit"."audit_archives" to app;
+-- l'archive (audit.archive) : la tête de chaque chaîne verrouillée, l'archive enregistrée, les entrées qu'elle couvre retirées
+grant select, delete on "audit"."audit_entries" to audit_archiver;
+grant select, update on "audit"."audit_chains" to audit_archiver;
+grant select, insert on "audit"."audit_archives" to audit_archiver;
 ```
 
-L'application ne peut alors ni réécrire une entrée, ni désactiver ou supprimer la garde. Il reste
-le rôle propriétaire et le superutilisateur, et c'est à cela que sert l'ancrage.
+L'application ne peut alors ni réécrire ni retirer une entrée, ni désactiver ou supprimer la garde.
+Il reste le rôle propriétaire et le superutilisateur, et c'est à cela que sert l'ancrage. L'archive
+s'exécute dans un processus à part, connecté en `audit_archiver` : dans un projet généré,
+`JOB_AUDIT_ARCHIVE_ENABLED=false` pour l'application et un processus à vous qui exécute
+`ArchiveAuditEntries` sur un journal ouvert avec le `DATABASE_URL` de ce rôle. Une application qui
+exécute elle-même `audit.archive`, le défaut d'un projet généré, détient aussi `select, insert on
+audit_archives` et `delete on audit_entries`.
+
+La garde laisse passer un seul `DELETE` : celui d'une entrée qu'une ligne de `audit_archives`
+couvre, que `archiveBefore` écrit dans la même transaction. Un rôle qui peut à la fois insérer dans
+`audit_archives` et supprimer de `audit_entries` peut donc laisser partir des entrées derrière une
+ligne de son cru. Une telle ligne reste, les archives n'acceptant que l'ajout, et
+`verifyTrail(trail, { files })` relit le fichier de chaque archive de chaque chaîne et le
+prouve avec `verifyArchive` : une ligne sans son fichier, ou dont le fichier ne la prouve pas, est
+la rupture de sa chaîne (`missing-entry`, ou `altered-content`, à la première séquence qu'elle
+nomme). Le `audit.verify` nocturne d'un projet généré avec un stockage de fichiers le fait. Gardez
+ces deux privilèges au rôle qui archive.
 
 Un nouveau store passe la même suite que ceux-ci :
 
@@ -946,7 +993,11 @@ auditTrailContract({ describe, it, expect, beforeEach }, { name: 'MyAuditTrail',
 ```
 
 `tamper` et `cut` font ce que ferait quelqu'un qui a accès au stockage, réécrire une entrée ou
-retirer la fin d'une chaîne ; sans eux, la suite le vérifie sur ce qu'elle a lu.
+retirer la fin d'une chaîne ; sans eux, la suite le vérifie sur ce qu'elle a lu. Un stockage qui
+archive passe aussi `archivableAuditTrailContract`, avec les mêmes `createTrail` et `cut` : la tête
+de chaque chaîne (`chainHeads`), l'archive des entrées plus anciennes qu'une date
+(`archiveBefore`), sa ligne (`archivesOf`), et une vérification qui va de la dernière archive à la
+tête.
 
 ## Interroger le journal
 

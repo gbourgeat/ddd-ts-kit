@@ -187,6 +187,29 @@ and `execution.scheduledAt` says which period the work is for.
   on the API), or initialise the project with `--cache redis`, which binds `RedisLock`, or bind a
   lock between processes of your own to `Lock` in the platform.
 {{/unless}}
+{{#if audit.on}}
+
+## Audit trail
+
+Who did what, on what, when and with what outcome is recorded around the use cases in
+`{{config.platformDir}}/audit/`, each entry linked to the one before it by a hash, chain by chain (one per tenant).{{#if audit.memory}}
+The entries live in the memory of the process until `{{config.platformDir}}/audit/create-audit-trail.ts` answers its TODO
+with a store of your storage: nothing verifies them by night, and a restart loses them.{{/if}}{{#if audit.sql}}
+Every night at 04:30 UTC the job `audit.verify` verifies every chain from its last archive{{#if audit.archive}}, every archive read
+back from the storage and proved against its row,{{/if}} to its head: an entry
+changed, removed, reordered or cut from the end of its chain fails the run, and the log names the chain and the
+sequence (`AuditTrailBrokenError`). `JOB_AUDIT_VERIFY_ENABLED=false` switches it off in one environment.{{/if}}{{#if audit.archive}}
+On the first day of every month at 04:00 UTC, `audit.archive` moves the entries older than twelve whole months to the
+storage of files, verified and anchored.{{/if}}{{#if audit.sql}}
+
+```bash
+npm run audit:verify                                            # the same verification, by hand: exit code 1 on a break
+```
+
+This project runs its migrations and the application with one database role, which owns the tables of the trail and
+can drop their guard. In production, migrate with an owner role and give the application the grants of the README of
+`@ddd-ts-kit/audit` ("Append-only in the database too"){{#if audit.archive}}, and the archive a role of its own{{/if}}.{{/if}}
+{{/if}}
 {{#if files.any}}
 
 ## Files
@@ -291,7 +314,7 @@ variables of `.env`:
 
 ```bash
 npm run privacy:erase -- <subject-id> --operator <who-asks>     # {{#if eventSourcing.on}}the key, then {{/if}}every declared copy{{#if tenancy.any}}, in each tenant of TENANTS{{/if}}{{#if housekeeping.any}}, then what the platform keeps of the person{{/if}}
-npm run privacy:export -- <subject-id> > export.json            # one dated document of every declared record{{#if audit.on}}, audited{{/if}}
+npm run privacy:export -- <subject-id> > export.json            # one dated document of every declared record{{#if eventSourcing.on}} and every value the event store keeps sealed for the person{{/if}}{{#if audit.on}}, audited{{/if}}
 npm run privacy:purge                                           # what outlived its retention, as the nightly job does
 ```
 

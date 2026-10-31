@@ -241,7 +241,12 @@ each other, and an offboarded tenant leaves chains that still verify. The price:
 between entries of two tenants is given by their timestamps only, not proven by a hash.
 
 The store refuses update and delete at the database level too (triggers), and the application's
-database role should own neither the table nor the triggers.
+database role should own neither the table nor the triggers. The one delete let through is that of
+an entry a row of `audit_archives` covers, which the archive writes in the same transaction: a role
+that may both insert such a row and delete entries can let entries go behind a row of its own. That
+row stays, the archives being append-only, and the verification given the storage of the files
+reads back the file of every archive of each chain: a row that no file proves is the break of
+its chain. Those two privileges belong to the role that archives, not to the application.
 
 ## Verification and anchoring
 
@@ -260,8 +265,18 @@ comes next. Whoever has looked at a break walks on from the entry after it. A ch
 archives is verified from the anchor of its last archive, which the caller names: the entries
 before it have left the database.
 
-Verification should run on a schedule and alert; a chain nobody verifies proves nothing in
-practice.
+Verification runs on a schedule and alerts; a chain nobody verifies proves nothing in practice.
+`verifyTrail(trail)` verifies every chain of a trail, each from its last archive to its head, so
+that a chain cut at its tail does not verify, and gathers the first break of each chain. A
+generated project with the trail on runs it every night at 04:30 UTC as the platform job
+`audit.verify`, which fails its run on a break, naming the chain and the sequence
+(`AuditTrailBrokenError`), and `npm run audit:verify` runs it by hand, exit code 1 on a break.
+The head goes on from the last archive: behind it, or at its end with another hash, it is a
+break. Given the storage of the files, every archive is read back and proved against the one
+before it, and a storage that fails is the break of that chain alone; without it, an anchor is
+what its row says. The head of a chain is a row the application role writes: it shows a tail cut
+behind the back of the trail, not a chain rewritten as a whole, which only a checkpoint published
+elsewhere shows.
 
 ## Archiving
 

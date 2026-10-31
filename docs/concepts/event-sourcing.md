@@ -377,6 +377,14 @@ personal values instead:
   PostgreSQL store. `erase(subject)` deletes the key, and a replay then reads
   `ERASED_PERSONAL_DATA` (`[erased]`) in place of every value sealed with it. A later key of the
   same subject never opens an older value.
+- `decode` reads a personal value with `data.personalText('reason')`, `data.personalInstant('bornOn')`
+  or `data.personal('email', Email.of)`: each answers `undefined` once the subject is erased, and
+  `read` never sees `[erased]`. A date or a value object read with `data.instant` or in `decode`
+  itself would refuse `[erased]`, and the aggregate would no longer load. So the field of the event
+  that holds a personal value admits its absence, and `data.isErased('reason')` tells an erased
+  value from one never given. The cipher opens an erased value as `{ $erased: { key } }`, never as
+  a text, so a text a person typed as `[erased]` is not taken for one. An upcaster reads the data
+  before it is decoded and sees that shape: it passes a personal value on as it is.
 - A projection rebuilt after an erasure shows the erased value; a projection that already holds
   the clear value has to be rebuilt, or to apply an erasure event of its own.
 
@@ -473,6 +481,14 @@ The key is destroyed first and the entry written after, since the two stores, ke
 share no transaction: when the entry cannot be written the erasure fails, and running it again
 records that no key was left, at a later date, so the completion date is never early
 ([`@ddd-ts-kit/audit`](../../packages/audit/README.md#e-erasures-of-data-subjects)).
+
+The right of access reads the same sealed values. `EventStorePersonalDataExport` of the kernel
+hands over every value sealed with a key of the person, opened, one record per event under
+`<name>.<event type>`, each value named by its path in the data; `runExport` of a generated
+project gives it to `exportDataSubject` beside the exports of the contexts, as
+`platform.event-store` ([Personal data](personal-data.md#the-export-end-to-end)). A stream is
+named after its aggregate, so the export reads the whole store; once the key is destroyed it
+answers nothing.
 
 What a context keeps of the same person in clear, the rows of its tables, is not sealed: it is
 declared once next to the mapper (`personalFields`: the subject column, the personal columns, rows

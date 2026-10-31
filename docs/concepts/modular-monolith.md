@@ -143,7 +143,7 @@ same jobs would do the work twice). `everyContext` stays the full list, the defa
 the generated contracts and the end-to-end tests, which see the whole system in one process.
 `test/architecture/hosting.spec.ts` composes both roots and fails when a module, a consumer or a
 job of a service is registered in the whole application, or when a consumer is registered twice.
-The jobs of the platform (`audit.archive`, `privacy.purge-expired`, `events.purge-published`,
+The jobs of the platform (`audit.verify`, `audit.archive`, `privacy.purge-expired`, `events.purge-published`,
 `jobs.purge-finished`) stay with the whole application, and the processes of one deployment share the `DEPLOYMENT_NAME` that namespaces their
 lock, cache and job store keys.
 

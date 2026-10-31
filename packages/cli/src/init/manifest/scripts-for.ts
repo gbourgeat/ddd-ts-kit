@@ -1,4 +1,5 @@
 import type { Config } from '../../config';
+import { auditVars } from '../../stack/audit-vars';
 import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file';
 import { inDialect } from '../../package-manager/in-dialect';
 import { BASELINE } from './baseline';
@@ -41,6 +42,7 @@ function scriptsOf(config: Config, tracing: string): Record<string, string> {
     regenerate: 'ddd-ts-kit depcruise-config --write && npm run docs:generate',
     ...databaseScripts(config),
     ...privacyScripts(config),
+    ...auditScripts(config),
     'infra:up': 'docker compose up -d --wait',
     'infra:down': 'docker compose down',
   };
@@ -67,6 +69,13 @@ function privacyScripts(config: Config): Record<string, string> {
     'privacy:export': 'tsx --env-file-if-exists=.env scripts/privacy-export.ts',
     'privacy:purge': 'tsx --env-file-if-exists=.env scripts/privacy-purge.ts',
   };
+}
+
+/** With an audit trail in the database, its verification by hand, as the nightly job `audit.verify` runs it. */
+function auditScripts(config: Config): Record<string, string> {
+  return auditVars(config)['sql'] === true
+    ? { 'audit:verify': 'tsx --env-file-if-exists=.env scripts/audit-verify.ts' }
+    : {};
 }
 
 /**
