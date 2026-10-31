@@ -3,6 +3,7 @@ import { renderTemplate } from '../../templating';
 import { applyWiring } from '../apply-wiring';
 import type { Scope } from '../scope';
 import { CliError } from '../../cli-error';
+import { TABLES_FILES } from './tables-files';
 import {
   keepsSinglePrismaSchema,
   PRISMA_MAIN_SCHEMA,
@@ -11,14 +12,8 @@ import {
   schemaOfContext,
   singlePrismaSchemaFound,
   singlePrismaSchemaSteps,
+  withDatasourceSchema,
 } from '../../prisma-schema';
-
-/** Where each ORM declares the tables of a context: the file its migration tooling reads, and the template that starts it. */
-const TABLES_FILES: Readonly<Record<string, (context: string) => string>> = {
-  drizzle: (context) => `${context}.schema`,
-  typeorm: (context) => `${context}.schema`,
-  knex: (context) => `create-${context}-tables.schema`,
-};
 
 /** The table or model of the aggregate, declared where the migration tooling of the ORM reads it. */
 export function declareStorage(scope: Scope, context: RenderContext): void {
@@ -76,11 +71,10 @@ function declarePrismaModel(scope: Scope, context: RenderContext): void {
 
   applyWiring(scope.ws, models, renderTemplate('repository/prisma/model.tpl', context));
 
-  const schema = schemaOfContext(scope.context.kebab);
   const content = scope.ws.read(PRISMA_MAIN_SCHEMA);
 
-  if (content !== undefined && !new RegExp(`schemas\\s*=\\s*\\[[^\\]]*"${schema}"`).test(content)) {
-    scope.ws.update(PRISMA_MAIN_SCHEMA, content.replace(/(schemas\s*=\s*\[[^\]]*)\]/, `$1, "${schema}"]`));
+  if (content !== undefined) {
+    scope.ws.update(PRISMA_MAIN_SCHEMA, withDatasourceSchema(content, schemaOfContext(scope.context.kebab)));
   }
 
   scope.ws.note(`${models} changed: run \`npm run db:client\` to regenerate the client and the schema of the tests.`);

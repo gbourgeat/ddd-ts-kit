@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:934d258243adce8c -->
+<!-- translation-of: persistence.md sha256:16685c2dddac667b -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -512,7 +512,7 @@ le même fichier.
 | Outil | `db:generate` | Écrit | Une migration fusionnée plus ancienne qu'une migration déjà appliquée |
 |---|---|---|---|
 | drizzle-kit 0.31 | `ddd-ts-kit drizzle-generate --name`, qui lance `drizzle-kit generate --name` (`migrations.prefix: 'timestamp'` dans `drizzle.config.ts`) | `migrations/20261012093000_add-invoices.sql`, son *snapshot* `meta/20261012093000_snapshot.json`, une entrée de `meta/_journal.json` | **ignorée sans un mot** : le migrateur applique les entrées plus récentes que la dernière enregistrée |
-| knex 3 | `knex migrate:make` (le gabarit module ES de knex, fixé dans `knexfile.js`) | `migrations/20261012093000_add-invoices.js` | appliquée : knex exécute chaque fichier qu'il n'a pas enregistré |
+| knex 3 | `npm run build`, puis `ddd-ts-kit knex-generate --name`, qui nomme le fichier avec `knex migrate:make` et y écrit la différence entre `createTables` et les migrations | `migrations/20261012093000_add-invoices.js` | appliquée : knex exécute chaque fichier qu'il n'a pas enregistré |
 | Prisma 7 | `ddd-ts-kit prisma-generate --name`, qui lance `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma transforme `-` en `_`) | appliquée par `migrate deploy`, qui exécute chaque migration qu'il n'a pas enregistrée (d'après sa documentation ; non mesuré ici) |
 | TypeORM 1.1 | `ddd-ts-kit typeorm-generate`, qui lance `typeorm migration:generate -d <data source>`, à qui l'on donne le chemin : `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (des millisecondes, et un `-` : TypeORM fixe les deux) | appliquée : TypeORM exécute chaque migration qu'il n'a pas enregistrée |
 
@@ -522,8 +522,32 @@ commande démarre PostgreSQL en processus (PGlite sur `@electric-sql/pglite-sock
 la base servant de base fantôme ; `typeorm migration:run`), compare le schéma et écrit la nouvelle
 migration, garde d'audit comprise. Un agent dans le bac à sable génère donc ses propres
 migrations. Avec `DATABASE_URL`, l'outil utilise ce serveur comme avant. Sous TypeORM,
-`npm run build` passe d'abord (la source de données lit les migrations compilées) ; un projet
-Prisma lit `SHADOW_DATABASE_URL` dans `prisma.config.ts`, que `init` écrit.
+`npm run build` passe d'abord (la source de données lit les migrations compilées), et `db:migrate`
+le lance lui-même, pour ne jamais répondre que rien n'attend alors qu'une migration n'est pas
+encore compilée ; un projet Prisma lit `SHADOW_DATABASE_URL` dans `prisma.config.ts`, que `init`
+écrit.
+
+Knex n'a pas de comparaison de schéma, et n'a jamais besoin d'un serveur pour générer :
+`ddd-ts-kit knex-generate` démarre deux PostgreSQL en processus, exécute le `createTables` compilé
+sur l'un et les migrations sur l'autre, puis chaque instruction de `createTables` du côté migré. Une
+instruction qui répond que son objet existe est laissée de côté, les autres sont écrites dans la
+migration, après un `add column` pour une colonne absente d'une table que les migrations ont créée.
+La migration contient ce SQL et n'appelle rien de l'application : elle construit donc les mêmes
+tables quoi que devienne `createTables`, et l'historique se rejoue sur une base neuve. Rien de
+différent, rien n'est écrit, comme sur les trois autres. Une colonne modifiée ou supprimée, une table
+supprimée, et un index, une contrainte, un déclencheur, une énumération, une fonction ou une vue
+modifiés sous le même nom sont listés en `TODO(domain)` de la migration, à écrire à la main : les objets
+sont comparés par la définition qu'en donne PostgreSQL. Une instruction de `createTables` qui change des
+lignes ou retire quelque chose n'est jamais écrite, puisqu'une migration s'exécute sur une base qui
+contient des données : c'est une ligne de la commande et un `TODO(domain)` de la migration suivante.
+Toute autre instruction, la sécurité par ligne ou un commentaire, entre avec la table ou la colonne à
+laquelle elle appartient. `npm run db:generate -- <name> --custom` (`pnpm run db:generate <name> --
+--custom` aussi) écrit la migration vide de knex, pour un changement de données ou une instruction
+écrite à la main.
+
+`db:migrate` trouve `DATABASE_URL` dans le shell, sinon dans `.env` : `knexfile.js`,
+`prisma.config.ts` et la source de données TypeORM chargent le fichier, puisque ces trois CLI ne le
+font pas, et drizzle-kit le lit lui-même.
 
 La commande prend la description après le script : `npm run db:generate add-invoices`
 (`npm run db:generate -- audit-guard --custom` pour une migration drizzle-kit écrite à la main).
@@ -587,9 +611,10 @@ formateur ignore est laissé de côté (le `biome.json` qu'écrit `init` ignore 
 Il dit ce qu'il a formaté ; sans un tel script, ou quand le formateur échoue, il le dit, et la
 migration reste écrite.
 
-La première migration knex qu'écrit `init` est `00000000000000_initial.js` : elle se trie avant
-tout horodatage ; un projet créé avant la 0.5 garde son `0001_initial.js`, puisqu'une migration
-appliquée n'est jamais renommée.
+`init` n'écrit aucune migration knex : `npm run db:generate initial` écrit la première, comme sur
+les trois autres. Un projet plus ancien garde son `00000000000000_initial.js` (`0001_initial.js`
+avant la 0.5), puisqu'une migration appliquée n'est jamais renommée, et son contenu passe en SQL :
+le journal des versions dit comment.
 
 **Mesuré avec drizzle-kit 0.31.11 et drizzle-orm 0.45.4 (2026-10-12)**, deux copies d'un même
 projet générant chacune une migration, comme le feraient deux branches :

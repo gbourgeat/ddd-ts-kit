@@ -8,3 +8,7 @@ export { keepsSinglePrismaSchema } from './keeps-single-prisma-schema';
 export { SINGLE_PRISMA_SCHEMA } from './single-prisma-schema';
 export { singlePrismaSchemaFound } from './single-prisma-schema-found';
 export { singlePrismaSchemaSteps } from './single-prisma-schema-steps';
+export { datasourceSchemas } from './datasource-schemas';
+export { previewFeaturesOf } from './preview-features-of';
+export { withDatasourceSchema } from './with-datasource-schema';
+export { withPreviewFeature } from './with-preview-feature';

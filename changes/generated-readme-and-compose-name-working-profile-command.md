@@ -1,0 +1,1 @@
+**The generated README and `docker-compose.yml` give the command that starts a compose profile: `docker compose --profile observability up -d --wait`.** They said `pnpm run infra:up --profile observability`, which fails with "unknown flag: --profile" because the flag goes before `up`. The same for the `identity` and `errors` profiles.

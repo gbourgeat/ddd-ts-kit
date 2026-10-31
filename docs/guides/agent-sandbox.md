@@ -273,7 +273,8 @@ So in a session under the regulated profile the agent writes the schema and the 
   (PGlite served over the wire protocol, the engine `openTestDatabase()` runs the tests on),
   replays the migrations already written, diffs them against the schema and writes the new
   migration, with the append-only statements of the audit trail. Drizzle generates from its
-  snapshots and Knex files are written by hand. A sandboxed agent generates its own migrations; on
+  snapshots, and Knex compares `createTables` with the migrations on PostgreSQL in process, whatever
+  `DATABASE_URL` says. A sandboxed agent generates its own migrations; on
   TypeORM it builds first (`npm run build && npm run db:generate migrations/<name>`);
 - the integration and end-to-end specs that name a `DATABASE_URL`; the specs on the in-memory fakes
   and the end-to-end specs without `DATABASE_URL` (an in-process database) run in the session.

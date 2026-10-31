@@ -10,14 +10,15 @@ npm install
 npm run verify          # every gate of the pipeline: green before the first line of business code
 cp .env.example .env
 {{#if database.server}}
-npm run infra:up        # the database, in Docker; add --profile observability for Jaeger
+npm run infra:up        # the database, in Docker; for Jaeger: docker compose --profile observability up -d --wait
 {{/if}}
 {{#if orm.drizzle}}
 npm run db:generate initial   # migrations/<timestamp>_initial.sql, from the Drizzle schema
 npm run db:migrate
 {{/if}}
 {{#if orm.knex}}
-npm run db:migrate      # builds, then applies migrations/ (the first one creates every table)
+npm run db:generate initial   # migrations/<timestamp>_initial.js, from `createTables` of {{config.platformDir}}/database/schema.ts
+npm run db:migrate
 {{/if}}
 {{#if orm.prisma}}
 npm run db:client       # the Prisma client and the schema of the tests, from the files of prisma/schema/
@@ -26,7 +27,7 @@ npm run db:migrate
 {{/if}}
 {{#if orm.typeorm}}
 npm run build && npm run db:generate migrations/initial   # migrations/<timestamp>-initial.ts, from the entity schemas
-npm run db:migrate
+npm run db:migrate      # builds, then applies migrations/
 {{/if}}
 npm run dev
 ```

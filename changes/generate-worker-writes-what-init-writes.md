@@ -1,0 +1,1 @@
+**`generate worker` and `generate service` leave what `init` writes for a project with a worker or a service.** `.env.example` says that `RUN_JOBS` defaults to false, a service joins the compose file with one blank line before `volumes:`, and the entry of `apps/` comes last in `knip.json`, where the generators add it.

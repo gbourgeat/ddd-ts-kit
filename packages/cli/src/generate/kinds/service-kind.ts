@@ -9,6 +9,7 @@ import { platformPath } from '../platform-path';
 import { vars } from '../vars';
 import { wiringFamily } from '../wiring-family';
 import { addComposeService } from './extraction/add-compose-service';
+import { composeServiceOf } from './extraction/compose-service-of';
 import { editJson } from './extraction/edit-json';
 import { EntryPoint } from './extraction/entry-point';
 import { recordOf } from './extraction/record-of';
@@ -29,12 +30,12 @@ export const serviceKind: Kind = {
     const scope = openScope(request);
     const { ws, config, context } = scope;
     const entry = new EntryPoint(config, context.kebab);
-    const service = { ...serviceSelection(scope), portVariable: `\${${context.constant}_PORT:-3001}` };
+    const service = { ...serviceSelection(scope) };
 
     ws.create(entry.source, renderTemplate('service/main.ts.tpl', vars(scope, { service })));
     entry.declareIn(ws);
     editJson(ws, CONFIG_FILE, (raw) => markDeployable(raw, context.kebab));
-    addComposeService(ws, context.kebab, renderTemplate('service/compose.tpl', vars(scope, { service })));
+    addComposeService(ws, context.kebab, composeServiceOf(config, context));
     leaveTheWholeApplication(scope);
 
     ws.note(

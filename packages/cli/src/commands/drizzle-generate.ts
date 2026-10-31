@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CliError } from '../cli-error';
 import { readConfig } from '../config';
+import { withGeneratorLock } from '../generator-lock';
 import {
   appendAuditGuard,
   auditGuardStatementsOf,
@@ -10,10 +11,12 @@ import {
   replayDrizzleMigrations,
   schemasIfMissing,
   tidyWrittenMigration,
+  warnDroppedContextTables,
 } from '../migration';
-import { Arguments } from './arguments';
+import type { Arguments } from './arguments';
 import type { Command } from './command';
 import type { Io } from './io';
+import { parseMigrationArguments } from './parse-migration-arguments';
 
 /** The trunk a branch merged, when `--replay` is not given another. */
 const DEFAULT_BASE = 'origin/main';
@@ -21,17 +24,25 @@ const DEFAULT_BASE = 'origin/main';
 /**
  * `db:generate` of a Drizzle project: drizzle-kit generate, which fails instead of succeeding
  * silently when it cannot ask its question, then formats what it wrote and warns about a primary
- * key changed in an order that fails. `--replay` generates again the migrations of a branch on top
- * of the trunk it merged.
+ * key changed in an order that fails. It says first when the migration will drop the tables of a
+ * context the schema index lost. `--replay` generates again the migrations of a branch on top of
+ * the trunk it merged.
  */
 export const drizzleGenerateCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, {
+  const args = parseMigrationArguments(argv, {
     name: { type: 'string' },
     custom: { type: 'boolean', default: false },
     replay: { type: 'boolean', default: false },
     base: { type: 'string' },
   });
 
+  // drizzle-kit numbers the migration and writes the journal from what it finds: one generator at a time does.
+  return withGeneratorLock({ root: args.projectRoot, command: `ddd-ts-kit drizzle-generate ${argv.join(' ')}` }, () =>
+    generateMigration(args, io),
+  );
+};
+
+function generateMigration(args: Arguments, io: Io): number {
   const root = args.projectRoot;
   const interactive = process.stdin.isTTY && process.stdout.isTTY;
 
@@ -42,6 +53,9 @@ export const drizzleGenerateCommand: Command = (argv, io) => {
   }
 
   const name = namedMigration(args);
+
+  warnDroppedContextTables(root, io);
+
   const { code, written } = generateAndRead({ root, name, custom: args.flag('custom'), interactive }, io);
 
   if (code === 0) {
@@ -51,7 +65,7 @@ export const drizzleGenerateCommand: Command = (argv, io) => {
   }
 
   return code;
-};
+}
 
 /** drizzle-kit writes `CREATE SCHEMA` alone: a schema that exists already is left as it is. */
 function createSchemasIfMissing(root: string, written: readonly string[]): void {

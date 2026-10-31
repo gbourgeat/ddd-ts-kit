@@ -14,7 +14,7 @@ function create{{aggregate.pascal}}Table(knex: Knex): Promise<void> {
 {{#if personal.any}}
 {{personal.knexTable}}
 {{/if}}
-    // TODO(domain): add one column per field of {{aggregate.pascal}}State (and to {{aggregate.pascal}}Columns of {{aggregate.kebab}}-row.schema.ts), with the type and the constraints the storage must enforce.
+    // TODO(domain): add one column per field of {{aggregate.pascal}}State (and to {{aggregate.pascal}}Columns of {{aggregate.kebab}}-row.schema.ts), with the type and the constraints the storage must enforce; then run `npm run db:generate <what-it-does>`.
     table.integer('version').notNullable();
 {{#if tenant.scoped}}
     tenantColumn(table);

@@ -1,1 +1,0 @@
-**`runCheck` of the `ddd-ts-kit` package takes a `catalogue` option: the rules it judges with, the rules of the kit unless it is given.** It replaces those rules for the run. The commands do not pass it.

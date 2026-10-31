@@ -1,5 +1,5 @@
 [English](import-aliases.md) · **Français**
-<!-- translation-of: import-aliases.md sha256:264a5b936077ae12 -->
+<!-- translation-of: import-aliases.md sha256:72c4173eaa6a9212 -->
 
 # Alias d'import : les `paths` de tsconfig, réécrits à la construction
 
@@ -165,7 +165,7 @@ d'un *scope*), `name/` ou `~/` (des noms de *package* possibles), et `$test/`, `
 | dependency-cruiser | `paths`, une fois qu'on le lui dit | `tsConfig: { fileName: 'tsconfig.json' }` dans le `.dependency-cruiser.cjs` généré |
 | knip | `paths`, de lui-même | rien |
 | drizzle-kit (`npm run db:generate <what-it-does>`) | `paths`, de lui-même, quand il charge le schéma TypeScript | rien : le script est `ddd-ts-kit drizzle-generate --name`, qui lance `drizzle-kit generate --name` à la racine du projet |
-| CLI de knex et de TypeORM | la sortie compilée (`npm run build` d'abord) | une migration knex est un fichier JavaScript à la racine du projet : elle nomme le schéma compilé par son chemin relatif sous `dist/` |
+| CLI de knex et de TypeORM | la sortie compilée (`npm run build` d'abord) | la source de données TypeORM et `ddd-ts-kit knex-generate` lisent `dist/` ; une migration knex est un fichier JavaScript qui contient son SQL et n'importe rien du projet |
 | CLI de Prisma | `prisma.config.ts`, qui n'importe aucun fichier du projet | rien |
 | ESLint avec `@ddd-ts-kit/eslint-plugin`, `ddd-ts-kit check` | `importAlias`, `importExtension` et `sourceRoot` de la configuration | ils classent un import par son chemin et ne chargent jamais de fichier : avec ou sans son extension, un spécificateur nomme la même source, et les règles de frontière le jugent de la même façon |
 | Biome | rien | il formate ; un import corrigé qui dépasse la largeur de ligne est replié par `npm run format` |
@@ -303,8 +303,8 @@ la partie exécution sur Node 22 également (`npm run ci:test:alias`).
   alias, écrit sans extension, et échoue une fois `paths` retiré.
 - **TypeORM, knex et Prisma** ne lisent aucun TypeScript du projet par un alias : la CLI de
   TypeORM charge la source de données compilée (réécrite, donc un simple `node` la charge), une
-  migration knex est un fichier JavaScript qui nomme le schéma compilé par un chemin relatif avec
-  son `.js`, et `prisma.config.ts` n'importe aucun fichier du projet.
+  migration knex est un fichier JavaScript qui contient son SQL et n'importe rien du projet, et
+  `prisma.config.ts` n'importe aucun fichier du projet.
 - Un `dist/` périmé ne peut pas être chargé par un outil de développement : `paths` ne nomme que
   des sources, et un outil qui ignore `paths` échoue au lieu de se rabattre sur la sortie.
 
