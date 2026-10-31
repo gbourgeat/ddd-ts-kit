@@ -246,7 +246,16 @@ function texts(values: CallRequest['header']): Record<string, string> {
 }
 
 function pathOf(template: string, values: CallRequest['path']): string {
-  return template.replace(/\{([^}]+)\}/g, (_match, name: string) => encodeURIComponent(String(values?.[name] ?? '')));
+  return template.replace(/\{([^}]+)\}/g, (_match, name: string) => segmentOf(name, String(values?.[name] ?? '')));
+}
+
+/** One segment of the path: empty or a dot segment, a URL would drop it and the call would reach another route. */
+function segmentOf(name: string, value: string): string {
+  if (value === '' || value === '.' || value === '..') {
+    throw new TypeError(`The path parameter "${name}" is empty or a dot segment: it names no segment of the path.`);
+  }
+
+  return encodeURIComponent(value);
 }
 
 /** A list is sent as the parameter repeated, the form OpenAPI calls `explode`. */
