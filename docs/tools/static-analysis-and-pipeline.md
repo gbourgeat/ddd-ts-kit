@@ -177,10 +177,14 @@ the hook run the lefthook of the checkout it fires in: the hooks of a repository
 all its worktrees, and without that line they would run the lefthook of whichever checkout
 installed them last, or skip every check once that checkout is gone. A worktree without its
 dependencies now fails the commit loudly; `npx ddd-ts-kit doctor` says when the line or the
-installed hook is missing.
+installed hook is missing. The file sets `output: [failure]`: a commit that passes prints one line, and a job that
+fails prints its findings.
 
 ```yaml
 lefthook: node_modules/.bin/lefthook
+
+output:
+  - failure
 
 pre-commit:
   parallel: true
