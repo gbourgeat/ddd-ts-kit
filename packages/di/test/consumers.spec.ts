@@ -11,13 +11,12 @@ import {
 } from '@ddd-ts-kit/kernel';
 import {
   UnreadableEventError,
-  createApplication,
-  createTestApplication,
   defineContextModule,
   kernelModule,
   type ContextModule,
   type EventContract,
 } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { InvoiceOnOrderPlaced } from './support/billing/application/integration/handlers/invoice-on-order-placed.integration-handler';
 import { InvoiceLedger } from './support/billing/application/ports/invoice-ledger.port';
 import { billingModule } from './support/billing/billing.module';

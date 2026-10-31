@@ -9,8 +9,11 @@ import type { TestKernel } from './test-kernel';
  * application and names each member of the test kernel. Nothing is written on the application,
  * so no member of the kernel can replace one of its fields, whatever their names.
  */
-export function testApplicationOf(application: Application, kernel: TestKernel): TestApplication {
-  const front: TestApplication = {
+export function testApplicationOf<Native>(
+  application: Application<Native>,
+  kernel: TestKernel,
+): TestApplication<Native> {
+  const front: TestApplication<Native> = {
     ...membersOf(kernel),
     resolve: application.resolve,
     get: application.resolve,

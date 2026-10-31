@@ -11,7 +11,8 @@ import {
   type ScheduledJob,
 } from '@ddd-ts-kit/kernel';
 import { Scheduled } from '@ddd-ts-kit/kernel/declarations';
-import { contextModule, createApplication, createTestApplication, kernelModule } from '../src';
+import { contextModule, kernelModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 
 /** A job that notes the tenant of each of its runs. */
 function tenantsJob(seen: (string | undefined)[]): new (scope: ExecutionScope) => ScheduledJob {

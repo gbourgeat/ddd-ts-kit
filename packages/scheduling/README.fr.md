@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:24f8981f367f8137 -->
+<!-- translation-of: README.md sha256:f62d71a7d5bd47a1 -->
 
 # @ddd-ts-kit/scheduling
 
@@ -340,7 +340,8 @@ code. Avec `@ddd-ts-kit/di` :
 
 <!-- checked sample -->
 ```ts
-import { createApplication, type ContextModule } from '@ddd-ts-kit/di';
+import { type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 declare const modules: readonly ContextModule[];
 declare const config: { readonly jobs: { readonly reminders: { readonly enabled: boolean }; readonly ledgerCron: string } };
@@ -450,7 +451,8 @@ grâce, un autre observateur), donnez le vôtre au module kernel :
 <!-- checked sample -->
 ```ts
 import { Clock, ErrorReporter, ExecutionScope, IdGenerator, Lock, Logger, Metrics } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { InProcessJobScheduler, JobCheckpoints, reportFailedRuns } from '@ddd-ts-kit/scheduling';
 
 declare const platformModule: ContextModule, billingModule: ContextModule;
@@ -556,7 +558,8 @@ jamais les *jobs* selon l'heure.
 
 <!-- checked sample -->
 ```ts
-import { contextModule, createTestApplication, fake, type DeclaredSource } from '@ddd-ts-kit/di';
+import { contextModule, fake, type DeclaredSource } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { expect } from 'vitest';
 
 // le barrel du contexte, et le fake de son port Mailer

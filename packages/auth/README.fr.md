@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2be6d72d28a74fb9 -->
+<!-- translation-of: README.md sha256:8efdbbf3ec2a3cae -->
 
 # @ddd-ts-kit/auth
 
@@ -303,7 +303,8 @@ permission à laquelle aucune politique ne répond : le refus par défaut tient 
 
 ```ts
 // main.ts
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { JwtAuthenticator } from '@ddd-ts-kit/auth/jwt';

@@ -104,7 +104,8 @@ export class InvoiceOnOrderPlacedIntegrationHandler {
 <!-- checked sample -->
 ```ts
 // main.ts
-import { contextModule, createApplication, kernelModule, type ContextModule, type DeclaredSource } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule, type ContextModule, type DeclaredSource } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { Clock } from '@ddd-ts-kit/kernel';
 import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
 import type { RabbitMqEventBus } from '@ddd-ts-kit/rabbitmq';

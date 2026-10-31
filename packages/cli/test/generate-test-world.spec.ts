@@ -41,7 +41,7 @@ describe('generate test-world, in the declared style', () => {
     const world = read(root, WORLD);
 
     expect(world).toContain(
-      "import { contextModule, createTestApplication, fake, type ContextModule, type Override } from '@ddd-ts-kit/di';",
+      "import { contextModule, fake, type ContextModule, type Override } from '@ddd-ts-kit/di';\nimport { createTestApplication } from '@ddd-ts-kit/di/tsyringe';",
     );
 
     expect(world).toContain("import * as billingDeclarations from '@/contexts/billing/billing.declarations';");
@@ -204,7 +204,7 @@ describe('generate test-world, on other stacks', () => {
     const world = read(root, WORLD);
 
     expect(world).toContain(
-      "import { contextModule, createTestApplication, type ContextModule, type Override } from '@ddd-ts-kit/di';",
+      "import { contextModule, type ContextModule, type Override } from '@ddd-ts-kit/di';\nimport { createTestApplication } from '@ddd-ts-kit/di/tsyringe';",
     );
 
     // The fakes a spec hands it go to the test application with the other settings.

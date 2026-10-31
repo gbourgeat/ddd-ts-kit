@@ -7,13 +7,8 @@ import { Access, Authenticator } from '@ddd-ts-kit/auth';
 import { Authenticator } from '@ddd-ts-kit/auth';
 {{/unless}}
 {{/if}}
-import {
-  createApplication,
-  kernelModule,
-  type Application as Container,
-  type ContextModule,
-  type JobsOptions,
-} from '@ddd-ts-kit/di';
+import { kernelModule, type Application as Container, type ContextModule, type JobsOptions } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 {{#if events.outbox}}
 import { OutboxPublisher } from '@ddd-ts-kit/events';
 {{/if}}

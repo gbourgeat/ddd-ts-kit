@@ -2,7 +2,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { createApplication, kernelModule } from '../src';
+import { kernelModule } from '../src';
+import { createApplication } from './support/on-container';
 import { discoverContext } from '../src/discovery';
 // What `ddd-ts-kit docs` generates next to the role files of a discovered context: here the stubbed loader answers the classes themselves, so their lists are registered the same way.
 import './fixtures/contexts/billing/billing.dependencies';

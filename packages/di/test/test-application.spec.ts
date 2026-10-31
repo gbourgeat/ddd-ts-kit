@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, CommandBus, FixedClock, IntegrationEventPublisher, UnitOfWork } from '@ddd-ts-kit/kernel';
-import { createTestApplication, fake, kernelModule } from '../src';
+import { fake, kernelModule } from '../src';
+import { createTestApplication } from './support/on-container';
 import { InvoiceLedger } from './support/billing/application/ports/invoice-ledger.port';
 import { billingModule } from './support/billing/billing.module';
 import { InMemoryInvoiceLedger } from './support/billing/infrastructure/persistence/in-memory-invoice-ledger';

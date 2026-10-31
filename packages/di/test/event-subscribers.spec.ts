@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EventBus, EventSubscribers, IntegrationEventSubscriber, type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, defineContextModule, kernelModule } from '../src';
+import { defineContextModule, kernelModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { RecordingSubscriber } from './support/fakes/recording-subscriber';
 import { SubscribersByContext } from './support/fakes/subscribers-by-context';
 import { twiceListening } from './support/twice-listening';

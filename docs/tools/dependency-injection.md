@@ -128,7 +128,8 @@ bindings:
 ```ts
 import { AuthorizedCommand, Clock, IdGenerator, type Actor } from '@ddd-ts-kit/kernel';
 import { CommandHandler, Repository, injected } from '@ddd-ts-kit/kernel/declarations';
-import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // the classes of the first sample, reduced to their shape
 declare class Appointment {
@@ -190,7 +191,8 @@ only re-exports the generated declarations of each layer of the context, where t
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
 import { AuthorizedCommand, Clock, IdGenerator, type Actor } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 
 // the classes of the first sample, without their decorators
 declare class Appointment {
@@ -305,7 +307,8 @@ bound under the port class, a frozen clock and sequential identifiers:
 ```ts
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { AuthorizedCommand, Clock, IdGenerator, type Actor, type CommandHandler } from '@ddd-ts-kit/kernel';
-import { createTestApplication, defineContextModule, fake } from '@ddd-ts-kit/di';
+import { defineContextModule, fake } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import { expect, it } from 'vitest';
 
 // the port, the command and the handler of the first sample, in a few lines

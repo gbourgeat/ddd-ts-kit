@@ -17,14 +17,8 @@ import {
   type EventBus,
 } from '@ddd-ts-kit/kernel';
 import { InMemoryAuditTrail, auditMiddleware } from '@ddd-ts-kit/audit';
-import {
-  UseCaseGuard,
-  createApplication,
-  defineContextModule,
-  kernelModule,
-  type Application,
-  type ContextModule,
-} from '@ddd-ts-kit/di';
+import { UseCaseGuard, defineContextModule, kernelModule, type Application, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { InMemoryOutboxStore, OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
 import {
   ForbiddenError,

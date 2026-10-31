@@ -1,8 +1,7 @@
-import type { DependencyContainer } from 'tsyringe';
 import type { WiringDescription } from '../description/wiring-description';
 import type { Resolve } from '../wiring/resolve';
 
-export interface Application {
+export interface Application<Native = unknown> {
   readonly resolve: Resolve;
 
   /** Calls `onStart` of every module, in declaration order, subscribes the consumers, then starts the job scheduler. */
@@ -19,8 +18,9 @@ export interface Application {
   describe(): WiringDescription;
 
   /**
-   * The underlying tsyringe child container, for interoperability. A port is registered under
-   * `tokenIdentity(port)`, never under the class: tsyringe would build a class it is asked for.
+   * The underlying container, for interoperability: its type is the one of the entry point the
+   * application was created from. A port is bound under `tokenIdentity(port)`, never under the
+   * class, which some containers would build when asked for it.
    */
-  readonly container: DependencyContainer;
+  readonly container: Native;
 }

@@ -15,14 +15,8 @@ import {
 import { Background } from '@ddd-ts-kit/kernel/declarations';
 import { InMemoryJobStore, JobStore, QueueWorker } from '@ddd-ts-kit/scheduling';
 import { lazyJobStore } from '../src/kernel/lazy-job-store';
-import {
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  kernelModule,
-  overrideForTests,
-  type ModuleBuilder,
-} from '../src';
+import { defineContextModule, kernelModule, overrideForTests, type ModuleBuilder } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { wiringFailure } from './support/failure';
 
 interface Statements {

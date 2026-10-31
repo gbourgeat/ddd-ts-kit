@@ -48,6 +48,7 @@ repositoryContract<Invoice>(
       return repository();
     },
     createAggregate: () => Invoice.draft(`inv-${(next += 1)}`, 100),
+    createAggregateKeepingJson: (value) => Invoice.draftWithDetails(`inv-${(next += 1)}`, 100, value),
     mutate: (invoice) => invoice.addCharge(50),
     idOf: (invoice) => invoice.id,
     stateOf: (invoice) => invoice.state,

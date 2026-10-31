@@ -160,6 +160,12 @@ function hookFixesOf(findings: readonly DoctorFinding[]): string[] {
     fixes.push('fix: `npx ddd-ts-kit init` writes lefthook.yml; then `npm run hooks:install`.');
   }
 
+  if (hooks.some((finding) => finding.name === 'git repository')) {
+    fixes.push(
+      'fix: `git init`, then `npm run hooks:install` installs the hooks of lefthook.yml in the new repository.',
+    );
+  }
+
   if (hooks.some((finding) => finding.name === 'pre-commit')) {
     fixes.push(
       'fix: `npm run hooks:install` installs the hooks of lefthook.yml in this clone, once: every worktree of the repository shares them.',

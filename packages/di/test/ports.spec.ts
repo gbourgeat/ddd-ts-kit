@@ -1,14 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, FixedClock, Query } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import {
-  contextModule,
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  fake,
-  kernelModule,
-} from '../src';
+import { contextModule, defineContextModule, fake, kernelModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { wiringFailure } from './support/failure';
 import { InMemoryStock } from './support/shop/in-memory-stock';
 import { Stock } from './support/shop/stock.port';

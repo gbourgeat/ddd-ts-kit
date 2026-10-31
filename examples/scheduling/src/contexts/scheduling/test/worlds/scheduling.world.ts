@@ -1,6 +1,7 @@
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { contextModule, createTestApplication, fake, type ContextModule, type Override } from '@ddd-ts-kit/di';
+import { contextModule, fake, type ContextModule, type Override } from '@ddd-ts-kit/di';
+import { createTestApplication } from '@ddd-ts-kit/di/tsyringe';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { Agenda } from '@/contexts/scheduling/calendars/application/ports/agenda.port';

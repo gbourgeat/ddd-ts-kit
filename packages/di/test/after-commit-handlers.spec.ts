@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CommandBus, InMemoryErrorReporter, InMemoryLogger } from '@ddd-ts-kit/kernel';
-import { contextModule, createApplication, createTestApplication, fake, kernelModule } from '../src';
+import { contextModule, fake, kernelModule } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { TransactionalJournal } from './support/fakes/transactional-journal';
 import { TransactionalUnitOfWork } from './support/fakes/transactional-unit-of-work';
 import {

@@ -1,8 +1,3 @@
-// tsyringe 4.10 throws while loading when the Reflect metadata polyfill is absent, even
-// though this package never uses decorators. Importing it here, before tsyringe, spares
-// consumers a line they would otherwise have to remember in every entry point and test.
-import 'reflect-metadata';
-
 export { describeToken, tokenIdentity, type Token } from '@ddd-ts-kit/kernel/declarations';
 export { WiringError, type WiringErrorCode } from './errors/wiring-error';
 export type { DependencyKind } from '@ddd-ts-kit/kernel';
@@ -45,7 +40,8 @@ export type { JobsOptions } from './jobs/jobs-options';
 export type { ApplicationOptions } from './application/application-options';
 export type { Application } from './application/application';
 export type { BindingInfo } from './application/binding-info';
-export { createApplication } from './application/create-application';
+export { createApplicationOn } from './application/create-application-on';
+export type { Container } from './application/container';
 export type { Decorate } from './application/decorate';
 export { overrideForTests } from './application/override-for-tests';
 export { override, type Override } from './application/override';
@@ -73,8 +69,8 @@ export { Instrumentation, type InstrumentedConsumer, type InstrumentedJob } from
 export type { KernelModuleOptions } from './kernel/kernel-module-options';
 export { kernelModule } from './kernel/kernel-module';
 export type { Provided } from './kernel/provided';
-export { createTestApplication } from './testing/create-test-application';
 export { fake } from './testing/fake';
+export { createTestApplicationOn } from './testing/create-test-application-on';
 export type { TestApplicationOptions } from './testing/test-application-options';
 export type { TestApplication } from './testing/test-application';
 export type { TestBackgroundJobs } from './testing/test-background-jobs';

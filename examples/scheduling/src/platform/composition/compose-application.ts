@@ -4,12 +4,12 @@ import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import {
   DeclaredEdges,
   contextModule,
-  createApplication,
   kernelModule,
   type Application as Container,
   type ContextModule,
   type JobsOptions,
 } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { OutboxPublisher } from '@ddd-ts-kit/events';
 import { ErrorMapper, controllerRoutes, defineRoutes, type Route } from '@ddd-ts-kit/http';
 import {

@@ -13,7 +13,8 @@ const SECRETS_JOB =
 /**
  * The git hooks of the project: lefthook.yml has the line that runs the lefthook of the checkout
  * the hook fires in and the pre-commit job that scans the staged changes for a secret, and this
- * clone has the pre-commit hook lefthook installs. Outside a git repository only the file is judged.
+ * clone has the pre-commit hook lefthook installs. Outside a git repository the hooks cannot be
+ * read: that is a finding, since `hooks:install` fails there too.
  */
 export function hookFindings(root: string): DoctorFinding[] {
   return [...configFindings(root), ...installedFindings(root)];
@@ -41,7 +42,14 @@ function installedFindings(root: string): DoctorFinding[] {
   const hooks = runGit(root, ['rev-parse', '--git-path', 'hooks'])?.trim();
 
   if (hooks === undefined || hooks === '') {
-    return [];
+    return [
+      {
+        area: 'hook',
+        name: 'git repository',
+        problem: 'missing',
+        expected: 'no git repository here: the hooks could not be read; `git init` comes first',
+      },
+    ];
   }
 
   const hook = read(path.resolve(root, hooks, 'pre-commit'));

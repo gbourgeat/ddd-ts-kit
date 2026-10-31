@@ -65,7 +65,8 @@ The three hooks, in the composition root:
 
 <!-- checked sample -->
 ```ts
-import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import type { Route } from '@ddd-ts-kit/http';
 import { mountExpress } from '@ddd-ts-kit/http/express';
 import { ExecutionScope, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';

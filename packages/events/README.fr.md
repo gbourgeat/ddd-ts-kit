@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e41558a4d69093e2 -->
+<!-- translation-of: README.md sha256:3fd61e7ea4097204 -->
 
 # @ddd-ts-kit/events
 
@@ -282,7 +282,8 @@ export const messagingModule = defineContextModule({
 <!-- checked sample -->
 ```ts
 // main.ts
-import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { Clock, ExecutionScope, Logger, scopedPublisher, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import {
   createEventRegistry,

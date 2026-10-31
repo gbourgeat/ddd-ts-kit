@@ -1,5 +1,6 @@
 import { Command, CommandBus, ErrorReporter } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { afterEach, expect, it } from 'vitest';
 import { SentryErrorReporter } from '../src';
 import { aTracker, type Tracker } from './support/a-tracker';

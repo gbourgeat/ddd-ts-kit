@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8874b7d49d8a67de -->
+<!-- translation-of: README.md sha256:a9ec0fdc22ad8dd0 -->
 
 # @ddd-ts-kit/http
 
@@ -804,7 +804,8 @@ ce sont des ports, résolus par leur classe :
 
 <!-- checked sample -->
 ```ts
-import { createApplication, defineContextModule, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { ErrorMapper, createErrorMapper, type ExecuteOptions } from '@ddd-ts-kit/http';
 import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 

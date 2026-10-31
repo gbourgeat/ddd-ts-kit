@@ -768,7 +768,8 @@ resolved by their class:
 
 <!-- checked sample -->
 ```ts
-import { createApplication, defineContextModule, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { defineContextModule, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { ErrorMapper, createErrorMapper, type ExecuteOptions } from '@ddd-ts-kit/http';
 import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 

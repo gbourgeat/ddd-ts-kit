@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { err, ok, type BackgroundJob, type BackgroundJobPayloadSchema } from '@ddd-ts-kit/kernel';
 import { Background } from '@ddd-ts-kit/kernel/declarations';
-import { createApplication, createTestApplication, defineContextModule, type ModuleBuilder } from '../src';
+import { defineContextModule, type ModuleBuilder } from '../src';
+import { createApplication, createTestApplication } from './support/on-container';
 import { wiringFailure } from './support/failure';
 
 interface Statements {

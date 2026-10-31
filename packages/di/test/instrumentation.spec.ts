@@ -10,14 +10,8 @@ import {
   QueryBus,
   type IntegrationEvent,
 } from '@ddd-ts-kit/kernel';
-import {
-  UseCaseGuard,
-  createApplication,
-  defineContextModule,
-  kernelModule,
-  type BindingAspect,
-  type Instrumentation,
-} from '../src';
+import { UseCaseGuard, defineContextModule, kernelModule, type BindingAspect, type Instrumentation } from '../src';
+import { createApplication } from './support/on-container';
 import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query';
 import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command';
 import { orderingModule } from './support/ordering/ordering.module';

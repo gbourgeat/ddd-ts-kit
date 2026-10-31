@@ -572,7 +572,8 @@ the bus is given through the options:
 ```ts
 // src/main.ts
 import { AuditTrail, InMemoryCommandBus, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
-import { UseCaseGuard, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { UseCaseGuard, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AuditMasker, auditDecisions, auditMiddleware } from '@ddd-ts-kit/audit';
 

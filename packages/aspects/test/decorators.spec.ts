@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { decoratorOf } from '../src/decorators';
 import { createAspectFakes, withAspectRuntime } from '../src/testing';
 import type { DecoratedRateGateway } from './fixtures/decorated-rate-gateway';

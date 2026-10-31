@@ -138,7 +138,8 @@ declare const IssueInvoice: new (actor: Actor, orderId: string) => Command;
 
 ```ts
 // main.ts
-import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication } from '@ddd-ts-kit/di/tsyringe';
 import { Clock } from '@ddd-ts-kit/kernel';
 import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
 import { aggregateOf, bus, messagingModule } from '@/platform/messaging.module';
