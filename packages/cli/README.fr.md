@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3de139ab81ec646f -->
+<!-- translation-of: README.md sha256:4ef5152c560895a0 -->
 
 # ddd-ts-kit
 
@@ -1041,7 +1041,7 @@ et des blocs `{{#if x}}` / `{{#unless x}}`. Un emplacement inconnu est une erreu
 ## docs
 
 ```
-ddd-ts-kit docs [--check] [--stored-events] [--behaviour]
+ddd-ts-kit docs [--check] [--dry-run] [--stored-events] [--behaviour]
 ```
 
 Régénère ce qui dérive de la configuration et du code, et rien d'autre :
@@ -1095,7 +1095,9 @@ Régénère ce qui dérive de la configuration et du code, et rien d'autre :
 une version enregistrée : lancez-le une fois que la forme d'une version est définitive.
 
 `--check` n'écrit rien, nomme chaque fichier périmé et chaque version d'événement stocké déclarée
-qui n'est pas enregistrée dans `stored-events.lock.json`, et sort avec le code 1. Le catalogue
+qui n'est pas enregistrée dans `stored-events.lock.json`, et sort avec le code 1. `--dry-run`
+n'écrit rien non plus : il nomme chaque fichier généré qu'il créerait, mettrait à jour ou
+supprimerait, tel que `docs` l'écrirait. Le catalogue
 des événements et le document AsyncAPI ont besoin d'exécuter le code du projet, c'est pourquoi
 ils sont produits par `scripts/events.ts` (`npm run events:generate`, qui fait partie de
 `npm run docs:generate`).

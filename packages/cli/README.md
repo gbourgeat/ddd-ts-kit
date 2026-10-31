@@ -986,7 +986,7 @@ Templates are plain files in `templates/<kind>/`, with `{{name.pascal}}`, `{{nam
 ## docs
 
 ```
-ddd-ts-kit docs [--check] [--stored-events] [--behaviour]
+ddd-ts-kit docs [--check] [--dry-run] [--stored-events] [--behaviour]
 ```
 
 Regenerates what is derived from the config and the code, and nothing else:
@@ -1035,7 +1035,8 @@ event declared in the codecs of `infrastructure/persistence/`, never rewriting a
 run it once the shape of a version is final.
 
 `--check` writes nothing, names each stale file and each declared stored-event version not
-recorded in `stored-events.lock.json`, and exits 1. The event catalog and the
+recorded in `stored-events.lock.json`, and exits 1. `--dry-run` writes nothing either: it names
+each generated file it would create, update or delete, as `docs` would write them. The event catalog and the
 AsyncAPI document need the code of the project to run, so they are produced by
 `scripts/events.ts` (`npm run events:generate`, part of `npm run docs:generate`).
 

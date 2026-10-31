@@ -303,7 +303,7 @@ Usage
   ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
   ddd-ts-kit merge-trunk [--trunk <git-ref>] [--since <commit>] [--to-land] [--dry-run]
   ddd-ts-kit merge-trunk --continue [--accept-lost] | --abort
-  ddd-ts-kit docs [--check] [--stored-events] [--behaviour]
+  ddd-ts-kit docs [--check] [--dry-run] [--stored-events] [--behaviour]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
@@ -660,6 +660,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    fails while a declared version is not recorded, or recorded by 0.82.0 or earlier, or
                    recorded as the hash of nothing; the codecs of each module of a context are read too, and a
                    codec whose data type is not found or declares no member is refused, nothing recorded
+  --dry-run        docs names each generated file it would create, update or delete, and writes none; --check
+                   compares instead, and exits 1 on a change
   --force          init and generate replace the files that exist with what the kit writes, only while git
                    holds them: a file to replace that differs from the last commit (uncommitted, staged,
                    or untracked and not ignored) refuses the command, exit 2, the files named, nothing
