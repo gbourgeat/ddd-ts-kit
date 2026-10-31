@@ -119,7 +119,7 @@ describe('init --agent-profile regulated, and the install of the stack', () => {
     expect(jsonAt(sandboxOf(pnpm), 'network', 'allowedDomains')).toEqual(['registry.npmjs.org']);
   });
 
-  it('reports a sandbox emptied of its content: a wildcard host, credential lists that deny something else', () => {
+  it('reports a sandbox emptied of its content: a wildcard host, credential lists that deny something else or hold a bare text', () => {
     const root = initProject(...NPM, '--agent-profile', 'regulated');
     const settings = readJson(root, SETTINGS) as Record<string, unknown>;
 
@@ -131,7 +131,10 @@ describe('init --agent-profile regulated, and the install of the stack', () => {
         sandbox: {
           ...sandboxOf(root),
           network: { allowedDomains: ['*', 'registry.npmjs.org'] },
-          credentials: { files: [{ path: '/nowhere', mode: 'deny' }], envVars: [{ name: 'X', mode: 'deny' }] },
+          credentials: {
+            files: ['~/.npmrc', { path: '/nowhere', mode: 'deny' }],
+            envVars: [{ name: 'X', mode: 'deny' }],
+          },
         },
       }),
     );
