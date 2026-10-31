@@ -38,7 +38,8 @@ function installEslint(messages: readonly Message[], meta: Readonly<Record<strin
       '  async loadFormatter(name) {',
       "    fs.writeFileSync('formatter.txt', name);",
       "    if (name === 'nope') throw Object.assign(new Error('There was a problem loading formatter'), { code: 'ERR_MODULE_NOT_FOUND' });",
-      '    return { format: (results) => name === "json" ? JSON.stringify(results) : `${name}: ${results[0].messages.length} problem(s)` };',
+      '    const asText = name !== "json" || fs.existsSync("json-as-text.flag");',
+      '    return { format: (results) => asText ? `${name}: ${results[0].messages.length} problem(s)` : JSON.stringify(results) };',
       '  }',
       '}',
       '',
@@ -198,6 +199,16 @@ describe('ddd-ts-kit lint --json', () => {
 
     expect(result.code).toBe(0);
     expect(result.json()).toMatchObject({ errors: 0, warnings: 0 });
+  });
+
+  it('keeps the report as text when the json formatter of the project answers something else', () => {
+    installEslint([{ ruleId: 'no-var', severity: 2 }]);
+    write(root, 'json-as-text.flag', '');
+
+    const result = cli(root, 'lint', '--json');
+
+    expect(result.code).toBe(1);
+    expect(result.json()).toMatchObject({ errors: 1, warnings: 0, report: 'json: 1 problem(s)' });
   });
 });
 
