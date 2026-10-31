@@ -163,7 +163,7 @@ path). A field of another type, the `readonly string[]` of the products for one,
 | Command | Does | When | Produces | Then |
 |---|---|---|---|---|
 | read [CHANGELOG.md](../../CHANGELOG.md), also shipped as `node_modules/ddd-ts-kit/CHANGELOG.md` | what changed and what to do | before upgrading, or when the session start says the plugin describes another version | the steps of the version | update the `@ddd-ts-kit/*` and `ddd-ts-kit` versions together |
-| commit, then `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again; keeps `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts` and the pipeline as the team's, merges `.gitignore` and `.dockerignore`; refuses, exit 2, while a file it would replace differs from the last commit | after the upgrade, on a clean working tree | the platform files of the new version, the files it kept, and notes | `git diff`, then `npm run verify` |
+| commit, then `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again. What the generators and the team wrote in those files stays: what each `ddd-ts-kit:*` region holds (a value of a gateway, the settings of a job, a policy, a hand-written fake), the grants of `roles.ts` and the role vocabulary, the database schemas and preview features of the Prisma datasource, the services of `docker-compose.yml`; the tables and the audited events a region does not hold are listed again from the tree. At the same version `git diff` is empty. What it cannot keep is named in a note, file by file, with the command that writes it again: a region this version no longer holds, a marker left without its partner, a `roles` object it cannot read to its end, which it leaves out whole, the repositories left on the ORM a flag changed. Keeps `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts`, the pipeline and the Drizzle journal `migrations/meta/_journal.json` as the team's, merges `.gitignore` and `.dockerignore`; refuses, exit 2, while a file it would replace differs from the last commit | after the upgrade, on a clean working tree | the platform files of the new version, the files it kept, and notes | `git diff`, then `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply`, `value-objects` | moves function routes to controllers, error classes to factories, value objects from a `Result` to factories that throw | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npx ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]` | moves the files of `src/platform/` a project generated flat to their folders (`composition/`, `observability/`, `jobs/`, `auth/authentication/`, `auth/authorization/`, the folder of the model, `audit/search-audit-entries/`), with every import of them and the scripts of package.json | when `doctor` reports `folder src/platform: flat`; the generators and `init --force` keep the flat layout until then | the moved files, the rewritten imports, the files of the team it left flat | `npm run format`, `npm run verify` |
 | `npm run regenerate` | regenerate what derives from the config | after any change of the config | `.dependency-cruiser.cjs`, the generated documents | `npm run verify` |
@@ -301,6 +301,7 @@ Usage
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit drizzle-generate --name <what-it-does> [--custom]
   ddd-ts-kit drizzle-generate --replay [--base <git-ref>]
+  ddd-ts-kit knex-generate --name <what-it-does> [--custom]
   ddd-ts-kit prisma-generate --name <what-it-does>
   ddd-ts-kit typeorm-generate <folder>/<what-it-does>
   ddd-ts-kit error-factories --plan | --apply [--to named|factories] [--dry-run]
@@ -337,6 +338,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    where drizzle-kit alone writes nothing and exits 0; then formats the snapshot and the
                    journal it wrote with the Biome or Prettier of the format script, and warns when the
                    SQL changes a primary key in an order that fails on PostgreSQL (exit code unchanged);
+                   says first, exit code unchanged, when the migration will drop the tables of a declared
+                   context because the schema index no longer names them;
                    --replay, after merging the trunk into a branch when both added migrations: when the
                    history forks from --base <ref> (origin/main by default), deletes the migrations of the
                    branch the base does not have, with their snapshots and journal entries, then generates
@@ -345,6 +348,14 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    refused while the journal holds conflict markers, when two of them change the schema,
                    or when drizzle-kit now writes a generated one otherwise (edited by hand), the folder
                    then put back as it was
+  knex-generate    the db:generate of a Knex project, which has no schema diff: compares the compiled
+                   createTables with the migrations replayed, both on PostgreSQL in process (no server), and
+                   writes the tables, columns and indexes the migrations lack, as SQL held in the migration,
+                   which then replays on a fresh database whatever createTables becomes; what it cannot
+                   write (a column or an object changed under its name, something dropped) and a statement
+                   that changes rows or removes something are listed in the migration as a TODO(domain);
+                   nothing differs, nothing is written; --custom writes the empty migration of knex, to fill
+                   by hand; a word after the name is refused
   error-factories  moves the refusals of a project to one class per refusal (--to named, the default), from
                    one class per error or from the factories of one error class per concept: --plan writes
                    error-factories.plan.json, where each refusal is given a class (the PascalCase of its
@@ -648,7 +659,11 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    written; outside a git repository, every file whose content would change does; commit
                    or stash first, then git diff shows what the kit rewrote; init --force keeps README.md,
                    AGENTS.md, CLAUDE.md, the entry point and the pipeline definitions once written (listed
-                   as kept) and merges .gitignore and .dockerignore, the lines of the team kept
+                   as kept) and merges .gitignore and .dockerignore, the lines of the team kept; the files it
+                   rewrites keep what their ddd-ts-kit:* regions, the roles, the Prisma datasource and the
+                   services of the compose file hold, and a note names, file by file, what it could not keep:
+                   a region this version does not hold, a marker without its partner, a roles object it
+                   cannot read to its end, the repositories left on the ORM a flag changed
   --force          generate replaces the files that exist with what the kit writes, only while git holds
                    them: a file to replace that differs from the last commit refuses the command, exit 2,
                    the files named, nothing written; outside a git repository, every file whose content

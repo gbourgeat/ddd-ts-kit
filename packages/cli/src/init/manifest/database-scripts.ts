@@ -10,7 +10,8 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   // Every `db:generate` takes what the migration does (`npm run db:generate add-invoices`) and refuses to run without it: the tool prefixes it with a timestamp.
   // Through the CLI: without a terminal drizzle-kit cannot ask whether a column is renamed, writes nothing and exits 0; `drizzle-generate` fails then, with the fix.
   drizzle: { 'db:generate': 'ddd-ts-kit drizzle-generate --name', 'db:migrate': 'drizzle-kit migrate' },
-  knex: { 'db:generate': 'knex migrate:make', 'db:migrate': 'npm run build && knex migrate:latest' },
+  // Through the CLI: knex has no schema diff, the kit writes what `createTables` builds and the migrations do not, from its compiled form.
+  knex: { 'db:generate': 'npm run build && ddd-ts-kit knex-generate --name', 'db:migrate': 'knex migrate:latest' },
   // The client and the schema of the tests are build products of the files of prisma/schema/: every entry point refreshes them.
   prisma: {
     'db:client': prismaClientScript(PRISMA_SCHEMA_FOLDER),
@@ -39,7 +40,8 @@ export function databaseScripts(config: Config): Record<string, string> {
  * The TypeORM CLI reads the compiled data source of the platform, wherever the project keeps its
  * platform; it takes the path of the new migration (`npm run db:generate migrations/add-invoices`).
  * `db:generate` goes through the CLI of the kit, which makes the audit trail append-only in the
- * migration that creates it.
+ * migration that creates it. `db:migrate` builds first: it reads `dist/migrations`, and what
+ * `db:generate` just wrote is a source until then.
  */
 function scriptsOf(config: Config): Record<string, string> {
   const { orm } = config.stack;
@@ -51,7 +53,7 @@ function scriptsOf(config: Config): Record<string, string> {
 
   return {
     'db:generate': 'ddd-ts-kit typeorm-generate',
-    'db:migrate': `typeorm migration:run -d ${dataSource}`,
+    'db:migrate': `npm run build && typeorm migration:run -d ${dataSource}`,
   };
 }
 

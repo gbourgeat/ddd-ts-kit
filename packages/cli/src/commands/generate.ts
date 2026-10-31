@@ -33,8 +33,9 @@ export function generate(argv: readonly string[], io: Io, probe?: GeneratorProbe
   const kind = requestedKind(kindName, rest);
   const asked: Asked = { argv, io, probe, args, kind, rest };
 
-  // A kind that writes the shared files reads them and writes them back: one generator at a time does.
-  return kind.writesShared && !args.flag('dry-run')
+  // A kind reads the shared files and the pages of its context and writes them back, whatever it may write outside the
+  // context: one generator at a time does.
+  return !args.flag('dry-run')
     ? withGeneratorLock({ root: args.projectRoot, command: `ddd-ts-kit generate ${argv.join(' ')}` }, () =>
         generateKind(asked),
       )

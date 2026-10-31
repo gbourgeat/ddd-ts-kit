@@ -5,11 +5,13 @@ import { DEPCRUISE_FILE } from '../depcruise/depcruise-file';
 import { renderCruiseFile } from '../depcruise/render-cruise-file';
 import { writeDocs } from '../docs/write-docs';
 import { declareContextEntries } from '../generate/kinds/declare-context-entries';
-import { placeContextFiles } from '../generate/place-context-files';
-import { wireContext } from '../generate/kinds/wire-context';
-import { rewirePersonalData } from './rewire-personal-data';
+import { keptWiring } from './kept-wiring';
+import type { OrphanedWiring } from './orphaned-wiring-notes';
+import { rewireContexts } from './rewire-contexts';
+import { stackBefore } from './stack-before';
+import { wiringNotes } from './wiring-notes';
 import { formatJson } from '../json/format-json';
-import { parseContextName, toName } from '../naming';
+import { toName } from '../naming';
 import { ignoreCodeTypesWhereTheyAre } from '../knip';
 import { inDialect } from '../package-manager/in-dialect';
 import { setUpSdk } from '../sdk';
@@ -85,7 +87,8 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
   recordAgentProfile(ws, config);
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
-  writeFiles(ws, { config, projectName, flat, force: options.force, earlier });
+  const orphaned = writeFiles(ws, { config, projectName, flat, force: options.force, earlier });
+
   writeLocalEnvironment(ws);
   ignoreWorktrees(ws);
   writeCopilotInstructions(ws);
@@ -95,9 +98,7 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
   writeCopilotSettings(ws);
   ws.create(`${config.sharedKernelDir}/.gitkeep`, '');
 
-  if (options.force) {
-    rewireContexts(ws, config);
-  }
+  const rewired = options.force ? rewireContexts(ws, config) : { contexts: [], repositories: [] };
 
   const declared = addContexts(ws, config, [...options.contexts, ...presetContexts(config, options)]);
   const withContexts = addPresets(ws, declared, [...new Set(options.presets ?? [])]);
@@ -105,6 +106,8 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
   writeDocs(ws, withContexts);
   writeContracts(ws, { config: withContexts, projectName, presetApplied: (options.presets ?? []).length > 0 });
   setUpSdk(ws, withContexts);
+
+  wiringNotes(ws, rewired, orphaned).forEach((note) => ws.note(note));
 
   const report = ws.commit(options.dryRun);
 
@@ -176,30 +179,6 @@ function configText(ws: Workspace, config: Config): string {
   }
 }
 
-/**
- * `--force` just rewrote the composition root, the proof that each context wires alone and the
- * registry of permissions from their templates: the contexts the config declares, which it kept,
- * are wired into them again. What another generator had added to a file of the platform (the
- * value a gateway is given, the settings of a job) is not known here, and is said.
- */
-function rewireContexts(ws: Workspace, config: Config): void {
-  // A project initialised again may keep its code lists and permission sets where 0.86 and 0.87 wrote them.
-  placeContextFiles(ws, config);
-
-  const present = Object.entries(config.contexts).filter(([name]) => ws.exists(`${config.contextsDir}/${name}`));
-
-  for (const [name, { classification, upstreams }] of present) {
-    wireContext(ws, { config, context: parseContextName(name), request: { name, classification, upstreams } });
-    rewirePersonalData(ws, config, name);
-  }
-
-  if (present.length > 0) {
-    ws.note(
-      `--force rewrote the files of the platform from their templates and wired the declared contexts again (${present.map(([name]) => name).join(', ')}), the erasure of each one listed again in the copies of the privacy folder. What a generator had added to one of those files besides (the value of a gateway, the settings of a job, the grant of a role, a policy of its own) is gone: run \`npm run verify\`, and generate again what it reports missing.`,
-    );
-  }
-}
-
 /** The contexts asked of this run, then what every context of the project needs from the analyzers: one that is initialised again keeps its own. */
 function addContexts(ws: Workspace, config: Config, entries: readonly string[]): Config {
   const withContexts = entries.reduce((current, entry) => addContext(ws, current, entry), config);
@@ -234,12 +213,14 @@ function addPresets(ws: Workspace, config: Config, names: readonly string[]): Co
  * A template ending in `.tpl` is rendered; any other is copied as it is. A file of the platform a
  * version before the folders wrote flat is written flat again, its imports with it.
  */
-function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }: Written): void {
+function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }: Written): OrphanedWiring[] {
   const context = templateVars(config, projectName);
+  const rewriting: Rewriting = { config, force, earlier: stackBefore(ws.root), orphaned: [] };
 
   for (const [target, template] of initFiles(config, projectName).filter(([file]) => !earlier.includes(file))) {
     const content = template.endsWith('.tpl') ? renderTemplate(template, context) : readTemplate(template);
     const kept = flat.moved.get(target.replace(/\.ts$/, ''));
+    const file = kept === undefined ? target : `${kept}.ts`;
 
     if (!(force && keptOrMerged(ws, config, { target, content }))) {
       // Without --force, a file of the team that exists is skipped as any other, and said to be the team's.
@@ -247,7 +228,9 @@ function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }
         ws.keep(target);
       }
 
-      ws.create(kept === undefined ? target : `${kept}.ts`, target === KNIP_FILE ? laidOut(content) : content);
+      const text = withWiringKept(ws, rewriting, { target, file, content });
+
+      ws.create(file, target === KNIP_FILE ? laidOut(text) : text);
     }
   }
 
@@ -265,6 +248,37 @@ function writeFiles(ws: Workspace, { config, projectName, flat, force, earlier }
   }
 
   writeReviewPolicy(ws, config, context);
+
+  return rewriting.orphaned;
+}
+
+/** What a run of `init` needs to take over what a file holds. */
+interface Rewriting {
+  readonly config: Config;
+  readonly force: boolean;
+  /** The stack the config recorded before this run. */
+  readonly earlier: Config['stack'] | undefined;
+  /** Filled with what a rewritten file held in a place this version no longer has. */
+  readonly orphaned: OrphanedWiring[];
+}
+
+/** What a file is written with: its template and, under --force, what the file before held. */
+function withWiringKept(
+  ws: Workspace,
+  { config, force, earlier, orphaned }: Rewriting,
+  { target, file, content }: { readonly target: string; readonly file: string; readonly content: string },
+): string {
+  const existing = force ? ws.read(file) : undefined;
+
+  if (existing === undefined) {
+    return content;
+  }
+
+  const wiring = keptWiring(config, earlier, { target, written: content, existing });
+
+  orphaned.push(...wiring.orphaned.map((region) => ({ ...region, file })));
+
+  return wiring.text;
 }
 
 /**

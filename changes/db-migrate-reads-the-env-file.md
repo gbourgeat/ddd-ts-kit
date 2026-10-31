@@ -1,0 +1,3 @@
+**`db:migrate` finds `DATABASE_URL` in `.env` on the four ORM.** The README copies `.env.example` to `.env` and runs `db:migrate`, but the CLI of knex, Prisma and TypeORM reads no `.env`: only drizzle-kit reached the database, and the three others failed on the connection unless the shell exported the variable. `knexfile.js`, `prisma.config.ts` and the data source of TypeORM load the file when it exists, and what the shell sets wins.
+
+To move: add to the top of `knexfile.js`, `prisma.config.ts` or `src/platform/database/data-source.ts` the lines `if (existsSync('.env')) { process.loadEnvFile('.env'); }`, with `import { existsSync } from 'node:fs';`.

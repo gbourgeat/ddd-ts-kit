@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { writeBusinessDecisions } from '../first-class-proof';
 import { changeConfig, CONFIG } from '../check-support';
@@ -120,6 +122,8 @@ describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on
 
   it('passes its end-to-end proof', () => {
     if (DATABASE !== '') {
+      expect(cli(root, 'knex-generate', '--name', 'initial').code).toBe(0);
+      nameFirstMigrationAlike(root);
       runIn(root, { command: bin('knex'), args: ['migrate:latest'], env: { DATABASE_URL: DATABASE } });
     }
 
@@ -135,3 +139,10 @@ describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on
     expect(endToEnd).not.toMatch(FAILED_COUNT);
   }, 480_000);
 });
+
+/** The stacks of this file share one database, and knex refuses a recorded migration it cannot find: their first migration keeps one name. */
+function nameFirstMigrationAlike(root: string): void {
+  const [file] = walk(root, 'migrations').filter((entry) => entry.endsWith('_initial.js'));
+
+  fs.renameSync(path.join(root, file ?? ''), path.join(root, 'migrations/00000000000000_initial.js'));
+}
