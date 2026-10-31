@@ -40,12 +40,6 @@ describe('Remote{{name.pascal}}', () => {
     expect(adapter.calls).toBe(2);
   });
   {{/if}}
-  {{#unless adapter.decorated}}
-  it('is an adapter of the port, built without argument until its transport is written', () => {
-    expect(new Remote{{name.pascal}}()).toBeInstanceOf(Remote{{name.pascal}});
-  });
-  {{/unless}}
-
   it('refuses to send a call as long as its transport is not written, and names the operation', async () => {
     const adapter = new Unwired{{name.pascal}}();
 

@@ -35,8 +35,8 @@ describe('generate, the language first', () => {
       'export class InvoiceBuilder extends Builder<InvoiceIngredients, Invoice>',
     );
 
-    expect(read(root, 'src/contexts/billing/test/unit/invoice.aggregate.spec.ts')).toMatch(
-      /given\(anInvoice\(\)\)\s+\.when\(.+\)\s+\.thenEvents\(\[\]\);/,
+    expect(read(root, 'src/contexts/billing/test/unit/invoice.aggregate.spec.ts')).toContain(
+      'replace each entry below by a given / when / then test (`given` of `@ddd-ts-kit/testing`) named after the business rule it proves',
     );
   });
 
@@ -302,14 +302,14 @@ describe('generate, the title of a spec of the model', () => {
     expect(unit('invoice-noting.service.spec.ts')).toContain("describe('Invoice noting', () => {");
   });
 
-  it('builds the domain service it describes with nothing, a port or a store being no part of it', () => {
+  it('holds the domain service it describes to taking nothing when it is built, a port or a store being no part of it', () => {
     const spec = read(root, 'src/contexts/billing/test/unit/invoice-noting.service.spec.ts');
 
     expect(spec).toContain(
       "import { InvoiceNotingService } from '@/contexts/billing/domain/services/invoice-noting.service';",
     );
 
-    expect(spec).toContain('expect(() => new InvoiceNotingService()).not.toThrow();');
+    expect(spec).toContain('expect(InvoiceNotingService).toHaveLength(0);');
   });
 });
 

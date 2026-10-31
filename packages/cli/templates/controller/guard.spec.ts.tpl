@@ -1,6 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
 import type { GuardRequest } from '@ddd-ts-kit/http';
-import { anonymousActor, executionContext } from '@ddd-ts-kit/kernel';
+import { executionContext } from '@ddd-ts-kit/kernel';
 import { {{name.pascal}}Guard } from '{{alias.context}}/presentation/http/guards/{{name.kebab}}.guard{{alias.ext}}';
 
 const actor = { id: 'user-1', type: 'user', roles: [], attributes: {} } as const;
@@ -19,7 +19,6 @@ const request: GuardRequest = {
 describe('{{name.pascal}}Guard', () => {
   it('refuses a caller with 403', () => {
     expect(() => new {{name.pascal}}Guard().check(request)).toThrow(expect.objectContaining({ code: 'FORBIDDEN' }));
-    expect(anonymousActor().type).toBe('anonymous');
   });
 
   // TODO(domain): replace the test above by one per decision of the guard.

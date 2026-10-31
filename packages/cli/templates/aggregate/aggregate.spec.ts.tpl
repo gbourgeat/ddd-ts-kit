@@ -1,5 +1,4 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { given } from '@ddd-ts-kit/testing';
 import { {{name.pascal}} } from '{{alias.context}}/domain/aggregates/{{name.kebab}}.aggregate{{alias.ext}}';
 {{#if birth.named}}
 import { {{birth.pascal}} } from '{{alias.context}}/domain/events/{{birth.kebab}}.event{{alias.ext}}';
@@ -32,14 +31,7 @@ describe('{{name.title}}', () => {
     expect(loaded.pullEvents()).toEqual([]);
   });
 
-  it('records nothing as long as no business intention is expressed', () => {
-    // TODO(domain): replace `toState` by a business method of {{name.pascal}} and `[]` by the facts it records, for example `[{ name: '{{context.kebab}}.{{name.kebab}}.issued' }]`.
-    given({{name.article}}{{name.pascal}}())
-      .when((subject) => subject.toState())
-      .thenEvents([]);
-  });
-
-  // TODO(domain): replace each entry below by a given / when / then test named after the business rule it proves: a built state, one intention, then the recorded facts (`thenEvents`) or the raised error (`thenError`).
+  // TODO(domain): replace each entry below by a given / when / then test (`given` of `@ddd-ts-kit/testing`) named after the business rule it proves: a built state, one intention, then the recorded facts (`thenEvents`) or the raised error (`thenError`).
 {{#unless birth.named}}
   it.todo('records the fact of its birth');
 {{/unless}}
