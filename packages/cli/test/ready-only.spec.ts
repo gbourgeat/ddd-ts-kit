@@ -107,4 +107,28 @@ describe('plan-waves --ready', () => {
     expect(stdout).toContain('none');
     expect(stdout).not.toContain('Later:');
   });
+
+  it('keeps the rows of another story that a shown batch waits for', () => {
+    const header =
+      '| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |\n|---|---|---|---|---|---|---|---|\n';
+
+    write(
+      root,
+      'docs/architecture/slices.md',
+      `# Slices\n\n${header}| US1.01 | billing | slice | Issue | | | billing | todo |\n| US2.01 | billing | slice | Pay | | US1.01 | billing | todo |\n`,
+    );
+
+    const plan = cli(root, 'plan-waves', '--ready', '--json').json();
+
+    expect(jsonAt(plan, 'otherStories')).toMatchObject([{ id: 'US1.01', batch: 'W1.1' }]);
+    expect(jsonAt(plan, 'later')).toEqual({ waves: 1, batches: 1, rows: 1 });
+  });
+});
+
+describe('status --ready without a slices file', () => {
+  it('prints what status prints', () => {
+    const bare = committedProject('bare', '--context', 'billing:core');
+
+    expect(cli(bare, 'status', '--ready').stdout).toBe(cli(bare, 'status').stdout);
+  });
 });
