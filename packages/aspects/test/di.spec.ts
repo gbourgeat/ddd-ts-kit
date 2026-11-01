@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { defineContextModule, kernelModule, type Decorate } from '@ddd-ts-kit/di';
 import { createApplication, createTestApplication } from '@ddd-ts-kit/di/tsyringe';
-import { Cache, Clock, InMemoryLogger, InMemoryMetrics, Logger, Metrics } from '@ddd-ts-kit/kernel';
+import {
+  Cache,
+  Clock,
+  FixedExecutionScope,
+  InMemoryLogger,
+  InMemoryMetrics,
+  Logger,
+  Metrics,
+} from '@ddd-ts-kit/kernel';
 import {
   aspects,
   cached,
@@ -105,6 +113,7 @@ describe('aspects on every binding, as the decorate hook', () => {
       metrics: app.resolve(Metrics),
       cache: app.resolve(Cache),
       clock: app.resolve(Clock),
+      scope: new FixedExecutionScope(),
     });
 
     await app.resolve(Quotes).quote('EUR-USD');

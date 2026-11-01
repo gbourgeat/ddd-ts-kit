@@ -245,7 +245,7 @@ constructor: the decorators read them from the aspect runtime when a call is mad
 | `retry({ attempts, backoff?, retryOn?, sleep? })` | calls again after a failure | never after a `DomainError`, an open circuit or a full bulkhead (`isTransient`); 100 ms doubling up to 30 s with full jitter | nothing: it records nothing |
 | `timeout(ms, { signal?, scheduler? })` | rejects with `TimeoutError` (`TIMEOUT`) | the underlying call keeps running unless `signal: true` | the message names the class and method only |
 | `circuitBreaker({ failureThreshold, resetAfterMs, halfOpenMax?, scope?, isFailure?, onStateChange?, clock? })` | refuses calls with `CircuitOpenError` (`CIRCUIT_OPEN`) after consecutive failures, then lets trial calls through | one circuit per instance and method; a `DomainError` is not a failure; one trial call | `onStateChange` gets class, method, context and the two states |
-| `cached({ key, ttlMs, cache?, shared?, allowKinds? })` | answers a repeated read from the `Cache` port | refuses kinds `repository` and `use-case`; an entry belongs to the tenant of the work unless `shared: true`, work that names no tenant keeps the key as written, and work under an elevation (`acrossTenants`) neither reads nor writes the cache; a call whose key is `undefined` is not cached; failures are not cached; concurrent identical calls of one tenant share one call; a failing cache is a miss | the key is built by the project from the arguments and goes to the cache only |
+| `cached({ key, ttlMs, cache?, shared?, allowKinds? })` | answers a repeated read from the `Cache` port | refuses kinds `repository` and `use-case`; needs `scope` in the runtime or `shared: true`, and throws at the call without either; an entry belongs to the tenant of the work unless `shared: true`, work that names no tenant keeps the key as written, and work under an elevation (`acrossTenants`) neither reads nor writes the cache; a call whose key is `undefined` is not cached; failures are not cached; concurrent identical calls of one tenant share one call; a failing cache is a miss | the key is built by the project from the arguments and goes to the cache only |
 | `bulkhead({ maxConcurrent, maxQueued?, scope? })` | bounds the calls running at once, refuses beyond with `BulkheadFullError` (`BULKHEAD_FULL`) | no queue; one compartment per instance and method | nothing |
 
 **Privacy.** The rule is the one of tracing: an entry, a label or an error raised by this
@@ -338,7 +338,8 @@ import { allOf, cached, forKinds, forMethods, when } from '@ddd-ts-kit/aspects';
 
 // The one place arguments are read: build the key from an identifier, never from personal data.
 // `undefined` leaves the call uncached. The cache key also holds the class and the method, and the
-// tenant of the work: `shared: true` keeps one entry for a read meant for every tenant.
+// tenant of the work, which needs `scope` in the aspect runtime: `shared: true` keeps one entry for a
+// read whose answer depends on no tenant, and needs no scope.
 const key = (_method: string, [id]: readonly unknown[]): string | undefined => (typeof id === 'string' ? id : undefined);
 
 export const cacheReads = when(allOf(forKinds('gateway', 'external'), forMethods('find*')), cached({ key, ttlMs: 60_000 }));
@@ -407,8 +408,9 @@ options, or from the runtime that the composition root installs once with
 when a call is made, never when a class is decorated or an instance wrapped, so the order of the
 statements in `main.ts` does not matter. A missing collaborator raises `AspectRuntimeError`,
 which names it. `scope` is the `ExecutionScope` of the application, where `cached` reads the tenant
-of the work: a generated composition root gives it, and a runtime without it leaves the keys as
-written, so a multi-tenant root written by hand must give it too. The clock and the scheduler
+of the work: a generated composition root gives it, and `cached` throws at the call without it,
+unless it says `shared: true` for an answer that depends on no tenant, so a root written by hand
+must give it too. The clock and the scheduler
 default to the system ones. `Scheduler` is the port of this package for "run this later"
 (`schedule(work, delayMs)`), an abstract class like the ports of the kernel: `systemScheduler` is
 its default, `ManualScheduler` of `./testing` the one of a spec.

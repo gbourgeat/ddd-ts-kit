@@ -1,12 +1,28 @@
-import { describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryCache, type Cache } from '@ddd-ts-kit/kernel';
-import { AspectNotAllowedError, cached, forKinds, forMethods, when, type CachedOptions } from '../src';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { FixedClock, FixedExecutionScope, InMemoryCache, type Cache } from '@ddd-ts-kit/kernel';
+import {
+  AspectNotAllowedError,
+  cached,
+  forKinds,
+  forMethods,
+  installAspectRuntime,
+  when,
+  type CachedOptions,
+} from '../src';
 import { createAspectFakes, withAspectRuntime } from '../src/testing';
 import { QuoteGateway } from './support/quote-gateway';
 import { SlowGateway } from './support/slow-gateway';
 import { Unreachable } from './support/unreachable';
 
 const byFirstArgument: CachedOptions['key'] = (_method, [first]) => (typeof first === 'string' ? first : undefined);
+
+beforeEach(() => {
+  installAspectRuntime({ scope: new FixedExecutionScope() });
+});
+
+afterEach(() => {
+  installAspectRuntime({});
+});
 
 function createCache(): { cache: InMemoryCache; clock: FixedClock } {
   const clock = new FixedClock(new Date('2026-03-01T10:00:00.000Z'));

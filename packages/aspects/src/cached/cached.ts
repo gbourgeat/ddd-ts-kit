@@ -19,8 +19,10 @@ export interface CachedOptions {
   /** Defaults to the cache of the aspect runtime. */
   readonly cache?: Cache;
   /**
-   * One entry for every tenant, for a read whose answer does not depend on the tenant. By default
-   * the entry is confined to the tenant of the work.
+   * One entry for every tenant, for a read whose answer does not depend on any tenant. By default
+   * the entry is confined to the tenant of the work, which needs `scope` in the aspect runtime:
+   * without it, and without `shared: true`, the call throws. A shared read cannot see an
+   * elevation (`acrossTenants`) unless the runtime has the scope.
    */
   readonly shared?: boolean;
   /** Kinds to wrap although they are refused by default: `repository`, `use-case`. */
@@ -37,9 +39,10 @@ const REFUSED_KINDS: readonly AspectKind[] = ['repository', 'use-case'];
  * Answers a read from the cache when it was made recently. For read methods of gateways and
  * external adapters: select them with `when(forMethods('find*'), cached(...))`. Refuses to
  * wrap a repository or a use case unless `allowKinds` says so: an aggregate served from a
- * cache hides that it is stale. Work that names a tenant has its own entries, through the
- * execution scope of the aspect runtime, unless `shared` says otherwise; work that names none
- * keeps the key as written; work under an elevation (`acrossTenants`) neither reads nor writes the
+ * cache hides that it is stale. Needs the execution scope of the aspect runtime (`scope` of
+ * `installAspectRuntime`), or `shared: true`, and throws at the call without either. Work that
+ * names a tenant has its own entries through that scope, unless `shared` says otherwise; work
+ * that names none keeps the key as written; work under an elevation (`acrossTenants`) neither reads nor writes the
  * cache, since its answer may reach beyond one tenant. Concurrent identical calls of one tenant share one underlying call;
  * failures are not cached; a cache that fails is treated as a miss.
  */

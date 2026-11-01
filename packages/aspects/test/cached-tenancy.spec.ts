@@ -2,13 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   AsyncLocalStorageExecutionScope,
   FixedClock,
+  FixedExecutionScope,
   InMemoryCache,
   cacheKey,
   executionContext,
   tenantCacheKey,
   type Actor,
 } from '@ddd-ts-kit/kernel';
-import { cached, type CachedOptions } from '../src';
+import { AspectRuntimeError, cached, type CachedOptions } from '../src';
+import { runWithAspectRuntime } from '../src/runtime/installed-runtime';
 import { withAspectRuntime } from '../src/testing';
 
 const scope = new AsyncLocalStorageExecutionScope();
@@ -162,11 +164,55 @@ describe('cached, in a multi-tenant application', () => {
     },
   );
 
-  it('keeps the key as written on a runtime that has no execution scope', async () => {
+  it('keeps the key as written under a scope that names no tenant', async () => {
     const { cache, hours } = arrange();
 
-    await withAspectRuntime({}, () => inTenant('acme', () => hours.of('p-1')));
+    await withAspectRuntime({ scope: new FixedExecutionScope() }, () => hours.of('p-1'));
 
     expect(await cache.get(cacheKey<unknown>('aspect', 'Hours', 'of', 'p-1'))).toBeDefined();
+  });
+});
+
+describe('cached, on a runtime that has no execution scope', () => {
+  const noScope = <T>(work: () => T): T => runWithAspectRuntime({}, work);
+
+  it('throws at the call, naming scope of installAspectRuntime and shared: true', async () => {
+    const { cache, hours, plain } = arrange();
+
+    const refused = noScope(() => hours.of('p-1'));
+
+    await expect(refused).rejects.toBeInstanceOf(AspectRuntimeError);
+    await expect(refused).rejects.toThrow(/installAspectRuntime\(\{ scope \}\).*shared: true/);
+    expect(plain.calls).toBe(0);
+    expect(cache.size).toBe(0);
+  });
+
+  it('throws for a cache of the runtime as it does for a given one', async () => {
+    const cache = new InMemoryCache(new FixedClock(new Date('2026-03-01T10:00:00.000Z')));
+    const plain = new Hours();
+    const hours = cached({ key: byId, ttlMs: 60_000 })(plain);
+
+    await expect(runWithAspectRuntime({ cache }, () => hours.of('p-1'))).rejects.toThrow(/shared: true/);
+    expect(plain.calls).toBe(0);
+  });
+
+  it('needs none when the caller says shared', async () => {
+    const { cache, hours, plain } = arrange({ shared: true });
+
+    await noScope(() => hours.of('p-1'));
+    await noScope(() => hours.of('p-1'));
+
+    expect(plain.calls).toBe(1);
+    expect(await cache.get(cacheKey<unknown>('aspect', 'Hours', 'of', 'p-1'))).toBeDefined();
+  });
+
+  it('leaves a call alone whose key is undefined', async () => {
+    const { cache } = arrange();
+    const plain = new Hours();
+    const hours = cached({ key: () => undefined, ttlMs: 60_000, cache })(plain);
+
+    await noScope(() => hours.of('p-1'));
+
+    expect(plain.calls).toBe(1);
   });
 });

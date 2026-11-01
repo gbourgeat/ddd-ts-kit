@@ -169,12 +169,15 @@ Concurrent identical calls of one tenant share one call to the calendars context
 not cached; a cache that fails is a miss. With a container, the same aspect goes on the binding:
 `.as('gateway').with(cached({ ... }))`.
 
-In a multi-tenant project the entry belongs to the tenant of the work: `cached` reads it from the
-`scope` of `installAspectRuntime`, which a generated composition root gives, and files the key
-under that tenant as `tenantCacheKey` does, so the sample above needs no tenant in its key. A read
-whose answer is the same for every tenant says so with `shared: true`, and keeps one entry. Work
-that names no tenant, a global job for one, keeps the key as written and meets no entry of a tenant.
-Work under an elevation (`acrossTenants`) neither reads nor writes the cache: it runs the call.
+`cached` needs the `scope` of `installAspectRuntime`, which a generated composition root gives, or
+`shared: true`: without either, a call throws an `AspectRuntimeError` that names the two, since the
+aspect cannot know a project is multi-tenant without the scope. With the scope, the entry belongs
+to the tenant of the work and the key is filed under that tenant as `tenantCacheKey` does, so the
+sample above needs no tenant in its key. A read whose answer depends on no tenant says so with
+`shared: true`, and keeps one entry; without a scope, a shared read cannot see an elevation, which
+is why `shared: true` means an answer that depends on no tenant. Work that names no tenant, a
+global job for one, keeps the key as written and meets no entry of a tenant. Work under an
+elevation (`acrossTenants`) neither reads nor writes the cache: it runs the call.
 
 **Rate limiter.** An exact sliding window: one sorted-set member per allowed call, decided in
 one script, so concurrent instances cannot both take the last place. A refused call is not

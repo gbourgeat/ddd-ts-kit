@@ -1,5 +1,5 @@
 [English](cache-and-coordination.md) · **Français**
-<!-- translation-of: cache-and-coordination.md sha256:8ec58f0a0aedd57e -->
+<!-- translation-of: cache-and-coordination.md sha256:4d43f632dbfec825 -->
 
 # Cache et coordination : Redis, Dragonfly, Valkey
 
@@ -179,11 +179,14 @@ Des appels identiques et simultanés d'un même *tenant* partagent un seul appel
 calendars ; un appel en échec n'est pas mis en cache ; un cache en panne vaut un défaut de cache.
 Avec un conteneur, le même aspect se pose sur la liaison : `.as('gateway').with(cached({ ... }))`.
 
-Dans un projet multitenant, l'entrée appartient au *tenant* du travail : `cached` le lit dans le
-`scope` d'`installAspectRuntime`, que donne une racine de composition générée, et range la clé sous
-ce *tenant* comme le fait `tenantCacheKey`, si bien que l'exemple ci-dessus n'a pas besoin de
-*tenant* dans sa clé. Une lecture dont la réponse est la même pour tous les *tenants* le dit avec
-`shared: true`, et garde une seule entrée. Le travail qui ne nomme aucun *tenant*, un *job* global
+`cached` a besoin du `scope` d'`installAspectRuntime`, que donne une racine de composition générée,
+ou de `shared: true` : sans l'un ni l'autre, un appel lève une `AspectRuntimeError` qui nomme les
+deux, puisque l'aspect ne peut pas savoir qu'un projet est multitenant sans le `scope`. Avec le
+`scope`, l'entrée appartient au *tenant* du travail et la clé est rangée sous ce *tenant* comme le
+fait `tenantCacheKey`, si bien que l'exemple ci-dessus n'a pas besoin de *tenant* dans sa clé. Une
+lecture dont la réponse ne dépend d'aucun *tenant* le dit avec `shared: true`, et garde une seule
+entrée ; sans `scope`, une lecture partagée ne voit pas une élévation, c'est pourquoi `shared: true`
+signifie une réponse qui ne dépend d'aucun *tenant*. Le travail qui ne nomme aucun *tenant*, un *job* global
 par exemple, garde la clé telle qu'elle est écrite et ne rencontre aucune entrée d'un *tenant*.
 Le travail sous une élévation (`acrossTenants`) ne lit ni n'écrit le cache : il exécute l'appel.
 
