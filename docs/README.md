@@ -28,6 +28,7 @@ also published as a website, with search, in English and in French:
 | [Architecture reference](ARCHITECTURE.md) | the canonical tree, every rule id, the tactical rules, tests, clean code |
 | [Configuration](CONFIG.md) | every key of `ddd-ts-kit.config.json` |
 | [Lines left out of the coverage measure](adr/0001-lines-left-out-of-the-coverage-measure.md) | the checks nothing can reach, why, and when each one goes |
+| [A read model store on OpenSearch](adr/0008-a-read-model-store-on-opensearch.md) | each choice of `@ddd-ts-kit/opensearch`, and what reverses it |
 | [Pipeline](../pipeline/README.md) | the quality gates, the git hooks, GitHub and GitLab side by side |
 | Package READMEs under [`packages/`](../packages) | what each package does, its limits and what was verified |
 
@@ -90,7 +91,7 @@ limits, and a recommendation by situation.
 | [Contract pairs](tools/contract-pairs.md) | which framework with which validation library, by team: the four pairs proven end to end, measured; oRPC and tRPC as a second door, not a pair |
 | [Representations and forms](tools/representations-and-forms.md) | XML and CSV without a library, and why; JSON Forms renderers for React, Angular and Vue, and the alternatives |
 | [Dependency injection](tools/dependency-injection.md) | the kit's declarations on tsyringe, InversifyJS or Awilix, NestJS, or manual wiring, compared and measured |
-| [Persistence](tools/persistence.md) | Drizzle, Knex, Prisma or TypeORM; PostgreSQL versus others |
+| [Persistence](tools/persistence.md) | Drizzle, Knex, Prisma or TypeORM; PostgreSQL versus others; a read model on OpenSearch |
 | [Message brokers](tools/message-brokers.md) | in-process, RabbitMQ, Kafka, NATS JetStream or Redis Streams |
 | [Cache and coordination](tools/cache-and-coordination.md) | Redis, Dragonfly or Valkey; what the lock does and does not guarantee |
 | [HTTP caches](tools/http-caches.md) | Varnish, Souin, nginx, Fastly, Cloudflare or Bunny in front of the API: how each purges by tag, what the kit verified |

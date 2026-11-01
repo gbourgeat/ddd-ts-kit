@@ -504,7 +504,32 @@ package. `init --database mongodb` is accepted with `--orm custom` although the 
   tooling; it runs no migration of its own.
 
 When not to use an ORM adapter at all: a context with no state (a pure translator), or a read
-model better served by a search engine or a cache, behind a port of its own.
+model better served by a search engine ([below](#a-read-model-in-a-search-engine-opensearch)) or
+a cache, behind a port of its own.
+
+## A read model in a search engine: OpenSearch
+
+A read model searched by many criteria over many rows, or one that several services read, may live
+in OpenSearch rather than in a table: `@ddd-ts-kit/opensearch` implements the same
+`ReadModelStore` port as the four ORM, so a projector does not know which one it writes to. The
+criteria of the read port become the query DSL, a write is applied only if its event is newer and
+only on the document it read, and the tenants are kept apart by an index each
+(`tenancy: { strategy: 'index' }`) or by a tenant field and an alias per tenant that OpenSearch
+filters itself (`{ strategy: 'attribute' }`). It speaks the REST API with no client library.
+
+| | A table of an ORM | OpenSearch |
+|---|---|---|
+| Consistency | the row commits with the processed-event mark of the event | eventually consistent: a search sees a write after the next refresh (one second by default), `refresh: 'wait_for'` waits for it; the write is outside the transaction, and a redelivery is stale |
+| Tenants | a tenant column, or a schema or a database per tenant | an index per tenant, or one index and a filtered alias per tenant |
+| Rebuild | `ProjectionRebuild`, on PostgreSQL | not built yet; each index carries a generation and every read goes through an alias, so that a rebuild can switch |
+| Full-text search | the full-text search of PostgreSQL, by hand | not built: a string is a `keyword`, `contains` a case-sensitive wildcard |
+| Operations | the database the project already runs | a cluster to run, size and upgrade |
+
+The package is not on npm yet and `init` does not wire it: its
+[README](../../packages/opensearch/README.md) shows the composition by hand, and
+[ADR-0008](../adr/0008-a-read-model-store-on-opensearch.md) records each choice and what
+reverses it. It was run on OpenSearch 3 only; the endpoints it calls are the ones Elasticsearch
+shares, which no spec has proven.
 
 ## Migrations: names, merges and order
 
@@ -744,6 +769,7 @@ working on one context alike. A context extracted as a service takes its tables 
 | Existing TypeORM application | TypeORM 1.x with `EntitySchema`; plan the audit trail store yourself |
 | MySQL imposed | Knex or TypeORM, and run the contract suites against your server in your own CI |
 | Another store | `custom`, behind the same ports, with a decision record |
+| A read model searched by many criteria, or read by several services | `@ddd-ts-kit/opensearch` behind the read model port, beside the ORM of the write model |
 
 ## Sources
 

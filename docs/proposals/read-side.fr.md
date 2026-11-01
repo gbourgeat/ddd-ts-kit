@@ -1,5 +1,5 @@
 [English](read-side.md) · **Français**
-<!-- translation-of: read-side.md sha256:35655e8238605fe3 -->
+<!-- translation-of: read-side.md sha256:58ad51a03308c31e -->
 
 # Proposition : le côté lecture
 
@@ -16,11 +16,11 @@ d'exécution l'ont, `ddd-ts-kit generate` et `check` ne le connaissent pas), **p
 
 | Partie | Construit dans les *packages* d'exécution | Pas encore généré par la CLI | Pas construit |
 |---|---|---|---|
-| 1. Critères et filtres | `Criteria`, `defineCriteria`, `validateCriteria`, `planCriteria`, `scoped` et l'évaluateur en mémoire `evaluateCriteria` dans `@ddd-ts-kit/kernel` ; la grammaire des paramètres d'URL et ses paramètres OpenAPI dans `@ddd-ts-kit/http` (`criteriaQuerySchema`, `criteriaFrom`, `criteriaParameters`) ; `criteriaToKnex`, `criteriaToDrizzle`, `criteriaToPrisma`, `criteriaToTypeOrm` ; `criteriaContract` dans `@ddd-ts-kit/testing` | `generate query --search` écrit un port de lecture qui prend le périmètre d'accès et une `PageRequest`, un adaptateur en mémoire et un `TODO(domain)` pour les critères : pas de `defineCriteria`, pas de paramètres `filter[...]` | le traducteur pour moteur de recherche ; RSQL |
+| 1. Critères et filtres | `Criteria`, `defineCriteria`, `validateCriteria`, `planCriteria`, `scoped` et l'évaluateur en mémoire `evaluateCriteria` dans `@ddd-ts-kit/kernel` ; la grammaire des paramètres d'URL et ses paramètres OpenAPI dans `@ddd-ts-kit/http` (`criteriaQuerySchema`, `criteriaFrom`, `criteriaParameters`) ; `criteriaToKnex`, `criteriaToDrizzle`, `criteriaToPrisma`, `criteriaToTypeOrm` ; le DSL de requête d'OpenSearch dans `@ddd-ts-kit/opensearch` ; `criteriaContract` dans `@ddd-ts-kit/testing` | `generate query --search` écrit un port de lecture qui prend le périmètre d'accès et une `PageRequest`, un adaptateur en mémoire et un `TODO(domain)` pour les critères : pas de `defineCriteria`, pas de paramètres `filter[...]` | RSQL |
 | 2. Représentations | `Representation`, `Representations.standard()` et la négociation sur `Accept` (406) dans `@ddd-ts-kit/http` ; JSON, `application/problem+json` et `+xml`, XML écrit et lu (415 sinon), CSV diffusé en flux, `streamSchemaOf`, `everyPage` pour diffuser une recherche page par page à travers le bus ; fichiers et réponses sans corps laissés hors de la négociation ; chaque type de média, 406 et 415 dans le contrat ; `withFieldAccess` et `fieldDeciderOf` pour les champs réservés à une permission ou à une politique, dans chaque représentation et dans les corps de requête HTTP ; la règle `authz/fields-by-schema` | généré depuis le 2026-10-13 : `stack.representations` choisi à `init`, `generate representation`, `describe` liste les types de média | un vocabulaire XML propre (espaces de noms, contenu mixte) ; l'entrée CSV |
 | 3. Formulaires | `formRoutes` sur `GET /forms/<operationId>`, les indications de `defineForm`, JSON Forms et l'arbre de blocs neutre, le formulaire donné seulement à qui peut exécuter son cas d'usage (`requires`), des champs cachés et en lecture seule selon l'appelant, `formDocumentsOf` | généré depuis le 2026-10-13 : `stack.forms` choisi à `init`, `generate form`, les formulaires écrits dans `openapi/forms/` | d'autres dialectes que JSON Forms, qu'un front-end obtient de l'arbre ; un moteur de rendu de consultation |
 | 4. Les données d'un autre contexte | l'hydratation : `hydrate(...).with(...).orElse(...)` dans le noyau, avec la politique en cas d'échec et de délai dépassé ; le port *gateway* qu'elle appelle (`generate gateway`) | aucun usage généré de `hydrate` | la règle des analyseurs : c'est le compilateur qui refuse des critères sur un champ hydraté, à sa place |
-| 5. Projections et recherche | `@Projection` et `@On` (`@ddd-ts-kit/kernel/declarations`), leur enregistrement et leurs métriques dans `@ddd-ts-kit/di` ; le port `ReadModelStore`, `TableReadModelStore` au-dessus d'`InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, tenus par `readModelStoreContract` ; `ProjectionRebuild` sur PostgreSQL | générés depuis le 2026-10-12, dans le style déclaré : `generate projection <context> <Name> <event-type>` écrit un projecteur et sa *spec*, `application/projections/` est un rôle de l'arborescence canonique, le *barrel* généré exporte un projecteur et enregistre ce que son constructeur reçoit, `describe` et `CONTEXT.md` le listent. Toujours pas générés : le port du modèle de lecture avec son adaptateur, que donnent `generate port` et le *package* de l'ORM | le stockage en index de recherche et le *package* Elasticsearch et OpenSearch ; un *job* de reconstruction généré |
+| 5. Projections et recherche | `@Projection` et `@On` (`@ddd-ts-kit/kernel/declarations`), leur enregistrement et leurs métriques dans `@ddd-ts-kit/di` ; le port `ReadModelStore`, `TableReadModelStore` au-dessus d'`InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, tenus par `readModelStoreContract` ; `ProjectionRebuild` sur PostgreSQL ; `OpenSearchReadModelStore` de `@ddd-ts-kit/opensearch` (pas encore sur npm), tenu par `readModelRowsContract` et `criteriaContract` sur OpenSearch 3, les locataires dans un index chacun ou derrière des alias filtrés | générés depuis le 2026-10-12, dans le style déclaré : `generate projection <context> <Name> <event-type>` écrit un projecteur et sa *spec*, `application/projections/` est un rôle de l'arborescence canonique, le *barrel* généré exporte un projecteur et enregistre ce que son constructeur reçoit, `describe` et `CONTEXT.md` le listent. Toujours pas générés : le port du modèle de lecture avec son adaptateur, que donnent `generate port` et le *package* de l'ORM | la reconstruction du store OpenSearch, un passage sur Elasticsearch, la recherche plein texte et les facettes ; le câblage d'OpenSearch par `init` ; un *job* de reconstruction généré |
 
 La référence de ce qui est construit est le README de chaque *package* : `@ddd-ts-kit/kernel`
 (« Criteria », « Hydration », « Projections »), `@ddd-ts-kit/http` (la grammaire des requêtes, les
@@ -51,8 +51,8 @@ lecture, disent lesquelles de leurs parties sont construites et lesquelles sont 
 
 ## 1. Critères et filtres
 
-Construit dans les *packages* d'exécution ; pas encore généré par la CLI ; pas de traducteur pour
-moteur de recherche.
+Construit dans les *packages* d'exécution, le traducteur pour OpenSearch compris ; pas encore
+généré par la CLI.
 
 **Problème.** Chaque route de recherche réinvente ses paramètres de requête HTTP, et chaque
 *repository* se couvre de méthodes de recherche.
@@ -140,8 +140,8 @@ critères sont planifiés.
   Les paramètres OpenAPI viennent de la même définition (`criteriaParameters`).
 - Des traducteurs transforment un plan de critères en requête du stockage : Knex, Drizzle,
   Prisma, TypeORM, et un évaluateur en mémoire pour les *fakes*. Une seule suite de contrat
-  (`criteriaContract`) les tient à la même table de critères et de réponses. Un traducteur pour
-  moteur de recherche (partie 5) n'est pas construit. Le *fake* d'un port de lecture est une
+  (`criteriaContract`) les tient à la même table de critères et de réponses, et le store
+  OpenSearch de la partie 5 aussi. Le *fake* d'un port de lecture est une
   classe de quelques lignes, et répond avec la sémantique de référence :
   `class FakeAppointmentList extends InMemoryReadModelStore<AppointmentRow> implements AppointmentList`,
   son constructeur appelant `super(appointmentCriteria)`.
@@ -356,7 +356,8 @@ qui échoue fait échouer toute la lecture, parce que cette relation n'a pas de 
 
 Les projections sur SQL sont construites dans les *packages* d'exécution, et
 `generate projection` écrit un projecteur ; la CLI n'écrit avec lui ni le port du modèle de
-lecture, ni un *job* de reconstruction ; le moteur de recherche n'est pas construit.
+lecture, ni un *job* de reconstruction. Un store de modèle de lecture sur OpenSearch est
+construit, sans sa reconstruction.
 
 **Problème.** Sans standard, les modèles de lecture sont écrits à la main dans des gestionnaires
 d'événements d'intégration, chacun avec sa propre réponse à l'idempotence, à la reconstruction et
@@ -477,12 +478,14 @@ export async function deliveredOutOfOrder(): Promise<PractitionerName | undefine
   plusieurs événements (`--on <event>...`), un `--store sql|search` qui écrit le port du modèle
   de lecture avec son adaptateur et son *fake* (aujourd'hui `generate port` et le *package* de
   l'ORM, à la main), et le *job* de reconstruction.
-- **Un index de recherche** comme seconde implémentation du stockage de modèle de lecture.
-- **Adaptateur de moteur de recherche.** Un *package* pour Elasticsearch et OpenSearch (même
-  protocole pour ce qui est nécessaire) : un index par modèle de lecture, un *mapping* dérivé du
-  schéma du modèle de lecture, des critères traduits dans le langage de requête, une application
-  des événements en masse, une bascule d'alias pour reconstruire sans interruption, le plein
-  texte et les facettes comme extensions des critères.
+- **Un index de recherche**, construit comme `@ddd-ts-kit/opensearch` (pas encore sur npm) : la
+  seconde sorte de stockage de modèle de lecture, un index par modèle de lecture, son *mapping*
+  tiré de la définition des critères, les critères traduits dans le DSL de requête, les
+  locataires dans un index chacun ou derrière un alias filtré chacun, toute lecture par un alias
+  ([ADR-0008](../adr/0008-a-read-model-store-on-opensearch.fr.md)). Toujours proposés : la
+  bascule d'alias d'une reconstruction sans interruption, l'application des événements en masse,
+  le plein texte et les facettes comme extensions des critères, un passage sur Elasticsearch, et
+  le câblage par `init` une fois le *package* publié.
 
 **Limites.** Un événement plus ancien écarté comme périmé (stale) n'est pas appliqué plus tard :
 un événement devrait porter l'état des champs qu'il fixe, ou arriver dans l'ordre par clé. Avec un
@@ -501,24 +504,27 @@ couvre bien des projets.
    ci-dessus. RSQL (`status=in=(booked,confirmed)`) n'est pas fourni.
 2. **Formulaires** : tranché par ce qui a été construit : les deux, l'arbre de blocs comme
    modèle propre au kit et JSON Forms comme son premier *mapper*.
-3. **Moteur de recherche** : Elasticsearch, OpenSearch, ou les deux derrière un seul adaptateur.
-   Recommandé : un adaptateur testé sur OpenSearch (licence ouverte) et sur Elasticsearch.
+3. **Moteur de recherche** : tranché par ce qui a été construit : OpenSearch d'abord, par le
+   sous-ensemble de l'API REST qu'Elasticsearch partage, sans bibliothèque cliente. Il tourne sur
+   OpenSearch 3 ; un passage sur Elasticsearch est ce qui prouverait le sous-ensemble partagé.
 4. **Ordre du travail.** Les critères, l'hydratation, les projections sur SQL, les
    représentations et les formulaires sont dans les *packages* d'exécution, les représentations
-   et les formulaires dans la CLI aussi, et le projecteur est généré. Ce qui reste, dans l'ordre
-   recommandé : les critères dans le générateur et le *checker* (`defineCriteria` et les
-   paramètres `filter[...]` depuis `generate query --search`) et le reste du générateur de
-   projections (le port du modèle de lecture, le *job* de reconstruction), puis l'adaptateur de
-   recherche.
+   et les formulaires dans la CLI aussi, le projecteur est généré, et l'adaptateur de recherche
+   est construit sur OpenSearch. Ce qui reste, dans l'ordre recommandé : les critères dans le
+   générateur et le *checker* (`defineCriteria` et les paramètres `filter[...]` depuis
+   `generate query --search`) et le reste du générateur de projections (le port du modèle de
+   lecture, le *job* de reconstruction), puis la reconstruction de l'adaptateur de recherche et
+   son câblage par `init`.
 
 ## Voir aussi
 
 - [Référence d'architecture](../ARCHITECTURE.fr.md)
+- [ADR-0008 : un store de modèle de lecture sur OpenSearch](../adr/0008-a-read-model-store-on-opensearch.fr.md)
 - README des *packages* : [kernel](../../packages/kernel/README.fr.md),
   [http](../../packages/http/README.fr.md), [di](../../packages/di/README.fr.md),
   [testing](../../packages/testing/README.fr.md), [knex](../../packages/knex/README.fr.md),
   [drizzle](../../packages/drizzle/README.fr.md), [prisma](../../packages/prisma/README.fr.md),
-  [typeorm](../../packages/typeorm/README.fr.md)
+  [typeorm](../../packages/typeorm/README.fr.md), [opensearch](../../packages/opensearch/README.fr.md)
 - [CQRS tel qu'il est utilisé ici](../concepts/cqrs.fr.md)
 - [Représentations, accès aux champs et formulaires](../concepts/representations-and-forms.fr.md)
 - [Cohérence à terme](../concepts/eventual-consistency.fr.md)

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7846147987534100 -->
+<!-- translation-of: README.md sha256:01e02b6021f4e782 -->
 
 <div align="center">
 
@@ -267,6 +267,7 @@ liste les skills et dit ce que chaque hôte exécute.
 | [`@ddd-ts-kit/audit`](packages/audit) | journal d'audit chaîné par hachage, en ajout seul |
 | [`@ddd-ts-kit/redis`](packages/redis) | cache, verrou, limiteur de débit et signal de relais sur Redis, Dragonfly ou Valkey |
 | [`@ddd-ts-kit/s3`](packages/s3) | stockage de fichiers sur AWS S3, MinIO, OVHcloud, Scaleway ou Cloudflare R2 |
+| [`@ddd-ts-kit/opensearch`](packages/opensearch) | le modèle de lecture d'une projection dans OpenSearch, chaque locataire dans un index ou derrière un alias filtré ; pas encore sur npm |
 | [`@ddd-ts-kit/http`](packages/http) | des routes déclarées une fois, montées sur Express, Fastify, Hono ou NestJS ; erreurs RFC 9457 ; OpenAPI 3.1 ; cache HTTP |
 | [`@ddd-ts-kit/validation`](packages/validation) | un seul port `Schema` au-dessus de zod, class-validator, TypeBox et Standard Schema |
 | [`@ddd-ts-kit/di`](packages/di) | des modules de contexte sur tsyringe, InversifyJS ou Awilix, les classes de port comme jetons, une application de test avec des fakes |
