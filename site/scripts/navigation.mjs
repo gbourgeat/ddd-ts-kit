@@ -62,7 +62,7 @@ export function sidebar(root) {
     group('guides', indexedItems(site, ['docs/README.md', 'Guides'], 'guides/')),
     group('tools', indexedItems(site, ['docs/README.md', 'Tools'], 'tools/')),
     group('reference', [
-      ...site.take(['architecture', 'config', 'adr/0001-lines-left-out-of-the-coverage-measure']).map(slug),
+      ...site.take(['architecture', 'config', ...under(site.routes, 'adr/')]).map(slug),
       group('proposals', indexedItems(site, ['docs/README.md', 'Proposals'], 'proposals/')),
     ]),
     group('packages', packageItems(site)),
