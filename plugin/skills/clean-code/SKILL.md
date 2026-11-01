@@ -134,7 +134,7 @@ has braces and its body on its own lines, never `if (a) return b;`: a branch is 
 glance, and a statement added to it later cannot silently fall outside it. `npm run format`
 (Biome, line width 120), then `npm run lint:fix`, settle layout: do not spend tokens on it. A
 blank line the lint asks for after the formatter wrapped a long line is expected, and the
-second command adds it. With `"formatOnWrite": true` in `ddd-ts-kit.config.json`, the guard runs the project's Biome on each file as it is written. Never Prettier nor a bare `npx biome`: another width, or an unrelated
+second command adds it. With `"formatOnWrite": true` in `ddd-ts-kit.config.json`, the guard runs the project's Biome on each file as it is written (not under the regulated profile). Never Prettier nor a bare `npx biome`: another width, or an unrelated
 package of that name.
 
 ## Types

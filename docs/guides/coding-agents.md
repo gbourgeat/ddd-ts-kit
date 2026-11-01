@@ -103,7 +103,7 @@ it refuses before the write a new import that breaks a dependency rule), and ref
 architecture errors remain in a tree with uncommitted changes (a clean tree is left to the
 pre-commit hook and the pipeline; a check that does not end in time, or that answers more than the
 64 MiB the guard reads, lets the session finish and says so;
-a session start past ten seconds of CLI calls skips the ones left and says it was cut short). With `"formatOnWrite": true` in the config (written by `init` for a new project), it first runs the Biome
+a session start past ten seconds of CLI calls skips the ones left and says it was cut short). With `"formatOnWrite": true` in the config (written by `init` for a new project), and outside the regulated profile, it first runs the Biome
 the project installed on the written file (the bin of its `@biomejs/biome` package, `format --write`, one file,
 never another formatter), so that the layout is settled at the write and the lint findings
 that follow a wrapped line come back in the same output; a run that fails changes nothing. It reminds, without blocking, when the uncommitted changes exceed
@@ -230,7 +230,7 @@ program (a bare `npx` or `pnpm`, `git checkout`/`stash`), or a redirection to a 
 which only the CLI and that agent make. The judge itself reads git without adding or committing,
 and runs the kit only to read (`acceptance` without `--lock`, `list`, `describe`, `explain`,
 `status`, `story`, `stories`, `story-check`). No hook
-runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository, and no config nor CLI in a folder another user may write, the shared temp directory above all), and of what code it cannot read writes, it compares only what is noted above: other git-ignored files and the places outside those checkouts are not enumerated, and the state it keeps between two calls lies in the project, within reach of code that aims at the guard; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
+runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work, which makes it a guide, not a security boundary: it runs the project's own `ddd-ts-kit` CLI and Biome from `node_modules` (the bin each package names, with Node, never one installed above the top of the repository, and no config nor CLI in a folder another user may write, the shared temp directory above all; under [the regulated profile](agent-sandbox.md#the-regulated-profile) it runs neither, so no check at the write nor at the stop), and of what code it cannot read writes, it compares only what is noted above: other git-ignored files and the places outside those checkouts are not enumerated, and the state it keeps between two calls lies in the project, within reach of code that aims at the guard; to isolate an agent, see [Sandboxing coding agents](agent-sandbox.md). Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
 Each agent gets what its host runs. The skills work in all three. The six agents are sub-agents

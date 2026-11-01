@@ -101,9 +101,30 @@ The managed settings live outside the repository (`managed-settings.json`, deplo
 platform team): `init` prints them as a block to paste, with the version left for the team to
 set. Pair the profile with level 1 for the load of the machine.
 
-One limit stays: the hooks run outside the sandbox and the guard of the plugin runs what the
-`node_modules` of the project holds, so a dependency runs there with the rights of the developer,
-and a project that cannot trust its dependencies does its installs by hand or reviews them.
+Under this profile the guard of the plugin runs no program the project holds, at any hook: neither
+the `ddd-ts-kit` nor the Biome of `node_modules`. Hooks run outside the sandbox and a sandboxed
+command may write the project, so a bin started from there would have the rights of the developer.
+The guard knows the profile from `agents.profile`, at the root of the project and in every folder
+above it, and from `.claude/settings.json` at the same levels, when its `sandbox` block has
+`enabled: true` and `allowUnsandboxedCommands: false` (`doctor` reports a project that lacks one).
+The sandbox of Claude Code refuses its commands a write to that file in their working directory and
+above ([Protected paths](https://code.claude.com/docs/en/sandboxing), read on 2026-11-01), so a
+command that rewrites `ddd-ts-kit.config.json`, or leaves another one lower down, does not bring
+those runs back. No `denyWrite` line holds the config itself: `generate context`, `sdk` and the
+presets write it from inside the sandbox.
+
+What it costs: no check at the write and none at the stop. `check-file` after a write, with
+`formatOnWrite` and `dependenciesBeforeWrite`, does not run; `check` does not run when a turn ends,
+so a turn is no longer refused for architecture errors; the build gate and the next step of a story,
+the map of the contexts and the workers to resume are not answered. The session start says so in
+one line. The rules the guard reads itself keep running (a generated file, the scope of a worker,
+the lock of a fix, the size of a commit), an agent runs `npx ddd-ts-kit check` in the sandbox, and
+the pipeline and the commit gate hold those checks.
+
+Two limits stay. On Codex and Copilot no such file exists, so `agents.profile` is the only sign, and
+a command they run can rewrite it. And a person still runs what `node_modules` holds, with the
+rights of the developer, at a commit or a test outside the sandbox: a project that cannot trust what
+a session left there installs again from its lockfile first.
 
 The two hooks are small Node scripts `init` writes once under `.claude/hooks/` (no `jq`, nothing
 to install), registered under `hooks.PreToolUse` of `.claude/settings.json`, owned by the team

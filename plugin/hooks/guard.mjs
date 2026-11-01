@@ -25,6 +25,8 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'nod
 import { linkedFolder, removeKitFile, writeKitFile } from './kit-files.mjs';
 
 const CONFIG = 'ddd-ts-kit.config.json';
+// The settings of Claude Code that turn its sandbox on, in a project.
+const CLAUDE_SETTINGS = '.claude/settings.json';
 // The most of the config the guard reads: a larger one is not read, and the guard judges nothing there.
 const CONFIG_BYTES = 256 * 1024;
 // The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
@@ -81,6 +83,9 @@ const FORMAT_TIMEOUT = 5000;
 const TIME_SCALE = timeScale(process.env.DDD_TS_KIT_GUARD_TIME_SCALE);
 // What a session start gives the CLI in all, of the 15 s of its hook: past it, the calls left are skipped.
 const BRIEFING_BUDGET = 10_000;
+// Said at session start under the regulated profile, in place of what the CLI would have answered.
+const REGULATED_NOTICE =
+  'Regulated profile: the guard runs no program of this project, neither its CLI nor its Biome, at any hook: the pipeline and the commit gate hold those checks, and `npx ddd-ts-kit check` runs them here.';
 const BRIEFING_CUT =
   'Briefing cut short: the CLI did not answer in time; `npx ddd-ts-kit status` and `npx ddd-ts-kit list` say the rest.';
 // The written files one call of post-write checks, of the 15 s of its hook: a patch of Codex can hold many.
@@ -1141,11 +1146,13 @@ function postWrite(input) {
   const all = writesOf(input).filter(({ deleted }) => !deleted);
   // Biome lays out every written file, which is quick; the check, which is not, reads the first ones.
   formatWrites(all);
-  const writes = all.slice(0, POST_WRITE_FILES);
+  // Under the regulated profile no file is checked here, so none is one left out.
+  const checkable = all.filter(({ file }) => !findProject(dirname(file))?.regulated);
+  const writes = checkable.slice(0, POST_WRITE_FILES);
   const errors = writes.filter(({ file }) => isChecked(file)).flatMap(({ file }) => checkWritten(file));
   const unchecked =
-    all.length > writes.length
-      ? `ddd-ts-kit: ${all.length - writes.length} more written file(s) not checked here: run \`npx ddd-ts-kit check\``
+    checkable.length > writes.length
+      ? `ddd-ts-kit: ${checkable.length - writes.length} more written file(s) not checked here: run \`npx ddd-ts-kit check\``
       : undefined;
   if (errors.length === 0) {
     return unchecked ? emit({ systemMessage: unchecked }) : undefined;
@@ -1555,9 +1562,14 @@ function readProject(root) {
   const { config, tooLarge } = readConfig(join(root, CONFIG));
   const text = (key, otherwise) =>
     Object.hasOwn(config, key) && typeof config[key] === 'string' && config[key] !== '' ? config[key] : otherwise;
+  const installed = installedCli(root);
+  const regulated = isRegulated(root);
   return {
     root,
-    cli: installedCli(root),
+    // Under the regulated profile no program of the project runs: of its CLI, the version its manifest states.
+    cli: regulated ? undefined : installed,
+    cliVersion: installed?.version,
+    regulated,
     sourceRoot: text('sourceRoot', 'src'),
     contextsDir: text('contextsDir', 'src/contexts'),
     sharedKernelDir: text('sharedKernelDir', `${text('sourceRoot', 'src')}/shared-kernel`),
@@ -1575,10 +1587,34 @@ function readProject(root) {
     // of the trunk; advised (the key absent, a project started before): only said.
     worktrees: config.worktrees === 'required' ? 'required' : 'advised',
     // The project's Biome runs on each written file before the check; absent, off.
-    formatOnWrite: config.formatOnWrite === true,
+    formatOnWrite: config.formatOnWrite === true && !regulated,
     // On trial: the dependency rules judge the text about to be written, before the write; absent, after it.
     dependenciesBeforeWrite: config.dependenciesBeforeWrite === true,
   };
+}
+
+// Hooks run outside the sandbox and a sandboxed command may write the project, node_modules and the config
+// included, so the regulated profile is read where such a command cannot lift it: at the root and in every
+// folder above it, so that a config planted lower says nothing, and in the settings that turn the sandbox on,
+// which the sandbox of Claude Code denies to its commands in their working directory and above. A folder
+// another user writes says nothing either way.
+function isRegulated(root) {
+  return foldersUp(root).filter(isOwnFolder).some(statesRegulatedProfile);
+}
+
+function foldersUp(directory) {
+  const above = dirname(directory);
+  return above === directory ? [directory] : [directory, ...foldersUp(above)];
+}
+
+// The config of the folder names the profile, or its settings hold what the profile writes for this: the
+// sandbox on, with no command let out of it. A sandbox a command can leave is no boundary to keep.
+function statesRegulatedProfile(folder) {
+  const sandbox = readJson(join(folder, CLAUDE_SETTINGS))?.sandbox;
+  return (
+    readConfig(join(folder, CONFIG)).config.agents?.profile === 'regulated' ||
+    (sandbox?.enabled === true && sandbox.allowUnsandboxedCommands === false)
+  );
 }
 
 // The config as an object of JSON, never read above CONFIG_BYTES; one that cannot be read or parsed
@@ -1683,7 +1719,7 @@ function projectBriefing(project, input) {
   if (project.cli) {
     lines.push('Contexts:', contextMap(project));
   } else {
-    lines.push(installAdvice(project));
+    lines.push(project.regulated ? REGULATED_NOTICE : installAdvice(project));
   }
   if (briefingCut) {
     lines.push(BRIEFING_CUT);
@@ -1753,7 +1789,7 @@ function installAdvice(project) {
 // The skills describe KIT_VERSION while the checks run the CLI the project installed, and the
 // plugin is updated apart from the lockfile. A gap is said at session start, never blocked.
 function versionGap(project) {
-  const installed = project.cli?.version;
+  const installed = project.cliVersion;
   if (typeof installed !== 'string' || compatible(installed, KIT_VERSION)) {
     return [];
   }
@@ -4290,11 +4326,12 @@ function worktreeOutside(project, input) {
 }
 
 // The files the guard itself runs, in the worktree and the session's checkout: the manifest and the
-// bin of the kit's CLI and of Biome, each by its time and size ('absent' when missing).
+// bin of the kit's CLI and of Biome, each by its time and size ('absent' when missing). Under the
+// regulated profile it runs none.
 function packageStates(project, session) {
   const states = {};
   for (const root of [project.root, session?.root].filter(Boolean)) {
-    for (const [name, command] of GUARD_RUNS) {
+    for (const [name, command] of project.regulated ? [] : GUARD_RUNS) {
       const home = join(root, 'node_modules', name);
       for (const file of [join(home, 'package.json'), installedBin(home, name, command)?.bin].filter(Boolean)) {
         const stat = statSync(file, { throwIfNoEntry: false });

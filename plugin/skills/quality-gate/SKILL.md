@@ -42,7 +42,7 @@ The size and message of the commit are skill `ddd-ts-kit:commit-discipline`.
 
 | When | Run | Cost |
 |---|---|---|
-| after each write | nothing: the guard runs `check-file` and returns the violations | none |
+| after each write | nothing: the guard runs `check-file` and returns the violations (under the regulated profile it runs no program of the project: `npx ddd-ts-kit check` here, the pipeline and the commit gate hold it) | none |
 | while iterating | `npx ddd-ts-kit verify-slice <context> --since <base>`: regenerate, the rules on the changed files, the specs of the context, the files near the size limit and the paths of the slice to stage (the pages of `docs/behaviour/` and the schema of the ORM the generator changed for the context included), in one run; a path it leaves out is never staged with the slice | seconds |
 | before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context> --brief` (nothing left but `TODO(review)`), `npx ddd-ts-kit check --commit-size` | under a minute |
 | to bring the trunk into the branch | `npx ddd-ts-kit merge-trunk`: one merge commit from the branch's own diff, derived files settled, `verify-merge` on the result before its commit; on a stop, resolve each hunk keeping both sides, `git add`, `merge-trunk --continue` ("Bring the trunk in" below) | seconds |

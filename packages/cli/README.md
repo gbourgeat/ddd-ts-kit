@@ -666,7 +666,9 @@ under pnpm), a bump of one of them asking the same again, and the block of manag
 cannot set (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
 `permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` with the marketplace of
 the kit, `requiredMinimumVersion`), for the platform team to paste, and writes the two hooks of
-the profile under `.claude/hooks/` ([Sandboxing coding agents](../../docs/guides/agent-sandbox.md#the-regulated-profile)).
+the profile under `.claude/hooks/`. Under the profile the guard of the plugin runs no program of
+the project, so no check at the write nor at the stop: the pipeline and the commit gate hold them
+([Sandboxing coding agents](../../docs/guides/agent-sandbox.md#the-regulated-profile)).
 
 An existing `.claude/settings.json` is never overwritten: the missing permissions are appended
 to its lists, everything else is kept, and the notes of the command list what was added. The

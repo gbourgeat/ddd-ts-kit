@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:8330bc5661c652b1 -->
+<!-- translation-of: agent-sandbox.md sha256:49b32a6a3b33510d -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -104,10 +104,33 @@ Les réglages gérés vivent hors du dépôt (`managed-settings.json`, déployé
 plateforme) : `init` les affiche comme un bloc à coller, la version laissée à l'équipe. Associez
 le profil au niveau 1 pour la charge de la machine.
 
-Une limite demeure : les *hooks* tournent en dehors du bac à sable et la garde du plugin exécute ce
-que contient le `node_modules` du projet, si bien qu'une dépendance y tourne avec les droits du
-développeur, et un projet qui ne peut pas se fier à ses dépendances fait ses installations à la main
-ou les relit.
+Sous ce profil, la garde du *plugin* ne lance aucun programme que le projet contient, à aucun
+*hook* : ni le `ddd-ts-kit` ni le Biome de `node_modules`. Les *hooks* tournent en dehors du bac à
+sable et une commande dans le bac à sable peut écrire le projet, si bien qu'un *bin* lancé de là
+aurait les droits du développeur. La garde connaît le profil par `agents.profile`, à la racine du
+projet et dans chaque dossier au-dessus, et par `.claude/settings.json` aux mêmes niveaux, quand son
+bloc `sandbox` porte `enabled: true` et `allowUnsandboxedCommands: false` (`doctor` signale un
+projet à qui l'un manque). Le bac à sable de Claude Code refuse à ses commandes d'écrire ce fichier
+dans leur répertoire de travail et au-dessus
+([*Protected paths*](https://code.claude.com/docs/en/sandboxing), lu le 2026-11-01) : une commande
+qui réécrit `ddd-ts-kit.config.json`, ou en laisse un autre plus bas, ne ramène donc pas ces
+exécutions. Aucune ligne `denyWrite` ne protège la configuration elle-même : `generate context`,
+`sdk` et les *presets* l'écrivent depuis le bac à sable.
+
+Ce que cela coûte : aucune vérification à l'écriture et aucune à l'arrêt. `check-file` après une
+écriture, avec `formatOnWrite` et `dependenciesBeforeWrite`, ne tourne pas ; `check` ne tourne pas à
+la fin d'un tour, qui n'est donc plus refusée pour des erreurs d'architecture ; la barrière de
+construction et l'étape suivante d'une *story*, la carte des contextes et les *workers* à reprendre
+ne reçoivent pas de réponse. Le démarrage de session le dit en une ligne. Les règles que la garde
+lit elle-même continuent (un fichier généré, le périmètre d'un *worker*, le verrou d'un correctif,
+la taille d'un *commit*), un agent lance `npx ddd-ts-kit check` dans le bac à sable, et le *pipeline*
+et la barrière de *commit* tiennent ces vérifications.
+
+Deux limites demeurent. Sur Codex et Copilot, ce fichier n'existe pas : `agents.profile` est le seul
+signe, et une commande qu'ils lancent peut le réécrire. Et une personne lance toujours ce que
+contient `node_modules`, avec les droits du développeur, à un *commit* ou à un test hors du bac à
+sable : un projet qui ne peut pas se fier à ce qu'une session y a laissé réinstalle d'abord depuis
+son fichier de verrouillage.
 
 Les deux *hooks* sont de petits scripts Node qu'`init` écrit une fois sous `.claude/hooks/` (pas
 de `jq`, rien à installer), enregistrés sous `hooks.PreToolUse` de `.claude/settings.json`,
