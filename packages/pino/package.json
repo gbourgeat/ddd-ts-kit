@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/pino",
-  "version": "0.108.1",
+  "version": "0.109.0",
   "description": "Adapter of the kernel Logger port on pino, with trace and execution correlation on every line.",
   "keywords": [
     "ddd",
@@ -40,10 +40,10 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.108.1"
+    "@ddd-ts-kit/kernel": "0.109.0"
   },
   "devDependencies": {
-    "@ddd-ts-kit/testing": "0.108.1",
+    "@ddd-ts-kit/testing": "0.109.0",
     "pino": "^10.4.0",
     "pino-pretty": "^13.2.0"
   },
