@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { fetchTransport, type OpenSearchTransport } from '../../src';
-import { OpenSearchServer } from './fake/open-search-server';
+import { OpenSearchServer } from '../../src/testing/open-search-server';
 
 const CREDENTIALS = {
   username: process.env['DDD_TS_KIT_TEST_OPENSEARCH_USERNAME'] ?? 'ddd-ts-kit',

@@ -1,11 +1,14 @@
-import { compareAs, type FakeProperty, typeAt, valueAt } from './fake-values';
+import { bodiesOf } from './bodies-of';
+import { bodyOf } from './body-of';
+import { compareAs } from './compare-as';
+import type { FakeProperty } from './properties-of';
+import { typeAt } from './type-at';
+import { UnknownQueryError } from './unknown-query-error';
+import { valueAt } from './value-at';
 
 type Source = Readonly<Record<string, unknown>>;
 type Clause = Readonly<Record<string, unknown>>;
 type Properties = Readonly<Record<string, FakeProperty>>;
-
-/** A query of the DSL the fake does not know: the node answers it 400. */
-export class UnknownQueryError extends Error {}
 
 /**
  * Whether a document matches a query of the subset of the DSL the store writes: `bool`, `term`,
@@ -14,7 +17,7 @@ export class UnknownQueryError extends Error {}
  */
 export function matches(query: Clause, source: Source, properties: Properties): boolean {
   const [kind, body] = Object.entries(query)[0] ?? ['match_all', {}];
-  const clause = (typeof body === 'object' && body !== null ? body : {}) as Clause;
+  const clause = bodyOf(body);
 
   if (kind === 'bool') {
     return holdsBool(clause, source, properties);
@@ -37,11 +40,7 @@ export function matches(query: Clause, source: Source, properties: Properties): 
 }
 
 function holdsBool(clause: Clause, source: Source, properties: Properties): boolean {
-  const list = (name: string): Clause[] => {
-    const value = clause[name];
-
-    return (Array.isArray(value) ? value : value === undefined ? [] : [value]) as Clause[];
-  };
+  const list = (name: string): Clause[] => bodiesOf(clause[name]);
 
   const all = [...list('filter'), ...list('must')].every((inner) => matches(inner, source, properties));
   const none = list('must_not').every((inner) => !matches(inner, source, properties));
@@ -54,7 +53,7 @@ function holdsBool(clause: Clause, source: Source, properties: Properties): bool
 
 function compares(kind: string, operand: unknown, value: unknown, type: string): boolean {
   const order = (other: unknown): number => compareAs(type, value, other);
-  const written = (typeof operand === 'object' && operand !== null ? operand : {}) as Clause;
+  const written = bodyOf(operand);
 
   switch (kind) {
     case 'term':

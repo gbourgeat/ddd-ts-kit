@@ -2,7 +2,7 @@ import { createServer } from 'node:net';
 import { defineCriteria } from '@ddd-ts-kit/kernel';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { OpenSearchReadModelStore, OpenSearchRequestError, OpenSearchUnavailableError, fetchTransport } from '../src';
-import { OpenSearchServer } from './support/fake/open-search-server';
+import { OpenSearchServer } from '../src/testing/open-search-server';
 
 const CREDENTIALS = { username: 'kit', password: 'secret' };
 const definition = defineCriteria<{ readonly id: string }>({ fields: { id: { type: 'string' } }, tieBreaker: 'id' });

@@ -1,13 +1,15 @@
-import type { OpenSearchRequest, OpenSearchResponse, OpenSearchTransport } from '../../../src';
-import { FakeIndex, FakeRefusal } from './fake-index';
-import { UnknownQueryError } from './fake-query';
-import { searched } from './fake-search';
-import type { FakeProperty } from './fake-values';
-
-type Body = Readonly<Record<string, unknown>>;
+import type { OpenSearchRequest, OpenSearchResponse, OpenSearchTransport } from '../transport/open-search-transport';
+import { bodiesOf } from './bodies-of';
+import { bodyOf, type Body } from './body-of';
+import { FakeIndex } from './fake-index';
+import { FakeRefusal } from './fake-refusal';
+import { propertiesOf } from './properties-of';
+import { searched } from './searched';
+import { textAt } from './text-at';
+import { UnknownQueryError } from './unknown-query-error';
 
 /** An alias on one index: its filter and routing, as `POST /_aliases` gave them. */
-export interface FakeAlias {
+interface FakeAlias {
   readonly filter?: Body;
   readonly routing?: string;
 }
@@ -54,7 +56,7 @@ export class InMemoryOpenSearch implements OpenSearchTransport {
   }
 
   private routed(request: OpenSearchRequest, [target = '', action, id]: readonly string[]): OpenSearchResponse {
-    const body = (request.body ?? {}) as Body;
+    const body = bodyOf(request.body);
     const query = request.query ?? {};
 
     if (target === '_aliases' && request.method === 'POST') {
@@ -66,7 +68,7 @@ export class InMemoryOpenSearch implements OpenSearchTransport {
     }
 
     if (action === '_mapping') {
-      this.index(target).extend(propertiesOf(body));
+      this.index(target).extend(propertiesOf(body['properties']));
 
       return { status: 200, body: { acknowledged: true } };
     }
@@ -105,7 +107,7 @@ export class InMemoryOpenSearch implements OpenSearchTransport {
       throw new FakeRefusal(400, 'resource_already_exists_exception', `index [${name}] already exists`);
     }
 
-    this.indices.set(name, new FakeIndex(propertiesOf((body['mappings'] ?? {}) as Body)));
+    this.indices.set(name, new FakeIndex(propertiesOf(bodyOf(body['mappings'])['properties'])));
 
     return { status: 200, body: { acknowledged: true, index: name } };
   }
@@ -123,10 +125,10 @@ export class InMemoryOpenSearch implements OpenSearchTransport {
   }
 
   private changeAliases(body: Body): OpenSearchResponse {
-    const actions = (Array.isArray(body['actions']) ? body['actions'] : []) as Body[];
-
-    for (const action of actions) {
-      const { index = '', alias = '', filter, routing } = (action['add'] ?? {}) as Record<string, string | undefined>;
+    for (const action of bodiesOf(body['actions'])) {
+      const add = bodyOf(action['add']);
+      const [index, alias] = [textAt(add, 'index'), textAt(add, 'alias')];
+      const { filter, routing } = add;
 
       this.index(index);
 
@@ -141,8 +143,8 @@ export class InMemoryOpenSearch implements OpenSearchTransport {
       const indices = this.aliases.get(alias) ?? new Map<string, FakeAlias>();
 
       indices.set(index, {
-        ...(filter === undefined ? {} : { filter: filter as unknown as Body }),
-        ...(routing === undefined ? {} : { routing }),
+        ...(filter === undefined ? {} : { filter: bodyOf(filter) }),
+        ...(typeof routing === 'string' ? { routing } : {}),
       });
 
       this.aliases.set(alias, indices);
@@ -258,10 +260,6 @@ export class InMemoryOpenSearch implements OpenSearchTransport {
 
     return index;
   }
-}
-
-function propertiesOf(mapping: Body): Readonly<Record<string, FakeProperty>> {
-  return (mapping['properties'] ?? {}) as Readonly<Record<string, FakeProperty>>;
 }
 
 function notFound(name: string): FakeRefusal {
