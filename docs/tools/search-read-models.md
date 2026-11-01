@@ -88,10 +88,15 @@ export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> impl
 - The specs of a context bind the port to `InMemoryReadModelStore` of the kernel, built with the
   same criteria: a fake, never a mock.
 - The adapter is held to `readModelRowsContract` and `criteriaContract` of
-  `@ddd-ts-kit/testing/contracts`, the suites the package passes under each strategy. They need a
-  node: run them in an integration spec that reads the node from `OPENSEARCH_URL` and is skipped
-  without it, and give the job of the pipeline that runs it an OpenSearch service. The pipeline
-  `init` writes starts none.
+  `@ddd-ts-kit/testing/contracts`, the suites the package passes under each strategy. In a unit
+  spec they run on `InMemoryOpenSearch` of `@ddd-ts-kit/opensearch/testing`, the OpenSearch in
+  memory the package itself runs on, handed to the store as its transport; `OpenSearchServer`
+  serves it on a local port for a spec that goes through `fetchTransport`
+  ([the README of the package](../../packages/opensearch/README.md#in-the-specs-of-a-project)
+  shows both). A real node proves what the fake answers differently: run the same suites in an
+  integration spec that reads the node from `OPENSEARCH_URL` and is skipped without it, and give
+  the job of the pipeline that runs it an OpenSearch service. The pipeline `init` writes starts
+  none.
 - An end-to-end test that goes through a store needs no node either: the kit recommends binding the
   port to the in-memory store in the composition of the end-to-end tests, in the
   `ddd-ts-kit:e2e-fakes` region of `test/e2e/support/start-application.ts`, as for any outside

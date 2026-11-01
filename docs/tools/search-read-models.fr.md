@@ -1,5 +1,5 @@
 [English](search-read-models.md) · **Français**
-<!-- translation-of: search-read-models.md sha256:cd5a168b9adf7eb2 -->
+<!-- translation-of: search-read-models.md sha256:5dd948550f4cfef8 -->
 
 # Modèles de lecture de recherche sur OpenSearch
 
@@ -93,10 +93,14 @@ export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> impl
 - Les specs d'un contexte lient le port à `InMemoryReadModelStore` du noyau, construit avec les
   mêmes critères : un faux, jamais un mock.
 - L'adaptateur est tenu à `readModelRowsContract` et `criteriaContract` de
-  `@ddd-ts-kit/testing/contracts`, les suites que le paquet passe sous chaque stratégie. Elles
-  demandent un nœud : lancez-les dans une spec d'intégration qui lit le nœud dans `OPENSEARCH_URL`
-  et se saute sans lui, et donnez au job du pipeline qui la lance un service OpenSearch. Le pipeline
-  qu'écrit `init` n'en démarre aucun.
+  `@ddd-ts-kit/testing/contracts`, les suites que le paquet passe sous chaque stratégie. Dans une
+  spec unitaire elles tournent sur `InMemoryOpenSearch` de `@ddd-ts-kit/opensearch/testing`,
+  l'OpenSearch en mémoire sur lequel tourne le paquet lui-même, donné au store comme transport ;
+  `OpenSearchServer` le sert sur un port local pour une spec qui passe par `fetchTransport`
+  ([le README du paquet](../../packages/opensearch/README.fr.md#dans-les-specs-dun-projet) montre
+  les deux). Un vrai nœud prouve ce que le faux répond autrement : lancez les mêmes suites dans une
+  spec d'intégration qui lit le nœud dans `OPENSEARCH_URL` et se saute sans lui, et donnez au job
+  du pipeline qui la lance un service OpenSearch. Le pipeline qu'écrit `init` n'en démarre aucun.
 - Un test de bout en bout qui passe par un store n'a pas besoin de nœud non plus : le kit
   recommande de lier le port au store en mémoire dans la composition des tests de bout en bout,
   dans la région `ddd-ts-kit:e2e-fakes` de `test/e2e/support/start-application.ts`, comme pour tout
