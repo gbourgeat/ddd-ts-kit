@@ -418,6 +418,54 @@ test('VS Code: with no matcher the write hooks run on every tool, and a read sta
   }
 });
 
+test('VS Code: a tool that only reads is no write, whatever field names a file, and a name it does not list is judged', () => {
+  const root = project();
+  const agent = worker(root);
+  const outside = join(root, 'src/contexts/billing/x.ts');
+  const named = { path: outside, file_path: outside };
+  for (const [name, tool] of Object.entries(readersOfVsCode(root, outside))) {
+    const call = { ...vsCode(root, name, { ...named, ...tool }), ...agent };
+    assert.equal(run('pre-write', call).output, undefined, name);
+    const after = run('post-write', call);
+    assert.equal(after.status, 0, name);
+    assert.equal(after.stderr, '', name);
+  }
+  for (const [name, tool] of Object.entries({
+    a_tool_of_a_later_release: { path: outside },
+    memory: { command: 'create', path: outside, file_text: 'x' },
+  })) {
+    const judged = run('pre-write', { ...vsCode(root, name, tool), ...agent });
+    assert.match(reason(judged), /another bounded context/, name);
+  }
+});
+
+// Each reader of VS Code with the fields its chat gives it (copilot-chat 0.72).
+function readersOfVsCode(root, outside) {
+  return {
+    read_file: { filePath: outside, startLine: 1, endLine: 2 },
+    view_image: { filePath: outside },
+    list_dir: { path: join(root, 'src/contexts/billing') },
+    file_search: { query: 'src/**/*.ts', maxResults: 5 },
+    grep_search: { query: 'Order', isRegexp: false, includePattern: 'src/**' },
+    semantic_search: { query: 'where orders are paid' },
+    search_workspace_symbols: { symbolName: 'Order' },
+    get_errors: { filePaths: [outside] },
+    get_changed_files: { repositoryPath: root, sourceControlState: ['unstaged'] },
+    read_project_structure: {},
+    copilot_getNotebookSummary: { filePath: outside },
+    read_notebook_cell_output: { filePath: outside, cellId: 'c' },
+    test_search: { filePaths: [outside] },
+    fetch_webpage: { urls: ['https://example.test'], query: 'x' },
+    github_repo: { repo: 'owner/name', query: 'x' },
+    github_text_search: { scope: 'owner/name', query: 'x' },
+    get_vscode_api: { query: 'x' },
+    search_subagent: { query: 'x', description: 'x', details: 'x' },
+    explore_subagent: { query: 'x', description: 'x', details: 'x' },
+    memory: { command: 'view', path: '/memories/notes.md' },
+    resolve_memory_file_uri: { path: '/memories/session/plan.md' },
+  };
+}
+
 test('malformed input never blocks', () => {
   const result = spawnSync('node', [guard, 'pre-write'], { input: 'not json', encoding: 'utf8' });
   assert.equal(result.status, 0);

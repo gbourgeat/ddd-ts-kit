@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:49b32a6a3b33510d -->
+<!-- translation-of: agent-sandbox.md sha256:5afbd6fc0fd539fd -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -125,6 +125,13 @@ ne reçoivent pas de réponse. Le démarrage de session le dit en une ligne. Les
 lit elle-même continuent (un fichier généré, le périmètre d'un *worker*, le verrou d'un correctif,
 la taille d'un *commit*), un agent lance `npx ddd-ts-kit check` dans le bac à sable, et le *pipeline*
 et la barrière de *commit* tiennent ces vérifications.
+
+Git ne tourne que dans un dépôt sous ce profil : celui de la racine de la session, le dossier où la
+session a démarré, dont le bac à sable protège `.git/config` et `.git/hooks`. Un dépôt imbriqué, un
+sous-module et un *worktree* d'un autre dépôt ne sont pas lus, et le début de session comme l'arrêt
+le disent d'un projet qui s'y trouve ; `git status` et `git diff` laissent les sous-modules de côté.
+Git n'a aucune option qui éteigne tous les pilotes que nomme une configuration, d'où cette règle
+([ADR-0006](../adr/0006-the-regulated-guard-runs-git-in-its-root-only.fr.md)).
 
 Deux limites demeurent. Sur Codex et Copilot, ce fichier n'existe pas : `agents.profile` est le seul
 signe, et une commande qu'ils lancent peut le réécrire. Et une personne lance toujours ce que

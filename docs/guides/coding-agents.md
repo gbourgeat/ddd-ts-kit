@@ -237,8 +237,10 @@ Each agent gets what its host runs. The skills work in all three. The six agents
 of Claude Code; Codex loads no agent from a plugin, and one session per worktree takes the place
 of `context-builder`. The hook runs wherever the host runs the hooks of a plugin: it reads the
 patches of Codex, the tool calls of Copilot and the editor tools of VS Code as well as those of
-Claude Code. VS Code keeps no matcher, so there each hook of an event runs on every tool, and a
-read stays a read. Codex cannot put
+Claude Code. VS Code keeps no matcher, so there each hook of an event runs on every tool: a tool
+the guard names a reader (`read_file`, `list_dir`, the searches, `memory` when it views) writes
+nothing, and a tool it does not name that gives a `path` is judged as a write
+([ADR-0007](../adr/0007-the-guard-names-the-readers-of-vs-code.md)). Codex cannot put
 a question to the user, so what Claude Code asks the project owner is said to the user there,
 and left to the checks of the pipeline.
 
