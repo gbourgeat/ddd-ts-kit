@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/opensearch",
-  "version": "0.108.1",
+  "version": "0.109.0",
   "description": "Adapter of the kernel ReadModelStore port on OpenSearch, with no client library: criteria translated to the query DSL, writes ordered by the event stamp, tenants kept apart by an index each or by filtered aliases on one index.",
   "keywords": [
     "ddd",
@@ -46,10 +46,10 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.108.1"
+    "@ddd-ts-kit/kernel": "0.109.0"
   },
   "peerDependencies": {
-    "@ddd-ts-kit/testing": "0.108.1"
+    "@ddd-ts-kit/testing": "0.109.0"
   },
   "peerDependenciesMeta": {
     "@ddd-ts-kit/testing": {
@@ -57,6 +57,6 @@
     }
   },
   "devDependencies": {
-    "@ddd-ts-kit/testing": "0.108.1"
+    "@ddd-ts-kit/testing": "0.109.0"
   }
 }
