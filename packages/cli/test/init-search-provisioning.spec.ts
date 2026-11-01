@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { OpenSearchReadModelStore, type OpenSearchReadModelOptions } from '../../opensearch/src';
-import { OpenSearchServer } from '../../opensearch/test/support/fake/open-search-server';
+import { OpenSearchReadModelStore, type OpenSearchReadModelOptions } from '@ddd-ts-kit/opensearch';
+import { OpenSearchServer } from '@ddd-ts-kit/opensearch/testing';
 import {
   ListedTenants,
   asTenant,

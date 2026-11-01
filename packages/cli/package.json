@@ -59,6 +59,7 @@
     "@ddd-ts-kit/auth": "^0.108.1",
     "@ddd-ts-kit/events": "^0.108.1",
     "@ddd-ts-kit/kernel": "^0.108.1",
+    "@ddd-ts-kit/opensearch": "^0.108.1",
     "@types/pg": "^8.23.1",
     "pg": "^8.23.1"
   }
