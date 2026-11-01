@@ -100,6 +100,10 @@ export interface AppConfig {
   /** Where the content of files lives (`files/open-files.ts`), never in the database. */
   readonly files: FilesConfig;
   {{/if}}
+  {{#if search.opensearch}}
+  /** Where the read models of OpenSearch live (`search/open-search.ts`): a copy for search, never the source of truth. */
+  readonly search: SearchConfig;
+  {{/if}}
 }
 
 /** `LOG_LEVEL`, `LOG_FORMAT` and `LOG_SCRUB_MESSAGES`. */
@@ -135,6 +139,15 @@ interface KeycloakConfig {
   readonly realm: string;
   readonly audience: string;
   readonly clientId?: string;
+}
+{{/if}}
+{{#if search.opensearch}}
+
+/** `OPENSEARCH_URL`, and `OPENSEARCH_USERNAME` with `OPENSEARCH_PASSWORD` when the security plugin asks for a user (both or neither). */
+interface SearchConfig {
+  readonly node: string;
+  readonly username?: string;
+  readonly password?: string;
 }
 {{/if}}
 {{#if authn.jwks}}

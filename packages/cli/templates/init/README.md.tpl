@@ -233,6 +233,25 @@ upload; see https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/concepts/file
 | `FILES_SIGNING_SECRET` | signs the links, 32 characters at least: required in production, even before the first file arrives; drawn at each start elsewhere |
 {{/if}}
 {{/if}}
+{{#if search.opensearch}}
+
+## Search
+
+A read model that serves lists with filters, sorts and pages may live in OpenSearch, OpenSearch
+in `docker-compose.yml` while developing: a copy for reading, written by its projection from the
+events and rebuilt from them, never the source of truth nor what an invariant or a right is decided
+on. Its port lives in `application/ports/`, its adapter in `infrastructure/` extends
+`OpenSearchReadModelStore` of `@ddd-ts-kit/opensearch` and takes `SearchIndexes` of
+`{{config.platformDir}}/search/search-indexes.ts`, which sets the node and the tenancy; the
+platform provisions the index of each store built so{{#if tenancy.any}}, for every tenant of `TENANTS`{{/if}}, before its first request. A project
+with no such store calls nothing at start. The specs of a context bind the port to the in-memory
+store of the kernel; the tests of this project are given no node.
+
+| Variable | Says |
+|---|---|
+| `OPENSEARCH_URL` | the node, or the load balancer in front of the cluster: required |
+| `OPENSEARCH_USERNAME`, `OPENSEARCH_PASSWORD` | the user of the security plugin, both or neither: left out locally, where the plugin is off |
+{{/if}}
 {{#if errors.sentry}}
 
 ## Error reporting

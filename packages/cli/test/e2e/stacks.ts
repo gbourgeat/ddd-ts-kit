@@ -192,6 +192,18 @@ export const EVERY_STACK: readonly StackFlags[] = [
     cache: 'redis',
     queue: 'redis',
   },
+  // The read models of OpenSearch on each family of wiring: the fullest stack with shared tables, by hand, under Nest.
+  { ...FIRST_CLASS, tenancy: 'shared-table', search: 'opensearch' },
+  { ...ABAC_ON_KNEX_BY_HAND, tenancy: 'shared-table', search: 'opensearch' },
+  {
+    http: 'nest',
+    validation: 'class-validator',
+    di: 'nest',
+    tests: 'vitest',
+    orm: 'none',
+    events: 'in-memory',
+    search: 'opensearch',
+  },
   REPORTED_BY_HAND,
   { ...REPORTED_BY_HAND, logger: 'winston' },
   { ...DEFAULT_STACK, logger: 'winston' },

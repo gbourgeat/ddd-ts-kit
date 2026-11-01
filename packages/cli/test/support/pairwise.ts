@@ -20,6 +20,7 @@ export const CAPABILITY_FLAGS = [
   'event-sourcing',
   'privacy',
   'storage',
+  'search',
   'authz',
   'style',
 ] as const;

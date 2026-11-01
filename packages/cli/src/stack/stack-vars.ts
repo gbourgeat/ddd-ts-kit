@@ -56,12 +56,13 @@ export function stackVars(config: Config): RenderContext {
   };
 }
 
-/** The tenants the storage confines to, the event store and the requests of a data subject, and the hand-wired foundations. */
+/** The tenants the storage confines to, the read models of OpenSearch, the event store and the requests of a data subject, and the hand-wired foundations. */
 function platformVars(config: Config): RenderContext {
-  const { tenancy, eventSourcing, privacy } = config.stack;
+  const { tenancy, eventSourcing, privacy, search } = config.stack;
 
   return {
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    search: one(search, ['none', 'opensearch']),
     eventSourcing: one(eventSourcing, ['on', 'off']),
     privacy: one(privacy, ['on', 'off']),
     platformJobs: { any: platformJobsOf(config) },
@@ -89,7 +90,7 @@ function keepsItsWork(config: Config): boolean {
 
 /** The members of the platform the hand-wired foundations hand on as they are, in the order the union names them. */
 function founded(config: Config): readonly string[] {
-  const { cache, http, audit, errors, eventSourcing } = config.stack;
+  const { cache, http, audit, errors, eventSourcing, search } = config.stack;
   const rateLimit = cache === 'redis' && http !== 'none';
 
   return [
@@ -104,6 +105,7 @@ function founded(config: Config): readonly string[] {
     ...(rateLimit ? ['rateLimiter'] : []),
     ...(audit === 'on' ? ['audit'] : []),
     ...(eventSourcing === 'on' ? ['eventSourcing'] : []),
+    ...(search === 'opensearch' ? ['search'] : []),
   ];
 }
 

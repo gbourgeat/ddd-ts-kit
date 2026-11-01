@@ -11,7 +11,7 @@ const KEYCLOAK_VERSION = '26.8.0';
 
 /** What the templates of `init` read: the variables of the stack, then the ones only a new project needs. */
 export function templateVars(config: Config, projectName: string): RenderContext {
-  const { database, docsUi, ci, cache, broker, errors, storage } = config.stack;
+  const { database, docsUi, ci, cache, broker, errors, storage, search } = config.stack;
 
   return {
     ...stackVars(config),
@@ -31,7 +31,8 @@ export function templateVars(config: Config, projectName: string): RenderContext
         cache === 'redis' ||
         ['redis', 'nats'].includes(broker) ||
         errors === 'sentry' ||
-        storage === 's3',
+        storage === 's3' ||
+        search === 'opensearch',
     },
     database: {
       postgres: database === 'postgres',
@@ -63,14 +64,15 @@ function extrasVars(extras: readonly string[]): RenderContext {
 
 /** Whether the validated configuration holds at least one URL: the reader of URLs is written only then. */
 function readsUrl(config: Config): boolean {
-  const { orm, broker, cache, httpCache } = config.stack;
+  const { orm, broker, cache, httpCache, search } = config.stack;
 
   return (
     httpCache === 'varnish' ||
     WITH_DATABASE.includes(orm) ||
     verifiesTokens(config) ||
     ['rabbitmq', 'nats', 'redis'].includes(broker) ||
-    cache === 'redis'
+    cache === 'redis' ||
+    search === 'opensearch'
   );
 }
 

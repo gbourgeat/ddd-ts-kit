@@ -191,6 +191,15 @@ S3_ACCESS_KEY_ID=minio-app
 S3_SECRET_ACCESS_KEY=minio-app-secret
 MINIO_PORT=9000
 {{/if}}
+{{#if search.opensearch}}
+
+# The read models kept for search (OpenSearch in docker-compose.yml), a copy rebuilt from the events, never the source of truth.
+OPENSEARCH_PORT=9200
+OPENSEARCH_URL=http://localhost:9200
+# The user of the security plugin, both or neither: left out locally, where the plugin is off; a service account in a deployment.
+# OPENSEARCH_USERNAME=
+# OPENSEARCH_PASSWORD=
+{{/if}}
 
 # Traces: start Jaeger with `docker compose --profile observability up -d jaeger`, then open http://127.0.0.1:16686
 # Without an endpoint no span leaves the process.

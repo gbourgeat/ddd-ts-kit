@@ -120,6 +120,9 @@ export function loadConfig(variables: Variables): AppConfig {
     {{#if files.s3}}
     files: readFiles(env),
     {{/if}}
+    {{#if search.opensearch}}
+    search: readSearch(env),
+    {{/if}}
   };
 
   env.assertValid();
@@ -220,6 +223,24 @@ function readLogFormat(env: Environment): AppConfig['log']['format'] {
 }
 {{/if}}
 
+{{#if search.opensearch}}
+/** The node of OpenSearch, and the user of its security plugin: both or neither. */
+function readSearch(env: Environment): AppConfig['search'] {
+  const username = env.optional('OPENSEARCH_USERNAME');
+  const password = env.optional('OPENSEARCH_PASSWORD');
+
+  if ((username === undefined) !== (password === undefined)) {
+    env.problem('OPENSEARCH_USERNAME and OPENSEARCH_PASSWORD must be set together, or neither');
+  }
+
+  return {
+    node: env.url('OPENSEARCH_URL'),
+    ...(username === undefined ? {} : { username }),
+    ...(password === undefined ? {} : { password }),
+  };
+}
+
+{{/if}}
 function readResilience(env: Environment): AppConfig['resilience'] {
   return {
     retryAttempts: env.integer('OUTBOUND_RETRY_ATTEMPTS', { fallback: 3, min: 1, max: 10 }),

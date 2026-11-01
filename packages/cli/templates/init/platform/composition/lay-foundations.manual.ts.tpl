@@ -40,6 +40,9 @@ import { createEventSourcing } from '{{alias.platform}}/event-sourcing/create-ev
 import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler{{alias.ext}}';
 import { createLogger } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
+{{#if search.opensearch}}
+import { openSearch } from '{{alias.platform}}/search/open-search{{alias.ext}}';
+{{/if}}
 
 {{foundations.founded}}
 
@@ -108,6 +111,14 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
 {{/unless}}
 {{#if cache.rateLimit}}
     rateLimiter: options.redis?.rateLimiter ?? new InMemoryRateLimiter(clock),
+{{/if}}
+{{#if search.opensearch}}
+{{#if tenancy.any}}
+    search: openSearch(options.search, { scope, tenants: options.tenants ?? [] }),
+{{/if}}
+{{#unless tenancy.any}}
+    search: openSearch(options.search),
+{{/unless}}
 {{/if}}
 {{#if errors.none}}
     jobs: schedulerOf(options, traced, parts),

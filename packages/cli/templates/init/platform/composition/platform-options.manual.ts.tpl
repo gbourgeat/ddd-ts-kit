@@ -16,6 +16,9 @@ import type { JobSettings } from '@ddd-ts-kit/kernel';
 {{/unless}}
 import type { QueueWorkerOptions } from '@ddd-ts-kit/scheduling';
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
+{{#if search.opensearch}}
+import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
+{{/if}}
 import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
 {{#if housekeeping.any}}
 import type { Housekeeping } from '{{alias.platform}}/jobs/housekeeping{{alias.ext}}';
@@ -70,5 +73,9 @@ export interface PlatformOptions {
 {{#if files.any}}
   /** Where the content of files lives: the storage of `main.ts`; left out (the tools, the tests), the memory of the process. */
   readonly files?: FileStorage;
+{{/if}}
+{{#if search.opensearch}}
+  /** Where the read models of OpenSearch live: the configuration of `main.ts`; left out (the tools, the tests), no node, and a store built then is refused at its first request. */
+  readonly search?: AppConfig['search'];
 {{/if}}
 }

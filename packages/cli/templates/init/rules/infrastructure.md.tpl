@@ -34,6 +34,9 @@ paths:
 {{#if eventSourcing.on}}
 - The repository adapter of an event-sourced aggregate delegates to `EventSourcedRepository` of the kernel. Its stored events are declared in `persistence/<aggregate>-events.mapper.ts` with `defineStoredEvent` and a named type of their data; a change of that type is a new version with its upcaster, never an edit (`event-sourcing/upcaster-required`, against `stored-events.lock.json`, which `ddd-ts-kit docs --stored-events` writes once the shape of a version is final; `docs --check` fails while a version is unrecorded). Every named type the data reaches is declared in the codec file too.
 {{/if}}
+{{#if search.opensearch}}
+- A read model kept in OpenSearch is written by hand, no generator yet: `class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> implements InvoiceList`, whose constructor takes `SearchIndexes` of the platform and calls `super(search.options('billing_invoices', invoiceCriteria))`; its name starts with the context. It is a copy for reading, written by its projection (`upsertIfNewer` with the stamp of the event, `delete` that keeps a tombstone) and rebuilt from the events: never read to decide an invariant or a right. It passes `readModelRowsContract` and `criteriaContract` of `@ddd-ts-kit/testing/contracts`, on a node the run names (`OPENSEARCH_URL`); the specs of the context bind its port to `InMemoryReadModelStore` of the kernel.
+{{/if}}
 - Infrastructure faults are plain errors (a 5xx, reported from outside); business refusals are `DomainError`s raised by the domain.
 - Every adapter passes the contract suite of the fake of its port (`test/integration/*.contract.spec.ts`).
 - Method: `/ddd-ts-kit:persistence`. Create with `npx ddd-ts-kit generate repository|adapter|gateway|acl ... --json`.

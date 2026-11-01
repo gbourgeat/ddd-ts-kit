@@ -66,6 +66,9 @@ const application = composeApplication(
     {{#if files.any}}
     files: openFiles(config.files),
     {{/if}}
+    {{#if search.opensearch}}
+    search: config.search,
+    {{/if}}
   },
   hostedContexts,
 );
