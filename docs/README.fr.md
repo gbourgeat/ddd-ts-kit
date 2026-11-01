@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9f5e240ec620f081 -->
+<!-- translation-of: README.md sha256:8524f494e87be153 -->
 
 # Documentation
 
@@ -36,6 +36,8 @@ source.
 | [Le magasin de tuples en mémoire refuse la production](adr/0003-the-in-memory-tuple-store-refuses-production.fr.md) | ce que `createTupleStore` permet, ce que fait un `NODE_ENV` absent, et ce qui l'inverserait |
 | [La garde du profil régulé n'exécute aucun programme du projet](adr/0004-the-regulated-guard-runs-no-program-of-the-project.fr.md) | comment le profil est lu, pourquoi pas de `denyWrite`, et les vérifications dont le profil se prive |
 | [Un refus est une erreur d'emblée avant la 1.0](adr/0005-a-refusal-is-an-error-at-once-before-1-0.fr.md) | ni transition, ni alias, ni cale avant la 1.0 ; une rupture arrive avec une ligne `To move` |
+| [La garde réglementée ne lance git qu'à sa racine](adr/0006-the-regulated-guard-runs-git-in-its-root-only.fr.md) | le seul dépôt où la garde lance git sous le profil réglementé, et ce qu'elle laisse sans lecture |
+| [La garde nomme les lecteurs de VS Code](adr/0007-the-guard-names-the-readers-of-vs-code.fr.md) | les outils de VS Code qui n'écrivent rien, et pourquoi une liste de lecteurs et non d'écrivains |
 | [Pipeline](../pipeline/README.md) | les portes de qualité, les *hooks* git, GitHub et GitLab côte à côte |
 | README des packages sous [`packages/`](../packages) | ce que fait chaque *package*, ses limites et ce qui a été vérifié |
 

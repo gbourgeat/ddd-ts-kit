@@ -16,6 +16,7 @@ import {
   installedVersion,
   launcher,
   patch,
+  project,
   put,
   reason,
   run,
@@ -27,6 +28,8 @@ const PROFILE = ['--agent-profile', 'regulated'];
 const NOTICE =
   /^Regulated profile: the guard runs no program of this project, neither its CLI nor its Biome, at any hook: the pipeline and the commit gate hold those checks, and `(?:npx|pnpm exec) ddd-ts-kit check` runs them here\.$/m;
 const SERVICE = 'src/contexts/ordering/domain/services/pricing.service.ts';
+const UNREAD =
+  /^(?:ddd-ts-kit: )?This project lies outside the git repository of the session root: under the regulated profile the guard runs no git there, so it reads neither its uncommitted changes nor its branch\.$/m;
 
 test('under the regulated profile no program of the project runs, whichever the hook', () => {
   const root = committed({ formatOnWrite: true, dependenciesBeforeWrite: true }, PROFILE);
@@ -77,6 +80,69 @@ test('a project planted below a regulated one, with its own config, repository a
   const ran = plantedPrograms(below);
   everyHook(below, 'src/x.ts');
   assert.deepEqual(ran(), []);
+});
+
+test('under the regulated profile git runs in the repository of the session root alone, whatever a nested one holds', () => {
+  const root = committed({}, PROFILE);
+  const marker = join(root, 'driver.log');
+  const nested = plantedRepository(join(root, 'tmp-of-a-command'), marker);
+  const started = { CLAUDE_PROJECT_DIR: root };
+  everyHook(nested, 'src/x.ts', started);
+  everyHook(root, SERVICE, started);
+  run('stop', { cwd: nested, session_id: 'regulated' }, started);
+  assert.deepEqual(driverRuns(marker), []);
+  for (const host of [{}, { CLAUDE_PROJECT_DIR: nested }]) {
+    everyHook(nested, 'src/x.ts', host);
+    assert.ok(driverRuns(marker).length > 0, 'the nested repository is the root of its own session');
+    rmSync(marker);
+  }
+});
+
+test('under the regulated profile neither a submodule nor a worktree of another repository is read', () => {
+  const root = committed({}, PROFILE);
+  const marker = join(root, 'driver.log');
+  const upstream = plantedRepository(directory('upstream'), marker, { driver: false });
+  git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', '--quiet', upstream, 'vendor/upstream');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: vendor');
+  const submodule = join(root, 'vendor/upstream');
+  git(submodule, 'config', 'filter.planted.clean', driverOf(marker));
+  put(submodule, 'notes.txt', 'two\n');
+  const other = plantedRepository(directory('other'), marker);
+  const checkout = join(root, '.worktrees', 'other');
+  git(other, 'worktree', 'add', '--quiet', checkout);
+  put(checkout, 'notes.txt', 'two\n');
+  const started = { CLAUDE_PROJECT_DIR: root };
+  everyHook(root, SERVICE, started);
+  everyHook(checkout, 'src/x.ts', started);
+  everyHook(submodule, 'src/x.ts', started);
+  assert.deepEqual(driverRuns(marker), []);
+  const loose = directory('loose');
+  put(loose, 'ddd-ts-kit.config.json', '{}');
+  assert.match(run('stop', { cwd: loose, session_id: 'loose' }, started).output.systemMessage, UNREAD);
+  const unversioned = project({}, PROFILE);
+  assert.match(run('stop', { cwd: unversioned, session_id: 'none' }).output.systemMessage, UNREAD);
+  const stopped = run('stop', { cwd: checkout, session_id: 'other' }, started);
+  assert.match(stopped.output.systemMessage, UNREAD);
+  const briefing = run('session', { cwd: checkout, source: 'startup' }, started).output.hookSpecificOutput;
+  assert.match(briefing.additionalContext, UNREAD);
+  assert.doesNotMatch(run('stop', { cwd: root, session_id: 'own' }, started).output?.systemMessage ?? '', UNREAD);
+});
+
+test('under the default profile git still runs in the repository each hook finds, its drivers included', () => {
+  const root = committed();
+  const marker = join(root, 'driver.log');
+  const nested = plantedRepository(join(root, 'tmp-of-a-command'), marker);
+  run('stop', { cwd: nested, session_id: 'default' }, { CLAUDE_PROJECT_DIR: root });
+  assert.ok(driverRuns(marker).length > 0);
+  rmSync(marker);
+  const upstream = plantedRepository(directory('upstream'), marker, { driver: false });
+  git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', '--quiet', upstream, 'vendor/upstream');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: vendor');
+  git(join(root, 'vendor/upstream'), 'config', 'filter.planted.clean', driverOf(marker));
+  put(join(root, 'vendor/upstream'), 'notes.txt', 'two\n');
+  const stopped = run('stop', { cwd: root, session_id: 'default' }, { CLAUDE_PROJECT_DIR: root });
+  assert.ok(driverRuns(marker).length > 0);
+  assert.doesNotMatch(stopped.output?.systemMessage ?? '', UNREAD);
 });
 
 test('a sandbox that lets a command out of it is no profile, nor the settings of a folder another user writes', () => {
@@ -175,6 +241,31 @@ test('a worker is not told of the packages the guard runs: under the profile it 
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
 });
 
+// A repository a sandboxed command may make, with a project of the kit and a clean filter of its own
+// config on every file, which records each run; a tracked file changed, so that a status or a diff of
+// it runs that filter. Without `driver`, the filter is named by the attributes and left undefined.
+function plantedRepository(folder, marker, { driver = true } = {}) {
+  put(folder, 'ddd-ts-kit.config.json', '{}');
+  put(folder, '.gitattributes', '* filter=planted\n');
+  put(folder, 'notes.txt', 'one\n');
+  git(folder, 'init', '--quiet');
+  git(folder, 'add', '--all');
+  git(folder, 'commit', '--quiet', '--no-verify', '--message', 'chore: planted');
+  if (driver) {
+    git(folder, 'config', 'filter.planted.clean', driverOf(marker));
+    put(folder, 'notes.txt', 'two\n');
+  }
+  return folder;
+}
+
+function driverOf(marker) {
+  return `sh -c 'echo ran >> ${marker}; cat'`;
+}
+
+function driverRuns(marker) {
+  return existsSync(marker) ? readFileSync(marker, 'utf8').trim().split('\n') : [];
+}
+
 // What a sandboxed command may leave in the project: the CLI and the Biome of node_modules replaced by
 // a program that records each run.
 function plantedPrograms(root) {
@@ -186,8 +277,9 @@ function plantedPrograms(root) {
 }
 
 // Each mode of the guard, in the worktree of a story, on a pending change that would reach each of its
-// runs: the session start, a write that adds an import, a shell command, the check after it, both stops.
-function everyHook(root, path = SERVICE) {
+// runs: the session start, a write that adds an import, a shell command, the check after it, both stops,
+// and the calls of a builder.
+function everyHook(root, path = SERVICE, env = {}) {
   put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
   put(root, 'docs/architecture/slices.md', '# Slices\n');
   put(root, path, 'export class Pricing {}\n');
@@ -196,13 +288,15 @@ function everyHook(root, path = SERVICE) {
   const content = "import express from 'express';\nexport class Pricing {}\n";
   const written = { tool_name: 'Write', tool_input: { file_path: file, content } };
   const builder = { agent_type: 'ddd-ts-kit:context-builder', agent_id: 'builder-1' };
-  run('session', { ...base, source: 'startup' });
-  run('pre-write', { ...base, ...written });
-  run('pre-bash', { ...base, ...bash(root, 'npm test') });
-  run('post-write', { ...base, ...written });
-  run('stop', base);
-  run('subagent-start', { ...base, ...builder });
-  run('subagent-stop', { ...base, ...builder });
+  run('session', { ...base, source: 'startup' }, env);
+  run('pre-write', { ...base, ...written }, env);
+  run('pre-bash', { ...base, ...bash(root, 'npm test') }, env);
+  run('post-write', { ...base, ...written }, env);
+  run('stop', base, env);
+  run('pre-bash', { ...base, ...bash(root, 'npm test'), ...builder }, env);
+  run('pre-write', { ...base, ...written, ...builder }, env);
+  run('subagent-start', { ...base, ...builder }, env);
+  run('subagent-stop', { ...base, ...builder }, env);
 }
 
 function rewrittenConfig(root, config) {
