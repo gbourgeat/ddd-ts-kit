@@ -37,10 +37,10 @@ class SlowFirstSequencer extends BaseSequencer {
  * on purpose: a new line comes with its spec. It says that a line ran, not that each case did: the
  * branches keep their own floor. A floor is raised when the package gains tests, never lowered to
  * make a change pass.
- * rabbitmq, nats, kafka, s3 and redis run the same specs on a server the test holds itself (an AMQP
- * broker in memory, a NATS server, an S3 server and a Redis server in their own process, a Kafka
- * cluster in memory), so this run measures them whole; the integration job runs them on a real
- * server too.
+ * rabbitmq, nats, kafka, s3, redis and opensearch run the same specs on a server the test holds
+ * itself (an AMQP broker in memory, a NATS server, an S3 server, a Redis server and an OpenSearch
+ * node in their own process, a Kafka cluster in memory), so this run measures them whole; the
+ * integration job runs them on a real server too.
  */
 const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>> = {
   aspects: [99, 97, 99, 100],
@@ -57,6 +57,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   knex: [100, 94, 100, 100],
   nats: [100, 98, 100, 100],
   openfga: [100, 98, 100, 100],
+  opensearch: [100, 95, 100, 100],
   pino: [100, 91, 100, 100],
   prisma: [100, 95, 100, 100],
   rabbitmq: [100, 99, 100, 100],

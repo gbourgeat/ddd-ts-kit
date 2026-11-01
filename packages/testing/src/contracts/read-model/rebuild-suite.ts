@@ -1,6 +1,7 @@
 import { ProjectionRebuild, type ProjectionRebuildReport } from '@ddd-ts-kit/kernel';
 import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
 import { failureOf } from '../failure-of';
+import type { ReadModelStoreUnderContract } from './read-model-store-under-contract';
 import { ReadModelStoreSuite } from './read-model-store-suite';
 import { rowOf as row } from './row-of';
 import { SourceOfTruth } from './source-of-truth';
@@ -9,7 +10,7 @@ import { stampedAt as at } from './stamped-at';
 type Row = CriteriaContractRow;
 
 /** A rebuild from the source of truth that loses no event, whatever happens while it runs. */
-export class RebuildSuite extends ReadModelStoreSuite {
+export class RebuildSuite extends ReadModelStoreSuite<ReadModelStoreUnderContract> {
   protected tests(): void {
     this.closesAfterEach();
     this.rebuilds();

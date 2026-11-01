@@ -28,6 +28,8 @@ variables:
   POSTGRES_IMAGE: postgres:18
   # The upstream MinIO project stopped publishing images in 2025; pgsty/minio builds the same server.
   MINIO_IMAGE: pgsty/minio:RELEASE.2026-08-04T00-00-00Z@sha256:b6bfe7239bfc83fb90d31612d9704d86039dd714f7904b3f1ad68f211e602372
+  # OpenSearch 3.9.0, the node the specs of @ddd-ts-kit/opensearch run against.
+  OPENSEARCH_IMAGE: opensearchproject/opensearch:3@sha256:3b55f6b6249cfdb92b52ee59adc8a266203ba9ef9f5d82544fad6f1af2f3609e
 
 default:
   # A newer commit of a merge request supersedes the pipeline in progress; the default branch finishes every pipeline.
@@ -210,6 +212,10 @@ integration:
     - name: docker.dragonflydb.io/dragonflydb/dragonfly:v2.0.2@sha256:061f00b201b58e12f974e4e96c761a881ee1c05e9d8ee967466a604b7299753b
       alias: dragonfly
       command: ['--proactor_threads=2', '--maxmemory=512mb']
+    # One node, no disk watermark: a setting with a dot is a flag here, a variable name holds none.
+    - name: $OPENSEARCH_IMAGE
+      alias: opensearch
+      command: ['opensearch', '-Ediscovery.type=single-node', '-Ecluster.routing.allocation.disk.threshold_enabled=false']
   variables:
     POSTGRES_USER: app
     POSTGRES_PASSWORD: app
@@ -219,6 +225,10 @@ integration:
     DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@postgres:5432/app
     DDD_TS_KIT_TEST_S3_ENDPOINT: http://minio:9000
     DDD_TS_KIT_TEST_REDIS_URL: redis://dragonfly:6379
+    DISABLE_SECURITY_PLUGIN: 'true'
+    DISABLE_INSTALL_DEMO_CONFIG: 'true'
+    OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    DDD_TS_KIT_TEST_OPENSEARCH_URL: http://opensearch:9200
   script:
     - if [ "$AFFECTED_integration" != "true" ]; then echo "No adapter package is reached, no spec to run."; exit 0; fi
     - npm run ci:test:integration -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml

@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:419593a8e753bdc2 -->
+<!-- translation-of: persistence.md sha256:47cf0b7de6d2cf91 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -529,7 +529,34 @@ la ligne d'usage de `--help` ne le mentionne pas.
   l'outillage de migration propre à chaque outil ; il n'exécute aucune migration à lui.
 
 Quand ne pas utiliser d'adaptateur d'ORM du tout : un contexte sans état (un pur traducteur), ou
-un modèle de lecture mieux servi par un moteur de recherche ou un cache, derrière un port à lui.
+un modèle de lecture mieux servi par un moteur de recherche
+([plus bas](#un-modèle-de-lecture-dans-un-moteur-de-recherche--opensearch)) ou un cache, derrière
+un port à lui.
+
+## Un modèle de lecture dans un moteur de recherche : OpenSearch
+
+Un modèle de lecture interrogé sur de nombreux critères et de nombreuses lignes, ou que plusieurs
+services lisent, peut vivre dans OpenSearch plutôt que dans une table : `@ddd-ts-kit/opensearch`
+implémente le même port `ReadModelStore` que les quatre ORM, si bien qu'un projecteur ne sait pas
+dans lequel il écrit. Les critères du port de lecture deviennent le DSL de requête, une écriture
+n'est appliquée que si son événement est plus récent et seulement sur le document qu'elle a lu, et
+les locataires sont tenus à part par un index chacun (`tenancy: { strategy: 'index' }`) ou par un
+champ de locataire et un alias par locataire qu'OpenSearch filtre lui-même
+(`{ strategy: 'attribute' }`). Il parle l'API REST sans bibliothèque cliente.
+
+| | Une table d'un ORM | OpenSearch |
+|---|---|---|
+| Cohérence | la ligne se valide avec la marque d'événement traité | cohérent à terme : une recherche voit une écriture après le rafraîchissement suivant (une seconde par défaut), `refresh: 'wait_for'` l'attend ; l'écriture est hors de la transaction, et une nouvelle livraison est périmée |
+| Locataires | une colonne de locataire, ou un schéma ou une base par locataire | un index par locataire, ou un index et un alias filtré par locataire |
+| Reconstruction | `ProjectionRebuild`, sur PostgreSQL | pas encore construite ; chaque index porte une génération et toute lecture passe par un alias, pour qu'une reconstruction puisse basculer |
+| Recherche plein texte | celle de PostgreSQL, à la main | pas construite : une chaîne est un `keyword`, `contains` un *wildcard* sensible à la casse |
+| Exploitation | la base que le projet fait déjà tourner | un cluster à faire tourner, dimensionner et mettre à jour |
+
+Le paquet n'est pas encore sur npm et `init` ne le câble pas : son
+[README](../../packages/opensearch/README.fr.md) montre la composition à la main, et
+[l'ADR-0008](../adr/0008-a-read-model-store-on-opensearch.fr.md) consigne chaque choix et ce qui le
+défait. Il n'a tourné que sur OpenSearch 3 ; les *endpoints* qu'il appelle sont ceux
+qu'Elasticsearch partage, ce qu'aucune spec n'a prouvé.
 
 ## Migrations : noms, fusions et ordre
 
@@ -794,6 +821,7 @@ en service emporte alors ses tables avec lui (`generate service`).
 | Application TypeORM existante | TypeORM 1.x avec `EntitySchema` ; prévoyez vous-même le registre du journal d'audit |
 | MySQL imposé | Knex ou TypeORM, et faites tourner les suites de contrat contre votre serveur dans votre propre CI |
 | Un autre système de stockage | `custom`, derrière les mêmes ports, avec un enregistrement de décision |
+| Un modèle de lecture interrogé sur de nombreux critères, ou lu par plusieurs services | `@ddd-ts-kit/opensearch` derrière le port du modèle de lecture, à côté de l'ORM du modèle d'écriture |
 
 ## Sources
 

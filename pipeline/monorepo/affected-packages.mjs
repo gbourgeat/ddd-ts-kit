@@ -34,7 +34,7 @@ const SITE = 'site/';
 /** The documents the runs that integrate every package read: the quick start of the root README, the rule table of the reference. */
 const READ_BY_THE_WHOLE_RUNS = ['README.md', 'docs/ARCHITECTURE.md'];
 
-/** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA, MinIO for s3, Varnish for http, Dragonfly for redis, or the broker of nats, rabbitmq and kafka. */
+/** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA, MinIO for s3, OpenSearch for opensearch, Varnish for http, Dragonfly for redis, or the broker of nats, rabbitmq and kafka. */
 export const ON_A_SERVER = [
   'drizzle',
   'knex',
@@ -43,6 +43,7 @@ export const ON_A_SERVER = [
   'audit',
   'openfga',
   's3',
+  'opensearch',
   'http',
   'redis',
   'nats',
