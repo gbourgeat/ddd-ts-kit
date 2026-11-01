@@ -39,7 +39,7 @@ says what undoes it.
 | The rebuild | not built: `rebuilding()` is false, the steps refuse with `UnsupportedRebuildError` | out of the scope of this change | a later version fills `<name>...v2` and moves the aliases in one `_aliases` call: the generation in each index name and the alias in front of every read are there for it |
 | The contract | `readModelRowsContract`, the rows half of `readModelStoreContract`, added to `@ddd-ts-kit/testing` | `readModelStoreContract` holds the rebuild, which this store does not have | the store runs `readModelStoreContract` once its rebuild exists |
 | The family | outside the read model family of `pipeline/monorepo/families.mjs` | OpenSearch is not an ORM, and the family compares the options of four ORM packages | a family of read model stores, if a second engine comes |
-| npm | `"private": true` | the release publishes by trusted publishing, which the owner configures on npmjs.com per package name: a first publication of a new name would fail the publish job | the owner configures the trusted publisher of `@ddd-ts-kit/opensearch`, then `private` goes |
+| npm | published by the release, as every package | the release publishes by trusted publishing, which npm accepts only for a name that exists: the owner reserved `@ddd-ts-kit/opensearch` with a deprecated `0.0.0` and declared its trusted publisher (`CONTRIBUTING.md`, "A new package"); 0.108.0 shipped it `private` until then | `"private": true` again keeps it off the next release; `npm deprecate` marks the published versions |
 | The CLI | `init` does not wire it | a generated project installs from npm, and the package is not there yet | `init --read-model opensearch` (or a value of `stack`), once the package is published |
 
 ## Consequences

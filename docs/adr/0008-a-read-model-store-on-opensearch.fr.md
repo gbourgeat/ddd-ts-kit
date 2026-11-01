@@ -1,5 +1,5 @@
 [English](0008-a-read-model-store-on-opensearch.md) · **Français**
-<!-- translation-of: 0008-a-read-model-store-on-opensearch.md sha256:426eccd6f01613a0 -->
+<!-- translation-of: 0008-a-read-model-store-on-opensearch.md sha256:596291fc9fe1071b -->
 
 # ADR-0008 : un store de modèle de lecture sur OpenSearch
 
@@ -40,7 +40,7 @@ dernière colonne dit ce qui le défait.
 | La reconstruction | pas construite : `rebuilding()` est faux, les étapes refusent avec `UnsupportedRebuildError` | hors du périmètre de ce changement | une version ultérieure remplit `<name>...v2` et déplace les alias en un appel `_aliases` : la génération dans chaque nom d'index et l'alias devant toute lecture sont là pour cela |
 | Le contrat | `readModelRowsContract`, la moitié « lignes » de `readModelStoreContract`, ajoutée à `@ddd-ts-kit/testing` | `readModelStoreContract` tient la reconstruction, que ce store n'a pas | le store passe `readModelStoreContract` une fois sa reconstruction écrite |
 | La famille | hors de la famille des modèles de lecture de `pipeline/monorepo/families.mjs` | OpenSearch n'est pas un ORM, et la famille compare les options de quatre *packages* d'ORM | une famille des stores de modèle de lecture, si un second moteur vient |
-| npm | `"private": true` | la release publie par publication de confiance, que le propriétaire configure sur npmjs.com par nom de paquet : une première publication d'un nom nouveau ferait échouer le job de publication | le propriétaire configure l'éditeur de confiance de `@ddd-ts-kit/opensearch`, puis `private` disparaît |
+| npm | publié par la release, comme chaque paquet | la release publie par publication de confiance, que npm n'accepte que pour un nom qui existe : le propriétaire a réservé `@ddd-ts-kit/opensearch` par un `0.0.0` déprécié et déclaré son éditeur de confiance (`CONTRIBUTING.md`, « A new package ») ; 0.108.0 l'a livré `private` jusque-là | `"private": true` à nouveau le tient hors de la release suivante ; `npm deprecate` marque les versions publiées |
 | La CLI | `init` ne le câble pas | un projet généré s'installe depuis npm, et le paquet n'y est pas encore | `init --read-model opensearch` (ou une valeur de `stack`), une fois le paquet publié |
 
 ## Conséquences

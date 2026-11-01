@@ -434,7 +434,7 @@ jobs:
       # pnpm then follows the release each project pins (pmOnFail: download).
       - name: The package manager a generated project pins
         run: npm install --global pnpm@12.11.2
-      # Packed once for the whole job: each spec file packed the 26 packages again.
+      # Packed once for the whole job: each spec file packed every package again.
       - name: The kit as npm packs it, once, for every project this job installs
         run: echo "DDD_TS_KIT_PACKED_KIT=$(node pipeline/monorepo/pack-kit.mjs "$RUNNER_TEMP/packed-kit")" >> "$GITHUB_ENV"
       - name: Installed for real from the packed kit and held to verify (every kind generated on the default stack and a heavy one; from the first minute, the quick start of the README and the other proven stacks)
