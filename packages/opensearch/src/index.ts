@@ -1,0 +1,11 @@
+export { InvalidIndexNameError } from './errors/invalid-index-name-error';
+export { OpenSearchRequestError } from './errors/open-search-request-error';
+export { OpenSearchUnavailableError } from './errors/open-search-unavailable-error';
+export { UnprovisionedIndexError } from './errors/unprovisioned-index-error';
+export { UnsupportedRebuildError } from './errors/unsupported-rebuild-error';
+export type { OpenSearchReadModelOptions } from './store/open-search-read-model-options';
+export { OpenSearchReadModelStore } from './store/open-search-read-model-store';
+export type { OpenSearchTenancy } from './store/open-search-tenancy';
+export { fetchTransport } from './transport/fetch-transport';
+export type { FetchTransportOptions } from './transport/fetch-transport-options';
+export type { OpenSearchRequest, OpenSearchResponse, OpenSearchTransport } from './transport/open-search-transport';

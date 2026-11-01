@@ -331,6 +331,8 @@
               "packages/nats/src/index.ts",
               "packages/openfga/src/index.ts",
               "packages/openfga/src/sdk.ts",
+              "packages/opensearch/src/index.ts",
+              "packages/opensearch/src/testing.ts",
               "packages/pino/src/index.ts",
               "packages/prisma/src/index.ts",
               "packages/rabbitmq/src/index.ts",
