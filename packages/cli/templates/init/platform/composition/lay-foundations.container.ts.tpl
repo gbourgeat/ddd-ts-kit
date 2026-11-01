@@ -18,12 +18,19 @@ import { createAudit, type Audit } from '{{alias.platform}}/audit/create-audit{{
 {{#unless audit.on}}
 import { logDecisions } from '{{alias.platform}}/auth/authorization/log-decisions{{alias.ext}}';
 {{/unless}}
+{{#if search.opensearch}}
+import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
+{{/if}}
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 {{#if eventSourcing.on}}
 import { createEventSourcing, type EventSourcing } from '{{alias.platform}}/event-sourcing/create-event-sourcing{{alias.ext}}';
 {{/if}}
 import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
+{{#if search.opensearch}}
+import { openSearch } from '{{alias.platform}}/search/open-search{{alias.ext}}';
+import type { SearchIndexes } from '{{alias.platform}}/search/search-indexes{{alias.ext}}';
+{{/if}}
 
 /**
  * What exists before any module: built once and handed to the kernel module, so that the buses,
@@ -49,6 +56,10 @@ export interface Foundations {
   /** The event store, the keys of the data subjects{{#if audit.on}}, audited,{{/if}} and the cipher of the personal values of the stored events. */
   readonly eventSourcing: EventSourcing;
 {{/if}}
+{{#if search.opensearch}}
+  /** The read models of OpenSearch, with the transport and the tenancy of the platform: what the adapter of a read model port is built from. */
+  readonly search: SearchIndexes;
+{{/if}}
 }
 
 interface Observed {
@@ -56,6 +67,14 @@ interface Observed {
   readonly log?: LogSettings;
   /** Whether a consumed event continues the trace of its publication (the default) or starts one linked to it. */
   readonly traceConsumers?: ConsumerTrace;
+{{#if search.opensearch}}
+  /** Where the read models of OpenSearch live: the configuration in `main.ts`; left out (the tools, the tests), no node. */
+  readonly search?: AppConfig['search'];
+{{#if tenancy.any}}
+  /** The tenants whose read models are provisioned. */
+  readonly tenants?: readonly string[];
+{{/if}}
+{{/if}}
 }
 
 export function layFoundations(persistence: Persistence, options: Observed): Foundations {
@@ -74,6 +93,14 @@ export function layFoundations(persistence: Persistence, options: Observed): Fou
     logger,
     metrics: createMetrics(),
     traced: traceApplication({ consumers: options.traceConsumers ?? 'continue' }),
+{{#if search.opensearch}}
+{{#if tenancy.any}}
+    search: openSearch(options.search, { scope, tenants: options.tenants ?? [] }),
+{{/if}}
+{{#unless tenancy.any}}
+    search: openSearch(options.search),
+{{/unless}}
+{{/if}}
 {{#if audit.on}}
     audit,
 {{#if eventSourcing.on}}

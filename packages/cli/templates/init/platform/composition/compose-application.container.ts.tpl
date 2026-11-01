@@ -73,6 +73,9 @@ import { relateSystemActors } from '{{alias.platform}}/auth/relationships/relate
 {{/if}}
 import { createCommandBus } from '{{alias.platform}}/buses/create-command-bus{{alias.ext}}';
 import { createQueryBus } from '{{alias.platform}}/buses/create-query-bus{{alias.ext}}';
+{{#if search.opensearch}}
+import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
+{{/if}}
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 {{#if eventSourcing.on}}
 import { eventSourcingModule } from '{{alias.platform}}/event-sourcing/event-sourcing.module{{alias.ext}}';
@@ -86,6 +89,9 @@ import { filesModule } from '{{alias.platform}}/files/files.module{{alias.ext}}'
 {{#if housekeeping.any}}
 import { DEFAULT_HOUSEKEEPING } from '{{alias.platform}}/jobs/housekeeping{{alias.ext}}';
 import { housekeepingModule } from '{{alias.platform}}/jobs/housekeeping.module{{alias.ext}}';
+{{/if}}
+{{#if search.opensearch}}
+import { searchModule } from '{{alias.platform}}/search/search.module{{alias.ext}}';
 {{/if}}
 {{#if privacy.on}}
 import { privacyModule } from '{{alias.platform}}/privacy/privacy.module{{alias.ext}}';
@@ -114,6 +120,10 @@ export interface ApplicationOptions extends PlatformOptions {
 {{#if files.any}}
   /** Where the content of files lives: the storage of `main.ts`; left out (the tools, the tests), the memory of the process. */
   readonly files?: FileStorage;
+{{/if}}
+{{#if search.opensearch}}
+  /** Where the read models of OpenSearch live: the configuration of `main.ts`; left out (the tools, the tests), no node, and a store built then is refused at its first request. */
+  readonly search?: AppConfig['search'];
 {{/if}}
 }
 
@@ -219,6 +229,9 @@ export function composeApplication(
 {{/if}}
 {{#if files.any}}
       filesModule(options.files ?? new InMemoryFileStorage(), { jobs: options.platformJobs !== false }),
+{{/if}}
+{{#if search.opensearch}}
+      searchModule(foundations.search),
 {{/if}}
 {{#if privacy.on}}
       privacyModule({ jobs: options.platformJobs !== false }),

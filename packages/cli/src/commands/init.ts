@@ -24,6 +24,7 @@ const STACK_FLAGS = [
   'cache',
   'rpc',
   'storage',
+  'search',
   'audit',
   'privacy',
   'errors',

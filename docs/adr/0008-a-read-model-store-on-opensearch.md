@@ -40,7 +40,7 @@ says what undoes it.
 | The contract | `readModelRowsContract`, the rows half of `readModelStoreContract`, added to `@ddd-ts-kit/testing` | `readModelStoreContract` holds the rebuild, which this store does not have | the store runs `readModelStoreContract` once its rebuild exists |
 | The family | outside the read model family of `pipeline/monorepo/families.mjs` | OpenSearch is not an ORM, and the family compares the options of four ORM packages | a family of read model stores, if a second engine comes |
 | npm | published by the release, as every package | the release publishes by trusted publishing, which npm accepts only for a name that exists: the owner reserved `@ddd-ts-kit/opensearch` with a deprecated `0.0.0` and declared its trusted publisher (`CONTRIBUTING.md`, "A new package"); 0.108.0 shipped it `private` until then | `"private": true` again keeps it off the next release; `npm deprecate` marks the published versions |
-| The CLI | `init` does not wire it | a generated project installs from npm, and the package is not there yet | `init --read-model opensearch` (or a value of `stack`), once the package is published |
+| The CLI | `init --search opensearch` wires it, since the package is on npm ([ADR-0009](0009-init-wires-opensearch.md)) | a generated project installs from npm | `init --search none` |
 
 ## Consequences
 
@@ -57,5 +57,5 @@ of its integration job, as it does its other servers.
 ## When to revisit
 
 When the rebuild is built (the contract becomes `readModelStoreContract`), when the package is
-published (the wiring of `init`), when a project runs it on Elasticsearch (the same specs on that
+published (the wiring of `init`, done in [ADR-0009](0009-init-wires-opensearch.md)), when a project runs it on Elasticsearch (the same specs on that
 server), and when full-text search is asked for (the mapping of `text` fields).

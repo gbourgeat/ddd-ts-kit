@@ -290,6 +290,10 @@ async function start(platform: Platform, options: ApplicationOptions): Promise<v
   subscribeAll(platform.subscriber, platform.audit.subscriptions);
 {{/unless}}
 {{/if}}
+{{#if search.opensearch}}
+  // The index of every read model of OpenSearch the contexts built, before an event reaches its projection.
+  await platform.search.provision();
+{{/if}}
   await options.events.start();
 
   if (options.jobs?.start === true) {

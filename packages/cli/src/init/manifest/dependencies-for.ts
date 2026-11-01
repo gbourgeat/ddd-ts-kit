@@ -83,6 +83,8 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'audit:on': [['@ddd-ts-kit/audit'], []],
   // The connector and the official SDK it is written against: the three packages are its optional peers.
   'storage:s3': [['@ddd-ts-kit/s3', '@aws-sdk/client-s3', '@aws-sdk/lib-storage', '@aws-sdk/s3-request-presigner'], []],
+  // The store speaks the REST API of OpenSearch through `fetch`: no client library.
+  'search:opensearch': [['@ddd-ts-kit/opensearch'], []],
   // The adapter, and the SDK it is written against; `@opentelemetry/api`, which links a report to its trace, is in the base.
   'errors:sentry': [['@ddd-ts-kit/sentry', '@sentry/node'], []],
   // The pretty format of pino is a transport of its own, loaded by name when `LOG_FORMAT=pretty`: knip knows it as a peer of the adapter.

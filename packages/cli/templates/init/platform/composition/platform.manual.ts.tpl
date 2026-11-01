@@ -41,6 +41,9 @@ import type { EventSourcing } from '{{alias.platform}}/event-sourcing/create-eve
 import type { Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
 {{/if}}
 import type { BackgroundJobs } from '{{alias.platform}}/jobs/background-jobs{{alias.ext}}';
+{{#if search.opensearch}}
+import type { SearchIndexes } from '{{alias.platform}}/search/search-indexes{{alias.ext}}';
+{{/if}}
 
 /** Wraps an adapter from outside: a span for its kind and, for what leaves the process, the default policy unless it states its own. */
 type Adapt = <T extends object>(instance: T, info: AspectInfo) => T;
@@ -114,5 +117,9 @@ export interface Platform {
   {{#if files.any}}
   /** Where files live, the keys they are stored under and the staging that keeps them consistent with the database: never their content in a table. */
   readonly files: Files;
+  {{/if}}
+  {{#if search.opensearch}}
+  /** The read models of OpenSearch, with the transport and the tenancy of the platform: what the adapter of a read model port is built from. */
+  readonly search: SearchIndexes;
   {{/if}}
 }

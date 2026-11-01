@@ -21,6 +21,7 @@ export const VERSIONS: Readonly<Record<string, string>> = {
   '@ddd-ts-kit/scheduling': '^0.108.1',
   '@ddd-ts-kit/sentry': '^0.108.1',
   '@ddd-ts-kit/s3': '^0.108.1',
+  '@ddd-ts-kit/opensearch': '^0.108.1',
   '@aws-sdk/client-s3': '^3.1150.0',
   '@aws-sdk/lib-storage': '^3.1150.0',
   '@aws-sdk/s3-request-presigner': '^3.1150.0',

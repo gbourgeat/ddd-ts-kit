@@ -166,6 +166,27 @@ services:
       retries: 30
 
 {{/if}}
+{{#if search.opensearch}}
+  # OpenSearch, one node for local use: its security plugin is off, so it holds no user and no TLS; a deployment keeps
+  # the plugin on, with TLS and a user whose rights cover the indices and aliases of this project only.
+  opensearch:
+    image: opensearchproject/opensearch:3@sha256:3b55f6b6249cfdb92b52ee59adc8a266203ba9ef9f5d82544fad6f1af2f3609e
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "127.0.0.1:${OPENSEARCH_PORT:-9200}:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:9200/_cluster/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+{{/if}}
 {{#if authn.keycloak}}
   # Keycloak {{keycloak.version}} in development mode, for local use only: it imports docker/keycloak/{{project.name}}-realm.json
   # at its first start (the API client, its audience mapper, a public client for the direct grant, demo users).
@@ -281,4 +302,7 @@ volumes:
 {{/if}}
 {{#if files.s3}}
   minio-data:
+{{/if}}
+{{#if search.opensearch}}
+  opensearch-data:
 {{/if}}

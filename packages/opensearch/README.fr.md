@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:57523eb375c8c2ae -->
+<!-- translation-of: README.md sha256:1b7edc02885ee4c4 -->
 
 # @ddd-ts-kit/opensearch
 
@@ -15,8 +15,11 @@ de son modèle de lecture, et la plateforme lie cet adaptateur.
 npm i @ddd-ts-kit/opensearch
 ```
 
-`init` ne le câble pas : la composition ci-dessous s'écrit à la main, et
-[la décision](../../docs/adr/0008-a-read-model-store-on-opensearch.fr.md) consigne chaque choix.
+`init --search opensearch` le câble dans la plateforme d'un projet généré : `SearchIndexes` fixe le
+transport et la stratégie de locataires et provisionne les index, et un adaptateur appelle
+`super(search.options(name, definition))` ([Modèles de lecture de recherche](../../docs/tools/search-read-models.fr.md),
+[ADR-0009](../../docs/adr/0009-init-wires-opensearch.fr.md)). La composition ci-dessous est la même à la main,
+et [la décision](../../docs/adr/0008-a-read-model-store-on-opensearch.fr.md) consigne chaque choix.
 
 ## Racine de composition
 

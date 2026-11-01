@@ -15,7 +15,7 @@ export const USAGE = `Usage
                   [--authn jwt|keycloak|passport|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
                   [--rpc none|orpc|trpc]
-                  [--storage local|s3|none]
+                  [--storage local|s3|none] [--search none|opensearch]
                   [--audit on|off] [--event-sourcing on|off] [--privacy on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals named|factories|classes]

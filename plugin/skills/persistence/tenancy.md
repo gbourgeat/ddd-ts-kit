@@ -32,6 +32,8 @@ tenant is, the four strategies and the propagation of the tenant are in
     an `orWhere` at its top, and the condition in its last `where` or an `andWhere` after it: a
     `where` resets what comes before it.
 - Reads may widen under an audited elevation, writes never.
+- A read model in OpenSearch takes the tenancy of the platform (`SearchIndexes`), never its own:
+  [search.md](search.md).
 - A measure grouped then paged selects from the scoped query with `derivedTable`. A raw
   aggregate is fine in its select as a literal (bind a list as one value, `state = any(?)`,
   rather than interpolating placeholders); raw SQL that names a table, calls an unknown function

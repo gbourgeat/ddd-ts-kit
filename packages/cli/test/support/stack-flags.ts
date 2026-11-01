@@ -20,6 +20,7 @@ export interface StackFlags {
   readonly style?: string;
   readonly assembly?: string;
   readonly storage?: string;
+  readonly search?: string;
   readonly tenancy?: string;
   readonly queue?: string;
   readonly routes?: string;

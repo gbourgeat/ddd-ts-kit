@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:52039e60e1b4741c -->
+<!-- translation-of: README.md sha256:ad774532121dcd4b -->
 
 # Documentation
 
@@ -39,6 +39,7 @@ source.
 | [La garde réglementée ne lance git qu'à sa racine](adr/0006-the-regulated-guard-runs-git-in-its-root-only.fr.md) | le seul dépôt où la garde lance git sous le profil réglementé, et ce qu'elle laisse sans lecture |
 | [La garde nomme les lecteurs de VS Code](adr/0007-the-guard-names-the-readers-of-vs-code.fr.md) | les outils de VS Code qui n'écrivent rien, et pourquoi une liste de lecteurs et non d'écrivains |
 | [Un store de modèle de lecture sur OpenSearch](adr/0008-a-read-model-store-on-opensearch.fr.md) | chaque choix de `@ddd-ts-kit/opensearch`, et ce qui le défait |
+| [init câble OpenSearch](adr/0009-init-wires-opensearch.fr.md) | `init --search opensearch` : la stratégie de locataires, le provisionnement des stores déclarés, pas encore de générateur, et ce qui défait chaque choix |
 | [Pipeline](../pipeline/README.md) | les portes de qualité, les *hooks* git, GitHub et GitLab côte à côte |
 | README des packages sous [`packages/`](../packages) | ce que fait chaque *package*, ses limites et ce qui a été vérifié |
 
@@ -102,6 +103,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Représentations et formulaires](tools/representations-and-forms.fr.md) | XML et CSV sans bibliothèque, et pourquoi ; les moteurs de rendu JSON Forms pour React, Angular et Vue, et les alternatives |
 | [Injection de dépendances](tools/dependency-injection.fr.md) | les déclarations du kit sur tsyringe, InversifyJS ou Awilix, NestJS, ou un câblage manuel, comparés et mesurés |
 | [Persistance](tools/persistence.fr.md) | Drizzle, Knex, Prisma ou TypeORM ; PostgreSQL face aux autres ; un modèle de lecture sur OpenSearch |
+| [Modèles de lecture de recherche](tools/search-read-models.fr.md) | un modèle de lecture sur OpenSearch : ce qui convient et ce qui ne convient pas, `init --search opensearch`, le store d'un contexte, ses tests, ses locataires, en production |
 | [Brokers de messages](tools/message-brokers.fr.md) | en processus, RabbitMQ, Kafka, NATS JetStream ou Redis Streams |
 | [Cache et coordination](tools/cache-and-coordination.fr.md) | Redis, Dragonfly ou Valkey ; ce que le verrou garantit et ne garantit pas |
 | [Caches HTTP](tools/http-caches.fr.md) | Varnish, Souin, nginx, Fastly, Cloudflare ou Bunny devant l'API : comment chacun purge par étiquette, ce que le kit a vérifié |

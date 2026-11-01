@@ -103,7 +103,9 @@ on PostgreSQL:
 through the helpers, the outbox keeping the tenant, and the rule `tenancy/scoped-statement` of the
 checker reporting a statement that reaches a table straight from the executor, the client or the
 manager, a row reached by its key alone, a read model store built without its tenant. The three others
-are wired by hand from the packages for now; `init` refuses them and says what to add.
+are wired by hand from the packages for now; `init` refuses them and says what to add. With
+`init --search opensearch` the read models kept in OpenSearch follow the same tenancy: one index,
+each tenant behind a filtered alias, from the platform alone ([Search read models](../tools/search-read-models.md)).
 
 The tenant condition holds for every row only as a conjunct of the statement. SQL binds `and`
 before `or`, so an alternative written beside the condition is outside it. Alternatives go in a

@@ -30,6 +30,10 @@ export function testEnvironment(overrides: Variables = {}): Variables {
     VARNISH_URL: (process.env['VARNISH_URL'] ?? '') || 'http://varnish.e2e.test',
     VARNISH_PURGE_KEY: (process.env['VARNISH_PURGE_KEY'] ?? '') || 'e2e-purge-key',
     {{/if}}
+    {{#if search.opensearch}}
+    // The configuration asks for a node; the application of the tests is given none, so no store reaches it.
+    OPENSEARCH_URL: (process.env['OPENSEARCH_URL'] ?? '') || 'http://localhost:9200',
+    {{/if}}
     {{#if cache.rateLimit}}
     RATE_LIMIT_MAX: process.env['RATE_LIMIT_MAX'] ?? '1000000',
     {{/if}}

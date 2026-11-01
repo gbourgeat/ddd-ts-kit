@@ -35,6 +35,7 @@ also published as a website, with search, in English and in French:
 | [The regulated guard runs git in its root only](adr/0006-the-regulated-guard-runs-git-in-its-root-only.md) | the one repository the guard runs git in under the regulated profile, and what it leaves unread |
 | [The guard names the readers of VS Code](adr/0007-the-guard-names-the-readers-of-vs-code.md) | the tools of VS Code that write nothing, and why a list of readers and not of writers |
 | [A read model store on OpenSearch](adr/0008-a-read-model-store-on-opensearch.md) | each choice of `@ddd-ts-kit/opensearch`, and what reverses it |
+| [init wires OpenSearch](adr/0009-init-wires-opensearch.md) | `init --search opensearch`: the tenancy, the provisioning of the declared stores, no generator yet, and what reverses each |
 | [Pipeline](../pipeline/README.md) | the quality gates, the git hooks, GitHub and GitLab side by side |
 | Package READMEs under [`packages/`](../packages) | what each package does, its limits and what was verified |
 
@@ -98,6 +99,7 @@ limits, and a recommendation by situation.
 | [Representations and forms](tools/representations-and-forms.md) | XML and CSV without a library, and why; JSON Forms renderers for React, Angular and Vue, and the alternatives |
 | [Dependency injection](tools/dependency-injection.md) | the kit's declarations on tsyringe, InversifyJS or Awilix, NestJS, or manual wiring, compared and measured |
 | [Persistence](tools/persistence.md) | Drizzle, Knex, Prisma or TypeORM; PostgreSQL versus others; a read model on OpenSearch |
+| [Search read models](tools/search-read-models.md) | a read model on OpenSearch: what fits and what does not, `init --search opensearch`, the store of a context, its tests, its tenants, in production |
 | [Message brokers](tools/message-brokers.md) | in-process, RabbitMQ, Kafka, NATS JetStream or Redis Streams |
 | [Cache and coordination](tools/cache-and-coordination.md) | Redis, Dragonfly or Valkey; what the lock does and does not guarantee |
 | [HTTP caches](tools/http-caches.md) | Varnish, Souin, nginx, Fastly, Cloudflare or Bunny in front of the API: how each purges by tag, what the kit verified |

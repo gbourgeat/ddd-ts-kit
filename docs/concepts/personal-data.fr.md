@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:d93d7dfb1c040e96 -->
+<!-- translation-of: personal-data.md sha256:a9b3388bdd5d2443 -->
 
 # Les données personnelles dans un projet généré
 
@@ -357,7 +357,9 @@ clair est signalée.
   nom porte un mot du vocabulaire (voir [Les règles](#les-règles)).
 - **Un *read model*.** Une projection garde ses lignes dans un *read model store*, pas dans une table
   à elle : elle ne déclare rien encore. La reconstruction d'une projection alimentée par l'event store
-  retire la copie en clair qu'elle gardait, une fois donnée à `rebuilds`.
+  retire la copie en clair qu'elle gardait, une fois donnée à `rebuilds`. Un *read model* dans
+  OpenSearch s'atteint comme le dit
+  [Modèles de lecture de recherche](../tools/search-read-models.fr.md#données-personnelles).
 - **Les colonnes que l'agrégat n'écrit pas encore.** Le *mapper* écrit les colonnes déclarées vides
   tant que l'agrégat ne les porte pas ; l'effacement d'une colonne vide atteint la ligne malgré tout.
 

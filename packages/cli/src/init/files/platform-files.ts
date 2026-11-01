@@ -32,7 +32,21 @@ export function platformFiles(config: Config): InitFile[] {
     ...when(config.stack.cache === 'redis', [file('redis/open-redis.ts')]),
     ...when(config.stack.errors === 'sentry', [file('observability/errors.ts')]),
     ...fileStorageFiles(config),
+    ...searchFiles(config),
     ...housekeepingFiles(config),
+  ];
+}
+
+/** The read models of OpenSearch: the injectable every context receives, and on a container the module that binds it. */
+function searchFiles(config: Config): InitFile[] {
+  if (config.stack.search === 'none') {
+    return [];
+  }
+
+  return [
+    platformFile(config, 'search/search-indexes.ts'),
+    platformFile(config, 'search/open-search.ts'),
+    ...when(familyOf(config) === 'container', [platformFile(config, 'search/search.module.ts', 'container')]),
   ];
 }
 
