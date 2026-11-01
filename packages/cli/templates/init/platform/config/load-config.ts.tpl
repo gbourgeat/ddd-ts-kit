@@ -47,10 +47,11 @@ export function loadConfig(variables: Variables): AppConfig {
   const environment = env.oneOf('NODE_ENV', environments, 'development');
 {{#if authn.none}}
 
-  // The development header is believed where NODE_ENV says so, never by default.
-  if (env.optional('NODE_ENV') === undefined) {
-    env.problem('NODE_ENV must be development or test: the development header is believed there only');
-  }
+  requireEnvironmentForTheDevelopmentHeader(env);
+{{/if}}
+{{#if authz.rebac}}
+
+  requireEnvironmentForTheTupleStore(env);
 {{/if}}
 
   const config: AppConfig = {
@@ -126,6 +127,29 @@ export function loadConfig(variables: Variables): AppConfig {
   return config;
 }
 
+{{#if authn.none}}
+/** The development header is believed where NODE_ENV says so, never by default. */
+function requireEnvironmentForTheDevelopmentHeader(env: Environment): void {
+  if (env.optional('NODE_ENV') === undefined) {
+    env.problem('NODE_ENV must be development or test: the development header is believed there only');
+  }
+}
+
+{{/if}}
+{{#if authz.rebac}}
+/**
+ * The in-memory tuple store of createTupleStore runs where NODE_ENV says so, never by default:
+ * drop this check once createTupleStore binds a store that persists.
+ */
+function requireEnvironmentForTheTupleStore(env: Environment): void {
+  if (env.optional('NODE_ENV') === undefined) {
+    env.problem(
+      'NODE_ENV must be set: the in-memory relation tuple store of createTupleStore runs in development and test only, and an unset NODE_ENV says neither',
+    );
+  }
+}
+
+{{/if}}
 {{#if housekeeping.any}}
 /** How long the platform keeps what it is done with, in days; past that, the nightly purges drop it. */
 function readHousekeeping(env: Environment): Housekeeping {

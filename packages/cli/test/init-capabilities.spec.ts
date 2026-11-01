@@ -164,6 +164,17 @@ describe('authentication and authorization', () => {
     expect(platform(initProject(), 'config/load-config.ts')).not.toContain('development header');
   });
 
+  it('refuses to start without NODE_ENV while the relation tuples live in memory', () => {
+    const root = initProject('--authz', 'rebac');
+
+    expect(platform(root, 'config/load-config.ts')).toContain(
+      "'NODE_ENV must be set: the in-memory relation tuple store of createTupleStore runs in development and test only, and an unset NODE_ENV says neither'",
+    );
+
+    expect(read(root, '.env.example')).toContain('the application refuses to start without NODE_ENV');
+    expect(platform(initProject(), 'config/load-config.ts')).not.toContain('relation tuple store');
+  });
+
   it('writes the .env a new project starts from, NODE_ENV=development in it, and keeps the one of the team', () => {
     const root = initProject('--authn', 'none');
 
