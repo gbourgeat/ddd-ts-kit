@@ -1,4 +1,4 @@
-import { FixedClock, InMemoryCache, InMemoryLogger, InMemoryMetrics } from '@ddd-ts-kit/kernel';
+import { FixedClock, FixedExecutionScope, InMemoryCache, InMemoryLogger, InMemoryMetrics } from '@ddd-ts-kit/kernel';
 import { ManualScheduler } from './manual-scheduler';
 
 export interface AspectFakes {
@@ -6,6 +6,8 @@ export interface AspectFakes {
   readonly metrics: InMemoryMetrics;
   readonly cache: InMemoryCache;
   readonly clock: FixedClock;
+  /** The scope `cached` reads the tenant from: it names none until a test runs or enters a context. */
+  readonly scope: FixedExecutionScope;
   /** Advancing it advances the clock too. */
   readonly scheduler: ManualScheduler;
 }
@@ -21,6 +23,7 @@ export function createAspectFakes(now: Date = DEFAULT_NOW): AspectFakes {
     metrics: new InMemoryMetrics(),
     cache: new InMemoryCache(clock),
     clock,
+    scope: new FixedExecutionScope(),
     scheduler: new ManualScheduler(clock),
   };
 }
