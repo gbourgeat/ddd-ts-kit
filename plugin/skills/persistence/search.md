@@ -24,8 +24,8 @@ and what does not, the tests, the tenants and the rights in production are in
   `@ddd-ts-kit/testing/contracts` in an integration spec that reads `OPENSEARCH_URL` and is skipped
   without it; the job that runs it needs an OpenSearch service.
 - **Tenants.** Work with no tenant is refused; a `get` and the writes reach the tenant of the work
-  only, an elevation widens a `search` only. A tenant created after the start needs
-  `provision(tenant)` on each store. Choose `index` when a tenant must be apart physically (a
+  only, an elevation widens a `search` only. A tenant is provisioned at its first request
+  once the tenant directory lists it; an unlisted one creates no index. Choose `index` when a tenant must be apart physically (a
   regulated tenant, offboarding by dropping an index, a restore per tenant, a noisy neighbour).
 - **A person in a document** is a copy to erase: an opaque key, and the rows of the subject deleted
   through the port on erasure.

@@ -1,5 +1,5 @@
 [English](search-read-models.md) · **Français**
-<!-- translation-of: search-read-models.md sha256:716c5d470e4add82 -->
+<!-- translation-of: search-read-models.md sha256:cd5a168b9adf7eb2 -->
 
 # Modèles de lecture de recherche sur OpenSearch
 
@@ -45,13 +45,17 @@ source de vérité. Chaque choix est consigné dans
   demi-gibioctet de tas, port 9200), `OPENSEARCH_URL` dans `.env.example` et les variables dans le
   README.
 
-L'index de chaque store construit depuis `SearchIndexes` est provisionné avant sa première requête :
-`ensureMapping()` sans locataires, `provision(tenant)` pour chaque locataire de `TENANTS` sous
-tables partagées. La composition provisionne les stores construits au moment où elle démarre ; les
-conteneurs construisent un adaptateur quand un handler en a besoin la première fois, si bien qu'un
-tel store est provisionné à sa propre première requête. Un projet sans store n'appelle rien :
-`npm run dev`, les tests et le pipeline n'ont besoin d'aucun nœud. Les outils et les tests ne
-reçoivent aucun nœud : un store construit là est refusé à sa première requête.
+L'index de chaque store construit depuis `SearchIndexes` est provisionné avant une requête :
+`ensureMapping()` une fois sans locataires ; sous tables partagées, `provision(tenant)` pour le
+locataire du travail, une fois par store et par locataire, quand l'annuaire des locataires de la
+plateforme le liste (les `TENANTS` de la configuration, ou les organisations du *preset*
+d'identité). Au démarrage, la composition provisionne, au mieux, chaque locataire listé des stores
+construits d'ici là : un échec est un avertissement dans le journal et le démarrage continue, la
+requête suivante provisionne de nouveau. Un projet sans store n'appelle rien : `npm run dev`, les
+tests et le pipeline n'ont besoin d'aucun nœud. Les outils et les tests ne reçoivent aucun nœud : le
+démarrage ne provisionne rien et un store est refusé à sa première requête. Les scripts de
+confidentialité reçoivent le nœud de la configuration, si bien qu'un effacement atteint une copie
+d'une personne tenue dans OpenSearch.
 
 ## Écrire un store
 
@@ -73,13 +77,16 @@ export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> impl
 ```
 
 - Son nom commence par son contexte (`billing_invoices`) : les index et les alias se construisent
-  depuis lui, et les droits du déploiement se donnent par ce préfixe.
+  depuis lui, et les droits du déploiement se donnent par ce préfixe. Rien d'autre n'impose le
+  préfixe, au-delà des droits du compte de service ; un second store construit sous un nom déjà
+  pris, avec une autre définition ou d'autres champs, lève `SearchNameTakenError`.
 - Seule sa projection l'écrit, par le port : `upsertIfNewer` avec le tampon de l'événement,
   `delete`, qui garde une pierre tombale pour qu'un événement plus ancien ne ramène pas la ligne.
 - `domain/` ne le lit jamais, et aucun handler n'y décide un invariant ou un droit.
 - Seule la plateforme connaît OpenSearch : un contexte ne nomme rien du paquet sinon
-  `OpenSearchReadModelStore` et ses refus, jamais `fetchTransport`, un transport ou une stratégie
-  de locataires à lui (`search/store-from-platform`, une erreur).
+  `OpenSearchReadModelStore` et ses refus, ne nomme le store que dans `extends`, appelle
+  `super(search.options(..))` et n'étale jamais cette réponse pour en changer le transport ou la
+  stratégie de locataires (`search/store-from-platform`, une erreur).
 
 ## Tester
 
@@ -90,6 +97,17 @@ export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> impl
   demandent un nœud : lancez-les dans une spec d'intégration qui lit le nœud dans `OPENSEARCH_URL`
   et se saute sans lui, et donnez au job du pipeline qui la lance un service OpenSearch. Le pipeline
   qu'écrit `init` n'en démarre aucun.
+- Un test de bout en bout qui passe par un store n'a pas besoin de nœud non plus : le kit
+  recommande de lier le port au store en mémoire dans la composition des tests de bout en bout,
+  dans la région `ddd-ts-kit:e2e-fakes` de `test/e2e/support/start-application.ts`, comme pour tout
+  système extérieur. Sur un conteneur du kit :
+
+  ```ts
+  builder.rebind(InvoiceList).toValue(new InMemoryReadModelStore(invoiceCriteria));
+  ```
+
+  Pour le lancer plutôt sur un nœud, passez-y `search: config.search` à l'application, et donnez un
+  nœud au pipeline.
 
 ## Locataires
 
@@ -105,10 +123,14 @@ cela n'est à fixer par un contexte :
   `search` ;
 - un locataire entre dans un nom, et celui qui n'est pas fait de minuscules, de chiffres, de `_` et
   de `-` est refusé (`InvalidIndexNameError`) ;
-- un locataire est provisionné au démarrage pour chaque locataire de `TENANTS`. Un locataire créé
-  plus tard demande `provision(tenant)` sur chaque store à sa création : appelez-le depuis le cas
-  d'usage qui crée le locataire, par un port de la plateforme, ou redémarrez une fois que `TENANTS`
-  le nomme.
+- un locataire est provisionné à sa première requête, une fois que l'annuaire des locataires de la
+  plateforme le liste : un locataire créé après le démarrage (une organisation du *preset*
+  d'identité) n'a besoin ni d'un redémarrage ni d'un appel ; un locataire que l'annuaire ne liste
+  pas, forgé ou inconnu, ne crée aucun index, et sa requête est refusée (`UnprovisionedIndexError`) ;
+  un travail sans locataire et une élévation ne provisionnent rien ;
+- l'échec d'un locataire reste le sien : il est retenté à sa requête suivante, et les autres
+  locataires ne sont pas provisionnés de nouveau ; `loadConfig` refuse une entrée de `TENANTS` qui
+  n'est pas en minuscules.
 
 ### Choisir la stratégie
 
