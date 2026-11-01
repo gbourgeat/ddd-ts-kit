@@ -28,6 +28,9 @@ import { createEventSourcing, type EventSourcing } from '{{alias.platform}}/even
 import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
 {{#if search.opensearch}}
+{{#if tenancy.any}}
+import { tenantDirectory } from '{{alias.platform}}/composition/tenant-directory{{alias.ext}}';
+{{/if}}
 import { openSearch } from '{{alias.platform}}/search/open-search{{alias.ext}}';
 import type { SearchIndexes } from '{{alias.platform}}/search/search-indexes{{alias.ext}}';
 {{/if}}
@@ -95,10 +98,10 @@ export function layFoundations(persistence: Persistence, options: Observed): Fou
     traced: traceApplication({ consumers: options.traceConsumers ?? 'continue' }),
 {{#if search.opensearch}}
 {{#if tenancy.any}}
-    search: openSearch(options.search, { scope, tenants: options.tenants ?? [] }),
+    search: openSearch(options.search, { logger, scope, directory: tenantDirectory(persistence, options.tenants) }),
 {{/if}}
 {{#unless tenancy.any}}
-    search: openSearch(options.search),
+    search: openSearch(options.search, { logger }),
 {{/unless}}
 {{/if}}
 {{#if audit.on}}

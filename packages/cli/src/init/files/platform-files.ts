@@ -44,8 +44,9 @@ function searchFiles(config: Config): InitFile[] {
   }
 
   return [
-    platformFile(config, 'search/search-indexes.ts'),
-    platformFile(config, 'search/open-search.ts'),
+    ...['search-indexes', 'open-search', 'provisioned-indexes', 'store-index', 'search-name-taken-error'].map((name) =>
+      platformFile(config, `search/${name}.ts`),
+    ),
     ...when(familyOf(config) === 'container', [platformFile(config, 'search/search.module.ts', 'container')]),
   ];
 }

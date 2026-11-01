@@ -114,10 +114,10 @@ export function layFoundations(persistence: Persistence, options: PlatformOption
 {{/if}}
 {{#if search.opensearch}}
 {{#if tenancy.any}}
-    search: openSearch(options.search, { scope, tenants: options.tenants ?? [] }),
+    search: openSearch(options.search, { logger, scope, directory: parts.tenants }),
 {{/if}}
 {{#unless tenancy.any}}
-    search: openSearch(options.search),
+    search: openSearch(options.search, { logger }),
 {{/unless}}
 {{/if}}
 {{#if errors.none}}

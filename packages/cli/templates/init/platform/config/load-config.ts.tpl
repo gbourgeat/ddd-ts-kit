@@ -55,9 +55,7 @@ export function loadConfig(variables: Variables): AppConfig {
 {{/if}}
 
   const config: AppConfig = {
-    serviceName: env.optional('OTEL_SERVICE_NAME') ?? '{{project.name}}',
-    deploymentName: env.optional('DEPLOYMENT_NAME') ?? '{{project.name}}',
-    serviceVersion: env.optional('SERVICE_VERSION') ?? '0.0.0',
+    ...readIdentity(env),
     environment,
     port: env.integer('PORT', { fallback: 3000, min: 0, max: 65535 }),
     log: readLog(env),
@@ -130,6 +128,15 @@ export function loadConfig(variables: Variables): AppConfig {
   return config;
 }
 
+/** What this process is called, in its deployment and in its version. */
+function readIdentity(env: Environment): Pick<AppConfig, 'serviceName' | 'deploymentName' | 'serviceVersion'> {
+  return {
+    serviceName: env.optional('OTEL_SERVICE_NAME') ?? '{{project.name}}',
+    deploymentName: env.optional('DEPLOYMENT_NAME') ?? '{{project.name}}',
+    serviceVersion: env.optional('SERVICE_VERSION') ?? '0.0.0',
+  };
+}
+
 {{#if authn.none}}
 /** The development header is believed where NODE_ENV says so, never by default. */
 function requireEnvironmentForTheDevelopmentHeader(env: Environment): void {
@@ -194,6 +201,13 @@ function readTenants(env: Environment): readonly string[] {
   if (!tenants.every(isTenantId)) {
     env.problem('TENANTS must list tenant ids: letters, digits, _ and -, at most 63 characters each');
   }
+{{#if search.opensearch}}
+
+  // A tenant is part of the name of its search index, which OpenSearch keeps in lower case.
+  if (tenants.some((tenant) => tenant !== tenant.toLowerCase())) {
+    env.problem('TENANTS must be lower case: each tenant names a search index of OpenSearch');
+  }
+{{/if}}
 
   return tenants;
 }

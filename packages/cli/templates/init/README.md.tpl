@@ -243,8 +243,9 @@ events and rebuilt from them, never the source of truth nor what an invariant or
 on. Its port lives in `application/ports/`, its adapter in `infrastructure/` extends
 `OpenSearchReadModelStore` of `@ddd-ts-kit/opensearch` and takes `SearchIndexes` of
 `{{config.platformDir}}/search/search-indexes.ts`, which sets the node and the tenancy; the
-platform provisions the index of each store built so{{#if tenancy.any}}, for every tenant of `TENANTS`{{/if}}, before its first request. A project
-with no such store calls nothing at start. The specs of a context bind the port to the in-memory
+platform provisions the index of each store built so before a request{{#if tenancy.any}}, for the tenant of the work once
+the tenant directory of the platform lists it: a tenant it does not list creates no index{{/if}}. The start never fails
+on it, and a project with no such store calls nothing at start. The specs of a context bind the port to the in-memory
 store of the kernel; the tests of this project are given no node.
 
 | Variable | Says |

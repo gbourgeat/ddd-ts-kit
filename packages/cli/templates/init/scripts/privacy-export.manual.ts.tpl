@@ -8,6 +8,11 @@ import { composeApplication } from '{{alias.platform}}/composition/compose-appli
 {{#if persistence.needsUrl}}
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 {{/if}}
+{{#unless persistence.needsUrl}}
+{{#if search.opensearch}}
+import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
+{{/if}}
+{{/unless}}
 import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
 {{#if tenancy.any}}
 import { tenantDirectory } from '{{alias.platform}}/composition/tenant-directory{{alias.ext}}';
@@ -56,6 +61,10 @@ const application = composeApplication(persistence, {
 {{/if}}
 {{#if http.any}}
   authenticator: offlineAuthenticator,
+{{/if}}
+{{#if search.opensearch}}
+  // The copies of a person in the read models of OpenSearch are reached on the node of the application.
+  search: loadConfig(process.env).search,
 {{/if}}
 });
 

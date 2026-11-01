@@ -64,6 +64,41 @@ describe('init --search', () => {
   });
 });
 
+describe('the fullest stack with search', () => {
+  it('keeps loadConfig under the size of a function', () => {
+    const root = initProject(
+      ...[
+        '--orm',
+        'prisma',
+        '--http-cache',
+        'varnish',
+        '--broker',
+        'rabbitmq',
+        '--cache',
+        'redis',
+        '--errors',
+        'sentry',
+      ],
+      ...[
+        '--storage',
+        's3',
+        '--authz',
+        'rebac',
+        '--events',
+        'outbox',
+        '--tenancy',
+        'shared-table',
+        '--search',
+        'opensearch',
+      ],
+    );
+
+    const sizes = JSON.stringify(cli(root, 'check', '--json').json()).match(/clean\/function-size[^}]*/g) ?? [];
+
+    expect(sizes).toEqual([]);
+  });
+});
+
 describe('what init --search opensearch writes', () => {
   it('reads the node and the user of the security plugin, both or neither', () => {
     const root = initProject('--search', 'opensearch');
@@ -85,9 +120,7 @@ describe('what init --search opensearch writes', () => {
 
     expect(platform(root, 'search/search-indexes.ts')).toContain('export abstract class SearchIndexes {');
 
-    expect(platform(root, 'search/open-search.ts')).toContain(
-      "return new ProvisionedIndexes(transport, { strategy: 'none' }, []);",
-    );
+    expect(platform(root, 'search/open-search.ts')).toContain("    tenancy: { strategy: 'none' },\n");
 
     expect(platform(root, 'search/search.module.ts')).toContain('builder.bind(SearchIndexes).toValue(search);');
     expect(platform(root, 'search/search.module.ts')).toContain('onStart: () => search.provision(),');
@@ -105,17 +138,58 @@ describe('what init --search opensearch writes', () => {
     );
   });
 
-  it('keeps the tenants of a store apart by a filtered alias under shared tables', () => {
+  it('keeps the tenants of a store apart by a filtered alias, the tenants read from the directory of the platform', () => {
     const root = initProject('--search', 'opensearch', '--tenancy', 'shared-table');
 
-    expect(platform(root, 'search/open-search.ts')).toContain(
-      "return new ProvisionedIndexes(transport, { strategy: 'attribute', scope }, tenants);",
+    expect(platform(root, 'search/open-search.ts')).toContain("    tenancy: { strategy: 'attribute', scope },\n");
+
+    expect(platform(root, 'composition/lay-foundations.ts')).toContain(
+      'search: openSearch(options.search, { logger, scope, directory: tenantDirectory(persistence, options.tenants) }),',
+    );
+  });
+
+  it('reads the tenants of the organisations of the identity preset, wired by hand too', () => {
+    const root = initProject(
+      '--search',
+      'opensearch',
+      '--preset',
+      'identity',
+      '--di',
+      'manual',
+      '--tenancy',
+      'shared-table',
+    );
+
+    expect(platform(root, 'composition/tenant-directory.ts')).toContain(
+      'OrganisationTenantDirectory(persistence.database)',
     );
 
     expect(platform(root, 'composition/lay-foundations.ts')).toContain(
-      'search: openSearch(options.search, { scope, tenants: options.tenants ?? [] }),',
+      'search: openSearch(options.search, { logger, scope, directory: parts.tenants }),',
     );
   });
+
+  it('refuses at the start a tenant that cannot name a search index', () => {
+    const loadConfig = platform(
+      initProject('--search', 'opensearch', '--tenancy', 'shared-table'),
+      'config/load-config.ts',
+    );
+
+    expect(loadConfig).toContain(
+      "env.problem('TENANTS must be lower case: each tenant names a search index of OpenSearch');",
+    );
+  });
+
+  it.each(['tsyringe', 'manual'])(
+    'reaches the copies of a person in OpenSearch from the privacy scripts, on %s',
+    (di) => {
+      const root = initProject('--search', 'opensearch', '--di', di);
+
+      for (const script of ['privacy-erase', 'privacy-export', 'privacy-purge']) {
+        expect(read(root, `scripts/${script}.ts`), script).toContain('  search: loadConfig(process.env).search,\n');
+      }
+    },
+  );
 
   it('starts a node in the compose stack and names its variables', () => {
     const root = initProject('--search', 'opensearch');
