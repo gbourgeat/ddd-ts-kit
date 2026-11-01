@@ -41,12 +41,16 @@ source of truth. Each choice is recorded in [ADR-0008](../adr/0008-a-read-model-
 - an `opensearch` service in `docker-compose.yml` (one node, security plugin off, half a gibibyte
   of heap, port 9200), `OPENSEARCH_URL` in `.env.example` and the variables in the README.
 
-The index of every store built from `SearchIndexes` is provisioned before its first request:
-`ensureMapping()` without tenancy, `provision(tenant)` for each tenant of `TENANTS` under shared
-tables. The composition provisions the stores built by the time it starts; the containers build an
-adapter when a handler first needs it, so such a store is provisioned at its own first request.
-A project with no store calls nothing: `npm run dev`, the tests and the pipeline need no node. The
-tools and the tests are given no node: a store built there is refused at its first request.
+The index of every store built from `SearchIndexes` is provisioned before a request:
+`ensureMapping()` once without tenancy; under shared tables, `provision(tenant)` for the tenant of
+the work, once per store and tenant, when the tenant directory of the platform lists it (the
+`TENANTS` of the configuration, or the organisations of the identity preset). At the start the
+composition provisions, best effort, every listed tenant of the stores built by then: a failure is
+a warning in the log and the start goes on, the next request provisions again. A project with no
+store calls nothing: `npm run dev`, the tests and the pipeline need no node. The tools and the
+tests are given no node: the start provisions nothing and a store is refused at its first request.
+The privacy scripts are given the node of the configuration, so an erasure reaches a copy of a
+person kept in OpenSearch.
 
 ## Writing a store
 
@@ -68,23 +72,42 @@ export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> impl
 ```
 
 - Its name starts with its context (`billing_invoices`): the indices and the aliases are built from
-  it, and the rights of the deployment are given by that prefix.
+  it, and the rights of the deployment are given by that prefix. Nothing else enforces the prefix,
+  beyond the rights of the service account; a second store built under a name already taken, with
+  another definition or other fields, throws `SearchNameTakenError`.
 - It is written by its projection only, through the port: `upsertIfNewer` with the stamp of the
   event, `delete`, which keeps a tombstone so that an older event does not bring the row back.
 - `domain/` never reads it, and no handler decides an invariant or a right on it.
 - Only the platform knows OpenSearch: a context names nothing of the package but
-  `OpenSearchReadModelStore` and its refusals, never `fetchTransport`, a transport or a tenancy of
-  its own (`search/store-from-platform`, an error).
+  `OpenSearchReadModelStore` and its refusals, names the store only in `extends`, calls
+  `super(search.options(..))` and never spreads that answer to change its transport or tenancy
+  (`search/store-from-platform`, an error).
 
 ## Testing
 
 - The specs of a context bind the port to `InMemoryReadModelStore` of the kernel, built with the
   same criteria: a fake, never a mock.
 - The adapter is held to `readModelRowsContract` and `criteriaContract` of
-  `@ddd-ts-kit/testing/contracts`, the suites the package passes under each strategy. They need a
-  node: run them in an integration spec that reads the node from `OPENSEARCH_URL` and is skipped
-  without it, and give the job of the pipeline that runs it an OpenSearch service. The pipeline
-  `init` writes starts none.
+  `@ddd-ts-kit/testing/contracts`, the suites the package passes under each strategy. In a unit
+  spec they run on `InMemoryOpenSearch` of `@ddd-ts-kit/opensearch/testing`, the OpenSearch in
+  memory the package itself runs on, handed to the store as its transport; `OpenSearchServer`
+  serves it on a local port for a spec that goes through `fetchTransport`
+  ([the README of the package](../../packages/opensearch/README.md#in-the-specs-of-a-project)
+  shows both). A real node proves what the fake answers differently: run the same suites in an
+  integration spec that reads the node from `OPENSEARCH_URL` and is skipped without it, and give
+  the job of the pipeline that runs it an OpenSearch service. The pipeline `init` writes starts
+  none.
+- An end-to-end test that goes through a store needs no node either: the kit recommends binding the
+  port to the in-memory store in the composition of the end-to-end tests, in the
+  `ddd-ts-kit:e2e-fakes` region of `test/e2e/support/start-application.ts`, as for any outside
+  system. On a container of the kit:
+
+  ```ts
+  builder.rebind(InvoiceList).toValue(new InMemoryReadModelStore(invoiceCriteria));
+  ```
+
+  To run it against a node instead, pass `search: config.search` to the application there, and
+  give the pipeline a node.
 
 ## Tenants
 
@@ -99,9 +122,12 @@ for a context to set:
   absent, even under an elevation; an elevation (`acrossTenants`) widens a `search` only;
 - a tenant becomes part of a name, and one that is not lower case letters, digits, `_` and `-` is
   refused (`InvalidIndexNameError`);
-- a tenant is provisioned at the start for every tenant of `TENANTS`. A tenant created later needs
-  `provision(tenant)` on each store when it is created: call it from the use case that creates the
-  tenant, through a port of the platform, or restart once `TENANTS` names it.
+- a tenant is provisioned at its first request, once the tenant directory of the platform lists it:
+  a tenant created after the start (an organisation of the identity preset) needs no restart and no
+  call; a tenant the directory does not list, forged or unknown, creates no index, and its request
+  is refused (`UnprovisionedIndexError`); work with no tenant and an elevation provision nothing;
+- the failure of one tenant stays its own: it is tried again at its next request, and the other
+  tenants are not provisioned again; `loadConfig` refuses a `TENANTS` entry that is not lower case.
 
 ### Choosing the strategy
 

@@ -199,6 +199,69 @@ wait on every write; it is what the specs use.
 - **A string up to 32 766 bytes** in a filtered field: Lucene refuses a longer term.
 - Offset pages stop at `index.max_result_window`; page by cursor beyond.
 
+## In the specs of a project
+
+`@ddd-ts-kit/opensearch/testing` exports `InMemoryOpenSearch`, the OpenSearch in memory the specs
+of this package run on: an `OpenSearchTransport` that serves the subset of the REST API the store
+calls (strict mappings, aliases with a filter and a routing, conditional writes, the query DSL the
+store writes), every write seen by the next search. Handed to `OpenSearchReadModelStore`, it holds
+an adapter to its contract in a unit spec, with no server. `OpenSearchServer` serves the same node
+on a local port, behind the credentials of the security plugin, for a spec that goes through
+`fetchTransport`. Neither is OpenSearch: a spec of the adapter on a real node is the one that
+proves a query OpenSearch answers differently; the specs of a context bind the read port to
+`InMemoryReadModelStore` of the kernel.
+
+<!-- checked sample -->
+```ts
+import { defineCriteria } from '@ddd-ts-kit/kernel';
+import { OpenSearchReadModelStore, fetchTransport } from '@ddd-ts-kit/opensearch';
+import { InMemoryOpenSearch, OpenSearchServer } from '@ddd-ts-kit/opensearch/testing';
+
+interface InvoiceRow {
+  readonly id: string;
+  readonly status: string;
+}
+
+const invoiceCriteria = defineCriteria<InvoiceRow>({
+  fields: { id: { type: 'string', filter: ['eq'] }, status: { type: 'string', filter: ['eq'], sortable: true } },
+  defaultSort: [{ field: 'status', direction: 'asc' }],
+  tieBreaker: 'id',
+});
+
+const issued = { eventId: 'evt-1', occurredAt: new Date('2026-11-01T09:00:00Z') };
+
+// A unit spec: the store on the node in memory, in the process.
+export async function onTheNodeInMemory(): Promise<InvoiceRow | undefined> {
+  const store = new OpenSearchReadModelStore<InvoiceRow>({
+    transport: new InMemoryOpenSearch(),
+    name: 'billing_invoices',
+    definition: invoiceCriteria,
+  });
+
+  await store.ensureMapping();
+  await store.upsertIfNewer('i1', issued, () => ({ id: 'i1', status: 'issued' }));
+
+  return store.get('i1');
+}
+
+// A spec of the transport: the same node on a local port, reached through fetchTransport.
+export async function overHttp(): Promise<void> {
+  const credentials = { username: 'app', password: 'app-secret' };
+  const server = await OpenSearchServer.start(credentials);
+  const store = new OpenSearchReadModelStore<InvoiceRow>({
+    transport: fetchTransport({ node: server.url, auth: credentials }),
+    name: 'billing_invoices',
+    definition: invoiceCriteria,
+  });
+
+  try {
+    await store.ensureMapping();
+  } finally {
+    await server.stop();
+  }
+}
+```
+
 ## Tests
 
 `readModelRowsContract` and `criteriaContract` of `@ddd-ts-kit/testing/contracts` (re-exported by

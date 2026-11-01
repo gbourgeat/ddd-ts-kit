@@ -79,6 +79,9 @@ export const SHARDS = [
     'error-rule-violations.spec.ts': 16,
     'dev-reload.spec.ts': 11,
     'client-sdk.spec.ts': 9,
+    // A context that declares a store of OpenSearch, started by the end-to-end tests of its project with no node:
+    // 7 s on a workstation, not yet measured on a runner.
+    'search-without-node.spec.ts': 7,
   },
 ];
 

@@ -1,7 +1,8 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import type { AddressInfo } from 'node:net';
-import type { OpenSearchRequest } from '../../../src';
+import type { OpenSearchRequest } from '../transport/open-search-transport';
 import { InMemoryOpenSearch } from './in-memory-open-search';
+
+const METHODS: readonly OpenSearchRequest['method'][] = ['GET', 'PUT', 'POST', 'DELETE'];
 
 /** What the server answers instead of the node, for the specs of the transport. */
 export type ServerMood = 'answering' | 'silent' | 'behind a proxy';
@@ -37,7 +38,7 @@ export class OpenSearchServer {
   }
 
   get url(): string {
-    return `http://127.0.0.1:${String((this.http.address() as AddressInfo).port)}`;
+    return `http://127.0.0.1:${String(Reflect.get(Object(this.http.address()), 'port'))}`;
   }
 
   async stop(): Promise<void> {
@@ -79,7 +80,7 @@ export class OpenSearchServer {
     const url = new URL(incoming.url ?? '/', 'http://node');
 
     const answered = await this.node.request({
-      method: (incoming.method ?? 'GET') as OpenSearchRequest['method'],
+      method: methodOf(incoming.method),
       path: url.pathname,
       query: Object.fromEntries(url.searchParams),
       ...(text === '' ? {} : { body: JSON.parse(text) }),
@@ -90,11 +91,18 @@ export class OpenSearchServer {
 }
 
 async function bodyOf(incoming: IncomingMessage): Promise<string> {
-  const chunks: Buffer[] = [];
+  let text = '';
+
+  incoming.setEncoding('utf8');
 
   for await (const chunk of incoming) {
-    chunks.push(chunk as Buffer);
+    text += String(chunk);
   }
 
-  return Buffer.concat(chunks).toString('utf8');
+  return text;
+}
+
+/** The method of a request, among those the store sends. */
+function methodOf(written: string | undefined): OpenSearchRequest['method'] {
+  return METHODS.find((method) => method === written) ?? 'GET';
 }

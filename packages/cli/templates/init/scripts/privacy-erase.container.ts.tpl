@@ -13,6 +13,11 @@ import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 {{#if queue.redis}}
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 {{/if}}
+{{#unless queue.redis}}
+{{#if search.opensearch}}
+import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
+{{/if}}
+{{/unless}}
 {{/unless}}
 import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
 {{#if tenancy.any}}
@@ -85,6 +90,10 @@ const application = composeApplication(persistence, {
 {{/if}}
 {{#if http.any}}
   authenticator: offlineAuthenticator,
+{{/if}}
+{{#if search.opensearch}}
+  // The copies of a person in the read models of OpenSearch are reached on the node of the application.
+  search: loadConfig(process.env).search,
 {{/if}}
 {{#if queue.redis}}
   redis,

@@ -46,7 +46,7 @@ export class AttachReceiptHandler {
 }`,
   },
   'search/store-from-platform': {
-    why: 'Which node a read model reaches and how its tenants are kept apart are choices of the platform, made once for every store: a context that opens a transport or names a tenancy of its own has chosen them for itself, out of reach of the provisioning, of the credentials of the deployment and of the tenancy of the project, and one of its stores may read the documents of every tenant. The domain and the use cases see a read model through its port, as on any store.',
+    why: 'Which node a read model reaches and how its tenants are kept apart are choices of the platform, made once for every store: a context that opens a transport or names a tenancy of its own has chosen them for itself, out of reach of the provisioning, of the credentials of the deployment and of the tenancy of the project, and one of its stores may read the documents of every tenant; spreading the answer of `search.options` to replace its tenancy is the same choice made over the platform. The domain and the use cases see a read model through its port, as on any store.',
     bad: `import { OpenSearchReadModelStore, fetchTransport } from '@ddd-ts-kit/opensearch';
 
 export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> implements InvoiceList {

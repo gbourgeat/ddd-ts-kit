@@ -6,8 +6,33 @@ const { BILLING, PORT, REPOSITORY_PORT } = PATHS;
 const SCHEMA = `${BILLING}/infrastructure/persistence/invoice.schema.ts`;
 const ADAPTER = `${BILLING}/infrastructure/persistence/drizzle-invoice.repository.ts`;
 const SPEC = `${BILLING}/test/unit/attach-receipt.handler.spec.ts`;
-const READER = `${BILLING}/infrastructure/persistence/search-invoice.reader.ts`;
+const READER = `${BILLING}/infrastructure/persistence/search-invoice-list.reader.ts`;
 const READER_SPEC = `${BILLING}/test/integration/search-invoice.reader.spec.ts`;
+const LOOSE_LIST = `${BILLING}/infrastructure/persistence/loose-list.reader.ts`;
+const LOOSE = `${BILLING}/infrastructure/persistence/loose-invoices.reader.ts`;
+
+/** An adapter as the guidance writes it: the store extended, its options asked of the platform, a field of the row named `transport`. */
+const SEARCH_ADAPTER = [
+  "import { defineCriteria } from '@ddd-ts-kit/kernel';",
+  "import { OpenSearchReadModelStore, UnprovisionedIndexError } from '@ddd-ts-kit/opensearch';",
+  "import type { SearchIndexes } from '@/platform/search/search-indexes.js';",
+  '',
+  'interface InvoiceRow {',
+  '  readonly id: string;',
+  '  readonly transport: string;',
+  '}',
+  '',
+  "const criteria = defineCriteria<InvoiceRow>({ fields: { id: { type: 'string', filter: ['eq'] } }, tieBreaker: 'id' });",
+  '',
+  'export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> {',
+  '  static readonly refused = UnprovisionedIndexError;',
+  '',
+  '  constructor(search: SearchIndexes) {',
+  "    super(search.options('billing_invoices', criteria, { fields: { transport: 'string' } }));",
+  '  }',
+  '}',
+  '',
+].join('\n');
 
 export const FILES_FIXTURES: readonly Fixture[] = [
   {
@@ -104,13 +129,23 @@ export const FILES_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'search/store-from-platform',
-    name: 'an adapter that extends the store and catches its refusal, a spec that opens a node of its own',
+    name: 'an adapter built from the options of the platform, a row field named transport, a spec that opens a node of its own',
     expect: 'pass',
     files: project({
-      [READER]:
-        "import { OpenSearchReadModelStore, UnprovisionedIndexError } from '@ddd-ts-kit/opensearch';\nexport const refusal = UnprovisionedIndexError;\nexport const store = OpenSearchReadModelStore;\n",
+      [READER]: SEARCH_ADAPTER,
       [READER_SPEC]:
         "import { fetchTransport } from '@ddd-ts-kit/opensearch';\nexport const transport = fetchTransport({ node: 'http://localhost:9200' });\n",
+    }),
+  },
+  {
+    ruleId: 'search/store-from-platform',
+    name: 'the options of the platform spread with another tenancy, in a file that does not import the package',
+    expect: { file: LOOSE },
+    files: project({
+      [LOOSE_LIST]:
+        "import { OpenSearchReadModelStore } from '@ddd-ts-kit/opensearch';\nexport class LooseList extends OpenSearchReadModelStore<{ readonly id: string }> {}\n",
+      [LOOSE]:
+        "import type { SearchIndexes } from '@/platform/search/search-indexes.js';\nimport { LooseList } from '@/contexts/billing/infrastructure/persistence/loose-list.reader.js';\nexport const looseInvoices = (search: SearchIndexes, definition: never) =>\n  new LooseList({ ...search.options('billing_invoices', definition), tenancy: { strategy: 'none' } });\n",
     }),
   },
   {
@@ -129,6 +164,15 @@ export const FILES_FIXTURES: readonly Fixture[] = [
     files: project({
       [READER]:
         "import { OpenSearchReadModelStore } from '@ddd-ts-kit/opensearch';\nexport const options = (given: object) => ({ ...given, tenancy: { strategy: 'none' } });\nexport const store = OpenSearchReadModelStore;\n",
+    }),
+  },
+  {
+    ruleId: 'search/store-from-platform',
+    name: 'an adapter whose constructor hands the store options it wrote itself',
+    expect: { file: READER },
+    files: project({
+      [READER]:
+        "import { OpenSearchReadModelStore } from '@ddd-ts-kit/opensearch';\nexport class SearchInvoiceList extends OpenSearchReadModelStore<{ readonly id: string }> {\n  constructor(written: Record<string, unknown>) {\n    super(written);\n  }\n}\n",
     }),
   },
   {

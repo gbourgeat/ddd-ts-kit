@@ -1,4 +1,6 @@
-import type { FakeProperty } from './fake-values';
+import { bodyOf } from './body-of';
+import { FakeRefusal } from './fake-refusal';
+import type { FakeProperty } from './properties-of';
 
 type Source = Readonly<Record<string, unknown>>;
 
@@ -6,17 +8,6 @@ export interface FakeDocument {
   readonly source: Source;
   readonly seqNo: number;
   readonly primaryTerm: number;
-}
-
-/** A refusal of a mapping or a document, as the node types it. */
-export class FakeRefusal extends Error {
-  constructor(
-    readonly status: number,
-    readonly type: string,
-    reason: string,
-  ) {
-    super(reason);
-  }
 }
 
 const LEAF_TYPES: Readonly<Record<string, (value: unknown) => boolean>> = {
@@ -97,7 +88,7 @@ function checked(source: Source, properties: Readonly<Record<string, FakePropert
         throw new FakeRefusal(400, 'mapper_parsing_exception', `object mapping for [${name}] tried to parse a value`);
       }
 
-      checked(value as Source, property.properties, name);
+      checked(bodyOf(value), property.properties, name);
     } else if (!(LEAF_TYPES[property.type ?? 'keyword'] ?? (() => true))(value)) {
       throw new FakeRefusal(
         400,

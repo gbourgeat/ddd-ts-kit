@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1b7edc02885ee4c4 -->
+<!-- translation-of: README.md sha256:eee20ce395d8b623 -->
 
 # @ddd-ts-kit/opensearch
 
@@ -211,6 +211,70 @@ les specs utilisent.
   les facettes ne sont pas construites.
 - **Une chaîne jusqu'à 32 766 octets** dans un champ filtré : Lucene refuse un terme plus long.
 - Les pages par décalage s'arrêtent à `index.max_result_window` ; au-delà, paginer par curseur.
+
+## Dans les specs d'un projet
+
+`@ddd-ts-kit/opensearch/testing` exporte `InMemoryOpenSearch`, l'OpenSearch en mémoire sur lequel
+tournent les specs de ce paquet : un `OpenSearchTransport` qui sert le sous-ensemble de l'API REST
+que le store appelle (*mappings* stricts, alias avec un filtre et un routage, écritures
+conditionnelles, le DSL de requête qu'écrit le store), chaque écriture vue par la recherche
+suivante. Donné à `OpenSearchReadModelStore`, il tient un adaptateur à son contrat dans une spec
+unitaire, sans serveur. `OpenSearchServer` sert le même nœud sur un port local, derrière les
+identifiants du plugin de sécurité, pour une spec qui passe par `fetchTransport`. Aucun des deux
+n'est OpenSearch : une spec de l'adaptateur sur un vrai nœud est celle qui prouve une requête
+qu'OpenSearch répond autrement ; les specs d'un contexte lient le port de lecture à
+`InMemoryReadModelStore` du noyau.
+
+<!-- checked sample -->
+```ts
+import { defineCriteria } from '@ddd-ts-kit/kernel';
+import { OpenSearchReadModelStore, fetchTransport } from '@ddd-ts-kit/opensearch';
+import { InMemoryOpenSearch, OpenSearchServer } from '@ddd-ts-kit/opensearch/testing';
+
+interface InvoiceRow {
+  readonly id: string;
+  readonly status: string;
+}
+
+const invoiceCriteria = defineCriteria<InvoiceRow>({
+  fields: { id: { type: 'string', filter: ['eq'] }, status: { type: 'string', filter: ['eq'], sortable: true } },
+  defaultSort: [{ field: 'status', direction: 'asc' }],
+  tieBreaker: 'id',
+});
+
+const issued = { eventId: 'evt-1', occurredAt: new Date('2026-11-01T09:00:00Z') };
+
+// Une spec unitaire : le store sur le nœud en mémoire, dans le processus.
+export async function onTheNodeInMemory(): Promise<InvoiceRow | undefined> {
+  const store = new OpenSearchReadModelStore<InvoiceRow>({
+    transport: new InMemoryOpenSearch(),
+    name: 'billing_invoices',
+    definition: invoiceCriteria,
+  });
+
+  await store.ensureMapping();
+  await store.upsertIfNewer('i1', issued, () => ({ id: 'i1', status: 'issued' }));
+
+  return store.get('i1');
+}
+
+// Une spec du transport : le même nœud sur un port local, atteint par fetchTransport.
+export async function overHttp(): Promise<void> {
+  const credentials = { username: 'app', password: 'app-secret' };
+  const server = await OpenSearchServer.start(credentials);
+  const store = new OpenSearchReadModelStore<InvoiceRow>({
+    transport: fetchTransport({ node: server.url, auth: credentials }),
+    name: 'billing_invoices',
+    definition: invoiceCriteria,
+  });
+
+  try {
+    await store.ensureMapping();
+  } finally {
+    await server.stop();
+  }
+}
+```
 
 ## Tests
 
