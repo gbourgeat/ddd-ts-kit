@@ -37,6 +37,15 @@ describe('fetchTransport', () => {
     expect(answer).toEqual({ status: 200, body: { acknowledged: true, index: 'given' } });
   });
 
+  it('reaches the same path when the node URL ends with slashes', async () => {
+    const answer = await fetchTransport({ node: `${server.url}///`, auth: CREDENTIALS }).request({
+      method: 'GET',
+      path: '/given',
+    });
+
+    expect(answer).toMatchObject({ status: 200, body: { given: { mappings: { properties: {} } } } });
+  });
+
   it('answers a refusal of the credentials as a status, which the store names', async () => {
     const answer = await fetchTransport({ node: server.url }).request({ method: 'GET', path: '/given' });
 

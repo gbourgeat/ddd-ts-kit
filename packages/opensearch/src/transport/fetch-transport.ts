@@ -9,7 +9,7 @@ const DEFAULT_TIMEOUT_MS = 10_000;
  * on every request, and a timeout. A request with no answer rejects with `OpenSearchUnavailableError`.
  */
 export function fetchTransport(options: FetchTransportOptions): OpenSearchTransport {
-  const node = options.node.replace(/\/+$/, '');
+  const node = withoutTrailingSlashes(options.node);
   const headers = headersOf(options.auth);
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
@@ -54,4 +54,15 @@ function parsed(text: string): unknown {
   } catch {
     return undefined;
   }
+}
+
+/** The node URL without the slashes it ends with, read from the end in one pass. */
+function withoutTrailingSlashes(node: string): string {
+  let end = node.length;
+
+  while (end > 0 && node[end - 1] === '/') {
+    end -= 1;
+  }
+
+  return node.slice(0, end);
 }
