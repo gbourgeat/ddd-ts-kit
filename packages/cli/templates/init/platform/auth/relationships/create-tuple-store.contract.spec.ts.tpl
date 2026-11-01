@@ -8,12 +8,8 @@ relationTupleStoreContract(
 );
 
 describe('The relation tuple store of the platform, by environment', () => {
-  it('starts in memory in development', () => {
-    expect(() => createTupleStore('development')).not.toThrow();
-  });
-
-  it('starts in memory in a test run', () => {
-    expect(() => createTupleStore('test')).not.toThrow();
+  it.each(['development', 'test'])('starts in memory in %s', (environment) => {
+    expect(() => createTupleStore(environment)).not.toThrow();
   });
 
   it('refuses production until a store that persists is bound', () => {
