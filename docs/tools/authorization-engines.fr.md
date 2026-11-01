@@ -1,5 +1,5 @@
 [English](authorization-engines.md) · **Français**
-<!-- translation-of: authorization-engines.md sha256:4045169e00b05dcf -->
+<!-- translation-of: authorization-engines.md sha256:779e35036a8549b4 -->
 
 # Moteurs d'autorisation : dans le processus ou un service dédié
 
@@ -11,7 +11,7 @@ politiques. Cette page les compare et dit quand passer de l'*authorizer* dans le
 service vaut ce qu'il coûte. Pour les relations, le kit tient les deux bouts aux mêmes suites de
 contrat : un magasin de tuples dans le PostgreSQL du projet (le port et sa suite sont livrés avec
 `@ddd-ts-kit/auth`, l'application d'exemple en a un adaptateur Knex, et `init --authz rebac`
-démarre un projet sur le magasin en mémoire avec une note pour le remplacer), et
+démarre un projet sur le magasin en mémoire avec une note pour le remplacer, magasin qui refuse de démarrer en production), et
 [`@ddd-ts-kit/openfga`](../../packages/openfga/README.fr.md), les deux mêmes ports sur un serveur
 OpenFGA, son modèle généré à partir du même schéma. Les autres services disposent d'une suite de
 contrat à laquelle tenir un adaptateur.

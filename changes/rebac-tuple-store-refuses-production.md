@@ -1,0 +1,3 @@
+**A project generated with `--authz rebac` refuses to start in production on the in-memory relation tuple store.** `createTupleStore` of `src/platform/auth/relationships/` now runs the in-memory store in development and test only, as `DevelopmentHeaderAuthenticator` does, and its error names what to bind instead: `OpenFgaRelationTupleStore` of `@ddd-ts-kit/openfga`, or a table of the database held to `relationTupleStoreContract`. `InMemoryRelationTupleStore` itself is unchanged and stays free for tests. See [Authorization engines](docs/tools/authorization-engines.md).
+
+To move: a project on ReBAC that runs in production binds a real store in `createTupleStore`, or its start refuses. Run `ddd-ts-kit init --force` to receive the refusal and the spec that proves it.
