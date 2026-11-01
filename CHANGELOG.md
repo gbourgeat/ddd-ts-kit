@@ -4,6 +4,78 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.107.0
+
+**The table of `generate` kinds in the README of the CLI lists every kind and its flags.** The rows of `module`, `property` and `acceptance` were missing, and so were the flags `--module` (on the 33 kinds that write into a module of the model), `--name` of `integration-handler` and `event-handler`, `--version` of `integration-handler`, `--global` of `job`, `--number` of `adr` and `--reason` of `context`. A spec holds the table, in English and in French, against `generate --help --json`.
+
+**The mutation reading of a change runs on GitLab and reads the runs on GitHub.** `mutation_changed` of the generated `.gitlab-ci.yml` runs on `node:24-bookworm`, the image of `install` that has git (it failed on `git fetch` in the slim image and turned every merge request pipeline red), and is allowed to fail, since it is a reading and not a gate. `mutation-changed` of the generated GitHub workflow asks `actions: read` beside `contents: read`, which `gh run list` needs on a private repository. A spec holds that every generated GitLab job whose script calls git names an image with git.
+
+To move: a project generated before keeps its pipeline definitions on `init --force`. In `.gitlab-ci.yml`, give `mutation_changed` `image: node:24-bookworm` and `allow_failure: true`; in `.github/workflows/ci.yml`, give `mutation-changed` `permissions: { contents: read, actions: read }`.
+
+**`init` and `doctor` say when the project is not at the top of its git repository.** In a monorepo, a project in `apps/api` has its `.github/`, `.gitlab-ci.yml` and `lefthook.yml` where GitHub, GitLab and lefthook never read them, and its `allowBuilds` where pnpm does not look from the workspace root. `init` now prints a note that names those files, and `doctor` reports a `hook project folder` finding with the same sentence as its fix; nothing is moved. The guide on teamwork has a section on running the kit in a subfolder.
+
+**The sandbox guide says what the allow-list of domains stops and what it does not.** `sandbox.network.allowedDomains` stops a request to a host that is not listed. It judges the host and the port, never what is sent, so it does not stop data sent to an allowed host (a `git push` with a token of another account), nor the code that a command already allowed runs, such as a spec. The guide no longer claims "no exfiltration by `curl`", and says what a team adds: `permissions.deny` on the commands that send, and tokens kept out of the sandbox.
+
+**The generated TypeORM schema says how to type a jsonb column.** A jsonb field typed `Record<string, unknown>` in the `Columns` type does not compile in the generated repository (`QueryDeepPartialEntity` of TypeORM refuses it in `insertIgnoringConflict` and `update`). The `TODO(domain)` of the generated schema and the persistence page now say to type it `JsonDocument` of `@ddd-ts-kit/typeorm` or a named interface, which compile.
+
+**`generate` refuses a name Windows reserves for a device.** `CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9` and `LPT1` to `LPT9`, whatever the case, are refused as the name of a context and of a concept (`con.aggregate.ts` cannot be checked out on NTFS), with one list shared by both. `--allow-name` lets a concept through where the project is not worked on from Windows.
+
+**The `cached` aspect and the `Cached` decorator keep their entries per tenant.** In work that names a tenant, an entry is filed under that tenant as `tenantCacheKey` does, and concurrent identical calls are shared within one tenant. `AspectRuntime` gains `scope`, the `ExecutionScope` `cached` reads the tenant from, and a generated composition root gives it to `installAspectRuntime`. `cached` needs that scope, or `shared: true` for an answer that depends on no tenant: without either, a call throws an `AspectRuntimeError` that names `scope` of `installAspectRuntime` and `shared: true`, with a cache of the options as with one of the runtime. `shared: true` keeps one entry for every tenant; work under a scope that names no tenant keeps the key as written; work under an elevation (`acrossTenants`) neither reads nor writes the cache and runs the call. The testing helpers of `@ddd-ts-kit/aspects` give a scope that names no tenant. See [Cache and coordination](docs/tools/cache-and-coordination.md).
+
+To move: in `src/platform/composition/compose-application.ts`, or a composition root written by hand, add `scope` to `installAspectRuntime` (`scope: container.resolve(ExecutionScope)` with a container, `scope` of the platform without one), or `cached` refuses at the call. A cached read meant for every tenant says `shared: true`. The cache of tenants already in place is read cold once.
+
+**`eraseDataSubject` runs every rebuild, whatever one of them does.** A rebuild that fails no longer stops those after it, so each healthy projection drops its clear copy in the same run. As for a copy, the first failure is thrown once everything ran, and running the erasure again completes it. See [Personal data](docs/concepts/personal-data.md).
+
+**`withFieldAccess` holds on an answer of a status the route does not declare, and the documentation says what it reaches.** Such an answer falls under the rules of every response the route declares. The rules apply to the properties of the schema they are declared on: a nested object is restricted by the property that holds it, which leaves it out whole, since a schema nested in a validation library does not go through the wrapper of the kit. See [`@ddd-ts-kit/http`](packages/http/README.md).
+
+To move: a project that wrapped the schema of a nested object apart restricts the property that holds it instead.
+
+**A generated client keeps a path parameter to its own segment: an empty value, `.` and `..` throw a `TypeError` before anything is sent.** Every other value is percent-encoded as before. See [Client SDK](docs/tools/client-sdk.md).
+
+To move: regenerate the clients (`ddd-ts-kit sdk`). A caller that passes such a value now gets the `TypeError`.
+
+**`keycloakAuthenticator` takes the access tokens of the realm and no other: a token whose `typ` claim is not `Bearer` is refused with `NOT_AN_ACCESS_TOKEN`.** An ID token is refused whatever its audience. `JwtAuthenticator` on another issuer does not change. See [Identity](docs/tools/identity.md).
+
+To move: a spec that signs its own tokens for a Keycloak authenticator adds `typ: 'Bearer'` to the claims, as `test/e2e/support/create-credentials.ts` of a generated project now does.
+
+**The audit pages say when an erasure reaches the masks of `subjectMasker`.** Without event sourcing `init` writes no key store and `privacy:erase` destroys no key: a project that masks this way brings the store and its table, and gives the store as `keys` to `eraseDataSubject`. See [The audit trail](docs/concepts/audit-trail.md).
+
+**`privacy/snapshot-sealed`: a value of a snapshot named like personal data is sealed with `personalData`, as in the events.** An erasure destroys the key of the person, which reaches what a snapshot sealed and nothing else. The rule reads `<aggregate>-snapshots.mapper.ts` by name, on both sides of the mapper, and warns as the other `privacy/*` rules do; `privacy/declared-field` no longer reads such a file as a table. [Event sourcing](docs/concepts/event-sourcing.md) and the `TODO(domain)` of a generated event-sourced repository say how to seal.
+
+To move: seal what the rule reports, with `personalData(subject, value)` in `encode` and `data.personalText(...)` or `data.personalInstant(...)` in `decode`, and change `version`. A snapshot already written stays as it is until the next one replaces it.
+
+**The documentation of an erasure says what a cache keeps of a person.** An erasure does not reach the `Cache` port: a value a `cached` read keeps of a person stays until its time to live. [Personal data](docs/concepts/personal-data.md), the README of `@ddd-ts-kit/aspects` and the register a new project is given (`docs/privacy/register.md`) now say so; a register already written keeps its text, which the team may complete.
+
+**The guard reads at most 16 MiB of a file it compares, and copies no more to hold it.** Past that size, the note
+before a command of a worker hashes the size and time of a changed file instead of its content, and keeps no copy
+of it. A file past the bound that was already changed before the command, and that changes during it, has nothing
+to be put back to: it is said to the worker, who leaves it out of its commits and names it in its report, and it is
+not held. The same goes for a file the guard cannot read.
+
+**The guard reads a patch that a host gives as the text of its tool input, the `apply_patch` of Copilot CLI.** A
+`tool_input` that is a string goes to the patch reader the patches of Codex go through, before the write and after
+it: each file of the patch is judged by the rules of the editor tools, the scope of a worker included.
+
+**The guard reads a patch whose file headers are indented or whose lines end in CRLF.** `*** Add File:`,
+`*** Update File:` and `*** Delete File:` are read with an indent, and every line of a patch with either line ending,
+as the patch tool of the host parses them. What that parser refuses stays unread: a lower case header, a wider
+marker, an indented `+` or `-` line.
+
+**The guard reads the editor tools of VS Code.** `create_file`, `replace_string_in_file`,
+`multi_replace_string_in_file`, `insert_edit_into_file` and `edit_notebook_file` are judged before the write and
+checked after it, the scope of a worker included: `filePath`, `oldString`, `newString`, `code`, and `replacements`,
+one write per file they name. A change of the `scripts` of `package.json` is read from the text these calls leave,
+and `code`, which the host merges, is asked. VS Code keeps no matcher, so the write hooks also run on its readers:
+`filePath` is read for the tools that write, and a `read_file` stays a read.
+
+**A project generated with `--authz rebac` refuses to start in production on the in-memory relation tuple store.** `createTupleStore` of `src/platform/auth/relationships/` now runs the in-memory store in development and test only, as `DevelopmentHeaderAuthenticator` does, and its error names what to bind instead: `OpenFgaRelationTupleStore` of `@ddd-ts-kit/openfga`, or a table of the database held to `relationTupleStoreContract`. `InMemoryRelationTupleStore` itself is unchanged and stays free for tests. See [Authorization engines](docs/tools/authorization-engines.md).
+
+To move: a project on ReBAC that runs in production binds a real store in `createTupleStore`, or its start refuses. Run `ddd-ts-kit init --force` to receive the refusal and the spec that proves it.
+
+**Under the regulated profile the guard of the plugin runs no program the project holds.** At no hook does it start the `ddd-ts-kit` or the Biome of `node_modules`. The profile is read from `agents.profile`, at the root of the project and in every folder above it, and from `.claude/settings.json` at the same levels, where `sandbox.enabled: true` with `sandbox.allowUnsandboxedCommands: false` counts as the profile: the sandbox of Claude Code denies that file to its commands. The rules the guard reads itself keep running. What the CLI answered does not: no check at the write nor at the stop, no `formatOnWrite`, no `dependenciesBeforeWrite`, no gate nor next step of a story, no map of the contexts. The session start says so in one line, a stop neither blocks on a check that did not run nor says it ran, the pipeline and the commit gate hold those checks, and `doctor` reports what it did. The message of the `Stop` hook now reads `ddd-ts-kit: guard`. See [Sandboxing coding agents](docs/guides/agent-sandbox.md).
+
+To move: a regulated project runs `ddd-ts-kit doctor --strict`: a `sandbox.enabled` or a `sandbox.allowUnsandboxedCommands` it reports is set by hand when the project set it otherwise, or written by `init --agent-profile regulated` when it is missing. No `denyWrite` line is needed. A project that relied on `formatOnWrite` formats at the commit, and one that wants the check before the pipeline runs `ddd-ts-kit check` in the session.
+
 ## 0.106.0
 
 **Every published package says the Node it needs: `engines.node` is `>=22.12.0` in each manifest.** `ddd-ts-kit` and the runtime packages carried no `engines` field; only `@ddd-ts-kit/eslint-plugin` did. `npm install` under an older Node now warns (`EBADENGINE`) instead of failing later on a syntax the runtime lacks, and the Node badge of the README reads the range from the published `ddd-ts-kit` instead of `unknown`.
