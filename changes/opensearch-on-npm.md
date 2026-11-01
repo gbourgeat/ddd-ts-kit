@@ -1,1 +1,0 @@
-**`@ddd-ts-kit/opensearch` is on npm.** The read model store on OpenSearch, with each tenant in an index or behind a filtered alias, ships with the other packages under the version of the kit: `npm i @ddd-ts-kit/opensearch`. `init` does not wire it yet; its README shows the composition by hand, and `docs/adr/0008-a-read-model-store-on-opensearch.md` records each choice.

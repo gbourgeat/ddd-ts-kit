@@ -4,6 +4,10 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.108.1
+
+**`@ddd-ts-kit/opensearch` is on npm.** The read model store on OpenSearch, with each tenant in an index or behind a filtered alias, ships with the other packages under the version of the kit: `npm i @ddd-ts-kit/opensearch`. `init` does not wire it yet; its README shows the composition by hand, and `docs/adr/0008-a-read-model-store-on-opensearch.md` records each choice.
+
 ## 0.108.0
 
 **The registry of permissions of a fresh project is laid out as the formatter keeps it, with no context and no audit set.** `src/platform/auth/authorization/permissions.ts` wrote `PermissionRegistry.of(` holding only the comments of its region, which Biome lays out otherwise, so `format:check` and `verify` failed on the first run of `init --authz rebac --authn none --orm none`. The sets now sit in a `permissionSets` array declared above the call, which `generate context` and `generate command --permission` fill as before, and `PermissionRegistry.of(...permissionSets)` takes them. The end-to-end check of a fresh project formats the stack with no ORM and no context.

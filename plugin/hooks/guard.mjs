@@ -31,7 +31,7 @@ const CLAUDE_SETTINGS = '.claude/settings.json';
 const CONFIG_BYTES = 256 * 1024;
 // The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
 // the version of the kit: setting a new version of the packages rewrites it.
-const KIT_VERSION = '0.108.0';
+const KIT_VERSION = '0.108.1';
 const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
 // The worktree of a story one session takes to its pull request; its code waits for the build gate.
