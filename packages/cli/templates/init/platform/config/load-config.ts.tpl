@@ -46,9 +46,11 @@ export function loadConfig(variables: Variables): AppConfig {
   const env = new Environment(variables);
   const environment = env.oneOf('NODE_ENV', environments, 'development');
 {{#if authn.none}}
+
   requireEnvironmentForTheDevelopmentHeader(env);
 {{/if}}
 {{#if authz.rebac}}
+
   requireEnvironmentForTheTupleStore(env);
 {{/if}}
 
