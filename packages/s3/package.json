@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/s3",
-  "version": "0.107.0",
+  "version": "0.108.0",
   "description": "Adapter of the kernel FileStorage port on the S3 protocol (AWS S3, MinIO, OVHcloud, Scaleway, Cloudflare R2): streamed uploads, signed links, copy, move, listing.",
   "keywords": [
     "ddd",
@@ -45,13 +45,13 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.107.0"
+    "@ddd-ts-kit/kernel": "0.108.0"
   },
   "peerDependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",
     "@aws-sdk/lib-storage": "^3.1152.0",
     "@aws-sdk/s3-request-presigner": "^3.1152.0",
-    "@ddd-ts-kit/testing": "0.107.0"
+    "@ddd-ts-kit/testing": "0.108.0"
   },
   "peerDependenciesMeta": {
     "@aws-sdk/client-s3": {
@@ -71,6 +71,6 @@
     "@aws-sdk/client-s3": "3.1156.0",
     "@aws-sdk/lib-storage": "3.1156.0",
     "@aws-sdk/s3-request-presigner": "3.1156.0",
-    "@ddd-ts-kit/testing": "0.107.0"
+    "@ddd-ts-kit/testing": "0.108.0"
   }
 }

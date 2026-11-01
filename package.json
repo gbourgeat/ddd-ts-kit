@@ -61,7 +61,7 @@
     "@biomejs/biome": "2.6.3",
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.3",
-    "@ddd-ts-kit/eslint-plugin": "0.107.0",
+    "@ddd-ts-kit/eslint-plugin": "0.108.0",
     "@electric-sql/pglite": "0.5.11",
     "@electric-sql/pglite-socket": "0.2.14",
     "@eslint/js": "^10.0.1",
