@@ -1,7 +1,6 @@
 {
   "name": "@ddd-ts-kit/opensearch",
   "version": "0.108.0",
-  "private": true,
   "description": "Adapter of the kernel ReadModelStore port on OpenSearch, with no client library: criteria translated to the query DSL, writes ordered by the event stamp, tenants kept apart by an index each or by filtered aliases on one index.",
   "keywords": [
     "ddd",

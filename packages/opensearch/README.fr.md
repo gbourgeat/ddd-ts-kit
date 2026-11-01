@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4ed4ca52291a2b00 -->
+<!-- translation-of: README.md sha256:57523eb375c8c2ae -->
 
 # @ddd-ts-kit/opensearch
 
@@ -11,13 +11,12 @@ Il ne dépend d'aucune bibliothèque cliente : il parle l'API REST par un transp
 lignes. Rien dans `domain/` ni `application/` n'importe ce paquet : un projecteur écrit sur le port
 de son modèle de lecture, et la plateforme lie cet adaptateur.
 
-**Pas encore sur npm.** Le paquet est `private` dans cette version : la release publie chaque
-paquet par publication de confiance (*trusted publishing*), que le propriétaire du scope
-configure sur npmjs.com une fois par nom de paquet. Une fois l'éditeur de confiance de
-`@ddd-ts-kit/opensearch` configuré, `private` disparaît et la release suivante le publie
-([la décision](../../docs/adr/0008-a-read-model-store-on-opensearch.fr.md)). D'ici là, il s'utilise
-depuis un clone du dépôt. `init` ne le câble pas non plus : la composition ci-dessous s'écrit à la
-main.
+```
+npm i @ddd-ts-kit/opensearch
+```
+
+`init` ne le câble pas : la composition ci-dessous s'écrit à la main, et
+[la décision](../../docs/adr/0008-a-read-model-store-on-opensearch.fr.md) consigne chaque choix.
 
 ## Racine de composition
 

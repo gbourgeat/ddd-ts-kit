@@ -9,12 +9,12 @@ or by a tenant field and a filtered alias per tenant. It depends on no client li
 the REST API through a transport of a few lines. Nothing in `domain/` or `application/` imports
 this package: a projector writes to its read model port, and the platform binds this adapter.
 
-**Not on npm yet.** The package is `private` in this version: the release publishes each package
-by trusted publishing, which the owner of the scope configures on npmjs.com once per package
-name. Once the trusted publisher of `@ddd-ts-kit/opensearch` is configured, `private` goes and the
-next release publishes it ([the decision record](../../docs/adr/0008-a-read-model-store-on-opensearch.md)).
-Until then it is used from a clone of the repository. `init` does not wire it either: the
-composition below is written by hand.
+```
+npm i @ddd-ts-kit/opensearch
+```
+
+`init` does not wire it: the composition below is written by hand, and
+[the decision record](../../docs/adr/0008-a-read-model-store-on-opensearch.md) states each choice.
 
 ## Composition root
 

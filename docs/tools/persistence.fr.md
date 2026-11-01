@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:47cf0b7de6d2cf91 -->
+<!-- translation-of: persistence.md sha256:756f18fcdd704a22 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -552,7 +552,7 @@ champ de locataire et un alias par locataire qu'OpenSearch filtre lui-même
 | Recherche plein texte | celle de PostgreSQL, à la main | pas construite : une chaîne est un `keyword`, `contains` un *wildcard* sensible à la casse |
 | Exploitation | la base que le projet fait déjà tourner | un cluster à faire tourner, dimensionner et mettre à jour |
 
-Le paquet n'est pas encore sur npm et `init` ne le câble pas : son
+`init` ne câble pas le paquet : son
 [README](../../packages/opensearch/README.fr.md) montre la composition à la main, et
 [l'ADR-0008](../adr/0008-a-read-model-store-on-opensearch.fr.md) consigne chaque choix et ce qui le
 défait. Il n'a tourné que sur OpenSearch 3 ; les *endpoints* qu'il appelle sont ceux
