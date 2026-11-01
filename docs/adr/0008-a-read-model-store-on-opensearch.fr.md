@@ -1,5 +1,5 @@
 [English](0008-a-read-model-store-on-opensearch.md) · **Français**
-<!-- translation-of: 0008-a-read-model-store-on-opensearch.md sha256:dd204c0453c6ab63 -->
+<!-- translation-of: 0008-a-read-model-store-on-opensearch.md sha256:426eccd6f01613a0 -->
 
 # ADR-0008 : un store de modèle de lecture sur OpenSearch
 
@@ -50,6 +50,11 @@ d'événement traité se valide dans la base, le document dans l'index. Une pann
 livre l'événement à nouveau, et l'estampille rend cette seconde livraison périmée, si bien que rien
 n'est appliqué deux fois ; un document écrit dans une unité de travail qui s'annule reste. Le
 README du paquet le dit.
+
+Les specs sur un vrai nœud coûtent environ quatre minutes et demie. Le job d'intégration de GitHub ne
+démarre OpenSearch que lorsqu'elles tournent : tous les paquets sur le tronc, la nuit et sur une
+release, ou une pull request qui atteint `packages/opensearch`. Le pipeline GitLab du kit le démarre
+comme service de son job d'intégration, comme ses autres serveurs.
 
 ## Quand y revenir
 

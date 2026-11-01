@@ -49,6 +49,11 @@ commits in the database, the document in the index. A failure between the two de
 again, and the stamp makes that second delivery stale, so nothing is applied twice; a document
 written in a unit of work that rolls back stays. The README of the package says it.
 
+The specs on a real node cost about four and a half minutes. The integration job of GitHub starts
+OpenSearch only when they run: every package on the trunk, at night and on a release, or a pull
+request that reaches `packages/opensearch`. The GitLab pipeline of the kit starts it as a service
+of its integration job, as it does its other servers.
+
 ## When to revisit
 
 When the rebuild is built (the contract becomes `readModelStoreContract`), when the package is

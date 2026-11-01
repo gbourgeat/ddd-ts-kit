@@ -285,7 +285,6 @@ jobs:
     env:
       DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@localhost:5432/app
       DDD_TS_KIT_TEST_S3_ENDPOINT: http://localhost:9000
-      DDD_TS_KIT_TEST_OPENSEARCH_URL: http://localhost:9200
       DDD_TS_KIT_TEST_REDIS_URL: redis://localhost:6379
       DDD_TS_KIT_OPENFGA_URL: http://localhost:8080
       DDD_TS_KIT_TEST_VARNISH_URL: http://127.0.0.1:16081
@@ -309,9 +308,12 @@ jobs:
       - name: MinIO for the S3 connector (pinned by digest, pulled with retries)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-minio.sh
+      # Started only when its specs run: every package on the trunk, at night and on a release, or a change that reaches it.
       - name: OpenSearch for the read model store of @ddd-ts-kit/opensearch (pinned by digest, pulled with retries)
-        if: ${{ needs.install.outputs.integration == 'true' }}
-        run: sh pipeline/github/scripts/start-opensearch.sh
+        if: ${{ needs.install.outputs.integration == 'true' && (needs.install.outputs.scope == 'all' || contains(needs.install.outputs.filters, 'packages/opensearch/')) }}
+        run: |
+          sh pipeline/github/scripts/start-opensearch.sh
+          echo "DDD_TS_KIT_TEST_OPENSEARCH_URL=http://localhost:9200" >> "$GITHUB_ENV"
       - name: Dragonfly for the Redis package, its event bus, job store, cache, lock and rate limiter (pinned by digest, pulled with retries)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-dragonfly.sh
