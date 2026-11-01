@@ -52,6 +52,16 @@ export function loadConfig(variables: Variables): AppConfig {
     env.problem('NODE_ENV must be development or test: the development header is believed there only');
   }
 {{/if}}
+{{#if authz.rebac}}
+
+  // The in-memory tuple store of createTupleStore runs where NODE_ENV says so, never by default:
+  // drop this check once createTupleStore binds a store that persists.
+  if (env.optional('NODE_ENV') === undefined) {
+    env.problem(
+      'NODE_ENV must be set: the in-memory relation tuple store of createTupleStore runs in development and test only, and an unset NODE_ENV says neither',
+    );
+  }
+{{/if}}
 
   const config: AppConfig = {
     serviceName: env.optional('OTEL_SERVICE_NAME') ?? '{{project.name}}',

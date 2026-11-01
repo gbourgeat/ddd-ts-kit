@@ -153,6 +153,10 @@ KEYCLOAK_AUDIENCE={{project.name}}-api
 
 # Authentication is the development header (x-development-actor: <id>;roles=<a>,<b>): the application starts with NODE_ENV=development or test only, never without it.
 {{/if}}
+{{#if authz.rebac}}
+
+# The relation tuples live in memory until createTupleStore binds a store that persists: the application refuses to start without NODE_ENV, and with the in-memory store in production.
+{{/if}}
 {{#if errors.sentry}}
 
 # Unexpected failures go to a Sentry or a GlitchTip project (same protocol, only the DSN differs). Without SENTRY_DSN the
