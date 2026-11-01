@@ -31,6 +31,7 @@ import {
   outboxStoreContract,
   processedEventStoreContract,
   rateLimiterContract,
+  readModelRowsContract,
   readModelStoreContract,
   repositoryContract,
   type CriteriaContractRow,
@@ -184,6 +185,11 @@ criteriaContract(runner, {
   createReadModel: (rows) => ({
     search: async (criteria) => evaluateCriteria(criteriaContractDefinition, rows, criteria),
   }),
+});
+
+readModelRowsContract(runner, {
+  name: 'InMemoryReadModelTable, rows alone',
+  createTable: () => ({ table: new InMemoryReadModelTable<CriteriaContractRow>() }),
 });
 
 readModelStoreContract(runner, {
