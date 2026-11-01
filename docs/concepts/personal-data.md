@@ -344,7 +344,8 @@ with `personalData(subject, value)` is declared by that, and only a key stored i
   vocabulary (see [The rules](#the-rules)).
 - **A read model.** A projection keeps its rows in a read model store, not in a table of its own:
   it declares nothing yet. The rebuild of a projection fed by the event store removes the clear copy
-  it kept, once given to `rebuilds`.
+  it kept, once given to `rebuilds`. A read model in OpenSearch is reached as
+  [Search read models](../tools/search-read-models.md#personal-data) says.
 - **The columns the aggregate does not write yet.** The mapper writes the declared columns empty
   until the aggregate carries them; the erasure of an empty column reaches the row all the same.
 

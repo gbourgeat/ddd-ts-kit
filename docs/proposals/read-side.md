@@ -19,7 +19,7 @@ generate` and `check` do not know it), **not built**.
 | 2. Representations | `Representation`, `Representations.standard()` and negotiation on `Accept` (406) in `@ddd-ts-kit/http`; JSON, `application/problem+json` and `+xml`, XML written and read (415 otherwise), CSV streamed, `streamSchemaOf`, `everyPage` to stream a search page by page through the bus; files and bodiless answers left out of negotiation; every media type, 406 and 415 in the contract; `withFieldAccess` and `fieldDeciderOf` for fields reserved to a permission or a policy, in every representation and in request bodies; the rule `authz/fields-by-schema` | generated since 2026-10-13: `stack.representations` chosen at `init`, `generate representation`, `describe` lists the media types | an XML vocabulary of its own (namespaces, mixed content); CSV input |
 | 3. Forms | `formRoutes` at `GET /forms/<operationId>`, `defineForm` hints, JSON Forms and the neutral tree of blocks, the form given only to who may run its use case (`requires`), hidden and read-only fields by caller, `formDocumentsOf` | generated since 2026-10-13: `stack.forms` chosen at `init`, `generate form`, the forms written to `openapi/forms/` | other dialects than JSON Forms, which a front end maps from the tree; a lookup renderer |
 | 4. Another context's data | hydration: `hydrate(...).with(...).orElse(...)` in the kernel, with the failure and timeout policy; the gateway port it calls (`generate gateway`) | no generated use of `hydrate` | the analyzer rule: the compiler refuses a criteria on a hydrated field instead |
-| 5. Projections and search | `@Projection` and `@On` (`@ddd-ts-kit/kernel/declarations`), their registration and metrics in `@ddd-ts-kit/di`; the `ReadModelStore` port, `TableReadModelStore` over `InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, held to `readModelStoreContract`; `ProjectionRebuild` on PostgreSQL; `OpenSearchReadModelStore` of `@ddd-ts-kit/opensearch`, held to `readModelRowsContract` and `criteriaContract` on OpenSearch 3, with tenants in an index each or behind filtered aliases | generated since 2026-10-12, in the declared style: `generate projection <context> <Name> <event-type>` writes a projector and its spec, `application/projections/` is a role of the canonical tree, the generated barrel exports a projector and registers what its constructor takes, `describe` and `CONTEXT.md` list it. Still not generated: the port of the read model with its adapter, which `generate port` and the ORM package give | the rebuild of the OpenSearch store, a run on Elasticsearch, full-text search and facets; the wiring of OpenSearch by `init`; a generated rebuild job |
+| 5. Projections and search | `@Projection` and `@On` (`@ddd-ts-kit/kernel/declarations`), their registration and metrics in `@ddd-ts-kit/di`; the `ReadModelStore` port, `TableReadModelStore` over `InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, held to `readModelStoreContract`; `ProjectionRebuild` on PostgreSQL; `OpenSearchReadModelStore` of `@ddd-ts-kit/opensearch`, held to `readModelRowsContract` and `criteriaContract` on OpenSearch 3, with tenants in an index each or behind filtered aliases | generated since 2026-10-12, in the declared style: `generate projection <context> <Name> <event-type>` writes a projector and its spec, `application/projections/` is a role of the canonical tree, the generated barrel exports a projector and registers what its constructor takes, `describe` and `CONTEXT.md` list it. Still not generated: the port of the read model with its adapter, which `generate port` and the ORM package give | the rebuild of the OpenSearch store, a run on Elasticsearch, full-text search and facets; a generated rebuild job |
 
 The reference for what is built is the README of each package: `@ddd-ts-kit/kernel`
 ("Criteria", "Hydration", "Projections"), `@ddd-ts-kit/http` (the query grammar, the
@@ -337,7 +337,7 @@ that fails fails the whole read, because that relation has no fallback.
 
 Projections on SQL are built in the runtime, and `generate projection` writes a projector; the
 CLI does not write the port of the read model with it, nor a rebuild job. A read model store on
-OpenSearch is built, without its rebuild.
+OpenSearch is built, without its rebuild, and `init --search opensearch` wires it.
 
 **Problem.** Without a standard, read models are written by hand in integration event
 handlers, each with its own answer to idempotence, rebuild and lag; and some reads
@@ -459,8 +459,8 @@ export async function deliveredOutOfOrder(): Promise<PractitionerName | undefine
   criteria translated to the query DSL, the tenants in an index each or behind a filtered alias
   each, every read through an alias ([ADR-0008](../adr/0008-a-read-model-store-on-opensearch.md)).
   Still proposed: the alias switch of a rebuild without downtime, the bulk application of
-  events, full-text and facets as extensions of criteria, a run on Elasticsearch, and the
-  wiring by `init` once the package is published.
+  events, full-text and facets as extensions of criteria, and a run on Elasticsearch;
+  `init --search opensearch` wires it ([ADR-0009](../adr/0009-init-wires-opensearch.md)).
 
 **Limits.** An older event skipped as stale is not applied later: an event should carry the
 state of the fields it sets, or come in order per key. With an `updatedAt` alone as the stamp
@@ -486,7 +486,8 @@ many projects.
    the search adapter is built on OpenSearch. What remains, in the recommended order: criteria
    in the generator and the checker (`defineCriteria` and the `filter[...]` parameters from
    `generate query --search`) and the rest of the projection generator (the port of the read
-   model, the rebuild job), then the rebuild of the search adapter and its wiring by `init`.
+   model, the rebuild job), then the rebuild of the search adapter, which
+   `init --search opensearch` already wires.
 
 ## See also
 

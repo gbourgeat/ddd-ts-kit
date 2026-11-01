@@ -257,7 +257,7 @@ host runs.
 | [`@ddd-ts-kit/audit`](packages/audit) | hash-chained, append-only audit trail |
 | [`@ddd-ts-kit/redis`](packages/redis) | cache, lock, rate limiter and relay signal on Redis, Dragonfly or Valkey |
 | [`@ddd-ts-kit/s3`](packages/s3) | file storage on AWS S3, MinIO, OVHcloud, Scaleway or Cloudflare R2 |
-| [`@ddd-ts-kit/opensearch`](packages/opensearch) | the read model of a projection in OpenSearch, each tenant in an index or behind a filtered alias |
+| [`@ddd-ts-kit/opensearch`](packages/opensearch) | the read model of a projection in OpenSearch, each tenant in an index or behind a filtered alias; wired by `init --search opensearch` ([Search read models](docs/tools/search-read-models.md)) |
 | [`@ddd-ts-kit/http`](packages/http) | routes declared once, mounted on Express, Fastify, Hono or NestJS; RFC 9457 errors; OpenAPI 3.1; HTTP caching |
 | [`@ddd-ts-kit/validation`](packages/validation) | one `Schema` port over zod, class-validator, TypeBox and Standard Schema |
 | [`@ddd-ts-kit/di`](packages/di) | context modules on tsyringe, InversifyJS or Awilix, port classes as tokens, a test application with fakes |

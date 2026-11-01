@@ -4,7 +4,7 @@ description: >-
   Use when adding a table, a repository, a lookup, a read model or a migration, replacing
   the in-memory adapter by a real one, choosing an ORM, or when persistence types leak out
   of infrastructure. Mapper, unit of work, optimistic concurrency, Drizzle, Knex, Prisma,
-  TypeORM.
+  TypeORM, OpenSearch.
 argument-hint: "<context> <Aggregate>"
 allowed-tools:
   - Read
@@ -34,7 +34,7 @@ lookups of the port, the columns, the mapper.
 - **One repository per aggregate root**, whole-aggregate load and save. Add only the lookups
   a use case needs, named in the ubiquitous language; a screen reads through a read port.
 - **Rows stay inside.** The mapper translates row to aggregate (`rehydrate`) and back; it is
-  the one place where a type assertion is acceptable. No ORM type crosses the port.
+  the one place for a type assertion. No ORM type crosses the port.
 - **Each context owns its tables**, in its own database schema and in a file of its own: the
   tables file of `infrastructure/persistence/` (Drizzle, Knex, TypeORM) or, on Prisma,
   `prisma/schema/<context>.prisma` beside the main `prisma/schema/schema.prisma` (a project still
@@ -70,7 +70,8 @@ lookups of the port, the columns, the mapper.
   retention: under `stack.privacy: on` (the default with an ORM), read
   [personal-data.md](personal-data.md) first when a table keeps something of a person.
   `privacy/declared-field` (a warning) reports a personal column no declaration names.
-- **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
+- **Searches** use `Page` and `PageRequest` of the kernel, a cursor ending on a unique
+  tie-breaker; under `stack.search: opensearch`, read [search.md](search.md) first.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of
   the port.
@@ -106,7 +107,7 @@ dialects: `@ddd-ts-kit/drizzle` (the default, PostgreSQL, one schema per context
 generated adapter is in-memory, held to the same contract suite, behind a `TODO(platform)`.
 
 An outside system is not storage: a provider an environment runs without (a sandbox, a demo,
-an environment for examiners, a provider not ready yet) is simulated by an adapter of
+a provider not ready yet) is simulated by an adapter of
 production code, `npx ddd-ts-kit generate adapter <ctx> <Port> --kind simulated`, never by a
 repository nor by the fake of `test/fakes/`, which production code never imports. Its records
 keep the shape the system sends and go through the translator of `infrastructure/anti-corruption/`.

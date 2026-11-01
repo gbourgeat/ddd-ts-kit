@@ -13,8 +13,11 @@ this package: a projector writes to its read model port, and the platform binds 
 npm i @ddd-ts-kit/opensearch
 ```
 
-`init` does not wire it: the composition below is written by hand, and
-[the decision record](../../docs/adr/0008-a-read-model-store-on-opensearch.md) states each choice.
+`init --search opensearch` wires it in the platform of a generated project: `SearchIndexes` sets the
+transport and the tenancy and provisions the indices, and an adapter calls
+`super(search.options(name, definition))` ([Search read models](../../docs/tools/search-read-models.md),
+[ADR-0009](../../docs/adr/0009-init-wires-opensearch.md)). The composition below is the same by hand,
+and [the decision record](../../docs/adr/0008-a-read-model-store-on-opensearch.md) states each choice.
 
 ## Composition root
 

@@ -525,7 +525,9 @@ filters itself (`{ strategy: 'attribute' }`). It speaks the REST API with no cli
 | Full-text search | the full-text search of PostgreSQL, by hand | not built: a string is a `keyword`, `contains` a case-sensitive wildcard |
 | Operations | the database the project already runs | a cluster to run, size and upgrade |
 
-`init` does not wire the package: its
+`init --search opensearch` wires the package in the platform: what fits it and what does not, how
+a context writes and tests its store and keeps its tenants apart are in
+[Search read models](search-read-models.md). Its
 [README](../../packages/opensearch/README.md) shows the composition by hand, and
 [ADR-0008](../adr/0008-a-read-model-store-on-opensearch.md) records each choice and what
 reverses it. It was run on OpenSearch 3 only; the endpoints it calls are the ones Elasticsearch

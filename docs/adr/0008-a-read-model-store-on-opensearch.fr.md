@@ -1,5 +1,5 @@
 [English](0008-a-read-model-store-on-opensearch.md) · **Français**
-<!-- translation-of: 0008-a-read-model-store-on-opensearch.md sha256:596291fc9fe1071b -->
+<!-- translation-of: 0008-a-read-model-store-on-opensearch.md sha256:a3fc7d7f44e74549 -->
 
 # ADR-0008 : un store de modèle de lecture sur OpenSearch
 
@@ -41,7 +41,7 @@ dernière colonne dit ce qui le défait.
 | Le contrat | `readModelRowsContract`, la moitié « lignes » de `readModelStoreContract`, ajoutée à `@ddd-ts-kit/testing` | `readModelStoreContract` tient la reconstruction, que ce store n'a pas | le store passe `readModelStoreContract` une fois sa reconstruction écrite |
 | La famille | hors de la famille des modèles de lecture de `pipeline/monorepo/families.mjs` | OpenSearch n'est pas un ORM, et la famille compare les options de quatre *packages* d'ORM | une famille des stores de modèle de lecture, si un second moteur vient |
 | npm | publié par la release, comme chaque paquet | la release publie par publication de confiance, que npm n'accepte que pour un nom qui existe : le propriétaire a réservé `@ddd-ts-kit/opensearch` par un `0.0.0` déprécié et déclaré son éditeur de confiance (`CONTRIBUTING.md`, « A new package ») ; 0.108.0 l'a livré `private` jusque-là | `"private": true` à nouveau le tient hors de la release suivante ; `npm deprecate` marque les versions publiées |
-| La CLI | `init` ne le câble pas | un projet généré s'installe depuis npm, et le paquet n'y est pas encore | `init --read-model opensearch` (ou une valeur de `stack`), une fois le paquet publié |
+| La CLI | `init --search opensearch` le câble, depuis que le paquet est sur npm ([ADR-0009](0009-init-wires-opensearch.fr.md)) | un projet généré s'installe depuis npm | `init --search none` |
 
 ## Conséquences
 
@@ -59,6 +59,6 @@ comme service de son job d'intégration, comme ses autres serveurs.
 ## Quand y revenir
 
 Quand la reconstruction sera construite (le contrat devient `readModelStoreContract`), quand le
-paquet sera publié (le câblage d'`init`), quand un projet le fera tourner sur Elasticsearch (les
+paquet sera publié (le câblage d'`init`, fait dans [l'ADR-0009](0009-init-wires-opensearch.fr.md)), quand un projet le fera tourner sur Elasticsearch (les
 mêmes specs sur ce serveur), et quand la recherche plein texte sera demandée (le *mapping* des
 champs `text`).

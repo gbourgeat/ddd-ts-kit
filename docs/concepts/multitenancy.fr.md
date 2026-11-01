@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:a8dbe5a8c46873fe -->
+<!-- translation-of: multitenancy.md sha256:faf09a4e75e86180 -->
 
 # Multitenance
 
@@ -109,7 +109,10 @@ Ce que fournit chaque adaptateur, prouvé par `tenantIsolationContract`
 `tenancy/scoped-statement` du *checker* signale une instruction qui atteint une table directement
 depuis l'exécuteur, le client ou le *manager*, une ligne atteinte par sa seule clé, un registre de
 modèles de lecture construit sans son *tenant*. Les trois autres se câblent à la main à partir des *packages* pour l'instant ;
-`init` les refuse et dit quoi ajouter.
+`init` les refuse et dit quoi ajouter. Avec
+`init --search opensearch`, les modèles de lecture tenus dans OpenSearch suivent la même stratégie :
+un index, chaque *tenant* derrière un alias filtré, depuis la plateforme seule
+([Modèles de lecture de recherche](../tools/search-read-models.fr.md)).
 
 La condition du *tenant* ne vaut pour chaque ligne que si elle reste en `and` avec tout le reste de
 l'instruction. SQL lie `and` avant `or` : une alternative écrite à côté de la condition est donc
