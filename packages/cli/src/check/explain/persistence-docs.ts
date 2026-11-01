@@ -45,4 +45,22 @@ export class AttachReceiptHandler {
   constructor(private readonly staging: FileStaging, private readonly keys: FileKeys) {}
 }`,
   },
+  'search/store-from-platform': {
+    why: 'Which node a read model reaches and how its tenants are kept apart are choices of the platform, made once for every store: a context that opens a transport or names a tenancy of its own has chosen them for itself, out of reach of the provisioning, of the credentials of the deployment and of the tenancy of the project, and one of its stores may read the documents of every tenant. The domain and the use cases see a read model through its port, as on any store.',
+    bad: `import { OpenSearchReadModelStore, fetchTransport } from '@ddd-ts-kit/opensearch';
+
+export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> implements InvoiceList {
+  constructor() {
+    super({ transport: fetchTransport({ node: 'http://search:9200' }), name: 'billing_invoices', definition: invoiceCriteria });
+  }
+}`,
+    good: `import { OpenSearchReadModelStore } from '@ddd-ts-kit/opensearch';
+import { SearchIndexes } from '@/platform/search/search-indexes';
+
+export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> implements InvoiceList {
+  constructor(search: SearchIndexes) {
+    super(search.options('billing_invoices', invoiceCriteria));
+  }
+}`,
+  },
 };

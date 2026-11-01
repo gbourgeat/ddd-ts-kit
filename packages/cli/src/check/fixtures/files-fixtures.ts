@@ -6,6 +6,8 @@ const { BILLING, PORT, REPOSITORY_PORT } = PATHS;
 const SCHEMA = `${BILLING}/infrastructure/persistence/invoice.schema.ts`;
 const ADAPTER = `${BILLING}/infrastructure/persistence/drizzle-invoice.repository.ts`;
 const SPEC = `${BILLING}/test/unit/attach-receipt.handler.spec.ts`;
+const READER = `${BILLING}/infrastructure/persistence/search-invoice.reader.ts`;
+const READER_SPEC = `${BILLING}/test/integration/search-invoice.reader.spec.ts`;
 
 export const FILES_FIXTURES: readonly Fixture[] = [
   {
@@ -98,6 +100,36 @@ export const FILES_FIXTURES: readonly Fixture[] = [
     expect: { file: 'prisma/schema/billing.prisma' },
     files: project({
       'prisma/schema/billing.prisma': 'model Receipt {\n  id      String @id\n  content Bytes\n}\n',
+    }),
+  },
+  {
+    ruleId: 'search/store-from-platform',
+    name: 'an adapter that extends the store and catches its refusal, a spec that opens a node of its own',
+    expect: 'pass',
+    files: project({
+      [READER]:
+        "import { OpenSearchReadModelStore, UnprovisionedIndexError } from '@ddd-ts-kit/opensearch';\nexport const refusal = UnprovisionedIndexError;\nexport const store = OpenSearchReadModelStore;\n",
+      [READER_SPEC]:
+        "import { fetchTransport } from '@ddd-ts-kit/opensearch';\nexport const transport = fetchTransport({ node: 'http://localhost:9200' });\n",
+    }),
+  },
+  {
+    ruleId: 'search/store-from-platform',
+    name: 'an adapter that opens a transport of its own',
+    expect: { file: READER },
+    files: project({
+      [READER]:
+        "import { OpenSearchReadModelStore, fetchTransport } from '@ddd-ts-kit/opensearch';\nexport const store = OpenSearchReadModelStore;\nexport const transport = fetchTransport({ node: 'http://search:9200' });\n",
+    }),
+  },
+  {
+    ruleId: 'search/store-from-platform',
+    name: 'a port of the application that names the store',
+    expect: { file: PORT },
+    also: ['layer/application-inward'],
+    files: project({
+      [PORT]:
+        "import type { OpenSearchReadModelStore } from '@ddd-ts-kit/opensearch';\nexport abstract class PaymentGateway {\n  abstract receipts(): OpenSearchReadModelStore<object>;\n}\n",
     }),
   },
 ];

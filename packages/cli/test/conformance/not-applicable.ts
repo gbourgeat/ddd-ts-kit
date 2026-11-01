@@ -6,4 +6,6 @@ export const NOT_APPLICABLE: Readonly<Record<string, string>> = {
     'the example decides with an authorizer of its own, where a system actor operates its own context: the rule is silent there by design',
   'scheduling/job-registered':
     'the example is in the declared style, where a job is registered by its decorator and declarations/role-declared reports a class without it',
+  'search/store-from-platform':
+    'the example keeps no read model in OpenSearch and does not install @ddd-ts-kit/opensearch: an import of it would be unresolved before it is misplaced',
 };
