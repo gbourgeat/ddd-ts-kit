@@ -1,5 +1,5 @@
 [English](0003-the-in-memory-tuple-store-refuses-production.md) · **Français**
-<!-- translation-of: 0003-the-in-memory-tuple-store-refuses-production.md sha256:92fd8938f50364a5 -->
+<!-- translation-of: 0003-the-in-memory-tuple-store-refuses-production.md sha256:30c1ce78375a4da5 -->
 
 # ADR-0003 : le magasin de tuples en mémoire refuse la production
 
@@ -7,7 +7,7 @@
 
 Le `createTupleStore` qu'écrit `init --authz rebac` (`packages/cli/templates/init/platform/auth/relationships/create-tuple-store.ts.tpl`) répond le `InMemoryRelationTupleStore` en mémoire en `development` et `test` seulement, et lève une erreur dans tout autre environnement. Son message nomme ce qu'il faut lier à la place : `OpenFgaRelationTupleStore` de `@ddd-ts-kit/openfga`, ou une table de la base tenue au `relationTupleStoreContract`. `InMemoryRelationTupleStore` lui-même ne change pas et reste libre pour les tests. C'est la règle que suit déjà `DevelopmentHeaderAuthenticator`. L'entrée du changement est `changes/rebac-tuple-store-refuses-production.md`.
 
-Un `NODE_ENV` absent arrête le démarrage. `loadConfig` (`packages/cli/templates/init/platform/config/load-config.ts.tpl`) signale `NODE_ENV must be set` sous `--authz rebac`, comme il signale `NODE_ENV must be development or test` sous `--authn none` pour l'en-tête de développement : un composant qui ne tourne qu'en développement et en test rend la variable obligatoire, si bien que la production n'est jamais atteinte par défaut. Un commentaire au-dessus du contrôle dit de le retirer dès que `createTupleStore` lie un magasin qui persiste. `createTupleStore` lit toujours `process.env['NODE_ENV'] ?? 'development'`, parce que les scripts qui composent l'application sans la démarrer, dont `scripts/openapi.ts`, tournent sans `NODE_ENV` et ne servent jamais de requête. L'entrée de ce changement est `changes/rebac-memory-store-needs-node-env.md`.
+Un `NODE_ENV` absent arrête le démarrage. `loadConfig` (`packages/cli/templates/init/platform/config/load-config.ts.tpl`) signale `NODE_ENV must be set` sous `--authz rebac`, comme il signale `NODE_ENV must be development or test` sous `--authn none` pour l'en-tête de développement : un composant qui ne tourne qu'en développement et en test rend la variable obligatoire, si bien que la production n'est jamais atteinte par défaut. Le commentaire de ce contrôle dit de le retirer dès que `createTupleStore` lie un magasin qui persiste. `createTupleStore` lit toujours `process.env['NODE_ENV'] ?? 'development'`, parce que les scripts qui composent l'application sans la démarrer, dont `scripts/openapi.ts`, tournent sans `NODE_ENV` et ne servent jamais de requête. L'entrée de ce changement est `changes/rebac-memory-store-needs-node-env.md`.
 
 ## Pourquoi
 
