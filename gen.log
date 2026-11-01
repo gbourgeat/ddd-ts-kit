@@ -1,2 +1,0 @@
-error: No ddd-ts-kit.config.json in /home/gbourgeat/ddd-ts-kit-w15.
-  fix: Run `ddd-ts-kit init` at the project root, or pass --cwd <project root>.
