@@ -28,6 +28,7 @@ also published as a website, with search, in English and in French:
 | [Architecture reference](ARCHITECTURE.md) | the canonical tree, every rule id, the tactical rules, tests, clean code |
 | [Configuration](CONFIG.md) | every key of `ddd-ts-kit.config.json` |
 | [Lines left out of the coverage measure](adr/0001-lines-left-out-of-the-coverage-measure.md) | the checks nothing can reach, why, and when each one goes |
+| [The regulated guard runs git in its root only](adr/0006-the-regulated-guard-runs-git-in-its-root-only.md) | the one repository the guard runs git in under the regulated profile, and what it leaves unread |
 | [Pipeline](../pipeline/README.md) | the quality gates, the git hooks, GitHub and GitLab side by side |
 | Package READMEs under [`packages/`](../packages) | what each package does, its limits and what was verified |
 

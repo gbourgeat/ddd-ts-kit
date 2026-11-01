@@ -2,7 +2,6 @@
 // starts or stops: every other call of the guard skips it. Counts the agent's tool calls inside the
 // guard calls that already run (pre-bash, pre-write), warns it twice before its turn limit, and
 // records in its worktree what `worker-scope --resume` reads back. Fails open, like the guard.
-import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,8 +10,6 @@ import { writeKitFile } from './kit-files.mjs';
 const AGENT_FILE = '.ddd-ts-kit/agent.json';
 const REPORT_FILE = '.ddd-ts-kit/report.md';
 const VERIFICATION_FILE = '.ddd-ts-kit/verification.json';
-// The most read of an answer of git, as in the guard.
-const ANSWER_BYTES = 64 * 1024 * 1024;
 
 // Calibration. The guard sees the shell and the writes (Bash, Write, Edit, MultiEdit), never the
 // reads (Read, Grep, Glob): its count is below the turns taken. Two real context-builder runs,
@@ -35,7 +32,8 @@ const NOTICES = {
 /**
  * Counts one tool call of a builder and answers the notice it is due, if any. `places.state` is
  * the file of its run in the guard's folder; `places.worker` the project of its worktree when the
- * call shows it (its scope file is there), else the one recorded earlier.
+ * call shows it (its scope file is there), else the one recorded earlier; `places.git` the git of
+ * the guard, its output or none, which runs only where the guard runs it.
  */
 export function countCall(input, places, command) {
   const run = readJson(places.state) ?? newRun();
@@ -49,7 +47,7 @@ export function countCall(input, places, command) {
   }
   writeJson(places.state, { ...run, ...(worker ? { worker } : {}) });
   if (worker) {
-    recordAgent(worker, { input, run, command });
+    recordAgent(places.git, worker, { input, run, command });
   }
   return notice ? NOTICES[notice] : undefined;
 }
@@ -60,7 +58,7 @@ export function startRun(input, places) {
   const run = { ...newRun(), run: (previous?.run ?? 0) + 1, ...(previous?.worker ? { worker: previous.worker } : {}) };
   writeJson(places.state, run);
   if (run.worker) {
-    recordAgent(run.worker, { input, run, command: undefined, calls: 0 });
+    recordAgent(places.git, run.worker, { input, run, command: undefined, calls: 0 });
   }
 }
 
@@ -76,7 +74,7 @@ export function stopRun(input, places, outside) {
     return undefined;
   }
   writeReport(run.worker, input, outside);
-  const slice = sliceState(run.worker);
+  const slice = sliceState(places.git, run.worker);
   const agent = readJson(join(run.worker, AGENT_FILE));
   if (agent) {
     writeJson(join(run.worker, AGENT_FILE), {
@@ -173,7 +171,7 @@ export function limitOf() {
 
 // What the conductor reads of the agent: its id, its run, when it was last seen, its counted
 // calls, and the calls each committed row took (a `git commit` naming its `Slice:`).
-function recordAgent(worker, { input, run, command, calls }) {
+function recordAgent(git, worker, { input, run, command, calls }) {
   const file = join(worker, AGENT_FILE);
   const known = readJson(file) ?? {};
   const now = new Date().toISOString();
@@ -189,7 +187,7 @@ function recordAgent(worker, { input, run, command, calls }) {
     sessionId: input.session_id ?? '',
     run: run.run,
     runStartedAt: sameRun ? known.runStartedAt : run.startedAt,
-    runStartHead: sameRun ? known.runStartHead : gitLine(worker, ['rev-parse', 'HEAD']),
+    runStartHead: sameRun ? known.runStartHead : gitLine(git, worker, ['rev-parse', 'HEAD']),
     lastSeen: now,
     toolCalls: calls ?? run.calls,
     rowCosts,
@@ -200,14 +198,14 @@ function recordAgent(worker, { input, run, command, calls }) {
 
 // Whether the report is current (written after the last commit and the last change of the slice),
 // and whether a verification that passed at this commit is left uncommitted with nothing changed since.
-function sliceState(worker) {
+function sliceState(git, worker) {
   const scope = readJson(join(worker, '.ddd-ts-kit', 'worker.json'));
   const contextsDir = readJson(join(worker, 'ddd-ts-kit.config.json'))?.contextsDir ?? 'src/contexts';
-  const inSlice = changedPaths(worker).filter(
+  const inSlice = changedPaths(git, worker).filter(
     (path) => path.startsWith(`${contextsDir}/${scope?.context}/`) || /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(path),
   );
   const changed = inSlice.map((path) => modifiedAt(join(worker, path)));
-  const committed = Number(gitLine(worker, ['log', '-1', '--format=%ct']) ?? 0) * 1000;
+  const committed = Number(gitLine(git, worker, ['log', '-1', '--format=%ct']) ?? 0) * 1000;
   const report = modifiedAt(join(worker, REPORT_FILE));
   const verification = readJson(join(worker, VERIFICATION_FILE));
   const verifiedAt = Date.parse(verification?.at ?? '');
@@ -216,12 +214,12 @@ function sliceState(worker) {
     verifiedUncommitted:
       verification?.ok === true &&
       inSlice.length > 0 &&
-      verification.head === gitLine(worker, ['rev-parse', 'HEAD']) &&
+      verification.head === gitLine(git, worker, ['rev-parse', 'HEAD']) &&
       changed.every((time) => time <= verifiedAt),
   };
 }
 
-function changedPaths(worker) {
+function changedPaths(git, worker) {
   const status = git(worker, ['status', '--porcelain=v1', '-z', '--untracked-files=all']) ?? '';
   const entries = status.split('\0');
   const paths = [];
@@ -242,22 +240,7 @@ function modifiedAt(file) {
   }
 }
 
-// Neither a core.fsmonitor planted in the config nor a hook planted in the repository runs on this git.
-function git(directory, args) {
-  const run = spawnSync(
-    'git',
-    ['-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', '--no-optional-locks', ...args],
-    {
-      cwd: directory,
-      encoding: 'utf8',
-      timeout: 3000,
-      maxBuffer: ANSWER_BYTES,
-    },
-  );
-  return run.status === 0 ? run.stdout : undefined;
-}
-
-function gitLine(directory, args) {
+function gitLine(git, directory, args) {
   return git(directory, args)?.trim() || null;
 }
 

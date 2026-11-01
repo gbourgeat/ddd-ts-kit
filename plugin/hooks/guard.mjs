@@ -86,6 +86,11 @@ const BRIEFING_BUDGET = 10_000;
 // Said at session start under the regulated profile, in place of what the CLI would have answered.
 const REGULATED_NOTICE =
   'Regulated profile: the guard runs no program of this project, neither its CLI nor its Biome, at any hook: the pipeline and the commit gate hold those checks, and `npx ddd-ts-kit check` runs them here.';
+// Said under the regulated profile of a project git is not run in.
+const UNREAD_REPOSITORY =
+  'This project lies outside the git repository of the session root: under the regulated profile the guard runs no git there, so it reads neither its uncommitted changes nor its branch.';
+// What git answers where the guard does not run it: as a run that failed, with no output.
+const NOT_READ = { status: null, stdout: '', stderr: '' };
 const BRIEFING_CUT =
   'Briefing cut short: the CLI did not answer in time; `npx ddd-ts-kit status` and `npx ddd-ts-kit list` say the rest.';
 // The written files one call of post-write checks, of the 15 s of its hook: a patch of Codex can hold many.
@@ -488,6 +493,9 @@ const GUARD_RUNS = [
 const ANSWER_BYTES = 64 * 1024 * 1024;
 // How a run stopped before its answer ended fails: past ANSWER_BYTES, or past its time limit.
 const CUT_SHORT = new Set(['ENOBUFS', 'ETIMEDOUT']);
+// The commands of git the guard runs that read the files of a checkout, and so would run git in each
+// of its submodules.
+const WORKTREE_READS = ['status', 'diff'];
 // The fields before the path in an entry of `git status --porcelain=v2`, by its kind.
 const STATUS_FIELDS = { 1: 8, 2: 9, u: 10, '?': 1 };
 const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>', '>&']);
@@ -643,6 +651,11 @@ const MODES = {
 
 // The projects this run of the guard has described: a hook finds the same one several times.
 const projects = new Map();
+// The input of the call, for the root of its session; the profile of each folder read and the common
+// git directory of the repository of each session root found.
+let called = {};
+const profiles = new Map();
+const repositories = new Map();
 // The scope of a worker in each worktree, read once per call of the guard (`workerScope`).
 const scopes = new Map();
 // The scope files of the story worktrees this run has read, by project root.
@@ -665,7 +678,9 @@ function main() {
   try {
     const run = MODES[process.argv[2]];
     if (run) {
-      Promise.resolve(run(readInput()))
+      const input = readInput();
+      called = isRecord(input) ? input : {};
+      Promise.resolve(run(input))
         .then(sayNotice)
         .catch(() => {
           process.exitCode = 0;
@@ -1223,7 +1238,13 @@ function builderPlaces(input, project) {
     return undefined;
   }
   const worker = project && existsSync(join(project.root, WORKER_SCOPE)) ? project.root : undefined;
-  return { state: stateFile('turns', home, input), worker, home };
+  // Its git is the guard's: under the regulated profile, it runs where the guard runs it.
+  return {
+    state: stateFile('turns', home, input),
+    worker,
+    home,
+    git: (directory, args) => git({ root: directory }, args),
+  };
 }
 
 // A new run of a builder: the note its last run left before inline code is dropped, since what
@@ -1317,6 +1338,7 @@ function stop(input) {
   }
   const reminders = [
     unfinishedCheck(),
+    ...unreadRepositoryNotice(project).map((line) => `ddd-ts-kit: ${line}`),
     commitReminder(project, input, { repeat: false }),
     designReminder(project, input),
   ].filter(Boolean);
@@ -1599,7 +1621,10 @@ function readProject(root) {
 // which the sandbox of Claude Code denies to its commands in their working directory and above. A folder
 // another user writes says nothing either way.
 function isRegulated(root) {
-  return foldersUp(root).filter(isOwnFolder).some(statesRegulatedProfile);
+  if (!profiles.has(root)) {
+    profiles.set(root, foldersUp(root).filter(isOwnFolder).some(statesRegulatedProfile));
+  }
+  return profiles.get(root);
 }
 
 function foldersUp(directory) {
@@ -1709,6 +1734,7 @@ function projectBriefing(project, input) {
     'Read `npx ddd-ts-kit list` (text; `--json` for a script) and the CONTEXT.md of one context instead of browsing the tree.',
     ...mergeNotice(project),
     ...configNotice(project),
+    ...unreadRepositoryNotice(project),
     ...(project.mode === 'off' ? [] : versionGap(project)),
     ...planPointer(project.root),
     ...workerNotice(project, input),
@@ -4877,14 +4903,65 @@ function git(project, args) {
   return run.status === 0 ? run.stdout : undefined;
 }
 
+// Under the regulated profile, of the session root or of the place, git runs in the repository of the
+// session root alone, never in a submodule of it: the sandbox of Claude Code denies its commands the
+// config and the hooks of that repository only, and a filter or a diff driver of any other config,
+// which a command can write, would run here outside the sandbox. Git has no switch that turns every
+// driver off (docs/adr/0006-the-regulated-guard-runs-git-in-its-root-only.md).
 function gitRun(project, args) {
+  if (!gitReads(project.root)) {
+    return NOT_READ;
+  }
+  const [subcommand, ...rest] = args;
+  const own = regulatedSession(project.root) && WORKTREE_READS.includes(subcommand);
+  return spawnGit(project.root, own ? [subcommand, '--ignore-submodules=all', ...rest] : args);
+}
+
+function gitReads(directory) {
+  return !regulatedSession(directory) || inSessionRepository(directory);
+}
+
+function regulatedSession(directory) {
+  return isRegulated(sessionRoot()) || isRegulated(directory);
+}
+
+// The folder the session started in: Claude Code names it to its hooks, and its sandbox protects the
+// git config there; another host sends its working directory.
+function sessionRoot() {
+  const cwd = typeof called.cwd === 'string' ? called.cwd : process.cwd();
+  return resolve(process.env.CLAUDE_PROJECT_DIR || cwd);
+}
+
+// Whether `directory` is a checkout of the repository of the session root, its linked worktrees
+// included, as their git files say: a nested repository, a submodule or a worktree of another
+// repository has a common git directory of its own.
+function inSessionRepository(directory) {
+  const root = sessionRoot();
+  if (!repositories.has(root)) {
+    const top = spawnGit(root, ['rev-parse', '--show-toplevel']);
+    repositories.set(root, top.status === 0 ? commonDirOf(top.stdout.trim()) : undefined);
+  }
+  const own = repositories.get(root);
+  return own !== undefined && commonDirOf(directory) === own;
+}
+
+function commonDirOf(directory) {
+  const gitDir = gitDirOf(directory);
+  return gitDir && realOf(resolve(gitDir, readText(join(gitDir, 'commondir'), '.').trim()));
+}
+
+function unreadRepositoryNotice(project) {
+  return gitReads(project.root) ? [] : [UNREAD_REPOSITORY];
+}
+
+function spawnGit(directory, args) {
   // A core.fsmonitor planted in the config never runs on the guard's own git, nor does a hook planted
   // in the repository (the guard commits nothing), and its status writes no index.
   return spawnSync(
     'git',
     ['-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', '--no-optional-locks', ...args],
     {
-      cwd: project.root,
+      cwd: directory,
       encoding: 'utf8',
       timeout: 5000,
       maxBuffer: ANSWER_BYTES,

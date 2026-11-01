@@ -112,12 +112,16 @@ export function runFrom(directory, mode, input) {
   return guardIn(directory, mode, { input, env: {} });
 }
 
+// The folder Claude Code started a session in is the test's to name in `env`: the one of the session
+// that runs the tests is never inherited.
 function guardIn(directory, mode, { input, env }) {
+  const inherited = { ...process.env };
+  delete inherited.CLAUDE_PROJECT_DIR;
   const result = spawnSync('node', [guard, mode], {
     cwd: directory,
     input: JSON.stringify(input),
     encoding: 'utf8',
-    env: { ...process.env, TMPDIR: guardTemp, ...env },
+    env: { ...inherited, TMPDIR: guardTemp, ...env },
   });
   return {
     status: result.status,

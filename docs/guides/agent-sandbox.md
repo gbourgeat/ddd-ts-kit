@@ -121,6 +121,13 @@ one line. The rules the guard reads itself keep running (a generated file, the s
 the lock of a fix, the size of a commit), an agent runs `npx ddd-ts-kit check` in the sandbox, and
 the pipeline and the commit gate hold those checks.
 
+Git runs in one repository under this profile: the one of the session root, the folder the session
+started in, whose `.git/config` and `.git/hooks` the sandbox protects. A nested repository, a
+submodule and a worktree of another repository are not read, and the session start and the stop say
+so of a project there; `git status` and `git diff` leave the submodules out. Git has no switch that
+turns off every driver a config names, which is why
+([ADR-0006](../adr/0006-the-regulated-guard-runs-git-in-its-root-only.md)).
+
 Two limits stay. On Codex and Copilot no such file exists, so `agents.profile` is the only sign, and
 a command they run can rewrite it. And a person still runs what `node_modules` holds, with the
 rights of the developer, at a commit or a test outside the sandbox: a project that cannot trust what
