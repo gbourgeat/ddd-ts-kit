@@ -1,1 +1,0 @@
-**`generate` refuses a name Windows reserves for a device.** `CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9` and `LPT1` to `LPT9`, whatever the case, are refused as the name of a context and of a concept (`con.aggregate.ts` cannot be checked out on NTFS), with one list shared by both. `--allow-name` lets a concept through where the project is not worked on from Windows.
