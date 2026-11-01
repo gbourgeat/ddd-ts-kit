@@ -145,6 +145,7 @@ const FASTIFY_STACK = {
   representations: 'negotiated',
   forms: 'on',
   schemas: 'shared',
+  search: 'none',
   storage: 'local',
   valueObjects: 'throwing',
   literals: 'named',
