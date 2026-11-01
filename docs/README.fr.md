@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d9c652286002273f -->
+<!-- translation-of: README.md sha256:da816260e17fffa6 -->
 
 # Documentation
 
@@ -33,6 +33,7 @@ source.
 | [Configuration](CONFIG.fr.md) | chaque clé de `ddd-ts-kit.config.json` |
 | [Lignes laissées hors de la mesure de couverture](adr/0001-lines-left-out-of-the-coverage-measure.fr.md) | les vérifications que rien n'atteint, pourquoi, et quand chacune part |
 | [La garde réglementée ne lance git qu'à sa racine](adr/0006-the-regulated-guard-runs-git-in-its-root-only.fr.md) | le seul dépôt où la garde lance git sous le profil réglementé, et ce qu'elle laisse sans lecture |
+| [La garde nomme les lecteurs de VS Code](adr/0007-the-guard-names-the-readers-of-vs-code.fr.md) | les outils de VS Code qui n'écrivent rien, et pourquoi une liste de lecteurs et non d'écrivains |
 | [Pipeline](../pipeline/README.md) | les portes de qualité, les *hooks* git, GitHub et GitLab côte à côte |
 | README des packages sous [`packages/`](../packages) | ce que fait chaque *package*, ses limites et ce qui a été vérifié |
 

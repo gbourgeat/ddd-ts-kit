@@ -29,6 +29,7 @@ also published as a website, with search, in English and in French:
 | [Configuration](CONFIG.md) | every key of `ddd-ts-kit.config.json` |
 | [Lines left out of the coverage measure](adr/0001-lines-left-out-of-the-coverage-measure.md) | the checks nothing can reach, why, and when each one goes |
 | [The regulated guard runs git in its root only](adr/0006-the-regulated-guard-runs-git-in-its-root-only.md) | the one repository the guard runs git in under the regulated profile, and what it leaves unread |
+| [The guard names the readers of VS Code](adr/0007-the-guard-names-the-readers-of-vs-code.md) | the tools of VS Code that write nothing, and why a list of readers and not of writers |
 | [Pipeline](../pipeline/README.md) | the quality gates, the git hooks, GitHub and GitLab side by side |
 | Package READMEs under [`packages/`](../packages) | what each package does, its limits and what was verified |
 
