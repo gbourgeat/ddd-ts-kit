@@ -2,11 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   AGENT_PROFILES,
-  AUDIT_MODES,
   AUTHN_STACKS,
   AUTHZ_STACKS,
   BROKER_STACKS,
-  CACHE_STACKS,
   CI_PLATFORMS,
   CONFIG_FILE,
   DEFAULT_IMPORT_ALIAS,
@@ -14,19 +12,16 @@ import {
   DEFAULT_SDK_NAME,
   DI_STACKS,
   DOCS_UIS,
-  ERROR_REPORTERS,
   HTTP_CACHE_STACKS,
   RPC_STACKS,
   HTTP_STACKS,
   IMPORT_EXTENSIONS,
-  LOGGERS,
   FORM_MODES,
   REFUSAL_FORMS,
   REPRESENTATION_MODES,
   ROUTE_FORMS,
   SCHEMA_FORMS,
   PACKAGE_MANAGERS,
-  STORAGE_STACKS,
   parseConfig,
   readConfig,
   TEST_STACKS,
@@ -44,6 +39,7 @@ import { refuseUnusedNoOutbox } from './refuse-unused-no-outbox';
 import { recordedOptions } from './recorded-options';
 import { resolveCiExtras } from './resolve-ci-extras';
 import { resolvePersistence } from './resolve-persistence';
+import { resolveOperations } from './resolve-operations';
 import { resolvePersonalData } from './resolve-personal-data';
 import { resolveQueue } from './resolve-queue';
 import { resolveStyle } from './resolve-style';
@@ -201,28 +197,6 @@ function supportedAlias(config: Config): Config {
 /** A worker that is already there keeps the jobs, so the API still starts with its jobs off, whatever the config says of it. */
 function hasWorker(root: string, config: Config): boolean {
   return fs.existsSync(path.join(root, config.sourceRoot, 'apps/worker/main.ts'));
-}
-
-/**
- * The cache stays in the process unless asked otherwise; files are kept in a local directory
- * unless an object store is asked for; the audit trail is on as soon as there
- * is a database to keep it in; unexpected failures are reported nowhere unless asked; the logger
- * writes JSON lines on the standard output unless pino or winston is asked for. Error
- * reporting hangs on the buses, the HTTP boundary, the jobs and the process, which every stack
- * has: no other choice refuses it.
- */
-function resolveOperations(
-  options: StackOptions,
-  orm: string,
-): Record<'cache' | 'storage' | 'audit' | 'errors' | 'logger', string> {
-  return {
-    cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
-    // A new project keeps the content of its files in a directory while it is developed, in memory in its tests; a recorded one says what it chose, or none.
-    storage: choose(STORAGE_STACKS, options.storage, 'storage') ?? 'local',
-    audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
-    errors: choose(ERROR_REPORTERS, options.errors, 'errors') ?? 'none',
-    logger: choose(LOGGERS, options.logger, 'logger') ?? 'stdout',
-  };
 }
 
 /** How the code is written: a new project takes the forms of the current version, a recorded one keeps the form it says. */

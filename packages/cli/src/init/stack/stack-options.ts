@@ -20,6 +20,8 @@ export interface StackOptions {
   /** `none`, `orpc` or `trpc`: the routes served as procedures too, for a typed TypeScript client. */
   readonly rpc?: string;
   readonly storage?: string;
+  /** `none` or `opensearch`: where the read models a context keeps for search live. */
+  readonly search?: string;
   readonly audit?: string;
   /** `on` or `off`: whether the event store is wired, for the aggregates kept as events. */
   readonly eventSourcing?: string;

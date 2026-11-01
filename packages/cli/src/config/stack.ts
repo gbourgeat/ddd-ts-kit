@@ -25,6 +25,7 @@ export const CACHE_STACKS = ['none', 'redis'] as const;
 export const HTTP_CACHE_STACKS = ['none', 'varnish'] as const;
 export const RPC_STACKS = ['none', 'orpc', 'trpc'] as const;
 export const STORAGE_STACKS = ['none', 'local', 's3'] as const;
+export const SEARCH_STACKS = ['none', 'opensearch'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const EVENT_SOURCING_MODES = ['on', 'off'] as const;
 export const PRIVACY_MODES = ['on', 'off'] as const;
@@ -86,6 +87,14 @@ export interface Stack {
    * the choice existed: it is `none`.
    */
   readonly storage: (typeof STORAGE_STACKS)[number];
+  /**
+   * Where the read models a context keeps for search live, besides the database: `opensearch`,
+   * `src/platform/search/` hands every context `SearchIndexes`, the options of an
+   * `OpenSearchReadModelStore` with the node of `OPENSEARCH_URL` and the tenancy of the project
+   * set, and provisions the index of each store built from it (OpenSearch in the compose stack);
+   * `none`, nothing wired. A config that says nothing was written before the choice existed: `none`.
+   */
+  readonly search: (typeof SEARCH_STACKS)[number];
   /** Whether the audit trail is wired: decisions, commands and integration events, recorded from outside the use cases. */
   readonly audit: (typeof AUDIT_MODES)[number];
   /**

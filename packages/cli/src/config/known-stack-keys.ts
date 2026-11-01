@@ -17,6 +17,7 @@ export const KNOWN_STACK_KEYS = [
   'broker',
   'cache',
   'storage',
+  'search',
   'audit',
   'errors',
   'logger',

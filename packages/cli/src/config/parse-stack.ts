@@ -29,6 +29,7 @@ import {
   REPRESENTATION_MODES,
   SCHEMA_FORMS,
   STORAGE_STACKS,
+  SEARCH_STACKS,
   STYLES,
   TENANCY_STRATEGIES,
   QUEUE_STORES,
@@ -82,6 +83,7 @@ type Choices = Pick<
   | 'httpCache'
   | 'rpc'
   | 'storage'
+  | 'search'
   | 'audit'
   | 'eventSourcing'
   | 'privacy'
@@ -101,6 +103,7 @@ function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
     httpCache: choose('httpCache', HTTP_CACHE_STACKS, 'none'),
     rpc: choose('rpc', RPC_STACKS, 'none'),
     storage: choose('storage', STORAGE_STACKS, 'none'),
+    search: choose('search', SEARCH_STACKS, 'none'),
     audit: choose('audit', AUDIT_MODES, orm === 'none' ? 'off' : 'on'),
     // Both were written before their choice existed: such a config has no event store and no privacy folder.
     eventSourcing: choose('eventSourcing', EVENT_SOURCING_MODES, 'off'),
