@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { scaffoldEverything, tempDir } from '../helpers';
+import { cli, DEFAULT_STACK, removeTempDir, type StackFlags, scaffoldEverything, tempDir } from '../helpers';
+import { initFlags } from '../support/init-flags';
 import { bin, findingsOf } from './run-in';
 import { label, SLOW, STACKS } from './stacks';
 
@@ -14,5 +15,23 @@ describe.runIf(SLOW)('a freshly generated project', () => {
     scaffoldEverything(root, stack);
 
     expect(findingsOf(root, { command: bin('biome'), args: ['format', '--max-diagnostics=400', '.'] })).toBe('');
+  });
+});
+
+/**
+ * `init` alone, with no context and no audit set, leaves the registry of permissions with the comments of its
+ * region only: the formatter keeps that form too.
+ */
+describe.runIf(SLOW)('a project with no ORM and no context', () => {
+  it('is already formatted on relationships without an authenticator', () => {
+    const root = tempDir('e2e-formatted-alone');
+    const stack: StackFlags = { ...DEFAULT_STACK, orm: 'none', authn: 'none', authz: 'rebac', di: 'manual' };
+
+    try {
+      expect(cli(root, 'init', ...initFlags(stack)).code).toBe(0);
+      expect(findingsOf(root, { command: bin('biome'), args: ['format', '--max-diagnostics=400', '.'] })).toBe('');
+    } finally {
+      removeTempDir(root);
+    }
   });
 });

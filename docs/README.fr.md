@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:da816260e17fffa6 -->
+<!-- translation-of: README.md sha256:8524f494e87be153 -->
 
 # Documentation
 
@@ -32,6 +32,10 @@ source.
 | [Référence d'architecture](ARCHITECTURE.fr.md) | l'arborescence canonique, chaque identifiant de règle, les règles tactiques, les tests, le clean code |
 | [Configuration](CONFIG.fr.md) | chaque clé de `ddd-ts-kit.config.json` |
 | [Lignes laissées hors de la mesure de couverture](adr/0001-lines-left-out-of-the-coverage-measure.fr.md) | les vérifications que rien n'atteint, pourquoi, et quand chacune part |
+| [Entrées de `cached` par locataire](adr/0002-cached-keeps-its-entries-per-tenant-and-needs-the-scope.fr.md) | pourquoi `cached` range une entrée sous le locataire, lève sans la portée et saute une élévation |
+| [Le magasin de tuples en mémoire refuse la production](adr/0003-the-in-memory-tuple-store-refuses-production.fr.md) | ce que `createTupleStore` permet, ce que fait un `NODE_ENV` absent, et ce qui l'inverserait |
+| [La garde du profil régulé n'exécute aucun programme du projet](adr/0004-the-regulated-guard-runs-no-program-of-the-project.fr.md) | comment le profil est lu, pourquoi pas de `denyWrite`, et les vérifications dont le profil se prive |
+| [Un refus est une erreur d'emblée avant la 1.0](adr/0005-a-refusal-is-an-error-at-once-before-1-0.fr.md) | ni transition, ni alias, ni cale avant la 1.0 ; une rupture arrive avec une ligne `To move` |
 | [La garde réglementée ne lance git qu'à sa racine](adr/0006-the-regulated-guard-runs-git-in-its-root-only.fr.md) | le seul dépôt où la garde lance git sous le profil réglementé, et ce qu'elle laisse sans lecture |
 | [La garde nomme les lecteurs de VS Code](adr/0007-the-guard-names-the-readers-of-vs-code.fr.md) | les outils de VS Code qui n'écrivent rien, et pourquoi une liste de lecteurs et non d'écrivains |
 | [Pipeline](../pipeline/README.md) | les portes de qualité, les *hooks* git, GitHub et GitLab côte à côte |

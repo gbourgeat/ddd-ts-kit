@@ -139,7 +139,7 @@ describe('authentication and authorization', () => {
     const root = initProject('--authz', 'rebac');
 
     expect(platform(root, 'auth/authorization/permissions.ts')).toContain(
-      'export const permissions = PermissionRegistry.of(',
+      'export const permissions = PermissionRegistry.of(...permissionSets);',
     );
 
     expect(platform(root, 'auth/authorization/permissions.ts')).toContain('// ddd-ts-kit:permission-sets');
