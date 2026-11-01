@@ -17,6 +17,9 @@ const ADAPTER_NAMES = [
   'UnsupportedRebuildError',
 ];
 
+/** What only the platform sets on a store: a key of these names in an adapter overrides the decision of the platform. */
+const PLATFORM_KEYS = /\b(tenancy|strategy|transport)\b/g;
+
 /** The layers that see a read model through its port only. */
 const PORT_LAYERS = ['domain', 'application'];
 
@@ -29,11 +32,11 @@ const ADAPTER_FIX =
 export const searchStoreFromPlatform: Rule = {
   id: 'search/store-from-platform',
   description:
-    'A context builds a store of @ddd-ts-kit/opensearch from the `SearchIndexes` of the platform only: it never opens a transport nor names a tenancy of its own, and its domain/ and application/ name the `ReadModelStore` port, never the store.',
+    'A context builds a store of @ddd-ts-kit/opensearch from the `SearchIndexes` of the platform only: it never opens a transport nor names a tenancy of its own, not even over the answer of `search.options`, and its domain/ and application/ name the `ReadModelStore` port, never the store.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) =>
-      judged(file) ? file.imports.flatMap((imported) => findingsOf(imported, file)) : [],
+      judged(file) ? [...file.imports.flatMap((imported) => findingsOf(imported, file)), ...overrides(file)] : [],
     );
   },
 };
@@ -41,6 +44,19 @@ export const searchStoreFromPlatform: Rule = {
 /** The production code of a context; the platform builds the transport and the tests may build a store on a node of their own. */
 function judged(file: SourceFile): boolean {
   return inContext(file.location) && !file.isTest;
+}
+
+/** A tenancy, a strategy or a transport written in the code of an adapter, which the answer of `search.options` already holds. */
+function overrides(file: SourceFile): Finding[] {
+  if (!file.imports.some(({ target }) => target.kind === 'package' && target.name === OPENSEARCH)) {
+    return [];
+  }
+
+  return [...file.scan.code.matchAll(PLATFORM_KEYS)].map((match) => ({
+    line: file.scan.lineAt(match.index),
+    message: `${match[0]} in an adapter of ${OPENSEARCH}: the transport and the tenancy of a store are the decision of the platform.`,
+    fix: ADAPTER_FIX,
+  }));
 }
 
 function findingsOf({ target, names, line }: ResolvedImport, file: SourceFile): Finding[] {

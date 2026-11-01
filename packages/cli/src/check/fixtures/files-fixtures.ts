@@ -124,6 +124,15 @@ export const FILES_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'search/store-from-platform',
+    name: 'an adapter that takes the options of the platform and overrides their tenancy',
+    expect: { file: READER },
+    files: project({
+      [READER]:
+        "import { OpenSearchReadModelStore } from '@ddd-ts-kit/opensearch';\nexport const options = (given: object) => ({ ...given, tenancy: { strategy: 'none' } });\nexport const store = OpenSearchReadModelStore;\n",
+    }),
+  },
+  {
+    ruleId: 'search/store-from-platform',
     name: 'a port of the application that names the store',
     expect: { file: PORT },
     also: ['layer/application-inward'],

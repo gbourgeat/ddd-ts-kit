@@ -1,5 +1,5 @@
 [English](0009-init-wires-opensearch.md) · **Français**
-<!-- translation-of: 0009-init-wires-opensearch.md sha256:d06fab774fdeec68 -->
+<!-- translation-of: 0009-init-wires-opensearch.md sha256:b81ba5725fa8c086 -->
 
 # ADR-0009 : init câble OpenSearch
 
@@ -41,10 +41,12 @@ gibioctet de mémoire.
 
 ## Étapes suivantes
 
-- `search/store-from-platform` ne lit que les imports : un adaptateur qui étale la réponse de
-  `search.options` et remplace `tenancy` ou `transport` n'est pas vu. L'étape suivante lit
-  l'argument de `super(...)` dans une classe qui étend `OpenSearchReadModelStore` : ce doit être
-  l'appel d'`options` sur un paramètre typé `SearchIndexes`.
+- `search/store-from-platform` lit le texte : outre les imports, un fichier d'un contexte qui
+  importe le paquet ne nomme ni `tenancy`, ni `strategy`, ni `transport` dans son code, si bien
+  qu'un remplacement dans la réponse de `search.options` est refusé ; une clé atteinte par un nom
+  calculé n'est pas vue. L'étape suivante lit l'argument de `super(...)` dans une classe qui étend
+  `OpenSearchReadModelStore` : ce doit être l'appel d'`options` sur un paramètre typé
+  `SearchIndexes`.
 - Un locataire créé après le démarrage n'est provisionné par la plateforme qu'au démarrage suivant ;
   un port de la plateforme qu'appelle le cas d'usage qui crée un locataire est l'étape suivante,
   avec le *preset* d'identité.

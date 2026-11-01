@@ -38,10 +38,11 @@ goes through a store reaches it only once `start-application.ts` passes the node
 
 ## Next steps
 
-- `search/store-from-platform` reads the imports only: an adapter that spreads the answer of
-  `search.options` and overrides `tenancy` or `transport` is not seen. The next step reads the
-  argument of `super(...)` in a class that extends `OpenSearchReadModelStore`: it must be the call
-  of `options` on a parameter typed `SearchIndexes`.
+- `search/store-from-platform` reads the text: besides the imports, a file of a context that
+  imports the package names no `tenancy`, `strategy` or `transport` in its code, so an override of
+  the answer of `search.options` is refused; a key reached by a computed name is not seen. The next
+  step reads the argument of `super(...)` in a class that extends `OpenSearchReadModelStore`: it
+  must be the call of `options` on a parameter typed `SearchIndexes`.
 - A tenant created after the start is provisioned by the platform only at the next start; a port
   of the platform that the use case creating a tenant calls is the next step, with the identity
   preset.
