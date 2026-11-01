@@ -28,6 +28,10 @@ also published as a website, with search, in English and in French:
 | [Architecture reference](ARCHITECTURE.md) | the canonical tree, every rule id, the tactical rules, tests, clean code |
 | [Configuration](CONFIG.md) | every key of `ddd-ts-kit.config.json` |
 | [Lines left out of the coverage measure](adr/0001-lines-left-out-of-the-coverage-measure.md) | the checks nothing can reach, why, and when each one goes |
+| [Cached entries per tenant](adr/0002-cached-keeps-its-entries-per-tenant-and-needs-the-scope.md) | why `cached` files an entry under the tenant, throws without the scope, and skips an elevation |
+| [The in-memory tuple store refuses production](adr/0003-the-in-memory-tuple-store-refuses-production.md) | what `createTupleStore` allows, what an unset `NODE_ENV` does, and what reverses it |
+| [The regulated guard runs no program of the project](adr/0004-the-regulated-guard-runs-no-program-of-the-project.md) | how the profile is read, why no `denyWrite`, and the checks the profile gives up |
+| [A refusal is an error at once before 1.0](adr/0005-a-refusal-is-an-error-at-once-before-1-0.md) | no transition, alias or shim before 1.0; a break ships with a `To move` line |
 | [Pipeline](../pipeline/README.md) | the quality gates, the git hooks, GitHub and GitLab side by side |
 | Package READMEs under [`packages/`](../packages) | what each package does, its limits and what was verified |
 
