@@ -168,6 +168,15 @@ export const FILES_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'search/store-from-platform',
+    name: 'an adapter whose constructor hands the store options it wrote itself',
+    expect: { file: READER },
+    files: project({
+      [READER]:
+        "import { OpenSearchReadModelStore } from '@ddd-ts-kit/opensearch';\nexport class SearchInvoiceList extends OpenSearchReadModelStore<{ readonly id: string }> {\n  constructor(written: Record<string, unknown>) {\n    super(written);\n  }\n}\n",
+    }),
+  },
+  {
+    ruleId: 'search/store-from-platform',
     name: 'a port of the application that names the store',
     expect: { file: PORT },
     also: ['layer/application-inward'],
