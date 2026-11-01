@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:a7488f3a6ef80360 -->
+<!-- translation-of: coding-agents.md sha256:da1af783b3dc6079 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -106,7 +106,7 @@ refuse de terminer tant que des
 erreurs d'architecture restent dans un arbre aux changements non *committés* (un arbre propre est
 laissé au *hook* de pre-commit et au *pipeline* ; une vérification qui ne finit pas à temps, ou qui répond plus que
 les 64 Mio que la garde lit, laisse la session terminer et le dit ; un début de session qui passe dix secondes d'appels à la CLI saute ceux qui
-restent et dit qu'il a été écourté). Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), il lance
+restent et dit qu'il a été écourté). Avec `"formatOnWrite": true` dans la configuration (écrite par `init` pour un nouveau projet), et hors du profil réglementé, il lance
 d'abord le Biome que le projet a installé sur le fichier écrit (le *bin* de son paquet
 `@biomejs/biome`, `format --write`, un fichier, jamais un autre formateur), pour que la mise en page soit réglée à
 l'écriture et que les constats du lint qui suivent une ligne repliée reviennent dans la même
@@ -255,7 +255,7 @@ la CLI et cet agent font. Le juge lui-même lit git sans ajouter ni *committer*,
 que pour lire (`acceptance` sans `--lock`, `list`, `describe`, `explain`, `status`, `story`,
 `stories`, `story-check`). Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
-panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt, ni une config ou une CLI dans un dossier qu'un autre utilisateur peut écrire, le répertoire temporaire partagé avant tout), et de ce qu'écrit un code qu'il ne peut pas lire, il ne compare que ce qui est noté plus haut : les autres fichiers ignorés par git et les endroits hors de ces *checkouts* ne sont pas énumérés, et l'état qu'il garde entre deux appels se trouve dans le projet, à portée d'un code qui vise la garde ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
+panne, il laisse passer : une garde cassée ne bloque jamais le travail, ce qui en fait un guide, pas une frontière de sécurité : il lance la CLI `ddd-ts-kit` et le Biome du projet lui-même depuis `node_modules` (le *bin* que nomme chaque paquet, avec Node, jamais un paquet installé au-dessus du sommet du dépôt, ni une config ou une CLI dans un dossier qu'un autre utilisateur peut écrire, le répertoire temporaire partagé avant tout ; sous [le profil réglementé](agent-sandbox.fr.md#le-profil-réglementé), il ne lance ni l'une ni l'autre, donc aucune vérification à l'écriture ni à l'arrêt), et de ce qu'écrit un code qu'il ne peut pas lire, il ne compare que ce qui est noté plus haut : les autres fichiers ignorés par git et les endroits hors de ces *checkouts* ne sont pas énumérés, et l'état qu'il garde entre deux appels se trouve dans le projet, à portée d'un code qui vise la garde ; pour isoler un agent, voir [Isoler les agents de code](agent-sandbox.fr.md). Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
 
 Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les six

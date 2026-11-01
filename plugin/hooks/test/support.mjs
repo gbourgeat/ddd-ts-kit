@@ -179,8 +179,8 @@ export function edit(file, { from, to }, extra = {}) {
 }
 
 // A project committed in a repository of its own, ignoring what init's .gitignore ignores of the kit.
-export function committed(config = {}) {
-  const root = project(config);
+export function committed(config = {}, flags = []) {
+  const root = project(config, flags);
   writeFileSync(join(root, '.gitignore'), 'node_modules\n.ddd-ts-kit/\n');
   git(root, 'init', '--quiet');
   git(root, 'add', '--all');

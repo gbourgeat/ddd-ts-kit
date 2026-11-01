@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:80d40783a90a2a67 -->
+<!-- translation-of: README.md sha256:d53193bb21e9a5d1 -->
 
 # ddd-ts-kit
 
@@ -698,7 +698,9 @@ versions relues (`npm install-scripts approve <package>...`, ou `'<package>@<ver
 (`allowManagedHooksOnly`, `allowManagedPermissionRulesOnly`,
 `permissions.disableBypassPermissionsMode`, `strictKnownMarketplaces` avec la *marketplace* du
 kit, `requiredMinimumVersion`), pour que l'équipe plateforme le colle, et écrit les deux *hooks*
-du profil sous `.claude/hooks/`
+du profil sous `.claude/hooks/`. Sous ce profil, la garde du *plugin* ne lance aucun programme du
+projet, donc aucune vérification à l'écriture ni à l'arrêt : le *pipeline* et la barrière de
+*commit* les tiennent
 ([Mettre les agents de code en bac à sable](../../docs/guides/agent-sandbox.fr.md#le-profil-réglementé)).
 
 Un `.claude/settings.json` existant n'est jamais écrasé : les permissions manquantes sont ajoutées
