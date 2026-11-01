@@ -9,7 +9,7 @@ relationships, Cedar and Open Policy Agent for policies. This page compares them
 moving from the in-process authorizer to a service pays for its cost. For relationships the kit
 holds both ends to the same contract suites: a tuple store in the PostgreSQL of the project (the
 port and its suite ship with `@ddd-ts-kit/auth`, the example application has a Knex adapter of
-it, and `init --authz rebac` starts a project on the in-memory store with a note to replace it),
+it, and `init --authz rebac` starts a project on the in-memory store with a note to replace it, and that store refuses to start in production),
 and [`@ddd-ts-kit/openfga`](../../packages/openfga/README.md), the same two ports on an OpenFGA
 server, its model generated from the same schema. The other services have a contract suite to
 hold an adapter to.
