@@ -113,17 +113,17 @@ qualifiers `invalid`, `unknown`, `already`, `too`, `no`, `missing`, `required` (
 a missing term is added with `--term` (`language/glossary-term`). `generate error scheduling SlotTaken forCalendar` writes
 `domain/errors/slot-taken.error.ts` (`SlotTaken`, extending `DomainRefusal`, never `...Error`),
 adds `SlotTaken: 'SLOT_TAKEN'` to `SchedulingCodes` in `<context>.codes.ts`, the factory
-`SlotTaken.forCalendar()`, and its case to the spec. Give the factory the facts of the refusal as
+`SlotTaken.forCalendar()`, and its case to the spec. Give the factory the facts as
 typed parameters, and throw it where the rule is kept:
-`throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`. Seen from another place, the same
+`throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`. Elsewhere, the same
 refusal gets a second factory (`generate error scheduling SlotTaken atStart`); a second code is a
 second class. Never `new` an error of `domain/errors/` (`errors/through-factory`). Facts are
-private: add `.exposing('<fact>')` in the factory only for what a client may read, never for what
-identifies a person. Declare the code in `errors` of the route by its member of the code list
-(`SchedulingCodes.SlotTaken`; a code of the kit by `KitCodes.Forbidden` of `@ddd-ts-kit/kernel`), never
-as a string: the editor completes it and a typo does not compile (`errors/known-code`). Under
+private: add `.exposing('<fact>')` only for what a client may read, never for what
+identifies a person. Declare the code in `errors` of the route by its list member
+(`SchedulingCodes.SlotTaken`, `KitCodes.Forbidden` of `@ddd-ts-kit/kernel`), not a string
+(`errors/known-code`). Under
 `stack.refusals: factories`, read [factories.md](factories.md) first: a refusal is a factory of
-the error class of its concept instead.
+the error class of its concept.
 
 A use case that receives a file is `generate file-upload`, and its content never goes in a
 table: read [file-upload.md](file-upload.md) first (refused under `stack.storage: none` or
