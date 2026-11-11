@@ -227,7 +227,14 @@ function aggregateFiles(config: Config): string[] {
 }
 
 function testFiles(config: Config): string[] {
-  return ['**/*.spec.ts', '**/*.test.ts', `${config.contextsDir}/*/test/**/*.ts`, 'test/**/*.ts'];
+  return [
+    '**/*.spec.ts',
+    '**/*.test.ts',
+    `${config.contextsDir}/*/test/**/*.ts`,
+    // In a context divided into modules: the test folder of a module, and the one of what its modules share.
+    `${config.contextsDir}/*/*/test/**/*.ts`,
+    'test/**/*.ts',
+  ];
 }
 
 /** Rules of typescript-eslint that need type information: naming them without it is an error. */

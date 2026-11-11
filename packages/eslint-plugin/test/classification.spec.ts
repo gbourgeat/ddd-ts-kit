@@ -277,3 +277,38 @@ describe('locate, a dot folder of the contexts directory', () => {
     expect(cliLocate(cliParseConfig({}), 'src/contexts/.claude/domain/a.ts')).toEqual({ area: 'other' });
   });
 });
+
+describe('locate, in a context divided into modules', () => {
+  it('locates the test folder of a module and what the modules share, in shared/, the same way', () => {
+    const raw = { contexts: { scheduling: { classification: 'core', modules: { calendars: {} } }, billing: {} } };
+
+    const files = [
+      'src/contexts/scheduling/calendars/test/unit/calendar.aggregate.spec.ts',
+      'src/contexts/scheduling/calendars/test/builders/calendar.builder.ts',
+      'src/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema.ts',
+      'src/contexts/scheduling/shared/presentation/http/calendars.routes.ts',
+      'src/contexts/scheduling/shared/test/worlds/scheduling.world.ts',
+      'src/contexts/scheduling/shared/domain/services/pricing.service.ts',
+      'src/contexts/scheduling/shared/notes.ts',
+      'src/contexts/billing/shared/infrastructure/persistence/billing.schema.ts',
+    ];
+
+    for (const file of files) {
+      expect(locate(parseConfig(raw), file), file).toEqual(cliLocate(cliParseConfig(raw), file));
+
+      expect(isTestFile(file, locate(parseConfig(raw), file)), file).toBe(
+        cliIsTestFile(file, cliLocate(cliParseConfig(raw), file)),
+      );
+    }
+
+    expect(locate(parseConfig(raw), files[2] ?? '')).toEqual({
+      area: 'context',
+      context: 'scheduling',
+      layer: 'infrastructure',
+      inside: ['persistence', 'scheduling.schema.ts'],
+      shared: true,
+    });
+
+    expect(locate(parseConfig(raw), files[1] ?? '')).toMatchObject({ layer: 'test', module: 'calendars' });
+  });
+});

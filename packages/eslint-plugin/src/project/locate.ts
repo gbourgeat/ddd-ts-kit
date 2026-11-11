@@ -55,8 +55,10 @@ function locateInContexts(config: Config, file: string): Location {
   return { area: 'context', context, layer, inside: layer === 'root' ? [first, ...rest] : rest };
 }
 
-/** The layers a module holds, and the test folders of its specs, as `moduleSplit` of the CLI reads them. */
-const MODULE_LAYERS: readonly Layer[] = ['domain', 'application', 'infrastructure', 'presentation'];
+/** The layers a module holds, its test folder among them, and the test folders of its specs at the root, as `moduleSplit` of the CLI reads them. */
+const MODULE_LAYERS: readonly Layer[] = ['domain', 'application', 'infrastructure', 'presentation', 'test'];
+/** What `shared/` holds, in a context divided into modules: no domain and no application, a concept belongs to a module. */
+const SHARED_LAYERS: readonly Layer[] = ['infrastructure', 'presentation', 'test'];
 const MODULE_TEST_FOLDERS: readonly string[] = ['unit', 'integration'];
 
 /**
@@ -73,7 +75,17 @@ function moduleLocation(modules: readonly string[], context: string, parts: read
     inTestFolder(modules, parts) ??
     inEarlierPlace(modules, parts);
 
-  return placed === undefined ? undefined : { area: 'context', context, ...placed };
+  return placed === undefined ? sharedLocation(modules, context, parts) : { area: 'context', context, ...placed };
+}
+
+/** `shared/<infrastructure|presentation|test>/...`: a file of the context, of no module, read as without the folder. */
+function sharedLocation(modules: readonly string[], context: string, parts: readonly string[]): Location | undefined {
+  const [first, second = '', ...rest] = parts;
+  const layer = SHARED_LAYERS.find((candidate) => candidate === second);
+
+  return modules.length > 0 && first === 'shared' && layer !== undefined
+    ? { area: 'context', context, layer, inside: rest, shared: true }
+    : undefined;
 }
 
 /** Where a file sits in its module: its layer, the path below it, the module. */
