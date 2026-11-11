@@ -127,7 +127,12 @@ const GENERATORS = [
   [/\/domain\/(?:[^/]+\/)?services\/[^/]+\.service\.ts$/, 'domain-service <context> <Name>'],
   [/\/domain\/(?:[^/]+\/)?repositories\/[^/]+\.repository\.ts$/, 'repository <context> <Aggregate>'],
   [/\.command\.ts$/, 'command <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)'],
-  [/\.query\.ts$/, 'query <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)'],
+  // In the application layer alone: `presentation/http/<resource>/<use-case>/*.query.ts` is the schema
+  // of a query string, written by hand.
+  [
+    /\/application\/queries\/(?:[^/]+\/)*[^/]+\.query\.ts$/,
+    'query <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)',
+  ],
   [
     /\.handler\.ts$/,
     'command|query <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)',
@@ -4246,7 +4251,9 @@ function linkReason(project, place, input) {
       ? `${path} is a link to ${away ? realPlace(place) : real}, outside your scope: a worker writes through no link that leaves it. ${REPORT_TO_CONDUCTOR}`
       : undefined;
   }
-  return statSync(place, { throwIfNoEntry: false })?.nlink > 1
+  // Only a regular file has another name: a folder counts itself and each folder it holds.
+  const stat = statSync(place, { throwIfNoEntry: false });
+  return stat?.isFile() && stat.nlink > 1
     ? `${path} has another name elsewhere (a hard link): writing it changes that file too. A worker writes only files of its scope that have one name. ${REPORT_TO_CONDUCTOR}`
     : undefined;
 }

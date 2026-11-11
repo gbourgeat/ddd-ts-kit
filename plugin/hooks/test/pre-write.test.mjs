@@ -235,6 +235,21 @@ test('every generated role of the canonical tree names its generator', () => {
   assert.equal(run('pre-write', write(join(root, 'test/e2e/journey-tenancy.e2e.spec.ts'))).output, undefined);
 });
 
+test('the schema of the query string of a route is written by hand; the query of the application layer is generated', () => {
+  const root = project();
+  const context = join(root, 'src/contexts/ordering');
+  const schema = run('pre-write', write(join(context, 'presentation/http/orders/list-orders/list-orders.query.ts')));
+  assert.equal(schema.output, undefined);
+  for (const path of [
+    'application/queries/list-orders/list-orders.query.ts',
+    'sales/application/queries/list-orders/list-orders.query.ts',
+  ]) {
+    const result = run('pre-write', write(join(context, path)));
+    assert.equal(decision(result), 'deny', path);
+    assert.match(reason(result), /generate query /, path);
+  }
+});
+
 test('the declarations of the use cases of a module are not a policy file: they go to the module file of the module', () => {
   const root = project();
   const result = run(

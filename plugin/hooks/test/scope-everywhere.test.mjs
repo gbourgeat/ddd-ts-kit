@@ -794,6 +794,19 @@ test('a here-document that never closes, or a line that ends inside a quote, is 
   }
 });
 
+test('a quote inside a quoted word of a command behind a package runner closes with its word', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const command of [
+    `npx ddd-ts-kit generate value-object ordering SupplierName --term "SupplierName=le nom d'un fournisseur" --json`,
+    'npx ddd-ts-kit generate value-object ordering Threshold --term "Threshold=an amount > the limit; refused" --json',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  const open = run('pre-bash', bash(root, `npx ddd-ts-kit lint --rule "name=d'un fournisseur`, agent));
+  assert.match(reason(open), /never closes/);
+});
+
 test('a builder from the conductor is refused a line it cannot read, as it is a write', () => {
   const { conductor, worktree } = conductorWithWorker();
   const refused = run(

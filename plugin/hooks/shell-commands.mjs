@@ -89,13 +89,40 @@ export function simpleCommands(text, directory, depth = 0) {
     found.push({ ...command, words, assigned, directory: current });
     current = movedTo(command, words, { current, stack, blocks });
     found.push(...nestedCommands(words, current, depth));
-    const wrapped = wrappedTextOf(command.words);
-    if (wrapped !== undefined) {
-      found.push(...simpleCommands(wrapped, current, depth + 1));
-    }
+    found.push(...wrappedCommands(command.words, current, depth));
   }
 
   return found;
+}
+
+/** The commands a command hands to another: a text read as its own line, or the words a runner runs. */
+function wrappedCommands(words, directory, depth) {
+  const wrapped = wrappedOf(words);
+  if (wrapped?.text !== undefined) {
+    return simpleCommands(wrapped.text, directory, depth + 1);
+  }
+  return wrapped ? runCommands(wrapped.words, directory, depth + 1) : [];
+}
+
+/**
+ * The command a package runner runs, from the words the shell already split: they are not text to
+ * split again, so a quote, a `>` or a `;` inside a word stays in it. What that command runs itself
+ * (a shell, a wrapper, another runner, `find -exec`) is read as for any command.
+ */
+function runCommands(inner, directory, depth) {
+  if (depth > DEPTH) {
+    return [unreadMarker('nested', directory, depth)];
+  }
+  const words = unwrapped(inner);
+  const command = {
+    words,
+    assigned: inner.slice(0, inner.length - words.length).filter(isAssignment),
+    redirects: [],
+    heredoc: false,
+    piped: false,
+    directory,
+  };
+  return [command, ...nestedCommands(words, directory, depth), ...wrappedCommands(inner, directory, depth)];
 }
 
 function unreadMarker(truncated, directory, depth) {
@@ -263,15 +290,15 @@ function isAssignment(word) {
   return /^[A-Za-z_][A-Za-z0-9_]*=/.test(word);
 }
 
-/** The text a command hands to another to split, read at each layer of its wrappers (`nice npx ...`). */
-function wrappedTextOf(words) {
+/** What a command hands to another to run, read at each layer of its wrappers (`nice npx ...`). */
+function wrappedOf(words) {
   let rest = words;
-  let text = wrappedText(rest);
-  for (let layer = 0; text === undefined && layer < LAYERS && unwrapOnce(rest) !== rest; layer += 1) {
+  let wrapped = wrappedBy(rest);
+  for (let layer = 0; wrapped === undefined && layer < LAYERS && unwrapOnce(rest) !== rest; layer += 1) {
     rest = unwrapOnce(rest);
-    text = wrappedText(rest);
+    wrapped = wrappedBy(rest);
   }
-  return text;
+  return wrapped;
 }
 
 /** The words after the options of a wrapper, its assignments (`env`), and its leading operand. */
@@ -323,18 +350,26 @@ function shellCode(words) {
 }
 
 // A command another computes from a text the shell alone splits: `su`/`doas`/`script`/`flock` from
-// their `-c` or `--command` string, `env -S` from its value, and a package runner (`npx`, `bunx`, `npm exec`, ...) from
-// the command it runs. The text is read as its own command line.
-function wrappedText(words) {
+// their `-c` or `--command` string, `env -S` from its value, a package runner from the string of its
+// `-c`/`--call`: a `text`, read as its own command line. The command a package runner runs (`npx`,
+// `bunx`, `npm exec`, ...) is `words` the shell already split.
+function wrappedBy(words) {
   const name = commandName(words);
   if (['su', 'doas', 'script', 'flock'].includes(name)) {
-    return valueOfFlag(words, '-c') ?? valueOfFlag(words, '--command');
+    return asText(valueOfFlag(words, '-c') ?? valueOfFlag(words, '--command'));
   }
   if (name === 'env') {
-    return envSplit(words);
+    return asText(envSplit(words));
   }
   const inner = runnerCommand(words);
-  return inner && inner.length > 0 ? inner.join(' ') : undefined;
+  if (inner?.call !== undefined) {
+    return asText(inner.call);
+  }
+  return inner && inner.words.length > 0 ? { words: inner.words } : undefined;
+}
+
+function asText(text) {
+  return text === undefined ? undefined : { text };
 }
 
 function valueOfFlag(words, flag) {
@@ -365,7 +400,7 @@ function runnerCommand(words) {
   }
   const args = words.slice(sub ? 2 : 1);
   const call = name === 'npx' || name === 'npm' ? leadingCall(args) : undefined;
-  return call === undefined ? innerCommand(args, ['-p', '--package']) : [call];
+  return call === undefined ? { words: innerCommand(args, ['-p', '--package']) } : { call };
 }
 
 // The string of `-c`/`--call` among the runner's own options, before the command it runs: a `-c`

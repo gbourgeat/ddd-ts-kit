@@ -191,6 +191,37 @@ test('a runner or a command string behind a wrapper is read for what it runs', (
   }
 });
 
+// The words of the command a package runner runs are those the shell split: a quote, a `>` or a `;`
+// inside one of them is text of that word.
+const RUNNER_WORDS = [
+  `npx ddd-ts-kit lint --rule "name=d'un fournisseur"`,
+  'npx ddd-ts-kit lint --rule "amount=a > b; c"',
+  'nice npx ddd-ts-kit lint --rule "a > src/main.ts"',
+  `npm exec -- ddd-ts-kit lint --rule 'rm src/main.ts; "'`,
+];
+
+// What the command behind a runner runs itself is still read: a shell, a wrapper, a runner, `find`.
+const BEHIND_A_RUNNER = [
+  ["npx sh -c 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
+  ["npx env -S 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
+  ['npx npx nice rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npx find src -name "*.orig" -exec rm {} +', /`rm` changes files under src/],
+  ['npx npx npx npx npx npx npx rm src/main.ts', /nested deeper/],
+];
+
+test('the words of the command behind a package runner are read as the shell split them', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const command of RUNNER_WORDS) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  for (const [command, expected] of BEHIND_A_RUNNER) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+});
+
 test('a double quote, an escape or a backquote inside a substitution does not hide the commands after it', () => {
   const root = project({}, ['--package-manager', 'npm']);
   const agent = worker(root, 'invoicing');
