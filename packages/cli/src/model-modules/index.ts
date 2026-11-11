@@ -28,3 +28,6 @@ export { moduleFileOf } from './module-file-of';
 export { moduleOfModuleFile } from './module-of-module-file';
 export { wiringFilesOf } from './wiring-files-of';
 export { wiringTextOf } from './wiring-text-of';
+export { heldFileOf } from './held-file-of';
+export { contextLevelFolderOf } from './context-level-folder-of';
+export { moduleTestFolderOf } from './module-test-folder-of';

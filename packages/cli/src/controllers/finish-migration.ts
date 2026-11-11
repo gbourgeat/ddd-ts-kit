@@ -1,6 +1,7 @@
 import { specifierOf } from '../alias';
 import { CONFIG_FILE, editConfigText } from '../config';
 import { isDeclared } from '../generate/is-declared';
+import { heldFileOf, treeOf } from '../model-modules';
 import { toName } from '../naming';
 import { projectSources } from '../refusals/project-sources';
 import { platformFileIn } from '../platform-layout';
@@ -50,8 +51,9 @@ export function finishMigration(migration: Migration, contexts: readonly string[
 }
 
 /** A declared context lists nothing: its controllers reach the application through its generated file. */
-function dropList({ config, draft }: Migration, context: string): void {
-  const list = `${config.contextsDir}/${context}/presentation/http/${context}.routes.ts`;
+function dropList({ ws, config, draft }: Migration, context: string): void {
+  const tree = treeOf(config, context);
+  const list = heldFileOf(ws, tree, `presentation/http/${context}.routes.ts`);
   const composition = compositionOf(config, draft);
   const name = `${toName(context).camel}Routes`;
 
@@ -59,7 +61,7 @@ function dropList({ config, draft }: Migration, context: string): void {
     draft.remove(list);
   }
 
-  draft.remove(`${config.contextsDir}/${context}/test/unit/${context}.routes.spec.ts`);
+  draft.remove(heldFileOf(ws, tree, `test/unit/${context}.routes.spec.ts`));
 
   draft.write(
     composition,

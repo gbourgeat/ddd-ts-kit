@@ -1,3 +1,4 @@
+import { roleFilesOf, type ContextTree } from '../model-modules';
 import type { Workspace } from '../workspace';
 import { decoratorOptions } from './decorator-options';
 import { listedIn } from './listed-in';
@@ -10,12 +11,15 @@ interface Written {
   readonly options: string;
 }
 
-/** The route groups of a context, by class name: every `*.routes.ts` of `presentation/http/` that carries `@RouteGroup`. */
-export function readRouteGroups(ws: Workspace, directory: string): ReadonlyMap<string, RouteGroupFact> {
+/**
+ * The route groups of a context, by class name: every `*.routes.ts` of `presentation/http/` that carries
+ * `@RouteGroup`, at the level of the context, in `shared/` and in each module of its model.
+ */
+export function readRouteGroups(ws: Workspace, tree: ContextTree): ReadonlyMap<string, RouteGroupFact> {
   const written = new Map<string, Written>();
 
-  for (const file of ws.list(`${directory}/${FOLDER}`).filter((name) => name.endsWith('.routes.ts'))) {
-    const source = ws.read(`${directory}/${FOLDER}/${file}`) ?? '';
+  for (const file of roleFilesOf(ws, tree, FOLDER).filter(({ name }) => name.endsWith('.routes.ts'))) {
+    const source = ws.read(file.path) ?? '';
     const options = decoratorOptions(source, 'RouteGroup');
     const name = /export\s+class\s+([A-Za-z_$][\w$]*)/.exec(source)?.[1];
 

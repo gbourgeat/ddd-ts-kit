@@ -3,6 +3,7 @@ import { applyWiring } from '../generate/apply-wiring';
 import { contextVars } from '../generate/context-vars';
 import { personalNames, type PersonalNames } from '../generate/kinds/personal-data/personal-names';
 import { wiringFamily } from '../generate/wiring-family';
+import { heldFileOf, treeOf } from '../model-modules';
 import { parseContextName, type Name } from '../naming';
 import { renderTemplate } from '../templating';
 import type { Workspace } from '../workspace';
@@ -34,7 +35,9 @@ interface Listed {
 }
 
 function relist(ws: Workspace, config: Config, { context, names, adapter, list }: Listed): void {
-  const source = ws.read(`${config.contextsDir}/${context.kebab}/infrastructure/persistence/${adapter}.repository.ts`);
+  const source = ws.read(
+    heldFileOf(ws, treeOf(config, context.kebab), `infrastructure/persistence/${adapter}.repository.ts`),
+  );
 
   if (source === undefined) {
     return;

@@ -318,7 +318,7 @@ function productionRules(project) {
 
 function testFiles(project) {
   return [
-    `^${escape(project.contextsDir)}/[^/]+/test/`,
+    `^${escape(project.contextsDir)}/[^/]+/(?:test|[^/]+/test)/`,
     '\\.(spec|test)\\.[cm]?ts$',
     '(^|/)open-test-database\\.ts$',
     '^test/',

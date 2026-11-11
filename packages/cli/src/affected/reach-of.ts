@@ -1,4 +1,5 @@
 import type { Config } from '../config';
+import { declaredModules, foldersOfContext, TEST_FOLDER } from '../model-modules';
 import type { PathReach } from './path-reach';
 import { ownEntry } from '../config/values/own-entry';
 
@@ -32,7 +33,10 @@ function contextReach(config: Config, inside: string): PathReach {
     return { kind: 'everything', reason: `${config.contextsDir}/${inside} belongs to no declared context` };
   }
 
-  return { kind: 'context', context, testsOnly: rest[0] === 'test' };
+  // The tests of the context, of a module of its model or of its shared folder.
+  const held = foldersOfContext(declaredModules(config, context)).includes(rest[0] ?? '') ? rest[1] : rest[0];
+
+  return { kind: 'context', context, testsOnly: held === TEST_FOLDER };
 }
 
 function isDocument(file: string): boolean {
