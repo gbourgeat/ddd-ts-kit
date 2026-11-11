@@ -5,7 +5,7 @@ import { SOURCE_SUFFIX } from '../source-suffix';
 
 const { AGGREGATE, COMMAND, SEND_HANDLER, SENT_AGGREGATE, ROUTE, SCHEDULING, VALUE_OBJECT } = PATHS;
 const CALENDAR_DAY = `${SCHEDULING}/calendars/application/queries/get-calendar-day/get-calendar-day.handler.ts`;
-const CALENDARS_GROUP = `${SCHEDULING}/presentation/http/calendars.routes.ts`;
+const CALENDARS_GROUP = `${SCHEDULING}/shared/presentation/http/calendars.routes.ts`;
 const DUE = '  return new Date(startsAt.getTime() - NOTICE_MS);';
 
 const READ =
