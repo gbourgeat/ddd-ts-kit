@@ -7,6 +7,7 @@ import { authenticationVars } from './authentication-vars';
 import { brokerVars } from './broker-vars';
 import { cacheVars } from './cache-vars';
 import { declaresRoles } from './declares-roles';
+import { endToEndVars } from './end-to-end-vars';
 import { errorVars } from './error-vars';
 import { eventVars } from './event-vars';
 import { one } from './one';
@@ -42,6 +43,7 @@ export function stackVars(config: Config): RenderContext {
     cache: cacheVars(config),
     files: filesVars(config),
     redis: redisVars(config),
+    endToEnd: endToEndVars(config),
     audit: auditVars(config),
     errors: errorVars(config),
     ...modelWritingVars(config),

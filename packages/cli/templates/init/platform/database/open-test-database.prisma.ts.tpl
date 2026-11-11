@@ -10,9 +10,17 @@ import type { PrismaClient } from '{{alias.generated}}/prisma/client{{alias.ext}
 import { createClient } from '{{alias.platform}}/database/create-client{{alias.ext}}';
 import { persistenceOver } from '{{alias.platform}}/database/persistence-over{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+import { cloneDatabase } from '{{alias.test}}/support/test-database-clone{{alias.ext}}';
 
 export interface TestDatabase {
   readonly persistence: Persistence;
+
+  /**
+   * On a server, the address of the copy this database is: what the configuration of an application
+   * under test names, so that nothing it opens from that address reaches the migrated database.
+   * Absent in process.
+   */
+  readonly url?: string;
 
   /** Empties every table{{#if audit.on}} but the audit trail, which is append-only whoever asks{{/if}}: call it before each test. */
   reset(): Promise<void>;
@@ -24,7 +32,8 @@ export interface TestDatabase {
  * PostgreSQL in process (PGlite, served over the wire protocol) by default, with the tables of
  * generated/schema.sql, which `npm run db:client` derives from prisma/schema/: adapter
  * and end-to-end specs need no container. With a URL, the tests run on that server instead,
- * which must already be migrated (`npm run db:migrate`).
+ * each call on a copy of the database the URL names, which must already be migrated
+ * (`npm run db:migrate`).
  */
 export function openTestDatabase(url?: string): Promise<TestDatabase> {
   return url === undefined ? openInProcess() : openServer(url);
@@ -63,10 +72,20 @@ async function inProcessPostgres(): Promise<PGlite> {
   return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
 }
 
+/**
+ * A database of its own on the server, copied from the migrated one and dropped at close
+ * (test/support/test-database-clone.ts): no other file, and no other run, reads or empties its rows.
+ */
 async function openServer(url: string): Promise<TestDatabase> {
-  const client = createClient(url);
+  const clone = await cloneDatabase(url);
+  const client = createClient(clone.url);
 
-  return { persistence: persistenceOver(client), reset: () => emptyTables(client), close: () => client.$disconnect() };
+  const close = async (): Promise<void> => {
+    await client.$disconnect();
+    await clone.drop();
+  };
+
+  return { url: clone.url, persistence: persistenceOver(client), reset: () => emptyTables(client), close };
 }
 
 async function createTables(url: string): Promise<void> {

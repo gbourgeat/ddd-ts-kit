@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:1ddc3ec933f2efb6 -->
+<!-- translation-of: testing-strategy.md sha256:9c50a0832e9cc3a2 -->
 
 # Stratégie de test
 
@@ -467,8 +467,32 @@ Mesuré avec PGlite 0.5.9 sur une machine au repos (2026-10-18, cinq exécutions
 initdb prend environ 770 ms, ouvrir une copie du cluster enregistré environ 170 ms, et créer vingt
 tables avec leurs clés et leurs index sur elle environ 25 ms. Enregistrer aussi les tables dans
 la copie épargnerait ces 25 ms et laisserait non exécuté le code qui les crée : ce n'est pas
-fait. Contre un serveur (une URL), la base est migrée à l'avance et chaque *spec* ne fait que
-vider ses tables : une base modèle n'épargnerait rien.
+fait.
+
+Contre un serveur (`DATABASE_URL`, que lit le support de bout en bout), la base que nomme l'URL
+est migrée à l'avance (`npm run db:migrate`) et chaque fichier de *spec* s'exécute sur une copie
+de cette base : `openTestDatabase(url)` crée une base à partir d'elle
+(`create database ... template`, dans `test/support/test-database-clone.ts`), y connecte la
+persistance, et la supprime à `close()`. Les fichiers s'exécutent donc en même temps sur un
+serveur comme dans le processus, deux exécutions lancées ensemble ne s'attendent pas, le journal
+d'audit commence vide dans chaque fichier, et la base migrée elle-même n'est jamais écrite.
+`reset()` vide toujours les tables de la copie entre deux tests. Ce que cela demande au serveur :
+
+- le rôle de l'URL peut créer une base (`alter role <role> createdb`) et possède la base migrée,
+  ou est un super-utilisateur, et le serveur est PostgreSQL 13 ou plus récent
+  (`drop database ... with (force)`) ;
+- personne d'autre n'est connecté à la base migrée quand un fichier démarre, car PostgreSQL ne
+  copie une base qu'à cette condition : une application laissée en marche sur elle, ou une
+  console, fait échouer la copie après une dizaine de secondes, avec un message qui le dit. Les
+  fichiers eux-mêmes se connectent à la base `postgres` du serveur pour créer et supprimer leurs
+  copies ;
+- une copie s'appelle `<base>_test_<secondes de sa date>_<aléa>`. Une exécution tuée laisse ses
+  copies ; le prochain fichier qui démarre supprime celles qui ont plus d'une heure, et jamais
+  une base d'un autre nom.
+
+Un *broker* ou un serveur au protocole Redis reste le même pour tous les fichiers : avec son
+adresse dans l'environnement, la configuration de l'exécution de bout en bout garde les fichiers
+l'un après l'autre.
 
 Sous Vitest, la mise en place globale renvoie son démontage, qui supprime le cluster enregistré.
 Sous Jest, la mise en place est l'export par défaut de ce fichier, et

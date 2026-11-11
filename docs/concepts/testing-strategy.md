@@ -446,8 +446,30 @@ creates them stays run, and measured, as before. Measured with PGlite 0.5.9 on a
 (2026-10-18, five runs each): an initdb takes about 770 ms, opening a copy of the saved cluster
 about 170 ms, and creating twenty tables with their keys and indexes on it about 25 ms. Saving the
 tables in the copy as well would spare those 25 ms and leave the code that creates them unrun: it
-is not done. Against a server (a URL), the database is migrated beforehand and each spec only
-empties its tables, so a template database would spare nothing.
+is not done.
+
+Against a server (`DATABASE_URL`, which the end-to-end support reads), the database the URL names
+is migrated beforehand (`npm run db:migrate`) and each spec file runs on a copy of it:
+`openTestDatabase(url)` creates a database from that one (`create database ... template`, in
+`test/support/test-database-clone.ts`), connects the persistence to it, and drops it at `close()`.
+The files therefore run at the same time on a server as they do in process, two runs started at
+once do not wait for each other, the audit trail starts empty in each file, and the migrated
+database itself is never written. `reset()` still empties the tables of the copy between two
+tests. What this asks of the server:
+
+- the role of the URL may create a database (`alter role <role> createdb`) and owns the migrated
+  one, or is a superuser, and the server is PostgreSQL 13 or later
+  (`drop database ... with (force)`);
+- nobody else is connected to the migrated database while a file starts, because PostgreSQL
+  copies a database only then: an application left running on it, or a console, makes the copy
+  fail after about ten seconds with a message that says so. The files themselves connect to the
+  `postgres` database of the server to create and drop their copies;
+- a copy is named `<database>_test_<seconds of its date>_<random>`. A run that is killed leaves
+  its copies; the next file that starts drops those that are more than an hour old, and never a
+  database with another name.
+
+A broker or a Redis protocol server stays one for every file: with its address in the environment,
+the configuration of the end-to-end run keeps the files one after the other.
 
 Under Vitest the global setup returns its teardown, which deletes the saved cluster. Under Jest
 the setup is the default export of that file, and `test/support/test-database-teardown.ts`, named

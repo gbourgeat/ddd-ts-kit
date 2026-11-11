@@ -470,10 +470,13 @@ export default {
   one once it holds more than 800 MB (`workerIdleMemoryLimit`). Jest keeps the modules of every spec
   file it ran in the process, about 15 MB each with ES modules, and a single worker runs in band,
   where that limit does not apply: a suite of about 200 end-to-end files then ran out of heap. With
-  `DATABASE_URL` set (a shared server, whose tables the files would empty for one another) the
-  config keeps one worker, in band, and the heap of a long suite needs
-  `NODE_OPTIONS=--max-old-space-size=<MB>`. Vitest isolates each file in a process of its own, so
-  its end-to-end suite has no such growth;
+  `DATABASE_URL` set the two workers stay: each file runs on a copy of the migrated database, its
+  own (`test/support/test-database-clone.ts`). A broker or a Redis protocol server is one for every
+  file, which would consume the events and read the keys of the others: with its address set
+  (`AMQP_URL`, `KAFKA_BROKERS`, `NATS_URL`, `REDIS_URL`) the config keeps one worker, in band, and
+  the heap of a long suite needs `NODE_OPTIONS=--max-old-space-size=<MB>`. Vitest isolates each
+  file in a process of its own, so its end-to-end suite has no such growth, and runs its files one
+  after the other on the same servers (`fileParallelism`);
 - on an ORM, the global setup that starts PostgreSQL in process once per run and saves its
   cluster (`test/support/test-database-template.ts`), each spec opening a copy, and its global
   teardown (`test/support/test-database-teardown.ts`), both named in `jest.config.js`;

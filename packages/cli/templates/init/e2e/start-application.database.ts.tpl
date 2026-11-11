@@ -135,13 +135,15 @@ export interface RunningApplication {
 
 /**
  * Starts the application on a free port. The database is PostgreSQL in process unless
- * DATABASE_URL names a migrated server (`npm run infra:up && npm run db:migrate`).
+ * DATABASE_URL names a migrated server (`npm run infra:up && npm run db:migrate`): this file then
+ * runs on a copy of that database, its own, dropped when the application closes.
  */
 export async function startApplication(): Promise<RunningApplication> {
   // An empty variable (a blank line of .env) means the same as none.
   const url = process.env['DATABASE_URL'] === '' ? undefined : process.env['DATABASE_URL'];
   const database = await openTestDatabase(url);
-  const config = loadConfig(testEnvironment({ DATABASE_URL: url ?? 'postgres://in-process/tests' }));
+  // On a server the configuration names the copy, never the migrated database: an adapter that connects from it stays in this file.
+  const config = loadConfig(testEnvironment({ DATABASE_URL: database.url ?? 'postgres://in-process/tests' }));
   const credentials = await createCredentials();
   const started = await start(database, config, credentials);
 
