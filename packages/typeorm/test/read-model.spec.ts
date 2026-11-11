@@ -1,7 +1,16 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
+import { Criteria, FixedExecutionScope, defineCriteria, scoped, type TenantScoped } from '@ddd-ts-kit/kernel';
+import { anExecutionContext } from '@ddd-ts-kit/testing';
 import { EntitySchema } from 'typeorm';
-import { TypeOrmReadModelTable, createTypeOrmUnitOfWork, readModelColumns, type ReadModelStamps } from '../src';
+import {
+  TypeOrmReadModelStore,
+  TypeOrmReadModelTable,
+  createTypeOrmUnitOfWork,
+  readModelColumns,
+  tenantColumn,
+  type ReadModelStamps,
+} from '../src';
 import { createDatabase, type TestDatabase } from './support/database';
 import { contractRows } from './support/read-model/criteria-contract-rows';
 
@@ -19,10 +28,22 @@ const ledgerRows = new EntitySchema<LedgerRow & ReadModelStamps>({
   columns: { id: { type: 'text', primary: true }, holder: { type: 'text' }, ...readModelColumns() },
 });
 
+/** A read model of tenant data whose rows do not carry their tenant: the column is the store's, not a field of the row. */
+const tenantLedgerRows = new EntitySchema<LedgerRow & TenantScoped & ReadModelStamps>({
+  name: 'TenantLedgerRow',
+  tableName: 'tenant_ledger',
+  columns: {
+    id: { type: 'text', primary: true },
+    holder: { type: 'text' },
+    tenantId: { ...tenantColumn().tenantId, select: false },
+    ...readModelColumns(),
+  },
+});
+
 let database: TestDatabase;
 
 beforeAll(async () => {
-  database = await createDatabase([contractRows, ledgerRows]);
+  database = await createDatabase([contractRows, ledgerRows, tenantLedgerRows]);
 });
 
 afterAll(async () => {
@@ -105,5 +126,34 @@ describe('TypeOrmReadModelTable of an entity in the default schema', () => {
     expect((await table.shadow().find('acct-1'))?.row).toEqual({ ...account, holder: 'J. Doe' });
     expect(await database.dataSource.query('select count(*)::int as count from public.ledger')).toEqual([{ count: 1 }]);
     await table.abandonRebuild();
+  });
+});
+
+describe('TypeOrmReadModelStore of tenant data, its tenant column declared `select: false`', () => {
+  const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z') };
+  const account = { id: 'acct-1', holder: 'Jane Doe' };
+  const everything = { kind: 'all' } as const;
+
+  const storeOf = (tenant: string) =>
+    new TypeOrmReadModelStore<LedgerRow>(createTypeOrmUnitOfWork(database.dataSource), {
+      entity: tenantLedgerRows,
+      tenant: { scope: new FixedExecutionScope(anExecutionContext().ofTenant(tenant).build()) },
+      definition: defineCriteria<LedgerRow>({
+        fields: { id: { type: 'string' }, holder: { type: 'string' } },
+        tieBreaker: 'id',
+      }),
+    });
+
+  it('writes the tenant of the work, confines the reads to it, and answers rows without it', async () => {
+    await database.truncate();
+    await storeOf('acme').upsertIfNewer('acct-1', stamp, () => account);
+
+    const listed = await storeOf('acme').search(scoped(Criteria.of<LedgerRow>(), everything));
+    const stored: unknown = await database.dataSource.query('select tenant_id from public.tenant_ledger');
+
+    expect(await storeOf('acme').get('acct-1')).toEqual(account);
+    expect(listed.items).toEqual([account]);
+    expect(stored).toEqual([{ tenant_id: 'acme' }]);
+    expect(await storeOf('globex').get('acct-1')).toBeUndefined();
   });
 });
