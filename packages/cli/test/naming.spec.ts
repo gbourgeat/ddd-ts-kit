@@ -31,6 +31,13 @@ describe('names', () => {
     }
   });
 
+  it('names the table of a word that is plural already as the word is', () => {
+    expect(toName('ReaderSettings').table).toBe('reader_settings');
+    expect(toName('ReaderSettings').tableCamel).toBe('readerSettings');
+    expect(toName('News').table).toBe('news');
+    expect(toName('Address').table).toBe('addresses');
+  });
+
   it('keeps acronyms together', () => {
     expect(toName('HTTPGateway').kebab).toBe('http-gateway');
   });

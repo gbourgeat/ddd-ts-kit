@@ -2,6 +2,8 @@
 export interface LintRun {
   readonly root: string;
   readonly patterns: readonly string[];
+  /** What `--ignore-pattern` leaves out, on top of what the config of the project ignores. */
+  readonly ignored: readonly string[];
   readonly format: string;
   readonly fix: boolean;
   /** Where ESLint keeps its cache, a directory the command prepared (`lintCacheOf`); none with `--no-cache`. */

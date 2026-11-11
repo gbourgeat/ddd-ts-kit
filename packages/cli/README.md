@@ -2549,7 +2549,7 @@ applies as for a file on disk.
 ## lint
 
 ```
-ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache]
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache] [--ignore-pattern <pattern>]...
 ```
 
 What `lint` and `ci:lint` of a generated project run: the ESLint of the project, through its API,
