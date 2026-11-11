@@ -15,7 +15,8 @@ import type { Io } from './io';
 
 /**
  * `lint` and `ci:lint` of a generated project: the ESLint of the project, with its cache unless
- * `--no-cache` asks for every file again, failing on an error or a warning. `--json` asks ESLint
+ * `--no-cache` asks for every file again, leaving out what each `--ignore-pattern` names (the line
+ * `affected` writes for a partial run), failing on an error or a warning. `--json` asks ESLint
  * for its JSON report and answers `{ errors, warnings, report }` on one line.
  */
 export const lintCommand: Command = (argv, io) => {
@@ -23,6 +24,7 @@ export const lintCommand: Command = (argv, io) => {
     format: { type: 'string' },
     fix: { type: 'boolean', default: false },
     'no-cache': { type: 'boolean', default: false },
+    'ignore-pattern': { type: 'string', multiple: true },
   });
 
   const root = args.projectRoot;
@@ -33,6 +35,7 @@ export const lintCommand: Command = (argv, io) => {
     {
       root,
       patterns: args.positionals,
+      ignored: args.many('ignore-pattern'),
       format: args.json ? 'json' : (args.text('format') ?? 'stylish'),
       fix: args.flag('fix'),
       cache: args.flag('no-cache') ? undefined : lintCacheOf(root),

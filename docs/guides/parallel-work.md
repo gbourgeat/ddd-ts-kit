@@ -72,7 +72,7 @@ just before `/people/me`, and git cannot put one after the other. `merge-trunk` 
 
 ```bash
 git fetch origin
-npx ddd-ts-kit merge-trunk                   # origin/HEAD, then origin/main; --trunk <ref> names another
+npx ddd-ts-kit merge-trunk                   # the base of the worker, else origin/HEAD, then origin/main; --trunk <ref> names another
 ```
 
 ```text
@@ -136,7 +136,7 @@ A merge finished by hand with `git commit` keeps those trailers.
 
 `--dry-run` previews (nothing changes), `--abort` undoes the merge in progress (a file the kit regenerates, such as a `docs/behaviour/` page or a `CONTEXT.md`, that was modified after the merge staged it is restored and named; any other file changed by hand makes it refuse, exit 2). `--continue` concludes the trunk commit the merge started from: when the trunk moved since, it prints `trunk moved: ...` and, once the merge is committed, `npx ddd-ts-kit merge-trunk` again brings the rest. With Prisma, a merge that changed a file under `prisma/schema/` runs `npm run db:client` after `regenerate`, so the git-ignored `generated/schema.sql` of the in-process test database is current; Drizzle, Knex and TypeORM derive no such file. The tree must be
 clean (the character devices a sandbox binds over the paths it denies are not counted) and no other merge, rebase or cherry-pick in progress (exit 2 otherwise); the trunk is never
-fetched, the commit it names is printed. `merge-trunk` needs git 2.40; an older git merges only
+fetched, the commit it names is printed. Without `--trunk`, the trunk is the `base` of `.ddd-ts-kit/worker.json` in the worktree of a worker (the ref `worker-scope` cut its branch from), then `origin/HEAD`, then `origin/main`. `merge-trunk` needs git 2.40; an older git merges only
 from the base git computes (`--since <merge base>`), with `git merge` itself.
 
 Under the sandbox of Claude Code, a merge of a trunk that changes a path the session cannot write
@@ -475,7 +475,9 @@ report. A resumed agent gets a new turn budget, and its count starts again.
 - the commits of the branch, each closing one row with the trailer `Slice: <id>`: in a worker's
   worktree, `verify-slice` prints the exact commit command, `git commit -m "feat(billing): pay an
   invoice" -m "Slice: M1.14"` (a commit without trailer, from an older kit, is matched in order
-  with the `feat(<context>)` commits and shown `(by order)`);
+  with the `feat(<context>)` commits and shown `(by order)`; on a branch kept for its next rows,
+  the commits made before it brought in the base `worker-scope` recorded are those of the rows
+  that landed, and are not read);
 - `verification.json`, written by `verify-slice` in a worker's worktree: when it ran, at which
   commit, for which row, the steps that failed and the paths it listed to stage;
 - `agent.json`, written by the guard: the agent id, its run (1 at launch, one more at each
@@ -568,7 +570,7 @@ Wave 1
     likely to touch the same files as W1.3
   W1.2 conductor, billing (aggregate Customer)
     #US2.01 skeleton "Customer"
-    on the trunk, by the conductor
+    on the trunk, by the conductor, in the worktree of the plan (`npx ddd-ts-kit worktree <plan>`)
   ...
 Wave 2
   W2.3 billing (aggregate unknown)
@@ -651,7 +653,11 @@ conflicts: plain git merge 3, own diff since base 1, automatic 1, for you 0
 
 A base found too old shows as more conflicts, never as a silent loss: when the first branch was
 deleted and nothing proves where it landed, the report names each branch sharing commits that was
-not found, with the `--since <commit>` to pass once a person has checked. `status --workers`
+not found, with the `--since <commit>` to pass once a person has checked. A `--since` too new is
+the one way to lose work: the merge drops what the branch added before it. `--since` at the head
+of the branch is refused, and `verify-merge` stops the merge on each file the branch added that
+the result lacks while the trunk never touched its path. The worker of a stacked branch has that
+other branch as its base: once it landed, name the trunk, `merge-trunk --trunk origin/main`. `status --workers`
 previews it for every worker: where its branch landed, its commits ahead and files changed counted
 from there (no more false overlaps with what already landed), its commits behind, and what
 `merge-trunk` would leave conflicted now.

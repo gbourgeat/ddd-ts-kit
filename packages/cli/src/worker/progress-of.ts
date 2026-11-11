@@ -83,8 +83,8 @@ function rowsOf(project: string, scope: WorkerFile, read: { ws: Workspace; uncom
   const ids = scope.rows ?? [];
   const names = new Map((readSlices(read.ws) ?? []).map((slice) => [slice.id, slice.slice]));
 
-  const commits =
-    scope.base === undefined ? [] : rowCommits(project, { base: scope.base, context: scope.context, rows: ids });
+  const base = baseOfRows(project, scope);
+  const commits = base === undefined ? [] : rowCommits(project, { base, context: scope.context, rows: ids });
 
   const current = ids.find((id) => !commits.some((done) => done.row === id));
 
@@ -98,6 +98,19 @@ function rowsOf(project: string, scope: WorkerFile, read: { ws: Workspace; uncom
 
     return { id, slice, state: id === current && read.uncommitted ? 'in progress' : 'to do' };
   });
+}
+
+/**
+ * Where the rows of the worker are read from: the commit its base named when worker-scope
+ * created or kept the worktree, while the branch holds it; else the base by its name. A branch
+ * kept for its next rows holds the commits of the rows that landed, which the trunk took as one
+ * new commit: read from the name, they are still ahead of it and would take the new rows.
+ */
+function baseOfRows(project: string, { base, baseCommit }: WorkerFile): string | undefined {
+  const held =
+    baseCommit !== undefined && runGit(project, ['merge-base', '--is-ancestor', baseCommit, 'HEAD']) !== undefined;
+
+  return held ? baseCommit : base;
 }
 
 function phaseOf(rows: readonly ProgressRow[], uncommitted: boolean): WorkerProgress['phase'] {

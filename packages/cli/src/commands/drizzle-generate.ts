@@ -4,6 +4,7 @@ import { CliError } from '../cli-error';
 import { readConfig } from '../config';
 import { withGeneratorLock } from '../generator-lock';
 import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder';
+import { readDrizzleMigrations } from '../check/migrations/read-drizzle-migrations';
 import {
   answeredAsJson,
   appendAuditGuard,
@@ -68,6 +69,7 @@ function migrate(args: Arguments, io: Io, interactive: boolean): number {
 
   const name = namedMigration(args);
 
+  refuseNameOfTheJournal(root, name);
   warnDroppedContextTables(root, io);
 
   const { code, written } = generateAndRead({ root, name, custom: args.flag('custom'), interactive }, io);
@@ -106,6 +108,18 @@ function guardTheAuditTrail(
     auditGuardStatementsOf(root, 'drizzle'),
     io,
   );
+}
+
+/** Two migrations of one name read as one in a review, and a second `add-invoices` is seldom what the first was. */
+function refuseNameOfTheJournal(root: string, name: string): void {
+  const taken = readDrizzleMigrations(root)?.entries.find(({ tag }) => tag.replace(/^\d+_/, '') === name);
+
+  if (taken !== undefined) {
+    throw new CliError(
+      `The journal already holds a migration named ${name}: ${taken.tag}.`,
+      'Name this one by what it changes this time, a column or a table: `npm run db:generate add-due-date-to-invoices`.',
+    );
+  }
 }
 
 function refuseNamedReplay(args: Arguments): void {

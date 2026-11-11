@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:f1c9bd80c583112c -->
+<!-- translation-of: commands.md sha256:93007935e0329e3e -->
 
 # Quelle commande, quand
 
@@ -331,7 +331,7 @@ Usage
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
   ddd-ts-kit check --commit-size [--staged] [--strict]
   ddd-ts-kit check-file <path> [--content-from <file>] [--rule <id>]...
-  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache]
+  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache] [--ignore-pattern <pattern>]...
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 
@@ -633,7 +633,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    trailer are listed and never fail, nor what a later commit restored; silent and exit 0
                    without a merge, exit 1 on an error; --warn prints the same and exits 0, as the
                    pre-push hook of init runs it in this version (a later minor version blocks the push)
-  merge-trunk      brings the trunk (--trunk, by default origin/HEAD then origin/main, never fetched) into the
+  merge-trunk      brings the trunk (--trunk; by default the base of .ddd-ts-kit/worker.json in the worktree of
+                   a worker, then origin/HEAD, then origin/main; nothing is fetched) into the
                    branch as one merge commit computed from the branch's own diff: from the newest commit of
                    the branch the trunk holds (--since; else the commit whose patch, derived files,
                    migrations, slices.md, plan.md and lockfiles left out, is one commit of the trunk, on this
@@ -651,8 +652,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    --accept-lost records a Lost-Accepted: trailer), and the commit of the merge's paths only,
                    with the trailers Merge-Base:, Trunk: and Landed:; any other changed path blocks it.
                    --dry-run previews, --abort undoes; refused (exit 2) on a dirty tree, another operation in
-                   progress, no committer known to git, an unknown trunk, or a git older than 2.40 with a base
-                   git would not compute
+                   progress, no committer known to git, an unknown trunk, a --since at the head of the branch,
+                   or a git older than 2.40 with a base git would not compute
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

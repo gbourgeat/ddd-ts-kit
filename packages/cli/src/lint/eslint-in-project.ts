@@ -11,11 +11,12 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const { root, patterns, format, fix, cache } = JSON.parse(process.env.${LINT_RUN_VARIABLE});
+const { root, patterns, ignored, format, fix, cache } = JSON.parse(process.env.${LINT_RUN_VARIABLE});
 const entry = createRequire(path.join(root, 'package.json')).resolve('eslint');
 const { ESLint } = await import(pathToFileURL(entry).href);
 const withCache = cache === undefined ? {} : { cache: true, cacheLocation: cache, cacheStrategy: 'content' };
-const eslint = new ESLint({ cwd: root, fix, ...withCache });
+const leftOut = ignored.length === 0 ? {} : { overrideConfig: [{ ignores: ignored }] };
+const eslint = new ESLint({ cwd: root, fix, ...withCache, ...leftOut });
 const stop = (refusal) => {
   process.stdout.write(JSON.stringify({ refusal }));
   process.exit(0);

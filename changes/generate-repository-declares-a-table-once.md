@@ -1,0 +1,3 @@
+**`generate repository` no longer declares a table a second time under the same name.** Run again on an aggregate that has its repository, with other options than the first time (`--personal`, `--tenant-scoped`), the command kept every file it had written and added a second declaration of the table to the schema of the context: every spec that loads that file then failed on a name declared twice. It is now refused, on the four ORM, and the file is left as it was; run again with the same options, it still adds nothing.
+
+To move: nothing. To add a personal field to a table that exists, change the table by hand, with its line in the `*.personal-fields.ts` of the aggregate.

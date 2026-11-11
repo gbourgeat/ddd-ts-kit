@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:341966c28b8dca66 -->
+<!-- translation-of: test-runners.md sha256:8a7d1c16cd8d065c -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -416,14 +416,14 @@ fonctions depuis `@jest/globals` ; `ContractRunner` ne leur demande rien de plus
 ```ts
 // vitest.config.ts
 import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
-import { decorators } from '@ddd-ts-kit/testing/vitest';
+import { decoratorCoverage, decorators } from '@ddd-ts-kit/testing/vitest';
 import { defineConfig } from 'vitest/config';
 
 const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
 
 export default defineConfig(({ mode }) => ({
   // décorateurs standard, compilés par le compilateur du projet ; les legacy n'ont besoin d'aucun plugin
-  plugins: [decorators({ compiler: '@typescript/native' })],
+  plugins: [decorators({ compiler: '@typescript/native' }), decoratorCoverage()],
   resolve: { tsconfigPaths: true },
   test: {
     projects: [

@@ -4,6 +4,7 @@ import { changedPaths } from './changed-paths';
 import { commitOf } from '../../commit/commit-of';
 import { conflictMarkers } from './conflict-markers';
 import { deletedSpecs } from './deleted-specs';
+import { droppedAdditions } from './dropped-additions';
 import { isGeneratedText } from './is-generated-text';
 import { isLineChecked } from './is-line-checked';
 import { keptRows } from './kept-rows';
@@ -61,21 +62,27 @@ function findingsAt(
   const paths = changedPaths(repo.top, pairs);
   const read = (revision: string): Map<string, string> => revisionFiles(repo.top, revision, paths);
   const sides: MergeSides = { base: read(base), ours: read(ours), theirs: read(theirs), result: read(at.result) };
+  const fork = runGit(repo.top, ['merge-base', ours, theirs])?.trim() ?? '';
+  const forked = fork === '' ? sides.base : read(fork);
+  const slices = `${repo.prefix}${SLICES_FILE}`;
 
   const findings = [
     ...lineFindings(linesOf(sides, repo), changesOf(repo.top, merge, at.result)),
-    ...keptRows(sides, `${repo.prefix}${SLICES_FILE}`),
+    ...keptRows(sides, slices, forked.get(slices)),
     ...lostTests(sides),
     ...deletedSpecs(sides),
     ...lostMigrations(sides),
     ...conflictMarkers(sides),
   ];
 
-  const fork = runGit(repo.top, ['merge-base', ours, theirs])?.trim();
+  if (fork === '') {
+    return findings;
+  }
 
-  return fork === undefined || fork === ''
-    ? findings
-    : untouchedByBranch(findings, { ours: sides.ours, fork: read(fork) });
+  return [
+    ...untouchedByBranch(findings, { ours: sides.ours, fork: forked }),
+    ...droppedAdditions(repo, { fork, ours, theirs, result: at.result }, findings),
+  ];
 }
 
 /** The hunks of each side against the base, and from each side to the result. */
