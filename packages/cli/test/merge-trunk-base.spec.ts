@@ -354,6 +354,37 @@ describe('merge-trunk: the base of a branch reused after its squash', () => {
     );
   });
 
+  it('takes for landed the merge of the trunk the branch made before its squash, though the trunk changed since what that merge brought', () => {
+    const notes = 'docs/notes.md';
+    const root = trunkRepository({ [INVOICE]: invoice(), [notes]: 'Invoices are issued monthly.\n' });
+
+    onBranch(root, 'build/billing');
+    commitFiles(root, { [HANDLER]: 'export const payHandler = 1;\n' }, 'row 1: pay handler');
+    onBranch(root, 'main');
+    commitFiles(root, { [notes]: 'Invoices are issued weekly.\n' }, 'docs: weekly (#2)');
+    onBranch(root, 'build/billing');
+    git(root, 'merge', '--quiet', '--no-ff', '--message', 'Merge main into build/billing', 'main');
+
+    const merged = git(root, 'rev-parse', 'HEAD').trim();
+    const squash = squashInto(root, 'build/billing', { message: 'feat(billing): pay handler (#3)' });
+
+    commitFiles(root, { [notes]: 'Invoices are issued daily.\n' }, 'docs: daily (#4)');
+    onBranch(root, 'build/billing');
+    commitFiles(root, { [INVOICE]: invoice('pay() { return 2; }') }, 'row 2: pay');
+
+    const result = mergeTrunk(root, '--json');
+
+    expect(result.json()).toMatchObject({
+      status: 'committed',
+      base: { commit: merged, evidence: 'landed', landedAs: { commit: squash } },
+      conflicts: { ownDiff: 0, forYou: 0 },
+      lostLines: { errors: [] },
+    });
+
+    expect(read(root, notes)).toBe('Invoices are issued daily.\n');
+    expect(read(root, INVOICE)).toBe(invoice('pay() { return 2; }'));
+  });
+
   it('never takes for landed a later commit that changed only what the comparison leaves out, unless the trunk holds it', () => {
     const context = 'src/contexts/billing/CONTEXT.md';
     const root = trunkRepository({ [INVOICE]: invoice(), [context]: '# billing\n' });
