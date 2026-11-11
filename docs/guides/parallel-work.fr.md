@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:1355b0b2278bbde3 -->
+<!-- translation-of: parallel-work.md sha256:71191fdab2085789 -->
 
 # Travailler en parallèle sans collisions
 
@@ -610,7 +610,7 @@ Wave 1
     likely to touch the same files as W1.3
   W1.2 conductor, billing (aggregate Customer)
     #US2.01 skeleton "Customer"
-    on the trunk, by the conductor
+    on the trunk, by the conductor, in the worktree of the plan (`npx ddd-ts-kit worktree <plan>`)
   ...
 Wave 2
   W2.3 billing (aggregate unknown)

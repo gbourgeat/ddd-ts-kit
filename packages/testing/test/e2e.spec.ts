@@ -213,6 +213,22 @@ describe('the JSON client', () => {
     expect(json.body).toEqual({ contentType: 'application/json', text: '"<order/>"' });
   });
 
+  it('sends bytes, a blob and a form as they are, under the content type of the call or of the form', async () => {
+    const bytes = new TextEncoder().encode('date;amount');
+    const csv = await server.client.post('/echo', bytes, { headers: { 'content-type': 'text/csv' } });
+    const blob = await server.client.post('/echo', new Blob([bytes], { type: 'text/csv' }));
+    const form = new FormData();
+
+    form.set('note', 'paid');
+
+    const sent = await server.client.post<{ contentType: string; text: string }>('/echo', form);
+
+    expect(csv.body).toEqual({ contentType: 'text/csv', text: 'date;amount' });
+    expect(blob.body).toEqual({ contentType: 'text/csv', text: 'date;amount' });
+    expect(sent.body.contentType).toMatch(/^multipart\/form-data; boundary=/);
+    expect(sent.body.text).toContain('name="note"');
+  });
+
   it('sends the default headers, and no content type without a body', async () => {
     const { body } = await server.client.get<Record<string, string>>('/headers');
 

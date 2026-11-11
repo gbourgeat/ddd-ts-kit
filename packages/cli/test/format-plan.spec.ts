@@ -117,7 +117,7 @@ describe('plan-waves for a reader, the waves', () => {
       'Wave 1',
       '  W1-B1 conductor, billing (aggregate Invoice)',
       '    #1 command "Issue an invoice"',
-      '    on the trunk, by the conductor',
+      '    on the trunk, by the conductor, in the worktree of the plan (`npx ddd-ts-kit worktree <plan>`)',
     ]);
   });
 

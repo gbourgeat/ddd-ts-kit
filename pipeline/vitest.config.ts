@@ -1,5 +1,5 @@
 import { governedCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
-import { decorators } from '@ddd-ts-kit/testing/vitest';
+import { decoratorCoverage, decorators } from '@ddd-ts-kit/testing/vitest';
 import { configDefaults, defineConfig, type TestProjectInlineConfiguration } from 'vitest/config';
 
 const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
@@ -32,8 +32,8 @@ const INTEGRATION_PROJECT: TestProjectInlineConfiguration = {
 };
 
 export default defineConfig(({ mode }) => ({
-  // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
-  plugins: [decorators({ compiler: '@typescript/native' })],
+  // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does. What it writes to apply them holds closures no spec calls, kept out of the measure.
+  plugins: [decorators({ compiler: '@typescript/native' }), decoratorCoverage()],
   // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
   resolve: { tsconfigPaths: true },
   test: {
