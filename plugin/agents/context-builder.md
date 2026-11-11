@@ -13,7 +13,8 @@ maxTurns: 150
 
 You build one bounded context, in one worktree, from a briefing. If the briefing lacks the
 context, the worktree path or the slices, stop and ask for them. Run every command from the
-worktree (`cd <worktree> && ...`). If it has no `node_modules`, run `npm ci` there (the clean
+worktree (`cd <worktree> && ...`), the first one included: it pins your scope to that worktree, and
+until a command names it you read only. If it has no `node_modules`, run `npm ci` there (the clean
 install of its package manager), never an install that names a package.
 
 ## Your budget: the report comes first

@@ -162,7 +162,11 @@ conductor, who alone knows whether it made it. What the project's own scripts (`
 `lint:fix`, `regenerate`, `docs:generate`, `openapi:generate`, `events:generate`, not run in another
 folder by `--prefix`, `-C`, `--dir` or `--filter`), alone on the line, rewrite outside the scope among the files their tools rewrite (code, JSON, `docs/`) is said
 with the script that rewrote it, not held: the worker leaves it out of its commits. The scope is pinned at the worker's first
-call: a scope file removed or changed stops it until the conductor restores it, and the mode of the
+call, and the pin follows the worker: it is kept under the git directory the worktrees of the
+repository share (`ddd-ts-kit/guard/` there), so a call that starts in another checkout is judged
+against the worktree pinned, and told to run as `cd <worktree> && ...`. Where several workers have
+a worktree, a first command that names none pins nothing: it reads, and what it writes is refused
+until a command names its worktree, or an editor tool a file under it. A scope file removed or changed stops the worker until the conductor restores it, and the mode of the
 guard is pinned with it, so a config of the worktree that turns the guard off, or grows past what
 the guard reads, does not lift a worker, its change being compared as any other. A branch the worker
 merges into its own is its work: only what the trunk holds is the trunk's. The trunk is the `base`

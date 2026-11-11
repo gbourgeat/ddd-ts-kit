@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:c5ff130a37b15d4e -->
+<!-- translation-of: parallel-work.md sha256:dfc5fde54593b2a1 -->
 
 # Travailler en parallèle sans collisions
 
@@ -466,7 +466,9 @@ enregistre (une branche d'intégration comme `work/<plan>` aussi bien que la pri
 branche que nomme `origin/HEAD`, `main` ou `master`. Une fusion de toute autre branche est
 retenue, et la garde ne nomme alors aucune commande : le *worker* ne défait rien et signale la
 fusion au chef d'orchestre. Le périmètre est fixé au premier appel du
-*worker* : un fichier de périmètre supprimé ou changé l'arrête. `npx prettier` dans un projet dont `format` lance
+*worker*, par la commande qui nomme son *worktree* (`cd <worktree> && ...`) là où plusieurs
+*workers* en ont un, et cette marque suit le *worker* : un appel qui part d'un autre *checkout* est
+jugé d'après le *worktree* fixé. Un fichier de périmètre supprimé ou changé l'arrête. `npx prettier` dans un projet dont `format` lance
 Biome et un `npx biome` nu sont refusés. Une sortie vers
 `/dev/null` ou le répertoire temporaire du système reste libre, et le chef d'orchestre n'est
 tenu à rien de tout cela. Un *worker* passe `--local-only`

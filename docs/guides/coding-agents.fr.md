@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:ed4bc6ca288fed9a -->
+<!-- translation-of: coding-agents.md sha256:a57ad1c9d42aaad2 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -176,8 +176,13 @@ Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerat
 `--dir` ou `--filter`), seuls sur la ligne, réécrivent hors du périmètre parmi les
 fichiers que leurs outils réécrivent (code, JSON, `docs/`) est dit avec le script qui l'a réécrit,
 sans retenir le *worker* : il le laisse hors de ses commits. Le
-périmètre est fixé au premier appel du *worker* : un fichier de périmètre supprimé ou changé
-l'arrête jusqu'à ce que le chef d'orchestre le rétablisse, et le mode de la garde est fixé avec lui :
+périmètre est fixé au premier appel du *worker*, et cette marque suit le *worker* : elle est gardée
+sous le répertoire git que les *worktrees* du dépôt partagent (`ddd-ts-kit/guard/` là), si bien
+qu'un appel qui part d'un autre *checkout* est jugé d'après le *worktree* fixé, et se voit dire de
+se lancer comme `cd <worktree> && ...`. Là où plusieurs *workers* ont un *worktree*, une première
+commande qui n'en nomme aucun ne fixe rien : elle lit, et ce qu'elle écrit est refusé jusqu'à ce
+qu'une commande nomme son *worktree*, ou un outil d'édition un fichier dedans. Un fichier de périmètre supprimé ou changé
+arrête le *worker* jusqu'à ce que le chef d'orchestre le rétablisse, et le mode de la garde est fixé avec lui :
 une config du *worktree* qui éteint la garde, ou qui dépasse ce que la garde lit, ne libère pas un
 *worker*, son changement étant comparé comme tout autre. Une branche que le *worker* fusionne dans la
 sienne est son travail : seul ce que le tronc contient est au tronc. Le tronc est la `base` que

@@ -956,7 +956,7 @@ test('what the last command of a worker changed outside its scope keeps it going
   assert.equal(kept.output.decision, 'block');
   assert.match(kept.output.reason, /changed files outside your scope: src\/main\.ts/);
   assert.match(kept.output.reason, /`git checkout HEAD -- src\/main\.ts`/);
-  assert.equal(existsSync(join(conductor, '.ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`)), true);
+  assert.equal(existsSync(join(conductor, '.git/ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`)), true);
 
   // It ended without putting the file back: the stop lets it go, and each place the conductor reads says it.
   const ended = run('subagent-stop', stopping);

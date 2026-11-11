@@ -767,7 +767,7 @@ function strayFileVerdict(input) {
     return undefined;
   }
   const stray = writesOf(input).find(({ file }) => !findProject(dirname(file)) && !isFreePlace(file));
-  const pinned = readJson(stateFile('scope', home, input));
+  const pinned = readJson(sharedStateFile('scope', home, input));
   if (!stray || !(isPin(pinned) || hasWorkerWorktree(home.root))) {
     return undefined;
   }
@@ -1271,7 +1271,7 @@ function builderPlaces(input, project) {
   const worker = project && existsSync(join(project.root, WORKER_SCOPE)) ? project.root : undefined;
   // Its git is the guard's: under the regulated profile, it runs where the guard runs it.
   return {
-    state: stateFile('turns', home, input),
+    state: sharedStateFile('turns', home, input),
     worker,
     home,
     git: (directory, args) => git({ root: directory }, args),
@@ -1310,7 +1310,7 @@ async function subagentStop(input) {
     emit({ decision: 'block', reason });
     return;
   }
-  releasePin(stateFile('scope', places.home, input));
+  releasePin(sharedStateFile('scope', places.home, input));
   if (outside) {
     emit({ systemMessage: `ddd-ts-kit: ${outside}` });
   }
@@ -2012,26 +2012,37 @@ function resumeLine({ branch, context, worktree, progress }, workers) {
   return `Worker to resume: ${shown} (${progress.phase}${agent ? `, agent ${agent}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${where}\`, then send what it prints.`;
 }
 
-// Read from git's own files, without running git: the worktrees of the repository listed under
-// its common directory, each with the path of its checkout.
 function hasWorkerWorktree(root) {
+  return workerWorktrees(root).length > 0;
+}
+
+// Read from git's own files, without running git: the worktrees of the repository listed under
+// its common directory that hold the scope of a worker, each by the root of the project in it.
+function workerWorktrees(root) {
   const top = repositoryTop(root);
   const gitDir = gitDirOf(root);
   if (!top || !gitDir) {
-    return false;
+    return [];
   }
   const common = resolve(gitDir, readText(join(gitDir, 'commondir'), '.').trim());
   const prefix = relative(top, root);
-  let names;
-  try {
-    names = readdirSync(join(common, 'worktrees'));
-  } catch {
+  return filesIn(join(common, 'worktrees'))
+    .map((entry) => dirname(readText(join(entry, 'gitdir'), '').trim()))
+    .filter((checkout) => checkout !== '.' && existsSync(join(checkout, prefix, WORKER_SCOPE)))
+    .map((checkout) => join(checkout, prefix));
+}
+
+// Whether a checkout of the repository other than `root` holds the scope of a worker: one of its
+// linked worktrees, or its main checkout, the folder that holds the common directory. Outside a
+// repository there is no other checkout.
+function hasAnotherScope(root) {
+  const common = commonDirOf(root);
+  if (!common) {
     return false;
   }
-  return names.some((name) => {
-    const checkout = dirname(readText(join(common, 'worktrees', name, 'gitdir'), '').trim());
-    return checkout !== '.' && existsSync(join(checkout, prefix, WORKER_SCOPE));
-  });
+  const main = join(dirname(common), relative(repositoryTop(root), root));
+  const scoped = [...workerWorktrees(root), ...(existsSync(join(main, WORKER_SCOPE)) ? [main] : [])];
+  return scoped.some((checkout) => realOf(checkout) !== realOf(root));
 }
 
 function repositoryTop(from) {
@@ -2228,11 +2239,11 @@ function isWorkerAgent(input) {
   return String(input.agent_type ?? '').includes(WORKER_AGENT);
 }
 
-// The scope of a worker is pinned at its first call: its context and its worktree are recorded in
-// the guard's folder of the session's checkout (the conductor's, which a worker does not write),
-// keyed by session and agent, and every later call is judged against that record, read once per
-// call of the guard. A scope file that disappeared or names another context, or the scope file of
-// another worktree, makes `changed` the refusal of every call of the worker there. A checkout
+// The scope of a worker is pinned at its first call: its context and its worktree are recorded
+// where its working directory cannot move the record (`sharedStateFile`), which a worker does not
+// write, keyed by session and agent, and every later call is judged against that record, read once
+// per call of the guard: the pin follows the worker. A scope file that disappeared or names
+// another context, or the scope file of another worktree, makes `changed` the refusal of every call of the worker there. A checkout
 // without a scope file (the conductor's, or the worktree of a story) leaves the worker `away`: it
 // is the refusal of what it writes there, and its reads stay free.
 function workerScope(project, input) {
@@ -2247,16 +2258,19 @@ function workerScope(project, input) {
 
 // The worktree is recorded and compared by its real path: a link to it, or another spelling of it, is the same.
 // A worker whose session stands in a scoped worktree is pinned to it, even when its first command
-// starts in another project.
+// starts in another project, as long as no other checkout of the repository holds a scope: where
+// several workers have a worktree, the one a session happens to stand in may be a sibling's, and
+// only a call that names its worktree pins it. Until then the worker has no scope: it reads, and
+// what it writes is refused with the shape that names a worktree (`builderStrayReason`).
 function pinnedScope(project, input) {
   const current = namedContext(project);
   const home = findProject(input.cwd ?? process.cwd()) ?? project;
-  const pin = stateFile('scope', home, input);
+  const pin = pinFile(project, input);
   let pinned = readJson(pin);
   const worktree = realpathSync(project.root);
   if (!isPin(pinned)) {
     const own = current ? project : namedContext(home) && home;
-    if (!own) {
+    if (!own || (!namesCheckout(input, own) && hasAnotherScope(own.root))) {
       return undefined;
     }
     pinned = { context: namedContext(own), worktree: realpathSync(own.root), mode: own.mode };
@@ -2272,6 +2286,25 @@ function pinnedScope(project, input) {
     : { context: pinned.context, changed: scopeChangedReason(pinned, current) };
 }
 
+function pinFile(project, input) {
+  return sharedStateFile('scope', findProject(input.cwd ?? process.cwd()) ?? project, input);
+}
+
+// Whether the call names the checkout `own` by an absolute path, whatever the working directory of
+// its session: the directory its command moves to (`cd <worktree> && ...`, `--cwd`), the file an
+// editor tool is given. A path read from another working directory names the same place only then.
+function namesCheckout(input, own) {
+  const { command } = toolInput(input);
+  const placesFrom = (cwd) => [
+    ...(typeof command === 'string' ? [commandDirectory(command, cwd)] : []),
+    ...writesOf({ ...input, cwd }).map(({ file }) => dirname(file)),
+  ];
+  const anywhere = new Set(placesFrom(sep));
+  return placesFrom(input.cwd ?? process.cwd()).some(
+    (place) => anywhere.has(place) && findProject(place)?.root === own.root,
+  );
+}
+
 // A worker's guard keeps the mode of its first call in its worktree: a config there that turns the
 // guard off, or grows past what the guard reads, does not lift it, and its change is compared as any
 // other change outside the scope.
@@ -2279,7 +2312,7 @@ function withPinnedMode(project, input) {
   if (project?.mode !== 'off' || !isWorkerAgent(input)) {
     return project;
   }
-  const pinned = readJson(stateFile('scope', findProject(input.cwd ?? process.cwd()) ?? project, input));
+  const pinned = readJson(pinFile(project, input));
   if (isPin(pinned) && pinned.worktree === realOf(project.root) && ['advise', 'enforce'].includes(pinned.mode)) {
     project.mode = pinned.mode;
   }
@@ -2304,7 +2337,7 @@ function scopeChangedReason(pinned, current) {
 }
 
 function otherWorktreeReason(pinned, project) {
-  return `Your scope is the context "${pinned.context}" in the worktree ${pinned.worktree}, pinned at your first call: ${project.root} is the worktree of another worker. Report to the conductor.`;
+  return `Your scope is the context "${pinned.context}" in the worktree ${pinned.worktree}, pinned at your first call: ${project.root} is the worktree of another worker. Run your commands as \`cd ${pinned.worktree} && ...\` and write your files by their absolute path under it; if this worktree is the one of your briefing, report to the conductor.`;
 }
 
 function awayReason(pinned, project) {
@@ -3437,7 +3470,7 @@ function workerGitReason(project, input, commands) {
     if (changesRepository(subcommand, tail)) {
       return `\`git ${subcommand}\`: the worktrees and the refs of the repository are the conductor's. ${REPORT_TO_CONDUCTOR}`;
     }
-    if (!readsAnywhere(subcommand, tail) && !isOwnCheckout(own, moved)) {
+    if (!readsAnywhere(subcommand, tail) && (!isOwnCheckout(own, moved) || unpinnedAmongSeveral(project, input))) {
       return `\`git ${subcommand}\` runs in ${moved ?? 'a place only the shell knows'}, not in your worktree: only the conductor lands a branch or moves its checkout. Run it as \`cd <worktree> && ...\`, and report to the conductor that the branch is ready.`;
     }
     const branch = () => workerBranch(own ?? findProject(moved).root);
@@ -3447,6 +3480,12 @@ function workerGitReason(project, input, commands) {
     }
   }
   return undefined;
+}
+
+// A worker no call has pinned yet, in a checkout that holds a scope: where another checkout holds one
+// too, the one its command stands in is not known to be its own.
+function unpinnedAmongSeveral(project, input) {
+  return namedContext(project) !== undefined && workerScope(project, input) === undefined;
 }
 
 // The branch of a worker: the one its scope file records, else the one its worktree has checked out.
@@ -3512,7 +3551,7 @@ function switchTarget(subcommand, tail, moved) {
 
 // The worktree a worker is pinned to, or the one its command stands in, before its first call is over.
 function ownWorktree(project, input) {
-  const pinned = readJson(stateFile('scope', findProject(input.cwd ?? process.cwd()) ?? project, input));
+  const pinned = readJson(pinFile(project, input));
   if (isPin(pinned)) {
     return pinned.worktree;
   }
@@ -4293,7 +4332,7 @@ function noteBeforeCode(project, input, commands) {
   const session = sessionCheckout(project, input);
   writeState(stateFile('before-run', project, input), {
     worktree: snapshot(project, worktreeOutside(project, input), join(project.root, GUARD_HELD)),
-    session: session && snapshot(session, sessionOutside),
+    session: session && { ...snapshot(session, sessionOutside), root: session.root },
     packages: commands.some(installsPackages) ? undefined : packageStates(project, session),
     script: sanctionedScripts(commands),
   });
@@ -4613,8 +4652,10 @@ function allMergedSides(checkout, from) {
     .flatMap((line) => line.split(' ').slice(2));
 }
 
+// The note is compared with the checkout it was taken in: a call that starts in another one, the
+// working directory of the session moved, compares nothing there.
 function sessionChangeReason(session, before) {
-  if (!session || !isRecord(before) || before.unread) {
+  if (!session || !isRecord(before) || before.unread || before.root !== session.root) {
     return undefined;
   }
   // What the conductor commits or merges there meanwhile is its own: only the files left changed in
@@ -4630,8 +4671,10 @@ function packagesChangeReason(before, project, session) {
   if (!isRecord(before)) {
     return undefined;
   }
+  // The packages of a checkout the note did not read, or that this call does not, are not compared:
+  // the working directory of the session moved between the two.
   const now = packageStates(project, session);
-  const changed = Object.keys({ ...before, ...now }).filter((file) => before[file] !== now[file]);
+  const changed = Object.keys(now).filter((file) => file in before && before[file] !== now[file]);
   return changed.length === 0
     ? undefined
     : `The packages the guard runs changed while your last command ran: ${changed.join(', ')}. A worker never changes node_modules: report it to the conductor, who installs them again. ${REPORT_TO_CONDUCTOR}`;
@@ -4841,6 +4884,20 @@ function stateFile(kind, project, input) {
     .digest('hex')
     .slice(0, 16);
   return join(project.root, GUARD_STATE, `${kind}-${key}.json`);
+}
+
+// The state of a worker that its working directory must not move, its pin and the count of its run:
+// under the common git directory of the repository, which every worktree of it shares and no
+// project holds, so that a call finds it from whichever checkout it starts in. Outside a repository
+// there is one checkout, and the guard's folder of the project holds it.
+function sharedStateFile(kind, home, input) {
+  const shared = sharedStateFolder(home.root);
+  return shared ? join(shared, basename(stateFile(kind, home, input))) : stateFile(kind, home, input);
+}
+
+function sharedStateFolder(root) {
+  const common = commonDirOf(root);
+  return common && isDirectory(join(common, 'objects')) ? join(common, 'ddd-ts-kit', 'guard') : undefined;
 }
 
 function writeState(file, state) {
@@ -5143,13 +5200,15 @@ function forget(marker) {
   return undefined;
 }
 
-// The markers and the runs of builders a week old, left by sessions and agents that ended, never
-// through a folder that is a link.
+// The markers and the runs of builders a week old, left by sessions and agents that ended, in the
+// guard's folder of the project and in the one its repository shares, never through a folder that is a link.
 function pruneGuardState(root) {
   const state = join(root, GUARD_STATE);
   const markers = join(root, GUARD_MARKERS);
   const files = [
-    ...filesIn(state).filter((file) => BUILDER_STATE.test(relative(state, file))),
+    ...[state, sharedStateFolder(root)]
+      .filter(Boolean)
+      .flatMap((folder) => filesIn(folder).filter((file) => BUILDER_STATE.test(relative(folder, file)))),
     ...filesIn(markers),
     ...filesIn(join(root, GUARD_HELD)),
   ];

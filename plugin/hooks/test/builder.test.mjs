@@ -97,11 +97,14 @@ function now() {
 }
 
 function seed(root, input, state) {
-  return put(root, runState(input), JSON.stringify(state));
+  return put(root, runState(input, root), JSON.stringify(state));
 }
 
-function runState(input) {
-  return `.ddd-ts-kit/guard/turns-${stateKey(input)}.json`;
+// The count of a builder's run: under the git directory of a repository, which its worktrees share,
+// else in the guard's folder of the project.
+function runState(input, root) {
+  const folder = existsSync(join(root, '.git')) ? '.git/ddd-ts-kit/guard' : '.ddd-ts-kit/guard';
+  return `${folder}/turns-${stateKey(input)}.json`;
 }
 
 function stateKey(input) {
@@ -119,7 +122,7 @@ test('two builders are counted apart, and a new run of one starts its count agai
   assert.equal(noticeOf(run('pre-bash', bash(root, 'git status', second))), undefined);
   assert.match(noticeOf(run('pre-bash', bash(root, 'git status', first))), /turn limit is near/);
   assert.equal(run('subagent-start', { cwd: root, ...first }).output, undefined);
-  const restarted = JSON.parse(readFileSync(join(root, runState(first)), 'utf8'));
+  const restarted = JSON.parse(readFileSync(join(root, runState(first, root)), 'utf8'));
   assert.equal(restarted.run, 2);
   assert.equal(restarted.calls, 0);
   assert.deepEqual(restarted.notices, []);
@@ -142,7 +145,7 @@ test('the main session and the other agents are neither counted nor warned', () 
     seed(root, input, { run: 1, calls: FIRST_NOTICE - 1, notices: [] });
     assert.equal(run('pre-bash', bash(root, 'git status', input)).output, undefined);
     assert.equal(run('subagent-start', { cwd: root, ...input }).output, undefined);
-    assert.equal(JSON.parse(readFileSync(join(root, runState(input)), 'utf8')).calls, FIRST_NOTICE - 1);
+    assert.equal(JSON.parse(readFileSync(join(root, runState(input, root)), 'utf8')).calls, FIRST_NOTICE - 1);
   }
   assert.equal(existsSync(join(root, '.ddd-ts-kit', 'agent.json')), false);
 });
@@ -239,7 +242,7 @@ test('the first start of a builder opens its first run, counted from zero', () =
   const root = project();
   const agent = builder('fresh');
   assert.equal(run('subagent-start', { cwd: root, ...agent }).output, undefined);
-  const started = JSON.parse(readFileSync(join(root, runState(agent)), 'utf8'));
+  const started = JSON.parse(readFileSync(join(root, runState(agent, root)), 'utf8'));
   assert.equal(started.run, 1);
   assert.equal(started.calls, 0);
   assert.deepEqual(started.notices, []);
@@ -328,8 +331,8 @@ test('a report or a run state a repository links elsewhere is never written thro
   writeFileSync(state, 'untouched\n');
   symlinkSync(report, join(root, REPORT));
   const agent = builder('linked');
-  mkdirSync(join(root, '.ddd-ts-kit', 'guard'));
-  symlinkSync(state, join(root, runState(agent)));
+  mkdirSync(join(root, '.git/ddd-ts-kit/guard'), { recursive: true });
+  symlinkSync(state, join(root, runState(agent, root)));
   run('pre-bash', bash(root, 'git status', agent));
   const stopped = run('subagent-stop', {
     cwd: root,
@@ -385,7 +388,7 @@ test('an agent of the project named context-builder without the prefix of the pl
   const agent = builder('unprefixed', { agent_type: 'context-builder' });
   assert.equal(decision(run('pre-bash', bash(root, 'rm src/main.ts', agent))), 'deny');
   run('subagent-start', { cwd: root, ...agent });
-  assert.equal(existsSync(join(root, runState(agent))), false);
+  assert.equal(existsSync(join(root, runState(agent, root))), false);
   assert.equal(existsSync(join(root, '.ddd-ts-kit', 'agent.json')), false);
 });
 
@@ -408,7 +411,7 @@ test('a new run of a builder removes no note through a folder of the guard its w
   const root = committed();
   const worktree = project();
   const agent = builder('linked-worktree');
-  put(root, runState(agent), JSON.stringify({ run: 1, calls: 3, notices: [], worker: worktree }));
+  put(root, runState(agent, root), JSON.stringify({ run: 1, calls: 3, notices: [], worker: worktree }));
   const shared = directory('shared');
   const note = `before-run-${stateKey(agent)}.json`;
   put(shared, note, '{}');
@@ -427,7 +430,7 @@ test('malformed input to the runs of a builder never blocks', () => {
   const root = committed();
   worker(root);
   const broken = builder('broken');
-  put(root, runState(broken), '{not json');
+  put(root, runState(broken, root), '{not json');
   assert.equal(run('pre-bash', bash(root, 'git status', broken)).status, 0);
 });
 
@@ -435,13 +438,13 @@ test('a count that fails never drops a refusal: a builder whose run state cannot
   const root = committed();
   worker(root);
   const agent = builder('unwritable');
-  mkdirSync(join(root, runState(agent)), { recursive: true });
+  mkdirSync(join(root, runState(agent, root)), { recursive: true });
   const refused = run('pre-bash', bash(root, 'rm src/main.ts', agent));
   assert.equal(decision(refused), 'deny');
   assert.equal(noticeOf(refused), undefined);
   // A state that is no run makes the count itself throw.
   const odd = builder('odd');
-  put(root, runState(odd), '"not a run"');
+  put(root, runState(odd, root), '"not a run"');
   assert.equal(decision(run('pre-bash', bash(root, 'rm src/main.ts', odd))), 'deny');
 });
 
@@ -477,6 +480,77 @@ test('a worker pinned to its worktree does not work in the worktree of another w
   const strayed = run('pre-bash', bash(conductor, `cd ${other} && git status`, agent));
   assert.equal(decision(strayed), 'deny');
   assert.match(reason(strayed), new RegExp(`context "billing" in the worktree ${worktree}, pinned at your first call`));
+  assert.match(reason(strayed), new RegExp(`Run your commands as \`cd ${worktree} && \\.\\.\\.\``));
+});
+
+// A conductor with the worktree of billing and, beside it, the worktree of shipping.
+function twoWorkers() {
+  const { conductor, worktree } = conductorWithWorker();
+  const other = join(conductor, '.worktrees', 'shipping');
+  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/shipping', other);
+  put(other, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'shipping' }));
+  return { conductor, worktree, other };
+}
+
+test('a first command that names no worktree pins no scope where several workers have one: it reads, and writes nothing', () => {
+  const { conductor, worktree, other } = twoWorkers();
+  // The session stands in the worktree of shipping; the worker of billing has not named its own yet.
+  const agent = builder('unnamed', { cwd: other });
+  assert.equal(run('pre-bash', bash(other, 'git status', agent)).output, undefined);
+  for (const command of [
+    'npm test',
+    'echo x > src/contexts/shipping/notes.md',
+    'git commit -m "feat: x"',
+    'cd src && npm test',
+  ]) {
+    const refused = run('pre-bash', bash(other, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /Run it as `cd <worktree> && \.\.\.`/, command);
+  }
+  const stray = run('pre-write', { cwd: other, ...write(join(conductor, 'src/main.ts'), agent) });
+  assert.match(reason(stray), /under the worktree of your briefing/);
+  // The command that names its worktree pins it: the worktree the session stands in is another worker's.
+  assert.equal(run('pre-bash', bash(other, `cd ${worktree} && npm test`, agent)).output, undefined);
+  const strayed = run('pre-bash', bash(other, 'git status', agent));
+  assert.match(reason(strayed), new RegExp(`context "billing" in the worktree ${worktree}, pinned at your first call`));
+  // A file named by its absolute path pins as a command that names its worktree does.
+  const writer = builder('writer', { cwd: other });
+  const written = write(join(worktree, 'src/contexts/billing/CONTEXT.md'), writer);
+  assert.equal(run('pre-write', { cwd: other, ...written }).output, undefined);
+  assert.equal(decision(run('pre-bash', bash(other, 'npm test', writer))), 'deny');
+});
+
+test('the pin follows the worker: a call that starts in another checkout is judged against the worktree pinned', () => {
+  const { conductor, worktree, other } = twoWorkers();
+  const agent = builder('moved', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  // The same worker, its working directory now in the worktree of shipping, then in its own.
+  for (const command of ['echo x > src/contexts/shipping/notes.md', 'npm test', 'git status']) {
+    const refused = run('pre-bash', bash(other, command, { ...agent, cwd: other }));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /context "billing" in the worktree .*, pinned at your first call/, command);
+  }
+  const outside = write(join(other, 'src/contexts/shipping/CONTEXT.md'), agent);
+  assert.equal(decision(run('pre-write', { ...outside, cwd: other })), 'deny');
+  // What the other worker left changed in its worktree, and the packages of a checkout the note of
+  // the last command did not read, are not compared with that note.
+  put(other, 'src/contexts/shipping/notes.md', 'Notes of the other worker.\n');
+  const named = bash(other, `cd ${worktree} && npm test`, { ...agent, cwd: other });
+  assert.equal(run('pre-bash', named).output, undefined);
+  const own = { ...agent, cwd: worktree };
+  assert.equal(run('pre-bash', bash(worktree, 'echo x > src/contexts/billing/notes.md', own)).output, undefined);
+  assert.equal(decision(run('pre-bash', bash(worktree, 'echo x > src/main.ts', own))), 'deny');
+  assert.equal(run('pre-bash', bash(worktree, 'npm test', own)).output, undefined);
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  // One pin and one count for the repository, whichever checkout a call started in; the stop releases it.
+  const state = join(conductor, '.git/ddd-ts-kit/guard');
+  assert.deepEqual(readdirSync(state).sort(), [`scope-${stateKey(agent)}.json`, `turns-${stateKey(agent)}.json`]);
+  assert.equal(JSON.parse(readFileSync(join(state, `turns-${stateKey(agent)}.json`), 'utf8')).calls, 10);
+  for (const checkout of [conductor, worktree, other]) {
+    assert.equal(existsSync(join(checkout, '.ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`)), false);
+  }
+  run('subagent-stop', { ...agent, cwd: other });
+  assert.equal(existsSync(join(state, `scope-${stateKey(agent)}.json`)), false);
 });
 
 test('code of a worker that writes into the checkout of the session is said to it once, for the conductor (otherCheckout)', () => {
@@ -541,7 +615,7 @@ test('the worktree of a pinned worker reached through a link is the same worktre
 
 test('the scope pin of a builder is pruned at the session start of the conductor and released at its stop', () => {
   const { conductor, worktree } = conductorWithWorker();
-  const pinOf = (agent) => join(conductor, '.ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`);
+  const pinOf = (agent) => join(conductor, '.git/ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`);
   const stopped = builder('stopped', { cwd: conductor });
   assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, stopped)).output, undefined);
   assert.equal(existsSync(pinOf(stopped)), true);
