@@ -1,6 +1,0 @@
-**Coverage no longer counts what the compiler writes to apply standard decorators, and the e2e client sends bytes as they are.**
-
-- `decoratorCoverage()` of `@ddd-ts-kit/testing/vitest` handled the legacy decorator mode alone. Under the standard mode the compiler writes, for every decorated member, two `access` closures that only a decorator reading them calls, mapped to the line of the decorator: a projection with several `@On` lost statements or functions no spec could win back, and a layer fell under its floor with every line covered. The plugin now marks those statements too, and a project generated in the standard mode lists it after `decorators()` in `vitest.config.ts`.
-- `FetchClient` of `@ddd-ts-kit/testing/e2e` turned every body that was not a text into JSON, a `Uint8Array` included, so an upload in another encoding than UTF-8 could not be tested end to end. Bytes, a `Blob` and a `FormData` are now sent as they are, under the content type the call names or the one of the form.
-
-To move: in a project on standard decorators, write `plugins: [decorators({ compiler: '@typescript/native' }), decoratorCoverage()]` in `vitest.config.ts`, with `decoratorCoverage` imported from `@ddd-ts-kit/testing/vitest`. A coverage floor lowered for this reason, or a local plugin doing the same, can go.
