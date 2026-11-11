@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:c404b067ed12e5d9 -->
+<!-- translation-of: CONFIG.md sha256:08b87a6d6e6f92d1 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -575,7 +575,7 @@ aussi tant que `--event-sourcing on` n'est pas demandé.
 | `contexts.<name>.deployable` | `true`, `false` : le contexte a son propre point d'entrée `src/apps/<name>/main.ts` ; `generate service <name>` la pose | `false` |
 | `contexts.<name>.tenancy` | `control-plane` : le contexte décide qui appartient à quel *tenant*, et ses tables n'appartiennent à aucun (le *preset* identity l'écrit sous une multitenance, avec son enregistrement de décision). `generate repository` ne cloisonne alors aucun de ses registres, sauf avec `--tenant-scoped`, et `tenancy/scoped-statement` ne juge pas ses adaptateurs, sans désactivation par instruction. Une dérogation : `deviations` contient `contexts.<name>.tenancy`. `config/valid` signale une autre valeur | aucune : la multitenance du projet |
 | `contexts.<name>.owners[]` | les identifiants de qui possède le contexte, tels que la plateforme du dépôt les connaît (`@org/equipe`, `@personne`, un courriel) : `ddd-ts-kit docs` les écrit dans `CODEOWNERS` pour l'arborescence du contexte et son `published-language/` ([Propriétaires](#propriétaires)) | `[]` : aucune ligne pour le contexte |
-| `contexts.<name>.modules` | `{ "<module>": {} }` : les modules du modèle du contexte, chacun un dossier du contexte qui contient ses propres couches, de `<module>/domain/` à `<module>/presentation/`, ses *specs* dans `test/unit/<module>/` ([Modules du modèle](concepts/modules.fr.md)). Un nom est en kebab-case, unique dans le contexte, et jamais le nom d'un dossier de rôle (`aggregates`, `commands`...) ni d'un dossier du contexte (`domain`, `test`...) ; `generate module <context> <module>` l'écrit | aucun |
+| `contexts.<name>.modules` | `{ "<module>": {} }` : les modules du modèle du contexte, chacun un dossier du contexte qui contient ses propres couches, de `<module>/domain/` à `<module>/presentation/`, et ses tests, `<module>/test/` ([Modules du modèle](concepts/modules.fr.md)). Un contexte qui déclare des modules garde ce qui n'appartient à aucun dans son dossier `shared/`, qui n'est jamais déclaré ici. Un nom est en kebab-case, unique dans le contexte, et jamais le nom d'un dossier de rôle (`aggregates`, `commands`...), d'un dossier du contexte (`domain`, `test`...) ni `shared` ; `generate module <context> <module>` l'écrit | aucun |
 | `contexts.<name>.modules.<module>.classification` | `core`, `supporting`, `generic` : le sous-domaine que le module porte, quand il diffère de la classification de son contexte | la classification du contexte |
 
 Les contextes de la configuration et les répertoires de `contextsDir` doivent former le même

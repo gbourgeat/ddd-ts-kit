@@ -7,7 +7,9 @@ export const TREE_DOCS: Readonly<Record<string, RuleDoc>> = {
     good: `contexts/billing/domain/value-objects/money.vo.ts
 contexts/billing/billing.declarations.ts                          // declared style only
 contexts/billing/application/application.declarations.ts          // declared style only
-contexts/billing/invoices/invoices.module.ts                      // explicit style, a module of the model`,
+contexts/billing/invoices/invoices.module.ts                      // explicit style, a module of the model
+contexts/billing/invoices/test/unit/invoice.aggregate.spec.ts     // a module holds its tests
+contexts/billing/shared/infrastructure/persistence/billing.schema.ts // what belongs to no module`,
   },
   'tree/context-doc': {
     why: 'CONTEXT.md is where the vocabulary and the boundaries are agreed with the domain experts. Without it, names drift and nobody can tell whether a concept belongs here. The classification says how much design effort the context deserves.',

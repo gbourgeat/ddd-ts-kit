@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:80476fa58babea90 -->
+<!-- translation-of: file-storage.md sha256:78e7e0822045e2cf -->
 
 # Stockage de fichiers
 

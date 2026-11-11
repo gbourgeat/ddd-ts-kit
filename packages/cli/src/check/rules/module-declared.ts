@@ -12,7 +12,7 @@ import { reporter } from '../support/reporter';
 export const moduleDeclared: Rule = {
   id: 'module/declared',
   description:
-    'Every module of the model a context declares in contexts.<name>.modules is named with terms of the ubiquitous language of the context, never with a technical word (shared, common, core, utils...), and has its row, with its purpose, in the "## Modules" table of the CONTEXT.md of the context.',
+    'Every module of the model a context declares in contexts.<name>.modules is named with terms of the ubiquitous language of the context, never with a technical word (common, core, utils...; `shared`, the folder of what belongs to no module, is refused by config/valid), and has its row, with its purpose, in the "## Modules" table of the CONTEXT.md of the context.',
   scope: 'project',
   run(project) {
     const report = reporter(project, this.id);
