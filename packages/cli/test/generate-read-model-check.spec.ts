@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { checkJsonOf } from './check-support';
 import { cli, read } from './helpers';
 import { expectOk } from './support/expect-ok';
 import { billingProject, PERSISTENCE } from './support/read-model-project';
@@ -48,5 +49,33 @@ describe('the check that keeps the live rows of a read model whole', () => {
     expect(tablesOf('prisma', 'prisma/schema/billing.prisma', 'dueAt:instant')).toContain(
       'ALTER TABLE "billing"."dues" ADD CONSTRAINT "dues_live_rows_whole" CHECK ("deleted" OR ("due_at" IS NOT NULL));\n',
     );
+  });
+});
+
+describe.each([
+  ['drizzle', SCHEMA, 'customerEmail'],
+  ['knex', `${PERSISTENCE}/create-billing-tables.schema.ts`, 'customer_email'],
+  ['typeorm', SCHEMA, 'customerEmail'],
+  ['prisma', 'prisma/schema/billing.prisma', 'customer_email'],
+])('generate personal-fields, pointed at the table of a read model on %s', (orm, file, spelled) => {
+  it('reads the table and its columns beside the check of its live rows, and declares the personal one as the ORM spells it', () => {
+    const root = billingProject('--orm', orm);
+
+    const fields = ['customerId:string', 'customerEmail:string', 'dueAt:instant'].flatMap((field) => [
+      '--field',
+      field,
+    ]);
+
+    expectOk(cli(root, 'generate', 'read-model', 'billing', 'Dues', ...fields));
+
+    const schema = read(root, file);
+    const personal = ['--personal', 'customer_email', '--subject', 'customer_id'];
+
+    expectOk(cli(root, 'generate', 'personal-fields', 'billing', 'dues', ...personal));
+
+    expect(read(root, file)).toBe(schema);
+    expect(read(root, `${PERSISTENCE}/dues.personal-fields.ts`)).toContain('DuesPersonalFields = personalFields(');
+    expect(read(root, `${PERSISTENCE}/dues.personal-fields.ts`)).toContain(`'${spelled}'`);
+    expect(checkJsonOf(cli(root, 'check', '--json')).violations).toEqual([]);
   });
 });

@@ -4,7 +4,7 @@ import type { Scope } from '../scope';
 import { declareTable } from './declare-table';
 
 const AGGREGATE_TABLE =
-  'Change the table by hand in <file>, a personal field with its line in the *.personal-fields.ts of the aggregate; the generator declares a table once.';
+  'The generator declares a table once: change it by hand in <file>. Personal columns the table holds are then declared by `ddd-ts-kit generate personal-fields <context> <table> --personal <column>,... --subject <column>`, or, when the table has its *.personal-fields.ts already, by a line in its fields.';
 
 /** The table or model of the aggregate, declared where the migration tooling of the ORM reads it. */
 export function declareStorage(scope: Scope, aggregate: Name, context: RenderContext): void {

@@ -13,6 +13,7 @@ import { domainEventKind } from './kinds/domain-event-kind';
 import { domainServiceKind } from './kinds/domain-service-kind';
 import { e2eKind } from './kinds/e2e-kind';
 import { erasureHandlerKind } from './kinds/erasure-handler-kind';
+import { personalFieldsKind } from './kinds/personal-fields-kind';
 import { errorKind } from './kinds/error-kind';
 import { entityKind } from './kinds/entity-kind';
 import { eventHandlerKind } from './kinds/event-handler-kind';
@@ -73,6 +74,7 @@ export const KINDS: readonly Kind[] = [
   schemaKind,
   integrationEventKind,
   integrationHandlerKind,
+  personalFieldsKind,
   erasureHandlerKind,
   eventHandlerKind,
   projectionKind,

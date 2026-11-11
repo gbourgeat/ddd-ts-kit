@@ -33,7 +33,8 @@ export const ELSEWHERE = [
  * One list per runner, with the seconds each file took on a runner of the pipeline, each file given,
  * longest first, to the runner with the most room. Measured again on 2026-11-11 on a pull request (the
  * cover of the stacks): the runners ended at 565, 368, 571 and 707 seconds, the fourth holding
- * first-class.spec.ts, which went to the second; they are counted 564, 565, 566 and 564, the fourth
+ * first-class.spec.ts, which went to the second; they are counted 591, 565, 566 and 584 with the
+ * specs of the two generators added since (read-model on the first, personal-fields-of-table on the fourth), the fourth
  * with the 60 s of the coverage gate, which only a deep run starts. On the trunk and at
  * night the two first-minute sweeps go deep (789 and 774 s) and their runners stay the longest: the
  * same move takes the longest from 1,226 to 1,019 s.
@@ -84,6 +85,8 @@ export const SHARDS = [
     'manual-module.spec.ts': 9,
     // A context that declares a store of OpenSearch, started by the end-to-end tests of its project with no node.
     'search-without-node.spec.ts': 2,
+    // The personal columns of a table no aggregate owns, type-checked on the four ORMs.
+    'personal-fields-of-table.spec.ts': 20,
   },
 ];
 

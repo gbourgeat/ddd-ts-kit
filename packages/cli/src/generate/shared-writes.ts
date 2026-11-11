@@ -47,6 +47,12 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
   module: { files: ['ddd-ts-kit.config.json'] },
   repository: { files: STORAGE, when: STORED },
   'read-model': { files: STORAGE, when: STORED_READ_MODEL },
+  'personal-fields': {
+    files: [
+      'the copies and the exports of the platform (<platformDir>/privacy/data-subject-copies.ts, data-subject-exports.ts)',
+    ],
+    when: 'the declaration is the first of its context, which brings its erasure and its export',
+  },
   command: {
     files: [...STORAGE, ...GRANTS],
     when: `--aggregate names an aggregate without a repository, which is created with the command, and ${STORED}; or ${GRANTED}`,

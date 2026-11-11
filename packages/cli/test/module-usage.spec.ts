@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { KINDS } from '../src/generate/kinds';
 import { MODULE_OPTION } from '../src/generate/usage-of';
-import { cli, DEFAULT_STACK, tempDir, write } from './helpers';
+import { cli, DEFAULT_STACK, read, tempDir, write } from './helpers';
 import { report } from './reports';
 import { initFlags } from './support/init-flags';
 import { jsonAt } from './support/json-at';
@@ -78,6 +78,18 @@ const RUNS: Record<string, { readonly context: string; readonly args: readonly s
     context: 'shipping',
     args: ['integration-handler', 'shipping', 'billing', 'billing.invoice.issued'],
   },
+  'personal-fields': {
+    context: 'billing',
+    args: [
+      'personal-fields',
+      'billing',
+      'payment_reminders',
+      '--personal',
+      'customer_email',
+      '--subject',
+      'customer_id',
+    ],
+  },
   'erasure-handler': { context: 'billing', args: ['erasure-handler', 'billing'] },
   'event-handler': { context: 'billing', args: ['event-handler', 'billing', 'Invoice', 'Issued'] },
   projection: { context: 'billing', args: ['projection', 'billing', 'InvoiceSummary', 'billing.invoice.issued'] },
@@ -104,6 +116,16 @@ const STORY_SLICES = `# Slices
 | # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
 |---|---|---|---|---|---|---|---|
 | US1.01 | billing | skeleton | Invoice | \`generate aggregate billing Invoice\` | | conductor | done |
+`;
+
+const BILLING_SCHEMA = 'src/contexts/billing/shared/infrastructure/persistence/billing.schema.ts';
+
+/** A table of billing no aggregate owns, written by hand in the schema of the context. */
+const PAYMENT_REMINDERS = `export const paymentReminders = billingSchema.table('payment_reminders', {
+  id: text('id').primaryKey(),
+  customerId: text('customer_id').notNull(),
+  customerEmail: text('customer_email'),
+});
 `;
 
 /** A project whose billing and shipping are divided into modules, holding in them what the runs above build on. */
@@ -135,6 +157,7 @@ function projectDividedIntoModules(): string {
   inInvoices('value-object', 'billing', 'Money');
   inInvoices('domain-event', 'billing', 'Invoice', 'Issued');
   inInvoices('repository', 'billing', 'Invoice', '--personal', 'payer');
+  write(root, BILLING_SCHEMA, `${read(root, BILLING_SCHEMA)}\n${PAYMENT_REMINDERS}`);
 
   inInvoices(
     'command',

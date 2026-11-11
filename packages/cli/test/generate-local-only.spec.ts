@@ -11,6 +11,7 @@ const SHARED_KINDS = [
   'context',
   'module',
   'repository',
+  'personal-fields',
   'command',
   'query',
   'file-upload',

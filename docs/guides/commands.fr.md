@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:644279719bbe5c74 -->
+<!-- translation-of: commands.md sha256:9cfe9e18da79fb58 -->
 
 # Quelle commande, quand
 
@@ -742,6 +742,7 @@ Kinds
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]... [--module <module>]
   integration-handler <context> <upstreamContext> <eventType>[@v<n>] [--version <n>] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: consumer)
+  personal-fields <context> <table> --personal <column>,<column>... --subject <column> [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>] [--tenant-scoped] [--module <module>]
   erasure-handler <context> [--module <module>]
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
   projection <context> <Name> <eventType>[@v<n>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: projector)

@@ -21,7 +21,7 @@ export interface DeclaredTable {
   readonly table: string;
   /** The folder of the templates that write it, per ORM; a file it does not hold is the one of `repository`. */
   readonly templates: string;
-  /** How to change a table already declared, since the generator declares it once. */
+  /** How to change a table already declared, since the generator declares it once; `<file>`, `<context>` and `<table>` are filled in. */
   readonly changedBy: string;
 }
 
@@ -94,7 +94,10 @@ function declareOnce(
   if (before > 0 && count() > before) {
     throw new CliError(
       `${file} already declares the table ${declared.table}, with other columns than this command would write.`,
-      declared.changedBy.replace('<file>', file),
+      declared.changedBy
+        .replace('<file>', file)
+        .replace('<context>', scope.context.kebab)
+        .replace('<table>', declared.table),
     );
   }
 }

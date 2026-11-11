@@ -31,6 +31,22 @@ a text accepts null, or the rows are erased with `row`. `personalDataErasureCont
 `@ddd-ts-kit/testing` holds the adapter and the fake (`InMemoryPersonalData`) to the same
 behaviour.
 
+## A table no aggregate owns
+
+A read model, a table of received messages, a table written by hand: never write its
+`*.personal-fields.ts` and its lines in the two adapters by hand.
+
+```bash
+npx ddd-ts-kit generate personal-fields <ctx> <table> --personal <column>,... --subject <column> [--erasure pseudonymise|row] [--retention ended_at:36m] --json
+```
+
+`<table>` is its SQL name, already in the schema file of the context: the command reads it and
+never changes it, and refuses a column it does not hold. `--subject` is required (the row is
+rarely the person; `id` only when it is). The declaration joins the erasure and the export of the
+context, or comes with them; their spec then lists `it.todo` cases, to write with rows inserted
+as the project writes that table. `generate repository --personal` on an existing table is
+refused: add the columns by hand, then run this.
+
 ## Erase and export
 
 - A context lists its port in `src/platform/privacy/data-subject-copies.ts`, its export port in
