@@ -18,6 +18,7 @@ const SHARED_KINDS = [
   'job',
   'policy',
   'gateway',
+  'read-model',
   'service',
   'worker',
   'adr',

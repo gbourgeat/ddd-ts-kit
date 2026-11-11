@@ -198,6 +198,7 @@ function flagsOf(args: Arguments): KindFlags {
     term: args.many('term'),
     value: args.many('value'),
     transition: args.many('transition'),
+    field: args.many('field'),
     ...switchesOf(args),
   };
 }

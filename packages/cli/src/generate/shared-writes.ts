@@ -27,6 +27,9 @@ const GRANTED = '--grant <role> names the role that holds the permission (stack.
 const STORED =
   'the repository is the first of its context: with drizzle, knex or typeorm the tables file of the context joins the schema index, with prisma the database schema of the context joins the datasource (its models go to prisma/schema/<context>.prisma, the file of the context)';
 
+const STORED_READ_MODEL =
+  'the table of the read model is the first of its context: with drizzle, knex or typeorm the tables file of the context joins the schema index, with prisma the database schema of the context joins the datasource (its model goes to prisma/schema/<context>.prisma, the file of the context); never without an ORM of the kit';
+
 /** One entry per kind whose `writesShared` is true: `--local-only` refuses those writes, the conductor of a parallel build makes them on the trunk. */
 export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
   context: {
@@ -43,6 +46,7 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
   },
   module: { files: ['ddd-ts-kit.config.json'] },
   repository: { files: STORAGE, when: STORED },
+  'read-model': { files: STORAGE, when: STORED_READ_MODEL },
   command: {
     files: [...STORAGE, ...GRANTS],
     when: `--aggregate names an aggregate without a repository, which is created with the command, and ${STORED}; or ${GRANTED}`,

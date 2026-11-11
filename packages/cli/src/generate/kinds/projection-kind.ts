@@ -26,7 +26,7 @@ export const projectionKind: Kind = {
   aliases: ['projector'],
   usage: 'projection <context> <Name> <eventType>[@v<n>] [--term "<Term>=<meaning>"]...',
   summary:
-    'A projector, the class that keeps one read model up to date from integration events of its own context or of a declared upstream, and its spec; registered in the module file of its context in the explicit style. After `generate integration-event <context> <Aggregate> <Fact>` of its eventType, in the context that publishes it.',
+    'A projector, the class that keeps one read model up to date from integration events of its own context or of a declared upstream, and its spec; registered in the module file of its context in the explicit style. The read model it keeps (port, table, store adapter, fake) comes from `generate read-model <context> <Name>`. After `generate integration-event <context> <Aggregate> <Fact>` of its eventType, in the context that publishes it.',
   positionals: ['context', 'Name', 'eventType'],
   writesShared: false,
   writesInModules: true,
@@ -68,6 +68,10 @@ export const projectionKind: Kind = {
     ]);
 
     wire(scope, 'projection', context);
+
+    scope.ws.note(
+      `${name.pascal}Projection keeps a read model: \`ddd-ts-kit generate read-model ${scope.context.kebab} <Name> --field <name>:<type>\` writes its port, its table, its store adapter and its fake, which the projection then receives in its constructor.`,
+    );
   },
 };
 

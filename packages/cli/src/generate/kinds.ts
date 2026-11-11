@@ -29,6 +29,7 @@ import { portKind } from './kinds/port-kind';
 import { processKind } from './kinds/process-kind';
 import { projectionKind } from './kinds/projection-kind';
 import { queryKind } from './kinds/query-kind';
+import { readModelKind } from './kinds/read-model-kind';
 import { repositoryKind } from './kinds/repository-kind';
 import { representationKind } from './kinds/representation-kind';
 import { routeGroupKind } from './kinds/route-group-kind';
@@ -75,6 +76,7 @@ export const KINDS: readonly Kind[] = [
   erasureHandlerKind,
   eventHandlerKind,
   projectionKind,
+  readModelKind,
   jobKind,
   backgroundJobKind,
   processKind,

@@ -15,6 +15,8 @@ export interface KindFlags {
   readonly value: readonly string[];
   /** The transitions of a state machine, one per `--transition "<intention>:<from>[,<from>]...[><to>]"`. */
   readonly transition: readonly string[];
+  /** The fields of the row of a read model, one per `--field <name>:<type>[:nullable]`. */
+  readonly field: readonly string[];
   readonly code?: string;
   readonly aggregate?: string;
   readonly method?: string;

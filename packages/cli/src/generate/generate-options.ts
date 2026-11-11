@@ -15,6 +15,7 @@ export const GENERATE_OPTIONS = {
   term: TEXTS,
   value: TEXTS,
   transition: TEXTS,
+  field: TEXTS,
   code: TEXT,
   aggregate: TEXT,
   method: TEXT,

@@ -81,6 +81,7 @@ const RUNS: Record<string, { readonly context: string; readonly args: readonly s
   'erasure-handler': { context: 'billing', args: ['erasure-handler', 'billing'] },
   'event-handler': { context: 'billing', args: ['event-handler', 'billing', 'Invoice', 'Issued'] },
   projection: { context: 'billing', args: ['projection', 'billing', 'InvoiceSummary', 'billing.invoice.issued'] },
+  'read-model': { context: 'billing', args: ['read-model', 'billing', 'InvoiceBoard', '--field', 'issuedAt:instant'] },
   job: { context: 'billing', args: ['job', 'billing', 'RemindOverdue', '--every', '1d', '--command', 'IssueInvoice'] },
   'background-job': {
     context: 'billing',

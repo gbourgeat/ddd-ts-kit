@@ -193,6 +193,7 @@ describe('generate <kind> --help', () => {
       'integration-handler',
       'event-handler',
       'projection',
+      'read-model',
       'job',
       'background-job',
       'process',
