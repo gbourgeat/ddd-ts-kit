@@ -558,6 +558,11 @@ A read model of tenant data takes `tenant: { scope }` (and `property` when the e
 tenant other than in `tenantId`, which `tenantColumn()` declares): every row is written with the
 tenant of the work in progress, every read, search and write is confined to it, an elevation of
 platform staff widening the reads only, and the copy of a rebuild follows the same conditions.
+The rows a read answers hold every column of the entity but the stamps, the tenant with them; when
+the row of the port does not carry its tenant, declare the column `select: false`
+(`tenantId: { ...tenantColumn().tenantId, select: false }`, the entity typed
+`Row & TenantScoped & ReadModelStamps`): the store still writes it and filters on it, and leaves it
+out of the rows.
 Keys stay unique across tenants, as the conflict of an insert is on the key alone: a key two
 tenants could share (a day, a slug) carries the tenant (`acme:2026-03-01`). A store built without
 `tenant` in a `--tenancy shared-table` project is reported by `tenancy/scoped-statement`.

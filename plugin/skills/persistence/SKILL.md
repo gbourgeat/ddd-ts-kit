@@ -29,6 +29,10 @@ writes the port (an abstract class extending the kernel `Repository<Aggregate>` 
 pass. `generate command --aggregate` creates it when missing. Fill the `todos` places: the
 lookups of the port, the columns, the mapper.
 
+Read model of a projection: `generate read-model <ctx> <Name> --field <name>:<type>...` writes
+port (over `ReadModelStore<Row>`), table, store adapter, fake and `readModelContract` spec,
+not `port` then `adapter`.
+
 ## Rules, whatever the technology
 
 - **One repository per aggregate root**, whole-aggregate load and save. Add only the lookups
@@ -37,11 +41,9 @@ lookups of the port, the columns, the mapper.
   the one place for a type assertion. No ORM type crosses the port.
 - **Each context owns its tables**, in its own database schema and in a file of its own: the
   tables file of `infrastructure/persistence/` (Drizzle, Knex, TypeORM; `shared/infrastructure/persistence/` with modules) or on Prisma
-  `prisma/schema/<context>.prisma` beside the main `prisma/schema/schema.prisma` (a project still
-  on the one `prisma/schema.prisma` of versions before 0.95 moves it first: `generate repository`
-  refuses with the steps). A stored field changes its column and the mapper in one commit. No foreign key, join or
-  query across contexts: reference by identifier, read through a published contract or a
-  local projection fed by integration events (`context/extractable`).
+  `prisma/schema/<context>.prisma` (an earlier single `prisma/schema.prisma` moves first: the
+  generator refuses with the steps). A stored field changes its column and the mapper in one commit. No foreign key, join or
+  query across contexts: reference by identifier, a published contract or a local projection (`context/extractable`).
 - **Transactions belong to the application.** The unit of work is a middleware of the command
   bus; a repository picks up the ambient transaction, never receives one, never commits.
   Domain events are dispatched at its end, before the commit. A unit of work of your own
@@ -52,8 +54,8 @@ lookups of the port, the columns, the mapper.
   command, never map the driver error by hand. A taken unique value (an email) raises
   `UniqueViolationError` (`CONFLICT`), never retried; the handler turns it into its own refusal.
 - **Audit and tenant columns are standard**: `created_at`, `created_by`, `updated_at`,
-  `updated_by`, and `tenant_id` with `--tenant-scoped`, stamped by the adapter from the
-  `ExecutionScope` and the `Clock` through the kernel helpers. The domain does not know them.
+  `updated_by`, and `tenant_id` with `--tenant-scoped`, stamped by the adapter from
+  `ExecutionScope` and `Clock`. The domain ignores them.
 - **Files never in a table.** No binary or base64 column (`persistence/no-file-content`): the
   content lives in the `FileStorage` port (`stack.storage`), a row keeps the key, size, media
   type and checksum of its `StoredFile`, and `FileStaging` orders the write (staged before the

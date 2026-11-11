@@ -9,6 +9,9 @@ import type { ExecutionScope } from '@ddd-ts-kit/kernel';
  */
 export interface TypeOrmReadModelTenant {
   readonly scope: ExecutionScope;
-  /** The property of the entity that holds the tenant (`tenantColumn()` declares it). Default `tenantId`. */
+  /**
+   * The property of the entity that holds the tenant (`tenantColumn()` declares it). Default `tenantId`. Declared
+   * `select: false`, it stays out of the rows a read answers: for a row that does not carry its tenant.
+   */
   readonly property?: string;
 }

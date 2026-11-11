@@ -13,6 +13,7 @@ import {
   InMemoryLock,
   InMemoryProcessedEventStore,
   InMemoryRateLimiter,
+  InMemoryReadModelStore,
   InMemoryReadModelTable,
   InMemoryUnitOfWork,
   evaluateCriteria,
@@ -31,6 +32,7 @@ import {
   outboxStoreContract,
   processedEventStoreContract,
   rateLimiterContract,
+  readModelContract,
   readModelRowsContract,
   readModelStoreContract,
   repositoryContract,
@@ -185,6 +187,32 @@ criteriaContract(runner, {
   createReadModel: (rows) => ({
     search: async (criteria) => evaluateCriteria(criteriaContractDefinition, rows, criteria),
   }),
+});
+
+const contractRow = (key: string): CriteriaContractRow => ({
+  id: key,
+  status: 'booked',
+  title: `The row ${key}`,
+  seats: 2,
+  price: '12.50',
+  startsAt: new Date('2026-10-10T12:00:00.000Z'),
+  cancelledAt: null,
+  room: null,
+  remote: false,
+  tenantId: 'acme',
+});
+
+readModelContract<CriteriaContractRow>(runner, {
+  name: 'InMemoryReadModelStore',
+  createStore: () => new InMemoryReadModelStore(criteriaContractDefinition),
+  createRow: contractRow,
+  change: (row) => ({ ...row, seats: row.seats + 1 }),
+});
+
+readModelContract<CriteriaContractRow>(runner, {
+  name: 'InMemoryReadModelStore, without a change',
+  createStore: () => new InMemoryReadModelStore(criteriaContractDefinition),
+  createRow: contractRow,
 });
 
 readModelRowsContract(runner, {

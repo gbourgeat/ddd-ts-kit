@@ -1,7 +1,7 @@
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
 import { {{event.definition}}, type {{event.typeName}} } from '{{alias.contexts}}/{{publisher.kebab}}/published-language{{alias.index}}';
 
-// TODO(domain): receive the port of the read model "{{name.words}}" keeps in the constructor, typed by that port (an abstract class of application/ports that extends `ReadModelStore<Row>` of the kernel: `ddd-ts-kit generate port {{context.kebab}} <Name>`); its adapter and its fake are bound to it like any other port.
+// TODO(domain): receive the port of the read model "{{name.words}}" keeps in the constructor, typed by that port (`ddd-ts-kit generate read-model {{context.kebab}} <Name> --field <name>:<type>` writes it with its table, its store adapter and its fake); its adapter and its fake are bound to it like any other port.
 @Projection('{{context.kebab}}.{{name.kebab}}')
 export class {{name.pascal}}Projection {
   @On({{event.definition}})

@@ -29,5 +29,10 @@ function laidOut(line: string, indent: string): string[] {
     return [''];
   }
 
+  // A comment is no statement: its parentheses and its commas are text, whatever its length.
+  if (/^\s*(?:\/\/|\/\*|\*)/.test(line)) {
+    return [line];
+  }
+
   return fitStatement(line.trim(), `${indent}${own}`).map((row) => row.slice(indent.length));
 }

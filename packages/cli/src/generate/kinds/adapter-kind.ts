@@ -39,6 +39,7 @@ export const adapterKind: Kind = {
     });
 
     placeWithItsPort(scope, { name, asked: request.flags.module });
+    refuseReadModel(scope, name);
 
     if (scope.flags.kind === 'simulated') {
       writeSimulated(scope, name);
@@ -98,6 +99,23 @@ function bindingKind(scope: Scope): string {
   throw new CliError(
     `Unknown value "${kind}" for --kind.`,
     `Use one of: ${ADAPTER_KINDS.join(', ')} (external: a system outside the application; gateway: another bounded context; simulated: an outside system answered in the memory of the process).`,
+  );
+}
+
+/**
+ * The port of a read model is kept in a table of the context, not by an outside system: its store adapter
+ * goes under `infrastructure/persistence`, and `generate read-model` writes it with the table.
+ */
+function refuseReadModel(scope: Scope, name: Name): void {
+  const port = scope.ws.read(`${scope.dir}/application/ports/${name.kebab}.port.ts`) ?? '';
+
+  if (!port.includes('ReadModelStore<')) {
+    return;
+  }
+
+  throw new CliError(
+    `${name.pascal} is the port of a read model: its adapter is a store over a table of "${scope.context.kebab}", not an adapter towards an outside system.`,
+    `Run \`ddd-ts-kit generate read-model ${scope.context.kebab} ${name.pascal}\` with one --field <name>:<type> per field of its row: it keeps the port as it is and writes the table, the store adapter under infrastructure/persistence and the contract suite the fake and the adapter both pass.`,
   );
 }
 

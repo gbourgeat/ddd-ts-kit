@@ -1,4 +1,5 @@
 @@imports
+import { integer, text } from 'drizzle-orm/pg-core';
 {{#if tenant.scoped}}
 import { index } from 'drizzle-orm/pg-core';
 import { auditColumns, tenantColumn } from '@ddd-ts-kit/drizzle/postgres';
