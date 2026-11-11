@@ -316,6 +316,8 @@ const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and repo
 const UNREAD_PIN =
   'The record of your scope, which the guard keeps since your first call, cannot be read, and the guard pins no worker twice: every call is held. Change nothing: end with your report, and tell the conductor to launch this worker again.';
 const UNREADABLE_COMMAND = `The guard could not read this command, and a worker runs none it cannot read: write it as shorter, separate commands. ${REPORT_TO_CONDUCTOR}`;
+const UNCOMPARED_COMMITS =
+  'The guard could not compare what your last command committed with the state it noted before it: git did not answer for the commits between them (one of them is gone from the repository, or git took too long). Nothing is taken as unchanged, and every call is held until git answers: report to the conductor.';
 const UNCOMPARED_NOTE =
   'ddd-ts-kit: `git status` did not answer in full, so what your last command changed outside your scope was not compared. Name it in your report, for the conductor.';
 // Where the guard keeps the state of a worker between two of its calls: the kit's ignored folder.
@@ -613,6 +615,7 @@ const TARGETED_COMMANDS = new Set(['cp', 'mv', 'ln', 'install']);
 const LANDING_COMMANDS = new Set(['cp', 'mv', 'ln', 'install', 'rsync']);
 // The options by which `cp` links instead of copying, or copies a whole tree.
 const CP_BRINGS = /^(?:-[a-zA-Z]*[alrRs][a-zA-Z]*|--(?:link|symbolic-link|recursive|archive))$/;
+const CP_TREE = /^(?:-[a-zA-Z]*[arR][a-zA-Z]*|--(?:recursive|archive))$/;
 // The commands that change the paths they are given, with the options that take a value, and which
 // operands they change: all of them, or the destination only.
 const PATH_COMMANDS = {
@@ -630,11 +633,20 @@ const PATH_COMMANDS = {
 
 // The commands that change who may read or write a file, or whether it may change: the options that
 // take a value, and whether the `first` operand is the mode or the owner.
+// `given` are the options that give that first operand instead; `--restore` reads the files from a list.
+const REFERENCE = /^--reference(?:=|$)/;
 const ACCESS_COMMANDS = {
-  chmod: { valued: ['--reference'], first: true },
-  chown: { valued: ['--reference', '--from'], first: true },
-  chgrp: { valued: ['--reference'], first: true },
+  chmod: { valued: ['--reference'], first: true, given: REFERENCE },
+  chown: { valued: ['--reference', '--from'], first: true, given: REFERENCE },
+  chgrp: { valued: ['--reference'], first: true, given: REFERENCE },
+  chflags: { valued: [], first: true, given: /^$/ },
+  chcon: {
+    valued: ['--reference', '-u', '-r', '-t', '-l', '--user', '--role', '--type', '--range'],
+    first: true,
+    given: /^(?:-[urtl]$|--(?:reference|user|role|type|range)(?:=|$))/,
+  },
   chattr: { valued: ['-v', '-p'], first: false },
+  setfattr: { valued: ['-n', '-v', '-x', '--name', '--value', '--remove', '--restore'], first: false },
   setfacl: {
     valued: ['-m', '-x', '-M', '-X', '--modify', '--remove', '--set', '--modify-file', '--remove-file', '--set-file'],
     first: false,
@@ -928,8 +940,26 @@ async function preBash(input) {
   }
 }
 
+// The reader of the shell, told once the programs the guard judges by a table of its own: a first
+// word that is none of them may be a wrapper, and the words after it are then read as commands.
+async function readerOfTheShell() {
+  const reader = await import('./shell-commands.mjs');
+  reader.knowPrograms([
+    ...[...PURE_READERS].filter(Boolean),
+    ...READING_PROGRAMS,
+    ...NEUTRAL_PROGRAMS,
+    ...AWK_PROGRAMS,
+    ...RUNNING_PROGRAMS,
+    ...CODE_RUNNERS,
+    ...IN_PLACE_EDITORS,
+    ...Object.keys({ ...PATH_COMMANDS, ...ACCESS_COMMANDS, ...TOOL_WRITES, ...DOWNLOAD_FLAGS }),
+    ...['git', 'dd', 'patch', 'tar', 'unzip', 'rsync', 'sed', 'tee', 'apply_patch'],
+  ]);
+  return reader;
+}
+
 async function shellVerdict(input, command, cwd) {
-  shell = await import('./shell-commands.mjs');
+  shell = await readerOfTheShell();
   // A leading `cd` out of every project leaves the command to be judged against the session's project;
   // a worker whose session stands in no project is judged in the project its command names.
   const project = withPinnedMode(
@@ -1062,7 +1092,7 @@ async function codexPatchVerdict(input, command, cwd) {
   if (hostOf(input) !== 'codex') {
     return undefined;
   }
-  shell = await import('./shell-commands.mjs');
+  shell = await readerOfTheShell();
   const project = findProject(cwd);
   const commands = readCommands(project ?? { root: cwd }, command, cwd);
   if (!commands?.some(({ words }) => shell.commandName(words) === 'apply_patch')) {
@@ -1182,12 +1212,28 @@ function workerCommandReason(project, input, { context, command, commands }) {
     formatterReason(project, commands) ??
     unknownProgramReason(commands) ??
     placeVariableReason(commands) ??
+    elsewhereReason(project, commands) ??
     (pending ? undefined : fileChangeReason(project, input, commands)) ??
     unreadReason(commands);
   if (!refusal && !pending) {
     noteBeforeCode(project, input, commands);
   }
   return refusal;
+}
+
+// A command that a `cd` further down the line, or an option of a package runner (`pnpm -C <dir> exec`,
+// `npm --prefix <dir> exec`), runs in another checkout: there a worker reads, and runs nothing.
+function elsewhereReason(project, commands) {
+  const moved = commands.find(
+    (command) =>
+      command.directory !== undefined &&
+      !isPureReader(command) &&
+      !readsFromAnywhere(command) &&
+      (findProject(command.directory)?.root ?? project.root) !== project.root,
+  );
+  return moved
+    ? `A worker runs its commands in its own worktree: \`${shell.commandName(moved.words)}\` would run in ${moved.directory}, another checkout, where a worker only reads (\`git log\`, \`git diff\`, \`cat\`). ${REPORT_TO_CONDUCTOR}`
+    : undefined;
 }
 
 // A command nested in more shells or evals than the reader follows, or a line that ends inside a
@@ -1377,6 +1423,9 @@ function branchOutsideReason(project, input) {
   }
   const outside = worktreeOutside(project, input);
   const committed = committedSince(project, base, outside, trunkTips(project, input));
+  if (committed === undefined) {
+    return `The guard could not compare your branch with its base ${base.slice(0, 12)}: git did not answer for the commits between them. Name it in your report for the conductor.`;
+  }
   const paths = [...committed.keys(), ...Object.keys(snapshot(project, outside).changes)];
   return paths.length === 0
     ? undefined
@@ -2357,21 +2406,24 @@ function recordedScope(project) {
 // The pin of a worker, read where it is kept. A pin an earlier version of the guard took, in that
 // place or in the guard's folder of a checkout (the one the call starts in, the one it names, the
 // main one), recorded no scope: it is kept, with the scope the worktree it names records now, never
-// replaced by a pin of the place this call happens to stand in. A pin that stands there and is none
-// (cut short, rewritten, closed to reading) is `unread`: the worker is held, not pinned again.
+// replaced by a pin of the place this call happens to stand in. A pin that stands in any of these
+// places and is none (cut short, rewritten, closed to reading) is `unread`: the worker is held, not
+// pinned again.
 function readPin(project, input) {
   const file = pinFile(project, input);
   const pinned = readJson(file);
   if (isPin(pinned)) {
     return { file, pinned };
   }
-  const earlier = [file, ...earlierPinFiles(project, input)].map(readJson).find(isEarlierPin);
+  const places = earlierPinFiles(project, input);
+  const earlier = [file, ...places].map(readJson).find(isEarlierPin);
   if (earlier) {
     const kept = { ...earlier, scope: recordedScope({ root: earlier.worktree }) };
     writeState(file, kept);
+    places.filter((place) => place !== file).forEach(removeKitFile);
     return { file, pinned: kept };
   }
-  return { file, unread: lstatSync(file, { throwIfNoEntry: false }) !== undefined };
+  return { file, unread: [file, ...places].some((place) => lstatSync(place, { throwIfNoEntry: false }) !== undefined) };
 }
 
 function earlierPinFiles(project, input) {
@@ -3708,7 +3760,7 @@ function realOf(path) {
 function changesRepository(subcommand, tail) {
   return (
     subcommand === 'update-ref' ||
-    (subcommand === 'worktree' && ['remove', 'move', 'prune'].includes(tail[0])) ||
+    (subcommand === 'worktree' && ['remove', 'move', 'prune', 'lock', 'unlock', 'repair'].includes(tail[0])) ||
     (subcommand === 'symbolic-ref' &&
       (shell.operands(tail).length > 1 || tail.some((word) => /^(?:-d|--delete)$/.test(word))))
   );
@@ -3990,7 +4042,9 @@ function folderLandingReason(project, input, command) {
   if (foreign) {
     return `A worker brings no link and no whole tree from outside its scope into it: \`${name}\` brings ${foreign.word.replaceAll(shell.UNKNOWN, '$(...)')}, outside your scope, into ${into}. ${REPORT_TO_CONDUCTOR}`;
   }
-  const linked = multiplyNamed(folder, { left: FOLDER_FILES });
+  // A whole tree, or files whose names only the shell knows, may land on any file of the folder; a
+  // file named lands on its name there.
+  const linked = landing.anywhere ? multiplyNamed(folder, { left: FOLDER_FILES }) : undefined;
   if (linked === folder) {
     return `${into} holds more files than the guard reads before a command (${FOLDER_FILES}), so it cannot see that none of them has another name elsewhere: \`${name}\` lands no file there. Write the file with the editor tools, or into a smaller folder. ${REPORT_TO_CONDUCTOR}`;
   }
@@ -4024,11 +4078,16 @@ function folderLanding({ words, directory }) {
   if (folder === undefined || !isDirectory(folder)) {
     return undefined;
   }
+  const placed = sources.map((word) => ({ word, place: shell.placeOf(word, directory) }));
   return {
     name,
     folder,
-    sources: sources.map((word) => ({ word, place: shell.placeOf(word, directory) })),
+    sources: placed,
     brings: name === 'ln' || name === 'rsync' || (name === 'cp' && args.some((word) => CP_BRINGS.test(word))),
+    anywhere:
+      name === 'rsync' ||
+      (name === 'cp' && args.some((word) => CP_TREE.test(word))) ||
+      placed.some(({ word, place }) => place === undefined || /[*?[]/.test(word) || isDirectory(place)),
   };
 }
 
@@ -4340,11 +4399,13 @@ function valuedTargets(args, valued) {
 // its first operand unless `--reference` gives it, and apart from the attributes of `chattr`. A mode
 // spelled as an option (`-w`) is none of the operands.
 function accessOperands(name, args) {
-  const { valued, first } = ACCESS_COMMANDS[name];
-  const referred = args.some((word) => /^--reference(?:=|$)/.test(word));
+  const { valued, first, given } = ACCESS_COMMANDS[name];
+  if (args.some((word) => /^--restore(?:=|$)/.test(word))) {
+    return [shell.UNKNOWN];
+  }
   const operands = shell.operands(args, valued).filter((word) => name !== 'chattr' || !/^[+=]/.test(word));
   const spelled = name === 'chmod' && args.some((word) => /^-[rwxXstugo]+$/.test(word));
-  return first && !referred && !spelled ? operands.slice(1) : operands;
+  return first && !spelled && !args.some((word) => given.test(word)) ? operands.slice(1) : operands;
 }
 
 function pathOperands(name, args) {
@@ -4390,6 +4451,13 @@ function gitChangedPaths(args, directory) {
     return staged && !worktree ? [] : shell.operands(tail, ['-s', '--source']).map(at);
   }
   if (subcommand === 'rm' || subcommand === 'mv') {
+    return shell.operands(tail).map(at);
+  }
+  // The mode of a file in the index, or an entry of the index given whole, is a change of that file.
+  if (subcommand === 'update-index' && tail.some((word) => /^--(?:cacheinfo|index-info|stdin)/.test(word))) {
+    return [{ place: undefined, by: 'git update-index' }];
+  }
+  if (['add', 'update-index'].includes(subcommand) && tail.some((word) => word.startsWith('--chmod'))) {
     return shell.operands(tail).map(at);
   }
   if (subcommand === 'clean' && !tail.some((word) => /^(-[a-zA-Z]*n|--dry-run)$/.test(word))) {
@@ -4621,13 +4689,17 @@ function startsTrunkMerge(command, base) {
   );
 }
 
+// Every `--trunk` of the command names the base, spaced or joined: given twice the CLI takes the
+// last, and a form with no value, or an option that only starts like it, is none the guard reads.
 function namesNoOtherTrunk(args, base) {
-  const at = args.findIndex((arg) => arg === '--trunk' || arg.startsWith('--trunk='));
-  if (at === -1) {
-    return true;
-  }
-  const trunk = args[at].startsWith('--trunk=') ? args[at].slice('--trunk='.length) : args[at + 1];
-  return trunk !== undefined && trunk === base;
+  return args.every((arg, index) => {
+    if (!arg.startsWith('--trunk')) {
+      return true;
+    }
+    const trunk =
+      arg === '--trunk' ? args[index + 1] : arg.startsWith('--trunk=') ? arg.slice('--trunk='.length) : undefined;
+    return trunk !== undefined && trunk === base;
+  });
 }
 
 // An install of the lockfile, in any spelling the guard knows (`npm ci`, `npm clean-install`, a bare
@@ -4750,6 +4822,10 @@ function settleNote(project, input, reading) {
   }
   const session = notedSession(before.session);
   const settled = holdChanges(project, input, before);
+  if (settled === UNCOMPARED_COMMITS) {
+    // The note stays: it is compared again once git answers.
+    return UNCOMPARED_COMMITS;
+  }
   const { said, ground } = session ? sessionChanges(session, before.session) : {};
   const told = ground ?? packagesChangeReason(before.packages, project, session);
   if (said) {
@@ -4774,6 +4850,9 @@ function holdChanges(project, input, { worktree: before, script, trunks: noted }
     return true;
   }
   const all = differences(project, outside, { before, now, trunks });
+  if (all === undefined) {
+    return UNCOMPARED_COMMITS;
+  }
   const rewritten = script ? all.filter(isRewrittenByTools) : [];
   const uncopied = all.filter((path) => !rewritten.includes(path) && hasNoCopy(project, before.changes[path]));
   const changed = all.filter((path) => !rewritten.includes(path) && !uncopied.includes(path));
@@ -4818,6 +4897,9 @@ function rewrittenNotice(script, paths) {
 // brings in compared by their content.
 function differences(checkout, outside, { before, now, trunks }) {
   const committed = now.head === before.head ? new Map() : committedSince(checkout, before.head, outside, trunks);
+  if (committed === undefined) {
+    return undefined;
+  }
   const paths = new Set([...Object.keys(before.changes), ...Object.keys(now.changes), ...committed.keys()]);
   return [...paths].filter((path) => {
     const was = before.changes[path];
@@ -4833,24 +4915,53 @@ function differences(checkout, outside, { before, now, trunks }) {
 // (the trunk `merge-trunk` brought in) is the trunk's, not a change of the worker. `trunks` are the
 // commits the trunks named when the comparison starts.
 function committedSince(checkout, from, outside, trunks) {
-  const fields = gitFields(
-    checkout,
-    ['diff', '--name-status', '--no-renames', '-z', '--end-of-options', from, 'HEAD'],
-    '\0',
-  );
+  if (!COMMIT_ID.test(from)) {
+    // A repository without a commit yet: the files git shows are all there is to compare.
+    return new Map();
+  }
+  const listed = gitRun(checkout, ['diff', '--name-status', '--no-renames', '-z', '--end-of-options', from, 'HEAD']);
+  if (listed !== NOT_READ && listed.status !== 0) {
+    // Git could not compare the two commits (one of them is gone, or it did not answer in time).
+    return undefined;
+  }
+  const fields = listed.stdout.split('\0');
   const paths = new Map();
   for (let index = 0; index + 1 < fields.length; index += 2) {
     if (outside(fields[index + 1], fields[index])) {
       paths.set(fields[index + 1], fields[index]);
     }
   }
-  for (const path of broughtIn(checkout, mergedSides(checkout, from, trunks), [...paths.keys()])) {
+  const kept = [...paths.keys()];
+  const brought =
+    trunks.length === 0
+      ? broughtIn(checkout, allMergedSides(checkout, from), kept)
+      : heldAsTheTrunk(checkout, trunks, kept);
+  for (const path of brought) {
     paths.delete(path);
   }
   return paths;
 }
 
-// Those of `paths` that HEAD holds as one of `sides` does: a merge brought them in whole.
+// Those of `paths` that HEAD holds as the trunk does, as far as the branch merged it: for each
+// trunk, the commit of it that HEAD contains (their merge base). A path is the trunk's when HEAD
+// holds it as that commit does; what that commit holds and HEAD lacks or changes is a change of the
+// branch, whatever earlier commit of the trunk a merge named as its other side, and so is what a
+// commit no trunk held brought in. A trunk git cannot compare excuses nothing.
+function heldAsTheTrunk(checkout, trunks, paths) {
+  const brought = new Set();
+  for (const trunk of trunks) {
+    const merged = git(checkout, ['merge-base', 'HEAD', trunk])?.trim();
+    const differing = merged ? gitRun(checkout, ['diff', '--name-only', '-z', merged, 'HEAD']) : NOT_READ;
+    const apart = new Set(differing.stdout.split('\0'));
+    for (const path of differing.status === 0 ? paths.filter((kept) => !apart.has(kept)) : []) {
+      brought.add(path);
+    }
+  }
+  return brought;
+}
+
+// Those of `paths` that HEAD holds as one of `sides` does: a merge brought them in whole. Without a
+// trunk apart from the branch checked out, every side is taken as the trunk's.
 function broughtIn(checkout, sides, paths) {
   const brought = new Set();
   // The newest sides: a trunk merged again holds what its earlier merges brought in.
@@ -4861,22 +4972,6 @@ function broughtIn(checkout, sides, paths) {
     }
   }
   return brought;
-}
-
-// The other parents of the merges on the first-parent line from `from` to HEAD that a trunk held:
-// a branch of the worker merged back is the worker's own work, and so is a commit no trunk held
-// when `trunks` were read. Without a trunk apart from the branch checked out, every side is taken
-// as the trunk's.
-function mergedSides(checkout, from, trunks) {
-  const sides = allMergedSides(checkout, from);
-  if (trunks.length === 0 || sides.length === 0) {
-    return sides;
-  }
-  // One walk for all of them: what the sides reach that no trunk does. A walk that fails, or whose
-  // answer is past what the guard reads, shows no side as the trunk's.
-  const apart = gitRun(checkout, ['rev-list', ...sides, '--not', ...trunks]);
-  const unheld = new Set(apart.stdout.split('\n'));
-  return apart.status === 0 ? sides.filter((side) => !unheld.has(side)) : [];
 }
 
 // The commits the trunks of a worker name now: the base its scope file recorded at the pin (the
@@ -5002,10 +5097,9 @@ function isPutBack(project, { now, since }, [path, target]) {
 
 function commitsOf(project, since, from) {
   if (!since.commits.has(from)) {
-    since.commits.set(
-      from,
-      committedSince(project, from, () => true, since.trunks(from)),
-    );
+    // Commits git cannot compare are taken to have changed every held file: none is back yet.
+    const committed = committedSince(project, from, () => true, since.trunks(from));
+    since.commits.set(from, committed ?? { has: () => true, get: () => 'M' });
   }
   return since.commits.get(from);
 }

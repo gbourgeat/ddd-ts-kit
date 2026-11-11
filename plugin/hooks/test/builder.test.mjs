@@ -598,6 +598,52 @@ test('a pin that stands and cannot be read holds every call: the worker is never
   chmodSync(pin, 0o600);
 });
 
+test('a command a runner or a later cd moves to another checkout is judged there, and refused there', () => {
+  const { conductor, worktree, other } = twoWorkers();
+  const agent = builder('moved-by-option', { cwd: conductor });
+  const inOwn = (command) => bash(conductor, `cd ${worktree} && ${command}`, agent);
+  assert.equal(run('pre-bash', inOwn('git status')).output, undefined);
+  for (const command of [
+    `pnpm -C ${conductor} exec git commit -m x`,
+    `pnpm --dir ${other} exec tee src/contexts/billing/x.ts`,
+    `pnpm --dir=${other} exec tee src/contexts/billing/x.ts`,
+    `pnpm -C ${other} tee src/contexts/billing/x.ts`,
+    `npm --prefix ${other} exec -- tee src/contexts/billing/x.ts`,
+    `npx --prefix ${other} tee src/contexts/billing/x.ts`,
+    `bun --cwd ${other} x tee src/contexts/billing/x.ts`,
+    `yarn --cwd ${other} exec tee src/contexts/billing/x.ts`,
+    `pnpm --filter api exec tee src/contexts/billing/x.ts`,
+    `pnpm -C ${other} exec -c 'tee src/contexts/billing/x.ts'`,
+    `pnpm -C ${other} exec vitest run`,
+    `cd ${other} && npm test`,
+    `git worktree lock ${other}`,
+    `git worktree unlock ${other}`,
+  ]) {
+    assert.equal(decision(run('pre-bash', inOwn(command))), 'deny', command);
+  }
+  for (const command of [
+    `pnpm -C ${worktree} exec tee src/contexts/billing/x.ts`,
+    `pnpm -C ${conductor} exec git status`,
+    `cd ${other} && git log --oneline && ls`,
+    'cd /tmp && ls',
+  ]) {
+    assert.equal(run('pre-bash', inOwn(command)).output, undefined, command);
+  }
+});
+
+test('a pin an earlier version took that cannot be read holds every call, as one of this version does', () => {
+  for (const [index, content] of ['{not json', '{}', '"scope"'].entries()) {
+    const { conductor, worktree, other } = twoWorkers();
+    const agent = builder(`unread-earlier-${index}`, { cwd: conductor });
+    put(conductor, `.ddd-ts-kit/guard/scope-${stateKey(agent)}.json`, content);
+    for (const command of [`cd ${other} && echo x > src/contexts/shipping/notes.md`, `cd ${worktree} && git status`]) {
+      const refused = run('pre-bash', bash(conductor, command, agent));
+      assert.equal(decision(refused), 'deny', `${index}: ${command}`);
+      assert.match(reason(refused), /The record of your scope, .* cannot be read/);
+    }
+  }
+});
+
 test('a write that names no worktree, where several workers have one, is told how to name it', () => {
   const { other } = twoWorkers();
   const agent = builder('relative-write', { cwd: other });

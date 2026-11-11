@@ -97,21 +97,35 @@ test('a command given a folder of the scope is judged by what it brings and by t
       command,
     );
   }
-  // A folder that holds a file with another name elsewhere takes no file, at any depth.
+  // A folder that holds a file with another name elsewhere, at any depth, takes no tree, nor files
+  // whose names the shell computes; a file named lands on the name it has there.
   linkSync(join(root, 'package.json'), join(root, domain, 'held/deep/package.json'));
   for (const command of [
-    `cp ${domain}/package.json ${domain}/held/deep/`,
-    `cp ${domain}/order.ts ${domain}/held/`,
     `cp -r ${domain}/tree ${domain}/held/`,
-    `mv ${domain}/order.ts ${domain}/held/`,
-    `ln ${domain}/order.ts ${domain}/held/`,
-    `install ${domain}/package.json ${domain}/held/deep/`,
-    `install -t ${domain}/held/deep ${domain}/package.json`,
     `rsync -a ${domain}/tree ${domain}/held/`,
+    `mv ${domain}/tree ${domain}/held/`,
+    `cp ${domain}/*.json ${domain}/held/deep/`,
+    `cp "$FILE" ${domain}/held/deep/`,
   ]) {
     const refused = run('pre-bash', bash(root, command, agent));
     assert.equal(decision(refused), 'deny', command);
     assert.match(reason(refused), /holds a file that has another name elsewhere \(a hard link\)/, command);
+  }
+  for (const command of [
+    `cp ${domain}/package.json ${domain}/held/deep/`,
+    `install ${domain}/package.json ${domain}/held/deep/`,
+    `install -t ${domain}/held/deep ${domain}/package.json`,
+  ]) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.match(reason(refused), /changes src\/contexts\/ordering\/domain\/held\/deep\/package\.json/, command);
+  }
+  for (const command of [
+    `cp ${domain}/order.ts ${domain}/held/`,
+    `mv ${domain}/order.ts ${domain}/held/`,
+    `ln ${domain}/order.ts ${domain}/held/`,
+    `install ${domain}/order.ts ${domain}/held/deep/`,
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
   // A file that lands on a link out of the scope is the file the link reaches.
   symlinkSync(join(root, 'src/main.ts'), join(root, domain, 'linked/main.ts'));
@@ -154,13 +168,37 @@ test('a command that changes who may read or write a file is held to the scope a
     'chattr -R =i src/platform',
     'setfacl -m u:nobody:r src/main.ts',
     'setfacl --modify=u:nobody:r src/main.ts',
+    'chcon -t etc_t src/main.ts',
+    'chcon system_u:object_r:etc_t:s0 src/main.ts',
+    'chcon --reference=package.json src/main.ts',
+    'setfattr -n user.note -v 1 src/main.ts',
+    'chflags uchg src/main.ts',
+    'git update-index --chmod=+x src/main.ts',
+    'git add --chmod=+x src/main.ts',
   ]) {
     const refused = run('pre-bash', bash(root, command, agent));
     assert.equal(decision(refused), 'deny', command);
-    assert.match(
-      reason(refused),
-      /A worker never changes a file outside its scope: `(?:chmod|chown|chgrp|chattr|setfacl)` changes /,
-    );
+    assert.match(reason(refused), /A worker never changes a file outside its scope: `[a-z -]+` changes /, command);
+  }
+  // A list of files the command reads from a file, or gives git by its index, is one only it knows.
+  for (const command of [
+    'setfacl --restore=acl.txt',
+    'setfacl --restore acl.txt',
+    'setfattr --restore=dump.txt',
+    'git update-index --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,src/main.ts',
+  ]) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /files only the shell knows/, command);
+  }
+  for (const command of [
+    'chcon -t etc_t src/contexts/ordering/tool.sh',
+    'setfattr -n user.note -v 1 src/contexts/ordering/tool.sh',
+    'git add --chmod=+x src/contexts/ordering/tool.sh',
+    'git update-index --chmod=+x src/contexts/ordering/tool.sh',
+    'git update-index --refresh',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
   for (const command of [
     'chmod +x src/contexts/ordering/tool.sh',
@@ -174,7 +212,7 @@ test('a command that changes who may read or write a file is held to the scope a
   }
 });
 
-test('a folder past what the guard reads before a command takes no file by cp', () => {
+test('a folder past what the guard reads before a command takes a file named, and no tree', () => {
   const root = committed({ worktrees: 'advised' });
   const agent = worker(root, 'ordering');
   const folder = 'src/contexts/ordering/domain/many';
@@ -183,7 +221,10 @@ test('a folder past what the guard reads before a command takes no file by cp', 
     closeSync(openSync(join(root, folder, 'deep', `file-${index}`), 'w'));
   }
   put(root, 'src/contexts/ordering/domain/order.ts', 'export {};\n');
-  const refused = run('pre-bash', bash(root, `cp src/contexts/ordering/domain/order.ts ${folder}/`, agent));
+  put(root, 'src/contexts/ordering/domain/tree/leaf.ts', 'export {};\n');
+  const named = `cp src/contexts/ordering/domain/order.ts ${folder}/`;
+  assert.equal(run('pre-bash', bash(root, named, agent)).output, undefined);
+  const refused = run('pre-bash', bash(root, `cp -r src/contexts/ordering/domain/tree ${folder}/`, agent));
   assert.equal(decision(refused), 'deny');
   assert.match(reason(refused), /holds more files than the guard reads before a command/);
 });

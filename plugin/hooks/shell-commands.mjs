@@ -20,51 +20,74 @@ export const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'fish']);
 const SHELL_VALUED = new Set(['-o', '+o', '-O', '+O', '--rcfile', '--init-file']);
 // Words that open or close a compound command: the command, if any, comes after them. `coproc`
 // starts a command in the background, its name after it.
-const KEYWORDS = new Set([
-  'if',
-  'then',
-  'else',
-  'elif',
-  'do',
-  'while',
-  'until',
-  '!',
-  '{',
-  '}',
-  'time',
-  'fi',
-  'done',
-  'coproc',
-]);
+const KEYWORDS = new Set(['if', 'then', 'else', 'elif', 'do', 'while', 'until', '!', '{', '}', 'fi', 'done', 'coproc']);
 // Commands that run the command written after them: `valued` are the options that take a value,
-// `skip` consumes one leading operand after the options (`number`, only a duration; `operand`,
-// any one word), and `tail` marks what `xargs` builds from standard input.
+// `flags` those that take none, `skip` consumes one leading operand after the options (`number`,
+// only a duration; `operand`, any one word), and `tail` marks what `xargs` builds from standard
+// input. A wrapper given only these options is read through to its command; given any other, the
+// guard cannot tell its value from the command, and reads every word after it as one (`hiddenCommands`).
 const WRAPPERS = {
-  sudo: { valued: ['-u', '-g', '-C', '-D', '-h', '-p', '-r', '-t', '-U'] },
-  env: { valued: ['-u', '-C', '--unset', '--chdir'] },
-  nice: { valued: ['-n', '--adjustment'] },
-  timeout: { valued: ['-s', '-k', '--signal', '--kill-after'], skip: 'number' },
-  stdbuf: { valued: ['-i', '-o', '-e'] },
+  sudo: { valued: ['-u', '-g', '-C', '-D', '-h', '-p', '-r', '-t', '-U'], flags: ['-E', '-H', '-n', '-S', '-k', '-b'] },
+  env: { valued: ['-u', '-C', '--unset', '--chdir'], flags: ['-i', '-', '--ignore-environment'] },
+  nice: { valued: ['-n', '--adjustment'], flags: [] },
+  timeout: {
+    valued: ['-s', '-k', '--signal', '--kill-after'],
+    flags: ['--preserve-status', '--foreground', '-v', '--verbose'],
+    skip: 'number',
+  },
+  time: {
+    valued: ['-o', '-f', '--output', '--format'],
+    flags: ['-p', '-v', '-a', '--portability', '--verbose', '--append'],
+  },
+  stdbuf: { valued: ['-i', '-o', '-e'], flags: [] },
   xargs: {
     valued: ['-I', '-n', '-P', '-d', '-L', '-s', '-E', '-a', '--arg-file', '--delimiter', '--max-args', '--max-procs'],
+    flags: ['-0', '-r', '-t', '-x', '--null', '--no-run-if-empty', '--verbose'],
     tail: 'unknown',
   },
-  command: { valued: [] },
-  exec: { valued: ['-a'] },
-  nohup: { valued: [] },
-  builtin: { valued: [] },
-  ionice: { valued: ['-c', '-n', '-p', '-P', '-u'] },
-  setsid: { valued: [] },
+  command: { valued: [], flags: ['-p'] },
+  exec: { valued: ['-a'], flags: ['-c', '-l'] },
+  nohup: { valued: [], flags: [] },
+  builtin: { valued: [], flags: [] },
+  ionice: { valued: ['-c', '-n', '-p', '-P', '-u'], flags: ['-t'] },
+  setsid: { valued: [], flags: ['-w', '-f', '-c', '--wait', '--fork', '--ctty'] },
   // `taskset <mask> cmd`, `taskset -c <list> cmd`: one positional word before the command either way.
-  taskset: { valued: [], skip: 'operand' },
-  chrt: { valued: ['-T', '-P'], skip: 'operand' },
-  flock: { valued: ['-w', '--timeout', '-E', '--conflict-exit-code'], skip: 'operand' },
-  doas: { valued: ['-u', '-C', '-a'] },
-  watch: { valued: ['-n', '--interval'] },
-  busybox: { valued: [] },
-  toybox: { valued: [] },
-  parallel: { valued: ['-j', '--jobs', '-S', '--sshlogin', '--results', '--joblog'] },
+  taskset: { valued: [], flags: ['-c', '-a', '--cpu-list', '--all-tasks'], skip: 'operand' },
+  chrt: { valued: ['-T', '-P'], flags: ['-f', '-r', '-o', '-b', '-i', '-d', '-R', '-a', '-v'], skip: 'operand' },
+  flock: {
+    valued: ['-w', '--timeout', '-E', '--conflict-exit-code'],
+    flags: ['-s', '-x', '-e', '-n', '-u', '-o', '--shared', '--exclusive', '--nonblock', '--unlock', '--close'],
+    skip: 'operand',
+  },
+  doas: { valued: ['-u', '-C', '-a'], flags: ['-n'] },
+  watch: { valued: ['-n', '--interval'], flags: ['-d', '-t', '-b', '-e', '-g', '-x', '--differences', '--no-title'] },
+  busybox: { valued: [], flags: [] },
+  toybox: { valued: [], flags: [] },
+  parallel: { valued: ['-j', '--jobs', '-S', '--sshlogin', '--results', '--joblog'], flags: ['-k', '--keep-order'] },
 };
+// The programs read by a table: the wrappers, the shells and the runners here, the words of the
+// shell that run nothing by themselves, and those the guard names (`knowPrograms`). Any other first
+// word may be a wrapper the guard does not know.
+const KNOWN_PROGRAMS = new Set([
+  ...['eval', 'su', 'script', 'find', 'export', 'declare', 'typeset', 'local', 'readonly', 'unset', 'set', 'shift'],
+  ...['for', 'in', 'case', 'esac', 'select', 'function', 'return', 'exit', 'break', 'continue', 'wait', 'read'],
+  ...['[[', ']]', '((', '))', ':', 'sleep', 'kill', 'alias', 'unalias', 'trap', 'type', 'hash', 'umask', 'ulimit'],
+  ...['mkdir', 'seq', 'yes', 'sort', 'uniq', 'env', 'printenv', 'id', 'whoami', 'uname', 'hostname', 'xargs'],
+  ...['rg', 'ag', 'fd', 'less', 'more', 'bat', 'tree', 'column', 'nl', 'tac', 'xxd', 'od', 'cmp', 'comm'],
+]);
+
+// The programs that may start a command hidden behind a wrapper the guard cannot read through: those
+// read by a table, here or by the caller. A word that names none of them starts nothing the guard
+// could judge.
+const STARTERS = new Set(['eval', 'su', 'script', 'find', 'xargs', ...Object.keys(WRAPPERS), ...SHELLS]);
+
+/** Names the programs the caller judges by a table of its own: their arguments are no commands. */
+export function knowPrograms(names) {
+  for (const name of names) {
+    KNOWN_PROGRAMS.add(name);
+    STARTERS.add(name);
+  }
+}
 
 /** Every simple command of `text`, the ones it nests included, each with the directory it runs in. */
 export function simpleCommands(text, directory, depth = 0) {
@@ -94,9 +117,46 @@ export function simpleCommands(text, directory, depth = 0) {
     current = movedTo(command, words, { current, stack, blocks });
     found.push(...nestedCommands(words, current, depth));
     found.push(...wrappedCommands(command.words, current, depth));
+    found.push(...hiddenCommands(command.words, current, depth));
   }
 
   return found;
+}
+
+/**
+ * The commands a wrapper the guard cannot read through may run: when the first word is no program
+ * it knows, or a wrapper it knows given an option it does not, each later word that may name a
+ * program is read as a command, with the words after it. They are words the shell already split,
+ * not text: a quoted word stays one word.
+ */
+function hiddenCommands(words, directory, depth) {
+  if (readThrough(words)) {
+    return [];
+  }
+  return words.flatMap((word, index) =>
+    index > 0 && (STARTERS.has(word) || word in RUNNERS)
+      ? runCommands(words.slice(index), directory, depth + 1, false)
+      : [],
+  );
+}
+
+/** Whether every layer of a command is one the guard reads in full, down to a program it knows. */
+function readThrough(words) {
+  let rest = words;
+  for (let layer = 0; layer <= LAYERS; layer += 1) {
+    const spec = WRAPPERS[commandName(rest)];
+    if (isAssignment(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
+      rest = rest.slice(1);
+    } else if (spec) {
+      rest = afterOptions(rest.slice(1), spec, true);
+    } else {
+      return rest.length <= 1 || KNOWN_PROGRAMS.has(commandName(rest)) || SHELLS.has(commandName(rest));
+    }
+    if (rest === undefined) {
+      return false;
+    }
+  }
+  return false;
 }
 
 /**
@@ -106,9 +166,13 @@ export function simpleCommands(text, directory, depth = 0) {
 function wrappedCommands(words, directory, depth) {
   const wrapped = wrappedOf(words) ?? {};
   const given = words.flatMap((word) => CALL_SETTING.exec(word)?.slice(1) ?? []);
+  // A runner told where to run (`pnpm -C <dir> exec`, `npm --prefix <dir> exec`) runs its command
+  // there; told a workspace or a filter, in a place only it knows.
+  const moved = wrapped.moved === undefined ? directory : placeOf(wrapped.moved, directory);
   return [
-    ...[...given, ...(wrapped.texts ?? [])].flatMap((text) => simpleCommands(text, directory, depth + 1)),
-    ...(wrapped.words ? runCommands(wrapped.words, directory, depth + 1) : []),
+    ...given.flatMap((text) => simpleCommands(text, directory, depth + 1)),
+    ...(wrapped.texts ?? []).flatMap((text) => simpleCommands(text, moved, depth + 1)),
+    ...(wrapped.words ? runCommands(wrapped.words, moved, depth + 1) : []),
   ];
 }
 
@@ -117,7 +181,7 @@ function wrappedCommands(words, directory, depth) {
  * split again, so a quote, a `>` or a `;` inside a word stays in it. What that command runs itself
  * (a shell, a wrapper, another runner, `find -exec`) is read as for any command.
  */
-function runCommands(inner, directory, depth) {
+function runCommands(inner, directory, depth, hidden = true) {
   if (depth > DEPTH) {
     return [unreadMarker('nested', directory, depth)];
   }
@@ -130,7 +194,12 @@ function runCommands(inner, directory, depth) {
     piped: false,
     directory,
   };
-  return [command, ...nestedCommands(words, directory, depth), ...wrappedCommands(inner, directory, depth)];
+  return [
+    command,
+    ...nestedCommands(words, directory, depth),
+    ...wrappedCommands(inner, directory, depth),
+    ...(hidden ? hiddenCommands(inner, directory, depth) : []),
+  ];
 }
 
 function unreadMarker(truncated, directory, depth) {
@@ -290,7 +359,7 @@ function unwrapOnce(rest) {
   if (!(name in WRAPPERS)) {
     return rest;
   }
-  const inner = afterOptions(rest.slice(1), WRAPPERS[name]);
+  const inner = afterOptions(rest.slice(1), WRAPPERS[name], false);
   return WRAPPERS[name].tail === 'unknown' && inner.length > 0 ? [...inner, UNKNOWN] : inner;
 }
 
@@ -309,10 +378,20 @@ function wrappedOf(words) {
   return wrapped;
 }
 
-/** The words after the options of a wrapper, its assignments (`env`), and its leading operand. */
-function afterOptions(words, { valued, skip }) {
+/**
+ * The words after the options of a wrapper, its assignments (`env`), and its leading operand. When
+ * `known` is asked, an option the table does not hold answers undefined: its value, if it takes one,
+ * cannot be told from the command.
+ */
+function afterOptions(words, { valued, flags, skip }, known) {
   let index = 0;
   while (index < words.length && (words[index].startsWith('-') || isAssignment(words[index]))) {
+    const [name] = words[index].split('=');
+    const read =
+      isAssignment(words[index]) || flags.includes(words[index]) || valued.includes(name) || words[index] === '--';
+    if (known && !read) {
+      return undefined;
+    }
     index += valued.includes(words[index]) ? 2 : 1;
   }
   if (skip === 'number') {
@@ -391,31 +470,53 @@ function envSplit(words) {
 
 // Each package runner, as far as the guard can prove what it runs: the subcommands by which it runs
 // a command (none: the runner itself runs it), and the only options it may be given before that
-// command, the `flags` that take no value and the `valued` ones. None of them asks for a shell.
-// `yarn` runs scripts and binaries by their bare name, and `bun` scripts: `any` of their forms may
-// run one, and only `bun x <command>` is proven.
+// command, the `flags` that take no value, the `valued` ones, and among these the ones that name
+// the directory the command runs in (`places`) or a place only the runner knows (`elsewhere`). None
+// of them asks for a shell. `yarn` runs scripts and binaries by their bare name, and `bun` scripts:
+// `any` of their forms may run one, and only `bun x <command>` is proven. `pnpm` runs a binary by
+// its bare name too, unless that name is one of its own `commands`.
 const RUNNERS = {
   npx: {
     flags: ['-y', '--yes', '--no', '--no-install', '-q', '--quiet'],
-    valued: ['-p', '--package', '-w', '--workspace'],
+    valued: ['-p', '--package', '-w', '--workspace', '--prefix'],
+    places: ['--prefix'],
+    elsewhere: ['-w', '--workspace'],
   },
   npm: {
     subs: ['exec', 'x'],
     near: /^exe?$/,
     flags: ['-y', '--yes', '--no', '-q', '--quiet', '--silent'],
     valued: ['-p', '--package', '-w', '--workspace', '--prefix'],
+    places: ['--prefix'],
+    elsewhere: ['-w', '--workspace'],
   },
-  pnpx: { flags: [], valued: ['--package'] },
-  pnpm: { subs: ['exec', 'dlx'], flags: ['-r', '--recursive'], valued: ['-F', '--filter', '-C', '--dir', '--package'] },
+  pnpx: { flags: [], valued: ['--package'], places: [], elsewhere: [] },
+  pnpm: {
+    subs: ['exec', 'dlx'],
+    flags: ['-r', '--recursive'],
+    valued: ['-F', '--filter', '-C', '--dir', '--package'],
+    places: ['-C', '--dir'],
+    elsewhere: ['-F', '--filter'],
+    commands: new Set([
+      ...['add', 'install', 'i', 'update', 'up', 'upgrade', 'remove', 'rm', 'uninstall', 'un', 'link', 'ln', 'unlink'],
+      ...['import', 'rebuild', 'rb', 'prune', 'fetch', 'dedupe', 'patch', 'patch-commit', 'patch-remove', 'audit'],
+      ...['list', 'ls', 'll', 'la', 'outdated', 'why', 'licenses', 'run', 'run-script', 'test', 't', 'tst', 'start'],
+      ...['stop', 'restart', 'create', 'env', 'publish', 'pack', 'server', 'store', 'root', 'bin', 'setup', 'init'],
+      ...['config', 'c', 'cache', 'doctor', 'deploy', 'approve-builds', 'self-update', 'help', 'completion'],
+      ...['recursive', 'multi', 'm', 'install-test', 'it', 'cat-file', 'cat-index', 'find-hash', 'ignored-builds'],
+    ]),
+  },
   yarn: { any: true },
-  bunx: { flags: ['--bun'], valued: ['-p', '--package'] },
-  bun: { any: true, subs: ['x'], flags: ['--bun'], valued: [] },
+  bunx: { flags: ['--bun'], valued: ['-p', '--package'], places: [], elsewhere: [] },
+  bun: { any: true, subs: ['x'], flags: ['--bun'], valued: ['--cwd'], places: ['--cwd'], elsewhere: [] },
 };
 // A program named plainly: no space, no quote, nothing the shell reads.
 const PLAIN_PROGRAM = /^[\w@.+:/-]+$/;
 // The settings of npm and pnpm, read from the environment, that hand a command to a shell.
 const SHELL_SETTING = /p?npm_config_(?:call|shell[_-]mode)/i;
 const CALL_SETTING = /^npm_config_call=(.+)$/is;
+// The options by which any runner is told where to run its command.
+const PLACE_OPTION = /^(?:-C|-F|-w|--dir|--prefix|--cwd|--filter|--workspace)(?:=|$)/;
 let shellAsked = false;
 
 // What a package runner runs. When the invocation has the one shape the guard reads in full (the
@@ -423,9 +524,11 @@ let shellAsked = false;
 // its arguments) and nothing on the line can ask the runner for a shell, the command is `words`, as
 // the shell split them: a quote, a `>` or a `;` in an argument is text of that argument. Any other
 // invocation (a `-c`, `--call` or `--shell-mode`, an option the guard does not know, a bundle of
-// short options, an abbreviation of the subcommand, a program that is no plain name) may hand text
-// to a shell: every word of it is read as shell text, alone and with the words after it, since any
-// of them may be the command line. A manager asked for none of its runners runs no command here.
+// short options, `true` or `false` after an option that takes no value, which npm reads as its
+// value, an abbreviation of the subcommand, a program that is no plain name) may hand text to a
+// shell: every word of it is read as shell text, alone and with the words after it, since any of
+// them may be the command line. `moved` is where the command runs when an option says so. A manager
+// asked for none of its runners runs no command here.
 function runnerCommand(words) {
   const runner = RUNNERS[commandName(words)];
   if (!runner) {
@@ -434,10 +537,17 @@ function runnerCommand(words) {
   const rest = words.slice(1);
   const proven = shellAsked || !runner.flags ? undefined : provenCommand(rest, runner);
   if (proven) {
-    return { words: proven };
+    return proven;
   }
-  const runs = runner.any || !runner.subs || rest.some((word) => runner.subs.includes(word) || runner.near?.test(word));
-  return runs ? { texts: rest.flatMap((word, index) => textsFrom(word, rest.slice(index + 1))) } : undefined;
+  const asked = rest.some((word) => runner.subs?.includes(word) || runner.near?.test(word));
+  const bare = runner.commands !== undefined && !rest.some((word) => runner.commands.has(word));
+  if (!(runner.any || !runner.subs || asked || bare)) {
+    return undefined;
+  }
+  return {
+    texts: rest.flatMap((word, index) => textsFrom(word, rest.slice(index + 1))),
+    ...(rest.some((word) => PLACE_OPTION.test(word)) ? { moved: UNKNOWN } : {}),
+  };
 }
 
 // A word read as the start of a command line, with the words after it; the value an option carries
@@ -447,24 +557,37 @@ function textsFrom(word, after) {
   return [word, ...(value === undefined ? [] : [value])].map((start) => [start, ...after].join(' '));
 }
 
-function provenCommand(rest, { subs, flags, valued }) {
-  let index = afterKnownOptions(rest, 0, { flags, valued });
-  if (subs) {
-    index = subs.includes(rest[index]) ? afterKnownOptions(rest, index + 1, { flags, valued }) : rest.length;
+function provenCommand(rest, runner) {
+  const told = {};
+  let index = afterKnownOptions(rest, 0, runner, told);
+  if (runner.subs?.includes(rest[index])) {
+    index = afterKnownOptions(rest, index + 1, runner, told);
+  } else if (runner.subs && (!runner.commands || runner.commands.has(rest[index]))) {
+    return undefined;
   }
   const inner = rest.slice(rest[index] === '--' ? index + 1 : index);
-  return inner.length > 0 && PLAIN_PROGRAM.test(inner[0]) && !inner[0].startsWith('-') ? inner : undefined;
+  return inner.length > 0 && PLAIN_PROGRAM.test(inner[0]) && !inner[0].startsWith('-')
+    ? { words: inner, ...told }
+    : undefined;
 }
 
-// The index after the options the guard knows from `from`; at an option it does not know, the index
-// of that option, which is then no plain program.
-function afterKnownOptions(rest, from, { flags, valued }) {
+// The index after the options the guard knows from `from`, where they tell the runner to run noted
+// in `told`; at an option it does not know, or at `true` or `false` after an option that takes no
+// value, the end of the words: no program is proven then.
+function afterKnownOptions(rest, from, { flags, valued, places, elsewhere }, told) {
   let index = from;
   while (index < rest.length && rest[index] !== '--') {
     const [flag, ...joined] = rest[index].split('=');
     if (flags.includes(rest[index])) {
       index += 1;
+      if (['true', 'false'].includes(rest[index])) {
+        return rest.length;
+      }
     } else if (valued.includes(flag)) {
+      const value = joined.length > 0 ? joined.join('=') : rest[index + 1];
+      if (places.includes(flag) || elsewhere.includes(flag)) {
+        told.moved = places.includes(flag) && value !== undefined ? value : UNKNOWN;
+      }
       index += joined.length > 0 ? 1 : 2;
     } else {
       break;

@@ -218,7 +218,7 @@ const RUNNER_SHELL_TEXT = [
   ['pnpm dlx --shell-mode "rm src/main.ts"', /`rm` changes src\/main\.ts/],
   ['pnpm -c exec "rm src/main.ts"', /`rm` changes src\/main\.ts/],
   ['pnpm --shell-mode dlx "rm src/main.ts"', /`rm` changes src\/main\.ts/],
-  ['pnpm --filter api exec -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['pnpm --filter api exec -c "rm src/main.ts"', /`rm` changes files only the shell knows/],
   ['pnpm exec -c rm src/main.ts', /`rm` changes src\/main\.ts/],
   ['npx --call="rm src/main.ts"', /`rm` changes src\/main\.ts/],
   ['npx -y -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
@@ -228,9 +228,9 @@ const RUNNER_SHELL_TEXT = [
   ['npm --silent exec -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
   ['bun x sh -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
   ['bunx sh -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
-  ['npx -w api sh -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
-  ['npx --workspace api rm src/main.ts', /`rm` changes src\/main\.ts/],
-  ['pnpm --filter api exec rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npx -w api sh -c "rm src/main.ts"', /`rm` changes files only the shell knows/],
+  ['npx --workspace api rm src/main.ts', /`rm` changes files only the shell knows/],
+  ['pnpm --filter api exec rm src/main.ts', /`rm` changes files only the shell knows/],
   ['yarn exec rm src/main.ts', /`rm` changes src\/main\.ts/],
 ];
 
@@ -310,6 +310,115 @@ test('a package runner the guard cannot prove hands no text to a shell is read a
   }
   // A manager asked for none of its runners runs no command of the line.
   for (const command of ['npm install', 'pnpm install --frozen-lockfile', 'npx']) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
+// npm reads `true` or `false` after one of its options that take none as the value of that option:
+// the word after it is the program, so the shape is not the one the guard reads in full.
+const RUNNER_SWALLOWED = [
+  ["npm exec -y false -- sh -c 'echo x > src/main.ts'", /the redirection `> src\/main\.ts`/],
+  ["npm exec --yes true -- sh -c 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
+  ['npm exec --no false rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npx --no false rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npx --no true tee src/main.ts', /`tee` writing src\/main\.ts/],
+  ['npx -y true rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npx -q false rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npx --no false ddd-ts-kit generate value-object ordering Money', /writes in another context/],
+  ['npx --no true biome format --write .', /biome/],
+  ['pnpm -r false exec rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['bunx --bun true rm src/main.ts', /`rm` changes src\/main\.ts/],
+];
+
+test('a word true or false after an option of a runner that takes none is read as its value, not as the program', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const [command, expected] of RUNNER_SWALLOWED) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+});
+
+// A wrapper is read through only when the guard knows it and every option it is given: any other
+// first word that is no program the guard knows, or a wrapper with an option it does not know, may
+// run the words after it, and each word that may start a command is read as one.
+const BEHIND_ANY_WRAPPER = [
+  'time -p rm src/main.ts',
+  'time -- rm src/main.ts',
+  'time -o /dev/null rm src/main.ts',
+  '/usr/bin/time -p rm src/main.ts',
+  'command time -p rm src/main.ts',
+  'strace -f rm src/main.ts',
+  'strace -o /dev/null rm src/main.ts',
+  'ltrace rm src/main.ts',
+  'fakeroot rm src/main.ts',
+  'setarch x86_64 rm src/main.ts',
+  'unshare -r rm src/main.ts',
+  'chroot / rm src/main.ts',
+  'xvfb-run -a rm src/main.ts',
+  'ionice -c 3 -t rm src/main.ts',
+  'stdbuf -oL rm src/main.ts',
+  'nice -19 rm src/main.ts',
+  'timeout --kill-after=1 5 rm src/main.ts',
+  'setsid -w rm src/main.ts',
+  'nohup -- rm src/main.ts',
+  'sudo -A rm src/main.ts',
+  'doas -n rm src/main.ts',
+  'watch -x rm src/main.ts',
+  'env -u NAME rm src/main.ts',
+  'env --unset=NAME rm src/main.ts',
+  'chrt -f 1 rm src/main.ts',
+  'taskset -c 0 rm src/main.ts',
+  'flock -n /tmp/lock rm src/main.ts',
+  'a-tool-of-the-project rm src/main.ts',
+  './scripts/run.sh rm src/main.ts',
+  'npx time -p rm src/main.ts',
+  "time -p sh -c 'rm src/main.ts'",
+  'time -p npx rm src/main.ts',
+];
+
+// What is no command is not read as one: the arguments of a program the guard knows, a quoted
+// word, a word the shell computes, the words of a loop.
+const NO_COMMAND = [
+  'echo rm src/main.ts',
+  'printf "%s" rm src/main.ts',
+  'grep -rn rm src/main.ts',
+  'a-tool-of-the-project "rm src/main.ts"',
+  'a-tool-of-the-project --out "$HOME" --name NAME=value',
+  'for word in rm tee; do echo "$word"; done',
+  'docker ps -a',
+  'time -p ls src',
+  'nice -n 5 ls src',
+];
+
+test('a wrapper is read through, with whatever options, down to the command it runs', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const command of BEHIND_ANY_WRAPPER) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), /`rm` changes src\/main\.ts/, command);
+  }
+  for (const command of NO_COMMAND) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
+test('pnpm given a program by its bare name runs it as pnpm exec does', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const [command, expected] of [
+    ['pnpm tee src/main.ts', /`tee` writing src\/main\.ts/],
+    ["pnpm sh -c 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
+    ['pnpm -r tee src/main.ts', /`tee` writing src\/main\.ts/],
+    ['pnpm --reporter silent tee src/main.ts', /`tee` writing src\/main\.ts/],
+  ]) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  for (const command of ['pnpm install', 'pnpm run build', 'pnpm test', 'pnpm ls --depth 0']) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
 });
