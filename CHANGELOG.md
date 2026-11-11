@@ -4,6 +4,10 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.110.1
+
+**The guard lets a worker take a lock with `flock` under `$XDG_RUNTIME_DIR`.** Since 0.110.0 the guard reads the lock file of `flock` as a file the command writes, and refused `flock "$XDG_RUNTIME_DIR/heavy.lock" npm run verify` to a context worker: a variable it did not read, in a directory outside the worktree. A worker then ran its heavy command without the lock the checkouts of the machine share. The guard now reads `$XDG_RUNTIME_DIR` by its value when the session started, and a lock of `flock` there is free, as output to the system temp directory is: `flock` creates the file when it is missing and writes nothing in it. Everything else a worker writes there is still refused (a redirection, the report of `time -o`), so is a lock that is a link into a project, and a worker that sets `XDG_RUNTIME_DIR` itself is refused as one that sets `TMPDIR`.
+
 ## 0.110.0
 
 **A project generated on Fastify compiles again with Fastify 5.12.8.** That version types `app.addresses()` as addresses or pipe paths, and `src/platform/http/start-http-server.ts` read `.port` of the first one, so `tsc` refused a new project (`Property 'port' does not exist on type 'string | AddressInfo'`). The file now reads the port through a function that answers 0 for a server bound to a pipe.
