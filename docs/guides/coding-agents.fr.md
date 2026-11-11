@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:055c3549c28ac1c7 -->
+<!-- translation-of: coding-agents.md sha256:35b173ca30b68fed -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -169,18 +169,34 @@ commande quand il était déjà modifié (gardé sous `.ddd-ts-kit/guard/held/`)
 pour un renommage, `rm` pour un nouveau fichier. Un fichier de plus de 16 Mio est comparé par sa
 taille et sa date, sans être lu, et aucune copie n'en est gardée : déjà modifié avant la commande, il
 est dit, sans retenir le *worker*, qui le nomme dans son rapport. Un fichier laissé modifié dans l'arbre de travail
-du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) ou
-un changement de ces paquets est dit une fois, pour le chef d'orchestre, qui seul sait s'il l'a fait.
+du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) est
+dit une fois au *worker* et ne refuse rien : le *worker* n'y remet rien en état et le nomme dans son
+rapport, pour le chef d'orchestre, qui seul sait s'il a fait ce changement. Un changement de ces
+paquets refuse une fois l'appel suivant, pour le chef d'orchestre aussi, tout comme un changement
+de ce sur quoi la garde s'appuie là : la config du kit, les réglages, *hooks* et *plugins* d'un
+agent de code, un fichier de périmètre.
 Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerate`, `docs:generate`,
 `openapi:generate`, `events:generate`, sans être lancés dans un autre dossier par `--prefix`, `-C`,
 `--dir` ou `--filter`), seuls sur la ligne, réécrivent hors du périmètre parmi les
 fichiers que leurs outils réécrivent (code, JSON, `docs/`) est dit avec le script qui l'a réécrit,
 sans retenir le *worker* : il le laisse hors de ses commits. Le
-périmètre est fixé au premier appel du *worker* : un fichier de périmètre supprimé ou changé
-l'arrête jusqu'à ce que le chef d'orchestre le rétablisse, et le mode de la garde est fixé avec lui :
-une config du *worktree* qui éteint la garde, ou qui dépasse ce que la garde lit, ne libère pas un
+périmètre est fixé au premier appel du *worker*, et cette marque suit le *worker* : elle est gardée
+sous le répertoire git que les *worktrees* du dépôt partagent (`ddd-ts-kit/guard/` là), si bien
+qu'un appel qui part d'un autre *checkout* est jugé d'après le *worktree* fixé, et se voit dire de
+se lancer comme `cd <worktree> && ...`. Là où plusieurs *workers* ont un *worktree*, une première
+commande qui n'en nomme aucun ne fixe rien : elle lit, et ce qu'elle écrit est refusé jusqu'à ce
+qu'une commande nomme son *worktree*, ou un outil d'édition un fichier dedans. Une marque qui ne
+peut pas être lue retient chaque appel jusqu'à ce que le chef d'orchestre relance le *worker*. Un fichier de périmètre supprimé ou changé (son contexte, sa base, son *commit* de base ou sa branche)
+arrête le *worker* jusqu'à ce que le chef d'orchestre le rétablisse, et le mode de la garde est fixé avec lui :
+une config qui éteint la garde, dans le *worktree* ou dans un autre *checkout* du dépôt, ou qui dépasse ce que la garde lit, ne libère pas un
 *worker*, son changement étant comparé comme tout autre. Une branche que le *worker* fusionne dans la
-sienne est son travail : seul ce que le tronc contient est au tronc. Le `merge-trunk` du kit n'est pas noté,
+sienne est son travail : seul ce que le tronc contient est au tronc. Le tronc est la `base` que
+notait son fichier de périmètre quand le *worker* a été fixé (une branche du dépôt, une branche
+d'intégration aussi bien que la principale), la branche que nomme `origin/HEAD`, `main` ou
+`master`, chacune telle qu'elle était avant la commande qui a fusionné : un tronc récupéré et
+fusionné par une seule commande n'est pas encore connu, si bien que le `fetch` va dans une commande
+à part, ou `merge-trunk` fait les deux. Une fusion de toute autre branche est retenue sans
+commande pour la défaire, et le *worker* la signale au chef d'orchestre. Le `merge-trunk` du kit n'est pas noté, sauf si `--trunk` nomme une autre référence que cette base,
 et une installation du *lockfile* laisse les paquets hors de la note. Il refuse un changement de
 dépendance et un autre formateur que `npm run format`. L'`architecture-reviewer`, le
 `domain-explorer` et le `story-verifier` ne changent aucun fichier d'un projet par le *shell*, ni

@@ -125,7 +125,7 @@ the guard refuses any write of a `context-builder` agent outside `src/contexts/<
 its end-to-end specs and their support in `test/e2e/support/<context>/` (in an acceptance spec, anything but removing `pending(...)`), any generator that writes a shared file, any dependency change, and any
 shell command that writes outside the scope (`sed -i`, `>`, `tee`, `cp`, `mv`, `rm`, or a path
 only the shell knows); code the guard cannot read (inline code, a script, the tests) runs, and a
-file it changed outside the scope stops the worker until it is put back, its scope pinned at its first call; `npx prettier` and a bare `npx biome` are refused too.
+file it changed outside the scope stops the worker until it is put back, its scope pinned at its first call (the first command that names its worktree, where several workers have one; the pin then follows the worker, whichever checkout a call starts in); `npx prettier` and a bare `npx biome` are refused too.
 
 Before briefing a worker in a context that already has one, run
 `npx ddd-ts-kit status --workers` from the trunk: it lists each worker (worktree, branch,

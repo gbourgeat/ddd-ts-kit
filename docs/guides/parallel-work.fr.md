@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:71191fdab2085789 -->
+<!-- translation-of: parallel-work.md sha256:b6a2b346cc351aff -->
 
 # Travailler en parallèle sans collisions
 
@@ -460,8 +460,17 @@ périmètre avant chaque telle commande (ses fichiers et `HEAD`) et le compare �
 suivante du *worker*, et un fichier qu'il y a changé, supprimé ou commité compris, arrête le
 *worker* jusqu'à ce qu'il soit remis en état par la commande que la garde nomme
 (`git checkout HEAD -- <path>`, le contenu gardé d'un fichier déjà modifié, `git mv` en retour, ou
-`rm` d'un nouveau fichier, permis pour ces fichiers). Le périmètre est fixé au premier appel du
-*worker* : un fichier de périmètre supprimé ou changé l'arrête. `npx prettier` dans un projet dont `format` lance
+`rm` d'un nouveau fichier, permis pour ces fichiers). Ce qu'une fusion du tronc apporte est au
+tronc, pas un changement du *worker* : le tronc est la `base` que son fichier de périmètre
+enregistre (une branche d'intégration comme `work/<plan>` aussi bien que la principale), la
+branche que nomme `origin/HEAD`, `main` ou `master`, telles qu'elles étaient avant la commande
+qui a fusionné (un *worker* fusionne avec `merge-trunk`, ou fait son `fetch` dans une commande à
+part). Une fusion de toute autre branche est
+retenue, et la garde ne nomme alors aucune commande : le *worker* ne défait rien et signale la
+fusion au chef d'orchestre. Le périmètre est fixé au premier appel du
+*worker*, par la commande qui nomme son *worktree* (`cd <worktree> && ...`) là où plusieurs
+*workers* en ont un, et cette marque suit le *worker* : un appel qui part d'un autre *checkout* est
+jugé d'après le *worktree* fixé. Un fichier de périmètre supprimé ou changé l'arrête. `npx prettier` dans un projet dont `format` lance
 Biome et un `npx biome` nu sont refusés. Une sortie vers
 `/dev/null` ou le répertoire temporaire du système reste libre, et le chef d'orchestre n'est
 tenu à rien de tout cela. Un *worker* passe `--local-only`

@@ -431,7 +431,13 @@ notes the state outside the scope before each such command (its files and `HEAD`
 at the worker's next command, and a file it changed there, deleted or committed included, stops
 the worker until it is put back with the command the guard names (`git checkout HEAD -- <path>`,
 the held content of a file already changed, `git mv` back, or `rm` of a new file, allowed for those
-files). The scope is pinned at the worker's first call: a scope file removed or changed stops it. `npx prettier` in a project
+files). What a merge of the trunk brings in is the trunk's, not a change of the worker: the trunk is the `base`
+its scope file records (an integration branch such as `work/<plan>` as well as the main one), the
+branch `origin/HEAD` names, `main` or `master`, as they stood before the command that merged (a
+worker merges with `merge-trunk`, or fetches in a command of its own). A merge of any other branch is held, and the guard
+then names no command: the worker undoes nothing and reports the merge to the conductor. The scope is pinned at the worker's first call, by the command that names its worktree
+(`cd <worktree> && ...`) where several workers have one, and the pin follows the worker: a call that
+starts in another checkout is judged against the worktree pinned. A scope file removed or changed stops it. `npx prettier` in a project
 that `format` runs Biome on and a bare `npx biome` are refused. Output to `/dev/null` or the system temp directory stays free, and the conductor
 is not held to any of this. A worker passes `--local-only` to `generate`:
 the command then refuses, and writes nothing, when the kind would write outside its context:
