@@ -1,8 +1,9 @@
+import { expectedOver } from './expected-over';
 import type { MergeFinding } from './merge-finding';
 import type { MergeSides } from './merge-sides';
 import { rankedPlaces } from './ranked-places';
 import { SPEC_FILE } from './spec-file';
-import { expectedOver, threeWayCount } from './three-way-count';
+import { threeWayCount } from './three-way-count';
 
 /** The title of an `it(` or a `test(`, with its modifiers, on one line or after a line break. */
 const TEST_TITLE =

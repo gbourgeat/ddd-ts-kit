@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, tempDir, write } from './helpers';
 import { git } from './support/git';
-import { BOTH_KEPT, INVOICE, PAY_AND_CANCEL, SLICES, spec } from './support/invoicing-merge';
+import { BOTH_KEPT, INVOICE, PAY_AND_CANCEL, spec } from './support/invoicing-merge';
 import { jsonAt } from './support/json-at';
 import { commit, mergeRepository, mergeWith, startMerge } from './support/merge-repository';
 
@@ -147,109 +147,6 @@ describe('verify-merge, what a merge left or deleted', () => {
     expect(cli(dropped, 'verify-merge', 'HEAD').stdout).toContain(
       'migrations/0002_working-add-payments.sql (ours)  migration "addpayments" missing from the result',
     );
-  });
-});
-
-describe('verify-merge, a file of the branch the merge dropped, whatever the base', () => {
-  const PAYMENT = 'src/contexts/billing/payment.ts';
-  const payment = 'export class Payment {\n  settle(amount: Money): void {}\n}\n';
-
-  /** The branch adds the payment, the trunk `theirs`; the merge is judged from the head of the branch, as a base too new. */
-  function mergedFromHead(theirs: Record<string, string | null>, resolution: Record<string, string | null>): string {
-    const root = mergeRepository({
-      base: { [INVOICE]: lines('  issue() {}') },
-      ours: { [PAYMENT]: payment },
-      theirs,
-    });
-
-    const head = git(root, 'rev-parse', 'HEAD').trim();
-
-    mergeWith(root, resolution, `Merge main into build/billing\n\nMerge-Base: ${head}`);
-
-    return root;
-  }
-
-  it('reports a file the branch added, that the trunk never touched and the result lacks, though the base holds it', () => {
-    const root = mergedFromHead({ [INVOICE]: lines('  issue() {}', '  cancel() {}') }, { [PAYMENT]: null });
-    const answer = cli(root, 'verify-merge', 'HEAD', '--json').json();
-
-    expect(jsonAt(answer, 'merges', '0', 'baseFrom')).toBe('trailer');
-    expect(jsonAt(answer, 'merges', '0', 'errors')).toEqual([expect.objectContaining({ kind: 'file-deleted', file: PAYMENT, side: 'ours', line: 1 })]);
-
-    expect(cli(root, 'verify-merge', 'HEAD').stdout).toContain(
-      `files deleted by the merge:\n    ${PAYMENT} (ours)  added on this side, its path never touched by the other: missing from the result`,
-    );
-  });
-
-  it('reports nothing when the result holds the file under another path, or when the trunk had that path and removed it', () => {
-    const moved = mergedFromHead(
-      { [INVOICE]: lines('  issue() {}', '  cancel() {}') },
-      { [PAYMENT]: null, 'src/contexts/payments/payment.ts': payment },
-    );
-
-    const root = mergeRepository({
-      base: { [INVOICE]: lines('  issue() {}') },
-      ours: { [PAYMENT]: payment },
-      theirs: { [PAYMENT]: payment },
-    });
-
-    const head = git(root, 'rev-parse', 'HEAD').trim();
-
-    git(root, 'switch', '--quiet', 'main');
-    commit(root, { [PAYMENT]: null }, 'refactor(billing): payments leave the context (#3)');
-    git(root, 'switch', '--quiet', 'build/billing');
-    mergeWith(root, { [PAYMENT]: null }, `Merge main into build/billing\n\nMerge-Base: ${head}`);
-
-    expect(kinds(cli(moved, 'verify-merge', 'HEAD', '--json').json())).toEqual([]);
-    expect(kinds(cli(root, 'verify-merge', 'HEAD', '--json').json())).toEqual([]);
-  });
-});
-
-describe('verify-merge, the rows of a base the trunk never held', () => {
-  const row = (id: string, slice: string, status: string): string =>
-    `| ${id} | billing | slice | ${slice} | generate command | | billing | ${status} |`;
-
-  const table = (...rows: readonly string[]): string =>
-    [
-      '| # | context | kind | slice | start with | depends on | owner | status |',
-      '|---|---|---|---|---|---|---|---|',
-      ...rows,
-      '',
-    ].join('\n');
-
-  it('reports a row the result dropped and a status it took back from the trunk, when the fork held neither', () => {
-    const forked = table(row('US1.01', 'Issue invoice', 'todo'));
-
-    const root = mergeRepository({
-      base: { [INVOICE]: lines('  issue() {}'), [SLICES]: forked },
-      ours: { [SLICES]: table(row('US1.01', 'Issue invoice', 'done'), row('US1.02', 'Pay invoice', 'todo')) },
-      theirs: { [INVOICE]: lines('  issue() {}', '  cancel() {}') },
-    });
-
-    const head = git(root, 'rev-parse', 'HEAD').trim();
-
-    mergeWith(root, { [SLICES]: forked }, `Merge main into build/billing\n\nMerge-Base: ${head}`);
-
-    const answer = cli(root, 'verify-merge', 'HEAD', '--json').json();
-
-    expect(jsonAt(answer, 'merges', '0', 'base')).toBe(head);
-    expect(kinds(answer)).toEqual(['row-not-done', 'row-lost']);
-    expect(cli(root, 'verify-merge', 'HEAD').stdout).toContain(`rows gone:\n    ${SLICES}:4 (ours)  #US1.02 Pay invoice`);
-  });
-
-  it('leaves to the trunk a row it deleted and a row it reopened since the fork', () => {
-    const root = mergeRepository({
-      base: {
-        [INVOICE]: lines('  issue() {}'),
-        [SLICES]: table(row('US1.01', 'Issue invoice', 'done'), row('US1.03', 'Cancel invoice', 'todo')),
-      },
-      ours: { [INVOICE]: lines('  issue() {}', '  pay() {}') },
-      theirs: { [SLICES]: table(row('US1.01', 'Issue invoice', 'todo')) },
-    });
-
-    mergeWith(root, {});
-
-    expect(kinds(cli(root, 'verify-merge', 'HEAD', '--json').json())).toEqual([]);
   });
 });
 

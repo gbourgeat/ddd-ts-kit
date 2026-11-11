@@ -1,8 +1,9 @@
+import { expectedOver } from './expected-over';
 import { LineCounts } from './line-counts';
 import type { MergeFinding } from './merge-finding';
 import type { MergeSides } from './merge-sides';
 import { rankedPlaces } from './ranked-places';
-import { expectedOver, threeWayCount } from './three-way-count';
+import { threeWayCount } from './three-way-count';
 
 /** The four counts of a merge, and the result flattened for the reflow filter. */
 interface Counted {

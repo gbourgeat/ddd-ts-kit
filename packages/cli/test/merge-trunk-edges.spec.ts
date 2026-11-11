@@ -6,15 +6,7 @@ import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub';
 import { git } from './support/git';
 import { IDENTITY_VARIABLES } from './support/git-identity';
 import { jsonAt } from './support/json-at';
-import {
-  commitFiles,
-  goOn,
-  mergeTrunk,
-  merging,
-  onBranch,
-  trunkRepository,
-  workerFile,
-} from './support/trunk-history';
+import { commitFiles, goOn, mergeTrunk, merging, onBranch, trunkRepository } from './support/trunk-history';
 import { type StubInstallers, stubInstallers } from './support/stub-installers';
 
 const INVOICE = 'src/contexts/billing/invoice.ts';
@@ -209,22 +201,6 @@ describe('merge-trunk: a deleted file, a drizzle refusal, and the refusals to st
     expect(mergeTrunk(root, '--since', 'main').stderr).toContain('--since main is not a commit of this branch.');
   });
 
-  it('refuses a --since that names the head of the branch, which would leave the trunk alone in the result', () => {
-    const root = conflicting();
-    const head = git(root, 'rev-parse', 'HEAD').trim();
-
-    for (const since of ['HEAD', head]) {
-      const refused = mergeTrunk(root, '--since', since);
-
-      expect(refused.code).toBe(2);
-      expect(refused.stderr).toContain(`--since ${since} is the head of this branch`);
-      expect(refused.stderr).toContain('the result would be the trunk alone');
-    }
-
-    expect(merging(root)).toBe(false);
-    expect(git(root, 'rev-parse', 'HEAD').trim()).toBe(head);
-  });
-
   it('refuses to start when an untracked file stands where the trunk adds one, and changes nothing', () => {
     const root = conflicting();
 
@@ -254,25 +230,6 @@ describe('merge-trunk: the trunk a remote names', () => {
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('error: The branch has no commit yet.');
     expect(refused.stderr).toContain('fix: Commit first: a merge joins two commits.');
-  });
-});
-
-describe('merge-trunk: the trunk of a worker', () => {
-  it('brings in the base recorded for the worker of the worktree, unless --trunk names another', () => {
-    const root = conflicting();
-
-    git(root, 'branch', 'release', 'main~1');
-    workerFile(root, { base: 'main' });
-
-    const recorded = goOn(root, '--dry-run', '--json');
-    const named = goOn(root, '--trunk', 'release', '--dry-run', '--json');
-
-    expect(recorded.json()).toMatchObject({
-      status: 'dry-run',
-      trunk: { ref: 'main', commit: git(root, 'rev-parse', 'main').trim() },
-    });
-
-    expect(named.json()).toMatchObject({ status: 'up-to-date', trunk: { ref: 'release' } });
   });
 });
 

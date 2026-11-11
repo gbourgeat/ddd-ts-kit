@@ -42,8 +42,3 @@ export function slicesFromFork(repo: MergeRepository, merge: RowsToMerge): Resol
     ? undefined
     : { file, kind: 'slices', content: rows.text, settled: true, how: HOW, blocks: [] };
 }
-
-/** The resolutions with that of the rows: in place of the one the slices file had as a conflicted path, else added. */
-export function withRows(resolutions: readonly Resolution[], rows: Resolution | undefined): Resolution[] {
-  return rows === undefined ? [...resolutions] : [...resolutions.filter(({ file }) => file !== rows.file), rows];
-}

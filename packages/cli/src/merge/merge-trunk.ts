@@ -19,7 +19,7 @@ import { type PreviewRequest, previewMerge, type StageEntry } from './preview-me
 import { refuseShallowHistory } from './refuse-shallow-history';
 import { resolveConflict } from './resolve-conflict';
 import type { Resolution } from './resolution';
-import { slicesFromFork, withRows } from './slices-from-fork';
+import { slicesFromFork } from './slices-from-fork';
 import { startMerge } from './start-merge';
 import { trunkOf } from './trunk-of';
 import { ensureWritable } from './ensure-writable';
@@ -131,7 +131,12 @@ function opened(opening: Opening): MergeReport {
   const own = preview(report.base.commit);
   const plain = report.base.commit === fork ? own : preview();
   const sides = { base: report.base.commit, fork, ours: 'HEAD', theirs: report.trunk.commit, tree: own.tree };
-  const resolutions = withRows(resolved(context, own.conflicts, { tree: own.tree }), slicesFromFork(context.repo, sides));
+
+  const resolutions = withRows(
+    resolved(context, own.conflicts, { tree: own.tree }),
+    slicesFromFork(context.repo, sides),
+  );
+
   const counted = counts(context, report, { resolutions, own: own.conflicts, plainMerge: plain.conflicts.size });
 
   if (request.dryRun) {
@@ -169,6 +174,11 @@ function withOldGit(opening: Opening, { version, fork }: { version: string; fork
 
 function resolved(context: MergeContext, conflicts: Conflicts, from: MergedFrom): Resolution[] {
   return conflictedPaths(context.repo.top, conflicts, from).map((path) => resolveConflict(path, context.repo));
+}
+
+/** The resolutions with that of the rows: in place of the one the slices file had as a conflicted path, else added. */
+function withRows(resolutions: readonly Resolution[], rows: Resolution | undefined): Resolution[] {
+  return rows === undefined ? [...resolutions] : [...resolutions.filter(({ file }) => file !== rows.file), rows];
 }
 
 function counts(

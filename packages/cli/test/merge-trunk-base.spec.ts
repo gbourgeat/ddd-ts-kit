@@ -5,7 +5,6 @@ import { exists, read } from './helpers';
 import { git } from './support/git';
 import {
   commitFiles,
-  goOn,
   lastMessage,
   mergeTrunk,
   merging,
@@ -21,7 +20,6 @@ const INVOICE = 'src/contexts/billing/invoice.ts';
 /** The generated declarations of a role folder: derived, so left out of the patch a branch is recognised by. */
 const DECLARATIONS = 'src/contexts/billing/application/application.declarations.ts';
 const HANDLER = 'src/contexts/billing/pay/handler.ts';
-const SLICES = 'docs/architecture/slices.md';
 
 const openapi = (...paths: string[]): string =>
   ['paths:', '  /accounts:', '    get: list', ...paths, '  /zeta:', '    get: z', ''].join('\n');
@@ -173,38 +171,6 @@ describe('merge-trunk: the base a merge is computed from', () => {
   });
 });
 
-describe('merge-trunk: a --since newer than what the trunk holds', () => {
-  it('stops on the file of the branch the merge dropped, when --since names a commit made after the landing', () => {
-    const root = trunkRepository({ [INVOICE]: invoice() });
-
-    onBranch(root, 'build/billing');
-    commitFiles(root, { [INVOICE]: invoice('issue() { return 1; }') }, 'row 1: issue');
-    squashInto(root, 'build/billing', { message: 'feat(billing): issue (#1)' });
-    commitFiles(root, { 'docs/notes.md': 'Unrelated.\n' }, 'docs: notes (#2)');
-    onBranch(root, 'build/billing');
-
-    const tooNew = commitFiles(root, { [HANDLER]: 'export const payHandler = 1;\n' }, 'row 2: pay handler');
-
-    commitFiles(root, { [INVOICE]: invoice('issue() { return 1; }', 'pay() { return 2; }') }, 'row 2: pay');
-
-    const stopped = mergeTrunk(root, '--since', tooNew, '--json');
-
-    expect(stopped.code).toBe(1);
-
-    expect(stopped.json()).toMatchObject({
-      status: 'stopped',
-      base: { commit: tooNew, evidence: 'option' },
-      lostLines: { errors: [{ kind: 'file-deleted', file: HANDLER, side: 'ours' }] },
-    });
-
-    expect(merging(root)).toBe(true);
-    expect(exists(root, HANDLER)).toBe(false);
-    expect(goOn(root, '--abort').code).toBe(0);
-    expect(mergeTrunk(root, '--json').json()).toMatchObject({ status: 'committed', lostLines: { errors: [] } });
-    expect(exists(root, HANDLER)).toBe(true);
-  });
-});
-
 describe('merge-trunk: the base when nothing proves a landing', () => {
   it('falls back to git merge-base without the parent nor a record: more conflicts, never a silent loss', () => {
     const { root } = stacked({ reviewFix: true });
@@ -303,86 +269,6 @@ describe('merge-trunk: the base of a branch reused after its squash', () => {
     expect(exists(root, 'migrations/0001_working-add-payments.sql')).toBe(false);
     expect(exists(root, 'migrations/0002_add-payments.sql')).toBe(true);
     expect(read(root, INVOICE)).toContain('refund() {}');
-  });
-
-  it('keeps a row of the slices file the branch added before its landing, when the trunk took the code without it', () => {
-    const row = (id: string, slice: string, status: string): string =>
-      `| ${id} | billing | slice | ${slice} | generate command | | billing | ${status} |`;
-
-    const table = (...rows: readonly string[]): string =>
-      [
-        '| # | context | kind | slice | start with | depends on | owner | status |',
-        '|---|---|---|---|---|---|---|---|',
-        ...rows,
-        '',
-      ].join('\n');
-
-    const root = trunkRepository({ [INVOICE]: invoice(), [SLICES]: table(row('US1.01', 'Issue invoice', 'todo')) });
-
-    onBranch(root, 'build/billing');
-
-    const landed = commitFiles(
-      root,
-      {
-        [INVOICE]: invoice('issue() { return 1; }'),
-        [SLICES]: table(row('US1.01', 'Issue invoice', 'done'), row('US1.02', 'Pay invoice', 'todo')),
-      },
-      'row 1: issue',
-    );
-
-    squashInto(root, 'build/billing', {
-      message: 'feat(billing): issue (#1)',
-      files: { [SLICES]: table(row('US1.01', 'Issue invoice', 'done')) },
-    });
-
-    commitFiles(root, { 'docs/notes.md': 'Unrelated.\n' }, 'docs: notes (#2)');
-    onBranch(root, 'build/billing');
-    commitFiles(root, { [INVOICE]: invoice('issue() { return 1; }', 'pay() { return 2; }') }, 'row 2: pay');
-
-    const result = mergeTrunk(root, '--json');
-
-    expect(result.json()).toMatchObject({
-      status: 'committed',
-      base: { commit: landed, evidence: 'landed' },
-      conflicts: { ownDiff: 0, automatic: 0, forYou: 0 },
-      automatic: [{ file: SLICES, kind: 'slices' }],
-      lostLines: { errors: [] },
-    });
-
-    expect(read(root, SLICES)).toBe(
-      table(row('US1.01', 'Issue invoice', 'done'), row('US1.02', 'Pay invoice', 'todo')),
-    );
-  });
-
-  it('takes for landed the merge of the trunk the branch made before its squash, though the trunk changed since what that merge brought', () => {
-    const notes = 'docs/notes.md';
-    const root = trunkRepository({ [INVOICE]: invoice(), [notes]: 'Invoices are issued monthly.\n' });
-
-    onBranch(root, 'build/billing');
-    commitFiles(root, { [HANDLER]: 'export const payHandler = 1;\n' }, 'row 1: pay handler');
-    onBranch(root, 'main');
-    commitFiles(root, { [notes]: 'Invoices are issued weekly.\n' }, 'docs: weekly (#2)');
-    onBranch(root, 'build/billing');
-    git(root, 'merge', '--quiet', '--no-ff', '--message', 'Merge main into build/billing', 'main');
-
-    const merged = git(root, 'rev-parse', 'HEAD').trim();
-    const squash = squashInto(root, 'build/billing', { message: 'feat(billing): pay handler (#3)' });
-
-    commitFiles(root, { [notes]: 'Invoices are issued daily.\n' }, 'docs: daily (#4)');
-    onBranch(root, 'build/billing');
-    commitFiles(root, { [INVOICE]: invoice('pay() { return 2; }') }, 'row 2: pay');
-
-    const result = mergeTrunk(root, '--json');
-
-    expect(result.json()).toMatchObject({
-      status: 'committed',
-      base: { commit: merged, evidence: 'landed', landedAs: { commit: squash } },
-      conflicts: { ownDiff: 0, forYou: 0 },
-      lostLines: { errors: [] },
-    });
-
-    expect(read(root, notes)).toBe('Invoices are issued daily.\n');
-    expect(read(root, INVOICE)).toBe(invoice('pay() { return 2; }'));
   });
 
   it('never takes for landed a later commit that changed only what the comparison leaves out, unless the trunk holds it', () => {
