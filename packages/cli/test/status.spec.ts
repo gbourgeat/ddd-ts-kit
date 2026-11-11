@@ -196,6 +196,23 @@ describe('status at step 7, the build', () => {
     );
   });
 
+  it('says that no row is ready while the rows left are in progress or wait for one', () => {
+    const root = initProject('--context', 'billing:core');
+
+    write(root, 'docs/architecture/plan.md', STEP_7);
+
+    write(
+      root,
+      'docs/architecture/slices.md',
+      table(
+        '| US1.01 | billing | slice | A | | | billing | in progress |',
+        '| US1.02 | billing | slice | B | | US1.01 | billing | todo |',
+      ),
+    );
+
+    expect(cli(root, 'status').stdout).toMatch(/^Next: 7 build - no row is ready on the trunk/);
+  });
+
   it('derives the next step from the rows, and prints the line of the plan beside it', () => {
     const root = initProject('--context', 'billing:core');
 
