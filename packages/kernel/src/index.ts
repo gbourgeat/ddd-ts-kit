@@ -326,6 +326,7 @@ export * from './infrastructure/in-memory/unit-of-work-middleware';
 export * from './infrastructure/in-memory/in-memory-tenant-directory';
 export * from './infrastructure/read-model/postgres-read-model-rebuild';
 export * from './infrastructure/read-model/projection-rebuild';
+export * from './infrastructure/read-model/read-model-key-held-elsewhere-error';
 export * from './infrastructure/read-model/read-model-table-not-ready-error';
 export * from './infrastructure/read-model/shadow-read-model-store';
 export * from './infrastructure/read-model/sql-run';

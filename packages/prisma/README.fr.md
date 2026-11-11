@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:50d1a5a30c7f69f3 -->
+<!-- translation-of: README.md sha256:b328be94c9364cb2 -->
 
 # @ddd-ts-kit/prisma
 
@@ -764,7 +764,11 @@ vérification garde entières les lignes vivantes (`check (deleted or (status is
 starts_at is not null))`), une requête à vous sur la table écarte les lignes supprimées
 (`deleted = false`), et une table dont des colonnes refusent NULL est refusée par
 `ReadModelTableNotReadyError` avant l'écriture de la première trace, par une lecture des colonnes de la table
-([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). `store.table` est ce que prend
+([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). Les
+champs du modèle sont optionnels eux aussi (`String?`) : le registre lit les colonnes de la table,
+pas le modèle, si bien qu'un champ laissé requis sur une colonne qui accepte NULL fait refuser la
+trace par le client Prisma avec sa propre erreur de validation, avant toute requête, et non avec
+l'erreur nommée. `store.table` est ce que prend
 `ProjectionRebuild` ; la reconstruction est réservée à PostgreSQL (une copie `<table>__rebuild`
 faite `LIKE ... INCLUDING ALL`, les clés écrites entre-temps dans `<table>__touched`, l'échange
 par renommage en une transaction) et ses garanties et limites sont dans le README de

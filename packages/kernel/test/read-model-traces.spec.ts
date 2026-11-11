@@ -4,7 +4,11 @@ import {
   InMemoryReadModelTable,
   InMemoryUnitOfWork,
   ProjectionRebuild,
+  ConcurrencyError,
+  ReadModelKeyHeldElsewhereError,
   ReadModelTableNotReadyError,
+  writeIfNewer,
+  type ReadModelRows,
   defineCriteria,
   pageOf,
   type EventStamp,
@@ -111,5 +115,41 @@ describe('ReadModelTableNotReadyError', () => {
 
     expect(message).toContain('"starts_at", "status" refuse NULL');
     expect(message).toContain('check (deleted or ("starts_at" is not null and "status" is not null))');
+  });
+});
+
+describe('a key held out of the reach of the work', () => {
+  /** Rows of another tenant: the key reads as absent, and its insert is refused by a conflict. */
+  const elsewhere = () => {
+    const rows = { reads: 0 };
+
+    const table: ReadModelRows<RoomRow> = {
+      find: async () => {
+        rows.reads += 1;
+
+        return undefined;
+      },
+      insert: async () => false,
+      replace: async () => false,
+    };
+
+    return { rows, table };
+  };
+
+  it('ignores a deletion at the second read: nothing of this tenant is there to delete', async () => {
+    const { rows, table } = elsewhere();
+
+    expect(await writeIfNewer(table, { key: 'r1', stamp: at(1) })).toBe('ignored');
+    expect(rows.reads).toBe(2);
+  });
+
+  it('refuses an upsert by name, as a concurrency error that says the key is unique across tenants', async () => {
+    const { rows, table } = elsewhere();
+    const written = writeIfNewer(table, { key: 'r1', stamp: at(1), next: () => room('r1') });
+
+    await expect(written).rejects.toThrow(ReadModelKeyHeldElsewhereError);
+    await expect(written).rejects.toThrow(ConcurrencyError);
+    await expect(written).rejects.toThrow('The key "r1" of the read model is held by another tenant');
+    expect(rows.reads).toBe(2);
   });
 });

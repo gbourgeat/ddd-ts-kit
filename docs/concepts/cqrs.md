@@ -327,8 +327,10 @@ asks four things of the table and of whoever reads it:
 
 **The key is unique across tenants.** The trace of a read model of tenant data carries the tenant
 of the work, and its key is taken for every tenant, as the key of a live row is: a key two
-tenants could share is a generated id or carries the tenant (`acme:2026-03-01`), otherwise the
-write of the second tenant, a deletion included, ends in a `ConcurrencyError`.
+tenants could share is a generated id or carries the tenant (`acme:2026-03-01`). Under a key
+another tenant holds, a deletion is `ignored`, since nothing of this tenant is there to delete
+and its trace cannot be written, and an upsert is refused at once with
+`ReadModelKeyHeldElsewhereError`, a `ConcurrencyError` whose message says so.
 
 ## Limits and when not to use it
 

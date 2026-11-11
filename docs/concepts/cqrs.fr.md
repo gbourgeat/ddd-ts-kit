@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:de64e7ffbb59d5ba -->
+<!-- translation-of: cqrs.md sha256:bce29dd2d1508b4e -->
 
 # CQRS tel qu'utilisé ici
 
@@ -345,8 +345,10 @@ suppression livrée avant la création qu'elle suit insère la trace, et la cré
 **La clé est unique entre les locataires.** La trace d'un modèle de lecture de données d'un
 locataire porte le locataire du travail en cours, et sa clé est prise pour tous les locataires,
 comme la clé d'une ligne vivante : une clé que deux locataires pourraient partager est un
-identifiant généré ou porte le locataire (`acme:2026-03-01`), sinon l'écriture du second
-locataire, suppression comprise, se termine par une `ConcurrencyError`.
+identifiant généré ou porte le locataire (`acme:2026-03-01`). Sous une clé que tient un autre
+locataire, une suppression est `ignored`, puisque rien de ce locataire n'est là à supprimer et
+que sa trace ne peut pas être écrite, et un *upsert* est refusé aussitôt par
+`ReadModelKeyHeldElsewhereError`, une `ConcurrencyError` dont le message le dit.
 
 ## Limites et quand ne pas l'utiliser
 

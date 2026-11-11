@@ -741,7 +741,10 @@ is nullable. A deletion of a key the table does not hold yet leaves the same tra
 constraint keeps the live rows whole (`check (deleted or (status is not null and starts_at is
 not null))`), a query of your own on the table leaves the deleted rows out (`deleted = false`),
 and a table whose columns refuse NULL is refused with `ReadModelTableNotReadyError` before the first trace is written, from one read of the columns of the table
-([What a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)). `store.table` is what `ProjectionRebuild` takes; the rebuild is
+([What a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)). The
+fields of the model are optional as well (`String?`): the store reads the columns of the table,
+not the model, so a field left required over a nullable column makes the Prisma client refuse the
+trace with its own validation error, before any statement, and not with the named one. `store.table` is what `ProjectionRebuild` takes; the rebuild is
 PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
 meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees
 and limits are in the README of `@ddd-ts-kit/kernel` ("Rebuild"). The store passes
