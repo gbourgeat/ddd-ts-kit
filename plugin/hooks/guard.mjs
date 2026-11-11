@@ -1224,15 +1224,19 @@ function workerCommandReason(project, input, { context, command, commands }) {
 // A command that a `cd` further down the line, or an option of a package runner (`pnpm -C <dir> exec`,
 // `npm --prefix <dir> exec`), runs in another checkout: there a worker reads, and runs nothing.
 function elsewhereReason(project, commands) {
+  const elsewhere = (place) => (findProject(place)?.root ?? project.root) !== project.root;
+  const acts = (command) => !isPureReader(command) && !readsFromAnywhere(command);
+  // After a `cd` the guard cannot follow (`cd <dir>; cmd`, a subshell), a command runs where that
+  // `cd` leads when it succeeds: the checkout it names is where the command is judged.
+  const led = commands
+    .filter(({ words }) => ['cd', 'pushd'].includes(shell.commandName(words)))
+    .map(({ words, directory }) => shell.placeOf(words[1] ?? shell.UNKNOWN, directory ?? project.root))
+    .find((place) => place !== undefined && elsewhere(place));
   const moved = commands.find(
-    (command) =>
-      command.directory !== undefined &&
-      !isPureReader(command) &&
-      !readsFromAnywhere(command) &&
-      (findProject(command.directory)?.root ?? project.root) !== project.root,
+    (command) => acts(command) && (command.directory === undefined ? led !== undefined : elsewhere(command.directory)),
   );
   return moved
-    ? `A worker runs its commands in its own worktree: \`${shell.commandName(moved.words)}\` would run in ${moved.directory}, another checkout, where a worker only reads (\`git log\`, \`git diff\`, \`cat\`). ${REPORT_TO_CONDUCTOR}`
+    ? `A worker runs its commands in its own worktree: \`${shell.commandName(moved.words)}\` would run in ${moved.directory ?? led}, another checkout, where a worker only reads (\`git log\`, \`git diff\`, \`cat\`). ${REPORT_TO_CONDUCTOR}`
     : undefined;
 }
 
@@ -2289,9 +2293,10 @@ function workerScopeReason(project, file, input) {
 // Why `path` of the project is outside the scope of a worker of `context`, if it is.
 function contextScopeReason(project, path, context) {
   if (
-    path.startsWith(`${project.contextsDir}/${context}/`) ||
+    // The folder of the context itself is the scope too, for a tool given it whole.
+    `${path}/`.startsWith(`${project.contextsDir}/${context}/`) ||
     E2E_SPEC.test(path) ||
-    path.startsWith(`test/e2e/support/${context}/`) ||
+    `${path}/`.startsWith(`test/e2e/support/${context}/`) ||
     path === WORKER_REPORT ||
     prismaSchemaContext(path) === context ||
     isWorkingMigration(project, path) ||
@@ -3646,7 +3651,10 @@ function workerGitReason(project, input, commands) {
     if (changesRepository(subcommand, tail)) {
       return `\`git ${subcommand}\`: the worktrees and the refs of the repository are the conductor's. ${REPORT_TO_CONDUCTOR}`;
     }
-    if (!readsAnywhere(subcommand, tail) && (!isOwnCheckout(own, moved) || unpinnedAmongSeveral(project, input))) {
+    if (!readsAnywhere(subcommand, tail) && unpinnedAmongSeveral(project, input)) {
+      return `\`git ${subcommand}\`: this call names no worktree, and several workers have one in this repository. Run it as \`cd <worktree> && ...\`, with the worktree of your briefing.`;
+    }
+    if (!readsAnywhere(subcommand, tail) && !isOwnCheckout(own, moved)) {
       return `\`git ${subcommand}\` runs in ${moved ?? 'a place only the shell knows'}, not in your worktree: only the conductor lands a branch or moves its checkout. Run it as \`cd <worktree> && ...\`, and report to the conductor that the branch is ready.`;
     }
     const branch = () => workerBranch(own ?? findProject(moved).root, workerScope(project, input));
@@ -4117,9 +4125,15 @@ function writtenTargets(command) {
   const at = (target, by) => ({ place: shell.placeOf(target, command.directory), by });
   const redirected = command.redirects
     .filter(({ operator }) => OUTPUT_REDIRECTS.has(operator))
-    .map(({ operator, target }) =>
-      at(target, `the redirection \`${operator} ${target.replaceAll(shell.UNKNOWN, '$(...)')}\``),
-    );
+    .map(({ operator, target, wrapper, unread }) => {
+      const shown = target.replaceAll(shell.UNKNOWN, '$(...)');
+      // A wrapper writes a file of its own as a redirection does; one given an option the guard
+      // does not read may write anywhere.
+      const written = unread
+        ? `\`${wrapper}\`, given an option the guard does not read,`
+        : `\`${wrapper}\` writing its output to ${shown}`;
+      return at(target, wrapper ? written : `the redirection \`${operator} ${shown}\``);
+    });
 
   // A place of the temp directory that is a link elsewhere is the place it reaches; a device is itself.
   return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))]
@@ -4626,7 +4640,10 @@ function noteBeforeCode(project, input, commands) {
     trunks: trunkTips(project, input),
     worktree: snapshot(project, worktreeOutside(project, input), join(project.root, GUARD_HELD)),
     session: session && { ...snapshot(session, sessionOutside), root: session.root, scopes: scopeStates(session) },
-    packages: commands.some(installsPackages) ? undefined : packageStates(project, session),
+    // The kit's merge installs the packages itself when the lockfile changed, as an install does.
+    packages: commands.some((command) => installsPackages(command) || mergesWithTheKit(command))
+      ? undefined
+      : packageStates(project, session),
     script: sanctionedScripts(commands),
   });
 }
@@ -4691,6 +4708,10 @@ function startsTrunkMerge(command, base) {
 
 // Every `--trunk` of the command names the base, spaced or joined: given twice the CLI takes the
 // last, and a form with no value, or an option that only starts like it, is none the guard reads.
+function mergesWithTheKit(command) {
+  return kitInvocations([command]).some(({ subcommand }) => subcommand === 'merge-trunk');
+}
+
 function namesNoOtherTrunk(args, base) {
   return args.every((arg, index) => {
     if (!arg.startsWith('--trunk')) {

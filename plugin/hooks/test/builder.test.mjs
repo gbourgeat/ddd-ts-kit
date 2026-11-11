@@ -614,6 +614,8 @@ test('a command a runner or a later cd moves to another checkout is judged there
     `yarn --cwd ${other} exec tee src/contexts/billing/x.ts`,
     `pnpm --filter api exec tee src/contexts/billing/x.ts`,
     `pnpm -C ${other} exec -c 'tee src/contexts/billing/x.ts'`,
+    `pnpm --dir=${other} exec -c 'tee src/contexts/billing/x.ts'`,
+    'yarn exec tee src/contexts/billing/x.ts --cwd',
     `pnpm -C ${other} exec vitest run`,
     `cd ${other} && npm test`,
     `git worktree lock ${other}`,
@@ -629,6 +631,81 @@ test('a command a runner or a later cd moves to another checkout is judged there
   ]) {
     assert.equal(run('pre-bash', inOwn(command)).output, undefined, command);
   }
+});
+
+test('a wrapper or a program told where to run, and a cd of a later statement, are judged where the command runs', () => {
+  const { conductor, worktree, other } = twoWorkers();
+  const agent = builder('moved-by-wrapper', { cwd: conductor });
+  const inOwn = (command) => bash(conductor, `cd ${worktree} && ${command}`, agent);
+  assert.equal(run('pre-bash', inOwn('git status')).output, undefined);
+  put(worktree, 'src/contexts/billing/domain/invoice.ts', 'export {};\n');
+  for (const command of [
+    `env -C ${conductor} rm -r src/contexts/billing/domain`,
+    `env -C ${conductor} cp README.md src/contexts/billing/domain/`,
+    `env --chdir=${other} git add -A`,
+    `env -C ${other} git commit -m x`,
+    `nice env -C ${other} npm test`,
+    `sudo -D ${other} npm test`,
+    `sudo --chdir=${other} npm test`,
+    `make -C ${other}`,
+    `make -C${other} build`,
+    `make --directory=${other} build`,
+    `cmake --build ${other}`,
+    `npm --prefix ${other} run build`,
+    `npm --prefix=${other} test`,
+    `pnpm -C ${other} install`,
+    `pnpm --dir ${other} run build`,
+    `yarn --cwd ${other} build`,
+    `bun --cwd ${other} run build`,
+    `(cd ${other}; npm test)`,
+    `cd ${other}; npm test`,
+    `cd ${other}\nnpm test`,
+    `pushd ${other}; npm test`,
+    `cd ${other} || true; node tool.mjs`,
+    `cd "$SOMEWHERE"; cd ${other}; npm test`,
+  ]) {
+    assert.equal(decision(run('pre-bash', inOwn(command))), 'deny', command);
+  }
+  for (const command of [
+    `env -C ${worktree} npm test`,
+    `env -C ${worktree} rm -r src/contexts/billing/domain`,
+    `make -C ${worktree}/src/contexts/billing`,
+    `(cd ${other}; git log --oneline)`,
+    'cd src/contexts/billing; npm test',
+    'cd /tmp; ls',
+    'cd "$SOMEWHERE"; npm test',
+    'cd; ls',
+  ]) {
+    assert.equal(run('pre-bash', inOwn(command)).output, undefined, command);
+  }
+});
+
+test('git that versions, before any call named a worktree among several, is told to name it', () => {
+  const { worktree } = twoWorkers();
+  const agent = builder('unnamed-git', { cwd: worktree });
+  const refused = run('pre-bash', bash(worktree, 'git commit -am x', agent));
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /names no worktree, .* Run it as `cd <worktree> && \.\.\.`/);
+  assert.doesNotMatch(reason(refused), /not in your worktree/);
+});
+
+test('the merge of the kit may install the packages: they are not compared after it', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = builder('kit-merge', { cwd: conductor });
+  const manifest = join(worktree, 'node_modules/ddd-ts-kit/package.json');
+  for (const merge of ['merge-trunk --continue', 'merge-trunk --trunk work/shipping']) {
+    assert.equal(
+      run('pre-bash', bash(conductor, `cd ${worktree} && npx ddd-ts-kit ${merge}`, agent)).output,
+      undefined,
+    );
+    utimesSync(manifest, new Date(Date.now() - 60_000 * (merge.length + 1)), new Date(0));
+    assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent)).output, undefined, merge);
+  }
+  // Any other command is still compared.
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  utimesSync(manifest, new Date(1), new Date(1));
+  const refused = run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent));
+  assert.match(reason(refused), /The packages the guard runs changed/);
 });
 
 test('a pin an earlier version took that cannot be read holds every call, as one of this version does', () => {

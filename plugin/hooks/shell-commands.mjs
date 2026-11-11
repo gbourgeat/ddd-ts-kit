@@ -18,6 +18,8 @@ const HEREDOC = /^<<(-?)[ \t]*(?:'([^'\n]*)'|"([^"\n]*)"|\\?([^\s;&|()<>'"]+))/;
 export const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'fish']);
 // The options of a shell that take a value (`-o errexit`, `-O extglob`, `--rcfile <file>`).
 const SHELL_VALUED = new Set(['-o', '+o', '-O', '+O', '--rcfile', '--init-file']);
+// The redirections that take the standard output of a command.
+const OUTPUTS = new Set(['>', '>>', '>|', '&>', '&>>']);
 // Words that open or close a compound command: the command, if any, comes after them. `coproc`
 // starts a command in the background, its name after it.
 const KEYWORDS = new Set(['if', 'then', 'else', 'elif', 'do', 'while', 'until', '!', '{', '}', 'fi', 'done', 'coproc']);
@@ -26,10 +28,20 @@ const KEYWORDS = new Set(['if', 'then', 'else', 'elif', 'do', 'while', 'until', 
 // only a duration; `operand`, any one word), and `tail` marks what `xargs` builds from standard
 // input. A wrapper given only these options is read through to its command; given any other, the
 // guard cannot tell its value from the command, and reads every word after it as one (`hiddenCommands`).
+// A wrapper writes too: the file its `writes` options name, its `lock` file, the file it writes `out`
+// to when nothing else takes its output; and its `places` options name where the command runs.
 const WRAPPERS = {
-  sudo: { valued: ['-u', '-g', '-C', '-D', '-h', '-p', '-r', '-t', '-U'], flags: ['-E', '-H', '-n', '-S', '-k', '-b'] },
-  env: { valued: ['-u', '-C', '--unset', '--chdir'], flags: ['-i', '-', '--ignore-environment'] },
-  nice: { valued: ['-n', '--adjustment'], flags: [] },
+  sudo: {
+    valued: ['-u', '-g', '-C', '-D', '-h', '-p', '-r', '-t', '-U', '--chdir'],
+    flags: ['-E', '-H', '-n', '-S', '-k', '-b'],
+    places: ['-D', '--chdir'],
+  },
+  env: {
+    valued: ['-u', '-C', '--unset', '--chdir', '-S', '--split-string'],
+    flags: ['-i', '-', '--ignore-environment'],
+    places: ['-C', '--chdir'],
+  },
+  nice: { valued: ['-n', '--adjustment'], flags: [], numeric: true },
   timeout: {
     valued: ['-s', '-k', '--signal', '--kill-after'],
     flags: ['--preserve-status', '--foreground', '-v', '--verbose'],
@@ -38,6 +50,53 @@ const WRAPPERS = {
   time: {
     valued: ['-o', '-f', '--output', '--format'],
     flags: ['-p', '-v', '-a', '--portability', '--verbose', '--append'],
+    writes: ['-o', '--output'],
+  },
+  strace: {
+    valued: ['-o', '-e', '-p', '-s', '-u', '-E', '-P', '-a', '-I', '-b', '-O', '-S', '-U', '-X'],
+    flags: [
+      '-f',
+      '-ff',
+      '-c',
+      '-C',
+      '-q',
+      '-r',
+      '-t',
+      '-tt',
+      '-T',
+      '-v',
+      '-x',
+      '-y',
+      '-yy',
+      '-i',
+      '-k',
+      '-w',
+      '-z',
+      '-Z',
+    ],
+    writes: ['-o'],
+  },
+  ltrace: {
+    valued: ['-o', '-e', '-p', '-s', '-u', '-a', '-l', '-n', '-x', '-D', '-A'],
+    flags: ['-f', '-c', '-C', '-i', '-r', '-t', '-tt', '-T', '-S', '-L', '-b'],
+    writes: ['-o'],
+  },
+  'xvfb-run': {
+    valued: [
+      '-e',
+      '--error-file',
+      '-f',
+      '--auth-file',
+      '-n',
+      '--server-num',
+      '-s',
+      '--server-args',
+      '-p',
+      '-w',
+      '--wait',
+    ],
+    flags: ['-a', '--auto-servernum', '-l', '--listen-tcp'],
+    writes: ['-e', '--error-file', '-f', '--auth-file'],
   },
   stdbuf: { valued: ['-i', '-o', '-e'], flags: [] },
   xargs: {
@@ -47,7 +106,7 @@ const WRAPPERS = {
   },
   command: { valued: [], flags: ['-p'] },
   exec: { valued: ['-a'], flags: ['-c', '-l'] },
-  nohup: { valued: [], flags: [] },
+  nohup: { valued: [], flags: [], out: 'nohup.out' },
   builtin: { valued: [], flags: [] },
   ionice: { valued: ['-c', '-n', '-p', '-P', '-u'], flags: ['-t'] },
   setsid: { valued: [], flags: ['-w', '-f', '-c', '--wait', '--fork', '--ctty'] },
@@ -58,6 +117,7 @@ const WRAPPERS = {
     valued: ['-w', '--timeout', '-E', '--conflict-exit-code'],
     flags: ['-s', '-x', '-e', '-n', '-u', '-o', '--shared', '--exclusive', '--nonblock', '--unlock', '--close'],
     skip: 'operand',
+    lock: true,
   },
   doas: { valued: ['-u', '-C', '-a'], flags: ['-n'] },
   watch: { valued: ['-n', '--interval'], flags: ['-d', '-t', '-b', '-e', '-g', '-x', '--differences', '--no-title'] },
@@ -65,6 +125,22 @@ const WRAPPERS = {
   toybox: { valued: [], flags: [] },
   parallel: { valued: ['-j', '--jobs', '-S', '--sshlogin', '--results', '--joblog'], flags: ['-k', '--keep-order'] },
 };
+// `script` records a terminal in the file it is given, `typescript` by default, or in those its logs name.
+const SCRIPT = {
+  valued: ['-c', '--command', '-E', '--echo', '-o', '--output-limit', '-t', '-m', '--logging-format'],
+  flags: ['-a', '-e', '-f', '-q', '--append', '--return', '--flush', '--quiet', '--force'],
+  logs: ['-O', '--log-out', '-B', '--log-io', '-T', '--log-timing', '-I', '--log-in'],
+};
+// The programs told by an option where to run what they run.
+const PLACED = {
+  make: ['-C', '--directory'],
+  cmake: ['--build'],
+  npm: ['--prefix'],
+  pnpm: ['-C', '--dir'],
+  yarn: ['--cwd'],
+  bun: ['--cwd'],
+};
+
 // The programs read by a table: the wrappers, the shells and the runners here, the words of the
 // shell that run nothing by themselves, and those the guard names (`knowPrograms`). Any other first
 // word may be a wrapper the guard does not know.
@@ -113,11 +189,15 @@ export function simpleCommands(text, directory, depth = 0) {
     const words = unwrapped(command.words);
     // The variables set for the command alone (`X=1 cmd`, `env X=1 cmd`), which the program reads.
     const assigned = command.words.slice(0, command.words.length - words.length).filter(isAssignment);
-    found.push({ ...command, words, assigned, directory: current });
-    current = movedTo(command, words, { current, stack, blocks });
-    found.push(...nestedCommands(words, current, depth));
-    found.push(...wrappedCommands(command.words, current, depth));
-    found.push(...hiddenCommands(command.words, current, depth));
+    // Where its wrappers send it, and the files they write themselves, as redirections of it.
+    const { place, writes } = wrapperEffects(command.words, current, command.redirects);
+    found.push({ ...command, words, assigned, directory: place, redirects: [...command.redirects, ...writes] });
+    const next = movedTo(command, words, { current, stack, blocks });
+    const inside = place === current ? next : place;
+    found.push(...nestedCommands(words, inside, depth));
+    found.push(...wrappedCommands(command.words, inside, depth));
+    found.push(...hiddenCommands(command.words, inside, depth));
+    current = next;
   }
 
   return found;
@@ -171,9 +251,17 @@ function wrappedCommands(words, directory, depth) {
   const moved = wrapped.moved === undefined ? directory : placeOf(wrapped.moved, directory);
   return [
     ...given.flatMap((text) => simpleCommands(text, directory, depth + 1)),
-    ...(wrapped.texts ?? []).flatMap((text) => simpleCommands(text, moved, depth + 1)),
+    ...guessed(wrapped.guessed, () => (wrapped.texts ?? []).flatMap((text) => simpleCommands(text, moved, depth + 1))),
     ...(wrapped.words ? runCommands(wrapped.words, moved, depth + 1) : []),
   ];
+}
+
+/** Reads `texts` as guesses when they are (`guessing`), for the time of that reading. */
+function guessed(guesses, read) {
+  guessing += guesses ? 1 : 0;
+  const found = read();
+  guessing -= guesses ? 1 : 0;
+  return found;
 }
 
 /**
@@ -186,19 +274,20 @@ function runCommands(inner, directory, depth, hidden = true) {
     return [unreadMarker('nested', directory, depth)];
   }
   const words = unwrapped(inner);
+  const { place, writes } = wrapperEffects(inner, directory, []);
   const command = {
     words,
     assigned: inner.slice(0, inner.length - words.length).filter(isAssignment),
-    redirects: [],
+    redirects: writes,
     heredoc: false,
     piped: false,
-    directory,
+    directory: place,
   };
   return [
     command,
-    ...nestedCommands(words, directory, depth),
-    ...wrappedCommands(inner, directory, depth),
-    ...(hidden ? hiddenCommands(inner, directory, depth) : []),
+    ...nestedCommands(words, place, depth),
+    ...wrappedCommands(inner, place, depth),
+    ...(hidden ? hiddenCommands(inner, place, depth) : []),
   ];
 }
 
@@ -383,21 +472,128 @@ function wrappedOf(words) {
  * `known` is asked, an option the table does not hold answers undefined: its value, if it takes one,
  * cannot be told from the command.
  */
-function afterOptions(words, { valued, flags, skip }, known) {
-  let index = 0;
-  while (index < words.length && (words[index].startsWith('-') || isAssignment(words[index]))) {
-    const [name] = words[index].split('=');
-    const read =
-      isAssignment(words[index]) || flags.includes(words[index]) || valued.includes(name) || words[index] === '--';
-    if (known && !read) {
-      return undefined;
-    }
-    index += valued.includes(words[index]) ? 2 : 1;
+function afterOptions(words, spec, known) {
+  const { index, unknown } = readOptions(words, spec);
+  if (known && unknown) {
+    return undefined;
   }
-  if (skip === 'number') {
+  if (spec.skip === 'number') {
     return /^\d/.test(words[index] ?? '') ? words.slice(index + 1) : words.slice(index);
   }
-  return skip === 'operand' ? words.slice(index + 1) : words.slice(index);
+  return spec.skip === 'operand' ? words.slice(index + 1) : words.slice(index);
+}
+
+/**
+ * The leading options of a wrapper: the `index` after them, the `values` of those that take one
+ * (spaced, after `=`, or joined to a short option: `-o file`, `--output=file`, `-ofile`), and whether
+ * one of them is `unknown` to the table.
+ */
+function readOptions(words, { valued, flags, numeric }) {
+  const read = { index: 0, values: [], unknown: false };
+  while (read.index < words.length && (words[read.index].startsWith('-') || isAssignment(words[read.index]))) {
+    const word = words[read.index];
+    const [name, ...joined] = word.split('=');
+    const short = word.slice(0, 2);
+    if (valued.includes(word)) {
+      read.values.push([word, words[read.index + 1]]);
+      read.index += 1;
+    } else if (joined.length > 0 && valued.includes(name)) {
+      read.values.push([name, joined.join('=')]);
+    } else if (!word.startsWith('--') && word.length > 2 && valued.includes(short)) {
+      read.values.push([short, word.slice(2)]);
+    } else {
+      // `--help` and `--version` run no command; `--` ends the options.
+      const plain =
+        isAssignment(word) ||
+        flags.includes(word) ||
+        ['--', '--help', '--version'].includes(word) ||
+        (numeric && /^-\d+$/.test(word));
+      read.unknown ||= !plain;
+    }
+    read.index += 1;
+  }
+  return read;
+}
+
+/**
+ * What the wrappers of a command do besides running it: the `place` it runs in, when one of them or
+ * the program itself is told (`env -C <dir>`, `make -C <dir>`, `npm --prefix <dir> run`), and the
+ * files they write themselves, as output redirections of the command (`writes`): the report of
+ * `time -o`, the log of `strace -o` or `script`, the lock of `flock`, `nohup.out` when nothing else
+ * takes the output. A wrapper given an option the table does not hold may write anywhere.
+ */
+function wrapperEffects(words, directory, redirects) {
+  let rest = words;
+  let place = directory;
+  const writes = [];
+  const write = (wrapper, target, unread) =>
+    writes.push({ operator: '>', target: target ?? UNKNOWN, wrapper, ...(unread ? { unread } : {}) });
+  for (let layer = 0; layer < LAYERS; layer += 1) {
+    const name = commandName(rest);
+    const spec = WRAPPERS[name];
+    if (isAssignment(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
+      rest = rest.slice(1);
+      continue;
+    }
+    if (!spec) {
+      break;
+    }
+    const args = rest.slice(1);
+    const read = readOptions(args, spec);
+    for (const [flag, value] of read.values) {
+      if (spec.writes?.includes(flag)) {
+        write(name, value);
+      }
+      if (spec.places?.includes(flag)) {
+        place = placeOf(value ?? UNKNOWN, place);
+      }
+    }
+    // A text read word by word, for want of knowing which word starts the command, is no command
+    // the guard knows to carry these options.
+    if (read.unknown && guessing === 0) {
+      write(name, undefined, true);
+    }
+    if (spec.lock) {
+      write(name, args[read.index]);
+    }
+    if (spec.out && !redirects.some(({ operator }) => OUTPUTS.has(operator))) {
+      write(name, spec.out);
+    }
+    rest = afterOptions(args, spec, false);
+  }
+  const name = commandName(rest);
+  if (name === 'script') {
+    const read = readOptions(rest.slice(1), { ...SCRIPT, valued: [...SCRIPT.valued, ...SCRIPT.logs] });
+    const logs = read.values.filter(([flag]) => SCRIPT.logs.includes(flag));
+    const file = rest[read.index + 1];
+    for (const target of [
+      ...logs.map(([, value]) => value),
+      ...(file || logs.length === 0 ? [file ?? 'typescript'] : []),
+    ]) {
+      write(name, target);
+    }
+    if (read.unknown) {
+      write(name, undefined, true);
+    }
+  }
+  if (name in PLACED && runnerCommand(rest)?.words === undefined) {
+    place = toldPlace(rest.slice(1), PLACED[name], place);
+  }
+  return { place, writes };
+}
+
+// The directory one of `options` names among the words, spaced, after `=` or joined (`-C<dir>`), from `place`.
+function toldPlace(args, options, place) {
+  let told = place;
+  args.forEach((word, index) => {
+    const option = options.find((name) => word === name || word.startsWith(`${name}=`) || /^-C./.test(word));
+    if (option && options.includes(word)) {
+      told = placeOf(args[index + 1] ?? UNKNOWN, told);
+    } else if (option) {
+      told = placeOf(word.startsWith(`${option}=`) ? word.slice(option.length + 1) : word.slice(2), told);
+    }
+  });
+  return told;
 }
 
 /** The commands a command runs itself: a shell given `-c`, `eval`, the `-exec` of `find`. */
@@ -518,6 +714,8 @@ const CALL_SETTING = /^npm_config_call=(.+)$/is;
 // The options by which any runner is told where to run its command.
 const PLACE_OPTION = /^(?:-C|-F|-w|--dir|--prefix|--cwd|--filter|--workspace)(?:=|$)/;
 let shellAsked = false;
+// Above zero while the words of an invocation the guard could not read in full are read as texts.
+let guessing = 0;
 
 // What a package runner runs. When the invocation has the one shape the guard reads in full (the
 // runner, its subcommand, options it knows on either side of it, then a program named plainly and
@@ -545,9 +743,19 @@ function runnerCommand(words) {
     return undefined;
   }
   return {
+    guessed: true,
     texts: rest.flatMap((word, index) => textsFrom(word, rest.slice(index + 1))),
-    ...(rest.some((word) => PLACE_OPTION.test(word)) ? { moved: UNKNOWN } : {}),
+    ...(rest.some((word) => PLACE_OPTION.test(word)) ? { moved: toldDirectory(rest) } : {}),
   };
+}
+
+// Where an invocation the guard does not read in full is told to run: the directory of `-C`, `--dir`,
+// `--prefix` or `--cwd`, and a place only the runner knows for a workspace or a filter.
+function toldDirectory(rest) {
+  const at = rest.findIndex((word) => PLACE_OPTION.test(word));
+  const [name, ...joined] = rest[at].split('=');
+  const value = joined.length > 0 ? joined.join('=') : rest[at + 1];
+  return ['-C', '--dir', '--prefix', '--cwd'].includes(name) && value !== undefined ? value : UNKNOWN;
 }
 
 // A word read as the start of a command line, with the words after it; the value an option carries

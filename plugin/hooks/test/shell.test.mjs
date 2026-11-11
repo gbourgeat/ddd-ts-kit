@@ -123,11 +123,11 @@ const COMPUTED_AND_WRAPPED = [
   ['setsid rm src/main.ts', /`rm` changes src\/main\.ts/],
   ['taskset -c 0 rm src/main.ts', /`rm` changes src\/main\.ts/],
   ['chrt 0 rm src/main.ts', /`rm` changes src\/main\.ts/],
-  ['flock /tmp/lock rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['flock /dev/null rm src/main.ts', /`rm` changes src\/main\.ts/],
   ['taskset 0x3 rm src/main.ts', /`rm` changes src\/main\.ts/],
   ['parallel -j 4 rm src/main.ts', /`rm` changes src\/main\.ts/],
-  ["flock /tmp/lock -c 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
-  ["flock /tmp/lock --command 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
+  ["flock /dev/null -c 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
+  ["flock /dev/null --command 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
   ['doas rm src/main.ts', /`rm` changes src\/main\.ts/],
   ['watch rm src/main.ts', /`rm` changes src\/main\.ts/],
   ['parallel rm src/main.ts', /`rm` changes src\/main\.ts/],
@@ -143,7 +143,7 @@ const COMPUTED_AND_WRAPPED = [
   ['pnpm dlx rm src/main.ts', /`rm` changes src\/main\.ts/],
   ['yarn dlx rm src/main.ts', /`rm` changes src\/main\.ts/],
   ['su -c "rm src/main.ts" builder', /`rm` changes src\/main\.ts/],
-  ['script -c "rm src/main.ts" /tmp/typescript', /`rm` changes src\/main\.ts/],
+  ['script -c "rm src/main.ts" /dev/null', /`rm` changes src\/main\.ts/],
   ["env -S 'cp a src/main.ts'", /`cp` changes src\/main\.ts/],
   ["env -S'cp a src/main.ts'", /`cp` changes src\/main\.ts/],
   ["env --split-string 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
@@ -362,15 +362,14 @@ const BEHIND_ANY_WRAPPER = [
   'nice -19 rm src/main.ts',
   'timeout --kill-after=1 5 rm src/main.ts',
   'setsid -w rm src/main.ts',
-  'nohup -- rm src/main.ts',
-  'sudo -A rm src/main.ts',
+  'nohup -- rm src/main.ts > /dev/null',
   'doas -n rm src/main.ts',
   'watch -x rm src/main.ts',
   'env -u NAME rm src/main.ts',
   'env --unset=NAME rm src/main.ts',
   'chrt -f 1 rm src/main.ts',
   'taskset -c 0 rm src/main.ts',
-  'flock -n /tmp/lock rm src/main.ts',
+  'flock -n /dev/null rm src/main.ts',
   'a-tool-of-the-project rm src/main.ts',
   './scripts/run.sh rm src/main.ts',
   'npx time -p rm src/main.ts',
@@ -495,4 +494,75 @@ test('a cd that CDPATH sends elsewhere leaves the place of what follows to the s
   assert.equal(run('pre-bash', bash(worktree, command, agent)).output, undefined);
   const elsewhere = run('pre-bash', bash(worktree, command, agent), { CDPATH: conductor });
   assert.equal(decision(elsewhere), 'deny');
+});
+
+// A wrapper that writes a file of its own (its report, its log, its lock) writes it as a redirection
+// does; one given an option the guard does not know may write anywhere.
+const WRAPPER_WRITES = [
+  ['command time -o src/main.ts true', /`time` writing its output to src\/main\.ts/],
+  ['/usr/bin/time -o src/main.ts true', /`time` writing its output to src\/main\.ts/],
+  ['\\time -a -o src/main.ts true', /`time` writing its output to src\/main\.ts/],
+  ['time --output=src/main.ts true', /`time` writing its output to src\/main\.ts/],
+  ['time -osrc/main.ts true', /`time` writing its output to src\/main\.ts/],
+  ['nice time -o src/main.ts true', /`time` writing its output to src\/main\.ts/],
+  ['strace -o src/main.ts true', /`strace` writing its output to src\/main\.ts/],
+  ['ltrace -o src/main.ts true', /`ltrace` writing its output to src\/main\.ts/],
+  ['xvfb-run -e src/main.ts true', /`xvfb-run` writing its output to src\/main\.ts/],
+  ['xvfb-run --error-file=src/main.ts true', /`xvfb-run` writing its output to src\/main\.ts/],
+  ['flock src/main.ts true', /`flock` writing its output to src\/main\.ts/],
+  ['script src/main.ts', /`script` writing its output to src\/main\.ts/],
+  ['script -q -O src/main.ts -c true', /`script` writing its output to src\/main\.ts/],
+  ['script --log-out=src/main.ts -c true', /`script` writing its output to src\/main\.ts/],
+  ['script -c true', /`script` writing its output to typescript/],
+  ['nohup true', /`nohup` writing its output to nohup\.out/],
+  ['npx nohup true', /`nohup` writing its output to nohup\.out/],
+  ['time -o "$REPORT" true', /writes files only the shell knows/],
+  ['time -o', /writes files only the shell knows/],
+  ['sudo -A true', /`sudo`, .* writes files only the shell knows/],
+  ['timeout --unknown 5 true', /`timeout`, .* writes files only the shell knows/],
+];
+
+test('a wrapper that writes a file of its own is held to the scope for it, as a redirection is', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'ordering');
+  for (const [command, expected] of WRAPPER_WRITES) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  for (const command of [
+    'time -o src/contexts/ordering/time.log true',
+    'time -o /dev/null true',
+    'time -p true',
+    'nohup true > /dev/null',
+    'nohup true >> src/contexts/ordering/run.log 2>&1',
+    'flock /dev/null true',
+    'script -q -c true /dev/null',
+    'stdbuf -oL true',
+    'nice -19 true',
+    'timeout -s9 5 true',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
+test('the root of the context of a worker is inside its scope, for a tool that writes under it', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'ordering');
+  for (const command of [
+    'npx --no eslint src/contexts/ordering --fix',
+    'npx --no eslint src/contexts/ordering/ --fix',
+    'npx --no eslint --fix test/e2e/support/ordering',
+    'touch src/contexts/ordering',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  for (const command of [
+    'npx --no eslint src/contexts --fix',
+    'npx --no eslint src/contexts/billing --fix',
+    'npx --no eslint src/contexts/ordering-archive --fix',
+    'npx --no eslint test/e2e/support --fix',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, agent))), 'deny', command);
+  }
 });
