@@ -1,3 +1,0 @@
-**In the process, the projections of an integration event apply before the handlers that react to it.** `@ddd-ts-kit/di` subscribed the consumers of an event in the order of the modules, so a handler declared in a context listed before the one of a projection ran first and read a read model the event had not reached yet. The projections now subscribe first, whatever the order of the modules: on the in-memory bus, and on what the outbox relay publishes to it, a handler reads the row the same event wrote. On a broker each consumer has its own queue and nothing orders them, as before.
-
-To move: nothing. A handler that relied on running before a projection of the same event, which nothing promised, now runs after it.
