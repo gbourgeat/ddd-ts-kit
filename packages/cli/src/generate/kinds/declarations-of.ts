@@ -21,7 +21,7 @@ export function declarationsOf(scope: Scope, upstream: string, eventType: string
 }
 
 function declarationIn(scope: Scope, { name, file, version }: EventDefinition): EventDeclaration | undefined {
-  const exported = [...(scope.ws.read(file) ?? '').matchAll(/export type (\w+) = IntegrationEvent</g)].map(
+  const exported = [...(scope.ws.read(file) ?? '').matchAll(/export\s+type\s+(\w+)\s*=\s*IntegrationEvent\s*</g)].map(
     (match) => match[1] ?? '',
   );
 

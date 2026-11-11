@@ -30,7 +30,7 @@ function installEslint(messages: readonly Message[], meta: Readonly<Record<strin
       '  constructor(options) { this.options = options; const { cache, cacheLocation, cacheStrategy } = options; fs.writeFileSync("cache.json", JSON.stringify({ cache, cacheLocation, cacheStrategy })); }',
       '  static async outputFixes() {}',
       '  async lintFiles(patterns) {',
-      "    fs.writeFileSync('asked.json', JSON.stringify({ patterns, fix: this.options.fix }));",
+      "    fs.writeFileSync('asked.json', JSON.stringify({ patterns, fix: this.options.fix, ignores: this.options.overrideConfig?.[0]?.ignores }));",
       "    if (patterns.includes('nothere.ts')) throw Object.assign(new Error('No files matching'), { messageTemplate: 'file-not-found' });",
       "    return [{ filePath: 'src/a.ts', messages }];",
       '  }',
@@ -124,6 +124,27 @@ describe('ddd-ts-kit lint', () => {
     expect(cli(root, 'lint').code).toBe(0);
     expect(exists(root, '.eslintcache/.cache_1')).toBe(false);
     expect(read(root, '.eslintcache/key')).not.toBe(key);
+  });
+
+  it('leaves out what each --ignore-pattern names, the line affected writes for a partial run', () => {
+    installEslint([]);
+
+    const result = cli(
+      root,
+      'lint',
+      '--ignore-pattern',
+      'src/contexts/catalog/',
+      '--ignore-pattern',
+      'src/contexts/shipping/',
+    );
+
+    expect(result.code).toBe(0);
+
+    expect(JSON.parse(read(root, 'asked.json'))).toEqual({
+      patterns: ['.'],
+      fix: false,
+      ignores: ['src/contexts/catalog/', 'src/contexts/shipping/'],
+    });
   });
 
   it('lints every file again with --no-cache, and leaves the cache where it was', () => {

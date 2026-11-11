@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:01e5fecbd0903753 -->
+<!-- translation-of: commands.md sha256:d45339d618eb2892 -->
 
 # Quelle commande, quand
 
@@ -331,7 +331,7 @@ Usage
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
   ddd-ts-kit check --commit-size [--staged] [--strict]
   ddd-ts-kit check-file <path> [--content-from <file>] [--rule <id>]...
-  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache]
+  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache] [--ignore-pattern <pattern>]...
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 

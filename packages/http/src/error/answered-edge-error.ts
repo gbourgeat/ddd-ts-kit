@@ -81,7 +81,7 @@ function refusalOf(error: unknown): EdgeRefusal {
   }
 
   if (status === CONTENT_TOO_LARGE) {
-    return bodyTooLarge(numberAt(error, 'limit'));
+    return bodyTooLarge(numberAt(error, 'limit') ?? numberAt(parserError(error), 'limit'));
   }
 
   return { status, title: statusTitle(status), code: codeOfStatus(status) };
@@ -96,11 +96,16 @@ function statusOf(error: unknown): number | undefined {
     : undefined;
 }
 
-/** The `type` body-parser gives its errors, else the `code` of a Fastify error. */
+/** The `type` body-parser gives its errors, else the `code` of a Fastify error, else the `type` of the error a framework wrapped. */
 function kindOf(error: unknown): string | undefined {
-  const kind = textAt(error, 'type') ?? textAt(error, 'code');
+  const kind = textAt(error, 'type') ?? textAt(error, 'code') ?? textAt(parserError(error), 'type');
 
   return kind !== undefined && KIND.test(kind) ? kind : undefined;
+}
+
+/** The error of body-parser that Nest over Express, since 12.3, hands as the `cause` of an `HttpException`. */
+function parserError(error: unknown): unknown {
+  return valueAt(error, 'cause');
 }
 
 function typeOf(error: unknown): string {
