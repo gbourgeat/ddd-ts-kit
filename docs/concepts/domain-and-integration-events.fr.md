@@ -1,5 +1,5 @@
 [English](domain-and-integration-events.md) · **Français**
-<!-- translation-of: domain-and-integration-events.md sha256:2c9c3f2a096dff10 -->
+<!-- translation-of: domain-and-integration-events.md sha256:b761cced8eef1472 -->
 
 # Événements du domaine et événements d'intégration
 
@@ -325,6 +325,16 @@ commande a rendu la main, toujours dans la transaction, la file est distribuée.
 peut enregistrer un agrégat : ses événements rejoignent la file derrière ceux qui attendent,
 selon la même règle d'ordre, sans récursion. Un gestionnaire peut ajouter une ligne à l'outbox.
 Puis la transaction est validée, et les gestionnaires de la phase `after-commit` s'exécutent.
+
+Les gestionnaires des deux phases s'exécutent dans le contexte d'exécution du `save` qui a
+enregistré l'événement : son tenant, son acteur, son identifiant de corrélation. Cela compte
+quand une commande s'exécute dans une autre pour un autre tenant (un relais qui n'en a pas, qui
+remet chaque message à l'organisation à laquelle il appartient) : la commande interne rejoint
+l'unité de travail de la commande englobante, ses événements sont distribués à la fin de
+celle-ci, et ce que leurs gestionnaires publient porte toujours le tenant de la commande interne.
+Un repository enveloppé à la main prend le scope en troisième argument :
+`dispatchingOnSave(repository, () => dispatcher, () => scope)` ; sans lui, les gestionnaires
+s'exécutent dans le contexte de l'unité de travail.
 
 | | Garanties | Quand il échoue | Livraison |
 |---|---|---|---|

@@ -1,4 +1,5 @@
 import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
 import { announceDomainEvents } from './announce-domain-events';
 import { recordedAggregates } from './recorded-aggregates';
 import { SaveAfterCommitError } from './save-after-commit-error';
@@ -7,6 +8,9 @@ import { unitOfWorkScope } from './unit-of-work-scope';
 type Method = (this: unknown, ...args: unknown[]) => unknown;
 
 type Dispatching = () => Pick<DomainEventDispatcher, 'dispatch'>;
+
+/** The execution scope of the application, asked for at each save; none where the application binds none. */
+type Scoping = () => ExecutionScope | undefined;
 
 const wrapped = new WeakSet<object>();
 
@@ -24,8 +28,12 @@ const wrapped = new WeakSet<object>();
  * answered and wrapping twice is a no-op; a sealed or frozen one is fronted by a proxy. The
  * dispatcher is asked for at each dispatch. An adapter contains no dispatch code: one that
  * pulls the events itself leaves nothing to dispatch here.
+ *
+ * Given the execution scope, the handlers run in the execution context of the save (its tenant, its
+ * actor, its correlation id), also when the unit of work that dispatches them was opened in another:
+ * a command run inside another one, for another tenant.
  */
-export function dispatchingOnSave<T extends object>(repository: T, dispatcher: Dispatching): T {
+export function dispatchingOnSave<T extends object>(repository: T, dispatcher: Dispatching, scope?: Scoping): T {
   if (wrapped.has(repository)) {
     return repository;
   }
@@ -33,7 +41,7 @@ export function dispatchingOnSave<T extends object>(repository: T, dispatcher: D
   const wrappers = new Map<string, Method>();
 
   for (const [name, method] of methodsOf(repository)) {
-    wrappers.set(name, announcing(method, dispatcher));
+    wrappers.set(name, announcing(method, dispatcher, scope));
   }
 
   const result = Object.isExtensible(repository) ? shadowed(repository, wrappers) : proxied(repository, wrappers);
@@ -75,13 +83,14 @@ function isMethod(value: unknown): value is Method {
 }
 
 /** Async when the method is declared so, for what reads it later (tracing, an aspect) to see an asynchronous method. */
-function announcing(original: Method, dispatcher: Dispatching): Method {
+function announcing(original: Method, dispatcher: Dispatching, scope: Scoping | undefined): Method {
   const announced = async (args: readonly unknown[], result: unknown): Promise<unknown> => {
     const value = await result;
 
     await announceDomainEvents(
       recordedAggregates(args).flatMap((aggregate) => aggregate.pullEvents()),
       dispatcher(),
+      scope?.(),
     );
 
     return value;

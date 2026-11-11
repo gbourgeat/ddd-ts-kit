@@ -120,7 +120,12 @@ function wrapBindings(builder: ModuleBuilder, { binding }: Instrumentation): voi
 
   builder.around(
     ['repository'],
-    (resolve) => (repository) => dispatchingOnSave(repository, () => resolve(DomainEventDispatcher)),
+    (resolve) => (repository) =>
+      dispatchingOnSave(
+        repository,
+        () => resolve(DomainEventDispatcher),
+        () => resolve(ExecutionScope),
+      ),
   );
 }
 

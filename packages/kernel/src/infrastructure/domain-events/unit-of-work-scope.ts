@@ -3,11 +3,18 @@ import type { DomainEventDispatcher } from '../../application/ports/domain-event
 import type { DomainEvent } from '../../domain/domain-event';
 import type { CommitStep } from './commit-step';
 
-/** One event waiting for the end of its scope: who dispatches it, and in which asynchronous context. */
+/** Runs the work somewhere: in an asynchronous context, in an execution context. */
+export type Within = <T>(work: () => T) => T;
+
+/**
+ * One event waiting for the end of its scope: who dispatches it, in which asynchronous context, and in
+ * which execution context (`inContext`: that of the save that recorded it, kept in both phases).
+ */
 export interface QueuedDomainEvent {
   readonly event: DomainEvent;
   readonly dispatcher: Pick<DomainEventDispatcher, 'dispatch'>;
-  readonly within: <T>(work: () => T) => T;
+  readonly within: Within;
+  readonly inContext: Within;
 }
 
 /**
