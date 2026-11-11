@@ -3,12 +3,12 @@ import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
 import { named } from '../named';
-import { WITH_DATABASE } from '../../stack/with-database';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { wire } from '../wire';
 import { generateEventSourcedRepository } from './generate-event-sourced-repository';
 import { isEventSourced } from './is-event-sourced';
+import { noteTheMigration } from './note-the-migration';
 import { declareStorage } from './declare-storage';
 import { personalVars } from './personal-data/personal-vars';
 import { REPOSITORY_ADAPTERS } from './repository-adapter';
@@ -47,24 +47,6 @@ export function generateRepository(scope: Scope, aggregate: Name): RenderContext
   return context;
 }
 
-/** The specs pass on the in-process database, which builds from the schema: nothing else says that a deployed one lacks the table. */
-function noteTheMigration(scope: Scope): void {
-  const { orm } = scope.config.stack;
-
-  if (!WITH_DATABASE.includes(orm)) {
-    return;
-  }
-
-  const generate =
-    orm === 'typeorm'
-      ? 'npm run build && npm run db:generate migrations/<what-it-does>'
-      : 'npm run db:generate <what-it-does>';
-
-  scope.ws.note(
-    `The table reaches no database until \`${generate}\` writes its migration and \`npm run db:migrate\` applies it: the specs pass before that, on the in-process database.`,
-  );
-}
-
 const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex', 'prisma', 'typeorm'];
 
 /**
@@ -74,7 +56,7 @@ const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex', 'prisma', 'typeorm
  * `tenantCondition`, `tenantWhere`). Defence in depth: the permission is still decided in the
  * application layer.
  */
-function tenantVars(scope: Scope): RenderContext {
+export function tenantVars(scope: Scope): RenderContext {
   const { config } = scope;
   const inherited = config.stack.tenancy !== 'none' && !isControlPlane(config, scope.context.kebab);
   const asked = scope.flags.tenantScoped || inherited;

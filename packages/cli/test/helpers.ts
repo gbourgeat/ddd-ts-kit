@@ -124,6 +124,17 @@ function scaffoldDecoratedAdapter(step: Step): void {
 
 const term = (row: string): string[] => ['--term', row];
 
+const field = (declared: string): string[] => ['--field', declared];
+
+const READ_MODEL_FIELDS = [
+  'customerId:string',
+  'total:decimal',
+  'issuedAt:instant',
+  'paidAt:instant:nullable',
+  'lines:number',
+  'overdue:boolean',
+];
+
 function scaffoldBilling(step: Step, withHttp: boolean, grant: (role: string) => string[]): void {
   const purpose = 'Bills customers for what they bought. Owns invoices from draft to payment.';
 
@@ -140,6 +151,8 @@ function scaffoldBilling(step: Step, withHttp: boolean, grant: (role: string) =>
   step('generate', 'domain-event', 'billing', 'Invoice', 'Issued');
   step('generate', 'domain-service', 'billing', 'Pricing', ...term('Price=What a customer pays for one item'));
   step('generate', 'repository', 'billing', 'Invoice');
+  // A read model beside the table of an aggregate, with a field of each type.
+  step('generate', 'read-model', 'billing', 'IssuedInvoices', ...READ_MODEL_FIELDS.flatMap(field));
 
   step(
     'generate',
@@ -268,6 +281,8 @@ function scaffoldOrderFulfilment(step: Step, withHttp: boolean, grant: (role: st
   step('generate', 'aggregate', 'order-fulfilment', 'PurchaseOrder', '--birth', 'Purchase Order Placed');
   step('generate', 'builder', 'order-fulfilment', 'PurchaseOrder', '--force');
   step('generate', 'repository', 'order-fulfilment', 'PurchaseOrder', '--tenant-scoped');
+  // A read model of tenant data, beside the table of an aggregate.
+  step('generate', 'read-model', 'order-fulfilment', 'OrderBoard', '--tenant-scoped', ...field('placedAt:instant'));
 
   step(
     'generate',

@@ -6,6 +6,7 @@ export const NO_FLAGS: KindFlags = {
   term: [],
   value: [],
   transition: [],
+  field: [],
   command: false,
   query: false,
   allowName: false,

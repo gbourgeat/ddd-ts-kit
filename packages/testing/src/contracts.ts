@@ -78,6 +78,7 @@ export {
   type PersonalDataRetentionUnderContract,
 } from './contracts/personal-data-retention-contract';
 export type { PersonalDataUnderContract } from './contracts/personal-data/personal-data-under-contract';
+export { readModelContract, type ReadModelContractOptions } from './contracts/read-model-contract';
 export { readModelRowsContract, type ReadModelRowsContractOptions } from './contracts/read-model-rows-contract';
 export { readModelStoreContract, type ReadModelStoreContractOptions } from './contracts/read-model-store-contract';
 export type { ReadModelRowsUnderContract } from './contracts/read-model/read-model-rows-under-contract';

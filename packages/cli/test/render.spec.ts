@@ -97,6 +97,7 @@ describe('shipped templates', () => {
         'projection',
         'property',
         'query',
+        'read-model',
         'repository',
         'route',
         'sdk',

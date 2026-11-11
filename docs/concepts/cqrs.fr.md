@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:99030f69174d7a01 -->
+<!-- translation-of: cqrs.md sha256:234e3488d8278043 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -211,7 +211,7 @@ qu'on le trouve.
   sourcing* sont des patrons indépendants que l'on présente souvent ensemble : un agrégat dont
   l'historique est le métier peut passer à l'*event sourcing* pendant que les autres gardent
   leurs lignes ([L'event sourcing, par agrégat](event-sourcing.fr.md)).
-- **Pas de base de lecture séparée, et pas de stockage de lecture généré.** Une projection est
+- **Pas de base de lecture séparée.** Une projection est
   une table du contexte consommateur. Les *packages* d'exécution portent le côté lecture : `Criteria` (les
   filtres, le tri et la page d'une liste, vérifiés contre une définition), l'hydratation, le port
   `ReadModelStore` avec un registre en table SQL, les déclarations `@Projection` et `@On` d'un
@@ -221,8 +221,17 @@ qu'on le trouve.
   `generate projection <context> <Name> <event-type>` écrit un projecteur et sa *spec*, dans le
   les deux styles (dans le style explicite sur tsyringe, le fichier de module du contexte
   l'inclut par `builder.include(<Name>Projection)` ; sur une plateforme câblée à la main, la
-  classe est simple et le module la souscrit sous son nom de consommateur) ; le port du modèle de lecture et son adaptateur de
-  stockage viennent de `generate port` et du *package* ORM. L'état de chaque partie est dans la
+  classe est simple et le module la souscrit sous son nom de consommateur), et
+  `generate read-model <context> <Name> --field <name>:<type>...` écrit le modèle de lecture
+  qu'il tient : le port au-dessus de `ReadModelStore` avec le type de sa ligne et ses critères, la
+  table dans le schéma du contexte, l'adaptateur de stockage de l'ORM du projet lié au port, le
+  *fake*, et une *spec* qui lance `readModelContract` sur les deux. Les colonnes des champs
+  acceptent null, puisqu'une ligne supprimée est une trace qui ne garde que sa clé et son tampon
+  ([ce que laisse une ligne supprimée](#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)),
+  et une contrainte de vérification, `<table>_live_rows_whole`, garde entière toute autre ligne (sur Prisma, dont le langage de
+  schéma n'en a pas, l'instruction reste à ajouter à la migration) ; une colonne de texte qu'une
+  lecture trie ou compare par intervalle prend la collation `"C"` dans sa migration, les critères
+  ordonnant les chaînes par point de code. L'état de chaque partie est dans la
   [proposition sur le côté lecture](../proposals/read-side.fr.md).
 - **Pas de performance en soi.** Deux chemins de code sur une seule base de données passent à
   l'échelle comme une seule base de données.
@@ -327,13 +336,14 @@ suppression livrée avant la création qu'elle suit insère la trace, et la cré
   exécutée est vue elle aussi, et jamais par une requête qui ferait échouer la transaction de
   l'événement. Sur Prisma, les champs du modèle sont optionnels eux aussi (`String?`).
 - **Une contrainte de vérification garde entières les lignes vivantes**, à la place du NOT NULL
-  que les colonnes ne portent plus :
+  que les colonnes ne portent plus. `generate read-model` l'écrit avec la table, sous ce nom ; une
+  table écrite avant, ou à la main, la prend dans une migration :
 
   ```sql
   alter table scheduling.appointment_list
     alter column status drop not null,
     alter column starts_at drop not null,
-    add constraint appointment_list_live_rows
+    add constraint appointment_list_live_rows_whole
       check (deleted or (status is not null and starts_at is not null));
   ```
 - **Un lecteur qui interroge la table directement filtre `deleted = false`.** Le registre le fait

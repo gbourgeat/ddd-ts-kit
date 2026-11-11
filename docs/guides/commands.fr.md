@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:3d6c0e7d7fa66b39 -->
+<!-- translation-of: commands.md sha256:9cfe9e18da79fb58 -->
 
 # Quelle commande, quand
 
@@ -742,9 +742,11 @@ Kinds
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]... [--module <module>]
   integration-handler <context> <upstreamContext> <eventType>[@v<n>] [--version <n>] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: consumer)
+  personal-fields <context> <table> --personal <column>,<column>... --subject <column> [--erasure pseudonymise|row] [--retention <column>:<n><d|m|y>] [--tenant-scoped] [--module <module>]
   erasure-handler <context> [--module <module>]
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]... [--module <module>]
   projection <context> <Name> <eventType>[@v<n>] [--term "<Term>=<meaning>"]... [--module <module>]   (alias: projector)
+  read-model <context> <Name> [--field <name>:<string|number|boolean|instant|decimal>[:nullable]]... [--tenant-scoped] [--term "<Term>=<meaning>"]... [--module <module>]
   job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--global] [--term "<Term>=<meaning>"]... [--module <module>]
   background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]... [--module <module>]
   process <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: process-manager)

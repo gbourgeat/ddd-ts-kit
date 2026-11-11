@@ -13,6 +13,7 @@ import { domainEventKind } from './kinds/domain-event-kind';
 import { domainServiceKind } from './kinds/domain-service-kind';
 import { e2eKind } from './kinds/e2e-kind';
 import { erasureHandlerKind } from './kinds/erasure-handler-kind';
+import { personalFieldsKind } from './kinds/personal-fields-kind';
 import { errorKind } from './kinds/error-kind';
 import { entityKind } from './kinds/entity-kind';
 import { eventHandlerKind } from './kinds/event-handler-kind';
@@ -29,6 +30,7 @@ import { portKind } from './kinds/port-kind';
 import { processKind } from './kinds/process-kind';
 import { projectionKind } from './kinds/projection-kind';
 import { queryKind } from './kinds/query-kind';
+import { readModelKind } from './kinds/read-model-kind';
 import { repositoryKind } from './kinds/repository-kind';
 import { representationKind } from './kinds/representation-kind';
 import { routeGroupKind } from './kinds/route-group-kind';
@@ -72,9 +74,11 @@ export const KINDS: readonly Kind[] = [
   schemaKind,
   integrationEventKind,
   integrationHandlerKind,
+  personalFieldsKind,
   erasureHandlerKind,
   eventHandlerKind,
   projectionKind,
+  readModelKind,
   jobKind,
   backgroundJobKind,
   processKind,

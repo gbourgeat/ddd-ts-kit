@@ -70,7 +70,7 @@ async function acceptNull(knex: Knex, { schema, table, live }: ReadModelTable): 
 
 /** `check (deleted or (<column> is not null and ...))`: what NOT NULL said of a live row, and no more of a deleted one. */
 async function keepLiveRowsWhole(knex: Knex, { schema, table, live }: ReadModelTable): Promise<void> {
-  const constraint = `${table}_live_rows`;
+  const constraint = `${table}_live_rows_whole`;
   const whole = live.map(() => '?? is not null').join(' and ');
 
   await knex.raw('alter table ??.?? drop constraint if exists ??', [schema, table, constraint]);

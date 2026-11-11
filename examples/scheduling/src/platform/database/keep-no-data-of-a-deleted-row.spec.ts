@@ -66,7 +66,7 @@ describe('The data of a deleted row of a read model', () => {
       .withSchema(NOTIFICATION_SCHEMA)
       .insert(contact('nobody', false, null));
 
-    await expect(written).rejects.toThrow('contacts_live_rows');
+    await expect(written).rejects.toThrow('contacts_live_rows_whole');
   });
 });
 

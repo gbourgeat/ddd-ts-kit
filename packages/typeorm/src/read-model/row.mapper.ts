@@ -7,7 +7,9 @@ const STAMPS = new Set(['lastEventId', 'lastEventAt', 'lastEventVersion', 'delet
 /**
  * Translates between the row of a read model, keyed by property, and the record of its
  * table, keyed by column name, through the driver: the copy of a rebuild has no entity of its
- * own, so its rows are read and written by column.
+ * own, so its rows are read and written by column. A column the entity declares `select: false`
+ * is written and filtered on, and is no field of the rows a read answers: the tenant column of a
+ * read model whose rows do not carry their tenant.
  */
 export class RowMapper<Row extends object> {
   private readonly fields: readonly ColumnMetadata[];
@@ -16,7 +18,7 @@ export class RowMapper<Row extends object> {
     private readonly driver: Driver,
     private readonly columns: readonly ColumnMetadata[],
   ) {
-    this.fields = columns.filter((column) => !STAMPS.has(column.propertyName));
+    this.fields = columns.filter((column) => !STAMPS.has(column.propertyName) && column.isSelect);
   }
 
   toRow(record: Readonly<Record<string, unknown>>): Row {

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a7031f4897944076 -->
+<!-- translation-of: README.md sha256:ccc07908a0551596 -->
 
 # @ddd-ts-kit/typeorm
 
@@ -586,7 +586,12 @@ Un modèle de lecture de données de *tenant* prend `tenant: { scope }` (et `pro
 l'entité porte le *tenant* ailleurs que dans `tenantId`, que `tenantColumn()` déclare) : chaque
 ligne s'écrit avec le *tenant* du travail en cours, chaque lecture, recherche et écriture lui est
 confinée, une élévation du personnel de la plateforme n'élargissant que les lectures, et la copie
-d'une reconstruction suit les mêmes conditions. Les clés restent uniques entre les *tenants*,
+d'une reconstruction suit les mêmes conditions. Les lignes qu'une lecture répond portent chaque
+colonne de l'entité sauf les tampons, le *tenant* avec elles ; quand la ligne du port ne porte pas
+son *tenant*, déclarez la colonne `select: false`
+(`tenantId: { ...tenantColumn().tenantId, select: false }`, l'entité typée
+`Row & TenantScoped & ReadModelStamps`) : le registre l'écrit et filtre toujours dessus, et la
+laisse hors des lignes. Les clés restent uniques entre les *tenants*,
 puisque le conflit d'une insertion porte sur la seule clé : une clé que deux *tenants* pourraient
 partager (un jour, un *slug*) porte le *tenant* (`acme:2026-03-01`). Un registre construit sans
 `tenant` dans un projet `--tenancy shared-table` est signalé par `tenancy/scoped-statement`.

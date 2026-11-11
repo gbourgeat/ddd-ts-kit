@@ -1,5 +1,5 @@
 [English](read-side.md) · **Français**
-<!-- translation-of: read-side.md sha256:3259fc90bb38f5f3 -->
+<!-- translation-of: read-side.md sha256:b36f4a1e1b4f45c2 -->
 
 # Proposition : le côté lecture
 
@@ -20,7 +20,7 @@ d'exécution l'ont, `ddd-ts-kit generate` et `check` ne le connaissent pas), **p
 | 2. Représentations | `Representation`, `Representations.standard()` et la négociation sur `Accept` (406) dans `@ddd-ts-kit/http` ; JSON, `application/problem+json` et `+xml`, XML écrit et lu (415 sinon), CSV diffusé en flux, `streamSchemaOf`, `everyPage` pour diffuser une recherche page par page à travers le bus ; fichiers et réponses sans corps laissés hors de la négociation ; chaque type de média, 406 et 415 dans le contrat ; `withFieldAccess` et `fieldDeciderOf` pour les champs réservés à une permission ou à une politique, dans chaque représentation et dans les corps de requête HTTP ; la règle `authz/fields-by-schema` | généré depuis le 2026-10-13 : `stack.representations` choisi à `init`, `generate representation`, `describe` liste les types de média | un vocabulaire XML propre (espaces de noms, contenu mixte) ; l'entrée CSV |
 | 3. Formulaires | `formRoutes` sur `GET /forms/<operationId>`, les indications de `defineForm`, JSON Forms et l'arbre de blocs neutre, le formulaire donné seulement à qui peut exécuter son cas d'usage (`requires`), des champs cachés et en lecture seule selon l'appelant, `formDocumentsOf` | généré depuis le 2026-10-13 : `stack.forms` choisi à `init`, `generate form`, les formulaires écrits dans `openapi/forms/` | d'autres dialectes que JSON Forms, qu'un front-end obtient de l'arbre ; un moteur de rendu de consultation |
 | 4. Les données d'un autre contexte | l'hydratation : `hydrate(...).with(...).orElse(...)` dans le noyau, avec la politique en cas d'échec et de délai dépassé ; le port *gateway* qu'elle appelle (`generate gateway`) | aucun usage généré de `hydrate` | la règle des analyseurs : c'est le compilateur qui refuse des critères sur un champ hydraté, à sa place |
-| 5. Projections et recherche | `@Projection` et `@On` (`@ddd-ts-kit/kernel/declarations`), leur enregistrement et leurs métriques dans `@ddd-ts-kit/di` ; le port `ReadModelStore`, `TableReadModelStore` au-dessus d'`InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, tenus par `readModelStoreContract` ; `ProjectionRebuild` sur PostgreSQL ; `OpenSearchReadModelStore` de `@ddd-ts-kit/opensearch`, tenu par `readModelRowsContract` et `criteriaContract` sur OpenSearch 3, les locataires dans un index chacun ou derrière des alias filtrés | générés depuis le 2026-10-12, dans le style déclaré : `generate projection <context> <Name> <event-type>` écrit un projecteur et sa *spec*, `application/projections/` est un rôle de l'arborescence canonique, le *barrel* généré exporte un projecteur et enregistre ce que son constructeur reçoit, `describe` et `CONTEXT.md` le listent. Toujours pas générés : le port du modèle de lecture avec son adaptateur, que donnent `generate port` et le *package* de l'ORM | la reconstruction du store OpenSearch, un passage sur Elasticsearch, la recherche plein texte et les facettes ; un *job* de reconstruction généré |
+| 5. Projections et recherche | `@Projection` et `@On` (`@ddd-ts-kit/kernel/declarations`), leur enregistrement et leurs métriques dans `@ddd-ts-kit/di` ; le port `ReadModelStore`, `TableReadModelStore` au-dessus d'`InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, tenus par `readModelStoreContract` ; `ProjectionRebuild` sur PostgreSQL ; `OpenSearchReadModelStore` de `@ddd-ts-kit/opensearch`, tenu par `readModelRowsContract` et `criteriaContract` sur OpenSearch 3, les locataires dans un index chacun ou derrière des alias filtrés | générés depuis le 2026-10-12, dans le style déclaré : `generate projection <context> <Name> <event-type>` écrit un projecteur et sa *spec*, `application/projections/` est un rôle de l'arborescence canonique, le *barrel* généré exporte un projecteur et enregistre ce que son constructeur reçoit, `describe` et `CONTEXT.md` le listent. Depuis le 2026-11-11, `generate read-model <context> <Name> --field <name>:<type>...` écrit le port du modèle de lecture avec sa table, son adaptateur de stockage sur les quatre ORM (en mémoire sans ORM), son *fake* et une *spec* `readModelContract` | la reconstruction du store OpenSearch, un passage sur Elasticsearch, la recherche plein texte et les facettes ; un *job* de reconstruction généré |
 
 La référence de ce qui est construit est le README de chaque *package* : `@ddd-ts-kit/kernel`
 (« Criteria », « Hydration », « Projections »), `@ddd-ts-kit/http` (la grammaire des requêtes, les
@@ -474,10 +474,11 @@ export async function deliveredOutOfOrder(): Promise<PractitionerName | undefine
   le fichier de module du contexte inclut la classe par `builder.include(<Name>Projection)` ; sur
   une plateforme câblée à la main, le projecteur est une classe simple que le module souscrit sous
   son nom de consommateur, avec la marque de traitement de tout consommateur mais sans les métriques
-  de projection du câblage déclaré. Toujours proposés : un projecteur pour
-  plusieurs événements (`--on <event>...`), un `--store sql|search` qui écrit le port du modèle
-  de lecture avec son adaptateur et son *fake* (aujourd'hui `generate port` et le *package* de
-  l'ORM, à la main), et le *job* de reconstruction.
+  de projection du câblage déclaré.
+  `generate read-model <context> <Name> --field <name>:<type>...` écrit le port du modèle de
+  lecture avec sa table, son adaptateur de stockage et son *fake*. Toujours proposés : un
+  projecteur pour plusieurs événements (`--on <event>...`), un modèle de lecture écrit sur le
+  stockage de recherche (`--store search`), et le *job* de reconstruction.
 - **Un index de recherche**, construit comme `@ddd-ts-kit/opensearch` : la
   seconde sorte de stockage de modèle de lecture, un index par modèle de lecture, son *mapping*
   tiré de la définition des critères, les critères traduits dans le DSL de requête, les

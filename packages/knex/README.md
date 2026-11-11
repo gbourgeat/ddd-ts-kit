@@ -709,7 +709,7 @@ await knex.schema.withSchema('scheduling').createTable('appointment_list', (tabl
   table.text('status').nullable(); // NULL in a deleted row, as every column of the row
   table.datetime('starts_at', { useTz: true, precision: 3 }).nullable();
   readModelColumns(table); // last_event_id, last_event_at, last_event_version, deleted
-  table.check('deleted or (status is not null and starts_at is not null)', [], 'appointment_list_live_rows');
+  table.check('deleted or (status is not null and starts_at is not null)', [], 'appointment_list_live_rows_whole');
 });
 
 // infrastructure/persistence/knex-appointment-list.repository.ts

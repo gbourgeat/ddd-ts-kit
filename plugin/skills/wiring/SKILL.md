@@ -67,7 +67,7 @@ A class says what it is on its own file, and that is its registration. There is 
 | scheduled job | `@Scheduled('<context>.<job>', { every } or { cron, timeZone })` |
 | projector of a read model | `@Projection('<context>.<name>')`, with `@On(definition)` on each method that applies an event |
 | policy | `@Policy(permission, { name })` |
-| adapter | `@Repository(Port)`, `@Gateway(Port)`, `@Adapter(Port, { kind })` |
+| adapter | `@Repository(Port)` (a repository, the store of a read model), `@Gateway(Port)`, `@Adapter(Port, { kind })` |
 
 - Nothing under `domain/` carries a decorator. Names (`consumer`, `name`) are string literals.
 - **The constructor states the dependencies, and nothing repeats it.** Each parameter is

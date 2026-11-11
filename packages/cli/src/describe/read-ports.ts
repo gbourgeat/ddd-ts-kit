@@ -18,7 +18,7 @@ export function readPorts(sources: ContextSources, adapters: readonly AdapterFac
       .filter(({ name: file }) => file.endsWith(suffix))
       .map(({ name: file, path }) => {
         const name =
-          /\bexport (?:abstract class|interface) (\w+)/.exec(ws.read(path) ?? '')?.[1] ??
+          declaredPort(ws.read(path) ?? '') ??
           toName(
             file
               .slice(0, -'.ts'.length)
@@ -36,4 +36,12 @@ export function readPorts(sources: ContextSources, adapters: readonly AdapterFac
         };
       }),
   ).sort((left, right) => left.name.localeCompare(right.name));
+}
+
+/**
+ * The port a file declares: its abstract class, which is the injection token, before an interface. The file
+ * of a read model also declares the type of its row, which is no port.
+ */
+function declaredPort(source: string): string | undefined {
+  return (/\bexport abstract class (\w+)/.exec(source) ?? /\bexport interface (\w+)/.exec(source))?.[1];
 }

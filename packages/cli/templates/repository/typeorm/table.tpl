@@ -1,5 +1,6 @@
 @@imports
 import type { {{aggregate.pascal}}Row } from '{{alias.context}}/infrastructure/persistence/{{aggregate.kebab}}-row.schema{{alias.ext}}';
+import { auditColumns } from '@ddd-ts-kit/typeorm';
 {{#if tenant.scoped}}
 import { tenantColumn } from '@ddd-ts-kit/typeorm';
 {{/if}}

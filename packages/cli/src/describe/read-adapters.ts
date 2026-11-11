@@ -12,7 +12,11 @@ export interface AdapterFact {
   readonly upstream: string;
 }
 
-const ADAPTER = /\bexport class (\w+)(?:\s+extends\s+[\w.<>]+)?\s+implements\s+([^{]+)\{/;
+/**
+ * The parent may take several type arguments (`extends DrizzleReadModelStore<Row, PgQueryResultHKT>`), and the
+ * formatter gives each clause of a long heritage a line of its own: the parent is whatever stands before `implements`.
+ */
+const ADAPTER = /\bexport class (\w+)(?:\s+extends\s+[^{]+?)?\s+implements\s+([^{]+)\{/;
 
 /** The adapters of a context: every class under `infrastructure/` that implements something. */
 export function readAdapters(sources: ContextSources): AdapterFact[] {

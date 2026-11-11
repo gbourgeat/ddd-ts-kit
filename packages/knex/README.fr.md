@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7c74a1ba28729822 -->
+<!-- translation-of: README.md sha256:f2b9067377746930 -->
 
 # @ddd-ts-kit/knex
 
@@ -740,7 +740,7 @@ await knex.schema.withSchema('scheduling').createTable('appointment_list', (tabl
   table.text('status').nullable(); // NULL dans une ligne supprimée, comme chaque colonne de la ligne
   table.datetime('starts_at', { useTz: true, precision: 3 }).nullable();
   readModelColumns(table); // last_event_id, last_event_at, last_event_version, deleted
-  table.check('deleted or (status is not null and starts_at is not null)', [], 'appointment_list_live_rows');
+  table.check('deleted or (status is not null and starts_at is not null)', [], 'appointment_list_live_rows_whole');
 });
 
 // infrastructure/persistence/knex-appointment-list.repository.ts

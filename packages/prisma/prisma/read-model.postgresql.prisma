@@ -10,7 +10,7 @@
 // Every field of your row is optional: a deleted row keeps its key and its stamp, and NULL in
 // every other column, so a unique value it held is free again. Keep the live rows whole with a
 // check constraint in the migration, which the schema cannot say either:
-// `ALTER TABLE ... ADD CONSTRAINT appointment_list_live_rows CHECK (deleted OR (status IS NOT NULL
+// `ALTER TABLE ... ADD CONSTRAINT appointment_list_live_rows_whole CHECK (deleted OR (status IS NOT NULL
 // AND starts_at IS NOT NULL))`.
 
 model AppointmentRow {
