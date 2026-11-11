@@ -1,6 +1,5 @@
 import { CliError } from '../cli-error';
 import { readConfig, type Config } from '../config';
-import { refuseEarlierLayout } from '../generate/refuse-earlier-layout';
 import { refreshDocs } from '../generate/refresh-docs';
 import { declaredModule } from '../model-modules';
 import { type ModuleMoves, moveToModule } from '../move-to-module';
@@ -33,7 +32,6 @@ export const moveToModuleCommand: Command = (argv, io) => {
   const module = readName(moduleName, 'module', MODULE_FIX).kebab;
 
   assertDeclared(config, context, module);
-  refuseEarlierLayout(ws, config, context);
 
   if (paths.length === 0) {
     throw new CliError(

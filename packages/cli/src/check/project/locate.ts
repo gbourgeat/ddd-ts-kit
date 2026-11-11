@@ -59,9 +59,10 @@ function locateInContexts(config: Config, relative: string): Location {
 }
 
 /**
- * A module of the model is one folder of the context holding its layers, and one folder of the
- * test folders of its specs: left out, the rest of the path is what it would be without modules,
- * so every role keeps its place. At its root, `<module>.module.ts` registers what the module holds
+ * A module of the model is one folder of the context holding its layers and its tests, or one
+ * folder of the test folders of the context for its specs: left out, the rest of the path is what
+ * it would be without modules, so every role keeps its place. `shared/`, the folder of what belongs
+ * to no module, is left out the same way, and gives no module. At its root, `<module>.module.ts` registers what the module holds
  * in the explicit style: a part of the module file of the context, read as one.
  */
 function moduleLocation(config: Config, context: string, parts: readonly string[]): Location | undefined {
@@ -72,11 +73,19 @@ function moduleLocation(config: Config, context: string, parts: readonly string[
     return { area: 'context', context, layer: 'module', inside: [], module: wiring };
   }
 
-  const { module, path } = moduleSplit(parts.join('/'), modules);
+  const { module, path, shared } = moduleSplit(parts.join('/'), modules);
   const [first, ...inside] = path.split('/');
   const layer = LAYERS.find((candidate) => candidate === first);
 
-  return module === undefined || layer === undefined ? undefined : { area: 'context', context, layer, inside, module };
+  if (layer === undefined) {
+    return undefined;
+  }
+
+  if (shared === true) {
+    return { area: 'context', context, layer, inside, shared };
+  }
+
+  return module === undefined ? undefined : { area: 'context', context, layer, inside, module };
 }
 
 function locateAtContextRoot(context: string, entry: string): Location {

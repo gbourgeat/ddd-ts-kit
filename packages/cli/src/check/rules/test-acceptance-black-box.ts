@@ -1,8 +1,10 @@
 import type { Finding } from '../model/finding';
+import type { Location } from '../model/location';
 import type { Project } from '../model/project';
 import type { Rule } from '../model/rule';
 import type { SourceFile } from '../model/source-file';
 import { besideTheSources } from '../project/beside-the-sources';
+import { inContext } from '../support/in-context';
 import { reporter } from '../support/reporter';
 import { toViolations } from '../support/to-violations';
 
@@ -26,7 +28,7 @@ function findingsIn({ config }: Project, file: SourceFile): Finding[] {
   const sourceRoot = `${config.sourceRoot}/`;
 
   return file.imports.flatMap(({ specifier, line, target }) => {
-    if (target.kind !== 'file' || !target.path.startsWith(sourceRoot) || isPublic(target.path, config.contextsDir)) {
+    if (target.kind !== 'file' || !target.path.startsWith(sourceRoot) || isPublic(target.location)) {
       return [];
     }
 
@@ -40,13 +42,10 @@ function findingsIn({ config }: Project, file: SourceFile): Finding[] {
   });
 }
 
-/** What a client of a context may know of it: the test data of its builders and its published language. */
-function isPublic(path: string, contextsDir: string): boolean {
-  const [context, top, folder] = path.slice(contextsDir.length + 1).split('/');
-
+/** What a client of a context may know of it: the test data of its builders, wherever its modules keep them, and its published language. */
+function isPublic(location: Location): boolean {
   return (
-    path.startsWith(`${contextsDir}/`) &&
-    context !== undefined &&
-    (top === 'published-language' || (top === 'test' && folder === 'builders'))
+    inContext(location) &&
+    (location.layer === 'published-language' || (location.layer === 'test' && location.inside[0] === 'builders'))
   );
 }

@@ -69,6 +69,7 @@ describe('what a slice stages, by a closed list', () => {
         fresh('openapi/notes.md'),
         fresh('src/contexts/billing-archive/notes.ts'),
         fresh('test/e2e/support/start-application.ts'),
+        fresh('test/e2e/support/shipping/a-parcel.ts'),
         fresh('.ddd-ts-kit/report.md'),
       ],
       { config, context: 'billing' },
@@ -85,6 +86,7 @@ describe('what a slice stages, by a closed list', () => {
       'openapi/notes.md',
       'src/contexts/billing-archive/notes.ts',
       'test/e2e/support/start-application.ts',
+      'test/e2e/support/shipping/a-parcel.ts',
     ]);
   });
 
@@ -164,5 +166,21 @@ describe('what a slice stages outside its context: what the generators and regen
       toStage: ['prisma/schema/schema.prisma'],
       leftOut: ['src/platform/database/schema.ts'],
     });
+  });
+});
+
+describe('the staging plan of a slice, on what its end-to-end specs share', () => {
+  it('stages what the end-to-end specs of the context share, which a spec of the slice imports', () => {
+    const plan = planStaging(
+      [fresh('test/e2e/issue-invoice.e2e.spec.ts'), fresh('test/e2e/support/billing/an-issued-invoice.ts')],
+      { config, context: 'billing' },
+    );
+
+    expect(plan.toStage).toEqual([
+      'test/e2e/issue-invoice.e2e.spec.ts',
+      'test/e2e/support/billing/an-issued-invoice.ts',
+    ]);
+
+    expect(plan.leftOut).toEqual([]);
   });
 });

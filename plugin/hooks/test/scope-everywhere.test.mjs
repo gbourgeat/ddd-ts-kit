@@ -531,8 +531,9 @@ const OWN_BRANCH_ALLOWED = [
 ];
 
 test("a worker's git keeps to its own branch: it pushes it alone, fetches into no ref, makes no tag and checks out no other", () => {
-  const { conductor, worktree, agent } = pinnedBuilder('own-branch');
+  const { conductor, worktree } = conductorWithWorker();
   put(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing', branch: 'work/billing' }));
+  const agent = builder('own-branch', conductor);
   put(worktree, 'src/contexts/billing/CONTEXT.md', '# billing\n');
   for (const command of OWN_BRANCH_REFUSED) {
     const refused = run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent));
@@ -794,6 +795,19 @@ test('a here-document that never closes, or a line that ends inside a quote, is 
   }
 });
 
+test('a quote inside a quoted word of a command behind a package runner closes with its word', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const command of [
+    `npx ddd-ts-kit generate value-object ordering SupplierName --term "SupplierName=le nom d'un fournisseur" --json`,
+    'npx ddd-ts-kit generate value-object ordering Threshold --term "Threshold=an amount > the limit; refused" --json',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  const open = run('pre-bash', bash(root, `npx ddd-ts-kit lint --rule "name=d'un fournisseur`, agent));
+  assert.match(reason(open), /never closes/);
+});
+
 test('a builder from the conductor is refused a line it cannot read, as it is a write', () => {
   const { conductor, worktree } = conductorWithWorker();
   const refused = run(
@@ -943,7 +957,7 @@ test('what the last command of a worker changed outside its scope keeps it going
   assert.equal(kept.output.decision, 'block');
   assert.match(kept.output.reason, /changed files outside your scope: src\/main\.ts/);
   assert.match(kept.output.reason, /`git checkout HEAD -- src\/main\.ts`/);
-  assert.equal(existsSync(join(conductor, '.ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`)), true);
+  assert.equal(existsSync(join(conductor, '.git/ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`)), true);
 
   // It ended without putting the file back: the stop lets it go, and each place the conductor reads says it.
   const ended = run('subagent-stop', stopping);
@@ -987,6 +1001,8 @@ test('what the last command changed in the checkout of the session is said at th
     told.output.reason,
     /checkout of the session, .* changed while your last command ran: src\/platform\/extra\.ts/,
   );
+  assert.match(told.output.reason, /name them in your report for the conductor/);
+  assert.doesNotMatch(told.output.reason, /\bstop\b/);
 });
 
 test('what a sanctioned script rewrote as the last command is said at the stop too', () => {

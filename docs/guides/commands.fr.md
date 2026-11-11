@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:f1c9bd80c583112c -->
+<!-- translation-of: commands.md sha256:df58519c294b371a -->
 
 # Quelle commande, quand
 
@@ -90,7 +90,7 @@ exemple, reste un `TODO(domain)` du schéma et de l'appel.
 | `npx ddd-ts-kit generate context <name> --classification <c> --reason "..." --term "<Term>=<meaning>\|<not to be confused with>" ... --upstream ...` | déclare un contexte avec son langage, la phrase qui dit pourquoi il a sa classification, et ses relations | après l'amorçage, un par ligne de `contexts.md`, les amonts d'abord | le répertoire du contexte, son `CONTEXT.md`, l'entrée de configuration | `npx ddd-ts-kit docs` |
 | `npx ddd-ts-kit list`, `describe <context>` | ce qui existe, par contexte ou pour un seul | avant de planifier ou de modifier un contexte | une carte des contextes, ou un contexte sous forme de faits (`--json`) | `/ddd-ts-kit:plan-slices` |
 | `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | déclare un [module du modèle](../concepts/modules.fr.md) : l'entrée de la configuration, sa ligne de `## Modules` dans `CONTEXT.md`, ses termes, et dans le style explicite son fichier de module `<module>/<module>.module.ts`, composé par `<context>.module.ts` ; peut être relancé, il ajoute ce qui manque | quand un contexte tient des groupes de concepts d'un même langage qu'un lecteur ouvre séparément ; jamais pour cacher un second langage | le module, déclaré et documenté | `move-to-module`, puis `generate ... --module` |
-| `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]` | déplace des fichiers et des dossiers de `domain/` et `application/` dans un module déclaré, avec chacun de leurs imports dans le projet | un groupe par commit, jusqu'à ce que `module/complete` n'avertisse plus | les fichiers déplacés et les imports réécrits | `npm run verify` |
+| `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]` | déplace des fichiers et des dossiers des couches d'un contexte, et ses *specs*, *fakes* et *builders*, dans un module déclaré (`<module>/<layer>/`, `<module>/test/`), avec chacun de leurs imports dans le projet | un groupe par commit, jusqu'à ce que `module/complete` n'avertisse plus | les fichiers déplacés et les imports réécrits | `npm run verify` |
 
 ## Construire une tranche
 
@@ -331,7 +331,7 @@ Usage
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
   ddd-ts-kit check --commit-size [--staged] [--strict]
   ddd-ts-kit check-file <path> [--content-from <file>] [--rule <id>]...
-  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache]
+  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache] [--ignore-pattern <pattern>]...
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 
@@ -391,24 +391,30 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    <file>=<folder> (both from the platform, a file outside it refused) gives it its
                    folder; the generators and init --force keep either layout until then
   move-to-module   takes files of a context into a module of its model, declared first with generate module,
-                   each to <module>/<layer>/ and each spec to test/<unit|integration>/<module>/: each <path>
-                   is a file or a folder of a role or a spec, relative to the context
+                   each to <module>/<layer>/, a spec, a fake or a builder to <module>/test/: each <path> is a
+                   file or a folder of a role or of the tests, relative to the context
                    (domain/aggregates/waitlist.aggregate.ts, application/commands/join-waitlist,
-                   infrastructure/persistence/knex-waitlist.repository.ts); the specs named after a moved
-                   file follow it, every import of them under the source root, test/ and scripts/ follows,
-                   and the generated declarations are rewritten; what the modules share stays at the level
-                   of the context: the code list and the permission set at its root, the schema of its
-                   database, its route groups, guards and shared shapes, its fakes, builders and worlds
-  context-layout   takes the files of the contexts, or of the ones named, that 0.86 or 0.87 wrote elsewhere to
-                   their place of today: domain/errors/codes.ts to <context>.codes.ts and
-                   application/authorization/<context>.permissions.ts to <context>.permissions.ts, at the
-                   root of the context, and each module of the model from domain/<module>/ and
-                   application/<module>/ to <module>/domain/ and <module>/application/, with the adapters,
-                   routes and specs it tells by their imports (a spec by the file it is named after); what
-                   names no module, or two, is listed and stays; every import of them under the source
-                   root, test/ and scripts/ follows, what derives from the tree is written again
-                   (.dependency-cruiser.cjs, the declarations) and knip is told of the code lists where they
-                   are; the generators keep the code lists and permission sets where they are until then
+                   shared/test/fakes/clock.fake.ts), from the level of the context, from shared/ or from
+                   another module; the specs named after a moved file follow it, every import of them under
+                   the source root, test/ and scripts/ follows, a migration that names the compiled file too,
+                   and the generated declarations are rewritten; what belongs to no module stays: the code
+                   list and the permission set at the root of the context, and in shared/ the schema of its
+                   database, its route groups, guards and shared shapes, its worlds
+  context-layout   takes the files of the contexts, or of the ones named, to their place of today. The code
+                   list and the permission set that 0.86 or 0.87 wrote in a role folder: domain/errors/codes.ts
+                   to <context>.codes.ts and application/authorization/<context>.permissions.ts to
+                   <context>.permissions.ts, at the root of the context. In a context divided into modules,
+                   what it still holds at its own level: the specs of test/<unit|integration>/<module>/ to
+                   <module>/test/; the adapters, routes, specs, fakes and builders to the module of the file
+                   they are named after (a builder after an aggregate, a fake after a port or a repository),
+                   else of what they import; and what belongs to no module to shared/: the schema and tables
+                   of the context, its route groups, guards and shared shapes, its worlds, and the specs,
+                   fakes and builders no module is told for. A file of a layer that names no module, or two,
+                   is listed and stays; nothing is overwritten; run again, nothing moves. Every import of them
+                   under the source root, test/ and scripts/ follows, a migration that names the compiled file
+                   too; what derives from the tree is written again (.dependency-cruiser.cjs, the
+                   declarations, the entries of knip), a config of a test runner to align is named, and knip
+                   is told of the code lists where they are
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
@@ -633,7 +639,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    trailer are listed and never fail, nor what a later commit restored; silent and exit 0
                    without a merge, exit 1 on an error; --warn prints the same and exits 0, as the
                    pre-push hook of init runs it in this version (a later minor version blocks the push)
-  merge-trunk      brings the trunk (--trunk, by default origin/HEAD then origin/main, never fetched) into the
+  merge-trunk      brings the trunk (--trunk; by default the base of .ddd-ts-kit/worker.json in the worktree of
+                   a worker, then origin/HEAD, then origin/main; nothing is fetched) into the
                    branch as one merge commit computed from the branch's own diff: from the newest commit of
                    the branch the trunk holds (--since; else the commit whose patch, derived files,
                    migrations, slices.md, plan.md and lockfiles left out, is one commit of the trunk, on this
@@ -651,8 +658,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    --accept-lost records a Lost-Accepted: trailer), and the commit of the merge's paths only,
                    with the trailers Merge-Base:, Trunk: and Landed:; any other changed path blocks it.
                    --dry-run previews, --abort undoes; refused (exit 2) on a dirty tree, another operation in
-                   progress, no committer known to git, an unknown trunk, or a git older than 2.40 with a base
-                   git would not compute
+                   progress, no committer known to git, an unknown trunk, a --since at the head of the branch,
+                   or a git older than 2.40 with a base git would not compute
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
@@ -696,19 +703,20 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    "generate --help --json" says which kinds do
   --module         generate writes the files of the layers into that module of the model of the context
                    (declared first with generate module), <module>/domain/ to <module>/presentation/, and
-                   their specs into test/unit/<module>/, finds the files it reads in the module that holds
-                   them and writes the imports to where they are; taken by the kinds whose usage below
-                   shows [--module <module>], and required by them in a context that declares modules
-                   (a file of a use case already in a module goes with it, and another module is
-                   refused); every other kind refuses it, what it writes staying at the level of the
-                   context (code list, permission set, database schema, route groups, guards, shared
-                   shapes, fakes, builders, worlds) or outside the contexts
+                   their specs, fakes and builders into <module>/test/, finds the files it reads in the
+                   module that holds them and writes the imports to where they are; taken by the kinds
+                   whose usage below shows [--module <module>], and required by them in a context that
+                   declares modules (a file of a use case already in a module goes with it, and another
+                   module is refused); every other kind refuses it, what it writes belonging to no module:
+                   the code list and the permission set at the root of the context, and in its shared/
+                   folder the database schema, the route groups, guards and shared shapes, the worlds; a
+                   context that still holds test/ at its own level is refused until context-layout moved it
 
 Kinds
   context <name> --classification <core|supporting|generic> [--reason "<why it is of that classification>"] [--purpose "<two sentences>"] [--term "<Term>=<meaning>[|<not to be confused with>]"]... [--upstream <ctx>[:relationship]]... [--preset identity]
   module <context> <module> [--purpose "<what it holds>"] [--classification <core|supporting|generic>] [--term "<Term>=<meaning>"]...
   aggregate <context> <Name> [--birth "<Fact>"] [--event-sourced] [--term "<Term>=<meaning>"]... [--module <module>]
-  builder <context> <Aggregate>
+  builder <context> <Aggregate> [--module <module>]
   test-world <context> [Name]
   entity <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]
   value-object <context|shared-kernel> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: vo)

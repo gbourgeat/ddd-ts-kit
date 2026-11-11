@@ -2,11 +2,12 @@ import { isDeclarationsFile } from '../../declared';
 import path from 'node:path';
 import {
   declaredModules,
+  earlierFolders,
   isContextLevel,
   isRoleFolder,
   MODULE_LAYERS,
   MODULE_TEST_FOLDERS,
-  moduleSplit,
+  SHARED_FOLDER,
   WITHOUT_MODULE,
 } from '../../model-modules';
 import type { Project } from '../model/project';
@@ -21,7 +22,7 @@ const NAMED = 5;
 export const moduleComplete: Rule = {
   id: 'module/complete',
   description:
-    'Once a context declares modules of its model, every file of its layers sits in one of them (<module>/domain/, <module>/application/, <module>/infrastructure/, <module>/presentation/), and every spec of one of their files in the module folder of its test folder (test/unit/<module>/), the files the context keeps at its own level aside: the code list and the permission set at its root, the schema, tables and migrations of its database, its route groups, guards and shared shapes, the fakes, builders and worlds of its specs, and the generated declarations. A module still where 0.86 and 0.87 put it (domain/<module>/, application/<module>/) is reported too, as an error: `context-layout` moves it. One finding per folder. A file outside its module is a warning, so that a context moves into its modules one commit at a time.',
+    'Once a context declares modules of its model, every file of its layers sits in one of them (<module>/domain/, <module>/application/, <module>/infrastructure/, <module>/presentation/) with its specs, fakes and builders (<module>/test/), what belongs to no module aside: the code list and the permission set at the root of the context, and in shared/ the schema and tables of its database, its route groups, guards and shared shapes, its worlds, and the generated declarations. A file of a layer left at the level of the context, or a file of a module left in shared/, is a warning, one finding per folder, so that a context moves into its modules one commit at a time. A layout of an earlier version is an error whatever the severity of the rule, and `context-layout` moves it: test/ at the level of the context, or a layer folder there that holds nothing but what shared/ holds now.',
   scope: 'project',
   run(project) {
     const report = reporter(project, this.id);
@@ -35,16 +36,6 @@ export const moduleComplete: Rule = {
 
       const at = (folder: string) => ({ file: `${project.config.contextsDir}/${context}/${folder}`, line: 1 });
 
-      // A layout of an earlier version is an error whatever the severity of the rule, which leaves a file outside its module a warning.
-      const earlier = [...earlierByFolder(project, context, modules)].map(([folder, module]) => ({
-        ...report(
-          at(folder),
-          `${folder}/ of "${context}" is the module ${module} where 0.86 and 0.87 put it: a module now holds its layers, ${module}/domain/, ${module}/application/...`,
-          `Run \`npx ddd-ts-kit context-layout ${context}\`, which moves each module to its folder with its adapters, routes and specs, and every import of them.`,
-        ),
-        severity: 'error' as const,
-      }));
-
       const outside = [...outsideByFolder(project, context)].map(([folder, files]) =>
         report(
           at(folder),
@@ -53,7 +44,17 @@ export const moduleComplete: Rule = {
         ),
       );
 
-      return [...earlier, ...outside];
+      // A layout of an earlier version is an error whatever the severity of the rule, which leaves a file outside its module a warning.
+      const before = earlierFolders(entriesOf(project, context), modules).map((folder) => ({
+        ...report(
+          at(folder),
+          `${folder}/ of "${context}" is laid out as before its modules held their tests and shared/ what belongs to none: a spec, a fake or a builder now sits in <module>/test/, the schema, the route groups and the worlds of the context in shared/.`,
+          `Run \`npx ddd-ts-kit context-layout ${context}\`, which moves them and every import of them.`,
+        ),
+        severity: 'error' as const,
+      }));
+
+      return [...before, ...outside];
     });
   },
 };
@@ -64,21 +65,13 @@ function listed(files: readonly string[]): string {
   return `${files.slice(0, NAMED).join(', ')}${more}`;
 }
 
-/** The folders of the modules of a context laid out as 0.86 and 0.87 laid them, `domain/<module>`, with the module each is. */
-function earlierByFolder(project: Project, context: string, modules: readonly string[]): Map<string, string> {
+/** The files of a context, relative to it. */
+function entriesOf(project: Project, context: string): string[] {
   const prefix = `${project.config.contextsDir}/${context}/`;
-  const byFolder = new Map<string, string>();
 
-  for (const file of project.files.filter((candidate) => candidate.path.startsWith(prefix))) {
-    const relative = file.path.slice(prefix.length);
-    const { module, earlier } = moduleSplit(relative, modules);
-
-    if (module !== undefined && earlier === true) {
-      byFolder.set(relative.split('/').slice(0, 2).join('/'), module);
-    }
-  }
-
-  return byFolder;
+  return project.contextEntries
+    .filter((entry) => entry.startsWith(prefix) && !entry.endsWith('/'))
+    .map((entry) => entry.slice(prefix.length));
 }
 
 /** The files of a context left at its level, by the folder they sit in, relative to the context. */
@@ -94,16 +87,22 @@ function outsideByFolder(project: Project, context: string): Map<string, string[
   for (const file of project.files.filter((candidate) => isLeftOutside(project, candidate, context))) {
     const [layer = '', role = '', ...rest] = (pathInContext(project, file) ?? file.path).split('/');
 
-    add(`${layer}/${role}`, movedTogether(role, rest));
+    add(`${holderOf(file)}${layer}/${role}`, movedTogether(role, rest));
   }
 
-  for (const spec of specsOfModules(project, context)) {
+  // A spec left in the test folder of the context is reported with that folder, as an earlier layout.
+  for (const spec of specsOfModules(project, context).filter((candidate) => holderOf(candidate) !== '')) {
     const [, kind = ''] = (pathInContext(project, spec) ?? spec.path).split('/');
 
-    add(`test/${kind}`, path.posix.basename(spec.path));
+    add(`${holderOf(spec)}test/${kind}`, path.posix.basename(spec.path));
   }
 
   return byFolder;
+}
+
+/** The folder of the context a file left outside every module sits in, before its layer: `shared/`, or none. */
+function holderOf({ location }: SourceFile): string {
+  return location.area === 'context' && location.shared === true ? `${SHARED_FOLDER}/` : '';
 }
 
 /** What moves as one piece: the folder of a use case, with its command, handler and result, or a file. */

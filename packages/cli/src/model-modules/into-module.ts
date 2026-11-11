@@ -1,20 +1,16 @@
-import { MODULE_LAYERS, MODULE_TEST_FOLDERS } from './module-layers';
+import { MODULE_LAYERS, TEST_FOLDER } from './module-layers';
+
+/** The folders of the tests a module holds for itself: its specs, its fakes and its builders. */
+const MODULE_TESTS: readonly string[] = ['unit', 'integration', 'fakes', 'builders'];
 
 /**
- * Puts a path relative to its context, written without modules, back in its module: a file of a
- * layer under the folder of the module (`<module>/domain/...`), a spec under the module folder of
- * its test folder (`test/unit/<module>/...`). Any other path stays at the level of the context.
+ * Puts a path relative to its context, written without modules, in its module: a file of a layer
+ * under the folder of the module (`<module>/domain/...`), a spec, a fake or a builder in its test
+ * folder (`<module>/test/unit/...`). Any other path stays as it is written.
  */
 export function intoModule(module: string | undefined, file: string): string {
-  const [first = '', second = '', ...rest] = file.split('/');
+  const [first = '', second = ''] = file.split('/');
+  const held = MODULE_LAYERS.includes(first) || (first === TEST_FOLDER && MODULE_TESTS.includes(second));
 
-  if (module === undefined) {
-    return file;
-  }
-
-  if (MODULE_LAYERS.includes(first)) {
-    return `${module}/${file}`;
-  }
-
-  return first === 'test' && MODULE_TEST_FOLDERS.includes(second) ? ['test', second, module, ...rest].join('/') : file;
+  return module !== undefined && held ? `${module}/${file}` : file;
 }

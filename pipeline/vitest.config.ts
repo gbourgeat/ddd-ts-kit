@@ -1,8 +1,13 @@
 import { governedCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
-import { decorators } from '@ddd-ts-kit/testing/vitest';
+import { decoratorCoverage, decorators } from '@ddd-ts-kit/testing/vitest';
 import { configDefaults, defineConfig, type TestProjectInlineConfiguration } from 'vitest/config';
 
-const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
+// The integration specs of a context, and of a module of its model that holds its tests.
+const INTEGRATION_SPECS = [
+  'src/contexts/*/test/integration/**/*.spec.ts',
+  'src/contexts/*/*/test/integration/**/*.spec.ts',
+];
+
 const INTEGRATION_MODE = 'integration';
 // A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
 const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);
@@ -14,7 +19,7 @@ const UNIT_PROJECT: TestProjectInlineConfiguration = {
   test: {
     name: 'unit',
     include: ['src/**/*.spec.ts'],
-    exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],
+    exclude: [...INTEGRATION_SPECS, ...NOT_AFFECTED],
     // The unit specs share no state: each worker runs them in one module graph, the declarations of a context evaluated once rather than once per spec file. `isolate: true` gives each file its own graph again.
     isolate: false,
   },
@@ -24,7 +29,7 @@ const INTEGRATION_PROJECT: TestProjectInlineConfiguration = {
   extends: true,
   test: {
     name: INTEGRATION_MODE,
-    include: [INTEGRATION_SPECS],
+    include: INTEGRATION_SPECS,
     exclude: NOT_AFFECTED,
     // A hook opens the test database (PGlite started and its tables created, or a server reached): under coverage on a busy machine it outlasts the default 10 seconds.
     hookTimeout: 60_000,
@@ -32,8 +37,8 @@ const INTEGRATION_PROJECT: TestProjectInlineConfiguration = {
 };
 
 export default defineConfig(({ mode }) => ({
-  // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
-  plugins: [decorators({ compiler: '@typescript/native' })],
+  // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does. What it writes to apply them holds closures no spec calls, kept out of the measure.
+  plugins: [decorators({ compiler: '@typescript/native' }), decoratorCoverage()],
   // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
   resolve: { tsconfigPaths: true },
   test: {

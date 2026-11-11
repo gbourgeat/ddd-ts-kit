@@ -1,3 +1,4 @@
+import type { Name } from '../../naming';
 import type { RenderContext } from '../../templating';
 import { renderTemplate } from '../../templating';
 import { applyWiring } from '../apply-wiring';
@@ -16,12 +17,12 @@ import {
 } from '../../prisma-schema';
 
 /** The table or model of the aggregate, declared where the migration tooling of the ORM reads it. */
-export function declareStorage(scope: Scope, context: RenderContext): void {
+export function declareStorage(scope: Scope, aggregate: Name, context: RenderContext): void {
   const { orm } = scope.config.stack;
   const tablesFile = TABLES_FILES[orm];
 
   if (orm === 'prisma') {
-    declarePrismaModel(scope, context);
+    declarePrismaModel(scope, aggregate, context);
   }
 
   if (tablesFile === undefined) {
@@ -42,7 +43,7 @@ export function declareStorage(scope: Scope, context: RenderContext): void {
     scope.ws.create(tables, renderTemplate(`repository/${orm}/schema.ts.tpl`, context));
   }
 
-  applyWiring(scope.ws, tables, renderTemplate(`repository/${orm}/table.tpl`, context));
+  declareOnce(scope, { file: tables, table: aggregate.table }, renderTemplate(`repository/${orm}/table.tpl`, context));
 
   applyWiring(
     scope.ws,
@@ -52,10 +53,30 @@ export function declareStorage(scope: Scope, context: RenderContext): void {
 }
 
 /**
+ * A command run again with the same options adds nothing, its block being there already. Run again with others
+ * (`--personal`, `--tenant-scoped`), it would declare the table a second time under the same name, and every
+ * spec that loads the file would fail on the name declared twice: it is refused, the file left as it was.
+ */
+function declareOnce(scope: Scope, { file, table }: { file: string; table: string }, wiring: string): void {
+  const named = new RegExp(`['"]${table}['"]`, 'g');
+  const declared = (): number => scope.ws.read(file)?.match(named)?.length ?? 0;
+  const before = declared();
+
+  applyWiring(scope.ws, file, wiring);
+
+  if (before > 0 && declared() > before) {
+    throw new CliError(
+      `${file} already declares the table ${table}, with other columns than this command would write.`,
+      `Change the table by hand in ${file}, a personal field with its line in the *.personal-fields.ts of the aggregate; the generator declares a table once.`,
+    );
+  }
+}
+
+/**
  * Prisma reads the files of one folder: the model joins the file of its context, which the worker
  * of the context owns, and the database schema of the context the datasource of the main file.
  */
-function declarePrismaModel(scope: Scope, context: RenderContext): void {
+function declarePrismaModel(scope: Scope, aggregate: Name, context: RenderContext): void {
   const models = prismaSchemaOf(scope.context.kebab);
 
   if (keepsSinglePrismaSchema((file) => scope.ws.exists(file))) {
@@ -69,7 +90,7 @@ function declarePrismaModel(scope: Scope, context: RenderContext): void {
     scope.ws.create(models, renderTemplate('repository/prisma/schema.prisma.tpl', context));
   }
 
-  applyWiring(scope.ws, models, renderTemplate('repository/prisma/model.tpl', context));
+  declareOnce(scope, { file: models, table: aggregate.table }, renderTemplate('repository/prisma/model.tpl', context));
 
   const content = scope.ws.read(PRISMA_MAIN_SCHEMA);
 

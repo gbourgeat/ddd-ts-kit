@@ -30,7 +30,8 @@ change nothing and run no command that writes.
    `openapi/openapi.yaml` (or the document of `openapi/` that holds it) for a route (search it with `grep`, do not read it whole).
 4. Only then one source file, found from its role: the canonical tree puts a use case in
    `application/commands|queries/<use-case>/`, a contract in `published-language/`, an
-   aggregate in `domain/aggregates/<name>.aggregate.ts`. Read the range that answers.
+   aggregate in `domain/aggregates/<name>.aggregate.ts`. In a context divided into modules of the model
+   the same path sits under `<module>/`, and what belongs to no module under `shared/`. Read the range that answers.
 
 Never glob or list `src/` to discover what exists: the map says it. Never read a spec, a
 fake or a generated barrel to answer a "where" question.

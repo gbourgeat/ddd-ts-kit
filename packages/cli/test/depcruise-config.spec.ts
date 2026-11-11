@@ -131,8 +131,8 @@ describe('depcruise-config against the script of the pipeline', () => {
 
     expect(added).toEqual([
       '^app/apps/[^/]+/main\\.ts$',
-      '^app/contexts/[^/]+/test/fakes/',
-      '^app/contexts/[^/]+/test/worlds/',
+      '^app/contexts/[^/]+/(?:test|[^/]+/test)/fakes/',
+      '^app/contexts/[^/]+/(?:test|[^/]+/test)/worlds/',
     ]);
 
     expect(orphansOf(ported).filter((pattern) => !added.includes(pattern))).toEqual(orphansOf(shipped));

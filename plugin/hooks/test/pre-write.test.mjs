@@ -235,6 +235,36 @@ test('every generated role of the canonical tree names its generator', () => {
   assert.equal(run('pre-write', write(join(root, 'test/e2e/journey-tenancy.e2e.spec.ts'))).output, undefined);
 });
 
+test('the schema of the query string of a route is written by hand; the query of the application layer is generated', () => {
+  const root = project();
+  const context = join(root, 'src/contexts/ordering');
+  for (const path of [
+    'presentation/http/orders/list-orders/list-orders.query.ts',
+    'sales/presentation/http/orders/list-orders/list-orders.query.ts',
+    'shared/presentation/http/orders/list-orders/list-orders.query.ts',
+    '../presentation/presentation/http/orders/list-orders/list-orders.query.ts',
+  ]) {
+    assert.equal(run('pre-write', write(join(context, path))).output, undefined, path);
+  }
+  // Anywhere else in a context, a new query is the generator's, wherever it was misplaced.
+  for (const path of [
+    'application/queries/list-orders/list-orders.query.ts',
+    'sales/application/queries/list-orders/list-orders.query.ts',
+    'application/list-orders.query.ts',
+    'application/commands/list-orders/list-orders.query.ts',
+    'application/sales/queries/list-orders/list-orders.query.ts',
+    'domain/list-orders.query.ts',
+    'application/presentation/list-orders.query.ts',
+    'infrastructure/http/presentation/list-orders.query.ts',
+    '../presentation/application/queries/list-orders/list-orders.query.ts',
+    '../presentation/domain/list-orders.query.ts',
+  ]) {
+    const result = run('pre-write', write(join(context, path)));
+    assert.equal(decision(result), 'deny', path);
+    assert.match(reason(result), /generate query /, path);
+  }
+});
+
 test('the declarations of the use cases of a module are not a policy file: they go to the module file of the module', () => {
   const root = project();
   const result = run(
@@ -326,8 +356,8 @@ test('the declarations of a module of the model are generated too, and a module 
   for (const folder of [
     'orders/application/commands/commands.declarations.ts',
     'orders/application/application.declarations.ts',
-    // The module under its layer, as 0.86 and 0.87 laid it out.
-    'application/orders/commands/commands.declarations.ts',
+    // What the modules of the context share, in its one folder.
+    'shared/presentation/presentation.declarations.ts',
   ]) {
     const declarations = run('pre-write', write(join(root, `src/contexts/ordering/${folder}`)));
     assert.equal(decision(declarations), 'deny', folder);
@@ -364,7 +394,7 @@ test('the declarations of a module of the model are generated too, and a module 
     'orders/application/commands/book-order/book-order.more.md',
     'orders/application/commands/cancel-order/cancel-order.notes.md',
     'orders/domain/value-objects/money.notes.md',
-    'test/unit/orders/book-order.notes.md',
+    'orders/test/unit/book-order.notes.md',
   ]) {
     put(root, join('src/contexts/ordering', file), 'one\ntwo\n');
   }

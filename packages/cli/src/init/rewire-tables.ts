@@ -3,10 +3,12 @@ import { applyWiring } from '../generate/apply-wiring';
 import { contextVars } from '../generate/context-vars';
 import { TABLES_FILES } from '../generate/kinds/tables-files';
 import { listedInIndex } from '../migration';
+import { heldFileOf, treeOf } from '../model-modules';
 import { parseContextName, type Name } from '../naming';
 import { PRISMA_MAIN_SCHEMA, prismaSchemaOf, schemaOfContext, withDatasourceSchema } from '../prisma-schema';
 import { renderTemplate, type RenderValue } from '../templating';
 import type { Workspace } from '../workspace';
+import { withHeldImports } from './with-held-imports';
 
 const TYPEORM_TABLE = /^export const (\w+) = new EntitySchema\b/gm;
 
@@ -28,7 +30,7 @@ export function rewireTables(ws: Workspace, config: Config, name: string): void 
 
   const file = TABLES_FILES[orm]?.(context.kebab);
   const index = `${config.platformDir}/database/schema.ts`;
-  const tables = ws.read(`${config.contextsDir}/${context.kebab}/infrastructure/persistence/${file}.ts`);
+  const tables = ws.read(heldFileOf(ws, treeOf(config, context.kebab), `infrastructure/persistence/${file}.ts`));
 
   if (tables === undefined || !ws.exists(index)) {
     return;
@@ -39,7 +41,11 @@ export function rewireTables(ws: Workspace, config: Config, name: string): void 
       applyWiring(
         ws,
         index,
-        renderTemplate(`repository/${orm}/schema-export.tpl`, { ...contextVars(config, context), ...entry.vars }),
+        withHeldImports(
+          ws,
+          config,
+          renderTemplate(`repository/${orm}/schema-export.tpl`, { ...contextVars(config, context), ...entry.vars }),
+        ),
       );
     }
   }

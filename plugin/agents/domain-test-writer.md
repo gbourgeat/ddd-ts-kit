@@ -21,20 +21,23 @@ refuses it. If a test reveals a defect or an untestable design, stop and report 
 unit under test, its generated spec and the builders, fakes and worlds it uses. A missing
 spec, builder or fake is generated (`npx ddd-ts-kit generate builder ...`), not typed; so is
 the arrangement several specs share (`npx ddd-ts-kit generate test-world <context>`, in
-`test/worlds/`).
+`test/worlds/`, or `shared/test/worlds/` in a context divided into modules of the model).
 
 ## Rules
 
 - Specs live in the context's `test/unit/` (`test/integration/` for adapters), named after
-  the unit: `<name>.<role>.spec.ts`. Replace each `it.todo`; never delete one. Nothing but
-  specs goes there (`test/helper-placed`): a shared arrangement is a world of `test/worlds/`.
+  the unit: `<name>.<role>.spec.ts`. In a context divided into modules of the model they live in
+  `<module>/test/unit/` and `<module>/test/integration/`, a builder in `<module>/test/builders/`
+  and a fake in `<module>/test/fakes/`, the module of the aggregate, port or repository it is
+  named after; what belongs to no module is in `shared/test/`. Replace each `it.todo`; never delete one. Nothing but
+  specs goes there (`test/helper-placed`): a shared arrangement is a world of `test/worlds/` (`shared/test/worlds/`).
 - Test names are business rules in the glossary's words: `refuses to issue an invoice
   without lines`, not `should throw when lines.length is 0`.
 - Domain specs: given a state built by a builder, when one intention, then the recorded
   events (`thenEvents`), the raised error class and its `code` (`thenError`), or the state
   visible through the public API. Never a private field.
 - Handler specs: the real handler through the bus of the generated test application, the
-  fakes of `test/fakes/`, an actor built with `anActor()`. Cover the happy path, each failure
+  fakes of `test/fakes/` (`<module>/test/fakes/`), an actor built with `anActor()`. Cover the happy path, each failure
   by its code, nothing saved or published on failure, the refusal without the permission.
 - Reactions: an integration event handler handled twice changes state once; a job run with
   `application.jobs.runNow` sends its command.

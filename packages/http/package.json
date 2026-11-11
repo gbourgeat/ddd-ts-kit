@@ -129,7 +129,7 @@
   },
   "devDependencies": {
     "@ddd-ts-kit/testing": "0.109.0",
-    "@hono/node-server": "^2.1.4",
+    "@hono/node-server": "^2.1.6",
     "@nestjs/common": "^12.3.2",
     "@nestjs/core": "^12.3.2",
     "@nestjs/platform-express": "^12.3.2",

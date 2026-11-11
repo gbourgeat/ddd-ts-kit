@@ -9,6 +9,6 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     include: ['src/**/*.spec.ts'],
-    exclude: ['src/contexts/*/test/integration/**'],
+    exclude: ['src/contexts/*/test/integration/**', 'src/contexts/*/*/test/integration/**'],
   },
 });

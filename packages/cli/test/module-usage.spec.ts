@@ -241,11 +241,11 @@ describe('the usage of each kind says whether it takes --module', () => {
   });
 
   it('shows --module on the use cases and the model, and keeps it off what the modules share', () => {
-    for (const name of ['aggregate', 'command', 'query', 'route', 'port', 'policy', 'integration-handler']) {
+    for (const name of ['aggregate', 'command', 'query', 'route', 'port', 'policy', 'integration-handler', 'builder']) {
       expect(usages.get(name)).toContain(MODULE_OPTION);
     }
 
-    for (const name of ['builder', 'test-world', 'route-group', 'guard', 'schema', 'e2e', 'service', 'worker']) {
+    for (const name of ['test-world', 'route-group', 'guard', 'schema', 'e2e', 'service', 'worker']) {
       expect(usages.get(name)).not.toContain('--module');
     }
   });

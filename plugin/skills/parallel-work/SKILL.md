@@ -125,7 +125,7 @@ the guard refuses any write of a `context-builder` agent outside `src/contexts/<
 its end-to-end specs and their support in `test/e2e/support/<context>/` (in an acceptance spec, anything but removing `pending(...)`), any generator that writes a shared file, any dependency change, and any
 shell command that writes outside the scope (`sed -i`, `>`, `tee`, `cp`, `mv`, `rm`, or a path
 only the shell knows); code the guard cannot read (inline code, a script, the tests) runs, and a
-file it changed outside the scope stops the worker until it is put back, its scope pinned at its first call; `npx prettier` and a bare `npx biome` are refused too.
+file it changed outside the scope stops the worker until it is put back, its scope pinned at its first call (the first command that names its worktree, where several workers have one; the pin then follows the worker, whichever checkout a call starts in); `npx prettier` and a bare `npx biome` are refused too.
 
 Before briefing a worker in a context that already has one, run
 `npx ddd-ts-kit status --workers` from the trunk: it lists each worker (worktree, branch,
@@ -256,7 +256,8 @@ plain merge of the trunk into the second replays them as conflicts. `merge-trunk
 first branch landed (by patch id, on the branch recorded as its base or any local branch sharing
 commits) and merges from there; when the first branch is gone and nothing proves it, it falls
 back to an older base (more conflicts, never a silent loss) and names the `--since <commit>` to
-confirm. `status --workers` shows, per worker, where it landed, what is ahead and behind, and
+confirm. Without `--trunk` it brings in the base of the worker, here the first branch: once that
+one landed, run it with `--trunk origin/main`. `status --workers` shows, per worker, where it landed, what is ahead and behind, and
 what `merge-trunk` would leave conflicted now. Never resolve by taking the trunk's side of a
 whole file.
 

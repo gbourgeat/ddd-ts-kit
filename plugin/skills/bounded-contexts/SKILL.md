@@ -65,7 +65,8 @@ Reference*). A part with a language of its own is a context; a part of one model
 language, same schema, same transaction, is a **module of the model**: one folder of the
 context holding its own layers (`<module>/domain/`, `<module>/application/`, ...), declared in
 `contexts.<name>.modules`, named with glossary terms
-(`docs/concepts/modules.md`).
+(`docs/concepts/modules.md`). Its tests go with it (`<module>/test/`), and what belongs to no module
+is in one `shared/` folder, never a module name; no layer folder stays at the root.
 
 - **Too large to read, one language**: propose modules, each a cluster of glossary terms used
   together, with one sentence of purpose. Never technical names (`shared`, `common`, `core`).
@@ -77,7 +78,7 @@ context holding its own layers (`<module>/domain/`, `<module>/application/`, ...
   `docs/guides/many-dependencies.md`.
 
 Once the owner agreed, `npx ddd-ts-kit generate module <context> <module> --purpose "..."` and
-`npx ddd-ts-kit move-to-module <context> <module> <path>...` (skill `ddd-ts-kit:scaffold`).
+`npx ddd-ts-kit move-to-module <context> <module> <path>...` (a path may be a spec, a fake or a builder; `npx ddd-ts-kit context-layout` moves a project laid out before) (skill `ddd-ts-kit:scaffold`).
 
 ## 4. Write the artefact
 

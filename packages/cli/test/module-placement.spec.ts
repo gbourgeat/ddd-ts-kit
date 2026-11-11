@@ -55,19 +55,76 @@ describe('where a generator writes a file in a context divided into modules', ()
     expect(() => placement(existing, 'calendars')(controller, true)).toThrow('split');
   });
 
-  it('writes a spec with its subject, at the depth it was given, and leaves one already in a module alone', () => {
+  it('writes a spec in the test folder of the module of its subject, at the depth it was given, and one of no module in shared', () => {
     const place = placement([]);
 
     expect(place(`${SCHEDULING}/test/unit/domain/slot.vo.spec.ts`, true)).toBe(
-      `${SCHEDULING}/test/unit/calendars/domain/slot.vo.spec.ts`,
+      `${SCHEDULING}/calendars/test/unit/domain/slot.vo.spec.ts`,
     );
 
-    expect(place(`${SCHEDULING}/test/unit/waitlist/offer.vo.spec.ts`, true)).toBe(
-      `${SCHEDULING}/test/unit/waitlist/offer.vo.spec.ts`,
+    expect(place(`${SCHEDULING}/waitlist/test/unit/offer.vo.spec.ts`, true)).toBe(
+      `${SCHEDULING}/waitlist/test/unit/offer.vo.spec.ts`,
     );
 
     expect(place(`${SCHEDULING}/test/unit/scheduling.permissions.spec.ts`, true)).toBe(
-      `${SCHEDULING}/test/unit/scheduling.permissions.spec.ts`,
+      `${SCHEDULING}/shared/test/unit/scheduling.permissions.spec.ts`,
+    );
+  });
+
+  it('writes a fake and a builder in the test folder of the asked module, of the one that holds them, else in shared', () => {
+    const fake = `${SCHEDULING}/test/fakes/mailer.fake.ts`;
+    const builder = `${SCHEDULING}/test/builders/offer.builder.ts`;
+
+    expect(placement([], 'waitlist')(fake, true)).toBe(`${SCHEDULING}/waitlist/test/fakes/mailer.fake.ts`);
+
+    expect(placement(['calendars/test/fakes/mailer.fake.ts'], 'waitlist')(fake, false)).toBe(
+      `${SCHEDULING}/calendars/test/fakes/mailer.fake.ts`,
+    );
+
+    expect(placement([])(builder, true)).toBe(`${SCHEDULING}/shared/test/builders/offer.builder.ts`);
+  });
+
+  it('writes what belongs to no module in shared, and reads it at the level of a context that has not moved it yet', () => {
+    const schema = `${SCHEDULING}/infrastructure/persistence/scheduling.schema.ts`;
+
+    expect(placement([], 'calendars')(schema, true)).toBe(
+      `${SCHEDULING}/shared/infrastructure/persistence/scheduling.schema.ts`,
+    );
+
+    expect(placement([])(`${SCHEDULING}/presentation/http/calendars.routes.ts`, true)).toBe(
+      `${SCHEDULING}/shared/presentation/http/calendars.routes.ts`,
+    );
+
+    expect(placement([])(`${SCHEDULING}/test/worlds/scheduling.world.ts`, true)).toBe(
+      `${SCHEDULING}/shared/test/worlds/scheduling.world.ts`,
+    );
+
+    expect(placement(['infrastructure/persistence/scheduling.schema.ts'])(schema, false)).toBe(schema);
+    expect(placement([])(`${SCHEDULING}/scheduling.codes.ts`, true)).toBe(`${SCHEDULING}/scheduling.codes.ts`);
+    expect(placement([])(`${SCHEDULING}/domain/errors/codes.ts`, true)).toBe(`${SCHEDULING}/domain/errors/codes.ts`);
+  });
+
+  it('leaves a path of a context that declares no module as it is written', () => {
+    const place = modulePlacement({
+      config: CONFIG,
+      asked: undefined,
+      existsAsIs: () => false,
+      modulesOf: () => [],
+      unplaced: (_context, relative) => {
+        throw new Error(`unplaced ${relative}`);
+      },
+      split: (_context, relative) => {
+        throw new Error(`split ${relative}`);
+      },
+      subjectModule: () => undefined,
+    });
+
+    expect(place('src/contexts/billing/test/fakes/clock.fake.ts', true)).toBe(
+      'src/contexts/billing/test/fakes/clock.fake.ts',
+    );
+
+    expect(place('src/contexts/billing/domain/events/paid.event.ts', true)).toBe(
+      'src/contexts/billing/domain/events/paid.event.ts',
     );
   });
 });

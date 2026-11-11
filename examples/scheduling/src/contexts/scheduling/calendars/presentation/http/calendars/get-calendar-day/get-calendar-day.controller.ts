@@ -5,7 +5,7 @@ import { GetCalendarDayQuery } from '@/contexts/scheduling/calendars/application
 import { GetCalendarDayParams } from '@/contexts/scheduling/calendars/presentation/http/calendars/get-calendar-day/get-calendar-day.params';
 import { GetCalendarDayAnswer } from '@/contexts/scheduling/calendars/presentation/http/calendars/get-calendar-day/get-calendar-day.answer';
 import type { GetCalendarDaySerializer } from '@/contexts/scheduling/calendars/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
-import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
+import { CalendarsRoutes } from '@/contexts/scheduling/shared/presentation/http/calendars.routes';
 
 const params = classSchema(GetCalendarDayParams);
 const answer = classSchema(GetCalendarDayAnswer);

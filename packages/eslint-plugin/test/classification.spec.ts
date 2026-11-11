@@ -97,7 +97,6 @@ const PATHS = [
   'src/contexts/scheduling/test/unit/calendars/calendar.aggregate.spec.ts',
   'src/contexts/scheduling/test/integration/waitlist/waitlist.repository.contract.spec.ts',
   'src/contexts/scheduling/test/fakes/calendar.repository.fake.ts',
-  'src/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.ts',
   'src/contexts/scheduling/application/waitlist/commands/join-waitlist/join-waitlist.handler.ts',
   'src/contexts/scheduling/presentation/http/calendars.routes.ts',
   'src/contexts/scheduling/orders/domain/order.aggregate.ts',
@@ -172,7 +171,7 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
     expect(names.get('ILogger')).toBe('Logger');
   });
 
-  it('locates the files of the modules of a context the same way, in their folder and where 0.86 and 0.87 put them', () => {
+  it('locates the files of the modules of a context the same way, in their folder', () => {
     const raw = { contexts: { scheduling: { classification: 'core', modules: { calendars: {}, waitlist: {} } } } };
 
     for (const file of PATHS) {
@@ -275,5 +274,40 @@ describe('locate, a dot folder of the contexts directory', () => {
 
     expect(locate(config, 'src/contexts/.claude/domain/a.ts')).toEqual({ area: 'other' });
     expect(cliLocate(cliParseConfig({}), 'src/contexts/.claude/domain/a.ts')).toEqual({ area: 'other' });
+  });
+});
+
+describe('locate, in a context divided into modules', () => {
+  it('locates the test folder of a module and what the modules share, in shared/, the same way', () => {
+    const raw = { contexts: { scheduling: { classification: 'core', modules: { calendars: {} } }, billing: {} } };
+
+    const files = [
+      'src/contexts/scheduling/calendars/test/unit/calendar.aggregate.spec.ts',
+      'src/contexts/scheduling/calendars/test/builders/calendar.builder.ts',
+      'src/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema.ts',
+      'src/contexts/scheduling/shared/presentation/http/calendars.routes.ts',
+      'src/contexts/scheduling/shared/test/worlds/scheduling.world.ts',
+      'src/contexts/scheduling/shared/domain/services/pricing.service.ts',
+      'src/contexts/scheduling/shared/notes.ts',
+      'src/contexts/billing/shared/infrastructure/persistence/billing.schema.ts',
+    ];
+
+    for (const file of files) {
+      expect(locate(parseConfig(raw), file), file).toEqual(cliLocate(cliParseConfig(raw), file));
+
+      expect(isTestFile(file, locate(parseConfig(raw), file)), file).toBe(
+        cliIsTestFile(file, cliLocate(cliParseConfig(raw), file)),
+      );
+    }
+
+    expect(locate(parseConfig(raw), files[2] ?? '')).toEqual({
+      area: 'context',
+      context: 'scheduling',
+      layer: 'infrastructure',
+      inside: ['persistence', 'scheduling.schema.ts'],
+      shared: true,
+    });
+
+    expect(locate(parseConfig(raw), files[1] ?? '')).toMatchObject({ layer: 'test', module: 'calendars' });
   });
 });

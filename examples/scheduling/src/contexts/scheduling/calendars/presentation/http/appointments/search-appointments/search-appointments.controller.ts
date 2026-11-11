@@ -10,10 +10,10 @@ import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { agendaCriteria } from '@/contexts/scheduling/calendars/application/ports/agenda.port';
 import { SearchAppointmentsQuery } from '@/contexts/scheduling/calendars/application/queries/search-appointments/search-appointments.query';
-import { AgendaLine } from '@/contexts/scheduling/presentation/http/shared/agenda-line.schema';
+import { AgendaLine } from '@/contexts/scheduling/shared/presentation/http/shared/agenda-line.schema';
 import type { Infer } from '@ddd-ts-kit/validation';
-import type { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
-import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
+import type { AgendaEntrySerializer } from '@/contexts/scheduling/shared/presentation/http/shared/agenda-entry.serializer';
+import { AppointmentsRoutes } from '@/contexts/scheduling/shared/presentation/http/appointments.routes';
 
 // The filters (`filter[status]=in:booked,requested`), the sort and the page the agenda declares; anything else is answered 422.
 const query = criteriaQuerySchema(agendaCriteria);

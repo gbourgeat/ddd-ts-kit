@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bbab87193df40b06 -->
+<!-- translation-of: README.md sha256:2cf7dd2f54b52650 -->
 
 # @ddd-ts-kit/testing
 
@@ -1038,11 +1038,12 @@ export default defineConfig(({ mode }) => ({
 - `REFERENCE_COVERAGE` est la référence : domaine 90/85/90/90, application 85/80/85/85,
   présentation 80/70/80/80, infrastructure 70/60/70/70 (instructions, branches, fonctions, lignes).
 
-En mode de décorateurs historique avec `emitDecoratorMetadata`, ajoutez `decoratorCoverage()` de
-`@ddd-ts-kit/testing/vitest` à `plugins` : les instructions qu'écrit la transformation pour appliquer les
-décorateurs contiennent, pour chaque type que nomme une classe décorée, une branche qu'aucun test ne peut
-prendre ; le *plugin* les marque avec l'indication que lit le fournisseur `v8`, comme le fournisseur le
-fait de lui-même pour SWC.
+Ajoutez `decoratorCoverage()` de `@ddd-ts-kit/testing/vitest` à `plugins`, après `decorators()` quand le
+projet l'a : les instructions qu'écrit un compilateur pour appliquer les décorateurs contiennent du code
+qu'aucun test ne peut atteindre. En mode historique avec `emitDecoratorMetadata`, c'est une branche pour
+chaque type que nomme une classe décorée ; en mode standard, les deux fermetures `access` de chaque membre
+décoré, que seul un décorateur qui les lit appelle. Le *plugin* marque ces instructions avec l'indication
+que lit le fournisseur `v8`, comme le fournisseur le fait de lui-même pour SWC.
 
 ## Budget de temps des specs
 

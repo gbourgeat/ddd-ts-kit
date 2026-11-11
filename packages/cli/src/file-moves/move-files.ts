@@ -6,6 +6,7 @@ import { withMovedImports } from '../platform-folders/with-moved-imports';
 import { projectSources } from '../refusals/project-sources';
 import type { Workspace } from '../workspace';
 import type { FileMove } from './file-move';
+import { followInMigrations } from './follow-in-migrations';
 
 const EXTENSION = /\.(?:ts|tsx|mts)$/;
 const SOURCE = /\.(?:ts|tsx|mts|js|mjs|cjs)$/;
@@ -19,7 +20,8 @@ export interface FileMoves {
 
 /**
  * Moves files and rewrites every import of them under the source root, `test/` and `scripts/`, by
- * alias or relative path, the extension kept as it was written.
+ * alias or relative path, the extension kept as it was written, and the compiled path a migration
+ * names them by (`followInMigrations`).
  */
 export function moveFiles(ws: Workspace, config: Config, moved: readonly FileMove[]): FileMoves {
   const touched = new Set(moved.flatMap((move) => [move.from, move.to]));
@@ -57,7 +59,7 @@ export function moveFiles(ws: Workspace, config: Config, moved: readonly FileMov
 
   followInBaseline(ws, moved);
 
-  return { moved, rewritten: [...rewrittenMoved, ...rewrittenOthers] };
+  return { moved, rewritten: [...rewrittenMoved, ...rewrittenOthers, ...followInMigrations(ws, moved)] };
 }
 
 /** The errors the baseline of the project records for a moved file follow it to its new path. */

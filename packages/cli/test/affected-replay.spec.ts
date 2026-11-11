@@ -56,8 +56,10 @@ describe('the affected selection is never narrower than the declared dependencie
 
     for (const file of walk(EXAMPLE).filter((candidate) => !candidate.startsWith('coverage/'))) {
       const { scope, contexts } = selectAffected(example, [file]);
-      const [, context = '', layer] = /^src\/contexts\/([^/]+)\/([^/]+)/.exec(file) ?? [];
-      const needed = context === '' ? [] : layer === 'test' ? [context] : mustRun(example, context);
+      // The tests of a context: its test folder, the one of a module of its model, the one of what its modules share.
+      const [, context = '', folder, held] = /^src\/contexts\/([^/]+)\/([^/]+)(?:\/([^/]+))?/.exec(file) ?? [];
+      const testsOnly = folder === 'test' || held === 'test';
+      const needed = context === '' ? [] : testsOnly ? [context] : mustRun(example, context);
 
       const document =
         /^(docs|openapi|\.claude|\.github\/instructions|\.github\/copilot)\//.test(file) || /^[^/]+\.md$/.test(file);

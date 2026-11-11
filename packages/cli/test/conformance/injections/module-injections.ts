@@ -20,11 +20,11 @@ export const MODULE_INJECTIONS: readonly Injection[] = [
     what: 'a module named after a technical grouping, its row written all the same',
     file: CONFIG,
     changes: [
-      { file: CONFIG, from: '"waitlist": {}', to: '"waitlist": {},\n        "shared": {}' },
+      { file: CONFIG, from: '"waitlist": {}', to: '"waitlist": {},\n        "common": {}' },
       {
         file: SCHEDULING_DOC,
         from: WAITLIST_ROW,
-        to: `${WAITLIST_ROW}\n| \`shared\` | What several modules reach for. |`,
+        to: `${WAITLIST_ROW}\n| \`common\` | What several modules reach for. |`,
       },
     ],
     checker: true,

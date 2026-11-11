@@ -3,7 +3,7 @@ import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/calendars/application/commands/mark-appointment-no-show/mark-appointment-no-show.command';
 import { MarkAppointmentNoShowParams } from '@/contexts/scheduling/calendars/presentation/http/appointments/mark-appointment-no-show/mark-appointment-no-show.params';
-import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
+import { AppointmentsRoutes } from '@/contexts/scheduling/shared/presentation/http/appointments.routes';
 
 const params = classSchema(MarkAppointmentNoShowParams);
 

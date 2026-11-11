@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { pickClass } from '@ddd-ts-kit/validation/class-validator';
-import { TimeSpan } from '@/contexts/scheduling/presentation/http/shared/time-span.schema';
+import { TimeSpan } from '@/contexts/scheduling/shared/presentation/http/shared/time-span.schema';
 
 /** Long enough for what a practitioner writes between two patients, short enough to stay a note. */
 const NOTE_LENGTH = 2000;

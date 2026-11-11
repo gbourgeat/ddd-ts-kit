@@ -1,5 +1,10 @@
-/** A statement the transform of the runner writes to apply legacy decorators: `Handler = _decorate([...], Handler);`. */
-const APPLIES_DECORATORS = /^\s*(?:[\w$.]+\s*=\s*)?_decorate\d*\(/;
+/**
+ * A statement the transform of the runner writes to apply decorators: `Handler = _decorate([...], Handler);` for the
+ * legacy ones, `__esDecorate(this, null, _issued_decorators, { ... access: { has: ..., get: ... } }, ...);` for the
+ * standard ones.
+ */
+const APPLIES_DECORATORS = /^\s*(?:(?:[\w$.]+\s*=\s*)?_decorate\d*|__esDecorate)\(/;
+const NAMES_A_HELPER = /_decorate|__esDecorate/;
 const HINT = '/* v8 ignore next */';
 
 /** The part of a Vite plugin this one fills: it is listed in `plugins` as it is. */
@@ -10,12 +15,17 @@ export interface DecoratorCoveragePlugin {
 }
 
 /**
- * Keeps the statements that apply legacy decorators out of the coverage measure. Under
+ * Keeps the statements that apply decorators out of the coverage measure. Under
  * `experimentalDecorators` with `emitDecoratorMetadata` (class-validator, NestJS) the transform
  * of the runner writes, for every type a decorated constructor or property names,
  * `typeof Port === "undefined" ? Object : Port`: a branch no test can take, mapped to the line of
  * the decorator. A handler with two ports would lose two branches a spec cannot win back, and the
  * branch threshold would measure the compiler instead of the code.
+ *
+ * Standard decorators have their own: for every decorated member the compiler writes the two closures of
+ * `access` (`has`, `get`), which only a decorator that reads them calls, mapped to the line of the decorator
+ * too. A projection with three `@On` would count six functions never called, and the function threshold
+ * would fall under its floor with every line covered.
  *
  * Each such statement is marked, after the transform, with the hint the coverage provider reads,
  * written at the end of the line above it so that no column of the source map moves. The provider
@@ -30,7 +40,7 @@ export function decoratorCoverage(): DecoratorCoveragePlugin {
     name: 'ddd-ts-kit:decorator-coverage',
     enforce: 'post',
     transform(code, id) {
-      if (id.includes('/node_modules/') || !code.includes('_decorate')) {
+      if (id.includes('/node_modules/') || !NAMES_A_HELPER.test(code)) {
         return undefined;
       }
 

@@ -1,7 +1,7 @@
 import { TECHNICAL_WORDS } from '../check/language/technical-words';
 import { splitWords } from '../naming';
 import { isRoleFolder } from './is-role-folder';
-import { CONTEXT_FOLDERS, MODULE_LAYERS } from './module-layers';
+import { CONTEXT_FOLDERS, MODULE_LAYERS, SHARED_FOLDER } from './module-layers';
 
 /**
  * Words that name a bag, not a part of the model: a module called `shared`, `common` or `core`
@@ -27,12 +27,14 @@ const KEBAB = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 export type ModuleNameFlaw =
   | { readonly reason: 'format' }
   | { readonly reason: 'role-folder' }
+  | { readonly reason: 'shared-folder' }
   | { readonly reason: 'technical'; readonly word: string };
 
 /**
  * The one judgement of a module name that the config check, the rule module/declared and
  * `generate module` share: a folder name in kebab-case, never the name of a layer, of a folder of the
- * root of a context or of a role folder, never a technical grouping. Whether its words are terms of the glossary depends on the context.
+ * root of a context or of a role folder, never `shared`, the folder of what belongs to no module,
+ * never a technical grouping. Whether its words are terms of the glossary depends on the context.
  */
 export function moduleNameFlaw(name: string): ModuleNameFlaw | undefined {
   if (!KEBAB.test(name)) {
@@ -41,6 +43,10 @@ export function moduleNameFlaw(name: string): ModuleNameFlaw | undefined {
 
   if (CONTEXT_FOLDERS.includes(name) || MODULE_LAYERS.some((layer) => isRoleFolder(layer, name))) {
     return { reason: 'role-folder' };
+  }
+
+  if (name === SHARED_FOLDER) {
+    return { reason: 'shared-folder' };
   }
 
   const word = splitWords(name).find((candidate) => MODULE_TECHNICAL_WORDS.includes(candidate));

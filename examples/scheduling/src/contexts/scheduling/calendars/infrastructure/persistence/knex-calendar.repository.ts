@@ -11,7 +11,7 @@ import {
 } from '@ddd-ts-kit/knex';
 import type { Calendar } from '@/contexts/scheduling/calendars/domain/aggregates/calendar.aggregate';
 import { CalendarRepository } from '@/contexts/scheduling/calendars/domain/repositories/calendar.repository';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema';
 import { CalendarMapper } from '@/contexts/scheduling/calendars/infrastructure/persistence/calendar.mapper';
 import type {
   CalendarColumns,

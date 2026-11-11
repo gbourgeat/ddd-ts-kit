@@ -27,8 +27,8 @@ interface Read {
 
 /** The routes the controllers of a context declare, one per `*.controller.ts` file and one per route method of a Nest controller, with what their groups add. */
 export function readControllers(sources: ContextSources, useCases: readonly UseCaseFact[]): RouteFact[] {
-  const { ws, directory } = sources;
-  const groups = readRouteGroups(ws, directory);
+  const { ws } = sources;
+  const groups = readRouteGroups(ws, sources);
 
   // The controllers of each module too: a route group of the context gives them their prefix.
   return roleFoldersOf(ws, sources, FOLDER)

@@ -60,12 +60,17 @@ function patchFromTrunk(root: string, commit: string, { trunk, pathspecs }: Land
     : patchIdsOf(root, ['diff', fork, commit, '--', ...pathspecs])[0]?.[0];
 }
 
-/** From the oldest of commits sharing one patch, the newest reached while the trunk holds each file every step changed. */
+/**
+ * From the oldest of commits sharing one patch, the newest reached while the trunk holds each file
+ * every step changed. A step that merged the trunk in changed, of its own, only the files where it
+ * differs from what it brought: the others are lines of the trunk, which the trunk may have
+ * changed again since, and they say nothing of what the branch landed.
+ */
 function heldByTrunk(root: string, oldestFirst: readonly string[], trunk: string): string {
   let held = oldestFirst[0] ?? '';
 
   for (const next of oldestFirst.slice(1)) {
-    const changed = (runGit(root, ['diff', '--name-only', '-z', held, next]) ?? '')
+    const changed = (runGit(root, ['diff', '--name-only', '-z', broughtIn(root, next, trunk) ?? held, next]) ?? '')
       .split('\0')
       .filter((file) => file !== '');
 
@@ -82,4 +87,13 @@ function heldByTrunk(root: string, oldestFirst: readonly string[], trunk: string
   }
 
   return held;
+}
+
+/** What a merge commit brought in from the trunk: its second parent, when the trunk holds it. */
+function broughtIn(root: string, commit: string, trunk: string): string | undefined {
+  const [, , other] = (runGit(root, ['rev-list', '--parents', '--max-count=1', commit]) ?? '').trim().split(' ');
+
+  return other !== undefined && runGit(root, ['merge-base', '--is-ancestor', other, trunk]) !== undefined
+    ? other
+    : undefined;
 }

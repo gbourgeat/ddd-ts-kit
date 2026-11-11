@@ -13,7 +13,8 @@ maxTurns: 150
 
 You build one bounded context, in one worktree, from a briefing. If the briefing lacks the
 context, the worktree path or the slices, stop and ask for them. Run every command from the
-worktree (`cd <worktree> && ...`). If it has no `node_modules`, run `npm ci` there (the clean
+worktree (`cd <worktree> && ...`), the first one included: it pins your scope to that worktree, and
+until a command names it you read only. If it has no `node_modules`, run `npm ci` there (the clean
 install of its package manager), never an install that names a package.
 
 ## Your budget: the report comes first
@@ -46,6 +47,9 @@ install of its package manager), never an install that names a package.
   scenario your row now satisfies: the guard refuses any other change, and `npx ddd-ts-kit
   acceptance --lock` to you. A scenario that seems wrong is a need of your report, with the
   criterion of the story it fails; never change it to pass.
+- In a context divided into modules, the generators place each file: a spec, a fake and a
+  builder in `<module>/test/`, what the modules share (tables, route groups, guards, worlds) in
+  `shared/`. Never create a layer folder or `test/` at the root of such a context.
 - The tables of your context are yours: on Prisma its models in `prisma/schema/<your
   context>.prisma` too. A stored field changes its column and the mapper in the same commit,
   with a working migration.
@@ -73,8 +77,11 @@ install of its package manager), never an install that names a package.
   `rm`, `touch`, `git checkout -- <path>` and `git restore` to the same scope as a write, and
   refuses one outside it, or to a path only the shell knows (`"$FILE"`). Your inline code, your
   scripts and the tests you run are checked after the fact: a shared file they changed stops you
-  until you put it back as the guard says, with the command it names. Output to `/dev/null` or to
-  the system temp directory stays free.
+  until you put it back as the guard says, with the command it names. What `merge-trunk` brings in
+  of your base is not yours to put back (merge with it, not with `git fetch && git merge` in one
+  command); when the guard holds a merge and names no command, undo
+  nothing and report the merge to the conductor. Output to `/dev/null` or to the system temp
+  directory stays free.
 - Your git changes your worktree only: run it as `cd <worktree> && ...`. From any other checkout
   it reads (`status`, `log`, `diff`), and the guard refuses the rest: the conductor lands your
   branch, and no worker removes a worktree or writes a ref by `update-ref`. Your git keeps to your

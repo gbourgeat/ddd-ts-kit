@@ -1027,10 +1027,12 @@ export default defineConfig(({ mode }) => ({
 - `REFERENCE_COVERAGE` is the reference: domain 90/85/90/90, application 85/80/85/85,
   presentation 80/70/80/80, infrastructure 70/60/70/70 (statements, branches, functions, lines).
 
-Under the legacy decorator mode with `emitDecoratorMetadata`, add `decoratorCoverage()` of
-`@ddd-ts-kit/testing/vitest` to `plugins`: the statements the transform writes to apply
-decorators hold, for every type a decorated class names, a branch no test can take; the plugin
-marks them with the hint the `v8` provider reads, as the provider does by itself for SWC.
+Add `decoratorCoverage()` of `@ddd-ts-kit/testing/vitest` to `plugins`, after `decorators()` when
+the project has it: the statements a compiler writes to apply decorators hold code no test can
+reach. Under the legacy mode with `emitDecoratorMetadata` it is a branch for every type a decorated
+class names; under the standard mode, the two `access` closures of every decorated member, which
+only a decorator that reads them calls. The plugin marks these statements with the hint the `v8`
+provider reads, as the provider does by itself for SWC.
 
 ## Time budget of the specs
 

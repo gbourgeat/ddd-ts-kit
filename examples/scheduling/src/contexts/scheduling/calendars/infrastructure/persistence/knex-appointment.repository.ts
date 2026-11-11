@@ -11,7 +11,7 @@ import {
 } from '@ddd-ts-kit/knex';
 import type { Appointment } from '@/contexts/scheduling/calendars/domain/aggregates/appointment.aggregate';
 import { AppointmentRepository } from '@/contexts/scheduling/calendars/domain/repositories/appointment.repository';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema';
 import { AppointmentMapper } from '@/contexts/scheduling/calendars/infrastructure/persistence/appointment.mapper';
 import { SlotTaken } from '@/contexts/scheduling/calendars/domain/errors/slot-taken.error';
 import {

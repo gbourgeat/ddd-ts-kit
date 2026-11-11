@@ -785,9 +785,9 @@ Next, in this order: the language of the context first, then the business decisi
 | Kind | Arguments | Writes |
 |---|---|---|
 | `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]... [--preset identity] [--reason "<why>"]` | `CONTEXT.md` with its glossary, `published-language/index.ts`, config entry, registration in `platform/composition/compose-application.ts` and in `test/architecture/extractable.spec.ts`; on tsyringe, with HTTP, `presentation/http/<name>.routes.ts` (a function of the two buses, in both styles); declared: the barrel `<name>.declarations.ts`; explicit and hand wiring: `<name>.module.ts`. `<name>.permissions.ts`, at the root of the context, is born with the first permission, or at once when `platform/auth/authorization/permissions.ts` lists the permission sets (rebac, custom). With `--preset`, the context is then written whole from that preset, its classification and purpose those of the preset unless the flags say otherwise ([Presets](#presets)) |
-| `module` | `<context> <module> [--purpose "<what it holds>"] [--classification <c>] [--term ...]...` | a module of the model of a context (Evans, Modules): declared in `contexts.<name>.modules` of the config, its row in the `## Modules` table of `CONTEXT.md`, its terms added to the glossary and, in the explicit style, its module file `<module>/<module>.module.ts` composed by `<context>.module.ts`; run again, it adds what is missing. The other kinds write into it with `--module <module>`, `move-to-module` moves files into it |
+| `module` | `<context> <module> [--purpose "<what it holds>"] [--classification <c>] [--term ...]...` | a module of the model of a context (Evans, Modules): declared in `contexts.<name>.modules` of the config, its row in the `## Modules` table of `CONTEXT.md`, its terms added to the glossary and, in the explicit style, its module file `<module>/<module>.module.ts` composed by `<context>.module.ts`; run again, it adds what is missing. The other kinds write into it with `--module <module>`, a spec, a fake and a builder in `<module>/test/`, and write what belongs to no module (the schema, the route groups, the guards, the shared shapes, the worlds) in `shared/`; `move-to-module` moves files into it, and `context-layout` lays out a context that held its tests at its own level |
 | `aggregate` | `<context> <Name> [--birth "<Fact>"] [--event-sourced] [--module <module>]` | aggregate, builder, spec in given / when / then. `--birth` names the fact it is born with in business words (`"Invoice Issued"`, `InvoiceIssued` or `Issued`), judged by the glossary and refused when it does not read as something that happened: it writes that domain event as `generate domain-event` does, `create` records it at the instant it is given, the builder takes that instant named after the fact (`issuedAt(instant)`) and the spec proves the birth; without it, the state holds no instant of its own (the audit columns of the row date its creation) and a `TODO(domain)` in `create` says how to record the birth later without rewriting the aggregate (`generate domain-event`, the `record` line, then `generate builder`); with `--event-sourced`, an aggregate on `EventSourcedAggregate` whose state is the replay of its events, born with its `Created` domain event (or the fact `--birth` names), its state holding the instant of that fact (`createdAt`), the codec of its stored events in `infrastructure/persistence/<name>-events.mapper.ts`, a builder that replays a history and a spec given events, and a note naming the `EventSourcedRepository` its repository adapter delegates to; refused while `stack.eventSourcing` is `off`, with the `init --force --event-sourcing on` to run |
-| `builder` | `<context> <Aggregate>` | `test/builders/<name>.builder.ts`, a class extending `Builder`; the instant of the birth `create` records is an ingredient named after its fact, the builder of an event-sourced aggregate replays its birth event, and a note names the parameters of `create` it cannot guess; when `create` is missing or records an event not named `<Aggregate><Fact>`, no builder is written and a note says why |
+| `builder` | `<context> <Aggregate> [--module <module>]` | `test/builders/<name>.builder.ts`, a class extending `Builder`; the instant of the birth `create` records is an ingredient named after its fact, the builder of an event-sourced aggregate replays its birth event, and a note names the parameters of `create` it cannot guess; when `create` is missing or records an event not named `<Aggregate><Fact>`, no builder is written and a note says why |
 | `test-world` | `<context> [Name]` | `test/worlds/<name>.world.ts` (the name defaults to the context): `a<Name>World({ now, idPrefix, given })`, the arrangement several specs of the context share. It reads the fakes of `test/fakes/` and the port each one implements, builds them, hands them to `given` so that the spec stores what it starts from, then to the test application (with `modules`, the authorization of the spec) or, wired by hand, wraps the repositories of the buses of `createTestBuses` with `dispatching`; it returns every fake under the name of its port. A fake that needs constructor arguments, or, under a container, stands for a port nothing binds or depends on yet, is left out with a note. Under a container it also takes `fakes`, the fake of a port it cannot build (a reader that answers what the spec gives it), and, under tenancy, `tenants`. The world named after the context is the one the specs of `command`, `query` and `job` generated after it arrange through |
 | `entity` | `<context> <Name> [--module <module>]` | entity, spec |
 | `value-object` (`vo`) | `<context> <Name> [--module <module>]` | value object, spec |
@@ -1813,7 +1813,9 @@ guard of the plugin keeps the runs of the `context-builder` agent in `.ddd-ts-ki
 
 `--resume` reads where the stopped worker of the context stands, from the trunk, and creates and
 rewrites nothing: its rows (committed by their `Slice:` trailer, or in order with the
-`feat(<context>)` commits for an older commit, shown `(by order)`), the files of the row under
+`feat(<context>)` commits for an older commit, shown `(by order)`; on a branch kept for its next
+rows, the commits made before it brought in the base `worker-scope` recorded belong to the rows
+that landed and are not read), the files of the row under
 way, the markers left in the context, its last verification and what changed since, whether its
 report is current, and its agent. Then the next step: `SendMessage` to that agent, with the
 message to send as it is, when it stopped mid-row after progress in a run that is not its third;
@@ -1976,7 +1978,9 @@ its whitespace collapsed, lines of punctuation only and conflict markers a side 
 out, and each import of named bindings split into one entry per binding: the result must hold it
 as many times as the base, plus what either side added, minus what either removed. The files are
 counted together, so a line moved to another file is not lost; a line laid out again on several
-lines is not either. The derived files, the files whose first lines say a tool wrote them
+lines is not either. A line is expected no more often than its files expect one by one: the same
+line each side removed from a different file (a generated marker filled in one file by the
+branch, in another by the trunk) is not a loss. The titles of the tests are counted the same way. The derived files, the files whose first lines say a tool wrote them
 (`@generated`, `autogenerated`, `DO NOT EDIT`), the migrations, the lockfiles (npm, pnpm, yarn,
 bun, uv, poetry, Pipfile, Cargo, Bundler, Composer, Go, NuGet) and `docs/architecture/slices.md`
 are left out of the lines.
@@ -1985,6 +1989,7 @@ are left out of the lines.
 |---|---|
 | a line one side added, or both kept, missing from the result | error |
 | a file neither side deleted, gone from the result with lines no other file has (one finding per file) | error |
+| a file one side added since the two sides parted (`git merge-base`), gone from the result while no commit of the other side touched its path; not reported when the result holds it under another path | error |
 | a row of `slices.md` done on one side and not done in the result, or a row of one side gone | error |
 | the title of an `it(` or a `test(` of one side gone, a spec file of one side deleted | error |
 | a migration of one side whose description (its name without number and `working-`) no migration of the result has | error |
@@ -1997,7 +2002,11 @@ A line inserted between base lines the other side left alone stays an error even
 side inserted at the same place: dropping one of two new methods is the loss the check exists
 for. So does a rewrite that lost more lines than the base lines or the other side's rewrite it
 competed with (an edit with a new method under it). What one side deleted, or reopened, is never
-reported. Nor is a line of the branch in a file the branch did not touch since its fork from the trunk
+reported. For the side brought in, a row of `slices.md` is read where the sides parted too: a base
+found on the branch after a squash may hold a row, or a `done`, the trunk never took, and a row
+the trunk never held is not a row the trunk deleted or reopened. The added file above is read
+from there as well, so a base named too new (`--since`, `--base`, a `Merge-Base:` trailer) does
+not hide it. Nor is a line of the branch in a file the branch did not touch since its fork from the trunk
 (the file is the same on the branch and at `git merge-base`): what the trunk removed or replaced
 there since is the trunk's change, whatever base the merge is computed from. A removal decided on purpose is recorded in the merge commit as a trailer
 `Lost-Accepted: <file:line>,...` (a file alone accepts all of its lines): those findings are
@@ -2025,23 +2034,27 @@ ddd-ts-kit merge-trunk --continue [--accept-lost] | --abort
 ```
 
 Brings the trunk into the branch as one merge commit computed from the branch's own diff. Never
-rebases, never fetches (the commit `--trunk` names is printed; by default `origin/HEAD`, then
-`origin/main`). Refused, exit 2: a working tree that is not clean (`.ddd-ts-kit/` aside), a merge,
+rebases, never fetches (the commit `--trunk` names is printed; by default the `base` of
+`.ddd-ts-kit/worker.json` in the worktree of a worker, the ref its branch was cut from, then
+`origin/HEAD`, then `origin/main`; a worker stacked on the branch of another names the trunk
+itself, `--trunk origin/main`, once that branch landed). Refused, exit 2: a working tree that is not clean (`.ddd-ts-kit/` aside), a merge,
 rebase, cherry-pick or revert in progress, a repository where git knows no committer (the merge
 ends with a commit), an unknown trunk.
 
 1. **The base**: the newest commit of the branch the trunk already holds. `--since <commit>` (a
-   commit of the branch); else the landed point: the newest commit whose whole change since the
+   commit of the branch, refused when it is its head: the result would be the trunk alone); else the landed point: the newest commit whose whole change since the
    trunk is one commit of the trunk, compared by stable patch id without context lines, the
    derived files, migrations, `slices.md`, `plan.md` and lockfiles left out, looked for on this
    branch, on the branch `.ddd-ts-kit/worker.json` records as its base, and on the local branches
    sharing commits with it (a stacked branch whose parent was squash-merged, a branch reused after
    its first row landed); of commits sharing one patch the oldest is taken, a newer one only when
-   the trunk holds what it changed; else the `baseCommit` worker-scope recorded, when it is a
+   the trunk holds what it changed (across a merge of the trunk the branch made, what that merge
+   changed of its own: the files it brought are the trunk's); else the `baseCommit` worker-scope recorded, when it is a
    commit of the branch and its own lines are all on the trunk (otherwise it stops, nothing
    changed, and lists them for a person to confirm with `--since`); else `git merge-base`, and
    the report names each branch sharing commits not found on the trunk, with its `--since`. Too
-   old shows as more conflicts, never as a silent loss.
+   old shows as more conflicts, never as a silent loss; too new, which only `--since` can name,
+   drops what the branch added before it, and `verify-merge` stops on each file gone that way.
 2. **The preview**: `git merge-tree --write-tree --merge-base=<base> HEAD <trunk>`, diff3 markers;
    the same without the base gives what a plain `git merge` would conflict on. `--dry-run` stops
    here and changes nothing.
@@ -2057,7 +2070,7 @@ ends with a commit), an unknown trunk.
    | derived | `openapi/`, `clients/`, `docs/integration/`, `docs/behaviour/`, `.dependency-cruiser.cjs`, the barrels and lists of each context | trunk side, rewritten by `regenerate` |
    | mixed document | `CONTEXT.md`, `docs/context-map.md` | a conflict inside a `<!-- ddd-ts-kit:<region> -->` region: trunk side; outside: for you |
    | registry | a conflict inside `// ddd-ts-kit:<region>` markers of any file | the base without what either side removed, plus what each added, ours first, once each; names imported from one module joined in one statement in `imports` |
-   | slices | `docs/architecture/slices.md` | row by row by `#`: the furthest status (done, in progress, todo), each other cell from the side that changed it; a cell both changed differently: for you |
+   | slices | `docs/architecture/slices.md` | row by row by `#`: the furthest status (done, in progress, todo), each other cell from the side that changed it; a cell both changed differently: for you. When the base is not where the branch left the trunk and holds another `slices.md`, the rows are merged from that fork, conflicted or not: the base may hold a row the trunk never took |
    | drizzle meta | `<out>/meta/_journal.json`, snapshots | trunk side, then the replay |
    | lockfile | `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock` | trunk side; `<manager> install` when the branch changed `package.json` since the base |
    | stored events | `stored-events.lock.json` | every version of both sides; one recorded with two shapes: for you |
@@ -2536,7 +2549,7 @@ applies as for a file on disk.
 ## lint
 
 ```
-ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache]
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache] [--ignore-pattern <pattern>]...
 ```
 
 What `lint` and `ci:lint` of a generated project run: the ESLint of the project, through its API,

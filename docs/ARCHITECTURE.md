@@ -148,20 +148,40 @@ src/
 ```
 
 **Modules of the model.** A context may divide its model into modules, declared in
-`contexts.<name>.modules` of the config. A module is one folder of the context that holds its
-own layers, each with the role folders of the tree above, unchanged:
+`contexts.<name>.modules` of the config. Once it does, no layer folder and no `test/` folder
+stays at its root beside them. A module is one folder of the context that holds its own layers,
+each with the role folders of the tree above, unchanged, and its own tests:
 `<module>/domain/aggregates/`, `<module>/application/commands/<use-case>/`,
-`<module>/infrastructure/persistence/`, `<module>/presentation/http/<resource>/<use-case>/`; the
-specs of its files sit in the module folder of their test folder, `test/unit/<module>/` and
-`test/integration/<module>/`. Everything about a part of the model is then under one folder.
-What every module shares stays at the level of the context: `CONTEXT.md`, which gains a
+`<module>/infrastructure/persistence/`, `<module>/presentation/http/<resource>/<use-case>/`, and
+`<module>/test/` with `unit/`, `integration/`, `builders/` and `fakes/`. A part of the model is
+then one folder, opened, moved and reviewed whole. A builder and a fake follow their subject, not
+their use: a builder sits in the module of the aggregate it is named after, a fake in the module
+of the port or the repository it is named after.
+
+```text
+contexts/scheduling/
+  CONTEXT.md  scheduling.codes.ts  scheduling.permissions.ts  scheduling.module.ts
+  published-language/
+  calendars/    domain/  application/  infrastructure/  presentation/  test/
+  waitlist/     domain/  application/  infrastructure/  presentation/  test/
+  shared/
+    infrastructure/persistence/   the schema and the tables of the context
+    presentation/http/            its route groups (*.routes.ts), guards/, shared/
+    test/                         worlds/, and the fakes, builders and specs of no module
+```
+
+What belongs to no module has one place. At the root of the context: `CONTEXT.md`, which gains a
 `## Modules` section (one row per module: its name and its purpose), `<context>.codes.ts`,
 `<context>.permissions.ts`, `<context>.module.ts`, the generated `<context>.declarations.ts` and
-`<context>.dependencies.ts`, `published-language/`, the schema, tables and migrations of its
-database (the `*.schema.ts` of `infrastructure/persistence/` that are no row schema), its route
-groups, guards and shared shapes (`presentation/http/*.routes.ts`, `guards/`, `shared/`), and the
-fakes, builders and worlds of its specs. A module never has a glossary, a schema or a published
-language of its own; a part that needs one is a context. In the explicit style a module has its
+`<context>.dependencies.ts`, and `published-language/`. In `shared/`, a folder the config never
+declares and no module may be named after: the schema, tables and migrations of its database
+(the `*.schema.ts` of `shared/infrastructure/persistence/` that are no row schema), its route
+groups, guards and shared shapes (`shared/presentation/http/*.routes.ts`, `guards/`, `shared/`),
+and in `shared/test/` its worlds, the fakes and builders that are named after nothing of a module,
+and the specs of what `shared/` holds or of several modules. `shared/` holds nothing else, and
+never a `domain/` nor an `application/`: a concept two modules need belongs to one of them, or is
+a module. A module never has a glossary, a schema or a published language of its own; a part
+that needs one is a context. In the explicit style a module has its
 module file, `<module>/<module>.module.ts`, the only file at the root of its folder: it registers
 what the module holds (its handlers, consumers, reactions, jobs, permissions and routes), and
 `<context>.module.ts` composes it, so that the module file of the context keeps only what the
@@ -169,16 +189,22 @@ context holds at its own level. `generate module` writes it with its composition
 registration generated with `--module` goes there; wired by hand, a use case whose repository
 another module file creates is registered in that file, a repository being created once per
 context. Declared, a module has no module file: its classes declare themselves. Every rule reads a
-file of a module as the same file outside one: its role is its path with the module folder left
-out. `generate <kind> <context> ... --module <module>` writes into a module, the specs with their
-subject, `generate module <context> <module>` declares one, and
+file of a module, or of `shared/`, as the same file in a context without modules: its role is its
+path with the module folder, or `shared/`, left out, and a file of `shared/` is of no module.
+`generate <kind> <context> ... --module <module>` writes into a module, the specs, fakes and
+builders with their subject, and writes what belongs to no module in `shared/`;
+`generate module <context> <module>` declares a module, and
 `move-to-module <context> <module> <path>...` moves existing files into it with their imports,
 the specs named after them following. In a context that declares modules, the generator refuses
-to write a file of a layer without `--module`, the files the context keeps aside, and names the
+to write a file of a layer without `--module`, what belongs to no module aside, and names the
 modules. The kinds that write such a file show `[--module <module>]` in their usage, and the
-others refuse `--module`. The layout of 0.86 and 0.87, a module under `domain/<module>/` and `application/<module>/`, is
-an error of `module/complete` whatever its severity, read only so that `ddd-ts-kit context-layout`
-moves it, telling the module of each adapter, route and spec by what it imports. Why and when:
+others refuse `--module`. A context that gains its first module moves one cluster of concepts per
+commit: until `move-to-module` took them, the files of its layers stay at its level, read there
+and reported by `module/complete` as a warning. Its `test/` folder at its own level, and a layer
+folder there that holds nothing but what `shared/` holds now, are the layout of an earlier
+version: an error of `module/complete` whatever its severity, refused by the generators, and moved
+by `ddd-ts-kit context-layout`, which tells the module of each spec, fake and builder by the file
+it is named after, then by what it imports. Why and when:
 [Modules of the model](concepts/modules.md).
 
 **Generated declarations.** In the declared style assembled by barrel, every layer of a context
@@ -331,11 +357,11 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `context/declared-relationship` | Such an import requires the relationship to be declared in the config. |
 | `context/published-language-is-a-contract` | `published-language/` imports only the kernel, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation`, the schema library of the project and other published languages (`publishedLanguageAllowedPackages`). |
 | `context/no-cycle` | The declared relationships form no cycle. |
-| `tree/closed` | A context holds only the canonical directories, plus its declared `extraDirectories` and the folders of its declared modules, and no source file outside a role directory. Its sources are `.ts` files: a JavaScript file or another form of TypeScript (`.js`, `.mjs`, `.cjs`, `.jsx`, `.tsx`, `.mts`, `.cts`) is reported wherever it sits in the context, since no rule reads it. At the root of a declared module the only file is its module file, `<module>/<module>.module.ts`. What git ignores and the dot-directories of a context are not part of the tree (see [Who checks what](#who-checks-what)). A folder at the root of a context that is no canonical directory and no declared module is reported; if it is a module of the model, `generate module <context> <module>` declares it. The code list and the permission set of a context sit at its root, `<context>.codes.ts` and `<context>.permissions.ts`. Where 0.86 and 0.87 kept them, `domain/errors/codes.ts` and `application/authorization/<context>.permissions.ts`, they are reported, and read only so that `ddd-ts-kit context-layout` moves them and every import of them. |
+| `tree/closed` | A context holds only the canonical directories, plus its declared `extraDirectories` and the folders of its declared modules, and no source file outside a role directory. Its sources are `.ts` files: a JavaScript file or another form of TypeScript (`.js`, `.mjs`, `.cjs`, `.jsx`, `.tsx`, `.mts`, `.cts`) is reported wherever it sits in the context, since no rule reads it. At the root of a declared module the only file is its module file, `<module>/<module>.module.ts`. A module holds its tests in `<module>/test/`. In a context that declares modules, `shared/` is closed: it holds `infrastructure/persistence/`, `presentation/http/` with its `guards/` and `shared/`, and `test/`, nothing else, and an entry of `extraDirectories` opens it only when it names `shared/`. What git ignores and the dot-directories of a context are not part of the tree (see [Who checks what](#who-checks-what)). A folder at the root of a context that is no canonical directory and no declared module is reported; if it is a module of the model, `generate module <context> <module>` declares it. The code list and the permission set of a context sit at its root, `<context>.codes.ts` and `<context>.permissions.ts`. Where 0.86 and 0.87 kept them, `domain/errors/codes.ts` and `application/authorization/<context>.permissions.ts`, they are reported, and read only so that `ddd-ts-kit context-layout` moves them and every import of them. |
 | `tree/context-doc` | Every context has a `CONTEXT.md` with the required sections (`Purpose`, `Classification`, `Ubiquitous language`, `Aggregates`, `Published events`, `Relationships`) and the classification declared in the config. |
 | `tree/documented-paths` | A path of a bounded context written as code in a Markdown file of `docs/architecture/` (a plan, a design note, a review) is a place the canonical tree allows, judged as `tree/closed` judges a file: its directories and the file itself. A path written relative to its context (it starts with `domain/`, `application/`, `infrastructure/`, `presentation/` or `published-language/`) names no context: it is reported only when every declared context refuses it, their extra directories considered. A path that does not exist yet is not reported, a plan names files to create, nor one through a dot-directory of a context, which is no part of the tree; one that the tree refuses (`application/services/`) describes a design the code no longer has. Default severity `warn`. |
-| `module/declared` | Every module of `contexts.<name>.modules` is named with terms of the `## Ubiquitous language` table of its context's `CONTEXT.md`, every word of its name, and never with a technical word (`shared`, `common`, `core`, `misc`, `utils` and the other technical words of `language/no-technical-name`), and has a row in the `## Modules` section of that `CONTEXT.md`. Its name is in kebab-case, unique in the context, and neither a role folder nor a folder of the context (`domain`, `test`, `published-language`...). Fix: `generate module <context> <module> --purpose "..." [--term "<Term>=<meaning>"]`. |
-| `module/complete` | Once a context declares modules, a file of a layer outside every module is reported, and so is a spec left in `test/unit/` or `test/integration/` while the file it is named after sits in a module, the files the context keeps aside (section 2, modules of the model). One finding per folder. Fix: `move-to-module <context> <module> <path>`. A module still where 0.86 and 0.87 put it, `domain/<module>/` or `application/<module>/`, is reported too, as an error whatever the severity of the rule, with `ddd-ts-kit context-layout` as its fix. Default severity `warn`, so that a context moves into modules one commit at a time. |
+| `module/declared` | Every module of `contexts.<name>.modules` is named with terms of the `## Ubiquitous language` table of its context's `CONTEXT.md`, every word of its name, and never with a technical word (`common`, `core`, `misc`, `utils` and the other technical words of `language/no-technical-name`), nor `shared`, the folder of what belongs to no module, which `config/valid` refuses, and has a row in the `## Modules` section of that `CONTEXT.md`. Its name is in kebab-case, unique in the context, and neither a role folder nor a folder of the context (`domain`, `test`, `published-language`...). Fix: `generate module <context> <module> --purpose "..." [--term "<Term>=<meaning>"]`. |
+| `module/complete` | Once a context declares modules, a file of a layer left at the level of the context is reported, and so is a file of a module left in `shared/`, a spec there named after a file of a module included, what belongs to no module aside (section 2, modules of the model). One finding per folder. Fix: `move-to-module <context> <module> <path>`. Default severity `warn`, so that a context moves into modules one commit at a time. The layout of an earlier version is reported too, as an error whatever the severity of the rule, one finding per folder, with `ddd-ts-kit context-layout` as its fix: `test/` at the level of the context, and a layer folder there that holds nothing but what `shared/` holds now. |
 | `module/no-cycle` | The imports between the modules of one context form no cycle. Default severity `warn`: coupling between modules is a signal to change the model (Evans, Modules), not a refusal. |
 | `naming/suffix` | A file in a role directory carries the role's suffix, in kebab-case. A barrel, `index.ts`, is no role file: a role folder that has a suffix holds its role files and nothing else. The code list of a context, `<context>.codes.ts` at its root, is read as `domain/errors/codes.ts`, the one file of a role named otherwise. |
 | `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler, job or projection per file, and one declared class per role file. |

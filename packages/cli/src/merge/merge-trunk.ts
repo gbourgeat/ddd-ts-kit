@@ -19,6 +19,7 @@ import { type PreviewRequest, previewMerge, type StageEntry } from './preview-me
 import { refuseShallowHistory } from './refuse-shallow-history';
 import { resolveConflict } from './resolve-conflict';
 import type { Resolution } from './resolution';
+import { slicesFromFork } from './slices-from-fork';
 import { startMerge } from './start-merge';
 import { trunkOf } from './trunk-of';
 import { ensureWritable } from './ensure-writable';
@@ -34,6 +35,9 @@ export interface MergeTrunkRequest {
   readonly gitVersion?: string;
   readonly now?: Date;
 }
+
+/** The conflicted paths of a merge, each with its stages. */
+type Conflicts = ReadonlyMap<string, readonly StageEntry[]>;
 
 /** The merge being opened: who merges what, from which base. */
 interface Opening {
@@ -55,7 +59,7 @@ export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
 
   ensureMergeable(top, fs.existsSync(mergeState.file(request.root)));
 
-  const trunk = trunkOf(top, request.trunk);
+  const trunk = trunkOf(top, request.trunk ?? context.worker?.base);
   const head = commitOf(top, 'HEAD');
 
   if (head === undefined) {
@@ -74,7 +78,7 @@ export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
   const report: MergeReport = { ...blank, ...EMPTY, next: NEXT_STEPS.upToDate };
 
   if (runGit(top, ['merge-base', '--is-ancestor', trunk.commit, head]) !== undefined) {
-    return report;
+    return { ...report, next: `${report.next}${unreadDefault(top, { request, trunk, head })}` };
   }
 
   refuseShallowHistory(top, { ours: head, theirs: trunk.commit });
@@ -89,6 +93,35 @@ export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
   });
 
   return opened({ context, request, report: { ...report, base } });
+}
+
+/**
+ * Up to date with the base of the worker says nothing of the default trunk: a worker cut from the branch of
+ * another, or scoped again on its own, would read "up to date" while the default trunk moved. Said, never merged.
+ */
+function unreadDefault(
+  top: string,
+  { request, trunk, head }: { request: MergeTrunkRequest; trunk: { ref: string; commit: string }; head: string },
+): string {
+  const usual = request.trunk === undefined ? usualTrunk(top) : undefined;
+
+  if (
+    usual === undefined ||
+    usual.commit === trunk.commit ||
+    runGit(top, ['merge-base', '--is-ancestor', usual.commit, head]) !== undefined
+  ) {
+    return '';
+  }
+
+  return ` ${usual.ref} holds commits this branch lacks and was not read, the base of the worker being ${trunk.ref}: \`npx ddd-ts-kit merge-trunk --trunk ${usual.ref}\` brings it in.`;
+}
+
+function usualTrunk(top: string): { ref: string; commit: string } | undefined {
+  try {
+    return trunkOf(top, undefined);
+  } catch {
+    return undefined;
+  }
 }
 
 const EMPTY = {
@@ -126,8 +159,14 @@ function opened(opening: Opening): MergeReport {
   const preview = (base?: string): ReturnType<typeof previewMerge> => previewMerge(top, previewOf(report, base));
   const own = preview(report.base.commit);
   const plain = report.base.commit === fork ? own : preview();
-  const resolutions = resolved(context, own.conflicts, { tree: own.tree });
-  const counted = counts(context, report, { resolutions, plainMerge: plain.conflicts.size });
+  const sides = { base: report.base.commit, fork, ours: 'HEAD', theirs: report.trunk.commit, tree: own.tree };
+
+  const resolutions = withRows(
+    resolved(context, own.conflicts, { tree: own.tree }),
+    slicesFromFork(context.repo, sides),
+  );
+
+  const counted = counts(context, report, { resolutions, own: own.conflicts, plainMerge: plain.conflicts.size });
 
   if (request.dryRun) {
     return { ...counted, status: 'dry-run', next: NEXT_STEPS.dryRun };
@@ -157,32 +196,34 @@ function withOldGit(opening: Opening, { version, fork }: { version: string; fork
   const resolutions = resolved(context, conflicts, 'worktree');
 
   return settled(opening, {
-    report: counts(context, report, { resolutions, plainMerge: conflicts.size }),
+    report: counts(context, report, { resolutions, own: conflicts, plainMerge: conflicts.size }),
     resolutions,
   });
 }
 
-function resolved(
-  context: MergeContext,
-  conflicts: ReadonlyMap<string, readonly StageEntry[]>,
-  from: MergedFrom,
-): Resolution[] {
+function resolved(context: MergeContext, conflicts: Conflicts, from: MergedFrom): Resolution[] {
   return conflictedPaths(context.repo.top, conflicts, from).map((path) => resolveConflict(path, context.repo));
+}
+
+/** The resolutions with that of the rows: in place of the one the slices file had as a conflicted path, else added. */
+function withRows(resolutions: readonly Resolution[], rows: Resolution | undefined): Resolution[] {
+  return rows === undefined ? [...resolutions] : [...resolutions.filter(({ file }) => file !== rows.file), rows];
 }
 
 function counts(
   context: MergeContext,
   report: MergeReport,
-  { resolutions, plainMerge }: { resolutions: readonly Resolution[]; plainMerge: number },
+  { resolutions, own, plainMerge }: { resolutions: readonly Resolution[]; own: Conflicts; plainMerge: number },
 ): MergeReport {
   const automatic = resolutions.filter((resolution) => resolution.settled);
+  const conflicted = automatic.filter(({ file }) => own.has(file));
   const left = resolutions.filter((resolution) => !resolution.settled);
   const rows = context.worker?.rows ?? [];
   const named = { top: context.repo.top, branch: report.branch, rows, trunk: report.trunk, base: report.base.commit };
 
   return {
     ...report,
-    conflicts: { plainMerge, ownDiff: resolutions.length, automatic: automatic.length, forYou: left.length },
+    conflicts: { plainMerge, ownDiff: own.size, automatic: conflicted.length, forYou: left.length },
     automatic: automatic.map(({ file, kind, how }) => ({ file, kind, how })),
     forYou: left.map((resolution) => forYouEntry(resolution, named)),
   };

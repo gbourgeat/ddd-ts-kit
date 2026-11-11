@@ -99,7 +99,7 @@ of each is its user name.
 | Aggregates with value objects, no primitive obsession | `src/contexts/scheduling/domain/` (`Calendar`, `Appointment`, `Waitlist`) |
 | Time zones and daylight saving in the domain, without a library | `scheduling/domain/value-objects/time-zone.vo.ts`, `test/unit/time-zone.vo.spec.ts`, `calendar.aggregate.spec.ts` |
 | A domain service over two aggregates | `scheduling/domain/services/scheduler.service.ts` |
-| Overlap decided by the domain and by a PostgreSQL exclusion constraint | `scheduling/infrastructure/persistence/create-scheduling-tables.schema.ts`, `knex-appointment.repository.ts`, `test/integration/concurrent-booking.spec.ts` |
+| Overlap decided by the domain and by a PostgreSQL exclusion constraint | `scheduling/shared/infrastructure/persistence/create-scheduling-tables.schema.ts`, `knex-appointment.repository.ts`, `test/integration/concurrent-booking.spec.ts` |
 | Permissions on every use case, policies on the loaded element | `scheduling/application/authorization/` |
 | Relationships (Zanzibar style) combined with roles | `src/platform/auth/relationships/relationship-schema.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.md) |
 | Persistent relation tuples, written in the unit of work | `src/platform/auth/relationships/knex-relation-tuple-store.ts`; `*/application/ports/*-relationships.port.ts` and their adapters |

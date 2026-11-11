@@ -47,6 +47,7 @@ describe('a whole context moved into a module of its model', () => {
 
     expect(cli(root, 'generate', 'module', 'billing', 'invoices', '--purpose', PURPOSE).code).toBe(0);
     expect(cli(root, 'move-to-module', 'billing', 'invoices', ...roleFoldersOfBilling(root)).code).toBe(0);
+    expect(cli(root, 'context-layout', 'billing').code).toBe(0);
   }, 120_000);
 
   it('is described as it was, every path in the module: nothing is lost from describe and CONTEXT.md', () => {
@@ -111,7 +112,7 @@ describe('generating into a module of the model', () => {
 
     expect(handler).toContain('@/contexts/billing/invoices/domain/aggregates/credit-note.aggregate');
 
-    expect(read(root, `${BILLING}/test/builders/credit-note.builder.ts`)).toContain(
+    expect(read(root, `${BILLING}/invoices/test/builders/credit-note.builder.ts`)).toContain(
       '/invoices/domain/aggregates/credit-note.aggregate',
     );
   });

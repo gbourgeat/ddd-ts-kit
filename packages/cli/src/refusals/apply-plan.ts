@@ -19,6 +19,7 @@ import { sayRefusals } from './say-refusals';
 import { renderFactory } from './render-factory';
 import { rewriteUsages } from './rewrite-usages';
 import { specParts } from './spec-parts';
+import { unitFolderOf } from './unit-folder-of';
 import { withImports } from './with-imports';
 import { ownEntry } from '../config/values/own-entry';
 
@@ -135,7 +136,7 @@ function moveClass({ config }: Tree, { error, move }: PlannedMove, draft: Migrat
 
   draft.remove(error.file);
   draft.write(target, fitSource(next));
-  moveSpec(`${config.contextsDir}/${error.context}`, { error, move }, draft);
+  moveSpec(config, { error, move }, draft);
 }
 
 /**
@@ -143,8 +144,11 @@ function moveClass({ config }: Tree, { error, move }: PlannedMove, draft: Migrat
  * of the concept class. A spec of the concept class without a `describe` takes no case: the spec of
  * the class stays, and is said.
  */
-function moveSpec(context: string, { error, move }: PlannedMove, draft: MigrationDraft): void {
-  const old = `${context}/test/unit/${baseName(error.file).replace(/\.ts$/, '.spec.ts')}`;
+function moveSpec(config: Config, { error, move }: PlannedMove, draft: MigrationDraft): void {
+  const name = baseName(error.file).replace(/\.ts$/, '.spec.ts');
+  // Where the spec of the class is: in the test folder of its module, or in the one of its context.
+  const unit = unitFolderOf(config, error.file, (folder) => draft.read(`${folder}/${name}`) !== undefined);
+  const old = `${unit}/${name}`;
   const source = draft.read(old);
 
   if (source === undefined) {
@@ -152,7 +156,7 @@ function moveSpec(context: string, { error, move }: PlannedMove, draft: Migratio
   }
 
   const { imports, cases } = specParts(rewriteUsages(source, [move]));
-  const target = `${context}/test/unit/${move.conceptFile}.spec.ts`;
+  const target = `${unit}/${move.conceptFile}.spec.ts`;
 
   if (cases === undefined) {
     draft.manual.push(`${old}: no describe block was found, move its cases to ${target} by hand.`);

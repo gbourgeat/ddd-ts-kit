@@ -12,6 +12,8 @@ export function projectWithModule(): string {
     generating = tempDir('modules-generate');
     scaffoldEverything(generating);
     expect(cli(generating, 'generate', 'module', 'billing', 'invoices', '--purpose', PURPOSE).code).toBe(0);
+    // The tests of billing and what belongs to no module leave the level of the context, once.
+    expect(cli(generating, 'context-layout', 'billing').code).toBe(0);
   }
 
   return generating;

@@ -70,12 +70,13 @@ function generateKind({ argv, io, probe, args, kind, rest }: Asked): number {
     context,
     module: flags.module,
     command: ['generate', ...argv].join(' '),
+    declaresModule: kind.name === 'module',
   });
 
   kind.run({ ws, config, args: rest, flags });
   stopPlacing();
   // A worker confined to its context leaves another context in the single declarations file of 0.84: the trunk moves it.
-  refreshDocs(ws, args.flag('local-only') ? 'keep' : 'move', args.flag('local-only') ? 'context' : 'whole');
+  refreshDocs(ws, args.flag('local-only') ? 'keep' : 'move', docsScope(args, probe));
 
   if (args.flag('local-only')) {
     refuseSharedWrites(ws, config, context, argv);
@@ -89,6 +90,15 @@ function generateKind({ argv, io, probe, args, kind, rest }: Asked): number {
   probe?.created(report.created);
 
   return printReport(io, args, report);
+}
+
+/** How far the documents are written again: nothing but the declarations under a probe, which reads none of them. */
+function docsScope(args: Arguments, probe: GeneratorProbe | undefined): 'whole' | 'context' | 'declarations' {
+  if (probe !== undefined) {
+    return 'declarations';
+  }
+
+  return args.flag('local-only') ? 'context' : 'whole';
 }
 
 /** The flags, with what a probe hears in place of a flag: the names to judge and the files built on. */

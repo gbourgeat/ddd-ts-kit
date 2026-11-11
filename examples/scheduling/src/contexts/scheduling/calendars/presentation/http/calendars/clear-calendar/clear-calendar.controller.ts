@@ -2,7 +2,7 @@ import { Controller, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { ClearCalendarCommand } from '@/contexts/scheduling/calendars/application/commands/clear-calendar/clear-calendar.command';
-import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
+import { CalendarsRoutes } from '@/contexts/scheduling/shared/presentation/http/calendars.routes';
 import { ClearCalendarParams } from '@/contexts/scheduling/calendars/presentation/http/calendars/clear-calendar/clear-calendar.params';
 import { ClearCalendarBody } from '@/contexts/scheduling/calendars/presentation/http/calendars/clear-calendar/clear-calendar.body';
 import { ClearCalendarAccepted } from '@/contexts/scheduling/calendars/presentation/http/calendars/clear-calendar/clear-calendar.accepted';

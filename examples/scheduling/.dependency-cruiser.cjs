@@ -9,7 +9,7 @@ module.exports = {
       "from": {
         "path": "^src/contexts/([^/]+)/(?:domain|[^/]+/domain)/",
         "pathNot": [
-          "^src/contexts/[^/]+/test/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/"
@@ -33,7 +33,7 @@ module.exports = {
       "from": {
         "path": "^src/contexts/([^/]+)/(?:application|[^/]+/application)/",
         "pathNot": [
-          "^src/contexts/[^/]+/test/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/",
@@ -63,7 +63,7 @@ module.exports = {
       "from": {
         "path": "^src/contexts/([^/]+)/(?:application|[^/]+/application)/background/[^/]+\\.background-job\\.ts$",
         "pathNot": [
-          "^src/contexts/[^/]+/test/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/"
@@ -98,7 +98,7 @@ module.exports = {
       "from": {
         "path": "^src/contexts/([^/]+)/(?:presentation|[^/]+/presentation)/",
         "pathNot": [
-          "^src/contexts/[^/]+/test/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/"
@@ -115,7 +115,7 @@ module.exports = {
       "from": {
         "path": "^src/contexts/([^/]+)/(?:infrastructure|[^/]+/infrastructure)/",
         "pathNot": [
-          "^src/contexts/[^/]+/test/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/"
@@ -213,7 +213,7 @@ module.exports = {
       "from": {
         "path": "^src/contexts/[^/]+/published-language(/|\\.ts$)",
         "pathNot": [
-          "^src/contexts/[^/]+/test/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/"
@@ -255,8 +255,8 @@ module.exports = {
           "^src/apps/[^/]+/main\\.ts$",
           "^src/platform/(observability/)?tracing\\.ts$",
           "^src/contexts/[^/]+/published-language/",
-          "^src/contexts/[^/]+/test/fakes/",
-          "^src/contexts/[^/]+/test/worlds/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/fakes/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/worlds/",
           "\\.d\\.[cm]?ts$",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)[^/]+\\.config\\.[cm]?[jt]s$",
@@ -285,7 +285,7 @@ module.exports = {
       "from": {
         "path": "^src/",
         "pathNot": [
-          "^src/contexts/[^/]+/test/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/"
@@ -310,7 +310,7 @@ module.exports = {
       "from": {
         "path": "^src/",
         "pathNot": [
-          "^src/contexts/[^/]+/test/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/"
@@ -318,7 +318,7 @@ module.exports = {
       },
       "to": {
         "path": [
-          "^src/contexts/[^/]+/test/",
+          "^src/contexts/[^/]+/(?:test|[^/]+/test)/",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)open-test-database\\.ts$",
           "^test/"

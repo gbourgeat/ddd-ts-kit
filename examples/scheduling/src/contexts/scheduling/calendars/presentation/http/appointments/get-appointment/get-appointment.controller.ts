@@ -5,7 +5,7 @@ import { GetAppointmentQuery } from '@/contexts/scheduling/calendars/application
 import type { GetAppointmentResult } from '@/contexts/scheduling/calendars/application/queries/get-appointment/get-appointment.result';
 import { GetAppointmentParams } from '@/contexts/scheduling/calendars/presentation/http/appointments/get-appointment/get-appointment.params';
 import { GetAppointmentAnswer } from '@/contexts/scheduling/calendars/presentation/http/appointments/get-appointment/get-appointment.answer';
-import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
+import { AppointmentsRoutes } from '@/contexts/scheduling/shared/presentation/http/appointments.routes';
 import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 
 const params = classSchema(GetAppointmentParams);

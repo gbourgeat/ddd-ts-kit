@@ -10,11 +10,11 @@ import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { agendaCriteria } from '@/contexts/scheduling/calendars/application/ports/agenda.port';
 import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/calendars/application/queries/search-practice-agenda/search-practice-agenda.query';
-import { AgendaLine } from '@/contexts/scheduling/presentation/http/shared/agenda-line.schema';
+import { AgendaLine } from '@/contexts/scheduling/shared/presentation/http/shared/agenda-line.schema';
 import { SearchPracticeAgendaParams } from '@/contexts/scheduling/calendars/presentation/http/practices/search-practice-agenda/search-practice-agenda.params';
 import type { Infer } from '@ddd-ts-kit/validation';
-import type { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
-import { PracticesRoutes } from '@/contexts/scheduling/presentation/http/practices.routes';
+import type { AgendaEntrySerializer } from '@/contexts/scheduling/shared/presentation/http/shared/agenda-entry.serializer';
+import { PracticesRoutes } from '@/contexts/scheduling/shared/presentation/http/practices.routes';
 
 const params = classSchema(SearchPracticeAgendaParams);
 // The filters (`filter[day]=2026-03-02`), the sort and the page the agenda declares; anything else is answered 422.

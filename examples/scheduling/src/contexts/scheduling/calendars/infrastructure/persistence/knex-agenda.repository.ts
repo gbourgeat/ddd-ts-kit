@@ -6,7 +6,7 @@ import {
   agendaCriteria,
   type AgendaEntry,
 } from '@/contexts/scheduling/calendars/application/ports/agenda.port';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema';
 
 @Repository(Agenda)
 export class KnexAgenda extends KnexReadModelStore<AgendaEntry> implements Agenda {

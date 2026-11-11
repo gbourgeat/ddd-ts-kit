@@ -102,7 +102,10 @@ describe('generate, what it refuses before writing', () => {
   it('a decision record without a title, and a module named after a layout, a bag or an unknown classification', () => {
     expect(refused('adr', '')).toBe('A decision record needs a title.');
     expect(refused('module', 'billing', 'aggregates')).toBe('"aggregates" cannot name a module of the model.');
-    expect(refused('module', 'billing', 'shared')).toContain('names a grouping of code ("shared")');
+    expect(refused('module', 'billing', 'common')).toContain('names a grouping of code ("common")');
+    expect(refused('module', 'billing', 'shared-invoices')).toContain('names a grouping of code ("shared")');
+    expect(refused('module', 'billing', 'shared')).toBe('"shared" cannot name a module of the model.');
+    expect(failure(generate('module', 'billing', 'shared')).fix).toContain('what belongs to none of its modules');
     expect(refused('module', 'billing', 'invoices', '--classification', 'odd')).toBe('Unknown classification "odd".');
   });
 });

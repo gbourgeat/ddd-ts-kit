@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:341966c28b8dca66 -->
+<!-- translation-of: test-runners.md sha256:f4d8df8fa0866788 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -416,19 +416,22 @@ fonctions depuis `@jest/globals` ; `ContractRunner` ne leur demande rien de plus
 ```ts
 // vitest.config.ts
 import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
-import { decorators } from '@ddd-ts-kit/testing/vitest';
+import { decoratorCoverage, decorators } from '@ddd-ts-kit/testing/vitest';
 import { defineConfig } from 'vitest/config';
 
-const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
+const INTEGRATION_SPECS = [
+  'src/contexts/*/test/integration/**/*.spec.ts',
+  'src/contexts/*/*/test/integration/**/*.spec.ts',
+];
 
 export default defineConfig(({ mode }) => ({
   // décorateurs standard, compilés par le compilateur du projet ; les legacy n'ont besoin d'aucun plugin
-  plugins: [decorators({ compiler: '@typescript/native' })],
+  plugins: [decorators({ compiler: '@typescript/native' }), decoratorCoverage()],
   resolve: { tsconfigPaths: true },
   test: {
     projects: [
-      { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS], isolate: false } },
-      { extends: true, test: { name: 'integration', include: [INTEGRATION_SPECS] } },
+      { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: INTEGRATION_SPECS, isolate: false } },
+      { extends: true, test: { name: 'integration', include: INTEGRATION_SPECS } },
     ],
     // ce qui est mesuré et le plancher de chaque couche : lus dans ddd-ts-kit.config.json
     coverage: { provider: 'v8', reporter: ['text', 'cobertura', 'lcov'], ...governedCoverage(mode) },
