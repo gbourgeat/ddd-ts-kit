@@ -59,7 +59,7 @@ export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
 
   ensureMergeable(top, fs.existsSync(mergeState.file(request.root)));
 
-  const trunk = trunkOf(top, request.trunk);
+  const trunk = trunkOf(top, request.trunk ?? context.worker?.base);
   const head = commitOf(top, 'HEAD');
 
   if (head === undefined) {
