@@ -1,11 +1,10 @@
-import type { EventStamp, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
+import type { EventStamp, PostgresTraceColumns, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
 import type { PrismaRawQueries } from '../outbox/prisma-raw-queries';
 import type { PrismaContext } from '../unit-of-work/prisma-context';
 import { quoted } from './quoted';
 import type { RowMapper } from './row.mapper';
 import { stampedRowOf } from './stamped-row-of';
 import type { TenantOfRows } from './tenant-of-rows';
-import type { TraceColumns } from './trace-columns';
 import { writtenOf } from './written-of';
 
 export interface NamedTable<Row extends object> {
@@ -17,12 +16,13 @@ export interface NamedTable<Row extends object> {
   /** The tenant of the rows, for a read model of tenant data. */
   readonly tenant: TenantOfRows;
   /** Of the table the copy is made like. */
-  readonly traces: TraceColumns;
+  readonly traces: PostgresTraceColumns;
 }
 
 /**
- * The stamped rows of a table that has no model: the copy of a rebuild, on PostgreSQL.
- * Statements are written here with quoted identifiers that come from the options of the
+ * The stamped rows of a table reached without a model, on PostgreSQL: the copy of a rebuild, and
+ * the table itself for the trace of a deleted row, which holds SQL NULL in every column, a `Json`
+ * one included, where the model would write a JSON `null`. Statements are written here with quoted identifiers that come from the options of the
  * adapter; every value is a `$n` parameter.
  */
 export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> implements ReadModelRows<Row> {
@@ -78,6 +78,16 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
     );
 
     return replaced.length === 1;
+  }
+
+  /** Whether any row holds the key, whatever its tenant: what tells a conflict on the key from one on another unique value. */
+  async holds(key: string): Promise<boolean> {
+    const found = await this.run(
+      `select 1 as held from ${this.target.path} where ${this.column(this.target.key)} = $1 limit 1`,
+      [key],
+    );
+
+    return found.length === 1;
   }
 
   /**

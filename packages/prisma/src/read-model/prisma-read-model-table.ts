@@ -1,5 +1,7 @@
 import {
   PostgresReadModelRebuild,
+  PostgresTraceColumns,
+  type TracedTable,
   type CriteriaPlan,
   type EventStamp,
   type SearchedRows,
@@ -14,9 +16,9 @@ import { criteriaToPrisma } from './criteria-to-prisma';
 import { PrismaModelRows } from './prisma-model-rows';
 import type { PrismaReadModelOptions } from './prisma-read-model-options';
 import { PrismaTableRows } from './prisma-table-rows';
+import { quoted } from './quoted';
 import { RowMapper } from './row.mapper';
 import { TenantOfRows } from './tenant-of-rows';
-import { TraceColumns, type TracedTable } from './trace-columns';
 
 const KEPT = { deleted: false };
 
@@ -39,20 +41,29 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
     options: PrismaReadModelOptions<Row, Tx>,
   ) {
     const { table, schema } = options;
-    const shadow = `"${PostgresReadModelRebuild.shadowOf(table).replaceAll('"', '""')}"`;
 
-    const traces = new TraceColumns(() => context.client(), tracedTable(options));
+    const inSchema = (name: string): string =>
+      schema === undefined ? quoted(name) : `${quoted(schema)}.${quoted(name)}`;
 
     this.mapper = new RowMapper<Row>(options.columns);
-    this.rows = new PrismaModelRows(context, options, traces);
 
-    this.copy = new PrismaTableRows(context, {
-      path: schema === undefined ? shadow : `"${schema.replaceAll('"', '""')}".${shadow}`,
+    const named = {
       key: options.key ?? 'id',
       mapper: this.mapper,
       tenant: new TenantOfRows(options.tenant, options.columns),
-      traces,
-    });
+      traces: new PostgresTraceColumns(
+        (statement, parameters) => this.run(statement, parameters),
+        () => tracedTable(options),
+      ),
+    };
+
+    this.rows = new PrismaModelRows(
+      context,
+      options,
+      new PrismaTableRows(context, { ...named, path: inSchema(table) }),
+    );
+
+    this.copy = new PrismaTableRows(context, { ...named, path: inSchema(PostgresReadModelRebuild.shadowOf(table)) });
 
     this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
       table,

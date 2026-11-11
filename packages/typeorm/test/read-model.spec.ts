@@ -160,4 +160,25 @@ describe('TypeOrmReadModelTable of an entity in the default schema', () => {
     expect(await database.dataSource.query('select count(*)::int as count from public.ledger')).toEqual([{ count: 1 }]);
     await table.abandonRebuild();
   });
+
+  it('refuses a trace by name when the database is behind the entity, before the statement it would refuse', async () => {
+    await database.truncate();
+    await database.dataSource.query('alter table public.ledger alter column holder set not null');
+
+    const unitOfWork = createTypeOrmUnitOfWork(database.dataSource);
+    const table = new TypeOrmReadModelTable<LedgerRow>(unitOfWork, { entity: ledgerRows });
+
+    const written = unitOfWork.run(async () => {
+      const refusal = await table.insert({ key: 'acct-2', row: undefined, stamp }).catch((error: unknown) => error);
+
+      // The transaction is still usable: nothing was sent that PostgreSQL refused.
+      await table.insert({ key: 'acct-1', row: account, stamp });
+
+      return refusal;
+    });
+
+    await expect(written).resolves.toMatchObject({ table: 'ledger', columns: ['holder'] });
+    expect((await table.find('acct-1'))?.row).toEqual(account);
+    await database.dataSource.query('alter table public.ledger alter column holder drop not null');
+  });
 });

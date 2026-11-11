@@ -325,6 +325,7 @@ export * from './infrastructure/in-memory/metric-sample';
 export * from './infrastructure/in-memory/unit-of-work-middleware';
 export * from './infrastructure/in-memory/in-memory-tenant-directory';
 export * from './infrastructure/read-model/postgres-read-model-rebuild';
+export * from './infrastructure/read-model/postgres-trace-columns';
 export * from './infrastructure/read-model/projection-rebuild';
 export * from './infrastructure/read-model/read-model-key-held-elsewhere-error';
 export * from './infrastructure/read-model/read-model-table-not-ready-error';

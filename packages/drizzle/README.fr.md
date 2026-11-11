@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fb288c83bfdf2b28 -->
+<!-- translation-of: README.md sha256:65f07c3ad9e35a8d -->
 
 # @ddd-ts-kit/drizzle
 
@@ -845,7 +845,8 @@ suppression d'une clé que la table ne tient pas encore laisse la même trace. U
 vérification garde entières les lignes vivantes (`check (deleted or (status is not null and
 starts_at is not null))`), une requête à vous sur la table écarte les lignes supprimées
 (`deleted = false`), et une table dont des colonnes refusent NULL est refusée par
-`ReadModelTableNotReadyError` à la construction du registre
+`ReadModelTableNotReadyError`, à la construction du registre d'après sa définition et, avant
+l'écriture de la première trace, par une lecture des colonnes que tient la base
 ([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). `store.table` est ce que prend
 `ProjectionRebuild` ; la reconstruction est réservée à PostgreSQL (une copie `<table>__rebuild`
 faite `LIKE ... INCLUDING ALL`, les clés écrites entre-temps dans `<table>__touched`, l'échange

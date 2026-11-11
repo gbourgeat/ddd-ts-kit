@@ -91,6 +91,25 @@ describe('DrizzleReadModelTable', () => {
     expect((await table.find('a1'))?.row).toEqual({ ...row, seats: 2 });
   });
 
+  it('refuses a trace by name when the database is behind the definition, before the statement it would refuse', async () => {
+    const { table, unitOfWork } = await emptied();
+
+    await database.db.execute(sql`alter table ${contractRows} alter column seats set not null`);
+
+    const written = unitOfWork.run(async () => {
+      const refusal = await table.insert({ key: 'a2', row: undefined, stamp }).catch((error: unknown) => error);
+
+      // The transaction is still usable: nothing was sent that PostgreSQL refused.
+      await table.insert({ key: 'a1', row, stamp });
+
+      return refusal;
+    });
+
+    await expect(written).resolves.toMatchObject({ table: 'read_side.criteria_contract', columns: ['seats'] });
+    expect((await table.find('a1'))?.row).toEqual(row);
+    await database.db.execute(sql`alter table ${contractRows} alter column seats drop not null`);
+  });
+
   it('refuses a table declared without the columns of a read model', () => {
     const declare = () =>
       new DrizzleReadModelTable<CriteriaContractRow, PgQueryResultHKT>(createDrizzleUnitOfWork(database.db), {

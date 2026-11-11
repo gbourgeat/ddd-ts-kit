@@ -1,4 +1,6 @@
+import { ReadModelKeyHeldElsewhereError } from '@ddd-ts-kit/kernel';
 import type { ContractRunner } from '../contract-runner';
+import { failureOf } from '../failure-of';
 import type { Awaitable } from '../awaitable';
 import { ReadModelStoreSuite } from './read-model-store-suite';
 import type { ReadModelRowsUnderContract } from './read-model-rows-under-contract';
@@ -122,7 +124,9 @@ export class DeletionsSuite extends ReadModelStoreSuite {
 
   private freesAUniqueValue(): void {
     if (this.storage.uniqueTitle !== true) {
-      this.todo('frees the unique value of a deleted row (hold title unique, and tell the contract with uniqueTitle)');
+      this.todo(
+        'frees the unique value of a deleted row, refuses the one of a live row (hold title unique, and say uniqueTitle)',
+      );
 
       return;
     }
@@ -134,6 +138,16 @@ export class DeletionsSuite extends ReadModelStoreSuite {
 
       this.expect(await this.put({ ...row('a3'), title: row('a1').title }, at('evt-3', 3))).toBe('applied');
       this.expect(await this.ids()).toEqual(['a3']);
+    });
+
+    this.it('refuses a row that takes the unique value of a live one, and not as a key held elsewhere', async () => {
+      await this.put(row('a1'), at('evt-1', 1));
+
+      const refusal = await failureOf(() => this.put({ ...row('a2'), title: row('a1').title }, at('evt-1', 1)));
+
+      this.expect(refusal instanceof Error).toBe(true);
+      this.expect(refusal instanceof ReadModelKeyHeldElsewhereError).toBe(false);
+      this.expect(await this.ids()).toEqual(['a1']);
     });
   }
 }

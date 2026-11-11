@@ -104,17 +104,18 @@ describe('PrismaReadModelTable', () => {
 interface LedgerRow {
   readonly id: string;
   readonly balance: number;
+  readonly details: unknown;
 }
 
 const LEDGER_MODEL: PrismaReadModelOptions<LedgerRow, Prisma.TransactionClient> = {
   delegate: (client) => client.ledgerRow,
   table: 'ledger',
-  columns: { id: 'id', balance: 'balance' },
+  columns: { id: 'id', balance: 'balance', details: 'details' },
 };
 
 describe('PrismaReadModelTable of a model in the default schema', () => {
   const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z'), version: 3 };
-  const account = { id: 'acct-1', balance: Number.MAX_SAFE_INTEGER };
+  const account = { id: 'acct-1', balance: Number.MAX_SAFE_INTEGER, details: null };
 
   const ledger = async () => {
     await database.truncate();
@@ -135,6 +136,24 @@ describe('PrismaReadModelTable of a model in the default schema', () => {
     expect(await table.find('acct-1')).toEqual({ key: 'acct-1', row: account, stamp });
     expect(await table.shadow().find('acct-1')).toEqual({ key: 'acct-1', row: account, stamp });
     await table.abandonRebuild();
+  });
+
+  it('leaves SQL NULL, not a JSON null, in the Json field of a deleted row, held before or not', async () => {
+    const table = await ledger();
+    const later = { eventId: 'evt-2', occurredAt: new Date('2026-10-10T12:01:00.000Z') };
+
+    await table.insert({ key: 'acct-1', row: { ...account, details: { note: 'kept while live' } }, stamp });
+
+    expect((await table.find('acct-1'))?.row?.details).toEqual({ note: 'kept while live' });
+    expect(await table.replace({ key: 'acct-1', row: undefined, stamp: later }, stamp)).toBe(true);
+    expect(await table.insert({ key: 'acct-2', row: undefined, stamp })).toBe(true);
+
+    expect(
+      await database.prisma.$queryRawUnsafe('select id, details is null as empty from public.ledger order by id'),
+    ).toEqual([
+      { id: 'acct-1', empty: true },
+      { id: 'acct-2', empty: true },
+    ]);
   });
 
   it('writes to the copy the trace of a deleted row, which has no model either', async () => {

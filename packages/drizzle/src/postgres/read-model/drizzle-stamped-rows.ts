@@ -1,6 +1,12 @@
 import { sql, type SQL, type TablesRelationalConfig } from 'drizzle-orm';
 import type { PgColumn, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import { tenantScopeOf, type EventStamp, type ReadModelRows, type StampedRow } from '@ddd-ts-kit/kernel';
+import {
+  tenantScopeOf,
+  type EventStamp,
+  type PostgresTraceColumns,
+  type ReadModelRows,
+  type StampedRow,
+} from '@ddd-ts-kit/kernel';
 import { reachCondition } from '../tenancy/reach-condition';
 import type { ReadModelTenant } from './read-model-tenant';
 import type { DrizzleContext } from '../unit-of-work/drizzle-context';
@@ -15,6 +21,8 @@ export interface StampedTable {
   readonly columns: Readonly<Record<string, PgColumn>>;
   readonly stamps: StampColumns;
   readonly tenant?: ReadModelTenant;
+  /** Of the table itself, which the copy of a rebuild is made like. */
+  readonly traces: PostgresTraceColumns;
 }
 
 /**
@@ -67,7 +75,7 @@ export class DrizzleStampedRows<
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    const values = this.valuesOf(entry);
+    const values = await this.valuesOf(entry);
 
     const columns = sql.join(
       values.map(([column]) => named(column)),
@@ -93,8 +101,10 @@ export class DrizzleStampedRows<
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
     const { stamps } = this.target;
 
+    const values = await this.valuesOf(entry);
+
     const changes = sql.join(
-      this.valuesOf(entry).map(([column, value]) => sql`${named(column)} = ${value}`),
+      values.map(([column, value]) => sql`${named(column)} = ${value}`),
       sql`, `,
     );
 
@@ -122,8 +132,13 @@ export class DrizzleStampedRows<
     return tenant === undefined ? sql`true` : sql`${named(tenant.column)} = ${tenantScopeOf(tenant.scope).tenantId}`;
   }
 
-  private valuesOf({ key, row, stamp }: StampedRow<Row>): [PgColumn, unknown][] {
-    const { stamps, tenant } = this.target;
+  /** The trace of a deleted row is written once the table is known, in the database, to accept it. */
+  private async valuesOf({ key, row, stamp }: StampedRow<Row>): Promise<[PgColumn, unknown][]> {
+    const { stamps, tenant, traces } = this.target;
+
+    if (row === undefined) {
+      await traces.require();
+    }
 
     // A deleted row keeps no data: every column of the row is written NULL, not left to its default.
     const data = row === undefined ? this.mapper.toNulls() : this.mapper.toValues(row);

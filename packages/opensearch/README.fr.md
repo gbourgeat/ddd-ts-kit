@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:eee20ce395d8b623 -->
+<!-- translation-of: README.md sha256:cf2bf51a0beb90a4 -->
 
 # @ddd-ts-kit/opensearch
 
@@ -286,4 +286,6 @@ refusés, et aucune écriture ne crée d'index. Elles tournent sur un OpenSearch
 processus, qui sert en HTTP le sous-ensemble de l'API REST que le store appelle, et sur le serveur
 que nomme `DDD_TS_KIT_TEST_OPENSEARCH_URL` : OpenSearch 3 dans le pipeline, avec le plugin de
 sécurité désactivé. `readModelStoreContract`, qui ajoute la reconstruction, ne tourne pas : il n'y
-a pas de reconstruction.
+a pas de reconstruction. Les deux cas du contrat qui lisent le stockage à côté du registre (`stored`,
+`uniqueTitle`) ne sont pas fournis : que le document d'une ligne supprimée tienne son tampon et aucun
+champ est ce qu'écrit `DocumentMapper`, pas une chose que le contrat prouve ici.

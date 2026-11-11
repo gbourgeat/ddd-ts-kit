@@ -84,6 +84,7 @@ const LEDGER = `
 model LedgerRow {
   id               String   @id
   balance          BigInt?
+  details          Json?
   lastEventId      String   @map("last_event_id")
   lastEventAt      DateTime @map("last_event_at") @db.Timestamptz(3)
   lastEventVersion BigInt?  @map("last_event_version")

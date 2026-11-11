@@ -1,12 +1,17 @@
 import type { Knex } from 'knex';
-import { tenantScopeOf, type EventStamp, type ReadModelRows, type StampedRow } from '@ddd-ts-kit/kernel';
+import {
+  tenantScopeOf,
+  type EventStamp,
+  type PostgresTraceColumns,
+  type ReadModelRows,
+  type StampedRow,
+} from '@ddd-ts-kit/kernel';
 import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict';
 import { TENANT_COLUMN, whereTenant } from '../tenancy/where-tenant';
 import type { KnexContext } from '../unit-of-work/knex-context';
 import type { KnexReadModelOptions } from './knex-read-model-options';
 import { recordsOf } from './records-of';
 import { RowMapper } from './row.mapper';
-import type { TraceColumns } from './trace-columns';
 
 /** The stamped rows of one table, the copy of a rebuild as well as the table itself. */
 export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
@@ -16,7 +21,7 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
     private readonly context: KnexContext,
     private readonly options: KnexReadModelOptions<Row>,
     /** Of the table itself, which the copy of a rebuild is made like. */
-    private readonly traces: TraceColumns<Row>,
+    private readonly traces: PostgresTraceColumns,
   ) {
     this.mapper = new RowMapper<Row>(options.columns);
   }
@@ -87,7 +92,7 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   /** Before the trace of a deleted row is written: the columns of the table accept it. */
   private async holdsTrace({ row }: StampedRow<Row>): Promise<void> {
     if (row === undefined) {
-      await this.traces.require(this.context.executor());
+      await this.traces.require();
     }
   }
 

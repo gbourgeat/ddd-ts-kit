@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:bce29dd2d1508b4e -->
+<!-- translation-of: cqrs.md sha256:99030f69174d7a01 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -321,9 +321,10 @@ suppression livrée avant la création qu'elle suit insère la trace, et la cré
   que le registre associe contient NULL, hormis la clé, le locataire et le tampon, si bien que les
   données personnelles d'une ligne supprimée ont disparu et qu'une valeur unique qu'elle tenait
   est de nouveau libre. Une table dont des colonnes refusent NULL est refusée par son nom
-  (`ReadModelTableNotReadyError`, qui liste les colonnes), à la construction du registre sur
-  Drizzle et TypeORM, avant l'écriture de la première trace sur Knex et Prisma (une lecture de
-  `information_schema.columns`), et jamais par une requête qui ferait échouer la transaction de
+  (`ReadModelTableNotReadyError`, qui liste les colonnes) : à la construction du registre sur
+  Drizzle et TypeORM, d'après la définition, et sur les quatre ORM avant l'écriture de la première
+  trace, par une lecture des colonnes que tient la base, si bien qu'une migration pas encore
+  exécutée est vue elle aussi, et jamais par une requête qui ferait échouer la transaction de
   l'événement. Sur Prisma, les champs du modèle sont optionnels eux aussi (`String?`).
 - **Une contrainte de vérification garde entières les lignes vivantes**, à la place du NOT NULL
   que les colonnes ne portent plus :
@@ -348,7 +349,10 @@ comme la clé d'une ligne vivante : une clé que deux locataires pourraient part
 identifiant généré ou porte le locataire (`acme:2026-03-01`). Sous une clé que tient un autre
 locataire, une suppression est `ignored`, puisque rien de ce locataire n'est là à supprimer et
 que sa trace ne peut pas être écrite, et un *upsert* est refusé aussitôt par
-`ReadModelKeyHeldElsewhereError`, une `ConcurrencyError` dont le message le dit.
+`ReadModelKeyHeldElsewhereError`, une `ConcurrencyError` dont le message le dit. Un travail élevé
+sur plusieurs locataires lit une telle clé comme tenue et n'écrit que dans son propre locataire,
+si bien que son écriture d'une clé que tient un autre locataire se termine encore, après cinq
+tentatives, par une simple `ConcurrencyError`.
 
 ## Limites et quand ne pas l'utiliser
 

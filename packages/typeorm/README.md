@@ -546,7 +546,8 @@ set: its key and its stamp, and NULL in every other column, which is why every c
 is nullable. A deletion of a key the table does not hold yet leaves the same trace. A check
 constraint keeps the live rows whole (`check (deleted or (status is not null and starts_at is
 not null))`), a query of your own on the table leaves the deleted rows out (`deleted = false`),
-and a table whose columns refuse NULL is refused with `ReadModelTableNotReadyError` when the store is built
+and a table whose columns refuse NULL is refused with `ReadModelTableNotReadyError`, when the store is built from its definition and, before the first
+trace is written, from one read of the columns the database holds
 ([What a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)). `store.table` is what `ProjectionRebuild` takes; the rebuild is
 PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
 meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees

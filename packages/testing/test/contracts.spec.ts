@@ -16,6 +16,9 @@ import {
   InMemoryReadModelTable,
   InMemoryUnitOfWork,
   evaluateCriteria,
+  UniqueViolationError,
+  type EventStamp,
+  type StampedRow,
 } from '@ddd-ts-kit/kernel';
 import { InMemoryOutboxStore } from '@ddd-ts-kit/events';
 import { InMemoryRepository, resetSequences, snapshots } from '../src';
@@ -204,13 +207,44 @@ const NO_DATA = {
   tenantId: null,
 };
 
-let readModelTable = new InMemoryReadModelTable<CriteriaContractRow>();
+/** The in-memory table holding `title` unique among its live rows, as a unique index would. */
+class UniqueTitles extends InMemoryReadModelTable<CriteriaContractRow> {
+  private readonly titles = new Map<string, string | undefined>();
 
-// In memory a deleted row is its key and its stamp, and no value is held unique: nothing to free.
+  override async insert(entry: StampedRow<CriteriaContractRow>): Promise<boolean> {
+    return this.kept(entry, await super.insert(this.free(entry)));
+  }
+
+  override async replace(entry: StampedRow<CriteriaContractRow>, held: EventStamp): Promise<boolean> {
+    return this.kept(entry, await super.replace(this.free(entry), held));
+  }
+
+  private free(entry: StampedRow<CriteriaContractRow>): StampedRow<CriteriaContractRow> {
+    const taken = [...this.titles].some(([key, title]) => key !== entry.key && title === entry.row?.title);
+
+    if (entry.row !== undefined && taken) {
+      throw new UniqueViolationError(entry.key);
+    }
+
+    return entry;
+  }
+
+  private kept(entry: StampedRow<CriteriaContractRow>, written: boolean): boolean {
+    if (written) {
+      this.titles.set(entry.key, entry.row?.title);
+    }
+
+    return written;
+  }
+}
+
+let readModelTable = new UniqueTitles();
+
+// In memory a deleted row is its key and its stamp.
 readModelStoreContract(runner, {
   name: 'InMemoryReadModelTable',
   createTable: () => {
-    readModelTable = new InMemoryReadModelTable<CriteriaContractRow>();
+    readModelTable = new UniqueTitles();
 
     return { table: readModelTable, unitOfWork: new InMemoryUnitOfWork() };
   },

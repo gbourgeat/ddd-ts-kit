@@ -272,3 +272,6 @@ is created by a write. They run on an OpenSearch in memory, in the process, whic
 subset of the REST API the store calls over HTTP, and on the server that
 `DDD_TS_KIT_TEST_OPENSEARCH_URL` names: OpenSearch 3 in the pipeline, with the security plugin
 disabled. `readModelStoreContract`, which adds the rebuild, does not run: there is no rebuild.
+The two cases of the contract that read the storage beside the store (`stored`, `uniqueTitle`) are
+not given: that the document of a deleted row holds its stamp and no field is what
+`DocumentMapper` writes, not something the contract proves here.

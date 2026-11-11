@@ -1,5 +1,7 @@
 import {
   PostgresReadModelRebuild,
+  PostgresTraceColumns,
+  type TracedTable,
   type CriteriaPlan,
   type EventStamp,
   type SearchedRows,
@@ -11,11 +13,11 @@ import {
 import type { KnexContext } from '../unit-of-work/knex-context';
 import { criteriaToKnex } from './criteria-to-knex';
 import type { KnexReadModelOptions } from './knex-read-model-options';
+import { TENANT_COLUMN } from '../tenancy/where-tenant';
 import { KnexStampedRows } from './knex-stamped-rows';
 import { predicateToKnex } from './predicate-to-knex';
 import { recordsOf } from './records-of';
 import { RowMapper } from './row.mapper';
-import { TraceColumns } from './trace-columns';
 
 /**
  * The table of one read model on knex: what `TableReadModelStore` and `ProjectionRebuild` are
@@ -35,7 +37,11 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
   ) {
     const { table, schema } = options;
 
-    const traces = new TraceColumns(options);
+    const traces = new PostgresTraceColumns(
+      (statement, parameters) => this.run(statement, parameters),
+      () => tracedTable(options),
+    );
+
     const copied = { ...options, table: PostgresReadModelRebuild.shadowOf(table) };
 
     this.rows = new KnexStampedRows(context, options, traces);
@@ -120,4 +126,18 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
 
     return recordsOf(typeof result === 'object' && result !== null && 'rows' in result ? result.rows : []);
   }
+}
+
+/** The table and the columns of the row, in which a trace holds NULL: every one but the key and the tenant. */
+function tracedTable<Row>({
+  table,
+  schema,
+  columns,
+  keyColumn = 'id',
+  tenant,
+}: KnexReadModelOptions<Row>): TracedTable {
+  const kept = new Set([keyColumn, ...(tenant === undefined ? [] : [TENANT_COLUMN])]);
+  const data = Object.values<string>(columns).filter((column) => !kept.has(column));
+
+  return { table, data, ...(schema === undefined ? {} : { schema }) };
 }

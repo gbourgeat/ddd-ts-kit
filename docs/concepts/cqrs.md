@@ -305,10 +305,10 @@ asks four things of the table and of whoever reads it:
 - **Every column of the row is nullable.** A trace keeps no data: every column the store maps
   holds NULL, the key, the tenant and the stamp apart, so the personal data of a deleted row is
   gone and a unique value it held is free again. A table whose columns refuse NULL is refused by
-  name (`ReadModelTableNotReadyError`, which lists the columns), when the store is built on Drizzle
-  and TypeORM, before the first trace is written on Knex and Prisma (one read of
-  `information_schema.columns`), and never by a statement that would abort the transaction of the
-  event. On Prisma the fields of the model are optional as well (`String?`).
+  name (`ReadModelTableNotReadyError`, which lists the columns): when the store is built on Drizzle
+  and TypeORM, from the definition, and on the four ORM before the first trace is written, from
+  one read of the columns the database holds, so a migration not run yet is caught too, and never
+  by a statement that would abort the transaction of the event. On Prisma the fields of the model are optional as well (`String?`).
 - **A check constraint keeps the live rows whole**, in place of the NOT NULL the columns no
   longer carry:
 
@@ -330,7 +330,9 @@ of the work, and its key is taken for every tenant, as the key of a live row is:
 tenants could share is a generated id or carries the tenant (`acme:2026-03-01`). Under a key
 another tenant holds, a deletion is `ignored`, since nothing of this tenant is there to delete
 and its trace cannot be written, and an upsert is refused at once with
-`ReadModelKeyHeldElsewhereError`, a `ConcurrencyError` whose message says so.
+`ReadModelKeyHeldElsewhereError`, a `ConcurrencyError` whose message says so. Work elevated over
+several tenants reads such a key as held and writes only in its own tenant, so its write of a key
+another tenant holds still ends, after five attempts, in a plain `ConcurrencyError`.
 
 ## Limits and when not to use it
 

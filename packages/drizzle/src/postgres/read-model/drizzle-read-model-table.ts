@@ -2,6 +2,7 @@ import { and, eq, sql, type ExtractTablesWithRelations, type TablesRelationalCon
 import { getTableConfig, type PgColumn, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import {
   PostgresReadModelRebuild,
+  PostgresTraceColumns,
   ReadModelTableNotReadyError,
   type CriteriaPlan,
   type EventStamp,
@@ -46,7 +47,12 @@ export class DrizzleReadModelTable<
   ) {
     const { name, schema } = getTableConfig(options.table);
 
-    holdsTraces(options, schema === undefined ? name : `${schema}.${name}`);
+    const data = holdsTraces(options, schema === undefined ? name : `${schema}.${name}`);
+
+    const traces = new PostgresTraceColumns(
+      (statement, parameters) => this.run(statement, parameters),
+      () => ({ table: name, data, ...(schema === undefined ? {} : { schema }) }),
+    );
 
     this.target = {
       schema,
@@ -54,6 +60,7 @@ export class DrizzleReadModelTable<
       key: options.key,
       columns: options.columns,
       stamps: stampColumns(options.table),
+      traces,
       ...(options.tenant === undefined ? {} : { tenant: options.tenant }),
     };
 
@@ -154,13 +161,15 @@ export class DrizzleReadModelTable<
 }
 
 /**
- * Refuses, when the store is built, a table whose columns could not hold the trace of a deleted
- * row: every column of the row accepts NULL, the key and the tenant apart.
+ * Refuses, when the store is built, a table whose definition could not hold the trace of a
+ * deleted row: every column of the row accepts NULL, the key and the tenant apart. An early
+ * signal: the database is asked before the first trace. Answers the columns of the row.
  */
-function holdsTraces<Row>({ columns, key, tenant }: DrizzleReadModelOptions<Row>, table: string): void {
+function holdsTraces<Row>({ columns, key, tenant }: DrizzleReadModelOptions<Row>, table: string): string[] {
   const mapped: readonly PgColumn[] = Object.values(columns);
   const kept = new Set([key.name, tenant?.column.name]);
-  const refusing = mapped.filter((column) => column.notNull && !kept.has(column.name));
+  const data = mapped.filter((column) => !kept.has(column.name));
+  const refusing = data.filter((column) => column.notNull);
 
   if (refusing.length > 0) {
     throw new ReadModelTableNotReadyError(
@@ -168,4 +177,6 @@ function holdsTraces<Row>({ columns, key, tenant }: DrizzleReadModelOptions<Row>
       refusing.map((column) => column.name),
     );
   }
+
+  return data.map((column) => column.name);
 }
