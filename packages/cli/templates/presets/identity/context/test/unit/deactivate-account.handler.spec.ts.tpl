@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { offsetPage } from '@ddd-ts-kit/kernel';
+import { KitCodes, offsetPage } from '@ddd-ts-kit/kernel';
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { DeactivateAccountCommand } from '{{alias.context}}/application/commands/deactivate-account/deactivate-account.command{{alias.ext}}';
@@ -74,9 +74,9 @@ describe('Deactivate account', () => {
     const remove = new RemoveMemberCommand(as('subject-grace'), 'acme', 'subject-alan');
     const search = new SearchMembersQuery(as('subject-grace'), 'acme', offsetPage({ limit: 20 }));
 
-    await expect(application.commandBus.execute(invite)).rejects.toMatchObject({ code: 'FORBIDDEN' });
-    await expect(application.commandBus.execute(remove)).rejects.toMatchObject({ code: 'FORBIDDEN' });
-    await expect(application.queryBus.execute(search)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(application.commandBus.execute(invite)).rejects.toMatchObject({ code: KitCodes.Forbidden });
+    await expect(application.commandBus.execute(remove)).rejects.toMatchObject({ code: KitCodes.Forbidden });
+    await expect(application.queryBus.execute(search)).rejects.toMatchObject({ code: KitCodes.Forbidden });
     expect(await members.countOwners('acme')).toBe(1);
   });
 

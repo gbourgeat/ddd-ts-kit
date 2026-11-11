@@ -24,7 +24,8 @@ describe('generate value-object, by the form the config says', () => {
     expect(written).toContain('static create(value: string): Money {');
     expect(written).toContain("throw new InvariantViolation('Money must not be empty.');");
     expect(written).not.toContain('Result');
-    expect(read(root, SPEC)).toContain("expectRefusal(() => Money.create('  '), 'INVARIANT_VIOLATION');");
+    expect(read(root, SPEC)).toContain("expectRefusal(() => Money.create('  '), KitCodes.InvariantViolation);");
+    expect(read(root, SPEC)).toContain("import { KitCodes } from '@ddd-ts-kit/kernel';");
     expect(read(root, SPEC)).not.toContain('unwrap');
     expect(read(root, '.claude/rules/domain.md')).toContain('with no `unwrap`');
   });
@@ -63,7 +64,8 @@ describe('generate value-object, by the form the config says', () => {
       const spec = read(root, 'src/contexts/billing/test/unit/currency.vo.spec.ts');
 
       expect(spec).toContain("const first = unwrap(Currency.create('sample'));");
-      expect(spec).toContain("expectRefusal(Currency.create('  '), 'INVARIANT_VIOLATION');");
+      expect(spec).toContain("expectRefusal(Currency.create('  '), KitCodes.InvariantViolation);");
+      expect(spec).toContain("import { KitCodes, unwrap } from '@ddd-ts-kit/kernel';");
     }
   });
 

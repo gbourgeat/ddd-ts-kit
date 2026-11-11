@@ -1,4 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
+import { KitCodes } from '@ddd-ts-kit/kernel';
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { RemoveMemberCommand } from '{{alias.context}}/application/commands/remove-member/remove-member.command{{alias.ext}}';
@@ -68,7 +69,7 @@ describe('Remove member', () => {
 
     await expect(
       application.commandBus.execute(new RemoveMemberCommand(as('subject-alan'), 'acme', 'subject-grace')),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
 });
 

@@ -7,6 +7,7 @@ import { spokenInLanguage } from '../spoken-in-language';
 import { named } from '../named';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
+import { withImport } from '../with-import';
 import { addCode, type CodeEntry } from './add-code';
 import { addFactory } from './add-factory';
 import { addSpecCase } from './add-spec-case';
@@ -121,12 +122,16 @@ function writeFactory(scope: Scope, file: string, { refusal, factory, context }:
   }
 }
 
+/** The case names the code by its entry of the list, so the spec imports the list: a spec written before it did is given the import. */
 function writeSpecCase(scope: Scope, file: string, { refusal, factory, context }: Writing): void {
   const text = renderTemplate('error/refusal-case.spec.ts.tpl', context).trimEnd();
+  const codesImport = renderTemplate('error/codes-import.ts.tpl', context).trimEnd();
   const existing = scope.ws.read(file);
 
   if (existing === undefined) {
-    scope.ws.create(file, renderTemplate('error/refusal.spec.ts.tpl', { ...context, error: { case: text } }));
+    const error = { case: text, codesImport };
+
+    scope.ws.create(file, renderTemplate('error/refusal.spec.ts.tpl', { ...context, error }));
 
     return;
   }
@@ -136,6 +141,6 @@ function writeSpecCase(scope: Scope, file: string, { refusal, factory, context }
   if (next === undefined) {
     scope.ws.notes.push(`${file} has no describe block: add the case of ${refusal.pascal}.${factory.camel} by hand.`);
   } else if (next !== existing) {
-    scope.ws.update(file, next);
+    scope.ws.update(file, withImport(next, codesImport));
   }
 }

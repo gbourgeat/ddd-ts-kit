@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { offsetPage } from '@ddd-ts-kit/kernel';
+import { KitCodes, offsetPage } from '@ddd-ts-kit/kernel';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { SearchMembersQuery } from '{{alias.context}}/application/queries/search-members/search-members.query{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
@@ -33,6 +33,6 @@ describe('Search members', () => {
 
     await expect(
       application.queryBus.execute(new SearchMembersQuery(as('subject-mallory'), 'acme', offsetPage({ limit: 20 }))),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
 });

@@ -121,7 +121,7 @@ function securityVars(scope: Scope, useCase: UseCase): RenderContext {
     protected: useCase.isProtected,
     security: useCase.isProtected ? `['${scheme}']` : 'false',
     actor: useCase.isProtected ? 'actorOf(input.context.principal)' : '',
-    errorCodes: useCase.isProtected ? "'UNAUTHORIZED', 'FORBIDDEN'" : '',
+    errorCodes: useCase.isProtected ? 'KitCodes.Unauthorized, KitCodes.Forbidden' : '',
   };
 }
 

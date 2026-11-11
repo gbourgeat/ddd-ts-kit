@@ -40,7 +40,7 @@ describe('a route of a new project', () => {
     expect(controller).not.toContain('security');
 
     expect(read(root, `${HTTP}/invoices.routes.ts`)).toContain(
-      "@RouteGroup({ prefix: '/invoices', tags: ['billing'], guards: [Authenticated], errors: ['FORBIDDEN'] })\nexport class InvoicesRoutes {}",
+      "import { Authenticated, RouteGroup } from '@ddd-ts-kit/http';\nimport { KitCodes } from '@ddd-ts-kit/kernel';\n\n@RouteGroup({ prefix: '/invoices', tags: ['billing'], guards: [Authenticated], errors: [KitCodes.Forbidden] })\nexport class InvoicesRoutes {}",
     );
   });
 

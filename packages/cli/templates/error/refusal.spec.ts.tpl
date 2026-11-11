@@ -1,5 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { DomainRefusal } from '@ddd-ts-kit/kernel';
+{{error.codesImport}}
 import { {{name.pascal}} } from '{{alias.context}}/domain/errors/{{name.kebab}}.error{{alias.ext}}';
 
 describe('{{name.pascal}}', () => {

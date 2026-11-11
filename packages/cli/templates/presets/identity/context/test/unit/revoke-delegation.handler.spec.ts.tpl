@@ -1,4 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
+import { KitCodes } from '@ddd-ts-kit/kernel';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { RevokeDelegationCommand } from '{{alias.context}}/application/commands/revoke-delegation/revoke-delegation.command{{alias.ext}}';
 import { aDelegation } from '{{alias.context}}/test/builders/delegation.builder{{alias.ext}}';
@@ -46,6 +47,6 @@ describe('Revoke delegation', () => {
 
     await expect(
       application.commandBus.execute(new RevokeDelegationCommand(as('subject-alan'), 'acme', 'delegation-1')),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
 });

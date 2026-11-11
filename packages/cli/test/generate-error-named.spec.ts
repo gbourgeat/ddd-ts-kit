@@ -57,13 +57,17 @@ describe('generate error, in a project of one class per refusal ("stack.refusals
 
     expect(read(root, ISSUED_SPEC)).toContain('const error = InvoiceAlreadyIssued.forInvoice();');
     expect(read(root, ISSUED_SPEC)).toContain('expect(error).toBeInstanceOf(DomainRefusal);');
-    expect(read(root, ISSUED_SPEC)).toContain("expect(error.code).toBe('INVOICE_ALREADY_ISSUED');");
+    expect(read(root, ISSUED_SPEC)).toContain("import { BillingCodes } from '@/contexts/billing/billing.codes';");
+    expect(read(root, ISSUED_SPEC)).toContain('expect(error.code).toBe(BillingCodes.InvoiceAlreadyIssued);');
   });
 
   it('states the refusal of its spec case by its code and its facts, never by its message', () => {
     const spec = read(root, ISSUED_SPEC);
 
-    expect(spec).toContain("expect(error.code).toBe('INVOICE_ALREADY_ISSUED');\n    expect(error.facts).toEqual({});");
+    expect(spec).toContain(
+      'expect(error.code).toBe(BillingCodes.InvoiceAlreadyIssued);\n    expect(error.facts).toEqual({});',
+    );
+
     expect(spec).not.toContain('error.message');
   });
 

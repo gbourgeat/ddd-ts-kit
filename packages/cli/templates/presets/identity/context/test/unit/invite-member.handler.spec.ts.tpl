@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { type DomainEvent, KitCodes } from '@ddd-ts-kit/kernel';
 import { InvitationIssued } from '{{alias.context}}/domain/events/invitation-issued.event{{alias.ext}}';
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
@@ -87,11 +87,11 @@ describe('Invite member', () => {
 
     await expect(
       application.commandBus.execute(new InviteMemberCommand(as('subject-alan'), 'acme', grace)),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: KitCodes.Forbidden });
 
     await expect(
       application.commandBus.execute(new InviteMemberCommand(as('subject-mallory'), 'acme', grace)),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: KitCodes.Forbidden });
 
     expect(invitations.all()).toEqual([]);
   });

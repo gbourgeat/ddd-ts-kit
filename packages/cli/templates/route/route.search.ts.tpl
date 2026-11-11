@@ -7,11 +7,11 @@ import Type from 'typebox';
 import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, pageQuerySchema, pageResponse, pageSchemaOf, type Route } from '@ddd-ts-kit/http';
 {{#if search.customSchema}}
-import { err, ok, type QueryBus } from '@ddd-ts-kit/kernel';
+import { err, KitCodes, ok, type QueryBus } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
 {{/if}}
 {{#unless search.customSchema}}
-import type { QueryBus } from '@ddd-ts-kit/kernel';
+import { KitCodes, type QueryBus } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{#if validation.zod}}
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
@@ -77,7 +77,7 @@ export function {{name.camel}}Route(queries: QueryBus): Route {
       request: { query },
       responses: { 200: { description: 'One page of the search.', body: pageSchemaOf(line) } },
       // TODO(domain): list the codes of the refusals "{{name.words}}" can raise, as their factories set them, so that they appear in the contract with their status (`errors/known-code`).
-      errors: ['UNAUTHORIZED', 'FORBIDDEN'],
+      errors: [KitCodes.Unauthorized, KitCodes.Forbidden],
       security: {{route.security}},
     },
     async (input) => {

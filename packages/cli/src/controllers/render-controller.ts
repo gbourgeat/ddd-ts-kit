@@ -1,6 +1,8 @@
 import type { HandleTypes } from './handle-types-of';
 import type { FunctionRoute } from './function-route';
 import type { MigratedGroup } from './migrated-group';
+import { KIT_CODES_LIST } from '../check/errors/kit-codes-list';
+import { declaredCode } from './declared-code';
 
 export interface ControllerParts {
   readonly route: FunctionRoute;
@@ -12,7 +14,7 @@ export interface ControllerParts {
   readonly groupImport: string;
 }
 
-const GUARD_ERRORS = ["'UNAUTHORIZED'"];
+const GUARD_ERRORS = ['UNAUTHORIZED'];
 
 /** The text of the controller file: the imports of the route, its schemas, the class, the helpers it kept. */
 export function renderController(parts: ControllerParts): string {
@@ -62,12 +64,14 @@ function declarationOf(parts: ControllerParts): string[] {
 
 /** What the guard and the group already say is not repeated on the controller. */
 function errorsOf({ route, group }: ControllerParts): string[] {
-  const said = group === undefined ? [] : [...GUARD_ERRORS, ...group.errors.map((code) => `'${code}'`)];
+  const said = group === undefined ? [] : [...GUARD_ERRORS, ...group.errors];
 
-  return listed(route.spec.get('errors')).filter((code) => !said.includes(code));
+  return listed(route.spec.get('errors')).filter((entry) => !said.includes(declaredCode(entry)));
 }
 
-function importsOf({ route, types, group, groupImport }: ControllerParts, reads: boolean): string[] {
+function importsOf(parts: ControllerParts, reads: boolean): string[] {
+  const { route, types, group, groupImport } = parts;
+
   const http = [
     'Controller',
     ...(group === undefined ? ['Public'] : []),
@@ -75,7 +79,10 @@ function importsOf({ route, types, group, groupImport }: ControllerParts, reads:
     ...(types.usesPageBody ? ['type PageBody'] : []),
   ];
 
+  const namesKit = errorsOf(parts).some((entry) => entry.startsWith(`${KIT_CODES_LIST}.`));
+
   const kept = route.imports
+    .map((statement) => (namesKit ? statement : withoutKitCodes(statement)))
     .filter((statement) => !fromAuth(statement) || namesOf(statement).some((name) => name !== 'actorOf'))
     .map((statement) => (statement.includes("from '@ddd-ts-kit/http'") ? withNames(statement, http) : statement))
     .map((statement) => (fromAuth(statement) ? without(statement, 'actorOf') : statement));
@@ -114,6 +121,21 @@ function without(statement: string, name: string): string {
   return `import { ${namesOf(statement)
     .filter((kept) => kept !== name)
     .join(', ')} } from '${specifier}';\n`;
+}
+
+/** The import of the kernel without the code list of the kit, when the group says every code of the kit the route named. */
+function withoutKitCodes(statement: string): string {
+  const names = namesOf(statement);
+
+  if (!statement.includes("from '@ddd-ts-kit/kernel'") || !names.includes(KIT_CODES_LIST)) {
+    return statement;
+  }
+
+  const left = names.filter((name) => name !== KIT_CODES_LIST);
+
+  return left.every((name) => name.startsWith('type '))
+    ? `import type { ${left.map((name) => name.slice('type '.length)).join(', ')} } from '@ddd-ts-kit/kernel';\n`
+    : `import { ${left.join(', ')} } from '@ddd-ts-kit/kernel';\n`;
 }
 
 function namesOf(statement: string): string[] {

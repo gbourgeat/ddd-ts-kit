@@ -8,6 +8,7 @@ const UNIT = 'src/contexts/billing/test/unit';
 const ISSUED = `${ERRORS}/invoice-already-issued.error.ts`;
 const AGGREGATE = 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts';
 const LATE_SPEC = `${UNIT}/invoice-late.error.spec.ts`;
+const VOIDED_SPEC = `${UNIT}/invoice-voided.error.spec.ts`;
 
 describe('generate error, in a project of one class per refusal, where its files are not what it expects', () => {
   let root: string;
@@ -53,5 +54,35 @@ describe('generate error, in a project of one class per refusal, where its files
     );
 
     expect(read(root, LATE_SPEC)).toBe(spec);
+  });
+
+  it('gives the import of the code list to a spec written before its cases named the code by the list', () => {
+    const before = [
+      "import { describe, expect, it } from 'vitest';",
+      "import { DomainRefusal } from '@ddd-ts-kit/kernel';",
+      "import { InvoiceVoided } from '@/contexts/billing/domain/errors/invoice-voided.error';",
+      '',
+      "describe('InvoiceVoided', () => {",
+      "  it('refuses for invoice with the code INVOICE_VOIDED', () => {",
+      "    expect(InvoiceVoided.forInvoice().code).toBe('INVOICE_VOIDED');",
+      '  });',
+      '});',
+      '',
+    ].join('\n');
+
+    expect(generate(root, 'InvoiceVoided', 'forInvoice', '--term', 'Void=To cancel an invoice issued').code).toBe(0);
+    write(root, VOIDED_SPEC, before);
+
+    expect(generate(root, 'InvoiceVoided', 'onDate').code).toBe(0);
+
+    const spec = read(root, VOIDED_SPEC);
+
+    expect(spec).toContain(
+      "import { InvoiceVoided } from '@/contexts/billing/domain/errors/invoice-voided.error';\nimport { BillingCodes } from '@/contexts/billing/billing.codes';\n",
+    );
+
+    expect(spec).toContain('const error = InvoiceVoided.onDate();');
+    expect(spec).toContain('expect(error.code).toBe(BillingCodes.InvoiceVoided);');
+    expect(spec).toContain("expect(InvoiceVoided.forInvoice().code).toBe('INVOICE_VOIDED');");
   });
 });

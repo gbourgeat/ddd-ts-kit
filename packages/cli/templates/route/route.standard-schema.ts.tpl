@@ -2,7 +2,12 @@
 import { actorOf } from '@ddd-ts-kit/auth';
 {{/if}}
 import { {{#if route.sharedAccepted}}acceptedSchema, {{/if}}defineRoute, type Route } from '@ddd-ts-kit/http';
+{{#if route.protected}}
+import { KitCodes, type {{route.busType}} } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless route.protected}}
 import type { {{route.busType}} } from '@ddd-ts-kit/kernel';
+{{/unless}}
 {{#if route.usesSchema}}
 import { standardSchema, type StandardSchemaV1 } from '@ddd-ts-kit/validation/standard-schema';
 {{/if}}

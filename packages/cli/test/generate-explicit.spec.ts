@@ -69,7 +69,7 @@ describe('generated code, in the explicit style', () => {
       const text = read(root, `${BILLING}/test/unit/${spec}`);
 
       expect(text.match(/^\s*it\('/gm)?.length, spec).toBe(2);
-      expect(text, spec).toContain("rejects.toMatchObject({ code: 'FORBIDDEN' })");
+      expect(text, spec).toContain('rejects.toMatchObject({ code: KitCodes.Forbidden })');
       expect(text, spec).toContain("const { holder, authorizer } = holdersOf(billingPermissions['");
       expect(text.match(/^\s*it\.todo\('/gm)?.length, spec).toBeGreaterThanOrEqual(2);
       expect(text, spec).toMatch(/application\.(commandBus|queryBus)\.execute\(/);

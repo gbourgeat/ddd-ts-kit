@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import type { GuardRequest } from '@ddd-ts-kit/http';
-import { type Actor, executionContext } from '@ddd-ts-kit/kernel';
+import { type Actor, executionContext, KitCodes } from '@ddd-ts-kit/kernel';
 import { {{name.pascal}}Guard } from '{{alias.context}}/presentation/http/guards/{{name.kebab}}.guard{{alias.ext}}';
 
 describe('Who may pass the {{name.words}} guard', () => {
@@ -9,7 +9,7 @@ describe('Who may pass the {{name.words}} guard', () => {
   it('refuses a caller with 403', () => {
     const request = requestOf(anActor().build());
 
-    expect(() => new {{name.pascal}}Guard().check(request)).toThrow(expect.objectContaining({ code: 'FORBIDDEN' }));
+    expect(() => new {{name.pascal}}Guard().check(request)).toThrow(expect.objectContaining({ code: KitCodes.Forbidden }));
   });
 
   it.todo('lets through the caller it is written for');

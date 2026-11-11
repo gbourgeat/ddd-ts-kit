@@ -240,6 +240,55 @@ const NAMED_KNOWN_CODE: readonly Fixture[] = [
     expect: { file: ROUTE },
     files: project({ ...NAMED_REFUSALS, [ROUTE]: route('INVOICE_ALREADY_ISSUED', 'INVOICE_VOIDED') }, NAMED),
   },
+  {
+    ruleId: 'errors/known-code',
+    name: 'under named, a route naming its codes by the members of the list of its context and of the kit',
+    expect: 'pass',
+    files: project(
+      {
+        ...NAMED_REFUSALS,
+        [ROUTE]: route('KitCodes.Forbidden', 'BillingCodes.UnknownInvoice', 'INVOICE_ALREADY_ISSUED'),
+      },
+      NAMED,
+    ),
+  },
+  {
+    ruleId: 'errors/known-code',
+    name: 'under named, a route naming a key the list of its context does not hold',
+    expect: { file: ROUTE },
+    files: project({ ...NAMED_REFUSALS, [ROUTE]: route('BillingCodes.InvoiceVoided') }, NAMED),
+  },
+  {
+    ruleId: 'errors/known-code',
+    name: 'under named, a route naming a key the list of the kit does not hold',
+    expect: { file: ROUTE },
+    files: project({ ...NAMED_REFUSALS, [ROUTE]: route('KitCodes.Forbiden') }, NAMED),
+  },
+  {
+    ruleId: 'errors/known-code',
+    name: 'under named, a route naming a code by a list that is neither that of a context, of the shared kernel nor of the kit',
+    expect: { file: ROUTE },
+    files: project({ ...NAMED_REFUSALS, [ROUTE]: route('QuotaCodes.Exceeded') }, NAMED),
+  },
+  {
+    ruleId: 'errors/known-code',
+    name: 'under named, a route naming a code by the list of another context',
+    expect: { file: ROUTE },
+    files: project(
+      {
+        ...NAMED_REFUSALS,
+        [`${PATHS.CATALOG}/catalog.codes.ts`]: codes("  InvoiceAlreadySent: 'INVOICE_ALREADY_SENT',").replaceAll(
+          'Billing',
+          'Catalog',
+        ),
+        [`${PATHS.CATALOG}/domain/errors/invoice-already-sent.error.ts`]: refusal('InvoiceAlreadySent')
+          .replaceAll('Billing', 'Catalog')
+          .replaceAll('billing', 'catalog'),
+        [ROUTE]: route('CatalogCodes.InvoiceAlreadySent'),
+      },
+      NAMED,
+    ),
+  },
 ];
 
 const NAMED_LANGUAGE: readonly Fixture[] = [

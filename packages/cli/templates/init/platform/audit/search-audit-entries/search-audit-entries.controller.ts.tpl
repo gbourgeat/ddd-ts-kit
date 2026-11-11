@@ -7,7 +7,7 @@ import {
   type HttpRequest,
   type PageBody,
 } from '@ddd-ts-kit/http';
-import type { QueryBus } from '@ddd-ts-kit/kernel';
+import { KitCodes, type QueryBus } from '@ddd-ts-kit/kernel';
 import { auditEntriesFilterOf } from '{{alias.platform}}/audit/search-audit-entries/audit-entries-filter-of{{alias.ext}}';
 import {
   auditEntriesParameters,
@@ -27,7 +27,7 @@ import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-e
   guards: [Authenticated],
   query: auditEntriesParameters,
   response: { status: 200, description: 'A page of entries.', body: pageSchemaOf(auditEntrySchema) },
-  errors: ['FORBIDDEN'],
+  errors: [KitCodes.Forbidden],
 })
 export class SearchAuditEntriesController {
   constructor(private readonly queries: QueryBus) {}

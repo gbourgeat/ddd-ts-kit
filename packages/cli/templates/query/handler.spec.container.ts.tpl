@@ -15,6 +15,11 @@ import { fake } from '@ddd-ts-kit/di';
 {{#unless world.through}}
 {{spec.diWithFake}}
 {{spec.contextImports}}
+{{/unless}}
+{{#if access.protected}}
+import { KitCodes } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless world.through}}
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 {{/unless}}
 {{#if access.protected}}
@@ -53,7 +58,7 @@ describe('{{name.title}}', () => {
     const application = {{world.await}}arrange({});
     const query = new {{name.pascal}}Query(anActor().build());
 
-    await expect(application.queryBus.execute(query)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(application.queryBus.execute(query)).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
 {{/if}}
 

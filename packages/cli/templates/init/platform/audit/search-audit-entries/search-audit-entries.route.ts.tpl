@@ -1,6 +1,6 @@
 import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, pageRequestFrom, pageResponse, pageSchemaOf, type Route } from '@ddd-ts-kit/http';
-import type { QueryBus } from '@ddd-ts-kit/kernel';
+import { KitCodes, type QueryBus } from '@ddd-ts-kit/kernel';
 import { auditEntriesFilterOf } from '{{alias.platform}}/audit/search-audit-entries/audit-entries-filter-of{{alias.ext}}';
 import { auditEntriesParameters, auditPageLimits } from '{{alias.platform}}/audit/search-audit-entries/audit-entries-parameters{{alias.ext}}';
 import { auditEntrySchema } from '{{alias.platform}}/audit/search-audit-entries/audit-entry-view{{alias.ext}}';
@@ -18,7 +18,7 @@ export function searchAuditEntriesRoute(queries: QueryBus): Route {
       tags: ['audit'],
       request: { query: auditEntriesParameters },
       responses: { 200: { description: 'A page of entries.', body: pageSchemaOf(auditEntrySchema) } },
-      errors: ['UNAUTHORIZED', 'FORBIDDEN'],
+      errors: [KitCodes.Unauthorized, KitCodes.Forbidden],
       security: ['{{authn.scheme}}'],
     },
     async (input) => {

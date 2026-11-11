@@ -17,6 +17,11 @@ import { anActor, holdersOf } from '@ddd-ts-kit/auth/testing';
 {{spec.diPlain}}
 {{/unless}}
 {{spec.contextImports}}
+{{/unless}}
+{{#if access.protected}}
+import { KitCodes } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless world.through}}
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 {{/unless}}
 {{#if access.protected}}
@@ -69,7 +74,7 @@ describe('{{name.title}}', () => {
     const { application } = {{world.await}}arrange();
     const command = new {{name.pascal}}Command(anActor().build());
 
-    await expect(application.commandBus.execute(command)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(application.commandBus.execute(command)).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
 {{/if}}
 
