@@ -438,7 +438,7 @@ worker merges with `merge-trunk`, or fetches in a command of its own). A merge o
 then names no command: the worker undoes nothing and reports the merge to the conductor. The scope is pinned at the worker's first call, by the command that names its worktree
 (`cd <worktree> && ...`) where several workers have one, and the pin follows the worker: a call that
 starts in another checkout is judged against the worktree pinned. A scope file removed or changed stops it. `npx prettier` in a project
-that `format` runs Biome on and a bare `npx biome` are refused. Output to `/dev/null` or the system temp directory stays free, and the conductor
+that `format` runs Biome on and a bare `npx biome` are refused. Output to `/dev/null` or the system temp directory stays free, so does a lock `flock` takes under `$XDG_RUNTIME_DIR` (one lock for the heavy runs of every checkout of a machine), and the conductor
 is not held to any of this. A worker passes `--local-only` to `generate`:
 the command then refuses, and writes nothing, when the kind would write outside its context:
 

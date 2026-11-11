@@ -32,7 +32,7 @@ const CLAUDE_SETTINGS = '.claude/settings.json';
 const CONFIG_BYTES = 256 * 1024;
 // The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
 // the version of the kit: setting a new version of the packages rewrites it.
-const KIT_VERSION = '0.110.0';
+const KIT_VERSION = '0.110.1';
 const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
 // The worktree of a story one session takes to its pull request; its code waits for the build gate.
@@ -711,7 +711,7 @@ const READ_ONLY_AGENTS = ['architecture-reviewer', 'domain-explorer', 'story-ver
 // How the record of a trial is appended: created if missing, never through a link under its name.
 const RECORD_APPEND = constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | constants.O_NOFOLLOW;
 // The variables that move where the shell finds a path, a directory or a program, or git its repository.
-const PLACE_VARIABLES = /^(?:TMPDIR|CDPATH|HOME|GIT_DIR|GIT_WORK_TREE|PATH)=/;
+const PLACE_VARIABLES = /^(?:TMPDIR|XDG_RUNTIME_DIR|CDPATH|HOME|GIT_DIR|GIT_WORK_TREE|PATH)=/;
 const MODES = {
   session,
   'pre-write': preWrite,
@@ -4129,27 +4129,33 @@ function multiplyNamed(folder, budget, top = folder) {
 
 // The files a command writes by name, of a project or unknown to all but the shell.
 function writtenTargets(command) {
-  const at = (target, by) => ({ place: shell.placeOf(target, command.directory), by });
+  const at = (target, by, lock) => ({ place: shell.placeOf(target, command.directory), by, lock });
   const redirected = command.redirects
     .filter(({ operator }) => OUTPUT_REDIRECTS.has(operator))
-    .map(({ operator, target, wrapper, unread }) => {
+    .map(({ operator, target, wrapper, unread, lock }) => {
       const shown = target.replaceAll(shell.UNKNOWN, '$(...)');
       // A wrapper writes a file of its own as a redirection does; one given an option the guard
       // does not read may write anywhere.
       const written = unread
         ? `\`${wrapper}\`, given an option the guard does not read,`
         : `\`${wrapper}\` writing its output to ${shown}`;
-      return at(target, wrapper ? written : `the redirection \`${operator} ${shown}\``);
+      return at(target, wrapper ? written : `the redirection \`${operator} ${shown}\``, lock);
     });
 
   // A place of the temp directory that is a link elsewhere is the place it reaches; a device is itself.
   return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))]
     .map((target) =>
-      target.place !== undefined && !target.place.startsWith('/dev/') && isFreePlace(target.place)
+      target.place !== undefined && !target.place.startsWith('/dev/') && isFree(target)
         ? { ...target, place: realPlace(target.place) }
         : target,
     )
-    .filter(({ place }) => place === undefined || !isFreePlace(place) || findProject(place) !== undefined);
+    .filter((target) => target.place === undefined || !isFree(target) || findProject(target.place) !== undefined);
+}
+
+// A lock `flock` takes is free in the runtime directory of the user too ($XDG_RUNTIME_DIR), where the
+// checkouts of one machine share it: `flock` creates the file when missing and never writes in it.
+function isFree({ place, lock }) {
+  return isFreePlace(place) || (lock === true && isUnder(place, [process.env.XDG_RUNTIME_DIR]));
 }
 
 // The only absolute places a worker writes outside its scope: the null and standard devices and
@@ -4158,7 +4164,11 @@ function isFreePlace(place) {
   if (['/dev/null', '/dev/stdout', '/dev/stderr'].includes(place)) {
     return true;
   }
-  return [tmpdir(), process.env.TMPDIR]
+  return isUnder(place, [tmpdir(), process.env.TMPDIR]);
+}
+
+function isUnder(place, directories) {
+  return directories
     .filter((dir) => typeof dir === 'string' && dir !== '')
     .flatMap((dir) => [resolve(dir), realOf(resolve(dir))])
     .some((dir) => place === dir || place.startsWith(`${dir}/`));
