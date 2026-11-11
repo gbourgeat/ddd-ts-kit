@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:5967d41a1115b070 -->
+<!-- translation-of: parallel-work.md sha256:1271bab2c3f36de7 -->
 
 # Travailler en parallèle sans collisions
 
@@ -340,7 +340,7 @@ Scope
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:
   a write outside it is refused, and the code you run that the guard cannot read (inline code, a script, your tests) is checked after it ran: a shared file it changed stops you until you put it back as the guard says. A slice that changes the stored state generates a
-  working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
+  working migration only, one per branch (regenerate it): `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
   recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
 
