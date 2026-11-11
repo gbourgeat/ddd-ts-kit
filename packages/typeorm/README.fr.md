@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1bf8f5bcefec1a4e -->
+<!-- translation-of: README.md sha256:34f76979405f533d -->
 
 # @ddd-ts-kit/typeorm
 
@@ -544,8 +544,8 @@ export const appointmentList = new EntitySchema<AppointmentRow & ReadModelStamps
   schema: 'scheduling',
   columns: {
     id: { type: 'text', primary: true },
-    status: { type: 'text' },
-    startsAt: { name: 'starts_at', type: 'timestamp with time zone', precision: 3 },
+    status: { type: 'text', nullable: true }, // NULL dans une ligne supprimée, comme chaque colonne de la ligne
+    startsAt: { name: 'starts_at', type: 'timestamp with time zone', precision: 3, nullable: true },
     ...readModelColumns(), // last_event_id, last_event_at, last_event_version, deleted
   },
 });
@@ -562,8 +562,14 @@ export class TypeOrmAppointmentList extends TypeOrmReadModelStore<AppointmentRow
 Chaque écriture passe par `TableReadModelStore` du noyau : une ligne n'est écrite que si son
 événement est plus récent que celui qu'elle porte, sur l'exécuteur de l'unité de travail, si
 bien que la ligne et la marque d'événement traité sont validées ensemble. Une ligne supprimée
-reste dans la table avec `deleted` posé : une requête à vous sur la table écarte ces lignes, et
-un index unique aussi (`WHERE NOT deleted`). `store.table` est ce que prend
+reste dans la table comme une trace, avec `deleted` positionné : sa clé et son tampon, et NULL
+dans toutes les autres colonnes, ce pour quoi chaque colonne de la ligne accepte NULL. La
+suppression d'une clé que la table ne tient pas encore laisse la même trace. Une contrainte de
+vérification garde entières les lignes vivantes (`check (deleted or (status is not null and
+starts_at is not null))`), une requête à vous sur la table écarte les lignes supprimées
+(`deleted = false`), et une table dont des colonnes refusent NULL est refusée par
+`ReadModelTableNotReadyError` à la construction du registre
+([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). `store.table` est ce que prend
 `ProjectionRebuild` ; la reconstruction est réservée à PostgreSQL (une copie `<table>__rebuild`
 faite `LIKE ... INCLUDING ALL`, les clés écrites entre-temps dans `<table>__touched`, l'échange
 par renommage en une transaction) et ses garanties et limites sont dans le README de

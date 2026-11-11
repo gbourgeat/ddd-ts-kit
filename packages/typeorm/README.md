@@ -524,8 +524,8 @@ export const appointmentList = new EntitySchema<AppointmentRow & ReadModelStamps
   schema: 'scheduling',
   columns: {
     id: { type: 'text', primary: true },
-    status: { type: 'text' },
-    startsAt: { name: 'starts_at', type: 'timestamp with time zone', precision: 3 },
+    status: { type: 'text', nullable: true }, // NULL in a deleted row, as every column of the row
+    startsAt: { name: 'starts_at', type: 'timestamp with time zone', precision: 3, nullable: true },
     ...readModelColumns(), // last_event_id, last_event_at, last_event_version, deleted
   },
 });
@@ -541,9 +541,13 @@ export class TypeOrmAppointmentList extends TypeOrmReadModelStore<AppointmentRow
 
 Every write goes through `TableReadModelStore` of the kernel: a row is written only if its
 event is newer than the one it holds, on the executor of the unit of work, so the row and the
-processed-event mark commit together. A removed row stays in the table with `deleted` set:
-a query of your own on the table leaves those rows out, and so does a unique index
-(`WHERE NOT deleted`). `store.table` is what `ProjectionRebuild` takes; the rebuild is
+processed-event mark commit together. A removed row stays in the table as a trace, with `deleted`
+set: its key and its stamp, and NULL in every other column, which is why every column of the row
+is nullable. A deletion of a key the table does not hold yet leaves the same trace. A check
+constraint keeps the live rows whole (`check (deleted or (status is not null and starts_at is
+not null))`), a query of your own on the table leaves the deleted rows out (`deleted = false`),
+and a table whose columns refuse NULL is refused with `ReadModelTableNotReadyError` when the store is built
+([What a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)). `store.table` is what `ProjectionRebuild` takes; the rebuild is
 PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
 meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees
 and limits are in the README of `@ddd-ts-kit/kernel` ([Rebuild](../kernel/README.md#rebuild)). The store passes

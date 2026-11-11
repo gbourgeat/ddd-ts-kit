@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:97710c410f2344fb -->
+<!-- translation-of: README.md sha256:38b88863108923f8 -->
 
 # @ddd-ts-kit/kernel
 
@@ -2051,7 +2051,7 @@ et une écriture n'a lieu que si son événement est plus récent :
 | Tampon | `stampOf(event)` : l'id et l'instant d'un événement d'intégration ; le nom, l'agrégat et l'instant d'un événement du domaine ; plus `stampOf(event, version)` quand l'événement porte une version par clé |
 | Plus récent | une `version` plus grande quand les deux tampons en portent une ; sinon un instant plus tardif ; au même instant, le plus grand id d'événement. Un même événement n'est jamais plus récent que lui-même |
 | `upsertIfNewer(key, stamp, next)` | écrit `next(current)` ; `stale` quand la ligne contient cet événement ou un plus tardif ; `ignored` quand `next` renvoie `undefined` (un correctif d'une ligne qui n'existe pas) |
-| `delete(key, stamp)` | la ligne disparaît pour `get` et `search`, et son tampon reste : un événement plus ancien livré en retard ne la ramène pas, un plus tardif oui |
+| `delete(key, stamp)` | la ligne disparaît pour `get` et `search`, et une trace reste, sa clé et son tampon sans aucune de ses données : un événement plus ancien livré en retard ne la ramène pas, un plus tardif oui. Une clé que le modèle de lecture ne tient pas prend la même trace (`applied`), si bien que la création que cette suppression suit est `stale` quand elle est livrée après elle. Sur un stockage SQL, chaque colonne de la ligne accepte NULL, sinon le registre refuse la table par `ReadModelTableNotReadyError` ([ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)) |
 | Concurrence | une écriture est conditionnée au tampon qu'elle a lu et est relue quand une autre est arrivée d'abord ; cinq tentatives, puis `ConcurrencyError` et la nouvelle livraison de l'événement |
 | Transaction | le store écrit sur l'exécuteur de l'unité de travail, si bien que la ligne et la marque d'événement traité sont validées ou annulées ensemble |
 

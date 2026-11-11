@@ -293,6 +293,43 @@ export class OpenSlotsProjection {
 `FindOpenSlots` then reads `OpenSlots` with a criteria, like any other read port. The
 projector sends no command and reads no other context: it only keeps its table current.
 
+### The table of a read model, and what a deleted row leaves
+
+`delete(key, stamp)` does not take the row out of its table. It leaves a trace: the key, the
+stamp and `deleted = true`, and nothing else. The trace is what makes a deletion hold whatever
+the order of the deliveries: an older event that arrives later finds a newer stamp and changes
+nothing. That holds for a key the table does not hold yet: a deletion delivered before the
+creation it follows inserts the trace, and the late creation is `stale`. On an SQL store, this
+asks four things of the table and of whoever reads it:
+
+- **Every column of the row is nullable.** A trace keeps no data: every column the store maps
+  holds NULL, the key, the tenant and the stamp apart, so the personal data of a deleted row is
+  gone and a unique value it held is free again. A table whose columns refuse NULL is refused by
+  name (`ReadModelTableNotReadyError`, which lists the columns), when the store is built on Drizzle
+  and TypeORM, before the first trace is written on Knex and Prisma (one read of
+  `information_schema.columns`), and never by a statement that would abort the transaction of the
+  event. On Prisma the fields of the model are optional as well (`String?`).
+- **A check constraint keeps the live rows whole**, in place of the NOT NULL the columns no
+  longer carry:
+
+  ```sql
+  alter table scheduling.appointment_list
+    alter column status drop not null,
+    alter column starts_at drop not null,
+    add constraint appointment_list_live_rows
+      check (deleted or (status is not null and starts_at is not null));
+  ```
+- **A reader that queries the table directly filters `deleted = false`.** The store does it in
+  `get` and `search`; a statement of your own (a join, an aggregate) has to.
+- **Traces are never purged.** A purge by `last_event_at` is unsafe: the stamp is the instant of
+  the event, not of its delivery, so no age of a trace tells that an older event of its key will
+  not be delivered again, and that event would then recreate the row.
+
+**The key is unique across tenants.** The trace of a read model of tenant data carries the tenant
+of the work, and its key is taken for every tenant, as the key of a live row is: a key two
+tenants could share is a generated id or carries the tenant (`acme:2026-03-01`), otherwise the
+write of the second tenant, a deletion included, ends in a `ConcurrencyError`.
+
 ## Limits and when not to use it
 
 - **A CRUD context with no rules** (a list of rooms, a settings screen) gains little from a

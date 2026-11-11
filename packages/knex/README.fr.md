@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d577cd6cc05f6dfa -->
+<!-- translation-of: README.md sha256:7c74a1ba28729822 -->
 
 # @ddd-ts-kit/knex
 
@@ -737,9 +737,10 @@ de chaîne.
 // la migration
 await knex.schema.withSchema('scheduling').createTable('appointment_list', (table) => {
   table.text('id').primary();
-  table.text('status').notNullable();
-  table.datetime('starts_at', { useTz: true, precision: 3 }).notNullable();
+  table.text('status').nullable(); // NULL dans une ligne supprimée, comme chaque colonne de la ligne
+  table.datetime('starts_at', { useTz: true, precision: 3 }).nullable();
   readModelColumns(table); // last_event_id, last_event_at, last_event_version, deleted
+  table.check('deleted or (status is not null and starts_at is not null)', [], 'appointment_list_live_rows');
 });
 
 // infrastructure/persistence/knex-appointment-list.repository.ts
@@ -759,8 +760,14 @@ export class KnexAppointmentList extends KnexReadModelStore<AppointmentRow> impl
 Chaque écriture passe par le `TableReadModelStore` du noyau : une ligne n'est écrite que si son
 événement est plus récent que celui qu'elle détient, sur l'exécuteur de l'unité de travail, si
 bien que la ligne et la marque d'événement traité sont validées ensemble. Une ligne supprimée
-reste dans la table avec `deleted` positionné : une requête SQL à vous sur la table écarte ces
-lignes, et un index unique aussi (`WHERE NOT deleted`). `store.table` est ce que prend
+reste dans la table comme une trace, avec `deleted` positionné : sa clé et son tampon, et NULL
+dans toutes les autres colonnes, ce pour quoi chaque colonne de la ligne accepte NULL. La
+suppression d'une clé que la table ne tient pas encore laisse la même trace. Une contrainte de
+vérification garde entières les lignes vivantes (`check (deleted or (status is not null and
+starts_at is not null))`), une requête à vous sur la table écarte les lignes supprimées
+(`deleted = false`), et une table dont des colonnes refusent NULL est refusée par
+`ReadModelTableNotReadyError` avant l'écriture de la première trace, par une lecture des colonnes de la table
+([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). `store.table` est ce que prend
 `ProjectionRebuild` ; la reconstruction est réservée à PostgreSQL (une copie `<table>__rebuild`
 faite par `LIKE ... INCLUDING ALL`, les clés écrites entre-temps dans `<table>__touched`,
 l'échange par renommage dans une seule transaction), et ses garanties et ses limites sont dans le

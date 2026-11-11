@@ -1968,7 +1968,7 @@ write happens only if its event is newer:
 | Stamp | `stampOf(event)`: the id and the instant of an integration event; the name, the aggregate and the instant of a domain event; plus `stampOf(event, version)` when the event carries a per-key version |
 | Newer | a greater `version` when both stamps carry one; else a later instant; at the same instant, the greater event id. The same event is never newer than itself |
 | `upsertIfNewer(key, stamp, next)` | writes `next(current)`; `stale` when the row holds this event or a later one; `ignored` when `next` answers `undefined` (a patch of a row that does not exist) |
-| `delete(key, stamp)` | the row is gone for `get` and `search`, and its stamp stays: an older event delivered late does not bring it back, a later one does |
+| `delete(key, stamp)` | the row is gone for `get` and `search`, and a trace stays, its key and its stamp without any of its data: an older event delivered late does not bring it back, a later one does. A key the read model does not hold takes the same trace (`applied`), so the creation this deletion follows is `stale` when it is delivered after it. On an SQL store every column of the row is nullable, or the store refuses the table with `ReadModelTableNotReadyError` ([what a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)) |
 | Concurrency | a write is conditional on the stamp it read and is read again when another got there first; five attempts, then `ConcurrencyError` and the redelivery of the event |
 | Transaction | the store writes on the executor of the unit of work, so the row and the processed-event mark of the event commit or roll back together |
 

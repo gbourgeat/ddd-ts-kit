@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:b84f801c87e18d6c -->
+<!-- translation-of: cqrs.md sha256:de64e7ffbb59d5ba -->
 
 # CQRS tel qu'utilisé ici
 
@@ -307,6 +307,46 @@ export class OpenSlotsProjection {
 `FindOpenSlots` lit ensuite `OpenSlots` avec des critères, comme n'importe quel autre port de
 lecture. Le projecteur n'envoie aucune commande et ne lit aucun autre contexte : il ne fait que
 garder sa table à jour.
+
+### La table d'un modèle de lecture, et ce que laisse une ligne supprimée
+
+`delete(key, stamp)` ne retire pas la ligne de sa table. Il laisse une trace : la clé, le tampon
+et `deleted = true`, et rien d'autre. C'est la trace qui fait tenir une suppression quel que soit
+l'ordre des livraisons : un événement plus ancien qui arrive plus tard trouve un tampon plus
+récent et ne change rien. Cela vaut pour une clé que la table ne tient pas encore : une
+suppression livrée avant la création qu'elle suit insère la trace, et la création en retard est
+`stale`. Sur un stockage SQL, cela demande quatre choses à la table et à qui la lit :
+
+- **Chaque colonne de la ligne accepte NULL.** Une trace ne garde aucune donnée : chaque colonne
+  que le registre associe contient NULL, hormis la clé, le locataire et le tampon, si bien que les
+  données personnelles d'une ligne supprimée ont disparu et qu'une valeur unique qu'elle tenait
+  est de nouveau libre. Une table dont des colonnes refusent NULL est refusée par son nom
+  (`ReadModelTableNotReadyError`, qui liste les colonnes), à la construction du registre sur
+  Drizzle et TypeORM, avant l'écriture de la première trace sur Knex et Prisma (une lecture de
+  `information_schema.columns`), et jamais par une requête qui ferait échouer la transaction de
+  l'événement. Sur Prisma, les champs du modèle sont optionnels eux aussi (`String?`).
+- **Une contrainte de vérification garde entières les lignes vivantes**, à la place du NOT NULL
+  que les colonnes ne portent plus :
+
+  ```sql
+  alter table scheduling.appointment_list
+    alter column status drop not null,
+    alter column starts_at drop not null,
+    add constraint appointment_list_live_rows
+      check (deleted or (status is not null and starts_at is not null));
+  ```
+- **Un lecteur qui interroge la table directement filtre `deleted = false`.** Le registre le fait
+  dans `get` et `search` ; une requête à vous (une jointure, un agrégat) doit le faire.
+- **Les traces ne sont jamais purgées.** Une purge par `last_event_at` n'est pas sûre : le tampon
+  est l'instant de l'événement, pas celui de sa livraison, si bien qu'aucun âge d'une trace ne dit
+  qu'un événement plus ancien de sa clé ne sera pas livré de nouveau, et cet événement recréerait
+  alors la ligne.
+
+**La clé est unique entre les locataires.** La trace d'un modèle de lecture de données d'un
+locataire porte le locataire du travail en cours, et sa clé est prise pour tous les locataires,
+comme la clé d'une ligne vivante : une clé que deux locataires pourraient partager est un
+identifiant généré ou porte le locataire (`acme:2026-03-01`), sinon l'écriture du second
+locataire, suppression comprise, se termine par une `ConcurrencyError`.
 
 ## Limites et quand ne pas l'utiliser
 
