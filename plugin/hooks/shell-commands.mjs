@@ -411,7 +411,12 @@ function expandWord(word, directory) {
     .replace(/^~(?=\/|$)/, homedir())
     .replace(/\$\{?HOME\}?(?![\w])/g, homedir())
     .replace(/\$\{TMPDIR(?::?-[^}]*)?\}|\$TMPDIR(?![\w])/g, process.env.TMPDIR ?? tmpdir())
-    .replace(/\$\{?PWD\}?(?![\w])/g, directory ?? UNKNOWN);
+    .replace(/\$\{?PWD\}?(?![\w])/g, directory ?? UNKNOWN)
+    // The runtime directory of the user, where a lock shared by several checkouts lives; unset, only the shell knows.
+    .replace(
+      /\$\{XDG_RUNTIME_DIR(?::?-[^}]*)?\}|\$XDG_RUNTIME_DIR(?![\w])/g,
+      (word) => process.env.XDG_RUNTIME_DIR || word,
+    );
 
   return known.includes('$') || known.includes(UNKNOWN) || known.includes('`') ? undefined : known;
 }
@@ -565,7 +570,7 @@ function afterWrapper(rest, spec, effects) {
     effects.writes.push(writeOf(name, undefined, true));
   }
   if (spec.lock) {
-    effects.writes.push(writeOf(name, args[read.index]));
+    effects.writes.push({ ...writeOf(name, args[read.index]), lock: true });
   }
   if (spec.out && !effects.taken) {
     effects.writes.push(writeOf(name, spec.out));
