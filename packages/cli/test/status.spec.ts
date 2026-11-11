@@ -177,6 +177,25 @@ describe('status at step 7, the build', () => {
   const table = (...rows: string[]): string =>
     `| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |\n|---|---|---|---|---|---|---|---|\n${rows.join('\n')}\n`;
 
+  it('names the rows in progress before the next row ready on the trunk', () => {
+    const root = initProject('--context', 'billing:core');
+
+    write(root, 'docs/architecture/plan.md', STEP_7);
+
+    write(
+      root,
+      'docs/architecture/slices.md',
+      table(
+        '| US1.01 | billing | slice | A | | | billing | in progress |',
+        '| US1.02 | billing | slice | B | | | billing | todo |',
+      ),
+    );
+
+    expect(cli(root, 'status').stdout).toMatch(
+      /^Next: 7 use-case - #US1\.01 in progress; once landed, the next row ready on the trunk, #US1\.02 B \(billing\)/,
+    );
+  });
+
   it('derives the next step from the rows, and prints the line of the plan beside it', () => {
     const root = initProject('--context', 'billing:core');
 
