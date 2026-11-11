@@ -31,3 +31,4 @@ export { wiringTextOf } from './wiring-text-of';
 export { heldFileOf } from './held-file-of';
 export { contextLevelFolderOf } from './context-level-folder-of';
 export { moduleTestFolderOf } from './module-test-folder-of';
+export { holdsModuleTests } from './holds-module-tests';

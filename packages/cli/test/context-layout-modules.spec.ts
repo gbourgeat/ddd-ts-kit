@@ -60,22 +60,20 @@ describe('a context whose module sits where 0.86 and 0.87 put it', () => {
     const moved = cli(root, 'context-layout', '--json').json() as { manual: string[] };
     const translator = 'infrastructure/anti-corruption/legacy-erp.translator.ts';
 
-    // The translator imports nothing of a module and nothing of one imports it: listed, left where it is, its spec with it.
+    // The translator imports nothing of a module and nothing of one imports it: listed, left where it is.
     expect(moved.manual).toEqual([
       expect.stringContaining(`${BILLING}/${translator} names no module`),
-      expect.stringContaining(`${BILLING}/test/integration/legacy-erp.translator.spec.ts names no module`),
       expect.stringContaining('Run the formatter'),
     ]);
 
-    expect(walk(root, BILLING).sort()).toEqual(
-      today
-        .map((file) =>
-          file
-            .replace(`${BILLING}/invoices/${translator}`, `${BILLING}/${translator}`)
-            .replace('/test/integration/invoices/legacy-erp', '/test/integration/legacy-erp'),
-        )
-        .sort(),
-    );
+    const laidOut = walk(root, BILLING).map((file) => file.slice(BILLING.length + 1));
+    const atTheLevelOfTheContext = /^(?:domain|application|infrastructure|presentation|test)\//;
+
+    // Every file of a layer and of the tests is in the module, or in shared/ for what belongs to none: its spec too.
+    expect(laidOut.filter((file) => atTheLevelOfTheContext.test(file))).toEqual([translator]);
+    expect(laidOut).toContain('shared/test/integration/legacy-erp.translator.spec.ts');
+    expect(laidOut).toContain('invoices/test/unit/issue-invoice.handler.spec.ts');
+    expect(laidOut).toHaveLength(today.length);
 
     const checkedDocs = cli(root, 'docs', '--check');
 
@@ -113,7 +111,7 @@ describe('context-layout, once the modules are in their folders', () => {
     );
 
     expect(cli(root, 'context-layout').code).toBe(0);
-    expect(exists(root, `${BILLING}/test/unit/invoices/domain/invoice.aggregate.rules.spec.ts`)).toBe(true);
+    expect(exists(root, `${BILLING}/invoices/test/unit/domain/invoice.aggregate.rules.spec.ts`)).toBe(true);
   });
 
   it('lists a file whose imports name two modules, whatever order the files come in', () => {

@@ -111,7 +111,7 @@ function place(entry: string, config: Config): Placed | undefined {
  */
 function strayInShared({ context, declared, inside, modules }: Placed, directory: boolean): Flaw | undefined {
   const written = `${SHARED_FOLDER}/${inside}`;
-  const held = `${SHARED_FOLDER}/ of ${context} holds only what belongs to none of its modules (${modules.join(', ')}): infrastructure/persistence/ (the schema and the tables of the context), presentation/http/ (its route groups, guards/ and shared/) and test/ (worlds/, fakes/ and builders/)`;
+  const held = `${SHARED_FOLDER}/ of ${context} holds only what belongs to none of its modules (${modules.join(', ')}): infrastructure/persistence/ (the schema and the tables of the context), presentation/http/ (its route groups, guards/ and shared/) and test/ (the worlds, the fakes and builders of no module, the specs of what it holds or of several modules)`;
 
   if (directory) {
     return isSharedDirectory(inside)

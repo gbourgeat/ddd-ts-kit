@@ -72,13 +72,19 @@ describe('where a reader finds what a context divided into modules keeps', () =>
     );
   });
 
-  it('names the test folder of a module once it holds one, and the folder of the context named after it before', () => {
+  it('names the test folder of a module once the context keeps its tests in its modules, and the folder of the context named after it before', () => {
     const { ws } = divided({ [`${INVOICES}/test/builders/invoice.builder.ts`]: '' });
 
     expect(moduleTestFolderOf(ws, TREE, { module: 'invoices', folder: 'unit' })).toBe(`${INVOICES}/test/unit`);
 
     expect(moduleTestFolderOf(ws, TREE, { module: 'reminders', folder: 'unit' })).toBe(
-      `${BILLING}/test/unit/reminders`,
+      `${BILLING}/reminders/test/unit`,
+    );
+
+    const today = divided({ [`${BILLING}/test/builders/invoice.builder.ts`]: '' }).ws;
+
+    expect(moduleTestFolderOf(today, TREE, { module: 'invoices', folder: 'unit' })).toBe(
+      `${BILLING}/test/unit/invoices`,
     );
 
     expect(moduleTestFolderOf(ws, TREE, { module: undefined, folder: 'integration' })).toBe(

@@ -29,6 +29,7 @@ const LAID_OUT: FixtureFiles = {
   [MONEY]: 'export const money = 1;\n',
   [`${SHARED}/test/worlds/billing.world.ts`]: 'export class BillingWorld {}\n',
   [`${SHARED}/test/fakes/clock.fake.ts`]: 'export class ClockFake {}\n',
+  [`${SHARED}/test/unit/tenant.guard.spec.ts`]: SPEC,
 };
 
 const divided = (files: FixtureFiles): FixtureFiles => project(files, withModules({ invoices: {} }));
@@ -49,12 +50,6 @@ export const SHARED_FOLDER_FIXTURES: readonly Fixture[] = [
     name: 'a domain folder in shared/, which holds no model',
     expect: { file: `${SHARED}/domain` },
     files: divided({ [`${SHARED}/domain/events/invoice-issued.event.ts`]: 'export const invoiceIssued = 1;\n' }),
-  },
-  {
-    ruleId: 'tree/closed',
-    name: 'the specs of a module in shared/, which holds the worlds, fakes and builders of no module',
-    expect: { file: `${SHARED}/test/unit` },
-    files: divided({ [`${SHARED}/test/unit/invoice-issued.event.spec.ts`]: SPEC }),
   },
   {
     ruleId: 'tree/closed',
