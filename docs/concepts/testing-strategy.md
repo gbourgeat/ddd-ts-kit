@@ -218,7 +218,7 @@ are regenerated. Shaped like the builder of the example:
 
 <!-- checked sample -->
 ```ts
-// scheduling/test/builders/appointment.builder.ts
+// scheduling/calendars/test/builders/appointment.builder.ts
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 

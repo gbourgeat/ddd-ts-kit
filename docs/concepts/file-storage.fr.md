@@ -271,7 +271,7 @@ L'application d'exemple porte ce cas d'usage de bout en bout, avec une *spec* qu
 annule contre une vraie base de données et un vrai répertoire :
 [`attach-appointment-document`](../../examples/scheduling/src/contexts/scheduling/calendars/application/commands/attach-appointment-document/attach-appointment-document.handler.ts)
 et
-[`document-lands-with-its-file.spec.ts`](../../examples/scheduling/src/contexts/scheduling/test/integration/calendars/document-lands-with-its-file.spec.ts).
+[`document-lands-with-its-file.spec.ts`](../../examples/scheduling/src/contexts/scheduling/calendars/test/integration/document-lands-with-its-file.spec.ts).
 
 Pour un gros fichier, le client l'envoie directement au stockage. Une première commande génère
 la clé et signe un lien d'envoi pour elle (`FileStaging.uploadUrl(key, { expiresInSeconds,

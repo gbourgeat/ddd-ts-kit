@@ -5,7 +5,10 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 import { ClearCalendarCommand } from '@/contexts/scheduling/calendars/application/commands/clear-calendar/clear-calendar.command';
 import { aCalendar } from '@/contexts/scheduling/calendars/test/builders/calendar.builder';
-import { anAppointment, type AppointmentBuilder } from '@/contexts/scheduling/calendars/test/builders/appointment.builder';
+import {
+  anAppointment,
+  type AppointmentBuilder,
+} from '@/contexts/scheduling/calendars/test/builders/appointment.builder';
 import { aSchedulingWorld } from '@/contexts/scheduling/shared/test/worlds/scheduling.world';
 
 const holders = authorizationModule({

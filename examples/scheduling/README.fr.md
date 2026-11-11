@@ -105,7 +105,7 @@ et le mot de passe de chacun est son nom d'utilisateur.
 | Des agrégats avec des objets-valeurs, sans obsession des primitives | `src/contexts/scheduling/domain/` (`Calendar`, `Appointment`, `Waitlist`) |
 | Les fuseaux horaires et le changement d'heure dans le domaine, sans bibliothèque | `scheduling/domain/value-objects/time-zone.vo.ts`, `test/unit/time-zone.vo.spec.ts`, `calendar.aggregate.spec.ts` |
 | Un service du domaine sur deux agrégats | `scheduling/domain/services/scheduler.service.ts` |
-| Un chevauchement décidé par le domaine et par une contrainte d'exclusion de PostgreSQL | `scheduling/infrastructure/persistence/create-scheduling-tables.schema.ts`, `knex-appointment.repository.ts`, `test/integration/concurrent-booking.spec.ts` |
+| Un chevauchement décidé par le domaine et par une contrainte d'exclusion de PostgreSQL | `scheduling/shared/infrastructure/persistence/create-scheduling-tables.schema.ts`, `knex-appointment.repository.ts`, `test/integration/concurrent-booking.spec.ts` |
 | Des permissions sur chaque cas d'usage, des politiques sur l'élément chargé | `scheduling/application/authorization/` |
 | Des relations (à la Zanzibar) combinées aux rôles | `src/platform/auth/relationships/relationship-schema.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.fr.md) |
 | Des tuples de relation persistants, écrits dans l'unité de travail | `src/platform/auth/relationships/knex-relation-tuple-store.ts` ; `*/application/ports/*-relationships.port.ts` et leurs adaptateurs |

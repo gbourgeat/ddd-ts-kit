@@ -224,7 +224,7 @@ langage. L'instant de la naissance est un ingrédient nommé d'après son fait (
 
 <!-- checked sample -->
 ```ts
-// scheduling/test/builders/appointment.builder.ts
+// scheduling/calendars/test/builders/appointment.builder.ts
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 
