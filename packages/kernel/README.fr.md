@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7668980877181ed1 -->
+<!-- translation-of: README.md sha256:97710c410f2344fb -->
 
 # @ddd-ts-kit/kernel
 
@@ -282,6 +282,15 @@ throw SlotTaken.forCalendar(calendar.id, slot.startsAt); // une réponse prévue
 Le statut HTTP de chaque code se choisit dans la couche de présentation, à un seul endroit ; les
 journaux d'erreurs, les *spans* et le journal d'audit enregistrent le `code`, et le rapporteur
 d'erreurs laisse une `DomainError` tranquille (les deux exceptions sont sous « ErrorReporter »).
+
+Les codes que lèvent les paquets du kit forment eux aussi une liste, `KitCodes`, avec son type `KitCode` :
+`KitCodes.Forbidden` vaut `'FORBIDDEN'`, `KitCodes.ValidationFailed` vaut `'VALIDATION_FAILED'`, et de même pour
+`NotFound`, `Conflict`, `InvariantViolation`, `Unauthorized`, `NotAcceptable`, `ConcurrencyConflict`,
+`InvalidCriteria`, `InvalidPageRequest`, `Timeout`, `CircuitOpen`, `BulkheadFull`, `AttemptsExhausted`,
+`ServiceUnavailable`, `PreconditionFailed`, `PreconditionRequired`, `FileTooLarge`, `UnsupportedMediaType`,
+`FileNotFound`, `FileRejected` et `InvalidFileKey`. Une route les nomme dans `errors` et un test les attend
+(`rejects.toMatchObject({ code: KitCodes.Forbidden })`) sans écrire la chaîne : l'éditeur complète la clé,
+et une clé mal orthographiée ne compile pas.
 
 Les codes d'un contexte forment un vocabulaire fermé, `SchedulingCode` : `isRefusal(error, SchedulingCodes)`
 restreint ce qui a été attrapé à l'un d'eux, si bien qu'un `switch` sur son code est exhaustif, et
