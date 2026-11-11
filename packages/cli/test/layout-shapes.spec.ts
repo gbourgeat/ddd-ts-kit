@@ -234,6 +234,12 @@ describe('a block a template adds to a region', () => {
     expect(fitBlock(unclosed, '  ')).toEqual(unclosed);
   });
 
+  it('leaves a comment longer than the line as it is, its parentheses and commas being text', () => {
+    const comment = `  // TODO(domain): add to the migration: ALTER TABLE "billing"."${LONG}" ADD CONSTRAINT "${LONG}_whole" CHECK ("deleted" OR ("total" IS NOT NULL AND "lines" IS NOT NULL));`;
+
+    expect(fitBlock(['model Row {', comment, '}'], '')).toEqual(['model Row {', comment, '}']);
+  });
+
   it('sets a statement it broke apart from the statements around it', () => {
     const chain = `builder.bind(${LONG}Repository).toClass(Drizzle${LONG}Repository, [Database, Clock]).as('repository');`;
 

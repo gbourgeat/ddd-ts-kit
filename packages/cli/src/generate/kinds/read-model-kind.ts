@@ -88,7 +88,12 @@ function readModelVars(scope: Scope, name: Name, store: ReadModelStore): RenderC
     adapter: { pascal: store.adapter, kebab: store.file, needsDatabase: store.needsDatabase },
     table: store.table,
     tenant: { scoped: store.tenantScoped },
-    fields: fieldLines(fields, { constant: name.camel, indent: store.tenantScoped ? '    ' : '  ' }),
+    fields: fieldLines(fields, {
+      name: store.table,
+      constant: name.camel,
+      schema: scope.context.kebab.replaceAll('-', '_'),
+      tenantScoped: store.tenantScoped,
+    }),
   });
 }
 

@@ -43,6 +43,8 @@ export const SHARDS = [
     // With NestJS on Nest controllers and Passport.
     'proven-stacks.spec.ts': 501,
     'event-sourced.spec.ts': 63,
+    // A read model as generated, with its contract on the test database, on Drizzle and on Knex (measured on a workstation).
+    'read-model.spec.ts': 27,
   },
   {
     'first-class.spec.ts': 209,

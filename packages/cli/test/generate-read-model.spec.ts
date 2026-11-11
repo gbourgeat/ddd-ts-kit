@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { checkJsonOf } from './check-support';
-import { cli, read } from './helpers';
+import { cli, read, write } from './helpers';
 import { report } from './reports';
 import { jsonAt } from './support/json-at';
 import {
@@ -115,5 +115,23 @@ describe('generate read-model, the port', () => {
 
     expect(generated.todos.map((todo) => todo.file)).toEqual(expect.arrayContaining([PORT, CONTRACT]));
     expect(checkJsonOf(cli(bare, 'check', '--json')).violations).toEqual([]);
+  });
+});
+
+describe('describe, on a port file that declares more than its port', () => {
+  it('names the port after its abstract class, not after the interface of the row written above it', () => {
+    const root = billingProject();
+
+    withInvoiceSummaries(root);
+
+    write(
+      root,
+      PORT,
+      read(root, PORT).replace('export type InvoiceSummariesRow = {', 'export interface InvoiceSummariesRow {'),
+    );
+
+    expect(jsonAt(cli(root, 'describe', 'billing', '--json').json(), 'ports')).toEqual([
+      expect.objectContaining({ name: 'InvoiceSummaries', adapters: ['DrizzleInvoiceSummaries'] }),
+    ]);
   });
 });

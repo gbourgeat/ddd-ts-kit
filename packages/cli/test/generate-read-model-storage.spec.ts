@@ -21,27 +21,38 @@ describe('generate read-model, the table on Drizzle', () => {
 
   withInvoiceSummaries(root);
 
-  it('declares the columns of the fields and those of the store, and imports only what it uses', () => {
+  it('declares the columns of the fields, each accepting null, with the check that keeps live rows whole', () => {
     const schema = read(root, SCHEMA);
 
     expect(schema).toContain("import { contextSchema, readModelColumns } from '@ddd-ts-kit/drizzle/postgres';");
 
     expect(schema).toContain(
-      "import { text, numeric, timestamp, doublePrecision, boolean } from 'drizzle-orm/pg-core';",
+      "import { check, text, numeric, timestamp, doublePrecision, boolean } from 'drizzle-orm/pg-core';",
     );
+
+    expect(schema).toContain("import { sql } from 'drizzle-orm';");
 
     expect(schema).toContain(
       [
-        "export const invoiceSummaries = billingSchema.table('invoice_summaries', {",
-        "  id: text('id').primaryKey(),",
-        "  customerId: text('customer_id').notNull(),",
-        "  total: numeric('total').notNull(),",
-        "  issuedAt: timestamp('issued_at', { withTimezone: true, mode: 'date' }).notNull(),",
-        "  paidAt: timestamp('paid_at', { withTimezone: true, mode: 'date' }),",
-        "  lines: doublePrecision('lines').notNull(),",
-        "  paid: boolean('paid').notNull(),",
-        '  ...readModelColumns(),',
-        '});',
+        'export const invoiceSummaries = billingSchema.table(',
+        "  'invoice_summaries',",
+        '  {',
+        "    id: text('id').primaryKey(),",
+        "    customerId: text('customer_id'),",
+        "    total: numeric('total'),",
+        "    issuedAt: timestamp('issued_at', { withTimezone: true, mode: 'date' }),",
+        "    paidAt: timestamp('paid_at', { withTimezone: true, mode: 'date' }),",
+        "    lines: doublePrecision('lines'),",
+        "    paid: boolean('paid'),",
+        '    ...readModelColumns(),',
+        '  },',
+        '  (table) => [',
+        '    check(',
+        "      'invoice_summaries_live_rows_whole',",
+        '      sql`${table.deleted} or (${table.customerId} is not null and ${table.total} is not null and ${table.issuedAt} is not null and ${table.lines} is not null and ${table.paid} is not null)`,',
+        '    ),',
+        '  ],',
+        ');',
       ].join('\n'),
     );
 
@@ -62,7 +73,7 @@ describe('generate read-model, the table on Drizzle', () => {
     addInvoiceRepository(root);
 
     expect(read(root, SCHEMA)).toContain(
-      "import { text, numeric, timestamp, doublePrecision, boolean, integer } from 'drizzle-orm/pg-core';",
+      "import { check, text, numeric, timestamp, doublePrecision, boolean, integer } from 'drizzle-orm/pg-core';",
     );
 
     expect(read(root, SCHEMA)).toContain("export const invoices = billingSchema.table('invoices', {");
@@ -86,13 +97,19 @@ describe('generate read-model, the table on Knex', () => {
         'function createInvoiceSummariesTable(knex: Knex): Promise<void> {',
         "  return knex.schema.withSchema(BILLING_SCHEMA).createTable('invoice_summaries', (table) => {",
         "    table.text('id').primary();",
-        "    table.text('customer_id').notNullable();",
-        "    table.specificType('total', 'numeric').notNullable();",
-        "    table.datetime('issued_at', { useTz: true, precision: 3 }).notNullable();",
+        "    table.text('customer_id');",
+        "    table.specificType('total', 'numeric');",
+        "    table.datetime('issued_at', { useTz: true, precision: 3 });",
         "    table.datetime('paid_at', { useTz: true, precision: 3 });",
-        "    table.double('lines').notNullable();",
-        "    table.boolean('paid').notNullable();",
+        "    table.double('lines');",
+        "    table.boolean('paid');",
         '    readModelColumns(table);',
+        '',
+        '    table.check(',
+        "      'deleted or (customer_id is not null and total is not null and issued_at is not null and lines is not null and paid is not null)',",
+        '      {},',
+        "      'invoice_summaries_live_rows_whole',",
+        '    );',
         '  });',
         '}',
       ].join('\n'),
@@ -120,12 +137,13 @@ describe('generate read-model, the model on Prisma', () => {
       [
         'model BillingInvoiceSummaries {',
         '  id String @id',
-        '  customerId String @map("customer_id")',
-        '  total Decimal',
-        '  issuedAt DateTime @map("issued_at") @db.Timestamptz(3)',
+        '  customerId String? @map("customer_id")',
+        '  total Decimal?',
+        '  issuedAt DateTime? @map("issued_at") @db.Timestamptz(3)',
         '  paidAt DateTime? @map("paid_at") @db.Timestamptz(3)',
-        '  lines Float',
-        '  paid Boolean',
+        '  lines Float?',
+        '  paid Boolean?',
+        '  // TODO(domain): the schema language has no check constraint. Add to the migration that creates this table, after its CREATE TABLE, what keeps the rows that are not removed whole: ALTER TABLE "billing"."invoice_summaries" ADD CONSTRAINT "invoice_summaries_live_rows_whole" CHECK ("deleted" OR ("customer_id" IS NOT NULL AND "total" IS NOT NULL AND "issued_at" IS NOT NULL AND "lines" IS NOT NULL AND "paid" IS NOT NULL));',
         '  /// The event that last changed the row: an older one changes nothing.',
         '  lastEventId String @map("last_event_id")',
         '  lastEventAt DateTime @map("last_event_at") @db.Timestamptz(3)',
@@ -172,14 +190,21 @@ describe('generate read-model, the entity on TypeORM', () => {
         '  schema: BILLING_SCHEMA,',
         '  columns: {',
         "    id: { type: 'text', primary: true },",
-        "    customerId: { name: 'customer_id', type: 'text' },",
-        "    total: { type: 'numeric' },",
-        "    issuedAt: { name: 'issued_at', type: 'timestamp with time zone', precision: 3 },",
+        "    customerId: { name: 'customer_id', type: 'text', nullable: true },",
+        "    total: { type: 'numeric', nullable: true },",
+        "    issuedAt: { name: 'issued_at', type: 'timestamp with time zone', precision: 3, nullable: true },",
         "    paidAt: { name: 'paid_at', type: 'timestamp with time zone', precision: 3, nullable: true },",
-        "    lines: { type: 'double precision' },",
-        "    paid: { type: 'boolean' },",
+        "    lines: { type: 'double precision', nullable: true },",
+        "    paid: { type: 'boolean', nullable: true },",
         '    ...readModelColumns(),',
         '  },',
+        '  checks: [',
+        '    {',
+        "      name: 'invoice_summaries_live_rows_whole',",
+        '      expression:',
+        `        '"deleted" or ("customer_id" is not null and "total" is not null and "issued_at" is not null and "lines" is not null and "paid" is not null)',`,
+        '    },',
+        '  ],',
         '});',
       ].join('\n'),
     );

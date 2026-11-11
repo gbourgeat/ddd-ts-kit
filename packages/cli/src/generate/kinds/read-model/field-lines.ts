@@ -1,4 +1,5 @@
 import type { RenderContext } from '../../../templating';
+import { liveRowsCheck } from './live-rows-check';
 import type { FieldType, ReadModelField } from './read-model-fields';
 
 /** How each type of field is written: in the row, in a sample of it, and in the table of each ORM. */
@@ -55,20 +56,29 @@ const SPELLINGS: Readonly<Record<FieldType, Spelling>> = {
   },
 };
 
-/** Where the fields are written in the Drizzle table: the constant of the table, and the indentation of its columns. */
-export interface DrizzleTable {
+/** The table the fields are written in. */
+export interface ReadModelTable {
+  /** Its name in the database, and the start of the name of what it declares. */
+  readonly name: string;
+  /** The constant of the Drizzle table and of the TypeORM entity. */
   readonly constant: string;
-  /** Deeper once the table takes the index of its tenant. */
-  readonly indent: string;
+  /** The database schema of its context. */
+  readonly schema: string;
+  readonly tenantScoped: boolean;
 }
 
 /**
  * The fields of the row of a read model as its templates read them: the lines of the row, of its
- * criteria and of a sample row, then the columns and the mapping of each ORM.
+ * criteria and of a sample row, then the columns and the mapping of each ORM. Every column of a
+ * field accepts null, whatever the row requires: a removed row is a trace that holds its key and
+ * its stamp alone, and `liveRowsCheck` is what keeps the rows that are not removed whole.
  */
-export function fieldLines(fields: readonly ReadModelField[], table: DrizzleTable): RenderContext {
+export function fieldLines(fields: readonly ReadModelField[], table: ReadModelTable): RenderContext {
   const lines = (line: (field: ReadModelField, spelling: Spelling) => string): string =>
     fields.map((field) => line(field, SPELLINGS[field.type])).join('\n');
+
+  const check = liveRowsCheck(fields, table);
+  const indent = check.drizzleWide ? '    ' : '  ';
 
   return {
     any: fields.length > 0,
@@ -76,33 +86,37 @@ export function fieldLines(fields: readonly ReadModelField[], table: DrizzleTabl
     criteria: lines(criteriaField),
     sample: lines((field, { sample }) => `    ${field.name}: ${sample(field)},`),
     names: lines(({ name, column }) => `        ${name}: '${column}',`),
-    drizzleImports: [...new Set(['text', ...fields.map(({ type }) => SPELLINGS[type].drizzle[0])])].join(', '),
-    drizzleTable: lines((field, spelling) => `${table.indent}${drizzleColumn(field, spelling)}`),
+    drizzleImports: drizzleImports(fields, check.checked),
+    drizzleTable: lines(
+      ({ name, column }, { drizzle }) => `${indent}${name}: ${drizzle[0]}('${column}'${drizzle[1]}),`,
+    ),
     drizzleColumns: lines(({ name }) => `        ${name}: ${table.constant}.${name},`),
-    knexTable: lines(({ column, nullable }, { knex }) => `    ${knex(column)}${nullable ? '' : '.notNullable()'};`),
+    knexTable: lines(({ column }, { knex }) => `    ${knex(column)};`),
     prismaModel: lines(prismaField),
     typeormTable: lines(typeormColumn),
+    ...check,
   };
+}
+
+/** What the Drizzle table takes from `drizzle-orm/pg-core`: the column of each type it holds, the index of a tenant and the check of its live rows. */
+function drizzleImports(fields: readonly ReadModelField[], checked: boolean): string {
+  const columns = fields.map(({ type }) => SPELLINGS[type].drizzle[0]);
+
+  return [...new Set([...(checked ? ['check'] : []), 'text', ...columns])].join(', ');
 }
 
 function criteriaField({ name, type, nullable }: ReadModelField): string {
   return `    ${name}: { type: '${type}'${nullable ? ', nullable: true' : ''} },`;
 }
 
-function drizzleColumn({ name, column, nullable }: ReadModelField, { drizzle }: Spelling): string {
-  const [declare, options] = drizzle;
-
-  return `${name}: ${declare}('${column}'${options})${nullable ? '' : '.notNull()'},`;
-}
-
-function prismaField({ name, column, type, nullable }: ReadModelField, { prisma }: Spelling): string {
+function prismaField({ name, column, type }: ReadModelField, { prisma }: Spelling): string {
   const mapped = name === column ? '' : ` @map("${column}")`;
 
-  return `  ${name} ${prisma}${nullable ? '?' : ''}${mapped}${type === 'instant' ? ' @db.Timestamptz(3)' : ''}`;
+  return `  ${name} ${prisma}?${mapped}${type === 'instant' ? ' @db.Timestamptz(3)' : ''}`;
 }
 
-function typeormColumn({ name, column, nullable }: ReadModelField, { typeorm }: Spelling): string {
+function typeormColumn({ name, column }: ReadModelField, { typeorm }: Spelling): string {
   const named = name === column ? '' : `name: '${column}', `;
 
-  return `    ${name}: { ${named}${typeorm}${nullable ? ', nullable: true' : ''} },`;
+  return `    ${name}: { ${named}${typeorm}, nullable: true },`;
 }

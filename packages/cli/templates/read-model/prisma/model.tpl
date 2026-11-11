@@ -4,6 +4,9 @@ model {{context.pascal}}{{name.pascal}} {
 {{#if fields.any}}
 {{fields.prismaModel}}
 {{/if}}
+{{#if fields.checked}}
+  // TODO(domain): the schema language has no check constraint. Add to the migration that creates this table, after its CREATE TABLE, what keeps the rows that are not removed whole: {{fields.prismaCheck}}
+{{/if}}
 {{#if tenant.scoped}}
   tenantId String @map("tenant_id")
 {{/if}}

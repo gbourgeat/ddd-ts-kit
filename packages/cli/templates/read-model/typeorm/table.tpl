@@ -23,6 +23,13 @@ export const {{name.camel}} = new EntitySchema<{{name.pascal}}Row & TenantScoped
     ...readModelColumns(),
   },
   indices: [{ name: '{{table}}_tenant_idx', columns: ['tenantId', 'id'] }],
+{{#if fields.checked}}
+  checks: [
+    {
+{{fields.typeormCheck}}
+    },
+  ],
+{{/if}}
 });
 {{/if}}
 {{#unless tenant.scoped}}
@@ -37,5 +44,12 @@ export const {{name.camel}} = new EntitySchema<{{name.pascal}}Row & ReadModelSta
 {{/if}}
     ...readModelColumns(),
   },
+{{#if fields.checked}}
+  checks: [
+    {
+{{fields.typeormCheck}}
+    },
+  ],
+{{/if}}
 });
 {{/unless}}

@@ -19,5 +19,8 @@ function create{{name.pascal}}Table(knex: Knex): Promise<void> {
     table.index(['tenant_id', 'id'], '{{table}}_tenant_idx');
 {{/if}}
     readModelColumns(table);
+{{#if fields.checked}}
+{{fields.knexCheck}}
+{{/if}}
   });
 }

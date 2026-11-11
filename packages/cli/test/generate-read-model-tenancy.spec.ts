@@ -11,14 +11,14 @@ const TENANT_DATA = [
   [
     'drizzle',
     SCHEMA,
-    "    ...tenantColumn(),\n    ...readModelColumns(),\n  },\n  (table) => [index('invoice_summaries_tenant_idx').on(table.tenantId, table.id)],\n);",
+    "    ...tenantColumn(),\n    ...readModelColumns(),\n  },\n  (table) => [\n    index('invoice_summaries_tenant_idx').on(table.tenantId, table.id),\n    check(\n",
     `${PERSISTENCE}/drizzle-invoice-summaries.repository.ts`,
     '      tenant: { scope, column: invoiceSummaries.tenantId },',
   ],
   [
     'knex',
     `${PERSISTENCE}/create-billing-tables.schema.ts`,
-    "    tenantColumn(table);\n    table.index(['tenant_id', 'id'], 'invoice_summaries_tenant_idx');\n    readModelColumns(table);",
+    "    tenantColumn(table);\n    table.index(['tenant_id', 'id'], 'invoice_summaries_tenant_idx');\n    readModelColumns(table);\n\n    table.check(\n",
     `${PERSISTENCE}/knex-invoice-summaries.repository.ts`,
     '      tenant: scope,',
   ],
@@ -32,7 +32,7 @@ const TENANT_DATA = [
   [
     'typeorm',
     SCHEMA,
-    "    tenantId: { ...tenantColumn().tenantId, select: false },\n    ...readModelColumns(),\n  },\n  indices: [{ name: 'invoice_summaries_tenant_idx', columns: ['tenantId', 'id'] }],",
+    "    tenantId: { ...tenantColumn().tenantId, select: false },\n    ...readModelColumns(),\n  },\n  indices: [{ name: 'invoice_summaries_tenant_idx', columns: ['tenantId', 'id'] }],\n  checks: [\n",
     `${PERSISTENCE}/type-orm-invoice-summaries.repository.ts`,
     'tenant: { scope }, definition: invoiceSummariesCriteria });',
   ],
