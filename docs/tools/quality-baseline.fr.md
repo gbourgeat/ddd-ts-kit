@@ -264,7 +264,7 @@ ne peuvent pas dériver (la moitié droite du dessin en haut de cette page) :
 
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
   "root": false,
   "extends": "//"
 }

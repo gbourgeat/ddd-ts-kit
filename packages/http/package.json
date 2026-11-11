@@ -138,7 +138,7 @@
     "@orpc/contract": "^1.16.1",
     "@orpc/server": "^1.16.1",
     "@trpc/client": "^11.22.1",
-    "@trpc/server": "^11.19.0",
+    "@trpc/server": "^11.22.1",
     "@types/busboy": "^1.5.5",
     "@types/express": "^5.0.0",
     "busboy": "^1.6.0",
