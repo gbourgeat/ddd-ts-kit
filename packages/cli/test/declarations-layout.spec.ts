@@ -40,20 +40,20 @@ describe('the folder whose declarations hold a role file', () => {
   });
 
   it('is the layer in the module of the model the config declares, and no folder of one it does not', () => {
-    const inModule = 'application/waitlist/commands/join-waitlist/join-waitlist.handler.ts';
+    const inModule = 'waitlist/application/commands/join-waitlist/join-waitlist.handler.ts';
 
-    expect(declarationsFolderOf(inModule, ['waitlist'])).toBe('application/waitlist');
-    expect(declarationsFolderOf(inModule, ['waitlist'], 'role-folder')).toBe('application/waitlist/commands');
-    expect(declarationsFolderOf(inModule, [])).toBe('application');
+    expect(declarationsFolderOf(inModule, ['waitlist'])).toBe('waitlist/application');
+    expect(declarationsFolderOf(inModule, ['waitlist'], 'role-folder')).toBe('waitlist/application/commands');
+    expect(declarationsFolderOf(inModule, [])).toBe('waitlist');
 
-    expect(isDeclarationsFile('scheduling', 'application/waitlist/application.declarations.ts', ['waitlist'])).toBe(
+    expect(isDeclarationsFile('scheduling', 'waitlist/application/application.declarations.ts', ['waitlist'])).toBe(
       true,
     );
 
-    expect(isDeclarationsFile('scheduling', 'application/waitlist/waitlist.declarations.ts', ['waitlist'])).toBe(false);
+    expect(isDeclarationsFile('scheduling', 'waitlist/application/waitlist.declarations.ts', ['waitlist'])).toBe(false);
 
-    expect(folderDeclarationsFile('application/waitlist', 'application')).toBe(
-      'application/waitlist/application.declarations.ts',
+    expect(folderDeclarationsFile('waitlist/application', 'application')).toBe(
+      'waitlist/application/application.declarations.ts',
     );
 
     expect(folderDeclarationsFile('infrastructure')).toBe('infrastructure/infrastructure.declarations.ts');
