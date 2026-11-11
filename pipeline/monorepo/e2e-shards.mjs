@@ -43,6 +43,8 @@ export const SHARDS = [
     // With NestJS on Nest controllers and Passport.
     'proven-stacks.spec.ts': 501,
     'event-sourced.spec.ts': 63,
+    // The personal columns of a table no aggregate owns, type-checked on the four ORMs.
+    'personal-fields-of-table.spec.ts': 20,
   },
   {
     'first-class.spec.ts': 209,

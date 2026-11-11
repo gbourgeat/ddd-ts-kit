@@ -1,5 +1,5 @@
 [English](personal-data.md) · **Français**
-<!-- translation-of: personal-data.md sha256:a9b3388bdd5d2443 -->
+<!-- translation-of: personal-data.md sha256:7c58d681bec97899 -->
 
 # Les données personnelles dans un projet généré
 
@@ -27,6 +27,7 @@ pour la preuve datée, [Multi-tenant](multitenancy.fr.md) pour ce qu'un *tenant*
 | `init --privacy on` (`on` avec un ORM, `off` sans ou sur demande) | les listes des copies et des exports que les contextes déclarent, la liste des événements qui portent des données personnelles (`personal-events.ts`, écrite par `docs`), `runErasure`, `runExport` et `runPurge`, le *job* de nuit `privacy.purge-expired`, les trois scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts`, `scripts/privacy-purge.ts` |
 | `init --event-sourcing on` (`off` sauf demande) | l'event store, les clés des personnes concernées et le chiffre qui scelle une valeur personnelle d'un événement stocké, audités quand le journal est actif | `src/platform/event-sourcing/`, le schéma `event_store` |
 | `generate repository <ctx> <Aggregate> --personal <colonne>,...` | les colonnes dans le stockage, leur déclaration, et une fois par contexte l'effacement et l'export qui la lisent | le contexte |
+| `generate personal-fields <ctx> <table> --personal <colonne>,... --subject <colonne>` | la déclaration d'une table qu'aucun agrégat ne possède, jointe à l'effacement et à l'export du contexte, ou écrite avec eux | le contexte |
 
 Un projet sans donnée personnelle prend `--privacy off` et ne paie rien ; un projet dont tous les
 agrégats sont des lignes garde `--event-sourcing off` et ne paie aucune table pour cela. Les deux
@@ -100,6 +101,52 @@ Les deux modes, fixés par table :
 |---|---|---|
 | `pseudonymise` (le défaut) | la ligne reste, chaque colonne personnelle de texte se lit `[erased]`, toute autre colonne personnelle ne lit rien (elle doit accepter null) | une ligne vers laquelle d'autres pointent, un fait du métier qui nomme la personne par un id opaque |
 | `row` | les lignes de la personne sont supprimées | une pure copie de la personne, un contact, une entrée de carnet d'adresses |
+
+## Une table qu'aucun agrégat ne possède
+
+Un modèle de lecture, une table de messages reçus, une table écrite à la main dans le schéma du
+contexte : chacune peut garder une copie d'une personne, et aucune n'a d'agrégat que
+`generate repository` pourrait nommer.
+
+```bash
+npx ddd-ts-kit generate personal-fields billing payment_reminders --personal customer_email,customer_name --subject customer_id
+```
+
+La table est donnée par son nom SQL et doit exister dans le fichier de schéma du contexte :
+`<context>.schema.ts` avec Drizzle et TypeORM, `create-<context>-tables.schema.ts` avec Knex,
+`prisma/schema/<context>.prisma` avec Prisma. La commande :
+
+- écrit `infrastructure/persistence/<table>.personal-fields.ts` (`payment-reminders.personal-fields.ts`,
+  qui exporte `PaymentRemindersPersonalFields`), épelée comme l'effacement de l'ORM la lit : avec
+  Drizzle et TypeORM par les propriétés que la définition de la table donne à ses colonnes, lues
+  dans le fichier de schéma, avec Knex et Prisma par les noms SQL ;
+- la joint aux `declarations` de l'effacement et de l'export du contexte quand ils existent ;
+- sinon les écrit comme le fait la première table d'un contexte (ports, adaptateurs, *fakes*,
+  liaison, les lignes dans les copies et les exports de la plateforme). La *spec* diffère : aucun
+  *repository* ni *builder* n'écrit les lignes d'une telle table, donc
+  `test/integration/<context>-personal-data.spec.ts` prouve les *fakes* et nomme en `it.todo`
+  chaque cas à prouver sur la base de test (effacé pour la personne et laissé aux autres, exporté,
+  purgé avec `--retention`), que vous écrivez avec des lignes insérées comme le projet écrit cette
+  table.
+
+Elle ne modifie jamais la table. Une colonne que `--personal`, `--subject` ou `--retention` nomme et
+que la définition ne tient pas est refusée, avec les colonnes qu'elle a ; quand la définition prend
+des colonnes ailleurs (une décomposition, une fonction appelée sur la table), la commande ne peut
+pas le savoir, déclare la colonne et dit dans sa sortie de vérifier que la table la tient. Là où
+l'effacement est confiné à un *tenant* (`--tenant-scoped`, ou un projet dont `stack.tenancy` n'est
+pas `none`), la table doit tenir `tenant_id` aussi.
+
+`--subject` est obligatoire ici. Dans une table sans agrégat la ligne est rarement la personne, et
+un défaut à `id` ferait chercher la personne dans la mauvaise colonne par
+`npm run privacy:erase -- <personne>` alors que le registre dit la table couverte. Ne donnez
+`--subject id` que lorsque l'identifiant de la ligne est celui de la personne.
+
+Refusés : une table que le schéma du contexte ne déclare pas (la commande liste celles qu'il
+déclare), une table qui a déjà une déclaration (ajoutez la colonne à ses `fields` à la main), et
+tout ce que `--personal` d'un *repository* refuse. `generate repository <ctx> <Aggregate> --personal ...`
+lancée sur un agrégat dont la table existe est refusée aussi, le générateur déclarant une table une
+seule fois : ajoutez les colonnes à la table à la main, puis déclarez-les avec
+`generate personal-fields`.
 
 ## L'effacement, de bout en bout
 
@@ -389,4 +436,5 @@ Par construction veut dire intégré par défaut, jamais une garantie juridique.
   les parties construites et celles à venir, les mots à employer
 - La référence du CLI : [`init`](../../packages/cli/README.fr.md) (`--privacy`, `--event-sourcing`)
   et [`generate repository`](../../packages/cli/README.fr.md) (`--personal`, `--subject`,
-  `--erasure`)
+  `--erasure`), [`generate personal-fields`](../../packages/cli/README.fr.md) pour une table
+  qu'aucun agrégat ne possède

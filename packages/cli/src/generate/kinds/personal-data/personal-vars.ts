@@ -25,6 +25,9 @@ const SPELLINGS: Readonly<Record<string, Spelling>> = {
 
 const SQL_NAMES: Spelling = { declaration: 'column', row: 'column' };
 
+/** How a column the request names is spelled in the definition of its table: derived from its SQL name, or read in the schema of a table the project wrote. */
+type ColumnOf = (column: string) => PersonalColumn;
+
 /**
  * `--personal` as the templates read it: whether a declaration is written, how the rows are erased,
  * the columns the storage gains, and for each ORM the names its declaration, its rows and its tests
@@ -33,10 +36,13 @@ const SQL_NAMES: Spelling = { declaration: 'column', row: 'column' };
 export function personalVars(scope: Scope): RenderContext {
   const request = personalRequestOf(scope);
 
-  if (request === undefined) {
-    return { any: false, retains: false };
-  }
+  return request === undefined
+    ? { any: false, retains: false }
+    : { ...personalVarsOf(scope, request, personalColumn), ofTable: false };
+}
 
+/** The request of a declaration as the templates read it, each column spelled by `columnOf`. */
+export function personalVarsOf(scope: Scope, request: PersonalRequest, columnOf: ColumnOf): RenderContext {
   const { orm } = scope.config.stack;
   const names = personalNames(orm, scope.context);
   const spelling = SPELLINGS[orm] ?? SQL_NAMES;
@@ -48,11 +54,11 @@ export function personalVars(scope: Scope): RenderContext {
     pseudonymise: request.erasure === 'pseudonymise',
     subjectIsId: request.subject === 'id',
     names: { ...names },
-    ...retentionVars(request, spelling),
+    ...retentionVars(request, spelling, columnOf),
     header: classHeader(names.adapter, names.base, names.port),
     exportHeader: classHeader(names.exportAdapter, names.exportBase, names.exportPort),
     ...storageVars(request),
-    ...spelledVars(request, spelling),
+    ...spelledVars(request, spelling, columnOf),
   };
 }
 
@@ -116,14 +122,14 @@ function linesOf(
 }
 
 /** The retention as the declaration spells it and as the generated spec dates a row. */
-function retentionVars(request: PersonalRequest, spelling: Spelling): RenderContext {
+function retentionVars(request: PersonalRequest, spelling: Spelling, columnOf: ColumnOf): RenderContext {
   const { retention } = request;
 
   if (retention === undefined) {
     return { retains: false };
   }
 
-  const after = personalColumn(retention.column);
+  const after = columnOf(retention.column);
 
   return {
     retains: true,
@@ -134,10 +140,10 @@ function retentionVars(request: PersonalRequest, spelling: Spelling): RenderCont
 }
 
 /** The subject and the fields as the declaration of this ORM spells them, the rows of two people as its tests write and expect them, and what the export hands over of one. */
-function spelledVars(request: PersonalRequest, spelling: Spelling): RenderContext {
-  const fields = request.fields.map(personalColumn);
-  const subject = personalColumn(request.subject);
-  const dated = request.retention === undefined ? [] : [personalColumn(request.retention.column)];
+function spelledVars(request: PersonalRequest, spelling: Spelling, columnOf: ColumnOf): RenderContext {
+  const fields = request.fields.map(columnOf);
+  const subject = columnOf(request.subject);
+  const dated = request.retention === undefined ? [] : [columnOf(request.retention.column)];
   const columns = [...(request.subject === 'id' ? fields : [...fields, subject]), ...dated];
 
   const about = (person: string): (readonly [string, string])[] =>

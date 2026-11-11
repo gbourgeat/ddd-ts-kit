@@ -95,8 +95,8 @@ missing. Rows with no path between them can be built in parallel.
   for a word of its name the glossary does not define (`--term "<Term>=<meaning>"`). The kinds
   whose `heldToGlossary` is false (`builder`, `test-world`, `property`, `vocabulary`,
   `repository`, `port`, `route`, `controller`, `route-group`, `guard`, `representation`, `form`,
-  `schema`, `erasure-handler`, `acl`, `e2e`, `acceptance`, `gateway`, `adapter`, `service`,
-  `worker`, `adr`) take no `--term`, which the generator refuses: what they name is read from the
+  `schema`, `personal-fields`, `erasure-handler`, `acl`, `e2e`, `acceptance`, `gateway`,
+  `adapter`, `service`, `worker`, `adr`) take no `--term`, which the generator refuses: what they name is read from the
   concept they serve, or was named by an earlier command.
 - The commands of a row run in the order written, each after the command that writes what it
   builds on, as the summary of its kind says (`After generate ...`): the aggregate before its

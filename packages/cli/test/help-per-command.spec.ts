@@ -235,6 +235,7 @@ describe('generate <kind> --help', () => {
       'integration-handler',
       'After `generate integration-event <upstreamContext> <Aggregate> <Fact>` of its eventType.',
     ],
+    ['personal-fields', 'After the table is written in the schema of the context'],
     ['erasure-handler', 'After `generate repository <context> <Aggregate> --personal <column>,...`.'],
     [
       'route-group',

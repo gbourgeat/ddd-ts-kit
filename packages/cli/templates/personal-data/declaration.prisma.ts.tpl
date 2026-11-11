@@ -8,7 +8,7 @@ const TABLE: PrismaPersonalTable = { schema: '{{context.schema}}', table: '{{agg
  * What `{{aggregate.table}}` keeps of a person in clear, and whose it is: the columns below belong to the person
  * `{{personal.subject}}` names{{#if personal.pseudonymise}}, and each reads `[erased]` once that person is erased{{/if}}{{#if personal.row}}, and their row is deleted once that person is erased{{/if}}.
  * Read by {{personal.names.adapter}}, which `npm run privacy:erase` runs; a column added later that holds
- * personal data is declared here too, and its mapper writes it.
+ * personal data is declared here too{{#unless personal.ofTable}}, and its mapper writes it{{/unless}}.
  */
 // The columns are named as the database spells them (`@map`), since the erasure writes SQL on the table.
 const declaration: PersonalFieldsOptions<Record<string, unknown>> = {
@@ -16,7 +16,12 @@ const declaration: PersonalFieldsOptions<Record<string, unknown>> = {
 {{personal.fields}}
   erasure: '{{personal.erasure}}',
 {{#if personal.retains}}
+{{#unless personal.ofTable}}
   // TODO(domain): the mapper writes {{personal.retentionColumn}} empty: write the date the relation with the person ended (the contract closed, the account deleted), or these rows never expire. Never count from the registration.
+{{/unless}}
+{{#if personal.ofTable}}
+  // TODO(domain): what writes {{aggregate.table}} writes in {{personal.retentionColumn}} the date the relation with the person ended (the contract closed, the account deleted), or these rows never expire. Never count from the registration.
+{{/if}}
   retention: {{personal.retention}},
 {{/if}}
 };
