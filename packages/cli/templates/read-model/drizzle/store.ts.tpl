@@ -18,7 +18,6 @@ import { {{name.camel}} } from '{{alias.context}}/infrastructure/persistence/{{c
 {{/if}}
 export class {{adapter.pascal}} extends DrizzleReadModelStore<{{name.pascal}}Row, PgQueryResultHKT> implements {{name.pascal}} {
 {{#if tenant.scoped}}
-  /** Tenant data: every row is written in, and every read confined to, the tenant of the work. */
   constructor(database: Database, scope: ExecutionScope) {
 {{/if}}
 {{#unless tenant.scoped}}

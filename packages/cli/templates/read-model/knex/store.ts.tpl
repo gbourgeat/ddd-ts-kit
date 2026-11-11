@@ -18,7 +18,6 @@ import { {{context.constant}}_SCHEMA } from '{{alias.context}}/infrastructure/pe
 {{/if}}
 export class {{adapter.pascal}} extends KnexReadModelStore<{{name.pascal}}Row> implements {{name.pascal}} {
 {{#if tenant.scoped}}
-  /** Tenant data: every row is written in, and every read confined to, the tenant of the work. */
   constructor(database: KnexContext, scope: ExecutionScope) {
 {{/if}}
 {{#unless tenant.scoped}}

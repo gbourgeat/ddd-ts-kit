@@ -18,7 +18,6 @@ import { {{name.camel}} } from '{{alias.context}}/infrastructure/persistence/{{c
 {{/if}}
 export class {{adapter.pascal}} extends TypeOrmReadModelStore<{{name.pascal}}Row> implements {{name.pascal}} {
 {{#if tenant.scoped}}
-  /** Tenant data: every row is written in, and every read confined to, the tenant of the work. */
   constructor(database: TypeOrmContext, scope: ExecutionScope) {
     super(database, { entity: {{name.camel}}, tenant: { scope }, definition: {{name.camel}}Criteria });
   }

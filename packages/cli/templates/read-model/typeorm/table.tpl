@@ -18,7 +18,6 @@ export const {{name.camel}} = new EntitySchema<{{name.pascal}}Row & TenantScoped
 {{#if fields.any}}
 {{fields.typeormTable}}
 {{/if}}
-    // Kept out of the rows a read answers: the store writes the tenant of the work and confines every statement to it.
     tenantId: { ...tenantColumn().tenantId, select: false },
     ...readModelColumns(),
   },

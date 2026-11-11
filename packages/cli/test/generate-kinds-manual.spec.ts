@@ -51,6 +51,7 @@ describe('a context wired by hand', () => {
       `${persistence}/invoice-row.schema.ts`,
       `${persistence}/invoice.mapper.ts`,
       `${persistence}/knex-invoice.repository.ts`,
+      `${persistence}/knex-issued-invoices.repository.ts`,
     ]);
 
     expect(read(root, `${persistence}/knex-invoice.repository.ts`)).toContain(

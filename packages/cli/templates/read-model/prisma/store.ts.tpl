@@ -19,7 +19,6 @@ import type { Prisma } from '{{alias.generated}}/prisma/client{{alias.ext}}';
 {{/if}}
 export class {{adapter.pascal}} extends PrismaReadModelStore<{{name.pascal}}Row, Prisma.TransactionClient> implements {{name.pascal}} {
 {{#if tenant.scoped}}
-  /** Tenant data: every row is written in, and every read confined to, the tenant of the work. */
   constructor(database: Database, scope: ExecutionScope) {
 {{/if}}
 {{#unless tenant.scoped}}
