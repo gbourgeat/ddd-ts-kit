@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:21b845ad7dd437da -->
+<!-- translation-of: quality-baseline.md sha256:9ee63ef003c8eb33 -->
 
 # Base de qualité
 
