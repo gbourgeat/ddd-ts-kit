@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:cde45ced143f905f -->
+<!-- translation-of: coding-agents.md sha256:35b173ca30b68fed -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -185,7 +185,8 @@ sous le répertoire git que les *worktrees* du dépôt partagent (`ddd-ts-kit/gu
 qu'un appel qui part d'un autre *checkout* est jugé d'après le *worktree* fixé, et se voit dire de
 se lancer comme `cd <worktree> && ...`. Là où plusieurs *workers* ont un *worktree*, une première
 commande qui n'en nomme aucun ne fixe rien : elle lit, et ce qu'elle écrit est refusé jusqu'à ce
-qu'une commande nomme son *worktree*, ou un outil d'édition un fichier dedans. Un fichier de périmètre supprimé ou changé (son contexte, sa base, son *commit* de base ou sa branche)
+qu'une commande nomme son *worktree*, ou un outil d'édition un fichier dedans. Une marque qui ne
+peut pas être lue retient chaque appel jusqu'à ce que le chef d'orchestre relance le *worker*. Un fichier de périmètre supprimé ou changé (son contexte, sa base, son *commit* de base ou sa branche)
 arrête le *worker* jusqu'à ce que le chef d'orchestre le rétablisse, et le mode de la garde est fixé avec lui :
 une config qui éteint la garde, dans le *worktree* ou dans un autre *checkout* du dépôt, ou qui dépasse ce que la garde lit, ne libère pas un
 *worker*, son changement étant comparé comme tout autre. Une branche que le *worker* fusionne dans la
@@ -195,7 +196,7 @@ d'intégration aussi bien que la principale), la branche que nomme `origin/HEAD`
 `master`, chacune telle qu'elle était avant la commande qui a fusionné : un tronc récupéré et
 fusionné par une seule commande n'est pas encore connu, si bien que le `fetch` va dans une commande
 à part, ou `merge-trunk` fait les deux. Une fusion de toute autre branche est retenue sans
-commande pour la défaire, et le *worker* la signale au chef d'orchestre. Le `merge-trunk` du kit n'est pas noté,
+commande pour la défaire, et le *worker* la signale au chef d'orchestre. Le `merge-trunk` du kit n'est pas noté, sauf si `--trunk` nomme une autre référence que cette base,
 et une installation du *lockfile* laisse les paquets hors de la note. Il refuse un changement de
 dépendance et un autre formateur que `npm run format`. L'`architecture-reviewer`, le
 `domain-explorer` et le `story-verifier` ne changent aucun fichier d'un projet par le *shell*, ni

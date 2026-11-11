@@ -2,7 +2,7 @@
 // pinned with its scope, and a branch the worker merges is its own work, only the trunk is the trunk's.
 
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
@@ -105,6 +105,20 @@ test('a note an earlier version of the guard took, without the trunks, is compar
   writeFileSync(note, JSON.stringify(earlier));
   git(root, 'merge', '--quiet', '--no-ff', '--no-verify', '--message', 'merge the wave', 'work/wave-1');
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+});
+
+test("a note whose trunks git cannot read shows no merge as the trunk's", () => {
+  const root = workerOfAWave('work/wave-1', { base: 'work/wave-1' });
+  const agent = { agent_type: 'ddd-ts-kit:context-builder', session_id: 'merge', agent_id: 'unread-trunks' };
+  assert.equal(run('pre-bash', bash(root, 'node -e "1"', agent)).output, undefined);
+  const state = join(root, '.ddd-ts-kit/guard');
+  const note = join(
+    state,
+    readdirSync(state).find((name) => name.startsWith('before-run-')),
+  );
+  writeFileSync(note, JSON.stringify({ ...JSON.parse(readFileSync(note, 'utf8')), trunks: ['no-commit'] }));
+  git(root, 'merge', '--quiet', '--no-ff', '--no-verify', '--message', 'merge the wave', 'work/wave-1');
+  assert.match(reason(run('pre-bash', bash(root, 'npm test', agent))), /A merge brought files outside your scope/);
 });
 
 test('a merge of a branch that is no trunk is held, and the worker is told to report it, not to undo it', () => {
@@ -216,4 +230,68 @@ test("the scope file is the conductor's: its base, its base commit or its branch
     put(made.root, '.ddd-ts-kit/worker.json', JSON.stringify(made.scope));
     assert.match(reason(run('pre-bash', bash(made.root, 'npm test', made.agent))), /A merge brought files/);
   }
+});
+
+test('the merge of the kit is noted when it is asked for another trunk than the base of the worker', () => {
+  for (const [trunk, merged, held] of [
+    ['--trunk work/billing', 'work/billing', true],
+    ['--trunk=work/billing', 'work/billing', true],
+    ['--trunk', 'work/billing', true],
+    ['--trunk work/wave-1', 'work/wave-1', false],
+    ['', 'work/wave-1', false],
+  ]) {
+    const root = workerOfAWave('work/billing', { base: 'work/wave-1' });
+    const agent = { agent_type: 'ddd-ts-kit:context-builder', session_id: 'kit-merge', agent_id: trunk };
+    assert.equal(run('pre-bash', bash(root, `npx ddd-ts-kit merge-trunk ${trunk}`, agent)).output, undefined, trunk);
+    git(root, 'merge', '--quiet', '--no-ff', '--no-verify', '--message', 'merge', merged);
+    const next = run('pre-bash', bash(root, 'git status', agent));
+    assert.equal(decision(next), held ? 'deny' : undefined, trunk);
+  }
+});
+
+// A branch that merged its trunk `count` times, each merge bringing in a file outside the scope, built
+// by one process of git.
+function manyTrunkMerges(root, count) {
+  const stream = [];
+  for (let index = 1; index <= count; index += 1) {
+    const file = `M 100644 inline src/platform/trunk-${index}.ts\ndata 11\nexport {};\n`;
+    const who = `committer guard <guard@example.test> ${1700000000 + index} +0000`;
+    const from = (branch) => (index === 1 ? `from refs/heads/${branch}^0\n` : '');
+    stream.push(
+      `commit refs/heads/main\nmark :${index * 2}\n${who}\ndata 5\ntrunk\n${from('main')}${file}`,
+      `commit refs/heads/work/ordering\nmark :${index * 2 + 1}\n${who}\ndata 5\nmerge\n${from('work/ordering')}merge :${index * 2}\n${file}`,
+    );
+  }
+  const imported = spawnSync('git', ['fast-import', '--quiet'], {
+    cwd: root,
+    input: stream.join('\n'),
+    encoding: 'utf8',
+  });
+  assert.equal(imported.status, 0, imported.stderr);
+  git(root, 'reset', '--quiet', '--hard', 'work/ordering');
+}
+
+test('a branch that merged its trunk hundreds of times is read by a bounded number of runs of git', () => {
+  const root = committed({ worktrees: 'advised' });
+  git(root, 'branch', '-M', 'main');
+  git(root, 'checkout', '--quiet', '-b', 'work/ordering');
+  const scope = { context: 'ordering', base: 'main', baseCommit: gitOutput(root, 'rev-parse', 'HEAD') };
+  put(root, '.ddd-ts-kit/worker.json', JSON.stringify(scope));
+  manyTrunkMerges(root, 300);
+  const bin = join(root, '..', `counted-${Date.now()}`);
+  const log = join(bin, 'runs.log');
+  put(bin, 'git', `#!/bin/sh\necho run >> ${log}\nexec ${gitOutput(root, '--exec-path')}/git "$@"\n`);
+  chmodSync(join(bin, 'git'), 0o755);
+  const counted = { PATH: `${bin}:${process.env.PATH}` };
+  const agent = { agent_type: 'ddd-ts-kit:context-builder', session_id: 'many', agent_id: 'merges' };
+  run('pre-bash', bash(root, 'git status', agent), counted);
+  assert.equal(run('subagent-stop', { cwd: root, ...agent, stop_hook_active: false }, counted).output, undefined);
+  const runs = readFileSync(log, 'utf8').split('\n').filter(Boolean).length;
+  assert.ok(runs < 60, `${runs} runs of git`);
+  // One file the worker committed among them is still found.
+  put(root, 'src/platform/own.ts', 'export {};\n');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'feat: outside');
+  const stopped = run('subagent-stop', { cwd: root, ...agent, stop_hook_active: false }, counted).output;
+  assert.match(stopped.reason, /outside your scope since its base [0-9a-f]+: src\/platform\/own\.ts\./);
 });

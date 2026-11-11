@@ -68,6 +68,10 @@ const WRAPPERS = {
 
 /** Every simple command of `text`, the ones it nests included, each with the directory it runs in. */
 export function simpleCommands(text, directory, depth = 0) {
+  if (depth === 0) {
+    // A setting of a runner given by the environment, anywhere on the line, may ask it for a shell.
+    shellAsked = SHELL_SETTING.test(text);
+  }
   if (depth > DEPTH) {
     // Deeper than the reader follows: a marker so the guard refuses it rather than read nothing.
     return [unreadMarker('nested', directory, depth)];
@@ -95,13 +99,17 @@ export function simpleCommands(text, directory, depth = 0) {
   return found;
 }
 
-/** The commands a command hands to another: a text read as its own line, or the words a runner runs. */
+/**
+ * The commands a command hands to another: texts, each read as its own line, or the words a runner
+ * runs. The command line a variable gives `npx` (`npm_config_call=...`) is such a text.
+ */
 function wrappedCommands(words, directory, depth) {
-  const wrapped = wrappedOf(words);
-  if (wrapped?.text !== undefined) {
-    return simpleCommands(wrapped.text, directory, depth + 1);
-  }
-  return wrapped ? runCommands(wrapped.words, directory, depth + 1) : [];
+  const wrapped = wrappedOf(words) ?? {};
+  const given = words.flatMap((word) => CALL_SETTING.exec(word)?.slice(1) ?? []);
+  return [
+    ...[...given, ...(wrapped.texts ?? [])].flatMap((text) => simpleCommands(text, directory, depth + 1)),
+    ...(wrapped.words ? runCommands(wrapped.words, directory, depth + 1) : []),
+  ];
 }
 
 /**
@@ -350,26 +358,19 @@ function shellCode(words) {
 }
 
 // A command another computes from a text the shell alone splits: `su`/`doas`/`script`/`flock` from
-// their `-c` or `--command` string, `env -S` from its value, a package runner from the string of its
-// `-c`/`--call`: a `text`, read as its own command line. The command a package runner runs (`npx`,
-// `bunx`, `npm exec`, ...) is `words` the shell already split.
+// their `-c` or `--command` string, `env -S` from its value: `texts`, each read as its own command
+// line. The command a package runner runs (`npx`, `bunx`, `npm exec`, ...) is `words` the shell
+// already split when the guard can prove the runner hands no text to a shell, and `texts` otherwise.
 function wrappedBy(words) {
   const name = commandName(words);
   if (['su', 'doas', 'script', 'flock'].includes(name)) {
     return asText(valueOfFlag(words, '-c') ?? valueOfFlag(words, '--command'));
   }
-  if (name === 'env') {
-    return asText(envSplit(words));
-  }
-  const inner = runnerCommand(words);
-  if (inner?.call !== undefined) {
-    return asText(inner.call);
-  }
-  return inner?.words.length > 0 ? { words: inner.words } : undefined;
+  return name === 'env' ? asText(envSplit(words)) : runnerCommand(words);
 }
 
 function asText(text) {
-  return text === undefined ? undefined : { text };
+  return text === undefined ? undefined : { texts: [text] };
 }
 
 function valueOfFlag(words, flag) {
@@ -388,59 +389,86 @@ function envSplit(words) {
   return spaced;
 }
 
-// Each package runner: the subcommands by which it runs a command (none: the runner itself runs it),
-// its options that take a value, those whose value is a command line (`call`), and those that hand
-// the whole command to a shell (`shell`).
+// Each package runner, as far as the guard can prove what it runs: the subcommands by which it runs
+// a command (none: the runner itself runs it), and the only options it may be given before that
+// command, the `flags` that take no value and the `valued` ones. None of them asks for a shell.
+// `yarn` runs scripts and binaries by their bare name, and `bun` scripts: `any` of their forms may
+// run one, and only `bun x <command>` is proven.
 const RUNNERS = {
-  npx: { valued: ['-p', '--package', '-w', '--workspace'], call: ['-c', '--call'] },
-  npm: { subs: ['exec', 'x'], valued: ['-p', '--package', '-w', '--workspace', '--prefix'], call: ['-c', '--call'] },
-  pnpx: { valued: ['--package'], shell: ['-c', '--shell-mode'] },
-  pnpm: {
-    subs: ['exec', 'dlx'],
-    valued: ['-F', '--filter', '-C', '--dir', '--package'],
-    shell: ['-c', '--shell-mode'],
+  npx: {
+    flags: ['-y', '--yes', '--no', '--no-install', '-q', '--quiet'],
+    valued: ['-p', '--package', '-w', '--workspace'],
   },
-  yarn: { subs: ['exec', 'dlx'], valued: ['-p', '--package', '--cwd'] },
-  bunx: { valued: ['-p', '--package'] },
-  bun: { subs: ['x'], valued: ['-p', '--package', '--cwd'] },
+  npm: {
+    subs: ['exec', 'x'],
+    near: /^exe?$/,
+    flags: ['-y', '--yes', '--no', '-q', '--quiet', '--silent'],
+    valued: ['-p', '--package', '-w', '--workspace', '--prefix'],
+  },
+  pnpx: { flags: [], valued: ['--package'] },
+  pnpm: { subs: ['exec', 'dlx'], flags: ['-r', '--recursive'], valued: ['-F', '--filter', '-C', '--dir', '--package'] },
+  yarn: { any: true },
+  bunx: { flags: ['--bun'], valued: ['-p', '--package'] },
+  bun: { any: true, subs: ['x'], flags: ['--bun'], valued: [] },
 };
+// A program named plainly: no space, no quote, nothing the shell reads.
+const PLAIN_PROGRAM = /^[\w@.+:/-]+$/;
+// The settings of npm and pnpm, read from the environment, that hand a command to a shell.
+const SHELL_SETTING = /p?npm_config_(?:call|shell[_-]mode)/i;
+const CALL_SETTING = /^npm_config_call=(.+)$/is;
+let shellAsked = false;
 
-// The command a package runner runs: `npx <cmd>`, `bunx <cmd>`, `npm|pnpm|yarn exec|dlx <cmd>`, `bun x <cmd>`,
-// after the runner's own options, before or after its subcommand, and a leading `--`. It is `words`
-// the shell already split, unless the runner is asked for a shell: the string of `-c`/`--call` of
-// `npx` and `npm exec`, or the command of `pnpm` under `-c`/`--shell-mode`, is a `call`, a command line.
+// What a package runner runs. When the invocation has the one shape the guard reads in full (the
+// runner, its subcommand, options it knows on either side of it, then a program named plainly and
+// its arguments) and nothing on the line can ask the runner for a shell, the command is `words`, as
+// the shell split them: a quote, a `>` or a `;` in an argument is text of that argument. Any other
+// invocation (a `-c`, `--call` or `--shell-mode`, an option the guard does not know, a bundle of
+// short options, an abbreviation of the subcommand, a program that is no plain name) may hand text
+// to a shell: every word of it is read as shell text, alone and with the words after it, since any
+// of them may be the command line. A manager asked for none of its runners runs no command here.
 function runnerCommand(words) {
   const runner = RUNNERS[commandName(words)];
   if (!runner) {
     return undefined;
   }
-  const asked = { call: undefined, shell: false };
-  let index = afterRunnerOptions(words, 1, runner, asked);
-  if (runner.subs) {
-    if (!runner.subs.includes(words[index])) {
-      return undefined;
-    }
-    index = afterRunnerOptions(words, index + 1, runner, asked);
+  const rest = words.slice(1);
+  const proven = shellAsked || !runner.flags ? undefined : provenCommand(rest, runner);
+  if (proven) {
+    return { words: proven };
   }
-  const inner = words.slice(words[index] === '--' ? index + 1 : index);
-  if (asked.call !== undefined) {
-    return { call: asked.call };
-  }
-  return asked.shell ? { call: inner.join(' ') } : { words: inner };
+  const runs = runner.any || !runner.subs || rest.some((word) => runner.subs.includes(word) || runner.near?.test(word));
+  return runs ? { texts: rest.flatMap((word, index) => textsFrom(word, rest.slice(index + 1))) } : undefined;
 }
 
-// The index after the runner's own options from `from`, what they ask noted in `asked`: an option
-// after the command belongs to that command (`npx eslint -c eslint.config.js`).
-function afterRunnerOptions(words, from, { valued, call = [], shell = [] }, asked) {
+// A word read as the start of a command line, with the words after it; the value an option carries
+// after `=` (`--call=...`) may start one too.
+function textsFrom(word, after) {
+  const value = /^-[^=]*=(.+)$/s.exec(word)?.[1];
+  return [word, ...(value === undefined ? [] : [value])].map((start) => [start, ...after].join(' '));
+}
+
+function provenCommand(rest, { subs, flags, valued }) {
+  let index = afterKnownOptions(rest, 0, { flags, valued });
+  if (subs) {
+    index = subs.includes(rest[index]) ? afterKnownOptions(rest, index + 1, { flags, valued }) : rest.length;
+  }
+  const inner = rest.slice(rest[index] === '--' ? index + 1 : index);
+  return inner.length > 0 && PLAIN_PROGRAM.test(inner[0]) && !inner[0].startsWith('-') ? inner : undefined;
+}
+
+// The index after the options the guard knows from `from`; at an option it does not know, the index
+// of that option, which is then no plain program.
+function afterKnownOptions(rest, from, { flags, valued }) {
   let index = from;
-  while (index < words.length && words[index].startsWith('-') && words[index] !== '--') {
-    const [flag, ...joined] = words[index].split('=');
-    const value = joined.length > 0 ? joined.join('=') : words[index + 1];
-    if (call.includes(flag)) {
-      asked.call ??= value;
+  while (index < rest.length && rest[index] !== '--') {
+    const [flag, ...joined] = rest[index].split('=');
+    if (flags.includes(rest[index])) {
+      index += 1;
+    } else if (valued.includes(flag)) {
+      index += joined.length > 0 ? 1 : 2;
+    } else {
+      break;
     }
-    asked.shell ||= shell.includes(flag);
-    index += joined.length === 0 && (valued.includes(flag) || call.includes(flag)) ? 2 : 1;
   }
   return index;
 }

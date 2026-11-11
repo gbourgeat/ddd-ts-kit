@@ -258,6 +258,62 @@ test('a package runner asked for a shell is read as the text it hands to it, on 
   }
 });
 
+// Whatever the guard cannot prove hands no text to a shell is read as text, every word of it: an
+// option it does not know, a bundle of short options, an option repeated, an abbreviation, a program
+// whose name is no plain name, yarn and bun in the forms that run a script, a setting of the runner
+// given by the environment.
+const RUNNER_UNPROVEN = [
+  "npx -yc 'echo x > src/main.ts'",
+  "npx --cal 'echo x > src/main.ts'",
+  "npx --ca='echo x > src/main.ts'",
+  "npx -- -c 'rm src/main.ts'",
+  "npx --loglevel silent -c 'rm src/main.ts'",
+  "npx --userconfig /x -c 'rm src/main.ts'",
+  "npx --call=true --call 'rm src/main.ts'",
+  "npx -c true -c 'rm src/main.ts'",
+  "npx -y --package 'rm src/main.ts'",
+  "npx 'rm src/main.ts'",
+  'npx "echo x > src/main.ts"',
+  "npm exec -yc 'rm src/main.ts'",
+  "npm exe -c 'rm src/main.ts'",
+  "npm ex -c 'rm src/main.ts'",
+  'npm exe rm src/main.ts',
+  "npm --loglevel silent exec -c 'rm src/main.ts'",
+  "npm exec --loglevel silent -c 'rm src/main.ts'",
+  "npm exec --cal 'rm src/main.ts'",
+  "pnpm exec -rc 'rm src/main.ts'",
+  "pnpm -rc exec 'rm src/main.ts'",
+  "pnpm --reporter silent exec -c 'rm src/main.ts'",
+  "pnpm --shell-mod exec 'rm src/main.ts'",
+  "pnpm --config.shell-mode=true exec 'rm src/main.ts'",
+  "pnpm --loglevel silent -c exec 'rm src/main.ts'",
+  "yarn exec 'rm src/main.ts'",
+  'yarn rm src/main.ts',
+  'yarn workspace api exec rm src/main.ts',
+  "bun exec 'rm src/main.ts'",
+  'bun run rm src/main.ts',
+  'bun -c bunfig.toml x rm src/main.ts',
+  "npm_config_call='rm src/main.ts' npx",
+  "export npm_config_call='rm src/main.ts' && npx",
+  "npm_config_shell_mode=true pnpm exec 'rm src/main.ts'",
+  "export NPM_CONFIG_SHELL_MODE=true; pnpm exec 'rm src/main.ts'",
+  "export npm_config_call=x; npx ddd-ts-kit lint --rule 'rm src/main.ts'",
+];
+
+test('a package runner the guard cannot prove hands no text to a shell is read as text, every word of it', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const command of RUNNER_UNPROVEN) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), /src\/main\.ts|`ex` changes/, command);
+  }
+  // A manager asked for none of its runners runs no command of the line.
+  for (const command of ['npm install', 'pnpm install --frozen-lockfile', 'npx']) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
 test('the words of the command behind a package runner are read as the shell split them', () => {
   const root = project({}, ['--package-manager', 'npm']);
   const agent = worker(root, 'invoicing');

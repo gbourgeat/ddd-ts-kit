@@ -241,6 +241,8 @@ test('the schema of the query string of a route is written by hand; the query of
   for (const path of [
     'presentation/http/orders/list-orders/list-orders.query.ts',
     'sales/presentation/http/orders/list-orders/list-orders.query.ts',
+    'shared/presentation/http/orders/list-orders/list-orders.query.ts',
+    '../presentation/presentation/http/orders/list-orders/list-orders.query.ts',
   ]) {
     assert.equal(run('pre-write', write(join(context, path))).output, undefined, path);
   }
@@ -252,6 +254,10 @@ test('the schema of the query string of a route is written by hand; the query of
     'application/commands/list-orders/list-orders.query.ts',
     'application/sales/queries/list-orders/list-orders.query.ts',
     'domain/list-orders.query.ts',
+    'application/presentation/list-orders.query.ts',
+    'infrastructure/http/presentation/list-orders.query.ts',
+    '../presentation/application/queries/list-orders/list-orders.query.ts',
+    '../presentation/domain/list-orders.query.ts',
   ]) {
     const result = run('pre-write', write(join(context, path)));
     assert.equal(decision(result), 'deny', path);

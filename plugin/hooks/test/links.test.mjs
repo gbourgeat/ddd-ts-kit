@@ -3,7 +3,7 @@
 // into the project are judged where they land.
 
 import assert from 'node:assert/strict';
-import { linkSync, mkdirSync, symlinkSync } from 'node:fs';
+import { closeSync, linkSync, mkdirSync, openSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { bash, committed, decision, guardTemp, put, reason, run, worker, write } from './support.mjs';
@@ -133,4 +133,57 @@ test('a command given a folder of the scope is judged by what it brings and by t
   ]) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
+});
+
+test('a command that changes who may read or write a file is held to the scope as one that writes it', () => {
+  const root = committed({ worktrees: 'advised' });
+  const agent = { ...worker(root, 'ordering'), session_id: 'access', agent_id: 'modes' };
+  put(root, 'src/contexts/ordering/tool.sh', '#!/bin/sh\n');
+  assert.equal(run('pre-bash', bash(root, 'git status', agent)).output, undefined);
+  for (const command of [
+    'chmod 000 src/main.ts',
+    'chmod -w src/main.ts',
+    'chmod -R a-w src/platform',
+    'chmod --reference=package.json src/main.ts',
+    'chmod --reference package.json src/main.ts',
+    'chmod 000 .git/ddd-ts-kit/guard',
+    'chown nobody src/main.ts',
+    'chown --reference=package.json src/main.ts',
+    'chgrp nogroup src/main.ts',
+    'chattr +i src/main.ts',
+    'chattr -R =i src/platform',
+    'setfacl -m u:nobody:r src/main.ts',
+    'setfacl --modify=u:nobody:r src/main.ts',
+  ]) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(
+      reason(refused),
+      /A worker never changes a file outside its scope: `(?:chmod|chown|chgrp|chattr|setfacl)` changes /,
+    );
+  }
+  for (const command of [
+    'chmod +x src/contexts/ordering/tool.sh',
+    'chmod 755 src/contexts/ordering/tool.sh',
+    'chmod u+x,g-w src/contexts/ordering/tool.sh',
+    'chown nobody src/contexts/ordering/tool.sh',
+    'chattr +i src/contexts/ordering/tool.sh',
+    'setfacl -m u:nobody:r src/contexts/ordering/tool.sh',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
+test('a folder past what the guard reads before a command takes no file by cp', () => {
+  const root = committed({ worktrees: 'advised' });
+  const agent = worker(root, 'ordering');
+  const folder = 'src/contexts/ordering/domain/many';
+  mkdirSync(join(root, folder, 'deep'), { recursive: true });
+  for (let index = 0; index < 5001; index += 1) {
+    closeSync(openSync(join(root, folder, 'deep', `file-${index}`), 'w'));
+  }
+  put(root, 'src/contexts/ordering/domain/order.ts', 'export {};\n');
+  const refused = run('pre-bash', bash(root, `cp src/contexts/ordering/domain/order.ts ${folder}/`, agent));
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /holds more files than the guard reads before a command/);
 });

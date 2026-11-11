@@ -169,7 +169,8 @@ call, and the pin follows the worker: it is kept under the git directory the wor
 repository share (`ddd-ts-kit/guard/` there), so a call that starts in another checkout is judged
 against the worktree pinned, and told to run as `cd <worktree> && ...`. Where several workers have
 a worktree, a first command that names none pins nothing: it reads, and what it writes is refused
-until a command names its worktree, or an editor tool a file under it. A scope file removed or changed (its context, its base, its base commit or its branch) stops the worker until the conductor restores it, and the mode of the
+until a command names its worktree, or an editor tool a file under it. A pin that cannot be read
+holds every call until the conductor launches the worker again. A scope file removed or changed (its context, its base, its base commit or its branch) stops the worker until the conductor restores it, and the mode of the
 guard is pinned with it, so a config that turns the guard off, in the worktree or in another checkout
 of the repository, or grows past what
 the guard reads, does not lift a worker, its change being compared as any other. A branch the worker
@@ -179,7 +180,7 @@ branch as well as the main one), the branch `origin/HEAD` names, `main` or `mast
 stood before the command that merged: a trunk fetched and merged by one command is not known yet,
 so the fetch goes in a command of its own, or `merge-trunk` does both. A merge of any other branch
 is held without a command to undo it, and the worker reports it to the conductor. The kit's own
-`merge-trunk` is not noted, and an install of the lockfile leaves the packages out of the note. It
+`merge-trunk` is not noted, unless `--trunk` names another ref than that base, and an install of the lockfile leaves the packages out of the note. It
 refuses a dependency change and another formatter than `npm run format`. The `architecture-reviewer`, the
 `domain-explorer` and the `story-verifier` change no file of a project by the shell, nor its work
 tree by git (they read with `git show` and `git diff`). A sub-agent is refused

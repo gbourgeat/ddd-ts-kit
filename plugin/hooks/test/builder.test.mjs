@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -546,6 +547,65 @@ test('a worker no call has pinned yet is refused what a pinned worker is: the pl
     assert.equal(decision(run('pre-bash', bash(other, command, agent))), 'deny', command);
   }
   assert.equal(run('pre-bash', bash(other, 'git log --oneline', agent)).output, undefined);
+});
+
+test('a pin an earlier version of the guard took is kept: the worker is held to the worktree it names, wherever the pin stood', () => {
+  const places = [
+    ({ conductor }) => join(conductor, '.ddd-ts-kit/guard'),
+    ({ other }) => join(other, '.ddd-ts-kit/guard'),
+    ({ conductor }) => join(conductor, '.git/ddd-ts-kit/guard'),
+  ];
+  for (const [index, place] of places.entries()) {
+    const fixture = twoWorkers();
+    const { conductor, worktree, other } = fixture;
+    const agent = builder(`earlier-${index}`, { cwd: index === 1 ? other : conductor });
+    const earlier = { context: 'billing', worktree, mode: 'enforce' };
+    put(place(fixture), `scope-${stateKey(agent)}.json`, JSON.stringify(earlier));
+    const strayed = run('pre-bash', bash(agent.cwd, `cd ${other} && echo x > src/contexts/shipping/notes.md`, agent));
+    assert.equal(decision(strayed), 'deny', `place ${index}`);
+    assert.match(reason(strayed), /context "billing" in the worktree .*, pinned at your first call/);
+    const own = `cd ${worktree} && echo x > src/contexts/billing/notes.md`;
+    assert.equal(run('pre-bash', bash(agent.cwd, own, agent)).output, undefined, `place ${index}`);
+    const kept = join(conductor, '.git/ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`);
+    assert.deepEqual(JSON.parse(readFileSync(kept, 'utf8')).scope, { base: null, baseCommit: null, branch: null });
+  }
+});
+
+test('a pin that stands and cannot be read holds every call: the worker is never pinned again over it', () => {
+  const { conductor, worktree, other } = twoWorkers();
+  const agent = builder('unread-pin', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent)).output, undefined);
+  const pin = join(conductor, '.git/ddd-ts-kit/guard', `scope-${stateKey(agent)}.json`);
+  const unreadable = [
+    () => writeFileSync(pin, '{not json'),
+    () => writeFileSync(pin, '{}'),
+    () => chmodSync(pin, 0o000),
+  ];
+  for (const [index, spoil] of unreadable.entries()) {
+    spoil();
+    for (const command of [
+      `cd ${other} && echo x > src/contexts/shipping/notes.md`,
+      `cd ${worktree} && git status`,
+      'git status',
+    ]) {
+      const refused = run('pre-bash', bash(conductor, command, agent));
+      assert.equal(decision(refused), 'deny', `${index}: ${command}`);
+      assert.match(reason(refused), /The record of your scope, .* cannot be read/);
+    }
+    const written = write(join(other, 'src/contexts/shipping/CONTEXT.md'), agent);
+    assert.equal(decision(run('pre-write', { cwd: conductor, ...written })), 'deny', `${index}`);
+  }
+  chmodSync(pin, 0o600);
+});
+
+test('a write that names no worktree, where several workers have one, is told how to name it', () => {
+  const { other } = twoWorkers();
+  const agent = builder('relative-write', { cwd: other });
+  const relative = { tool_name: 'Write', tool_input: { file_path: 'src/contexts/shipping/CONTEXT.md', content: '' } };
+  const refused = run('pre-write', { cwd: other, ...relative, ...agent });
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /names no worktree, .* by its absolute path under the worktree of your briefing/);
+  assert.doesNotMatch(reason(refused), /holds no scope of a worker/);
 });
 
 test('the pin follows the worker: a call that starts in another checkout is judged against the worktree pinned', () => {

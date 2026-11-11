@@ -981,6 +981,7 @@ test('a commit puts back held files only when it records their restoration, and 
 test("a worker's own commit, a decision record of its slice included, and the trunk a merge brings in do not stop it", () => {
   const root = committed();
   const agent = { ...worker(root, 'ordering'), session_id: 'own', agent_id: 'builder-1' };
+  put(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'ordering', base: 'trunk' }));
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
   put(root, 'src/contexts/ordering/domain/order.ts', 'export class Order {}\n');
   put(root, 'docs/adr/0042-orders-are-numbered.md', '# Orders are numbered\n');

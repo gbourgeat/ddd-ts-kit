@@ -71,6 +71,9 @@ const STORY_ID = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
 const CONTEXT_NAME = /^[a-z][a-z0-9-]*$/;
 const GIT_REF = /^(?!-)[\p{L}\p{N}_./-]+$/u;
 const COMMIT_ID = /^[0-9a-f]{7,64}$/;
+// The merged sides a path is compared with, newest first, and the files of a folder read before a command.
+const COMPARED_SIDES = 16;
+const FOLDER_FILES = 5000;
 // A space is allowed (a project under "My Projects"); a quote, a backquote, a dollar or a backslash is not.
 const ABSOLUTE_PATH = /^\/[\p{L}\p{N} _@%+=:,./-]*$/u;
 const LABEL = /^[a-z][a-z -]*$/;
@@ -129,12 +132,9 @@ const GENERATORS = [
   [/\/domain\/(?:[^/]+\/)?services\/[^/]+\.service\.ts$/, 'domain-service <context> <Name>'],
   [/\/domain\/(?:[^/]+\/)?repositories\/[^/]+\.repository\.ts$/, 'repository <context> <Aggregate>'],
   [/\.command\.ts$/, 'command <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)'],
-  // Everywhere but in the presentation layer: `presentation/http/<resource>/<use-case>/*.query.ts`
-  // is the schema of a query string, written by hand.
-  [
-    /^(?!(?:.*\/)?presentation\/).*\.query\.ts$/,
-    'query <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)',
-  ],
+  // But in the presentation layer of a context, where `*.query.ts` is the schema of a query string,
+  // written by hand (`isQuerySchema`).
+  [/\.query\.ts$/, 'query <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)'],
   [
     /\.handler\.ts$/,
     'command|query <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)',
@@ -313,6 +313,8 @@ const VS_CODE_READERS = new Set([
   'resolve_memory_file_uri',
 ]);
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
+const UNREAD_PIN =
+  'The record of your scope, which the guard keeps since your first call, cannot be read, and the guard pins no worker twice: every call is held. Change nothing: end with your report, and tell the conductor to launch this worker again.';
 const UNREADABLE_COMMAND = `The guard could not read this command, and a worker runs none it cannot read: write it as shorter, separate commands. ${REPORT_TO_CONDUCTOR}`;
 const UNCOMPARED_NOTE =
   'ddd-ts-kit: `git status` did not answer in full, so what your last command changed outside your scope was not compared. Name it in your report, for the conductor.';
@@ -626,6 +628,19 @@ const PATH_COMMANDS = {
   truncate: { valued: ['-s', '-r', '--size', '--reference'], changes: 'all' },
 };
 
+// The commands that change who may read or write a file, or whether it may change: the options that
+// take a value, and whether the `first` operand is the mode or the owner.
+const ACCESS_COMMANDS = {
+  chmod: { valued: ['--reference'], first: true },
+  chown: { valued: ['--reference', '--from'], first: true },
+  chgrp: { valued: ['--reference'], first: true },
+  chattr: { valued: ['-v', '-p'], first: false },
+  setfacl: {
+    valued: ['-m', '-x', '-M', '-X', '--modify', '--remove', '--set', '--modify-file', '--remove-file', '--set-file'],
+    first: false,
+  },
+};
+
 // The commands of the kit that write no file: what it lists, describes, explains and reports, its
 // checks (`check` without `--baseline`, `lint` without `--fix`, `docs --check` without
 // `--stored-events`, `affected` without `--run`), the acceptance read without `--lock`, a briefing,
@@ -782,11 +797,11 @@ function strayFileVerdict(input) {
     return undefined;
   }
   const stray = writesOf(input).find(({ file }) => !findProject(dirname(file)) && !isFreePlace(file));
-  const pinned = readJson(sharedStateFile('scope', home, input));
-  if (!stray || !(isPin(pinned) || hasWorkerWorktree(home.root))) {
+  const { pinned } = readPin(home, input);
+  if (!stray || !(pinned || hasWorkerWorktree(home.root))) {
     return undefined;
   }
-  const where = isPin(pinned) ? `your worktree ${pinned.worktree}` : 'the worktree of your briefing';
+  const where = pinned ? `your worktree ${pinned.worktree}` : 'the worktree of your briefing';
   return {
     decision: home.mode === 'advise' ? 'ask' : 'deny',
     reason: `${stray.file} is outside every project: a worker writes in ${where}, and in the temp directory. ${REPORT_TO_CONDUCTOR}`,
@@ -2064,9 +2079,14 @@ function hasAnotherScope(root) {
   if (!common) {
     return false;
   }
-  const main = join(dirname(common), relative(repositoryTop(root), root));
+  const main = mainCheckout(root, common);
   const scoped = [...workerWorktrees(root), ...(existsSync(join(main, WORKER_SCOPE)) ? [main] : [])];
   return scoped.some((checkout) => realOf(checkout) !== realOf(root));
+}
+
+// The project in the main checkout of the repository, the folder that holds its common directory.
+function mainCheckout(root, common) {
+  return join(dirname(common), relative(repositoryTop(root), root));
 }
 
 function repositoryTop(from) {
@@ -2289,10 +2309,13 @@ function workerScope(project, input) {
 function pinnedScope(project, input) {
   const current = namedContext(project);
   const home = findProject(input.cwd ?? process.cwd()) ?? project;
-  const pin = pinFile(project, input);
-  let pinned = readJson(pin);
+  const read = readPin(project, input);
+  if (read.unread) {
+    return { context: current ?? 'unread', changed: UNREAD_PIN };
+  }
+  let { pinned } = read;
   const worktree = realpathSync(project.root);
-  if (!isPin(pinned)) {
+  if (!pinned) {
     const own = current ? project : namedContext(home) && home;
     if (!own || (!namesCheckout(input, own) && hasAnotherScope(own.root))) {
       return undefined;
@@ -2303,7 +2326,7 @@ function pinnedScope(project, input) {
       mode: own.mode,
       scope: recordedScope(own),
     };
-    writeState(pin, pinned);
+    writeState(read.file, pinned);
   }
   if (pinned.worktree !== worktree) {
     return current
@@ -2329,6 +2352,37 @@ function recordedScope(project) {
     baseCommit: named(file?.baseCommit, COMMIT_ID) ?? null,
     branch: named(file?.branch, GIT_REF) ?? null,
   };
+}
+
+// The pin of a worker, read where it is kept. A pin an earlier version of the guard took, in that
+// place or in the guard's folder of a checkout (the one the call starts in, the one it names, the
+// main one), recorded no scope: it is kept, with the scope the worktree it names records now, never
+// replaced by a pin of the place this call happens to stand in. A pin that stands there and is none
+// (cut short, rewritten, closed to reading) is `unread`: the worker is held, not pinned again.
+function readPin(project, input) {
+  const file = pinFile(project, input);
+  const pinned = readJson(file);
+  if (isPin(pinned)) {
+    return { file, pinned };
+  }
+  const earlier = [file, ...earlierPinFiles(project, input)].map(readJson).find(isEarlierPin);
+  if (earlier) {
+    const kept = { ...earlier, scope: recordedScope({ root: earlier.worktree }) };
+    writeState(file, kept);
+    return { file, pinned: kept };
+  }
+  return { file, unread: lstatSync(file, { throwIfNoEntry: false }) !== undefined };
+}
+
+function earlierPinFiles(project, input) {
+  const home = findProject(input.cwd ?? process.cwd()) ?? project;
+  const common = commonDirOf(project.root);
+  const roots = [home.root, project.root, ...(common ? [mainCheckout(project.root, common)] : [])];
+  return [...new Set(roots)].map((root) => stateFile('scope', { root }, input));
+}
+
+function isEarlierPin(value) {
+  return isRecord(value) && typeof value.worktree === 'string' && named(value.context, CONTEXT_NAME) !== undefined;
 }
 
 function pinFile(project, input) {
@@ -2357,8 +2411,8 @@ function withPinnedMode(project, input) {
   if (project?.mode !== 'off' || !isWorkerAgent(input)) {
     return project;
   }
-  const pinned = readJson(pinFile(project, input));
-  if (isPin(pinned) && inRepositoryOf(pinned.worktree, project.root) && ['advise', 'enforce'].includes(pinned.mode)) {
+  const { pinned } = readPin(project, input);
+  if (pinned && inRepositoryOf(pinned.worktree, project.root) && ['advise', 'enforce'].includes(pinned.mode)) {
     project.mode = pinned.mode;
   }
   return project;
@@ -2383,14 +2437,8 @@ function scopeRewrittenReason(pinned) {
   return `The scope file changed: ${WORKER_SCOPE} of your worktree still names the context "${pinned.context}", but its base, its base commit or its branch is not what it was at your first call. Change nothing until it is back: report to the conductor, who restores it.`;
 }
 
-// A pin of an earlier version of the guard recorded no scope: it is no pin, and the next call pins again.
 function isPin(value) {
-  return (
-    isRecord(value) &&
-    isRecord(value.scope) &&
-    typeof value.worktree === 'string' &&
-    named(value.context, CONTEXT_NAME) !== undefined
-  );
+  return isEarlierPin(value) && isRecord(value.scope);
 }
 
 function scopeChangedReason(pinned, current) {
@@ -2410,7 +2458,7 @@ function awayReason(pinned, project) {
 // worktrees: a path that forgot its worktree lands in the checkout of the conductor.
 function strayWriteReason(project, input) {
   return isWorkerAgent(input) && !workerScope(project, input) && hasWorkerWorktree(project.root)
-    ? `${project.root} holds no scope of a worker, and worker worktrees stand in this repository. Write the file by its absolute path under the worktree of your briefing. ${REPORT_TO_CONDUCTOR}`
+    ? `${namedContext(project) ? 'This call names no worktree, and several workers have one in this repository' : `${project.root} holds no scope of a worker, and worker worktrees stand in this repository`}. Write the file by its absolute path under the worktree of your briefing, and run a command as \`cd <worktree> && ...\`. ${REPORT_TO_CONDUCTOR}`
     : undefined;
 }
 
@@ -2980,10 +3028,24 @@ function handWrittenRoleReason(project, file) {
   if (E2E_SPEC.test(path)) {
     return `${path} is a new end-to-end spec. The spec of a use case is generated: \`npx ddd-ts-kit generate e2e <context> <UseCase> --json\`. Two are written by hand: a part of a spec split by behaviour, named after the spec it comes from (test/e2e/<use-case>-<behaviour>.e2e.spec.ts beside test/e2e/<use-case>.e2e.spec.ts), and a journey across use cases (test/e2e/journey-<name>.e2e.spec.ts).`;
   }
-  const generator = GENERATORS.find(([suffix]) => suffix.test(path));
+  const generator = isQuerySchema(project, path) ? undefined : GENERATORS.find(([suffix]) => suffix.test(path));
   return generator
     ? `${path} is a new file of a generated role. Create it with \`npx ddd-ts-kit generate ${generator[1]} --json\`, then fill the TODO(domain) markers.${POLICY_FILE.test(path) ? DECLARATIONS_HOME : ''}`
     : undefined;
+}
+
+// The schema of a query string, `*.query.ts` in the presentation layer of a context: of the context
+// itself (`<context>/presentation/`), of one of its modules or of what its modules share
+// (`<context>/<module>/presentation/`, `<context>/shared/presentation/`). A folder named
+// `presentation` anywhere else, or a context of that name, is no such layer.
+function isQuerySchema(project, path) {
+  const [, layer, inner] = path.slice(project.contextsDir.length + 1).split('/');
+  const layers = ['domain', 'application', 'infrastructure'];
+  return (
+    path.startsWith(`${project.contextsDir}/`) &&
+    /\.query\.ts$/.test(path) &&
+    (layer === 'presentation' || (inner === 'presentation' && !layers.includes(layer)))
+  );
 }
 
 // A value object of the shared kernel and its refusals are generated as those of a context are.
@@ -3614,8 +3676,8 @@ function switchTarget(subcommand, tail, moved) {
 
 // The worktree a worker is pinned to, or the one its command stands in, before its first call is over.
 function ownWorktree(project, input) {
-  const pinned = readJson(pinFile(project, input));
-  if (isPin(pinned)) {
+  const { pinned } = readPin(project, input);
+  if (pinned) {
     return pinned.worktree;
   }
   return namedContext(project) ? realpathSync(project.root) : undefined;
@@ -3928,7 +3990,10 @@ function folderLandingReason(project, input, command) {
   if (foreign) {
     return `A worker brings no link and no whole tree from outside its scope into it: \`${name}\` brings ${foreign.word.replaceAll(shell.UNKNOWN, '$(...)')}, outside your scope, into ${into}. ${REPORT_TO_CONDUCTOR}`;
   }
-  const linked = multiplyNamed(folder);
+  const linked = multiplyNamed(folder, { left: FOLDER_FILES });
+  if (linked === folder) {
+    return `${into} holds more files than the guard reads before a command (${FOLDER_FILES}), so it cannot see that none of them has another name elsewhere: \`${name}\` lands no file there. Write the file with the editor tools, or into a smaller folder. ${REPORT_TO_CONDUCTOR}`;
+  }
   if (linked) {
     return `${into} holds a file that has another name elsewhere (a hard link), ${projectPath(project, linked)}: what \`${name}\` lands in that folder could change the other file too. ${REPORT_TO_CONDUCTOR}`;
   }
@@ -3967,11 +4032,20 @@ function folderLanding({ words, directory }) {
   };
 }
 
-// The first file under `folder`, at any depth, that has another name elsewhere.
-function multiplyNamed(folder) {
+// The first file under `folder`, at any depth, that has another name elsewhere; `top` itself once
+// more files were read than `budget.left` allows.
+function multiplyNamed(folder, budget, top = folder) {
   for (const file of filesIn(folder)) {
+    budget.left -= 1;
+    if (budget.left < 0) {
+      return top;
+    }
     const stat = lstatSync(file, { throwIfNoEntry: false });
-    const found = stat?.isDirectory() ? multiplyNamed(file) : stat?.isFile() && stat.nlink > 1 ? file : undefined;
+    const found = stat?.isDirectory()
+      ? multiplyNamed(file, budget, top)
+      : stat?.isFile() && stat.nlink > 1
+        ? file
+        : undefined;
     if (found) {
       return found;
     }
@@ -4096,6 +4170,10 @@ function tableWrites(name, { words, directory, expression }) {
       ...at(word, name),
       below: recursive || (word.endsWith('/{}') && findReachesScope(expression)),
     }));
+  }
+  if (name in ACCESS_COMMANDS) {
+    const below = words.some((word) => /^(?:-[a-zA-Z]*R[a-zA-Z]*|--recursive)$/.test(word));
+    return accessOperands(name, words.slice(1)).map((word) => ({ ...at(word, name), below }));
   }
   if (name === 'dd') {
     return words.filter((word) => word.startsWith('of=')).map((word) => at(word.slice(3), 'dd'));
@@ -4256,6 +4334,17 @@ function valuedTargets(args, valued) {
     }
   }
   return targets;
+}
+
+// The files a command that changes who may read or write them is given: after the mode or the owner,
+// its first operand unless `--reference` gives it, and apart from the attributes of `chattr`. A mode
+// spelled as an option (`-w`) is none of the operands.
+function accessOperands(name, args) {
+  const { valued, first } = ACCESS_COMMANDS[name];
+  const referred = args.some((word) => /^--reference(?:=|$)/.test(word));
+  const operands = shell.operands(args, valued).filter((word) => name !== 'chattr' || !/^[+=]/.test(word));
+  const spelled = name === 'chmod' && args.some((word) => /^-[rwxXstugo]+$/.test(word));
+  return first && !referred && !spelled ? operands.slice(1) : operands;
 }
 
 function pathOperands(name, args) {
@@ -4460,7 +4549,8 @@ function linkTarget(place) {
 // worker (`settleNote`). The kit's own merge of the trunk, which brings the trunk's files in, is not
 // noted; nor are the packages around an install, which rewrites them.
 function noteBeforeCode(project, input, commands) {
-  if (commands.every((command) => isPureReader(command) || startsTrunkMerge(command))) {
+  const { base } = workerScope(project, input);
+  if (commands.every((command) => isPureReader(command) || startsTrunkMerge(command, base))) {
     return;
   }
   const session = sessionCheckout(project, input);
@@ -4522,10 +4612,22 @@ function listsBranches(tail) {
   );
 }
 
-function startsTrunkMerge(command) {
+// The kit's merge of the trunk of the worker: the one it finds by itself, or the base the scope
+// file recorded, named by `--trunk`. Asked for any other ref, it is a merge as another.
+function startsTrunkMerge(command, base) {
   return kitInvocations([command]).some(
-    ({ subcommand, args }) => subcommand === 'merge-trunk' && !args.includes('--continue'),
+    ({ subcommand, args }) =>
+      subcommand === 'merge-trunk' && !args.includes('--continue') && namesNoOtherTrunk(args, base),
   );
+}
+
+function namesNoOtherTrunk(args, base) {
+  const at = args.findIndex((arg) => arg === '--trunk' || arg.startsWith('--trunk='));
+  if (at === -1) {
+    return true;
+  }
+  const trunk = args[at].startsWith('--trunk=') ? args[at].slice('--trunk='.length) : args[at + 1];
+  return trunk !== undefined && trunk === base;
 }
 
 // An install of the lockfile, in any spelling the guard knows (`npm ci`, `npm clean-install`, a bare
@@ -4751,7 +4853,8 @@ function committedSince(checkout, from, outside, trunks) {
 // Those of `paths` that HEAD holds as one of `sides` does: a merge brought them in whole.
 function broughtIn(checkout, sides, paths) {
   const brought = new Set();
-  for (const side of sides) {
+  // The newest sides: a trunk merged again holds what its earlier merges brought in.
+  for (const side of sides.slice(0, COMPARED_SIDES)) {
     const differing = new Set(gitFields(checkout, ['diff', '--name-only', '-z', side, 'HEAD'], '\0'));
     for (const path of paths.filter((kept) => !differing.has(kept))) {
       brought.add(path);
@@ -4765,11 +4868,15 @@ function broughtIn(checkout, sides, paths) {
 // when `trunks` were read. Without a trunk apart from the branch checked out, every side is taken
 // as the trunk's.
 function mergedSides(checkout, from, trunks) {
-  return allMergedSides(checkout, from).filter(
-    (side) =>
-      trunks.length === 0 ||
-      trunks.some((trunk) => gitRun(checkout, ['merge-base', '--is-ancestor', side, trunk]).status === 0),
-  );
+  const sides = allMergedSides(checkout, from);
+  if (trunks.length === 0 || sides.length === 0) {
+    return sides;
+  }
+  // One walk for all of them: what the sides reach that no trunk does. A walk that fails, or whose
+  // answer is past what the guard reads, shows no side as the trunk's.
+  const apart = gitRun(checkout, ['rev-list', ...sides, '--not', ...trunks]);
+  const unheld = new Set(apart.stdout.split('\n'));
+  return apart.status === 0 ? sides.filter((side) => !unheld.has(side)) : [];
 }
 
 // The commits the trunks of a worker name now: the base its scope file recorded at the pin (the
