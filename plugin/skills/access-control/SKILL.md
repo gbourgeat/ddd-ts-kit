@@ -65,7 +65,7 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
   generated handler spec already proves that an actor without it is refused.
 - A guard is another thing: a control at the edge over a set of routes, named in `guards` of
   a `@RouteGroup` or of a controller (`Authenticated`, `HasRole(Role.Auditor)`, `HasScope('invoices:read')`, `TenantMember`, `Public`, or a
-  guard of the project in `presentation/http/guards/*.guard.ts`). It reads the caller and the
+  guard of the project in `presentation/http/guards/*.guard.ts`, `shared/presentation/http/guards/` in a context with modules). It reads the caller and the
   request, answers 401 or 403 before the controller runs (before the request is read when it
   decides on the caller alone, through `admit`), and never loads an element
   (`presentation/guard-at-the-edge`). It never replaces the permission: a job or an event
