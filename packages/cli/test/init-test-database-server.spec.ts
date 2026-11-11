@@ -22,10 +22,19 @@ describe('the test database of a project on a PostgreSQL server', () => {
       expect(open).toContain("import { cloneDatabase } from '$test/support/test-database-clone';");
       expect(open).toContain(`const clone = await cloneDatabase(url);\n  ${connecting}`);
       expect(open).toContain(`${closing}\n      await clone.drop();`.replace('\n      ', closingIndent(orm)));
+      expect(open).toContain('  readonly url?: string;');
+      expect(open).toMatch(/return \{\n? *url: clone\.url,/);
       // Nothing connects to the database the URL names: it is only copied.
       expect(open).not.toMatch(/(?:connectToDatabase|createClient|createDataSource)\(url\)/);
     },
   );
+
+  it('names the copy in the configuration of the application under test, and what stands for a database in process', () => {
+    const support = read(initProject(), 'test/e2e/support/start-application.ts');
+
+    expect(support).toContain("testEnvironment({ DATABASE_URL: database.url ?? 'postgres://in-process/tests' })");
+    expect(support).not.toContain('DATABASE_URL: url');
+  });
 
   it('copies through the maintenance database, so that the files that start together are no session of the copied one', () => {
     const clone = read(initProject(), CLONE);
@@ -71,7 +80,8 @@ describe('the files of an end-to-end run with Vitest', () => {
   it('run at the same time whatever DATABASE_URL, each on a database of its own', () => {
     const config = read(initProject('--orm', 'prisma'), 'vitest.e2e.config.ts');
 
-    expect(config).toContain('a copy of the one\n    // DATABASE_URL names (test/support/test-database-clone.ts)');
+    expect(config).toContain('a copy of the one\n// DATABASE_URL names (test/support/test-database-clone.ts)');
+    expect(config).toMatch(/on a server too\.\nexport default defineConfig\(\{/);
     expect(config).not.toContain('fileParallelism');
   });
 

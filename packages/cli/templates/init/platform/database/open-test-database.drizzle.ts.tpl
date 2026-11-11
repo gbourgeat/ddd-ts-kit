@@ -11,6 +11,13 @@ import { cloneDatabase } from '{{alias.test}}/support/test-database-clone{{alias
 export interface TestDatabase {
   readonly persistence: Persistence;
 
+  /**
+   * On a server, the address of the copy this database is: what the configuration of an application
+   * under test names, so that nothing it opens from that address reaches the migrated database.
+   * Absent in process.
+   */
+  readonly url?: string;
+
   /** Empties every table{{#if audit.on}} but the audit trail, which is append-only whoever asks{{/if}}: call it before each test. */
   reset(): Promise<void>;
 
@@ -66,6 +73,7 @@ async function openServer(url: string): Promise<TestDatabase> {
   const statements = new TableStatements();
 
   return {
+    url: clone.url,
     persistence: persistenceOver(connection),
     reset: async () => {
       await connection.db.execute(sql.raw(statements.emptying()));
