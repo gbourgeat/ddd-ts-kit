@@ -58,5 +58,7 @@ export class TraceColumns {
 }
 
 function columnNameOf(record: unknown): unknown {
-  return typeof record === 'object' && record !== null && 'column_name' in record ? record.column_name : undefined;
+  const name: unknown = Reflect.get(Object(record), 'column_name');
+
+  return name;
 }

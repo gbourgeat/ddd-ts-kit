@@ -166,11 +166,11 @@ describe('PrismaReadModelTable of a table whose columns refuse NULL', () => {
   const later = { eventId: 'evt-2', occurredAt: new Date('2026-10-10T12:01:00.000Z') };
   const scope = new AsyncLocalStorageExecutionScope();
 
-  const strict = async () => {
+  const strict = async (schema?: string) => {
     await database.truncate();
 
     const unitOfWork = createPrismaUnitOfWork(database.prisma);
-    const options = { ...STRICT_MODEL, tenant: { scope } };
+    const options = { ...STRICT_MODEL, tenant: { scope }, ...(schema === undefined ? {} : { schema }) };
 
     return { table: new PrismaReadModelTable<StrictRow, Prisma.TransactionClient>(unitOfWork, options), unitOfWork };
   };
@@ -195,13 +195,13 @@ describe('PrismaReadModelTable of a table whose columns refuse NULL', () => {
   });
 
   it('refuses the same way to empty a row it holds, each time, and on the copy of a rebuild', async () => {
-    const { table } = await strict();
+    const { table } = await strict('public');
 
     await asTenant(scope, 'acme', async () => {
       await table.insert({ key: 's1', row: { id: 's1', title: 'held', note: 'n' }, stamp });
 
       await expect(table.replace({ key: 's1', row: undefined, stamp: later }, stamp)).rejects.toThrow(
-        'check (deleted or ("title" is not null))',
+        'The read model table public.strict_rows cannot hold the trace of a deleted row: "title" refuses NULL',
       );
 
       await expect(table.shadow().insert({ key: 's3', row: undefined, stamp })).rejects.toThrow(
