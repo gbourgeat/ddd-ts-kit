@@ -1,5 +1,5 @@
 // Run by the knex CLI under plain node, which resolves no alias: it names the compiled schema by its path.
-import { addAppointmentDocuments } from '../dist/src/contexts/scheduling/infrastructure/persistence/add-appointment-documents.schema.js';
+import { addAppointmentDocuments } from '../dist/src/contexts/scheduling/shared/infrastructure/persistence/add-appointment-documents.schema.js';
 
 export const up = (knex) => addAppointmentDocuments(knex);
 

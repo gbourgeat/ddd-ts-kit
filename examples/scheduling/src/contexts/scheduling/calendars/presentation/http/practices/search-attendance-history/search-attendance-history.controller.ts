@@ -14,7 +14,7 @@ import {
   type AttendanceEntry,
 } from '@/contexts/scheduling/calendars/application/ports/attendance-history.port';
 import { SearchAttendanceHistoryQuery } from '@/contexts/scheduling/calendars/application/queries/search-attendance-history/search-attendance-history.query';
-import { PracticesRoutes } from '@/contexts/scheduling/presentation/http/practices.routes';
+import { PracticesRoutes } from '@/contexts/scheduling/shared/presentation/http/practices.routes';
 import { SearchAttendanceHistoryLine } from '@/contexts/scheduling/calendars/presentation/http/practices/search-attendance-history/search-attendance-history.line';
 import { SearchAttendanceHistoryParams } from '@/contexts/scheduling/calendars/presentation/http/practices/search-attendance-history/search-attendance-history.params';
 

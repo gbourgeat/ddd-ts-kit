@@ -1,5 +1,5 @@
 import { personalFields, type PersonalFieldsOptions } from '@ddd-ts-kit/kernel';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema';
 import type { AppointmentRow } from '@/contexts/scheduling/calendars/infrastructure/persistence/appointment-row.schema';
 
 /** The table as the erasure reaches it: tenant data, every statement confined to the network of the work. */

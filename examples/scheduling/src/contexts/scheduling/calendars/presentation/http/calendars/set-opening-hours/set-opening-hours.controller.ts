@@ -4,7 +4,7 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { SetOpeningHoursCommand } from '@/contexts/scheduling/calendars/application/commands/set-opening-hours/set-opening-hours.command';
 import { SetOpeningHoursParams } from '@/contexts/scheduling/calendars/presentation/http/calendars/set-opening-hours/set-opening-hours.params';
 import { SetOpeningHoursBody } from '@/contexts/scheduling/calendars/presentation/http/calendars/set-opening-hours/set-opening-hours.body';
-import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
+import { CalendarsRoutes } from '@/contexts/scheduling/shared/presentation/http/calendars.routes';
 
 const params = classSchema(SetOpeningHoursParams);
 const body = classSchema(SetOpeningHoursBody);

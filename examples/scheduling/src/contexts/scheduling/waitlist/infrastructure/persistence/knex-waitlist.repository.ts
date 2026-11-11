@@ -11,7 +11,7 @@ import {
 } from '@ddd-ts-kit/knex';
 import type { Waitlist } from '@/contexts/scheduling/waitlist/domain/aggregates/waitlist.aggregate';
 import { WaitlistRepository } from '@/contexts/scheduling/waitlist/domain/repositories/waitlist.repository';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema';
 import { WaitlistMapper } from '@/contexts/scheduling/waitlist/infrastructure/persistence/waitlist.mapper';
 import type {
   WaitlistColumns,

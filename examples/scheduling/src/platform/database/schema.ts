@@ -3,7 +3,7 @@ import { createAuditTables } from '@ddd-ts-kit/audit/knex';
 import { createJobTable, createOutboxTables, createProcessTable } from '@ddd-ts-kit/knex';
 import { createRelationTupleTables } from '@/platform/auth/relationships/create-relation-tuple-tables';
 // ddd-ts-kit:imports
-import { createSchedulingTables } from '@/contexts/scheduling/infrastructure/persistence/create-scheduling-tables.schema';
+import { createSchedulingTables } from '@/contexts/scheduling/shared/infrastructure/persistence/create-scheduling-tables.schema';
 import { createIdentityTables } from '@/contexts/identity/infrastructure/persistence/create-identity-tables.schema';
 import { createNotificationTables } from '@/contexts/notification/infrastructure/persistence/create-notification-tables.schema';
 import { createAnalyticsTables } from '@/contexts/analytics/infrastructure/persistence/create-analytics-tables.schema';

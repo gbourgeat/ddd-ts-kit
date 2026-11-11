@@ -6,7 +6,7 @@ import {
   KnexProcessedEventStore,
   KnexProcessStore,
 } from '@ddd-ts-kit/knex';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema';
 import type { DatabaseConnection } from '@/platform/database/connect-to-database';
 import type { Persistence } from '@/platform/database/persistence';
 import { MESSAGING_SCHEMA } from '@/platform/database/schema';

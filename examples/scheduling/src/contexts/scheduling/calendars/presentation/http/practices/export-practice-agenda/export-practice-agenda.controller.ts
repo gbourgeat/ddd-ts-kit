@@ -3,10 +3,10 @@ import { Criteria, cursorPage, type QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import type { AgendaEntry } from '@/contexts/scheduling/calendars/application/ports/agenda.port';
 import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/calendars/application/queries/search-practice-agenda/search-practice-agenda.query';
-import { PracticesRoutes } from '@/contexts/scheduling/presentation/http/practices.routes';
+import { PracticesRoutes } from '@/contexts/scheduling/shared/presentation/http/practices.routes';
 import { ExportPracticeAgendaParams } from '@/contexts/scheduling/calendars/presentation/http/practices/export-practice-agenda/export-practice-agenda.params';
-import type { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
-import { AgendaLine } from '@/contexts/scheduling/presentation/http/shared/agenda-line.schema';
+import type { AgendaEntrySerializer } from '@/contexts/scheduling/shared/presentation/http/shared/agenda-entry.serializer';
+import { AgendaLine } from '@/contexts/scheduling/shared/presentation/http/shared/agenda-line.schema';
 
 const params = classSchema(ExportPracticeAgendaParams);
 const line = classSchema(AgendaLine, { shared: true });

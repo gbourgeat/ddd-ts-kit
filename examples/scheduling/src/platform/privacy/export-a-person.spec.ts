@@ -26,7 +26,7 @@ import { aPerson } from '@/contexts/identity/test/builders/person.builder';
 import { KnexContacts } from '@/contexts/notification/infrastructure/persistence/knex-contacts.repository';
 import { KnexAppointmentRepository } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment.repository';
 import { KnexPractitionerDirectory } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-practitioner-directory.repository';
-import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
+import { anAppointment } from '@/contexts/scheduling/calendars/test/builders/appointment.builder';
 
 const NOW = new Date('2026-02-01T09:00:00.000Z');
 

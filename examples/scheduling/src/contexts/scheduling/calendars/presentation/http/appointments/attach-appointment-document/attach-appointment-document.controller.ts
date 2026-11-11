@@ -2,7 +2,7 @@ import { acceptedSchema, Controller, type Accepted, type HttpRequest, type Incom
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/calendars/application/commands/attach-appointment-document/attach-appointment-document.command';
-import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
+import { AppointmentsRoutes } from '@/contexts/scheduling/shared/presentation/http/appointments.routes';
 import { AttachAppointmentDocumentParams } from '@/contexts/scheduling/calendars/presentation/http/appointments/attach-appointment-document/attach-appointment-document.params';
 
 const params = classSchema(AttachAppointmentDocumentParams);

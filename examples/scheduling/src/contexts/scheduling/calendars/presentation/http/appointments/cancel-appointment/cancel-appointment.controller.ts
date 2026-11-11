@@ -4,7 +4,7 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { CancelAppointmentCommand } from '@/contexts/scheduling/calendars/application/commands/cancel-appointment/cancel-appointment.command';
 import { CancelAppointmentParams } from '@/contexts/scheduling/calendars/presentation/http/appointments/cancel-appointment/cancel-appointment.params';
 import { CancelAppointmentBody } from '@/contexts/scheduling/calendars/presentation/http/appointments/cancel-appointment/cancel-appointment.body';
-import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
+import { AppointmentsRoutes } from '@/contexts/scheduling/shared/presentation/http/appointments.routes';
 
 const params = classSchema(CancelAppointmentParams);
 const body = classSchema(CancelAppointmentBody);

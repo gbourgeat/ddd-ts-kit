@@ -34,7 +34,7 @@ import { AppointmentStatus } from '@/contexts/scheduling/calendars/domain/vocabu
 import { KnexAgenda } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-agenda.repository';
 import { KnexAppointmentRepository } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-appointment.repository';
 import { KnexPractitionerDirectory } from '@/contexts/scheduling/calendars/infrastructure/persistence/knex-practitioner-directory.repository';
-import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
+import { anAppointment } from '@/contexts/scheduling/calendars/test/builders/appointment.builder';
 
 const NOW = new Date('2026-02-01T09:00:00.000Z');
 const PDF = '%PDF-1.7\n%%EOF\n';

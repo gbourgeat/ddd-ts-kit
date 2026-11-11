@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsInt, IsString, Min, ValidateNested } from 'class-validator';
-import { OpeningRangeDto } from '@/contexts/scheduling/presentation/http/shared/opening-range.dto';
+import { OpeningRangeDto } from '@/contexts/scheduling/shared/presentation/http/shared/opening-range.dto';
 
 export class GetOpeningHoursAnswer {
   @IsString()

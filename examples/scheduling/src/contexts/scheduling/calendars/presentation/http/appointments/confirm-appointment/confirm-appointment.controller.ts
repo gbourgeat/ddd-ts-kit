@@ -3,7 +3,7 @@ import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { ConfirmAppointmentCommand } from '@/contexts/scheduling/calendars/application/commands/confirm-appointment/confirm-appointment.command';
 import { ConfirmAppointmentParams } from '@/contexts/scheduling/calendars/presentation/http/appointments/confirm-appointment/confirm-appointment.params';
-import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
+import { AppointmentsRoutes } from '@/contexts/scheduling/shared/presentation/http/appointments.routes';
 
 const params = classSchema(ConfirmAppointmentParams);
 
