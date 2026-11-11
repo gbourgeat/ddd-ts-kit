@@ -1,0 +1,3 @@
+**Under Nest 12.3 over Express, a body too large is still answered with its limit.** Since 12.3 the Express adapter of Nest hands the error of its parser as the `cause` of an `HttpException`, so the 413 of `@ddd-ts-kit/http` said `The body is larger than what the server reads.` where it said `The body is larger than 102400 bytes.` The limit and the type of the error are now read on that cause too: the log line of a body that is not JSON carries `errorType: 'entity.parse.failed'` under Nest over Express, as under Express alone, where it carried `BadRequestException`.
+
+To move: a dashboard or an alert that filters the refusals of the edge on `errorType: 'BadRequestException'` filters on `entity.parse.failed`.

@@ -103,7 +103,7 @@ describe.each([
   ['Express', startExpress, 'entity.parse.failed'],
   ['Fastify', startFastify, 'FST_ERR_CTP_INVALID_JSON_BODY'],
   // Nest turns the error of the parser into an HttpException of its own before any filter sees it.
-  ['Nest over Express', nestOver('express'), 'BadRequestException'],
+  ['Nest over Express', nestOver('express'), 'entity.parse.failed'],
   ['Nest over Fastify', nestOver('fastify'), 'HttpException'],
 ] as const)('a body %s refuses before its route', (_name, start, errorType) => {
   it('is logged by its type and its status, never by what the body holds', async () => {
