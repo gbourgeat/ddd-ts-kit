@@ -9,6 +9,7 @@ import { named } from '../named';
 import { openScope } from '../open-scope';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
+import { actingRole } from './e2e/acting-role';
 import { reactionOf, type JobStart, type Reaction } from './e2e/reaction-of';
 import { tracedCommand } from './traced-command';
 import { isControlPlane } from '../../config/is-control-plane';
@@ -42,12 +43,15 @@ export const e2eKind: Kind = {
       const traced = tracedCommand(scope, name);
       const command = `{ name: 'command ${name.pascal}Command'${traced.saved} }`;
       const tree = spanTree(`${endpoint.method} ${endpoint.path}`, command);
+      const { written: role, roleImport } = actingRole(scope);
+      const namesRole = endpoint.protected === true && roleImport !== '';
+      const actor = { role, roleImport, namesRole, tenant: tenantOf(scope) };
 
       scope.ws.create(
         spec,
         renderTemplate(
           'e2e/e2e.spec.ts.tpl',
-          vars(scope, { name: named(name), e2e: { ...endpoint, ...traced, tree, tenant: tenantOf(scope) } }),
+          vars(scope, { name: named(name), e2e: { ...endpoint, ...traced, tree, ...actor } }),
         ),
       );
     }

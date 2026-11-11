@@ -11,6 +11,9 @@ import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 {{#if e2e.traced}}
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
 {{/if}}
+{{#if e2e.namesRole}}
+{{e2e.roleImport}}
+{{/if}}
 import { startApplication, type RunningApplication } from '{{alias.test}}/e2e/support/start-application{{alias.ext}}';
 {{#if e2e.traced}}
 import { storyOf } from '{{alias.test}}/e2e/support/story-of{{alias.ext}}';
@@ -63,7 +66,7 @@ describe('{{name.title}}, end to end', () => {
 {{#if authz.rebac}}
     await application.relate({ object: 'context:{{context.kebab}}', relation: 'operator', subject: 'user:ada' });
 {{/if}}
-    const ada = await application.as({ id: 'ada', roles: ['admin']{{e2e.tenant}} });
+    const ada = await application.as({ id: 'ada', roles: [{{e2e.role}}]{{e2e.tenant}} });
 
     const trace = await tracing.traceOf(async () => {
       expectStatus(await ada.{{e2e.call}}('{{e2e.samplePath}}'{{e2e.body}}), {{e2e.status}});
@@ -88,7 +91,7 @@ describe('{{name.title}}, end to end', () => {
 {{#if authz.rebac}}
     await application.relate({ object: 'context:{{context.kebab}}', relation: 'operator', subject: 'user:ada' });
 {{/if}}
-    const ada = await application.as({ id: 'ada', roles: ['admin']{{e2e.tenant}} });
+    const ada = await application.as({ id: 'ada', roles: [{{e2e.role}}]{{e2e.tenant}} });
 
     const response = await ada.{{e2e.call}}('{{e2e.samplePath}}'{{e2e.body}});
 {{/if}}

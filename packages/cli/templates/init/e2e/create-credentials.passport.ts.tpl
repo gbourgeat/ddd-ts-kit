@@ -4,15 +4,28 @@ import type { HttpHeaders } from '@ddd-ts-kit/testing/e2e';
 import { SignJWT, exportSPKI, generateKeyPair, type CryptoKey } from 'jose';
 import { actorOfToken } from '{{alias.platform}}/auth/authentication/actor-of-token{{alias.ext}}';
 import { bearerStrategy } from '{{alias.platform}}/auth/authentication/bearer-strategy{{alias.ext}}';
+{{#if authz.roles}}
+import type { Role } from '{{alias.platform}}/auth/authorization/role{{alias.ext}}';
+{{/if}}
 import { authEnvironment } from '{{alias.test}}/e2e/support/auth-environment{{alias.ext}}';
 
 const issuer = authEnvironment.AUTH_ISSUER;
 const audience = authEnvironment.AUTH_AUDIENCE;
 
+{{#if authz.roles}}
+/** Who a test calls as: the subject, the roles and the tenant its token carries. A role is one the platform declares (`Role.Admin`): another does not compile. */
+{{/if}}
+{{#unless authz.roles}}
 /** Who a test calls as: the subject, the roles and the tenant its token carries. */
+{{/unless}}
 export interface TestActor {
   readonly id: string;
+{{#if authz.roles}}
+  readonly roles?: readonly Role[];
+{{/if}}
+{{#unless authz.roles}}
   readonly roles?: readonly string[];
+{{/unless}}
   readonly tenantId?: string;
 }
 

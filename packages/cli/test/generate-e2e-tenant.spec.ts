@@ -36,7 +36,7 @@ describe('generate e2e', () => {
   it('acts in a tenant where the project is multi-tenant, as a tenant-scoped repository asks', () => {
     const spec = specOf('--tenancy', 'shared-table');
 
-    expect(spec.match(/roles: \['admin'\], tenantId: 'acme' \}/g)).toHaveLength(2);
+    expect(spec.match(/roles: \[Role\.Admin\], tenantId: 'acme' \}/g)).toHaveLength(2);
   });
 
   it('writes no tenant where the project has none', () => {
