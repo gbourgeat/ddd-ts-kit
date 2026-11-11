@@ -8,7 +8,6 @@ export {
   MODULE_LAYERS,
   MODULE_TEST_FOLDERS,
   SHARED_FOLDER,
-  SHARED_FOLDERS,
   TEST_FOLDER,
 } from './module-layers';
 export { modulePlacement } from './module-placement';
