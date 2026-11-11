@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:055c3549c28ac1c7 -->
+<!-- translation-of: coding-agents.md sha256:ed4bc6ca288fed9a -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -180,7 +180,10 @@ périmètre est fixé au premier appel du *worker* : un fichier de périmètre s
 l'arrête jusqu'à ce que le chef d'orchestre le rétablisse, et le mode de la garde est fixé avec lui :
 une config du *worktree* qui éteint la garde, ou qui dépasse ce que la garde lit, ne libère pas un
 *worker*, son changement étant comparé comme tout autre. Une branche que le *worker* fusionne dans la
-sienne est son travail : seul ce que le tronc contient est au tronc. Le `merge-trunk` du kit n'est pas noté,
+sienne est son travail : seul ce que le tronc contient est au tronc. Le tronc est la `base` que
+note son fichier de périmètre (une branche d'intégration aussi bien que la principale), la branche
+que nomme `origin/HEAD`, `main` ou `master` ; une fusion de toute autre branche est retenue sans
+commande pour la défaire, et le *worker* la signale au chef d'orchestre. Le `merge-trunk` du kit n'est pas noté,
 et une installation du *lockfile* laisse les paquets hors de la note. Il refuse un changement de
 dépendance et un autre formateur que `npm run format`. L'`architecture-reviewer`, le
 `domain-explorer` et le `story-verifier` ne changent aucun fichier d'un projet par le *shell*, ni

@@ -655,3 +655,22 @@ test('at its stop, a builder is told the files outside its scope its branch comm
   run('pre-bash', bash(root, 'git status', unknown));
   assert.equal(run('subagent-stop', { cwd: root, ...unknown, stop_hook_active: false }).output, undefined);
 });
+
+test('at its stop, what a builder merged of the integration branch its scope file names as its base is not its own', () => {
+  const root = committed();
+  git(root, 'branch', '-M', 'main');
+  git(root, 'checkout', '--quiet', '-b', 'work/wave-1');
+  const base = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
+  git(root, 'checkout', '--quiet', '-b', 'work/ordering');
+  const scope = { context: 'ordering', base: 'work/wave-1', baseCommit: base };
+  put(root, '.ddd-ts-kit/worker.json', JSON.stringify(scope));
+  git(root, 'checkout', '--quiet', 'work/wave-1');
+  put(root, 'src/platform/of-the-wave.ts', 'export {};\n');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'feat(platform): of the wave');
+  git(root, 'checkout', '--quiet', 'work/ordering');
+  git(root, 'merge', '--quiet', '--no-ff', '--no-verify', '--message', 'merge the wave', 'work/wave-1');
+  const agent = builder('merged-the-wave');
+  run('pre-bash', bash(root, 'git status', agent));
+  assert.equal(run('subagent-stop', { cwd: root, ...agent, stop_hook_active: false }).output, undefined);
+});

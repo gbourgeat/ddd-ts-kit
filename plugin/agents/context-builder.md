@@ -73,8 +73,10 @@ install of its package manager), never an install that names a package.
   `rm`, `touch`, `git checkout -- <path>` and `git restore` to the same scope as a write, and
   refuses one outside it, or to a path only the shell knows (`"$FILE"`). Your inline code, your
   scripts and the tests you run are checked after the fact: a shared file they changed stops you
-  until you put it back as the guard says, with the command it names. Output to `/dev/null` or to
-  the system temp directory stays free.
+  until you put it back as the guard says, with the command it names. What `merge-trunk` brings in
+  of your base is not yours to put back; when the guard holds a merge and names no command, undo
+  nothing and report the merge to the conductor. Output to `/dev/null` or to the system temp
+  directory stays free.
 - Your git changes your worktree only: run it as `cd <worktree> && ...`. From any other checkout
   it reads (`status`, `log`, `diff`), and the guard refuses the rest: the conductor lands your
   branch, and no worker removes a worktree or writes a ref by `update-ref`. Your git keeps to your

@@ -4560,31 +4560,46 @@ function committedSince(checkout, from, outside) {
       paths.set(fields[index + 1], fields[index]);
     }
   }
-  for (const side of mergedSides(checkout, from)) {
-    const differing = new Set(gitFields(checkout, ['diff', '--name-only', '-z', side, 'HEAD'], '\0'));
-    for (const path of [...paths.keys()].filter((kept) => !differing.has(kept))) {
-      paths.delete(path);
-    }
+  for (const path of broughtIn(checkout, mergedSides(checkout, from), [...paths.keys()])) {
+    paths.delete(path);
   }
   return paths;
 }
 
-// The other parents of the merges on the first-parent line from `from` to HEAD that the trunk holds:
+// Those of `paths` that HEAD holds as one of `sides` does: a merge brought them in whole.
+function broughtIn(checkout, sides, paths) {
+  const brought = new Set();
+  for (const side of sides) {
+    const differing = new Set(gitFields(checkout, ['diff', '--name-only', '-z', side, 'HEAD'], '\0'));
+    for (const path of paths.filter((kept) => !differing.has(kept))) {
+      brought.add(path);
+    }
+  }
+  return brought;
+}
+
+// The other parents of the merges on the first-parent line from `from` to HEAD that a trunk holds:
 // a branch of the worker merged back is the worker's own work. Without a trunk apart from the branch
 // checked out, every side is taken as the trunk's.
 function mergedSides(checkout, from) {
-  const trunk = trunkOf(checkout);
+  const trunks = trunksOf(checkout);
   return allMergedSides(checkout, from).filter(
-    (side) => trunk === undefined || gitRun(checkout, ['merge-base', '--is-ancestor', side, trunk]).status === 0,
+    (side) =>
+      trunks.length === 0 ||
+      trunks.some((trunk) => gitRun(checkout, ['merge-base', '--is-ancestor', side, trunk]).status === 0),
   );
 }
 
-// The trunk of the repository, the one origin/HEAD names, else main or master, when it is not the
-// branch checked out.
-function trunkOf(checkout) {
+// The trunks a worker may merge: the base its scope file records (the trunk of the repository, or
+// the integration branch its worktree was cut from), the one origin/HEAD names, main and master,
+// each when it exists and is not the branch checked out.
+function trunksOf(checkout) {
   const current = git(checkout, ['symbolic-ref', '--quiet', 'HEAD'])?.trim();
-  return ['refs/remotes/origin/HEAD', 'refs/heads/main', 'refs/heads/master'].find(
-    (ref) => ref !== current && git(checkout, ['rev-parse', '--verify', '--quiet', ref]) !== undefined,
+  const base = named(readJson(join(checkout.root, WORKER_SCOPE))?.base, GIT_REF);
+  return [...(base ? [base] : []), 'refs/remotes/origin/HEAD', 'refs/heads/main', 'refs/heads/master'].filter(
+    (ref) =>
+      ![ref, `refs/heads/${ref}`].includes(current) &&
+      git(checkout, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]) !== undefined,
   );
 }
 
@@ -4727,7 +4742,39 @@ function recordsRestoration(project, input, { now, since, left }) {
   );
 }
 
+// What a merge brought in is not put back path by path, which would undo the other side in the
+// branch: the worker is given no step for it, and reports it.
 function putBackReason(project, state, left) {
+  const merged = mergedIn(project, state, left);
+  const own = left.filter(([path]) => !merged.includes(path));
+  const said = [
+    ...(own.length > 0 ? [ownChangesReason(project, state, own)] : []),
+    ...(merged.length > 0
+      ? [
+          `A merge brought files outside your scope into your branch: ${merged.join(', ')}. Its other side is no trunk the guard knows (the \`base\` of ${WORKER_SCOPE}, origin/HEAD, main, master), so they are held as changes of your branch. Undo nothing, by \`git checkout\`, \`git rm\` or a reset: stop here and report the merge to the conductor, who knows what it brought in.`,
+        ]
+      : []),
+  ];
+  return said.join(' ');
+}
+
+// The held paths a commit since changed and that HEAD holds as a side merged since does.
+function mergedIn(project, { now, since }, left) {
+  const merged = new Set();
+  for (const head of new Set(left.map(([, target]) => target.head))) {
+    const committed = left
+      .filter(
+        ([path, target]) => target.head === head && head !== now.head && commitsOf(project, since, head).has(path),
+      )
+      .map(([path]) => path);
+    for (const path of committed.length > 0 ? broughtIn(project, allMergedSides(project, head), committed) : []) {
+      merged.add(path);
+    }
+  }
+  return [...merged];
+}
+
+function ownChangesReason(project, state, left) {
   const steps = left.map((held) => putBackStep(project, state, held)).filter((step) => step.command);
   const afterwards = steps.flatMap((step) => (step.after ? [`, then \`${step.after}\``] : [])).join('');
   const commit = steps.some((step) => step.after !== undefined)
@@ -4737,7 +4784,7 @@ function putBackReason(project, state, left) {
     ? ` A file already changed before that command is held to its content then, kept in ${GUARD_HELD}/.`
     : '';
 
-  return `Code your commands ran changed files outside your scope: ${left.map(([path]) => path).join(', ')}. Put them back before anything else (${steps.map((step) => `\`${step.command}\``).join(', then ')}${commit}: allowed for these files), then change only files of your scope.${kept} ${REPORT_TO_CONDUCTOR}`;
+  return `Your commands, or another session, changed files outside your scope: ${left.map(([path]) => path).join(', ')}. Put them back before anything else (${steps.map((step) => `\`${step.command}\``).join(', then ')}${commit}: allowed for these files), then change only files of your scope.${kept} ${REPORT_TO_CONDUCTOR}`;
 }
 
 // The command that brings one held file back to the state it is held to: its content before the

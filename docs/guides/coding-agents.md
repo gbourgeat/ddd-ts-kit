@@ -165,7 +165,10 @@ with the script that rewrote it, not held: the worker leaves it out of its commi
 call: a scope file removed or changed stops it until the conductor restores it, and the mode of the
 guard is pinned with it, so a config of the worktree that turns the guard off, or grows past what
 the guard reads, does not lift a worker, its change being compared as any other. A branch the worker
-merges into its own is its work: only what the trunk holds is the trunk's. The kit's own
+merges into its own is its work: only what the trunk holds is the trunk's. The trunk is the `base`
+its scope file records (an integration branch as well as the main one), the branch `origin/HEAD`
+names, `main` or `master`; a merge of any other branch is held without a command to undo it, and
+the worker reports it to the conductor. The kit's own
 `merge-trunk` is not noted, and an install of the lockfile leaves the packages out of the note. It
 refuses a dependency change and another formatter than `npm run format`. The `architecture-reviewer`, the
 `domain-explorer` and the `story-verifier` change no file of a project by the shell, nor its work
