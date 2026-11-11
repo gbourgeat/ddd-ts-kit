@@ -179,3 +179,27 @@ describe('expectProblem with facts', () => {
     expect(() => expectProblem({ ...response, body: { status: 409 } }, { status: 409, facts: { grid: 15 } })).toThrow();
   });
 });
+
+describe('the codes a caller names', () => {
+  type OrderCode = 'ORDER_ALREADY_PAID' | 'EMPTY_ORDER';
+
+  const response = {
+    status: 409,
+    headers: { 'content-type': 'application/problem+json' },
+    body: { status: 409, code: 'EMPTY_ORDER' },
+  };
+
+  it('are the only ones the compiler lets a refusal be expected with', () => {
+    expect(expectRefusal<OrderCode>(refuse, 'ORDER_ALREADY_PAID')).toBeInstanceOf(OrderError);
+
+    // @ts-expect-error -- a code the caller did not name does not compile
+    expect(() => expectRefusal<OrderCode>(refuse, 'ORDER_ALREADY_PAYED')).toThrow();
+  });
+
+  it('are the only ones the compiler lets a problem be expected with', () => {
+    expect(expectProblem<OrderCode>(response, { status: 409, code: 'EMPTY_ORDER' })).toBe(response.body);
+
+    // @ts-expect-error -- a code the caller did not name does not compile
+    expect(() => expectProblem<OrderCode>(response, { status: 409, code: 'EMPTY_ORDERS' })).toThrow();
+  });
+});

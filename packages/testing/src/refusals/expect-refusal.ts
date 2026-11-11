@@ -20,13 +20,20 @@ interface Attempt {
  *     expectRefusal(() => Email.create('nope'), 'INVALID_EMAIL');
  *     expectRefusal(Email.create('nope'), 'INVALID_EMAIL'); // a factory that returns a Result
  *     await expectRefusal(() => bus.execute(command), 'SLOT_TAKEN');
+ *
+ * The code is any string, or one of the codes the caller names, which the compiler then checks
+ * and the editor completes: `expectRefusal<SchedulingCode>(() => appointment.cancel(at), 'APPOINTMENT_ENDED')`.
  */
-export function expectRefusal(
+export function expectRefusal<Code extends string = string>(
   subject: () => PromiseLike<unknown>,
-  code: string,
+  code: NoInfer<Code>,
   facts?: ExpectedFacts,
 ): Promise<unknown>;
-export function expectRefusal(subject: unknown, code: string, facts?: ExpectedFacts): unknown;
+export function expectRefusal<Code extends string = string>(
+  subject: unknown,
+  code: NoInfer<Code>,
+  facts?: ExpectedFacts,
+): unknown;
 
 export function expectRefusal(subject: unknown, code: string, facts: ExpectedFacts = {}): unknown {
   const attempt = attempted(subject);

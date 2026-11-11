@@ -412,6 +412,11 @@ error, and fails with an `AssertionError` that names what was refused instead, o
 that differ, one line each. The facts given must be carried with those values; the refusal may
 carry others.
 
+The code is any string. A caller that names the codes it may expect has the compiler check each
+one and the editor complete it: `expectRefusal<SchedulingCode>(() => appointment.cancel(at), 'APPOINTMENT_ENDED')`,
+and `expectProblem<SchedulingCode | KitCode>(response, { status: 409, code: 'SLOT_TAKEN' })` end to end. A
+member of a code list needs no type argument: `expectRefusal(() => Email.create(raw), KitCodes.InvariantViolation)`.
+
 Instead of asserting the wording of a message, which breaks when it is rephrased, or the class
 of the error, which says nothing of its facts and is not what a client reads:
 

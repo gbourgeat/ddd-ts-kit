@@ -1,10 +1,11 @@
 import { deepStrictEqual } from 'node:assert';
 import type { HttpResponse } from './http-response';
 
-export interface ExpectedProblem {
+/** `Code` is the codes the answer may carry: any string, unless the caller names them (`ExpectedProblem<SchedulingCode | KitCode>`). */
+export interface ExpectedProblem<Code extends string = string> {
   readonly status: number;
   /** The stable error code, when the answer must carry this one. */
-  readonly code?: string;
+  readonly code?: Code;
   /** The facts the document must expose under `facts`, by name, as JSON writes them. It may expose others. */
   readonly facts?: Readonly<Record<string, unknown>>;
 }
@@ -17,8 +18,14 @@ const PROBLEM_JSON = 'application/problem+json';
  * Asserts an RFC 9457 answer: the status, on the response and in the document, the
  * `application/problem+json` content type, the `code` member and, when given, the exposed
  * `facts`. Returns the document.
+ *
+ * The code is any string, or one of the codes the caller names, which the compiler then checks
+ * and the editor completes: `expectProblem<SchedulingCode | KitCode>(response, { status: 409, code: 'SLOT_TAKEN' })`.
  */
-export function expectProblem(response: HttpResponse, expected: ExpectedProblem): ProblemDetails {
+export function expectProblem<Code extends string = string>(
+  response: HttpResponse,
+  expected: ExpectedProblem<NoInfer<Code>>,
+): ProblemDetails {
   const problem = isRecord(response.body) ? response.body : {};
   const code = (value: unknown): object => (expected.code === undefined ? {} : { code: value });
   const exposed = isRecord(problem.facts) ? problem.facts : {};
