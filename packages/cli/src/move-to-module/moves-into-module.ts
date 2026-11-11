@@ -5,15 +5,20 @@ import { isDeclarationsFile } from '../declared';
 import { filesUnder } from '../generate/files-under';
 import {
   declaredModules,
+  holdsModuleTests,
   intoModule,
   isContextLevel,
   isRoleFolder,
   MODULE_LAYERS,
   MODULE_TEST_FOLDERS,
   moduleSplit,
+  TEST_FOLDER,
 } from '../model-modules';
 import type { Workspace } from '../workspace';
 import type { ModuleMove } from './module-move';
+
+/** The folders of the tests whose files follow their subject into a module that keeps its tests. */
+const SUPPORT_FOLDERS = ['fakes', 'builders'];
 
 /** What to move: a context, the module it goes into, and paths relative to the context. */
 export interface MoveRequest {
@@ -29,7 +34,10 @@ export interface MoveRequest {
  */
 export function movesIntoModule(ws: Workspace, config: Config, request: MoveRequest): ModuleMove[] {
   const directory = `${config.contextsDir}/${request.context}`;
-  const placement = { ...request, directory, modules: declaredModules(config, request.context) };
+  const modules = declaredModules(config, request.context);
+  // Once the context keeps its tests in its modules, a spec, a fake or a builder goes to the test folder of the module.
+  const ownTests = holdsModuleTests(ws, { directory, modules });
+  const placement = { ...request, directory, modules, ownTests };
 
   const moves = request.paths.flatMap((asked) => {
     const relative = asked.replace(/^\.\//, '').replace(/\/+$/, '');
@@ -49,7 +57,7 @@ export function movesIntoModule(ws: Workspace, config: Config, request: MoveRequ
     return files.flatMap((file) => moveOf(file, placement));
   });
 
-  // The specs of a moved file go with it, into the module folder of their test folder.
+  // The specs of a moved file go with it, into the test folder of the module, or the module folder of the test folder of the context.
   const specs = specsOf(ws, moves, placement).flatMap((file) => moveOf(file, placement));
   const unique = [...new Map([...moves, ...specs].map((move) => [move.from, move])).values()];
 
@@ -64,6 +72,8 @@ interface Placement {
   readonly directory: string;
   readonly modules: readonly string[];
   readonly module: string;
+  /** True when the context keeps its tests in its modules: `<module>/test/`. */
+  readonly ownTests: boolean;
 }
 
 /**
@@ -107,22 +117,27 @@ function refuseLosses(ws: Workspace, moves: readonly ModuleMove[], placement: Pl
 }
 
 /**
- * The specs of the context named after a moved production file (`appointment.repository.contract.spec.ts`
- * is of `appointment.repository.ts`), wherever they sit in `test/unit/` and `test/integration/`,
- * relative to the context.
+ * The specs named after a moved production file (`appointment.repository.contract.spec.ts` is of
+ * `appointment.repository.ts`), wherever they sit in a `unit/` or an `integration/` folder of the
+ * tests of where the file came from: the context, `shared/` or another module. Relative to the context.
  */
 function specsOf(ws: Workspace, moves: readonly ModuleMove[], { directory, modules }: Placement): string[] {
-  const names = moves
-    .filter((move) => !move.from.slice(directory.length + 1).startsWith('test/'))
-    .map((move) => posix.basename(move.from).replace(/\.ts$/, ''));
+  const moved = moves
+    .map((move) => ({ ...moduleSplit(move.from.slice(directory.length + 1), modules), from: move.from }))
+    .filter(({ path }) => !path.startsWith(`${TEST_FOLDER}/`))
+    .map(({ module, from }) => ({ module, name: posix.basename(from).replace(/\.ts$/, '') }));
 
-  return MODULE_TEST_FOLDERS.flatMap((folder) =>
-    filesUnder(ws, `${directory}/test/${folder}`).map((file) => `test/${folder}/${file}`),
-  ).filter((file) => {
+  return filesUnder(ws, directory).filter((file) => {
+    const { module, path } = moduleSplit(file, modules);
+    const [top, folder = ''] = path.split('/');
     const stem = posix.basename(file).replace(/\.spec\.ts$/, '');
-    const inPlace = moduleSplit(file, modules).module === undefined;
 
-    return inPlace && file.endsWith('.spec.ts') && names.some((name) => stem === name || stem.startsWith(`${name}.`));
+    return (
+      top === TEST_FOLDER &&
+      MODULE_TEST_FOLDERS.includes(folder) &&
+      file.endsWith('.spec.ts') &&
+      moved.some((from) => from.module === module && (stem === from.name || stem.startsWith(`${from.name}.`)))
+    );
   });
 }
 
@@ -137,23 +152,43 @@ function twinsOf(ws: Workspace, move: ModuleMove, { directory, modules, module }
     .filter((file) => file !== move.from && ws.exists(file));
 }
 
-function moveOf(file: string, { context, directory, modules, module }: Placement): ModuleMove[] {
+function moveOf(file: string, { context, directory, modules, module, ownTests }: Placement): ModuleMove[] {
   const { path } = moduleSplit(file, modules);
-  const [layer = '', folder = ''] = path.split('/');
-  const inLayer = MODULE_LAYERS.includes(layer) && isRoleFolder(layer, folder);
+  const place = placeOf(path, ownTests);
 
-  if (!inLayer && !(layer === 'test' && MODULE_TEST_FOLDERS.includes(folder))) {
+  if (place === undefined) {
     throw new CliError(
       `${file} is in no role folder of a layer of "${context}", and in no test/unit/ nor test/integration/.`,
-      'A module holds the files of the layers of its concepts and their specs: published-language/, the fakes, the builders and the worlds stay at the level of the context.',
+      ownTests
+        ? 'A module holds the files of the layers of its concepts, their specs, their fakes and their builders: published-language/ and the worlds stay at the level of the context.'
+        : 'A module holds the files of the layers of its concepts and their specs: published-language/, the fakes, the builders and the worlds stay at the level of the context.',
     );
   }
 
-  if (isContextLevel(context, path) || isDeclarationsFile(context, file, modules)) {
+  if (place !== 'support' && (isContextLevel(context, path) || isDeclarationsFile(context, file, modules))) {
     return [];
   }
 
-  const to = intoModule(module, path);
+  const to = ownTests && place !== 'layer' ? `${module}/${path}` : intoModule(module, path);
 
   return to === file ? [] : [{ from: `${directory}/${file}`, to: `${directory}/${to}` }];
+}
+
+/**
+ * What a path, read without its module, is to a module: a file of a role folder of a layer, a
+ * spec of `test/unit/` or `test/integration/`, or the support of its tests, a fake or a builder,
+ * which has a place in a module only where the modules keep their tests. Undefined for any other.
+ */
+function placeOf(path: string, ownTests: boolean): 'layer' | 'spec' | 'support' | undefined {
+  const [layer = '', folder = ''] = path.split('/');
+
+  if (layer !== TEST_FOLDER) {
+    return MODULE_LAYERS.includes(layer) && isRoleFolder(layer, folder) ? 'layer' : undefined;
+  }
+
+  if (MODULE_TEST_FOLDERS.includes(folder)) {
+    return 'spec';
+  }
+
+  return ownTests && SUPPORT_FOLDERS.includes(folder) ? 'support' : undefined;
 }
