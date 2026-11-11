@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1794397328878" clover="3.2.0">
+  <project timestamp="1794397328878" name="All files">
+    <metrics statements="25" coveredstatements="25" conditionals="30" coveredconditionals="28" methods="9" coveredmethods="9" elements="64" coveredelements="62" complexity="0" loc="25" ncloc="25" packages="2" files="2" classes="2"/>
+    <package name="init.files">
+      <metrics statements="10" coveredstatements="10" conditionals="10" coveredconditionals="8" methods="5" coveredmethods="5"/>
+      <file name="persistence-files.ts" path="/home/gbourgeat/ddd-ts-kit/.claude/worktrees/agent-a98516f0a8d5cb53f/packages/cli/src/init/files/persistence-files.ts">
+        <metrics statements="10" coveredstatements="10" conditionals="10" coveredconditionals="8" methods="5" coveredmethods="5"/>
+        <line num="11" count="2" type="stmt"/>
+        <line num="13" count="2" type="stmt"/>
+        <line num="20" count="2" type="stmt"/>
+        <line num="43" count="8" type="stmt"/>
+        <line num="54" count="2" type="stmt"/>
+        <line num="72" count="35" type="stmt"/>
+        <line num="73" count="286" type="cond" truecount="3" falsecount="1"/>
+        <line num="75" count="35" type="stmt"/>
+        <line num="76" count="286" type="stmt"/>
+        <line num="92" count="35" type="cond" truecount="1" falsecount="1"/>
+      </file>
+    </package>
+    <package name="stack">
+      <metrics statements="15" coveredstatements="15" conditionals="20" coveredconditionals="20" methods="4" coveredmethods="4"/>
+      <file name="end-to-end-vars.ts" path="/home/gbourgeat/ddd-ts-kit/.claude/worktrees/agent-a98516f0a8d5cb53f/packages/cli/src/stack/end-to-end-vars.ts">
+        <metrics statements="15" coveredstatements="15" conditionals="20" coveredconditionals="20" methods="4" coveredmethods="4"/>
+        <line num="6" count="2" type="stmt"/>
+        <line num="14" count="70" type="stmt"/>
+        <line num="15" count="70" type="stmt"/>
+        <line num="16" count="70" type="cond" truecount="4" falsecount="0"/>
+        <line num="17" count="70" type="cond" truecount="2" falsecount="0"/>
+        <line num="19" count="70" type="stmt"/>
+        <line num="23" count="18" type="stmt"/>
+        <line num="24" count="18" type="stmt"/>
+        <line num="30" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="31" count="14" type="stmt"/>
+        <line num="32" count="14" type="cond" truecount="4" falsecount="0"/>
+        <line num="33" count="14" type="cond" truecount="4" falsecount="0"/>
+        <line num="34" count="14" type="stmt"/>
+        <line num="35" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="37" count="14" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>

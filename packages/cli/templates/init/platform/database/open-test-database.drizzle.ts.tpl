@@ -6,6 +6,7 @@ import { connectToDatabase } from '{{alias.platform}}/database/connect-to-databa
 import { persistenceOver } from '{{alias.platform}}/database/persistence-over{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 import { TableStatements } from '{{alias.platform}}/database/table-statements{{alias.ext}}';
+import { cloneDatabase } from '{{alias.test}}/support/test-database-clone{{alias.ext}}';
 
 export interface TestDatabase {
   readonly persistence: Persistence;
@@ -19,8 +20,9 @@ export interface TestDatabase {
 /**
  * PostgreSQL in process (PGlite) by default, with the tables of ./schema.ts created from their
  * Drizzle definitions (table-statements.ts): adapter and end-to-end specs need no container and
- * no migration run. With a URL, the tests run on that server instead, which must already be
- * migrated (`npm run db:migrate`); the migrations remain what production applies.
+ * no migration run. With a URL, the tests run on that server instead, each call on a copy of the
+ * database the URL names, which must already be migrated (`npm run db:migrate`); the migrations
+ * remain what production applies.
  */
 export function openTestDatabase(url?: string): Promise<TestDatabase> {
   return url === undefined ? openInProcess() : openServer(url);
@@ -54,8 +56,13 @@ async function inProcessPostgres(): Promise<PGlite> {
   return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
 }
 
+/**
+ * A database of its own on the server, copied from the migrated one and dropped at close
+ * (test/support/test-database-clone.ts): no other file, and no other run, reads or empties its rows.
+ */
 async function openServer(url: string): Promise<TestDatabase> {
-  const connection = connectToDatabase(url);
+  const clone = await cloneDatabase(url);
+  const connection = connectToDatabase(clone.url);
   const statements = new TableStatements();
 
   return {
@@ -63,6 +70,9 @@ async function openServer(url: string): Promise<TestDatabase> {
     reset: async () => {
       await connection.db.execute(sql.raw(statements.emptying()));
     },
-    close: () => connection.close(),
+    close: async () => {
+      await connection.close();
+      await clone.drop();
+    },
   };
 }

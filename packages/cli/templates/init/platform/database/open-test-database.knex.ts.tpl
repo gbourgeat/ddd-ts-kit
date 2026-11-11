@@ -11,6 +11,7 @@ import { AUDIT_SCHEMA, createTables } from '{{alias.platform}}/database/schema{{
 {{#unless audit.on}}
 import { createTables } from '{{alias.platform}}/database/schema{{alias.ext}}';
 {{/unless}}
+import { cloneDatabase } from '{{alias.test}}/support/test-database-clone{{alias.ext}}';
 
 export interface TestDatabase {
   readonly persistence: Persistence;
@@ -24,7 +25,8 @@ export interface TestDatabase {
 /**
  * PostgreSQL in process (PGlite, served over the wire protocol) by default, with the tables of
  * ./schema.ts: adapter and end-to-end specs need no container. With a URL, the tests run on
- * that server instead, which must already be migrated (`npm run db:migrate`).
+ * that server instead, each call on a copy of the database the URL names, which must already be
+ * migrated (`npm run db:migrate`).
  */
 export function openTestDatabase(url?: string): Promise<TestDatabase> {
   return url === undefined ? openInProcess() : openServer(url);
@@ -63,13 +65,21 @@ async function inProcessPostgres(): Promise<PGlite> {
   return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
 }
 
+/**
+ * A database of its own on the server, copied from the migrated one and dropped at close
+ * (test/support/test-database-clone.ts): no other file, and no other run, reads or empties its rows.
+ */
 async function openServer(url: string): Promise<TestDatabase> {
-  const connection = connectToDatabase(url);
+  const clone = await cloneDatabase(url);
+  const connection = connectToDatabase(clone.url);
 
   return {
     persistence: persistenceOver(connection),
     reset: () => emptyTables(connection.db),
-    close: () => connection.close(),
+    close: async () => {
+      await connection.close();
+      await clone.drop();
+    },
   };
 }
 

@@ -1,6 +1,7 @@
 import pg from 'pg';
 import { describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from '../helpers';
+import { copiesLike, runEndToEndTwiceAtOnce } from './end-to-end-on-copies';
 import { installForReal } from './install-for-real';
 import { runIn } from './run-in';
 import { SLOW } from './stacks';
@@ -30,13 +31,15 @@ const INVOICE_TERM = 'Invoice=A bill';
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1 and DDD_TS_KIT_MIGRATIONS_SERVER): a project with an audit trail,
  * installed for real, runs the database lines of its README as written from an empty real
- * PostgreSQL, `DATABASE_URL` in `.env` and nowhere else; a second table reaches the same database
+ * PostgreSQL, `DATABASE_URL` in `.env` and nowhere else; its end-to-end specs, started twice at the
+ * same time on that server, each run their files on copies of the migrated database, at the same
+ * time, and leave none behind; a second table reaches the same database
  * by `db:generate` and `db:migrate`; a fresh database built from the migrations alone then holds
  * the same columns, the audit trail append-only on both, and every gate stays green.
  */
 describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated project, on a real PostgreSQL', () => {
   it.each(TOOLS)(
-    'on %s, the README builds the tables, a second table arrives, a fresh database replays them all',
+    'on %s, the README builds the tables, two end-to-end runs share the server, a second table arrives, a fresh database replays them all',
     async (orm, generateInvoices) => {
       const existing = `migrations_${orm}`;
       const fresh = `migrations_${orm}_fresh`;
@@ -66,6 +69,12 @@ describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated proj
 
       expect(await columnsOf(existing)).toContain('ordering.orders.id');
       expect(await triggersOf(existing)).toEqual(GUARD);
+
+      const endToEnd = runEndToEndTwiceAtOnce(root, SERVER ?? '', existing);
+
+      expect(endToEnd.printed.match(/Test Files\s+3 passed/g)).toHaveLength(2);
+      expect(endToEnd.together).toBeGreaterThanOrEqual(2);
+      expect(await copiesOf(existing)).toEqual([]);
 
       expect(cli(root, 'generate', 'aggregate', 'ordering', 'Invoice', '--term', INVOICE_TERM).code).toBe(0);
       expect(cli(root, 'generate', 'repository', 'ordering', 'Invoice').code).toBe(0);
@@ -112,6 +121,16 @@ async function renewed(database: string): Promise<void> {
   await client.query(`drop database if exists ${database} with (force)`);
   await client.query(`create database ${database}`);
   await client.end();
+}
+
+/** The copies of `database` the end-to-end runs made and did not drop. */
+async function copiesOf(database: string): Promise<string[]> {
+  const rows = await rowsOf<{ datname: string }>(
+    'postgres',
+    `select datname from pg_database where datname like '${copiesLike(database)}'`,
+  );
+
+  return rows.map((row) => row.datname);
 }
 
 async function triggersOf(database: string): Promise<string[]> {

@@ -78,6 +78,8 @@ export function persistenceFiles(config: Config): InitFile[] {
     // The global setup that saves the test database once per run, for each spec to open a copy of it; Jest names its teardown apart.
     ...when(WITH_DATABASE.includes(orm), [
       ['test/support/test-database-template.ts', 'init/platform/database/test-database-template.ts.tpl'],
+      // On a server, the database of each spec file: a copy of the migrated one, whatever the ORM.
+      ['test/support/test-database-clone.ts', 'init/platform/database/test-database-clone.ts.tpl'],
     ]),
     ...when(tests === 'jest' && WITH_DATABASE.includes(orm), [
       ['test/support/test-database-teardown.ts', 'init/platform/database/test-database-teardown.ts.tpl'],

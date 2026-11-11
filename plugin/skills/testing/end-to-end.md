@@ -15,7 +15,10 @@ declaration, with `await application.publish([event])`, then awaits `settled()`;
 `settled()`. `runJob` throws on a per-tenant job that reached no tenant (`JobRun.tenants` is `0`):
 open a tenant first (an organisation), after `reset()`. On an ORM, each spec opens a copy of the PostgreSQL
 cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
-creates its tables there.
+creates its tables there. With `DATABASE_URL` set, each spec file runs on a copy of that migrated
+database instead (`test/support/test-database-clone.ts`), dropped when the application closes:
+files run at the same time there too, and a spec never connects to the migrated database itself,
+which PostgreSQL copies only while nobody else is connected to it.
 
 A spec past 350 lines (`clean/file-size`) is split by behaviour into parts named after it:
 `test/e2e/place-order-refusals.e2e.spec.ts` beside `test/e2e/place-order.e2e.spec.ts`. With a

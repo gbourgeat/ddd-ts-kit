@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:f4d8df8fa0866788 -->
+<!-- translation-of: test-runners.md sha256:d25bcb1247ad0d07 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -495,10 +495,15 @@ export default {
   par un neuf dès qu'il dépasse 800 Mo (`workerIdleMemoryLimit`). Jest garde dans le processus les
   modules de chaque fichier de *spec* joué, environ 15 Mo chacun avec les modules ES, et un
   *worker* unique tourne en bande, où cette limite ne s'applique pas : une suite d'environ 200
-  fichiers de bout en bout a alors manqué de tas. Avec `DATABASE_URL` (un serveur partagé, dont les
-  fichiers videraient les tables les uns des autres) la configuration garde un seul *worker*, en
-  bande, et le tas d'une longue suite demande `NODE_OPTIONS=--max-old-space-size=<Mo>`. Vitest
-  isole chaque fichier dans un processus à lui, sa suite de bout en bout n'a pas cette croissance ;
+  fichiers de bout en bout a alors manqué de tas. Avec `DATABASE_URL`, les deux *workers* restent :
+  chaque fichier s'exécute sur une copie de la base migrée, la sienne
+  (`test/support/test-database-clone.ts`). Un *broker* ou un serveur au protocole Redis est le même
+  pour tous les fichiers, qui consommeraient les événements et liraient les clés les uns des
+  autres : avec son adresse (`AMQP_URL`, `KAFKA_BROKERS`, `NATS_URL`, `REDIS_URL`) la configuration
+  garde un seul *worker*, en bande, et le tas d'une longue suite demande
+  `NODE_OPTIONS=--max-old-space-size=<Mo>`. Vitest isole chaque fichier dans un processus à lui, sa
+  suite de bout en bout n'a pas cette croissance, et il exécute ses fichiers l'un après l'autre sur
+  ces mêmes serveurs (`fileParallelism`) ;
 - sur un ORM, la mise en place globale qui démarre PostgreSQL dans le processus une fois par
   exécution et enregistre son cluster (`test/support/test-database-template.ts`), chaque *spec* en
   ouvrant une copie, et son démontage global (`test/support/test-database-teardown.ts`), tous deux

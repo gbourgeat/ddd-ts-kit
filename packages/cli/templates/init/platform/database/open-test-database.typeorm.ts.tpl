@@ -11,6 +11,7 @@ import type { Persistence } from '{{alias.platform}}/database/persistence{{alias
 {{#if audit.on}}
 import { AUDIT_SCHEMA } from '{{alias.platform}}/database/schema{{alias.ext}}';
 {{/if}}
+import { cloneDatabase } from '{{alias.test}}/support/test-database-clone{{alias.ext}}';
 
 export interface TestDatabase {
   readonly persistence: Persistence;
@@ -24,7 +25,8 @@ export interface TestDatabase {
 /**
  * PostgreSQL in process (PGlite, served over the wire protocol) by default, with the tables
  * created from the entity schemas: adapter and end-to-end specs need no container. With a URL,
- * the tests run on that server instead, which must already be migrated (`npm run db:migrate`).
+ * the tests run on that server instead, each call on a copy of the database the URL names, which
+ * must already be migrated (`npm run db:migrate`).
  */
 export function openTestDatabase(url?: string): Promise<TestDatabase> {
   return url === undefined ? openInProcess() : openServer(url);
@@ -66,14 +68,24 @@ async function inProcessPostgres(): Promise<PGlite> {
   return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
 }
 
+/**
+ * A database of its own on the server, copied from the migrated one and dropped at close
+ * (test/support/test-database-clone.ts): no other file, and no other run, reads or empties its rows.
+ */
 async function openServer(url: string): Promise<TestDatabase> {
-  const dataSource = createDataSource(url);
+  const clone = await cloneDatabase(url);
+  const dataSource = createDataSource(clone.url);
 
   await dataSource.initialize();
 
   const persistence = persistenceOver(dataSource);
 
-  return { persistence, reset: () => emptyTables(dataSource), close: () => persistence.close() };
+  const close = async (): Promise<void> => {
+    await persistence.close();
+    await clone.drop();
+  };
+
+  return { persistence, reset: () => emptyTables(dataSource), close };
 }
 
 // TypeORM creates tables, not schemas.

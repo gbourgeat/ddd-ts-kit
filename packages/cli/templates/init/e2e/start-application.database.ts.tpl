@@ -135,7 +135,8 @@ export interface RunningApplication {
 
 /**
  * Starts the application on a free port. The database is PostgreSQL in process unless
- * DATABASE_URL names a migrated server (`npm run infra:up && npm run db:migrate`).
+ * DATABASE_URL names a migrated server (`npm run infra:up && npm run db:migrate`): this file then
+ * runs on a copy of that database, its own, dropped when the application closes.
  */
 export async function startApplication(): Promise<RunningApplication> {
   // An empty variable (a blank line of .env) means the same as none.
