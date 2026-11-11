@@ -4,6 +4,8 @@ import { type ModuleFile, subjectModule } from '../model-modules';
 export interface Placed {
   readonly file: string;
   module: string | undefined;
+  /** The module its imports named, and another one whose code imports it: it was told neither. */
+  between?: { readonly imports: string; readonly importedBy: string };
 }
 
 /** What `settle` reads: the module of each file already in one, their production files, and what each open file imports. */
@@ -11,6 +13,8 @@ export interface Reading {
   readonly known: ReadonlyMap<string, string | undefined>;
   readonly production: readonly ModuleFile[];
   readonly imports: ReadonlyMap<string, readonly string[]>;
+  /** The modules whose production files import each open file. */
+  readonly importers: ReadonlyMap<string, readonly string[]>;
 }
 
 /**
@@ -18,6 +22,8 @@ export interface Reading {
  * after a file of one module is of it (`subjectModule`); a file that imports files of exactly one module is of it; a file that imports
  * none is of the one module of the open files that import it. A file whose imports name two
  * modules, once every file is told, is of none: it is listed, whatever order the files came in.
+ * So is a file of a layer whose imports name one module while the code of another imports it:
+ * in the first, it would make the second depend on it, which is a person's to decide.
  */
 export function settle(open: Placed[], reading: Reading): void {
   const named = new Set<Placed>();
@@ -63,19 +69,48 @@ interface Settling {
   readonly conflicting: Set<Placed>;
 }
 
-/** Takes its module back from every file whose imports name two modules; answers whether one was. */
+/** Takes its module back from every file whose imports name two modules, or one module while another imports it; answers whether one was. */
 function withdrawTwoModules(open: Placed[], reading: Reading, { named, conflicting }: Settling): boolean {
-  const twice = open.filter(
-    (placed) =>
-      placed.module !== undefined && !named.has(placed) && new Set(modulesReached(placed, open, reading)).size > 1,
-  );
+  const told = open.filter((placed) => placed.module !== undefined && !named.has(placed));
+  const twice = told.filter((placed) => new Set(modulesReached(placed, open, reading)).size > 1);
 
   for (const placed of twice) {
     placed.module = undefined;
     conflicting.add(placed);
   }
 
-  return twice.length > 0;
+  // Read once the files of two modules are of none: one of them is no importer from another module.
+  const between = told.filter((placed) => placed.module !== undefined && importerElsewhere(placed, open, reading));
+
+  for (const placed of between) {
+    placed.between = { imports: placed.module ?? '', importedBy: importerElsewhere(placed, open, reading) ?? '' };
+  }
+
+  for (const placed of between) {
+    placed.module = undefined;
+    conflicting.add(placed);
+  }
+
+  return twice.length + between.length > 0;
+}
+
+/** Another module than its own whose production code imports a file of a layer, undefined for a file of the tests. */
+function importerElsewhere(
+  placed: Placed,
+  open: readonly Placed[],
+  { imports, importers }: Reading,
+): string | undefined {
+  if (placed.file.startsWith('test/')) {
+    return undefined;
+  }
+
+  const ofOpenFiles = open
+    .filter(({ file }) => !file.startsWith('test/') && (imports.get(file) ?? []).includes(placed.file))
+    .map(({ module }) => module);
+
+  return [...(importers.get(placed.file) ?? []), ...ofOpenFiles].find(
+    (module) => module !== undefined && module !== placed.module,
+  );
 }
 
 /** The modules of the files a file imports, those of the open files told so far included. */

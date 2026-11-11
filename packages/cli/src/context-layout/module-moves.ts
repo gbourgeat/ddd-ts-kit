@@ -26,8 +26,17 @@ export interface ModuleMoves {
   readonly moves: readonly FileMove[];
   /** Files of a layer left at the level of the context: no module, or more than one, is theirs. */
   readonly unplaced: readonly string[];
+  /** Files of a layer left where they are: their imports name one module, and the code of another imports them. */
+  readonly between: readonly Between[];
   /** Moves not made because a file is at their target already: nothing is overwritten. */
   readonly taken: readonly FileMove[];
+}
+
+/** A file whose imports name one module while another module imports it. */
+export interface Between {
+  readonly file: string;
+  readonly imports: string;
+  readonly importedBy: string;
 }
 
 /** What is read of a context to lay it out: its name, its directory from the project root and the modules of its model. */
@@ -52,7 +61,7 @@ export function moduleMoves(ws: Workspace, config: Config, context: string): Mod
   const laid = { context, directory: `${config.contextsDir}/${context}`, modules: declaredModules(config, context) };
 
   if (laid.modules.length === 0) {
-    return { moves: [], unplaced: [], taken: [] };
+    return { moves: [], unplaced: [], between: [], taken: [] };
   }
 
   const files = filesUnder(ws, laid.directory);
@@ -70,7 +79,10 @@ export function moduleMoves(ws: Workspace, config: Config, context: string): Mod
 
   return {
     moves: all.filter((move) => !ws.exists(move.to)),
-    unplaced: open.filter(({ file, module }) => module === undefined && !isTest(file)).map(({ file }) => at(file)),
+    unplaced: open
+      .filter(({ file, module, between }) => module === undefined && between === undefined && !isTest(file))
+      .map(({ file }) => at(file)),
+    between: open.flatMap(({ file, between }) => (between === undefined ? [] : [{ file: at(file), ...between }])),
     taken: all.filter((move) => ws.exists(move.to)),
   };
 }
@@ -86,11 +98,20 @@ interface Read {
 function reading(ws: Workspace, config: Config, { files, open, laid }: Read): Parameters<typeof settle>[1] {
   const { directory, modules } = laid;
   const split = files.map((file) => ({ file, ...moduleSplit(file, modules) }));
+  const roots = aliasRoots(config);
+  const importers = new Map<string, string[]>();
+
+  for (const { file, module } of split.filter((one) => one.module !== undefined && !isTest(one.path))) {
+    for (const imported of importsOf(ws, { directory, file, roots })) {
+      importers.set(imported, [...(importers.get(imported) ?? []), module ?? '']);
+    }
+  }
 
   return {
+    importers,
     known: new Map(split.map(({ file, module }) => [file, module])),
     production: split.flatMap(({ module, path }) => (module === undefined || isTest(path) ? [] : [{ path, module }])),
-    imports: new Map(open.map(({ file }) => [file, importsOf(ws, { directory, file, roots: aliasRoots(config) })])),
+    imports: new Map(open.map(({ file }) => [file, importsOf(ws, { directory, file, roots })])),
   };
 }
 

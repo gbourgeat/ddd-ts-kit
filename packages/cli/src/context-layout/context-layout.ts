@@ -4,7 +4,7 @@ import { type FileMove, moveFiles } from '../file-moves';
 import type { Workspace } from '../workspace';
 import { refreshDocs } from '../generate/refresh-docs';
 import { enterModuleTestFolders, ignoreCodeTypesWhereTheyAre } from '../knip';
-import { moduleMoves } from './module-moves';
+import { type Between, moduleMoves } from './module-moves';
 import { runnerConfigsByHand } from './runner-configs-by-hand';
 
 const KNIP_BY_HAND =
@@ -45,6 +45,7 @@ export function contextLayout(ws: Workspace, config: Config, asked: readonly str
   // knip is told of the code lists where they are, also when a person moved them.
   const knip = ignoreCodeTypesWhereTheyAre(ws, config);
   const unplaced = inModules.flatMap((placed) => placed.unplaced).map((file) => unplacedLine(config, file));
+  const between = inModules.flatMap((placed) => placed.between).map((file) => betweenLine(config, file));
   const taken = inModules.flatMap((placed) => placed.taken).map(takenLine);
 
   return {
@@ -54,6 +55,7 @@ export function contextLayout(ws: Workspace, config: Config, asked: readonly str
       ...toTheRoot.manual,
       ...taken,
       ...unplaced,
+      ...between,
       ...(knip === 'unreadable' ? [KNIP_BY_HAND] : []),
       ...runnerConfigsByHand(ws, config, moved),
     ],
@@ -96,4 +98,10 @@ function unplacedLine(config: Config, file: string): string {
   const [context = '', ...inside] = file.slice(config.contextsDir.length + 1).split('/');
 
   return `${file} names no module, or two, by what it imports: it stays where it is. Move it with \`ddd-ts-kit move-to-module ${context} <module> ${inside.join('/')}\`.`;
+}
+
+function betweenLine(config: Config, { file, imports, importedBy }: Between): string {
+  const [context = '', ...inside] = file.slice(config.contextsDir.length + 1).split('/');
+
+  return `${file} imports the module ${imports} and is imported by the module ${importedBy}: it stays where it is, since in ${imports} it would make ${importedBy} depend on that module. Move it to the one it belongs to with \`ddd-ts-kit move-to-module ${context} <module> ${inside.join('/')}\`.`;
 }
