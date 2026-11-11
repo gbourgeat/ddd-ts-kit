@@ -274,6 +274,18 @@ describe('context-layout, what it says and writes of the tools of the project', 
     expect(said[1]).toContain('jest.mutation.config.js names the integration specs');
   });
 
+  it('says which rules of the tests written for the agents still name the test folder of the contexts alone', () => {
+    const root = projectWith(MOVED_SPEC, {
+      '.claude/rules/tests.md': '---\npaths:\n  - "src/contexts/*/test/**"\n---\n',
+      '.github/instructions/tests.instructions.md':
+        '---\napplyTo: "src/contexts/*/test/**,src/contexts/*/*/test/**,**/*.spec.ts"\n---\n',
+    });
+
+    expect(laidOut(root).manual).toEqual([
+      '.claude/rules/tests.md names the test folder of each context alone: name the test folder of its modules beside it (src/contexts/*/*/test/**), or the rules of the tests no longer reach a spec a module keeps.',
+    ]);
+  });
+
   it('says nothing of the configs when no file of the tests moved, or when they name both places', () => {
     const upToDate = "export default { ignore: ['/src/contexts/[^/]+/(?:test|[^/]+/test)/integration/'] };\n";
 
