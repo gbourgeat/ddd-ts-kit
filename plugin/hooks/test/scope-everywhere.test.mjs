@@ -1000,6 +1000,8 @@ test('what the last command changed in the checkout of the session is said at th
     told.output.reason,
     /checkout of the session, .* changed while your last command ran: src\/platform\/extra\.ts/,
   );
+  assert.match(told.output.reason, /name them in your report for the conductor/);
+  assert.doesNotMatch(told.output.reason, /\bstop\b/);
 });
 
 test('what a sanctioned script rewrote as the last command is said at the stop too', () => {

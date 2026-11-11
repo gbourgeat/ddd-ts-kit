@@ -553,7 +553,7 @@ test('the pin follows the worker: a call that starts in another checkout is judg
   assert.equal(existsSync(join(state, `scope-${stateKey(agent)}.json`)), false);
 });
 
-test('code of a worker that writes into the checkout of the session is said to it once, for the conductor (otherCheckout)', () => {
+test('a file left changed in the checkout of the session is said to the worker once, for the conductor, and refuses nothing (otherCheckout)', () => {
   const { conductor, worktree } = conductorWithWorker();
   const agent = builder('other-checkout', { cwd: conductor });
   // Its own guard state in the conductor's checkout, and a run that changed nothing there, say nothing.
@@ -562,13 +562,28 @@ test('code of a worker that writes into the checkout of the session is said to i
   }
   put(conductor, 'src/platform/evil.ts', 'export const evil = 1;\n');
   const told = run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent));
-  assert.equal(decision(told), 'deny');
+  assert.equal(decision(told), undefined);
   assert.match(
-    reason(told),
+    noticeOf(told),
     new RegExp(`checkout of the session, ${conductor}, changed while your last command ran: src/platform/evil\\.ts\\.`),
   );
-  assert.match(reason(told), /put nothing back there yourself; stop and report them to the conductor/);
+  assert.match(noticeOf(told), /put nothing back there yourself, and name them in your report for the conductor/);
+  assert.doesNotMatch(noticeOf(told), /\bstop\b/);
+  // Said once: the file stays as it is, and the next commands run without a word of it.
   assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent)).output, undefined);
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  // It rides along a refusal of the call, and the packages the guard runs still refuse.
+  put(conductor, 'src/platform/evil.ts', 'export const evil = 2;\n');
+  const refused = run('pre-bash', bash(conductor, `cd ${worktree} && npm i zod`, agent));
+  assert.equal(decision(refused), 'deny');
+  assert.match(noticeOf(refused), /src\/platform\/evil\.ts/);
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  put(conductor, 'src/platform/evil.ts', 'export const evil = 3;\n');
+  utimesSync(join(conductor, 'node_modules/ddd-ts-kit/package.json'), new Date(0), new Date(0));
+  const packages = run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent));
+  assert.equal(decision(packages), 'deny');
+  assert.match(reason(packages), /The packages the guard runs changed while your last command ran/);
+  assert.match(noticeOf(packages), /src\/platform\/evil\.ts/);
   // From the conductor's checkout, outside every worktree, code is refused rather than run unnoted.
   for (const command of [`node ${worktree}/src/contexts/billing/tool.mjs`, 'python3 x.py', 'bash x.sh', 'npm test']) {
     const stray = run('pre-bash', bash(conductor, command, agent));
@@ -595,7 +610,7 @@ test('a commit or a merge of the conductor in its own checkout while a worker co
   // A file of its working tree changed and not committed is still said.
   put(conductor, 'src/platform/evil.ts', 'export const evil = 1;\n');
   assert.match(
-    reason(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent))),
+    noticeOf(run('pre-bash', bash(conductor, `cd ${worktree} && git status`, agent))),
     /src\/platform\/evil\.ts/,
   );
 });

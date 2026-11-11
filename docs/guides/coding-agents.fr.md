@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:a57ad1c9d42aaad2 -->
+<!-- translation-of: coding-agents.md sha256:2dbd2d4e33e61316 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -169,8 +169,10 @@ commande quand il était déjà modifié (gardé sous `.ddd-ts-kit/guard/held/`)
 pour un renommage, `rm` pour un nouveau fichier. Un fichier de plus de 16 Mio est comparé par sa
 taille et sa date, sans être lu, et aucune copie n'en est gardée : déjà modifié avant la commande, il
 est dit, sans retenir le *worker*, qui le nomme dans son rapport. Un fichier laissé modifié dans l'arbre de travail
-du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) ou
-un changement de ces paquets est dit une fois, pour le chef d'orchestre, qui seul sait s'il l'a fait.
+du *checkout* de la session (pas celui que le chef d'orchestre commite ou fusionne entre-temps) est
+dit une fois au *worker* et ne refuse rien : le *worker* n'y remet rien en état et le nomme dans son
+rapport, pour le chef d'orchestre, qui seul sait s'il a fait ce changement. Un changement de ces
+paquets refuse une fois l'appel suivant, pour le chef d'orchestre aussi.
 Ce que les scripts du projet lui-même (`npm run format`, `lint:fix`, `regenerate`, `docs:generate`,
 `openapi:generate`, `events:generate`, sans être lancés dans un autre dossier par `--prefix`, `-C`,
 `--dir` ou `--filter`), seuls sur la ligne, réécrivent hors du périmètre parmi les

@@ -4498,8 +4498,10 @@ function pendingChangeReason(project, input, commands) {
 }
 
 // The note before the last command, compared now: what changed outside the scope in the worktree is
-// held until it is put back (`heldChangeReason`); what changed in the session's checkout or in the
-// packages the guard runs is said once, for the conductor, who alone knows whether it changed them.
+// held until it is put back (`heldChangeReason`); what changed in the packages the guard runs is
+// refused once; a file left changed in the session's checkout is said once and refuses nothing: it
+// is written already, the worker puts nothing back there, and the conductor, who edits its plan
+// while workers run, alone knows whether it changed it.
 // A process the last command left in the background goes on changing files: when nothing changed and
 // the call only reads (`reading`), the note of the worktree stays for the next call, until a change, a
 // stop or a new note ends it.
@@ -4511,8 +4513,12 @@ function settleNote(project, input, reading) {
   }
   const session = sessionCheckout(project, input);
   const settled = holdChanges(project, input, before);
-  const told = sessionChangeReason(session, before.session) ?? packagesChangeReason(before.packages, project, session);
-  if (reading && !settled && !told) {
+  const said = sessionChangeNotice(session, before.session);
+  const told = packagesChangeReason(before.packages, project, session);
+  if (said) {
+    notice = [notice, said].filter(Boolean).join('\n');
+  }
+  if (reading && !settled && !told && !said) {
     writeState(noted, { worktree: before.worktree, script: before.script });
   } else {
     removeKitFile(noted);
@@ -4654,7 +4660,7 @@ function allMergedSides(checkout, from) {
 
 // The note is compared with the checkout it was taken in: a call that starts in another one, the
 // working directory of the session moved, compares nothing there.
-function sessionChangeReason(session, before) {
+function sessionChangeNotice(session, before) {
   if (!session || !isRecord(before) || before.unread || before.root !== session.root) {
     return undefined;
   }
@@ -4664,7 +4670,7 @@ function sessionChangeReason(session, before) {
   const changed = Object.keys(now).filter((path) => before.changes[path]?.hash !== now[path].hash);
   return changed.length === 0
     ? undefined
-    : `Files of the checkout of the session, ${session.root}, changed while your last command ran: ${changed.join(', ')}. A worker never changes another checkout: put nothing back there yourself; stop and report them to the conductor, who knows whether it changed them. ${REPORT_TO_CONDUCTOR}`;
+    : `ddd-ts-kit: files of the checkout of the session, ${session.root}, changed while your last command ran: ${changed.join(', ')}. A worker never changes another checkout: put nothing back there yourself, and name them in your report for the conductor, who knows whether it changed them.`;
 }
 
 function packagesChangeReason(before, project, session) {
