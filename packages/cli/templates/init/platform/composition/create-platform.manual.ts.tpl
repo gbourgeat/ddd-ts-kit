@@ -117,6 +117,7 @@ function adapterOf(settings: ResilienceSettings, { traced, domainEvents, scope }
 
   return (instance, info) => {
     const resilient = governed(instance, info);
+
     const saving =
       info.kind === 'repository'
         ? dispatchingOnSave(
