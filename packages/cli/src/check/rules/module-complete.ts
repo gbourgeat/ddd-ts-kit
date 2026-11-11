@@ -7,6 +7,7 @@ import {
   MODULE_LAYERS,
   MODULE_TEST_FOLDERS,
   moduleSplit,
+  SHARED_FOLDER,
   WITHOUT_MODULE,
 } from '../../model-modules';
 import type { Project } from '../model/project';
@@ -94,16 +95,21 @@ function outsideByFolder(project: Project, context: string): Map<string, string[
   for (const file of project.files.filter((candidate) => isLeftOutside(project, candidate, context))) {
     const [layer = '', role = '', ...rest] = (pathInContext(project, file) ?? file.path).split('/');
 
-    add(`${layer}/${role}`, movedTogether(role, rest));
+    add(`${holderOf(file)}${layer}/${role}`, movedTogether(role, rest));
   }
 
   for (const spec of specsOfModules(project, context)) {
     const [, kind = ''] = (pathInContext(project, spec) ?? spec.path).split('/');
 
-    add(`test/${kind}`, path.posix.basename(spec.path));
+    add(`${holderOf(spec)}test/${kind}`, path.posix.basename(spec.path));
   }
 
   return byFolder;
+}
+
+/** The folder of the context a file left outside every module sits in, before its layer: `shared/`, or none. */
+function holderOf({ location }: SourceFile): string {
+  return location.area === 'context' && location.shared === true ? `${SHARED_FOLDER}/` : '';
 }
 
 /** What moves as one piece: the folder of a use case, with its command, handler and result, or a file. */
