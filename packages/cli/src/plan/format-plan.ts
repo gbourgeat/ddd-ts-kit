@@ -183,6 +183,6 @@ function howLine(batch: Batch): string {
   }
 
   return batch.owner === 'conductor'
-    ? 'on the trunk, by the conductor'
+    ? 'on the trunk, by the conductor, in the worktree of the plan (`npx ddd-ts-kit worktree <plan>`)'
     : `brief ${batch.owner} by hand: worker-scope briefs the worker of a context`;
 }

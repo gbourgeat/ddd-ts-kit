@@ -1,6 +1,6 @@
 import { CliError } from '../../cli-error';
 import type { Name } from '../../naming';
-import { renderTemplate } from '../../templating';
+import { type RenderContext, renderTemplate } from '../../templating';
 import { emit } from '../emit';
 import type { Kind } from '../kind';
 import { label } from '../label';
@@ -8,7 +8,8 @@ import { named } from '../named';
 import { openScope } from '../open-scope';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
-import { wire } from '../wire';
+import { applyWiring } from '../apply-wiring';
+import { wirings } from '../wirings';
 import { wiringFamily } from '../wiring-family';
 import { publishInIndex } from './publish-in-index';
 import { platformPath } from '../platform-path';
@@ -40,10 +41,24 @@ export const gatewayKind: Kind = {
       ['gateway/contract.spec.ts.tpl', `test/integration/${name.kebab}-gateway.contract.spec.ts`],
     ]);
 
-    wire(scope, 'gateway', context);
+    wireOnce(scope, name, context);
     explain(scope, upstream, name);
   },
 };
+
+/**
+ * A second context that needs the same contract finds it bound already, to the implementation a person wrote
+ * in place of the empty value: binding it again to `{}` below would replace that implementation at run time.
+ */
+function wireOnce(scope: Scope, name: Name, context: RenderContext): void {
+  const empty = `builder.bind(${name.pascal}Contract).toValue({});\n`;
+
+  for (const { file, wiring } of wirings(scope, { kind: 'gateway' }, context)) {
+    const bound = scope.ws.read(file)?.includes(`bind(${name.pascal}Contract)`) === true;
+
+    applyWiring(scope.ws, file, bound ? wiring.replace(empty, '') : wiring);
+  }
+}
 
 function declaredUpstream(scope: Scope, upstream: string): string {
   if (

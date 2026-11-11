@@ -44,7 +44,7 @@ export class FetchClient implements HttpClient {
 
   private async send<Body>({ method, path, body, options }: Exchange): Promise<HttpResponse<Body>> {
     const headers = {
-      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      ...(body === undefined || isRaw(body) ? {} : { 'content-type': 'application/json' }),
       ...this.headers,
       ...lowerCased(options?.headers),
     };
@@ -60,13 +60,28 @@ export class FetchClient implements HttpClient {
   }
 }
 
-/** JSON, unless the request says another content type and gives its text as it is: an XML body, a CSV import. */
-function payloadOf(body: unknown, headers: Readonly<Record<string, string>>): string | null {
+/**
+ * JSON, unless the request says another content type and gives its text as it is (an XML body, a CSV import),
+ * or gives bytes, a blob or a form, sent as they are: a file to upload, in any encoding.
+ */
+function payloadOf(
+  body: unknown,
+  headers: Readonly<Record<string, string>>,
+): string | Uint8Array<ArrayBuffer> | Blob | FormData | null {
   if (body === undefined) {
     return null;
   }
 
+  if (isRaw(body)) {
+    return body;
+  }
+
   return typeof body === 'string' && !isJson(headers['content-type'] ?? null) ? body : JSON.stringify(body);
+}
+
+/** What `fetch` sends without reading it as text: its content type is the caller's, or the one of the form. */
+function isRaw(body: unknown): body is Uint8Array<ArrayBuffer> | Blob | FormData {
+  return body instanceof Uint8Array || body instanceof Blob || body instanceof FormData;
 }
 
 async function readBody(response: Response): Promise<unknown> {

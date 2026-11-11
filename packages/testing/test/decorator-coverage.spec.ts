@@ -12,6 +12,30 @@ const TRANSFORMED = [
   'export { IssueInvoiceHandler };',
 ].join('\n');
 
+const STANDARD = [
+  '        static {',
+  '            _issued_decorators = [On(invoiceIssued)];',
+  '            __esDecorate(this, null, _issued_decorators, { kind: "method", name: "issued", static: false, private: false, access: { has: obj => "issued" in obj, get: obj => obj.issued }, metadata: _metadata }, null, _instanceExtraInitializers);',
+  '            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);',
+  '            InvoicesToShip = _classThis = _classDescriptor.value;',
+  '        }',
+].join('\n');
+
+describe('decoratorCoverage(), on standard decorators', () => {
+  it('marks every statement that applies one, whose access closures no spec calls', () => {
+    const marked =
+      decoratorCoverage().transform(STANDARD, '/project/src/invoices-to-ship.projection.ts')?.code.split('\n') ?? [];
+
+    const source = STANDARD.split('\n');
+
+    expect(marked[0]).toBe(source[0]);
+    expect(marked[1]).toBe(`${source[1] ?? ''} ${HINT}`);
+    expect(marked[2]).toBe(`${source[2] ?? ''} ${HINT}`);
+    expect(marked[3]).toBe(source[3]);
+    expect(marked[4]).toBe(source[4]);
+  });
+});
+
 describe('decoratorCoverage(), the Vitest plugin', () => {
   const plugin = decoratorCoverage();
 

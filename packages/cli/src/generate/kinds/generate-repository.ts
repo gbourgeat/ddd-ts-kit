@@ -36,7 +36,7 @@ export function generateRepository(scope: Scope, aggregate: Name): RenderContext
     ['repository/contract.spec.ts.tpl', `test/integration/${aggregate.kebab}.repository.contract.spec.ts`],
   ]);
 
-  declareStorage(scope, context);
+  declareStorage(scope, aggregate, context);
   wire(scope, 'repository', context);
   noteTheMigration(scope);
 

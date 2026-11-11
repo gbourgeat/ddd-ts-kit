@@ -20,9 +20,16 @@ export function buildNextOf(plan: string | null, rows: readonly StatusRow[]): st
     return BUILD_DONE;
   }
 
+  const started = rows.filter((row) => row.status === 'in progress');
   const ready = rows.find((row) => row.status === 'todo' && row.ready === 'trunk');
 
-  return ready === undefined
-    ? '7 build - no row is ready on the trunk: the rows left are in progress or wait for a dependency'
-    : `7 use-case - build the next row ready on the trunk, #${ready.id} ${ready.slice} (${ready.context}) (skill \`ddd-ts-kit:use-case\`)`;
+  if (ready === undefined) {
+    return '7 build - no row is ready on the trunk: the rows left are in progress or wait for a dependency';
+  }
+
+  const next = `#${ready.id} ${ready.slice} (${ready.context}) (skill \`ddd-ts-kit:use-case\`)`;
+
+  return started.length === 0
+    ? `7 use-case - build the next row ready on the trunk, ${next}`
+    : `7 use-case - ${started.map(({ id }) => `#${id}`).join(', ')} in progress; once landed, the next row ready on the trunk, ${next}`;
 }

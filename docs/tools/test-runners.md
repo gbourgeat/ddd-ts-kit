@@ -394,7 +394,7 @@ that builds the real adapter. Under Jest the first line imports the five functio
 ```ts
 // vitest.config.ts
 import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
-import { decorators } from '@ddd-ts-kit/testing/vitest';
+import { decoratorCoverage, decorators } from '@ddd-ts-kit/testing/vitest';
 import { defineConfig } from 'vitest/config';
 
 const INTEGRATION_SPECS = [
@@ -404,7 +404,7 @@ const INTEGRATION_SPECS = [
 
 export default defineConfig(({ mode }) => ({
   // standard decorators, compiled by the compiler of the project; legacy ones need no plugin
-  plugins: [decorators({ compiler: '@typescript/native' })],
+  plugins: [decorators({ compiler: '@typescript/native' }), decoratorCoverage()],
   resolve: { tsconfigPaths: true },
   test: {
     projects: [

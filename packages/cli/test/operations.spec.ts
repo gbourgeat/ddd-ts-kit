@@ -256,7 +256,10 @@ describe('generate query --search and generate adapter', () => {
       "import { Retry, Timeout } from '@ddd-ts-kit/aspects/decorators';",
     );
 
-    expect(read(root, 'vitest.config.ts')).toContain("import { decorators } from '@ddd-ts-kit/testing/vitest';");
+    expect(read(root, 'vitest.config.ts')).toContain(
+      "import { decoratorCoverage, decorators } from '@ddd-ts-kit/testing/vitest';",
+    );
+
     expect(cli(root, 'generate', 'adapter', 'billing', 'Unknown').code).toBe(2);
     expect(cli(root, 'generate', 'adapter', 'billing', 'PaymentGateway', '--kind', 'queue', '--force').code).toBe(2);
   });

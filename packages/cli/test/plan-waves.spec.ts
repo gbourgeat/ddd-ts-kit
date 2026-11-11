@@ -166,7 +166,7 @@ describe('plan-waves for a reader', () => {
     );
 
     expect(text).toContain(
-      '  W1.2 conductor, billing (aggregate Customer)\n    #US2.01 skeleton "Customer"\n    on the trunk, by the conductor\n',
+      '  W1.2 conductor, billing (aggregate Customer)\n    #US2.01 skeleton "Customer"\n    on the trunk, by the conductor, in the worktree of the plan (`npx ddd-ts-kit worktree <plan>`)\n',
     );
 
     expect(text).toContain('    #US2.04 slice "Credit invoice" (in progress)\n');

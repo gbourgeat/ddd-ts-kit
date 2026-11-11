@@ -112,11 +112,13 @@ describe('pipeline templates', () => {
     const legacy = initProject('--validation', 'class-validator');
     const plugin = "plugins: [decorators({ compiler: '@typescript/native' })]";
 
-    expect(read(standard, 'vitest.config.ts')).toContain(plugin);
+    expect(read(standard, 'vitest.config.ts')).toContain(
+      "plugins: [decorators({ compiler: '@typescript/native' }), decoratorCoverage()]",
+    );
+
     expect(read(standard, 'vitest.e2e.config.ts')).toContain(plugin);
     expect(read(legacy, 'vitest.config.ts')).not.toContain('decorators(');
     expect(read(legacy, 'vitest.config.ts')).toContain('plugins: [decoratorCoverage()]');
-    expect(read(standard, 'vitest.config.ts')).not.toContain('decoratorCoverage');
     expect(read(legacy, 'vitest.e2e.config.ts')).not.toContain('decorators');
     expect(readJson(legacy, 'tsconfig.json')).toMatchObject({ compilerOptions: { experimentalDecorators: true } });
     expect(jsonAt(readJson(standard, 'tsconfig.json'), 'compilerOptions')).not.toHaveProperty('experimentalDecorators');

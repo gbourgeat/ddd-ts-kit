@@ -1,6 +1,6 @@
 import { governedCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
 {{#if decorators.standard}}
-import { decorators } from '@ddd-ts-kit/testing/vitest';
+import { decoratorCoverage, decorators } from '@ddd-ts-kit/testing/vitest';
 {{/if}}
 {{#if decorators.legacy}}
 import { decoratorCoverage } from '@ddd-ts-kit/testing/vitest';
@@ -49,8 +49,8 @@ const INTEGRATION_PROJECT: TestProjectInlineConfiguration = {
 
 export default defineConfig(({ mode }) => ({
   {{#if decorators.standard}}
-  // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
-  plugins: [decorators({ compiler: '@typescript/native' })],
+  // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does. What it writes to apply them holds closures no spec calls, kept out of the measure.
+  plugins: [decorators({ compiler: '@typescript/native' }), decoratorCoverage()],
   {{/if}}
   {{#if decorators.legacy}}
   // Under `emitDecoratorMetadata` the transform guards every type a decorated class names with a branch no test can take: the statements that apply decorators are kept out of the measure.
