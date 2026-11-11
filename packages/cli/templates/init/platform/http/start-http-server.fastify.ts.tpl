@@ -65,9 +65,15 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{/if}}
   await app.listen({ port: config.port, host: '0.0.0.0' });
 
-  const [address] = app.addresses();
+  return { port: boundPort(app.addresses()), close: () => app.close() };
+}
 
-  return { port: address?.port ?? 0, close: () => app.close() };
+// A server bound to a pipe gives its path, a string, where one bound to a port gives the port.
+function boundPort(addresses: readonly unknown[]): number {
+  const [address] = addresses;
+  const port: unknown = typeof address === 'object' && address !== null && 'port' in address ? address.port : 0;
+
+  return typeof port === 'number' ? port : 0;
 }
 
 /** TRUST_PROXY as Fastify takes it: a number of hops as the test of each hop. */
