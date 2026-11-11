@@ -1,11 +1,13 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher';
+import type { ExecutionScope } from '../../application/ports/execution-scope';
 import type { DomainEvent } from '../../domain/domain-event';
 import { dispatchAfterCommit } from './dispatch-after-commit';
 import { dispatchBeforeCommit } from './dispatch-before-commit';
 import { here } from './here';
 import { SaveAfterCommitError } from './save-after-commit-error';
-import { unitOfWorkScope, type QueuedDomainEvent, type UnitOfWorkScope } from './unit-of-work-scope';
+import { inContextOf } from './in-context-of';
+import { unitOfWorkScope, type QueuedDomainEvent, type UnitOfWorkScope, type Within } from './unit-of-work-scope';
 
 /**
  * Hands over the events a save pulled from its aggregates.
@@ -18,10 +20,15 @@ import { unitOfWorkScope, type QueuedDomainEvent, type UnitOfWorkScope } from '.
  * handlers then `after-commit` ones, in the asynchronous context of that save. Events recorded
  * meanwhile, by a handler that saves an aggregate, wait behind them: one chain, in recording
  * order, without recursion. The first `before-commit` handler that fails rejects the promise.
+ *
+ * With an execution scope, the handlers of both phases run in the execution context of the save,
+ * whenever the dispatch happens: a command run inside another, for another tenant or another actor,
+ * shares the unit of work of the first, and its events are dispatched at the end of that one.
  */
 export async function announceDomainEvents(
   events: readonly DomainEvent[],
   dispatcher: Pick<DomainEventDispatcher, 'dispatch'>,
+  scope?: ExecutionScope,
 ): Promise<void> {
   if (events.length === 0) {
     return;
@@ -34,20 +41,24 @@ export async function announceDomainEvents(
   }
 
   if (current !== undefined && current.stage !== 'closed') {
-    current.queue.push(...queued(events, dispatcher, current.kind === 'save' ? AsyncLocalStorage.snapshot() : here));
+    const within = current.kind === 'save' ? AsyncLocalStorage.snapshot() : here;
+
+    current.queue.push(...queued(events, dispatcher, { within, inContext: inContextOf(scope) }));
 
     return;
   }
 
-  await dispatchedNow(queued(events, dispatcher, AsyncLocalStorage.snapshot()));
+  await dispatchedNow(
+    queued(events, dispatcher, { within: AsyncLocalStorage.snapshot(), inContext: inContextOf(scope) }),
+  );
 }
 
 function queued(
   events: readonly DomainEvent[],
   dispatcher: Pick<DomainEventDispatcher, 'dispatch'>,
-  within: QueuedDomainEvent['within'],
+  where: { readonly within: Within; readonly inContext: Within },
 ): QueuedDomainEvent[] {
-  return events.map((event) => ({ event, dispatcher, within }));
+  return events.map((event) => ({ event, dispatcher, ...where }));
 }
 
 async function dispatchedNow(events: QueuedDomainEvent[]): Promise<void> {

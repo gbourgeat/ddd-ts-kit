@@ -318,6 +318,15 @@ transaction, the queue is dispatched. A handler may save an aggregate: its event
 queue behind those waiting, under the same order rule, without recursion. A handler may append
 to the outbox. Then the transaction commits, and the handlers of the `after-commit` phase run.
 
+The handlers of both phases run in the execution context of the save that recorded the event:
+its tenant, its actor, its correlation id. It matters when a command runs inside another one for
+another tenant (a relay that has none, handing each message to the organisation it belongs to):
+the inner command joins the unit of work of the outer one, its events are dispatched at the end
+of that one, and what their handlers publish still carries the tenant of the inner command. A
+repository wrapped by hand takes the scope as a third argument:
+`dispatchingOnSave(repository, () => dispatcher, () => scope)`; without it the handlers run in
+the context of the unit of work.
+
 | | Guarantees | When it fails | Delivery |
 |---|---|---|---|
 | `before-commit` handler (default) | runs once every save of the command is done (when the command handler has returned), in its transaction; what it writes commits or rolls back with the state change | the command fails and everything rolls back | in the transaction: exactly with the commit |

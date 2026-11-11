@@ -11,6 +11,7 @@ import {
   dispatchingOnSave,
   reportAfterCommitFailures,
   type DomainEventDispatcher,
+  type ExecutionScope,
 } from '@ddd-ts-kit/kernel';
 import type { TracedApplication } from '@ddd-ts-kit/tracing';
 import { accessPolicies } from '{{alias.platform}}/auth/authorization/access-policies{{alias.ext}}';
@@ -62,7 +63,7 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
   const domainEvents = traced.domainEvents(new InMemoryDomainEventDispatcher(afterCommitFailed));
   const authorizer = createAuthorizer();
   const protection = new UseCaseProtection(authorizer, onDecision);
-  const adapter = adapterOf(options.resilience ?? defaultResilienceSettings, { traced, domainEvents });
+  const adapter = adapterOf(options.resilience ?? defaultResilienceSettings, { traced, domainEvents, scope });
 {{#if files.any}}
   const files = filesOf(options, foundations);
 {{/if}}
@@ -103,19 +104,28 @@ function filesOf(options: PlatformOptions, foundations: Foundations): Files {
 interface Outside {
   readonly traced: TracedApplication;
   readonly domainEvents: DomainEventDispatcher;
+  readonly scope: ExecutionScope;
 }
 
 /**
  * Around every adapter, outermost first: its span, for a repository the dispatch of the domain
- * events of what it saves (handlers only save), then the retries and the time limit of what
+ * events of what it saves (handlers only save, and run in the execution context of the save), then the retries and the time limit of what
  * leaves the process.
  */
-function adapterOf(settings: ResilienceSettings, { traced, domainEvents }: Outside): Platform['adapter'] {
+function adapterOf(settings: ResilienceSettings, { traced, domainEvents, scope }: Outside): Platform['adapter'] {
   const governed = defaultPolicy(settings);
 
   return (instance, info) => {
     const resilient = governed(instance, info);
-    const saving = info.kind === 'repository' ? dispatchingOnSave(resilient, () => domainEvents) : resilient;
+
+    const saving =
+      info.kind === 'repository'
+        ? dispatchingOnSave(
+            resilient,
+            () => domainEvents,
+            () => scope,
+          )
+        : resilient;
 
     return traced.binding(saving, { ...info, context: info.context ?? 'platform' });
   };
