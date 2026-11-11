@@ -173,7 +173,8 @@ export const WORK_NOTES: readonly Note[] = [
     name: 'merge-trunk',
     command: 'merge-trunk',
     lines: [
-      'brings the trunk (--trunk, by default origin/HEAD then origin/main, never fetched) into the',
+      'brings the trunk (--trunk; by default the base of .ddd-ts-kit/worker.json in the worktree of',
+      'a worker, then origin/HEAD, then origin/main; nothing is fetched) into the',
       "branch as one merge commit computed from the branch's own diff: from the newest commit of",
       'the branch the trunk holds (--since; else the commit whose patch, derived files,',
       'migrations, slices.md, plan.md and lockfiles left out, is one commit of the trunk, on this',
@@ -191,8 +192,8 @@ export const WORK_NOTES: readonly Note[] = [
       "--accept-lost records a Lost-Accepted: trailer), and the commit of the merge's paths only,",
       'with the trailers Merge-Base:, Trunk: and Landed:; any other changed path blocks it.',
       '--dry-run previews, --abort undoes; refused (exit 2) on a dirty tree, another operation in',
-      'progress, no committer known to git, an unknown trunk, or a git older than 2.40 with a base',
-      'git would not compute',
+      'progress, no committer known to git, an unknown trunk, a --since at the head of the branch,',
+      'or a git older than 2.40 with a base git would not compute',
     ],
   },
 ];

@@ -1,3 +1,4 @@
+import { expectedOver } from './expected-over';
 import { LineCounts } from './line-counts';
 import type { MergeFinding } from './merge-finding';
 import type { MergeSides } from './merge-sides';
@@ -16,8 +17,8 @@ interface Counted {
 /**
  * The lines a merge lost or brought back, over the files of `sides` taken as one set. A line is
  * lost when the result holds it fewer times than the base plus what the sides added minus what
- * they removed, unless its text, whitespace aside, is still in a file of the result (a line laid
- * out again on several). A line above that count is brought back when a side removed it, written
+ * they removed, as one set and file by file, unless its text, whitespace aside, is still in a
+ * file of the result (a line laid out again on several). A line above that count is brought back when a side removed it, written
  * by the merge otherwise. Lines both sides lost in a file the merge wrote lines of its own in are
  * a hunk the merge rewrote: a warning, not an error.
  */
@@ -45,9 +46,10 @@ function findingsOf(text: string, counted: Counted): MergeFinding[] {
 
   if (inResult < count.expected && !isReflowed(text, counted.flatResult)) {
     const side = count.addedBy === 'theirs' ? counted.theirs : counted.ours;
+    const expected = expectedOver(counted.base.places(text), counted.ours.places(text), counted.theirs.places(text));
 
     return rankedPlaces(side.places(text), counted.base.places(text), counted.result.places(text))
-      .slice(0, count.expected - inResult)
+      .slice(0, Math.max(expected - inResult, 0))
       .map(({ file, line }): MergeFinding => ({ kind: 'lost-line', file, line, side: count.addedBy, text }));
   }
 
