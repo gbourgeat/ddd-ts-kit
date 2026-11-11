@@ -78,7 +78,7 @@ export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
   const report: MergeReport = { ...blank, ...EMPTY, next: NEXT_STEPS.upToDate };
 
   if (runGit(top, ['merge-base', '--is-ancestor', trunk.commit, head]) !== undefined) {
-    return report;
+    return { ...report, next: `${report.next}${unreadDefault(top, { request, trunk, head })}` };
   }
 
   refuseShallowHistory(top, { ours: head, theirs: trunk.commit });
@@ -93,6 +93,35 @@ export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
   });
 
   return opened({ context, request, report: { ...report, base } });
+}
+
+/**
+ * Up to date with the base of the worker says nothing of the default trunk: a worker cut from the branch of
+ * another, or scoped again on its own, would read "up to date" while the default trunk moved. Said, never merged.
+ */
+function unreadDefault(
+  top: string,
+  { request, trunk, head }: { request: MergeTrunkRequest; trunk: { ref: string; commit: string }; head: string },
+): string {
+  const usual = request.trunk === undefined ? usualTrunk(top) : undefined;
+
+  if (
+    usual === undefined ||
+    usual.commit === trunk.commit ||
+    runGit(top, ['merge-base', '--is-ancestor', usual.commit, head]) !== undefined
+  ) {
+    return '';
+  }
+
+  return ` ${usual.ref} holds commits this branch lacks and was not read, the base of the worker being ${trunk.ref}: \`npx ddd-ts-kit merge-trunk --trunk ${usual.ref}\` brings it in.`;
+}
+
+function usualTrunk(top: string): { ref: string; commit: string } | undefined {
+  try {
+    return trunkOf(top, undefined);
+  } catch {
+    return undefined;
+  }
 }
 
 const EMPTY = {
