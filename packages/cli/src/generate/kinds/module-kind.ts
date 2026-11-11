@@ -82,6 +82,13 @@ function moduleName(scope: Scope, input: string): Name {
     );
   }
 
+  if (flaw?.reason === 'shared-folder') {
+    throw new CliError(
+      `"${name.kebab}" cannot name a module of the model.`,
+      `${name.kebab}/ is where a context divided into modules keeps what belongs to none of its modules: it is never declared. Name the module after the cluster of concepts it holds, with terms of the glossary.`,
+    );
+  }
+
   if (flaw?.reason === 'technical') {
     throw new CliError(
       `"${name.kebab}" names a grouping of code ("${flaw.word}"), not a part of the model.`,

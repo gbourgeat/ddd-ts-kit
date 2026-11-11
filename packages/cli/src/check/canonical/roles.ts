@@ -70,12 +70,17 @@ export const ROLES: readonly Role[] = [
   {
     directory: 'infrastructure/persistence',
     suffixes: ['.repository.ts', '.mapper.ts', '.reader.ts', '.schema.ts', '.personal-fields.ts'],
+    shared: true,
   },
   { directory: 'infrastructure/external', suffixes: [] },
   { directory: 'infrastructure/anti-corruption', suffixes: [] },
-  { directory: 'presentation/http', suffixes: ['.routes.ts', '.route.ts', '.controller.ts', '.dto.ts'] },
-  { directory: 'presentation/http/guards', suffixes: ['.guard.ts'] },
-  { directory: 'presentation/http/shared', suffixes: [] },
+  {
+    directory: 'presentation/http',
+    suffixes: ['.routes.ts', '.route.ts', '.controller.ts', '.dto.ts'],
+    shared: true,
+  },
+  { directory: 'presentation/http/guards', suffixes: ['.guard.ts'], shared: true },
+  { directory: 'presentation/http/shared', suffixes: [], shared: true },
   {
     directory: 'presentation/http/*/*',
     suffixes: [
@@ -92,6 +97,6 @@ export const ROLES: readonly Role[] = [
     ],
   },
   { directory: 'presentation/cli', suffixes: [] },
-  { directory: 'test/builders', suffixes: ['.builder.ts'] },
-  { directory: 'test/worlds', suffixes: ['.world.ts'] },
+  { directory: 'test/builders', suffixes: ['.builder.ts'], shared: true },
+  { directory: 'test/worlds', suffixes: ['.world.ts'], shared: true },
 ];

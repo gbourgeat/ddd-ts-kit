@@ -36,6 +36,7 @@ import { LAYER_FIXTURES } from './layer-fixtures';
 import { LAYOUT_FIXTURES } from './layout-fixtures';
 import { LIFECYCLE_FIXTURES } from './lifecycle-fixtures';
 import { MODULE_FIXTURES } from './module-fixtures';
+import { SHARED_FOLDER_FIXTURES } from './shared-folder-fixtures';
 import { NAMED_REFUSAL_FIXTURES } from './named-refusal-fixtures';
 import { NAMING_FIXTURES } from './naming-fixtures';
 import { NEST_CONTROLLERS_FIXTURES } from './nest-controllers-fixtures';
@@ -105,6 +106,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...LAYOUT_FIXTURES,
   ...LIFECYCLE_FIXTURES,
   ...MODULE_FIXTURES,
+  ...SHARED_FOLDER_FIXTURES,
   ...NAMING_FIXTURES,
   ...BUSINESS_NAME_FIXTURES,
   ...OUTBOX_FIXTURES,

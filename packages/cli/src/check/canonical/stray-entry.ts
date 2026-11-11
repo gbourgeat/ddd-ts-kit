@@ -3,9 +3,18 @@ import type { Config } from '../../config';
 import { CONTEXT_FILES } from '../../context-files';
 import { controllersFile } from '../../nest-controllers/controllers-file';
 import { barrelFile, dependenciesFile, isDeclarationsFile } from '../../declared';
-import { declaredModules, moduleFileOf, moduleOfModuleFile, moduleSplit, WITHOUT_MODULE } from '../../model-modules';
+import {
+  declaredModules,
+  moduleFileOf,
+  moduleOfModuleFile,
+  moduleSplit,
+  SHARED_FOLDER,
+  WITHOUT_MODULE,
+} from '../../model-modules';
 import type { Flaw } from '../model/flaw';
 import { isCanonicalDirectory } from './is-canonical-directory';
+import { holdsSharedFiles } from './holds-shared-files';
+import { isSharedDirectory } from './is-shared-directory';
 import { OPEN_DIRECTORIES } from './open-directories';
 import { roleOf } from './role-of';
 import { ownEntry } from '../../config/values/own-entry';
@@ -21,6 +30,8 @@ interface Placed {
   readonly inside: string;
   /** The declared module the entry sits in, when it does. */
   readonly module?: string;
+  /** True when the entry sits in `shared/` of a context divided into modules: `inside` is then its path below it. */
+  readonly shared: boolean;
   /** The modules of the model the config declares for the context. */
   readonly modules: readonly string[];
   readonly extras: readonly string[];
@@ -36,6 +47,10 @@ export function strayEntry(entry: string, config: Config): Flaw | undefined {
   // The folder of a declared module holds its layers: it is canonical as the context itself is.
   if (placed === undefined || (placed.module !== undefined && placed.inside === '') || inDotDirectory(entry)) {
     return undefined;
+  }
+
+  if (placed.shared) {
+    return strayInShared(placed, entry.endsWith('/'));
   }
 
   // At its root, a module of the model holds its module file, which the module file of the context composes.
@@ -71,16 +86,55 @@ function place(entry: string, config: Config): Placed | undefined {
   }
 
   const modules = declaredModules(config, context);
-  const { module, path: inside } = moduleSplit(rest.join('/'), modules);
+  const extras = ownEntry(contexts, context)?.extraDirectories ?? [];
+  const written = rest.join('/');
+  const { module, path: split } = moduleSplit(written, modules);
+  // The whole of shared/ is closed, what it does not hold too, unless the config opens it by name: it is then read as written.
+  const underShared = modules.length > 0 && rest[0] === SHARED_FOLDER;
+  const shared = underShared && !coveredByExtra(extras, written);
+  const unsplit = underShared ? written : split;
 
   return {
     context,
     declared: stack.style === 'declared',
-    inside,
+    inside: shared ? rest.slice(1).join('/') : unsplit,
+    shared,
     modules,
     ...(module === undefined ? {} : { module }),
-    extras: ownEntry(contexts, context)?.extraDirectories ?? [],
+    extras,
   };
+}
+
+/**
+ * `shared/` of a context divided into modules is closed: the directories that hold what belongs to
+ * no module, and no other. An extra directory of the config opens it only when it names `shared/`.
+ */
+function strayInShared({ context, declared, inside, modules }: Placed, directory: boolean): Flaw | undefined {
+  const written = `${SHARED_FOLDER}/${inside}`;
+  const held = `${SHARED_FOLDER}/ of ${context} holds only what belongs to none of its modules (${modules.join(', ')}): infrastructure/persistence/ (the schema and the tables of the context), presentation/http/ (its route groups, guards/ and shared/) and test/ (worlds/, fakes/ and builders/)`;
+
+  if (directory) {
+    return isSharedDirectory(inside)
+      ? undefined
+      : {
+          message: `"${written}" is not a directory of ${SHARED_FOLDER}/.`,
+          fix: `${held}. Move its files into the module whose concepts they serve, in the directory of their role (<module>/<layer>/<role>/).`,
+        };
+  }
+
+  if (OTHER_CODE.test(inside)) {
+    return notTypeScript(written);
+  }
+
+  // The declarations of a layer of shared/, which the generator writes for the guards it holds.
+  const generated = declared && inside.includes('/') && isDeclarationsFile(context, inside, WITHOUT_MODULE);
+
+  return !inside.endsWith('.ts') || generated || holdsSharedFiles(path.posix.dirname(inside))
+    ? undefined
+    : {
+        message: `"${written}" is not in a directory of ${SHARED_FOLDER}/.`,
+        fix: `${held}. Move it into one of them, or into the module whose concepts it serves.`,
+      };
 }
 
 function strayDirectory({ context, inside, module, extras }: Placed): Flaw | undefined {

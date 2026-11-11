@@ -53,6 +53,11 @@ function namingFlaw(module: ModuleConfig, unknown: readonly string[]): NamingFla
   const flaw = moduleNameFlaw(module.name);
   const technical = flaw?.reason === 'technical' ? flaw.word : undefined;
 
+  // The name of shared/, the folder of what belongs to no module, is refused by config/valid, once.
+  if (flaw?.reason === 'shared-folder') {
+    return undefined;
+  }
+
   if (technical !== undefined) {
     return {
       message: (context) =>

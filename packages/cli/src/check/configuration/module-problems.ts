@@ -45,22 +45,7 @@ export function moduleProblems(context: string, { modules }: ContextConfig, writ
 
 function namingProblems(context: string, modules: ContextConfig['modules']): ModuleProblem[] {
   return modules.flatMap(({ name, classification }) => {
-    const reason = moduleNameFlaw(name)?.reason;
-    const problems: ModuleProblem[] = [];
-
-    if (reason === 'format') {
-      problems.push({
-        needle: name,
-        message: `The module "${name}" of "${context}" is not written in kebab-case.`,
-        fix: `Name it as its folder is named, in kebab-case: <module>/, holding <module>/domain/, <module>/application/...`,
-      });
-    } else if (reason === 'role-folder') {
-      problems.push({
-        needle: name,
-        message: `The module "${name}" of "${context}" has the name of a role folder.`,
-        fix: 'A module is a part of the model, named in its language; its layers keep their role folders under it (<module>/domain/aggregates/).',
-      });
-    }
+    const problems = nameProblems(context, name);
 
     if (classification !== undefined && !isOneOf(CLASSIFICATIONS, classification)) {
       problems.push({
@@ -72,4 +57,26 @@ function namingProblems(context: string, modules: ContextConfig['modules']): Mod
 
     return problems;
   });
+}
+
+/** What to say of a name that cannot be a folder of the tree of its context, by the reason `moduleNameFlaw` gives; a technical word is for the rule module/declared. */
+const REFUSED_NAMES: Readonly<Record<string, (name: string, context: string) => Omit<ModuleProblem, 'needle'>>> = {
+  format: (name, context) => ({
+    message: `The module "${name}" of "${context}" is not written in kebab-case.`,
+    fix: `Name it as its folder is named, in kebab-case: <module>/, holding <module>/domain/, <module>/application/...`,
+  }),
+  'role-folder': (name, context) => ({
+    message: `The module "${name}" of "${context}" has the name of a role folder.`,
+    fix: 'A module is a part of the model, named in its language; its layers keep their role folders under it (<module>/domain/aggregates/).',
+  }),
+  'shared-folder': (name, context) => ({
+    message: `The module "${name}" of "${context}" takes the name of the folder ${name}/.`,
+    fix: `${name}/ is where a context divided into modules keeps what belongs to none of its modules (the schema of its database, its route groups, what its specs share): it is never declared. Name the module after the cluster of concepts it holds.`,
+  }),
+};
+
+function nameProblems(context: string, name: string): ModuleProblem[] {
+  const refused = REFUSED_NAMES[moduleNameFlaw(name)?.reason ?? ''];
+
+  return refused === undefined ? [] : [{ needle: name, ...refused(name, context) }];
 }

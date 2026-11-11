@@ -2,7 +2,15 @@ export { declaredModules } from './declared-modules';
 export { intoModule } from './into-module';
 export { isContextLevel } from './is-context-level';
 export { isRoleFolder } from './is-role-folder';
-export { EARLIER_MODULE_LAYERS, MODULE_LAYERS, MODULE_TEST_FOLDERS } from './module-layers';
+export { foldersOfContext } from './folders-of-context';
+export {
+  EARLIER_MODULE_LAYERS,
+  MODULE_LAYERS,
+  MODULE_TEST_FOLDERS,
+  SHARED_FOLDER,
+  SHARED_FOLDERS,
+  TEST_FOLDER,
+} from './module-layers';
 export { modulePlacement } from './module-placement';
 export { moduleSplit } from './module-split';
 export { placedImports } from './placed-imports';
