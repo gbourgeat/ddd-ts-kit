@@ -8,8 +8,8 @@ import type { {{aggregate.pascal}}Row } from '{{alias.context}}/infrastructure/p
 {{/unless}}
 {{#if personal.ofTable}}
 
-/** A row of `{{aggregate.table}}`, as its entity schema types it. */
-type {{aggregate.pascal}}Row = typeof {{aggregate.tableCamel}} extends EntitySchema<infer Row> ? Row : never;
+/** The row an entity schema types. */
+type RowOf<Schema> = Schema extends EntitySchema<infer Row> ? Row : never;
 {{/if}}
 
 /**
@@ -18,7 +18,12 @@ type {{aggregate.pascal}}Row = typeof {{aggregate.tableCamel}} extends EntitySch
  * Read by {{personal.names.adapter}}, which `npm run privacy:erase` runs; a column added later that holds
  * personal data is declared here too{{#unless personal.ofTable}}, and its mapper writes it{{/unless}}.
  */
+{{#if personal.ofTable}}
+const declaration: PersonalFieldsOptions<RowOf<typeof {{aggregate.tableCamel}}>> = {
+{{/if}}
+{{#unless personal.ofTable}}
 const declaration: PersonalFieldsOptions<{{aggregate.pascal}}Row> = {
+{{/unless}}
   subject: '{{personal.subject}}',
 {{personal.fields}}
   erasure: '{{personal.erasure}}',

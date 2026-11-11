@@ -104,9 +104,8 @@ describe('the declaration of a table, as the erasure of each ORM reads it', () =
 
     expect(typeorm).toContain("import type { EntitySchema } from 'typeorm';");
 
-    expect(typeorm).toContain(
-      'type PaymentRemindersRow = typeof paymentReminders extends EntitySchema<infer Row> ? Row : never;',
-    );
+    expect(typeorm).toContain('type RowOf<Schema> = Schema extends EntitySchema<infer Row> ? Row : never;');
+    expect(typeorm).toContain('const declaration: PersonalFieldsOptions<RowOf<typeof paymentReminders>> = {');
 
     expect(typeorm).toContain("  subject: 'customerId',\n  fields: ['customerEmail', 'customerName'],\n");
 
