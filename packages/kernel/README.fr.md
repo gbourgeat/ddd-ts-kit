@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:38b88863108923f8 -->
+<!-- translation-of: README.md sha256:7093aad7d26be44f -->
 
 # @ddd-ts-kit/kernel
 
@@ -2051,7 +2051,7 @@ et une écriture n'a lieu que si son événement est plus récent :
 | Tampon | `stampOf(event)` : l'id et l'instant d'un événement d'intégration ; le nom, l'agrégat et l'instant d'un événement du domaine ; plus `stampOf(event, version)` quand l'événement porte une version par clé |
 | Plus récent | une `version` plus grande quand les deux tampons en portent une ; sinon un instant plus tardif ; au même instant, le plus grand id d'événement. Un même événement n'est jamais plus récent que lui-même |
 | `upsertIfNewer(key, stamp, next)` | écrit `next(current)` ; `stale` quand la ligne contient cet événement ou un plus tardif ; `ignored` quand `next` renvoie `undefined` (un correctif d'une ligne qui n'existe pas) |
-| `delete(key, stamp)` | la ligne disparaît pour `get` et `search`, et une trace reste, sa clé et son tampon sans aucune de ses données : un événement plus ancien livré en retard ne la ramène pas, un plus tardif oui. Une clé que le modèle de lecture ne tient pas prend la même trace (`applied`), si bien que la création que cette suppression suit est `stale` quand elle est livrée après elle. Sur un stockage SQL, chaque colonne de la ligne accepte NULL, sinon le registre refuse la table par `ReadModelTableNotReadyError` ([ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)) |
+| `delete(key, stamp)` | la ligne disparaît pour `get` et `search`, et une trace reste, sa clé et son tampon sans aucune de ses données : un événement plus ancien livré en retard ne la ramène pas, un plus tardif oui. Une clé que le modèle de lecture ne tient pas prend la même trace et répond `traced`, puisqu'aucune ligne n'a été retirée (comme une suppression par-dessus une trace antérieure), si bien que la création que cette suppression suit est `stale` quand elle est livrée après elle. Sur un stockage SQL, chaque colonne de la ligne accepte NULL, sinon le registre refuse la table par `ReadModelTableNotReadyError` ([ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)) |
 | Concurrence | une écriture est conditionnée au tampon qu'elle a lu et est relue quand une autre est arrivée d'abord ; cinq tentatives, puis `ConcurrencyError` et la nouvelle livraison de l'événement |
 | Transaction | le store écrit sur l'exécuteur de l'unité de travail, si bien que la ligne et la marque d'événement traité sont validées ou annulées ensemble |
 
@@ -2151,7 +2151,7 @@ une telle projection lève au chargement du fichier.
 ### Vue de l'extérieur
 
 Par les ports qui existent. `@ddd-ts-kit/di` compte `projection_events_total` par `context`,
-`projection`, `event` et `result` (`applied`, `stale`, `ignored`, `failed`) sur `Metrics`, et
+`projection`, `event` et `result` (`applied`, `traced`, `stale`, `ignored`, `failed`) sur `Metrics`, et
 pose `projection_last_event_age_ms`, l'âge du dernier événement appliqué au moment où il l'a été :
 le retard. Une projection est abonnée comme consommateur sous son nom, si bien que chaque
 livraison est un *span* `process <projection>`, avec les appels à son modèle de lecture en

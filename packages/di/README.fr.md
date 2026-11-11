@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:20506c82266f06d4 -->
+<!-- translation-of: README.md sha256:fe6d5d51ea2261b3 -->
 
 # @ddd-ts-kit/di
 
@@ -1049,7 +1049,7 @@ du kernel, lié par son adaptateur ou donné avec `fake(Port, store)`.
   ensemble. Sans eux, l'estampille que porte chaque ligne rend quand même une nouvelle livraison
   sans effet.
 - **Mesurée.** Avec `Metrics` lié, `projection_events_total` compte chaque événement par
-  `context`, `projection`, `event` et `result` (`applied`, `stale`, `ignored`, `failed`), et
+  `context`, `projection`, `event` et `result` (`applied`, `traced`, `stale`, `ignored`, `failed`), et
   `projection_last_event_age_ms` contient l'âge du dernier événement appliqué au moment où il l'a
   été.
 - **Décrite.** `describe().projections` liste chaque projection avec les événements qu'elle

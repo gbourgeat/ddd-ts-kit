@@ -1015,7 +1015,7 @@ the kernel, bound by its adapter or given with `fake(Port, store)`.
   database as the read model, the mark and the row commit or roll back together. Without
   them, the stamp each row carries still makes a redelivery a no-op.
 - **Measured.** With `Metrics` bound, `projection_events_total` counts each event by `context`,
-  `projection`, `event` and `result` (`applied`, `stale`, `ignored`, `failed`), and
+  `projection`, `event` and `result` (`applied`, `traced`, `stale`, `ignored`, `failed`), and
   `projection_last_event_age_ms` holds the age of the last event applied when it was.
 - **Described.** `describe().projections` lists each projection with the events it applies and
   the method of each; they do not appear among `integrationEventHandlers` and

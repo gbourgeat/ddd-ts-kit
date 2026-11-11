@@ -65,7 +65,8 @@ describe('the trace of a deletion', () => {
   it('is kept under a key the read model does not hold: the creation it follows is stale, a later one applies', async () => {
     const store = new InMemoryReadModelStore(rooms);
 
-    expect(await store.delete('r1', at(3))).toBe('applied');
+    expect(await store.delete('r1', at(3))).toBe('traced');
+    expect(await store.delete('r1', at(3))).toBe('stale');
     expect(await store.table.find('r1')).toEqual({ key: 'r1', row: undefined, stamp: at(3) });
     expect(await store.upsertIfNewer('r1', at(2), () => room('r1'))).toBe('stale');
     expect(await store.get('r1')).toBeUndefined();

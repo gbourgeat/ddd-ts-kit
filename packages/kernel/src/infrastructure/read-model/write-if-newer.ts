@@ -76,5 +76,10 @@ async function attempted<Row>(
   const done =
     held === undefined ? await rows.insert({ key, row, stamp }) : await rows.replace({ key, row, stamp }, held.stamp);
 
-  return done ? 'applied' : undefined;
+  if (!done) {
+    return undefined;
+  }
+
+  // A deletion that found no live row removed nothing: it left, or moved forward, a trace.
+  return next === undefined && held?.row === undefined ? 'traced' : 'applied';
 }

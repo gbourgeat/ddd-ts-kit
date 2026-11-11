@@ -117,7 +117,7 @@ class ReadModelSuite<Row extends object> extends ContractSuite<ReadModelStore<Ro
     });
 
     this.it('keeps the trace of a deletion delivered before the creation it follows, which is then stale', async () => {
-      this.expect(await this.subject.delete('row-1', at('evt-3', 3))).toBe('applied');
+      this.expect(await this.subject.delete('row-1', at('evt-3', 3))).toBe('traced');
       this.expect(await this.put('row-1', 2)).toBe('stale');
       this.expect(await this.subject.get('row-1')).toBe(undefined);
     });

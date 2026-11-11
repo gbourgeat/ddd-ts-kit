@@ -74,8 +74,9 @@ export class DeletionsSuite extends ReadModelStoreSuite {
       this.expect(await this.ids()).toEqual([]);
     });
 
-    this.it('applies a deletion delivered before the creation it follows, which is then stale', async () => {
-      this.expect(await this.store.delete('a1', at('evt-3', 3))).toBe('applied');
+    this.it('traces a deletion delivered before the creation it follows, which is then stale', async () => {
+      this.expect(await this.store.delete('a1', at('evt-3', 3))).toBe('traced');
+      this.expect(await this.store.delete('a1', at('evt-4', 4))).toBe('traced');
       this.expect(await this.put(row('a1'), at('evt-2', 2))).toBe('stale');
       this.expect(await this.store.get('a1')).toBe(undefined);
       this.expect(await this.ids()).toEqual([]);
