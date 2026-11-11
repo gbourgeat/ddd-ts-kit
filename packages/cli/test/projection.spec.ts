@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { checkJsonOf } from './check-support';
-import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir } from './helpers';
+import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir, write } from './helpers';
 import { failure, report } from './reports';
 
 const SHIPPING = 'src/contexts/shipping';
@@ -143,5 +143,32 @@ describe('generate projection', () => {
     expect(module).toContain('const invoicesToShipProjection = new InvoicesToShipProjection();');
     expect(module).toContain("consumer: 'shipping.invoices-to-ship',");
     expect(module).toContain('invoicesToShipProjection.issued(event)');
+  });
+});
+
+describe('generate projection, on an event the formatter folded', () => {
+  it('reads the type of an event whose declaration the formatter folded over two lines', () => {
+    const folded = tempDir('projection-folded');
+
+    scaffoldEverything(folded);
+
+    const event = 'src/contexts/billing/published-language/invoice-issued.v2.integration-event.ts';
+
+    write(
+      folded,
+      event,
+      read(folded, event).replace(
+        'export type InvoiceIssuedV2 = IntegrationEvent<',
+        'export type InvoiceIssuedV2 =\n  IntegrationEvent<',
+      ),
+    );
+
+    expect(read(folded, event)).toContain('export type InvoiceIssuedV2 =\n  IntegrationEvent<');
+
+    const generated = report(
+      cli(folded, 'generate', 'projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued', '--json'),
+    );
+
+    expect(generated.created).toEqual([PROJECTION, SPEC]);
   });
 });

@@ -23,7 +23,8 @@ const BEHAVIOUR_PAGE = /^docs\/behaviour\/([^/]+)\.md$/;
 /**
  * Splits the changed paths of the working tree between the slice of `context` and the rest, by a
  * closed list: a path is staged only when it belongs to the slice. The files of the context, its
- * Prisma models (`prisma/schema/<context>.prisma`), an end-to-end spec, an acceptance spec, a
+ * Prisma models (`prisma/schema/<context>.prisma`), an end-to-end spec and what the end-to-end specs
+ * of the context share (`test/e2e/support/<context>/`), an acceptance spec, a
  * working migration with its snapshot and the journal, the pages of what the tests state but those
  * of another context, the shared files of the storage the generator wrote for the slice alone
  * (`storage`, read by `storageOfSlice`), and the derived files
@@ -43,6 +44,7 @@ export function planStaging(
     entry.path.startsWith(`${config.contextsDir}/${context}/`) ||
     entry.path === prismaSchemaOf(context) ||
     END_TO_END_SPEC.test(entry.path) ||
+    entry.path.startsWith(`test/e2e/support/${context}/`) ||
     ACCEPTANCE_SPEC.test(entry.path) ||
     isWorkingMigration(entry.path, working) ||
     isBehaviourPage(entry.path, context, contexts) ||

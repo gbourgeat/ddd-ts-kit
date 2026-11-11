@@ -9,7 +9,11 @@ import { refreshNestControllers } from '../nest-controllers/refresh-nest-control
 import { type EarlierDeclarations, refreshBarrels } from './refresh-barrels';
 
 /** Keeps what is derived from the config and the tree in step with what was just scaffolded, once the project has it. */
-export function refreshDocs(ws: Workspace, earlier: EarlierDeclarations, scope: DocsWriting['scope'] = 'whole'): void {
+export function refreshDocs(
+  ws: Workspace,
+  earlier: EarlierDeclarations,
+  scope: DocsWriting['scope'] | 'declarations' = 'whole',
+): void {
   const config = ws.read(CONFIG_FILE);
 
   if (config === undefined) {
@@ -21,7 +25,9 @@ export function refreshDocs(ws: Workspace, earlier: EarlierDeclarations, scope: 
   refreshBarrels(ws, current, earlier);
   refreshNestControllers(ws, current);
 
-  if (ws.exists(CONTEXT_MAP)) {
+  // The replay of a plan runs every command of every open row in a copy nobody reads the documents of: the
+  // declarations a later command builds on are enough, and describing the whole project after each one is not paid.
+  if (scope !== 'declarations' && ws.exists(CONTEXT_MAP)) {
     writeDocs(ws, current, { earlier, scope });
   }
 
