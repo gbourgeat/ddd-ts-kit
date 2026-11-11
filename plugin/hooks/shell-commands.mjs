@@ -210,12 +210,12 @@ export function simpleCommands(text, directory, depth = 0) {
  * not text: a quoted word stays one word.
  */
 function hiddenCommands(words, directory, depth) {
-  if (readThrough(words)) {
+  if (depth > DEPTH || readThrough(words)) {
     return [];
   }
   return words.flatMap((word, index) =>
     index > 0 && (STARTERS.has(word) || word in RUNNERS)
-      ? runCommands(words.slice(index), directory, depth + 1, false)
+      ? commandOfWords(words.slice(index), directory, depth + 1)
       : [],
   );
 }
@@ -269,7 +269,13 @@ function guessed(guesses, read) {
  * split again, so a quote, a `>` or a `;` inside a word stays in it. What that command runs itself
  * (a shell, a wrapper, another runner, `find -exec`) is read as for any command.
  */
-function runCommands(inner, directory, depth, hidden = true) {
+function runCommands(inner, directory, depth) {
+  const read = commandOfWords(inner, directory, depth);
+  return [...read, ...hiddenCommands(inner, read[0].directory, depth)];
+}
+
+/** The command `inner` is, with what it nests and what it hands to another, where its wrappers send it. */
+function commandOfWords(inner, directory, depth) {
   if (depth > DEPTH) {
     return [unreadMarker('nested', directory, depth)];
   }
@@ -283,12 +289,7 @@ function runCommands(inner, directory, depth, hidden = true) {
     piped: false,
     directory: place,
   };
-  return [
-    command,
-    ...nestedCommands(words, place, depth),
-    ...wrappedCommands(inner, place, depth),
-    ...(hidden ? hiddenCommands(inner, place, depth) : []),
-  ];
+  return [command, ...nestedCommands(words, place, depth), ...wrappedCommands(inner, place, depth)];
 }
 
 function unreadMarker(truncated, directory, depth) {
@@ -523,63 +524,70 @@ function readOptions(words, { valued, flags, numeric }) {
  * takes the output. A wrapper given an option the table does not hold may write anywhere.
  */
 function wrapperEffects(words, directory, redirects) {
+  const effects = { place: directory, writes: [], taken: redirects.some(({ operator }) => OUTPUTS.has(operator)) };
   let rest = words;
-  let place = directory;
-  const writes = [];
-  const write = (wrapper, target, unread) =>
-    writes.push({ operator: '>', target: target ?? UNKNOWN, wrapper, ...(unread ? { unread } : {}) });
   for (let layer = 0; layer < LAYERS; layer += 1) {
-    const name = commandName(rest);
-    const spec = WRAPPERS[name];
+    const spec = WRAPPERS[commandName(rest)];
     if (isAssignment(rest[0] ?? '') || KEYWORDS.has(rest[0])) {
       rest = rest.slice(1);
-      continue;
-    }
-    if (!spec) {
+    } else if (spec) {
+      rest = afterWrapper(rest, spec, effects);
+    } else {
       break;
     }
-    const args = rest.slice(1);
-    const read = readOptions(args, spec);
-    for (const [flag, value] of read.values) {
-      if (spec.writes?.includes(flag)) {
-        write(name, value);
-      }
-      if (spec.places?.includes(flag)) {
-        place = placeOf(value ?? UNKNOWN, place);
-      }
-    }
-    // A text read word by word, for want of knowing which word starts the command, is no command
-    // the guard knows to carry these options.
-    if (read.unknown && guessing === 0) {
-      write(name, undefined, true);
-    }
-    if (spec.lock) {
-      write(name, args[read.index]);
-    }
-    if (spec.out && !redirects.some(({ operator }) => OUTPUTS.has(operator))) {
-      write(name, spec.out);
-    }
-    rest = afterOptions(args, spec, false);
   }
   const name = commandName(rest);
   if (name === 'script') {
-    const read = readOptions(rest.slice(1), { ...SCRIPT, valued: [...SCRIPT.valued, ...SCRIPT.logs] });
-    const logs = read.values.filter(([flag]) => SCRIPT.logs.includes(flag));
-    const file = rest[read.index + 1];
-    for (const target of [
-      ...logs.map(([, value]) => value),
-      ...(file || logs.length === 0 ? [file ?? 'typescript'] : []),
-    ]) {
-      write(name, target);
-    }
-    if (read.unknown) {
-      write(name, undefined, true);
-    }
+    effects.writes.push(...scriptWrites(rest));
   }
   if (name in PLACED && runnerCommand(rest)?.words === undefined) {
-    place = toldPlace(rest.slice(1), PLACED[name], place);
+    effects.place = toldPlace(rest.slice(1), PLACED[name], effects.place);
   }
-  return { place, writes };
+  return { place: effects.place, writes: effects.writes };
+}
+
+/** The words after one wrapper, what it writes and where it sends its command noted in `effects`. */
+function afterWrapper(rest, spec, effects) {
+  const name = commandName(rest);
+  const args = rest.slice(1);
+  const read = readOptions(args, spec);
+  for (const [flag, value] of read.values) {
+    if (spec.writes?.includes(flag)) {
+      effects.writes.push(writeOf(name, value));
+    }
+    if (spec.places?.includes(flag)) {
+      effects.place = placeOf(value ?? UNKNOWN, effects.place);
+    }
+  }
+  // A text read word by word, for want of knowing which word starts the command, is no command
+  // the guard knows to carry these options.
+  if (read.unknown && guessing === 0) {
+    effects.writes.push(writeOf(name, undefined, true));
+  }
+  if (spec.lock) {
+    effects.writes.push(writeOf(name, args[read.index]));
+  }
+  if (spec.out && !effects.taken) {
+    effects.writes.push(writeOf(name, spec.out));
+  }
+  return afterOptions(args, spec, false);
+}
+
+/** The file a wrapper writes, as an output redirection; `unread` when an option it was given is not known. */
+function writeOf(wrapper, target, unread) {
+  return { operator: '>', target: target ?? UNKNOWN, wrapper, ...(unread ? { unread } : {}) };
+}
+
+/** The files `script` records in: those its logs name, and the one it is given or `typescript`. */
+function scriptWrites(rest) {
+  const read = readOptions(rest.slice(1), { ...SCRIPT, valued: [...SCRIPT.valued, ...SCRIPT.logs] });
+  const logs = read.values.filter(([flag]) => SCRIPT.logs.includes(flag));
+  const file = rest[read.index + 1];
+  const targets = [...logs.map(([, value]) => value), ...(file || logs.length === 0 ? [file ?? 'typescript'] : [])];
+  return [
+    ...targets.map((target) => writeOf('script', target)),
+    ...(read.unknown ? [writeOf('script', undefined, true)] : []),
+  ];
 }
 
 // The directory one of `options` names among the words, spaced, after `=` or joined (`-C<dir>`), from `place`.
@@ -766,42 +774,38 @@ function textsFrom(word, after) {
 }
 
 function provenCommand(rest, runner) {
-  const told = {};
-  let index = afterKnownOptions(rest, 0, runner, told);
-  if (runner.subs?.includes(rest[index])) {
-    index = afterKnownOptions(rest, index + 1, runner, told);
-  } else if (runner.subs && (!runner.commands || runner.commands.has(rest[index]))) {
+  const told = { index: 0, moved: undefined };
+  afterKnownOptions(rest, runner, told);
+  if (runner.subs?.includes(rest[told.index])) {
+    told.index += 1;
+    afterKnownOptions(rest, runner, told);
+  } else if (runner.subs && (!runner.commands || runner.commands.has(rest[told.index]))) {
     return undefined;
   }
-  const inner = rest.slice(rest[index] === '--' ? index + 1 : index);
+  const inner = rest.slice(rest[told.index] === '--' ? told.index + 1 : told.index);
   return inner.length > 0 && PLAIN_PROGRAM.test(inner[0]) && !inner[0].startsWith('-')
-    ? { words: inner, ...told }
+    ? { words: inner, moved: told.moved }
     : undefined;
 }
 
-// The index after the options the guard knows from `from`, where they tell the runner to run noted
-// in `told`; at an option it does not know, or at `true` or `false` after an option that takes no
-// value, the end of the words: no program is proven then.
-function afterKnownOptions(rest, from, { flags, valued, places, elsewhere }, told) {
-  let index = from;
-  while (index < rest.length && rest[index] !== '--') {
-    const [flag, ...joined] = rest[index].split('=');
-    if (flags.includes(rest[index])) {
-      index += 1;
-      if (['true', 'false'].includes(rest[index])) {
-        return rest.length;
-      }
+// Moves `told.index` past the options the guard knows, where they tell the runner to run noted in
+// `told.moved`; at an option it does not know it stops, and at `true` or `false` after an option
+// that takes no value it goes to the end of the words: no program is proven then.
+function afterKnownOptions(rest, { flags, valued, places, elsewhere }, told) {
+  while (told.index < rest.length && rest[told.index] !== '--') {
+    const [flag, ...joined] = rest[told.index].split('=');
+    if (flags.includes(rest[told.index])) {
+      told.index = ['true', 'false'].includes(rest[told.index + 1]) ? rest.length : told.index + 1;
     } else if (valued.includes(flag)) {
-      const value = joined.length > 0 ? joined.join('=') : rest[index + 1];
+      const value = joined.length > 0 ? joined.join('=') : rest[told.index + 1];
       if (places.includes(flag) || elsewhere.includes(flag)) {
         told.moved = places.includes(flag) && value !== undefined ? value : UNKNOWN;
       }
-      index += joined.length > 0 ? 1 : 2;
+      told.index += joined.length > 0 ? 1 : 2;
     } else {
       break;
     }
   }
-  return index;
 }
 
 /** `find <roots> ... -exec <command> {} ;`: `{}` stands for a file under each root. */

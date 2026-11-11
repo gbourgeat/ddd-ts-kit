@@ -485,15 +485,6 @@ test('a worker pinned to its worktree does not work in the worktree of another w
   assert.match(reason(strayed), new RegExp(`Run your commands as \`cd ${worktree} && \\.\\.\\.\``));
 });
 
-// A conductor with the worktree of billing and, beside it, the worktree of shipping.
-function twoWorkers() {
-  const { conductor, worktree } = conductorWithWorker();
-  const other = join(conductor, '.worktrees', 'shipping');
-  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/shipping', other);
-  put(other, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'shipping' }));
-  return { conductor, worktree, other };
-}
-
 test('a first command that names no worktree pins no scope where several workers have one: it reads, and writes nothing', () => {
   const { conductor, worktree, other } = twoWorkers();
   // The session stands in the worktree of shipping; the worker of billing has not named its own yet.
@@ -521,6 +512,15 @@ test('a first command that names no worktree pins no scope where several workers
   assert.equal(run('pre-write', { cwd: other, ...written }).output, undefined);
   assert.equal(decision(run('pre-bash', bash(other, 'npm test', writer))), 'deny');
 });
+
+// A conductor with the worktree of billing and, beside it, the worktree of shipping.
+function twoWorkers() {
+  const { conductor, worktree } = conductorWithWorker();
+  const other = join(conductor, '.worktrees', 'shipping');
+  git(conductor, 'worktree', 'add', '--quiet', '-b', 'work/shipping', other);
+  put(other, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'shipping' }));
+  return { conductor, worktree, other };
+}
 
 test('a worker no call has pinned yet is refused what a pinned worker is: the places of the shell and of git stay as they are', () => {
   const { conductor, other } = twoWorkers();
@@ -599,11 +599,32 @@ test('a pin that stands and cannot be read holds every call: the worker is never
 });
 
 test('a command a runner or a later cd moves to another checkout is judged there, and refused there', () => {
-  const { conductor, worktree, other } = twoWorkers();
+  const places = twoWorkers();
+  const { conductor, worktree } = places;
   const agent = builder('moved-by-option', { cwd: conductor });
   const inOwn = (command) => bash(conductor, `cd ${worktree} && ${command}`, agent);
   assert.equal(run('pre-bash', inOwn('git status')).output, undefined);
-  for (const command of [
+  for (const command of runElsewhereByAnOption(places)) {
+    assert.equal(decision(run('pre-bash', inOwn(command))), 'deny', command);
+  }
+  for (const command of runInTheWorktreeOrRead(places)) {
+    assert.equal(run('pre-bash', inOwn(command)).output, undefined, command);
+  }
+});
+
+// The same options naming the worktree of the worker, and what only reads elsewhere.
+function runInTheWorktreeOrRead({ conductor, worktree, other }) {
+  return [
+    `pnpm -C ${worktree} exec tee src/contexts/billing/x.ts`,
+    `pnpm -C ${conductor} exec git status`,
+    `cd ${other} && git log --oneline && ls`,
+    'cd /tmp && ls',
+  ];
+}
+
+// The commands an option of a runner, or a `cd` of the line, runs in another checkout.
+function runElsewhereByAnOption({ conductor, other }) {
+  return [
     `pnpm -C ${conductor} exec git commit -m x`,
     `pnpm --dir ${other} exec tee src/contexts/billing/x.ts`,
     `pnpm --dir=${other} exec tee src/contexts/billing/x.ts`,
@@ -620,26 +641,41 @@ test('a command a runner or a later cd moves to another checkout is judged there
     `cd ${other} && npm test`,
     `git worktree lock ${other}`,
     `git worktree unlock ${other}`,
-  ]) {
-    assert.equal(decision(run('pre-bash', inOwn(command))), 'deny', command);
-  }
-  for (const command of [
-    `pnpm -C ${worktree} exec tee src/contexts/billing/x.ts`,
-    `pnpm -C ${conductor} exec git status`,
-    `cd ${other} && git log --oneline && ls`,
-    'cd /tmp && ls',
-  ]) {
-    assert.equal(run('pre-bash', inOwn(command)).output, undefined, command);
-  }
-});
+  ];
+}
 
 test('a wrapper or a program told where to run, and a cd of a later statement, are judged where the command runs', () => {
-  const { conductor, worktree, other } = twoWorkers();
+  const places = twoWorkers();
+  const { conductor, worktree } = places;
   const agent = builder('moved-by-wrapper', { cwd: conductor });
   const inOwn = (command) => bash(conductor, `cd ${worktree} && ${command}`, agent);
   assert.equal(run('pre-bash', inOwn('git status')).output, undefined);
   put(worktree, 'src/contexts/billing/domain/invoice.ts', 'export {};\n');
-  for (const command of [
+  for (const command of runElsewhereByAWrapper(places)) {
+    assert.equal(decision(run('pre-bash', inOwn(command))), 'deny', command);
+  }
+  for (const command of runAtHomeOrRead(places)) {
+    assert.equal(run('pre-bash', inOwn(command)).output, undefined, command);
+  }
+});
+
+// The same forms naming the worktree of the worker, a place of no checkout, or a reader.
+function runAtHomeOrRead({ worktree, other }) {
+  return [
+    `env -C ${worktree} npm test`,
+    `env -C ${worktree} rm -r src/contexts/billing/domain`,
+    `make -C ${worktree}/src/contexts/billing`,
+    `(cd ${other}; git log --oneline)`,
+    'cd src/contexts/billing; npm test',
+    'cd /tmp; ls',
+    'cd "$SOMEWHERE"; npm test',
+    'cd; ls',
+  ];
+}
+
+// The commands a wrapper, a program or a `cd` of a later statement runs in another checkout.
+function runElsewhereByAWrapper({ conductor, other }) {
+  return [
     `env -C ${conductor} rm -r src/contexts/billing/domain`,
     `env -C ${conductor} cp README.md src/contexts/billing/domain/`,
     `env --chdir=${other} git add -A`,
@@ -663,22 +699,8 @@ test('a wrapper or a program told where to run, and a cd of a later statement, a
     `pushd ${other}; npm test`,
     `cd ${other} || true; node tool.mjs`,
     `cd "$SOMEWHERE"; cd ${other}; npm test`,
-  ]) {
-    assert.equal(decision(run('pre-bash', inOwn(command))), 'deny', command);
-  }
-  for (const command of [
-    `env -C ${worktree} npm test`,
-    `env -C ${worktree} rm -r src/contexts/billing/domain`,
-    `make -C ${worktree}/src/contexts/billing`,
-    `(cd ${other}; git log --oneline)`,
-    'cd src/contexts/billing; npm test',
-    'cd /tmp; ls',
-    'cd "$SOMEWHERE"; npm test',
-    'cd; ls',
-  ]) {
-    assert.equal(run('pre-bash', inOwn(command)).output, undefined, command);
-  }
-});
+  ];
+}
 
 test('git that versions, before any call named a worktree among several, is told to name it', () => {
   const { worktree } = twoWorkers();
@@ -795,13 +817,17 @@ test('a file left changed in the checkout of the session is said to the worker o
   assert.equal(decision(packages), 'deny');
   assert.match(reason(packages), /The packages the guard runs changed while your last command ran/);
   assert.match(noticeOf(packages), /src\/platform\/evil\.ts/);
-  // From the conductor's checkout, outside every worktree, code is refused rather than run unnoted.
+  codeFromTheConductorIsRefused({ conductor, worktree }, agent);
+});
+
+// From the conductor's checkout, outside every worktree, code is refused rather than run unnoted.
+function codeFromTheConductorIsRefused({ conductor, worktree }, agent) {
   for (const command of [`node ${worktree}/src/contexts/billing/tool.mjs`, 'python3 x.py', 'bash x.sh', 'npm test']) {
     const stray = run('pre-bash', bash(conductor, command, agent));
     assert.match(reason(stray), /Run it as `cd <worktree> && \.\.\.`/, command);
   }
   assert.equal(run('pre-bash', bash(conductor, `cat ${worktree}/README.md`, agent)).output, undefined);
-});
+}
 
 test('a package file the guard runs that appears, changes or disappears since the note refuses the next call', () => {
   const { conductor, worktree } = conductorWithWorker();

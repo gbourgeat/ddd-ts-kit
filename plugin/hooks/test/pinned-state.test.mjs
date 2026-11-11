@@ -55,6 +55,21 @@ test("what the trunk brings in by a merge stays the trunk's", () => {
   assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
 });
 
+test("the base the scope file records is a trunk: what an integration branch brings in by a merge stays the trunk's", () => {
+  const root = workerOfAWave('work/wave-1', { base: 'work/wave-1' });
+  const agent = { agent_type: 'ddd-ts-kit:context-builder', session_id: 'merge', agent_id: 'wave' };
+  assert.equal(run('pre-bash', bash(root, 'node -e "1"', agent)).output, undefined);
+  git(root, 'merge', '--quiet', '--no-ff', '--no-verify', '--message', 'merge the wave', 'work/wave-1');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent)).output, undefined);
+  // From a session that stands in no project, the worker is judged the same.
+  const elsewhere = bash(dirname(root), `cd ${root} && npm test`, { ...agent, agent_id: 'wave-elsewhere' });
+  assert.equal(run('pre-bash', elsewhere).output, undefined);
+  // And so is a host that sends no working directory: the guard reads the one it starts in.
+  const { cwd, ...sent } = bash(root, 'npm test', { ...agent, agent_id: 'wave-no-cwd' });
+  assert.equal(runFrom(cwd, 'pre-bash', sent).output, undefined);
+});
+
 // A worker on `work/ordering`, cut from the integration branch `work/wave-1` its scope file records
 // as its base, itself ahead of `main`; `branch` then gains a commit outside the scope of the worker.
 function workerOfAWave(branch, scope) {
@@ -75,21 +90,6 @@ function workerOfAWave(branch, scope) {
   git(root, 'checkout', '--quiet', 'work/ordering');
   return root;
 }
-
-test("the base the scope file records is a trunk: what an integration branch brings in by a merge stays the trunk's", () => {
-  const root = workerOfAWave('work/wave-1', { base: 'work/wave-1' });
-  const agent = { agent_type: 'ddd-ts-kit:context-builder', session_id: 'merge', agent_id: 'wave' };
-  assert.equal(run('pre-bash', bash(root, 'node -e "1"', agent)).output, undefined);
-  git(root, 'merge', '--quiet', '--no-ff', '--no-verify', '--message', 'merge the wave', 'work/wave-1');
-  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
-  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent)).output, undefined);
-  // From a session that stands in no project, the worker is judged the same.
-  const elsewhere = bash(dirname(root), `cd ${root} && npm test`, { ...agent, agent_id: 'wave-elsewhere' });
-  assert.equal(run('pre-bash', elsewhere).output, undefined);
-  // And so is a host that sends no working directory: the guard reads the one it starts in.
-  const { cwd, ...sent } = bash(root, 'npm test', { ...agent, agent_id: 'wave-no-cwd' });
-  assert.equal(runFrom(cwd, 'pre-bash', sent).output, undefined);
-});
 
 test('a note an earlier version of the guard took, without the trunks, is compared with the trunks as they stand', () => {
   const root = workerOfAWave('work/wave-1', { base: 'work/wave-1' });
@@ -157,10 +157,23 @@ test('a file a merge brought in and a file the worker changed are told apart in 
   );
 });
 
-function gitOutput(root, ...args) {
-  const identity = ['-c', 'user.name=guard', '-c', 'user.email=guard@example.test', '-c', 'commit.gpgsign=false'];
-  return spawnSync('git', [...identity, ...args], { cwd: root, encoding: 'utf8' }).stdout.trim();
-}
+test('a merge of a commit no trunk held before the command is held, whatever the trunk names afterwards', () => {
+  const moves = [
+    () => undefined,
+    ({ root, side }) => git(root, 'update-ref', 'refs/heads/main', side),
+    ({ root, side }) => git(root, 'update-ref', 'refs/remotes/origin/HEAD', side),
+  ];
+  for (const [index, move] of moves.entries()) {
+    const made = mergedOffEveryBranch(`moved-${index}`);
+    move(made);
+    const stopped = run('pre-bash', bash(made.root, 'npm test', made.agent));
+    assert.equal(decision(stopped), 'deny', `move ${index}`);
+    assert.match(reason(stopped), /A merge brought files outside your scope into your branch: src\/main\.ts/);
+    const own = write(join(made.root, 'src/contexts/ordering/CONTEXT.md'), made.agent);
+    assert.equal(decision(run('pre-write', own)), 'deny', `move ${index}`);
+    assert.match(stopOf(made.root, made.agent).reason, /src\/platform\/added\.ts/);
+  }
+});
 
 // A worker on `work/ordering`, cut from `main`, pinned by a first command; then a commit that is on
 // no branch, changing files outside its scope, is merged into its branch, as code it ran could do.
@@ -181,27 +194,14 @@ function mergedOffEveryBranch(id) {
   return { root, agent, side, scope: { ...scope, branch: 'work/ordering' } };
 }
 
+function gitOutput(root, ...args) {
+  const identity = ['-c', 'user.name=guard', '-c', 'user.email=guard@example.test', '-c', 'commit.gpgsign=false'];
+  return spawnSync('git', [...identity, ...args], { cwd: root, encoding: 'utf8' }).stdout.trim();
+}
+
 function stopOf(root, agent) {
   return run('subagent-stop', { cwd: root, ...agent, stop_hook_active: false }).output;
 }
-
-test('a merge of a commit no trunk held before the command is held, whatever the trunk names afterwards', () => {
-  const moves = [
-    () => undefined,
-    ({ root, side }) => git(root, 'update-ref', 'refs/heads/main', side),
-    ({ root, side }) => git(root, 'update-ref', 'refs/remotes/origin/HEAD', side),
-  ];
-  for (const [index, move] of moves.entries()) {
-    const made = mergedOffEveryBranch(`moved-${index}`);
-    move(made);
-    const stopped = run('pre-bash', bash(made.root, 'npm test', made.agent));
-    assert.equal(decision(stopped), 'deny', `move ${index}`);
-    assert.match(reason(stopped), /A merge brought files outside your scope into your branch: src\/main\.ts/);
-    const own = write(join(made.root, 'src/contexts/ordering/CONTEXT.md'), made.agent);
-    assert.equal(decision(run('pre-write', own)), 'deny', `move ${index}`);
-    assert.match(stopOf(made.root, made.agent).reason, /src\/platform\/added\.ts/);
-  }
-});
 
 test("the scope file is the conductor's: its base, its base commit or its branch changed since the pin stops the worker", () => {
   const forgeries = [
@@ -244,6 +244,7 @@ test('the merge of the kit is noted when it is asked for another trunk than the 
     ['--trunk work/wave-1 --trunk=work/billing', 'work/billing', true],
     ['--trunk work/billing --trunk work/wave-1', 'work/billing', true],
     ['--trunk work/wave-1 --trunk', 'work/billing', true],
+    ['--trunks work/wave-1', 'work/billing', true],
   ]) {
     const root = workerOfAWave('work/billing', { base: 'work/wave-1' });
     const agent = { agent_type: 'ddd-ts-kit:context-builder', session_id: 'kit-merge', agent_id: trunk };
@@ -253,28 +254,6 @@ test('the merge of the kit is noted when it is asked for another trunk than the 
     assert.equal(decision(next), held ? 'deny' : undefined, trunk);
   }
 });
-
-// A branch that merged its trunk `count` times, each merge bringing in a file outside the scope, built
-// by one process of git.
-function manyTrunkMerges(root, count) {
-  const stream = [];
-  for (let index = 1; index <= count; index += 1) {
-    const file = `M 100644 inline src/platform/trunk-${index}.ts\ndata 11\nexport {};\n`;
-    const who = `committer guard <guard@example.test> ${1700000000 + index} +0000`;
-    const from = (branch) => (index === 1 ? `from refs/heads/${branch}^0\n` : '');
-    stream.push(
-      `commit refs/heads/main\nmark :${index * 2}\n${who}\ndata 5\ntrunk\n${from('main')}${file}`,
-      `commit refs/heads/work/ordering\nmark :${index * 2 + 1}\n${who}\ndata 5\nmerge\n${from('work/ordering')}merge :${index * 2}\n${file}`,
-    );
-  }
-  const imported = spawnSync('git', ['fast-import', '--quiet'], {
-    cwd: root,
-    input: stream.join('\n'),
-    encoding: 'utf8',
-  });
-  assert.equal(imported.status, 0, imported.stderr);
-  git(root, 'reset', '--quiet', '--hard', 'work/ordering');
-}
 
 test('a branch that merged its trunk hundreds of times is read by a bounded number of runs of git', () => {
   const root = committed({ worktrees: 'advised' });
@@ -300,6 +279,28 @@ test('a branch that merged its trunk hundreds of times is read by a bounded numb
   const stopped = run('subagent-stop', { cwd: root, ...agent, stop_hook_active: false }, counted).output;
   assert.match(stopped.reason, /outside your scope since its base [0-9a-f]+: src\/platform\/own\.ts\./);
 });
+
+// A branch that merged its trunk `count` times, each merge bringing in a file outside the scope, built
+// by one process of git.
+function manyTrunkMerges(root, count) {
+  const stream = [];
+  for (let index = 1; index <= count; index += 1) {
+    const file = `M 100644 inline src/platform/trunk-${index}.ts\ndata 11\nexport {};\n`;
+    const who = `committer guard <guard@example.test> ${1700000000 + index} +0000`;
+    const from = (branch) => (index === 1 ? `from refs/heads/${branch}^0\n` : '');
+    stream.push(
+      `commit refs/heads/main\nmark :${index * 2}\n${who}\ndata 5\ntrunk\n${from('main')}${file}`,
+      `commit refs/heads/work/ordering\nmark :${index * 2 + 1}\n${who}\ndata 5\nmerge\n${from('work/ordering')}merge :${index * 2}\n${file}`,
+    );
+  }
+  const imported = spawnSync('git', ['fast-import', '--quiet'], {
+    cwd: root,
+    input: stream.join('\n'),
+    encoding: 'utf8',
+  });
+  assert.equal(imported.status, 0, imported.stderr);
+  git(root, 'reset', '--quiet', '--hard', 'work/ordering');
+}
 
 test('a merge of an earlier commit of the trunk does not excuse a tree that drops what the trunk brought since', () => {
   const root = committed({ worktrees: 'advised' });

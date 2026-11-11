@@ -520,6 +520,7 @@ const WRAPPER_WRITES = [
   ['time -o', /writes files only the shell knows/],
   ['sudo -A true', /`sudo`, .* writes files only the shell knows/],
   ['timeout --unknown 5 true', /`timeout`, .* writes files only the shell knows/],
+  ['script --unknown -c true /dev/null', /`script`, .* writes files only the shell knows/],
 ];
 
 test('a wrapper that writes a file of its own is held to the scope for it, as a redirection is', () => {

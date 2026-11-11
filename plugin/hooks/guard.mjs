@@ -940,24 +940,6 @@ async function preBash(input) {
   }
 }
 
-// The reader of the shell, told once the programs the guard judges by a table of its own: a first
-// word that is none of them may be a wrapper, and the words after it are then read as commands.
-async function readerOfTheShell() {
-  const reader = await import('./shell-commands.mjs');
-  reader.knowPrograms([
-    ...[...PURE_READERS].filter(Boolean),
-    ...READING_PROGRAMS,
-    ...NEUTRAL_PROGRAMS,
-    ...AWK_PROGRAMS,
-    ...RUNNING_PROGRAMS,
-    ...CODE_RUNNERS,
-    ...IN_PLACE_EDITORS,
-    ...Object.keys({ ...PATH_COMMANDS, ...ACCESS_COMMANDS, ...TOOL_WRITES, ...DOWNLOAD_FLAGS }),
-    ...['git', 'dd', 'patch', 'tar', 'unzip', 'rsync', 'sed', 'tee', 'apply_patch'],
-  ]);
-  return reader;
-}
-
 async function shellVerdict(input, command, cwd) {
   shell = await readerOfTheShell();
   // A leading `cd` out of every project leaves the command to be judged against the session's project;
@@ -984,6 +966,24 @@ async function shellVerdict(input, command, cwd) {
     ? workerCommandReason(project, input, { context, command, commands })
     : (builderStrayReason(project, input, commands) ?? sessionShellReason(input, commands));
   return refusal ? { decision, reason: refusal } : undefined;
+}
+
+// The reader of the shell, told once the programs the guard judges by a table of its own: a first
+// word that is none of them may be a wrapper, and the words after it are then read as commands.
+async function readerOfTheShell() {
+  const reader = await import('./shell-commands.mjs');
+  reader.knowPrograms([
+    ...[...PURE_READERS].filter(Boolean),
+    ...READING_PROGRAMS,
+    ...NEUTRAL_PROGRAMS,
+    ...AWK_PROGRAMS,
+    ...RUNNING_PROGRAMS,
+    ...CODE_RUNNERS,
+    ...IN_PLACE_EDITORS,
+    ...Object.keys({ ...PATH_COMMANDS, ...ACCESS_COMMANDS, ...TOOL_WRITES, ...DOWNLOAD_FLAGS }),
+    ...['git', 'dd', 'patch', 'tar', 'unzip', 'rsync', 'sed', 'tee', 'apply_patch'],
+  ]);
+  return reader;
 }
 
 // The project of the first place a worker's command names (a directory it moves to, a file it writes):
@@ -1426,7 +1426,7 @@ function branchOutsideReason(project, input) {
     return undefined;
   }
   const outside = worktreeOutside(project, input);
-  const committed = committedSince(project, base, outside, trunkTips(project, input));
+  const committed = committedSince(project, { from: base, trunks: trunkTips(project, input) }, outside);
   if (committed === undefined) {
     return `The guard could not compare your branch with its base ${base.slice(0, 12)}: git did not answer for the commits between them. Name it in your report for the conductor.`;
   }
@@ -2124,24 +2124,6 @@ function workerWorktrees(root) {
     .map((checkout) => join(checkout, prefix));
 }
 
-// Whether a checkout of the repository other than `root` holds the scope of a worker: one of its
-// linked worktrees, or its main checkout, the folder that holds the common directory. Outside a
-// repository there is no other checkout.
-function hasAnotherScope(root) {
-  const common = commonDirOf(root);
-  if (!common) {
-    return false;
-  }
-  const main = mainCheckout(root, common);
-  const scoped = [...workerWorktrees(root), ...(existsSync(join(main, WORKER_SCOPE)) ? [main] : [])];
-  return scoped.some((checkout) => realOf(checkout) !== realOf(root));
-}
-
-// The project in the main checkout of the repository, the folder that holds its common directory.
-function mainCheckout(root, common) {
-  return join(dirname(common), relative(repositoryTop(root), root));
-}
-
 function repositoryTop(from) {
   let directory = resolve(from);
   for (;;) {
@@ -2362,27 +2344,15 @@ function workerScope(project, input) {
 // what it writes is refused with the shape that names a worktree (`builderStrayReason`).
 function pinnedScope(project, input) {
   const current = namedContext(project);
-  const home = findProject(input.cwd ?? process.cwd()) ?? project;
   const read = readPin(project, input);
   if (read.unread) {
     return { context: current ?? 'unread', changed: UNREAD_PIN };
   }
-  let { pinned } = read;
-  const worktree = realpathSync(project.root);
+  const pinned = read.pinned ?? firstPin(project, input, read.file);
   if (!pinned) {
-    const own = current ? project : namedContext(home) && home;
-    if (!own || (!namesCheckout(input, own) && hasAnotherScope(own.root))) {
-      return undefined;
-    }
-    pinned = {
-      context: namedContext(own),
-      worktree: realpathSync(own.root),
-      mode: own.mode,
-      scope: recordedScope(own),
-    };
-    writeState(read.file, pinned);
+    return undefined;
   }
-  if (pinned.worktree !== worktree) {
+  if (pinned.worktree !== realpathSync(project.root)) {
     return current
       ? { context: current, changed: otherWorktreeReason(pinned, project) }
       : { context: pinned.context, changed: awayReason(pinned, project), away: true };
@@ -2395,6 +2365,43 @@ function pinnedScope(project, input) {
   return JSON.stringify(recordedScope(project)) !== JSON.stringify(pinned.scope)
     ? { context: current, changed: scopeRewrittenReason(pinned) }
     : { context: current, ...pinned.scope };
+}
+
+// The pin of a first call, written in `file`: of the checkout the call judges when it holds a scope,
+// else of the one the session stands in; none where the call names no checkout and another one
+// holds a scope too.
+function firstPin(project, input, file) {
+  const home = findProject(input.cwd ?? process.cwd()) ?? project;
+  const own = namedContext(project) ? project : namedContext(home) && home;
+  if (!own || (!namesCheckout(input, own) && hasAnotherScope(own.root))) {
+    return undefined;
+  }
+  const pinned = {
+    context: namedContext(own),
+    worktree: realpathSync(own.root),
+    mode: own.mode,
+    scope: recordedScope(own),
+  };
+  writeState(file, pinned);
+  return pinned;
+}
+
+// Whether a checkout of the repository other than `root` holds the scope of a worker: one of its
+// linked worktrees, or its main checkout, the folder that holds the common directory. Outside a
+// repository there is no other checkout.
+function hasAnotherScope(root) {
+  const common = commonDirOf(root);
+  if (!common) {
+    return false;
+  }
+  const main = mainCheckout(root, common);
+  const scoped = [...workerWorktrees(root), ...(existsSync(join(main, WORKER_SCOPE)) ? [main] : [])];
+  return scoped.some((checkout) => realOf(checkout) !== realOf(root));
+}
+
+// The project in the main checkout of the repository, the folder that holds its common directory.
+function mainCheckout(root, common) {
+  return join(dirname(common), relative(repositoryTop(root), root));
 }
 
 // What the scope file of a worktree records beside its context: the base its branch was cut from
@@ -4917,7 +4924,8 @@ function rewrittenNotice(script, paths) {
 // changed by the commits between them (a commit, an amend, a reset), the files of the trunk a merge
 // brings in compared by their content.
 function differences(checkout, outside, { before, now, trunks }) {
-  const committed = now.head === before.head ? new Map() : committedSince(checkout, before.head, outside, trunks);
+  const committed =
+    now.head === before.head ? new Map() : committedSince(checkout, { from: before.head, trunks }, outside);
   if (committed === undefined) {
     return undefined;
   }
@@ -4935,7 +4943,7 @@ function differences(checkout, outside, { before, now, trunks }) {
 // (A added, M modified, D deleted); a path that HEAD holds as the other side of a merge since then
 // (the trunk `merge-trunk` brought in) is the trunk's, not a change of the worker. `trunks` are the
 // commits the trunks named when the comparison starts.
-function committedSince(checkout, from, outside, trunks) {
+function committedSince(checkout, { from, trunks }, outside) {
   if (!COMMIT_ID.test(from)) {
     // A repository without a commit yet: the files git shows are all there is to compare.
     return new Map();
@@ -5119,7 +5127,7 @@ function isPutBack(project, { now, since }, [path, target]) {
 function commitsOf(project, since, from) {
   if (!since.commits.has(from)) {
     // Commits git cannot compare are taken to have changed every held file: none is back yet.
-    const committed = committedSince(project, from, () => true, since.trunks(from));
+    const committed = committedSince(project, { from, trunks: since.trunks(from) }, () => true);
     since.commits.set(from, committed ?? { has: () => true, get: () => 'M' });
   }
   return since.commits.get(from);

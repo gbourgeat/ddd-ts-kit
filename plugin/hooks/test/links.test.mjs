@@ -75,7 +75,19 @@ test('a command given a folder of the scope is judged by what it brings and by t
   for (const folder of ['clean', 'held/deep', 'linked']) {
     mkdirSync(join(root, domain, folder), { recursive: true });
   }
-  // A link or a whole tree is not brought from outside the scope into a folder of it.
+  const place = { root, agent, domain };
+  nothingIsBroughtFromOutside(place);
+  aFolderThatHoldsALinkTakesNoTree(place);
+  aFileNamedLandsOnTheNameItHasThere(place);
+  // A file that lands on a link out of the scope is the file the link reaches.
+  symlinkSync(join(root, 'src/main.ts'), join(root, domain, 'linked/main.ts'));
+  const landed = run('pre-bash', bash(root, `cp ${domain}/main.ts ${domain}/linked/`, agent));
+  assert.match(reason(landed), /`cp` changes src\/contexts\/ordering\/domain\/linked\/main\.ts/);
+  aFolderOfTheScopeTakesFilesAndTrees(place);
+});
+
+// A link or a whole tree is not brought from outside the scope into a folder of it.
+function nothingIsBroughtFromOutside({ root, agent, domain }) {
   for (const command of [
     `ln package.json ${domain}/clean/`,
     `ln -t ${domain}/clean package.json`,
@@ -97,8 +109,11 @@ test('a command given a folder of the scope is judged by what it brings and by t
       command,
     );
   }
-  // A folder that holds a file with another name elsewhere, at any depth, takes no tree, nor files
-  // whose names the shell computes; a file named lands on the name it has there.
+}
+
+// A folder that holds a file with another name elsewhere, at any depth, takes no tree, nor files
+// whose names the shell computes; a file named lands on the name it has there.
+function aFolderThatHoldsALinkTakesNoTree({ root, agent, domain }) {
   linkSync(join(root, 'package.json'), join(root, domain, 'held/deep/package.json'));
   for (const command of [
     `cp -r ${domain}/tree ${domain}/held/`,
@@ -111,6 +126,10 @@ test('a command given a folder of the scope is judged by what it brings and by t
     assert.equal(decision(refused), 'deny', command);
     assert.match(reason(refused), /holds a file that has another name elsewhere \(a hard link\)/, command);
   }
+}
+
+// In that folder a file named changes the file of that name, and lands where no file has it.
+function aFileNamedLandsOnTheNameItHasThere({ root, agent, domain }) {
   for (const command of [
     `cp ${domain}/package.json ${domain}/held/deep/`,
     `install ${domain}/package.json ${domain}/held/deep/`,
@@ -127,11 +146,10 @@ test('a command given a folder of the scope is judged by what it brings and by t
   ]) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
-  // A file that lands on a link out of the scope is the file the link reaches.
-  symlinkSync(join(root, 'src/main.ts'), join(root, domain, 'linked/main.ts'));
-  const landed = run('pre-bash', bash(root, `cp ${domain}/main.ts ${domain}/linked/`, agent));
-  assert.match(reason(landed), /`cp` changes src\/contexts\/ordering\/domain\/linked\/main\.ts/);
-  // Inside the scope, with no link on the way, a folder takes files and trees.
+}
+
+// Inside the scope, with no link on the way, a folder takes files and trees.
+function aFolderOfTheScopeTakesFilesAndTrees({ root, agent, domain }) {
   for (const command of [
     `cp ${domain}/order.ts ${domain}/clean/`,
     `cp -r ${domain}/tree ${domain}/clean/`,
@@ -147,14 +165,68 @@ test('a command given a folder of the scope is judged by what it brings and by t
   ]) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
-});
+}
 
 test('a command that changes who may read or write a file is held to the scope as one that writes it', () => {
   const root = committed({ worktrees: 'advised' });
   const agent = { ...worker(root, 'ordering'), session_id: 'access', agent_id: 'modes' };
   put(root, 'src/contexts/ordering/tool.sh', '#!/bin/sh\n');
   assert.equal(run('pre-bash', bash(root, 'git status', agent)).output, undefined);
-  for (const command of [
+  for (const command of accessChangesOutsideTheScope()) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /A worker never changes a file outside its scope: `[a-z -]+` changes /, command);
+  }
+  // A list of files the command reads from a file, or gives git by its index, is one only it knows.
+  for (const command of accessChangesOfUnnamedFiles()) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /files only the shell knows/, command);
+  }
+  for (const command of labelChangesInTheScope()) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  for (const command of modeChangesInTheScope()) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
+// Modes, owners and access lists, on a file of the scope.
+function modeChangesInTheScope() {
+  return [
+    'chmod +x src/contexts/ordering/tool.sh',
+    'chmod 755 src/contexts/ordering/tool.sh',
+    'chmod u+x,g-w src/contexts/ordering/tool.sh',
+    'chown nobody src/contexts/ordering/tool.sh',
+    'chattr +i src/contexts/ordering/tool.sh',
+    'setfacl -m u:nobody:r src/contexts/ordering/tool.sh',
+  ];
+}
+
+// Labels, attributes and the mode git records, on a file of the scope.
+function labelChangesInTheScope() {
+  return [
+    'chcon -t etc_t src/contexts/ordering/tool.sh',
+    'setfattr -n user.note -v 1 src/contexts/ordering/tool.sh',
+    'git add --chmod=+x src/contexts/ordering/tool.sh',
+    'git update-index --chmod=+x src/contexts/ordering/tool.sh',
+    'git update-index --refresh',
+  ];
+}
+
+// Changes whose files are listed in a file, or given to git by its index.
+function accessChangesOfUnnamedFiles() {
+  return [
+    'setfacl --restore=acl.txt',
+    'setfacl --restore acl.txt',
+    'setfattr --restore=dump.txt',
+    'git update-index --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,src/main.ts',
+  ];
+}
+
+// Changes of mode, owner, attribute or label of a file outside the scope.
+function accessChangesOutsideTheScope() {
+  return [
     'chmod 000 src/main.ts',
     'chmod -w src/main.ts',
     'chmod -R a-w src/platform',
@@ -175,42 +247,8 @@ test('a command that changes who may read or write a file is held to the scope a
     'chflags uchg src/main.ts',
     'git update-index --chmod=+x src/main.ts',
     'git add --chmod=+x src/main.ts',
-  ]) {
-    const refused = run('pre-bash', bash(root, command, agent));
-    assert.equal(decision(refused), 'deny', command);
-    assert.match(reason(refused), /A worker never changes a file outside its scope: `[a-z -]+` changes /, command);
-  }
-  // A list of files the command reads from a file, or gives git by its index, is one only it knows.
-  for (const command of [
-    'setfacl --restore=acl.txt',
-    'setfacl --restore acl.txt',
-    'setfattr --restore=dump.txt',
-    'git update-index --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,src/main.ts',
-  ]) {
-    const refused = run('pre-bash', bash(root, command, agent));
-    assert.equal(decision(refused), 'deny', command);
-    assert.match(reason(refused), /files only the shell knows/, command);
-  }
-  for (const command of [
-    'chcon -t etc_t src/contexts/ordering/tool.sh',
-    'setfattr -n user.note -v 1 src/contexts/ordering/tool.sh',
-    'git add --chmod=+x src/contexts/ordering/tool.sh',
-    'git update-index --chmod=+x src/contexts/ordering/tool.sh',
-    'git update-index --refresh',
-  ]) {
-    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
-  }
-  for (const command of [
-    'chmod +x src/contexts/ordering/tool.sh',
-    'chmod 755 src/contexts/ordering/tool.sh',
-    'chmod u+x,g-w src/contexts/ordering/tool.sh',
-    'chown nobody src/contexts/ordering/tool.sh',
-    'chattr +i src/contexts/ordering/tool.sh',
-    'setfacl -m u:nobody:r src/contexts/ordering/tool.sh',
-  ]) {
-    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
-  }
-});
+  ];
+}
 
 test('a folder past what the guard reads before a command takes a file named, and no tree', () => {
   const root = committed({ worktrees: 'advised' });
