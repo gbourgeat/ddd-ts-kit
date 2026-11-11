@@ -105,6 +105,6 @@ function undeclared(
   return report(
     kept,
     `The column ${column} of ${kept.context} is named like personal data (${term}), and no personalFields declaration of ${kept.context} names it: the erasure, the export and the register of personal data do not reach it.`,
-    `Name it in the fields of the declaration of its table (${where ?? `infrastructure/persistence/<aggregate>${SUFFIX}`}, which \`ddd-ts-kit generate repository ${kept.context} <Aggregate> --personal <column>,...\` writes). A column that holds nothing of a person in this project is recorded: \`// ddd-ts-kit-disable-next-line privacy/declared-field -- ADR-NNNN: <why>\` above it, or the word in \`privacy.allow\` of ddd-ts-kit.config.json.`,
+    `Name it in the fields of the declaration of its table (${where ?? `infrastructure/persistence/<aggregate>${SUFFIX}`}, which \`ddd-ts-kit generate repository ${kept.context} <Aggregate> --personal <column>,...\` writes; for a table no aggregate owns, \`ddd-ts-kit generate personal-fields ${kept.context} <table> --personal <column>,... --subject <column>\`). A column that holds nothing of a person in this project is recorded: \`// ddd-ts-kit-disable-next-line privacy/declared-field -- ADR-NNNN: <why>\` above it, or the word in \`privacy.allow\` of ddd-ts-kit.config.json.`,
   );
 }

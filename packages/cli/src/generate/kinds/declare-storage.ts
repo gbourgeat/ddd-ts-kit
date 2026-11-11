@@ -67,7 +67,7 @@ function declareOnce(scope: Scope, { file, table }: { file: string; table: strin
   if (before > 0 && declared() > before) {
     throw new CliError(
       `${file} already declares the table ${table}, with other columns than this command would write.`,
-      `Change the table by hand in ${file}, a personal field with its line in the *.personal-fields.ts of the aggregate; the generator declares a table once.`,
+      `The generator declares a table once: change it by hand in ${file}. Personal columns the table holds are then declared by \`ddd-ts-kit generate personal-fields ${scope.context.kebab} ${table} --personal <column>,... --subject <column>\`, or, when the table has its *.personal-fields.ts already, by a line in its fields.`,
     );
   }
 }

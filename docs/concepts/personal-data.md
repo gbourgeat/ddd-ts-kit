@@ -27,6 +27,7 @@ own, and this page says so. The pieces of the kit this page rests on:
 | `init --privacy on` (`on` with an ORM, `off` without one or when asked) | the lists of the copies and of the exports the contexts declare, the list of the events that carry personal data (`personal-events.ts`, written by `docs`), `runErasure`, `runExport` and `runPurge`, the nightly job `privacy.purge-expired`, the three scripts | `src/platform/privacy/`, `scripts/privacy-erase.ts`, `scripts/privacy-export.ts`, `scripts/privacy-purge.ts` |
 | `init --event-sourcing on` (`off` unless asked) | the event store, the keys of the data subjects and the cipher that seals a personal value of a stored event, audited when the trail is on | `src/platform/event-sourcing/`, the `event_store` schema |
 | `generate repository <ctx> <Aggregate> --personal <column>,...` | the columns in the storage, their declaration, and once per context the erasure and the export that read it | the context |
+| `generate personal-fields <ctx> <table> --personal <column>,... --subject <column>` | the declaration of a table no aggregate owns, joined to the erasure and the export of the context, or written with them | the context |
 
 A project without personal data takes `--privacy off` and pays nothing; a project whose aggregates
 are all rows keeps `--event-sourcing off` and pays no table for it. Both are recorded in the config
@@ -99,6 +100,49 @@ The two modes, settled per table:
 |---|---|---|
 | `pseudonymise` (the default) | the row stays, each personal text column reads `[erased]`, any other personal column reads nothing (it has to accept null) | a row others point to, a fact of the business that names the person by an opaque id |
 | `row` | the rows of the person are deleted | a pure copy of the person, a contact, an address book entry |
+
+## A table no aggregate owns
+
+A read model, a table of received messages, a table written by hand in the schema of the context:
+each may keep a copy of a person, and none has an aggregate `generate repository` could name.
+
+```bash
+npx ddd-ts-kit generate personal-fields billing payment_reminders --personal customer_email,customer_name --subject customer_id
+```
+
+The table is given by its SQL name and has to exist in the schema file of the context:
+`<context>.schema.ts` on Drizzle and TypeORM, `create-<context>-tables.schema.ts` on Knex,
+`prisma/schema/<context>.prisma` on Prisma. The command:
+
+- writes `infrastructure/persistence/<table>.personal-fields.ts` (`payment-reminders.personal-fields.ts`,
+  which exports `PaymentRemindersPersonalFields`), spelled as the erasure of the ORM reads it: on
+  Drizzle and TypeORM with the properties the definition of the table gives its columns, read in the
+  schema file, on Knex and Prisma with the SQL names;
+- joins it to the `declarations` of the erasure and of the export of the context when they exist;
+- otherwise writes them as the first table of a context does (ports, adapters, fakes, binding, the
+  lines in the copies and the exports of the platform). The spec differs: no repository nor builder
+  writes the rows of such a table, so `test/integration/<context>-personal-data.spec.ts` proves the
+  fakes and names each case to prove on the test database as `it.todo` (erased for the subject and
+  left to the others, exported, purged with `--retention`), for you to write with rows inserted as
+  the project writes that table.
+
+It never changes the table. A column `--personal`, `--subject` or `--retention` names that the
+definition does not hold is refused, with the columns it has; when the definition takes columns
+from elsewhere (a spread, a helper called on the table), the command cannot tell, declares the
+column and says in its output to check that the table holds it. Where the erasure is confined to a
+tenant (`--tenant-scoped`, or a project whose `stack.tenancy` is not `none`), the table has to hold
+`tenant_id` too.
+
+`--subject` is required here. On a table without aggregate the row is rarely the person, and a
+default of `id` would have `npm run privacy:erase -- <person>` look for the person in the wrong
+column while the register says the table is covered. Give `--subject id` only when the id of the
+row is the id of the person.
+
+Refused: a table the schema of the context does not declare (the command lists the ones it does),
+a table that has a declaration already (add the column to its `fields` by hand), and whatever
+`--personal` of a repository refuses. `generate repository <ctx> <Aggregate> --personal ...` run on
+an aggregate whose table exists is refused too, since the generator declares a table once: add the
+columns to the table by hand, then declare them with `generate personal-fields`.
 
 ## The erasure, end to end
 
@@ -369,4 +413,5 @@ project writes around it. By construction means built in by default, never a leg
 - [Privacy by design, beyond event sourcing](../proposals/privacy-by-design.md): the parts built and
   the parts to come, the wording to use
 - The CLI reference: [`init`](../../packages/cli/README.md) (`--privacy`, `--event-sourcing`) and
-  [`generate repository`](../../packages/cli/README.md) (`--personal`, `--subject`, `--erasure`)
+  [`generate repository`](../../packages/cli/README.md) (`--personal`, `--subject`, `--erasure`),
+  [`generate personal-fields`](../../packages/cli/README.md) for a table no aggregate owns
