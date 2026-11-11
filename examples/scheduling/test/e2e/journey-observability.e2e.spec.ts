@@ -212,22 +212,22 @@ function whatFollowsTheFact(followed: Readonly<Record<string, string>>): Expecte
   ];
 }
 
-/** After the response, by the relay: each consumer continues the trace, in its own context, under the correlation of the request. */
+/** After the response, by the relay: each consumer continues the trace, in its own context, under the correlation of the request; the projection first, then the handler that reacts. */
 function theConsumers(followed: Readonly<Record<string, string>>): ExpectedSpan[] {
   const consumed = { ...followed, 'app.origin': 'event' };
 
   return [
     {
-      name: 'process notification.scheduling-appointment-booked',
-      kind: 'CONSUMER',
-      attributes: { ...consumed, 'app.context': 'notification' },
-      children: [theNotification, whatFollowsTheNotification],
-    },
-    {
       name: 'process analytics.outcomes',
       kind: 'CONSUMER',
       attributes: { ...consumed, 'app.context': 'analytics' },
       children: [{ name: 'repository OutcomeRegister.written' }],
+    },
+    {
+      name: 'process notification.scheduling-appointment-booked',
+      kind: 'CONSUMER',
+      attributes: { ...consumed, 'app.context': 'notification' },
+      children: [theNotification, whatFollowsTheNotification],
     },
   ];
 }

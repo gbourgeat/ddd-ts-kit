@@ -16,7 +16,7 @@ export function domainEventRuns(events: readonly QueuedDomainEvent[]): DomainEve
   for (const queued of events) {
     const last = groups.at(-1);
 
-    if (last !== undefined && last[0].dispatcher === queued.dispatcher && last[0].within === queued.within) {
+    if (last !== undefined && leavesWith(last[0], queued)) {
       last.push(queued);
     } else {
       groups.push([queued]);
@@ -32,6 +32,12 @@ function runOf(group: Group): DomainEventRun {
 
   return {
     dispatch: (scope, phase) =>
-      first.within(() => unitOfWorkScope.run(scope, async () => first.dispatcher.dispatch(facts, phase))),
+      first.within(() =>
+        first.inContext(() => unitOfWorkScope.run(scope, async () => first.dispatcher.dispatch(facts, phase))),
+      ),
   };
+}
+
+function leavesWith(one: QueuedDomainEvent, other: QueuedDomainEvent): boolean {
+  return one.dispatcher === other.dispatcher && one.within === other.within && one.inContext === other.inContext;
 }

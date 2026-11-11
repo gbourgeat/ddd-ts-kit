@@ -203,8 +203,8 @@ describe('a generated command handler', () => {
   it('wired by hand, is given a repository that dispatches on save, inside its span', () => {
     const create = platform(initProject('--di', 'manual'), 'composition/create-platform.ts');
 
-    expect(create).toContain(
-      "const saving = info.kind === 'repository' ? dispatchingOnSave(resilient, () => domainEvents) : resilient;",
+    expect(create).toMatch(
+      /info\.kind === 'repository'\s+\? dispatchingOnSave\(\s+resilient,\s+\(\) => domainEvents,\s+\(\) => scope,\s+\)\s+: resilient;/,
     );
 
     expect(create).toContain("return traced.binding(saving, { ...info, context: info.context ?? 'platform' });");

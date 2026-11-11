@@ -44,7 +44,7 @@ export class ConsumerSubscriptions {
     const runtime = this.runtime();
     const instrument = this.resolveIfBound(Instrumentation)?.consumer;
 
-    return this.consumptions.map((consumption) => {
+    return projectionsFirst(this.consumptions).map((consumption) => {
       const handler = consumption.subscribe(this.ports.resolve, runtime);
 
       return this.subscriberOf(consumption.module).subscribe(
@@ -80,6 +80,18 @@ export class ConsumerSubscriptions {
   private resolveIfBound<T>(target: Token<T>): T | undefined {
     return this.ports.isBound(target) ? this.ports.resolve(target) : undefined;
   }
+}
+
+/**
+ * The consumptions of the projections, then the others, each group in the order of the wiring. The bus of
+ * the process awaits its subscribers in the order they subscribed: a handler that reacts to an event then
+ * reads the projection the same event feeds. A broker gives each consumer its own queue, and no order.
+ */
+function projectionsFirst(consumptions: readonly EventConsumption[]): EventConsumption[] {
+  return [
+    ...consumptions.filter(({ projection }) => projection !== undefined),
+    ...consumptions.filter(({ projection }) => projection === undefined),
+  ];
 }
 
 function consumerOf({ consumer, module, type }: EventConsumption): InstrumentedConsumer {

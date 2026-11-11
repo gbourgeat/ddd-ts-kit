@@ -318,6 +318,15 @@ transaction, the queue is dispatched. A handler may save an aggregate: its event
 queue behind those waiting, under the same order rule, without recursion. A handler may append
 to the outbox. Then the transaction commits, and the handlers of the `after-commit` phase run.
 
+The handlers of both phases run in the execution context of the save that recorded the event:
+its tenant, its actor, its correlation id. It matters when a command runs inside another one for
+another tenant (a relay that has none, handing each message to the organisation it belongs to):
+the inner command joins the unit of work of the outer one, its events are dispatched at the end
+of that one, and what their handlers publish still carries the tenant of the inner command. A
+repository wrapped by hand takes the scope as a third argument:
+`dispatchingOnSave(repository, () => dispatcher, () => scope)`; without it the handlers run in
+the context of the unit of work.
+
 | | Guarantees | When it fails | Delivery |
 |---|---|---|---|
 | `before-commit` handler (default) | runs once every save of the command is done (when the command handler has returned), in its transaction; what it writes commits or rolls back with the state change | the command fails and everything rolls back | in the transaction: exactly with the commit |
@@ -648,6 +657,7 @@ The example application declares the same event with class-validator
 | Personal data? | Only when a consumer needs it. A broker keeps messages; the envelope carries no actor by default for the same reason (events README) |
 | A fact or an instruction? | A fact. `scheduling.appointment.booked`, not "send-reminder": the producer does not know what consumers do |
 | Order-sensitive consumers? | Carry a version or a sequence of the aggregate in the payload: ordering is not guaranteed by default (see [Delivery and idempotency](delivery-and-idempotency.md)) |
+| A handler that reads a projection fed by the same event? | In the process, the projections of an event apply before the handlers that react to it, whatever the order of the modules. On a broker each consumer has its own queue and nothing orders them: have the handler read what it needs from the payload, or fail and be redelivered until the row is there |
 | Field descriptions | Written in the schema: they flow into the catalog and the AsyncAPI document |
 
 There is a real trade-off between thin events (identifiers only, consumers call back) and fat

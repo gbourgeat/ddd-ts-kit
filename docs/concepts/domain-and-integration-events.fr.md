@@ -1,5 +1,5 @@
 [English](domain-and-integration-events.md) · **Français**
-<!-- translation-of: domain-and-integration-events.md sha256:2c9c3f2a096dff10 -->
+<!-- translation-of: domain-and-integration-events.md sha256:281f042d77260019 -->
 
 # Événements du domaine et événements d'intégration
 
@@ -325,6 +325,16 @@ commande a rendu la main, toujours dans la transaction, la file est distribuée.
 peut enregistrer un agrégat : ses événements rejoignent la file derrière ceux qui attendent,
 selon la même règle d'ordre, sans récursion. Un gestionnaire peut ajouter une ligne à l'outbox.
 Puis la transaction est validée, et les gestionnaires de la phase `after-commit` s'exécutent.
+
+Les gestionnaires des deux phases s'exécutent dans le contexte d'exécution du `save` qui a
+enregistré l'événement : son tenant, son acteur, son identifiant de corrélation. Cela compte
+quand une commande s'exécute dans une autre pour un autre tenant (un relais qui n'en a pas, qui
+remet chaque message à l'organisation à laquelle il appartient) : la commande interne rejoint
+l'unité de travail de la commande englobante, ses événements sont distribués à la fin de
+celle-ci, et ce que leurs gestionnaires publient porte toujours le tenant de la commande interne.
+Un repository enveloppé à la main prend le scope en troisième argument :
+`dispatchingOnSave(repository, () => dispatcher, () => scope)` ; sans lui, les gestionnaires
+s'exécutent dans le contexte de l'unité de travail.
 
 | | Garanties | Quand il échoue | Livraison |
 |---|---|---|---|
@@ -663,6 +673,7 @@ L'application d'exemple déclare le même événement avec class-validator
 | Des données personnelles ? | Seulement quand un consommateur en a besoin. Un *broker* conserve les messages ; l'enveloppe ne porte aucun acteur par défaut pour la même raison (README des événements) |
 | Un fait ou une instruction ? | Un fait. `scheduling.appointment.booked`, pas « send-reminder » : le producteur ne sait pas ce que font les consommateurs |
 | Des consommateurs sensibles à l'ordre ? | Placez une version ou une séquence de l'agrégat dans la charge utile : l'ordre n'est pas garanti par défaut (voir [Livraison et idempotence](delivery-and-idempotency.fr.md)) |
+| Un gestionnaire qui lit une projection alimentée par le même événement ? | Dans le processus, les projections d'un événement s'appliquent avant les gestionnaires qui y réagissent, quel que soit l'ordre des modules. Sur un broker, chaque consommateur a sa propre file et rien ne les ordonne : le gestionnaire lit ce dont il a besoin dans la charge utile, ou échoue et est relivré jusqu'à ce que la ligne soit là |
 | Descriptions des champs | Écrites dans le schéma : elles passent dans le catalogue et dans le document AsyncAPI |
 
 Il existe un vrai compromis entre les événements maigres (identifiants seuls, les consommateurs
