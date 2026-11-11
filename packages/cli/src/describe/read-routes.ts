@@ -1,6 +1,8 @@
 import { presentationOfRoute } from './presentation-of-route';
 import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description';
+import { codesNamedIn } from './codes-named-in';
 import type { ContextSources } from './context-sources';
+import { listedIn } from './listed-in';
 import { readControllers } from './read-controllers';
 import { roleFilesOf } from '../model-modules';
 
@@ -17,9 +19,11 @@ export function readRoutes(sources: ContextSources, useCases: readonly UseCaseFa
     .filter(({ name }) => name.endsWith('.route.ts'))
     .map(({ path }) => routeOf(path, ws.read(path) ?? '', useCases));
 
-  return [...functions, ...readControllers(sources, useCases)].sort(
-    (left, right) => left.path.localeCompare(right.path) || left.method.localeCompare(right.method),
-  );
+  const named = codesNamedIn(sources);
+
+  return [...functions, ...readControllers(sources, useCases)]
+    .map((route) => ({ ...route, errors: [...new Set(route.errors.map(named))] }))
+    .sort((left, right) => left.path.localeCompare(right.path) || left.method.localeCompare(right.method));
 }
 
 function routeOf(file: string, source: string, useCases: readonly UseCaseFact[]): RouteFact {
@@ -38,9 +42,7 @@ function routeOf(file: string, source: string, useCases: readonly UseCaseFact[])
     permission: useCases.find((candidate) => candidate.kind === kind && candidate.name === useCase)?.permission ?? '',
     request: requestOf(source),
     responses: responsesOf(source),
-    errors: [...(/\berrors:\s*\[([^\]]*)\]/.exec(source)?.[1] ?? '').matchAll(/'([^']+)'/g)].map(
-      (match) => match[1] ?? '',
-    ),
+    errors: listedIn(source, 'errors').map((entry) => entry.replace(/^['"]|['"]$/g, '')),
     ...presentationOfRoute(source, field('operationId')),
     file,
   };

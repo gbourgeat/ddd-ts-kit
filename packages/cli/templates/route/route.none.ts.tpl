@@ -3,11 +3,16 @@ import { actorOf } from '@ddd-ts-kit/auth';
 {{/if}}
 import { {{#if route.sharedAccepted}}acceptedSchema, {{/if}}defineRoute, type Route } from '@ddd-ts-kit/http';
 {{#if route.usesSchema}}
-import { err, ok, type {{route.busType}} } from '@ddd-ts-kit/kernel';
+import { err, {{#if route.protected}}KitCodes, {{/if}}ok, type {{route.busType}} } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
 {{/if}}
 {{#unless route.usesSchema}}
+{{#if route.protected}}
+import { KitCodes, type {{route.busType}} } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless route.protected}}
 import type { {{route.busType}} } from '@ddd-ts-kit/kernel';
+{{/unless}}
 {{/unless}}
 {{route.useCaseImport}}
 

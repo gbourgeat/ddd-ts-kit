@@ -88,4 +88,18 @@ export const SHARED_KERNEL_FIXTURES: readonly Fixture[] = [
       NAMED,
     ),
   },
+  {
+    ruleId: 'errors/known-code',
+    name: 'a route naming a code by a member of the list of the shared kernel',
+    expect: 'pass',
+    files: project(
+      {
+        ...MONEY_GLOSSARY,
+        [INVALID_MONEY]: refusal('InvalidMoney'),
+        [CODES]: codes,
+        [ROUTE]: route('SharedKernelCodes.InvalidMoney'),
+      },
+      NAMED,
+    ),
+  },
 ];

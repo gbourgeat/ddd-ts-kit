@@ -96,7 +96,8 @@ describe('a command, on a container, before and after the world of its context',
     );
 
     expect(spec).toContain('    const { application, invoiceRepository } = await arrange();');
-    expect(spec).toContain("rejects.toMatchObject({ code: 'FORBIDDEN' })");
+    expect(spec).toContain('rejects.toMatchObject({ code: KitCodes.Forbidden })');
+    expect(spec).toContain("import { KitCodes } from '@ddd-ts-kit/kernel';");
     expect(spec).toContain("  it.todo('applies the business decision to the invoice');");
 
     for (const gone of [

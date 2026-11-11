@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { cursorPage, encodeCursor, offsetPage } from '@ddd-ts-kit/kernel';
+import { cursorPage, encodeCursor, KitCodes, offsetPage } from '@ddd-ts-kit/kernel';
 import type { {{name.pascal}}Sort } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result{{alias.ext}}';
 import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.kebab}}-reader.fake{{alias.ext}}';
 
@@ -38,7 +38,7 @@ describe('The reader of {{name.words}}', () => {
     const reader = new Fake{{name.pascal}}Reader(LINES);
     const forged = cursorPage<{{name.pascal}}Sort>({ cursor: encodeCursor({ id: 3 }) });
 
-    await expect(reader.search({ kind: 'all' }, forged)).rejects.toMatchObject({ code: 'INVALID_PAGE_REQUEST' });
+    await expect(reader.search({ kind: 'all' }, forged)).rejects.toMatchObject({ code: KitCodes.InvalidPageRequest });
   });
 
   // TODO(domain): once the reader reads the real projection, hold its production adapter to the same expectations.

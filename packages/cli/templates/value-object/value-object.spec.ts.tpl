@@ -1,7 +1,10 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 {{#if valueObjects.result}}
-import { unwrap } from '@ddd-ts-kit/kernel';
+import { KitCodes, unwrap } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#if valueObjects.throwing}}
+import { KitCodes } from '@ddd-ts-kit/kernel';
 {{/if}}
 import { {{name.pascal}} } from '{{alias.context}}/domain/value-objects/{{name.kebab}}.vo{{alias.ext}}';
 
@@ -22,10 +25,10 @@ describe('{{name.title}}', () => {
 
   it('refuses an empty value with a coded error', () => {
 {{#if valueObjects.throwing}}
-    expectRefusal(() => {{name.pascal}}.create('  '), 'INVARIANT_VIOLATION');
+    expectRefusal(() => {{name.pascal}}.create('  '), KitCodes.InvariantViolation);
 {{/if}}
 {{#if valueObjects.result}}
-    expectRefusal({{name.pascal}}.create('  '), 'INVARIANT_VIOLATION');
+    expectRefusal({{name.pascal}}.create('  '), KitCodes.InvariantViolation);
 {{/if}}
   });
 

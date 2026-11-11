@@ -8,7 +8,7 @@ import { fake } from '@ddd-ts-kit/di';
 {{spec.diWithFake}}
 {{spec.contextImports}}
 {{/unless}}
-import { offsetPage } from '@ddd-ts-kit/kernel';
+import { KitCodes, offsetPage } from '@ddd-ts-kit/kernel';
 {{#unless world.through}}
 import { platformTestModule } from '{{alias.platform}}/composition/platform-test.module{{alias.ext}}';
 {{/unless}}
@@ -41,7 +41,7 @@ describe('{{name.title}}', () => {
     const application = {{world.await}}arrange(LINES);
     const query = new {{name.pascal}}Query(anActor().build(), offsetPage());
 
-    await expect(application.queryBus.execute(query)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(application.queryBus.execute(query)).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
 
   // TODO(domain): replace each entry below by a test named after what "{{name.words}}" shows and to whom.

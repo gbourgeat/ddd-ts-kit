@@ -98,8 +98,8 @@ describe('docs: the reference of a CONTEXT.md', () => {
       root,
       route,
       read(root, route).replace(
-        "errors: ['UNAUTHORIZED', 'FORBIDDEN']",
-        "errors: ['UNAUTHORIZED', 'FORBIDDEN', 'INVOICE_ALREADY_ISSUED']",
+        'errors: [KitCodes.Unauthorized, KitCodes.Forbidden]',
+        "errors: [KitCodes.Unauthorized, KitCodes.Forbidden, 'INVOICE_ALREADY_ISSUED']",
       ),
     );
 

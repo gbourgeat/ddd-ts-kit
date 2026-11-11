@@ -88,4 +88,42 @@ describe('the controller written for a function route', () => {
       ].join('\n'),
     );
   });
+
+  const named = (errors: string, kernel: string): string =>
+    renderController({
+      route: { ...route, imports: [...route.imports, kernel], spec: new Map([...route.spec, ['errors', errors]]) },
+      types,
+      group,
+      body: BODY,
+      groupImport: "import { InvoicesRoutes } from '../invoices.routes';",
+    });
+
+  it('leaves out the codes of the kit its guard and its group say when the route named them by the list of the kit, and the import with them', () => {
+    const typed = named(
+      '[KitCodes.Unauthorized, KitCodes.Forbidden]',
+      "import { KitCodes, type QueryBus } from '@ddd-ts-kit/kernel';\n",
+    );
+
+    expect(typed).toContain('  errors: [],');
+    expect(typed).toContain("import type { QueryBus } from '@ddd-ts-kit/kernel';");
+    expect(typed).not.toContain('KitCodes');
+
+    const valued = named(
+      "[KitCodes.Unauthorized, 'INVOICE_LOCKED']",
+      "import { err, KitCodes, ok, type QueryBus } from '@ddd-ts-kit/kernel';\n",
+    );
+
+    expect(valued).toContain("  errors: ['INVOICE_LOCKED'],");
+    expect(valued).toContain("import { err, ok, type QueryBus } from '@ddd-ts-kit/kernel';");
+  });
+
+  it('keeps a code of the kit neither its guard nor its group says, with the import of the list', () => {
+    const kept = named(
+      '[KitCodes.Unauthorized, KitCodes.Forbidden, KitCodes.Conflict, Other.code]',
+      "import { KitCodes, type QueryBus } from '@ddd-ts-kit/kernel';\n",
+    );
+
+    expect(kept).toContain('  errors: [KitCodes.Conflict, Other.code],');
+    expect(kept).toContain("import { KitCodes, type QueryBus } from '@ddd-ts-kit/kernel';");
+  });
 });

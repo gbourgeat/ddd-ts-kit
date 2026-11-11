@@ -29,7 +29,11 @@ describe('what the template of a route group reads', () => {
     expect(
       groupVars({ name: toName('Billing'), prefix: '/billing', tag: 'billing', access: 'authenticated' }),
     ).toMatchObject({
-      options: "prefix: '/billing', tags: ['billing'], guards: [Authenticated], errors: ['FORBIDDEN']",
+      options: "prefix: '/billing', tags: ['billing'], guards: [Authenticated], errors: [KitCodes.Forbidden]",
+      imports: [
+        "import { Authenticated, RouteGroup } from '@ddd-ts-kit/http';",
+        "import { KitCodes } from '@ddd-ts-kit/kernel';",
+      ].join('\n'),
     });
   });
 });

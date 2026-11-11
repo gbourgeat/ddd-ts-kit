@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { AuthorizationMap, PolicyAccess, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
 import { anActor, holdersOf } from '@ddd-ts-kit/auth/testing';
-import { offsetPage } from '@ddd-ts-kit/kernel';
+import { KitCodes, offsetPage } from '@ddd-ts-kit/kernel';
 {{#unless world.through}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
 {{/unless}}
@@ -38,7 +38,7 @@ describe('{{name.title}}', () => {
     const queryBus = {{world.await}}arrange(LINES);
     const query = new {{name.pascal}}Query(anActor().build(), offsetPage());
 
-    await expect(queryBus.execute(query)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(queryBus.execute(query)).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
 
   // TODO(domain): replace each entry below by a test named after what "{{name.words}}" shows and to whom.

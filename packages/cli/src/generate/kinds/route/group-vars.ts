@@ -17,25 +17,34 @@ export function groupVars(group: GroupDeclaration): RenderContext {
   const guard = guardOf(group);
   const { parent, prefix } = group;
 
+  const refuses = guard !== undefined && guard.name !== 'Public' && parent === undefined;
+
   const options = [
     ...(parent === undefined ? [] : [`parent: ${parent.className}`]),
     ...(prefix === '' ? [] : [`prefix: '${prefix}'`]),
     ...(parent === undefined ? [`tags: ['${group.tag}']`] : []),
     ...(guard === undefined ? [] : [`guards: [${guard.written}]`]),
-    ...(guard !== undefined && guard.name !== 'Public' && parent === undefined ? ["errors: ['FORBIDDEN']"] : []),
+    ...(refuses ? ['errors: [KitCodes.Forbidden]'] : []),
   ];
 
   return {
     pascal: group.name.pascal,
     words: group.name.words,
-    imports: importsOf(group, guard?.name).join('\n'),
+    imports: importsOf(group, { guard: guard?.name, refuses }).join('\n'),
     options: options.join(', '),
   };
 }
 
-function importsOf({ parent, role }: GroupDeclaration, guard: string | undefined): string[] {
+/** The guard the group names, and whether it declares the refusal of the kit a guard answers. */
+interface Guarded {
+  readonly guard: string | undefined;
+  readonly refuses: boolean;
+}
+
+function importsOf({ parent, role }: GroupDeclaration, { guard, refuses }: Guarded): string[] {
   return [
     `import { ${[...(guard === undefined ? [] : [guard]), 'RouteGroup'].join(', ')} } from '@ddd-ts-kit/http';`,
+    ...(refuses ? ["import { KitCodes } from '@ddd-ts-kit/kernel';"] : []),
     ...(parent === undefined ? [] : [`import { ${parent.className} } from '${parent.specifier}';`]),
     ...(role === undefined ? [] : [`import { Role } from '${role.specifier}';`]),
   ];

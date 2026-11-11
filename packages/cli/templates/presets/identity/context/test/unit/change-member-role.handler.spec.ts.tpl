@@ -1,4 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
+import { KitCodes } from '@ddd-ts-kit/kernel';
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { ChangeMemberRoleCommand } from '{{alias.context}}/application/commands/change-member-role/change-member-role.command{{alias.ext}}';
@@ -76,7 +77,7 @@ describe('Change member role', () => {
 
     await expect(
       arranged.application.commandBus.execute(new ChangeMemberRoleCommand(arranged.as('subject-alan'), 'acme', 'subject-grace', MemberRole.Admin)),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
 });
 

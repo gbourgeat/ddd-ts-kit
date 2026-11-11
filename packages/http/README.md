@@ -96,7 +96,7 @@ another body than the declared response, is an error on the decorator.
 <!-- checked sample -->
 ```ts
 import { z } from 'zod';
-import { AuthorizedCommand, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, KitCodes, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
 import { Authenticated, Controller, RouteGroup, controllerRoutes, type HttpRequest } from '@ddd-ts-kit/http';
 import type { Infer } from '@ddd-ts-kit/validation';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
@@ -117,7 +117,7 @@ const placed = zodSchema(z.object({ id: z.string() }), { io: 'output' });
 type PlaceOrderBody = Infer<typeof body>; // { customerId: string }
 type Placed = Infer<typeof placed>; // { id: string }
 
-@RouteGroup({ prefix: '/orders', tags: ['orders'], guards: [Authenticated], errors: ['FORBIDDEN'] })
+@RouteGroup({ prefix: '/orders', tags: ['orders'], guards: [Authenticated], errors: [KitCodes.Forbidden] })
 export class OrdersRoutes {}
 
 @Controller({

@@ -10,6 +10,7 @@ import {
 } from '../model-modules';
 import type { Workspace } from '../workspace';
 import { toName } from '../naming';
+import { declaredCode } from './declared-code';
 import { handleTypesOf, type HandleTypes } from './handle-types-of';
 import type { FunctionRoute } from './function-route';
 import { handleBody } from './handle-body';
@@ -124,7 +125,7 @@ function groupsOf(controllers: readonly PlannedController[], context: string): M
       className: `${toName(resource).pascal}Routes`,
       prefix: resource === context && !pathStartsWith(route, resource) ? '' : `/${resource}`,
       tags: groups.get(resource)?.tags ?? listed(route.spec.get('tags')).map(unquoted),
-      errors: members.every((member) => (member.route.spec.get('errors') ?? '').includes("'FORBIDDEN'"))
+      errors: members.every((member) => listed(member.route.spec.get('errors')).map(declaredCode).includes('FORBIDDEN'))
         ? ['FORBIDDEN']
         : [],
     });

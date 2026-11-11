@@ -3,7 +3,12 @@ import Type from 'typebox';
 import { actorOf } from '@ddd-ts-kit/auth';
 {{/if}}
 import { {{#if route.sharedAccepted}}acceptedSchema, {{/if}}defineRoute, type Route } from '@ddd-ts-kit/http';
+{{#if route.protected}}
+import { KitCodes, type {{route.busType}} } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless route.protected}}
 import type { {{route.busType}} } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import { typeboxSchema } from '@ddd-ts-kit/validation/typebox';
 {{route.useCaseImport}}
 

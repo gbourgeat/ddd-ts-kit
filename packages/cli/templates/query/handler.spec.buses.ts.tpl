@@ -8,6 +8,9 @@ import { AuthorizationMap, authorizationMiddleware, requires } from '@ddd-ts-kit
 {{/unless}}
 import { anActor, holdersOf } from '@ddd-ts-kit/auth/testing';
 {{/if}}
+{{#if access.protected}}
+import { KitCodes } from '@ddd-ts-kit/kernel';
+{{/if}}
 {{#unless world.through}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
 {{/unless}}
@@ -45,7 +48,7 @@ describe('{{name.title}}', () => {
     const queryBus = {{world.await}}arrange({});
     const query = new {{name.pascal}}Query(anActor().build());
 
-    await expect(queryBus.execute(query)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(queryBus.execute(query)).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
   {{/if}}
 

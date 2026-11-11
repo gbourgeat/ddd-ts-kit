@@ -1,6 +1,9 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { nestControllerRoute } from '@ddd-ts-kit/http/nest';
 import { routeOf } from '@ddd-ts-kit/http/testing';
+{{#if route.refusesMissing}}
+import { KitCodes } from '@ddd-ts-kit/kernel';
+{{/if}}
 import { {{route.recordingBus}} } from '@ddd-ts-kit/kernel/testing';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 {{route.messageImport}}
@@ -43,7 +46,7 @@ describe('{{route.method}} {{route.path}}', () => {
     expect(response).toMatchObject({
       status: 422,
       body: {
-        code: 'VALIDATION_FAILED',
+        code: KitCodes.ValidationFailed,
         issues: expect.arrayContaining([expect.objectContaining({ path: 'body.{{route.missingField}}' })]),
       },
     });

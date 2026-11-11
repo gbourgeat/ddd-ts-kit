@@ -278,6 +278,15 @@ The HTTP status of each code is chosen in the presentation layer, in one place; 
 logs, the spans and the audit trail record the `code`, and the error reporter leaves a
 `DomainError` alone (the two exceptions are under "ErrorReporter").
 
+The codes the packages of the kit raise are a list too, `KitCodes`, with its type `KitCode`:
+`KitCodes.Forbidden` is `'FORBIDDEN'`, `KitCodes.ValidationFailed` is `'VALIDATION_FAILED'`, and so on for
+`NotFound`, `Conflict`, `InvariantViolation`, `Unauthorized`, `NotAcceptable`, `ConcurrencyConflict`,
+`InvalidCriteria`, `InvalidPageRequest`, `Timeout`, `CircuitOpen`, `BulkheadFull`, `AttemptsExhausted`,
+`ServiceUnavailable`, `PreconditionFailed`, `PreconditionRequired`, `FileTooLarge`, `UnsupportedMediaType`,
+`FileNotFound`, `FileRejected` and `InvalidFileKey`. A route names them in `errors` and a test expects them
+(`rejects.toMatchObject({ code: KitCodes.Forbidden })`) without writing the string: the editor completes
+the key, and a misspelled one does not compile.
+
 The codes of a context are a closed vocabulary, `SchedulingCode`: `isRefusal(error, SchedulingCodes)`
 narrows what was caught to one of them, so a `switch` on its code is exhaustive, and the class of
 one refusal knows its facts:

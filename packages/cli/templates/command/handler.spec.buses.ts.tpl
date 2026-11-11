@@ -8,6 +8,9 @@ import { AuthorizationMap, authorizationMiddleware, requires } from '@ddd-ts-kit
 {{/unless}}
 import { anActor, holdersOf } from '@ddd-ts-kit/auth/testing';
 {{/if}}
+{{#if access.protected}}
+import { KitCodes } from '@ddd-ts-kit/kernel';
+{{/if}}
 {{#unless world.through}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
 {{/unless}}
@@ -59,7 +62,7 @@ describe('{{name.title}}', () => {
     const { commandBus } = {{world.await}}arrange();
     const command = new {{name.pascal}}Command(anActor().build());
 
-    await expect(commandBus.execute(command)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(commandBus.execute(command)).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
   {{/if}}
 

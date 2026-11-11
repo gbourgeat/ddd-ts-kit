@@ -1,4 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
+import { KitCodes } from '@ddd-ts-kit/kernel';
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { GrantDelegationCommand } from '{{alias.context}}/application/commands/grant-delegation/grant-delegation.command{{alias.ext}}';
@@ -57,7 +58,7 @@ describe('Grant delegation', () => {
 
     await expect(
       application.commandBus.execute(new GrantDelegationCommand(as('subject-ada'), 'acme', lend(MemberRight.InviteMembers))),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    ).rejects.toMatchObject({ code: KitCodes.Forbidden });
   });
 });
 

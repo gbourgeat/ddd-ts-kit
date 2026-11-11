@@ -8,6 +8,7 @@ export * from './domain-refusal';
 export * from './factual-refusal';
 export * from './invariant-violation';
 export * from './is-refusal';
+export * from './kit-codes';
 export * from './not-found-error';
 export * from './precondition-failed-error';
 export * from './refusal-facts';

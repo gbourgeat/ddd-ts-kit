@@ -9,6 +9,9 @@ import {
   FileStaging,
   InMemoryErrorReporter,
   InMemoryFileStorage,
+{{#if access.protected}}
+  KitCodes,
+{{/if}}
   TenantFileKeys,
   fileUploadsMiddleware,
 } from '@ddd-ts-kit/kernel';
@@ -47,7 +50,7 @@ describe('{{name.title}}', () => {
     const { commandBus, storage } = arrange();
     const command = new {{name.pascal}}Command(anActor().build(), aFile());
 
-    await expect(commandBus.execute(command)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(commandBus.execute(command)).rejects.toMatchObject({ code: KitCodes.Forbidden });
     expect(storage.keys()).toEqual([]);
   });
   {{/if}}

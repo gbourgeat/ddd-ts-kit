@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8009c0e998bd7abd -->
+<!-- translation-of: README.md sha256:2cf7dd2f54b52650 -->
 
 # @ddd-ts-kit/testing
 
@@ -415,6 +415,13 @@ await expectRefusal(() => commands.execute(command), 'SLOT_TAKEN', { calendarId:
 attrapée. Une action qui rend une promesse donne une promesse à attendre. Elle rend l'erreur, et échoue
 avec une `AssertionError` qui nomme ce qui a été refusé à la place, ou les faits qui diffèrent, un par
 ligne. Les faits donnés doivent être portés avec ces valeurs ; le refus peut en porter d'autres.
+
+Le code est une chaîne quelconque. Un appelant qui nomme les codes qu'il peut attendre fait vérifier chacun
+par le compilateur et le fait compléter par l'éditeur :
+`expectRefusal<SchedulingCode>(() => appointment.cancel(at), 'APPOINTMENT_ENDED')`, et
+`expectProblem<SchedulingCode | KitCode>(response, { status: 409, code: 'SLOT_TAKEN' })` de bout en bout. Un
+membre d'une liste de codes se passe d'argument de type :
+`expectRefusal(() => Email.create(raw), KitCodes.InvariantViolation)`.
 
 Au lieu de vérifier la formulation d'un message, qui casse quand on la reformule, ou la classe de
 l'erreur, qui ne dit rien de ses faits et n'est pas ce que lit un client :

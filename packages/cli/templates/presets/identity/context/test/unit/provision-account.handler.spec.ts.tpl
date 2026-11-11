@@ -1,4 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
+import { KitCodes } from '@ddd-ts-kit/kernel';
 import { ProvisionAccountCommand } from '{{alias.context}}/application/commands/provision-account/provision-account.command{{alias.ext}}';
 import { anAccount } from '{{alias.context}}/test/builders/account.builder{{alias.ext}}';
 import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
@@ -59,7 +60,7 @@ describe('Provision account', () => {
     const { application, stranger } = arrangeIdentity();
 
     await expect(application.commandBus.execute(new ProvisionAccountCommand(stranger, profile))).rejects.toMatchObject({
-      code: 'FORBIDDEN',
+      code: KitCodes.Forbidden,
     });
   });
 });

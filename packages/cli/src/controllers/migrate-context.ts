@@ -33,12 +33,14 @@ function writeGroups({ draft }: Migration, { http, groups }: ContextPlan): void 
       ...(group.prefix === '' ? [] : [`prefix: '${group.prefix}'`]),
       `tags: [${group.tags.map((tag) => `'${tag}'`).join(', ')}]`,
       'guards: [Authenticated]',
-      ...(group.errors.length === 0 ? [] : [`errors: [${group.errors.map((code) => `'${code}'`).join(', ')}]`]),
+      ...(group.errors.length === 0 ? [] : ['errors: [KitCodes.Forbidden]']),
     ];
+
+    const kit = group.errors.length === 0 ? '' : "import { KitCodes } from '@ddd-ts-kit/kernel';\n";
 
     draft.write(
       `${http}/${group.kebab}.routes.ts`,
-      `import { Authenticated, RouteGroup } from '@ddd-ts-kit/http';\n\n@RouteGroup({ ${options.join(', ')} })\nexport class ${group.className} {}\n`,
+      `import { Authenticated, RouteGroup } from '@ddd-ts-kit/http';\n${kit}\n@RouteGroup({ ${options.join(', ')} })\nexport class ${group.className} {}\n`,
     );
   }
 }

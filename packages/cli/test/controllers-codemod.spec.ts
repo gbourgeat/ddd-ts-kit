@@ -76,10 +76,13 @@ describe('controllers, on a declared project of function routes', () => {
 
     expect(controller).toContain('await this.commands.execute(new CancelInvoiceCommand(request.actor));');
     expect(controller).not.toContain('actorOf');
-    expect(controller).not.toContain("'UNAUTHORIZED'");
+    expect(controller).not.toContain('UNAUTHORIZED');
+    expect(controller).toContain('errors: [],');
+    expect(controller).not.toContain('KitCodes');
+    expect(controller).toContain("import type { CommandBus } from '@ddd-ts-kit/kernel';");
 
-    expect(read(root, `${HTTP}/invoices.routes.ts`)).toContain(
-      "@RouteGroup({ prefix: '/invoices', tags: ['billing'], guards: [Authenticated], errors: ['FORBIDDEN'] })",
+    expect(read(root, `${HTTP}/invoices.routes.ts`)).toBe(
+      "import { Authenticated, RouteGroup } from '@ddd-ts-kit/http';\nimport { KitCodes } from '@ddd-ts-kit/kernel';\n\n@RouteGroup({ prefix: '/invoices', tags: ['billing'], guards: [Authenticated], errors: [KitCodes.Forbidden] })\nexport class InvoicesRoutes {}\n",
     );
   });
 
