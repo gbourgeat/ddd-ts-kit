@@ -12,8 +12,6 @@ const from = (file: string): string => `import '@/contexts/billing/${file}';\n`;
 
 /** Billing as it is laid out today, one file per rule of the move; each is named by what it proves. */
 const TODAY: Readonly<Record<string, string>> = {
-  // A module where 0.86 and 0.87 put it.
-  'domain/invoices/events/invoice-issued.event.ts': '',
   // The modules.
   'invoices/domain/aggregates/invoice.aggregate.ts': '',
   'invoices/domain/repositories/invoice.repository.ts': '',
@@ -47,7 +45,6 @@ const TODAY: Readonly<Record<string, string>> = {
 
 /** Where each file of `TODAY` is once the context is laid out. */
 const TO_COME: Readonly<Record<string, string>> = {
-  'domain/invoices/events/invoice-issued.event.ts': 'invoices/domain/events/invoice-issued.event.ts',
   'infrastructure/persistence/billing.schema.ts': 'shared/infrastructure/persistence/billing.schema.ts',
   'presentation/http/invoices.routes.ts': 'shared/presentation/http/invoices.routes.ts',
   'presentation/http/guards/tenant.guard.ts': 'shared/presentation/http/guards/tenant.guard.ts',

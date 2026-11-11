@@ -108,21 +108,18 @@ describe('move-to-module, on a context whose modules hold their tests', () => {
   });
 });
 
-describe('move-to-module, on a context laid out as today', () => {
-  it('still moves a spec to the folder of the context named after the module, and refuses a fake', () => {
+describe('move-to-module, on a context whose tests are still at its own level', () => {
+  it('takes the spec and the fake to the test folder of the module, before context-layout moves the rest', () => {
     const root = projectWith([
       'application/ports/ledger.port.ts',
       'test/unit/ledger.port.spec.ts',
       'test/fakes/ledger.fake.ts',
     ]);
 
-    expect(() => moved(root, 'reminders', 'test/fakes/ledger.fake.ts')).toThrow(
-      /is in no role folder of a layer of "billing"/,
-    );
-
-    expect(moved(root, 'reminders', 'application/ports/ledger.port.ts')).toEqual({
+    expect(moved(root, 'reminders', 'application/ports/ledger.port.ts', 'test/fakes/ledger.fake.ts')).toEqual({
       'application/ports/ledger.port.ts': 'reminders/application/ports/ledger.port.ts',
-      'test/unit/ledger.port.spec.ts': 'test/unit/reminders/ledger.port.spec.ts',
+      'test/unit/ledger.port.spec.ts': 'reminders/test/unit/ledger.port.spec.ts',
+      'test/fakes/ledger.fake.ts': 'reminders/test/fakes/ledger.fake.ts',
     });
   });
 });
@@ -134,8 +131,8 @@ describe('context-layout, on a declared context whose layers hold generated decl
     const root = projectWith(
       [
         'application/application.declarations.ts',
-        'domain/invoices/aggregates/invoice.aggregate.ts',
-        'application/invoices/commands/issue-invoice/issue-invoice.handler.ts',
+        'invoices/application/commands/issue-invoice/issue-invoice.handler.ts',
+        'test/unit/invoices/issue-invoice.handler.spec.ts',
       ],
       declared,
     );

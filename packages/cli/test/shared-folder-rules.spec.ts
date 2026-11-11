@@ -32,18 +32,18 @@ describe('the test rules, on a module that holds its tests', () => {
     expect(finding?.fix).toContain('Create src/contexts/billing/invoices/test/builders/invoice.builder.ts');
   });
 
-  it('still names the test folder of the context for a module that holds no test', () => {
+  it('names the test folder of a module that holds no test yet', () => {
     const root = projectWith(
       { [`${SCHEDULING}/calendars/domain/aggregates/calendar.aggregate.ts`]: 'export class Calendar {}\n' },
       { contexts: { scheduling: { classification: 'core', modules: { calendars: {} } } } },
     );
 
     expect(reported(root, 'test/spec-required').map(({ message }) => message)).toEqual([
-      `calendar.aggregate.ts has no spec in ${SCHEDULING}/test/.`,
+      `calendar.aggregate.ts has no spec in ${SCHEDULING}/calendars/test/.`,
     ]);
 
     expect(reported(root, 'test/builder-required').map(({ message }) => message)).toEqual([
-      `The aggregate calendar.aggregate.ts has no builder in ${SCHEDULING}/test/builders/.`,
+      `The aggregate calendar.aggregate.ts has no builder in ${SCHEDULING}/calendars/test/builders/.`,
     ]);
   });
 });

@@ -70,6 +70,7 @@ function generateKind({ argv, io, probe, args, kind, rest }: Asked): number {
     context,
     module: flags.module,
     command: ['generate', ...argv].join(' '),
+    declaresModule: kind.name === 'module',
   });
 
   kind.run({ ws, config, args: rest, flags });

@@ -1,6 +1,6 @@
 import type { Config } from '../config';
 import type { ContextDescription } from '../describe/context-description';
-import { type ContextTree, foldersOfContext, intoModule, moduleSplit, TEST_FOLDER, treeOf } from '../model-modules';
+import { type ContextTree, foldersOfContext, moduleSplit, TEST_FOLDER, treeOf } from '../model-modules';
 import type { Workspace } from '../workspace';
 import { behaviourPage } from './behaviour-page';
 import { contextSections } from './context-sections';
@@ -86,11 +86,13 @@ function specsOfContext(ws: Workspace, { directory, modules }: ContextTree): Spe
     specsUnder(ws, `${directory}/${folder}/${TEST_FOLDER}`).map((file) => {
       const fromContext = file.slice(directory.length + 1);
       const { module, path } = moduleSplit(fromContext, modules);
+      const [kind = '', ...below] = path.slice(TEST_FOLDER.length + 1).split('/');
 
+      // Read with the module below the folder of its kind: `unit/calendars/slot.vo.spec.ts` is headed `Slot, in calendars`.
       return specOfPage(
         fromContext,
         rulesIn(ws.read(file) ?? ''),
-        intoModule(module, path).slice(TEST_FOLDER.length + 1),
+        [kind, ...(module === undefined ? [] : [module]), ...below].join('/'),
       );
     }),
   );

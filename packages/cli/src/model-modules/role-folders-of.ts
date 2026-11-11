@@ -2,13 +2,12 @@ import type { Workspace } from '../workspace';
 import type { ContextTree } from './context-tree';
 import { foldersOfContext } from './folders-of-context';
 import { intoModule } from './into-module';
-import { EARLIER_MODULE_LAYERS, SHARED_FOLDER, SHARED_FOLDERS, TEST_FOLDER } from './module-layers';
+import { SHARED_FOLDER, SHARED_FOLDERS } from './module-layers';
 
 /**
  * Every folder of a context that plays one role, by its path from the project root: the folder
  * of the context itself (`domain/aggregates`), the same folder in each module of its model
- * (`calendars/domain/aggregates`, or `domain/calendars/aggregates` as 0.86 and 0.87 laid it out;
- * `test/unit/calendars` and `calendars/test/unit` for a folder of the tests), and in `shared/` when
+ * (`calendars/domain/aggregates`, `calendars/test/unit` for a folder of the tests), and in `shared/` when
  * the context is divided into modules (`shared/infrastructure/persistence`). A reader that lists a
  * role goes through here, so a file moved into a module is never lost from what the kit writes
  * about its context.
@@ -26,13 +25,9 @@ export function roleFoldersOf(ws: Workspace, { directory, modules }: ContextTree
   );
 }
 
-/** Where a module holds the folder today, where it holds its own tests, and where 0.86 and 0.87 put it, which context-layout moves. */
+/** Where a module holds the folder. */
 function inModule(module: string, folder: string): string[] {
-  return [
-    intoModule(module, folder),
-    topOf(folder) === TEST_FOLDER ? `${module}/${folder}` : folder,
-    earlierPlace(module, folder),
-  ];
+  return [intoModule(module, folder)];
 }
 
 /** The folder in `shared/`, which holds no folder of `domain/` nor of `application/`. */
@@ -42,11 +37,4 @@ function inShared(folder: string): string[] {
 
 function topOf(folder: string): string {
   return folder.split('/')[0] ?? '';
-}
-
-/** A folder of `domain/` or `application/` in a module as 0.86 and 0.87 laid it out: `domain/<module>/aggregates`. */
-function earlierPlace(module: string, folder: string): string {
-  const [layer = '', ...rest] = folder.split('/');
-
-  return EARLIER_MODULE_LAYERS.includes(layer) ? [layer, module, ...rest].join('/') : folder;
 }

@@ -97,7 +97,6 @@ const PATHS = [
   'src/contexts/scheduling/test/unit/calendars/calendar.aggregate.spec.ts',
   'src/contexts/scheduling/test/integration/waitlist/waitlist.repository.contract.spec.ts',
   'src/contexts/scheduling/test/fakes/calendar.repository.fake.ts',
-  'src/contexts/scheduling/domain/calendars/aggregates/calendar.aggregate.ts',
   'src/contexts/scheduling/application/waitlist/commands/join-waitlist/join-waitlist.handler.ts',
   'src/contexts/scheduling/presentation/http/calendars.routes.ts',
   'src/contexts/scheduling/orders/domain/order.aggregate.ts',
@@ -172,7 +171,7 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
     expect(names.get('ILogger')).toBe('Logger');
   });
 
-  it('locates the files of the modules of a context the same way, in their folder and where 0.86 and 0.87 put them', () => {
+  it('locates the files of the modules of a context the same way, in their folder', () => {
     const raw = { contexts: { scheduling: { classification: 'core', modules: { calendars: {}, waitlist: {} } } } };
 
     for (const file of PATHS) {

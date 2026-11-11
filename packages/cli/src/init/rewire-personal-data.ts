@@ -7,6 +7,7 @@ import { heldFileOf, treeOf } from '../model-modules';
 import { parseContextName, type Name } from '../naming';
 import { renderTemplate } from '../templating';
 import type { Workspace } from '../workspace';
+import { withHeldImports } from './with-held-imports';
 
 /**
  * `--force` rewrote `data-subject-copies.ts` and `data-subject-exports.ts` from their templates:
@@ -50,6 +51,6 @@ function relist(ws: Workspace, config: Config, { context, names, adapter, list }
   applyWiring(
     ws,
     `${config.platformDir}/privacy/data-subject-${list}.ts`,
-    renderTemplate(`personal-data/${list}.${family}.tpl`, vars),
+    withHeldImports(ws, config, renderTemplate(`personal-data/${list}.${family}.tpl`, vars)),
   );
 }

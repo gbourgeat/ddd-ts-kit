@@ -12,7 +12,10 @@ import { roleFoldersOf } from './role-folders-of';
 export function heldFileOf(ws: Workspace, tree: ContextTree, file: string): string {
   const name = posix.basename(file);
 
-  const held = roleFoldersOf(ws, tree, posix.dirname(file))
+  const [atTheContext, ...placed] = roleFoldersOf(ws, tree, posix.dirname(file));
+
+  // A context divided into modules holds the file in a module or in shared/: one left at its level is read last.
+  const held = [...placed, ...(atTheContext === undefined ? [] : [atTheContext])]
     .map((folder) => `${folder}/${name}`)
     .find((candidate) => ws.existsAsIs(candidate));
 

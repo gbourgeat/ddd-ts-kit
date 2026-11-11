@@ -11,7 +11,8 @@ const { BILLING, HANDLER, HANDLER_SPEC } = PATHS;
 const { SPEC } = SAMPLES;
 
 const IN_MODULE = `${BILLING}/invoices/application/commands/issue-invoice/issue-invoice.handler.ts`;
-const SPEC_IN_MODULE = `${BILLING}/test/unit/invoices/issue-invoice.handler.spec.ts`;
+const SPEC_IN_MODULE = `${BILLING}/invoices/test/unit/issue-invoice.handler.spec.ts`;
+const SPEC_IN_SHARED = `${BILLING}/shared/test/unit/issue-invoice.handler.spec.ts`;
 const INVOICE_ISSUED = `${BILLING}/invoices/domain/events/invoice-issued.event.ts`;
 const REMINDER_SENT = `${BILLING}/reminders/domain/events/reminder-sent.event.ts`;
 
@@ -48,16 +49,16 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'module/complete',
-    name: 'a context whose files are all in its modules, its specs with them, but what it keeps at its own level',
+    name: 'a context whose files are all in its modules, its specs and fakes with them, and what belongs to none in shared/',
     expect: 'pass',
     files: project(
       {
         [IN_MODULE]: 'export class IssueInvoiceHandler {}\n',
         [SPEC_IN_MODULE]: SPEC,
-        [`${BILLING}/infrastructure/persistence/billing.schema.ts`]: "export const billingSchema = 'billing';\n",
-        [`${BILLING}/presentation/http/invoices.routes.ts`]: 'export class InvoicesRoutes {}\n',
-        [`${BILLING}/presentation/http/shared/money.schema.ts`]: 'export const money = 1;\n',
-        [`${BILLING}/test/fakes/invoice.repository.fake.ts`]: 'export class InvoiceRepositoryFake {}\n',
+        [`${BILLING}/shared/infrastructure/persistence/billing.schema.ts`]: "export const billingSchema = 'billing';\n",
+        [`${BILLING}/shared/presentation/http/invoices.routes.ts`]: 'export class InvoicesRoutes {}\n',
+        [`${BILLING}/shared/presentation/http/shared/money.schema.ts`]: 'export const money = 1;\n',
+        [`${BILLING}/invoices/test/fakes/invoice.repository.fake.ts`]: 'export class InvoiceRepositoryFake {}\n',
       },
       withModules({ invoices: { classification: 'core' } }),
     ),
@@ -78,9 +79,9 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'module/complete',
-    name: 'the spec of a file of a module left at the level of the context',
-    expect: { file: `${BILLING}/test/unit` },
-    severity: 'warn',
+    name: 'the tests of a context divided into modules left at its own level: an earlier layout, an error whatever the severity of the rule',
+    expect: { file: `${BILLING}/test` },
+    severity: 'error',
     files: project(
       { [IN_MODULE]: 'export class IssueInvoiceHandler {}\n', [HANDLER_SPEC]: SPEC },
       withModules({ invoices: {} }),
@@ -88,11 +89,25 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'module/complete',
-    name: 'a module where 0.86 and 0.87 put it, under domain/: an error, whatever the severity of the rule',
-    expect: { file: `${BILLING}/domain/invoices` },
+    name: 'the schema of a context divided into modules left alone in its layer folder: an earlier layout',
+    expect: { file: `${BILLING}/infrastructure` },
     severity: 'error',
     files: project(
-      { [`${BILLING}/domain/invoices/events/invoice-issued.event.ts`]: 'export const invoiceIssued = 1;\n' },
+      {
+        [IN_MODULE]: 'export class IssueInvoiceHandler {}\n',
+        [SPEC_IN_MODULE]: SPEC,
+        [`${BILLING}/infrastructure/persistence/billing.schema.ts`]: "export const billingSchema = 'billing';\n",
+      },
+      withModules({ invoices: {} }),
+    ),
+  },
+  {
+    ruleId: 'module/complete',
+    name: 'the spec of a file of a module left in shared/',
+    expect: { file: `${BILLING}/shared/test/unit` },
+    severity: 'warn',
+    files: project(
+      { [IN_MODULE]: 'export class IssueInvoiceHandler {}\n', [SPEC_IN_SHARED]: SPEC },
       withModules({ invoices: {} }),
     ),
   },
@@ -102,7 +117,7 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
     expect: { file: `${BILLING}/application/commands` },
     severity: 'warn',
     files: project(
-      { [HANDLER]: 'export class IssueInvoiceHandler {}\n', [HANDLER_SPEC]: SPEC },
+      { [HANDLER]: 'export class IssueInvoiceHandler {}\n', [SPEC_IN_SHARED]: SPEC },
       withModules({ invoices: {} }),
     ),
   },
@@ -195,7 +210,7 @@ export const MODULE_FIXTURES: readonly Fixture[] = [
     expect: { file: CONFIG_FILE },
     also: ['module/declared', 'module/complete'],
     files: project(
-      { [HANDLER]: 'export class IssueInvoiceHandler {}\n', [HANDLER_SPEC]: SPEC },
+      { [HANDLER]: 'export class IssueInvoiceHandler {}\n', [SPEC_IN_SHARED]: SPEC },
       withModules({ commands: {} }),
     ),
   },

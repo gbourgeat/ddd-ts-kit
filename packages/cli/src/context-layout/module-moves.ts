@@ -6,6 +6,7 @@ import { filesUnder } from '../generate/files-under';
 import {
   declaredModules,
   isContextLevel,
+  isHeldByShared,
   MODULE_LAYERS,
   MODULE_TEST_FOLDERS,
   moduleSplit,
@@ -38,9 +39,8 @@ interface Laid {
 
 /**
  * The moves that give each module of a context its folder, and `shared/` what belongs to none.
- * What a module holds elsewhere goes to its folder: what 0.86 and 0.87 put under `domain/<module>/`
- * and `application/<module>/`, and its specs of `test/unit/<module>/` and `test/integration/<module>/`,
- * which go to `<module>/test/`. A file of a layer, a spec, a fake or a builder left at the level of
+ * The specs of a module kept in `test/unit/<module>/` and `test/integration/<module>/` go to
+ * `<module>/test/`. A file of a layer, a spec, a fake or a builder left at the level of
  * the context goes to the module of the file it is named after, else of what it imports, or of
  * what imports it when it imports nothing of a module (`settle`). What the context keeps at its
  * own level goes to `shared/`: its schema and tables, its route groups with their guards and shared
@@ -96,20 +96,18 @@ function reading(ws: Workspace, config: Config, { files, open, laid }: Read): Pa
 
 /**
  * The move of a file that needs no telling. A file of a module that sits outside its folder goes
- * into it (`domain/<module>/...` as 0.86 and 0.87 laid it out, `test/unit/<module>/...`); what the
+ * into it (`test/unit/<module>/...`); what the
  * context keeps at its own level, and its worlds, go to `shared/`.
  */
-function heldMove(file: string, { context, modules }: Laid): { from: string; to: string }[] {
+function heldMove(file: string, { modules }: Laid): { from: string; to: string }[] {
   const { module, path, shared } = moduleSplit(file, modules);
-  const [top = '', folder] = file.split('/');
+  const [top = ''] = file.split('/');
 
   if (module !== undefined) {
     return file === `${module}/${path}` || path === '' ? [] : [{ from: file, to: `${module}/${path}` }];
   }
 
-  const ofTheContext = top === TEST_FOLDER ? folder === 'worlds' : isContextLevel(context, file);
-
-  return shared !== true && SHARED_FOLDERS.includes(top) && ofTheContext
+  return shared !== true && SHARED_FOLDERS.includes(top) && isHeldByShared(file)
     ? [{ from: file, to: `${SHARED_FOLDER}/${file}` }]
     : [];
 }

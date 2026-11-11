@@ -88,7 +88,7 @@ describe('the folders that hold files of a context', () => {
     ]);
   });
 
-  it('lists the specs of a module where the context keeps them and where the module does', () => {
+  it('lists the specs of a module in its test folder, and no folder of the context named after it', () => {
     const root = projectWith({
       [`${SCHEDULING}/test/unit/calendars/calendar.aggregate.spec.ts`]: '',
       [`${SCHEDULING}/waitlist/test/unit/join-waitlist.handler.spec.ts`]: '',
@@ -96,7 +96,6 @@ describe('the folders that hold files of a context', () => {
 
     expect(roleFoldersOf(new Workspace(root, false), TREE, 'test/unit')).toEqual([
       `${SCHEDULING}/test/unit`,
-      `${SCHEDULING}/test/unit/calendars`,
       `${SCHEDULING}/waitlist/test/unit`,
     ]);
   });

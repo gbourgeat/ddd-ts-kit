@@ -4,7 +4,6 @@ export { isContextLevel } from './is-context-level';
 export { isRoleFolder } from './is-role-folder';
 export { foldersOfContext } from './folders-of-context';
 export {
-  EARLIER_MODULE_LAYERS,
   MODULE_LAYERS,
   MODULE_TEST_FOLDERS,
   SHARED_FOLDER,
@@ -31,4 +30,6 @@ export { wiringTextOf } from './wiring-text-of';
 export { heldFileOf } from './held-file-of';
 export { contextLevelFolderOf } from './context-level-folder-of';
 export { moduleTestFolderOf } from './module-test-folder-of';
-export { holdsModuleTests } from './holds-module-tests';
+export { subjectModule, type ModuleFile } from './subject-module';
+export { isHeldByShared } from './is-held-by-shared';
+export { earlierFolders } from './earlier-folders';

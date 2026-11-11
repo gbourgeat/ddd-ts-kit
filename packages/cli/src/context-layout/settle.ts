@@ -1,4 +1,4 @@
-import { type ModuleFile, subjectModule } from './subject-module';
+import { type ModuleFile, subjectModule } from '../model-modules';
 
 /** A file of the context, relative to it, and the module it belongs to once told. */
 export interface Placed {

@@ -5,7 +5,6 @@ import { isDeclarationsFile } from '../declared';
 import { filesUnder } from '../generate/files-under';
 import {
   declaredModules,
-  holdsModuleTests,
   intoModule,
   isContextLevel,
   isRoleFolder,
@@ -17,7 +16,7 @@ import {
 import type { Workspace } from '../workspace';
 import type { ModuleMove } from './module-move';
 
-/** The folders of the tests whose files follow their subject into a module that keeps its tests. */
+/** The folders of the tests whose files follow their subject into a module, beside its specs. */
 const SUPPORT_FOLDERS = ['fakes', 'builders'];
 
 /** What to move: a context, the module it goes into, and paths relative to the context. */
@@ -35,9 +34,7 @@ export interface MoveRequest {
 export function movesIntoModule(ws: Workspace, config: Config, request: MoveRequest): ModuleMove[] {
   const directory = `${config.contextsDir}/${request.context}`;
   const modules = declaredModules(config, request.context);
-  // Once the context keeps its tests in its modules, a spec, a fake or a builder goes to the test folder of the module.
-  const ownTests = holdsModuleTests(ws, { directory, modules });
-  const placement = { ...request, directory, modules, ownTests };
+  const placement = { ...request, directory, modules };
 
   const moves = request.paths.flatMap((asked) => {
     const relative = asked.replace(/^\.\//, '').replace(/\/+$/, '');
@@ -72,8 +69,6 @@ interface Placement {
   readonly directory: string;
   readonly modules: readonly string[];
   readonly module: string;
-  /** True when the context keeps its tests in its modules: `<module>/test/`. */
-  readonly ownTests: boolean;
 }
 
 /**
@@ -152,43 +147,30 @@ function twinsOf(ws: Workspace, move: ModuleMove, { directory, modules, module }
     .filter((file) => file !== move.from && ws.exists(file));
 }
 
-function moveOf(file: string, { context, directory, modules, module, ownTests }: Placement): ModuleMove[] {
+function moveOf(file: string, { context, directory, modules, module }: Placement): ModuleMove[] {
   const { path } = moduleSplit(file, modules);
-  const place = placeOf(path, ownTests);
 
-  if (place === undefined) {
+  if (!hasPlaceInModule(path)) {
     throw new CliError(
       `${file} is in no role folder of a layer of "${context}", and in no test/unit/ nor test/integration/.`,
-      ownTests
-        ? 'A module holds the files of the layers of its concepts, their specs, their fakes and their builders: published-language/ and the worlds stay at the level of the context.'
-        : 'A module holds the files of the layers of its concepts and their specs: published-language/, the fakes, the builders and the worlds stay at the level of the context.',
+      'A module holds the files of the layers of its concepts, their specs, their fakes and their builders: published-language/ and the worlds stay outside every module.',
     );
   }
 
-  if (place !== 'support' && (isContextLevel(context, path) || isDeclarationsFile(context, file, modules))) {
+  if (isContextLevel(context, path) || isDeclarationsFile(context, file, modules)) {
     return [];
   }
 
-  const to = ownTests && place !== 'layer' ? `${module}/${path}` : intoModule(module, path);
+  const to = intoModule(module, path);
 
   return to === file ? [] : [{ from: `${directory}/${file}`, to: `${directory}/${to}` }];
 }
 
-/**
- * What a path, read without its module, is to a module: a file of a role folder of a layer, a
- * spec of `test/unit/` or `test/integration/`, or the support of its tests, a fake or a builder,
- * which has a place in a module only where the modules keep their tests. Undefined for any other.
- */
-function placeOf(path: string, ownTests: boolean): 'layer' | 'spec' | 'support' | undefined {
+/** True for a path, read without its module, that a module holds: a file of a role folder of a layer, a spec, a fake or a builder. */
+function hasPlaceInModule(path: string): boolean {
   const [layer = '', folder = ''] = path.split('/');
 
-  if (layer !== TEST_FOLDER) {
-    return MODULE_LAYERS.includes(layer) && isRoleFolder(layer, folder) ? 'layer' : undefined;
-  }
-
-  if (MODULE_TEST_FOLDERS.includes(folder)) {
-    return 'spec';
-  }
-
-  return ownTests && SUPPORT_FOLDERS.includes(folder) ? 'support' : undefined;
+  return layer === TEST_FOLDER
+    ? MODULE_TEST_FOLDERS.includes(folder) || SUPPORT_FOLDERS.includes(folder)
+    : MODULE_LAYERS.includes(layer) && isRoleFolder(layer, folder);
 }

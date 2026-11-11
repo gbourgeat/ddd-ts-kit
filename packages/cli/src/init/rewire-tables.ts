@@ -8,6 +8,7 @@ import { parseContextName, type Name } from '../naming';
 import { PRISMA_MAIN_SCHEMA, prismaSchemaOf, schemaOfContext, withDatasourceSchema } from '../prisma-schema';
 import { renderTemplate, type RenderValue } from '../templating';
 import type { Workspace } from '../workspace';
+import { withHeldImports } from './with-held-imports';
 
 const TYPEORM_TABLE = /^export const (\w+) = new EntitySchema\b/gm;
 
@@ -40,7 +41,11 @@ export function rewireTables(ws: Workspace, config: Config, name: string): void 
       applyWiring(
         ws,
         index,
-        renderTemplate(`repository/${orm}/schema-export.tpl`, { ...contextVars(config, context), ...entry.vars }),
+        withHeldImports(
+          ws,
+          config,
+          renderTemplate(`repository/${orm}/schema-export.tpl`, { ...contextVars(config, context), ...entry.vars }),
+        ),
       );
     }
   }

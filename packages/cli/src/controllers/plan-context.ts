@@ -4,6 +4,7 @@ import {
   moduleSplit,
   moduleTestFolderOf,
   roleFilesOf,
+  SHARED_FOLDER,
   treeOf,
   type ContextTree,
 } from '../model-modules';
@@ -67,6 +68,11 @@ interface Planning {
 }
 
 function plannedOf(file: string, source: string, { ws, context, tree }: Planning): PlannedController | string {
+  // A route is of a module: one left in shared/ would become a controller there, where no module owns it.
+  if (file.startsWith(`${tree.directory}/${SHARED_FOLDER}/`)) {
+    return `${file}: a route belongs to a module, and this one sits in ${SHARED_FOLDER}/: move it first with \`ddd-ts-kit move-to-module ${context} <module> ${file.slice(tree.directory.length + 1)}\`.`;
+  }
+
   const route = readFunctionRoute(file, source);
 
   if (typeof route === 'string') {
@@ -94,7 +100,7 @@ function plannedOf(file: string, source: string, { ws, context, tree }: Planning
     resource: resourceOf(route, context),
     isPublic: route.spec.get('security') === 'false',
     http,
-    unit: moduleTestFolderOf(ws, tree, { module, folder: 'unit' }),
+    unit: moduleTestFolderOf(tree, module, 'unit'),
   };
 }
 

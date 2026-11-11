@@ -1,10 +1,9 @@
 import path from 'node:path';
 import type { Config } from '../config';
-import { declaredModules } from './declared-modules';
 import { intoModule } from './into-module';
 import { isContextLevel } from './is-context-level';
-import { MODULE_LAYERS, MODULE_TEST_FOLDERS } from './module-layers';
-import { ownEntry } from '../config/values/own-entry';
+import { isHeldByShared } from './is-held-by-shared';
+import { MODULE_LAYERS, SHARED_FOLDER, TEST_FOLDER } from './module-layers';
 
 /** The module of the model a command writes in: `--module <module>` for the context it was given. */
 interface AskedModule {
@@ -23,7 +22,7 @@ export interface PlacementSources {
   readonly unplaced: (context: string, relative: string) => never;
   /** Called when `--module` names another module than the one that holds the use case of the file: it throws. */
   readonly split: (context: string, relative: string, holder: string) => never;
-  /** The module whose production file a spec of a context is named after (`<subject>.spec.ts`), if one is. */
+  /** The module whose production file a spec, a fake or a builder of a context is named after, if one is. */
   readonly subjectModule: (context: string, spec: string) => string | undefined;
 }
 
@@ -34,49 +33,57 @@ interface RolePath {
 }
 
 /**
- * Where a path of a context, written as it would be without modules of its model, is: as written
- * when the file is there or stays one per context; else in the module that holds it, the asked
- * one first; else, for a file being written, in the asked module. A spec goes with its subject,
- * in the module that holds the file it is named after, and stays at the level of the context
- * when no module does.
+ * Where a path of a context divided into modules, written as it would be without them, is. What
+ * belongs to no module is in `shared/` (`isHeldByShared`); the code list and the permission set
+ * stay as written, at the root. A file of a layer is in the module that holds it, the asked one
+ * first, or, for a file being written, in the asked module; one still at the level of the
+ * context, which `move-to-module` has not moved yet, is read there. A spec, a fake or a builder
+ * goes with its subject, in the test folder of the module that holds the file it is named after,
+ * and in `shared/test/` when no module does. A path of a context without modules is as written.
  */
 export function modulePlacement(sources: PlacementSources): (file: string, writing: boolean) => string {
   return (file, writing) => {
-    const role = rolePathOf(sources.config, file);
+    const role = rolePathOf(sources, file);
 
-    if (role === undefined || isContextLevel(role.context, role.relative) || sources.existsAsIs(file)) {
+    if (role === undefined) {
       return file;
     }
 
-    if (role.relative.startsWith('test/')) {
-      return specInItsModule(sources, role) ?? file;
+    const inShared = `${sources.config.contextsDir}/${role.context}/${SHARED_FOLDER}/${role.relative}`;
+
+    if (isHeldByShared(role.relative)) {
+      return readWhereItIs(sources, file, inShared);
     }
 
-    return inItsModule(sources, role, writing) ?? (writing ? unplaced(sources, role, file) : file);
+    if (role.relative.startsWith(`${TEST_FOLDER}/`)) {
+      return testInItsModule(sources, role) ?? inShared;
+    }
+
+    if (isContextLevel(role.context, role.relative) || sources.existsAsIs(file)) {
+      return file;
+    }
+
+    return inItsModule(sources, role, writing) ?? (writing ? sources.unplaced(role.context, role.relative) : file);
   };
 }
 
-/** The path a file has in a context, when it is written in a layer or in a test folder a module divides. */
-function rolePathOf(config: Config, file: string): RolePath | undefined {
+/** What belongs to no module is in `shared/`; what a context in the middle of its move still holds at its own level is read there. */
+function readWhereItIs({ existsAsIs }: PlacementSources, file: string, inShared: string): string {
+  return !existsAsIs(inShared) && existsAsIs(file) ? file : inShared;
+}
+
+/** The path a file has in a context divided into modules, when it is written in a layer or in the test folder. */
+function rolePathOf({ config, modulesOf }: PlacementSources, file: string): RolePath | undefined {
   const prefix = `${config.contextsDir}/`;
   const [context = '', ...parts] = file.startsWith(prefix) ? file.slice(prefix.length).split('/') : [];
-  const inLayer = MODULE_LAYERS.includes(parts[0] ?? '') && parts.length > 1;
+  const [top = ''] = parts;
+  const held = parts.length > 1 && (MODULE_LAYERS.includes(top) || top === TEST_FOLDER);
 
-  return inLayer || isSpecOutsideModules(parts, declaredModules(config, context))
-    ? { context, relative: parts.join('/') }
-    : undefined;
+  return held && modulesOf(context).length > 0 ? { context, relative: parts.join('/') } : undefined;
 }
 
-/** A spec of `test/unit/` or `test/integration/`, at any depth, not already in the folder of a module. */
-function isSpecOutsideModules(
-  [layer, folder = '', first = '']: readonly string[],
-  modules: readonly string[],
-): boolean {
-  return layer === 'test' && MODULE_TEST_FOLDERS.includes(folder) && first !== '' && !modules.includes(first);
-}
-
-/** The module of a spec: the one that holds it, the asked one, or the one that holds its subject. */
-function specInItsModule(sources: PlacementSources, role: RolePath): string | undefined {
+/** A spec, a fake or a builder in its module: the one that holds it, the asked one, or the one that holds its subject. */
+function testInItsModule(sources: PlacementSources, role: RolePath): string | undefined {
   const { context, relative } = role;
   const asked = sources.asked?.context === context ? sources.asked.module : undefined;
   const candidates = candidatesOf(sources, role, asked);
@@ -161,11 +168,4 @@ function useCaseFoldersOf(relative: string): string[] {
   return layer === 'presentation' && role === 'http' && inUseCase
     ? [`presentation/http/${first}/${second}`, `application/commands/${second}`, `application/queries/${second}`]
     : [];
-}
-
-/** A file written in a context that declares modules, without saying which one: refused, with the way out. */
-function unplaced(sources: PlacementSources, { context, relative }: RolePath, file: string): string {
-  const declared = (ownEntry(sources.config.contexts, context)?.modules ?? []).length > 0;
-
-  return declared ? sources.unplaced(context, relative) : file;
 }

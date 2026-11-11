@@ -1,9 +1,8 @@
-import path from 'node:path';
 import { aliasRoots } from '../alias';
 import { CliError } from '../cli-error';
 import type { Config } from '../config';
 import { contextFilePlacement } from '../context-files';
-import { declaredModule, declaredModules, modulePlacement, placedImports } from '../model-modules';
+import { declaredModule, declaredModules, modulePlacement, placedImports, subjectModule } from '../model-modules';
 import type { Workspace } from '../workspace';
 import { filesUnder } from './files-under';
 import { refuseEarlierLayout } from './refuse-earlier-layout';
@@ -15,6 +14,8 @@ export interface ModuleRequest {
   readonly context: string | undefined;
   readonly module: string | undefined;
   readonly command: string;
+  /** True for `generate module`, which declares a module and writes no file of a layer: it runs in a context not laid out yet. */
+  readonly declaresModule?: boolean;
 }
 
 /**
@@ -60,7 +61,9 @@ function modulesPlacement(
     return undefined;
   }
 
-  refuseEarlierLayout(ws, config, request.context);
+  if (request.declaresModule !== true) {
+    refuseEarlierLayout(ws, config, request.context);
+  }
 
   return modulePlacement({
     config,
@@ -70,7 +73,7 @@ function modulesPlacement(
     unplaced: (context, relative) => {
       throw unplacedError(context, relative, { modules: declaredModules(config, context), command: request.command });
     },
-    subjectModule: (context, spec) => subjectModule(ws, config, { context, spec }),
+    subjectModule: (context, spec) => moduleOfSubject(ws, config, { context, spec }),
     split: (context, relative, holder) => {
       throw new CliError(
         `The use case of ${relative} is in the module "${holder}" of "${context}": --module ${asked?.module ?? ''} would split it between two modules.`,
@@ -80,27 +83,25 @@ function modulesPlacement(
   });
 }
 
-/** What a spec is named after, in a context: the module that holds the production file of that name. */
+/** A file of the tests of a context, by its name: a spec, a fake or a builder. */
 interface Named {
   readonly context: string;
   readonly spec: string;
 }
 
 /**
- * The module holding the file a spec is named after (`appointment.repository.contract.spec.ts`
- * is of `appointment.repository.ts`), the longest name winning; undefined when no module holds one.
+ * The module holding the file a spec, a fake or a builder is named after (`subjectModule`):
+ * `appointment.repository.contract.spec.ts` is of `appointment.repository.ts`, `invoice.builder.ts`
+ * of `invoice.aggregate.ts`; undefined when no module holds one.
  */
-function subjectModule(ws: Workspace, config: Config, { context, spec }: Named): string | undefined {
-  const stem = spec.replace(/\.spec\.ts$/, '');
-
-  const matches = declaredModules(config, context).flatMap((module) =>
+function moduleOfSubject(ws: Workspace, config: Config, { context, spec }: Named): string | undefined {
+  const production = declaredModules(config, context).flatMap((module) =>
     filesUnder(ws, `${config.contextsDir}/${context}/${module}`)
-      .map((file) => path.posix.basename(file).replace(/\.ts$/, ''))
-      .filter((name) => stem === name || stem.startsWith(`${name}.`))
-      .map((name) => ({ module, length: name.length })),
+      .filter((file) => !file.startsWith('test/'))
+      .map((file) => ({ path: file, module })),
   );
 
-  return matches.sort((left, right) => right.length - left.length)[0]?.module;
+  return subjectModule(spec, production);
 }
 
 function askedModule(
@@ -123,6 +124,8 @@ function askedModule(
 interface Unplaced {
   readonly modules: readonly string[];
   readonly command: string;
+  /** True for `generate module`, which declares a module and writes no file of a layer: it runs in a context not laid out yet. */
+  readonly declaresModule?: boolean;
 }
 
 function unplacedError(context: string, relative: string, { modules, command }: Unplaced): CliError {
