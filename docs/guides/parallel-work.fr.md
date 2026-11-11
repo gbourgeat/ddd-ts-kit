@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:b6a2b346cc351aff -->
+<!-- translation-of: parallel-work.md sha256:5967d41a1115b070 -->
 
 # Travailler en parallèle sans collisions
 
@@ -472,7 +472,7 @@ fusion au chef d'orchestre. Le périmètre est fixé au premier appel du
 *workers* en ont un, et cette marque suit le *worker* : un appel qui part d'un autre *checkout* est
 jugé d'après le *worktree* fixé. Un fichier de périmètre supprimé ou changé l'arrête. `npx prettier` dans un projet dont `format` lance
 Biome et un `npx biome` nu sont refusés. Une sortie vers
-`/dev/null` ou le répertoire temporaire du système reste libre, et le chef d'orchestre n'est
+`/dev/null` ou le répertoire temporaire du système reste libre, de même qu'un verrou que `flock` prend sous `$XDG_RUNTIME_DIR` (un seul verrou pour les exécutions lourdes de tous les checkouts d'une machine), et le chef d'orchestre n'est
 tenu à rien de tout cela. Un *worker* passe `--local-only`
 à `generate` : la commande refuse alors, et n'écrit rien, quand la sorte écrirait hors de son
 contexte :

@@ -3,10 +3,10 @@
 // and a text that only looks like a command is not.
 
 import assert from 'node:assert/strict';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { bash, conductorWithWorker, decision, project, reason, run, worker } from './support.mjs';
+import { bash, conductorWithWorker, decision, guardTemp, project, reason, run, worker } from './support.mjs';
 
 // Each runs `rm` on a file outside the scope of the worker, or writes one, however it is written.
 const HIDDEN_WRITES = [
@@ -545,6 +545,39 @@ test('a wrapper that writes a file of its own is held to the scope for it, as a 
   ]) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
+});
+
+test('a worker takes a lock with `flock` in the runtime directory of the user, and writes nothing else there', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'ordering');
+  const runtime = `${guardTemp}-runtime-of-the-user`;
+  mkdirSync(runtime, { recursive: true });
+  symlinkSync(join(root, 'src/main.ts'), join(runtime, 'linked.lock'));
+  const within = { XDG_RUNTIME_DIR: runtime };
+
+  for (const command of [
+    'flock "$XDG_RUNTIME_DIR/heavy-1.lock" npm test',
+    'flock -n "${XDG_RUNTIME_DIR}/heavy-1.lock" npm test',
+    'flock "${XDG_RUNTIME_DIR:-/tmp}/heavy-1.lock" npm test',
+    `flock ${runtime}/heavy-1.lock npm test`,
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent), within).output, undefined, command);
+  }
+  for (const [command, expected] of [
+    ['flock "$XDG_RUNTIME_DIR/heavy-1.lock" rm src/main.ts', /`rm` changes src\/main\.ts/],
+    ['echo x > "$XDG_RUNTIME_DIR/notes.txt"', /outside your worktree/],
+    ['time -o "$XDG_RUNTIME_DIR/time.log" true', /outside your worktree/],
+    ['flock "$XDG_RUNTIME_DIR/linked.lock" true', /`flock` writing its output to/],
+    ['XDG_RUNTIME_DIR=src flock "$XDG_RUNTIME_DIR/main.ts" true', /A worker sets no `XDG_RUNTIME_DIR`/],
+  ]) {
+    const result = run('pre-bash', bash(root, command, agent), within);
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  const unset = run('pre-bash', bash(root, 'flock "$XDG_RUNTIME_DIR/heavy-1.lock" true', agent), {
+    XDG_RUNTIME_DIR: '',
+  });
+  assert.match(reason(unset), /writes files only the shell knows/);
 });
 
 test('the root of the context of a worker is inside its scope, for a tool that writes under it', () => {

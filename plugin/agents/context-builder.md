@@ -81,7 +81,7 @@ install of its package manager), never an install that names a package.
   of your base is not yours to put back (merge with it, not with `git fetch && git merge` in one
   command); when the guard holds a merge and names no command, undo
   nothing and report the merge to the conductor. Output to `/dev/null` or to the system temp
-  directory stays free.
+  directory stays free, and so does a lock `flock` takes under `$XDG_RUNTIME_DIR`.
 - Your git changes your worktree only: run it as `cd <worktree> && ...`. From any other checkout
   it reads (`status`, `log`, `diff`), and the guard refuses the rest: the conductor lands your
   branch, and no worker removes a worktree or writes a ref by `update-ref`. Your git keeps to your
