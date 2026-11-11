@@ -5,6 +5,7 @@ import { exists, read } from './helpers';
 import { git } from './support/git';
 import {
   commitFiles,
+  goOn,
   lastMessage,
   mergeTrunk,
   merging,
@@ -168,6 +169,38 @@ describe('merge-trunk: the base a merge is computed from', () => {
     const confirmed = mergeTrunk(root, '--since', a2, '--json');
 
     expect(confirmed.json()).toMatchObject({ status: 'committed', base: { commit: a2, evidence: 'option' } });
+  });
+});
+
+describe('merge-trunk: a --since newer than what the trunk holds', () => {
+  it('stops on the file of the branch the merge dropped, when --since names a commit made after the landing', () => {
+    const root = trunkRepository({ [INVOICE]: invoice() });
+
+    onBranch(root, 'build/billing');
+    commitFiles(root, { [INVOICE]: invoice('issue() { return 1; }') }, 'row 1: issue');
+    squashInto(root, 'build/billing', { message: 'feat(billing): issue (#1)' });
+    commitFiles(root, { 'docs/notes.md': 'Unrelated.\n' }, 'docs: notes (#2)');
+    onBranch(root, 'build/billing');
+
+    const tooNew = commitFiles(root, { [HANDLER]: 'export const payHandler = 1;\n' }, 'row 2: pay handler');
+
+    commitFiles(root, { [INVOICE]: invoice('issue() { return 1; }', 'pay() { return 2; }') }, 'row 2: pay');
+
+    const stopped = mergeTrunk(root, '--since', tooNew, '--json');
+
+    expect(stopped.code).toBe(1);
+
+    expect(stopped.json()).toMatchObject({
+      status: 'stopped',
+      base: { commit: tooNew, evidence: 'option' },
+      lostLines: { errors: [{ kind: 'file-deleted', file: HANDLER, side: 'ours' }] },
+    });
+
+    expect(merging(root)).toBe(true);
+    expect(exists(root, HANDLER)).toBe(false);
+    expect(goOn(root, '--abort').code).toBe(0);
+    expect(mergeTrunk(root, '--json').json()).toMatchObject({ status: 'committed', lostLines: { errors: [] } });
+    expect(exists(root, HANDLER)).toBe(true);
   });
 });
 

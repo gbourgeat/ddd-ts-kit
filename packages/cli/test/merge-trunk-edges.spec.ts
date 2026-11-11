@@ -201,6 +201,22 @@ describe('merge-trunk: a deleted file, a drizzle refusal, and the refusals to st
     expect(mergeTrunk(root, '--since', 'main').stderr).toContain('--since main is not a commit of this branch.');
   });
 
+  it('refuses a --since that names the head of the branch, which would leave the trunk alone in the result', () => {
+    const root = conflicting();
+    const head = git(root, 'rev-parse', 'HEAD').trim();
+
+    for (const since of ['HEAD', head]) {
+      const refused = mergeTrunk(root, '--since', since);
+
+      expect(refused.code).toBe(2);
+      expect(refused.stderr).toContain(`--since ${since} is the head of this branch`);
+      expect(refused.stderr).toContain('the result would be the trunk alone');
+    }
+
+    expect(merging(root)).toBe(false);
+    expect(git(root, 'rev-parse', 'HEAD').trim()).toBe(head);
+  });
+
   it('refuses to start when an untracked file stands where the trunk adds one, and changes nothing', () => {
     const root = conflicting();
 

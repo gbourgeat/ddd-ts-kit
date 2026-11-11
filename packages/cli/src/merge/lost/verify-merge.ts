@@ -4,6 +4,7 @@ import { changedPaths } from './changed-paths';
 import { commitOf } from '../../commit/commit-of';
 import { conflictMarkers } from './conflict-markers';
 import { deletedSpecs } from './deleted-specs';
+import { droppedAdditions } from './dropped-additions';
 import { isGeneratedText } from './is-generated-text';
 import { isLineChecked } from './is-line-checked';
 import { keptRows } from './kept-rows';
@@ -73,9 +74,14 @@ function findingsAt(
 
   const fork = runGit(repo.top, ['merge-base', ours, theirs])?.trim();
 
-  return fork === undefined || fork === ''
-    ? findings
-    : untouchedByBranch(findings, { ours: sides.ours, fork: read(fork) });
+  if (fork === undefined || fork === '') {
+    return findings;
+  }
+
+  return [
+    ...untouchedByBranch(findings, { ours: sides.ours, fork: read(fork) }),
+    ...droppedAdditions(repo, { fork, ours, theirs, result: at.result }, findings),
+  ];
 }
 
 /** The hunks of each side against the base, and from each side to the result. */

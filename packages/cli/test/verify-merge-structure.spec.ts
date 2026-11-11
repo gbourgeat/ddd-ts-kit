@@ -150,6 +150,61 @@ describe('verify-merge, what a merge left or deleted', () => {
   });
 });
 
+describe('verify-merge, a file of the branch the merge dropped, whatever the base', () => {
+  const PAYMENT = 'src/contexts/billing/payment.ts';
+  const payment = 'export class Payment {\n  settle(amount: Money): void {}\n}\n';
+
+  /** The branch adds the payment, the trunk `theirs`; the merge is judged from the head of the branch, as a base too new. */
+  function mergedFromHead(theirs: Record<string, string | null>, resolution: Record<string, string | null>): string {
+    const root = mergeRepository({
+      base: { [INVOICE]: lines('  issue() {}') },
+      ours: { [PAYMENT]: payment },
+      theirs,
+    });
+
+    const head = git(root, 'rev-parse', 'HEAD').trim();
+
+    mergeWith(root, resolution, `Merge main into build/billing\n\nMerge-Base: ${head}`);
+
+    return root;
+  }
+
+  it('reports a file the branch added, that the trunk never touched and the result lacks, though the base holds it', () => {
+    const root = mergedFromHead({ [INVOICE]: lines('  issue() {}', '  cancel() {}') }, { [PAYMENT]: null });
+    const answer = cli(root, 'verify-merge', 'HEAD', '--json').json();
+
+    expect(jsonAt(answer, 'merges', '0', 'baseFrom')).toBe('trailer');
+    expect(jsonAt(answer, 'merges', '0', 'errors')).toEqual([expect.objectContaining({ kind: 'file-deleted', file: PAYMENT, side: 'ours', line: 1 })]);
+
+    expect(cli(root, 'verify-merge', 'HEAD').stdout).toContain(
+      `files deleted by the merge:\n    ${PAYMENT} (ours)  added on this side, its path never touched by the other: missing from the result`,
+    );
+  });
+
+  it('reports nothing when the result holds the file under another path, or when the trunk had that path and removed it', () => {
+    const moved = mergedFromHead(
+      { [INVOICE]: lines('  issue() {}', '  cancel() {}') },
+      { [PAYMENT]: null, 'src/contexts/payments/payment.ts': payment },
+    );
+
+    const root = mergeRepository({
+      base: { [INVOICE]: lines('  issue() {}') },
+      ours: { [PAYMENT]: payment },
+      theirs: { [PAYMENT]: payment },
+    });
+
+    const head = git(root, 'rev-parse', 'HEAD').trim();
+
+    git(root, 'switch', '--quiet', 'main');
+    commit(root, { [PAYMENT]: null }, 'refactor(billing): payments leave the context (#3)');
+    git(root, 'switch', '--quiet', 'build/billing');
+    mergeWith(root, { [PAYMENT]: null }, `Merge main into build/billing\n\nMerge-Base: ${head}`);
+
+    expect(kinds(cli(moved, 'verify-merge', 'HEAD', '--json').json())).toEqual([]);
+    expect(kinds(cli(root, 'verify-merge', 'HEAD', '--json').json())).toEqual([]);
+  });
+});
+
 describe('verify-merge, decided and repaired losses', () => {
   it('lists the losses a Lost-Accepted trailer names, by file or by file:line, without failing on them', () => {
     const root = mergeRepository(PAY_AND_CANCEL);
