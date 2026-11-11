@@ -6,6 +6,7 @@ import { auditVars } from './audit-vars';
 import { authenticationVars } from './authentication-vars';
 import { brokerVars } from './broker-vars';
 import { cacheVars } from './cache-vars';
+import { declaresRoles } from './declares-roles';
 import { errorVars } from './error-vars';
 import { eventVars } from './event-vars';
 import { one } from './one';
@@ -36,7 +37,7 @@ export function stackVars(config: Config): RenderContext {
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
     events: eventVars(config),
     authn: authenticationVars(config),
-    authz: one(authz, ['rbac', 'abac', 'rebac', 'custom']),
+    authz: { ...one(authz, ['rbac', 'abac', 'rebac', 'custom']), roles: declaresRoles(config) },
     broker: brokerVars(config),
     cache: cacheVars(config),
     files: filesVars(config),

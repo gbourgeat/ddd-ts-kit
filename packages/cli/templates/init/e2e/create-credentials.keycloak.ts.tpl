@@ -4,16 +4,29 @@ import type { Authenticator } from '@ddd-ts-kit/auth';
 import { keycloakAuthenticator } from '@ddd-ts-kit/auth/jwt';
 import type { HttpHeaders } from '@ddd-ts-kit/testing/e2e';
 import { SignJWT, exportJWK, generateKeyPair, type CryptoKey, type JWK } from 'jose';
+{{#if authz.roles}}
+import type { Role } from '{{alias.platform}}/auth/authorization/role{{alias.ext}}';
+{{/if}}
 import { authEnvironment } from '{{alias.test}}/e2e/support/auth-environment{{alias.ext}}';
 
 const realm = authEnvironment.KEYCLOAK_REALM;
 const audience = authEnvironment.KEYCLOAK_AUDIENCE;
 const keyId = 'e2e-key';
 
+{{#if authz.roles}}
+/** Who a test calls as: the subject, the realm roles and the tenant its token carries. A role is one the platform declares (`Role.Admin`): another does not compile. */
+{{/if}}
+{{#unless authz.roles}}
 /** Who a test calls as: the subject, the realm roles and the tenant its token carries. */
+{{/unless}}
 export interface TestActor {
   readonly id: string;
+{{#if authz.roles}}
+  readonly roles?: readonly Role[];
+{{/if}}
+{{#unless authz.roles}}
   readonly roles?: readonly string[];
+{{/unless}}
   readonly tenantId?: string;
 }
 
