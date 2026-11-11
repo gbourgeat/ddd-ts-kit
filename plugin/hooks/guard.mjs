@@ -2221,19 +2221,19 @@ function isBarrel(project, path) {
 
 /**
  * The path of a file inside its context, its module of the model left out, as the CLI reads it:
- * a module holds its layers (<module>/application/...) and a folder of the test folders of its specs
- * (test/unit/<module>/...); 0.86 and 0.87 put it under domain/ and application/ (application/<module>/...).
+ * a module holds its layers and its tests (<module>/application/..., <module>/test/...), and what the
+ * modules of a context share sits in one folder (shared/infrastructure/..., shared/presentation/...,
+ * shared/test/...), read as the same path without it.
  */
 function outsideItsModule(project, context, parts) {
   const modules = project.modules[context] ?? [];
   const [first, second, ...rest] = parts;
-  if (modules.includes(first) && ['domain', 'application', 'infrastructure', 'presentation'].includes(second)) {
+  if (modules.includes(first) && ['domain', 'application', 'infrastructure', 'presentation', 'test'].includes(second)) {
     return [second, ...rest];
   }
-  if (first === 'test' && ['unit', 'integration'].includes(second) && modules.includes(rest[0])) {
-    return [first, second, ...rest.slice(1)];
-  }
-  return (first === 'domain' || first === 'application') && modules.includes(second) ? [first, ...rest] : parts;
+  const shared =
+    modules.length > 0 && first === 'shared' && ['infrastructure', 'presentation', 'test'].includes(second);
+  return shared ? [second, ...rest] : parts;
 }
 
 // By context name, in a map without prototype: a context named `constructor` or `__proto__` is a name.
