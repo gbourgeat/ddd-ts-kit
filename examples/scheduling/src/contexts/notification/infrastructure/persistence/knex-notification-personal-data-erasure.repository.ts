@@ -30,6 +30,13 @@ export class KnexNotificationPersonalDataErasure implements NotificationPersonal
       throw new NotADataSubjectIdError();
     }
 
+    // Nothing kept of the person in this network: nothing is erased, and nothing is counted. A deletion
+    // would answer `applied` all the same, for the trace it leaves under a key never held, and a mistyped
+    // id would then read as a person erased.
+    if ((await this.contacts.get(personId)) === undefined) {
+      return 0;
+    }
+
     const stamp = storableStamp({ eventId: `erasure:${personId}`, occurredAt: this.clock.now() });
 
     return (await this.contacts.delete(personId, stamp)) === 'applied' ? 1 : 0;

@@ -307,7 +307,9 @@ projector sends no command and reads no other context: it only keeps its table c
 stamp and `deleted = true`, and nothing else. The trace is what makes a deletion hold whatever
 the order of the deliveries: an older event that arrives later finds a newer stamp and changes
 nothing. That holds for a key the table does not hold yet: a deletion delivered before the
-creation it follows inserts the trace, and the late creation is `stale`. On an SQL store, this
+creation it follows inserts the trace, and the late creation is `stale`. So `applied` says that
+the deletion was recorded, not that a row was there: code that counts what it removed (an
+erasure that reports what it reached) asks `get(key)` first and deletes only what it finds. On an SQL store, this
 asks four things of the table and of whoever reads it:
 
 - **Every column of the row is nullable.** A trace keeps no data: every column the store maps

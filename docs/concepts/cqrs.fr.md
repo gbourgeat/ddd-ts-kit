@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:234e3488d8278043 -->
+<!-- translation-of: cqrs.md sha256:e23333e92fe5d5c3 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -324,7 +324,9 @@ et `deleted = true`, et rien d'autre. C'est la trace qui fait tenir une suppress
 l'ordre des livraisons : un événement plus ancien qui arrive plus tard trouve un tampon plus
 récent et ne change rien. Cela vaut pour une clé que la table ne tient pas encore : une
 suppression livrée avant la création qu'elle suit insère la trace, et la création en retard est
-`stale`. Sur un stockage SQL, cela demande quatre choses à la table et à qui la lit :
+`stale`. `applied` dit donc que la suppression a été enregistrée, pas qu'une ligne était là : un
+code qui compte ce qu'il a retiré (un effacement qui rapporte ce qu'il a atteint) demande
+d'abord `get(key)` et ne supprime que ce qu'il trouve. Sur un stockage SQL, cela demande quatre choses à la table et à qui la lit :
 
 - **Chaque colonne de la ligne accepte NULL.** Une trace ne garde aucune donnée : chaque colonne
   que le registre associe contient NULL, hormis la clé, le locataire et le tampon, si bien que les
