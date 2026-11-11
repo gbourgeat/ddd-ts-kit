@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:5967d41a1115b070 -->
+<!-- translation-of: parallel-work.md sha256:e4559d38e02db7a4 -->
 
 # Travailler en parallèle sans collisions
 
@@ -473,7 +473,7 @@ fusion au chef d'orchestre. Le périmètre est fixé au premier appel du
 jugé d'après le *worktree* fixé. Un fichier de périmètre supprimé ou changé l'arrête. `npx prettier` dans un projet dont `format` lance
 Biome et un `npx biome` nu sont refusés. Une sortie vers
 `/dev/null` ou le répertoire temporaire du système reste libre, de même qu'un verrou que `flock` prend sous `$XDG_RUNTIME_DIR` (un seul verrou pour les exécutions lourdes de tous les checkouts d'une machine), et le chef d'orchestre n'est
-tenu à rien de tout cela. Un *worker* passe `--local-only`
+tenu à rien de tout cela. La garde lit `$TMPDIR`, `$XDG_RUNTIME_DIR` et `$HOME` par leur valeur au début de la session et refuse un *worker* qui en affecte une ; une ligne qui en change une sous une forme qu'elle ne lit pas est jugée sur l'ancienne valeur. Elle arrête les erreurs d'un *worker*, pas un *worker* qui la contourne : c'est le rôle d'[un bac à sable](agent-sandbox.fr.md). Un *worker* passe `--local-only`
 à `generate` : la commande refuse alors, et n'écrit rien, quand la sorte écrirait hors de son
 contexte :
 
