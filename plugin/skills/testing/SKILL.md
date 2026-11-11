@@ -28,9 +28,9 @@ test and `it.todo` entries naming the behaviours to prove: replace each, never d
 
 | Level | What runs | Doubles | Where |
 |---|---|---|---|
-| domain | aggregates, value objects, domain services | none | `test/unit/` |
+| domain | aggregates, value objects, domain services | none | `test/unit/` (`<module>/test/unit/` in a context with modules) |
 | application | the real handler through the buses, with its permission | fakes of every port, fixed clock, sequential ids | `test/unit/` |
-| adapter | one adapter against its real dependency, and the contract suite | none | `test/integration/` |
+| adapter | one adapter against its real dependency, and the contract suite | none | `test/integration/` (`<module>/test/integration/`) |
 | end to end | the whole application through HTTP and the event bus | none; generated seeded data | `test/e2e/` at the project root |
 | acceptance | a story as its client sees it, written before its code | none; generated seeded data | `test/acceptance/` at the project root |
 
@@ -41,7 +41,7 @@ tests (`test/no-mocks`): they assert calls, not outcomes, and break on refactori
 
 | Need | Use |
 |---|---|
-| a repository | its fake in `test/fakes/` (extends `InMemoryRepository`); assert `findById` or `all()` |
+| a repository | its fake in `test/fakes/`, or `<module>/test/fakes/` beside its repository (extends `InMemoryRepository`); assert `findById` or `all()` |
 | another port | its fake, a working in-memory class recording what it received; an object literal fits too, a port being a shape |
 | time, identifiers | `application.clock` (`advance`), sequential ids (`idPrefix`) |
 | published events | `application.eventBus.published`; domain events of the command, heard once its handler has returned: `application.domainEvents.on('<name>', ...)` before executing; what `after-commit` handlers threw: `application.domainEvents.afterCommitFailures` |
@@ -115,7 +115,7 @@ included.
 
 The arrangement the specs of a context share (the same test application or buses, the same
 fakes) is a world, generated once instead of copied or written as a helper:
-`npx ddd-ts-kit generate test-world <ctx> [Name]` writes `test/worlds/<name>.world.ts`. The one
+`npx ddd-ts-kit generate test-world <ctx> [Name]` writes `test/worlds/<name>.world.ts` (`shared/test/worlds/` in a context divided into modules of the model). The one
 named after the context is the one the generators of use cases and jobs arrange through.
 
 ```ts
@@ -128,7 +128,7 @@ const { application, orderRepository } = await anOrderingWorld({
 });
 ```
 
-It builds every fake of `test/fakes/` and returns each under the name of its port; `given`
+It builds every fake of the context (`test/fakes/`, and `<module>/test/fakes/` of each module) and returns each under the name of its port; `given`
 stores the starting state before the application wires the fakes, so the events recorded while
 building it are not announced; `fakes` takes the fake of a port it cannot build alone (a reader
 that answers what the spec gives it). The permission, the data and the facts a spec listens to
@@ -139,7 +139,7 @@ test data a builder, an in-memory port a fake.
 
 ## Builders
 
-One per aggregate in `test/builders/` (`generate builder`, written with the aggregate):
+One per aggregate in `test/builders/`, or `<module>/test/builders/` in the module of its aggregate (`generate builder [--module]`, written with the aggregate):
 valid defaults, methods named in the ubiquitous language (`paid()`, not
 `withStatus('PAID')`), built through the aggregate's public API so an invalid state cannot be
 built. A test states only what its rule depends on. Generated with `--birth "<Fact>"`

@@ -88,7 +88,8 @@ missing. Rows with no path between them can be built in parallel.
   write shared files. The worker merges the trunk, then fills the TODOs.
 - `Start with` holds the exact generator commands (without `npx ddd-ts-kit` and `--json`), so
   the worker runs them instead of working them out. Every command or query names its
-  permission or `--public`.
+  permission or `--public`. A read that takes criteria, a scope or a page is named `Search...`,
+  never `List...` (`naming/search-not-list`: the generator refuses `List...`).
 - A command of a kind held to the glossary (`heldToGlossary: true` in
   `npx ddd-ts-kit generate --help --json`, the kinds whose usage shows `--term`) adds the term
   for a word of its name the glossary does not define (`--term "<Term>=<meaning>"`). The kinds
@@ -112,10 +113,11 @@ missing. Rows with no path between them can be built in parallel.
   domain services, repositories, commands, queries, ports, adapters, gateways, ACLs, routes,
   policies, integration events and handlers, jobs and projections included. The generator
   refuses such a command of that context without it. The generator itself keeps at the level of
-  the context what the modules share (codes, permissions, the schema of the database, route
-  groups, guards, shared schemas, fakes, builders and worlds): the kinds that write only those
-  (`builder`, `test-world`, `route-group`, `guard`, `schema`), an `e2e` spec and a `service`
-  refuse `--module`, so their commands never carry it. A row that serves two modules is split,
+  the context what belongs to no module: the codes and permissions at its root, and in its
+  `shared/` folder the schema of the database, route groups, guards, shared schemas, worlds and
+  the fakes and builders of no module. The kinds that write only those (`test-world`,
+  `route-group`, `guard`, `schema`), an `e2e` spec and a `service` refuse `--module`, so their
+  commands never carry it; `builder` takes it, a builder following its aggregate. A row that serves two modules is split,
   one row per module.
 - `--grant <role>` is written only when `stack.authz` is `rbac`. On `rebac` or `abac` the right
   is decided by the relationship schema or a policy, never by `--grant`: the generator refuses it.

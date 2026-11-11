@@ -46,7 +46,7 @@ first:
   `bind(Port)`), the port is imported as a value (`ports/value-import`).
 - A value that is not a port (settings, a database handle) is carried the same way: an
   abstract class with readonly members, bound to a plain object in the platform.
-- A fake of `test/fakes/` is bound in tests only. An outside system the application runs
+- A fake of `test/fakes/` (`<module>/test/fakes/` with modules) is bound in tests only. An outside system the application runs
   without (a sandbox, a demo) gets a simulated adapter instead,
   `npx ddd-ts-kit generate adapter <ctx> <Port> --kind simulated`: production code under
   `infrastructure/external/`, bound to the port like any adapter (kind `external`). A port has
@@ -133,5 +133,5 @@ const application = createTestApplication({
 The test application brings a fixed clock, sequential identifiers, in-memory buses, logger,
 metrics and error reporter. Replace every adapter that leaves the process by its fake; never
 mock a module. When several specs of a context share this arrangement,
-`npx ddd-ts-kit generate test-world <ctx>` writes it once, in `test/worlds/`. Details: skill
+`npx ddd-ts-kit generate test-world <ctx>` writes it once, in `test/worlds/` (`shared/test/worlds/` with modules). Details: skill
 `ddd-ts-kit:testing`.

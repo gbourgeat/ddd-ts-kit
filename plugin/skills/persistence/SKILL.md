@@ -36,7 +36,7 @@ lookups of the port, the columns, the mapper.
 - **Rows stay inside.** The mapper translates row to aggregate (`rehydrate`) and back; it is
   the one place for a type assertion. No ORM type crosses the port.
 - **Each context owns its tables**, in its own database schema and in a file of its own: the
-  tables file of `infrastructure/persistence/` (Drizzle, Knex, TypeORM) or, on Prisma,
+  tables file of `infrastructure/persistence/` (Drizzle, Knex, TypeORM; `shared/infrastructure/persistence/` with modules) or on Prisma
   `prisma/schema/<context>.prisma` beside the main `prisma/schema/schema.prisma` (a project still
   on the one `prisma/schema.prisma` of versions before 0.95 moves it first: `generate repository`
   refuses with the steps). A stored field changes its column and the mapper in one commit. No foreign key, join or
@@ -106,9 +106,8 @@ dialects: `@ddd-ts-kit/drizzle` (the default, PostgreSQL, one schema per context
 `@ddd-ts-kit/knex`, `@ddd-ts-kit/prisma`, `@ddd-ts-kit/typeorm`. With `none` or `custom` the
 generated adapter is in-memory, held to the same contract suite, behind a `TODO(platform)`.
 
-An outside system is not storage: a provider an environment runs without (a sandbox, a demo,
-a provider not ready yet) is simulated by an adapter of
-production code, `npx ddd-ts-kit generate adapter <ctx> <Port> --kind simulated`, never by a
+An outside system is not storage: a provider an environment runs without (a sandbox, a demo)
+is simulated by an adapter of production code, `npx ddd-ts-kit generate adapter <ctx> <Port> --kind simulated`, never by a
 repository nor by the fake of `test/fakes/`, which production code never imports. Its records
 keep the shape the system sends and go through the translator of `infrastructure/anti-corruption/`.
 
