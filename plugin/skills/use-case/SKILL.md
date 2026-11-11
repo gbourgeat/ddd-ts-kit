@@ -119,7 +119,9 @@ typed parameters, and throw it where the rule is kept:
 refusal gets a second factory (`generate error scheduling SlotTaken atStart`); a second code is a
 second class. Never `new` an error of `domain/errors/` (`errors/through-factory`). Facts are
 private: add `.exposing('<fact>')` in the factory only for what a client may read, never for what
-identifies a person. Declare the code in `errors` of the route (`errors/known-code`). Under
+identifies a person. Declare the code in `errors` of the route by its member of the code list
+(`SchedulingCodes.SlotTaken`; a code of the kit by `KitCodes.Forbidden` of `@ddd-ts-kit/kernel`), never
+as a string: the editor completes it and a typo does not compile (`errors/known-code`). Under
 `stack.refusals: factories`, read [factories.md](factories.md) first: a refusal is a factory of
 the error class of its concept instead.
 

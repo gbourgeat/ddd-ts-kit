@@ -13,7 +13,8 @@ of the kit, "How a refusal is written"; what follows is what changes in the slic
   (`errors/factory-name`). The constructor of the class is not public.
 - The rest of the refusal holds as the body says: the facts as typed parameters, private unless
   `.exposing('<fact>')` names them, never `new` (`errors/through-factory`), the code declared in
-  `errors` of the route (`errors/known-code`).
+  `errors` of the route (`errors/known-code`): as a string here, no list holds it; a code of the kit
+  as `KitCodes.Forbidden` of `@ddd-ts-kit/kernel`.
 - `npx ddd-ts-kit error-factories` moves such a project to named refusals when the user decides
   to: `--plan` writes `error-factories.plan.json`, editable, then `--apply` follows it and lists
   what it cannot rewrite.

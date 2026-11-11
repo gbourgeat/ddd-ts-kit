@@ -14,10 +14,15 @@ The rules are in the [architecture reference](../ARCHITECTURE.md) (`presentation
 ```ts
 // presentation/http/appointments.routes.ts
 import { Authenticated, RouteGroup } from '@ddd-ts-kit/http';
+import { KitCodes } from '@ddd-ts-kit/kernel';
 
-@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated], errors: ['FORBIDDEN'] })
+@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated], errors: [KitCodes.Forbidden] })
 export class AppointmentsRoutes {}
 ```
+
+`KitCodes` of `@ddd-ts-kit/kernel` names the codes of the kit (`KitCodes.Forbidden` is `'FORBIDDEN'`), and
+`<Context>Codes` of `<context>.codes.ts` those of the context: an `errors` list written with them is
+completed by the editor, and a misspelled code does not compile. A string says the same code.
 
 ```ts
 // presentation/http/appointments/book-appointment/book-appointment.controller.ts
@@ -108,7 +113,7 @@ command it sends in one module so that it reads at once (a project keeps one fil
 ```ts
 import { z } from 'zod';
 import { acceptedSchema, Authenticated, Controller, RouteGroup, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
-import { AuthorizedCommand, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, KitCodes, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
 import type { Infer } from '@ddd-ts-kit/validation';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 
@@ -118,7 +123,7 @@ declare class CancelAppointmentCommand extends AuthorizedCommand<string> {
 }
 
 // presentation/http/appointments.routes.ts
-@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated], errors: ['FORBIDDEN'] })
+@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated], errors: [KitCodes.Forbidden] })
 export class AppointmentsRoutes {}
 
 // presentation/http/appointments/cancel-appointment/cancel-appointment.controller.ts

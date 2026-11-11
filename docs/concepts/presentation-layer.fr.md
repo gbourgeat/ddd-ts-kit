@@ -1,5 +1,5 @@
 [English](presentation-layer.md) · **Français**
-<!-- translation-of: presentation-layer.md sha256:6b22d5d4909e46ae -->
+<!-- translation-of: presentation-layer.md sha256:3f59e2f299134cb6 -->
 
 # La couche présentation : contrôleurs, groupes de routes, gardes
 
@@ -16,10 +16,15 @@ dans [`@ddd-ts-kit/http`](../../packages/http/README.fr.md).
 ```ts
 // presentation/http/appointments.routes.ts
 import { Authenticated, RouteGroup } from '@ddd-ts-kit/http';
+import { KitCodes } from '@ddd-ts-kit/kernel';
 
-@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated], errors: ['FORBIDDEN'] })
+@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated], errors: [KitCodes.Forbidden] })
 export class AppointmentsRoutes {}
 ```
+
+`KitCodes` de `@ddd-ts-kit/kernel` nomme les codes du kit (`KitCodes.Forbidden` vaut `'FORBIDDEN'`), et
+`<Context>Codes` de `<context>.codes.ts` ceux du contexte : une liste `errors` écrite avec eux est
+complétée par l'éditeur, et un code mal orthographié ne compile pas. Une chaîne dit le même code.
 
 ```ts
 // presentation/http/appointments/book-appointment/book-appointment.controller.ts
@@ -111,7 +116,7 @@ fichier par rôle) :
 ```ts
 import { z } from 'zod';
 import { acceptedSchema, Authenticated, Controller, RouteGroup, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
-import { AuthorizedCommand, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, KitCodes, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
 import type { Infer } from '@ddd-ts-kit/validation';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 
@@ -121,7 +126,7 @@ declare class CancelAppointmentCommand extends AuthorizedCommand<string> {
 }
 
 // presentation/http/appointments.routes.ts
-@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated], errors: ['FORBIDDEN'] })
+@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated], errors: [KitCodes.Forbidden] })
 export class AppointmentsRoutes {}
 
 // presentation/http/appointments/cancel-appointment/cancel-appointment.controller.ts
