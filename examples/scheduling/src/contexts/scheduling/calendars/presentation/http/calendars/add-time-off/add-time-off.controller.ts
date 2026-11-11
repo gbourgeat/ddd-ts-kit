@@ -3,8 +3,8 @@ import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { AddTimeOffCommand } from '@/contexts/scheduling/calendars/application/commands/add-time-off/add-time-off.command';
 import { AddTimeOffParams } from '@/contexts/scheduling/calendars/presentation/http/calendars/add-time-off/add-time-off.params';
-import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
-import { TimeSpan } from '@/contexts/scheduling/presentation/http/shared/time-span.schema';
+import { CalendarsRoutes } from '@/contexts/scheduling/shared/presentation/http/calendars.routes';
+import { TimeSpan } from '@/contexts/scheduling/shared/presentation/http/shared/time-span.schema';
 
 const params = classSchema(AddTimeOffParams);
 const body = classSchema(TimeSpan, { shared: true });

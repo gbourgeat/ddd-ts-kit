@@ -91,8 +91,8 @@ In a context divided into modules of the model (a `## Modules` section in its `C
 add `--module <module>` to every `generate` of the slice: the module whose terms the use case
 speaks. The generator refuses without it and names the modules; it finds the aggregate, events
 and ports in whatever module holds them, and writes the route and the specs of the slice in the
-module too (`<module>/presentation/http/`, `test/unit/<module>/`). The code list, the permission
-set and the route groups stay at the level of the context. A use case that needs two modules
+module too (`<module>/presentation/http/`, `<module>/test/unit/`). The codes and permissions stay at the
+root of the context, route groups and world in `shared/`. A use case that needs two modules
 belongs to the one that decides.
 
 A handler whose constructor grows long is a smell, not a limit: walk the table of

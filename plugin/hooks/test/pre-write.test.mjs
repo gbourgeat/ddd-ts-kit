@@ -356,8 +356,8 @@ test('the declarations of a module of the model are generated too, and a module 
   for (const folder of [
     'orders/application/commands/commands.declarations.ts',
     'orders/application/application.declarations.ts',
-    // The module under its layer, as 0.86 and 0.87 laid it out.
-    'application/orders/commands/commands.declarations.ts',
+    // What the modules of the context share, in its one folder.
+    'shared/presentation/presentation.declarations.ts',
   ]) {
     const declarations = run('pre-write', write(join(root, `src/contexts/ordering/${folder}`)));
     assert.equal(decision(declarations), 'deny', folder);
@@ -394,7 +394,7 @@ test('the declarations of a module of the model are generated too, and a module 
     'orders/application/commands/book-order/book-order.more.md',
     'orders/application/commands/cancel-order/cancel-order.notes.md',
     'orders/domain/value-objects/money.notes.md',
-    'test/unit/orders/book-order.notes.md',
+    'orders/test/unit/book-order.notes.md',
   ]) {
     put(root, join('src/contexts/ordering', file), 'one\ntwo\n');
   }

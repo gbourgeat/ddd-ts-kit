@@ -7,7 +7,12 @@ import { decoratorCoverage } from '@ddd-ts-kit/testing/vitest';
 {{/if}}
 import { configDefaults, defineConfig, type TestProjectInlineConfiguration } from 'vitest/config';
 
-const INTEGRATION_SPECS = '{{config.contextsDir}}/*/test/integration/**/*.spec.ts';
+// The integration specs of a context, and of a module of its model that holds its tests.
+const INTEGRATION_SPECS = [
+  '{{config.contextsDir}}/*/test/integration/**/*.spec.ts',
+  '{{config.contextsDir}}/*/*/test/integration/**/*.spec.ts',
+];
+
 const INTEGRATION_MODE = 'integration';
 // A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
 const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);
@@ -19,7 +24,7 @@ const UNIT_PROJECT: TestProjectInlineConfiguration = {
   test: {
     name: 'unit',
     include: ['{{config.sourceRoot}}/**/*.spec.ts', 'test/architecture/**/*.spec.ts'],
-    exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],
+    exclude: [...INTEGRATION_SPECS, ...NOT_AFFECTED],
     // The unit specs share no state: each worker runs them in one module graph, the declarations of a context evaluated once rather than once per spec file. `isolate: true` gives each file its own graph again.
     isolate: false,
   },
@@ -29,7 +34,7 @@ const INTEGRATION_PROJECT: TestProjectInlineConfiguration = {
   extends: true,
   test: {
     name: INTEGRATION_MODE,
-    include: [INTEGRATION_SPECS],
+    include: INTEGRATION_SPECS,
     exclude: NOT_AFFECTED,
 {{#if persistence.hasDatabase}}
     globalSetup: ['test/support/test-database-template.ts'],

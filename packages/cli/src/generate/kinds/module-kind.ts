@@ -2,7 +2,8 @@ import { CLASSIFICATIONS, CONFIG_FILE, editConfigText, isOneOf } from '../../con
 import { isRecord } from '../../config/values/is-record';
 import { withModuleRow } from '../../check/modules/with-module-row';
 import { CliError } from '../../cli-error';
-import { moduleFileOf, moduleNameFlaw } from '../../model-modules';
+import { earlierFolders, moduleFileOf, moduleNameFlaw } from '../../model-modules';
+import { filesUnder } from '../files-under';
 import { renderTemplate } from '../../templating';
 import { readName, type Name } from '../../naming';
 import type { Kind } from '../kind';
@@ -36,6 +37,13 @@ export const moduleKind: Kind = {
     declareModule(scope, module.kebab);
     scope.ws.update(doc, withModuleRow(scope.ws.read(doc) ?? '', module.kebab, scope.flags.purpose));
     writeModuleFile(scope, module);
+
+    // What the context held before its first module is laid out for none: its tests and what no module owns move once.
+    if (earlierFolders(filesUnder(scope.ws, scope.dir), [module.kebab]).length > 0) {
+      scope.ws.note(
+        `A context divided into modules keeps its tests in its modules and what belongs to none in shared/: run \`ddd-ts-kit context-layout ${scope.context.kebab}\` now, which moves the specs, fakes and builders of ${scope.context.kebab}, its schema, its route groups and its worlds, and every import of them.`,
+      );
+    }
 
     scope.ws.note(
       `Generate into the module with \`--module ${module.kebab}\`, or move files of ${scope.context.kebab} into it with \`ddd-ts-kit move-to-module ${scope.context.kebab} ${module.kebab} <path>...\`, one cluster of concepts per commit.`,
@@ -79,6 +87,13 @@ function moduleName(scope: Scope, input: string): Name {
     throw new CliError(
       `"${input}" cannot name a module of the model.`,
       'A module is one folder of its context holding its layers (<module>/domain/, <module>/application/...), named after the cluster of concepts it holds, never after a layer nor a role folder.',
+    );
+  }
+
+  if (flaw?.reason === 'shared-folder') {
+    throw new CliError(
+      `"${name.kebab}" cannot name a module of the model.`,
+      `${name.kebab}/ is where a context divided into modules keeps what belongs to none of its modules: it is never declared. Name the module after the cluster of concepts it holds, with terms of the glossary.`,
     );
   }
 

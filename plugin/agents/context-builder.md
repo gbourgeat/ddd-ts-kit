@@ -47,6 +47,9 @@ install of its package manager), never an install that names a package.
   scenario your row now satisfies: the guard refuses any other change, and `npx ddd-ts-kit
   acceptance --lock` to you. A scenario that seems wrong is a need of your report, with the
   criterion of the story it fails; never change it to pass.
+- In a context divided into modules, the generators place each file: a spec, a fake and a
+  builder in `<module>/test/`, what the modules share (tables, route groups, guards, worlds) in
+  `shared/`. Never create a layer folder or `test/` at the root of such a context.
 - The tables of your context are yours: on Prisma its models in `prisma/schema/<your
   context>.prisma` too. A stored field changes its column and the mapper in the same commit,
   with a working migration.

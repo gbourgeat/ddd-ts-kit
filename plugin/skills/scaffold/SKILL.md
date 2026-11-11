@@ -35,8 +35,8 @@ skill `ddd-ts-kit:use-case`; events between contexts, skill `ddd-ts-kit:integrat
    In a context that declares modules of the model (`## Modules` of its `CONTEXT.md`), add
    `--module <module>` to a kind whose usage shows `[--module <module>]`, the module whose
    glossary terms the name uses; the generator refuses without it and lists the modules. The
-   other kinds (`builder`, `test-world`, `route-group`, `guard`, `schema`, `e2e`, ...) write
-   what the modules share and refuse `--module`. A new module: `generate module <ctx> <module> --purpose
+   other kinds (`test-world`, `route-group`, `guard`, `schema`, `e2e`, ...) write
+   what no module holds, in `shared/`, and refuse `--module`; `builder` takes it. A new module: `generate module <ctx> <module> --purpose
    "..."`, after the owner agreed (`docs/concepts/modules.md`).
 2. **Run with `--json`** (`--dry-run` first when unsure):
    ```bash
@@ -91,7 +91,7 @@ skill `ddd-ts-kit:use-case`; events between contexts, skill `ddd-ts-kit:integrat
   `representation <context> <UseCase> xml,csv` adds what a controller answers in besides JSON,
   `form <context> <UseCase>` the hints of its form.
 - `schema` writes one shape of the HTTP contract several routes use, declared once and shared,
-  in `presentation/http/shared/` of the context, or in `presentation/` of the shared kernel with
+  in `presentation/http/shared/` of the context (`shared/presentation/http/shared/` with modules), or in `presentation/` of the shared kernel with
   `schema shared-kernel <Name>`; a command route answers an identifier with `acceptedSchema`.
 - **The shared kernel** takes a value at least two contexts use and its refusals, nothing else:
   `value-object shared-kernel <Name> --term "<Term>=<meaning>"`, then `error shared-kernel

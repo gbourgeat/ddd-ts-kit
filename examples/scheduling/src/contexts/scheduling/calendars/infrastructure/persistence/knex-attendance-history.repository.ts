@@ -5,7 +5,7 @@ import {
   attendanceHistoryCriteria,
   type AttendanceEntry,
 } from '@/contexts/scheduling/calendars/application/ports/attendance-history.port';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema';
 
 @Repository(AttendanceHistory)
 export class KnexAttendanceHistory extends KnexReadModelStore<AttendanceEntry> implements AttendanceHistory {

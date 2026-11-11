@@ -3,7 +3,7 @@ import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { CreateCalendarCommand } from '@/contexts/scheduling/calendars/application/commands/create-calendar/create-calendar.command';
 import { CreateCalendarBody } from '@/contexts/scheduling/calendars/presentation/http/calendars/create-calendar/create-calendar.body';
-import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
+import { CalendarsRoutes } from '@/contexts/scheduling/shared/presentation/http/calendars.routes';
 
 const body = classSchema(CreateCalendarBody);
 

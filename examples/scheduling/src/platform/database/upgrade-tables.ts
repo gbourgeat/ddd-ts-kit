@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
-import { addAppointmentDocuments } from '@/contexts/scheduling/infrastructure/persistence/add-appointment-documents.schema';
-import { addInternalNotes } from '@/contexts/scheduling/infrastructure/persistence/add-internal-notes.schema';
+import { addAppointmentDocuments } from '@/contexts/scheduling/shared/infrastructure/persistence/add-appointment-documents.schema';
+import { addInternalNotes } from '@/contexts/scheduling/shared/infrastructure/persistence/add-internal-notes.schema';
 
 /**
  * Every change of a table made once the first migration was shared, in the order of the

@@ -13,7 +13,7 @@ function fixOf(root: string): string {
 }
 
 describe('the fix of test/spec-required', () => {
-  it('names test/unit/<module>/ for a file of a module of the model', () => {
+  it('names <module>/test/unit/ for a file of a module of the model', () => {
     const root = initProject('--context', 'billing:core', '--audit', 'off');
 
     expect(
@@ -22,7 +22,7 @@ describe('the fix of test/spec-required', () => {
 
     write(root, SERVICE, SERVICE_CODE);
 
-    expect(fixOf(root)).toContain('src/contexts/billing/test/unit/invoicing/tax-rate.service.spec.ts');
+    expect(fixOf(root)).toContain('src/contexts/billing/invoicing/test/unit/tax-rate.service.spec.ts');
   });
 
   it('names test/unit/ for a file outside every module', () => {

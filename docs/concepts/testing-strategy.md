@@ -218,7 +218,7 @@ are regenerated. Shaped like the builder of the example:
 
 <!-- checked sample -->
 ```ts
-// scheduling/test/builders/appointment.builder.ts
+// scheduling/calendars/test/builders/appointment.builder.ts
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 
@@ -348,6 +348,20 @@ A helper written among the specs instead, `test/unit/scheduling-application.ts`,
 [`test/helper-placed`](../ARCHITECTURE.md#3-dependency-rules), a warning: `test/unit/` and
 `test/integration/` hold specs, and a shared arrangement, test data or an in-memory port each
 has its place (`test/worlds/`, `test/builders/`, `test/fakes/`).
+
+### Where the tests of a module live
+
+A context that divides its model into [modules](modules.md) keeps no `test/` folder at its own
+level. Each module holds its tests beside its layers, `<module>/test/` with `unit/`,
+`integration/`, `builders/` and `fakes/`: the specs of a part of the model are opened, moved and
+reviewed with it. A builder and a fake follow their subject, not their use: the builder of an
+aggregate sits in the module of that aggregate, the fake of a port or of a repository in the
+module of that port, and a spec of another module imports them from there. What belongs to no
+module sits in `shared/test/`: the worlds, which arrange a test application over the fakes of
+every module, a fake or a builder named after nothing of a module (a clock), and the spec of a
+guard or of several modules. `generate` writes each of them there, `move-to-module` takes the
+specs of a moved file with it, and `ddd-ts-kit context-layout` moves a context laid out before.
+A context without modules keeps its `test/` folder as this page shows it.
 
 ## Given / when / then
 

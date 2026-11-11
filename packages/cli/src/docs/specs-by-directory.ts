@@ -8,15 +8,14 @@ const FIRST = ['unit', 'integration'];
 const TITLES: Readonly<Record<string, string>> = { e2e: 'End-to-end specs' };
 
 /**
- * Specs under the heading of the directory they are in, from the directory the page reads, each under
- * a heading of its own: `unit` and `integration` first, those at its root last.
+ * Specs under the heading of the directory they are read in (`unit` for a spec of `test/unit/` of the context
+ * and of the test folder of a module), each under a heading of its own: `unit` and `integration` first, those at its root last.
  */
 export function specsByDirectory(specs: readonly SpecOfPage[]): PageSection[] {
   const byDirectory = new Map<string, SpecOfPage[]>();
 
   for (const spec of specs) {
-    const slash = spec.file.indexOf('/');
-    const directory = slash === -1 ? '' : spec.file.slice(0, slash);
+    const [directory = ''] = spec.subject.folder.split('/');
 
     byDirectory.set(directory, [...(byDirectory.get(directory) ?? []), spec]);
   }
@@ -29,7 +28,7 @@ export function specsByDirectory(specs: readonly SpecOfPage[]): PageSection[] {
     ...(byDirectory.has('') ? [''] : []),
   ].map((directory) => ({
     title: directory === '' ? 'Specs' : (ownEntry(TITLES, directory) ?? `${capitalised(directory)} specs`),
-    entries: (byDirectory.get(directory) ?? []).map((spec) => ({ heading: specHeading(spec.file), specs: [spec] })),
+    entries: (byDirectory.get(directory) ?? []).map((spec) => ({ heading: specHeading(spec.subject), specs: [spec] })),
   }));
 }
 

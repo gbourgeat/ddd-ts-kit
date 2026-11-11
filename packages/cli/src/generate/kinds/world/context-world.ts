@@ -1,6 +1,7 @@
+import { heldFileOf, treeOf } from '../../../model-modules';
 import type { Scope } from '../../scope';
 
-/** The world of a context, read as a spec arranges through it: `test/worlds/<context>.world.ts`. */
+/** The world of a context, read as a spec arranges through it: `test/worlds/<context>.world.ts`, of the context or of `shared/`. */
 export type ContextWorld = AbsentWorld | UnreadWorld | ReadWorld;
 
 /** No file: `generate test-world` writes one. */
@@ -35,7 +36,8 @@ export interface ReadWorld {
  * of `<Context>WorldFakes` and of `<Context>WorldOptions`, whatever the types those members hold.
  */
 export function contextWorld(scope: Scope): ContextWorld {
-  const file = `${scope.dir}/test/worlds/${scope.context.kebab}.world.ts`;
+  const tree = treeOf(scope.config, scope.context.kebab);
+  const file = heldFileOf(scope.ws, tree, `test/worlds/${scope.context.kebab}.world.ts`);
   const source = scope.ws.read(file);
   const builder = `${scope.context.article}${scope.context.pascal}World`;
   const optionsName = `${scope.context.pascal}WorldOptions`;

@@ -1,4 +1,5 @@
 import { onKitContainer } from '../../../config';
+import { declaredModules, moduleSplit, roleFilesOf, TEST_FOLDER, treeOf } from '../../../model-modules';
 import { toName } from '../../../naming';
 import type { Scope } from '../../scope';
 import { filesUnder } from '../../files-under';
@@ -27,7 +28,7 @@ export interface ContextFakes {
 const FAKE_SUFFIX = '.fake.ts';
 
 /**
- * The fakes of a context, read from `test/fakes/*.fake.ts`: the class each file exports, and the
+ * The fakes of a context, read from `test/fakes/*.fake.ts` of the context, of each module of its model and of `shared/`: the class each file exports, and the
  * port of the context it implements or extends, declared in `domain/repositories/` or
  * `application/ports/`, itself or through the class of the context it extends (the in-memory
  * reader of a search). Left out: a fake whose constructor needs an argument; one that stands for
@@ -39,16 +40,12 @@ export function contextFakes(scope: Scope): ContextFakes {
   const ports = declaredPorts(scope);
   // Only a container checks that a fake stands for something it binds: the buses take any fake.
   const inUse = onKitContainer(scope.config) ? portsInUse(scope, [...ports.values()]) : new Set(ports.keys());
-  const directory = `${scope.dir}/test/fakes`;
-
   const classes = classesOf(scope);
 
-  const judged = scope.ws
-    .list(directory)
-    .filter((name) => name.endsWith(FAKE_SUFFIX))
-    .map((name) =>
-      judge(`${directory}/${name}`, scope.ws.read(`${directory}/${name}`) ?? '', { ports, inUse, classes }),
-    );
+  // The fakes of the context, of each module of its model and of shared/.
+  const judged = roleFilesOf(scope.ws, treeOf(scope.config, scope.context.kebab), 'test/fakes')
+    .filter(({ name }) => name.endsWith(FAKE_SUFFIX))
+    .map(({ path }) => judge(path, scope.ws.read(path) ?? '', { ports, inUse, classes }));
 
   const found = judged.filter((fake): fake is ContextFake => typeof fake !== 'string');
   const fakes = found.filter((fake) => chosen(found, fake.key) === fake);
@@ -75,9 +72,11 @@ interface KnownPorts {
 
 /** The exported classes of the sources of the context, its tests aside, by name. */
 function classesOf(scope: Scope): ReadonlyMap<string, FakeClass> {
+  const modules = declaredModules(scope.config, scope.context.kebab);
+
   return new Map(
     filesUnder(scope.ws, scope.dir)
-      .filter((file) => file.endsWith('.ts') && !file.startsWith('test/'))
+      .filter((file) => file.endsWith('.ts') && !moduleSplit(file, modules).path.startsWith(`${TEST_FOLDER}/`))
       .flatMap((file) => {
         const found = fakeClass(scope.ws.read(`${scope.dir}/${file}`) ?? '');
 

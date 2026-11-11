@@ -7,9 +7,10 @@ sub-context: a part with a language of its own is a [bounded context](bounded-co
 of one model, with the same language, the same database schema and the same transactions, is a
 module (Evans, *Domain-Driven Design Reference*, "Modules"). In this kit a module is optional:
 one folder of a context holding its own layers (`<module>/domain/`, `<module>/application/`,
-`<module>/infrastructure/`, `<module>/presentation/`), declared in the config, named with terms of
-the glossary, with the role folders unchanged below each layer, and its specs in
-`test/unit/<module>/`. Three rules keep it
+`<module>/infrastructure/`, `<module>/presentation/`) and its own tests (`<module>/test/`), declared
+in the config, named with terms of the glossary, with the role folders unchanged below each layer.
+Once a context declares modules, no layer folder stays at its root beside them, and what belongs
+to no module has one place, its `shared/` folder. Three rules keep it
 honest (`module/declared`, `module/complete`, `module/no-cycle`), `generate --module` writes into
 it, and `move-to-module` moves an existing context into modules one commit at a time.
 
@@ -38,8 +39,8 @@ cycle.
 **The gains.**
 
 - **Read by concept first.** A folder holds one part of the model: everything about the
-  waitlist, its model, its use cases, its adapters and its routes, is under `waitlist/`, and its
-  specs under `test/unit/waitlist/`, not spread over ten role folders shared with everything else. These are the "modules that tell the story of the system".
+  waitlist, its model, its use cases, its adapters and its routes, and its specs, is under `waitlist/`,
+  not spread over ten role folders shared with everything else. These are the "modules that tell the story of the system".
 - **A step between one big context and two contexts.** Before modules, a context too big to
   hold in mind had two ways out: stay big, or split into two contexts and pay integration
   events, an outbox, eventual consistency and, when they need each other, a refused cycle. A
@@ -59,11 +60,12 @@ cycle.
   asks for terms of the glossary and refuses technical words; whether the cut follows the model
   stays a judgement of people, reviewed by the `architecture-reviewer` agent.
 - **One more folder level**, and longer imports.
-- **What every module shares stays at the level of the context**, and is read there: the code
-  list and the permission set at its root, the schema, tables and migrations of its database
-  (one database per context), its route groups, guards and shared shapes (a route group gives a
-  prefix to the routes of a resource, whatever module answers them), and the fakes, builders and
-  worlds of its specs.
+- **What belongs to no module has one place**, and is read there: the code list and the
+  permission set at the root of the context, and in its `shared/` folder the schema, tables and
+  migrations of its database (one database per context), its route groups, guards and shared
+  shapes (a route group gives a prefix to the routes of a resource, whatever module answers them)
+  and the worlds of its specs. `shared/` is no module and no bag: it holds no `domain/` and no
+  `application/`. A concept two modules need belongs to one of them, or is a module.
 - **"Module" already names other things of the kit**: `<context>.module.ts` (explicit wiring),
   the module file of a module of the model that it composes (`<module>/<module>.module.ts`), and
   `ContextModule` of `@ddd-ts-kit/di`. The pages say "module of the model" wherever they could
@@ -119,21 +121,29 @@ src/contexts/appointments/
       event-handlers/offer-freed-slot.event-handler.ts
     infrastructure/persistence/knex-waitlist.repository.ts
     presentation/http/appointments/join-waitlist/...
-  infrastructure/persistence/                  the schema, tables and migrations of the context
-  presentation/http/                           the route groups, guards/ and shared/
-  test/
-    unit/booking/  unit/waitlist/              the specs of each module
-    integration/booking/  integration/waitlist/
-    fakes/  builders/  worlds/                 shared by the specs of every module
+  shared/                                      what belongs to no module, and nothing else
+    infrastructure/persistence/                the schema, tables and migrations of the context
+    presentation/http/                         the route groups, guards/ and shared/
+    test/
+      worlds/                                  the arrangements the specs of several modules share
+      fakes/  builders/  unit/  integration/   of no module: a clock, the spec of a guard
 ```
 
-What never moves into a module: `<context>.codes.ts`, `<context>.permissions.ts`,
-`<context>.module.ts`, the generated `<context>.declarations.ts` and `<context>.dependencies.ts`,
-`CONTEXT.md`, `published-language/`, the `*.schema.ts` of `infrastructure/persistence/` that are
-no row schema, the route groups (`presentation/http/*.routes.ts`), `presentation/http/guards/` and
-`presentation/http/shared/`, and `test/fakes/`, `test/builders/` and `test/worlds/`. A module never has a glossary, a database schema or a
-published language of its own, and two modules of one context never exchange integration
-events: a part that needs one of them is a context.
+Each module holds its tests beside its layers, `<module>/test/` with `unit/`, `integration/`,
+`builders/` and `fakes/` (left out of the tree above): a part of the model is one folder, its
+tests with it, opened, moved and reviewed whole. Fakes and builders follow their subject, not
+their use: the builder of an aggregate sits in the module of that aggregate, the fake of a port
+or of a repository in the module of that port, whoever uses them.
+
+What never moves into a module: at the root of the context, `<context>.codes.ts`,
+`<context>.permissions.ts`, `<context>.module.ts`, the generated `<context>.declarations.ts` and
+`<context>.dependencies.ts`, `CONTEXT.md` and `published-language/`; in `shared/`, the `*.schema.ts`
+of `infrastructure/persistence/` that are no row schema, the route groups
+(`presentation/http/*.routes.ts`), `presentation/http/guards/` and `presentation/http/shared/`, the
+worlds, and the fakes, builders and specs that are named after nothing of a module. The config
+never declares `shared`, and no module may be named after it. A module never has a glossary, a
+database schema or a published language of its own, and two modules of one context never
+exchange integration events: a part that needs one of them is a context.
 
 In the explicit style, what wires the classes splits the same way. Each module has its module
 file, `<module>/<module>.module.ts`, the only file at the root of its folder: it registers the
@@ -175,9 +185,9 @@ module:
 
 | Rule | Holds | Severity |
 |---|---|---|
-| `tree/closed` | accepts the folder of a declared module at the root of the context, and its module file `<module>/<module>.module.ts` at the root of the module, nothing else there; still reports a folder the config does not declare, with `generate module` as its fix | `error` |
-| `module/declared` | every module of `contexts.<name>.modules` is named with terms of the glossary of its context (every word of its name; technical words `shared`, `common`, `core`, `misc`, `utils` and the other technical words of `language/no-technical-name`) and has a row in `## Modules` of `CONTEXT.md` | `error` |
-| `module/complete` | once a context declares modules, a file of a layer outside every module, the files the context keeps aside, is reported, and so is a spec left in `test/unit/` while the file it is named after sits in a module, and a module still where 0.86 and 0.87 put it (`domain/<module>/`) | `warn`, so that a context moves into modules one commit at a time |
+| `tree/closed` | accepts the folder of a declared module at the root of the context, with its layers, its `test/` and its module file `<module>/<module>.module.ts`, nothing else at its root; accepts `shared/` in a context that declares modules, closed: `infrastructure/persistence/`, `presentation/http/` with `guards/` and `shared/`, and `test/`; still reports a folder the config does not declare, with `generate module` as its fix | `error` |
+| `module/declared` | every module of `contexts.<name>.modules` is named with terms of the glossary of its context (every word of its name; no technical word, `common`, `core`, `misc`, `utils` and the other technical words of `language/no-technical-name`) and has a row in `## Modules` of `CONTEXT.md`; the name `shared` is refused by `config/valid`, it is the folder of what belongs to no module | `error` |
+| `module/complete` | once a context declares modules, a file of a layer left at its level is reported, and so is a file of a module left in `shared/`, what belongs to no module aside | `warn`, so that a context moves into modules one commit at a time; the layout of an earlier version (`test/` at the level of the context, a layer folder there with nothing but what `shared/` holds now) is an `error` whatever the severity, and `context-layout` moves it |
 | `module/no-cycle` | the imports between the modules of one context form no cycle | `warn`, because Evans makes coupling between modules a signal to change the model, not a refusal |
 
 Every other rule reads a file of a module as it reads the same file outside one: the role of a
@@ -192,7 +202,7 @@ npx ddd-ts-kit generate module appointments waitlist \
   --purpose "Clients waiting for a taken slot, and the offer made to the first of them when it frees up." \
   --term "Waitlist=The clients waiting for a slot that is taken, in the order they asked"
 
-# Write into it: every file of a layer goes into the module, its spec into test/unit/<module>/.
+# Write into it: every file of a layer goes into the module, its spec, builder and fake into <module>/test/.
 npx ddd-ts-kit generate aggregate appointments Waitlist --module waitlist
 npx ddd-ts-kit generate command appointments JoinWaitlist --aggregate Waitlist --permission waitlist.join --module waitlist
 
@@ -212,25 +222,28 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
 - With `--module`, the files a kind reads (an existing aggregate, an event, a port) are found in
   whatever module holds them, and the imports it writes name where they are. A file of a use case
   already in a module is written with it, `--module` or not; a `--module` naming another module
-  is refused, since it would split the use case. A spec goes into the module of the file it is
-  named after. What the context keeps aside (the code list, the permission set, the schema of its
-  database, its route groups) stays at the level of the context.
+  is refused, since it would split the use case. A spec, a builder or a fake goes into the test
+  folder of the module of the file it is named after, and into `shared/test/` when it is named
+  after nothing of a module. What belongs to no module is written where it lives: the code list
+  and the permission set at the root of the context, the schema of its database, its route
+  groups, guards and shared shapes and its worlds in `shared/`.
 - In a context that declares modules, a kind that would write a file of a layer without
   `--module` is refused, with the list of the modules and the same command with `--module`: the
-  generator guides, it never leaves the choice unsaid. A context still in the layout of 0.86 and 0.87 is
-  refused too, with `context-layout` as the way out.
+  generator guides, it never leaves the choice unsaid. A context that still holds `test/` at its
+  own level is refused too, with `context-layout` as the way out.
 - The kinds that take `--module` show `[--module <module>]` in their usage
   (`npx ddd-ts-kit generate --help --json`, `writesInModules`): the model, the use cases, their
-  routes, ports, adapters, gateways, policies and events. A kind that writes only what the context
-  keeps aside or what lies outside the contexts (`builder`, `test-world`, `route-group`, `guard`,
+  routes, ports, adapters, gateways, policies, events and builders. A kind that writes only what
+  belongs to no module or what lies outside the contexts (`test-world`, `route-group`, `guard`,
   `schema`, `e2e`, `service`, `module`, `context`, `acceptance`, `worker`, `adr`) refuses
   `--module`, which would have no effect on it.
 - `move-to-module` takes paths relative to the context, files or folders of a role of any layer,
-  or specs, moves them into a declared module (a spec into `test/<unit|integration>/<module>/`),
-  takes the specs named after a moved file with it, and rewrites every import of them under the
-  source root, `test/` and `scripts/`; the generated declarations follow in the same run. A path
-  already in a module moves to the other one, and every file of a folder moves, not only its
-  sources. Nothing is moved when a file of the same name is in the module already, when two
+  specs, fakes or builders, moves them into a declared module (a file of the tests into
+  `<module>/test/`), takes the specs named after a moved file with it, and rewrites every import
+  of them under the source root, `test/` and `scripts/`, and the compiled path a migration names
+  a moved file by; the generated declarations follow in the same run. A path already in a
+  module, or in `shared/`, moves to the module asked, and every file of a folder moves, not only
+  its sources. Nothing is moved when a file of the same name is in the module already, when two
   files would land on one path, when another module of the context holds a file of the same role
   and name (the declarations of the context would export it twice), or when a file is not text. `--dry-run` shows the plan; the checks and the
   tests come next.
@@ -259,30 +272,47 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   `<module>/infrastructure/` and `<module>/presentation/`. A folder that file does not name is no
   module at boot either: a role file in it is refused, as `check` reports it.
 
-### From the layout of 0.86 and 0.87
+### From a context laid out before its modules held their tests
 
-0.86 and 0.87 put a module under `domain/<module>/` and `application/<module>/`, and left its adapters,
-routes and specs organised by technique. This version reads that layout only to move it:
-`module/complete` reports it as an error, whatever its severity; the generators refuse to write in such a context until it is
-moved. `npx ddd-ts-kit context-layout [<context>...] [--dry-run]` moves it: each module to its
-folder, and each adapter, route and spec left at the level of the context to the module of what
-it imports (a spec to the module of the file it is named after; a file that imports nothing of a
-module to the module of the files that import it), every import of them following. A file whose
-imports name two modules, or none, is listed and stays where it is: move it with
-`move-to-module`, or leave it at the level of the context when every module uses it.
+Earlier versions kept the tests of every module in the test folder of the context
+(`test/unit/<module>/`), and its schema, its route groups, its fakes, builders and worlds at the
+level of the context. This version reads that layout only to move it: `module/complete` reports
+`test/` at the level of the context, and a layer folder there that holds nothing but what
+`shared/` holds now, as an error whatever its severity, and the generators refuse to write in
+such a context until it is moved. `npx ddd-ts-kit context-layout [<context>...] [--dry-run]`
+moves it in one run: the specs of `test/<unit|integration>/<module>/` to `<module>/test/`; each
+spec, fake and builder left in the test folders of the context to the module of the file it is
+named after (a builder after an aggregate, a fake after a port or a repository), else of the one
+module its imports name, else to `shared/test/`; the schema and tables, the route groups, guards
+and shared shapes and the worlds to `shared/`; every import of them following, the compiled path
+a migration names them by included. A file of a layer whose imports name two modules, or none, is
+listed and stays where it is: move it with `move-to-module`. Nothing is overwritten, and a second
+run moves nothing. The command names each config of a test runner (`vitest.config.ts`,
+`vitest.mutation.config.ts`, `jest.mutation.config.js`) that still globs the integration specs of
+the test folder of the contexts alone: add the test folder of their modules beside it, or the
+integration specs of a module run with the unit specs.
 
 ## Adopting modules, step by step
 
 1. **Read the glossary.** Group its terms by the use cases that use them together. Two groups
    that rarely meet are two modules; a word with two meanings is two contexts.
 2. **Declare the modules**: `generate module <context> <module> --purpose "..."`, once per
-   module. `module/complete` now warns about every file outside a module: that list is the plan.
+   module. `module/complete` now warns about every file of a layer outside a module: that list
+   is the plan. It also reports `test/` at the level of the context as an error, and the
+   generators refuse the context until step 4: the context is in the middle of its move, read
+   as it is, its files of a layer where they were.
 3. **Move one cluster per commit**: `move-to-module <context> <module> <paths>...`, its model,
    its use cases, its adapters and its routes, then `npm run verify`. The specs named after the
-   moved files follow them into `test/unit/<module>/`.
-4. **Read the warnings of `module/no-cycle`.** A cycle between two modules asks whether a
+   moved files follow them into `<module>/test/`.
+4. **Lay out what is left**: `npx ddd-ts-kit context-layout <context>`, once the files of the
+   layers are in their modules, or earlier to generate into a module at once. The fakes and the
+   builders follow their subject into its module, the schema, the route groups and the worlds go
+   to `shared/`, and what no module is told for goes to `shared/test/`. Run before step 3, it
+   sends to `shared/test/` the fakes and builders whose subject is not in a module yet:
+   `move-to-module` takes them later, named one by one.
+5. **Read the warnings of `module/no-cycle`.** A cycle between two modules asks whether a
    concept is in the wrong module, or whether a concept is missing.
-5. **From then on, generate with `--module`.**
+6. **From then on, generate with `--module`.**
 
 ## Limits and when not to use it
 

@@ -184,7 +184,7 @@ describe('what a pull request runs, against the default branch', () => {
     const config = read(root, 'vitest.config.ts');
 
     expect(config).toContain('const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);');
-    expect(config).toContain('exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED]');
+    expect(config).toContain('exclude: [...INTEGRATION_SPECS, ...NOT_AFFECTED]');
     expect(config).toContain('...governedCoverage(mode),');
 
     expect(read(initProject('--tests', 'jest', '--orm', 'custom'), 'jest.config.js')).toContain(

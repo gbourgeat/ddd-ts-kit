@@ -24,7 +24,7 @@ import { SetOpeningHoursController } from '@/contexts/scheduling/calendars/prese
 import { ExportPracticeAgendaController } from '@/contexts/scheduling/calendars/presentation/http/practices/export-practice-agenda/export-practice-agenda.controller';
 import { SearchAttendanceHistoryController } from '@/contexts/scheduling/calendars/presentation/http/practices/search-attendance-history/search-attendance-history.controller';
 import { SearchPracticeAgendaController } from '@/contexts/scheduling/calendars/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
-import { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
+import { AgendaEntrySerializer } from '@/contexts/scheduling/shared/presentation/http/shared/agenda-entry.serializer';
 import { CommandBus, QueryBus } from '@ddd-ts-kit/kernel';
 
 export * from '@/contexts/scheduling/calendars/presentation/http/appointments/attach-appointment-document/attach-appointment-document.controller';

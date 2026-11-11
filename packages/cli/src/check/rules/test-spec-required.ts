@@ -1,11 +1,13 @@
 import path from 'node:path';
 import { roleOf } from '../canonical/role-of';
+import type { Project } from '../model/project';
 import type { Rule } from '../model/rule';
 import type { SourceFile } from '../model/source-file';
 import { inContext } from '../support/in-context';
 import { isAbstractBase } from '../support/is-abstract-base';
 import { perFile } from '../support/per-file';
 import { roleDirectory } from '../support/role-directory';
+import { testFolderOf } from '../support/test-folder-of';
 
 const SPEC = /\.(?:spec|test)\.ts$/;
 
@@ -15,7 +17,7 @@ interface Subject {
   /** The file name without `.ts`, and without the suffix of its role: a spec may carry either. */
   readonly base: string;
   readonly short: string;
-  /** The module of the model that holds the file: its spec sits in `test/unit/<module>/`. */
+  /** The module of the model that holds the file: its spec sits in `<module>/test/unit/`. */
   readonly module: string | undefined;
 }
 
@@ -25,8 +27,7 @@ export const testSpecRequired: Rule = {
     "Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler and job has a *.spec.ts in the context's test/; an abstract base is held by the specs of its implementations.",
   scope: 'project',
   run(project) {
-    const { contextsDir } = project.config;
-    const specs = specsOf(project.contextEntries, contextsDir);
+    const specs = specsOf(project);
 
     return perFile(project, this.id, (file) => {
       const subject = subjectOf(file);
@@ -39,22 +40,23 @@ export const testSpecRequired: Rule = {
         return [];
       }
 
-      const directory = `${contextsDir}/${subject.context}/test/`;
-      const unit = subject.module === undefined ? 'unit' : `unit/${subject.module}`;
-      const fix = `Create ${directory}${unit}/${subject.base}.spec.ts that names the expected behaviour in business language and exercises it without mocks.`;
+      const { directory } = testFolderOf(project, subject.context, subject.module);
+      const fix = `Create ${directory}unit/${subject.base}.spec.ts that names the expected behaviour in business language and exercises it without mocks.`;
 
       return [{ line: 1, message: `${subject.name} has no spec in ${directory}.`, fix }];
     });
   },
 };
 
-/** `<context>/<name without .spec.ts>` for every spec found on disk. */
-function specsOf(entries: readonly string[], contextsDir: string): Set<string> {
-  const specs = entries.flatMap((entry) => {
-    const [context = '', top, ...rest] = entry.slice(contextsDir.length + 1).split('/');
-    const name = rest.at(-1) ?? '';
+/** `<context>/<name without .spec.ts>` for every spec found on disk, in the test folder of the context, of one of its modules or of `shared/`. */
+function specsOf(project: Project): Set<string> {
+  const specs = project.contextEntries.flatMap((entry) => {
+    const location = project.locate(entry);
+    const name = path.posix.basename(entry);
 
-    return top === 'test' && SPEC.test(name) ? [`${context}/${name.replace(SPEC, '')}`] : [];
+    return inContext(location) && location.layer === 'test' && SPEC.test(name)
+      ? [`${location.context}/${name.replace(SPEC, '')}`]
+      : [];
   });
 
   return new Set(specs);

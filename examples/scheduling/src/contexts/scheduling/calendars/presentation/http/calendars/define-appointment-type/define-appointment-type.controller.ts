@@ -4,7 +4,7 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { DefineAppointmentTypeCommand } from '@/contexts/scheduling/calendars/application/commands/define-appointment-type/define-appointment-type.command';
 import { DefineAppointmentTypeParams } from '@/contexts/scheduling/calendars/presentation/http/calendars/define-appointment-type/define-appointment-type.params';
 import { DefineAppointmentTypeBody } from '@/contexts/scheduling/calendars/presentation/http/calendars/define-appointment-type/define-appointment-type.body';
-import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
+import { CalendarsRoutes } from '@/contexts/scheduling/shared/presentation/http/calendars.routes';
 
 const params = classSchema(DefineAppointmentTypeParams);
 const body = classSchema(DefineAppointmentTypeBody);

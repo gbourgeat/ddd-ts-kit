@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a710655453f3ce8a -->
+<!-- translation-of: README.md sha256:4d6a7e774da55a64 -->
 
 # @ddd-ts-kit/drizzle
 
@@ -932,7 +932,7 @@ garderait ce qu'il ne doit pas. L'adaptateur implémente `PersonalDataRetention`
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { createDrizzleEventSourcing, DrizzleContext, eventStoreTables } from '@ddd-ts-kit/drizzle/postgres';
 
-// src/contexts/scheduling/infrastructure/persistence/scheduling.schema.ts, lu par drizzle-kit
+// src/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema.ts, lu par drizzle-kit
 export const { events, head, snapshots, checkpoints, subjectKeys } = eventStoreTables('scheduling');
 
 // la racine de composition : la base du projet, puis un store par port

@@ -4,7 +4,7 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { AddExceptionCommand } from '@/contexts/scheduling/calendars/application/commands/add-exception/add-exception.command';
 import { AddExceptionParams } from '@/contexts/scheduling/calendars/presentation/http/calendars/add-exception/add-exception.params';
 import { AddExceptionBody } from '@/contexts/scheduling/calendars/presentation/http/calendars/add-exception/add-exception.body';
-import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
+import { CalendarsRoutes } from '@/contexts/scheduling/shared/presentation/http/calendars.routes';
 
 const params = classSchema(AddExceptionParams);
 const body = classSchema(AddExceptionBody);

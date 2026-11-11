@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:917c2134a6c0ccd3 -->
+<!-- translation-of: testing-strategy.md sha256:1ddc3ec933f2efb6 -->
 
 # Stratégie de test
 
@@ -224,7 +224,7 @@ langage. L'instant de la naissance est un ingrédient nommé d'après son fait (
 
 <!-- checked sample -->
 ```ts
-// scheduling/test/builders/appointment.builder.ts
+// scheduling/calendars/test/builders/appointment.builder.ts
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 
@@ -364,6 +364,21 @@ signalée par [`test/helper-placed`](../ARCHITECTURE.fr.md#3-règles-de-dépenda
 avertissement : `test/unit/` et `test/integration/` contiennent des *specs*, et une mise en place
 partagée, des données de test ou un port en mémoire ont chacun leur place (`test/worlds/`,
 `test/builders/`, `test/fakes/`).
+
+### Où vivent les tests d'un module
+
+Un contexte qui divise son modèle en [modules](modules.fr.md) ne garde aucun dossier `test/` à
+son propre niveau. Chaque module tient ses tests à côté de ses couches, `<module>/test/` avec
+`unit/`, `integration/`, `builders/` et `fakes/` : les *specs* d'une partie du modèle s'ouvrent,
+se déplacent et se relisent avec elle. Un *builder* et un *fake* suivent leur sujet, pas leur
+usage : le *builder* d'un agrégat est dans le module de cet agrégat, le *fake* d'un port ou d'un
+*repository* dans le module de ce port, et une *spec* d'un autre module les importe de là. Ce
+qui n'appartient à aucun module est dans `shared/test/` : les mondes, qui arrangent une
+application de test sur les *fakes* de tous les modules, un *fake* ou un *builder* qui ne porte
+le nom de rien d'un module (une horloge), et la *spec* d'une garde ou de plusieurs modules.
+`generate` écrit chacun à sa place, `move-to-module` emmène les *specs* d'un fichier déplacé, et
+`ddd-ts-kit context-layout` déplace un contexte disposé auparavant. Un contexte sans modules
+garde son dossier `test/` tel que cette page le montre.
 
 ## Étant donné / quand / alors
 

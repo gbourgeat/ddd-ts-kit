@@ -12,6 +12,7 @@ import { rewriteNamedUsages } from './rewrite-named-usages';
 import { rewriteUsages } from './rewrite-usages';
 import { specParts } from './spec-parts';
 import { type SplitSpec, splitConceptSpec } from './split-concept-spec';
+import { unitFolderOf } from './unit-folder-of';
 import { withImports } from './with-imports';
 
 const IMPORT = /^import [^;]+;\n/gm;
@@ -27,19 +28,22 @@ interface Moved {
  * concept class is cut, each case going to the spec of the class whose refusal it builds.
  */
 export function moveNamedSpecs(config: Config, { moves, sources }: Moved, draft: MigrationDraft): void {
-  const unit = (context: string): string => `${config.contextsDir}/${context}/test/unit`;
+  // Where the spec of a file is: in the test folder of its module, or in the one of its context.
+  const unit = (file: string): string =>
+    unitFolderOf(config, file, (folder) => draft.read(`${folder}/${specName(file)}`) !== undefined);
 
   for (const move of moves.filter((candidate) => candidate.oldFactory === undefined)) {
-    moveLegacySpec(unit(move.context), move, draft);
+    moveLegacySpec(unit(move.oldFile), move, draft);
   }
 
   for (const concept of sources.concepts) {
     const own = moves.filter((move) => move.oldFile === concept.file);
-    const spec = `${unit(concept.context)}/${specName(concept.file)}`;
+    const folder = unit(concept.file);
+    const spec = `${folder}/${specName(concept.file)}`;
 
     if (own.length > 0) {
       splitSpec(
-        { spec, unit: unit(concept.context), concept },
+        { spec, unit: folder, concept },
         { own, all: moves.filter((move) => move.context === concept.context) },
         draft,
       );

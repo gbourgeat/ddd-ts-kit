@@ -1,5 +1,5 @@
 ---
-applyTo: "src/contexts/*/test/**,**/*.spec.ts,test/**"
+applyTo: "src/contexts/*/test/**,src/contexts/*/*/test/**,**/*.spec.ts,test/**"
 ---
 
 # Tests

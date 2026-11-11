@@ -10,7 +10,7 @@ import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { BookAppointmentBody } from '@/contexts/scheduling/calendars/presentation/http/appointments/book-appointment/book-appointment.body';
 import type { BookAppointmentMapper } from '@/contexts/scheduling/calendars/presentation/http/appointments/book-appointment/book-appointment.mapper';
-import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
+import { AppointmentsRoutes } from '@/contexts/scheduling/shared/presentation/http/appointments.routes';
 import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
 
 // The staff of the practice sees the internal note, the holder of the desk (or the manager) writes it: an assistant who

@@ -11,7 +11,7 @@ import { MESSAGING_SCHEMA } from '@/platform/database/schema';
 import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
 import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/identity.schema';
 import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema';
 
 /** The tables of the contexts as they stood when the application became multi-tenant (ADR-0003). */
 const TABLES_OF_ONE_NETWORK: readonly AddTenantColumnOptions[] = [

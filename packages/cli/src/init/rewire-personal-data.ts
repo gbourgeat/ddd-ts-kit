@@ -3,9 +3,11 @@ import { applyWiring } from '../generate/apply-wiring';
 import { contextVars } from '../generate/context-vars';
 import { personalNames, type PersonalNames } from '../generate/kinds/personal-data/personal-names';
 import { wiringFamily } from '../generate/wiring-family';
+import { heldFileOf, treeOf } from '../model-modules';
 import { parseContextName, type Name } from '../naming';
 import { renderTemplate } from '../templating';
 import type { Workspace } from '../workspace';
+import { withHeldImports } from './with-held-imports';
 
 /**
  * `--force` rewrote `data-subject-copies.ts` and `data-subject-exports.ts` from their templates:
@@ -34,7 +36,9 @@ interface Listed {
 }
 
 function relist(ws: Workspace, config: Config, { context, names, adapter, list }: Listed): void {
-  const source = ws.read(`${config.contextsDir}/${context.kebab}/infrastructure/persistence/${adapter}.repository.ts`);
+  const source = ws.read(
+    heldFileOf(ws, treeOf(config, context.kebab), `infrastructure/persistence/${adapter}.repository.ts`),
+  );
 
   if (source === undefined) {
     return;
@@ -47,6 +51,6 @@ function relist(ws: Workspace, config: Config, { context, names, adapter, list }
   applyWiring(
     ws,
     `${config.platformDir}/privacy/data-subject-${list}.ts`,
-    renderTemplate(`personal-data/${list}.${family}.tpl`, vars),
+    withHeldImports(ws, config, renderTemplate(`personal-data/${list}.${family}.tpl`, vars)),
   );
 }

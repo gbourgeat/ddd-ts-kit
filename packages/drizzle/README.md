@@ -907,7 +907,7 @@ every copy, and `auditedPersonalDataRetention` of `@ddd-ts-kit/audit` records ea
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { createDrizzleEventSourcing, DrizzleContext, eventStoreTables } from '@ddd-ts-kit/drizzle/postgres';
 
-// src/contexts/scheduling/infrastructure/persistence/scheduling.schema.ts, read by drizzle-kit
+// src/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema.ts, read by drizzle-kit
 export const { events, head, snapshots, checkpoints, subjectKeys } = eventStoreTables('scheduling');
 
 // the composition root: the database of the project, then one store per port

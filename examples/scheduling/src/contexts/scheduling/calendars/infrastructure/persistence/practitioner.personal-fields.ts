@@ -1,5 +1,5 @@
 import { personalFields, type PersonalFieldsOptions } from '@ddd-ts-kit/kernel';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/shared/infrastructure/persistence/scheduling.schema';
 
 /** A row of the practitioner directory, as far as a person is concerned. */
 interface PractitionerRow {

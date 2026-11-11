@@ -17,6 +17,7 @@ beforeAll(() => {
   const module = cli(root, 'generate', 'module', 'billing', 'invoices', '--purpose', PURPOSE);
 
   expect(module.code, module.stderr).toBe(0);
+  expect(cli(root, 'context-layout', 'billing').code).toBe(0);
 
   const generated = cli(
     root,

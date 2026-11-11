@@ -11,4 +11,6 @@ export interface Role {
   readonly perContext?: readonly string[];
   /** Suffixes whose files need a spec (test/spec-required). */
   readonly specFor?: readonly string[];
+  /** True when `shared/` of a context divided into modules holds the directory too, for what belongs to no module. */
+  readonly shared?: boolean;
 }

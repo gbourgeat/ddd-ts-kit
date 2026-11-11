@@ -210,6 +210,7 @@ function projectWithTwoModules(label: string, di: string, style = 'explicit'): s
   expect(cli(root, 'generate', ...context, ...TERMS.flatMap((term) => ['--term', term])).code).toBe(0);
   expect(cli(root, 'generate', 'module', 'billing', 'invoices', '--purpose', 'The invoices.').code).toBe(0);
   expect(cli(root, 'generate', 'module', 'billing', 'payments', '--purpose', 'The payments.').code).toBe(0);
+  expect(cli(root, 'context-layout', 'billing').code).toBe(0);
 
   return root;
 }

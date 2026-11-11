@@ -4,7 +4,7 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { JoinWaitlistCommand } from '@/contexts/scheduling/waitlist/application/commands/join-waitlist/join-waitlist.command';
 import { JoinWaitlistParams } from '@/contexts/scheduling/waitlist/presentation/http/calendars/join-waitlist/join-waitlist.params';
 import { JoinWaitlistBody } from '@/contexts/scheduling/waitlist/presentation/http/calendars/join-waitlist/join-waitlist.body';
-import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
+import { CalendarsRoutes } from '@/contexts/scheduling/shared/presentation/http/calendars.routes';
 
 const params = classSchema(JoinWaitlistParams);
 const body = classSchema(JoinWaitlistBody);

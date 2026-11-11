@@ -1,5 +1,14 @@
 import { posix } from 'node:path';
-import { intoModule, moduleSplit, roleFilesOf, treeOf, type ContextTree } from '../model-modules';
+import {
+  contextLevelFolderOf,
+  moduleSplit,
+  moduleTestFolderOf,
+  roleFilesOf,
+  SHARED_FOLDER,
+  treeOf,
+  type ContextTree,
+} from '../model-modules';
+import type { Workspace } from '../workspace';
 import { toName } from '../naming';
 import { handleTypesOf, type HandleTypes } from './handle-types-of';
 import type { FunctionRoute } from './function-route';
@@ -23,7 +32,7 @@ export interface PlannedController {
 
 export interface ContextPlan {
   readonly context: string;
-  /** `<contextsDir>/<context>/presentation/http`, where the route groups are written. */
+  /** `<contextsDir>/<context>/presentation/http`, or the same folder of `shared/` once the context holds it, where the route groups are written. */
   readonly http: string;
   readonly controllers: readonly PlannedController[];
   readonly groups: ReadonlyMap<string, MigratedGroup>;
@@ -33,11 +42,11 @@ export interface ContextPlan {
 export function planContext(migration: Migration, context: string): ContextPlan | undefined {
   const { ws, config, blockers } = migration;
   const tree = treeOf(config, context);
-  const http = `${tree.directory}/presentation/http`;
+  const http = contextLevelFolderOf(ws, tree, 'presentation/http');
 
   // The function routes of the context and those of each module of its model.
   const files = roleFilesOf(ws, tree, 'presentation/http').filter(({ name }) => name.endsWith('.route.ts'));
-  const planned = files.map(({ path }) => plannedOf(path, ws.read(path) ?? '', { context, tree }));
+  const planned = files.map(({ path }) => plannedOf(path, ws.read(path) ?? '', { ws, context, tree }));
   const refused = planned.filter((entry) => typeof entry === 'string');
 
   if (files.length === 0 || refused.length > 0) {
@@ -53,11 +62,17 @@ export function planContext(migration: Migration, context: string): ContextPlan 
 
 /** The context a route is planned in, with its directory and the modules of its model. */
 interface Planning {
+  readonly ws: Workspace;
   readonly context: string;
   readonly tree: ContextTree;
 }
 
-function plannedOf(file: string, source: string, { context, tree }: Planning): PlannedController | string {
+function plannedOf(file: string, source: string, { ws, context, tree }: Planning): PlannedController | string {
+  // A route is of a module: one left in shared/ would become a controller there, where no module owns it.
+  if (file.startsWith(`${tree.directory}/${SHARED_FOLDER}/`)) {
+    return `${file}: a route belongs to a module, and this one sits in ${SHARED_FOLDER}/: move it first with \`ddd-ts-kit move-to-module ${context} <module> ${file.slice(tree.directory.length + 1)}\`.`;
+  }
+
   const route = readFunctionRoute(file, source);
 
   if (typeof route === 'string') {
@@ -85,7 +100,7 @@ function plannedOf(file: string, source: string, { context, tree }: Planning): P
     resource: resourceOf(route, context),
     isPublic: route.spec.get('security') === 'false',
     http,
-    unit: `${tree.directory}/${intoModule(module, 'test/unit')}`,
+    unit: moduleTestFolderOf(tree, module, 'unit'),
   };
 }
 

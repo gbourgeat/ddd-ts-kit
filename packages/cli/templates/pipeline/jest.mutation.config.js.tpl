@@ -4,5 +4,5 @@ import base from './jest.config.js';
 export default {
   ...base,
   testMatch: ['<rootDir>/{{config.sourceRoot}}/**/*.spec.ts'],
-  testPathIgnorePatterns: [...base.testPathIgnorePatterns, '/{{config.contextsDir}}/[^/]+/test/integration/'],
+  testPathIgnorePatterns: [...base.testPathIgnorePatterns, '/{{config.contextsDir}}/[^/]+/(?:test|[^/]+/test)/integration/'],
 };

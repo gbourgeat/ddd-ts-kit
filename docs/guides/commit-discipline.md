@@ -233,7 +233,7 @@ git commit -m "refactor(scheduling): extract BookingWindow from Calendar"
 # command and handler, route, their specs, the regenerated declarations of their layers and the contract
 git add src/contexts/scheduling/calendars/application/commands/reschedule-appointment/ \
         src/contexts/scheduling/calendars/presentation/http/appointments/reschedule-appointment/ \
-        src/contexts/scheduling/test/unit/calendars/reschedule-appointment.*.spec.ts \
+        src/contexts/scheduling/calendars/test/unit/reschedule-appointment.*.spec.ts \
         src/contexts/scheduling/calendars/application/application.declarations.ts \
         src/contexts/scheduling/calendars/presentation/presentation.declarations.ts \
         openapi/openapi.yaml

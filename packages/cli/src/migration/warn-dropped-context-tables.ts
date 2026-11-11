@@ -4,7 +4,9 @@ import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder';
 import { isRecord } from '../check/support/is-record';
 import type { Io } from '../commands/io';
 import { readConfig, type Config } from '../config';
+import { roleFoldersOf, treeOf } from '../model-modules';
 import { schemaOfContext } from '../prisma-schema';
+import { Workspace } from '../workspace';
 import { declaredTables, type DeclaredTable } from './declared-tables';
 import { listedInIndex } from './listed-in-index';
 import { migrationFiles } from './migration-files';
@@ -50,18 +52,20 @@ export function warnDroppedContextTables(root: string, io: Io, tool: MigrationTo
   }
 }
 
-/** The tables the files of the persistence of a context export. */
+/** The tables the files of the persistence of a context export: its own, those of `shared/` and of each module of its model. */
 function tablesOf(root: string, config: Config, context: string): ContextTable[] {
-  const directory = `${config.contextsDir}/${context}/infrastructure/persistence`;
+  const folders = roleFoldersOf(new Workspace(root, false), treeOf(config, context), 'infrastructure/persistence');
 
-  return namesIn(path.join(root, directory))
-    .filter((name) => name.endsWith('.ts') && !name.endsWith('.spec.ts'))
-    .flatMap((name) =>
-      declaredTables(readIfPresent(path.join(root, directory, name)) ?? '').map((table) => ({
-        ...table,
-        file: name.replace(/\.ts$/, ''),
-      })),
-    );
+  return folders.flatMap((directory) =>
+    namesIn(path.join(root, directory))
+      .filter((name) => name.endsWith('.ts') && !name.endsWith('.spec.ts'))
+      .flatMap((name) =>
+        declaredTables(readIfPresent(path.join(root, directory, name)) ?? '').map((table) => ({
+          ...table,
+          file: name.replace(/\.ts$/, ''),
+        })),
+      ),
+  );
 }
 
 /** The tables the migrations of TypeORM created, each as `<schema>.<table>`: it keeps no snapshot. */
