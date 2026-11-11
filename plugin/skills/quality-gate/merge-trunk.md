@@ -4,7 +4,7 @@ Read when a branch has its rows committed and the trunk moved, before its review
 
 When the rows of a branch are committed, before its review and its merge: bring the trunk into
 the branch with `npx ddd-ts-kit merge-trunk` (`--cwd <worktree>` from outside it), never
-`git merge` alone; `--trunk <git-ref>` names the trunk when `git fetch origin` has not made it findable. It computes the
+`git merge` alone; the trunk is the base of the worker of the worktree, else `origin/HEAD`, then `origin/main`, and `--trunk <git-ref>` names another (a stacked branch whose parent landed: `--trunk origin/main`). It computes the
 merge from the newest commit of the branch the trunk holds (a first row already squash-merged, a
 branch it was stacked on), settles the derived files (the `package.json` of a client at the higher
 of both versions), generated regions and registries, the rows

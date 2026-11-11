@@ -7,8 +7,10 @@ const TRUNKS = ['origin/HEAD', 'origin/main'];
 const FIX = 'Fetch it first (`git fetch origin`), or name the trunk: `--trunk <ref>`.';
 
 /**
- * The trunk to bring in: `--trunk`, else origin/HEAD (named by the branch it points to), else
- * origin/main. Nothing is fetched: the commit is the one the ref names now.
+ * The trunk to bring in: `explicit` (`--trunk`, else the base recorded for the worker of the
+ * worktree, the ref its branch was cut from and is checked against), else origin/HEAD (named by
+ * the branch it points to), else origin/main. Nothing is fetched: the commit is the one the ref
+ * names now.
  */
 export function trunkOf(top: string, explicit: string | undefined): { ref: string; commit: string } {
   if (explicit !== undefined) {

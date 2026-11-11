@@ -100,6 +100,52 @@ describe('verify-merge, the choices of a merge that are no loss', () => {
   });
 });
 
+describe('verify-merge, the same line in two files', () => {
+  const ISSUE = 'src/contexts/billing/issue-invoice.ts';
+  const PAY = 'src/contexts/billing/pay-invoice.ts';
+  const marker = '// TODO(domain): state the rule this decision enforces.';
+  const decision = (name: string, body: string): string => `export function ${name}(): void {\n  ${body}\n}\n`;
+  const todo = "describe('Invoice', () => {\n  it.todo('refuses the invoice in the wrong state');\n});\n";
+
+  const test = (title: string, call: string): string =>
+    `describe('Invoice', () => {\n  it('${title}', () => {\n    expect(${call}).toThrow();\n  });\n});\n`;
+
+  const histories = {
+    base: {
+      [ISSUE]: decision('issueInvoice', marker),
+      [PAY]: decision('payInvoice', marker),
+      'src/contexts/billing/issue-invoice.spec.ts': todo,
+      'src/contexts/billing/pay-invoice.spec.ts': todo,
+    },
+    ours: {
+      [ISSUE]: decision('issueInvoice', 'ensureDraft(invoice);'),
+      'src/contexts/billing/issue-invoice.spec.ts': test('refuses to issue an invoice twice', 'issueTwice'),
+    },
+    theirs: {
+      [PAY]: decision('payInvoice', 'ensureIssued(invoice);'),
+      'src/contexts/billing/pay-invoice.spec.ts': test('refuses to pay a draft invoice', 'payDraft'),
+    },
+  };
+
+  it('reads a generated marker and a test to write, each filled in one file by one side, as no loss', () => {
+    const root = merged(histories, {});
+
+    expect(kinds(root, 'errors')).toEqual([]);
+    expect(kinds(root, 'warnings')).toEqual([]);
+  });
+
+  it('still reports the marker and the test a side kept in its file when the merge dropped them there', () => {
+    const kept = { ...histories, theirs: { [CHANGES]: '# Changes\n' } };
+
+    const root = merged(kept, {
+      [PAY]: decision('payInvoice', ''),
+      'src/contexts/billing/pay-invoice.spec.ts': "describe('Invoice', () => {\n});\n",
+    });
+
+    expect(kinds(root, 'errors')).toEqual(['lost-line', 'lost-line', 'test-lost']);
+  });
+});
+
 describe('verify-merge, a base line the merge dropped', () => {
   it('is lost where the side kept it, outside the lines it changed, though the side added a copy of it', () => {
     const kept = 'return Money.of(cents);';

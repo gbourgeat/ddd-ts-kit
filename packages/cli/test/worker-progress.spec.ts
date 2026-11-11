@@ -93,6 +93,27 @@ describe('status --workers, where a worker stands', () => {
     expect(cli(root, 'worker-scope', 'billing', '--resume').stdout).toMatch(/#M1\.01 committed [0-9a-f]+ \(by order\)/);
   });
 
+  it('never matches in order a commit of a row that landed, once the branch is kept for its next row', () => {
+    commitRow('feat(billing): issue invoice');
+    write(root, ISSUE, "export const issued = 'feat(billing): issue invoice';\n");
+    git(root, 'add', ISSUE);
+    git(root, 'commit', '--quiet', '--message', 'feat(billing): issue invoice (#1)');
+    git(worktree, 'merge', '--quiet', '--no-ff', '--message', 'Merge main into build/billing', 'main');
+
+    expect(cli(root, 'worker-scope', 'billing', '--rows', 'M1.02', '--no-install').code).toBe(0);
+    expect(jsonAt(progress(), 'rows')).toEqual([{ id: 'M1.02', slice: 'Pay invoice', state: 'to do' }]);
+    expect(jsonAt(progress(), 'phase')).toBe('not started');
+
+    write(worktree, PAY, 'export const pay = 1;\n');
+    git(worktree, 'add', PAY);
+    git(worktree, 'commit', '--quiet', '--message', 'feat(billing): pay invoice');
+    git(root, 'commit', '--quiet', '--allow-empty', '--message', 'docs: notes (#2)');
+
+    expect(jsonAt(progress(), 'rows')).toEqual([
+      expect.objectContaining({ id: 'M1.02', state: 'committed', byOrder: true }),
+    ]);
+  });
+
   it('asks for a new agent between rows, and for the merge once every row is committed and nothing is left', () => {
     commitRow('feat(billing): issue invoice', 'Slice: M1.01');
     agent({});

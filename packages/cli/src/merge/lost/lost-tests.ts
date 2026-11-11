@@ -1,3 +1,4 @@
+import { expectedOver } from './expected-over';
 import type { MergeFinding } from './merge-finding';
 import type { MergeSides } from './merge-sides';
 import { rankedPlaces } from './ranked-places';
@@ -13,8 +14,8 @@ type Place = { readonly file: string; readonly line: number };
 /**
  * The tests of a side the result no longer has: each title of a spec file, counted over every
  * spec file of the merge, is expected as many times as the base had it plus what the sides added
- * minus what they removed. A test one side deleted is not lost; a test moved to another spec
- * file is not either.
+ * minus what they removed, and no more than its spec files expect one by one. A test one side
+ * deleted is not lost; a test moved to another spec file is not either.
  */
 export function lostTests(sides: MergeSides): MergeFinding[] {
   const base = titlesOf(sides.base);
@@ -29,7 +30,8 @@ export function lostTests(sides: MergeSides): MergeFinding[] {
       placesOf(theirs, title).length,
     );
 
-    const missing = count.expected - placesOf(result, title).length;
+    const expected = expectedOver(placesOf(base, title), placesOf(ours, title), placesOf(theirs, title));
+    const missing = expected - placesOf(result, title).length;
     const side = count.addedBy === 'theirs' ? theirs : ours;
 
     return rankedPlaces(placesOf(side, title), placesOf(base, title), placesOf(result, title))

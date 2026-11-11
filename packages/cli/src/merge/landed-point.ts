@@ -54,6 +54,13 @@ function sinceCommit(root: string, since: string, head: string): string {
     );
   }
 
+  if (commit === head) {
+    throw new CliError(
+      `--since ${since} is the head of this branch: merged from there, the result would be the trunk alone, without what this branch holds.`,
+      'Pass the newest commit of this branch the trunk already holds, or no --since: merge-trunk then looks for it.',
+    );
+  }
+
   return commit;
 }
 

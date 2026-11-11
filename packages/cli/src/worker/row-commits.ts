@@ -61,15 +61,21 @@ export function rowCommits(directory: string, branch: RowsOfBranch): RowCommit[]
   });
 }
 
-/** The commits of the branch's own line since the base, oldest first, merges left out. */
+/**
+ * The commits of the branch's own line since the base, oldest first, merges left out. When the
+ * branch holds the base, only the commits made on top of it: those the branch made before it
+ * brought the base in are not its descendants, and belong to rows that landed.
+ */
 function commitsSince(directory: string, base: string): LoggedCommit[] {
   const format = '%h%x1f%s%x1f%(trailers:key=Slice,valueonly,separator=%x2C)%x1e';
+  const held = runGit(directory, ['merge-base', '--is-ancestor', base, 'HEAD']) !== undefined;
 
   const log = runGit(directory, [
     'log',
     '--reverse',
     '--first-parent',
     '--no-merges',
+    ...(held ? ['--ancestry-path'] : []),
     `--format=${format}`,
     `${base}..HEAD`,
   ]);
