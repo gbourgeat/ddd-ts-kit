@@ -174,6 +174,7 @@ const TEXT_FLAGS = [
   'cron',
   'phase',
   'event',
+  'job',
   'group',
   'prefix',
   'role',

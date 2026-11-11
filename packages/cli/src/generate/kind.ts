@@ -66,6 +66,8 @@ export interface KindFlags {
   readonly phase?: string;
   /** The integration event an end-to-end spec publishes to start its use case, as `<context>.<aggregate>.<fact>`. */
   readonly event?: string;
+  /** The job an end-to-end spec starts its use case with, scheduled or background, by the name of its class or the one it runs under. */
+  readonly job?: string;
   /** The route group of a controller, or the parent of a group, by its name. */
   readonly group?: string;
   /** The path prefix of a route group. */

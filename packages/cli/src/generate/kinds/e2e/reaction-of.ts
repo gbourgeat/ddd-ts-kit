@@ -9,7 +9,8 @@ import type { RenderContext } from '../../../templating';
 import { foundPrerequisite } from '../../found-prerequisite';
 import { MissingPrerequisite } from '../../missing-prerequisite';
 import type { Scope } from '../../scope';
-import { jobsSending } from './jobs-sending';
+import type { SendingJobs } from './jobs-sending';
+import { startingJobs } from './starting-jobs';
 import { declaredModules, wiringTextOf } from '../../../model-modules';
 
 /** What an end-to-end spec publishes to start a use case no route reaches, and where a client reads what followed. */
@@ -18,27 +19,26 @@ export interface Reaction {
   readonly e2e: RenderContext;
 }
 
-/** What an end-to-end spec runs to start a use case no route reaches and no handler does: the jobs that send its command. */
+/** What an end-to-end spec runs to start a use case no route reaches and no handler does, or the one `--job` names: the jobs that send its command. */
 export interface JobStart {
-  /** Each job as the scheduler names it, `<context>.<job>`. */
-  readonly jobs: readonly string[];
+  readonly jobs: SendingJobs;
   readonly e2e: RenderContext;
 }
 
 /**
  * The integration event whose handler sends the command of the use case: the one named with
- * `--event`, or the only one a handler of the context sends that command for. Failing that, the
- * jobs of the context that send it.
+ * `--event`, or the only one a handler of the context sends that command for. Failing that, or
+ * when `--job` names one, the jobs of the context that send it, scheduled or background.
  */
 export function reactionOf(scope: Scope, name: Name, routeFile: string): Reaction | JobStart {
   const sources = sourcesOf(scope);
   const consumed = readConsumedEvents(sources);
   const useCase = { scope, name, consumed };
   const asked = scope.flags.event;
-  const event = asked === undefined ? sentFor(useCase) : handledOf(useCase, asked);
-  const jobs = event === undefined ? jobsSending(scope, name) : [];
+  const event = eventOf(useCase, asked);
+  const jobs = event === undefined ? startingJobs(scope, name) : { scheduled: [], background: [] };
 
-  if (event === undefined && jobs.length === 0) {
+  if (event === undefined && jobs.scheduled.length + jobs.background.length === 0) {
     throw noTrigger(useCase, routeFile);
   }
 
@@ -51,7 +51,7 @@ export function reactionOf(scope: Scope, name: Name, routeFile: string): Reactio
     .map((route) => `GET ${route.path}`);
 
   if (event === undefined) {
-    return { jobs, e2e: { reads: reads.join(', '), readable: reads.length > 0, jobs: jobs.join(', ') } };
+    return { jobs, e2e: { reads: reads.join(', '), readable: reads.length > 0 } };
   }
 
   return {
@@ -66,6 +66,15 @@ interface UseCaseOf {
   readonly name: Name;
   /** The integration events the context handles, one per handler. */
   readonly consumed: readonly ConsumedEventFact[];
+}
+
+/** No event when `--job` names what starts the use case: the spec is the one of that job. */
+function eventOf(useCase: UseCaseOf, asked: string | undefined): ConsumedEventFact | undefined {
+  if (useCase.scope.flags.job !== undefined) {
+    return undefined;
+  }
+
+  return asked === undefined ? sentFor(useCase) : handledOf(useCase, asked);
 }
 
 function sourcesOf(scope: Scope): ContextSources {
@@ -107,8 +116,8 @@ function noTrigger({ scope, name, consumed }: UseCaseOf, routeFile: string): Mis
   const handled = consumed.length === 0 ? '' : ` (handled here: ${typesOf(consumed).join(', ')})`;
 
   return new MissingPrerequisite(
-    `The use case ${name.pascal} has no route in "${scope.context.kebab}" (${routeFile}), no integration event handler of it sends ${name.pascal}Command, and no job of it does (application/scheduling/*.job.ts).`,
-    `An end-to-end spec drives the application through HTTP, through the integration event that starts the use case, or through the job that runs it: create the route first with \`ddd-ts-kit generate route ${scope.context.kebab} ${name.pascal} --method <M> --path <path>\`, create the job with \`ddd-ts-kit generate job ${scope.context.kebab} <JobName> --every <duration> --command ${name.pascal}\`, or name the event its handler receives with --event <context>.<aggregate>.<fact>${handled}.`,
+    `The use case ${name.pascal} has no route in "${scope.context.kebab}" (${routeFile}), no integration event handler of it sends ${name.pascal}Command, and no job of it does (application/scheduling/*.job.ts, application/background/*.background-job.ts).`,
+    `An end-to-end spec drives the application through HTTP, through the integration event that starts the use case, or through the job that runs it: create the route first with \`ddd-ts-kit generate route ${scope.context.kebab} ${name.pascal} --method <M> --path <path>\`, create the job with \`ddd-ts-kit generate job ${scope.context.kebab} <JobName> --every <duration> --command ${name.pascal}\` (or \`generate background-job ${scope.context.kebab} <Name> --command ${name.pascal}\` for one a use case enqueues), or name the event its handler receives with --event <context>.<aggregate>.<fact>${handled}.`,
   );
 }
 

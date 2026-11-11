@@ -13,7 +13,14 @@ declaration, with `await application.publish([event])`, then awaits `settled()`;
 `--event <eventType>` when handlers of several events send it. A use case only a job
 (`generate job`) starts gets `await application.runJob('<context>.<job>')` instead, then
 `settled()`. `runJob` throws on a per-tenant job that reached no tenant (`JobRun.tenants` is `0`):
-open a tenant first (an organisation), after `reset()`. On an ORM, each spec opens a copy of the PostgreSQL
+open a tenant first (an organisation), after `reset()`. A use case a background job
+(`generate background-job`) starts gets three steps: the request whose use case enqueues the
+job, `const ran = await application.runDueJobs()` (what is due on the queues, run as the worker
+would; it answers the name of each job run and rejects when a run did not succeed, by the code
+of its error), then `settled()`. The generated spec asserts the job is among `ran`: it fails
+until you send the request that enqueues. Never wait for the worker with a delay or `eventually`.
+`--job <JobName>` names one job, also for a use case a route reaches
+(`test/e2e/<use-case>-<job>.e2e.spec.ts`). On an ORM, each spec opens a copy of the PostgreSQL
 cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
 creates its tables there. With `DATABASE_URL` set, each spec file runs on a copy of that migrated
 database instead (`test/support/test-database-clone.ts`), dropped when the application closes:

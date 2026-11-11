@@ -503,6 +503,21 @@ generator looks for a route, then a handler that sends the command, then a job t
 names the three when it finds none. `runJob` fails when the job is per-tenant and the run reached no
 tenant (`JobRun.tenants` is `0`, the job was never called): open a tenant first, after `reset()`.
 
+A use case a background job starts (`generate background-job`, enqueued by another use case) is
+found the same way, and its spec has three steps: the request whose use case enqueues the job,
+sent through the API; `const ran = await application.runDueJobs()`, which runs what is due on the
+queues as the worker would, until none is left, and answers the name of each job run; then
+`application.settled()` and what a client observes. The generated spec asserts that the job is
+among `ran`, so it fails until the request that enqueues is written. `runDueJobs` rejects when a
+run did not succeed, naming the job, the outcome and the code of the error (`The background job
+billing.void-invoice ended retried (UNEXPECTED_ERROR).`), never its message. From its first call
+the spec is the one consumer of the queues: the worker of the process, which a queue kept in
+memory starts, is stopped first, so no job ends behind the spec. A job enqueued with a delay is
+not due before its time: the spec of its use cases on a clock it moves is the unit spec of the
+job. `--job <JobName>` names one job, scheduled or background, by its class or the name it runs
+under, also for a use case a route reaches: its spec is written beside the one of the route, in
+`test/e2e/<use-case>-<job>.e2e.spec.ts`.
+
 The acceptance of a story is an end-to-end spec written before its code, from the criteria of the
 story (`docs/architecture/stories/<story>.md`): `test/acceptance/<story>.acceptance.spec.ts`, one
 scenario per criterion, through the API only. Each scenario runs wrapped in `pending(...)` of

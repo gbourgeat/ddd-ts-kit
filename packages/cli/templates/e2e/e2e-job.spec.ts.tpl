@@ -1,15 +1,15 @@
 {{#if tests.vitest}}
-import { afterAll, beforeAll, beforeEach, describe, it, onTestFailed } from 'vitest';
+import { {{e2e.globals}}, onTestFailed } from 'vitest';
 {{/if}}
 {{#if tests.jest}}
-import { afterAll, beforeAll, beforeEach, describe, it } from '@jest/globals';
+import { {{e2e.globals}} } from '@jest/globals';
 {{/if}}
 {{#if tests.vitest}}
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 {{/if}}
 import { startApplication, type RunningApplication } from '{{alias.test}}/e2e/support/start-application{{alias.ext}}';
 
-// No route starts "{{name.words}}": {{e2e.jobs}} sends its command when its schedule is due, so the spec runs the job as the scheduler would.
+// {{e2e.starts}}
 describe('{{name.title}}, end to end', () => {
   let application: RunningApplication;
 

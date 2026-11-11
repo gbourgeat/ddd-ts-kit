@@ -745,7 +745,7 @@ Kinds
   background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]... [--module <module>]
   process <context> <Name> [--term "<Term>=<meaning>"]... [--module <module>]   (alias: process-manager)
   acl <context> <upstreamOrSystemName> [--module <module>]
-  e2e <context> <UseCaseName> [--event <eventType>]
+  e2e <context> <UseCaseName> [--event <eventType> | --job <JobName>]
   acceptance <story> ["<title>"]
   policy <context> <Name> --permission <aggregate>.<action> [--term "<Term>=<meaning>"]... [--module <module>]
   gateway <context> <upstreamContext> <Name> [--module <module>]

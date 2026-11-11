@@ -16,6 +16,9 @@ import type { IntegrationEvent, IntegrationEventSubscriber, JobScheduler } from 
 {{#if di.container}}
 import { defineContextModule } from '@ddd-ts-kit/di';
 {{/if}}
+{{#if di.container}}
+import { QueueWorker } from '@ddd-ts-kit/scheduling';
+{{/if}}
 import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
 import { relationTuples } from '{{alias.platform}}/auth/relationships/relation-tuples{{alias.ext}}';
@@ -41,6 +44,9 @@ import { inProcessEvents } from '{{alias.platform}}/events/in-process-events{{al
 import { startOutboxRelay } from '{{alias.platform}}/events/start-outbox-relay{{alias.ext}}';
 {{/if}}
 import { startHttpServer } from '{{alias.platform}}/http/start-http-server{{alias.ext}}';
+{{#unless di.container}}
+import type { BackgroundJobs } from '{{alias.platform}}/jobs/background-jobs{{alias.ext}}';
+{{/unless}}
 {{#if cache.redis}}
 import { openRedis } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 {{/if}}
@@ -120,6 +126,13 @@ export interface RunningApplication {
    */
   runJob(name: string): Promise<void>;
 
+  /**
+   * Runs the background jobs that are due until none is left, in place of the worker of the process,
+   * stopped from then on: call it once the request that enqueues answered, then await `settled()`. It
+   * answers the name of each job run and rejects when a run did not succeed. A delayed job is not due.
+   */
+  runDueJobs(): Promise<string[]>;
+
   /** Starts from nothing again: call it before each test. */
   reset(): Promise<void>;
 
@@ -146,6 +159,7 @@ export async function startApplication(): Promise<RunningApplication> {
     as: async (actor) => current.client.withHeaders(await credentials.headersOf(actor)),
     publish: (events) => current.publish(events),
     runJob: (name) => current.runJob(name),
+    runDueJobs: () => current.runDueJobs(),
 {{#if authz.rebac}}
     relate: (tuple) => relationTuples.write([tuple]),
 {{/if}}
@@ -168,6 +182,8 @@ interface Started {
   publish(events: readonly IntegrationEvent[]): Promise<void>;
 
   runJob(name: string): Promise<void>;
+
+  runDueJobs(): Promise<string[]>;
 
   settled(options?: SettledOptions): Promise<void>;
 
@@ -215,6 +231,12 @@ async function start(credentials: Credentials): Promise<Started> {
 {{/if}}
     publish: (events) => application.eventBus.publish(events),
     runJob: (name) => runJob(application.jobs, name),
+{{#if di.container}}
+    runDueJobs: () => runDueJobs(application.container.resolve(QueueWorker)),
+{{/if}}
+{{#unless di.container}}
+    runDueJobs: () => runDueJobs(application.platform.backgroundJobs),
+{{/unless}}
 {{#if events.outbox}}
     settled: (options) => settled({ outbox: () => persistence.outbox.stats() }, options),
 {{/if}}
@@ -293,4 +315,18 @@ async function runJob(jobs: JobScheduler, name: string): Promise<void> {
   if (tenants === 0) {
     throw new Error(`The job ${name} is per-tenant and ran for no tenant: open a tenant first (an organisation).`);
   }
+}
+
+/** Stops the worker (a queue in memory starts one), runs what is due, and fails the spec on a run that did not succeed, by the code of its error. */
+async function runDueJobs(worker: {{#if di.container}}QueueWorker{{/if}}{{#unless di.container}}BackgroundJobs{{/unless}}): Promise<string[]> {
+  await worker.stop();
+
+  const runs = await worker.runDue();
+  const failed = runs.find((run) => run.outcome !== 'succeeded');
+
+  if (failed !== undefined) {
+    throw new Error(`The background job ${failed.job} ended ${failed.outcome} (${failed.errorCode ?? 'no error'}).`);
+  }
+
+  return runs.map((run) => run.job);
 }

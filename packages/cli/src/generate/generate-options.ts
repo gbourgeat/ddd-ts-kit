@@ -38,6 +38,7 @@ export const GENERATE_OPTIONS = {
   deviation: TEXT,
   phase: TEXT,
   event: TEXT,
+  job: TEXT,
   group: TEXT,
   prefix: TEXT,
   role: TEXT,

@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:f557cbcb0fdf846d -->
+<!-- translation-of: background-jobs.md sha256:209e9581845fb462 -->
 
 # Jobs en arrière-plan
 
@@ -586,6 +586,16 @@ la *spec* générée construit les mêmes pièces sur les bus de test de `@ddd-t
 `InMemoryJobStore`, une `StoredJobQueue` et un `QueueWorker` sur l'horloge et la portée
 d'exécution de `createTestBuses()`, le *job* enregistré sur le *worker*, `worker.runDue()` à la
 place de `application.backgroundJobs.runDue()`.
+
+De bout en bout, sur l'application entière, le support du projet exécute la file de la même
+façon : `await application.runDueJobs()` de `test/e2e/support/start-application.ts` arrête le
+*worker* du processus, exécute ce qui est échu jusqu'à ce qu'il ne reste rien, répond le nom de
+chaque *job* exécuté et rejette quand une exécution n'a pas réussi.
+`ddd-ts-kit generate e2e <context> <UseCase>` écrit dessus la *spec* d'un cas d'usage qu'un *job*
+en arrière-plan lance : la requête qui met en file, `runDueJobs()`, `settled()`, puis ce qu'un
+client observe ([stratégie de test](testing-strategy.fr.md)). Le *worker* qu'il exécute est celui
+de l'application, sur le stockage de la pile : la table des *jobs*, Redis quand son URL est
+donnée, la mémoire du processus sinon.
 
 Une *spec* de l'exemple, raccourcie : la deuxième annulation échoue une fois, et la tentative
 suivante reprend au point de reprise au lieu de recommencer depuis le début.

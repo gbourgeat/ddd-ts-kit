@@ -213,10 +213,15 @@ describe('the JSON client', () => {
     expect(json.body).toEqual({ contentType: 'application/json', text: '"<order/>"' });
   });
 
-  it('sends bytes, a blob and a form as they are, under the content type of the call or of the form', async () => {
+  it('sends bytes, a buffer, a blob and a form as they are, under the content type of the call or of the form', async () => {
     const bytes = new TextEncoder().encode('date;amount');
     const csv = await server.client.post('/echo', bytes, { headers: { 'content-type': 'text/csv' } });
     const blob = await server.client.post('/echo', new Blob([bytes], { type: 'text/csv' }));
+
+    const buffer = await server.client.post('/echo', Buffer.from('date;amount'), {
+      headers: { 'content-type': 'text/csv' },
+    });
+
     const form = new FormData();
 
     form.set('note', 'paid');
@@ -225,6 +230,7 @@ describe('the JSON client', () => {
 
     expect(csv.body).toEqual({ contentType: 'text/csv', text: 'date;amount' });
     expect(blob.body).toEqual({ contentType: 'text/csv', text: 'date;amount' });
+    expect(buffer.body).toEqual({ contentType: 'text/csv', text: 'date;amount' });
     expect(sent.body.contentType).toMatch(/^multipart\/form-data; boundary=/);
     expect(sent.body.text).toContain('name="note"');
   });

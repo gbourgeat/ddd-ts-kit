@@ -96,7 +96,8 @@ comes from the event; when the design names the handler after what it does here,
   <UseCase>` publishes the upstream event through the running application
   (`application.publish`), awaits `settled()` and leaves what to observe; `--event
   <eventType>` when handlers of several events send that command. A use case only a job
-  starts gets `await application.runJob('<ctx>.<job>')` instead of the publication.
+  starts gets `await application.runJob('<ctx>.<job>')` instead of the publication, one a
+  background job starts `await application.runDueJobs()` after the request that enqueues.
 
 ## Evolve
 
