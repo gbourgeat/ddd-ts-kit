@@ -55,7 +55,8 @@ install of its package manager), never an install that names a package.
   with a working migration.
 - Shared files are not yours: the config, `src/main.ts`, `src/platform/**`, `package.json`,
   the lockfile, `prisma/schema/schema.prisma`, migrations (but your working migration,
-  `npm run db:generate working-<what>`), what you would write by hand under `docs/` (but a
+  `npm run db:generate working-<what>`: one for the branch, deleted and generated again when a
+  later slice changes the schema again), what you would write by hand under `docs/` (but a
   decision record you generated). Another
   context is not yours either; its `published-language/` is read-only.
 - The derived files (generated documents, barrels, context map, dependency rules) are never
