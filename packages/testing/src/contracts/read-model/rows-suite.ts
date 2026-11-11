@@ -8,14 +8,13 @@ import { stampedAt as at } from './stamped-at';
 
 type Row = CriteriaContractRow;
 
-/** Rows that round trip, events applied once and in order, deletions that last, and searching. */
+/** Rows that round trip, events applied once and in order, and searching. `DeletionsSuite` holds the deletions. */
 export class RowsSuite extends ReadModelStoreSuite {
   protected tests(): void {
     this.closesAfterEach();
     this.keepsRows();
     this.appliesInOrder();
     this.appliesByVersion();
-    this.deletes();
     this.searches();
   }
 
@@ -98,38 +97,6 @@ export class RowsSuite extends ReadModelStoreSuite {
       await this.put(row('a1'), { ...at('evt-1', 1), version: 7 });
 
       this.expect((await this.subject.table.find('a1'))?.stamp).toEqual({ ...at('evt-1', 1), version: 7 });
-    });
-  }
-
-  private deletes(): void {
-    this.it('removes a row, and an older event delivered late does not bring it back', async () => {
-      await this.put(row('a1'), at('evt-1', 1));
-
-      this.expect(await this.store.delete('a1', at('evt-3', 3))).toBe('applied');
-      this.expect(await this.store.get('a1')).toBe(undefined);
-      this.expect(await this.put(row('a1'), at('evt-2', 2))).toBe('stale');
-      this.expect(await this.store.get('a1')).toBe(undefined);
-    });
-
-    this.it('writes a row again when a later event recreates it', async () => {
-      await this.put(row('a1'), at('evt-1', 1));
-      await this.store.delete('a1', at('evt-2', 2));
-
-      this.expect(await this.put({ ...row('a1'), title: 'back' }, at('evt-3', 3))).toBe('applied');
-      this.expect((await this.store.get('a1'))?.title).toBe('back');
-    });
-
-    this.it('inserts no trace of a deleted row under a key it does not hold', async () => {
-      this.expect(await this.subject.table.insert({ key: 'a1', row: undefined, stamp: at('evt-1', 1) })).toBe(false);
-      this.expect(await this.subject.table.find('a1')).toBe(undefined);
-    });
-
-    this.it('ignores a deletion older than the row, or of a row it never held', async () => {
-      await this.put(row('a1'), at('evt-2', 2));
-
-      this.expect(await this.store.delete('a1', at('evt-1', 1))).toBe('stale');
-      this.expect(await this.store.delete('a2', at('evt-1', 1))).toBe('ignored');
-      this.expect(await this.store.get('a1')).toEqual(row('a1'));
     });
   }
 

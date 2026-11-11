@@ -1,7 +1,8 @@
 import { and, eq, sql, type ExtractTablesWithRelations, type TablesRelationalConfig } from 'drizzle-orm';
-import { getTableConfig, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { getTableConfig, type PgColumn, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import {
   PostgresReadModelRebuild,
+  ReadModelTableNotReadyError,
   type CriteriaPlan,
   type EventStamp,
   type SearchedRows,
@@ -44,6 +45,8 @@ export class DrizzleReadModelTable<
     private readonly options: DrizzleReadModelOptions<Row>,
   ) {
     const { name, schema } = getTableConfig(options.table);
+
+    holdsTraces(options, schema === undefined ? name : `${schema}.${name}`);
 
     this.target = {
       schema,
@@ -147,5 +150,22 @@ export class DrizzleReadModelTable<
     );
 
     return rowsOf(await this.context.executor().execute(query));
+  }
+}
+
+/**
+ * Refuses, when the store is built, a table whose columns could not hold the trace of a deleted
+ * row: every column of the row accepts NULL, the key and the tenant apart.
+ */
+function holdsTraces<Row>({ columns, key, tenant }: DrizzleReadModelOptions<Row>, table: string): void {
+  const mapped: readonly PgColumn[] = Object.values(columns);
+  const kept = new Set([key.name, tenant?.column.name]);
+  const refusing = mapped.filter((column) => column.notNull && !kept.has(column.name));
+
+  if (refusing.length > 0) {
+    throw new ReadModelTableNotReadyError(
+      table,
+      refusing.map((column) => column.name),
+    );
   }
 }

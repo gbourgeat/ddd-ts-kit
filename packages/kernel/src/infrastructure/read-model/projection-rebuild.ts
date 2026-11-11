@@ -117,7 +117,10 @@ export class ProjectionRebuild<Row> {
     return keys.length;
   }
 
-  /** The source no longer has the row: the copy takes the trace the table holds of its deletion, if it has one. */
+  /**
+   * The source no longer has the row: the copy takes the trace the table holds of its deletion,
+   * if it has one, whether or not the copy held the row yet.
+   */
   private async forget(key: string): Promise<void> {
     const live = await this.parts.table.find(key);
 

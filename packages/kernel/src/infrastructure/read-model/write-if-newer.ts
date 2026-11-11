@@ -8,7 +8,10 @@ import { ConcurrencyError } from '../../domain/errors/concurrency-error';
 export interface StampedChange<Row> {
   readonly key: string;
   readonly stamp: EventStamp;
-  /** The row to write from the current one. Absent for a deletion. */
+  /**
+   * The row to write from the current one. Absent for a deletion, which is written even when the
+   * key is not held: the trace it leaves stops the older creation delivered after it.
+   */
   readonly next?: (current: Row | undefined) => Row | undefined;
 }
 
@@ -46,7 +49,7 @@ async function attempted<Row>(
 ): Promise<ReadModelWrite | undefined> {
   const row = next?.(held?.row);
 
-  if (row === undefined && (next !== undefined || held === undefined)) {
+  if (row === undefined && next !== undefined) {
     return 'ignored';
   }
 

@@ -16,6 +16,7 @@ import type { PrismaReadModelOptions } from './prisma-read-model-options';
 import { PrismaTableRows } from './prisma-table-rows';
 import { RowMapper } from './row.mapper';
 import { TenantOfRows } from './tenant-of-rows';
+import { TraceColumns, type TracedTable } from './trace-columns';
 
 const KEPT = { deleted: false };
 
@@ -40,14 +41,17 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
     const { table, schema } = options;
     const shadow = `"${PostgresReadModelRebuild.shadowOf(table).replaceAll('"', '""')}"`;
 
+    const traces = new TraceColumns(() => context.client(), tracedTable(options));
+
     this.mapper = new RowMapper<Row>(options.columns);
-    this.rows = new PrismaModelRows(context, options);
+    this.rows = new PrismaModelRows(context, options, traces);
 
     this.copy = new PrismaTableRows(context, {
       path: schema === undefined ? shadow : `"${schema.replaceAll('"', '""')}".${shadow}`,
       key: options.key ?? 'id',
       mapper: this.mapper,
       tenant: new TenantOfRows(options.tenant, options.columns),
+      traces,
     });
 
     this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
@@ -126,4 +130,13 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
       ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null)
       : [];
   }
+}
+
+/** The table and the columns of the row, in which a trace holds NULL: every one but the key and the tenant. */
+function tracedTable<Row, Tx>({ table, schema, columns, key, tenant }: PrismaReadModelOptions<Row, Tx>): TracedTable {
+  const kept = new Set<string>([key ?? 'id', ...(tenant === undefined ? [] : [tenant.field ?? 'tenantId'])]);
+  const mapped: [string, string][] = Object.entries(columns);
+  const data = mapped.filter(([field]) => !kept.has(field)).map(([, column]) => column);
+
+  return { table, data, ...(schema === undefined ? {} : { schema }) };
 }

@@ -192,10 +192,28 @@ readModelRowsContract(runner, {
   createTable: () => ({ table: new InMemoryReadModelTable<CriteriaContractRow>() }),
 });
 
+const NO_DATA = {
+  status: null,
+  title: null,
+  seats: null,
+  price: null,
+  startsAt: null,
+  cancelledAt: null,
+  room: null,
+  remote: null,
+  tenantId: null,
+};
+
+let readModelTable = new InMemoryReadModelTable<CriteriaContractRow>();
+
+// In memory a deleted row is its key and its stamp, and no value is held unique: nothing to free.
 readModelStoreContract(runner, {
   name: 'InMemoryReadModelTable',
-  createTable: () => ({
-    table: new InMemoryReadModelTable<CriteriaContractRow>(),
-    unitOfWork: new InMemoryUnitOfWork(),
-  }),
+  createTable: () => {
+    readModelTable = new InMemoryReadModelTable<CriteriaContractRow>();
+
+    return { table: readModelTable, unitOfWork: new InMemoryUnitOfWork() };
+  },
+  stored: async (key) => ({ ...NO_DATA, ...(await readModelTable.find(key))?.row, id: key }),
+  uniqueTitle: true,
 });

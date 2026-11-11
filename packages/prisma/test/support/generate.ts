@@ -51,18 +51,20 @@ model Invoice {
 
 const READ_MODEL = `
 /// The read model of the criteria and read model contracts: one field of every type, and the
-/// four fields of the shipped template that order the events of a projection.
+/// four fields of the shipped template that order the events of a projection. Every field of the
+/// row is optional, which is what a deleted row holds there; \`remote\` has a default, which a
+/// deleted row does not take.
 model CriteriaContractRow {
   id               String    @id
-  status           String
-  title            String
-  seats            Int
-  price            Decimal
-  startsAt         DateTime  @map("starts_at") @db.Timestamptz(3)
+  status           String?
+  title            String?   @unique(map: "criteria_contract_title_key")
+  seats            Int?
+  price            Decimal?
+  startsAt         DateTime? @map("starts_at") @db.Timestamptz(3)
   cancelledAt      DateTime? @map("cancelled_at") @db.Timestamptz(3)
   room             String?
-  remote           Boolean
-  tenantId         String    @map("tenant_id")
+  remote           Boolean?  @default(false)
+  tenantId         String?   @map("tenant_id")
   lastEventId      String    @map("last_event_id")
   lastEventAt      DateTime  @map("last_event_at") @db.Timestamptz(3)
   lastEventVersion BigInt?   @map("last_event_version")
@@ -81,13 +83,30 @@ model CriteriaContractRow {
 const LEDGER = `
 model LedgerRow {
   id               String   @id
-  balance          BigInt
+  balance          BigInt?
   lastEventId      String   @map("last_event_id")
   lastEventAt      DateTime @map("last_event_at") @db.Timestamptz(3)
   lastEventVersion BigInt?  @map("last_event_version")
   deleted          Boolean  @default(false)
 
   @@map("ledger")
+  @@schema("public")
+}
+`;
+
+/** A read model as it was declared before a deleted row kept no data: `title` refuses NULL. */
+const STRICT = `
+model StrictRow {
+  id               String   @id
+  title            String
+  note             String?
+  tenantId         String   @map("tenant_id")
+  lastEventId      String   @map("last_event_id")
+  lastEventAt      DateTime @map("last_event_at") @db.Timestamptz(3)
+  lastEventVersion BigInt?  @map("last_event_version")
+  deleted          Boolean  @default(false)
+
+  @@map("strict_rows")
   @@schema("public")
 }
 `;
@@ -162,6 +181,7 @@ async function composeSchema(): Promise<string> {
     INVOICE,
     READ_MODEL,
     LEDGER,
+    STRICT,
     PEOPLE,
   ].join('\n');
 }

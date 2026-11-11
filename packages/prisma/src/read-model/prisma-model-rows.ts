@@ -5,6 +5,7 @@ import type { PrismaReadModelOptions } from './prisma-read-model-options';
 import { RowMapper } from './row.mapper';
 import { stampedRowOf } from './stamped-row-of';
 import { TenantOfRows } from './tenant-of-rows';
+import type { TraceColumns } from './trace-columns';
 import { writtenOf } from './written-of';
 
 /** The stamped rows of the table of a read model, through its model. */
@@ -16,6 +17,7 @@ export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Ro
   constructor(
     private readonly context: PrismaContext<Tx>,
     private readonly options: PrismaReadModelOptions<Row, Tx>,
+    private readonly traces: TraceColumns,
   ) {
     this.mapper = new RowMapper<Row>(options.columns);
     this.tenant = new TenantOfRows(options.tenant, options.columns);
@@ -38,12 +40,8 @@ export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Ro
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) {
-      return false;
-    }
-
     const { count } = await this.model().createMany({
-      data: [{ ...writtenOf(entry, this.keyField()), ...this.tenant.writing() }],
+      data: [{ ...(await this.written(entry)), ...this.tenant.writing() }],
       skipDuplicates: true,
     });
 
@@ -52,10 +50,11 @@ export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Ro
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
     const own = this.tenant.writing();
+    const written = await this.written(entry);
 
     const { count } = await this.model().updateMany({
       where: { [this.keyField()]: entry.key, lastEventId: held.eventId, lastEventAt: held.occurredAt, ...own },
-      data: { ...writtenOf(entry, this.keyField()), ...own },
+      data: { ...written, ...own },
     });
 
     return count === 1;
@@ -68,6 +67,15 @@ export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Ro
   /** The condition of a read, by field: what the tenant of the work may see, or nothing for a read model of every tenant. */
   reading(): Readonly<Record<string, unknown>> {
     return this.tenant.reading();
+  }
+
+  /** What the entry writes, by field, once the table is known to accept the trace of a deleted row. */
+  private async written(entry: StampedRow<Row>): Promise<Record<string, unknown>> {
+    if (entry.row === undefined) {
+      await this.traces.require();
+    }
+
+    return writtenOf(entry, this.keyField(), this.mapper.fields());
   }
 
   private keyField(): string {

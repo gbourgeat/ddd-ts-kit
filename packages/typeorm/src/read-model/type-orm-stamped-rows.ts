@@ -59,10 +59,6 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) {
-      return false;
-    }
-
     const { path, entity, mapper } = this.target;
     const manager = this.context.manager();
     const insert = manager.createQueryBuilder().insert();
@@ -103,10 +99,13 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
     return `${driver.escape(alias)}.${driver.escape(this.target.mapper.columnOf(property))}`;
   }
 
-  /** What the entry writes, by property: a removed row keeps its fields and changes its stamp only; tenant data carries the tenant of the work. */
+  /**
+   * What the entry writes, by property: a removed row keeps no data, each of its fields is
+   * written NULL and not left to its default; tenant data carries the tenant of the work.
+   */
   private written({ key, row, stamp }: StampedRow<Row>): Record<string, unknown> {
     return {
-      ...row,
+      ...(row ?? this.target.mapper.toNulls()),
       [this.target.key]: key,
       lastEventId: stamp.eventId,
       lastEventAt: stamp.occurredAt,

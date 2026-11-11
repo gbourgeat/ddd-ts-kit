@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
+import { AsyncLocalStorageExecutionScope, ReadModelTableNotReadyError } from '@ddd-ts-kit/kernel';
 import { EntitySchema } from 'typeorm';
 import { TypeOrmReadModelTable, createTypeOrmUnitOfWork, readModelColumns, type ReadModelStamps } from '../src';
 import { createDatabase, type TestDatabase } from './support/database';
@@ -16,7 +17,7 @@ interface LedgerRow {
 const ledgerRows = new EntitySchema<LedgerRow & ReadModelStamps>({
   name: 'LedgerRow',
   tableName: 'ledger',
-  columns: { id: { type: 'text', primary: true }, holder: { type: 'text' }, ...readModelColumns() },
+  columns: { id: { type: 'text', primary: true }, holder: { type: 'text', nullable: true }, ...readModelColumns() },
 });
 
 let database: TestDatabase;
@@ -42,7 +43,17 @@ async function emptied() {
   return tableOf();
 }
 
-readModelStoreContract(runner, { name: 'TypeOrmReadModelTable', createTable: emptied });
+/** What the table holds under a key, by field of the row, read beside the store. */
+async function stored(key: string) {
+  const rows: Record<string, unknown>[] = await database.dataSource.query(
+    'select id, status, title, seats, price, starts_at as "startsAt", cancelled_at as "cancelledAt", room, remote, tenant_id as "tenantId" from read_side.criteria_contract where id = $1',
+    [key],
+  );
+
+  return rows[0];
+}
+
+readModelStoreContract(runner, { name: 'TypeOrmReadModelTable', createTable: emptied, stored, uniqueTitle: true });
 
 describe('TypeOrmReadModelTable', () => {
   const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z') };
@@ -83,6 +94,49 @@ describe('TypeOrmReadModelTable', () => {
     expect(await table.replace({ key: 'a1', row: { ...row, seats: 2 }, stamp: later }, stamp)).toBe(true);
     expect(await table.replace({ key: 'a1', row: { ...row, seats: 3 }, stamp: later }, stamp)).toBe(false);
     expect((await table.find('a1'))?.row).toEqual({ ...row, seats: 2 });
+  });
+});
+
+describe('TypeOrmReadModelTable of an entity whose columns refuse NULL', () => {
+  interface StrictRow {
+    readonly id: string;
+    readonly title: string;
+    readonly note: string | null;
+    readonly tenantId: string;
+  }
+
+  const columns = {
+    id: { type: 'text', primary: true },
+    title: { type: 'text' },
+    note: { type: 'text', nullable: true },
+    tenantId: { name: 'tenant_id', type: 'text' },
+    ...readModelColumns(),
+  } as const;
+
+  const declare = (schema?: string) => () =>
+    new TypeOrmReadModelTable<StrictRow>(createTypeOrmUnitOfWork(database.dataSource), {
+      entity: new EntitySchema<StrictRow & ReadModelStamps>({
+        name: 'StrictRow',
+        ...(schema === undefined ? {} : { schema, tableName: 'strict_rows' }),
+        columns,
+      }),
+      ...(schema === undefined ? {} : { tenant: { scope: new AsyncLocalStorageExecutionScope() } }),
+    });
+
+  it('refuses it when it is built, naming the columns to make nullable and the check constraint', () => {
+    expect(declare()).toThrow(ReadModelTableNotReadyError);
+
+    expect(declare()).toThrow(
+      'The read model table StrictRow cannot hold the trace of a deleted row: "title", "tenant_id" refuse NULL',
+    );
+
+    expect(declare()).toThrow('check (deleted or ("title" is not null and "tenant_id" is not null))');
+  });
+
+  it('leaves the tenant of a read model of tenant data out of it', () => {
+    expect(declare('read_side')).toThrow(
+      'The read model table read_side.strict_rows cannot hold the trace of a deleted row: "title" refuses NULL',
+    );
   });
 });
 

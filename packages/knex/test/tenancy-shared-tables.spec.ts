@@ -137,6 +137,10 @@ describe('a read model of tenant data', () => {
 
     expect((await asTenant(scope, 'acme', () => table().find('a1')))?.row?.tenantId).toBe('acme');
     expect(await asTenant(scope, 'globex', () => table().find('a1'))).toBeUndefined();
+    // The trace of a deleted row is written in the tenant of the work too, under a key it did not hold.
+    expect(await asTenant(scope, 'acme', () => table().insert({ key: 't1', row: undefined, stamp }))).toBe(true);
+    expect(await asTenant(scope, 'acme', () => table().find('t1'))).toEqual({ key: 't1', row: undefined, stamp });
+    expect(await asTenant(scope, 'globex', () => table().find('t1'))).toBeUndefined();
     expect(await asTenant(scope, 'globex', () => table().replace({ key: 'a1', row, stamp }, stamp))).toBe(false);
     expect((await asTenant(scope, 'globex', () => table().search(plan))).rows).toEqual([]);
     expect((await asTenant(scope, 'acme', () => table().search(plan))).rows).toHaveLength(1);

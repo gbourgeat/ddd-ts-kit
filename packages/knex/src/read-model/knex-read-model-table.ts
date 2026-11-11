@@ -15,6 +15,7 @@ import { KnexStampedRows } from './knex-stamped-rows';
 import { predicateToKnex } from './predicate-to-knex';
 import { recordsOf } from './records-of';
 import { RowMapper } from './row.mapper';
+import { TraceColumns } from './trace-columns';
 
 /**
  * The table of one read model on knex: what `TableReadModelStore` and `ProjectionRebuild` are
@@ -34,8 +35,11 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
   ) {
     const { table, schema } = options;
 
-    this.rows = new KnexStampedRows(context, options);
-    this.copy = new KnexStampedRows(context, { ...options, table: PostgresReadModelRebuild.shadowOf(table) });
+    const traces = new TraceColumns(options);
+    const copied = { ...options, table: PostgresReadModelRebuild.shadowOf(table) };
+
+    this.rows = new KnexStampedRows(context, options, traces);
+    this.copy = new KnexStampedRows(context, copied, traces);
 
     this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
       table,

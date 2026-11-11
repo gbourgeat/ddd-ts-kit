@@ -67,10 +67,6 @@ export class DrizzleStampedRows<
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) {
-      return false;
-    }
-
     const values = this.valuesOf(entry);
 
     const columns = sql.join(
@@ -129,13 +125,11 @@ export class DrizzleStampedRows<
   private valuesOf({ key, row, stamp }: StampedRow<Row>): [PgColumn, unknown][] {
     const { stamps, tenant } = this.target;
 
-    const written =
-      row === undefined
-        ? []
-        : this.mapper.toValues(row).filter(([column]) => column !== this.target.key && column !== tenant?.column);
+    // A deleted row keeps no data: every column of the row is written NULL, not left to its default.
+    const data = row === undefined ? this.mapper.toNulls() : this.mapper.toValues(row);
 
     return [
-      ...written,
+      ...data.filter(([column]) => column !== this.target.key && column !== tenant?.column),
       [this.target.key, key],
       [stamps.lastEventId, stamp.eventId],
       [stamps.lastEventAt, stamp.occurredAt.toISOString()],

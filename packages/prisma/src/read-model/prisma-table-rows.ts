@@ -5,6 +5,7 @@ import { quoted } from './quoted';
 import type { RowMapper } from './row.mapper';
 import { stampedRowOf } from './stamped-row-of';
 import type { TenantOfRows } from './tenant-of-rows';
+import type { TraceColumns } from './trace-columns';
 import { writtenOf } from './written-of';
 
 export interface NamedTable<Row extends object> {
@@ -15,6 +16,8 @@ export interface NamedTable<Row extends object> {
   readonly mapper: RowMapper<Row>;
   /** The tenant of the rows, for a read model of tenant data. */
   readonly tenant: TenantOfRows;
+  /** Of the table the copy is made like. */
+  readonly traces: TraceColumns;
 }
 
 /**
@@ -49,11 +52,7 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) {
-      return false;
-    }
-
-    const record = this.recordOf(entry);
+    const record = await this.recordOf(entry);
     const columns = record.map(([column]) => quoted(column)).join(', ');
     const places = record.map((_, index) => `$${String(index + 1)}`).join(', ');
     const key = this.column(this.target.key);
@@ -67,7 +66,7 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
-    const record = this.recordOf(entry);
+    const record = await this.recordOf(entry);
     const changes = record.map(([column], index) => `${quoted(column)} = $${String(index + 1)}`).join(', ');
     const key = this.column(this.target.key);
     const next = (offset: number): string => `$${String(record.length + offset)}`;
@@ -81,11 +80,18 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
     return replaced.length === 1;
   }
 
-  /** What the entry writes, by column: its fields and stamps, and the tenant of the work for a read model of tenant data. */
-  private recordOf(entry: StampedRow<Row>): [string, unknown][] {
-    const { mapper, key, tenant } = this.target;
+  /**
+   * What the entry writes, by column: its fields and stamps, and the tenant of the work for a read
+   * model of tenant data. The trace of a deleted row is written once the table is known to accept it.
+   */
+  private async recordOf(entry: StampedRow<Row>): Promise<[string, unknown][]> {
+    const { mapper, key, tenant, traces } = this.target;
 
-    return Object.entries({ ...mapper.toRecord(writtenOf(entry, key)), ...tenant.written() });
+    if (entry.row === undefined) {
+      await traces.require();
+    }
+
+    return Object.entries({ ...mapper.toRecord(writtenOf(entry, key, mapper.fields())), ...tenant.written() });
   }
 
   private column(field: string): string {

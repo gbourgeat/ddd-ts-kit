@@ -1,6 +1,7 @@
-import type { ObjectLiteral } from 'typeorm';
+import type { EntitySchemaColumnOptions, ObjectLiteral } from 'typeorm';
 import {
   PostgresReadModelRebuild,
+  ReadModelTableNotReadyError,
   type CriteriaPlan,
   type EventStamp,
   type SearchedRows,
@@ -32,6 +33,7 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
     private readonly options: TypeOrmReadModelOptions<Row>,
   ) {
     this.tenant = new TenantOfRows(options.tenant);
+    holdsTraces(options);
   }
 
   find(key: string): Promise<StampedRow<Row> | undefined> {
@@ -138,5 +140,31 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
       },
       { table: tableName, ...(schema === undefined ? {} : { schema }) },
     );
+  }
+}
+
+const STAMPS: readonly string[] = ['lastEventId', 'lastEventAt', 'lastEventVersion', 'deleted'];
+
+/**
+ * Refuses, when the store is built, an entity whose columns could not hold the trace of a
+ * deleted row: every column of the row is `nullable`, the key and the tenant apart.
+ */
+function holdsTraces<Row>({ entity, key, tenant }: TypeOrmReadModelOptions<Row>): void {
+  const { columns, schema, tableName, name } = entity.options;
+
+  const kept = new Set<string>([
+    ...STAMPS,
+    key ?? 'id',
+    ...(tenant === undefined ? [] : [tenant.property ?? 'tenantId']),
+  ]);
+
+  const refusing = Object.entries<EntitySchemaColumnOptions | undefined>(columns).flatMap(([property, column]) =>
+    column === undefined || column.nullable === true || kept.has(property) ? [] : [column.name ?? property],
+  );
+
+  if (refusing.length > 0) {
+    const table = tableName ?? name;
+
+    throw new ReadModelTableNotReadyError(schema === undefined ? table : `${schema}.${table}`, refusing);
   }
 }
