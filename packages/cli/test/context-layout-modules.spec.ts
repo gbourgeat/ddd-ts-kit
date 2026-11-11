@@ -164,6 +164,30 @@ describe('context-layout, once the modules hold their tests', () => {
 
     expect(exists(root, `${BILLING}/payments/infrastructure/persistence/b-helper.mapper.ts`)).toBe(true);
   });
+
+  it('leaves a file of a layer that imports one module and is imported by the code of another, and says both', () => {
+    const reader = `${BILLING}/infrastructure/persistence/issued-invoice.reader.ts`;
+
+    write(
+      root,
+      reader,
+      "import { invoiceIssued } from '@/contexts/billing/invoices/domain/events/invoice-issued.event';\n\nexport const issued = invoiceIssued;\n",
+    );
+
+    write(
+      root,
+      `${BILLING}/payments/application/handlers/settle.handler.ts`,
+      "import { issued } from '@/contexts/billing/infrastructure/persistence/issued-invoice.reader';\n\nexport const settle = issued;\n",
+    );
+
+    const moved = cli(root, 'context-layout', '--json').json() as { manual: string[] };
+
+    expect(moved.manual).toContainEqual(
+      `${reader} imports the module invoices and is imported by the module payments: it stays where it is, since in invoices it would make payments depend on that module. Move it to the one it belongs to with \`ddd-ts-kit move-to-module billing <module> infrastructure/persistence/issued-invoice.reader.ts\`.`,
+    );
+
+    expect(exists(root, reader)).toBe(true);
+  });
 });
 
 /** Every role folder of the layers of billing, relative to the context. */

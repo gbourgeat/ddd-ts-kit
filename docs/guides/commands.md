@@ -404,7 +404,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    else of what they import; and what belongs to no module to shared/: the schema and tables
                    of the context, its route groups, guards and shared shapes, its worlds, and the specs,
                    fakes and builders no module is told for. A file of a layer that names no module, or two,
-                   is listed and stays; nothing is overwritten; run again, nothing moves. Every import of them
+                   or one while the code of another module imports it, is listed and stays; nothing is
+                   overwritten; run again, nothing moves. Every import of them
                    under the source root, test/ and scripts/ follows, a migration that names the compiled file
                    too; what derives from the tree is written again (.dependency-cruiser.cjs, the
                    declarations, the entries of knip), a config of a test runner to align is named, and knip
