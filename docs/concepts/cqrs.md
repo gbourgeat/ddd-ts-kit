@@ -202,7 +202,7 @@ found.
   of work, not to rebuild them. CQRS and event sourcing are independent patterns that are often
   presented together: one aggregate whose history is the business can be event-sourced while
   the others keep their rows ([Event sourcing, per aggregate](event-sourcing.md)).
-- **No separate read database, and no generated read store.** A projection is a table of the
+- **No separate read database.** A projection is a table of the
   consuming context. The runtime packages carry the read side: `Criteria` (filters, sort and
   page of a list, checked against a definition), hydration, the `ReadModelStore` port with a
   SQL table store, the `@Projection` and `@On` declarations of a projector and a rebuild
@@ -211,8 +211,15 @@ found.
   `generate projection <context> <Name> <event-type>` writes a projector and its spec, in the
   both styles (in the explicit style on tsyringe the module file of the context includes it with
   `builder.include(<Name>Projection)`; on a platform wired by hand the class is plain and the module
-  subscribes it under its consumer name); the port of the read model and its store adapter come
-  from `generate port` and the ORM package. The
+  subscribes it under its consumer name), and
+  `generate read-model <context> <Name> --field <name>:<type>...` writes the read model it keeps:
+  the port over `ReadModelStore` with the type of its row and its criteria, the table in the schema
+  of the context, the store adapter of the ORM of the project bound to the port, the fake, and a
+  spec that runs `readModelContract` on both. The columns of the fields accept null, since a removed
+  row is a trace that keeps its key and its stamp alone, and a check constraint keeps every other row
+  whole (on Prisma, whose schema language has none, the statement is left to add to the migration);
+  a text column a read sorts or compares by range takes the collation `"C"` in its migration, criteria
+  ordering strings by code point. The
   status of each part is in the [read side proposal](../proposals/read-side.md).
 - **No performance by itself.** Two code paths over one database scale like one database.
 - **No asynchronous commands by default.** The in-process buses are awaited. A command answered

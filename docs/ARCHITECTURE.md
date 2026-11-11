@@ -128,7 +128,8 @@ src/
         publishers/              *.publisher.ts    (domain event to integration event)
         handlers/                *.integration-handler.ts (integration event to command)
     infrastructure/
-      persistence/               *.repository.ts adapters, *.mapper.ts, *.reader.ts, *.schema.ts, *.personal-fields.ts
+      persistence/               *.repository.ts adapters (of a repository, of the store of a read model),
+                                 *.mapper.ts, *.reader.ts, *.schema.ts, *.personal-fields.ts
       external/                  adapters of outside systems, remote or simulated
       anti-corruption/           translators of another context's or system's model
     presentation/
