@@ -531,8 +531,9 @@ const OWN_BRANCH_ALLOWED = [
 ];
 
 test("a worker's git keeps to its own branch: it pushes it alone, fetches into no ref, makes no tag and checks out no other", () => {
-  const { conductor, worktree, agent } = pinnedBuilder('own-branch');
+  const { conductor, worktree } = conductorWithWorker();
   put(worktree, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing', branch: 'work/billing' }));
+  const agent = builder('own-branch', conductor);
   put(worktree, 'src/contexts/billing/CONTEXT.md', '# billing\n');
   for (const command of OWN_BRANCH_REFUSED) {
     const refused = run('pre-bash', bash(conductor, `cd ${worktree} && ${command}`, agent));

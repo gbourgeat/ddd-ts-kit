@@ -63,3 +63,74 @@ test('a folder of the scope of a worker is no hard link: it is moved, removed an
   const linked = run('pre-bash', bash(root, 'rm src/contexts/ordering/domain/old/package.json', agent));
   assert.equal(decision(linked), 'deny');
 });
+
+test('a command given a folder of the scope is judged by what it brings and by the files it lands on there', () => {
+  const root = committed({ worktrees: 'advised' });
+  const agent = worker(root, 'ordering');
+  const domain = 'src/contexts/ordering/domain';
+  put(root, `${domain}/order.ts`, 'export {};\n');
+  put(root, `${domain}/package.json`, '{}\n');
+  put(root, `${domain}/main.ts`, 'export {};\n');
+  put(root, `${domain}/tree/leaf.ts`, 'export {};\n');
+  for (const folder of ['clean', 'held/deep', 'linked']) {
+    mkdirSync(join(root, domain, folder), { recursive: true });
+  }
+  // A link or a whole tree is not brought from outside the scope into a folder of it.
+  for (const command of [
+    `ln package.json ${domain}/clean/`,
+    `ln -t ${domain}/clean package.json`,
+    `ln -s ${root}/package.json ${domain}/clean/`,
+    `cp -l package.json ${domain}/clean/`,
+    `cp --link package.json ${domain}/clean/`,
+    `cp -al src/platform ${domain}/clean/`,
+    `cp -r src/platform ${domain}/clean/`,
+    `cp --target-directory=${domain}/clean -R src/platform`,
+    `rsync -a src/platform ${domain}/clean/`,
+    `rsync --link-dest=${root} package.json ${domain}/clean/`,
+    `cp -r "$SOURCE" ${domain}/clean/`,
+  ]) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(
+      reason(refused),
+      /brings .*, outside your scope, into src\/contexts\/ordering\/domain\/clean/,
+      command,
+    );
+  }
+  // A folder that holds a file with another name elsewhere takes no file, at any depth.
+  linkSync(join(root, 'package.json'), join(root, domain, 'held/deep/package.json'));
+  for (const command of [
+    `cp ${domain}/package.json ${domain}/held/deep/`,
+    `cp ${domain}/order.ts ${domain}/held/`,
+    `cp -r ${domain}/tree ${domain}/held/`,
+    `mv ${domain}/order.ts ${domain}/held/`,
+    `ln ${domain}/order.ts ${domain}/held/`,
+    `install ${domain}/package.json ${domain}/held/deep/`,
+    `install -t ${domain}/held/deep ${domain}/package.json`,
+    `rsync -a ${domain}/tree ${domain}/held/`,
+  ]) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /holds a file that has another name elsewhere \(a hard link\)/, command);
+  }
+  // A file that lands on a link out of the scope is the file the link reaches.
+  symlinkSync(join(root, 'src/main.ts'), join(root, domain, 'linked/main.ts'));
+  const landed = run('pre-bash', bash(root, `cp ${domain}/main.ts ${domain}/linked/`, agent));
+  assert.match(reason(landed), /`cp` changes src\/contexts\/ordering\/domain\/linked\/main\.ts/);
+  // Inside the scope, with no link on the way, a folder takes files and trees.
+  for (const command of [
+    `cp ${domain}/order.ts ${domain}/clean/`,
+    `cp -r ${domain}/tree ${domain}/clean/`,
+    `mv ${domain}/order.ts ${domain}/clean/`,
+    `install ${domain}/order.ts ${domain}/clean/`,
+    `rsync -a ${domain}/tree ${domain}/clean/`,
+    `ln ${domain}/order.ts ${domain}/clean/`,
+    `cp ${domain}/*.ts ${domain}/clean/`,
+    `cp package.json ${domain}/clean/`,
+    `install -d ${domain}/clean/more`,
+    `cp ${domain}/order.ts`,
+    `cp -t ${domain}/clean`,
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});

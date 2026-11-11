@@ -209,6 +209,55 @@ const BEHIND_A_RUNNER = [
   ['npx npx npx npx npx npx npx rm src/main.ts', /nested deeper/],
 ];
 
+// A runner asked to run its command through a shell (`-c`, `--call`, `--shell-mode`, among its own
+// options, before or after `exec`) hands it a text: that text is read as a command line.
+const RUNNER_SHELL_TEXT = [
+  ['pnpm exec -c "echo x > src/main.ts"', /the redirection `> src\/main\.ts`/],
+  ['pnpm exec --shell-mode "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['pnpm dlx -c "cowsay hi; rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['pnpm dlx --shell-mode "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['pnpm -c exec "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['pnpm --shell-mode dlx "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['pnpm --filter api exec -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['pnpm exec -c rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['npx --call="rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['npx -y -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['npm exec -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['npm exec --call="rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['npm x -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['npm --silent exec -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['bun x sh -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['bunx sh -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['npx -w api sh -c "rm src/main.ts"', /`rm` changes src\/main\.ts/],
+  ['npx --workspace api rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['pnpm --filter api exec rm src/main.ts', /`rm` changes src\/main\.ts/],
+  ['yarn exec rm src/main.ts', /`rm` changes src\/main\.ts/],
+];
+
+// Without it, the words stay words, and an option after the command is the command's own.
+const RUNNER_PLAIN = [
+  'pnpm exec ddd-ts-kit lint --rule "a > src/main.ts"',
+  'pnpm dlx ddd-ts-kit lint --rule "rm src/main.ts; x"',
+  'pnpm exec ddd-ts-kit lint -c "rm src/main.ts"',
+  'pnpm install',
+  'npm --version',
+  'bun --version',
+];
+
+test('a package runner asked for a shell is read as the text it hands to it, on every runner', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const [command, expected] of RUNNER_SHELL_TEXT) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  for (const command of RUNNER_PLAIN) {
+    const refused = run('pre-bash', bash(root, command, agent)).output;
+    assert.doesNotMatch(JSON.stringify(refused ?? ''), /src\/main\.ts/, command);
+  }
+});
+
 test('the words of the command behind a package runner are read as the shell split them', () => {
   const root = project({}, ['--package-manager', 'npm']);
   const agent = worker(root, 'invoicing');

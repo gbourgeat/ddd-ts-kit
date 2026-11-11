@@ -365,7 +365,7 @@ function wrappedBy(words) {
   if (inner?.call !== undefined) {
     return asText(inner.call);
   }
-  return inner && inner.words.length > 0 ? { words: inner.words } : undefined;
+  return inner?.words.length > 0 ? { words: inner.words } : undefined;
 }
 
 function asText(text) {
@@ -388,39 +388,61 @@ function envSplit(words) {
   return spaced;
 }
 
-const RUNNERS = new Set(['npx', 'pnpx', 'bunx']);
+// Each package runner: the subcommands by which it runs a command (none: the runner itself runs it),
+// its options that take a value, those whose value is a command line (`call`), and those that hand
+// the whole command to a shell (`shell`).
+const RUNNERS = {
+  npx: { valued: ['-p', '--package', '-w', '--workspace'], call: ['-c', '--call'] },
+  npm: { subs: ['exec', 'x'], valued: ['-p', '--package', '-w', '--workspace', '--prefix'], call: ['-c', '--call'] },
+  pnpx: { valued: ['--package'], shell: ['-c', '--shell-mode'] },
+  pnpm: {
+    subs: ['exec', 'dlx'],
+    valued: ['-F', '--filter', '-C', '--dir', '--package'],
+    shell: ['-c', '--shell-mode'],
+  },
+  yarn: { subs: ['exec', 'dlx'], valued: ['-p', '--package', '--cwd'] },
+  bunx: { valued: ['-p', '--package'] },
+  bun: { subs: ['x'], valued: ['-p', '--package', '--cwd'] },
+};
 
-// The command a package runner runs: `npx <cmd>`, `bunx <cmd>`, `npm|pnpm|yarn exec|dlx <cmd>`, after their
-// options and a leading `--`; for `npx` and `npm exec`, the string of `-c`/`--call` is the command itself.
+// The command a package runner runs: `npx <cmd>`, `bunx <cmd>`, `npm|pnpm|yarn exec|dlx <cmd>`, `bun x <cmd>`,
+// after the runner's own options, before or after its subcommand, and a leading `--`. It is `words`
+// the shell already split, unless the runner is asked for a shell: the string of `-c`/`--call` of
+// `npx` and `npm exec`, or the command of `pnpm` under `-c`/`--shell-mode`, is a `call`, a command line.
 function runnerCommand(words) {
-  const name = commandName(words);
-  const sub = ['npm', 'pnpm', 'yarn'].includes(name) && ['exec', 'dlx'].includes(words[1]);
-  if (!RUNNERS.has(name) && !sub) {
+  const runner = RUNNERS[commandName(words)];
+  if (!runner) {
     return undefined;
   }
-  const args = words.slice(sub ? 2 : 1);
-  const call = name === 'npx' || name === 'npm' ? leadingCall(args) : undefined;
-  return call === undefined ? { words: innerCommand(args, ['-p', '--package']) } : { call };
-}
-
-// The string of `-c`/`--call` among the runner's own options, before the command it runs: a `-c`
-// after the command belongs to that command (`npx eslint -c eslint.config.js`).
-function leadingCall(args) {
-  for (let index = 0; index < args.length && args[index].startsWith('-') && args[index] !== '--'; index += 1) {
-    if (args[index] === '-c' || args[index] === '--call') {
-      return args[index + 1];
+  const asked = { call: undefined, shell: false };
+  let index = afterRunnerOptions(words, 1, runner, asked);
+  if (runner.subs) {
+    if (!runner.subs.includes(words[index])) {
+      return undefined;
     }
-    index += ['-p', '--package'].includes(args[index]) ? 1 : 0;
+    index = afterRunnerOptions(words, index + 1, runner, asked);
   }
-  return undefined;
+  const inner = words.slice(words[index] === '--' ? index + 1 : index);
+  if (asked.call !== undefined) {
+    return { call: asked.call };
+  }
+  return asked.shell ? { call: inner.join(' ') } : { words: inner };
 }
 
-function innerCommand(args, valued) {
-  let index = 0;
-  while (index < args.length && args[index].startsWith('-') && args[index] !== '--') {
-    index += valued.includes(args[index]) ? 2 : 1;
+// The index after the runner's own options from `from`, what they ask noted in `asked`: an option
+// after the command belongs to that command (`npx eslint -c eslint.config.js`).
+function afterRunnerOptions(words, from, { valued, call = [], shell = [] }, asked) {
+  let index = from;
+  while (index < words.length && words[index].startsWith('-') && words[index] !== '--') {
+    const [flag, ...joined] = words[index].split('=');
+    const value = joined.length > 0 ? joined.join('=') : words[index + 1];
+    if (call.includes(flag)) {
+      asked.call ??= value;
+    }
+    asked.shell ||= shell.includes(flag);
+    index += joined.length === 0 && (valued.includes(flag) || call.includes(flag)) ? 2 : 1;
   }
-  return args[index] === '--' ? args.slice(index + 1) : args.slice(index);
+  return index;
 }
 
 /** `find <roots> ... -exec <command> {} ;`: `{}` stands for a file under each root. */

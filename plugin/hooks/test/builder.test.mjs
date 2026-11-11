@@ -27,6 +27,7 @@ import {
   guard,
   guardTemp,
   here,
+  patchConfig,
   project,
   put,
   reason,
@@ -520,6 +521,33 @@ test('a first command that names no worktree pins no scope where several workers
   assert.equal(decision(run('pre-bash', bash(other, 'npm test', writer))), 'deny');
 });
 
+test('a worker no call has pinned yet is refused what a pinned worker is: the places of the shell and of git stay as they are', () => {
+  const { conductor, other } = twoWorkers();
+  const agent = builder('unpinned-places', { cwd: other });
+  for (const command of [
+    `HOME=${guardTemp}/home git status`,
+    `env HOME=${guardTemp}/home git log`,
+    `PATH=${guardTemp}:$PATH git status`,
+    `GIT_DIR=${conductor}/.git GIT_WORK_TREE=${conductor} git status`,
+    'TMPDIR=x ls',
+    'CDPATH=/x ls',
+    `export HOME=${guardTemp}/home`,
+  ]) {
+    const refused = run('pre-bash', bash(other, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /A worker sets no `(?:HOME|PATH|GIT_DIR|TMPDIR|CDPATH)`/, command);
+  }
+  // A read of git given a program to run, or a setting, is no read.
+  for (const command of [
+    `GIT_EXTERNAL_DIFF=${guardTemp}/show git diff`,
+    'git -c core.pager=less log',
+    'git diff --ext-diff',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(other, command, agent))), 'deny', command);
+  }
+  assert.equal(run('pre-bash', bash(other, 'git log --oneline', agent)).output, undefined);
+});
+
 test('the pin follows the worker: a call that starts in another checkout is judged against the worktree pinned', () => {
   const { conductor, worktree, other } = twoWorkers();
   const agent = builder('moved', { cwd: conductor });
@@ -590,6 +618,68 @@ test('a file left changed in the checkout of the session is said to the worker o
     assert.match(reason(stray), /Run it as `cd <worktree> && \.\.\.`/, command);
   }
   assert.equal(run('pre-bash', bash(conductor, `cat ${worktree}/README.md`, agent)).output, undefined);
+});
+
+test('a package file the guard runs that appears, changes or disappears since the note refuses the next call', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = builder('packages', { cwd: conductor });
+  const bin = join(conductor, 'node_modules/ddd-ts-kit/bin.mjs');
+  const source = readFileSync(bin, 'utf8');
+  const test = bash(conductor, `cd ${worktree} && npm test`, agent);
+  const steps = [
+    () => rmSync(bin),
+    () => writeFileSync(bin, source, { mode: 0o755 }),
+    () => writeFileSync(bin, `${source}\n`),
+  ];
+  for (const [index, change] of steps.entries()) {
+    assert.equal(run('pre-bash', test).output, undefined, `note ${index}`);
+    change();
+    const refused = run('pre-bash', test);
+    assert.equal(decision(refused), 'deny', `step ${index}`);
+    assert.match(reason(refused), /The packages the guard runs changed while your last command ran: .*bin\.mjs/);
+  }
+  // The note is compared with the checkout it was taken for, wherever the next call starts.
+  assert.equal(run('pre-bash', test).output, undefined);
+  rmSync(bin);
+  const moved = run('pre-bash', bash(worktree, 'npm test', { ...agent, cwd: worktree }));
+  assert.match(reason(moved), /The packages the guard runs changed while your last command ran: .*bin\.mjs/);
+});
+
+test('the ground of the guard in the checkout of the session is no ordinary file: its change refuses the next call', () => {
+  const grounds = [
+    (conductor) => patchConfig(conductor, { guard: 'off' }),
+    (conductor) => put(conductor, '.claude/settings.json', '{}\n'),
+    (conductor) => put(conductor, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing' })),
+    (conductor) => put(conductor, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US1' })),
+  ];
+  for (const [index, change] of grounds.entries()) {
+    const { conductor, worktree } = conductorWithWorker();
+    const agent = builder(`ground-${index}`, { cwd: conductor });
+    assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+    put(conductor, 'docs/notes.md', 'Notes of the conductor.\n');
+    change(conductor);
+    const refused = run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent));
+    assert.equal(decision(refused), 'deny', `ground ${index}`);
+    assert.match(
+      reason(refused),
+      /The ground of the guard in the checkout of the session, .* changed while your last command ran/,
+    );
+    assert.match(noticeOf(refused), /docs\/notes\.md/);
+    assert.doesNotMatch(reason(refused), /docs\/notes\.md/);
+  }
+});
+
+test('a guard switched off in the checkout of the session does not lift a pinned worker there', () => {
+  const { conductor, worktree } = conductorWithWorker();
+  const agent = builder('switched-off', { cwd: conductor });
+  assert.equal(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent)).output, undefined);
+  patchConfig(conductor, { guard: 'off' });
+  assert.equal(decision(run('pre-bash', bash(conductor, `cd ${worktree} && npm test`, agent))), 'deny');
+  assert.equal(decision(run('pre-bash', bash(conductor, 'echo x > src/main.ts', agent))), 'deny');
+  assert.equal(decision(run('pre-write', { cwd: conductor, ...write(join(conductor, 'src/main.ts'), agent) })), 'deny');
+  assert.equal(decision(run('pre-bash', bash(conductor, `cd ${worktree} && echo x > src/main.ts`, agent))), 'deny');
+  // A session that is no worker is judged by the config as it stands.
+  assert.equal(run('pre-bash', bash(conductor, 'echo x > src/main.ts')).output, undefined);
 });
 
 test('a commit or a merge of the conductor in its own checkout while a worker command runs is not charged to the worker', () => {

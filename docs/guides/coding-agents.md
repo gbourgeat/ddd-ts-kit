@@ -159,7 +159,9 @@ of it is kept: already changed before the command, it is said, not held, and the
 its report. A file left changed in the working tree of the session's checkout (not
 one the conductor commits or merges meanwhile) is said to the worker once and refuses nothing: the
 worker puts nothing back there and names it in its report, for the conductor, who alone knows
-whether it made the change. A change of those packages refuses the next call once, for the conductor too. What the project's own scripts (`npm run format`,
+whether it made the change. A change of those packages refuses the next call once, for the conductor too,
+and so does a change of what the guard stands on there: the config of the kit, the settings, hooks
+and plugins of a coding agent, a scope file. What the project's own scripts (`npm run format`,
 `lint:fix`, `regenerate`, `docs:generate`, `openapi:generate`, `events:generate`, not run in another
 folder by `--prefix`, `-C`, `--dir` or `--filter`), alone on the line, rewrite outside the scope among the files their tools rewrite (code, JSON, `docs/`) is said
 with the script that rewrote it, not held: the worker leaves it out of its commits. The scope is pinned at the worker's first
@@ -167,13 +169,16 @@ call, and the pin follows the worker: it is kept under the git directory the wor
 repository share (`ddd-ts-kit/guard/` there), so a call that starts in another checkout is judged
 against the worktree pinned, and told to run as `cd <worktree> && ...`. Where several workers have
 a worktree, a first command that names none pins nothing: it reads, and what it writes is refused
-until a command names its worktree, or an editor tool a file under it. A scope file removed or changed stops the worker until the conductor restores it, and the mode of the
-guard is pinned with it, so a config of the worktree that turns the guard off, or grows past what
+until a command names its worktree, or an editor tool a file under it. A scope file removed or changed (its context, its base, its base commit or its branch) stops the worker until the conductor restores it, and the mode of the
+guard is pinned with it, so a config that turns the guard off, in the worktree or in another checkout
+of the repository, or grows past what
 the guard reads, does not lift a worker, its change being compared as any other. A branch the worker
 merges into its own is its work: only what the trunk holds is the trunk's. The trunk is the `base`
-its scope file records (an integration branch as well as the main one), the branch `origin/HEAD`
-names, `main` or `master`; a merge of any other branch is held without a command to undo it, and
-the worker reports it to the conductor. The kit's own
+its scope file recorded when the worker was pinned (a branch of the repository, an integration
+branch as well as the main one), the branch `origin/HEAD` names, `main` or `master`, each as it
+stood before the command that merged: a trunk fetched and merged by one command is not known yet,
+so the fetch goes in a command of its own, or `merge-trunk` does both. A merge of any other branch
+is held without a command to undo it, and the worker reports it to the conductor. The kit's own
 `merge-trunk` is not noted, and an install of the lockfile leaves the packages out of the note. It
 refuses a dependency change and another formatter than `npm run format`. The `architecture-reviewer`, the
 `domain-explorer` and the `story-verifier` change no file of a project by the shell, nor its work

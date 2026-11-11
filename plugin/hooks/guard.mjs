@@ -8,6 +8,7 @@ import {
   existsSync,
   fstatSync,
   globSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   openSync,
@@ -69,6 +70,7 @@ const QUOTED_LIMIT = 300;
 const STORY_ID = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
 const CONTEXT_NAME = /^[a-z][a-z0-9-]*$/;
 const GIT_REF = /^(?!-)[\p{L}\p{N}_./-]+$/u;
+const COMMIT_ID = /^[0-9a-f]{7,64}$/;
 // A space is allowed (a project under "My Projects"); a quote, a backquote, a dollar or a backslash is not.
 const ABSOLUTE_PATH = /^\/[\p{L}\p{N} _@%+=:,./-]*$/u;
 const LABEL = /^[a-z][a-z -]*$/;
@@ -127,10 +129,10 @@ const GENERATORS = [
   [/\/domain\/(?:[^/]+\/)?services\/[^/]+\.service\.ts$/, 'domain-service <context> <Name>'],
   [/\/domain\/(?:[^/]+\/)?repositories\/[^/]+\.repository\.ts$/, 'repository <context> <Aggregate>'],
   [/\.command\.ts$/, 'command <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)'],
-  // In the application layer alone: `presentation/http/<resource>/<use-case>/*.query.ts` is the schema
-  // of a query string, written by hand.
+  // Everywhere but in the presentation layer: `presentation/http/<resource>/<use-case>/*.query.ts`
+  // is the schema of a query string, written by hand.
   [
-    /\/application\/queries\/(?:[^/]+\/)*[^/]+\.query\.ts$/,
+    /^(?!(?:.*\/)?presentation\/).*\.query\.ts$/,
     'query <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)',
   ],
   [
@@ -217,6 +219,15 @@ const GOVERNED_FILES = [
 
 // The errors a codebase had when it adopted the kit: written by the project owner, lowered by `check --baseline prune`.
 const BASELINE_FILE = /^ddd-ts-kit-baseline\.json$/;
+// What the guard stands on in a checkout: its config, and the settings, hooks and plugins of the hosts.
+const GUARD_GROUND = [
+  /^ddd-ts-kit\.config\.json$/,
+  /^\.claude\//,
+  /^\.claude-plugin\//,
+  /^\.codex\//,
+  /^\.agents\//,
+  /^\.github\/(?:hooks|copilot)\//,
+];
 const BASELINE_OWNER =
   'it is written by the project owner, in a terminal, when the project adopts the kit; an agent never writes it, since one command would silence every error of the moment, its own included. `npx ddd-ts-kit check --baseline prune` lowers it after a fix and follows a `git mv`, without asking. Fix the error instead.';
 
@@ -596,6 +607,10 @@ const GIT_FORCE_WRITERS = {
 const PUTS_BACK = new Set(['rm', 'unlink', 'git checkout', 'git restore', 'git rm', 'git clean']);
 // The commands whose `-t` names the directory they write in; `touch -t` takes a date.
 const TARGETED_COMMANDS = new Set(['cp', 'mv', 'ln', 'install']);
+// The commands that, given a folder that exists, write the files they are given under it.
+const LANDING_COMMANDS = new Set(['cp', 'mv', 'ln', 'install', 'rsync']);
+// The options by which `cp` links instead of copying, or copies a whole tree.
+const CP_BRINGS = /^(?:-[a-zA-Z]*[alrRs][a-zA-Z]*|--(?:link|symbolic-link|recursive|archive))$/;
 // The commands that change the paths they are given, with the options that take a value, and which
 // operands they change: all of them, or the destination only.
 const PATH_COMMANDS = {
@@ -1057,8 +1072,14 @@ async function codexPatchVerdict(input, command, cwd) {
 // session has worker worktrees and a builder's command touches no scoped project, a write by that
 // command lands where the guard cannot judge it: it is refused, with the one shape it reads.
 function builderStrayReason(project, input, commands) {
-  if (!isHeldToAWorktree(project, input) || !builderWrites(commands)) {
+  if (!isHeldToAWorktree(project, input)) {
     return undefined;
+  }
+  // What holds a worker whatever its scope holds it here too: a read under another HOME, PATH or
+  // GIT_DIR is no longer the read the guard judged.
+  const moved = placeVariableReason(commands);
+  if (moved || !builderWrites(commands)) {
+    return moved;
   }
   return 'A worker runs every command as `cd <worktree> && ...` so that the guard reads it against the scope of that worktree; this command writes without moving into a worktree of your project. Run it as `cd <worktree> && ...`.';
 }
@@ -1089,7 +1110,8 @@ function builderWrites(commands) {
 function readsFromAnywhere(command) {
   if (shell.commandName(command.words) === 'git') {
     const { subcommand, tail } = gitInvocation(command.words.slice(1), command.directory);
-    return readsAnywhere(subcommand, tail) || ['add', 'commit'].includes(subcommand);
+    const plain = command.assigned.length === 0 && !command.words.some(runsAProgramOfGit);
+    return plain && (readsAnywhere(subcommand, tail) || ['add', 'commit'].includes(subcommand));
   }
   return isPureReader(command) || kitInvocations([command]).some(kitReads);
 }
@@ -1323,22 +1345,24 @@ function changedAtStop(places, input) {
   if (!project || !workerContext(project, input)) {
     return undefined;
   }
+  const { changed } = workerScope(project, input);
   const told = settleNote(project, input, false) ?? heldChangeReason(project, input, [])?.reason;
-  const said = [notice, told, branchOutsideReason(project, input)].filter(Boolean).join('\n');
+  const said = [notice, changed, told, branchOutsideReason(project, input)].filter(Boolean).join('\n');
   notice = undefined;
   return said || undefined;
 }
 
-// What the branch of a worker holds outside its scope since the base its scope file records: its
-// commits since then, what the trunk brought in left out, and what stays uncommitted. A scope file
-// that records no base leaves the commits uncompared, as the guard fails open.
+// What the branch of a worker holds outside its scope since the base its scope file recorded when
+// the worker was pinned: its commits since then, what the trunk brought in left out, and what stays
+// uncommitted. A scope file that records no base leaves the commits uncompared, as the guard fails open.
 function branchOutsideReason(project, input) {
-  const base = readJson(join(project.root, WORKER_SCOPE))?.baseCommit;
-  if (typeof base !== 'string' || !/^[0-9a-f]{7,64}$/.test(base)) {
+  const base = workerScope(project, input).baseCommit;
+  if (!base) {
     return undefined;
   }
   const outside = worktreeOutside(project, input);
-  const paths = [...committedSince(project, base, outside).keys(), ...Object.keys(snapshot(project, outside).changes)];
+  const committed = committedSince(project, base, outside, trunkTips(project, input));
+  const paths = [...committed.keys(), ...Object.keys(snapshot(project, outside).changes)];
   return paths.length === 0
     ? undefined
     : `Your branch holds files outside your scope since its base ${base.slice(0, 12)}: ${[...new Set(paths)].join(', ')}. Take them out of your branch (\`git checkout ${base.slice(0, 12)} -- <path>\` or \`git rm\` for a new file, then \`git commit\`), or name them in your report for the conductor. ${REPORT_TO_CONDUCTOR}`;
@@ -2273,7 +2297,12 @@ function pinnedScope(project, input) {
     if (!own || (!namesCheckout(input, own) && hasAnotherScope(own.root))) {
       return undefined;
     }
-    pinned = { context: namedContext(own), worktree: realpathSync(own.root), mode: own.mode };
+    pinned = {
+      context: namedContext(own),
+      worktree: realpathSync(own.root),
+      mode: own.mode,
+      scope: recordedScope(own),
+    };
     writeState(pin, pinned);
   }
   if (pinned.worktree !== worktree) {
@@ -2281,9 +2310,25 @@ function pinnedScope(project, input) {
       ? { context: current, changed: otherWorktreeReason(pinned, project) }
       : { context: pinned.context, changed: awayReason(pinned, project), away: true };
   }
-  return current === pinned.context
-    ? { context: current }
-    : { context: pinned.context, changed: scopeChangedReason(pinned, current) };
+  if (current !== pinned.context) {
+    return { context: pinned.context, changed: scopeChangedReason(pinned, current) };
+  }
+  // What the scope file recorded at the pin is what holds: the conductor wrote it, and the code a
+  // worker runs could rewrite the file.
+  return JSON.stringify(recordedScope(project)) !== JSON.stringify(pinned.scope)
+    ? { context: current, changed: scopeRewrittenReason(pinned) }
+    : { context: current, ...pinned.scope };
+}
+
+// What the scope file of a worktree records beside its context: the base its branch was cut from
+// and merges, the commit that base named, and its branch, each null when absent or not of its grammar.
+function recordedScope(project) {
+  const file = readJson(join(project.root, WORKER_SCOPE));
+  return {
+    base: named(file?.base, GIT_REF) ?? null,
+    baseCommit: named(file?.baseCommit, COMMIT_ID) ?? null,
+    branch: named(file?.branch, GIT_REF) ?? null,
+  };
 }
 
 function pinFile(project, input) {
@@ -2313,10 +2358,17 @@ function withPinnedMode(project, input) {
     return project;
   }
   const pinned = readJson(pinFile(project, input));
-  if (isPin(pinned) && pinned.worktree === realOf(project.root) && ['advise', 'enforce'].includes(pinned.mode)) {
+  if (isPin(pinned) && inRepositoryOf(pinned.worktree, project.root) && ['advise', 'enforce'].includes(pinned.mode)) {
     project.mode = pinned.mode;
   }
   return project;
+}
+
+// The worktree itself, or another checkout of its repository: a config that turns the guard off in
+// the checkout of the session lifts a pinned worker no more than one in its own worktree.
+function inRepositoryOf(worktree, root) {
+  const common = commonDirOf(worktree);
+  return worktree === realOf(root) || (common !== undefined && common === commonDirOf(root));
 }
 
 // The context the scope file of the worktree names, or the environment of the guard.
@@ -2327,8 +2379,18 @@ function namedContext(project) {
   );
 }
 
+function scopeRewrittenReason(pinned) {
+  return `The scope file changed: ${WORKER_SCOPE} of your worktree still names the context "${pinned.context}", but its base, its base commit or its branch is not what it was at your first call. Change nothing until it is back: report to the conductor, who restores it.`;
+}
+
+// A pin of an earlier version of the guard recorded no scope: it is no pin, and the next call pins again.
 function isPin(value) {
-  return isRecord(value) && typeof value.worktree === 'string' && named(value.context, CONTEXT_NAME) !== undefined;
+  return (
+    isRecord(value) &&
+    isRecord(value.scope) &&
+    typeof value.worktree === 'string' &&
+    named(value.context, CONTEXT_NAME) !== undefined
+  );
 }
 
 function scopeChangedReason(pinned, current) {
@@ -3473,7 +3535,7 @@ function workerGitReason(project, input, commands) {
     if (!readsAnywhere(subcommand, tail) && (!isOwnCheckout(own, moved) || unpinnedAmongSeveral(project, input))) {
       return `\`git ${subcommand}\` runs in ${moved ?? 'a place only the shell knows'}, not in your worktree: only the conductor lands a branch or moves its checkout. Run it as \`cd <worktree> && ...\`, and report to the conductor that the branch is ready.`;
     }
-    const branch = () => workerBranch(own ?? findProject(moved).root);
+    const branch = () => workerBranch(own ?? findProject(moved).root, workerScope(project, input));
     if (leavesOwnBranch(subcommand, tail, { moved, branch })) {
       const where = branch() === undefined ? 'its own branch' : `its branch \`${branch()}\``;
       return `\`git ${subcommand}\`: a worker's git keeps to ${where}: it pushes that branch alone, without force nor deletion, fetches into no ref, makes no tag, and checks out no other branch nor creates one; the trunk and the other refs are the conductor's. ${REPORT_TO_CONDUCTOR}`;
@@ -3488,9 +3550,10 @@ function unpinnedAmongSeveral(project, input) {
   return namedContext(project) !== undefined && workerScope(project, input) === undefined;
 }
 
-// The branch of a worker: the one its scope file records, else the one its worktree has checked out.
-function workerBranch(root) {
-  const recorded = named(readJson(join(root, WORKER_SCOPE))?.branch, GIT_REF);
+// The branch of a worker: the one its scope file recorded at the pin, or records before any pin,
+// else the one its worktree has checked out.
+function workerBranch(root, scope) {
+  const recorded = scope?.branch ?? named(readJson(join(root, WORKER_SCOPE))?.branch, GIT_REF);
   return recorded ?? named(git({ root }, ['symbolic-ref', '--quiet', '--short', 'HEAD'])?.trim(), GIT_REF);
 }
 
@@ -3840,6 +3903,77 @@ function fileChangeReason(project, input, commands) {
     const changed = changedPaths(command).find((path) => outsideScope(project, input, path.place));
     if (changed) {
       return `A worker never changes a file outside its scope: \`${changed.by}\` changes ${describePlace(project, changed.place)}. ${EDIT_WITH_TOOLS}`;
+    }
+    const landing = folderLandingReason(project, input, command);
+    if (landing) {
+      return landing;
+    }
+  }
+  return undefined;
+}
+
+// cp, mv, ln, install and rsync given a folder that exists write under it, not it: a folder of the
+// scope is judged by what the command brings into it and by the files it lands on there. A link or a
+// whole tree comes from the scope alone; a folder that holds a file with another name elsewhere (a
+// hard link), at any depth, takes nothing, since a file landing on that name changes the other one;
+// and each file lands where its name leads, through a link if one stands there.
+function folderLandingReason(project, input, command) {
+  const landing = folderLanding(command);
+  if (!landing) {
+    return undefined;
+  }
+  const { name, sources, folder, brings } = landing;
+  const into = describePlace(project, folder);
+  const foreign = brings ? sources.find((source) => outsideScope(project, input, source.place)) : undefined;
+  if (foreign) {
+    return `A worker brings no link and no whole tree from outside its scope into it: \`${name}\` brings ${foreign.word.replaceAll(shell.UNKNOWN, '$(...)')}, outside your scope, into ${into}. ${REPORT_TO_CONDUCTOR}`;
+  }
+  const linked = multiplyNamed(folder);
+  if (linked) {
+    return `${into} holds a file that has another name elsewhere (a hard link), ${projectPath(project, linked)}: what \`${name}\` lands in that folder could change the other file too. ${REPORT_TO_CONDUCTOR}`;
+  }
+  const landed = sources
+    .map(({ word }) => join(folder, basename(word)))
+    .find((place) => outsideScope(project, input, place));
+  return landed
+    ? `A worker never changes a file outside its scope: \`${name}\` changes ${describePlace(project, landed)}. ${EDIT_WITH_TOOLS}`
+    : undefined;
+}
+
+// The sources and the folder of a command that lands files in a folder that exists, and whether it
+// `brings` links or whole trees: `ln` and `rsync` always, `cp` by its options. `install -d` makes folders.
+function folderLanding({ words, directory }) {
+  const name = shell.commandName(words);
+  const args = words.slice(1);
+  if (!LANDING_COMMANDS.has(name) || (name === 'install' && args.includes('-d'))) {
+    return undefined;
+  }
+  const target = targetDirectory(name, args);
+  const valued = name === 'rsync' ? RSYNC_VALUED : PATH_COMMANDS[name].valued;
+  const operands = shell.operands(args, target === undefined ? valued : [...valued, '-t', '--target-directory']);
+  const sources = target === undefined ? operands.slice(0, -1) : operands;
+  if (sources.length === 0) {
+    return undefined;
+  }
+  const folder = shell.placeOf(target ?? operands.at(-1), directory);
+  if (folder === undefined || !isDirectory(folder)) {
+    return undefined;
+  }
+  return {
+    name,
+    folder,
+    sources: sources.map((word) => ({ word, place: shell.placeOf(word, directory) })),
+    brings: name === 'ln' || name === 'rsync' || (name === 'cp' && args.some((word) => CP_BRINGS.test(word))),
+  };
+}
+
+// The first file under `folder`, at any depth, that has another name elsewhere.
+function multiplyNamed(folder) {
+  for (const file of filesIn(folder)) {
+    const stat = lstatSync(file, { throwIfNoEntry: false });
+    const found = stat?.isDirectory() ? multiplyNamed(file) : stat?.isFile() && stat.nlink > 1 ? file : undefined;
+    if (found) {
+      return found;
     }
   }
   return undefined;
@@ -4331,8 +4465,9 @@ function noteBeforeCode(project, input, commands) {
   }
   const session = sessionCheckout(project, input);
   writeState(stateFile('before-run', project, input), {
+    trunks: trunkTips(project, input),
     worktree: snapshot(project, worktreeOutside(project, input), join(project.root, GUARD_HELD)),
-    session: session && { ...snapshot(session, sessionOutside), root: session.root },
+    session: session && { ...snapshot(session, sessionOutside), root: session.root, scopes: scopeStates(session) },
     packages: commands.some(installsPackages) ? undefined : packageStates(project, session),
     script: sanctionedScripts(commands),
   });
@@ -4511,15 +4646,15 @@ function settleNote(project, input, reading) {
   if (!isRecord(before?.worktree)) {
     return undefined;
   }
-  const session = sessionCheckout(project, input);
+  const session = notedSession(before.session);
   const settled = holdChanges(project, input, before);
-  const said = sessionChangeNotice(session, before.session);
-  const told = packagesChangeReason(before.packages, project, session);
+  const { said, ground } = session ? sessionChanges(session, before.session) : {};
+  const told = ground ?? packagesChangeReason(before.packages, project, session);
   if (said) {
     notice = [notice, said].filter(Boolean).join('\n');
   }
   if (reading && !settled && !told && !said) {
-    writeState(noted, { worktree: before.worktree, script: before.script });
+    writeState(noted, { worktree: before.worktree, script: before.script, trunks: before.trunks });
   } else {
     removeKitFile(noted);
   }
@@ -4528,14 +4663,15 @@ function settleNote(project, input, reading) {
 
 // Whether the note is settled: something changed outside the scope since it, or it cannot be compared.
 // A status that did not answer in full, on either side, compares nothing, and that is said once.
-function holdChanges(project, input, { worktree: before, script }) {
+function holdChanges(project, input, { worktree: before, script, trunks: noted }) {
+  const trunks = notedTrunks(project, input, noted);
   const outside = worktreeOutside(project, input);
   const now = snapshot(project, outside);
   if (before.unread || now.unread) {
     notice = [notice, UNCOMPARED_NOTE].filter(Boolean).join('\n');
     return true;
   }
-  const all = differences(project, outside, { before, now });
+  const all = differences(project, outside, { before, now, trunks });
   const rewritten = script ? all.filter(isRewrittenByTools) : [];
   const uncopied = all.filter((path) => !rewritten.includes(path) && hasNoCopy(project, before.changes[path]));
   const changed = all.filter((path) => !rewritten.includes(path) && !uncopied.includes(path));
@@ -4549,7 +4685,7 @@ function holdChanges(project, input, { worktree: before, script }) {
     const file = stateFile('outside', project, input);
     const held = readJson(file) ?? {};
     for (const path of changed) {
-      held[path] ??= { ...(before.changes[path] ?? { clean: true }), head: before.head };
+      held[path] ??= { ...(before.changes[path] ?? { clean: true }), head: before.head, trunks };
     }
     writeState(file, held);
   }
@@ -4578,8 +4714,8 @@ function rewrittenNotice(script, paths) {
 // The paths whose content differs between two snapshots: changed in either, or, when HEAD moved,
 // changed by the commits between them (a commit, an amend, a reset), the files of the trunk a merge
 // brings in compared by their content.
-function differences(checkout, outside, { before, now }) {
-  const committed = now.head === before.head ? new Map() : committedSince(checkout, before.head, outside);
+function differences(checkout, outside, { before, now, trunks }) {
+  const committed = now.head === before.head ? new Map() : committedSince(checkout, before.head, outside, trunks);
   const paths = new Set([...Object.keys(before.changes), ...Object.keys(now.changes), ...committed.keys()]);
   return [...paths].filter((path) => {
     const was = before.changes[path];
@@ -4592,8 +4728,9 @@ function differences(checkout, outside, { before, now }) {
 
 // The paths `outside` keeps that differ between the commit `from` and HEAD, each with its letter
 // (A added, M modified, D deleted); a path that HEAD holds as the other side of a merge since then
-// (the trunk `merge-trunk` brought in) is the trunk's, not a change of the worker.
-function committedSince(checkout, from, outside) {
+// (the trunk `merge-trunk` brought in) is the trunk's, not a change of the worker. `trunks` are the
+// commits the trunks named when the comparison starts.
+function committedSince(checkout, from, outside, trunks) {
   const fields = gitFields(
     checkout,
     ['diff', '--name-status', '--no-renames', '-z', '--end-of-options', from, 'HEAD'],
@@ -4605,7 +4742,7 @@ function committedSince(checkout, from, outside) {
       paths.set(fields[index + 1], fields[index]);
     }
   }
-  for (const path of broughtIn(checkout, mergedSides(checkout, from), [...paths.keys()])) {
+  for (const path of broughtIn(checkout, mergedSides(checkout, from, trunks), [...paths.keys()])) {
     paths.delete(path);
   }
   return paths;
@@ -4623,11 +4760,11 @@ function broughtIn(checkout, sides, paths) {
   return brought;
 }
 
-// The other parents of the merges on the first-parent line from `from` to HEAD that a trunk holds:
-// a branch of the worker merged back is the worker's own work. Without a trunk apart from the branch
-// checked out, every side is taken as the trunk's.
-function mergedSides(checkout, from) {
-  const trunks = trunksOf(checkout);
+// The other parents of the merges on the first-parent line from `from` to HEAD that a trunk held:
+// a branch of the worker merged back is the worker's own work, and so is a commit no trunk held
+// when `trunks` were read. Without a trunk apart from the branch checked out, every side is taken
+// as the trunk's.
+function mergedSides(checkout, from, trunks) {
   return allMergedSides(checkout, from).filter(
     (side) =>
       trunks.length === 0 ||
@@ -4635,17 +4772,29 @@ function mergedSides(checkout, from) {
   );
 }
 
-// The trunks a worker may merge: the base its scope file records (the trunk of the repository, or
-// the integration branch its worktree was cut from), the one origin/HEAD names, main and master,
-// each when it exists and is not the branch checked out.
-function trunksOf(checkout) {
-  const current = git(checkout, ['symbolic-ref', '--quiet', 'HEAD'])?.trim();
-  const base = named(readJson(join(checkout.root, WORKER_SCOPE))?.base, GIT_REF);
-  return [...(base ? [base] : []), 'refs/remotes/origin/HEAD', 'refs/heads/main', 'refs/heads/master'].filter(
-    (ref) =>
-      ![ref, `refs/heads/${ref}`].includes(current) &&
-      git(checkout, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]) !== undefined,
-  );
+// The commits the trunks of a worker name now: the base its scope file recorded at the pin (the
+// trunk of the repository, or the integration branch its worktree was cut from), the branch
+// origin/HEAD names, main and master. A trunk is a branch of the repository, local or of a remote,
+// that is neither the branch checked out nor the worker's own: HEAD, a tag, a commit or another
+// spelling of its branch is none.
+function trunkTips(project, input) {
+  const scope = workerScope(project, input);
+  const own = [
+    git(project, ['symbolic-ref', '--quiet', 'HEAD'])?.trim(),
+    ...(scope.branch ? [`refs/heads/${scope.branch}`] : []),
+  ];
+  const tips = [...(scope.base ? [scope.base] : []), 'refs/remotes/origin/HEAD', 'refs/heads/main', 'refs/heads/master']
+    .map((name) => git(project, ['rev-parse', '--verify', '--quiet', '--symbolic-full-name', name])?.trim())
+    .filter((ref) => /^refs\/(?:heads|remotes)\//.test(ref ?? '') && !own.includes(ref))
+    .map((ref) => git(project, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`])?.trim())
+    .filter(Boolean);
+  return [...new Set(tips)];
+}
+
+// The trunks a note recorded before the command it was taken for; a note of an earlier version of
+// the guard recorded none, and is compared with the trunks as they stand.
+function notedTrunks(project, input, noted) {
+  return Array.isArray(noted) ? noted : trunkTips(project, input);
 }
 
 function allMergedSides(checkout, from) {
@@ -4658,29 +4807,53 @@ function allMergedSides(checkout, from) {
     .flatMap((line) => line.split(' ').slice(2));
 }
 
-// The note is compared with the checkout it was taken in: a call that starts in another one, the
-// working directory of the session moved, compares nothing there.
-function sessionChangeNotice(session, before) {
-  if (!session || !isRecord(before) || before.unread || before.root !== session.root) {
-    return undefined;
-  }
-  // What the conductor commits or merges there meanwhile is its own: only the files left changed in
-  // its working tree, and changed since the note, can be the worker's.
-  const now = snapshot(session, sessionOutside).changes;
-  const changed = Object.keys(now).filter((path) => before.changes[path]?.hash !== now[path].hash);
-  return changed.length === 0
-    ? undefined
-    : `ddd-ts-kit: files of the checkout of the session, ${session.root}, changed while your last command ran: ${changed.join(', ')}. A worker never changes another checkout: put nothing back there yourself, and name them in your report for the conductor, who knows whether it changed them.`;
+// The checkout of the session the note was taken for: the next call may start in another one, and
+// is still compared with that one.
+function notedSession(before) {
+  return isRecord(before) && typeof before.root === 'string' ? { root: before.root } : undefined;
 }
 
+// The scope files of a checkout, which git ignores, by their content.
+function scopeStates(checkout) {
+  return Object.fromEntries([WORKER_SCOPE, STORY_SCOPE].map((path) => [path, contentHash(join(checkout.root, path))]));
+}
+
+// What the conductor commits or merges in its checkout meanwhile is its own: only the files left
+// changed in its working tree, and changed since the note, can be the worker's. An ordinary file is
+// `said`, a notice; the `ground` of the guard there (its config, the settings and the hooks of the
+// hosts, a scope file) is a refusal, since a change of it changes what the guard holds next.
+function sessionChanges(session, before) {
+  if (before.unread) {
+    return {};
+  }
+  const now = snapshot(session, sessionOutside).changes;
+  const changed = Object.keys(now).filter((path) => before.changes[path]?.hash !== now[path].hash);
+  const scopes = scopeStates(session);
+  const ground = [
+    ...changed.filter((path) => GUARD_GROUND.some((pattern) => pattern.test(path))),
+    ...Object.keys(scopes).filter((path) => before.scopes[path] !== scopes[path]),
+  ];
+  const plain = changed.filter((path) => !ground.includes(path));
+  return {
+    said:
+      plain.length === 0
+        ? undefined
+        : `ddd-ts-kit: files of the checkout of the session, ${session.root}, changed while your last command ran: ${plain.join(', ')}. A worker never changes another checkout: put nothing back there yourself, and name them in your report for the conductor, who knows whether it changed them.`,
+    ground:
+      ground.length === 0
+        ? undefined
+        : `The ground of the guard in the checkout of the session, ${session.root}, changed while your last command ran: ${ground.join(', ')}. A worker never changes the config of the kit, the settings or the hooks of a coding agent, nor a scope file: put nothing back there yourself, and report it to the conductor, who knows whether it changed them. ${REPORT_TO_CONDUCTOR}`,
+  };
+}
+
+// A package file that appears, changes or disappears since the note is a change, in the worktree
+// and in the checkout of the session the note was taken for.
 function packagesChangeReason(before, project, session) {
   if (!isRecord(before)) {
     return undefined;
   }
-  // The packages of a checkout the note did not read, or that this call does not, are not compared:
-  // the working directory of the session moved between the two.
   const now = packageStates(project, session);
-  const changed = Object.keys(now).filter((file) => file in before && before[file] !== now[file]);
+  const changed = Object.keys({ ...before, ...now }).filter((file) => before[file] !== now[file]);
   return changed.length === 0
     ? undefined
     : `The packages the guard runs changed while your last command ran: ${changed.join(', ')}. A worker never changes node_modules: report it to the conductor, who installs them again. ${REPORT_TO_CONDUCTOR}`;
@@ -4696,7 +4869,8 @@ function heldChangeReason(project, input, commands) {
   if (now.unread) {
     return undefined;
   }
-  const since = new Map();
+  const noted = new Map(Object.values(held).map((target) => [target.head, target.trunks]));
+  const since = { commits: new Map(), trunks: (head) => notedTrunks(project, input, noted.get(head)) };
   const left = Object.entries(held).filter((entry) => !isPutBack(project, { now, since }, entry));
   if (left.length === 0) {
     removeKitFile(recorded);
@@ -4720,13 +4894,13 @@ function isPutBack(project, { now, since }, [path, target]) {
 }
 
 function commitsOf(project, since, from) {
-  if (!since.has(from)) {
-    since.set(
+  if (!since.commits.has(from)) {
+    since.commits.set(
       from,
-      committedSince(project, from, () => true),
+      committedSince(project, from, () => true, since.trunks(from)),
     );
   }
-  return since.get(from);
+  return since.commits.get(from);
 }
 
 // A command that only puts back some of `paths` (`git checkout HEAD --`, `git mv` back, `cp` of the
@@ -4800,7 +4974,7 @@ function putBackReason(project, state, left) {
     ...(own.length > 0 ? [ownChangesReason(project, state, own)] : []),
     ...(merged.length > 0
       ? [
-          `A merge brought files outside your scope into your branch: ${merged.join(', ')}. Its other side is no trunk the guard knows (the \`base\` of ${WORKER_SCOPE}, origin/HEAD, main, master), so they are held as changes of your branch. Undo nothing, by \`git checkout\`, \`git rm\` or a reset: stop here and report the merge to the conductor, who knows what it brought in.`,
+          `A merge brought files outside your scope into your branch: ${merged.join(', ')}. Its other side is no trunk the guard knows (the \`base\` of ${WORKER_SCOPE}, origin/HEAD, main, master, as they stood before the command that merged: a trunk fetched and merged by one command is not known yet, \`npx ddd-ts-kit merge-trunk\` merges it), so they are held as changes of your branch. Undo nothing, by \`git checkout\`, \`git rm\` or a reset: stop here and report the merge to the conductor, who knows what it brought in.`,
         ]
       : []),
   ];

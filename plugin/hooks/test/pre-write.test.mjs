@@ -238,11 +238,20 @@ test('every generated role of the canonical tree names its generator', () => {
 test('the schema of the query string of a route is written by hand; the query of the application layer is generated', () => {
   const root = project();
   const context = join(root, 'src/contexts/ordering');
-  const schema = run('pre-write', write(join(context, 'presentation/http/orders/list-orders/list-orders.query.ts')));
-  assert.equal(schema.output, undefined);
+  for (const path of [
+    'presentation/http/orders/list-orders/list-orders.query.ts',
+    'sales/presentation/http/orders/list-orders/list-orders.query.ts',
+  ]) {
+    assert.equal(run('pre-write', write(join(context, path))).output, undefined, path);
+  }
+  // Anywhere else in a context, a new query is the generator's, wherever it was misplaced.
   for (const path of [
     'application/queries/list-orders/list-orders.query.ts',
     'sales/application/queries/list-orders/list-orders.query.ts',
+    'application/list-orders.query.ts',
+    'application/commands/list-orders/list-orders.query.ts',
+    'application/sales/queries/list-orders/list-orders.query.ts',
+    'domain/list-orders.query.ts',
   ]) {
     const result = run('pre-write', write(join(context, path)));
     assert.equal(decision(result), 'deny', path);
