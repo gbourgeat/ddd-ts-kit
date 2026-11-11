@@ -95,18 +95,20 @@ describe('merge-trunk: the trunk of a worker', () => {
 
     git(root, 'branch', 'release', 'main~2');
     workerFile(root, { base: 'release' });
-    expect(goOn(root, '--json').json().next).not.toContain('was not read');
+    expect(goOn(root, '--json').stdout).not.toContain('was not read');
     git(root, 'update-ref', 'refs/remotes/origin/main', 'main');
 
     const stacked = goOn(root, '--json').json();
 
     expect(stacked).toMatchObject({ status: 'up-to-date', trunk: { ref: 'release' } });
 
-    expect(stacked.next).toContain(
-      'origin/main holds commits this branch lacks and was not read, the base of the worker being release: `npx ddd-ts-kit merge-trunk --trunk origin/main` brings it in.',
-    );
+    expect(stacked).toMatchObject({
+      next: expect.stringContaining(
+        'origin/main holds commits this branch lacks and was not read, the base of the worker being release: `npx ddd-ts-kit merge-trunk --trunk origin/main` brings it in.',
+      ),
+    });
 
     git(root, 'update-ref', 'refs/remotes/origin/main', 'release');
-    expect(goOn(root, '--json').json().next).not.toContain('was not read');
+    expect(goOn(root, '--json').stdout).not.toContain('was not read');
   });
 });
