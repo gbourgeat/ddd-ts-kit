@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/contexts/*/test/**"
+  - "src/contexts/*/*/test/**"
   - "**/*.spec.ts"
   - "test/**"
 ---

@@ -1,6 +1,7 @@
 ---
 paths:
   - "{{config.contextsDir}}/*/test/**"
+  - "{{config.contextsDir}}/*/*/test/**"
   - "**/*.spec.ts"
   - "test/**"
 ---

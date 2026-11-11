@@ -397,7 +397,10 @@ import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
 import { decorators } from '@ddd-ts-kit/testing/vitest';
 import { defineConfig } from 'vitest/config';
 
-const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
+const INTEGRATION_SPECS = [
+  'src/contexts/*/test/integration/**/*.spec.ts',
+  'src/contexts/*/*/test/integration/**/*.spec.ts',
+];
 
 export default defineConfig(({ mode }) => ({
   // standard decorators, compiled by the compiler of the project; legacy ones need no plugin
@@ -405,8 +408,8 @@ export default defineConfig(({ mode }) => ({
   resolve: { tsconfigPaths: true },
   test: {
     projects: [
-      { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS], isolate: false } },
-      { extends: true, test: { name: 'integration', include: [INTEGRATION_SPECS] } },
+      { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: INTEGRATION_SPECS, isolate: false } },
+      { extends: true, test: { name: 'integration', include: INTEGRATION_SPECS } },
     ],
     // what is measured and the floor of each layer: read from ddd-ts-kit.config.json
     coverage: { provider: 'v8', reporter: ['text', 'cobertura', 'lcov'], ...governedCoverage(mode) },

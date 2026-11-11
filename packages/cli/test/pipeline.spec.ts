@@ -167,6 +167,8 @@ describe('the knip config init writes', () => {
         0,
         'src/contexts/*/test/fakes/*.ts',
         'src/contexts/*/test/worlds/*.ts',
+        'src/contexts/*/*/test/fakes/*.ts',
+        'src/contexts/*/*/test/worlds/*.ts',
         'test/architecture/**/*.spec.ts',
       ),
     );

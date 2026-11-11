@@ -20,7 +20,7 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     include: ['{{config.sourceRoot}}/**/*.spec.ts'],
-    exclude: ['{{config.contextsDir}}/*/test/integration/**'],
+    exclude: ['{{config.contextsDir}}/*/test/integration/**', '{{config.contextsDir}}/*/*/test/integration/**'],
     {{#if assembly.discovery}}
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.
     server: { deps: { inline: ['@ddd-ts-kit/di'] } },
