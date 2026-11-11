@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:211b2943c15009bd -->
+<!-- translation-of: parallel-work.md sha256:1355b0b2278bbde3 -->
 
 # Travailler en parallèle sans collisions
 
@@ -75,7 +75,7 @@ après l'autre. `merge-trunk` le règle :
 
 ```bash
 git fetch origin
-npx ddd-ts-kit merge-trunk                   # origin/HEAD, puis origin/main ; --trunk <ref> en nomme un autre
+npx ddd-ts-kit merge-trunk                   # la base du worker, sinon origin/HEAD, puis origin/main ; --trunk <ref> en nomme un autre
 ```
 
 ```text
@@ -144,7 +144,7 @@ base. Une fusion terminée à la main par `git commit` garde ces *trailers*.
 
 `--dry-run` donne l'aperçu (rien ne change), `--abort` défait la fusion en cours (un fichier que le kit régénère, comme une page de `docs/behaviour/` ou un `CONTEXT.md`, et modifié après avoir été indexé par la fusion est restauré et nommé ; tout autre fichier changé à la main la fait refuser, code 2). `--continue` conclut le *commit* du tronc avec lequel la fusion a commencé : si le tronc a avancé depuis, il affiche `trunk moved: ...` et, une fois la fusion validée, `npx ddd-ts-kit merge-trunk` de nouveau apporte le reste. Avec Prisma, une fusion qui a changé un fichier de `prisma/schema/` lance `npm run db:client` après `regenerate`, de sorte que `generated/schema.sql`, ignoré par git et lu par la base de test en processus, est à jour ; Drizzle, Knex et TypeORM ne dérivent aucun fichier de ce genre. L'arbre doit
 être propre (les fichiers de périphérique que le *sandbox* monte sur les chemins qu'il interdit ne comptent pas) et aucune autre fusion, aucun *rebase* ni *cherry-pick* en cours (sortie 2 sinon) ;
-le tronc n'est jamais récupéré, le *commit* qu'il nomme est affiché. `merge-trunk` demande
+le tronc n'est jamais récupéré, le *commit* qu'il nomme est affiché. Sans `--trunk`, le tronc est la `base` de `.ddd-ts-kit/worker.json` dans le *worktree* d'un *worker* (la référence d'où `worker-scope` a coupé sa branche), puis `origin/HEAD`, puis `origin/main`. `merge-trunk` demande
 git 2.40 ; un git plus ancien ne fusionne qu'à partir de la base que git calcule
 (`--since <merge base>`), avec `git merge` lui-même.
 
@@ -506,7 +506,9 @@ repart de zéro.
   *worktree* d'un *worker*, `verify-slice` affiche la commande de *commit* exacte,
   `git commit -m "feat(billing): pay an invoice" -m "Slice: M1.14"` (un *commit* sans *trailer*,
   d'un kit plus ancien, est apparié dans l'ordre aux *commits* `feat(<contexte>)` et affiché
-  `(by order)`) ;
+  `(by order)` ; sur une branche gardée pour ses lignes suivantes, les *commits* faits avant
+  qu'elle n'apporte la base enregistrée par `worker-scope` sont ceux des lignes déjà arrivées, et
+  ne sont pas lus) ;
 - `verification.json`, écrit par `verify-slice` dans le *worktree* d'un *worker* : quand il a
   tourné, à quel *commit*, pour quelle ligne, les étapes en échec et les chemins qu'il a listés à
   indexer ;
@@ -701,7 +703,12 @@ conflicts: plain git merge 3, own diff since base 1, automatic 1, for you 0
 Une base trouvée trop ancienne se voit en conflits de plus, jamais en perte silencieuse : quand la
 première branche a été supprimée et que rien ne prouve où elle est arrivée, le rapport nomme
 chaque branche qui partage des *commits* et n'a pas été trouvée, avec le `--since <commit>` à
-passer une fois qu'une personne a vérifié. `status --workers` en donne l'aperçu pour chaque
+passer une fois qu'une personne a vérifié. Un `--since` trop récent est la seule façon de perdre
+du travail : la fusion laisse tomber ce que la branche a ajouté avant lui. `--since` à la tête de
+la branche est refusé, et `verify-merge` arrête la fusion sur chaque fichier ajouté par la branche
+que le résultat n'a pas alors que le tronc n'a jamais touché son chemin. Le *worker* d'une branche
+empilée a cette autre branche pour base : une fois celle-ci arrivée, nommez le tronc,
+`merge-trunk --trunk origin/main`. `status --workers` en donne l'aperçu pour chaque
 *worker* : où sa branche est arrivée, ses *commits* d'avance et ses fichiers changés comptés à
 partir de là (plus de faux recouvrements avec ce qui est déjà arrivé), ses *commits* de retard, et
 ce que `merge-trunk` laisserait en conflit maintenant.

@@ -256,7 +256,8 @@ plain merge of the trunk into the second replays them as conflicts. `merge-trunk
 first branch landed (by patch id, on the branch recorded as its base or any local branch sharing
 commits) and merges from there; when the first branch is gone and nothing proves it, it falls
 back to an older base (more conflicts, never a silent loss) and names the `--since <commit>` to
-confirm. `status --workers` shows, per worker, where it landed, what is ahead and behind, and
+confirm. Without `--trunk` it brings in the base of the worker, here the first branch: once that
+one landed, run it with `--trunk origin/main`. `status --workers` shows, per worker, where it landed, what is ahead and behind, and
 what `merge-trunk` would leave conflicted now. Never resolve by taking the trunk's side of a
 whole file.
 
