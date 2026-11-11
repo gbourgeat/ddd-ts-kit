@@ -1,6 +1,7 @@
 import type { RenderContext } from '../../../templating';
 import { liveRowsCheck } from './live-rows-check';
 import type { FieldType, ReadModelField } from './read-model-fields';
+import type { ReadModelTable } from './read-model-table';
 
 /** How each type of field is written: in the row, in a sample of it, and in the table of each ORM. */
 interface Spelling {
@@ -55,17 +56,6 @@ const SPELLINGS: Readonly<Record<FieldType, Spelling>> = {
     typeorm: "type: 'numeric'",
   },
 };
-
-/** The table the fields are written in. */
-export interface ReadModelTable {
-  /** Its name in the database, and the start of the name of what it declares. */
-  readonly name: string;
-  /** The constant of the Drizzle table and of the TypeORM entity. */
-  readonly constant: string;
-  /** The database schema of its context. */
-  readonly schema: string;
-  readonly tenantScoped: boolean;
-}
 
 /**
  * The fields of the row of a read model as its templates read them: the lines of the row, of its

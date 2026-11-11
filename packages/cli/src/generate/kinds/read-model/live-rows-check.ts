@@ -1,5 +1,5 @@
 import { LINE_WIDTH } from '../../../layout';
-import type { ReadModelTable } from './field-lines';
+import type { ReadModelTable } from './read-model-table';
 import type { ReadModelField } from './read-model-fields';
 
 /** The check constraint of a read model table, as the templates of each ORM read it. */
