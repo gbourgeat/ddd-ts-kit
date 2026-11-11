@@ -153,6 +153,23 @@ describe('ddd-ts-kit drizzle-generate', () => {
     expect(exists(root, 'arguments.json')).toBe(false);
   });
 
+  it('refuses a name the journal already holds, before running drizzle-kit', () => {
+    const root = projectWithDrizzleKit('');
+
+    write(
+      root,
+      'migrations/meta/_journal.json',
+      JSON.stringify({ entries: [{ idx: 0, when: 1, tag: '0000_add-invoices' }] }),
+    );
+
+    const result = cli(root, 'drizzle-generate', '--name', 'add-invoices');
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain('The journal already holds a migration named add-invoices: 0000_add-invoices.');
+    expect(exists(root, 'arguments.json')).toBe(false);
+    expect(cli(root, 'drizzle-generate', '--name', 'add-invoice-lines').code).toBe(0);
+  });
+
   it('refuses a name of blanks', () => {
     const root = projectWithDrizzleKit('');
 

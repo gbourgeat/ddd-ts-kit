@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:971cf74438344b02 -->
+<!-- translation-of: README.md sha256:35d21050b0cf084f -->
 
 # ddd-ts-kit
 
@@ -2715,7 +2715,7 @@ restreint les règles ; la *baseline* du projet s'applique comme pour un fichier
 ## lint
 
 ```
-ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache]
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix] [--no-cache] [--ignore-pattern <pattern>]...
 ```
 
 Ce que lancent `lint` et `ci:lint` d'un projet généré : l'ESLint du projet, par son API, sur les
