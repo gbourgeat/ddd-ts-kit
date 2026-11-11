@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, tempDir, write } from './helpers';
 import { git } from './support/git';
-import { BOTH_KEPT, INVOICE, PAY_AND_CANCEL, spec } from './support/invoicing-merge';
+import { BOTH_KEPT, INVOICE, PAY_AND_CANCEL, SLICES, spec } from './support/invoicing-merge';
 import { jsonAt } from './support/json-at';
 import { commit, mergeRepository, mergeWith, startMerge } from './support/merge-repository';
 
@@ -201,6 +201,54 @@ describe('verify-merge, a file of the branch the merge dropped, whatever the bas
     mergeWith(root, { [PAYMENT]: null }, `Merge main into build/billing\n\nMerge-Base: ${head}`);
 
     expect(kinds(cli(moved, 'verify-merge', 'HEAD', '--json').json())).toEqual([]);
+    expect(kinds(cli(root, 'verify-merge', 'HEAD', '--json').json())).toEqual([]);
+  });
+});
+
+describe('verify-merge, the rows of a base the trunk never held', () => {
+  const row = (id: string, slice: string, status: string): string =>
+    `| ${id} | billing | slice | ${slice} | generate command | | billing | ${status} |`;
+
+  const table = (...rows: readonly string[]): string =>
+    [
+      '| # | context | kind | slice | start with | depends on | owner | status |',
+      '|---|---|---|---|---|---|---|---|',
+      ...rows,
+      '',
+    ].join('\n');
+
+  it('reports a row the result dropped and a status it took back from the trunk, when the fork held neither', () => {
+    const forked = table(row('US1.01', 'Issue invoice', 'todo'));
+
+    const root = mergeRepository({
+      base: { [INVOICE]: lines('  issue() {}'), [SLICES]: forked },
+      ours: { [SLICES]: table(row('US1.01', 'Issue invoice', 'done'), row('US1.02', 'Pay invoice', 'todo')) },
+      theirs: { [INVOICE]: lines('  issue() {}', '  cancel() {}') },
+    });
+
+    const head = git(root, 'rev-parse', 'HEAD').trim();
+
+    mergeWith(root, { [SLICES]: forked }, `Merge main into build/billing\n\nMerge-Base: ${head}`);
+
+    const answer = cli(root, 'verify-merge', 'HEAD', '--json').json();
+
+    expect(jsonAt(answer, 'merges', '0', 'base')).toBe(head);
+    expect(kinds(answer)).toEqual(['row-not-done', 'row-lost']);
+    expect(cli(root, 'verify-merge', 'HEAD').stdout).toContain(`rows gone:\n    ${SLICES}:4 (ours)  #US1.02 Pay invoice`);
+  });
+
+  it('leaves to the trunk a row it deleted and a row it reopened since the fork', () => {
+    const root = mergeRepository({
+      base: {
+        [INVOICE]: lines('  issue() {}'),
+        [SLICES]: table(row('US1.01', 'Issue invoice', 'done'), row('US1.03', 'Cancel invoice', 'todo')),
+      },
+      ours: { [INVOICE]: lines('  issue() {}', '  pay() {}') },
+      theirs: { [SLICES]: table(row('US1.01', 'Issue invoice', 'todo')) },
+    });
+
+    mergeWith(root, {});
+
     expect(kinds(cli(root, 'verify-merge', 'HEAD', '--json').json())).toEqual([]);
   });
 });

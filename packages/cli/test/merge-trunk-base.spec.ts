@@ -21,6 +21,7 @@ const INVOICE = 'src/contexts/billing/invoice.ts';
 /** The generated declarations of a role folder: derived, so left out of the patch a branch is recognised by. */
 const DECLARATIONS = 'src/contexts/billing/application/application.declarations.ts';
 const HANDLER = 'src/contexts/billing/pay/handler.ts';
+const SLICES = 'docs/architecture/slices.md';
 
 const openapi = (...paths: string[]): string =>
   ['paths:', '  /accounts:', '    get: list', ...paths, '  /zeta:', '    get: z', ''].join('\n');
@@ -302,6 +303,55 @@ describe('merge-trunk: the base of a branch reused after its squash', () => {
     expect(exists(root, 'migrations/0001_working-add-payments.sql')).toBe(false);
     expect(exists(root, 'migrations/0002_add-payments.sql')).toBe(true);
     expect(read(root, INVOICE)).toContain('refund() {}');
+  });
+
+  it('keeps a row of the slices file the branch added before its landing, when the trunk took the code without it', () => {
+    const row = (id: string, slice: string, status: string): string =>
+      `| ${id} | billing | slice | ${slice} | generate command | | billing | ${status} |`;
+
+    const table = (...rows: readonly string[]): string =>
+      [
+        '| # | context | kind | slice | start with | depends on | owner | status |',
+        '|---|---|---|---|---|---|---|---|',
+        ...rows,
+        '',
+      ].join('\n');
+
+    const root = trunkRepository({ [INVOICE]: invoice(), [SLICES]: table(row('US1.01', 'Issue invoice', 'todo')) });
+
+    onBranch(root, 'build/billing');
+
+    const landed = commitFiles(
+      root,
+      {
+        [INVOICE]: invoice('issue() { return 1; }'),
+        [SLICES]: table(row('US1.01', 'Issue invoice', 'done'), row('US1.02', 'Pay invoice', 'todo')),
+      },
+      'row 1: issue',
+    );
+
+    squashInto(root, 'build/billing', {
+      message: 'feat(billing): issue (#1)',
+      files: { [SLICES]: table(row('US1.01', 'Issue invoice', 'done')) },
+    });
+
+    commitFiles(root, { 'docs/notes.md': 'Unrelated.\n' }, 'docs: notes (#2)');
+    onBranch(root, 'build/billing');
+    commitFiles(root, { [INVOICE]: invoice('issue() { return 1; }', 'pay() { return 2; }') }, 'row 2: pay');
+
+    const result = mergeTrunk(root, '--json');
+
+    expect(result.json()).toMatchObject({
+      status: 'committed',
+      base: { commit: landed, evidence: 'landed' },
+      conflicts: { ownDiff: 0, automatic: 0, forYou: 0 },
+      automatic: [{ file: SLICES, kind: 'slices' }],
+      lostLines: { errors: [] },
+    });
+
+    expect(read(root, SLICES)).toBe(
+      table(row('US1.01', 'Issue invoice', 'done'), row('US1.02', 'Pay invoice', 'todo')),
+    );
   });
 
   it('never takes for landed a later commit that changed only what the comparison leaves out, unless the trunk holds it', () => {

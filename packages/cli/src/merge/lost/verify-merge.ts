@@ -62,24 +62,25 @@ function findingsAt(
   const paths = changedPaths(repo.top, pairs);
   const read = (revision: string): Map<string, string> => revisionFiles(repo.top, revision, paths);
   const sides: MergeSides = { base: read(base), ours: read(ours), theirs: read(theirs), result: read(at.result) };
+  const fork = runGit(repo.top, ['merge-base', ours, theirs])?.trim() ?? '';
+  const forked = fork === '' ? sides.base : read(fork);
+  const slices = `${repo.prefix}${SLICES_FILE}`;
 
   const findings = [
     ...lineFindings(linesOf(sides, repo), changesOf(repo.top, merge, at.result)),
-    ...keptRows(sides, `${repo.prefix}${SLICES_FILE}`),
+    ...keptRows(sides, slices, forked.get(slices)),
     ...lostTests(sides),
     ...deletedSpecs(sides),
     ...lostMigrations(sides),
     ...conflictMarkers(sides),
   ];
 
-  const fork = runGit(repo.top, ['merge-base', ours, theirs])?.trim();
-
-  if (fork === undefined || fork === '') {
+  if (fork === '') {
     return findings;
   }
 
   return [
-    ...untouchedByBranch(findings, { ours: sides.ours, fork: read(fork) }),
+    ...untouchedByBranch(findings, { ours: sides.ours, fork: forked }),
     ...droppedAdditions(repo, { fork, ours, theirs, result: at.result }, findings),
   ];
 }

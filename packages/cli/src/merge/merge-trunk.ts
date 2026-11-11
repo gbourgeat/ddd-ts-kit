@@ -19,6 +19,7 @@ import { type PreviewRequest, previewMerge, type StageEntry } from './preview-me
 import { refuseShallowHistory } from './refuse-shallow-history';
 import { resolveConflict } from './resolve-conflict';
 import type { Resolution } from './resolution';
+import { slicesFromFork, withRows } from './slices-from-fork';
 import { startMerge } from './start-merge';
 import { trunkOf } from './trunk-of';
 import { ensureWritable } from './ensure-writable';
@@ -34,6 +35,9 @@ export interface MergeTrunkRequest {
   readonly gitVersion?: string;
   readonly now?: Date;
 }
+
+/** The conflicted paths of a merge, each with its stages. */
+type Conflicts = ReadonlyMap<string, readonly StageEntry[]>;
 
 /** The merge being opened: who merges what, from which base. */
 interface Opening {
@@ -126,8 +130,9 @@ function opened(opening: Opening): MergeReport {
   const preview = (base?: string): ReturnType<typeof previewMerge> => previewMerge(top, previewOf(report, base));
   const own = preview(report.base.commit);
   const plain = report.base.commit === fork ? own : preview();
-  const resolutions = resolved(context, own.conflicts, { tree: own.tree });
-  const counted = counts(context, report, { resolutions, plainMerge: plain.conflicts.size });
+  const sides = { base: report.base.commit, fork, ours: 'HEAD', theirs: report.trunk.commit, tree: own.tree };
+  const resolutions = withRows(resolved(context, own.conflicts, { tree: own.tree }), slicesFromFork(context.repo, sides));
+  const counted = counts(context, report, { resolutions, own: own.conflicts, plainMerge: plain.conflicts.size });
 
   if (request.dryRun) {
     return { ...counted, status: 'dry-run', next: NEXT_STEPS.dryRun };
@@ -157,32 +162,29 @@ function withOldGit(opening: Opening, { version, fork }: { version: string; fork
   const resolutions = resolved(context, conflicts, 'worktree');
 
   return settled(opening, {
-    report: counts(context, report, { resolutions, plainMerge: conflicts.size }),
+    report: counts(context, report, { resolutions, own: conflicts, plainMerge: conflicts.size }),
     resolutions,
   });
 }
 
-function resolved(
-  context: MergeContext,
-  conflicts: ReadonlyMap<string, readonly StageEntry[]>,
-  from: MergedFrom,
-): Resolution[] {
+function resolved(context: MergeContext, conflicts: Conflicts, from: MergedFrom): Resolution[] {
   return conflictedPaths(context.repo.top, conflicts, from).map((path) => resolveConflict(path, context.repo));
 }
 
 function counts(
   context: MergeContext,
   report: MergeReport,
-  { resolutions, plainMerge }: { resolutions: readonly Resolution[]; plainMerge: number },
+  { resolutions, own, plainMerge }: { resolutions: readonly Resolution[]; own: Conflicts; plainMerge: number },
 ): MergeReport {
   const automatic = resolutions.filter((resolution) => resolution.settled);
+  const conflicted = automatic.filter(({ file }) => own.has(file));
   const left = resolutions.filter((resolution) => !resolution.settled);
   const rows = context.worker?.rows ?? [];
   const named = { top: context.repo.top, branch: report.branch, rows, trunk: report.trunk, base: report.base.commit };
 
   return {
     ...report,
-    conflicts: { plainMerge, ownDiff: resolutions.length, automatic: automatic.length, forYou: left.length },
+    conflicts: { plainMerge, ownDiff: own.size, automatic: conflicted.length, forYou: left.length },
     automatic: automatic.map(({ file, kind, how }) => ({ file, kind, how })),
     forYou: left.map((resolution) => forYouEntry(resolution, named)),
   };
