@@ -657,6 +657,7 @@ The example application declares the same event with class-validator
 | Personal data? | Only when a consumer needs it. A broker keeps messages; the envelope carries no actor by default for the same reason (events README) |
 | A fact or an instruction? | A fact. `scheduling.appointment.booked`, not "send-reminder": the producer does not know what consumers do |
 | Order-sensitive consumers? | Carry a version or a sequence of the aggregate in the payload: ordering is not guaranteed by default (see [Delivery and idempotency](delivery-and-idempotency.md)) |
+| A handler that reads a projection fed by the same event? | In the process, the projections of an event apply before the handlers that react to it, whatever the order of the modules. On a broker each consumer has its own queue and nothing orders them: have the handler read what it needs from the payload, or fail and be redelivered until the row is there |
 | Field descriptions | Written in the schema: they flow into the catalog and the AsyncAPI document |
 
 There is a real trade-off between thin events (identifiers only, consumers call back) and fat
