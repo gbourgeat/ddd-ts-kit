@@ -889,13 +889,14 @@ GET /appointments?filter[status]=in:booked,confirmed&filter[startsAt]=gte:2026-1
 
 | Written | Means |
 |---|---|
-| `filter[<field>]=<operator>:<value>` | one condition. The operators are those of the kernel: `eq`, `ne`, `in`, `gt`, `gte`, `lt`, `lte`, `contains`, `startsWith`, `isNull`, `between` |
+| `filter[<field>]=<operator>:<value>` | one condition. The operators are those of the kernel: `eq`, `ne`, `in`, `gt`, `gte`, `lt`, `lte`, `contains`, `startsWith`, `containsIgnoringCase`, `startsWithIgnoringCase`, `isNull`, `between` |
 | `filter[<field>]=<value>` | `eq`. The text before the first colon is an operator only when it is the name of one: `filter[title]=10:30 review` is an `eq`, and a value that starts like an operator is written `eq:in:the morning` |
 | several `filter[...]` | joined by AND; the same field may be repeated: `filter[seats]=gte:2&filter[seats]=lte:4` |
 | `in:<a>,<b>,<c>` | a list, separated by commas. A comma inside a value is written `\,`, a backslash `\\`; a colon needs nothing |
 | `between:<from>,<to>` | two values, both bounds included |
 | `isNull:true`, `isNull:false`, `isNull` | without a value, or with one; `isNull` alone means `true` |
 | `contains:<text>`, `startsWith:<text>` | the text as it is, commas included; case sensitive |
+| `containsIgnoringCase:<text>`, `startsWithIgnoringCase:<text>` | the same, whatever the case of the letters; accents are kept (the folding rule is in the README of the kernel, "What a criteria means") |
 | `filter[or][<field>]=...` | the conditions written under `or` are alternatives; under `not`, the rows that satisfy them all are refused; `and` exists for symmetry |
 | `filter[or][0][<field>]=...&filter[or][0][<other>]=...&filter[or][1][<field>]=...` | an index holds several conditions together inside a group: `or(and(...), ...)`. It counts as one more level of depth, which the definition allows or not (`maxDepth`, 1 by default) |
 | `sort=-startsAt,id` | comma-separated or repeated, a leading `-` for descending, among the fields declared sortable and the tie-breaker |

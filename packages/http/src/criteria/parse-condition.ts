@@ -1,4 +1,10 @@
-import type { FieldDeclaration, FieldValue, FilterNode, FilterOperator } from '@ddd-ts-kit/kernel';
+import {
+  isTextSearch,
+  type FieldDeclaration,
+  type FieldValue,
+  type FilterNode,
+  type FilterOperator,
+} from '@ddd-ts-kit/kernel';
 import { coerceValue } from './coerce-value';
 import { splitList } from './split-list';
 
@@ -12,6 +18,8 @@ const OPERATORS: readonly FilterOperator[] = [
   'lte',
   'contains',
   'startsWith',
+  'containsIgnoringCase',
+  'startsWithIgnoringCase',
   'isNull',
   'between',
 ];
@@ -50,12 +58,13 @@ function operandOf(
   operator: FilterOperator,
   text: string,
 ): FieldValue | FieldValue[] | undefined {
+  if (isTextSearch(operator)) {
+    return text;
+  }
+
   switch (operator) {
     case 'isNull':
       return coerceValue('boolean', text);
-    case 'contains':
-    case 'startsWith':
-      return text;
     case 'in':
     case 'between':
       return listOf(declared, text);

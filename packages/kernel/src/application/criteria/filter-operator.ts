@@ -8,5 +8,7 @@ export type FilterOperator =
   | 'lte'
   | 'contains'
   | 'startsWith'
+  | 'containsIgnoringCase'
+  | 'startsWithIgnoringCase'
   | 'isNull'
   | 'between';

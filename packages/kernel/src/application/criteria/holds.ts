@@ -1,6 +1,8 @@
 import { compareValues } from './compare-values';
 import type { FieldDeclaration } from './field-declaration';
 import type { FieldType } from './field-type';
+import { findsText } from './finds-text';
+import { isTextSearch } from './is-text-search';
 import type { Predicate, PredicateTest } from './predicate';
 
 type Fields = Readonly<Record<string, FieldDeclaration>>;
@@ -39,6 +41,10 @@ function compares({ operator, value: operand }: PredicateTest, value: unknown, t
   const operands: readonly unknown[] = Array.isArray(operand) ? operand : [operand];
   const [first, second] = operands;
 
+  if (isTextSearch(operator)) {
+    return findsText(operator, String(value), String(first));
+  }
+
   switch (operator) {
     case 'eq':
       return order(first) === 0;
@@ -48,10 +54,6 @@ function compares({ operator, value: operand }: PredicateTest, value: unknown, t
       return operands.some((candidate) => order(candidate) === 0);
     case 'between':
       return order(first) >= 0 && order(second) <= 0;
-    case 'contains':
-      return String(value).includes(String(first));
-    case 'startsWith':
-      return String(value).startsWith(String(first));
     default:
       return ordered(operator, order(first));
   }

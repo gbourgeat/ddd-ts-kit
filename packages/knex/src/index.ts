@@ -25,6 +25,8 @@ export * from './columns/tenant-row';
 export * from './columns/add-tenant-column-options';
 export * from './columns/add-tenant-column';
 export * from './sql/insert-ignoring-conflict';
+export * from './locks/advisory-lock';
+export * from './locks/try-advisory-lock';
 export * from './read-model/read-model-columns';
 export * from './read-model/predicate-to-knex';
 export * from './read-model/criteria-to-knex';

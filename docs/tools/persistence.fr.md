@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:dc22e9b84e5cc6cf -->
+<!-- translation-of: persistence.md sha256:df8d349f528bdd24 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -367,6 +367,29 @@ facultatif : sans lui, le cas reste en attente (`it.todo`, avec la raison `give 
 mutate that records a change of state`), ce qui est l'état de départ d'un spec de contrat tout juste
 généré. Une sauvegarde sans changement n'est pas jugée : un adaptateur de table avance la version,
 un event store n'ajoute rien.
+
+### Une décision qu'aucune version ne protège : un verrou sur une clé métier
+
+La concurrence optimiste compare la version d'une ligne qui existe. Compter les réservations
+d'un créneau avant d'en insérer une, ou donner le numéro suivant d'une séquence par *tenant*,
+décide sur des lignes qui ne sont pas encore là : deux unités de travail lisent le même compte
+et écrivent toutes les deux. Les quatre *packages* d'ORM donnent pour cela les deux mêmes
+*helpers*. `advisoryLock(context, key, { tenant: scope })` attend qu'aucune autre transaction ne
+tienne le verrou sur `key`, puis le tient jusqu'à ce que l'unité de travail valide ou annule
+(`pg_advisory_xact_lock`) ; `tryAdvisoryLock` répond `false` au lieu d'attendre. La clé est un
+texte que PostgreSQL hache sur 64 bits (`hashtextextended`), préfixé par le *tenant* du travail
+quand `tenant` est donné, si bien que deux *tenants* ne s'attendent jamais ; deux clés de même
+hachage s'attendent, et rien d'autre ne se passe. Hors d'une unité de travail, le verrou serait
+relâché aussitôt, et le *helper* refuse (`AdvisoryLockOutsideUnitOfWorkError`).
+
+Ce sont des fonctions de l'adaptateur, pas un port du kernel : un cas d'usage n'importe aucun
+*package* d'ORM, donc le verrou se place dans la méthode du *repository* qui en a besoin, ou
+derrière un port du contexte dont le *fake* ne fait rien. Le prendre en premier dans l'unité de
+travail et garder l'isolation par défaut (`read committed`), sous laquelle la lecture qui suit
+voit ce que le détenteur précédent a validé. `tenancy/scoped-statement` accepte le *helper* et
+signale un `pg_advisory_xact_lock` écrit à la main. PostgreSQL seulement ;
+`advisoryLockContract` y tient les quatre *packages*, l'attente elle-même sur un vrai serveur,
+puisque PGlite est une seule session.
 
 ## Comparaison
 

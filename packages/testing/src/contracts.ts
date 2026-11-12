@@ -42,6 +42,8 @@ export {
 export { jobStoreContract, type JobStoreContractOptions } from './contracts/job-store-contract';
 export type { JobStoreUnderContract } from './contracts/job-store/job-store-under-contract';
 export { lockContract, type LockContractOptions } from './contracts/lock-contract';
+export { advisoryLockContract, type AdvisoryLockContractOptions } from './contracts/advisory-lock-contract';
+export type { AdvisoryLockUnderContract } from './contracts/advisory-lock/advisory-lock-under-contract';
 export { loggerContract, type LoggerContractOptions } from './contracts/logger-contract';
 export type { CreateLogger } from './contracts/logger/create-logger';
 export type { LoggedLine } from './contracts/logger/logged-line';

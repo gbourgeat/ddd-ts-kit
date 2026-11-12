@@ -418,6 +418,47 @@ export async function saveOrReport(invoice: Invoice): Promise<'saved' | 'changed
 }
 ```
 
+### A lock on a business key
+
+Optimistic concurrency protects a row that exists. A decision taken on rows that do not exist
+yet (count the bookings of a slot then insert one, give the next number of a sequence per
+tenant) has no version to compare: two units of work read the same count and both write.
+`advisoryLock(context, key, { tenant })` serialises them: it waits until no other transaction
+holds the lock on `key`, then holds it until the unit of work commits or rolls back
+(`pg_advisory_xact_lock`). Nothing releases it by hand.
+
+```ts
+// infrastructure/persistence/prisma-invoice-numbers.repository.ts
+import { advisoryLock } from '@ddd-ts-kit/prisma';
+
+async next(): Promise<number> {
+  // First in the unit of work, before the read it protects.
+  await advisoryLock(this.database, 'invoice-number', { tenant: this.scope });
+
+  return (await this.lastNumber()) + 1;
+}
+```
+
+- **The key is a text**, hashed by PostgreSQL into the 64-bit number it locks on
+  (`hashtextextended(text, 0)`). With `tenant`, an `ExecutionScope`, the text is
+  `tenant:<id>:<key>` (`tenantKey` of the kernel): two tenants never wait for each other, and
+  work that names no tenant is refused. Two texts of the same hash, about one pair in 2^64,
+  wait for each other as one key would: a wait, never a wrong answer.
+- **Inside a unit of work only.** Outside of one the lock would be released as its statement
+  ends: `AdvisoryLockOutsideUnitOfWorkError`. Keep the default isolation, `read committed`:
+  the read that follows the lock then sees what the previous holder committed, where
+  `repeatable read` and `serializable` read as of the moment the lock was asked.
+- **`tryAdvisoryLock(context, key, { tenant })`** does not wait: `true` when it took the lock,
+  `false` when another transaction holds it (`pg_try_advisory_xact_lock`).
+- **A use case imports no ORM package.** The lock sits in the method of the repository that
+  needs it, or behind a port of the context (`InvoiceNumbering.reserve()`) whose adapter is
+  this one call and whose fake does nothing.
+- PostgreSQL only. In a tenant-scoped project, `tenancy/scoped-statement` accepts the helper
+  and reports a raw `pg_advisory_xact_lock`, as any raw SQL.
+- Held to `advisoryLockContract` of `@ddd-ts-kit/testing/contracts`. The wait of a second unit
+  of work is proven on a real server: PGlite is one session, where the second one waits for
+  the connection itself.
+
 ## Audit columns, tenant scoping and pages
 
 The standard persistence shapes of the kernel, on Prisma. A Prisma schema has no way to share
@@ -623,7 +664,7 @@ The rules these examples hold, and that the tests of this package check on a rea
 by the tie-breaker), `take` and `skip`. `predicateToPrisma(predicate, fields?)` gives one
 `where`. They are data, never text: Prisma binds every value. The fields of the read model
 are the fields of the model; `fields` renames those that differ. The text of `contains` and
-`startsWith` has its `%`, `_` and `\` escaped, which Prisma does not do.
+`startsWith` has its `%`, `_` and `\` escaped, which Prisma does not do. `containsIgnoringCase` and `startsWithIgnoringCase` are the same filters with `mode: 'insensitive'`, an `ILIKE`, which PostgreSQL folds with the locale of the database (the rule and its limits are in the README of the kernel, "What a criteria means"); no b-tree index serves it, a GIN index of `pg_trgm` on the column does.
 
 ```ts
 // infrastructure/persistence/prisma-appointment-queries.reader.ts

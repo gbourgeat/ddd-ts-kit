@@ -196,6 +196,12 @@ wait on every write; it is what the specs use.
   an alias, so a rebuild fills `v2` and moves the alias in one `_aliases` call.
 - **No full-text search.** A `string` is a `keyword`: `contains` is a wildcard query, case
   sensitive, and slow on a large index. Text analysis, relevance and facets are not built.
+- **A search that ignores case is a regular expression.** `containsIgnoringCase` and
+  `startsWithIgnoringCase` are a `regexp` query that names both forms of each letter (`[éÉ]`),
+  since `case_insensitive` folds the ASCII letters alone: it is as slow as a wildcard, and its
+  text holds about 240 letters at most (`index.max_regex_length`, 1000 by default, four
+  characters a letter). The letters every store folds alike are in the README of the kernel,
+  "What a criteria means".
 - **A string up to 32 766 bytes** in a filtered field: Lucene refuses a longer term.
 - Offset pages stop at `index.max_result_window`; page by cursor beyond.
 

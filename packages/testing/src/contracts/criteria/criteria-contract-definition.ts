@@ -6,7 +6,10 @@ export const criteriaContractDefinition: CriteriaDefinition<CriteriaContractRow>
   fields: {
     id: { type: 'string', filter: ['eq', 'in'] },
     status: { type: 'string', filter: ['eq', 'ne', 'in'], sortable: true },
-    title: { type: 'string', filter: ['eq', 'ne', 'in', 'contains', 'startsWith'] },
+    title: {
+      type: 'string',
+      filter: ['eq', 'ne', 'in', 'contains', 'startsWith', 'containsIgnoringCase', 'startsWithIgnoringCase'],
+    },
     seats: { type: 'number', filter: ['eq', 'ne', 'in', 'gt', 'gte', 'lt', 'lte', 'between'], sortable: true },
     price: { type: 'decimal', filter: ['eq', 'ne', 'in', 'gt', 'gte', 'lt', 'lte', 'between'], sortable: true },
     startsAt: { type: 'instant', filter: ['eq', 'in', 'gt', 'gte', 'lt', 'lte', 'between'], sortable: true },
