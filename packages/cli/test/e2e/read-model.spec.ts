@@ -39,6 +39,48 @@ function generatedOn(orm: string): string[] {
   ];
 }
 
+/** How a spec of the project runs one statement beside its stores, on each ORM. */
+const RAW: Readonly<Record<string, readonly [imported: string, run: string]>> = {
+  drizzle: [
+    "import { sql } from 'drizzle-orm';\n",
+    'database.persistence.database.executor().execute(sql.raw(statement))',
+  ],
+  knex: ['', 'database.persistence.database.executor().raw(statement)'],
+};
+
+/**
+ * Appended to the contract spec of the read model, which opens the test database: the check the application
+ * makes when it starts, on the tables as generated, then on a column put back to NOT NULL as an upgrade finds it.
+ */
+function tablesCheckOn(orm: string): string {
+  const [imported, run] = RAW[orm] ?? ['', ''];
+
+  return `
+${imported}import { readModelTables } from '@/platform/database/read-model-tables';
+
+describe('the read model tables of the database', () => {
+  const column = 'alter table shipping.invoices_to_ship alter column customer_id';
+  const alter = (statement: string): Promise<unknown> => Promise.resolve(${run});
+
+  it('are ready as generated, and one that is not is refused by name, with its migration', async () => {
+    const tables = readModelTables(database.persistence);
+
+    expect(await tables.notReady()).toEqual([]);
+
+    await alter(column + ' set not null');
+
+    const refusal = await tables.require().catch((error: unknown) => error);
+
+    await alter(column + ' drop not null');
+
+    expect(String(refusal)).toContain('1 read model table is not ready for this version: shipping.invoices_to_ship.');
+    expect(String(refusal)).toContain('alter table shipping.invoices_to_ship\\n  alter column "customer_id" drop not null;');
+    expect(await tables.notReady()).toEqual([]);
+  });
+});
+`;
+}
+
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1): a read model as generated, installed as published, against the compiler, both
  * analyzers, the formatter and its own contract on the test database. Prisma and TypeORM, which this workspace
@@ -87,6 +129,15 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
 
   it('keeps the rows of a tenant from another, in the contract of a read model of tenant data', () => {
     const contract = runIn(project.root, { command: bin('vitest'), args: ['run', TENANT_CONTRACT] });
+
+    expect(contract).toMatch(/Tests\s+23 passed \|\s*2 todo/);
+    expect(contract).not.toMatch(FAILED_COUNT);
+  }, 120_000);
+
+  it('finds every read model table ready as generated, and refuses by name one an upgrade left as it was', () => {
+    project.append(CONTRACT, tablesCheckOn(orm));
+
+    const contract = runIn(project.root, { command: bin('vitest'), args: ['run', CONTRACT] });
 
     expect(contract).toMatch(/Tests\s+23 passed \|\s*2 todo/);
     expect(contract).not.toMatch(FAILED_COUNT);

@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:cb047f7905f8e4d4 -->
+<!-- translation-of: persistence.md sha256:297d3c9ac9148be9 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -886,6 +886,15 @@ n'appartiennent à aucun contexte, et `db:migrate` deviendrait une liste ordonn�
 garder en phase avec la configuration. L'horodatage, la règle et la procédure ci-dessus couvrent
 aussi bien un dossier unique qu'une équipe qui travaille sur un seul contexte. Un contexte extrait
 en service emporte alors ses tables avec lui (`generate service`).
+
+**Ce qu'une migration a laissé de côté, avant un déploiement.** L'ordre ci-dessus se lit dans les
+fichiers ; ce que les migrations font des tables de modèle de lecture se lit dans une base.
+`npm run db:read-models` liste, sur la base que nomme `DATABASE_URL`, chaque table de modèle de
+lecture qui ne peut pas contenir la trace d'une ligne supprimée, avec la migration qu'il faut à
+chacune, et sort avec le code 1 ; l'application fait la même vérification à son démarrage, si bien
+qu'une table qu'une montée de version a laissée telle quelle arrête le démarrage et non le premier
+événement qui l'atteint
+([Chaque table vérifiée au démarrage, et avant un déploiement](../concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement)).
 
 ## Recommandation selon la situation
 

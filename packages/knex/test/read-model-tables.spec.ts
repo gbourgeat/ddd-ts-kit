@@ -22,7 +22,7 @@ readModelTablesContract(runner, {
 
     return {
       tables: (options) => knexReadModelTables(unitOfWork, options),
-      execute: (statement) => database.knex.raw(statement),
+      execute: (statement) => Promise.resolve(database.knex.raw(statement)),
     };
   },
 });

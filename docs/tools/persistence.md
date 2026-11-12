@@ -831,6 +831,14 @@ config. The timestamp, the rule and the procedure above cover a single folder an
 working on one context alike. A context extracted as a service takes its tables with it then
 (`generate service`).
 
+**What a migration left undone, before a deployment.** The order above is read from the files;
+what the migrations make of the read model tables is read from a database. `npm run
+db:read-models` lists, on the database `DATABASE_URL` names, every read model table that cannot
+hold the trace of a deleted row, with the migration each needs, and exits 1; the application
+makes the same check when it starts, so a table an upgrade left as it was stops the start and
+not the first event that reaches it
+([Every table checked at the start, and before a deployment](../concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment)).
+
 ## Recommendation by situation
 
 | Situation | Choice |
