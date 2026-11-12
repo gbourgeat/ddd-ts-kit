@@ -244,7 +244,7 @@ export function composeApplication(
 {{/if}}
     platform,
 {{#if persistence.hasDatabase}}
-    start: () => start(platform, options, contexts.map(({ name }) => name)),
+    start: () => start(platform, options, contexts),
 {{/if}}
 {{#unless persistence.hasDatabase}}
     start: () => start(platform, options),
@@ -286,7 +286,7 @@ function boundaryOf(platform: Platform, options: ApplicationOptions{{#if present
  * process while the queue is kept in its memory: no other process would see what this one enqueues{{/if}}.
  */
 {{#if persistence.hasDatabase}}
-async function start(platform: Platform, options: ApplicationOptions, hosted: readonly string[]): Promise<void> {
+async function start(platform: Platform, options: ApplicationOptions, hosted: readonly ContextWiring[]): Promise<void> {
 {{/if}}
 {{#unless persistence.hasDatabase}}
 async function start(platform: Platform, options: ApplicationOptions): Promise<void> {
@@ -305,7 +305,7 @@ async function start(platform: Platform, options: ApplicationOptions): Promise<v
 {{/unless}}
 {{/if}}
 {{#if persistence.hasDatabase}}
-  await platform.readModelTables(hosted).atStart(platform.logger, options.readModelTables);
+  await platform.readModelTables(hosted.map(({ name }) => name)).atStart(platform.logger, options.readModelTables);
 {{/if}}
 {{#if search.opensearch}}
   // The index of every read model of OpenSearch the contexts built, before an event reaches its projection.

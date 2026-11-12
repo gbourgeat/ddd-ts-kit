@@ -83,7 +83,7 @@ describe('the read model tables of the database', () => {
     expect(own.map(({ table }) => table)).toEqual(['invoices_to_ship']);
 
     expect(String(refusal)).toContain('1 read model table is not ready for this version: shipping.invoices_to_ship.');
-    expect(String(refusal)).toContain('alter table "shipping"."invoices_to_ship" alter column "customer_id" drop not null;');
+    expect(String(refusal)).toContain('alter table "shipping"."invoices_to_ship" alter column "customer_id" drop not null');
     expect(await tables.notReady()).toEqual([]);
   });
 });

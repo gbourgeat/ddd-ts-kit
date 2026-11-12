@@ -91,9 +91,11 @@ describe('ReadModelTables', () => {
       ['error', { tables: 'scheduling.agenda', unread: 'Store1, KnexLedger' }],
     ]);
 
-    expect((await tables.report()).ready).toBe(false);
+    expect(await tables.report()).toMatchObject({ ready: false, outcome: 'not-ready' });
 
     const one = await new ReadModelTables(entries(new Error('down'))).report();
+
+    expect(one.outcome).toBe('unread');
 
     expect(one.text).toBe(
       'No listed read model keeps a table that could be read.\n\nThe table of 1 read model could not be read, so nothing says whether a trace is taken: Store1 (down).',
@@ -123,6 +125,7 @@ describe('ReadModelTables', () => {
 
     expect(await listed().report()).toEqual({
       ready: true,
+      outcome: 'ready',
       text: 'No read model table is listed: nothing was checked.',
     });
   });
@@ -227,6 +230,7 @@ describe('ReadModelTables: what a start warns of and what a command prints', () 
 
     expect(await new ReadModelTables([], ['KnexLedger', 'KnexRooms']).report()).toEqual({
       ready: true,
+      outcome: 'ready',
       text: `No read model table is listed: nothing was checked.\n${String(DOUBTS[2])}`,
     });
   });
@@ -234,11 +238,13 @@ describe('ReadModelTables: what a start warns of and what a command prints', () 
   it('reports as a command prints it: how many tables it read and their names, the warnings, then the refusals', async () => {
     expect(await listed(READY).report()).toEqual({
       ready: true,
+      outcome: 'ready',
       text: 'Checked 1 read model table: scheduling.outcomes.\nEach can hold the trace of a deleted row.',
     });
 
     expect(await listed(UNVALIDATED, OTHER, AGENDA).report()).toEqual({
       ready: false,
+      outcome: 'not-ready',
       text: [
         'Checked 3 read model tables: scheduling.outcomes, rooms, scheduling.agenda.',
         ...NOTES,

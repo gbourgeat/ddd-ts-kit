@@ -287,7 +287,7 @@ describe('what the event store hands the composition root', () => {
     const byHand = initProject(...BY_HAND, ...EVENT_SOURCED);
 
     expect(platform(tsyringe, 'composition/compose-application.ts')).toContain(
-      'platformModule(persistence, options),\n      eventSourcingModule(foundations.eventSourcing),\n      guard,',
+      'platformModule(persistence, options, contexts.modules),\n      eventSourcingModule(foundations.eventSourcing),\n      guard,',
     );
 
     const module = platform(tsyringe, 'event-sourcing/event-sourcing.module.ts');

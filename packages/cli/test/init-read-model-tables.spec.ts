@@ -146,11 +146,11 @@ describe('init: the check of the listed read model tables, at the start and from
       const module = platform(initProject('--di', di), 'composition/platform.module.ts');
 
       expect(module).toContain(
-        '    onStart: ({ resolve }) => readModelTables(persistence, hosted).atStart(resolve(Logger), options.readModelTables),',
+        '    onStart: ({ resolve }) => readModelTables(persistence, contexts).atStart(resolve(Logger), options.readModelTables),',
       );
 
       expect(platform(initProject('--di', di), 'composition/compose-application.ts')).toContain(
-        '      platformModule(\n        persistence,\n        options,\n        contexts.modules.map(({ name }) => name),\n      ),',
+        '      platformModule(persistence, options, contexts.modules),\n',
       );
 
       expect(module).toContain('  readonly readModelTables?: ReadModelTablesAtStart;');
@@ -160,20 +160,22 @@ describe('init: the check of the listed read model tables, at the start and from
     const explicit = platform(initProject('--style', 'explicit'), 'composition/platform.module.ts');
 
     expect(explicit).toContain(
-      'readModelTables(persistence, hosted).atStart(resolve(Logger), options.readModelTables)',
+      'readModelTables(persistence, contexts).atStart(resolve(Logger), options.readModelTables)',
     );
+
+    expect(explicit).toContain('  const contexts = hosted?.map(({ name }) => name);');
   });
 
   it('asks it in the start of a platform wired by hand, before the event provider delivers anything', () => {
     const root = initProject('--di', 'manual', '--orm', 'knex');
 
     expect(platform(root, 'composition/compose-application.ts')).toContain(
-      '  await platform.readModelTables(hosted).atStart(platform.logger, options.readModelTables);\n' +
+      '  await platform.readModelTables(hosted.map(({ name }) => name)).atStart(platform.logger, options.readModelTables);\n' +
         '  await options.events.start();\n',
     );
 
     expect(platform(root, 'composition/compose-application.ts')).toContain(
-      '    start: () => start(platform, options, contexts.map(({ name }) => name)),',
+      '    start: () => start(platform, options, contexts),',
     );
 
     expect(platform(root, 'composition/create-platform.ts')).toContain(

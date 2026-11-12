@@ -30,7 +30,7 @@ const SHARED: readonly Export[] = [
 const TSYRINGE: readonly Export[] = [
   [
     'composition/platform.module.ts',
-    'export function platformModule(persistence: Persistence, options: PlatformOptions): ContextModule',
+    'export function platformModule(\n  persistence: Persistence,\n  options: PlatformOptions,\n  hosted?: readonly ContextModule[],\n): ContextModule {',
   ],
   ['composition/platform-test.module.ts', 'export const platformTestModule = defineContextModule('],
   ['composition/lay-foundations.ts', 'export function layFoundations('],

@@ -217,11 +217,7 @@ export function composeApplication(
     modules: [
       kernel(foundations, persistence, options),
 {{#if persistence.hasDatabase}}
-      platformModule(
-        persistence,
-        options,
-        contexts.modules.map(({ name }) => name),
-      ),
+      platformModule(persistence, options, contexts.modules),
 {{/if}}
 {{#unless persistence.hasDatabase}}
       platformModule(persistence, options),
