@@ -28,7 +28,9 @@ const STORED =
   'the repository is the first of its context: with drizzle, knex or typeorm the tables file of the context joins the schema index, with prisma the database schema of the context joins the datasource (its models go to prisma/schema/<context>.prisma, the file of the context)';
 
 const STORED_READ_MODEL =
-  'the table of the read model is the first of its context: with drizzle, knex or typeorm the tables file of the context joins the schema index, with prisma the database schema of the context joins the datasource (its model goes to prisma/schema/<context>.prisma, the file of the context); never without an ORM of the kit';
+  'with an ORM of the kit, always: the store joins the list of the read model tables the application checks when it starts; and when its table is the first of its context, with drizzle, knex or typeorm the tables file of the context joins the schema index, with prisma the database schema of the context joins the datasource (its model goes to prisma/schema/<context>.prisma, the file of the context); never without an ORM of the kit';
+
+const LISTED_READ_MODELS = 'the list of the read model tables (<platformDir>/database/read-model-tables.ts)';
 
 /** One entry per kind whose `writesShared` is true: `--local-only` refuses those writes, the conductor of a parallel build makes them on the trunk. */
 export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
@@ -46,7 +48,7 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
   },
   module: { files: ['ddd-ts-kit.config.json'] },
   repository: { files: STORAGE, when: STORED },
-  'read-model': { files: STORAGE, when: STORED_READ_MODEL },
+  'read-model': { files: [LISTED_READ_MODELS, ...STORAGE], when: STORED_READ_MODEL },
   'personal-fields': {
     files: [
       'the copies and the exports of the platform (<platformDir>/privacy/data-subject-copies.ts, data-subject-exports.ts)',

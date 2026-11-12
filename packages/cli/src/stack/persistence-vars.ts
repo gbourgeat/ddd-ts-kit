@@ -15,14 +15,6 @@ const STORAGE_TOKEN: Readonly<Record<string, StorageToken>> = {
   typeorm: { token: 'TypeOrmContext', from: '@ddd-ts-kit/typeorm' },
 };
 
-/** The function of each ORM package that checks every read model table of the database in one pass, and where it is exported from. */
-const READ_MODEL_TABLES: Readonly<Record<string, StorageToken>> = {
-  drizzle: { token: 'drizzleReadModelTables', from: '@ddd-ts-kit/drizzle/postgres' },
-  knex: { token: 'knexReadModelTables', from: '@ddd-ts-kit/knex' },
-  prisma: { token: 'prismaReadModelTables', from: '@ddd-ts-kit/prisma' },
-  typeorm: { token: 'typeOrmReadModelTables', from: '@ddd-ts-kit/typeorm' },
-};
-
 /** How the composition roots open the storage of the stack, and what the storage offers them. */
 export function persistenceVars(config: Config): RenderContext {
   const { orm, events } = config.stack;
@@ -32,8 +24,6 @@ export function persistenceVars(config: Config): RenderContext {
     needsUrl: hasDatabase,
     hasDatabase,
     ...tokenVars(STORAGE_TOKEN[orm]),
-    readModelTables: READ_MODEL_TABLES[orm]?.token ?? '',
-    readModelTablesFrom: READ_MODEL_TABLES[orm]?.from ?? '',
     await: orm === 'typeorm' || orm === 'prisma' ? 'await ' : '',
     signals: !hasDatabase && events === 'outbox',
   };

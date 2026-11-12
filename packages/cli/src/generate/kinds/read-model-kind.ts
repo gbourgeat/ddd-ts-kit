@@ -1,6 +1,7 @@
 import { CliError } from '../../cli-error';
 import type { Name } from '../../naming';
-import type { RenderContext } from '../../templating';
+import { renderTemplate, type RenderContext } from '../../templating';
+import { applyWiring } from '../apply-wiring';
 import { emit } from '../emit';
 import type { Kind } from '../kind';
 import { label } from '../label';
@@ -48,6 +49,7 @@ export const readModelKind: Kind = {
 
     declareTable(scope, context, { table: store.table, templates: 'read-model', changedBy: CHANGED_BY_HAND });
     register(scope, context, { name, store });
+    listTable(scope, context, store);
     noteTheMigration(scope);
 
     if (scope.flags.tenantScoped && !store.needsDatabase) {
@@ -95,6 +97,21 @@ function readModelVars(scope: Scope, name: Name, store: ReadModelStore): RenderC
       tenantScoped: store.tenantScoped,
     }),
   });
+}
+
+/**
+ * A read model kept in a table joins the list the application checks when it starts
+ * (`<platformDir>/database/read-model-tables.ts`): its store is built there as the application
+ * binds it, so its table is read by the code the store itself runs before its first trace.
+ */
+function listTable(scope: Scope, context: RenderContext, store: ReadModelStore): void {
+  if (store.needsDatabase) {
+    applyWiring(
+      scope.ws,
+      `${scope.config.platformDir}/database/read-model-tables.ts`,
+      renderTemplate('read-model/tables.wiring.tpl', context),
+    );
+  }
 }
 
 interface Registered {

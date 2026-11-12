@@ -272,7 +272,7 @@ function boundaryOf(platform: Platform, options: ApplicationOptions{{#if present
 
 /**
 {{#if persistence.hasDatabase}}
- * The read model tables of the database first, then the consumers, then the jobs: a job sends commands whose events must find their handlers.
+ * The listed read model tables first, then the consumers, then the jobs: a job sends commands whose events must find their handlers.
 {{/if}}
 {{#unless persistence.hasDatabase}}
  * The consumers first, then the jobs: a job sends commands whose events must find their handlers.

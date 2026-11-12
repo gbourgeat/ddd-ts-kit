@@ -126,7 +126,7 @@ export interface PlatformOptions {
   readonly traceConsumers?: ConsumerTrace;
   {{#if persistence.hasDatabase}}
   /**
-   * What the start does with a read model table that cannot hold the trace of a deleted row. Left out, it
+   * What the start does with a listed read model table that cannot hold the trace of a deleted row. Left out, it
    * refuses to start, with every such table and the migration to write; `'reported'` logs them as one error
    * and starts, for a deployment that starts the application before its migrations ran.
    */
@@ -159,7 +159,7 @@ export function platformModule(persistence: Persistence, options: PlatformOption
   return defineContextModule({
     name: 'platform',
     {{#if persistence.hasDatabase}}
-    // Before a consumer is subscribed or a request served, whatever builds a store and whenever: one read of the catalog.
+    // Before a consumer is subscribed or a request served, whenever a store is built: each listed read model table, read by its own store.
     onStart: ({ resolve }) => readModelTables(persistence).atStart(resolve(Logger), options.readModelTables),
     {{/if}}
     // Closed inside `stop()` of the application, after the jobs and the consumers and before the logger is flushed.

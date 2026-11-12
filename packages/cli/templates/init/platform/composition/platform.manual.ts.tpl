@@ -27,7 +27,7 @@ import type {
   {{/if}}
 } from '@ddd-ts-kit/kernel';
 {{#if persistence.hasDatabase}}
-import type { PostgresReadModelTables } from '@ddd-ts-kit/kernel';
+import type { ReadModelTables } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if queue.stored}}
 import type { JobStore } from '@ddd-ts-kit/scheduling';
@@ -72,8 +72,8 @@ export interface Platform {
   readonly eventBus: IntegrationEventPublisher;
   readonly persistence: Persistence;
   {{#if persistence.hasDatabase}}
-  /** The read model tables of the database, which the application checks in one pass when it starts, before an event reaches a store. */
-  readonly readModelTables: PostgresReadModelTables;
+  /** The read model tables the application lists, which it checks in one pass when it starts, before an event reaches a store. */
+  readonly readModelTables: ReadModelTables;
   {{/if}}
   /** Asks the policies about one element, then the authorizer: for the rules that need loaded state. */
   readonly access: Access;
