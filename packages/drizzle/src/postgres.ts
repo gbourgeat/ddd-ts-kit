@@ -16,6 +16,7 @@ export * from './postgres/outbox/processed-events-table';
 export * from './postgres/outbox/drizzle-outbox-store';
 export * from './postgres/outbox/drizzle-processed-event-store';
 export * from './postgres/sql/primary-key-of';
+export * from './postgres/sql/insert-ignoring-conflict';
 export * from './postgres/locks/drizzle-locking-context';
 export * from './postgres/locks/advisory-lock';
 export * from './postgres/locks/try-advisory-lock';

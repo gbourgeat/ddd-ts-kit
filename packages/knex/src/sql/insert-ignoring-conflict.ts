@@ -19,6 +19,12 @@ export interface IgnoringInsert {
  * too: when it wrote nothing, one query asks whether a row holds the key, and when none does,
  * a `UniqueViolationError` is raised, as the other databases answer.
  *
+ * On PostgreSQL that takes two statements at most. A conflict target on the key alone lets two
+ * inserts of one key made at once meet on the other unique index first, and one of them is then
+ * refused for a value no other row holds. The first statement skips on any unique value; when it
+ * wrote nothing, the second names the key: `false` for a key that is held, and the refusal of
+ * the database for a value another row holds.
+ *
  * `table` is the query builder of the target table, built on `executor`:
  * `insertIgnoringConflict(db, db('invoices').withSchema('billing'), { row, conflict: 'id' })`.
  */
@@ -30,16 +36,26 @@ export async function insertIgnoringConflict(
   const columns = typeof conflict === 'string' ? [conflict] : [...conflict];
   // Before the insert, which changes the builder: the lookup of the key on MySQL reads the same table.
   const lookup = table.clone();
+  const skipping = table.clone();
   const insert = table.insert(row).onConflict(columns).ignore();
+  const dialect = dialectOf(executor);
 
-  if (dialectOf(executor) === 'mysql') {
+  if (dialect === 'mysql') {
     return (await wroteOnMySql(executor, insert)) || keyTaken(lookup, row, columns);
   }
 
-  // RETURNING yields the row only when it was written.
-  const inserted: unknown[] = await insert.returning(columns[0] ?? '*');
+  const key = columns[0] ?? '*';
 
-  return inserted.length === 1;
+  // RETURNING yields the row only when it was written.
+  if (dialect === 'postgres' && (await wrote(skipping.insert(row).onConflict().ignore().returning(key)))) {
+    return true;
+  }
+
+  return wrote(insert.returning(key));
+}
+
+async function wrote(insert: PromiseLike<readonly unknown[]>): Promise<boolean> {
+  return (await insert).length === 1;
 }
 
 /** Whether a row holds the key of `row`; when none does, the row was skipped for another unique value. */

@@ -1,5 +1,5 @@
 import { and, count, eq, isNull } from 'drizzle-orm';
-import { optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
+import { insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
@@ -57,20 +57,16 @@ export class DrizzleMemberRepository implements MemberRepository {
   async save(saved: Member): Promise<void> {
     await optimisticUpdate(saved, async ({ expected, next }) => {
       const state = { ...MemberMapper.toRow(saved), version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.length;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).length;
     });
   }
 
-  private insert(state: VersionedMember) {
+  private async insert(state: VersionedMember): Promise<number> {
     const row = { ...state, ...stampCreation(this.scope, this.clock) };
+    const insertion = () => executorOf(this.database).insert(members).values(row);
 
-    return executorOf(this.database)
-      .insert(members)
-      .values(row)
-      .onConflictDoNothing({ target: primaryKeyOf(members) })
-      .returning({ id: members.id });
+    return (await insertIgnoringConflict(insertion, members)) ? 1 : 0;
   }
 
   private update(state: VersionedMember, expected: number) {

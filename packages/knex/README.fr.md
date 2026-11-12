@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:11f81fbc7a2e9500 -->
+<!-- translation-of: README.md sha256:e262f9c238977296 -->
 
 # @ddd-ts-kit/knex
 
@@ -395,7 +395,7 @@ dialectes diffèrent (`RETURNING` sur PostgreSQL et SQLite, le nombre de lignes 
 MySQL). Il n'ignore qu'un conflit sur `conflict` (l'id) : une ligne qui prend une valeur qu'une
 autre ligne détient sous une contrainte d'unicité (un e-mail) est refusée par la base, et
 `optimisticUpdate` lève `UniqueViolationError` (code `CONFLICT`, 409), pas une mise à jour
-perdue ; sur MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` écarte aussi cette ligne, l'utilitaire demande si une ligne détient la clé quand rien n'a été écrit, et lève `UniqueViolationError` quand aucune ne la détient.
+perdue ; sur MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` écarte aussi cette ligne, l'utilitaire demande si une ligne détient la clé quand rien n'a été écrit, et lève `UniqueViolationError` quand aucune ne la détient. Deux premiers enregistrements d'un même agrégat faits en même temps (une requête livrée deux fois) ne sont pas refusés pour la valeur unique qu'ils écrivent tous les deux : sur PostgreSQL, une cible de conflit sur la clé seule les laisse se rencontrer d'abord sur l'autre index unique, si bien que l'utilitaire insère par une instruction qui passe sur toute valeur unique, et seulement quand elle n'a rien écrit par une seconde qui nomme la clé. Celui qui a perdu n'écrit aucune ligne, une `ConcurrencyError`.
 
 ![Deux transactions chargent la facture inv-1 à la version 3 ; la première sauvegarde, sa mise à jour trouve la version 3 et la ligne passe à la version 4 ; la seconde sauvegarde ensuite, sa mise à jour attend toujours la version 3, n'écrit aucune ligne, et optimisticUpdate lève ConcurrencyError, code CONCURRENCY_CONFLICT](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/persistence-optimistic-concurrency.fr.svg)
 

@@ -40,6 +40,7 @@ repositoryContract<Invoice>(
     },
     createAggregate: () => Invoice.draft(`inv-${(next += 1)}`, next * 100),
     createAggregateTaking: (holder) => Invoice.draft(`inv-${(next += 1)}`, holder.state.amount),
+    createAggregateAgain: (first) => Invoice.draft(first.id, first.state.amount),
     mutate: (invoice) => invoice.addCharge(50),
     idOf: (invoice) => invoice.id,
     stateOf: (invoice) => invoice.state,

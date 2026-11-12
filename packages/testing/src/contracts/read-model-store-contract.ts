@@ -4,6 +4,7 @@ import { DeletionsSuite } from './read-model/deletions-suite';
 import { RebuildSuite } from './read-model/rebuild-suite';
 import type { ReadModelStoreUnderContract } from './read-model/read-model-store-under-contract';
 import { RowsSuite } from './read-model/rows-suite';
+import { WritesAtOnceSuite } from './read-model/writes-at-once-suite';
 
 export interface ReadModelStoreContractOptions {
   readonly name: string;
@@ -17,7 +18,8 @@ export interface ReadModelStoreContractOptions {
   stored?(key: string): Awaitable<Readonly<Record<string, unknown>> | undefined>;
   /**
    * True when the storage holds `title` unique (a unique index on its column): the contract
-   * checks that a deleted row frees its value. Without it that case stays to do.
+   * checks that a deleted row frees its value, and that writers inserting one row at once are not
+   * refused for it. Without it those cases stay to do.
    */
   readonly uniqueTitle?: boolean;
 }
@@ -33,5 +35,10 @@ export function readModelStoreContract(runner: ContractRunner, options: ReadMode
 
   new RowsSuite(runner, create).describe(`${options.name} (read model store contract: rows)`);
   new DeletionsSuite(runner, create, options).describe(`${options.name} (read model store contract: deletions)`);
+
+  new WritesAtOnceSuite(runner, create, { ...options, rebuilt: true }).describe(
+    `${options.name} (read model store contract: writes at once)`,
+  );
+
   new RebuildSuite(runner, create).describe(`${options.name} (read model store contract: rebuild)`);
 }

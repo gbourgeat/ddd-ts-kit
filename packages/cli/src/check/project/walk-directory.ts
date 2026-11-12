@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-
-const SKIPPED_DIRECTORIES = new Set(['node_modules', 'dist', '.git', '.worktrees']);
+import { SKIPPED_DIRECTORIES } from './skipped-directories';
 
 /** Where a walk starts, and what it leaves out. */
 export interface Walk {

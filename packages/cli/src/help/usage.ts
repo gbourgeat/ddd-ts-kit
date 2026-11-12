@@ -63,7 +63,7 @@ export const USAGE = `Usage
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]
-  ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]
+  ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run] [--allow-cycle]
   ddd-ts-kit context-layout [<context>...] [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit affected --base <git-ref> --run <script>

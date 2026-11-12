@@ -1,23 +1,11 @@
 import { posix } from 'node:path';
 import { CliError } from '../cli-error';
 import type { Config } from '../config';
-import { isDeclarationsFile } from '../declared';
 import { filesUnder } from '../generate/files-under';
-import {
-  declaredModules,
-  intoModule,
-  isContextLevel,
-  isRoleFolder,
-  MODULE_LAYERS,
-  MODULE_TEST_FOLDERS,
-  moduleSplit,
-  TEST_FOLDER,
-} from '../model-modules';
+import { declaredModules, intoModule, MODULE_TEST_FOLDERS, moduleSplit, TEST_FOLDER } from '../model-modules';
 import type { Workspace } from '../workspace';
 import type { ModuleMove } from './module-move';
-
-/** The folders of the tests whose files follow their subject into a module, beside its specs. */
-const SUPPORT_FOLDERS = ['fakes', 'builders'];
+import { placeInModule } from './place-in-module';
 
 /** What to move: a context, the module it goes into, and paths relative to the context. */
 export interface MoveRequest {
@@ -148,29 +136,16 @@ function twinsOf(ws: Workspace, move: ModuleMove, { directory, modules, module }
 }
 
 function moveOf(file: string, { context, directory, modules, module }: Placement): ModuleMove[] {
-  const { path } = moduleSplit(file, modules);
+  const place = placeInModule(file, { context, modules });
 
-  if (!hasPlaceInModule(path)) {
+  if (place === 'none') {
     throw new CliError(
       `${file} is in no role folder of a layer of "${context}", and in no test/unit/ nor test/integration/.`,
       'A module holds the files of the layers of its concepts, their specs, their fakes and their builders: published-language/ and the worlds stay outside every module.',
     );
   }
 
-  if (isContextLevel(context, path) || isDeclarationsFile(context, file, modules)) {
-    return [];
-  }
+  const to = intoModule(module, moduleSplit(file, modules).path);
 
-  const to = intoModule(module, path);
-
-  return to === file ? [] : [{ from: `${directory}/${file}`, to: `${directory}/${to}` }];
-}
-
-/** True for a path, read without its module, that a module holds: a file of a role folder of a layer, a spec, a fake or a builder. */
-function hasPlaceInModule(path: string): boolean {
-  const [layer = '', folder = ''] = path.split('/');
-
-  return layer === TEST_FOLDER
-    ? MODULE_TEST_FOLDERS.includes(folder) || SUPPORT_FOLDERS.includes(folder)
-    : MODULE_LAYERS.includes(layer) && isRoleFolder(layer, folder);
+  return place === 'stays' || to === file ? [] : [{ from: `${directory}/${file}`, to: `${directory}/${to}` }];
 }

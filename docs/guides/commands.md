@@ -87,7 +87,7 @@ path). A field of another type, the `readonly string[]` of the products for one,
 | `npx ddd-ts-kit generate context <name> --classification <c> --reason "..." --term "<Term>=<meaning>\|<not to be confused with>" ... --upstream ...` | declares a context with its language, the sentence of why it is of its classification, and its relationships | after the bootstrap, one per row of `contexts.md`, upstreams first | the context directory, its `CONTEXT.md`, the config entry | `npx ddd-ts-kit docs` |
 | `npx ddd-ts-kit list`, `describe <context>` | what exists, per context or for one | before planning or changing a context | a map of the contexts, or one as facts (`--json`) | `/ddd-ts-kit:plan-slices` |
 | `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | declares a [module of the model](../concepts/modules.md): the config entry, its row of `## Modules` in `CONTEXT.md`, its terms, and in the explicit style its module file `<module>/<module>.module.ts`, composed by `<context>.module.ts`; re-runnable, it adds what is missing | when one context holds clusters of concepts of one language that a reader opens separately; never to hide a second language | the module, declared and documented | `move-to-module`, then `generate ... --module` |
-| `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]` | moves files and folders of the layers of a context, and its specs, fakes and builders, into a declared module (`<module>/<layer>/`, `<module>/test/`), with every import of them in the project | one cluster per commit, until `module/complete` warns no more | the moved files and the rewritten imports | `npm run verify` |
+| `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run] [--allow-cycle]` | moves files and folders of the layers of a context, and its specs, fakes and builders, into a declared module (`<module>/<layer>/`, `<module>/test/`), with every import of them in the project; writes nothing when the move would close a cycle between modules that is not there now, and names the cycle and the file to move along, unless `--allow-cycle` | one cluster per commit, until `module/complete` warns no more | the moved files and the rewritten imports | `npm run verify` |
 
 ## Build a slice
 
@@ -163,7 +163,7 @@ path). A field of another type, the `readonly string[]` of the products for one,
 | Command | Does | When | Produces | Then |
 |---|---|---|---|---|
 | read [CHANGELOG.md](../../CHANGELOG.md), also shipped as `node_modules/ddd-ts-kit/CHANGELOG.md` | what changed and what to do | before upgrading, or when the session start says the plugin describes another version | the steps of the version | update the `@ddd-ts-kit/*` and `ddd-ts-kit` versions together |
-| commit, then `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again. What the generators and the team wrote in those files stays: what each `ddd-ts-kit:*` region holds (a value of a gateway, the settings of a job, a policy, a hand-written fake), the grants of `roles.ts` and the role vocabulary, the database schemas and preview features of the Prisma datasource, the services of `docker-compose.yml`; the tables and the audited events a region does not hold are listed again from the tree. At the same version `git diff` is empty. What it cannot keep is named in a note, file by file, with the command that writes it again: a region this version no longer holds, a marker left without its partner, a `roles` object it cannot read to its end, which it leaves out whole, the repositories left on the ORM a flag changed. Keeps `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts`, the pipeline and the Drizzle journal `migrations/meta/_journal.json` as the team's, merges `.gitignore` and `.dockerignore`; refuses, exit 2, while a file it would replace differs from the last commit | after the upgrade, on a clean working tree | the platform files of the new version, the files it kept, and notes | `git diff`, then `npm run verify` |
+| commit, then `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again. What the generators and the team wrote in those files stays: what each `ddd-ts-kit:*` region holds (a value of a gateway, the settings of a job, a policy, a hand-written fake), the grants of `roles.ts` and the role vocabulary, the database schemas and preview features of the Prisma datasource, the services of `docker-compose.yml`; the tables and the audited events a region does not hold are listed again from the tree. At the same version `git diff` is empty. What it cannot keep is named in a note, file by file, with the command that writes it again: a region this version no longer holds, a marker left without its partner, a `roles` object it cannot read to its end, which it leaves out whole, the repositories left on the ORM a flag changed. Keeps `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/main.ts`, the pipeline, the Drizzle journal `migrations/meta/_journal.json` and the tables the tests on a server keep their rows of (`test/support/test-database-kept.ts`) as the team's, merges `.gitignore` and `.dockerignore`; refuses, exit 2, while a file it would replace differs from the last commit | after the upgrade, on a clean working tree | the platform files of the new version, the files it kept, and notes | `git diff`, then `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply`, `value-objects` | moves function routes to controllers, error classes to factories, value objects from a `Result` to factories that throw | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npx ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]` | moves the files of `src/platform/` a project generated flat to their folders (`composition/`, `observability/`, `jobs/`, `auth/authentication/`, `auth/authorization/`, the folder of the model, `audit/search-audit-entries/`), with every import of them and the scripts of package.json | when `doctor` reports `folder src/platform: flat`; the generators and `init --force` keep the flat layout until then | the moved files, the rewritten imports, the files of the team it left flat | `npm run format`, `npm run verify` |
 | `npm run regenerate` | regenerate what derives from the config | after any change of the config | `.dependency-cruiser.cjs`, the generated documents | `npm run verify` |
@@ -254,6 +254,13 @@ kit, never a mistake of the caller: one line with the version of the kit and whe
 (under `--json`, an `error` with `"internal": true`); report it at
 https://github.com/gbourgeat/ddd-ts-kit/issues with the command it gives.
 
+Under `--json`, a refusal is `{"error": {"message": "...", "fix": "..."}}`. The refusal of
+`move-to-module` that would close a cycle between modules adds to it what a script reads without
+parsing the sentences: `cycles`, each with its `modules` in order and its `steps` (`from`, `to`,
+`added` for a step the move adds, and `imports`, each with `file`, `line` and `imported`, the paths
+as they are before the move), and `along`, the files or folders to name in the same command,
+relative to the context. With `--allow-cycle` the same `cycles` are in the report of the move.
+
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->
 
@@ -316,7 +323,7 @@ Usage
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]
-  ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]
+  ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run] [--allow-cycle]
   ddd-ts-kit context-layout [<context>...] [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit affected --base <git-ref> --run <script>
@@ -393,7 +400,11 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    the source root, test/ and scripts/ follows, a migration that names the compiled file too,
                    and the generated declarations are rewritten; what belongs to no module stays: the code
                    list and the permission set at the root of the context, and in shared/ the schema of its
-                   database, its route groups, guards and shared shapes, its worlds
+                   database, its route groups, guards and shared shapes, its worlds. A move that would close a
+                   cycle between modules that is not there now writes nothing, with or without --dry-run: it
+                   names the cycle, the imports that make it (file and line) and the file to move along;
+                   --allow-cycle moves all the same, and module/no-cycle then reports the cycle. A project
+                   that turns module/no-cycle off is not judged
   context-layout   takes the files of the contexts, or of the ones named, to their place of today. The code
                    list and the permission set that 0.86 or 0.87 wrote in a role folder: domain/errors/codes.ts
                    to <context>.codes.ts and application/authorization/<context>.permissions.ts to

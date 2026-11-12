@@ -29,6 +29,26 @@ export const IMPORTS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'imports/alias-only',
+    name: 'the files a test runner loads as its global setup, which import one another by a relative path of test/support',
+    expect: 'pass',
+    files: project({
+      'test/support/test-database-run.ts': 'export const run = 1;\n',
+      'test/support/test-database-setup.ts':
+        "import { run } from './test-database-run.js';\nexport const setup = run;\n",
+    }),
+  },
+  {
+    ruleId: 'imports/alias-only',
+    name: 'a file of test/support that leaves its directory by a relative path',
+    expect: { file: 'test/support/test-database-setup.ts' },
+    files: project({
+      [SUPPORT]: 'export const start = 1;\n',
+      'test/support/test-database-setup.ts':
+        "import { start } from '../e2e/support/start-application.js';\nexport const setup = start;\n",
+    }),
+  },
+  {
+    ruleId: 'imports/alias-only',
     name: 'a relative import of the same directory',
     expect: { file: LOAD_CONFIG },
     files: project({

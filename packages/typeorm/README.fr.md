@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b05678c79634dca1 -->
+<!-- translation-of: README.md sha256:d64ad3568841637e -->
 
 # @ddd-ts-kit/typeorm
 
@@ -240,10 +240,10 @@ Dans le style explicite, sans le décorateur, la même liaison tient en une lign
 n'a écrit aucune ligne, et fait avancer `invoice.version` sinon. `insertIgnoringConflict` insère
 sauf si la clé existe et dit s'il l'a fait ; contrairement à une violation d'unicité
 interceptée, il laisse utilisable la transaction PostgreSQL qui l'entoure. Il n'ignore qu'un
-conflit sur la clé primaire (`ON CONFLICT (id) DO NOTHING` sur PostgreSQL et SQLite) : une ligne
+conflit sur la clé primaire (`ON CONFLICT (id) DO NOTHING` sur PostgreSQL et SQLite, une fois qu'une instruction sans cible n'a rien écrit) : une ligne
 qui prend une valeur qu'une autre ligne détient sous une contrainte d'unicité (un e-mail) est
 refusée par la base, et `optimisticUpdate` lève `UniqueViolationError` (code `CONFLICT`, 409),
-pas une mise à jour perdue ; sur MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` écarte aussi cette ligne, l'utilitaire demande si une ligne détient la clé quand rien n'a été écrit, et lève `UniqueViolationError` quand aucune ne la détient. N'utilisez pas
+pas une mise à jour perdue ; sur MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` écarte aussi cette ligne, l'utilitaire demande si une ligne détient la clé quand rien n'a été écrit, et lève `UniqueViolationError` quand aucune ne la détient. Deux premiers enregistrements d'un même agrégat faits en même temps (une requête livrée deux fois) ne sont pas refusés pour la valeur unique qu'ils écrivent tous les deux : sur PostgreSQL, une cible de conflit sur la clé seule les laisse se rencontrer d'abord sur l'autre index unique, si bien que l'utilitaire insère par une instruction qui passe sur toute valeur unique, et seulement quand elle n'a rien écrit par une seconde qui nomme la clé. Celui qui a perdu n'écrit aucune ligne, une `ConcurrencyError`. N'utilisez pas
 `manager.save` pour un agrégat : il lit avant d'écrire et choisit seul entre insertion et mise à
 jour, ce qui défait la garde de version. Le `@VersionColumn` de TypeORM n'est pas utilisé pour la
 même raison : la version appartient à l'agrégat.

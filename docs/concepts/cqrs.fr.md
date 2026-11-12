@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:067f48cd2f3666f1 -->
+<!-- translation-of: cqrs.md sha256:563a55520cb8de78 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -444,6 +444,18 @@ que sa trace ne peut pas être écrite, et un *upsert* est refusé aussitôt par
 sur plusieurs locataires lit une telle clé comme tenue et n'écrit que dans son propre locataire,
 si bien que son écriture d'une clé que tient un autre locataire se termine encore, après cinq
 tentatives, par une simple `ConcurrencyError`.
+
+**Une table peut tenir unique une autre valeur de la ligne** (un *slug*, un numéro, par un index
+unique de votre migration). La base la garde : une ligne qui prend la valeur que tient une ligne
+vivante d'une autre clé est refusée, par l'erreur du pilote ou par `UniqueViolationError`, et le
+gestionnaire de l'événement la voit ; la trace d'une ligne supprimée libère sa valeur. Des
+événements d'une même clé appliqués en même temps ne sont jamais refusés pour la valeur qu'ils
+écrivent tous. PostgreSQL peut les refuser quand l'insertion nomme la clé seule comme cible de
+conflit, puisque deux insertions qui se croisent se rencontrent alors d'abord sur l'autre index :
+les registres des quatre ORM insèrent par une instruction qui passe sur toute valeur unique, et
+seulement quand elle n'a rien écrit par une seconde qui nomme la clé, ce qui distingue une clé
+tenue, pour laquelle l'événement est comparé à la ligne et appliqué s'il est plus récent, d'une
+valeur que tient une autre ligne, qui est refusée.
 
 ### Chaque table vérifiée au démarrage, et avant un déploiement
 

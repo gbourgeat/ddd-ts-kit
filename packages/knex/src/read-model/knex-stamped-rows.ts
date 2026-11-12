@@ -50,6 +50,8 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   async insert(entry: StampedRow<Row>): Promise<boolean> {
     await this.holdsTrace(entry);
 
+    // Two writers of one key inserting at once are not refused for another unique value of the row
+    // they both write: `insertIgnoringConflict` names the key only once a first statement skipped.
     return insertIgnoringConflict(this.context.executor(), this.table(), {
       row: this.recordOf(entry),
       conflict: this.keyColumn(),

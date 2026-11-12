@@ -14,7 +14,7 @@ The alias is declared once, under `paths` in `tsconfig.json`, which the compiler
 
 ## Reported
 
-- a relative specifier, `./x` or `../x`, with or without an extension, the same directory included: fixed to the alias of the file
+- a relative specifier, `./x` or `../x`, with or without an extension, the same directory included: fixed to the alias of the file (but between two files directly under `test/support/`, see Details)
 - a relative specifier that names a file under no aliased directory (a manifest, a build product): reported, not fixed
 - an alias specifier with a `.` or `..` segment, which could name a file outside the directory of the alias: reported, not fixed
 
@@ -54,6 +54,13 @@ The aliases of a project:
 | `$generated/` | `generated/`, with `stack.orm` `prisma` only | fixed |
 
 The fix computes the alias from the place of the file and the config: the relative specifier is resolved from the directory of the file, and the result is written from the directory its alias names, ending as `importExtension` of the config says: with nothing under `none`, with `.js` under `js` (a config without the key). It keeps the quotes of the specifier. A fixed import is often longer than the line: run the formatter after the fix (`npm run format`). Fixing twice changes nothing.
+
+One relative path stands: a file directly under `test/support/` imports its neighbour by `./<name>`. A test runner loads its global setup, and every file that one imports, with the resolution of Node, before any alias of the project exists: Jest resolves no `moduleNameMapper` there, and a setup that imported by alias would start from the script of the project only, not from `npx jest` nor from an editor. Nothing else is spared: from `test/support/`, `../e2e/support/start-application` and `./parts/part` are reported, and a file of any other directory imports its neighbour by alias. Under `"importExtension": "js"` the neighbour is named by the `.ts` of its source (`./test-database-run.ts`), which Node resolves and which `rewriteRelativeImportExtensions` of `tsconfig.json` lets the compiler read.
+
+```ts
+// test/support/test-database-setup.ts
+import { openRun } from './test-database-run';
+```
 
 Not judged: a file outside the three directories (a config file at the project root, a JavaScript migration), the client under `generated/`, which a tool writes, and a specifier that is neither relative nor one of the aliases (a package, a Node built-in).
 

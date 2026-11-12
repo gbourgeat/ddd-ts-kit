@@ -56,13 +56,17 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
     const columns = record.map(([column]) => quoted(column)).join(', ');
     const places = record.map((_, index) => `$${String(index + 1)}`).join(', ');
     const key = this.column(this.target.key);
+    const row = `insert into ${this.target.path} (${columns}) values (${places})`;
+    const values = record.map(([, value]) => value);
 
-    const inserted = await this.run(
-      `insert into ${this.target.path} (${columns}) values (${places}) on conflict (${key}) do nothing returning ${key}`,
-      record.map(([, value]) => value),
-    );
+    const inserted = async (conflict: string): Promise<boolean> =>
+      (await this.run(`${row} on conflict${conflict} do nothing returning ${key}`, values)).length === 1;
 
-    return inserted.length === 1;
+    // On the key alone, two writers of one key inserting at once may be refused on another unique
+    // value of the row they both write. The first statement skips on any unique value; when it wrote
+    // nothing, the second names the key: `false` for a key that is held, and the refusal of the
+    // database for a value another row holds.
+    return (await inserted('')) || inserted(` (${key})`);
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {

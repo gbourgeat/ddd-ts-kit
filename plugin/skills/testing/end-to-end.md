@@ -22,10 +22,15 @@ until you send the request that enqueues. Never wait for the worker with a delay
 `--job <JobName>` names one job, also for a use case a route reaches
 (`test/e2e/<use-case>-<job>.e2e.spec.ts`). On an ORM, each spec opens a copy of the PostgreSQL
 cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
-creates its tables there. With `DATABASE_URL` set, each spec file runs on a copy of that migrated
-database instead (`test/support/test-database-clone.ts`), dropped when the application closes:
-files run at the same time there too, and a spec never connects to the migrated database itself,
-which PostgreSQL copies only while nobody else is connected to it.
+creates its tables there. With `DATABASE_URL` set, a global setup copies the migrated database it
+names once and empties the copy (`test/support/test-database-setup.ts`), and each spec file runs
+on a copy of that template, dropped when the application closes: a file starts from empty tables
+there too, and never connects to the migrated database itself. A row a migration inserts and the
+application reads: list its table in `KEPT_TABLES` of `test/support/test-database-kept.ts`, as
+the server stores its name (`public.countries`); any other row, the spec stores. The files of
+`test/support/` import one another by `./<name>`, since a runner loads them before any alias. A
+run refused with `spec files at once need ... connections` does what its message says (fewer
+files at once, or the bound it names).
 
 A spec past 350 lines (`clean/file-size`) is split by behaviour into parts named after it:
 `test/e2e/place-order-refusals.e2e.spec.ts` beside `test/e2e/place-order.e2e.spec.ts`. With a

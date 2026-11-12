@@ -34,6 +34,9 @@ export interface TestDatabase {
  * and end-to-end specs need no container. With a URL, the tests run on that server instead,
  * each call on a copy of the database the URL names, which must already be migrated
  * (`npm run db:migrate`).
+ * The copy holds the tables and no row, but for the tables test/support/test-database-kept.ts
+ * lists: an end-to-end run makes it from the template of its global setup, any other caller
+ * copies the migrated database itself.
  */
 export function openTestDatabase(url?: string): Promise<TestDatabase> {
   return url === undefined ? openInProcess() : openServer(url);
@@ -73,12 +76,14 @@ async function inProcessPostgres(): Promise<PGlite> {
 }
 
 /**
- * A database of its own on the server, copied from the migrated one and dropped at close
- * (test/support/test-database-clone.ts): no other file, and no other run, reads or empties its rows.
+ * A database of its own on the server, dropped at close (test/support/test-database-clone.ts): the
+ * tables of the migrated one, emptied but for those test/support/test-database-kept.ts lists. No
+ * other file, and no other run, reads or empties its rows. Its pool is the share this file has of
+ * the connections of the server.
  */
 async function openServer(url: string): Promise<TestDatabase> {
   const clone = await cloneDatabase(url);
-  const client = createClient(clone.url);
+  const client = createClient(clone.url, { poolSize: clone.poolSize });
 
   const close = async (): Promise<void> => {
     await client.$disconnect();

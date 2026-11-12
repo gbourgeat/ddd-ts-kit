@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:d25bcb1247ad0d07 -->
+<!-- translation-of: test-runners.md sha256:c6f49595a3fc7fe8 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -496,8 +496,13 @@ export default {
   modules de chaque fichier de *spec* joué, environ 15 Mo chacun avec les modules ES, et un
   *worker* unique tourne en bande, où cette limite ne s'applique pas : une suite d'environ 200
   fichiers de bout en bout a alors manqué de tas. Avec `DATABASE_URL`, les deux *workers* restent :
-  chaque fichier s'exécute sur une copie de la base migrée, la sienne
-  (`test/support/test-database-clone.ts`). Un *broker* ou un serveur au protocole Redis est le même
+  chaque fichier s'exécute sur une base à lui, copiée du modèle que son exécution a fait de la base
+  migrée (`test/support/test-database-clone.ts`), et la configuration nomme la mise en place
+  globale qui ouvre cette exécution (`test/support/test-database-setup.ts`), puisqu'un *hook* n'y
+  a que les 20 secondes d'un test. Jest charge cette mise en place, et ce qu'elle importe, avec la
+  résolution de Node, qui ne connaît aucun alias : les fichiers de `test/support/` s'importent par
+  un chemin relatif, si bien que `npx jest -c jest.e2e.config.js` et le lanceur d'un éditeur
+  démarrent l'exécution comme les scripts. Un *broker* ou un serveur au protocole Redis est le même
   pour tous les fichiers, qui consommeraient les événements et liraient les clés les uns des
   autres : avec son adresse (`AMQP_URL`, `KAFKA_BROKERS`, `NATS_URL`, `REDIS_URL`) la configuration
   garde un seul *worker*, en bande, et le tas d'une longue suite demande

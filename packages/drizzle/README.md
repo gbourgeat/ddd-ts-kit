@@ -233,7 +233,7 @@ import { and, eq } from 'drizzle-orm';
 import { integer, text, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { contextSchema, DrizzleContext, optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
+import { contextSchema, DrizzleContext, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
 
 // The aggregate and its port of the previous sample, reduced to their shape.
 type OrderStatus = 'open' | 'placed';
@@ -289,14 +289,16 @@ export class DrizzleOrderRepository implements OrderRepository {
 
     await optimisticUpdate(order, async ({ expected, next }) => {
       const row = OrderMapper.toRow(order, next);
-      const written =
-        expected === 0
-          ? await db.insert(orders).values(row).onConflictDoNothing({ target: primaryKeyOf(orders) }).returning({ id: orders.id })
-          : await db
-              .update(orders)
-              .set(row)
-              .where(and(eq(orders.id, order.id), eq(orders.version, expected)))
-              .returning({ id: orders.id });
+
+      if (expected === 0) {
+        return (await insertIgnoringConflict(() => db.insert(orders).values(row), orders)) ? 1 : 0;
+      }
+
+      const written = await db
+        .update(orders)
+        .set(row)
+        .where(and(eq(orders.id, order.id), eq(orders.version, expected)))
+        .returning({ id: orders.id });
 
       return written.length; // 0 rows: optimisticUpdate throws ConcurrencyError
     });
@@ -316,16 +318,21 @@ with a relational schema (`drizzle(url, { schema })`), declare `Database` as
 
 | `expected` | Statement | No row written means |
 |---|---|---|
-| `0`: never saved | `INSERT ... ON CONFLICT (id) DO NOTHING` | the id is taken |
+| `0`: never saved | `insertIgnoringConflict`: `INSERT ... ON CONFLICT DO NOTHING`, then `ON CONFLICT (id) DO NOTHING` when it wrote nothing | the id is taken |
 | `n` | `UPDATE ... SET version = n + 1 WHERE id = ... AND version = n` | another transaction saved it since it was read |
 
-The conflict target is the primary key alone, as the table declares it
-(`onConflictDoNothing({ target: primaryKeyOf(orders) })`, the id, or every column of a key that
-holds the tenant): without
-it, PostgreSQL also skips a row that takes a value another row holds under a unique constraint
-(an email), and the save reads as a lost update. Named, that row is refused by the database,
-and `optimisticUpdate` raises `UniqueViolationError` (code `CONFLICT`, 409), as for an update
-that takes such a value.
+`insertIgnoringConflict(() => db.insert(orders).values(row), orders)` inserts unless the primary
+key exists, as the table declares it (`primaryKeyOf(orders)`, the id, or every column of a key that
+holds the tenant), and says whether it did. It takes two statements at most, which is why the
+insert is given as a function. Neither conflict clause is enough alone. Without a target,
+PostgreSQL also skips a row that takes a value another row holds under a unique constraint (an
+email), and the save reads as a lost update. With the key as its target, two first saves of one
+aggregate made at once (a request delivered twice) meet on the other unique index first, and the
+one that lost is refused for a value no other row holds, where it lost an update. So the first
+statement names no target, and only when it wrote nothing the second names the key: a key that is
+held writes no row, which `optimisticUpdate` raises as a `ConcurrencyError`, and a value another
+row holds is refused by the database, which it raises as a `UniqueViolationError` (code
+`CONFLICT`, 409), as for an update that takes such a value.
 
 ### A lock on a business key
 
@@ -389,9 +396,9 @@ import {
   auditColumns,
   contextSchema,
   DrizzleContext,
+  insertIgnoringConflict,
   optimisticUpdate,
   ownTenantCondition,
-  primaryKeyOf,
   tenantColumn,
   tenantCondition,
 } from '@ddd-ts-kit/drizzle/postgres';
@@ -461,19 +468,17 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { id: invoice.id, amount: invoice.amount, status: invoice.status, version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.length;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).length;
     });
   }
 
-  private insert(state: VersionedInvoice) {
+  private async insert(state: VersionedInvoice): Promise<number> {
     // tenant_id from the work in progress, created_* and updated_* from its actor and the Clock
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
+    const insertion = () => this.database.executor().insert(invoices).values(row);
 
-    const insertion = this.database.executor().insert(invoices).values(row);
-
-    return insertion.onConflictDoNothing({ target: primaryKeyOf(invoices) }).returning({ id: invoices.id });
+    return (await insertIgnoringConflict(insertion, invoices)) ? 1 : 0;
   }
 
   private update(state: VersionedInvoice, expected: number) {

@@ -17,8 +17,9 @@ describe('the first save of a generated repository', () => {
   it('ignores a conflict on the id alone on Drizzle, so that another unique value is refused by the database', () => {
     const repository = repositoryOn('drizzle', 'drizzle-invoice.repository.ts');
 
-    expect(repository).toContain('insertion.onConflictDoNothing({ target: primaryKeyOf(invoices) });');
-    expect(repository).not.toContain('onConflictDoNothing()');
+    expect(repository).toContain('const insertion = () => this.database.executor().insert(invoices).values(row);');
+    expect(repository).toContain('return (await insertIgnoringConflict(insertion, invoices)) ? 1 : 0;');
+    expect(repository).not.toContain('onConflictDoNothing');
   });
 
   it('ignores a conflict on the id alone on Knex', () => {

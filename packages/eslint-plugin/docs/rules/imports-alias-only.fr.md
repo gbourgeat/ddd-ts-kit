@@ -1,5 +1,5 @@
 [English](imports-alias-only.md) · **Français**
-<!-- translation-of: imports-alias-only.md sha256:6ba4c7970c915372 -->
+<!-- translation-of: imports-alias-only.md sha256:50b0b771ef706859 -->
 
 # ddd-ts-kit/imports-alias-only
 
@@ -15,7 +15,7 @@ L'alias est déclaré une fois, sous `paths` dans `tsconfig.json`, que lisent le
 
 ## Signalé
 
-- un spécificateur relatif, `./x` ou `../x`, avec ou sans extension, même répertoire compris : corrigé vers l'alias du fichier
+- un spécificateur relatif, `./x` ou `../x`, avec ou sans extension, même répertoire compris : corrigé vers l'alias du fichier (sauf entre deux fichiers placés directement sous `test/support/`, voir Détails)
 - un spécificateur relatif qui nomme un fichier hors de tout répertoire doté d'un alias (un manifeste, un produit de la construction) : signalé, non corrigé
 - un spécificateur d'alias avec un segment `.` ou `..`, qui pourrait nommer un fichier hors du répertoire de l'alias : signalé, non corrigé
 
@@ -55,6 +55,13 @@ Les alias d'un projet :
 | `$generated/` | `generated/`, avec `stack.orm` `prisma` seulement | fixe |
 
 La correction calcule l'alias à partir de l'emplacement du fichier et de la configuration : le spécificateur relatif est résolu depuis le répertoire du fichier, et le résultat est écrit depuis le répertoire que nomme son alias, avec la terminaison que dit `importExtension` de la configuration : rien sous `none`, `.js` sous `js` (une configuration sans la clé). Elle garde les guillemets du spécificateur. Un import corrigé est souvent plus long que la ligne : lancez le formateur après la correction (`npm run format`). Corriger deux fois ne change rien.
+
+Un seul chemin relatif est admis : un fichier placé directement sous `test/support/` importe son voisin par `./<nom>`. Un lanceur de tests charge sa mise en place globale (*global setup*), et chaque fichier que celle-ci importe, avec la résolution de Node, avant qu'aucun alias du projet n'existe : Jest n'y résout aucun `moduleNameMapper`, et une mise en place qui importerait par alias ne démarrerait que depuis le script du projet, ni depuis `npx jest` ni depuis un éditeur. Rien d'autre n'est épargné : depuis `test/support/`, `../e2e/support/start-application` et `./parts/part` sont signalés, et un fichier de tout autre répertoire importe son voisin par alias. Sous `"importExtension": "js"`, le voisin est nommé par le `.ts` de sa source (`./test-database-run.ts`), que Node résout et que `rewriteRelativeImportExtensions` de `tsconfig.json` laisse lire au compilateur.
+
+```ts
+// test/support/test-database-setup.ts
+import { openRun } from './test-database-run';
+```
 
 Ne sont pas jugés : un fichier hors des trois répertoires (un fichier de configuration à la racine du projet, une migration JavaScript), le client sous `generated/`, qu'un outil écrit, et un spécificateur qui n'est ni relatif ni l'un des alias (un *package*, un module natif de Node).
 

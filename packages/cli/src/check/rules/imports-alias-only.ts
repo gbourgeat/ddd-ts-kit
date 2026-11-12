@@ -12,11 +12,18 @@ import { toViolations } from '../support/to-violations';
 
 const RELATIVE = /^\.{1,2}(?:\/|$)/;
 const DOT_SEGMENT = /\/\.{1,2}(?:\/|$)/;
+/**
+ * A test runner loads its global setup, and what that file imports, with the resolution of Node,
+ * before any alias of the project exists: the files of `test/support/` import one another by a
+ * relative path of that same directory, `./<name>`, and nothing else is spared.
+ */
+const LOADED_BY_A_RUNNER = /^test\/support\/[^/]+$/;
+const SIBLING = /^\.\/[^/]+$/;
 
 export const importsAliasOnly: Rule = {
   id: 'imports/alias-only',
   description:
-    'A file of the project is imported by its alias (`@/...`), never by a relative path, the same directory included; an alias path holds no `.` or `..` segment. Holds under the source root, `test/` and `scripts/`.',
+    'A file of the project is imported by its alias (`@/...`), never by a relative path, the same directory included; an alias path holds no `.` or `..` segment. Holds under the source root, `test/` and `scripts/`; the files of `test/support/`, which a test runner loads before any alias exists, import one another by `./<name>`.',
   scope: 'file',
   run(project) {
     const written = writtenBy(project);
@@ -51,6 +58,10 @@ function findingsIn(written: Written, file: SourceFile): Finding[] {
 
 function flawOf(written: Written, file: string, specifier: string): Flaw | undefined {
   const { roots } = written;
+
+  if (LOADED_BY_A_RUNNER.test(file) && SIBLING.test(specifier)) {
+    return undefined;
+  }
 
   if (RELATIVE.test(specifier)) {
     return relativeFlaw(written, file, specifier);

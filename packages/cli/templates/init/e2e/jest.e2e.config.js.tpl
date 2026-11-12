@@ -23,6 +23,11 @@ export default {
   ...base,
   testMatch: ['<rootDir>/test/e2e/**/*.e2e.spec.ts', '<rootDir>/test/acceptance/**/*.acceptance.spec.ts'],
   testTimeout: 20000,
+{{#if persistence.hasDatabase}}
+  // With DATABASE_URL, copies the migrated database once and checks that the files of the run fit in the connections of
+  // the server; without it, initialises PostgreSQL in process as jest.config.js does.
+  globalSetup: '<rootDir>/test/support/test-database-setup.ts',
+{{/if}}
 {{#if endToEnd.sharedServer}}
   maxWorkers: sharedServer ? 1 : 2,
   // Out of band, a worker whose memory passes this after a file is replaced by a fresh one, so the heap of a long suite

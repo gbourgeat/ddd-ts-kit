@@ -239,32 +239,42 @@ const NO_DATA = {
 class UniqueTitles extends InMemoryReadModelTable<CriteriaContractRow> {
   private readonly titles = new Map<string, string | undefined>();
 
-  override async insert(entry: StampedRow<CriteriaContractRow>): Promise<boolean> {
-    return this.kept(entry, await super.insert(this.free(entry)));
+  override insert(entry: StampedRow<CriteriaContractRow>): Promise<boolean> {
+    return this.holding(entry, () => super.insert(entry));
   }
 
-  override async replace(entry: StampedRow<CriteriaContractRow>, held: EventStamp): Promise<boolean> {
-    return this.kept(entry, await super.replace(this.free(entry), held));
+  override replace(entry: StampedRow<CriteriaContractRow>, held: EventStamp): Promise<boolean> {
+    return this.holding(entry, () => super.replace(entry, held));
   }
 
-  private free(entry: StampedRow<CriteriaContractRow>): StampedRow<CriteriaContractRow> {
+  /** The title is taken before the write, as an index takes it for writers at once, and given back when nothing was written. */
+  private async holding(entry: StampedRow<CriteriaContractRow>, write: () => Promise<boolean>): Promise<boolean> {
     const taken = [...this.titles].some(([key, title]) => key !== entry.key && title === entry.row?.title);
 
     if (entry.row !== undefined && taken) {
       throw new UniqueViolationError(entry.key);
     }
 
-    return entry;
-  }
+    const before = this.titles.get(entry.key);
 
-  private kept(entry: StampedRow<CriteriaContractRow>, written: boolean): boolean {
-    if (written) {
-      this.titles.set(entry.key, entry.row?.title);
+    this.titles.set(entry.key, entry.row?.title);
+
+    const written = await write();
+
+    if (!written) {
+      this.titles.set(entry.key, before);
     }
 
     return written;
   }
 }
+
+// A store without a rebuild that holds a unique value: the writes at once are checked on its table alone.
+readModelRowsContract(runner, {
+  name: 'InMemoryReadModelTable holding a unique value, rows alone',
+  createTable: () => ({ table: new UniqueTitles() }),
+  uniqueTitle: true,
+});
 
 let readModelTable = new UniqueTitles();
 

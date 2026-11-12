@@ -275,9 +275,15 @@ A save that takes a value another row holds under a unique constraint (an email,
 not a lost update: running it again is refused again. The four ORM answer it alike, on an
 insert and on an update: `UniqueViolationError`, a `ConflictError` (code `CONFLICT`, 409) whose
 `cause` is the error of the driver (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`, `SQLITE_CONSTRAINT_PRIMARYKEY`, a raw `SQLITE_CONSTRAINT` whose message names a unique key,
-`P2002`), raised by `optimisticUpdate`. The first save ignores a conflict on the id alone
-(`ON CONFLICT (id) DO NOTHING`); on Prisma, whose `skipDuplicates` names no target,
-`rowsCreated` looks the id up when nothing was written. A handler that has a business answer
+`P2002`), raised by `optimisticUpdate`. The first save ignores a conflict on the id alone:
+`insertIgnoringConflict` of Drizzle, Knex and TypeORM; on Prisma, whose `skipDuplicates` names
+no target, `rowsCreated` looks the id up when nothing was written. Two first saves of one
+aggregate made at once (a request delivered twice) are a lost update, on a table with a unique
+column too: one writes the row and the other is answered `ConcurrencyError`, never a
+`UniqueViolationError` for the value they both write. On PostgreSQL an insert whose conflict
+target is the id alone would raise it, since the two inserts meet on the other unique index
+first, so `insertIgnoringConflict` inserts with `ON CONFLICT DO NOTHING`, and only when that
+wrote nothing with `ON CONFLICT (id) DO NOTHING`, which tells a taken id from a taken value. A handler that has a business answer
 for the taken value (`EMAIL_TAKEN`) catches `UniqueViolationError` and raises its own refusal.
 On MySQL, which has no conflict target and whose `INSERT IGNORE` skips that row too,
 `insertIgnoringConflict` of Knex and of TypeORM asks whether a row holds the id when nothing was
