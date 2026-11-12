@@ -1,4 +1,4 @@
-import { ProjectionRebuild, RowNotHeldError, type ProjectionRebuildReport } from '@ddd-ts-kit/kernel';
+import { ProjectionRebuild, type ProjectionRebuildReport } from '@ddd-ts-kit/kernel';
 import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
 import { failureOf } from '../failure-of';
 import type { ReadModelStoreUnderContract } from './read-model-store-under-contract';
@@ -15,7 +15,7 @@ export class RebuildSuite extends ReadModelStoreSuite<ReadModelStoreUnderContrac
     this.closesAfterEach();
     this.rebuilds();
     this.rebuildsUnderEvents();
-    this.rebuildsAroundARefusedChange();
+    this.rebuildsAroundAMissingRow();
     this.appliesAfterTheSwap();
     this.rebuildsAroundDeletions();
     this.rebuildsAroundTraces();
@@ -96,19 +96,19 @@ export class RebuildSuite extends ReadModelStoreSuite<ReadModelStoreUnderContrac
     });
   }
 
-  private rebuildsAroundARefusedChange(): void {
-    this.it('reads again the key of a change refused while it exports, which is applied after the swap', async () => {
+  private rebuildsAroundAMissingRow(): void {
+    this.it('reads again the key of a change that found no row while it exports, applied after the swap', async () => {
       const source = this.sourceOf(['a1', 'a3', 'a4', 'a5'], 2);
       const renamed = (current: Row): Row => ({ ...current, title: 'renamed' });
-      const refusals: unknown[] = [];
+      const answers: string[] = [];
 
       source.duringExport = async () => {
-        refusals.push(await failureOf(() => this.store.updateIfNewer('a5', at('evt-9', 9), renamed)));
+        answers.push(await this.store.updateIfNewer('a5', at('evt-9', 9), renamed));
       };
 
       const report = await this.rebuild(source);
 
-      this.expect(refusals.map((refusal) => refusal instanceof RowNotHeldError)).toEqual([true]);
+      this.expect(answers).toEqual(['missing']);
       this.expect(report.reread).toBe(1);
       this.expect(await this.store.get('a5')).toEqual(row('a5'));
       this.expect(await this.store.updateIfNewer('a5', at('evt-9', 9), renamed)).toBe('applied');

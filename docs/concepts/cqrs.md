@@ -292,7 +292,7 @@ export class OpenSlotsProjection {
 
   @On(appointmentCancelled)
   cancelled(event: IntegrationEvent<PayloadOf<typeof appointmentCancelled>>): Promise<ReadModelWrite> {
-    // the event changes a row a booking created: delivered before it, it is thrown back
+    // the event changes part of a row a booking created: without that row, the answer is `missing`
     return this.slots.updateIfNewer(keyOf(event.payload), stampOf(event), (row) => ({ ...row, open: true }));
   }
 }
@@ -306,48 +306,68 @@ projector sends no command and reads no other context: it only keeps its table c
 | The event | The write | When the key holds no row |
 |---|---|---|
 | says the whole row, or may create it | `upsertIfNewer(key, stamp, next)` | `next` is handed `undefined` and the row it answers is written |
-| does not concern this read model | `upsertIfNewer` whose `next` answers `undefined` | nothing is written: `ignored`, and nothing is kept of the event |
-| changes a row another event created | `updateIfNewer(key, stamp, change)` | `RowNotHeldError`: the event is thrown back |
+| does not concern this read model | `upsertIfNewer` whose `next` answers `undefined` | nothing is written: `ignored` |
+| changes part of a row another event created | `updateIfNewer(key, stamp, change)` | nothing is written: `missing` |
 | removes the row | `delete(key, stamp)` | the trace is written: `traced` |
 
-Deliveries have no order, so a change can arrive before the creation it follows. Written as an
-`upsertIfNewer` whose `next` answers `undefined` when there is no row, it would be `ignored` and
-acknowledged; the creation would then write the row as it was at first, and the change would never
-be applied again. `updateIfNewer` refuses instead: it writes nothing and throws `RowNotHeldError`,
-which carries the key. Let it leave the method: the unit of work of the event rolls back with its
-processed mark, the provider delivers the event again, and it is applied once the creation is.
+**A write that carries the whole row is right in any order.** Whatever the deliveries, the row
+ends as the latest event says. Prefer it: an event that states what it leaves (the booking above,
+with its calendar, its start and `open`) needs nothing of the events before it.
 
-- **Over the trace of a deletion**, a change that is not later than the deletion is `stale`. A
-  later one is refused the same way: in the history, a row deleted and then changed was created
-  again in between, and that creation has not been applied yet.
-- **When the creation never comes**, the event is retried as any failed event and ends in the
-  dead letters of its provider ([when a handler keeps failing](delivery-and-idempotency.md#when-a-handler-keeps-failing)):
-  it is replayed once the row exists. A provider that retries a few times at a short, constant
-  delay may bury the change before a creation that is itself late: size its retries for the delay
-  the creation can take.
-- **It is counted apart.** `projection_events_total` counts the delivery under the result `early`,
-  not `failed`: a delivery out of order is not a defect, and an `early` count that keeps growing
-  for one event is the creation that does not come.
-- **A domain event of the context itself** is applied inside the save, in the order the aggregate
-  recorded it. A missing row there is an error of the projection, and it fails the save.
-- **During a rebuild**, the key of a refused change is still read again from the source before the
-  swap, and a replay of the event store that meets a change without its row stops on the error.
+**An event that changes part of a row is right only when the events of its key are applied in
+order.** The store refuses to go back in time, and that is all it does. It cannot put back what
+arrived out of order:
 
-Use `upsertIfNewer` with a `next` that answers `undefined` only as a filter, for an event this
-read model has no row for and never will.
+- a change delivered before the creation of its row finds nothing to change: `updateIfNewer`
+  writes nothing and answers `missing`. The creation then writes the row as it was at first, and
+  the change is not applied again by the store;
+- of two partial changes delivered out of order, the older one is `stale` and acknowledged: what
+  it alone said is lost;
+- over the trace of a deletion, a change that is not later than the deletion is `stale`, and a
+  later one is `missing`: the row was removed, by its history or outside it.
+
+So `updateIfNewer` is not a cure for disorder. It is the write of a partial change on a feed that
+keeps the order of a key, and it tells a missing row (`missing`) from a filtered event (`ignored`),
+which `upsertIfNewer` with a `next` answering `undefined` could not.
+
+**Which feeds keep the order of a key.**
+
+| Feed | Order of the events of one key | A failed event |
+|---|---|---|
+| domain events of the context, applied in the save (`@On(EventClass)`, the default feed) | the order the aggregate recorded them, in the transaction of the save | fails the save, and so the command; nothing delivers it again |
+| the event store, by a catch-up subscription (`feed: 'event-store'`) | the order of the store | the batch is rolled back and read again at each poll, until it passes: every stream waits behind it |
+| the in-process bus, without outbox | the order of `publish`, one event at a time | `publish` rejects to the use case, after the other handlers ran; nothing delivers it again |
+| the outbox relay, `ordering: 'none'` (the default) | none: a failed record is overtaken by its successors, and several relays interleave | retried with a backoff, then dead |
+| the outbox relay, `ordering: 'per-key'` | kept while one relay runs: a record waits for the earlier records of its key | blocks the later events of its key until it goes out or is dead |
+| Kafka | the order of a partition: a failed record is retried in place | the partition is paused for the whole group between attempts, then the record is dead and its successors go on without it |
+| RabbitMQ, NATS, Redis Streams | none: several messages are handled at once and a retry comes back after its successors | a few attempts at a constant delay, every handler of the consumer run again, then dead |
+
+**What to do with `missing`.** The projection decides, since only it knows its feed:
+
+- **Fed in the save or by a catch-up subscription: answer it, never throw.** The events are in
+  order there, so a missing row is a row this read model does not keep, or one removed outside the
+  history (an erasure). A throw would fail the command for ever, or stall the subscription.
+- **Fed by a broker without order (RabbitMQ, NATS, Redis Streams, a relay without `per-key`):**
+  prefer events that carry the whole row. Where a partial change is all the upstream gives,
+  throwing an error of your own on `missing` makes the provider retry, then dead-letter
+  ([when a handler keeps failing](delivery-and-idempotency.md#when-a-handler-keeps-failing)): a
+  few attempts over some seconds, which a creation that is itself late outlasts, and every
+  handler of the consumer runs again on each. Answering `missing` instead drops the change and
+  counts it.
+- **On Kafka, do not throw for it.** A change ahead of its creation on the same partition can
+  never succeed by waiting, and each attempt pauses the partition for the whole group.
+- **Count it.** `projection_events_total` has the result `missing`: a count that grows is a
+  change that arrived before its creation, or after a removal.
 
 **One kind of stamp per key.** `stampOf(event)` orders by the instant of the event, then by its
-id; `stampOf(event, version)` orders by a version the upstream counts per key. Each is a total
-order: the latest of a set of events is the same whatever the order of their deliveries. One of
-each is not. A version says nothing of an instant, and "the version when both have one, else the
-instant" made a cycle: with A (version 1, 12:09), B (no version, 12:05) and C (version 2, 12:01),
-C was newer than A, A newer than B and B newer than C, so the row that stayed depended on the
-order of the deliveries. A write whose stamp is not of the kind its key holds is therefore refused
-with `MixedStampsError`, which names the key and both events: no rule that ranked one kind above
-the other could do better than drop events in silence. Stamp every event that writes a key the
-same way, the rows of the source of a rebuild included
-([rebuild](../../packages/kernel/README.md#rebuild)); a read model that changes kind is emptied
-and rebuilt.
+id; `stampOf(event, version)` orders by a version the upstream counts per key. The order is total
+within each kind: the latest of a set of events is the same whatever the order of their
+deliveries. When one stamp has a version and the other has none, the instants decide, and that is
+not an order: with A (version 1, 12:09), B (no version, 12:05) and C (version 2, 12:01), C is
+newer than A, A newer than B and B newer than C, so the row that stays depends on the order of the
+deliveries. Stamp every event that writes a key the same way, the rows of the source of a rebuild
+included. The one mix that is meant is a deletion made outside the history of the key, such as an
+erasure stamped at the clock: it is later than everything the row saw, and the instants say so.
 
 ### The table of a read model, and what a deleted row leaves
 

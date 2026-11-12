@@ -30,8 +30,8 @@ export class InProcessAppointmentExportGateway implements AppointmentExportGatew
 
 /**
  * Scheduling says when the appointment last changed, not by which fact: the stamp holds that
- * instant alone, as a version like the stamps of the facts (a read model refuses one stamp with a
- * version and one without), at the rank below theirs. A fact of the very same instant is therefore
+ * instant alone, as a version like the stamps of the facts, at the rank below theirs: against a
+ * stamp without a version the instants would decide, and those of the facts are given to the second. A fact of the very same instant is therefore
  * applied once more, which changes nothing since it sets the same line.
  */
 function toOutcome(appointment: ExportedAppointment): StampedRow<Outcome> {

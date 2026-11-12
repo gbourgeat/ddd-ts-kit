@@ -119,8 +119,6 @@ export * from './application/hydration/hydration-timeout-error';
 export * from './application/read-model/event-stamp';
 export * from './application/read-model/stamp-of';
 export * from './application/read-model/is-newer';
-export * from './application/read-model/mixed-stamps-error';
-export * from './application/read-model/row-not-held-error';
 export * from './application/read-model/same-stamp';
 export * from './application/read-model/read-model-write';
 export * from './application/read-model/stamped-row';

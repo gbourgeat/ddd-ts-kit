@@ -2,7 +2,6 @@ import type { ReadModelRows } from '../../application/ports/read-model-rows';
 import type { EventStamp } from '../../application/read-model/event-stamp';
 import { isNewer } from '../../application/read-model/is-newer';
 import type { ReadModelWrite } from '../../application/read-model/read-model-write';
-import { RowNotHeldError } from '../../application/read-model/row-not-held-error';
 import type { StampedRow } from '../../application/read-model/stamped-row';
 import { ConcurrencyError } from '../../domain/errors/concurrency-error';
 import { ReadModelKeyHeldElsewhereError } from './read-model-key-held-elsewhere-error';
@@ -17,7 +16,7 @@ export interface StampedChange<Row> {
   readonly next?: (current: Row | undefined) => Row | undefined;
   /**
    * The row to write from the one the key holds, for an event that changes a row and does not
-   * create it. Without a live row to hand it, the write is refused with `RowNotHeldError`.
+   * create it. Without a live row to hand it, nothing is written and the answer is `missing`.
    */
   readonly change?: (current: Row) => Row;
 }
@@ -29,8 +28,8 @@ const ATTEMPTS = 5;
  * event or a later one, and writes on the condition that the row still holds the stamp it
  * read: a concurrent write makes it read again, so two events of one key never overwrite each
  * other blindly, with or without a transaction. A `change` that finds no live row, or the trace
- * of a deletion older than its event, is refused: the creation it follows has not been applied
- * yet, and the event must come back after it. A key that reads as absent, refuses an insert and
+ * of a deletion older than its event, writes nothing and answers `missing`: a key another tenant
+ * holds reads as absent there too, since nothing of this tenant is there to change. A key that reads as absent, refuses an insert and
  * still reads as absent is held out of the reach of this work, by another tenant: that is settled
  * at once, since no further attempt would change it.
  */
@@ -44,8 +43,12 @@ export async function writeIfNewer<Row>(rows: ReadModelRows<Row>, change: Stampe
       return heldElsewhere(change);
     }
 
-    if (held !== undefined && !isNewer(change.stamp, held.stamp, change.key)) {
+    if (held !== undefined && !isNewer(change.stamp, held.stamp)) {
       return 'stale';
+    }
+
+    if (change.change !== undefined && held?.row === undefined) {
+      return 'missing';
     }
 
     const written = await attempted(rows, change, held);
@@ -95,14 +98,6 @@ async function attempted<Row>(
 }
 
 /** What the change writes: nothing for a deletion, or for a `next` that answers nothing. */
-function rowOf<Row>({ key, next, change }: StampedChange<Row>, held: StampedRow<Row> | undefined): Row | undefined {
-  if (change === undefined) {
-    return next?.(held?.row);
-  }
-
-  if (held?.row === undefined) {
-    throw new RowNotHeldError(key);
-  }
-
-  return change(held.row);
+function rowOf<Row>({ next, change }: StampedChange<Row>, held: StampedRow<Row> | undefined): Row | undefined {
+  return change === undefined || held?.row === undefined ? next?.(held?.row) : change(held.row);
 }

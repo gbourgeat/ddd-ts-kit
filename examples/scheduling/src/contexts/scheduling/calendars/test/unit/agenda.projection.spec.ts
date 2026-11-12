@@ -205,16 +205,13 @@ describe('The agenda, given facts twice or out of order', () => {
     });
   });
 
-  it('refuses the move of an appointment it never saw, and applies it once the booking is there', async () => {
+  it('answers missing for the move of an appointment it never saw, and applies it once the booking is there', async () => {
     const agenda = new FakeAgenda();
     const projection = new AgendaProjection(agenda);
     const { booking } = planned().build();
     const moved = new AppointmentRescheduled('appointment-1', at('07:00'), { booking, previous: booking });
 
-    await expect(projection.rescheduled(moved)).rejects.toMatchObject({
-      name: 'RowNotHeldError',
-      key: 'appointment-1',
-    });
+    expect(await projection.rescheduled(moved)).toBe('missing');
 
     expect(await agenda.get('appointment-1')).toBeUndefined();
 

@@ -1,7 +1,6 @@
-import { Criteria, MixedStampsError, RowNotHeldError, cursorPage, scoped, type EventStamp } from '@ddd-ts-kit/kernel';
+import { Criteria, cursorPage, scoped, type EventStamp } from '@ddd-ts-kit/kernel';
 import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
 import { criteriaContractRows } from '../criteria/criteria-contract-rows';
-import { failureOf } from '../failure-of';
 import { everything } from './everything';
 import { ReadModelStoreSuite } from './read-model-store-suite';
 import { rowOf as row } from './row-of';
@@ -10,7 +9,7 @@ import { stampedAt as at } from './stamped-at';
 type Row = CriteriaContractRow;
 
 /**
- * Rows that round trip, events applied once and in order, a change that waits for its creation,
+ * Rows that round trip, events applied once and in order, a change that says when its row is missing,
  * and searching. `DeletionsSuite` holds the deletions.
  */
 export class RowsSuite extends ReadModelStoreSuite {
@@ -19,10 +18,10 @@ export class RowsSuite extends ReadModelStoreSuite {
     this.keepsRows();
     this.appliesInOrder();
     this.changesARowItHolds();
-    this.refusesAChangeWithoutARow();
+    this.findsNoRowToChange();
     this.appliesByVersion();
     this.ordersEachKindOfStamp();
-    this.refusesAMixOfKinds();
+    this.deletesOutsideTheHistory();
     this.replacesOnTheWholeStamp();
     this.searches();
   }
@@ -113,11 +112,9 @@ export class RowsSuite extends ReadModelStoreSuite {
     });
   }
 
-  private refusesAChangeWithoutARow(): void {
-    this.it('refuses a change delivered before its creation, then applies it after it', async () => {
-      const refusal = await failureOf(() => this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats));
-
-      this.expect(refusal instanceof RowNotHeldError).toBe(true);
+  private findsNoRowToChange(): void {
+    this.it('answers missing for a change delivered before its creation, then applies it after it', async () => {
+      this.expect(await this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats)).toBe('missing');
       this.expect(await this.subject.table.find('a1')).toBe(undefined);
 
       this.expect(await this.put(row('a1'), at('evt-1', 1))).toBe('applied');
@@ -125,12 +122,10 @@ export class RowsSuite extends ReadModelStoreSuite {
       this.expect(await this.store.get('a1')).toEqual({ ...row('a1'), seats: 3 });
     });
 
-    this.it('refuses a change later than the deletion of its row, until a later event creates it again', async () => {
+    this.it('answers missing for a change later than the deletion of its row, and leaves the trace', async () => {
       await this.store.delete('a1', at('evt-1', 1));
 
-      const refusal = await failureOf(() => this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats));
-
-      this.expect(refusal instanceof RowNotHeldError).toBe(true);
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('missing');
       this.expect(await this.subject.table.find('a1')).toEqual({ key: 'a1', row: undefined, stamp: at('evt-1', 1) });
 
       await this.put(row('a1'), at('evt-2', 2));
@@ -147,6 +142,21 @@ export class RowsSuite extends ReadModelStoreSuite {
       this.expect(await this.put({ ...row('a1'), title: 'v3' }, { ...at('evt-3', 1), version: 3 })).toBe('applied');
       this.expect((await this.store.get('a1'))?.title).toBe('v3');
     });
+
+    this.it(
+      'keeps the instant of a stamp to the millisecond, so the next event of the key replaces the row',
+      async () => {
+        const first = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.123Z') };
+        const second = { eventId: 'evt-2', occurredAt: new Date('2026-10-10T12:00:00.456Z') };
+
+        await this.put(row('a1'), first);
+
+        this.expect((await this.subject.table.find('a1'))?.stamp).toEqual(first);
+        this.expect(await this.put({ ...row('a1'), seats: 7 }, second)).toBe('applied');
+        this.expect(await this.put({ ...row('a1'), seats: 9 }, first)).toBe('stale');
+        this.expect((await this.store.get('a1'))?.seats).toBe(7);
+      },
+    );
 
     this.it('keeps the version with the row', async () => {
       await this.put(row('a1'), { ...at('evt-1', 1), version: 7 });
@@ -180,23 +190,14 @@ export class RowsSuite extends ReadModelStoreSuite {
     }
   }
 
-  private refusesAMixOfKinds(): void {
-    this.it('refuses a stamp with a version under a key that holds one without, and the reverse', async () => {
-      await this.put(row('a1'), at('evt-5', 5));
-      await this.put(row('a2'), versioned('evt-9', 9, 1));
-      await this.store.delete('a3', at('evt-5', 5));
+  private deletesOutsideTheHistory(): void {
+    this.it('removes a row of versioned events by a deletion stamped at the clock, as an erasure is', async () => {
+      await this.put(row('a1'), versioned('evt-1', 1, 4));
 
-      const refusals = [
-        await failureOf(() => this.put({ ...row('a1'), seats: 9 }, versioned('evt-1', 1, 2))),
-        await failureOf(() => this.put({ ...row('a2'), seats: 9 }, at('evt-5', 5))),
-        await failureOf(() => this.store.delete('a2', at('evt-5', 5))),
-        await failureOf(() => this.put(row('a3'), versioned('evt-9', 9, 1))),
-      ];
-
-      this.expect(refusals.map((refusal) => refusal instanceof MixedStampsError)).toEqual([true, true, true, true]);
-      this.expect(await this.store.get('a1')).toEqual(row('a1'));
-      this.expect(await this.store.get('a2')).toEqual(row('a2'));
-      this.expect(await this.store.get('a3')).toBe(undefined);
+      this.expect(await this.store.delete('a1', at('evt-5', 5))).toBe('applied');
+      this.expect(await this.put(row('a1'), versioned('evt-2', 2, 5))).toBe('stale');
+      this.expect(await this.store.updateIfNewer('a1', versioned('evt-6', 6, 6), moreSeats)).toBe('missing');
+      this.expect(await this.store.get('a1')).toBe(undefined);
     });
   }
 

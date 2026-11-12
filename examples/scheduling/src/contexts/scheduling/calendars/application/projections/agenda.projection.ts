@@ -30,7 +30,8 @@ type Standing = Pick<AgendaEntry, 'status'> &
  * Keeps the agenda from the facts of the appointments of this context. Every fact but a move
  * carries the whole entry it leaves, so a fact applied twice or late ends on the same entry;
  * a move changes the place and keeps where the appointment stands, so it needs the entry its
- * booking wrote: without it the move is refused, never dropped.
+ * booking wrote. The facts are applied in the save, in the order the appointment recorded them:
+ * a move that finds no entry answers `missing` and never fails the save.
  */
 @Projection('scheduling.agenda')
 export class AgendaProjection {

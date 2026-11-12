@@ -1,5 +1,5 @@
 [English](eventual-consistency.md) · **Français**
-<!-- translation-of: eventual-consistency.md sha256:53b6c5c1bf86b8c8 -->
+<!-- translation-of: eventual-consistency.md sha256:edcb67b8013df6f0 -->
 
 # La cohérence à terme, expliquée à un responsable produit
 
@@ -161,9 +161,8 @@ export async function project(slots: OpenSlots, event: SlotEvent, open: boolean)
 
 L'ordre par instant repose sur l'horloge du producteur ; quand l'amont fournit une version par
 clé, `stampOf(event, version)` la porte et l'ordre ne dépend plus des horloges. Chaque
-événement qui écrit une clé est tamponné de la même façon, avec une version ou sans : une
-écriture qui rencontre un tampon de l'autre sorte est refusée avec `MixedStampsError`, puisque
-les deux ne s'ordonnent pas l'un l'autre
+événement qui écrit une clé devrait être tamponné de la même façon, avec une version ou sans :
+entre un de chaque les instants décident, ce qui n'est pas un ordre
 ([une seule sorte de tampon par clé](cqrs.fr.md#quelle-écriture-pour-quel-événement)). Les projections
 du kit sont écrites de cette façon ([CQRS tel qu'il est employé ici](cqrs.fr.md)). Une
 suppression est ordonnée de la même façon, même livrée avant la création qu'elle suit : elle
@@ -171,11 +170,13 @@ laisse une trace sous sa clé
 ([ce que laisse une ligne supprimée](cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)).
 
 L'exemple écrit toute la ligne, si bien que n'importe quel événement peut arriver le premier. Un
-événement qui ne fait que changer une ligne (un créneau déplacé, une note ajoutée) ne peut pas
-être écrit avant l'événement qui crée la ligne, et ne doit pas être abandonné non plus :
-`ReadModelStore.updateIfNewer` le refuse avec `RowNotHeldError` tant que la ligne n'est pas là,
-le consommateur échoue, et le fournisseur livre de nouveau l'événement après la création
-([quelle écriture pour quel événement](cqrs.fr.md#quelle-écriture-pour-quel-événement)).
+événement qui ne fait que changer une partie d'une ligne (un créneau déplacé, une note ajoutée)
+n'est juste que si les événements de sa clé sont appliqués dans l'ordre : le registre refuse de
+remonter le temps, et ne peut pas remettre un changement arrivé avant la création de sa ligne ou
+après un changement plus tardif. `ReadModelStore.updateIfNewer` écrit un tel changement et répond
+`missing` quand la ligne n'est pas là ; quelles alimentations gardent l'ordre d'une clé, et que
+faire de `missing` sur chacune, est dans
+[quelle écriture pour quel événement](cqrs.fr.md#quelle-écriture-pour-quel-événement).
 
 ## Limites et cas où s'en passer
 

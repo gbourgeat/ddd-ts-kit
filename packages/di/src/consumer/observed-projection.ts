@@ -1,4 +1,4 @@
-import { Clock, Metrics, RowNotHeldError, type MetricLabels } from '@ddd-ts-kit/kernel';
+import { Clock, Metrics, type MetricLabels } from '@ddd-ts-kit/kernel';
 import type { Resolve } from '../wiring/resolve';
 
 export interface ProjectedEvent {
@@ -13,17 +13,15 @@ export interface ProjectedEvent {
 type Applying = (occurredAt: Date, apply: () => Promise<unknown>) => Promise<void>;
 
 /** What a write answers when it wrote or removed no row: counted under its own name, and no measure of the lag. */
-const SKIPPED = new Set<unknown>(['traced', 'stale', 'ignored']);
+const SKIPPED = new Set<unknown>(['traced', 'stale', 'ignored', 'missing']);
 
 /**
  * What measures a projection from outside, through the `Metrics` port: `projection_events_total`
- * counts each event by `result` (`applied`, `traced`, `stale`, `ignored`, `early`, `failed`), and
+ * counts each event by `result` (`applied`, `traced`, `stale`, `ignored`, `missing`, `failed`), and
  * `projection_last_event_age_ms` is the age of the last event applied when it was, which is
- * the lag of the projection. `early` is an event thrown back because the row it changes is not
- * held yet (`RowNotHeldError`): it failed as any other, and is counted apart because a delivery
- * out of order is not a defect. Each delivery counts, so an event that is never preceded by its
- * creation counts `early` until its provider dead-letters it. Without a bound `Metrics`, nothing
- * is measured.
+ * the lag of the projection. `missing` is a change that found no row and that its projection
+ * answered: a count that grows is a change delivered before its creation, or after a removal.
+ * Without a bound `Metrics`, nothing is measured.
  */
 export function observedProjection(resolve: Resolve, { projection, context, event }: ProjectedEvent): Applying {
   const metrics = bound(resolve, Metrics);
@@ -43,7 +41,7 @@ export function observedProjection(resolve: Resolve, { projection, context, even
     const result = await apply().then(
       (outcome) => (SKIPPED.has(outcome) ? String(outcome) : 'applied'),
       (error: unknown) => {
-        counted(error instanceof RowNotHeldError ? 'early' : 'failed');
+        counted('failed');
 
         throw error;
       },

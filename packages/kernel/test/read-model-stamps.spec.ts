@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   InMemoryReadModelStore,
   InMemoryReadModelTable,
-  MixedStampsError,
   defineCriteria,
   isNewer,
   sameStamp,
@@ -28,13 +27,6 @@ const at = (minute: number, version?: number): EventStamp => ({
 const booked = (id: string): VisitRow => ({ id, room: 'A' });
 const moved = (visit: VisitRow): VisitRow => ({ ...visit, room: 'B' });
 
-async function failureOf(act: () => Promise<unknown>): Promise<unknown> {
-  return act().then(
-    () => undefined,
-    (error: unknown) => error,
-  );
-}
-
 describe('the order of stamps', () => {
   const byInstant = [at(1), at(2), at(5), { ...at(5), eventId: 'evt-5b' }, at(9)];
   const byVersion = [at(9, 1), at(5, 2), at(1, 3), at(7, 4)];
@@ -56,14 +48,20 @@ describe('the order of stamps', () => {
     }
   });
 
-  it('refuses to compare a stamp with a version and one without, where the instants used to make a cycle', () => {
+  it('lets the instants decide between a stamp with a version and one without, which is not an order', () => {
     const [a, b, c] = [at(9, 1), at(5), at(1, 2)];
 
-    expect(isNewer(c, a)).toBe(true);
-    expect(() => isNewer(a, b)).toThrow(MixedStampsError);
-    expect(() => isNewer(b, c)).toThrow(MixedStampsError);
-    expect(() => isNewer(b, a, 'v1')).toThrow('The read model, under the key "v1", holds a stamp with a version');
-    expect(() => isNewer(a, b)).toThrow('A read model holds a stamp without a version (event "evt-5")');
+    expect([isNewer(c, a), isNewer(a, b), isNewer(b, c)]).toEqual([true, true, true]);
+  });
+
+  it('applies a deletion stamped at the clock, outside the versions of its key, and keeps older events out', async () => {
+    const store = new InMemoryReadModelStore(visits);
+
+    await store.upsertIfNewer('v1', at(1, 1), () => booked('v1'));
+
+    expect(await store.delete('v1', at(5))).toBe('applied');
+    expect(await store.updateIfNewer('v1', at(2, 2), moved)).toBe('stale');
+    expect(await store.get('v1')).toBeUndefined();
   });
 
   it.each([
@@ -81,22 +79,6 @@ describe('the order of stamps', () => {
 
       expect(await store.get('v1')).toEqual({ id: 'v1', room: latest });
     }
-  });
-
-  it('refuses, by the name of the key, a write whose stamp is not of the kind the key holds', async () => {
-    const store = new InMemoryReadModelStore(visits);
-
-    await store.upsertIfNewer('v1', at(1, 1), () => booked('v1'));
-    await store.delete('v2', at(1));
-
-    const refusal = await failureOf(() => store.upsertIfNewer('v1', at(2), () => booked('v1')));
-
-    expect(refusal).toBeInstanceOf(MixedStampsError);
-    expect(refusal).toMatchObject({ key: 'v1', incoming: at(2), held: at(1, 1), name: 'MixedStampsError' });
-    await expect(store.updateIfNewer('v1', at(2), moved)).rejects.toThrow(MixedStampsError);
-    await expect(store.delete('v1', at(2))).rejects.toThrow(MixedStampsError);
-    await expect(store.upsertIfNewer('v2', at(2, 2), () => booked('v2'))).rejects.toThrow(MixedStampsError);
-    expect(await store.get('v1')).toEqual(booked('v1'));
   });
 });
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c306170e3a560f12 -->
+<!-- translation-of: README.md sha256:5cadc917f0ab46ea -->
 
 # @ddd-ts-kit/di
 
@@ -1049,11 +1049,11 @@ du kernel, lié par son adaptateur ou donné avec `fake(Port, store)`.
   ensemble. Sans eux, l'estampille que porte chaque ligne rend quand même une nouvelle livraison
   sans effet.
 - **Mesurée.** Avec `Metrics` lié, `projection_events_total` compte chaque événement par
-  `context`, `projection`, `event` et `result` (`applied`, `traced`, `stale`, `ignored`, `early`, `failed`), et
+  `context`, `projection`, `event` et `result` (`applied`, `traced`, `stale`, `ignored`, `missing`, `failed`), et
   `projection_last_event_age_ms` contient l'âge du dernier événement appliqué au moment où il l'a
-  été. `early` est une livraison renvoyée avec `RowNotHeldError`, parce que la ligne que
-  l'événement change n'est pas encore tenue : elle échoue comme toute autre et est comptée à part,
-  une livraison dans le désordre n'étant pas un défaut.
+  été. `missing` est un changement qui n'a trouvé aucune ligne (`updateIfNewer`) et que sa
+  projection a répondu : un compte qui monte est un changement arrivé avant sa création, ou après
+  un retrait.
 - **Décrite.** `describe().projections` liste chaque projection avec les événements qu'elle
   applique et la méthode de chacun ; elles n'apparaissent pas parmi `integrationEventHandlers` et
   `domainEventHandlers`.

@@ -44,8 +44,9 @@ class RegisteredCustomerOrders extends InMemoryCustomerOrders {
   }
 }
 
-describe('a declared projection whose event changes a row that is not held yet', () => {
-  function reportingOn(rows: RegisteredCustomerOrders) {
+describe('a declared projection whose event changes a row that is not held', () => {
+  it('counts the event as missing when the projection answers it, and takes its mark: it does not come back', async () => {
+    const rows = new RegisteredCustomerOrders();
     const metrics = new InMemoryMetrics();
     const processed = new TransactionalProcessedEvents();
     const unitOfWork = new TransactionalUnitOfWork([processed]);
@@ -60,39 +61,18 @@ describe('a declared projection whose event changes a row that is not held yet',
 
     const counted = (result: string) => metrics.counterValue('projection_events_total', { ...labels, result });
 
-    return { app, processed, unitOfWork, counted };
-  }
-
-  it('fails the delivery and leaves no mark, so the event comes back and is applied after the creation', async () => {
-    const rows = new RegisteredCustomerOrders();
-    const { app, processed, unitOfWork } = reportingOn(rows);
-
     await app.start();
-    await expect(app.resolve(EventBus).publish([placed('evt-2', 2)])).rejects.toThrow('1 event handler(s) failed');
-
-    expect(processed.has(`${NAME} evt-2`)).toBe(false);
-    expect(await rows.get('customer-1')).toBeUndefined();
-
-    await rows.register('customer-1', 1);
     await app.resolve(EventBus).publish([placed('evt-2', 2)]);
+    await rows.register('customer-1', 1);
+    await app.resolve(EventBus).publish([placed('evt-2', 2), placed('evt-3', 3)]);
 
-    expect(unitOfWork.outcomes).toEqual(['rolled back', 'committed']);
+    expect(unitOfWork.outcomes).toEqual(['committed', 'committed', 'committed']);
     expect(processed.has(`${NAME} evt-2`)).toBe(true);
-    expect(await rows.get('customer-1')).toEqual({ customerId: 'customer-1', orders: 1, lastOrderId: 'order-evt-2' });
-  });
+    expect([counted('missing'), counted('applied'), counted('failed')]).toEqual([1, 1, 0]);
+    expect(await rows.get('customer-1')).toEqual({ customerId: 'customer-1', orders: 1, lastOrderId: 'order-evt-3' });
 
-  it('counts each such delivery as early, apart from the failures, until the event is applied', async () => {
-    const rows = new RegisteredCustomerOrders();
-    const { app, counted } = reportingOn(rows);
-
-    await app.start();
-    await expect(app.resolve(EventBus).publish([placed('evt-2', 2)])).rejects.toThrow(AggregateError);
-    await expect(app.resolve(EventBus).publish([placed('evt-2', 2)])).rejects.toThrow(AggregateError);
-    await rows.register('customer-1', 1);
-    await app.resolve(EventBus).publish([placed('evt-2', 2)]);
-
-    expect(counted('early')).toBe(2);
-    expect(counted('failed')).toBe(0);
-    expect(counted('applied')).toBe(1);
+    expect(
+      metrics.gaugeValue('projection_last_event_age_ms', { context: 'reporting', projection: NAME }),
+    ).toBeDefined();
   });
 });

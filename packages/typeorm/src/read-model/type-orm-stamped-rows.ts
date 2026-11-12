@@ -54,7 +54,7 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
       row: read('deleted') === true ? undefined : mapper.toRow({ ...record }),
       stamp: {
         eventId: String(read('lastEventId')),
-        occurredAt: new Date(String(read('lastEventAt'))),
+        occurredAt: instantOf(read('lastEventAt')),
         ...(version === null ? {} : { version: Number(version) }),
       },
     };
@@ -168,4 +168,9 @@ function onKeyAlone(manager: EntityManager, keyColumn: string): (statement: stri
 /** The version the row must still hold with the rest of its stamp, or none: on every dialect. */
 function heldVersion(column: string, { version }: EventStamp): [string, Record<string, unknown>] {
   return version === undefined ? [`${column} is null`, {}] : [`${column} = :heldVersion`, { heldVersion: version }];
+}
+
+/** The instant as the driver gave it: the text of a `Date` has no milliseconds, so a date is never read through it. */
+function instantOf(value: unknown): Date {
+  return value instanceof Date ? value : new Date(String(value));
 }

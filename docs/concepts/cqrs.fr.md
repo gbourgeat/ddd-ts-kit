@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:fc4caaf87b72f10d -->
+<!-- translation-of: cqrs.md sha256:2df856a70f71cdf0 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -307,7 +307,7 @@ export class OpenSlotsProjection {
 
   @On(appointmentCancelled)
   cancelled(event: IntegrationEvent<PayloadOf<typeof appointmentCancelled>>): Promise<ReadModelWrite> {
-    // l'événement change une ligne qu'une réservation a créée : livré avant elle, il est renvoyé
+    // l'événement change une partie d'une ligne qu'une réservation a créée : sans cette ligne, la réponse est `missing`
     return this.slots.updateIfNewer(keyOf(event.payload), stampOf(event), (row) => ({ ...row, open: true }));
   }
 }
@@ -322,53 +322,76 @@ garder sa table à jour.
 | L'événement | L'écriture | Quand la clé ne tient aucune ligne |
 |---|---|---|
 | dit toute la ligne, ou peut la créer | `upsertIfNewer(key, stamp, next)` | `next` reçoit `undefined` et la ligne qu'il répond est écrite |
-| ne concerne pas ce modèle de lecture | `upsertIfNewer` dont le `next` répond `undefined` | rien n'est écrit : `ignored`, et rien n'est gardé de l'événement |
-| change une ligne qu'un autre événement a créée | `updateIfNewer(key, stamp, change)` | `RowNotHeldError` : l'événement est renvoyé |
+| ne concerne pas ce modèle de lecture | `upsertIfNewer` dont le `next` répond `undefined` | rien n'est écrit : `ignored` |
+| change une partie d'une ligne qu'un autre événement a créée | `updateIfNewer(key, stamp, change)` | rien n'est écrit : `missing` |
 | retire la ligne | `delete(key, stamp)` | la trace est écrite : `traced` |
 
-Les livraisons n'ont pas d'ordre, si bien qu'un changement peut arriver avant la création qu'il
-suit. Écrit comme un `upsertIfNewer` dont le `next` répond `undefined` quand il n'y a pas de
-ligne, il serait `ignored` et acquitté ; la création écrirait ensuite la ligne telle qu'elle
-était au départ, et le changement ne serait plus jamais appliqué. `updateIfNewer` refuse à la
-place : il n'écrit rien et lève `RowNotHeldError`, qui porte la clé. Laissez-la sortir de la
-méthode : l'unité de travail de l'événement est annulée avec sa marque d'événement traité, le
-fournisseur livre de nouveau l'événement, et il est appliqué une fois la création appliquée.
+**Une écriture qui porte toute la ligne est juste dans n'importe quel ordre.** Quelles que soient
+les livraisons, la ligne finit telle que le dit l'événement le plus récent. Préférez-la : un
+événement qui énonce ce qu'il laisse (la réservation ci-dessus, avec son calendrier, son début et
+`open`) n'a besoin de rien des événements qui le précèdent.
 
-- **Par-dessus la trace d'une suppression**, un changement qui n'est pas plus tardif que la
-  suppression est `stale`. Un changement plus tardif est refusé de la même façon : dans
-  l'histoire, une ligne supprimée puis changée a été créée de nouveau entre les deux, et cette
-  création n'a pas encore été appliquée.
-- **Quand la création ne vient jamais**, l'événement est retenté comme tout événement en échec et
-  finit dans la file de rejet de son fournisseur ([quand un gestionnaire échoue sans cesse](delivery-and-idempotency.fr.md#quand-un-gestionnaire-échoue-sans-cesse)) :
-  il est rejoué une fois que la ligne existe. Un fournisseur qui retente quelques fois à un délai
-  court et constant peut enterrer le changement avant une création elle-même en retard :
-  dimensionnez ses tentatives pour le délai que la création peut prendre.
-- **Il est compté à part.** `projection_events_total` compte la livraison sous le résultat
-  `early`, pas `failed` : une livraison dans le désordre n'est pas un défaut, et un compte `early`
-  qui ne cesse de monter pour un événement est la création qui ne vient pas.
-- **Un événement du domaine du contexte lui-même** est appliqué dans la sauvegarde, dans l'ordre
-  où l'agrégat l'a enregistré. Une ligne absente y est une erreur de la projection, et elle fait
-  échouer la sauvegarde.
-- **Pendant une reconstruction**, la clé d'un changement refusé est tout de même relue dans la
-  source avant l'échange, et un rejeu du registre d'événements qui rencontre un changement sans
-  sa ligne s'arrête sur l'erreur.
+**Un événement qui change une partie d'une ligne n'est juste que si les événements de sa clé sont
+appliqués dans l'ordre.** Le registre refuse de remonter le temps, et il ne fait que cela. Il ne
+peut pas remettre ce qui est arrivé dans le désordre :
 
-N'employez `upsertIfNewer` avec un `next` qui répond `undefined` que comme un filtre, pour un
-événement dont ce modèle de lecture n'a pas la ligne et ne l'aura jamais.
+- un changement livré avant la création de sa ligne ne trouve rien à changer : `updateIfNewer`
+  n'écrit rien et répond `missing`. La création écrit ensuite la ligne telle qu'elle était au
+  départ, et le changement n'est pas appliqué de nouveau par le registre ;
+- de deux changements partiels livrés dans le désordre, le plus ancien est `stale` et acquitté :
+  ce que lui seul disait est perdu ;
+- par-dessus la trace d'une suppression, un changement qui n'est pas plus tardif que la
+  suppression est `stale`, et un plus tardif est `missing` : la ligne a été retirée, par son
+  histoire ou en dehors d'elle.
+
+`updateIfNewer` n'est donc pas un remède au désordre. C'est l'écriture d'un changement partiel
+sur une alimentation qui garde l'ordre d'une clé, et il distingue une ligne absente (`missing`)
+d'un événement filtré (`ignored`), ce qu'un `upsertIfNewer` dont le `next` répond `undefined` ne
+pouvait pas.
+
+**Quelles alimentations gardent l'ordre d'une clé.**
+
+| Alimentation | Ordre des événements d'une clé | Un événement en échec |
+|---|---|---|
+| les événements du domaine du contexte, appliqués dans la sauvegarde (`@On(EventClass)`, l'alimentation par défaut) | l'ordre où l'agrégat les a enregistrés, dans la transaction de la sauvegarde | fait échouer la sauvegarde, donc la commande ; rien ne le livre de nouveau |
+| le registre d'événements, par un abonnement de rattrapage (`feed: 'event-store'`) | l'ordre du registre | le lot est annulé et relu à chaque interrogation, jusqu'à ce qu'il passe : tous les flux attendent derrière lui |
+| le bus dans le processus, sans outbox | l'ordre de `publish`, un événement à la fois | `publish` est rejeté vers le cas d'utilisation, après l'exécution des autres gestionnaires ; rien ne le livre de nouveau |
+| le relais de l'outbox, `ordering: 'none'` (par défaut) | aucun : un enregistrement en échec est doublé par ses successeurs, et plusieurs relais s'entrelacent | retenté avec un délai croissant, puis mort |
+| le relais de l'outbox, `ordering: 'per-key'` | gardé tant qu'un seul relais tourne : un enregistrement attend les enregistrements antérieurs de sa clé | bloque les événements suivants de sa clé jusqu'à ce qu'il sorte ou soit mort |
+| Kafka | l'ordre d'une partition : un enregistrement en échec est retenté sur place | la partition est mise en pause pour tout le groupe entre les tentatives, puis l'enregistrement est mort et ses successeurs continuent sans lui |
+| RabbitMQ, NATS, Redis Streams | aucun : plusieurs messages sont traités à la fois et une nouvelle tentative revient après ses successeurs | quelques tentatives à délai constant, chaque gestionnaire du consommateur exécuté de nouveau, puis mort |
+
+**Que faire de `missing`.** La projection décide, puisqu'elle seule connaît son alimentation :
+
+- **Alimentée dans la sauvegarde ou par un abonnement de rattrapage : répondez-le, ne levez
+  jamais.** Les événements y sont dans l'ordre, si bien qu'une ligne absente est une ligne que ce
+  modèle de lecture ne tient pas, ou une ligne retirée en dehors de l'histoire (un effacement).
+  Une erreur ferait échouer la commande pour toujours, ou bloquerait l'abonnement.
+- **Alimentée par un broker sans ordre (RabbitMQ, NATS, Redis Streams, un relais sans
+  `per-key`) :** préférez des événements qui portent toute la ligne. Là où un changement partiel
+  est tout ce que donne l'amont, lever une erreur à vous sur `missing` fait retenter le
+  fournisseur, puis rejeter
+  ([quand un gestionnaire échoue sans cesse](delivery-and-idempotency.fr.md#quand-un-gestionnaire-échoue-sans-cesse)) :
+  quelques tentatives sur quelques secondes, auxquelles survit une création elle-même en retard,
+  et chaque gestionnaire du consommateur s'exécute de nouveau à chacune. Répondre `missing` à la
+  place abandonne le changement et le compte.
+- **Sur Kafka, ne levez pas pour cela.** Un changement en avance sur sa création dans la même
+  partition ne peut jamais réussir en attendant, et chaque tentative met la partition en pause
+  pour tout le groupe.
+- **Comptez-le.** `projection_events_total` a le résultat `missing` : un compte qui monte est un
+  changement arrivé avant sa création, ou après un retrait.
 
 **Une seule sorte de tampon par clé.** `stampOf(event)` ordonne par l'instant de l'événement,
 puis par son id ; `stampOf(event, version)` ordonne par une version que l'amont compte par clé.
-Chacune est un ordre total : le plus récent d'un ensemble d'événements est le même quel que soit
-l'ordre de leurs livraisons. Un de chaque ne l'est pas. Une version ne dit rien d'un instant, et
-« la version quand les deux en ont une, sinon l'instant » faisait un cycle : avec A (version 1,
-12:09), B (sans version, 12:05) et C (version 2, 12:01), C était plus récent que A, A plus récent
-que B et B plus récent que C, si bien que la ligne qui restait dépendait de l'ordre des
-livraisons. Une écriture dont le tampon n'est pas de la sorte que tient sa clé est donc refusée
-avec `MixedStampsError`, qui nomme la clé et les deux événements : aucune règle qui rangerait une
-sorte au-dessus de l'autre ne ferait mieux qu'abandonner des événements en silence. Tamponnez de
-la même façon chaque événement qui écrit une clé, les lignes de la source d'une reconstruction
-comprises ([reconstruction](../../packages/kernel/README.fr.md#reconstruction)) ; un modèle de
-lecture qui change de sorte est vidé et reconstruit.
+L'ordre est total dans chaque sorte : le plus récent d'un ensemble d'événements est le même quel
+que soit l'ordre de leurs livraisons. Quand un tampon a une version et l'autre non, les instants
+décident, et ce n'est pas un ordre : avec A (version 1, 12:09), B (sans version, 12:05) et C
+(version 2, 12:01), C est plus récent que A, A plus récent que B et B plus récent que C, si bien
+que la ligne qui reste dépend de l'ordre des livraisons. Tamponnez de la même façon chaque
+événement qui écrit une clé, les lignes de la source d'une reconstruction comprises. Le seul
+mélange voulu est une suppression faite en dehors de l'histoire de la clé, comme un effacement
+tamponné à l'horloge : il est plus tardif que tout ce que la ligne a vu, et les instants le
+disent.
 
 ### La table d'un modèle de lecture, et ce que laisse une ligne supprimée
 

@@ -1,5 +1,5 @@
 [English](delivery-and-idempotency.md) · **Français**
-<!-- translation-of: delivery-and-idempotency.md sha256:2e7cf7b89fa53d1a -->
+<!-- translation-of: delivery-and-idempotency.md sha256:6c3e7a9d7885c0dc -->
 
 # Garanties de livraison et consommateurs idempotents
 
@@ -242,8 +242,8 @@ qui l'a précédé. Trois façons d'y faire face, de la moins coûteuse à la pl
 
    Le noyau compare les estampilles pour vous : `stampOf(event, version)` et `isNewer`, la règle
    qu'appliquent les registres de modèles de lecture dans `upsertIfNewer`. Deux estampilles avec
-   une version sont ordonnées par elle, deux sans par leur instant ; une de chaque n'a pas d'ordre,
-   et `isNewer` lève `MixedStampsError` :
+   une version sont ordonnées par elle ; sinon leurs instants décident, si bien que les estampilles
+   d'une clé devraient toutes porter une version, ou aucune :
 
    <!-- checked sample -->
    ```ts
@@ -305,12 +305,6 @@ découlent :
   nouveau ;
 - seuls des codes voyagent avec un message rejeté, jamais des messages d'erreur, qui peuvent citer
   des données de la charge utile.
-
-Un échec peut être voulu : une projection qui reçoit un changement avant la création de la ligne
-qu'il change lève `RowNotHeldError` pour que l'événement revienne après elle
-([quelle écriture pour quel événement](cqrs.fr.md#quelle-écriture-pour-quel-événement)). Il est
-retenté et rejeté comme tout autre, si bien qu'un message rejeté avec ce code est une création qui
-n'est jamais venue.
 
 Deux faits de plus, communs aux fournisseurs du kit :
 

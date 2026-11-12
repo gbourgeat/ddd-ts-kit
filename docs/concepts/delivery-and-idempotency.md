@@ -226,8 +226,8 @@ preceded it. Three ways to cope, cheapest first:
    ![Making order irrelevant: the producer emits versions 1, 2 and 3 of one appointment; they arrive as 1, 3, 2; the consumer applies 1, then 3, and ignores 2 because the row already holds a later version, so it ends in the state of version 3 whatever the order of arrival](../assets/diagrams/delivery-and-idempotency-ordering.svg)
 
    The kernel compares stamps for you: `stampOf(event, version)` and `isNewer`, the rule the
-   read model stores apply in `upsertIfNewer`. Two stamps with a version are ordered by it, two
-   without by their instant; one of each has no order, and `isNewer` throws `MixedStampsError`:
+   read model stores apply in `upsertIfNewer`. Two stamps with a version are ordered by it;
+   otherwise their instants decide, so the stamps of one key should all carry a version, or none:
 
    <!-- checked sample -->
    ```ts
@@ -282,11 +282,6 @@ directly. Rules that follow:
 - a dead letter is an alert, not a log line: the destination must be empty in normal operation;
 - replay after fixing the cause; replaying a poison message only kills it again;
 - only codes travel with a dead letter, never error messages, which may quote payload data.
-
-A failure can be the design: a projection that receives a change before the creation of the row
-it changes throws `RowNotHeldError` so that the event comes back after it
-([which write for which event](cqrs.md#which-write-for-which-event)). It is retried and
-dead-lettered like any other, so a dead letter with that code is a creation that never came.
 
 Two more facts shared by the providers of the kit:
 

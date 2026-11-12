@@ -41,7 +41,7 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
       row: record['deleted'] === true ? undefined : this.mapper.toRow(record),
       stamp: {
         eventId: String(record['last_event_id']),
-        occurredAt: new Date(String(record['last_event_at'])),
+        occurredAt: instantOf(record['last_event_at']),
         ...(version === null || version === undefined ? {} : { version: Number(version) }),
       },
     };
@@ -116,4 +116,9 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   private keyColumn(): string {
     return this.options.keyColumn ?? 'id';
   }
+}
+
+/** The instant as the driver gave it: the text of a `Date` has no milliseconds, so a date is never read through it. */
+function instantOf(value: unknown): Date {
+  return value instanceof Date ? value : new Date(String(value));
 }

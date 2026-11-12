@@ -61,6 +61,7 @@ describe('event stamps', () => {
     ['the same instant and a smaller id', at('a', 1), at('b', 1), false],
     ['a greater version, whatever the instant', at('a', 1, 3), at('z', 9, 2), true],
     ['the same version', at('b', 9, 2), at('a', 1, 2), false],
+    ['a version against none: the instants decide', at('a', 1, 9), at('z', 2), false],
   ])('%s', (_label, incoming, held, newer) => {
     expect(isNewer(incoming, held)).toBe(newer);
   });
