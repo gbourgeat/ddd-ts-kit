@@ -1,45 +1,43 @@
-import { signatureOf } from './signature-of';
+import type { ContentExpectation } from './content-expectation';
+import { contentRuleOf } from './content-rule-of';
+import { looksLikeText } from './looks-like-text';
 import { mediaTypeOf } from './media-type-of';
-
-/** Office and e-book documents are zip archives: their signature is the one of a zip. */
-const ZIP_CONTAINERS = new Set([
-  'application/zip',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'application/vnd.oasis.opendocument.text',
-  'application/vnd.oasis.opendocument.spreadsheet',
-  'application/epub+zip',
-]);
-
-/** Text has no signature: it is accepted when its first bytes are UTF-8 without control characters. */
-const TEXT_TYPES = new Set(['text/plain', 'text/csv', 'text/markdown', 'application/json']);
-
-/** Tab, line feed, form feed and carriage return are text; every other C0 control character is not. */
-const TEXT_CONTROLS = new Set([9, 10, 12, 13]);
+import { signatureOf } from './signature-of';
+import { ZIP_CONTAINERS } from './zip-containers';
 
 /**
  * Whether the first bytes of a content are what its declared media type says, read on the bytes
- * and never on a file name: a PDF starts with `%PDF-`, a PNG with its eight bytes. A binary
- * format the kit does not recognise, SVG included, never matches.
+ * and never on a file name, by the content rule of that type (`contentRuleOf`):
+ *
+ * - a signature: a PDF starts with `%PDF-`, a PNG with its eight bytes, an office document is a zip;
+ * - text, for the text types of the kit and those the route states as `text`: no control
+ *   character, valid UTF-8 unless the route takes `single-byte` text (`TextRule`), and never the
+ *   signature of a binary format;
+ * - `unchecked`, stated by the route: the bytes are taken as they are.
+ *
+ * A type with no rule, SVG included, never matches.
  */
-export function contentMatches(head: Uint8Array, declared: string): boolean {
+export function contentMatches(
+  head: Uint8Array,
+  declared: string,
+  expectation: Pick<ContentExpectation, 'text' | 'contentRules'> = {},
+): boolean {
   const essence = mediaTypeOf(declared);
+  const rule = contentRuleOf(essence, expectation.contentRules);
+
+  if (rule === 'unchecked') {
+    return true;
+  }
+
   const signature = signatureOf(head);
 
   if (signature !== undefined) {
-    return signature === essence || (signature === 'application/zip' && ZIP_CONTAINERS.has(essence));
+    return rule === 'signature' && proves(signature, essence);
   }
 
-  return TEXT_TYPES.has(essence) && looksLikeText(head);
+  return rule === 'text' && looksLikeText(head, expectation.text ?? 'utf-8');
 }
 
-function looksLikeText(head: Uint8Array): boolean {
-  try {
-    new TextDecoder('utf-8', { fatal: true }).decode(head, { stream: true });
-  } catch {
-    return false;
-  }
-
-  return head.every((byte) => byte >= 32 || TEXT_CONTROLS.has(byte));
+function proves(signature: string, essence: string): boolean {
+  return signature === essence || (signature === 'application/zip' && ZIP_CONTAINERS.includes(essence));
 }

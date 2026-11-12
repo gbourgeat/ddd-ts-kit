@@ -69,6 +69,10 @@ class OrderingApplication implements DatabaseReset {
       return sendJson(response, 200, { contentType: request.headers['content-type'], text: await readText(request) });
     }
 
+    if (method === 'POST' && url === '/bytes') {
+      return sendJson(response, 200, { latin1: await readText(request, 'latin1') });
+    }
+
     if (method === 'DELETE') {
       return send(response, 204);
     }
@@ -118,10 +122,10 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
   return text === '' ? undefined : JSON.parse(text);
 }
 
-async function readText(request: IncomingMessage): Promise<string> {
+async function readText(request: IncomingMessage, encoding: BufferEncoding = 'utf8'): Promise<string> {
   let text = '';
 
-  for await (const chunk of request.setEncoding('utf8')) {
+  for await (const chunk of request.setEncoding(encoding)) {
     text += chunk;
   }
 
@@ -233,6 +237,21 @@ describe('the JSON client', () => {
     expect(buffer.body).toEqual({ contentType: 'text/csv', text: 'date;amount' });
     expect(sent.body.contentType).toMatch(/^multipart\/form-data; boundary=/);
     expect(sent.body.text).toContain('name="note"');
+  });
+
+  it('sends the file of a form byte for byte, in whatever encoding it is', async () => {
+    const form = new FormData();
+
+    form.set(
+      'statement',
+      new Blob([Buffer.from('Libell\xe9;Montant\r\n', 'latin1')], { type: 'text/csv' }),
+      'export.csv',
+    );
+
+    const { body } = await server.client.post<{ latin1: string }>('/bytes', form);
+
+    expect(body.latin1).toContain('name="statement"; filename="export.csv"');
+    expect(body.latin1).toContain('\r\n\r\nLibell\xe9;Montant\r\n');
   });
 
   it('sends the default headers, and no content type without a body', async () => {

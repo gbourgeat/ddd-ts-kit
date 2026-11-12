@@ -80,7 +80,7 @@ export class FileInspection extends Transform {
 function refusalOf(head: Buffer, expected: ContentExpectation): FileError | null {
   const valid =
     acceptsMediaType(expected.accepted, expected.mediaType) &&
-    contentMatches(head.subarray(0, HEAD_BYTES), expected.mediaType);
+    contentMatches(head.subarray(0, HEAD_BYTES), expected.mediaType, expected);
 
   return valid ? null : FileError.unsupportedMediaType(expected.mediaType, expected.accepted);
 }

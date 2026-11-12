@@ -1,6 +1,6 @@
 import { pipeline } from 'node:stream/promises';
 import busboy, { type FileInfo } from 'busboy';
-import { FileError, FileInspection, mediaTypeOf } from '@ddd-ts-kit/kernel';
+import { FileError, FileInspection, mediaTypeOf, type ContentExpectation } from '@ddd-ts-kit/kernel';
 import type { RawRequest } from '../pipeline/raw-request';
 import type { ReceivedUpload } from '../pipeline/received-upload';
 import type { UploadSpec } from '../route/upload-spec';
@@ -78,10 +78,19 @@ function inspected(spec: UploadSpec, file: NodeJS.ReadableStream, info: FileInfo
 
   const inspection = new FileInspection({
     maxBytes: spec.maxBytes,
-    expected: { mediaType, accepted: spec.mediaTypes },
+    expected: expectationOf(spec, mediaType),
   });
 
   void pipeline(file, inspection).catch(() => undefined);
 
   return { fileName: info.filename ?? '', mediaType, stream: inspection };
+}
+
+function expectationOf({ mediaTypes, text, contentRules }: UploadSpec, mediaType: string): ContentExpectation {
+  return {
+    mediaType,
+    accepted: mediaTypes,
+    ...(text === undefined ? {} : { text }),
+    ...(contentRules === undefined ? {} : { contentRules }),
+  };
 }

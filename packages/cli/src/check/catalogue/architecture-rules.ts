@@ -52,6 +52,7 @@ import { eventSourcingStoreBehindRepository } from '../rules/event-sourcing-stor
 import { eventSourcingUpcasterRequired } from '../rules/event-sourcing-upcaster-required';
 import { errorsKnownCode } from '../rules/errors-known-code';
 import { filesPortNotConnector } from '../rules/files-port-not-connector';
+import { filesUploadContentRule } from '../rules/files-upload-content-rule';
 import { searchStoreFromPlatform } from '../rules/search-store-from-platform';
 import { eventsConsumerIdempotent } from '../rules/events-consumer-idempotent';
 import { eventsDefinedInPublishedLanguage } from '../rules/events-defined-in-published-language';
@@ -217,5 +218,6 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   persistenceNoFileContent,
   persistencePrimaryKeyOrder,
   filesPortNotConnector,
+  filesUploadContentRule,
   searchStoreFromPlatform,
 ];

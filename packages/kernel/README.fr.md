@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:849d095a5138f5c4 -->
+<!-- translation-of: README.md sha256:f0865606eeb490bb -->
 
 # @ddd-ts-kit/kernel
 
@@ -1505,8 +1505,10 @@ Une écriture dans le stockage n'est pas annulée avec une transaction.
 
 Pour un gros fichier, le client téléverse directement vers le stockage :
 `uploadUrl(key, { expiresInSeconds, mediaType, accepted, maxBytes })` renvoie le `link` pour le
-client et l'autorisation `pending` (`PendingUpload` : clé, plafond de taille, types de média) que
-la commande enregistre sur l'agrégat ; `confirm(pending)`, appelé par une commande qui relit
+client et l'autorisation `pending` (`PendingUpload` : clé, plafond de taille, types de média, et
+la règle `text` et les `contentRules` données avec eux) que la commande enregistre sur
+l'agrégat ; il lève une erreur quand un type accepté n'a pas de règle de contenu, puisqu'aucun
+fichier de ce type ne pourrait être confirmé ; `confirm(pending)`, appelé par une commande qui relit
 l'autorisation depuis l'agrégat, jamais depuis le client, vérifie ce qui est arrivé par rapport
 au plafond et sur ses octets (`contentMatches`), l'analyse, et renvoie le `StoredFile`. Aucune
 clé finale ne peut commencer par `staging/` (`assertFinalKey`).
@@ -1516,6 +1518,17 @@ hache et, avec une attente, retient les premiers octets jusqu'à ce qu'ils prouv
 média déclaré (`acceptsMediaType`, `contentMatches` : un PDF commence par `%PDF-`, les documents
 bureautiques sont des archives zip, le texte est de l'UTF-8 sans caractères de contrôle, SVG et
 les formats binaires inconnus ne correspondent jamais).
+
+Chaque type de média a une règle de contenu (`contentRuleOf`) : une signature
+(`SIGNED_MEDIA_TYPES`), le texte (`TEXT_MEDIA_TYPES`), ou celle que l'attente énonce dans
+`contentRules` pour un type pour lequel le kit n'en a pas, `text` ou `unchecked` (les octets
+sont pris tels quels). `contentRuleDefects` liste, avant qu'un contenu n'arrive, les types
+acceptés qu'aucun contenu ne pourrait prouver et les règles énoncées qui ne font rien :
+`@ddd-ts-kit/http` refuse une route là-dessus, `uploadUrl` un lien. L'attente dit aussi le
+texte qu'elle prend (`TextRule`) : `utf-8`, le défaut, ou `single-byte`, qui laisse aussi passer
+un texte en Windows-1252 ou en ISO-8859-1 (aucun NUL, aucun caractère de contrôle, aucune marque
+d'ordre d'octets UTF-16 ou UTF-32) et refuse toujours un fichier binaire. Le kit ne décode
+jamais les octets : `isUtf8(bytes)` dit à un lecteur quel décodeur prendre.
 
 Connecteurs : `InMemoryFileStorage` pour les tests (`keys()` liste ce qu'il contient) et
 `LocalFileStorage({ directory, baseUrl, secret })` pour le développement, tous deux

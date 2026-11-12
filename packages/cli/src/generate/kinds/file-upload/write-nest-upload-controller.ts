@@ -7,6 +7,7 @@ import { controllerImports } from '../route/controller-imports';
 import type { ControllerPlan } from '../route/controller-plan';
 import { groupVars } from '../route/group-vars';
 import { nestControllerVars } from '../route/nest-controller-vars';
+import { uploadFileVars } from './upload-file-vars';
 
 /**
  * Writes the Nest controller of an upload in its folder, its group when it is new, and its spec:
@@ -23,7 +24,7 @@ export function writeNestUploadController(scope: Scope, plan: ControllerPlan): v
   const context = vars(scope, {
     name: named(name),
     route: { ...route, imports: [message, ...groupImport].join('\n') },
-    upload: uploadVars(plan),
+    upload: { ...uploadFileVars(scope), ...uploadVars(plan) },
     ...(group === undefined
       ? {}
       : {

@@ -1445,7 +1445,9 @@ reporter)` gives the order that keeps both consistent, each step once:
 
 For a large file the client uploads straight to the storage: `uploadUrl(key, { expiresInSeconds,
 mediaType, accepted, maxBytes })` answers the `link` for the client and the `pending` grant
-(`PendingUpload`: key, size cap, media types) that the command records on the aggregate;
+(`PendingUpload`: key, size cap, media types, and the `text` rule and `contentRules` given with
+them) that the command records on the aggregate; it throws when an accepted type has no content
+rule, since no file of it could be confirmed;
 `confirm(pending)`, called by a command that reads the grant back from the aggregate, never
 from the client, checks what arrived against the cap and on its bytes (`contentMatches`), scans
 it, and answers the `StoredFile`. No final key may start with `staging/` (`assertFinalKey`).
@@ -1455,6 +1457,16 @@ with an expectation holds back the first bytes until they prove the declared med
 (`acceptsMediaType`, `contentMatches`: a PDF starts with `%PDF-`, office documents are zip
 archives, text is UTF-8 without control characters, SVG and unknown binary formats never
 match).
+
+Each media type has a content rule (`contentRuleOf`): a signature (`SIGNED_MEDIA_TYPES`), text
+(`TEXT_MEDIA_TYPES`), or the one the expectation states in `contentRules` for a type the kit
+has none for, `text` or `unchecked` (the bytes are taken as they are). `contentRuleDefects`
+lists, before any content arrives, the accepted types no content could prove and the stated
+rules that do nothing: `@ddd-ts-kit/http` refuses a route on it, `uploadUrl` a link. The
+expectation also says the text it takes (`TextRule`): `utf-8`, the default, or `single-byte`,
+which also passes text in Windows-1252 or ISO-8859-1 (no NUL, no control character, no UTF-16
+or UTF-32 byte order mark) and still refuses a binary file. The bytes are never decoded by the
+kit: `isUtf8(bytes)` tells a reader which decoder to take.
 
 Connectors: `InMemoryFileStorage` for the tests (`keys()` lists what it holds) and
 `LocalFileStorage({ directory, baseUrl, secret })` for development, both `ServedFileStorage`:
