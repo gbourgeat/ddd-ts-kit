@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1f612efb214cfe4c -->
+<!-- translation-of: README.md sha256:9a3f0e46e14fc95b -->
 
 # @ddd-ts-kit/kernel
 
@@ -2108,7 +2108,7 @@ n'existe : `notReady()` liste les tables, `require()` refuse avec `ReadModelTabl
 `atStart(logger)` est ce qu'appelle une application à son démarrage (`atStart(logger, 'reported')`
 journalise les tables en une erreur et laisse le démarrage se poursuivre). Les deux refus nomment la
 table, les colonnes qui refusent NULL, si la contrainte de vérification `<table>_live_rows_whole`
-manque, et la migration à écrire, que `readModelTableMigration` rend en instructions. Chaque
+manque, et la migration à écrire, en instructions (leur champ `migration` les contient seules). Chaque
 *package* d'ORM donne la vérification sur son propre contexte (`knexReadModelTables`,
 `drizzleReadModelTables`, `prismaReadModelTables`, `typeOrmReadModelTables`), tous tenus à
 `readModelTablesContract` : voir

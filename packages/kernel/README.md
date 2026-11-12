@@ -2022,8 +2022,8 @@ database, in one statement on the catalog and before any store exists: `notReady
 tables, `require()` refuses with `ReadModelTablesNotReadyError`, and `atStart(logger)` is what an
 application calls when it starts (`atStart(logger, 'reported')` logs the tables as one error and
 lets the start go on). Both refusals name the table, the columns that refuse NULL, whether the
-check constraint `<table>_live_rows_whole` is missing, and the migration to write, which
-`readModelTableMigration` answers as statements. Each ORM package gives the check over its own
+check constraint `<table>_live_rows_whole` is missing, and the migration to write, as statements
+(their `migration` field holds them alone). Each ORM package gives the check over its own
 context (`knexReadModelTables`, `drizzleReadModelTables`, `prismaReadModelTables`,
 `typeOrmReadModelTables`), all held to `readModelTablesContract`: see
 [Every table checked at the start, and before a deployment](../../docs/concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment).

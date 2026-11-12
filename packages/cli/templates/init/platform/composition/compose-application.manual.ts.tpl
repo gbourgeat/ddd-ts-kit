@@ -294,12 +294,12 @@ async function start(platform: Platform, options: ApplicationOptions): Promise<v
   subscribeAll(platform.subscriber, platform.audit.subscriptions);
 {{/unless}}
 {{/if}}
+{{#if persistence.hasDatabase}}
+  await platform.readModelTables.atStart(platform.logger, options.readModelTables);
+{{/if}}
 {{#if search.opensearch}}
   // The index of every read model of OpenSearch the contexts built, before an event reaches its projection.
   await platform.search.provision();
-{{/if}}
-{{#if persistence.hasDatabase}}
-  await platform.readModelTables.atStart(platform.logger, options.readModelTables);
 {{/if}}
   await options.events.start();
 

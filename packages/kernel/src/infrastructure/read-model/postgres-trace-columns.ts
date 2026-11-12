@@ -1,6 +1,6 @@
+import { liveRowsConstraintOf } from './live-rows-constraint-of';
 import { ReadModelTableNotReadyError } from './read-model-table-not-ready-error';
 import type { SqlRun } from './sql-run';
-import { liveRowsConstraintOf } from './unready-read-model-table';
 
 export interface TracedTable {
   readonly schema?: string;

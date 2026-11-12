@@ -5,10 +5,10 @@ import {
   PostgresTraceColumns,
   ReadModelTableNotReadyError,
   ReadModelTablesNotReadyError,
-  liveRowsConstraintOf,
-  readModelTableMigration,
   type UnreadyReadModelTable,
 } from '../src';
+import { liveRowsConstraintOf } from '../src/infrastructure/read-model/live-rows-constraint-of';
+import { readModelTableMigration } from '../src/infrastructure/read-model/read-model-table-migration';
 
 const AGENDA: UnreadyReadModelTable = {
   schema: 'scheduling',
@@ -224,9 +224,11 @@ describe('PostgresReadModelTables', () => {
 
     expect(statements).toHaveLength(2);
     expect(statements[0]?.[1]).toEqual([]);
+
     expect(statements[0]?.[0]).toContain(
       "stamp.attname in ('last_event_id', 'last_event_at', 'last_event_version', 'deleted')",
     );
+
     expect(statements[0]?.[0]).toContain("left(held.relname || '_live_rows_whole', 63)");
   });
 

@@ -167,7 +167,8 @@ class ReadModelTablesSuite extends ContractSuite<ReadModelTablesUnderContract> {
       await this.subject.tables().atStart(logger, 'reported');
 
       const [entry] = logger.entries;
-      const named = String(entry?.fields['tables']);
+      const tables = entry?.fields['tables'];
+      const named = typeof tables === 'string' ? tables : '';
 
       this.expect(logger.entries.length).toBe(1);
       this.expect(entry?.level).toBe('error');

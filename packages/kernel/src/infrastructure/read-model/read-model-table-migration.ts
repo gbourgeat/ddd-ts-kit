@@ -1,4 +1,5 @@
-import { liveRowsConstraintOf, type UnreadyReadModelTable } from './unready-read-model-table';
+import { liveRowsConstraintOf } from './live-rows-constraint-of';
+import type { UnreadyReadModelTable } from './unready-read-model-table';
 
 /**
  * The migration that makes a read model table ready, as PostgreSQL statements: NOT NULL dropped on
@@ -8,7 +9,7 @@ import { liveRowsConstraintOf, type UnreadyReadModelTable } from './unready-read
  */
 export function readModelTableMigration(unready: UnreadyReadModelTable): string {
   const { table, refusing, row, constraint } = unready;
-  const path = readModelTablePath(unready);
+  const path = pathOf(unready);
   const name = liveRowsConstraintOf(table);
   const whole = refusing.map((column) => `${quoted(column)} is not null`).join(' and ');
   const dropped = refusing.map((column) => `alter column ${quoted(column)} drop not null`);
@@ -23,7 +24,7 @@ export function readModelTableMigration(unready: UnreadyReadModelTable): string 
 }
 
 /** The table as a statement names it: its schema first when it has one, quoted where PostgreSQL asks for it. */
-export function readModelTablePath({ schema, table }: Pick<UnreadyReadModelTable, 'schema' | 'table'>): string {
+function pathOf({ schema, table }: UnreadyReadModelTable): string {
   return schema === undefined ? named(table) : `${named(schema)}.${named(table)}`;
 }
 

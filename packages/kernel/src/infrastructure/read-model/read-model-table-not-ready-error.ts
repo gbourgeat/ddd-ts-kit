@@ -1,5 +1,6 @@
-import { readModelTableMigration, readModelTablePath } from './read-model-table-migration';
-import { liveRowsConstraintOf, type UnreadyReadModelTable } from './unready-read-model-table';
+import { liveRowsConstraintOf } from './live-rows-constraint-of';
+import { readModelTableMigration } from './read-model-table-migration';
+import type { UnreadyReadModelTable } from './unready-read-model-table';
 
 /**
  * The table of a read model has columns that refuse NULL, so it cannot hold the trace of a
@@ -24,7 +25,7 @@ export class ReadModelTableNotReadyError extends Error {
     const migration = readModelTableMigration(unready);
 
     super(
-      `The read model table ${table} cannot hold the trace of a deleted row: ${refusalOf(unready)}, and a deleted row keeps its key and its stamp only. ${constraintOf(unready)} The migration to write:\n${migration}`,
+      `The read model table ${table} cannot hold the trace of a deleted row: ${refusalOf(unready)}, and a deleted row keeps its key and its stamp only. ${constraintOf(unready, table)} The migration to write:\n${migration}`,
     );
 
     this.name = 'ReadModelTableNotReadyError';
@@ -41,11 +42,11 @@ function refusalOf({ refusing }: UnreadyReadModelTable): string {
 }
 
 /** What is known of the check constraint that keeps the live rows whole, in place of the NOT NULL the columns lose. */
-function constraintOf(unready: UnreadyReadModelTable): string {
+function constraintOf(unready: UnreadyReadModelTable, table: string): string {
   const name = liveRowsConstraintOf(unready.table);
 
   if (unready.constraint === undefined) {
-    return `The definition the store reads says so: declare these columns nullable there, with the check constraint ${name} that keeps the live rows whole, and ${readModelTablePath(unready)} takes the same in the database.`;
+    return `The definition the store reads says so: declare these columns nullable there, with the check constraint ${name} that keeps the live rows whole, and ${table} takes the same in the database.`;
   }
 
   return unready.constraint

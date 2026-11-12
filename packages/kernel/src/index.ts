@@ -333,7 +333,6 @@ export * from './infrastructure/read-model/postgres-read-model-tables';
 export * from './infrastructure/read-model/postgres-trace-columns';
 export * from './infrastructure/read-model/projection-rebuild';
 export * from './infrastructure/read-model/read-model-key-held-elsewhere-error';
-export * from './infrastructure/read-model/read-model-table-migration';
 export * from './infrastructure/read-model/read-model-table-not-ready-error';
 export * from './infrastructure/read-model/read-model-tables-not-ready-error';
 export * from './infrastructure/read-model/shadow-read-model-store';

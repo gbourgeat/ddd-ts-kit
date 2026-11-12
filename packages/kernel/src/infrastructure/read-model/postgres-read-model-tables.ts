@@ -68,6 +68,7 @@ export class PostgresReadModelTables {
     for (const record of await this.run(COLUMNS, [])) {
       const column = readColumn(record);
       const path = `${column.schema}.${column.table}`;
+
       const table = tables.get(path) ?? {
         schema: column.schema,
         table: column.table,
