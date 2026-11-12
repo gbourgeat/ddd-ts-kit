@@ -196,6 +196,8 @@ declared, and that type must be accepted, or it is refused with `UNSUPPORTED_MED
 a byte reaches the storage. A PDF starts with `%PDF-`; a Word or Excel document is a zip
 archive; text is UTF-8 without control characters; SVG and the binary formats the kit does not
 recognise never pass, since a name or a declared type proves nothing.
+[What a route accepts](#what-a-route-accepts-a-content-rule-for-each-media-type) says how a
+route takes text that is not UTF-8, and a type the kit has no rule for.
 
 The handler therefore never sees bytes. It records the reference and asks for the promotion:
 
@@ -268,11 +270,89 @@ against a real database and a real directory:
 and
 [`document-lands-with-its-file.spec.ts`](../../examples/scheduling/src/contexts/scheduling/calendars/test/integration/document-lands-with-its-file.spec.ts).
 
+### What a route accepts: a content rule for each media type
+
+A media type in `mediaTypes` is only a name: what lets a file through is the rule its first
+bytes are held to. Every accepted type has one, from the kit or stated by the route.
+
+| The content rule | For | What passes |
+|---|---|---|
+| a signature | `application/pdf`, `image/png`, `image/jpeg`, `image/gif`, `image/webp`, `application/zip`, `application/gzip`, and the zip containers: the Office documents (`...wordprocessingml.document`, `...spreadsheetml.sheet`, `...presentationml.presentation`), OpenDocument text and spreadsheet, `application/epub+zip` | the first bytes of that format |
+| text | `text/plain`, `text/csv`, `text/tab-separated-values`, `text/markdown`, `application/json`, `application/csv` | no NUL and no control character but tab, line feed, form feed and carriage return, never the signature of a binary format, and the text rule of the upload, below |
+| `text`, stated in `contentRules` | a type the kit has no rule for, whose content is text: `application/vnd.ms-excel`, the name a browser on Windows gives a CSV | the same as text |
+| `unchecked`, stated in `contentRules` | a type the kit has no rule for, taken as it is: `application/octet-stream`, `video/*` | any bytes; the size cap and the scanner still apply |
+
+A type with no rule could receive no file: every upload of it would be answered 415. So the
+declaration is refused instead. `@Controller`, `defineRoute` and the routes of a Nest controller
+throw when the route is declared, naming the type and the two rules it may state;
+`FileStaging.uploadUrl` throws the same for a direct upload; and `ddd-ts-kit check` reports it
+on the line of the type (`files/upload-content-rule`) when the list is written in the
+declaration. A family is accepted when the kit or the route has a rule for one of its types
+(`image/*`, or `video/*` with `{ 'video/*': 'unchecked' }`); a rule stated for a type the kit
+already verifies, or for one the upload does not accept, is refused too, since it would do
+nothing.
+
+**Text that is not UTF-8.** By default a text type is valid UTF-8 and nothing else: it is the
+strongest proof bytes give of being text, and what a parser that reads UTF-8 can take without a
+second look. An export of a bank or of a spreadsheet is often in Windows-1252 or ISO-8859-1,
+where an accented letter is one byte and no sequence is ever invalid. A route that receives
+such files says so with `text: 'single-byte'`: UTF-8 and every single-byte encoding that extends
+ASCII pass, and a binary file under the name of a CSV is still refused, by its signature, its
+NUL bytes or its control characters. UTF-16 and UTF-32 are refused under both rules. It is an
+option and not the default because the bytes cannot say which encoding they are in: a route
+that expects UTF-8 would otherwise receive, without a refusal, a file it decodes wrong.
+
+<!-- checked sample -->
+```ts
+import { Controller, Public, type HttpRequest, type IncomingFile } from '@ddd-ts-kit/http';
+import { Command, isUtf8, type CommandBus } from '@ddd-ts-kit/kernel';
+
+declare class ImportStatementCommand extends Command<void> {
+  constructor(file: IncomingFile);
+}
+
+@Controller({
+  method: 'POST',
+  path: '/statements',
+  summary: 'Import a bank statement',
+  guards: [Public],
+  upload: {
+    field: 'statement',
+    maxBytes: 5_000_000,
+    mediaTypes: ['text/csv', 'application/csv', 'application/vnd.ms-excel'],
+    text: 'single-byte',
+    contentRules: { 'application/vnd.ms-excel': 'text' },
+  },
+  response: { status: 201, description: 'Received.' },
+})
+export class ImportStatementController {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle({ upload }: HttpRequest<{ upload: IncomingFile }>): Promise<void> {
+    await this.commands.execute(new ImportStatementCommand(upload));
+  }
+}
+
+/** Whoever reads the stored file decodes it: the kit hands over the bytes as they came. */
+export function decoded(bytes: Uint8Array): string {
+  return new TextDecoder(isUtf8(bytes) ? 'utf-8' : 'windows-1252').decode(bytes);
+}
+```
+
+The kit never decodes: the stored file is the bytes the client sent, and its checksum is
+theirs. `isUtf8(bytes)` of the kernel tells the reader which of the two it holds; which
+single-byte encoding it is (Windows-1252 for a Western European export) is a fact of the source
+the project knows, not one the bytes carry. The `charset` a client may write on the part
+(`text/csv; charset=windows-1252`) is not handed over: browsers do not send one, and the
+multipart parser does not expose it. `generate file-upload --text single-byte` writes this
+declaration, and a spec that sends a Windows-1252 file through the multipart reader and a
+workbook under the name of a CSV.
+
 For a large file, the client sends it straight to the store. A first command generates the key
 and signs an upload link for it (`FileStaging.uploadUrl(key, { expiresInSeconds, mediaType,
 accepted, maxBytes })`); it hands the `link` to the client and records the `pending` grant (key,
-size cap, media types) on the aggregate that awaits the file. The client sends the file to the
-link. A second command, which names the aggregate and never a key, reads the grant back from it
+size cap, media types, and the `text` rule and `contentRules` given with them) on the aggregate
+that awaits the file. The client sends the file to the link. A second command, which names the aggregate and never a key, reads the grant back from it
 and confirms (`FileStaging.confirm(pending)`): what arrived is measured against the cap of the
 grant, checked on its bytes and scanned, then recorded and promoted like any staged file. A
 client can neither choose the key it confirms nor raise the cap. The links of the local and

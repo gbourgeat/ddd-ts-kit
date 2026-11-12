@@ -1,5 +1,5 @@
 [English](file-import-export.md) · **Français**
-<!-- translation-of: file-import-export.md sha256:224a4829d3a554a4 -->
+<!-- translation-of: file-import-export.md sha256:339e8bc70d1786d9 -->
 
 # Import et export de fichiers
 
@@ -26,7 +26,10 @@ par un gestionnaire de processus.
 1. **Réception.** Le fichier arrive comme n'importe quel autre : un `FileUpload` que le bus met de
    côté et analyse avant la transaction, ou, pour un gros fichier, un envoi direct confirmé à
    partir de son `PendingUpload`. `FileScanner` est l'endroit où vit une politique sur le format
-   (un CSV de 50 Mo au plus, une seule feuille).
+   (un CSV de 50 Mo au plus, une seule feuille). Un export de banque ou de tableur n'est souvent
+   pas en UTF-8 : le téléversement dit `text: 'single-byte'` pour le recevoir, et la tâche qui
+   lit les lignes décode elle-même les octets (`isUtf8`, voir
+   [Stockage de fichiers](file-storage.fr.md#ce-quune-route-accepte--une-règle-de-contenu-par-type-de-média)).
 2. **Lancement.** Le gestionnaire de `StartImport` enregistre un agrégat `Import` avec le
    `StoredFile`, son propriétaire et son statut, et met en file `ImportRowsBackgroundJob` avec
    l'identifiant de l'import pour tout contenu. Les deux sont validés ensemble, si bien qu'un
