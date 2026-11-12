@@ -4,16 +4,19 @@ import { adapterPolicies } from '../aspects/adapter-policies';
 import type { AdapterPolicy } from '../aspects/adapter-policy';
 import { statedTimeouts } from '../aspects/stated-timeouts';
 import type { Finding } from '../model/finding';
-import type { Project } from '../model/project';
 import type { Rule } from '../model/rule';
 import type { SourceFile } from '../model/source-file';
 import type { ClassShape } from '../structure/class-shape';
+import { importedFrom } from '../support/imported-from';
 import { perFile } from '../support/per-file';
 
 /** The kinds the default policy of the platform goes around (`resilience/default-policy.ts`). */
 const DEFAULTED_KINDS = ['external', 'gateway'];
 const DEFAULT_SETTINGS = '/resilience/default-resilience-settings.ts';
-const DEFAULT_TIMEOUT = /(?<![\w$.])timeoutMs\s*:\s*(\d[\d_]*)/;
+const DEFAULT_TIMEOUT = /(?<![\w$.])timeoutMs\s*:\s*(\d[\d_]*)\s*[,}]/;
+/** The variable the configuration of the platform reads the default limit from, and the fallback written beside it. */
+const DEFAULT_VARIABLE = 'OUTBOUND_TIMEOUT_MS';
+const FALLBACK = /^\s*,\s*\{[^{}]*?(?<![\w$.])fallback\s*:\s*(\d[\d_]*)\s*[,}]/;
 
 interface Adapter {
   readonly policy: AdapterPolicy;
@@ -27,54 +30,97 @@ interface Limit {
   readonly statedBy: string;
 }
 
+/**
+ * The limit of the default policy of the platform: its milliseconds, `none` in a project without
+ * the default settings, `unreadable` when they are not written as one number.
+ */
+type DefaultLimit = number | 'none' | 'unreadable';
+
 export const aspectsTimeoutCoversDelegate: Rule = {
   id: 'aspects/timeout-covers-delegate',
   description:
-    'An adapter that is given a port (a constructor parameter typed by it) is not cut before the adapter bound to that port: its time limit, the `timeout(<ms>)` of its `ownPolicy(...)` or, for an `external` or `gateway` adapter that states none, the default of the platform (`timeoutMs` of `resilience/default-resilience-settings.ts`), is at least the limit the adapter behind the port states for itself. Read from the declarations (`@Adapter`, `@Gateway`), the bindings of the container of the kit and the `@Timeout` of the methods, where the durations are written as numbers.',
+    'An adapter that is given a port (a constructor parameter typed by it) is not cut before the adapter bound to that port: the time limit around all its methods, the `timeout(<ms>)` of its declaration or binding and, for an `external` or `gateway` adapter that states no `ownPolicy(...)`, the default of the platform (the fallback of `OUTBOUND_TIMEOUT_MS` in its configuration, else `timeoutMs` of `resilience/default-resilience-settings.ts`), is at least the limit the adapter behind the port states for itself, its `@Timeout` included. Read from the declarations (`@Adapter`, `@Gateway`) and the bindings of the container of the kit, where the durations are written as numbers.',
   scope: 'project',
   run(project) {
-    const adapters = adaptersOf(project);
-    const fallback = defaultTimeout(project);
-    const found = new Map<string, Finding[]>();
+    const sources = project.files.filter((file) => !file.isTest);
+    const adapters = adapterPolicies(project).flatMap((policy) => located(policy, sources));
+    const fallback = adapters.length === 0 ? 'none' : defaultLimit(sources);
 
-    for (const outer of adapters) {
-      const cut = injectedOf(outer.shape).flatMap((port) =>
-        cutShort(outer, servingOf(adapters, port, outer), fallback),
-      );
-
-      found.set(outer.file.path, [...(found.get(outer.file.path) ?? []), ...cut]);
-    }
-
-    return perFile(project, this.id, (file) => unique(found.get(file.path) ?? []));
+    return perFile(project, this.id, (file) =>
+      unique(
+        adapters
+          .filter((outer) => outer.file === file)
+          .flatMap((outer) => cutShort(outer, servingOf(outer, adapters, sources), fallback)),
+      ),
+    );
   },
 };
 
-/** Each stated policy with the class it governs, found by its name among the classes of the sources. */
-function adaptersOf(project: Project): Adapter[] {
-  const sources = project.files.filter((file) => !file.isTest);
+/**
+ * A stated policy with the class it governs: the one of the file that states it, else of the
+ * file that one imports the name from, else the only class of that name in the sources.
+ */
+function located(policy: AdapterPolicy, sources: readonly SourceFile[]): Adapter[] {
+  const imported = importedFrom(policy.source, policy.className)?.target;
+  const declaring = sources.filter((file) => classNamed(file, policy.className) !== undefined);
 
-  return adapterPolicies(project).flatMap((policy) => {
-    for (const file of sources) {
-      const shape = file.structure.classes.find(({ name, depth }) => depth === 0 && name === policy.className);
+  const file =
+    declaring.find((candidate) => candidate === policy.source) ??
+    declaring.find((candidate) => imported?.kind === 'file' && candidate.path === imported.path) ??
+    (declaring.length === 1 ? declaring[0] : undefined);
 
-      if (shape !== undefined) {
-        return [{ policy, file, shape }];
-      }
-    }
+  const shape = file === undefined ? undefined : classNamed(file, policy.className);
 
-    return [];
-  });
+  return file === undefined || shape === undefined ? [] : [{ policy, file, shape }];
 }
 
-/** `timeoutMs` of the default settings of the platform; undefined in a project without them. */
-function defaultTimeout(project: Project): number | undefined {
-  const settings = project.files.find(
-    ({ location, path }) => location.area === 'platform' && path.endsWith(DEFAULT_SETTINGS),
+function classNamed(file: SourceFile, name: string): ClassShape | undefined {
+  return file.scan.code.includes(name)
+    ? file.structure.classes.find((shape) => shape.depth === 0 && shape.name === name)
+    : undefined;
+}
+
+/**
+ * What the default policy cuts an attempt at. `main.ts` gives it the validated configuration, so
+ * the fallback written beside `OUTBOUND_TIMEOUT_MS` in the platform counts first; a platform that
+ * does not read that variable runs with `timeoutMs` of the default settings.
+ */
+function defaultLimit(sources: readonly SourceFile[]): DefaultLimit {
+  const platform = sources.filter(({ location }) => location.area === 'platform');
+  const settings = platform.find(({ path }) => path.endsWith(DEFAULT_SETTINGS));
+
+  if (settings === undefined) {
+    return 'none';
+  }
+
+  const configured = platform.flatMap(({ scan }) =>
+    scan.strings
+      .filter(({ value }) => value === DEFAULT_VARIABLE)
+      .map(({ end }) => FALLBACK.exec(scan.code.slice(end))?.[1]),
   );
 
-  const written = settings === undefined ? undefined : DEFAULT_TIMEOUT.exec(settings.scan.code)?.[1];
+  const written = new Set(configured.length > 0 ? configured : [DEFAULT_TIMEOUT.exec(settings.scan.code)?.[1]]);
+  const [only] = written;
 
-  return written === undefined ? undefined : Number(written.replaceAll('_', ''));
+  return written.size === 1 && only !== undefined ? Number(only.replaceAll('_', '')) : 'unreadable';
+}
+
+/** The adapters bound to a port the constructor of `outer` is given, each with that port. */
+function servingOf(
+  outer: Adapter,
+  adapters: readonly Adapter[],
+  sources: readonly SourceFile[],
+): { port: string; inner: Adapter }[] {
+  return injectedOf(outer.shape).flatMap((port) =>
+    adapters
+      .filter(
+        (inner) =>
+          inner.policy.port === port &&
+          inner.policy.className !== outer.policy.className &&
+          isSamePort(port, { given: outer.file, served: inner.policy.source }, sources),
+      )
+      .map((inner) => ({ port, inner })),
+  );
 }
 
 /** The classes that type the constructor parameters of an adapter: what the container gives it. */
@@ -84,16 +130,37 @@ function injectedOf(shape: ClassShape): string[] {
   return parameters.flatMap((parameter) => rawClassName(parameterShape(parameter).type ?? '') ?? []);
 }
 
-function servingOf(adapters: readonly Adapter[], port: string, outer: Adapter): { port: string; inner: Adapter }[] {
-  return adapters
-    .filter(({ policy }) => policy.port === port && policy.className !== outer.policy.className)
-    .map((inner) => ({ port, inner }));
+/**
+ * Two files that name a port name the same one unless each shows the file that declares it and
+ * the two differ: two contexts may each have a port of one name.
+ */
+function isSamePort(
+  port: string,
+  { given, served }: { given: SourceFile; served: SourceFile },
+  sources: readonly SourceFile[],
+): boolean {
+  const givenFrom = originOf(port, given, sources);
+  const servedFrom = originOf(port, served, sources);
+
+  return givenFrom === undefined || servedFrom === undefined || givenFrom === servedFrom;
+}
+
+/** The file that declares the class `name` as `file` reads it: itself or the one it imports it from; undefined through a barrel or a package. */
+function originOf(name: string, file: SourceFile, sources: readonly SourceFile[]): string | undefined {
+  if (classNamed(file, name) !== undefined) {
+    return file.path;
+  }
+
+  const target = importedFrom(file, name)?.target;
+  const declaring = target?.kind === 'file' ? sources.find(({ path }) => path === target.path) : undefined;
+
+  return declaring !== undefined && classNamed(declaring, name) !== undefined ? declaring.path : undefined;
 }
 
 function cutShort(
   outer: Adapter,
   serving: readonly { port: string; inner: Adapter }[],
-  fallback: number | undefined,
+  fallback: DefaultLimit,
 ): Finding[] {
   const ceiling = ceilingOf(outer, fallback);
 
@@ -107,53 +174,48 @@ function cutShort(
 }
 
 /**
- * The longest one attempt of the adapter may last: the shortest limit around all its methods (its
- * stated ones, the default of its kind when it states no policy of its own), else the longest of
- * its `@Timeout`, the methods being cut one by one. Undefined when nothing cuts it, or when a
- * duration is not a number the text shows.
+ * The longest one attempt of the adapter may last: the shortest limit around all its methods.
+ * Undefined when nothing goes around them all or when a duration is not a number the text shows.
+ * A `@Timeout` on one of its methods is not counted: the text does not say which method calls the port.
  */
-function ceilingOf({ policy, file, shape }: Adapter, fallback: number | undefined): Limit | undefined {
-  const methods = statedTimeouts(file.scan.code.slice(shape.bodyStart, shape.end), 'Timeout');
+function ceilingOf({ policy }: Adapter, fallback: DefaultLimit): Limit | undefined {
+  return shortest(aroundOf(policy, fallback) ?? []);
+}
+
+/**
+ * The shortest limit the adapter behind a port states for itself, around its methods or on one of
+ * them; undefined when it states none, or one the text does not show.
+ */
+function floorOf({ policy, file, shape }: Adapter, fallback: DefaultLimit): Limit | undefined {
+  const methods = statedTimeouts(file.scan.code.slice(shape.bodyStart, shape.end), '@Timeout');
   const around = aroundOf(policy, fallback);
 
-  if (!policy.readable || !methods.readable) {
+  if (around === undefined || !methods.readable || policy.timeouts.length + methods.timeouts.length === 0) {
     return undefined;
   }
 
-  if (around.length > 0) {
-    return shortest(around);
+  return shortest([...around, ...methods.timeouts.map((ms) => ({ ms, statedBy: 'its `@Timeout`' }))]);
+}
+
+/**
+ * The limits around every method of an adapter: those its declaration or binding states, and the
+ * default one of its kind when it states no policy of its own. Undefined when the text does not show them.
+ */
+function aroundOf(policy: AdapterPolicy, fallback: DefaultLimit): Limit[] | undefined {
+  if (!policy.readable) {
+    return undefined;
   }
 
-  return methods.timeouts.length === 0
+  const own = policy.timeouts.map((ms) => ({ ms, statedBy: 'its own policy' }));
+  const kind = policy.kind ?? '';
+
+  if (policy.ownPolicy || fallback === 'none' || !DEFAULTED_KINDS.includes(kind)) {
+    return own;
+  }
+
+  return fallback === 'unreadable'
     ? undefined
-    : { ms: Math.max(...methods.timeouts), statedBy: 'the longest `@Timeout` of its methods' };
-}
-
-/** The shortest limit the adapter behind a port states for itself; undefined when it states none it can be read by. */
-function floorOf({ policy, file, shape }: Adapter, fallback: number | undefined): Limit | undefined {
-  const methods = statedTimeouts(file.scan.code.slice(shape.bodyStart, shape.end), 'Timeout');
-  const stated = [...policy.timeouts, ...methods.timeouts];
-
-  if (!policy.readable || !methods.readable || stated.length === 0) {
-    return undefined;
-  }
-
-  return shortest([
-    ...aroundOf(policy, fallback),
-    ...methods.timeouts.map((ms) => ({ ms, statedBy: 'its `@Timeout`' })),
-  ]);
-}
-
-/** The limits around every method of an adapter: those its declaration or binding states, and the default one. */
-function aroundOf(policy: AdapterPolicy, fallback: number | undefined): Limit[] {
-  const defaulted = !policy.ownPolicy && fallback !== undefined && DEFAULTED_KINDS.includes(policy.kind ?? '');
-
-  return [
-    ...policy.timeouts.map((ms) => ({ ms, statedBy: 'its own policy' })),
-    ...(defaulted
-      ? [{ ms: fallback, statedBy: `the default policy of the ${policy.kind ?? ''} adapters, which it never chose` }]
-      : []),
-  ];
+    : [...own, { ms: fallback, statedBy: `the default policy of the ${kind} adapters, which it never chose` }];
 }
 
 function shortest(limits: readonly Limit[]): Limit | undefined {

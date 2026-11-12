@@ -3,7 +3,8 @@ import { PATHS } from '../paths';
 import { SOURCE_ALIAS } from '../source-alias';
 import { SOURCE_SUFFIX } from '../source-suffix';
 
-const { ADAPTER, DUE_HANDLER, EVENT_HANDLER, JOB, OCCUPANCY_ROUTE, PLAN_HANDLER, PORT, ROUTE, SEND_HANDLER } = PATHS;
+const { ADAPTER, DUE_HANDLER, EVENT_HANDLER, GATEWAY, JOB, OCCUPANCY_ROUTE, PLAN_HANDLER, PORT, ROUTE, SEND_HANDLER } =
+  PATHS;
 
 const CONCRETE =
   'What implements a port lives outside the application layer: naming it there is also an import that leaves the layer.';
@@ -20,6 +21,9 @@ const LISTED =
 
 const STALE =
   'The generated list of a class is read from its constructor: a changed signature leaves the barrel stale until it is regenerated.';
+
+const UNIMPORTED =
+  'The mailer is a port of another context, which the gateway could not import without breaking a boundary: the parameter names it without an import, and the rule that reads the constructor reports that too.';
 
 const SECOND_STATEMENT = [
   { tool: 'checker', rule: 'declarations/constructor-injection', reason: LISTED },
@@ -240,6 +244,24 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     file: ROUTE,
     changes: [{ file: ROUTE, where: 'start', to: "import '@nestjs/common';\n" }],
     checker: true,
+  },
+  {
+    rule: 'aspects/timeout-covers-delegate',
+    what: 'a gateway left to the default policy and given the port of the mailer, which states a longer limit',
+    file: GATEWAY,
+    changes: [
+      {
+        file: GATEWAY,
+        from: '  constructor(readonly upstream: PersonDirectoryContract) {}',
+        to: '  constructor(\n    readonly upstream: PersonDirectoryContract,\n    readonly mailer: Mailer,\n  ) {}',
+      },
+      { file: ADAPTER, from: '  @Timeout(2000, { signal: true })', to: '  @Timeout(120_000, { signal: true })' },
+    ],
+    checker: true,
+    alsoReports: [
+      { tool: 'checker', rule: 'declarations/barrel-current', reason: STALE },
+      { tool: 'checker', rule: 'declarations/constructor-injection', reason: UNIMPORTED },
+    ],
   },
   {
     rule: 'standard/no-parallel-interface',

@@ -7,10 +7,10 @@ export interface StatedTimeouts {
 }
 
 /**
- * The durations given to the calls of `name` (`timeout` of `@ddd-ts-kit/aspects`, `Timeout` of
+ * The durations given to the calls of `name` (`timeout` of `@ddd-ts-kit/aspects`, `@Timeout` of
  * its decorators) in blanked code. A call given a variable or an expression is not readable.
  */
-export function statedTimeouts(code: string, name: 'timeout' | 'Timeout'): StatedTimeouts {
+export function statedTimeouts(code: string, name: 'timeout' | '@Timeout'): StatedTimeouts {
   const given = [...code.matchAll(new RegExp(String.raw`(?<![\w$.])${name}\s*\(\s*([^,)]*)`, 'g'))].map((match) =>
     (match[1] ?? '').trim(),
   );

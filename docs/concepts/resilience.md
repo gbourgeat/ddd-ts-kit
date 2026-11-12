@@ -335,9 +335,12 @@ binding of this adapter states another, at least as long as the adapter it calls
 **The rule [`aspects/timeout-covers-delegate`](../ARCHITECTURE.md#3-dependency-rules) reports it
 before it runs.** `ddd-ts-kit check` reads the adapters the project declares (`@Adapter`,
 `@Gateway`) or binds with the container of the kit, the classes that type the constructor of
-each, and the durations written as numbers: an adapter whose limit (its own, else the default of
-the platform when its kind is `external` or `gateway`) is shorter than the limit the adapter
-behind one of its ports states for itself is an error, with the two durations. The fix states the
+each, and the durations written as numbers: an adapter whose limit (the `timeout(<ms>)` of its
+declaration or binding, and the default of the platform when its kind is `external` or `gateway`
+and it states no `ownPolicy(...)`) is shorter than the limit the adapter behind one of its ports
+states for itself, its `@Timeout` included, is an error, with the two durations. The default is
+the one `main.ts` runs with: the fallback of `OUTBOUND_TIMEOUT_MS` in the configuration of the
+platform, else `timeoutMs` of `resilience/default-resilience-settings.ts`. The fix states the
 policy of the outer adapter, at least as long as the inner one, or `ownPolicy()` alone when it
 only hands the call over and the inner adapter carries the policy:
 
@@ -348,10 +351,12 @@ export class RemoteQuoteReader implements QuoteReader {
 }
 ```
 
-What it cannot read it does not judge: a duration taken from the configuration or a variable, an
-environment that raises `OUTBOUND_TIMEOUT_MS`, a platform wired by hand (`platform.adapter(...)`),
-an adapter the outer one reaches without receiving its port, and the retries, which multiply
-both limits. There the message of the error is what tells.
+What it cannot read it does not judge: a duration or a kind taken from the configuration or a
+variable, an aspect under `when(...)`, which goes around some calls only, a `@Timeout` on a method
+of the outer adapter (the text does not say which method calls the port), an environment that
+sets `OUTBOUND_TIMEOUT_MS`, a platform wired by hand (`platform.adapter(...)`), an adapter the
+outer one reaches without receiving its port, and the retries, which multiply both limits. There
+the message of the error is what tells.
 
 Use cases get their cross-cutting behaviour from bus middlewares instead. None of the three
 forms is allowed in `domain/` or `application/`: rule

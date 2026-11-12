@@ -1,5 +1,5 @@
 [English](resilience.md) · **Français**
-<!-- translation-of: resilience.md sha256:ec88585bd82522e5 -->
+<!-- translation-of: resilience.md sha256:f5b376894f80f54b -->
 
 # Résilience
 
@@ -355,10 +355,14 @@ binding of this adapter states another, at least as long as the adapter it calls
 **La règle [`aspects/timeout-covers-delegate`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) le
 signale avant l'exécution.** `ddd-ts-kit check` lit les adaptateurs que le projet déclare
 (`@Adapter`, `@Gateway`) ou lie avec le conteneur du kit, les classes qui typent le constructeur
-de chacun, et les durées écrites comme des nombres : un adaptateur dont le délai (le sien, sinon
-celui par défaut de la plateforme quand son genre est `external` ou `gateway`) est plus court que
-celui que l'adaptateur derrière l'un de ses ports déclare pour lui-même est une erreur, avec les
-deux durées. Le correctif déclare la politique de l'adaptateur extérieur, au moins aussi longue
+de chacun, et les durées écrites comme des nombres : un adaptateur dont le délai (le
+`timeout(<ms>)` de sa déclaration ou de sa liaison, et celui par défaut de la plateforme quand son
+genre est `external` ou `gateway` et qu'il ne déclare aucun `ownPolicy(...)`) est plus court que
+celui que l'adaptateur derrière l'un de ses ports déclare pour lui-même, ses `@Timeout` compris,
+est une erreur, avec les deux durées. Le délai par défaut est celui avec lequel `main.ts`
+s'exécute : la valeur de repli de `OUTBOUND_TIMEOUT_MS` dans la configuration de la plateforme,
+sinon le `timeoutMs` de `resilience/default-resilience-settings.ts`. Le correctif déclare la
+politique de l'adaptateur extérieur, au moins aussi longue
 que celle de l'adaptateur intérieur, ou `ownPolicy()` seul quand il ne fait que passer l'appel et
 que l'adaptateur intérieur porte la politique :
 
@@ -369,8 +373,10 @@ export class RemoteQuoteReader implements QuoteReader {
 }
 ```
 
-Ce qu'elle ne peut pas lire, elle ne le juge pas : une durée prise dans la configuration ou dans
-une variable, un environnement qui relève `OUTBOUND_TIMEOUT_MS`, une plateforme câblée à la main
+Ce qu'elle ne peut pas lire, elle ne le juge pas : une durée ou un genre pris dans la
+configuration ou dans une variable, un aspect sous `when(...)`, qui n'entoure que certains appels,
+un `@Timeout` sur une méthode de l'adaptateur extérieur (le texte ne dit pas quelle méthode
+appelle le port), un environnement qui fixe `OUTBOUND_TIMEOUT_MS`, une plateforme câblée à la main
 (`platform.adapter(...)`), un adaptateur que l'adaptateur extérieur atteint sans recevoir son
 port, et les nouvelles tentatives, qui multiplient les deux délais. Là, c'est le message de
 l'erreur qui le dit.
