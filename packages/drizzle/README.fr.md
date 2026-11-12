@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:65f07c3ad9e35a8d -->
+<!-- translation-of: README.md sha256:9f670bc5527865fe -->
 
 # @ddd-ts-kit/drizzle
 
@@ -702,7 +702,7 @@ requête : `where` (les filtres, le périmètre de l'acteur et le *keyset* d'une
 par le champ qui départage), `limit` et `offset`. `predicateToDrizzle(predicate, columns)` donne
 une condition. `columns` associe chaque champ du modèle de lecture à sa colonne, et c'est la
 seule source d'identifiants : chaque valeur est un paramètre encodé par sa colonne, une
-recherche textuelle est `like $1 escape $2`, avec `%`, `_` et `\` échappés.
+recherche textuelle est `like $1 escape $2`, avec `%`, `_` et `\` échappés. `containsIgnoringCase` et `startsWithIgnoringCase` sont la même recherche en `ILIKE`, que PostgreSQL replie avec la locale de la base (la règle et ses limites sont dans le README du kernel, « Ce que signifient des critères ») ; aucun index b-tree ne la sert, un index GIN de `pg_trgm` sur la colonne le fait.
 
 Un port de lecture déclare ce qu'un appelant peut demander avec `defineCriteria` ; une requête
 à vous sur la table d'un modèle de lecture planifie les critères, puis remet le plan au

@@ -1,7 +1,15 @@
-import type { FieldValue, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
+import { isTextSearch, type FieldValue, type Predicate, type PredicateTest, type TextSearch } from '@ddd-ts-kit/kernel';
 import type { PrismaWhere } from './prisma-criteria';
 
 type Fields = Readonly<Record<string, string>>;
+
+/** A search that ignores case is the same filter in `insensitive` mode, an `ILIKE` on PostgreSQL: see `foldCase` of the kernel. */
+const SEARCHES: Readonly<Record<TextSearch, (text: string) => Readonly<Record<string, unknown>>>> = {
+  contains: (text) => ({ contains: text }),
+  startsWith: (text) => ({ startsWith: text }),
+  containsIgnoringCase: (text) => ({ contains: text, mode: 'insensitive' }),
+  startsWithIgnoringCase: (text) => ({ startsWith: text, mode: 'insensitive' }),
+};
 
 const COMPARISONS = { eq: 'equals', gt: 'gt', gte: 'gte', lt: 'lt', lte: 'lte', isNull: 'equals' } as const;
 
@@ -47,8 +55,8 @@ function compared({ operator, value }: PredicateTest): Readonly<Record<string, u
     return { gte: first, lte: second };
   }
 
-  if (operator === 'contains' || operator === 'startsWith') {
-    return { [operator]: literal(String(first)) };
+  if (isTextSearch(operator)) {
+    return SEARCHES[operator](literal(String(first)));
   }
 
   return operator === 'ne' ? { not: { equals: first } } : { [COMPARISONS[operator]]: first };

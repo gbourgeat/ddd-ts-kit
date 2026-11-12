@@ -15,7 +15,11 @@ export interface ProductRow {
 export const products = defineCriteria<ProductRow>({
   fields: {
     sku: { type: 'string', filter: ['eq'] },
-    name: { type: 'string', filter: ['ne', 'contains', 'startsWith', 'gt', 'lte'], sortable: true },
+    name: {
+      type: 'string',
+      filter: ['ne', 'contains', 'startsWith', 'containsIgnoringCase', 'startsWithIgnoringCase', 'gt', 'lte'],
+      sortable: true,
+    },
     price: { type: 'decimal', filter: ['eq', 'gt', 'gte', 'lt', 'lte', 'between', 'in'], sortable: true },
     stock: { type: 'number', filter: ['gt', 'lte'], sortable: true },
     active: { type: 'boolean', filter: ['eq', 'ne'], sortable: true },

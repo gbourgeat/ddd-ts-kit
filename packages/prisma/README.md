@@ -623,7 +623,7 @@ The rules these examples hold, and that the tests of this package check on a rea
 by the tie-breaker), `take` and `skip`. `predicateToPrisma(predicate, fields?)` gives one
 `where`. They are data, never text: Prisma binds every value. The fields of the read model
 are the fields of the model; `fields` renames those that differ. The text of `contains` and
-`startsWith` has its `%`, `_` and `\` escaped, which Prisma does not do.
+`startsWith` has its `%`, `_` and `\` escaped, which Prisma does not do. `containsIgnoringCase` and `startsWithIgnoringCase` are the same filters with `mode: 'insensitive'`, an `ILIKE`, which PostgreSQL folds with the locale of the database (the rule and its limits are in the README of the kernel, "What a criteria means"); no b-tree index serves it, a GIN index of `pg_trgm` on the column does.
 
 ```ts
 // infrastructure/persistence/prisma-appointment-queries.reader.ts

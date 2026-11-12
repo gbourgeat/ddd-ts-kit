@@ -1,5 +1,6 @@
 import {
   Criteria,
+  InvalidCriteriaError,
   cursorPage,
   offsetPage,
   scoped,
@@ -14,6 +15,7 @@ import type { CriteriaCase } from './criteria/criteria-case';
 import type { CriteriaContractRow } from './criteria/criteria-contract-row';
 import { criteriaContractRows } from './criteria/criteria-contract-rows';
 import { GROUP_CASES } from './criteria/group-cases';
+import { IGNORING_CASE_CASES } from './criteria/ignoring-case-cases';
 import { OPERATOR_CASES } from './criteria/operator-cases';
 import { SCOPE_CASES } from './criteria/scope-cases';
 import { SORT_CASES } from './criteria/sort-cases';
@@ -35,7 +37,7 @@ const MAPPING: ReadScopeMapping<CriteriaContractRow> = {
   filter: { tenantId: 'tenantId', remote: 'remote' },
 };
 
-const CASES = [...OPERATOR_CASES, ...GROUP_CASES, ...SORT_CASES, ...SCOPE_CASES];
+const CASES = [...OPERATOR_CASES, ...IGNORING_CASE_CASES, ...GROUP_CASES, ...SORT_CASES, ...SCOPE_CASES];
 
 /**
  * What every translator of criteria guarantees, the in-memory evaluator included: the same
@@ -59,8 +61,24 @@ class CriteriaSuite extends ContractSuite<ReadModelUnderContract> {
       this.answers(example);
     }
 
+    this.refusesAnEmptyText();
     this.pagesByOffset();
     this.pagesByCursor();
+  }
+
+  private refusesAnEmptyText(): void {
+    this.it('an empty text to search is refused, whatever the case, where every row would hold it', async () => {
+      for (const operator of ['contains', 'startsWith', 'containsIgnoringCase', 'startsWithIgnoringCase'] as const) {
+        const refusal = await this.subject
+          .search(scoped(Criteria.of<CriteriaContractRow>().where('title', operator, ''), { kind: 'all' }))
+          .then(
+            () => undefined,
+            (error: unknown) => error,
+          );
+
+        this.expect(refusal instanceof InvalidCriteriaError).toBe(true);
+      }
+    });
   }
 
   private answers(example: CriteriaCase): void {

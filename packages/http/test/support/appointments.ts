@@ -16,7 +16,10 @@ export const appointments = defineCriteria<AppointmentRow>({
   fields: {
     id: { type: 'string' },
     status: { type: 'string', filter: ['eq', 'ne', 'in'], sortable: true },
-    title: { type: 'string', filter: ['eq', 'in', 'contains', 'startsWith'] },
+    title: {
+      type: 'string',
+      filter: ['eq', 'in', 'contains', 'startsWith', 'containsIgnoringCase', 'startsWithIgnoringCase'],
+    },
     seats: { type: 'number', filter: ['eq', 'gte', 'lte', 'between', 'in'], sortable: true },
     price: { type: 'decimal', filter: ['gte'] },
     startsAt: { type: 'instant', filter: ['gte', 'lt', 'between'], sortable: true },

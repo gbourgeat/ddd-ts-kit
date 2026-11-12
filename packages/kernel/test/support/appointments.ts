@@ -13,7 +13,11 @@ export interface AppointmentRow {
 export const appointments = defineCriteria<AppointmentRow>({
   fields: {
     id: { type: 'string', filter: ['in'] },
-    status: { type: 'string', filter: ['eq', 'in', 'contains'], sortable: true },
+    status: {
+      type: 'string',
+      filter: ['eq', 'in', 'contains', 'containsIgnoringCase', 'startsWithIgnoringCase'],
+      sortable: true,
+    },
     seats: { type: 'number', filter: ['eq', 'gte', 'between', 'in'], sortable: true },
     startsAt: { type: 'instant', filter: ['gte'], sortable: true },
     room: { type: 'string', filter: ['isNull', 'eq'], sortable: true, nullable: true },

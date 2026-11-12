@@ -1,4 +1,7 @@
 export * from './filter-operator';
+export * from './fold-case';
+export * from './text-search';
+export * from './is-text-search';
 export * from './field-value';
 export * from './field-of';
 export * from './operator-of';

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b328be94c9364cb2 -->
+<!-- translation-of: README.md sha256:2a2c503eebd3bddb -->
 
 # @ddd-ts-kit/prisma
 
@@ -640,7 +640,7 @@ curseur), `counted` (les filtres et le périmètre seuls, pour un `count`), `ord
 total terminé par le départage), `take` et `skip`. `predicateToPrisma(predicate, fields?)` donne
 un seul `where`. Ce sont des données, jamais du texte : Prisma lie chaque valeur. Les champs du
 modèle de lecture sont les champs du modèle ; `fields` renomme ceux qui diffèrent. Le texte de
-`contains` et de `startsWith` a ses `%`, `_` et `\` échappés, ce que Prisma ne fait pas.
+`contains` et de `startsWith` a ses `%`, `_` et `\` échappés, ce que Prisma ne fait pas. `containsIgnoringCase` et `startsWithIgnoringCase` sont les mêmes filtres avec `mode: 'insensitive'`, un `ILIKE`, que PostgreSQL replie avec la locale de la base (la règle et ses limites sont dans le README du kernel, « Ce que signifient des critères ») ; aucun index b-tree ne la sert, un index GIN de `pg_trgm` sur la colonne le fait.
 
 ```ts
 // infrastructure/persistence/prisma-appointment-queries.reader.ts

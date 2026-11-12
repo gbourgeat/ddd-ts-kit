@@ -168,6 +168,21 @@ describe('InMemoryOpenSearch, the queries', () => {
     expect(ids(await search(node, { query: { wildcard: { name: { value: 'a?b' } } } }))).toEqual(['i1', 'i2']);
   });
 
+  it('matches a regular expression with a list of characters, an escaped character and any run', async () => {
+    const node = await aNode();
+
+    await put(node, 'i1', { name: 'A.b' });
+    await put(node, 'i2', { name: 'axb' });
+    await put(node, 'i3', { name: 'a-b' });
+
+    expect(ids(await search(node, { query: { regexp: { name: { value: 'a\\.b' } } } }))).toEqual([]);
+    expect(ids(await search(node, { query: { regexp: { name: { value: '[aA]\\.b' } } } }))).toEqual(['i1']);
+    expect(ids(await search(node, { query: { regexp: { name: { value: '[aA].b' } } } }))).toEqual(['i1', 'i2', 'i3']);
+    expect(ids(await search(node, { query: { regexp: { name: { value: '.*[xX].*' } } } }))).toEqual(['i2']);
+    expect(ids(await search(node, { query: { regexp: { name: { value: 'a[x-]b' } } } }))).toEqual(['i2', 'i3']);
+    expect(ids(await search(node, { query: { regexp: { name: { value: '[xX]' } } } }))).toEqual([]);
+  });
+
   it('keeps the order of the documents that tie on every sort key, a nested key read by its type', async () => {
     const node = await aNode();
 

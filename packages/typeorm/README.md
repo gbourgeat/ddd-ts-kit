@@ -485,7 +485,7 @@ the keyset of a cursor page, the total order ended by the tie-breaker, the windo
 fields of the read model are the properties of the entity (`properties` renames those that
 differ). Every value is a named parameter; the only text composed is `alias.property` with an
 operator of a closed list, both from the adapter. A text search is `LIKE :p ESCAPE :e` with
-`%`, `_` and `\` escaped.
+`%`, `_` and `\` escaped. `containsIgnoringCase` and `startsWithIgnoringCase` are the same search as an `ILIKE`, which PostgreSQL folds with the locale of the database (the rule and its limits are in the README of the kernel, "What a criteria means"); no b-tree index serves it, a GIN index of `pg_trgm` on the column does.
 
 ```ts
 // infrastructure/persistence/type-orm-appointment-queries.reader.ts

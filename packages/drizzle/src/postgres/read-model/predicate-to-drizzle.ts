@@ -16,7 +16,14 @@ import {
   type SQL,
 } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
-import type { FieldValue, FilterOperand, FilterOperator, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
+import {
+  isTextSearch,
+  type FieldValue,
+  type FilterOperand,
+  type FilterOperator,
+  type Predicate,
+  type PredicateTest,
+} from '@ddd-ts-kit/kernel';
 import { columnOf } from './column-of';
 import { likePattern } from './like-pattern';
 
@@ -24,6 +31,14 @@ type Columns = Readonly<Record<string, PgColumn>>;
 
 /** The operators that compare a value: `isNull` is rendered before any of them. */
 type Comparison = Exclude<FilterOperator, 'isNull'>;
+
+/** A search that ignores case is an `ilike`: PostgreSQL folds it with the locale of the database, see `foldCase` of the kernel. */
+const LIKE = {
+  contains: sql`like`,
+  startsWith: sql`like`,
+  containsIgnoringCase: sql`ilike`,
+  startsWithIgnoringCase: sql`ilike`,
+} as const;
 
 const COMPARISONS = { eq, ne, gt, gte, lt, lte } as const;
 
@@ -60,14 +75,15 @@ function compared(operator: Comparison, value: FilterOperand, column: PgColumn):
   const values: FieldValue[] = typeof value === 'object' && !(value instanceof Date) ? [...value] : [value];
   const [first = null, second = null] = values;
 
+  if (isTextSearch(operator)) {
+    return sql`${column} ${LIKE[operator]} ${likePattern(operator, String(first))} escape ${'\\'}`;
+  }
+
   switch (operator) {
     case 'in':
       return inArray(column, values);
     case 'between':
       return between(column, first, second);
-    case 'contains':
-    case 'startsWith':
-      return sql`${column} like ${likePattern(operator, String(first))} escape ${'\\'}`;
     default:
       return COMPARISONS[operator](column, first);
   }

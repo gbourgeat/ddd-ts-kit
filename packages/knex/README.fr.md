@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f2b9067377746930 -->
+<!-- translation-of: README.md sha256:4ddd6d7fed5051eb -->
 
 # @ddd-ts-kit/knex
 
@@ -701,7 +701,7 @@ les filtres et le périmètre de l'acteur, le jeu de clés (keyset) d'une page p
 total terminé par le départage, la fenêtre. `predicateToKnex(builder, predicate, columns)` ajoute
 les filtres seuls, pour un comptage. `columns` associe chaque champ du modèle de lecture à sa
 colonne, et c'est la seule source d'identifiants : chaque valeur est un paramètre lié, et une
-recherche textuelle est `like ? escape ?`, avec `%`, `_` et `\` échappés.
+recherche textuelle est `like ? escape ?`, avec `%`, `_` et `\` échappés. `containsIgnoringCase` et `startsWithIgnoringCase` sont la même recherche en `ILIKE`, que PostgreSQL replie avec la locale de la base (la règle et ses limites sont dans le README du kernel, « Ce que signifient des critères ») ; aucun index b-tree ne la sert, un index GIN de `pg_trgm` sur la colonne le fait.
 
 ```ts
 // infrastructure/persistence/knex-appointment-queries.reader.ts

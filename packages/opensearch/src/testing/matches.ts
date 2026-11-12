@@ -2,6 +2,7 @@ import { bodiesOf } from './bodies-of';
 import { bodyOf } from './body-of';
 import { compareAs } from './compare-as';
 import type { FakeProperty } from './properties-of';
+import { regularExpressionOf } from './regular-expression-of';
 import { typeAt } from './type-at';
 import { UnknownQueryError } from './unknown-query-error';
 import { valueAt } from './value-at';
@@ -12,7 +13,7 @@ type Properties = Readonly<Record<string, FakeProperty>>;
 
 /**
  * Whether a document matches a query of the subset of the DSL the store writes: `bool`, `term`,
- * `terms`, `range`, `exists`, `wildcard`, `prefix`, `match_all`. A missing or null value matches
+ * `terms`, `range`, `exists`, `wildcard`, `prefix`, `regexp`, `match_all`. A missing or null value matches
  * no comparison, as in an index.
  */
 export function matches(query: Clause, source: Source, properties: Properties): boolean {
@@ -66,6 +67,8 @@ function compares(kind: string, operand: unknown, value: unknown, type: string):
       return patternOf(String(written['value'])).test(String(value));
     case 'prefix':
       return String(value).startsWith(String(written['value']));
+    case 'regexp':
+      return regularExpressionOf(String(written['value'])).test(String(value));
     default:
       throw new UnknownQueryError(`[${kind}] query is not supported by the fake`);
   }

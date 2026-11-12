@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:cf2bf51a0beb90a4 -->
+<!-- translation-of: README.md sha256:c7365bafda9281e8 -->
 
 # @ddd-ts-kit/opensearch
 
@@ -209,6 +209,12 @@ les specs utilisent.
 - **Pas de recherche plein texte.** Une `string` est un `keyword` : `contains` est une requête
   *wildcard*, sensible à la casse, et lente sur un gros index. L'analyse de texte, la pertinence et
   les facettes ne sont pas construites.
+- **Une recherche qui ignore la casse est une expression régulière.** `containsIgnoringCase` et
+  `startsWithIgnoringCase` sont une requête `regexp` qui nomme les deux formes de chaque lettre
+  (`[éÉ]`), puisque `case_insensitive` ne replie que les lettres ASCII : elle est aussi lente
+  qu'un *wildcard*, et son texte tient environ 240 lettres au plus (`index.max_regex_length`,
+  1000 par défaut, quatre caractères par lettre). Les lettres que tous les stockages replient
+  de la même façon sont dans le README du kernel, « Ce que signifient des critères ».
 - **Une chaîne jusqu'à 32 766 octets** dans un champ filtré : Lucene refuse un terme plus long.
 - Les pages par décalage s'arrêtent à `index.max_result_window` ; au-delà, paginer par curseur.
 

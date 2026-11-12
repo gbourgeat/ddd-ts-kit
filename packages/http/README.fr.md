@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1eae05e78cb49daa -->
+<!-- translation-of: README.md sha256:ca0b1f9495bbcd23 -->
 
 # @ddd-ts-kit/http
 
@@ -927,13 +927,14 @@ GET /appointments?filter[status]=in:booked,confirmed&filter[startsAt]=gte:2026-1
 
 | Écrit | Signifie |
 |---|---|
-| `filter[<field>]=<operator>:<value>` | une condition. Les opérateurs sont ceux du kernel : `eq`, `ne`, `in`, `gt`, `gte`, `lt`, `lte`, `contains`, `startsWith`, `isNull`, `between` |
+| `filter[<field>]=<operator>:<value>` | une condition. Les opérateurs sont ceux du kernel : `eq`, `ne`, `in`, `gt`, `gte`, `lt`, `lte`, `contains`, `startsWith`, `containsIgnoringCase`, `startsWithIgnoringCase`, `isNull`, `between` |
 | `filter[<field>]=<value>` | `eq`. Le texte avant le premier deux-points n'est un opérateur que s'il en est le nom : `filter[title]=10:30 review` est un `eq`, et une valeur qui commence comme un opérateur s'écrit `eq:in:the morning` |
 | plusieurs `filter[...]` | reliés par ET ; le même champ peut être répété : `filter[seats]=gte:2&filter[seats]=lte:4` |
 | `in:<a>,<b>,<c>` | une liste, séparée par des virgules. Une virgule dans une valeur s'écrit `\,`, une barre oblique inverse `\\` ; un deux-points ne demande rien |
 | `between:<from>,<to>` | deux valeurs, bornes comprises |
 | `isNull:true`, `isNull:false`, `isNull` | sans valeur, ou avec une valeur ; `isNull` seul veut dire `true` |
 | `contains:<text>`, `startsWith:<text>` | le texte tel quel, virgules comprises ; sensible à la casse |
+| `containsIgnoringCase:<text>`, `startsWithIgnoringCase:<text>` | de même, quelle que soit la casse des lettres ; les accents sont gardés (la règle est dans le README du kernel, « Ce que signifient des critères ») |
 | `filter[or][<field>]=...` | les conditions écrites sous `or` sont des alternatives ; sous `not`, les lignes qui les satisfont toutes sont refusées ; `and` existe par symétrie |
 | `filter[or][0][<field>]=...&filter[or][0][<other>]=...&filter[or][1][<field>]=...` | un indice tient plusieurs conditions ensemble dans un groupe : `or(and(...), ...)`. Il compte pour un niveau de profondeur de plus, que la définition autorise ou non (`maxDepth`, 1 par défaut) |
 | `sort=-startsAt,id` | séparés par des virgules ou répétés, un `-` en tête pour l'ordre décroissant, parmi les champs déclarés triables et le champ de départage |

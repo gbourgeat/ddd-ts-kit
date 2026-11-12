@@ -685,7 +685,7 @@ query: `where` (the filters, the scope of the actor and the keyset of a cursor p
 the tie-breaker), `limit` and `offset`. `predicateToDrizzle(predicate, columns)` gives one
 condition. `columns` maps each field of the read model to its column, and is the only source
 of identifiers: every value is a parameter encoded by its column, a text search is
-`like $1 escape $2` with `%`, `_` and `\` escaped.
+`like $1 escape $2` with `%`, `_` and `\` escaped. `containsIgnoringCase` and `startsWithIgnoringCase` are the same search as an `ILIKE`, which PostgreSQL folds with the locale of the database (the rule and its limits are in the README of the kernel, "What a criteria means"); no b-tree index serves it, a GIN index of `pg_trgm` on the column does.
 
 A read port declares what a caller may ask with `defineCriteria`; a query of your own on the
 table of a read model plans the criteria, then hands the plan to the translator:

@@ -671,7 +671,7 @@ filters and the scope of the actor, the keyset of a cursor page, the total order
 tie-breaker, the window. `predicateToKnex(builder, predicate, columns)` adds the filters alone,
 for a count. `columns` maps each field of the read model to its column, and is the only source
 of identifiers: every value is a binding, a text search is `like ? escape ?` with `%`, `_` and
-`\` escaped.
+`\` escaped. `containsIgnoringCase` and `startsWithIgnoringCase` are the same search as an `ILIKE`, which PostgreSQL folds with the locale of the database (the rule and its limits are in the README of the kernel, "What a criteria means"); no b-tree index serves it, a GIN index of `pg_trgm` on the column does.
 
 ```ts
 // infrastructure/persistence/knex-appointment-queries.reader.ts

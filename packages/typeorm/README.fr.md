@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ccc07908a0551596 -->
+<!-- translation-of: README.md sha256:e9ea6f0809d5d38a -->
 
 # @ddd-ts-kit/typeorm
 
@@ -503,7 +503,7 @@ la fenêtre. `predicateToTypeOrm(builder, predicate, { alias })` ajoute les filt
 un comptage. Les champs du modèle de lecture sont les propriétés de l'entité (`properties`
 renomme celles qui diffèrent). Chaque valeur est un paramètre nommé ; le seul texte composé est
 `alias.property` avec un opérateur d'une liste fermée, tous deux venant de l'adaptateur. Une
-recherche textuelle est `LIKE :p ESCAPE :e`, avec `%`, `_` et `\` échappés.
+recherche textuelle est `LIKE :p ESCAPE :e`, avec `%`, `_` et `\` échappés. `containsIgnoringCase` et `startsWithIgnoringCase` sont la même recherche en `ILIKE`, que PostgreSQL replie avec la locale de la base (la règle et ses limites sont dans le README du kernel, « Ce que signifient des critères ») ; aucun index b-tree ne la sert, un index GIN de `pg_trgm` sur la colonne le fait.
 
 ```ts
 // infrastructure/persistence/type-orm-appointment-queries.reader.ts

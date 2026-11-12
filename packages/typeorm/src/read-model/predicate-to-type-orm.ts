@@ -1,5 +1,12 @@
 import { Brackets, NotBrackets, type WhereExpressionBuilder } from 'typeorm';
-import type { FieldValue, FilterOperand, FilterOperator, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
+import {
+  isTextSearch,
+  type FieldValue,
+  type FilterOperand,
+  type FilterOperator,
+  type Predicate,
+  type PredicateTest,
+} from '@ddd-ts-kit/kernel';
 import { likePattern } from './like-pattern';
 
 export interface TypeOrmCriteriaOptions {
@@ -15,6 +22,14 @@ interface Rendering extends TypeOrmCriteriaOptions {
   /** Parameter names already given, so that each is unique in the query. */
   readonly names: string[];
 }
+
+/** A search that ignores case is an `ILIKE`: PostgreSQL folds it with the locale of the database, see `foldCase` of the kernel. */
+const LIKE = {
+  contains: 'LIKE',
+  startsWith: 'LIKE',
+  containsIgnoringCase: 'ILIKE',
+  startsWithIgnoringCase: 'ILIKE',
+} as const;
 
 const COMPARISONS = { eq: '=', ne: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=' } as const;
 
@@ -104,20 +119,20 @@ function compared(
   const [first = null, second = null] = values;
   const [one, two] = [named(rendering), named(rendering)];
 
+  if (isTextSearch(operator)) {
+    const pattern = likePattern(operator, String(first));
+
+    builder.andWhere(`${column} ${LIKE[operator]} :${one} ESCAPE :${two}`, { [one]: pattern, [two]: '\\' });
+
+    return;
+  }
+
   switch (operator) {
     case 'in':
       builder.andWhere(`${column} IN (:...${one})`, { [one]: values });
       break;
     case 'between':
       builder.andWhere(`${column} BETWEEN :${one} AND :${two}`, { [one]: first, [two]: second });
-      break;
-    case 'contains':
-    case 'startsWith':
-      builder.andWhere(`${column} LIKE :${one} ESCAPE :${two}`, {
-        [one]: likePattern(operator, String(first)),
-        [two]: '\\',
-      });
-
       break;
     default:
       builder.andWhere(`${column} ${COMPARISONS[operator]} :${one}`, { [one]: first });
