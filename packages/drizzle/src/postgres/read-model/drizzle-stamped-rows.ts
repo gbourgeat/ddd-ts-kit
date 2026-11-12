@@ -88,14 +88,16 @@ export class DrizzleStampedRows<
     );
 
     const key = named(this.target.key);
+    const row = sql`insert into ${this.table()} (${columns}) values (${written})`;
 
-    const inserted = await this.context
-      .executor()
-      .execute(
-        sql`insert into ${this.table()} (${columns}) values (${written}) on conflict (${key}) do nothing returning ${key}`,
-      );
-
-    return rowsOf(inserted).length === 1;
+    // On the key alone, two writers of one key inserting at once may be refused on another unique
+    // value of the row they both write. The first statement skips on any unique value; when it wrote
+    // nothing, the second names the key: `false` for a key that is held, and the refusal of the
+    // database for a value another row holds.
+    return (
+      (await this.inserted(sql`${row} on conflict do nothing returning ${key}`)) ||
+      this.inserted(sql`${row} on conflict (${key}) do nothing returning ${key}`)
+    );
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
@@ -117,6 +119,10 @@ export class DrizzleStampedRows<
       );
 
     return rowsOf(replaced).length === 1;
+  }
+
+  private async inserted(statement: SQL): Promise<boolean> {
+    return rowsOf(await this.context.executor().execute(statement)).length === 1;
   }
 
   /** What a read may reach: every row, or those of the tenants of the work for a read model of tenant data. */

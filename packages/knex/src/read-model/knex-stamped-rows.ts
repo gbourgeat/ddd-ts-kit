@@ -6,6 +6,7 @@ import {
   type ReadModelRows,
   type StampedRow,
 } from '@ddd-ts-kit/kernel';
+import { dialectOf } from '../sql/dialect-of';
 import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict';
 import { TENANT_COLUMN, whereTenant } from '../tenancy/where-tenant';
 import type { KnexContext } from '../unit-of-work/knex-context';
@@ -50,10 +51,23 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   async insert(entry: StampedRow<Row>): Promise<boolean> {
     await this.holdsTrace(entry);
 
-    return insertIgnoringConflict(this.context.executor(), this.table(), {
-      row: this.recordOf(entry),
-      conflict: this.keyColumn(),
-    });
+    const executor = this.context.executor();
+    const row = this.recordOf(entry);
+    const conflict = this.keyColumn();
+
+    // On the key alone, two writers of one key inserting at once may be refused on another unique
+    // value of the row they both write, on PostgreSQL. The first statement skips on any unique
+    // value; when it wrote nothing, the second names the key: `false` for a key that is held, and
+    // the refusal of the database for a value another row holds.
+    if (dialectOf(executor) === 'postgres') {
+      const inserted: unknown[] = await this.table().insert(row).onConflict().ignore().returning(conflict);
+
+      if (inserted.length === 1) {
+        return true;
+      }
+    }
+
+    return insertIgnoringConflict(executor, this.table(), { row, conflict });
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {

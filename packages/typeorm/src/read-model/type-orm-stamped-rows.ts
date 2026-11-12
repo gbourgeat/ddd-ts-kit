@@ -1,4 +1,4 @@
-import type { EntityManager, EntitySchema, ObjectLiteral, QueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import type { EntityManager, EntitySchema, WhereExpressionBuilder } from 'typeorm';
 import type { EventStamp, PostgresTraceColumns, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
 import type { TypeOrmContext } from '../unit-of-work/type-orm-context';
 import type { RowMapper } from './row.mapper';
@@ -71,7 +71,14 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
       entity === undefined ? insert.into(path, Object.keys(record)).values(record) : insert.into(entity).values(written)
     ).orIgnore();
 
-    return affected(manager, ignoring, onKeyAlone(manager, mapper.columnOf(this.target.key)));
+    const [skipping, parameters] = ignoring.getQueryAndParameters();
+    const onKey = onKeyAlone(manager, mapper.columnOf(this.target.key))(skipping);
+
+    // On the key alone, two writers of one key inserting at once may be refused on another unique
+    // value of the row they both write. The first statement skips on any unique value; when it wrote
+    // nothing, the second names the key: `false` for a key that is held, and the refusal of the
+    // database for a value another row holds.
+    return (await wrote(manager, skipping, parameters)) || (onKey !== skipping && wrote(manager, onKey, parameters));
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
@@ -91,7 +98,7 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
       .andWhere(`${column('lastEventAt')} = :heldAt`, { heldAt: held.occurredAt })
       .andWhere(...heldVersion(column('lastEventVersion'), held));
 
-    return affected(manager, confined(update, tenant.writing(column)));
+    return wrote(manager, ...confined(update, tenant.writing(column)).getQueryAndParameters());
   }
 
   private column(manager: EntityManager, alias: string, property: string): string {
@@ -134,13 +141,7 @@ function confined<Builder extends WhereExpressionBuilder>(
 }
 
 /** Whether the statement wrote one row: the structured result of the query runner says it on every driver. */
-async function affected(
-  manager: EntityManager,
-  builder: QueryBuilder<ObjectLiteral>,
-  rewritten: (statement: string) => string = (statement) => statement,
-): Promise<boolean> {
-  const [built, parameters] = builder.getQueryAndParameters();
-  const statement = rewritten(built);
+async function wrote(manager: EntityManager, statement: string, parameters: unknown[]): Promise<boolean> {
   const transactional = manager.queryRunner;
   const runner = transactional ?? manager.dataSource.createQueryRunner();
 
@@ -156,8 +157,8 @@ async function affected(
 }
 
 /**
- * `orIgnore` names no conflict target, so it would also skip a row that takes a unique value
- * another row holds: the key is named, and that other conflict is refused by the database.
+ * `orIgnore` names no conflict target, so it also skips a row that takes a unique value another
+ * row holds: in the statement that names the key, that other conflict is refused by the database.
  */
 function onKeyAlone(manager: EntityManager, keyColumn: string): (statement: string) => string {
   const key = manager.dataSource.driver.escape(keyColumn);

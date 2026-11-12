@@ -414,6 +414,16 @@ and its trace cannot be written, and an upsert is refused at once with
 several tenants reads such a key as held and writes only in its own tenant, so its write of a key
 another tenant holds still ends, after five attempts, in a plain `ConcurrencyError`.
 
+**A table may hold another value of the row unique** (a slug, a number, by a unique index of your
+migration). The database keeps it: a row that takes the value a live row of another key holds is
+refused, by the error of the driver or by `UniqueViolationError`, and the handler of the event sees
+it; the trace of a deleted row frees its value. Events of one key applied at once are never refused
+for the value they all write. PostgreSQL can refuse them when the insert names the key alone as its
+conflict target, since two inserts that cross then meet on the other index first: the stores of the
+four ORM insert with a statement that skips on any unique value, and only when it wrote nothing with
+a second one that names the key, which tells a key that is held, for which the event is compared
+with the row and applied if newer, from a value another row holds, which is refused.
+
 ## Limits and when not to use it
 
 - **A CRUD context with no rules** (a list of rooms, a settings screen) gains little from a
