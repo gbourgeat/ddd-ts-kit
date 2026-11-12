@@ -15,7 +15,8 @@ import { ZIP_CONTAINERS } from './zip-containers';
  *   signature of a binary format;
  * - `unchecked`, stated by the route: the bytes are taken as they are.
  *
- * A type with no rule, SVG included, never matches.
+ * A type with no rule never matches, and the rule of a family is not one for SVG, HTML or
+ * JavaScript: those pass only when the route states them by name.
  */
 export function contentMatches(
   head: Uint8Array,

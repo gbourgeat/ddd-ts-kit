@@ -21,6 +21,7 @@ export * from './is-utf8';
 export * from './listed-file';
 export * from './max-signed-url-seconds';
 export * from './media-type-of';
+export * from './named-only-media-types';
 export * from './pending-upload';
 export * from './pending-upload-link';
 export * from './put-options';

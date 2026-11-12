@@ -1,5 +1,5 @@
 import type { StringRecord } from '../scan/string-record';
-import { KIT_CONTENT_TYPES } from './kit-content-types';
+import { KIT_CONTENT_TYPES, NAMED_ONLY_CONTENT_TYPES } from './kit-content-types';
 import type { UploadContentDefect } from './upload-content-defect';
 import type { UploadDeclaration } from './upload-declaration';
 
@@ -32,9 +32,14 @@ function unprovable(literal: StringRecord, rules: readonly string[]): UploadCont
 
   const proven = essence.endsWith('/*')
     ? [...KIT_CONTENT_TYPES, ...rules].some((type) => type.startsWith(family))
-    : [...KIT_CONTENT_TYPES, ...rules].some((type) => type === essence || type === `${family}*`);
+    : [...KIT_CONTENT_TYPES, ...rules].some((type) => type === essence || type === familyRuleOf(essence));
 
   return proven ? [] : [{ literal, message: `"${literal.value}" has no content rule.` }];
+}
+
+/** The family whose stated rule holds for a type: none for a type a browser runs, which is stated by name. */
+function familyRuleOf(essence: string): string | undefined {
+  return NAMED_ONLY_CONTENT_TYPES.includes(essence) ? undefined : `${familyOf(essence)}/*`;
 }
 
 function misstated(literal: StringRecord, accepted: readonly string[]): UploadContentDefect[] {

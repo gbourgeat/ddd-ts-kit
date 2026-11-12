@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:0530793e7a606b69 -->
+<!-- translation-of: file-storage.md sha256:8ef64291bab7f5c2 -->
 
 # Stockage de fichiers
 
@@ -298,6 +298,12 @@ est écrite dans la déclaration. Une famille est acceptée quand le kit ou la r
 pour l'un de ses types (`image/*`, ou `video/*` avec `{ 'video/*': 'unchecked' }`) ; une règle
 énoncée pour un type que le kit vérifie déjà, ou pour un type que le téléversement n'accepte
 pas, est refusée aussi, puisqu'elle ne ferait rien.
+
+La règle d'une famille n'atteint jamais un type qu'un navigateur exécute en l'ouvrant :
+`image/svg+xml`, `text/html`, `application/xhtml+xml`, `text/javascript` et
+`application/javascript` (`NAMED_ONLY_MEDIA_TYPES`). Avec `{ 'image/*': 'unchecked' }`, un SVG
+reste refusé ; une route qui en reçoit le nomme, `{ 'image/svg+xml': 'text' }`, et répond alors
+de la façon dont il est servi.
 
 **Un texte qui n'est pas en UTF-8.** Par défaut, un type de texte est de l'UTF-8 valide et rien
 d'autre : c'est la preuve la plus forte que des octets donnent d'être du texte, et ce qu'un

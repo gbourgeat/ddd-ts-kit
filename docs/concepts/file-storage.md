@@ -292,6 +292,11 @@ declaration. A family is accepted when the kit or the route has a rule for one o
 already verifies, or for one the upload does not accept, is refused too, since it would do
 nothing.
 
+The rule of a family never reaches a type a browser runs when it opens it: `image/svg+xml`,
+`text/html`, `application/xhtml+xml`, `text/javascript` and `application/javascript`
+(`NAMED_ONLY_MEDIA_TYPES`). With `{ 'image/*': 'unchecked' }` an SVG is still refused; a route
+that takes one names it, `{ 'image/svg+xml': 'text' }`, and then answers for how it is served.
+
 **Text that is not UTF-8.** By default a text type is valid UTF-8 and nothing else: it is the
 strongest proof bytes give of being text, and what a parser that reads UTF-8 can take without a
 second look. An export of a bank or of a spreadsheet is often in Windows-1252 or ISO-8859-1,
