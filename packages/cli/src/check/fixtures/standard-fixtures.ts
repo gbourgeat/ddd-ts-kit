@@ -7,7 +7,21 @@ import { MONEY_GLOSSARY } from './shared-kernel-glossary';
 
 const { ADAPTER, BILLING, MODULE, ROUTE } = PATHS;
 
+const QUOTE_READER = `${BILLING}/infrastructure/external/remote-quote-reader.adapter.ts`;
+
 export const STANDARD_FIXTURES: readonly Fixture[] = [
+  {
+    ruleId: 'aspects/timeout-covers-delegate',
+    name: 'a delegating adapter whose own policy lasts as long as the adapter behind the port it is given',
+    expect: 'pass',
+    files: project(delegation('.with(ownPolicy(timeout(120_000)))')),
+  },
+  {
+    ruleId: 'aspects/timeout-covers-delegate',
+    name: 'a delegating adapter left to the default policy, cut before the adapter it calls',
+    expect: { file: QUOTE_READER },
+    files: project(delegation('')),
+  },
   {
     ruleId: 'aspects/outside-in',
     name: 'decorators on an adapter and in the platform, wrappers bound in the module file',
@@ -116,3 +130,15 @@ export const STANDARD_FIXTURES: readonly Fixture[] = [
     }),
   },
 ];
+
+/** An adapter given the port of a slow one, the default settings of the platform, and the module that binds both. */
+function delegation(policyOfTheDelegating: string): Record<string, string> {
+  return {
+    [QUOTE_READER]:
+      'export class RemoteQuoteReader {\n  constructor(private readonly models: ModelReader) {}\n\n  read(): unknown {\n    return this.models;\n  }\n}\n',
+    [`${BILLING}/infrastructure/external/remote-model-reader.adapter.ts`]: 'export class RemoteModelReader {}\n',
+    'src/platform/resilience/default-resilience-settings.ts':
+      'export const defaultResilienceSettings = { retryAttempts: 3, retryBaseDelayMs: 100, timeoutMs: 2000 };\n',
+    [MODULE]: `import type { ContainerBuilder } from '@ddd-ts-kit/di';\nexport function billingModule(builder: ContainerBuilder): void {\n  builder.bind(QuoteReader).toClass(RemoteQuoteReader).as('external')${policyOfTheDelegating};\n  builder.bind(ModelReader).toClass(RemoteModelReader).as('external').with(ownPolicy(timeout(120_000)));\n}\n`,
+  };
+}

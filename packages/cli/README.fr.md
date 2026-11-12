@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a53f244ee1ee65ef -->
+<!-- translation-of: README.md sha256:0a68cf6bbe19d33b -->
 
 # ddd-ts-kit
 
@@ -2166,6 +2166,18 @@ une ligne de ponctuation perdue, ni un changement de sens, et un clone superfici
 *commits* qu'elle lit : en CI il lui faut `fetch-depth: 0`, c'est pourquoi les *pipelines*
 d'`init` ne la lancent pas.
 
+**Les migrations de la branche face au tronc.** Sans `<commit>`, elle lit ensuite les migrations
+de l'arbre de travail face au même tronc, avec les quatre ORM : une migration que la branche
+ajoute et dont le nom se trie avant la dernière migration du tronc (knex, Prisma, TypeORM), une
+entrée que la branche ajoute au journal de drizzle-kit et dont le `when` n'est pas après la
+dernière entrée de celui du tronc, et un fichier `.sql` que ce journal ne liste pas. Chacune est
+une erreur qui nomme la migration, la dernière du tronc et la commande qui remet l'ordre
+(`merge-trunk` sous drizzle-kit, ou le `meta/` du tronc puis `drizzle-generate --replay` une fois
+le tronc fusionné ; `merge-trunk --to-land` ailleurs), et `--warn` ne l'adoucit pas : code de
+sortie 1. Une migration de travail (`working-<what-it-does>`) est laissée de côté. Dans
+`--json` : `migrations`, chacune `{ kind, migration, file, trunkLast, text, fix }` avec `kind`
+`before-trunk` ou `not-in-journal`, comptées dans `errorCount`.
+
 
 ## merge-trunk
 
@@ -2260,6 +2272,13 @@ dit quoi faire ensuite et garde la fusion en cours pour le `--continue` suivant.
 nécessaire pour une base que git ne calculerait pas ; un git plus ancien fusionne avec
 `git merge` lui-même depuis `git merge-base` (`--since <merge base>`), et refuse `--dry-run`.
 Sortie 0 une fois commité, à jour ou en aperçu, 1 sur un arrêt, 2 quand il ne peut pas démarrer.
+
+Sur une branche qui contient déjà le tronc, il n'y a rien à fusionner. `--to-land` fait quand
+même atterrir ses migrations quand l'une est une migration de travail, se trie avant la dernière
+du tronc ou manque au journal de drizzle-kit : rejouées sous drizzle-kit, renommées après la
+dernière du tronc sous knex, Prisma et TypeORM (un arrêt, code de sortie 1, quand l'une d'elles
+et une migration plus récente du tronc nomment la même table). Elles sont laissées à committer :
+aucun commit de fusion ne les porte.
 
 ```text
 merge-trunk build/billing-2 <- origin/main (d8d281b)
@@ -2535,6 +2554,7 @@ règle.
 | `authz/actor-explicit` | dans `domain/` et `application/` : `ActorContext`, `ExecutionScope` (comme type ou comme valeur : la classe est le jeton d'une liste de dépendances), `AsyncLocalStorageExecutionScope`, `ScopedActorContext`, `AsyncLocalStorage` ; `.current()` ou `.require()` sur un contexte d'acteur ou sur quelque chose nommé `scope`, `scopes` ou `...executionScope` ; un import de `stampCreation`, `stampUpdate` ou `tenantScopeOf` |
 | `authz/fields-by-schema` | sous `application/queries/` : `roles.includes(`, `.some(`, `.every(`, `.find(`, `.indexOf(`, une comparaison avec un `role`, `isAdmin` |
 | `aspects/outside-in` | un import de `@ddd-ts-kit/aspects/decorators` hors de `infrastructure/` d'un contexte et du répertoire de la plateforme : `presentation/`, le fichier de module, `published-language/`, le noyau partagé, `main.ts`, toute autre source (`domain/` et `application/` sont signalés par les deux règles `layer/*` à la place) |
+| `aspects/timeout-covers-delegate` | un adaptateur déclaré avec `@Adapter` ou `@Gateway`, ou lié par `bind(Port).toClass(Adapter)` dans un fichier qui importe `@ddd-ts-kit/di`, dont le constructeur a un paramètre typé par un port auquel un autre adaptateur de ce genre est lié, et dont le délai est plus court que celui que cet adaptateur déclare : le plus petit `timeout(<nombre>)` écrit dans sa déclaration ou sa liaison et, sans `ownPolicy(` et avec le genre `external` ou `gateway`, le `timeoutMs` de `<platform>/resilience/default-resilience-settings.ts` ; sinon son plus grand `@Timeout(<nombre>)`. Un `timeout(` ou un `@Timeout(` qui reçoit autre chose qu'un nombre rend l'adaptateur muet |
 | `tracing/platform-only` | un import de `@ddd-ts-kit/tracing` ou d'un *package* `@opentelemetry/*` hors du répertoire de la plateforme, de `main.ts` et de `apps/`, tests compris |
 | `nest/no-parallel-pipeline` | dans `presentation/`, `infrastructure/` ou le fichier de module d'un contexte, tests à part : un import d'un contrôleur que Nest sert (ses décorateurs de route et de paramètres, sauf si le fichier importe `KitRoute` ou `KitRoutes` de `@ddd-ts-kit/http/nest`), de la requête ou de la réponse brutes, d'un *guard*, d'un *pipe*, d'un filtre d'exceptions ou d'une `HttpException`, d'un intercepteur ou du `Logger` de `@nestjs/common`, un import sans nom de celui-ci, ou un import d'un *package* de Nest dont le kit fait le travail (`@nestjs/core`, `@nestjs/swagger`, `@nestjs/cqrs`, `@nestjs/passport`, `@nestjs/config`, `@nestjs/schedule` et les autres de la section 3 d'ARCHITECTURE.md) ; le message dit ce que le kit fait à sa place ; sous la racine des sources hors des contextes, tests à part : un fichier qui importe `Controller` de `@nestjs/common`, ni `KitRoute` ni `KitRoutes`, et nomme `CommandBus` ou `QueryBus` ou importe un fichier d'un contexte |
 | `nest/controllers-current` | avec `"stack.routes": "nest"` : un `<context>.controllers.ts` qui diffère de ce que donnent les contrôleurs Nest du contexte et les signatures de leurs méthodes, ou absent ; une partie de la requête prise entière par aucune classe DTO et que `request` de `@KitRoute` ne donne pas ; une méthode de route qui ne répond ni une classe DTO, ni `Accepted`, ni `void`, et ne déclare pas de `response` dans `@KitRoute` |

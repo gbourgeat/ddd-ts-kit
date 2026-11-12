@@ -1,5 +1,6 @@
 import type { Rule } from '../model/rule';
 import { aspectsOutsideIn } from '../rules/aspects-outside-in';
+import { aspectsTimeoutCoversDelegate } from '../rules/aspects-timeout-covers-delegate';
 import { authzActorExplicit } from '../rules/authz-actor-explicit';
 import { authzFieldsBySchema } from '../rules/authz-fields-by-schema';
 import { authzDeclared } from '../rules/authz-declared';
@@ -184,6 +185,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   privacyNoPersonalDataInLogs,
   privacySnapshotSealed,
   aspectsOutsideIn,
+  aspectsTimeoutCoversDelegate,
   tracingPlatformOnly,
   tenancyScopedStatement,
   standardNoParallelInterface,

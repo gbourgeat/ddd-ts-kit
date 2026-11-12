@@ -10,6 +10,22 @@ builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]).wi
 // infrastructure/external/stripe-payment.gateway.ts
 import { Retry } from '@ddd-ts-kit/aspects/decorators';`,
   },
+  'aspects/timeout-covers-delegate': {
+    why: 'The platform puts a default policy around every `external` or `gateway` adapter that states none: retries, and a time limit for each attempt (`timeoutMs` of resilience/default-resilience-settings.ts, 2 seconds as generated). An adapter that only hands its call to another adapter, slow by nature and bound with a longer limit of its own, is then cut by a limit it never chose: every call fails at the default, as a timeout of the outer adapter, and nothing points at the adapter behind it. The same holds for an own policy shorter than the one of the adapter it calls. The rule reads what the text states: `@Adapter` and `@Gateway`, the bindings of the container of the kit (`bind(Port).toClass(Adapter).as(kind).with(...)`), the `@Timeout` of the methods, and durations written as numbers. A duration read from the configuration, an environment that sets OUTBOUND_TIMEOUT_MS, a platform wired by hand and the retries around the limit are not judged.',
+    bad: `// infrastructure/external/remote-quote-reader.adapter.ts
+@Adapter(QuoteReader, { kind: 'external' })
+export class RemoteQuoteReader implements QuoteReader {
+  constructor(private readonly models: ModelReader) {}
+}
+// infrastructure/external/remote-model-reader.adapter.ts
+@Adapter(ModelReader, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })
+export class RemoteModelReader implements ModelReader {}`,
+    good: `// infrastructure/external/remote-quote-reader.adapter.ts
+@Adapter(QuoteReader, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })
+export class RemoteQuoteReader implements QuoteReader {
+  constructor(private readonly models: ModelReader) {}
+}`,
+  },
   'tracing/platform-only': {
     why: 'Tracing is non-invasive and wired once. One action is one trace because every span is opened by the same few places: the request boundary, the bus middleware, the instrumentation around adapters and handlers, the outbox relay. A context that imports @ddd-ts-kit/tracing or an @opentelemetry package opens spans of its own, with names and attributes nobody reviews, and can no longer be traced differently by changing the composition root alone. Judged: every source under the source root, tests included, but the platform directory, main.ts and apps/.',
     bad: `// infrastructure/external/stripe-payment.gateway.ts

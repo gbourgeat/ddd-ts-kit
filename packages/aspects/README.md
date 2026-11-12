@@ -243,7 +243,7 @@ constructor: the decorators read them from the aspect runtime when a call is mad
 | `logged({ level?, fields?, logger?, clock? })` | entries `<Class>.<method> started` (debug), then `succeeded` (`level`, default info) or `failed` | a `DomainError` fails at `warn`, a fault at `error`; fields `class`, `method`, `kind`, `context`, `durationMs`, `errorType`, `errorCode` | arguments, results, error messages |
 | `timed({ name?, metrics?, clock? })` | histogram `<name>_duration_ms`, counter `<name>_total` | `name` is `dependency_call`; labels `class`, `method`, `kind`, `context`, `outcome`, `error_code` | arguments, results, error messages, identifiers |
 | `retry({ attempts, backoff?, retryOn?, sleep? })` | calls again after a failure | never after a `DomainError`, an open circuit or a full bulkhead (`isTransient`); 100 ms doubling up to 30 s with full jitter | nothing: it records nothing |
-| `timeout(ms, { signal?, scheduler? })` | rejects with `TimeoutError` (`TIMEOUT`) | the underlying call keeps running unless `signal: true` | the message names the class and method only |
+| `timeout(ms, { signal?, scheduler?, statedBy? })` | rejects with `TimeoutError` (`TIMEOUT`) | the underlying call keeps running unless `signal: true` | the message names the class and method only, then who stated the limit when `statedBy` says it |
 | `circuitBreaker({ failureThreshold, resetAfterMs, halfOpenMax?, scope?, isFailure?, onStateChange?, clock? })` | refuses calls with `CircuitOpenError` (`CIRCUIT_OPEN`) after consecutive failures, then lets trial calls through | one circuit per instance and method; a `DomainError` is not a failure; one trial call | `onStateChange` gets class, method, context and the two states |
 | `cached({ key, ttlMs, cache?, shared?, allowKinds? })` | answers a repeated read from the `Cache` port | refuses kinds `repository` and `use-case`; needs `scope` in the runtime or `shared: true`, and throws at the call without either; an entry belongs to the tenant of the work unless `shared: true`, work that names no tenant keeps the key as written, and work under an elevation (`acrossTenants`) neither reads nor writes the cache; a call whose key is `undefined` is not cached; failures are not cached; concurrent identical calls of one tenant share one call; a failing cache is a miss | the key is built by the project from the arguments and goes to the cache only |
 | `bulkhead({ maxConcurrent, maxQueued?, scope? })` | bounds the calls running at once, refuses beyond with `BulkheadFullError` (`BULKHEAD_FULL`) | no queue; one compartment per instance and method | nothing |
@@ -258,6 +258,12 @@ erasure does not reach the cache, so what it holds of a person lasts its `ttlMs`
 last declared parameter, aborted when the time is up. Declare `signal?: AbortSignal` last,
 without a default value, and pass it to the underlying call. A signal the caller passed there is
 kept: either one aborts. A method without parameter receives none.
+
+**`timeout` and who stated it.** `statedBy` is a few words the `TimeoutError` keeps and ends its
+message with: `Class.method did not answer within 2000 ms (<statedBy>)`. A policy put around
+adapters that did not ask for it, as the default one of a platform, names itself there and says
+how an adapter states its own, so that a call cut by a limit nobody wrote on that adapter does not
+read as its fault.
 
 **`retry` and jitter.** `backoff: { baseMs, factor, maxMs, jitter }`. `jitter` is a function
 `(delayMs, attempt) => delayMs`: `fullJitter()` by default, `fullJitter(seededRandom)` or

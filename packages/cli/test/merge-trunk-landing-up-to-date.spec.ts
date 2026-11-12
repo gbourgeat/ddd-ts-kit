@@ -115,6 +115,22 @@ describe('merge-trunk --to-land on a branch that already holds the trunk', () =>
     expect(names(kept)).toContain('20261015101500_add-invoices.js');
   });
 
+  it('leaves a working migration the trunk itself holds: nothing of the branch is to land', () => {
+    const root = trunkRepository({
+      'ddd-ts-kit.config.json': JSON.stringify({ contexts: {}, stack: { orm: 'knex' } }),
+      'migrations/20261015101500_working-add-invoices.js': 'export const up = () => undefined;\n',
+    });
+
+    onBranch(root, 'build/billing');
+    commitFiles(root, { 'README.md': 'Billing.\n' }, 'docs: billing');
+
+    expect(mergeTrunk(root, '--to-land', '--json').json()).toMatchObject({
+      status: 'up-to-date',
+      migrations: [],
+      next: 'nothing to merge: the branch already holds the trunk',
+    });
+  });
+
   it('lands nothing on a storage of its own, which has no migration of the kit', () => {
     const root = trunkRepository({
       'ddd-ts-kit.config.json': JSON.stringify({ contexts: {}, stack: { orm: 'custom' } }),

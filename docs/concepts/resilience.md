@@ -36,6 +36,10 @@ timeout; it is the one policy with no good reason to be absent.
 - *A timed-out write is an unknown outcome*, not a failure. The SMS may have been sent.
 - *Timeouts longer than the caller's.* If the route's client gives up after 5 seconds, an inner
   timeout of 30 seconds only wastes resources. Budgets shrink going inward.
+- *A default that cuts a slower adapter behind it.* The default policy gives every `external` or
+  `gateway` adapter that states none a limit of 2 seconds. An adapter that only hands its call to
+  another one, slow by nature and bound with 120 seconds of its own, then fails every call at 2
+  seconds, as a timeout of the outer adapter. See "A delegating adapter" below.
 
 An adapter that can be cancelled takes the signal as its last parameter and hands it to the
 call; `timeout(2000, { signal: true })` then aborts the request itself, not only the wait:
@@ -309,6 +313,45 @@ export class ProviderMailer implements Mailer {
   }
 }
 ```
+
+### A delegating adapter
+
+An adapter may be given the port of another adapter and only hand the call over: a reader that
+adds a cache key, a gateway that picks one provider among two. The limit that counts is then the
+shortest on the way, and the outer adapter has one it never wrote: the default of its kind. Two
+things make this visible.
+
+**The error says which policy cut the call.** `timeout(ms, { statedBy })` ends the message of the
+`TimeoutError` with who stated the limit, and keeps it in `statedBy`; the code stays `TIMEOUT`.
+The default policy of a generated project names itself there
+(`src/platform/resilience/default-policy.ts`):
+
+```text
+RemoteQuoteReader.read did not answer within 2000 ms (the default policy of the external and
+gateway adapters, OUTBOUND_TIMEOUT_MS: `ownPolicy(timeout(<ms>))` on the declaration or the
+binding of this adapter states another, at least as long as the adapter it calls)
+```
+
+**The rule [`aspects/timeout-covers-delegate`](../ARCHITECTURE.md#3-dependency-rules) reports it
+before it runs.** `ddd-ts-kit check` reads the adapters the project declares (`@Adapter`,
+`@Gateway`) or binds with the container of the kit, the classes that type the constructor of
+each, and the durations written as numbers: an adapter whose limit (its own, else the default of
+the platform when its kind is `external` or `gateway`) is shorter than the limit the adapter
+behind one of its ports states for itself is an error, with the two durations. The fix states the
+policy of the outer adapter, at least as long as the inner one, or `ownPolicy()` alone when it
+only hands the call over and the inner adapter carries the policy:
+
+```ts
+@Adapter(QuoteReader, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })
+export class RemoteQuoteReader implements QuoteReader {
+  constructor(private readonly models: ModelReader) {}
+}
+```
+
+What it cannot read it does not judge: a duration taken from the configuration or a variable, an
+environment that raises `OUTBOUND_TIMEOUT_MS`, a platform wired by hand (`platform.adapter(...)`),
+an adapter the outer one reaches without receiving its port, and the retries, which multiply
+both limits. There the message of the error is what tells.
 
 Use cases get their cross-cutting behaviour from bus middlewares instead. None of the three
 forms is allowed in `domain/` or `application/`: rule

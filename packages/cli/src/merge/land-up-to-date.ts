@@ -30,9 +30,11 @@ export function landUpToDate(context: MergeContext, report: MergeReport, now: Da
 
   const migrations = [...report.migrations, ...landed.lines];
 
-  return landed.stop === undefined
-    ? { ...report, migrations, next: NEXT_STEPS.landedUpToDate }
-    : { ...report, status: 'stopped', migrations, stop: landed.stop, next: NEXT_STEPS.migrationsUpToDate };
+  if (landed.stop !== undefined) {
+    return { ...report, status: 'stopped', migrations, stop: landed.stop, next: NEXT_STEPS.migrationsUpToDate };
+  }
+
+  return landed.lines.length === 0 ? report : { ...report, migrations, next: NEXT_STEPS.landedUpToDate };
 }
 
 function hasMigrationsToLand(root: string, orm: OrmStack, trunk: { name: string; commit: string }): boolean {

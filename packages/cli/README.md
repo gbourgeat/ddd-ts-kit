@@ -2028,6 +2028,18 @@ two places, a lost line of punctuation or a change of meaning, and a shallow clo
 commits it reads: in CI it needs `fetch-depth: 0`, which is why the pipelines of `init` do not
 run it.
 
+**The migrations of the branch against the trunk.** Without a `<commit>`, it then reads the
+migrations of the working tree against the same trunk, on the four ORM: a migration the branch
+adds whose name sorts before the last migration of the trunk (knex, Prisma, TypeORM), an entry
+the branch adds to the journal of drizzle-kit whose `when` is not after the last entry of the
+trunk's, and a `.sql` file that journal does not list. Each is an error that names the migration,
+the last one of the trunk and the command that brings the order right (`merge-trunk` under
+drizzle-kit, or the `meta/` of the trunk then `drizzle-generate --replay` once the trunk is
+merged; `merge-trunk --to-land` elsewhere), and `--warn` does not soften it: exit 1. A working
+migration (`working-<what-it-does>`) is left out. In `--json`: `migrations`, each
+`{ kind, migration, file, trunkLast, text, fix }` with `kind` `before-trunk` or `not-in-journal`,
+counted in `errorCount`.
+
 ## merge-trunk
 
 ```
@@ -2109,6 +2121,12 @@ says what to do next and keeps the merge in progress for the next `--continue`. 
 for a base git would not compute; an older git merges with `git merge` itself from
 `git merge-base` (`--since <merge base>`), and refuses `--dry-run`. Exit 0 once committed, up to
 date or previewed, 1 on a stop, 2 when it cannot start.
+
+On a branch that already holds the trunk there is nothing to merge. `--to-land` still lands its
+migrations when one is a working one, sorts before the last of the trunk or is out of the journal
+of drizzle-kit: replayed under drizzle-kit, renamed after the last of the trunk under knex, Prisma
+and TypeORM (a stop, exit 1, when one of them and a later migration of the trunk name the same
+table). They are left to commit: no merge commit carries them.
 
 ```text
 merge-trunk build/billing-2 <- origin/main (d8d281b)
@@ -2370,6 +2388,7 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 | `authz/actor-explicit` | in `domain/` and `application/`: `ActorContext`, `ExecutionScope` (as a type or as a value: the class is the token of a dependency list), `AsyncLocalStorageExecutionScope`, `ScopedActorContext`, `AsyncLocalStorage`; `.current()` or `.require()` on an actor context or on something named `scope`, `scopes` or `...executionScope`; an import of `stampCreation`, `stampUpdate` or `tenantScopeOf` |
 | `authz/fields-by-schema` | under `application/queries/`: `roles.includes(`, `.some(`, `.every(`, `.find(`, `.indexOf(`, a comparison with a `role`, `isAdmin` |
 | `aspects/outside-in` | an import of `@ddd-ts-kit/aspects/decorators` outside `infrastructure/` of a context and the platform directory: `presentation/`, the module file, `published-language/`, the shared kernel, `main.ts`, any other source (`domain/` and `application/` are reported by the two `layer/*` rules instead) |
+| `aspects/timeout-covers-delegate` | an adapter declared with `@Adapter` or `@Gateway`, or bound by `bind(Port).toClass(Adapter)` in a file that imports `@ddd-ts-kit/di`, whose constructor has a parameter typed by a port another such adapter is bound to, and whose time limit is shorter than the one that adapter states: the smallest `timeout(<number>)` written in its declaration or binding and, without `ownPolicy(` and with the kind `external` or `gateway`, `timeoutMs` of `<platform>/resilience/default-resilience-settings.ts`; else its largest `@Timeout(<number>)`. A `timeout(` or `@Timeout(` given anything but a number silences the adapter |
 | `tracing/platform-only` | an import of `@ddd-ts-kit/tracing` or of an `@opentelemetry/*` package outside the platform directory, `main.ts` and `apps/`, tests included |
 | `nest/no-parallel-pipeline` | in `presentation/`, `infrastructure/` or the module file of a context, tests apart: an import of a controller Nest serves (its route and parameter decorators, unless the file imports `KitRoute` or `KitRoutes` of `@ddd-ts-kit/http/nest`), the raw request or answer, a guard, a pipe, an exception filter or an `HttpException`, an interceptor or the `Logger` of `@nestjs/common`, a bare import of it, or an import of a package of Nest whose work the kit does (`@nestjs/core`, `@nestjs/swagger`, `@nestjs/cqrs`, `@nestjs/passport`, `@nestjs/config`, `@nestjs/schedule` and the others of section 3 of ARCHITECTURE.md); the message names what the kit does in its place; under the source root outside the contexts, tests apart: a file that imports `Controller` of `@nestjs/common`, neither `KitRoute` nor `KitRoutes`, and names `CommandBus` or `QueryBus` or imports a file of a context |
 | `nest/controllers-current` | with `"stack.routes": "nest"`: a `<context>.controllers.ts` that differs from what the Nest controllers of the context and the signatures of their methods give, or is missing; a part of the request taken whole by no DTO class that `request` of `@KitRoute` does not give; a route method that answers no DTO class, `Accepted` or `void` and declares no `response` in `@KitRoute` |
