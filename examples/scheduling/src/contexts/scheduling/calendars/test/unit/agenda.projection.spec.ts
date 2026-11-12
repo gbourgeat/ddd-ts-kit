@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { RowNotHeldError } from '@ddd-ts-kit/kernel';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
@@ -212,7 +211,11 @@ describe('The agenda, given facts twice or out of order', () => {
     const { booking } = planned().build();
     const moved = new AppointmentRescheduled('appointment-1', at('07:00'), { booking, previous: booking });
 
-    await expect(projection.rescheduled(moved)).rejects.toThrow(RowNotHeldError);
+    await expect(projection.rescheduled(moved)).rejects.toMatchObject({
+      name: 'RowNotHeldError',
+      key: 'appointment-1',
+    });
+
     expect(await agenda.get('appointment-1')).toBeUndefined();
 
     await projection.booked(new AppointmentBooked('appointment-1', at('06:00'), { booking }));
