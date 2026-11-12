@@ -1,6 +1,5 @@
 import type { Config } from '../../config';
 import type { InitFile } from './init-file';
-import { when } from './when';
 
 const WITH_TEST_DATABASE = ['drizzle', 'knex', 'prisma', 'typeorm'];
 
@@ -22,10 +21,6 @@ export function endToEndFiles(config: Config): InitFile[] {
       ? ['jest.e2e.config.js', 'init/e2e/jest.e2e.config.js.tpl']
       : ['vitest.e2e.config.ts', 'init/e2e/vitest.e2e.config.ts.tpl'],
     support('start-application', WITH_TEST_DATABASE.includes(orm) ? 'database' : 'memory'),
-    // The global setup of the run: what a server is asked once, where no timeout of a hook applies.
-    ...when(WITH_TEST_DATABASE.includes(orm), [
-      ['test/support/test-database-run.ts', 'init/e2e/test-database-run.ts.tpl'],
-    ]),
     support('create-credentials', authn),
     support('auth-environment', authn),
     support('test-environment'),

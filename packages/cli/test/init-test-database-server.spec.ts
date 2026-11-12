@@ -147,12 +147,12 @@ describe('the test database of a project on a PostgreSQL server', () => {
     expect(run).toContain('if (runOf(name, run.url) === run.id) {\n      await run.server.query(dropping(name));');
   });
 
-  it('is written with Jest too, not without an ORM, and its global setup only where there is an end-to-end run', () => {
+  it('is written with Jest too, and without an HTTP stack, where the test database imports it, not without an ORM', () => {
     expect(exists(initProject('--tests', 'jest', '--orm', 'typeorm'), CLONE)).toBe(true);
     expect(exists(initProject('--tests', 'jest', '--orm', 'typeorm'), RUN)).toBe(true);
+    expect(exists(initProject('--http', 'none'), RUN)).toBe(true);
     expect(exists(initProject('--orm', 'none'), CLONE)).toBe(false);
     expect(exists(initProject('--orm', 'none'), RUN)).toBe(false);
-    expect(exists(initProject('--http', 'none'), RUN)).toBe(false);
   });
 });
 
@@ -185,12 +185,15 @@ describe('the global setup of an end-to-end run on a server', () => {
     expect(teardown).not.toMatch(/from '[.$@]/);
   });
 
-  it('is an entry for knip under Jest, whose configuration names it only when DATABASE_URL is set', () => {
+  it('is an entry for knip where no configuration it reads names it: under Jest, and without an HTTP stack', () => {
     const entry = '"test/support/test-database-run.ts"';
 
+    // jest.e2e.config.js names it only when DATABASE_URL is set.
     expect(read(initProject('--tests', 'jest'), 'knip.json')).toContain(`"test/e2e/**/*.e2e.spec.ts",\n      ${entry}`);
+    // Without an HTTP stack there is no end-to-end run yet, and the test database imports the file.
+    expect(read(initProject('--http', 'none'), 'knip.json')).toContain(entry);
+    expect(read(initProject('--tests', 'jest', '--http', 'none'), 'knip.json')).toContain(entry);
     expect(read(initProject('--tests', 'jest', '--orm', 'none'), 'knip.json')).not.toContain(entry);
-    expect(read(initProject('--tests', 'jest', '--http', 'none'), 'knip.json')).not.toContain(entry);
     // The configuration of Vitest names it whatever the environment: its plugin finds it there.
     expect(read(initProject(), 'knip.json')).not.toContain(entry);
   });
