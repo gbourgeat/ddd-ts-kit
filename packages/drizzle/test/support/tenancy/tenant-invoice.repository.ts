@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { FixedClock, stampCreation, stampUpdate, tenantScopeOf, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate, ownTenantCondition, primaryKeyOf, tenantCondition } from '../../../src/postgres';
+import { insertIgnoringConflict, optimisticUpdate, ownTenantCondition, tenantCondition } from '../../../src/postgres';
 import type { Database } from '../platform/database/database';
 import { Invoice, type InvoiceState } from '../billing-core/domain/invoice';
 import type { InvoiceRepository } from '../billing-core/domain/repositories/invoice.repository';
@@ -43,21 +43,16 @@ export class TenantInvoiceRepository implements InvoiceRepository {
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { ...invoice.state, version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.length;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).length;
     });
   }
 
-  private insert(state: VersionedInvoice) {
+  private async insert(state: VersionedInvoice): Promise<number> {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, clock) };
+    const insertion = () => this.database.executor().insert(invoices).values(row);
 
-    return this.database
-      .executor()
-      .insert(invoices)
-      .values(row)
-      .onConflictDoNothing({ target: primaryKeyOf(invoices) })
-      .returning({ id: invoices.id });
+    return (await insertIgnoringConflict(insertion, invoices)) ? 1 : 0;
   }
 
   private update(state: VersionedInvoice, expected: number) {

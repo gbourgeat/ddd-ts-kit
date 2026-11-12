@@ -1,4 +1,4 @@
-import type { EntityManager, EntitySchema, ObjectLiteral, QueryDeepPartialEntity } from 'typeorm';
+import type { EntityManager, EntitySchema, InsertQueryBuilder, ObjectLiteral, QueryDeepPartialEntity } from 'typeorm';
 import { UniqueViolationError } from '@ddd-ts-kit/kernel';
 import { inserted } from './inserted';
 
@@ -13,27 +13,37 @@ import { inserted } from './inserted';
  * as any statement would be. MySQL has no conflict target and its `INSERT IGNORE` skips that row
  * too: when it wrote nothing, one query asks whether a row holds the key, and when none does, a
  * `UniqueViolationError` is raised, as the other databases answer.
+ *
+ * Where the database has a conflict target, that takes two statements at most. On PostgreSQL a
+ * target on the key alone lets two inserts of one key made at once meet on the other unique index
+ * first, and one of them is then refused for a value no other row holds. The first statement
+ * skips on any unique value; when it wrote nothing, the second names the key: `false` for a key
+ * that is held, and the refusal of the database for a value another row holds.
  */
 export async function insertIgnoringConflict<Row extends ObjectLiteral>(
   manager: EntityManager,
   entity: EntitySchema<Row>,
   row: QueryDeepPartialEntity<Row>,
 ): Promise<boolean> {
-  const insert = manager.createQueryBuilder().insert().into(entity).values(row);
+  const inserting = (): InsertQueryBuilder<Row> => manager.createQueryBuilder().insert().into(entity).values(row);
   const primary = manager.dataSource.getMetadata(entity).primaryColumns;
 
-  if (!manager.dataSource.driver.supportedUpsertTypes.includes('on-conflict-do-update')) {
-    const key = Object.fromEntries(
-      primary.map((column) => [column.propertyName, Reflect.get(row, column.propertyName)]),
-    );
+  if (await inserted(manager, inserting().orIgnore())) {
+    return true;
+  }
 
-    return (await inserted(manager, insert.orIgnore())) || keyTaken(manager, entity, key);
+  if (!manager.dataSource.driver.supportedUpsertTypes.includes('on-conflict-do-update')) {
+    return keyTaken(
+      manager,
+      entity,
+      Object.fromEntries(primary.map((column) => [column.propertyName, Reflect.get(row, column.propertyName)])),
+    );
   }
 
   // Nothing to overwrite: TypeORM writes `ON CONFLICT ( <key> ) DO NOTHING`.
   return inserted(
     manager,
-    insert.orUpdate(
+    inserting().orUpdate(
       [],
       primary.map((column) => column.databaseName),
     ),

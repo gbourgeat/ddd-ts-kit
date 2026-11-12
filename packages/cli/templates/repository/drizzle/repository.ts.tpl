@@ -1,9 +1,9 @@
 import { and, eq } from 'drizzle-orm';
 {{#if tenant.scoped}}
-import { optimisticUpdate, ownTenantCondition, primaryKeyOf, tenantCondition } from '@ddd-ts-kit/drizzle/postgres';
+import { insertIgnoringConflict, optimisticUpdate, ownTenantCondition, tenantCondition } from '@ddd-ts-kit/drizzle/postgres';
 {{/if}}
 {{#unless tenant.scoped}}
-import { optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
+import { insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
 {{/unless}}
 {{#if tenant.scoped}}
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
@@ -53,19 +53,16 @@ export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal
   async save(saved: {{aggregate.pascal}}): Promise<void> {
     await optimisticUpdate(saved, async ({ expected, next }) => {
       const state = { ...{{aggregate.pascal}}Mapper.toRow(saved), version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.length;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).length;
     });
   }
 
-  private insert(state: Versioned{{aggregate.pascal}}) {
+  private async insert(state: Versioned{{aggregate.pascal}}): Promise<number> {
     const row = { ...state, {{#if tenant.scoped}}...tenantScopeOf(this.scope), {{/if}}...stampCreation(this.scope, this.clock) };
+    const insertion = () => this.database.executor().insert({{aggregate.tableCamel}}).values(row);
 
-    const insertion = this.database.executor().insert({{aggregate.tableCamel}}).values(row);
-    const ignoringTheKey = insertion.onConflictDoNothing({ target: primaryKeyOf({{aggregate.tableCamel}}) });
-
-    return ignoringTheKey.returning({ id: {{aggregate.tableCamel}}.id });
+    return (await insertIgnoringConflict(insertion, {{aggregate.tableCamel}})) ? 1 : 0;
   }
 
   private update(state: Versioned{{aggregate.pascal}}, expected: number) {

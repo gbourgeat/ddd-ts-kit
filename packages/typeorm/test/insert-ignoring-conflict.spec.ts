@@ -56,12 +56,28 @@ async function sentOn(
 }
 
 describe('insertIgnoringConflict', () => {
-  it('ignores a conflict on the primary key alone where the database names a target (SQLite)', async () => {
-    const { sent, outcome } = await sentOn({ type: 'better-sqlite3', database: ':memory:' });
+  it('writes a row no unique value refuses in one statement that names no target (PostgreSQL)', async () => {
+    const { sent, outcome } = await sentOn({ type: 'postgres' });
 
     expect(outcome).toBe(true);
-    expect(sent).toContain('ON CONFLICT ( "id" ) DO NOTHING');
+    expect(sent).toMatch(/ON CONFLICT DO NOTHING$/);
   });
+
+  it.each([
+    ['PostgreSQL', { type: 'postgres' }, 'ON CONFLICT DO NOTHING'],
+    ['SQLite', { type: 'better-sqlite3', database: ':memory:' }, 'ON CONFLICT DO NOTHING'],
+  ] as const)(
+    'names the primary key alone in a second statement when the first wrote nothing (%s)',
+    async (_, options, skipping) => {
+      const { sent, outcome } = await sentOn(options, { written: 0, holders: 0 });
+      const [first, second, ...others] = sent.split('\n');
+
+      expect(outcome).toBe(false);
+      expect(first).toContain(skipping);
+      expect(second).toContain('ON CONFLICT ( "id" ) DO NOTHING');
+      expect(others).toEqual([]);
+    },
+  );
 
   it('falls back to INSERT IGNORE on MySQL, which has no conflict target', async () => {
     const { sent, outcome } = await sentOn({ type: 'mysql', database: 'kit' });
