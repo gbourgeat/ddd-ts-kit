@@ -108,11 +108,13 @@ describe('init: the read model tables the application lists, checked before a st
     const store = 'src/contexts/billing/infrastructure/persistence/knex-invoice-summaries.repository.ts';
 
     withInvoiceSummaries(root);
+
     write(
       root,
       store,
       read(root, store).replace('scope: ExecutionScope)', 'scope: ExecutionScope, readonly page = 20)'),
     );
+
     rmSync(path.join(root, 'src/platform', LIST));
 
     const first = cli(root, 'init', '--force');

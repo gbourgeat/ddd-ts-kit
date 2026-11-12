@@ -9,7 +9,7 @@ import type { Workspace } from '../workspace';
 const STORE = /^export class (\w+)\s+extends (?:Drizzle|Knex|Prisma|TypeOrm|Table)ReadModelStore</m;
 
 /** The constructor a generated store has: the storage, and the scope of the work when it keeps tenant data. */
-const BUILT_ON_THE_STORAGE = /\bconstructor\(\s*database: [\w.]+(?:,\s*scope: ExecutionScope)?,?\s*\)/;
+const BUILT_ON_THE_STORAGE = /\bconstructor\(\s*\w+: [\w.]+(?:,\s*\w+: ExecutionScope)?,?\s*\)/;
 
 const PERSISTENCE = 'infrastructure/persistence/';
 

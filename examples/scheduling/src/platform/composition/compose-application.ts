@@ -120,7 +120,11 @@ export function composeApplication(
   const container = createApplication({
     modules: [
       kernel(foundations, persistence, options),
-      platformModule(persistence, options),
+      platformModule(
+        persistence,
+        options,
+        contexts.modules.map(({ name }) => name),
+      ),
       guard,
       auditModule(foundations.audit),
       filesModule(options.files ?? new InMemoryFileStorage()),

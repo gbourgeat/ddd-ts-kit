@@ -8,7 +8,10 @@ import type { Persistence } from '{{alias.platform}}/database/persistence{{alias
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 
-/** The class of a read model store, built as the application binds it: on the storage, with the scope of the work when it keeps tenant data. */
+/**
+ * The class of a read model store, built as the application binds it: on the storage, with the
+ * scope of the work when it keeps tenant data.
+ */
 type Store = new (database: Persistence['database'], scope: ExecutionScope) => ReadModelInATable;
 
 /**
@@ -21,7 +24,11 @@ const LISTED: readonly (readonly [context: string, store: Store])[] = [
   // /ddd-ts-kit:read-model-tables
 ];
 
-/** The read model stores of the tree `init` could not list, since their constructor takes something else: the check says so at each start until each is listed, or built here by a class of its own. */
+/**
+ * The read model stores of the tree `init` could not list, since their constructor takes
+ * something else: the check says at each start that nothing checks their tables, until each is
+ * listed through a class of its own that builds it.
+ */
 const NOT_LISTED: readonly string[] = [
   // ddd-ts-kit:read-models-not-listed
   // /ddd-ts-kit:read-models-not-listed
