@@ -10,6 +10,7 @@ import {
   EventSubscribers,
   ExecutionScope,
   Lock,
+  Logger,
   Metrics,
   PersonalDataCipher,
   ProcessStore,
@@ -19,12 +20,14 @@ import {
   SubjectKeyStore,
   UnitOfWork,
   type ErrorReporter,
+  type ReadModelTablesAtStart,
 } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
 import { JobStore } from '@ddd-ts-kit/scheduling';
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
 import { createTupleStore } from '@/platform/auth/relationships/create-tuple-store';
 import type { Persistence } from '@/platform/database/persistence';
+import { readModelTables } from '@/platform/database/read-model-tables';
 import type { EventProvider } from '@/platform/events/event-provider';
 import type { LogSettings } from '@/platform/observability/create-logger';
 import type { RedisServices } from '@/platform/redis/open-redis';
@@ -51,6 +54,12 @@ export interface PlatformOptions {
   readonly resilience?: ResilienceSettings;
   /** Whether a consumed event continues the trace of its publication (the default) or starts one linked to it. */
   readonly traceConsumers?: ConsumerTrace;
+  /**
+   * What the start does with a read model table that cannot hold the trace of a deleted row. Left out, it
+   * refuses to start, with every such table and the migration to write; `'reported'` logs them as one error
+   * and starts, for a deployment that starts the application before its migrations ran.
+   */
+  readonly readModelTables?: ReadModelTablesAtStart;
   /** Where unexpected failures are reported: the reporter of `errors.ts` in `main.ts`; left out (the tools, the tests), nowhere. */
   readonly errors?: ErrorReporter;
   /** The Redis protocol server; left out, the cache, the lock and the limiter stay in the memory of the process. */
@@ -66,6 +75,8 @@ export interface PlatformOptions {
 export function platformModule(persistence: Persistence, options: PlatformOptions): ContextModule {
   return defineContextModule({
     name: 'platform',
+    // Before a consumer is subscribed or a request served, whatever builds a store and whenever: one read of the catalog.
+    onStart: ({ resolve }) => readModelTables(persistence).atStart(resolve(Logger), options.readModelTables),
     // Closed inside `stop()` of the application, after the jobs and the consumers and before the logger is flushed.
     onStop: () => options.events.close(),
     register(builder) {

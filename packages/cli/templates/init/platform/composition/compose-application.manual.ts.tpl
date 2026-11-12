@@ -60,9 +60,6 @@ import { createPlatform } from '{{alias.platform}}/composition/create-platform{{
 import { platformErrorMapper } from '{{alias.platform}}/composition/platform-error-mapper{{alias.ext}}';
 {{/if}}
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
-{{#if persistence.hasDatabase}}
-import { readModelTables } from '{{alias.platform}}/database/read-model-tables{{alias.ext}}';
-{{/if}}
 {{#if files.http}}
 import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{/if}}
@@ -110,9 +107,8 @@ export const everyContext: readonly ContextModule[] = [
 ];
 
 /**
- * The contexts run as services of their own (`ddd-ts-kit generate service`): the application
- * `main.ts` and the worker run leaves them out, since their consumers, their processes and their
- * jobs belong to the service, not to both.
+ * The contexts run as services of their own (`ddd-ts-kit generate service`): the application `main.ts` and the worker
+ * run leaves them out, since their consumers, their processes and their jobs belong to the service, not to both.
  */
 const extracted: readonly ContextModule[] = [
   // ddd-ts-kit:extracted
@@ -275,16 +271,16 @@ function boundaryOf(platform: Platform, options: ApplicationOptions{{#if present
 {{/if}}
 
 /**
+{{#if persistence.hasDatabase}}
+ * The read model tables of the database first, then the consumers, then the jobs: a job sends commands whose events must find their handlers.
+{{/if}}
+{{#unless persistence.hasDatabase}}
  * The consumers first, then the jobs: a job sends commands whose events must find their handlers.
+{{/unless}}
  * The worker of the background jobs runs in the process that runs the jobs{{#if queue.memory}}, and in every
  * process while the queue is kept in its memory: no other process would see what this one enqueues{{/if}}.
  */
 async function start(platform: Platform, options: ApplicationOptions): Promise<void> {
-{{#if persistence.hasDatabase}}
-  // Before a consumer is subscribed or a request served, whatever builds a store and whenever: one read of the catalog.
-  await readModelTables(platform.persistence).atStart(platform.logger, options.readModelTables);
-
-{{/if}}
 {{#if authz.rebac}}
   await relateSystemActors();
 
@@ -301,6 +297,9 @@ async function start(platform: Platform, options: ApplicationOptions): Promise<v
 {{#if search.opensearch}}
   // The index of every read model of OpenSearch the contexts built, before an event reaches its projection.
   await platform.search.provision();
+{{/if}}
+{{#if persistence.hasDatabase}}
+  await platform.readModelTables.atStart(platform.logger, options.readModelTables);
 {{/if}}
   await options.events.start();
 

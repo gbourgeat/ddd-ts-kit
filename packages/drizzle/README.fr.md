@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a91c2a406c27407d -->
+<!-- translation-of: README.md sha256:36d647ed17f9082e -->
 
 # @ddd-ts-kit/drizzle
 
@@ -890,7 +890,7 @@ starts_at is not null))`), une requête à vous sur la table écarte les lignes 
 (`deleted = false`), et une table dont des colonnes refusent NULL est refusée par
 `ReadModelTableNotReadyError`, à la construction du registre d'après sa définition et, avant
 l'écriture de la première trace, par une lecture des colonnes que tient la base
-([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). `store.table` est ce que prend
+([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). Une application n'attend pas cette première trace : `drizzleReadModelTables(context)` lit chaque table de modèle de lecture de la base en une instruction sur le catalogue, quel que soit le registre construit, et son `require()` refuse avec `ReadModelTablesNotReadyError`, qui nomme chaque table qui n'est pas prête, ses colonnes et la migration à écrire ; un projet généré l'appelle à son démarrage, et `npm run db:read-models` avant un déploiement ([Chaque table vérifiée au démarrage, et avant un déploiement](../../docs/concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement)). `store.table` est ce que prend
 `ProjectionRebuild` ; la reconstruction est réservée à PostgreSQL (une copie `<table>__rebuild`
 faite `LIKE ... INCLUDING ALL`, les clés écrites entre-temps dans `<table>__touched`, l'échange
 par renommage en une transaction) et ses garanties et limites sont dans le README de

@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:2df856a70f71cdf0 -->
+<!-- translation-of: cqrs.md sha256:067f48cd2f3666f1 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -408,11 +408,14 @@ ce qu'il a retiré (un effacement qui rapporte ce qu'il a atteint) ne compte que
   que le registre associe contient NULL, hormis la clé, le locataire et le tampon, si bien que les
   données personnelles d'une ligne supprimée ont disparu et qu'une valeur unique qu'elle tenait
   est de nouveau libre. Une table dont des colonnes refusent NULL est refusée par son nom
-  (`ReadModelTableNotReadyError`, qui liste les colonnes) : à la construction du registre sur
+  (`ReadModelTableNotReadyError`) : à la construction du registre sur
   Drizzle et TypeORM, d'après la définition, et sur les quatre ORM avant l'écriture de la première
   trace, par une lecture des colonnes que tient la base, si bien qu'une migration pas encore
   exécutée est vue elle aussi, et jamais par une requête qui ferait échouer la transaction de
-  l'événement. Sur Prisma, les champs du modèle sont optionnels eux aussi (`String?`).
+  l'événement. Son message nomme la table, les colonnes qui refusent NULL, si la contrainte de
+  vérification manque, et la migration à écrire, en instructions. Sur Prisma, les champs du modèle
+  sont optionnels eux aussi (`String?`). Une application n'attend pas cette première trace :
+  [chaque table est vérifiée à son démarrage](#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement).
 - **Une contrainte de vérification garde entières les lignes vivantes**, à la place du NOT NULL
   que les colonnes ne portent plus. `generate read-model` l'écrit avec la table, sous ce nom ; une
   table écrite avant, ou à la main, la prend dans une migration :
@@ -441,6 +444,82 @@ que sa trace ne peut pas être écrite, et un *upsert* est refusé aussitôt par
 sur plusieurs locataires lit une telle clé comme tenue et n'écrit que dans son propre locataire,
 si bien que son écriture d'une clé que tient un autre locataire se termine encore, après cinq
 tentatives, par une simple `ConcurrencyError`.
+
+### Chaque table vérifiée au démarrage, et avant un déploiement
+
+Un registre refuse sa table avant sa première trace, et sur Drizzle et TypeORM à sa construction.
+Un conteneur construit un registre quand quelque chose le demande pour la première fois, si bien
+que dans une application câblée ainsi les deux refus arrivent avec la première requête ou le
+premier événement qui atteint le modèle de lecture, en production, et une table à la fois. Deux
+choses le disent plus tôt, pour toutes les tables d'un coup.
+
+**Au démarrage.** `knexReadModelTables(context)`, `drizzleReadModelTables`, `prismaReadModelTables`
+et `typeOrmReadModelTables` rendent un `PostgresReadModelTables` du noyau. Il lit le catalogue de
+la base en une instruction, sans ligne ni verrou, et n'a besoin d'aucun registre : une table de
+modèle de lecture se reconnaît à son tampon, les quatre colonnes que `readModelColumns` lui donne
+sous les mêmes noms sur chaque ORM, et sa ligne est toute autre colonne hormis la clé primaire et
+`tenant_id`. `notReady()` rend chaque table qui ne peut pas contenir une trace, `require()` refuse
+avec `ReadModelTablesNotReadyError`, une seule erreur qui les nomme toutes, chacune avec ses
+colonnes et sa migration :
+
+```text
+2 read model tables are not ready for this version: notification.contacts, scheduling.agenda. Apply the migrations of the project before the application starts; a table they leave as it is takes the migration written under its name.
+
+The read model table notification.contacts cannot hold the trace of a deleted row: "address" refuses NULL, and a deleted row keeps its key and its stamp only. The check constraint contacts_live_rows_whole, which keeps the live rows whole, is missing. The migration to write:
+alter table notification.contacts
+  alter column "address" drop not null,
+  add constraint contacts_live_rows_whole check (deleted or ("address" is not null));
+update notification.contacts set "address" = null, "label" = null where deleted;
+
+The read model table scheduling.agenda cannot hold ...
+```
+
+Un projet généré l'appelle au démarrage de l'application, avant qu'un consommateur soit abonné ou
+qu'une requête soit servie (`src/platform/database/read-model-tables.ts`, appelé par le module de
+la plateforme sur tsyringe, InversifyJS et Awilix, dans le style déclaré comme dans le style
+explicite, et par `start` de `compose-application.ts` sur une plateforme câblée à la main) : le
+*worker*, le service d'un seul contexte et les tests de bout en bout démarrent par lui aussi. Il
+est actif par défaut et coûte cette seule instruction. Un projet écrit avant ajoute le fichier et
+l'appel à la main ; la vérification elle-même ne demande rien au câblage.
+
+**Un déploiement qui démarre l'application avant que ses migrations aient tourné.** Par défaut le
+démarrage échoue, et c'est la réponse sûre d'un déploiement progressif : les nouvelles instances
+ne deviennent jamais prêtes, les anciennes continuent de servir, et les nouvelles démarrent une
+fois la migration passée. Une chaîne où la migration attend que la nouvelle version soit en
+service attendrait sans fin : elle passe `readModelTables: 'reported'` à `composeApplication` dans
+`main.ts`. Le même message est alors journalisé en une erreur, le démarrage se poursuit, et chaque
+registre refuse encore par son nom avant sa première trace.
+
+**Avant un déploiement.** `DATABASE_URL=<la base du déploiement> npm run db:read-models` exécute la
+même vérification depuis la ligne de commande (`scripts/read-model-tables.ts`), affiche le même
+message et sort avec le code 1 quand une table n'est pas prête. Lancée sur la base de
+l'environnement une fois ses migrations passées, c'est la porte du déploiement ; lancée après
+`npm run db:migrate` sur une base vide, comme en a une chaîne d'intégration, elle dit la même chose
+des migrations du projet. C'est un script du projet et non une commande de `ddd-ts-kit`, qui n'a
+aucun pilote de base de données : le script lit par l'ORM que le projet a déjà. Rien ne lit les
+fichiers de migration eux-mêmes : les quatre outils les écrivent sous quatre formes (du SQL, un
+script knex, une classe TypeORM), et ce qu'un fichier dit d'une colonne n'est pas ce que tient la
+base une fois toutes les migrations passées.
+
+Ce que la vérification ne peut pas savoir, et comment le lui dire :
+
+- **Une colonne où aucun registre n'écrit NULL.** La vérification lit la table, pas le registre :
+  une colonne que le registre n'associe pas et que la base remplit
+  (`created_at timestamptz not null default now()`), ou une colonne de locataire nommée autrement
+  que `tenant_id`, est signalée. Nommez-la dans le second argument,
+  `{ kept: ['<schema>.<table>.<column>'] }`, dans `read-model-tables.ts`.
+- **Une table dont les colonnes du tampon portent d'autres noms** n'est pas vue comme un modèle de
+  lecture. Le registre d'une telle table la refuse toujours avant sa première trace.
+- **La contrainte de vérification seule n'est jamais un refus.** Une ligne peut n'exiger aucun
+  champ, et n'en a alors pas : une table dont les colonnes acceptent NULL est prête. Le message
+  d'une table qui n'est pas prête dit si `<table>_live_rows_whole` est là, et sa migration l'ajoute
+  quand elle manque.
+- **Une base par locataire** se vérifie par la connexion de chacune. Les schémas d'une même base
+  sont tous lus, un schéma par locataire compris.
+- **Un modèle de lecture sur OpenSearch n'a pas de telle table.** La trace d'une suppression est un
+  document qui garde sa clé et son tampon, et un *mapping* ne refuse aucun champ absent : il n'y a
+  rien à migrer, et l'index de chaque registre est déjà provisionné au démarrage. Un modèle de
+  lecture gardé en mémoire (`--orm none`) n'en a pas non plus.
 
 ## Limites et quand ne pas l'utiliser
 

@@ -782,7 +782,7 @@ is nullable. A deletion of a key the table does not hold yet leaves the same tra
 constraint keeps the live rows whole (`check (deleted or (status is not null and starts_at is
 not null))`), a query of your own on the table leaves the deleted rows out (`deleted = false`),
 and a table whose columns refuse NULL is refused with `ReadModelTableNotReadyError` before the first trace is written, from one read of the columns of the table
-([What a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)). The
+([What a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)). An application does not wait for that first trace: `prismaReadModelTables(context)` reads every read model table of the database in one statement on the catalog, whatever store exists, and its `require()` refuses with `ReadModelTablesNotReadyError`, which names each table that is not ready, its columns and the migration to write; a generated project calls it when it starts, and `npm run db:read-models` before a deployment ([Every table checked at the start, and before a deployment](../../docs/concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment)). The
 fields of the model are optional as well (`String?`): the store reads the columns of the table,
 not the model, so a field left required over a nullable column makes the Prisma client refuse the
 trace with its own validation error, before any statement, and not with the named one. `store.table` is what `ProjectionRebuild` takes; the rebuild is

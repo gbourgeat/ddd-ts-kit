@@ -2015,6 +2015,19 @@ adapter gives (three statements and the query of a plan): `InMemoryReadModelStor
 the fakes, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore` and
 `TypeOrmReadModelStore` in the adapter packages, all held to `readModelStoreContract`.
 
+On PostgreSQL the table of such a store holds the trace of a deleted row only if every column of
+its row accepts NULL. `PostgresTraceColumns` is the refusal of one store, before its first trace,
+from the columns it maps. `PostgresReadModelTables` asks the same of every read model table of the
+database, in one statement on the catalog and before any store exists: `notReady()` lists the
+tables, `require()` refuses with `ReadModelTablesNotReadyError`, and `atStart(logger)` is what an
+application calls when it starts (`atStart(logger, 'reported')` logs the tables as one error and
+lets the start go on). Both refusals name the table, the columns that refuse NULL, whether the
+check constraint `<table>_live_rows_whole` is missing, and the migration to write, which
+`readModelTableMigration` answers as statements. Each ORM package gives the check over its own
+context (`knexReadModelTables`, `drizzleReadModelTables`, `prismaReadModelTables`,
+`typeOrmReadModelTables`), all held to `readModelTablesContract`: see
+[Every table checked at the start, and before a deployment](../../docs/concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment).
+
 ### Rebuild
 
 A read model fed by events that no event store keeps is rebuilt from the source of truth, the

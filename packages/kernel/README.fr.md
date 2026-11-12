@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:314a1331fe1201ef -->
+<!-- translation-of: README.md sha256:1f612efb214cfe4c -->
 
 # @ddd-ts-kit/kernel
 
@@ -2099,6 +2099,20 @@ qui concerne de nombreuses lignes les liste avec des critères et écrit chacune
 adaptateur (trois instructions et la requête d'un plan) : `InMemoryReadModelStore` ici pour les
 *fakes*, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore` et
 `TypeOrmReadModelStore` dans les *packages* d'adaptateurs, tous tenus à `readModelStoreContract`.
+
+Sur PostgreSQL, la table d'un tel store ne contient la trace d'une ligne supprimée que si chaque
+colonne de sa ligne accepte NULL. `PostgresTraceColumns` est le refus d'un store, avant sa première
+trace, d'après les colonnes qu'il associe. `PostgresReadModelTables` demande la même chose de chaque
+table de modèle de lecture de la base, en une instruction sur le catalogue et avant qu'aucun store
+n'existe : `notReady()` liste les tables, `require()` refuse avec `ReadModelTablesNotReadyError`, et
+`atStart(logger)` est ce qu'appelle une application à son démarrage (`atStart(logger, 'reported')`
+journalise les tables en une erreur et laisse le démarrage se poursuivre). Les deux refus nomment la
+table, les colonnes qui refusent NULL, si la contrainte de vérification `<table>_live_rows_whole`
+manque, et la migration à écrire, que `readModelTableMigration` rend en instructions. Chaque
+*package* d'ORM donne la vérification sur son propre contexte (`knexReadModelTables`,
+`drizzleReadModelTables`, `prismaReadModelTables`, `typeOrmReadModelTables`), tous tenus à
+`readModelTablesContract` : voir
+[Chaque table vérifiée au démarrage, et avant un déploiement](../../docs/concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement).
 
 ### Reconstruction
 

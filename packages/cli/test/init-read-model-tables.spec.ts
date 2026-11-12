@@ -44,14 +44,19 @@ describe('init: the read model tables of the database, checked before a store is
     expect(explicit).toContain('readModelTables(persistence).atStart(resolve(Logger), options.readModelTables)');
   });
 
-  it('asks it first in the start of a platform wired by hand', () => {
+  it('asks it in the start of a platform wired by hand, before the event provider delivers anything', () => {
     const root = initProject('--di', 'manual', '--orm', 'knex');
 
     expect(platform(root, 'composition/compose-application.ts')).toContain(
-      'async function start(platform: Platform, options: ApplicationOptions): Promise<void> {\n' +
-        '  // Before a consumer is subscribed or a request served, whatever builds a store and whenever: one read of the catalog.\n' +
-        '  await readModelTables(platform.persistence).atStart(platform.logger, options.readModelTables);\n',
+      '  await platform.readModelTables.atStart(platform.logger, options.readModelTables);\n' +
+        '  await options.events.start();\n',
     );
+
+    expect(platform(root, 'composition/create-platform.ts')).toContain(
+      '    readModelTables: readModelTables(persistence),',
+    );
+
+    expect(platform(root, 'composition/platform.ts')).toContain('  readonly readModelTables: PostgresReadModelTables;');
 
     expect(platform(root, 'composition/platform-options.ts')).toContain(
       '  readonly readModelTables?: ReadModelTablesAtStart;',
@@ -85,6 +90,7 @@ describe('init: the read model tables of the database, checked before a store is
       expect(read(root, 'package.json')).not.toContain('db:read-models');
       expect(read(root, 'README.md')).not.toContain('db:read-models');
       expect(platform(root, 'composition/compose-application.ts')).not.toContain('readModelTables');
+      expect(platform(root, 'composition/compose-application.ts')).not.toContain('read model tables');
     }
 
     expect(platform(initProject('--orm', 'none'), 'composition/platform.module.ts')).not.toContain('readModelTables');

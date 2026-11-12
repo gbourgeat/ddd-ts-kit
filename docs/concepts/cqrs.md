@@ -384,10 +384,13 @@ asks four things of the table and of whoever reads it:
 - **Every column of the row is nullable.** A trace keeps no data: every column the store maps
   holds NULL, the key, the tenant and the stamp apart, so the personal data of a deleted row is
   gone and a unique value it held is free again. A table whose columns refuse NULL is refused by
-  name (`ReadModelTableNotReadyError`, which lists the columns): when the store is built on Drizzle
+  name (`ReadModelTableNotReadyError`): when the store is built on Drizzle
   and TypeORM, from the definition, and on the four ORM before the first trace is written, from
   one read of the columns the database holds, so a migration not run yet is caught too, and never
-  by a statement that would abort the transaction of the event. On Prisma the fields of the model are optional as well (`String?`).
+  by a statement that would abort the transaction of the event. Its message names the table, the
+  columns that refuse NULL, whether the check constraint is missing, and the migration to write, as
+  statements. On Prisma the fields of the model are optional as well (`String?`). An application
+  does not wait for that first trace: [every table is checked when it starts](#every-table-checked-at-the-start-and-before-a-deployment).
 - **A check constraint keeps the live rows whole**, in place of the NOT NULL the columns no
   longer carry. `generate read-model` writes it with the table, under this name; a table written
   before, or by hand, takes it in a migration:
@@ -413,6 +416,77 @@ and its trace cannot be written, and an upsert is refused at once with
 `ReadModelKeyHeldElsewhereError`, a `ConcurrencyError` whose message says so. Work elevated over
 several tenants reads such a key as held and writes only in its own tenant, so its write of a key
 another tenant holds still ends, after five attempts, in a plain `ConcurrencyError`.
+
+### Every table checked at the start, and before a deployment
+
+A store refuses its table before its first trace, and on Drizzle and TypeORM when it is built. A
+container builds a store when something first asks for it, so in an application wired that way
+both refusals come with the first request or the first event that reaches the read model, in
+production, and one table at a time. Two things say it earlier, for every table at once.
+
+**At the start.** `knexReadModelTables(context)`, `drizzleReadModelTables`, `prismaReadModelTables`
+and `typeOrmReadModelTables` answer a `PostgresReadModelTables` of the kernel. It reads the catalog
+of the database in one statement, no row and no lock, and needs no store: a read model table is
+known by its stamp, the four columns `readModelColumns` gives it under the same names on every
+ORM, and its row is every other column but the primary key and `tenant_id`. `notReady()` answers
+every table that cannot hold a trace, `require()` refuses with `ReadModelTablesNotReadyError`,
+one error that names them all, each with its columns and its migration:
+
+```text
+2 read model tables are not ready for this version: notification.contacts, scheduling.agenda. Apply the migrations of the project before the application starts; a table they leave as it is takes the migration written under its name.
+
+The read model table notification.contacts cannot hold the trace of a deleted row: "address" refuses NULL, and a deleted row keeps its key and its stamp only. The check constraint contacts_live_rows_whole, which keeps the live rows whole, is missing. The migration to write:
+alter table notification.contacts
+  alter column "address" drop not null,
+  add constraint contacts_live_rows_whole check (deleted or ("address" is not null));
+update notification.contacts set "address" = null, "label" = null where deleted;
+
+The read model table scheduling.agenda cannot hold ...
+```
+
+A generated project calls it when the application starts, before a consumer is subscribed or a
+request served (`src/platform/database/read-model-tables.ts`, called by the platform module on
+tsyringe, InversifyJS and Awilix, in the declared and the explicit style, and by `start` of
+`compose-application.ts` on a platform wired by hand): the worker, a service of one context and
+the end-to-end tests start through it too. It is on by default and costs that one statement. A
+project written before adds the file and the call by hand; the check itself needs nothing of the
+wiring.
+
+**A deployment that starts the application before its migrations ran.** By default the start
+fails, and that is the safe answer of a rolling deployment: the new instances never become ready,
+the old ones keep serving, and the new ones start once the migration ran. A pipeline in which the
+migration waits for the new version to be up would wait for ever: it passes
+`readModelTables: 'reported'` to `composeApplication` in `main.ts`. The same message is then
+logged as one error, the start goes on, and each store still refuses by name before its first
+trace.
+
+**Before a deployment.** `DATABASE_URL=<the database of the deployment> npm run db:read-models`
+runs the same check from the command line (`scripts/read-model-tables.ts`), prints the same
+message and exits 1 when a table is not ready. Run against the database of the environment once
+its migrations ran, it is the gate of the deployment; run after `npm run db:migrate` on an empty
+database, as a pipeline has one, it says the same of the migrations of the project. It is a
+script of the project and not a command of `ddd-ts-kit`, which has no database driver: the script
+reads through the ORM the project already has. Nothing reads the migration files themselves: the
+four tools write them in four forms (SQL, a knex script, a TypeORM class), and what a file says of
+a column is not what the database holds once every migration ran.
+
+What the check cannot know, and how to tell it:
+
+- **A column no store writes NULL in.** The check reads the table, not the store: a column the
+  store does not map and the database fills (`created_at timestamptz not null default now()`), or
+  a tenant column named otherwise than `tenant_id`, is reported. Name it in the second argument,
+  `{ kept: ['<schema>.<table>.<column>'] }`, in `read-model-tables.ts`.
+- **A table whose stamp columns carry other names** is not seen as a read model. The store of such
+  a table still refuses it before its first trace.
+- **The check constraint alone is never a refusal.** A row may require no field, and then has
+  none: a table whose columns accept NULL is ready. The message of a table that is not ready says
+  whether `<table>_live_rows_whole` is there, and its migration adds it when it is missing.
+- **A database per tenant** is checked through the connection of each. The schemas of one
+  database are all read, a schema per tenant included.
+- **A read model on OpenSearch has no such table.** The trace of a deletion is a document that
+  keeps its key and its stamp, and a mapping refuses no absent field: there is nothing to migrate,
+  and the index of each store is provisioned at the start already. A read model kept in memory
+  (`--orm none`) has none either.
 
 ## Limits and when not to use it
 
