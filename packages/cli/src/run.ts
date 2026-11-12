@@ -182,7 +182,7 @@ function refused(error: CliError, argv: readonly string[], io: Io): number {
     inProjectDialect(error.fix, workingDirectoryOf(argv));
 
   if (argv.includes('--json')) {
-    io.out(stdoutJson({ error: { message: error.message, fix } }));
+    io.out(stdoutJson({ error: { ...error.facts, message: error.message, fix } }));
   } else {
     io.err(`error: ${error.message}\n  fix: ${fix.split('\n').join('\n       ')}`);
   }

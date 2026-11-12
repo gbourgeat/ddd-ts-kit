@@ -108,7 +108,11 @@ export const TOOL_NOTES: readonly Note[] = [
       'the source root, test/ and scripts/ follows, a migration that names the compiled file too,',
       'and the generated declarations are rewritten; what belongs to no module stays: the code',
       'list and the permission set at the root of the context, and in shared/ the schema of its',
-      'database, its route groups, guards and shared shapes, its worlds',
+      'database, its route groups, guards and shared shapes, its worlds. A move that would close a',
+      'cycle between modules that is not there now writes nothing, with or without --dry-run: it',
+      'names the cycle, the imports that make it (file and line) and the file to move along;',
+      '--allow-cycle moves all the same, and module/no-cycle then reports the cycle. A project',
+      'that turns module/no-cycle off is not judged',
     ],
   },
   {

@@ -196,7 +196,8 @@ path with the module folder, or `shared/`, left out, and a file of `shared/` is 
 builders with their subject, and writes what belongs to no module in `shared/`;
 `generate module <context> <module>` declares a module, and
 `move-to-module <context> <module> <path>...` moves existing files into it with their imports,
-the specs named after them following. In a context that declares modules, the generator refuses
+the specs named after them following, and writes nothing when the move would close a cycle
+between modules that is not there now, unless `--allow-cycle` is passed. In a context that declares modules, the generator refuses
 to write a file of a layer without `--module`, what belongs to no module aside, and names the
 modules. The kinds that write such a file show `[--module <module>]` in their usage, and the
 others refuse `--module`. A context that gains its first module moves one cluster of concepts per
