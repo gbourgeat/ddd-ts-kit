@@ -1,4 +1,5 @@
 import type { BackgroundJob, BackgroundJobOptions, BackgroundJobPayloadSchema } from '@ddd-ts-kit/kernel';
+import type { BackgroundJobRun } from '@ddd-ts-kit/scheduling';
 
 /** A background job class: named by its static `jobName`, built from what its constructor takes, its stored payload read with its static `payload`. */
 export interface BackgroundJobClass<Deps extends readonly unknown[]> {
@@ -19,4 +20,7 @@ export interface BackgroundJobs {
   start(): Promise<void>;
 
   stop(): Promise<void>;
+
+  /** Runs every job due now until none is left and answers the attempts: for a test, or a command run once. Not while the worker runs. */
+  runDue(): Promise<BackgroundJobRun[]>;
 }

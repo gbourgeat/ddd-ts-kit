@@ -45,7 +45,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`) whether i
 | `acl` | `<ctx> <upstream-or-system>` | `infrastructure/anti-corruption/<name>.translator.ts`, spec |
 | `builder` | `<ctx> <Aggregate> [--module <module>]` | `test/builders/`, or `<module>/test/builders/` |
 | `test-world` | `<ctx> [Name]` | `test/worlds/<name>.world.ts` (`shared/test/worlds/` in a context with modules): `a<Name>World({ now, idPrefix, given })`, the test application (or the buses) with every fake of `test/fakes/`, each returned under the name of its port; the arrangement several specs share, the one the specs of `command`, `query` and `job` generated after it arrange through |
-| `e2e` | `<ctx> <UseCase> [--event <eventType>]` | `test/e2e/<use-case>.e2e.spec.ts` (needs the route, an integration event handler that sends the command (the spec publishes its event), or a job that sends it (the spec runs it with `application.runJob`)) |
+| `e2e` | `<ctx> <UseCase> [--event <eventType> \| --job <JobName>]` | `test/e2e/<use-case>.e2e.spec.ts` (needs the route, an integration event handler that sends the command (the spec publishes its event), or a job that sends it (the spec runs a scheduled one with `application.runJob`, what is due of a background one with `application.runDueJobs`); `--job` names one job, also beside a route: `test/e2e/<use-case>-<job>.e2e.spec.ts`) |
 | `service` | `<ctx>` | `src/apps/<ctx>/main.ts`: the context run alone, a start script, a compose service |
 | `worker` | | `src/apps/worker/main.ts`: a process for the scheduled jobs and the queues, a start script, a compose service |
 | `adr` | `"<title>" [--deviation <what>] [--reason "<why>"]` | `docs/adr/NNNN-<slug>.md` |

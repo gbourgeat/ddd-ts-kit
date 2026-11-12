@@ -151,6 +151,7 @@ function backgroundJobsOn(worker: QueueWorker, traced: TracedApplication): Backg
     },
     start: () => worker.start(),
     stop: () => worker.stop(),
+    runDue: () => worker.runDue(),
   };
 }
 

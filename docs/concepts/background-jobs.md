@@ -560,6 +560,15 @@ hand, the generated spec builds the same pieces on the test buses of `@ddd-ts-ki
 of `createTestBuses()`, the job registered on the worker, `worker.runDue()` in place of
 `application.backgroundJobs.runDue()`.
 
+End to end, on the whole application, the support of the project runs the queue the same way:
+`await application.runDueJobs()` of `test/e2e/support/start-application.ts` stops the worker of
+the process, runs what is due until nothing is left, answers the name of each job run and
+rejects when a run did not succeed. `ddd-ts-kit generate e2e <context> <UseCase>` writes the
+spec of a use case a background job starts on it: the request that enqueues, `runDueJobs()`,
+`settled()`, then what a client observes ([testing strategy](testing-strategy.md)). The worker
+it runs is the one of the application, on the store of the stack: the jobs table, Redis when
+its URL is set, the memory of the process otherwise.
+
 A spec of the example, shortened: the second cancellation fails once, and the next attempt
 resumes from the checkpoint instead of starting over.
 

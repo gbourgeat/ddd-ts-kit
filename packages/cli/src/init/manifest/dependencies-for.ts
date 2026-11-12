@@ -28,7 +28,9 @@ const BASE_DEV = ['ddd-ts-kit', 'tsx', '@types/node', '@ddd-ts-kit/testing', '@f
 /** What `@ddd-ts-kit/tracing/testing` is written against: the end-to-end specs assert the trace of a request. */
 const TRACE_ASSERTIONS = ['@opentelemetry/sdk-trace', '@opentelemetry/context-async-hooks'];
 
-/** What each choice of the stack adds: [runtime dependencies, development dependencies]. */
+const QUEUE_WORKER = ['@ddd-ts-kit/scheduling'];
+
+/** What each choice of the stack adds: [runtime dependencies, development dependencies]; a package both lists ask for is a runtime dependency. */
 const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly string[]]>> = {
   'http:express': [
     ['@ddd-ts-kit/http', 'express'],
@@ -40,9 +42,10 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
     ['@ddd-ts-kit/http', '@nestjs/common', '@nestjs/core', '@nestjs/platform-express', 'reflect-metadata', 'rxjs'],
     TRACE_ASSERTIONS,
   ],
-  'di:tsyringe': [['@ddd-ts-kit/di', 'tsyringe', 'reflect-metadata'], []],
-  'di:inversify': [['@ddd-ts-kit/di', 'inversify', 'reflect-metadata'], []],
-  'di:awilix': [['@ddd-ts-kit/di', 'awilix'], []],
+  // On a container the end-to-end support resolves the queue worker by its token (`runDueJobs`), which the scheduling package holds.
+  'di:tsyringe': [['@ddd-ts-kit/di', 'tsyringe', 'reflect-metadata'], QUEUE_WORKER],
+  'di:inversify': [['@ddd-ts-kit/di', 'inversify', 'reflect-metadata'], QUEUE_WORKER],
+  'di:awilix': [['@ddd-ts-kit/di', 'awilix'], QUEUE_WORKER],
   // By hand the platform builds the job scheduler itself; on tsyringe the kernel module of @ddd-ts-kit/di brings it.
   'di:manual': [['@ddd-ts-kit/scheduling'], []],
   'di:nest': [['@ddd-ts-kit/scheduling'], []],
@@ -108,11 +111,12 @@ export function dependenciesFor(config: Config): Packages {
   // Without an HTTP boundary nothing verifies a credential: the token library would be dead weight.
   const made = Object.entries(config.stack).filter(([key]) => key !== 'authn' || config.stack.http !== 'none');
   const choices = made.map(([key, value]) => BY_CHOICE[`${key}:${value}`] ?? [[], []]);
-  const development = { ...ranges([...BASE_DEV, ...choices.flatMap(([, names]) => names)]), ...analyzers(config) };
+  const runtime = [...BASE, ...choices.flatMap(([names]) => names), ...uploads(config)];
+  const inTests = [...BASE_DEV, ...choices.flatMap(([, names]) => names)].filter((name) => !runtime.includes(name));
 
   return {
-    dependencies: sorted(ranges([...BASE, ...choices.flatMap(([runtime]) => runtime), ...uploads(config)])),
-    devDependencies: sorted(development),
+    dependencies: sorted(ranges(runtime)),
+    devDependencies: sorted({ ...ranges(inTests), ...analyzers(config) }),
   };
 }
 

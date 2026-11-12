@@ -1,4 +1,5 @@
 import { readControllers } from '../../describe/read-controllers';
+import { CliError } from '../../cli-error';
 import { fitStatement } from '../../layout';
 import { toName, type Name } from '../../naming';
 import type { RenderContext } from '../../templating';
@@ -10,7 +11,8 @@ import { openScope } from '../open-scope';
 import type { Scope } from '../scope';
 import { vars } from '../vars';
 import { actingRole } from './e2e/acting-role';
-import { reactionOf, type JobStart, type Reaction } from './e2e/reaction-of';
+import { jobSpec, type Support } from './e2e/job-spec';
+import { reactionOf } from './e2e/reaction-of';
 import { tracedCommand } from './traced-command';
 import { isControlPlane } from '../../config/is-control-plane';
 import { declaredModules } from '../../model-modules';
@@ -18,9 +20,9 @@ import { declaredModules } from '../../model-modules';
 export const e2eKind: Kind = {
   name: 'e2e',
   aliases: [],
-  usage: 'e2e <context> <UseCaseName> [--event <eventType>]',
+  usage: 'e2e <context> <UseCaseName> [--event <eventType> | --job <JobName>]',
   summary:
-    'An end-to-end spec on the whole application, in test/e2e/ at the project root: driving the route of a use case, or, for a use case no route reaches, publishing the integration event its handler receives (--event names it when several do) or running the job that sends its command. After `generate route <context> <UseCaseName>`, or the `generate integration-handler` or `generate job` that starts its use case.',
+    'An end-to-end spec on the whole application, in test/e2e/ at the project root: driving the route of a use case, or, for a use case no route reaches, publishing the integration event its handler receives (--event names it when several do) or running the job that sends its command, the scheduled one at once and the background one with what is due on its queue (--job names one job, also for a use case a route reaches, and writes test/e2e/<use-case>-<job>.e2e.spec.ts). After `generate route <context> <UseCaseName>`, or the `generate integration-handler`, `generate job` or `generate background-job` that starts its use case.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   writesInModules: false,
@@ -28,51 +30,64 @@ export const e2eKind: Kind = {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'controller', 'handler'] });
     const file = `${scope.dir}/presentation/http/${name.kebab}.route.ts`;
-    const endpoint = scope.flags.event === undefined ? endpointOf(scope, name, file) : undefined;
-    const spec = `test/e2e/${name.kebab}.e2e.spec.ts`;
+    const endpoint = namesItsStarter(scope) ? undefined : endpointOf(scope, name, file);
 
-    let starts: Starter = 'route';
-
-    if (endpoint === undefined) {
-      const reaction = reactionOf(scope, name, file);
-
-      starts = 'jobs' in reaction ? 'job' : 'event';
-
-      scope.ws.create(spec, reactionSpec(scope, name, reaction));
-    } else {
-      const traced = tracedCommand(scope, name);
-      const command = `{ name: 'command ${name.pascal}Command'${traced.saved} }`;
-      const tree = spanTree(`${endpoint.method} ${endpoint.path}`, command);
-      const { written: role, roleImport } = actingRole(scope);
-      const namesRole = endpoint.protected === true && roleImport !== '';
-      const actor = { role, roleImport, namesRole, tenant: tenantOf(scope) };
-
-      scope.ws.create(
-        spec,
-        renderTemplate(
-          'e2e/e2e.spec.ts.tpl',
-          vars(scope, { name: named(name), e2e: { ...endpoint, ...traced, tree, ...actor } }),
-        ),
-      );
-    }
-
-    noteSupport(scope, starts);
+    noteSupport(scope, endpoint === undefined ? startedSpec(scope, name, file) : routeSpec(scope, name, endpoint));
   },
 };
 
-/** The spec of a use case no route reaches: it publishes the event its handler receives, or runs the job that sends its command. */
-function reactionSpec(scope: Scope, name: Name, reaction: Reaction | JobStart): string {
-  if (!('jobs' in reaction)) {
-    return renderTemplate('e2e/e2e-reaction.spec.ts.tpl', vars(scope, { name: named(name), ...reaction }));
+/** The spec of a use case no route reaches, or whose starter a flag names: it publishes the event its handler receives, or runs the jobs that send its command. Answers what it needs of the support. */
+function startedSpec(scope: Scope, name: Name, routeFile: string): readonly Support[] {
+  const reaction = reactionOf(scope, name, routeFile);
+
+  if ('jobs' in reaction) {
+    const { file, content, needs } = jobSpec(scope, name, reaction);
+
+    scope.ws.create(file, content);
+
+    return needs;
   }
 
-  const cases = reaction.jobs
-    .map((job) =>
-      renderTemplate('e2e/e2e-job-case.ts.tpl', vars(scope, { name: named(name), job: { name: job } })).trimEnd(),
-    )
-    .join('\n\n');
+  scope.ws.create(
+    `test/e2e/${name.kebab}.e2e.spec.ts`,
+    renderTemplate('e2e/e2e-reaction.spec.ts.tpl', vars(scope, { name: named(name), ...reaction })),
+  );
 
-  return renderTemplate('e2e/e2e-job.spec.ts.tpl', vars(scope, { name: named(name), e2e: { ...reaction.e2e, cases } }));
+  return ['publish'];
+}
+
+/** The spec that drives the route of the use case: the support of any project serves it. */
+function routeSpec(scope: Scope, name: Name, endpoint: Endpoint): readonly Support[] {
+  const traced = tracedCommand(scope, name);
+  const command = `{ name: 'command ${name.pascal}Command'${traced.saved} }`;
+  const tree = spanTree(`${endpoint.method} ${endpoint.path}`, command);
+  const { written: role, roleImport } = actingRole(scope);
+  const namesRole = endpoint.protected === true && roleImport !== '';
+  const actor = { role, roleImport, namesRole, tenant: tenantOf(scope) };
+
+  scope.ws.create(
+    `test/e2e/${name.kebab}.e2e.spec.ts`,
+    renderTemplate(
+      'e2e/e2e.spec.ts.tpl',
+      vars(scope, { name: named(name), e2e: { ...endpoint, ...traced, tree, ...actor } }),
+    ),
+  );
+
+  return [];
+}
+
+/** True when a flag says what starts the use case: its route is then left aside. `--event` and `--job` name two different specs. */
+function namesItsStarter(scope: Scope): boolean {
+  const { event, job } = scope.flags;
+
+  if (event !== undefined && job !== undefined) {
+    throw new CliError(
+      'generate e2e takes --event or --job, not both.',
+      'A spec starts its use case one way: run the command once with --event <eventType>, once with --job <JobName>.',
+    );
+  }
+
+  return event !== undefined || job !== undefined;
 }
 
 /** The tenant the actors of the spec act in: a tenant-scoped repository refuses a token without one. */
@@ -82,25 +97,29 @@ function tenantOf(scope: Scope): string {
     : ", tenantId: 'acme'";
 }
 
-/** What starts the use case the spec drives. */
-type Starter = 'route' | 'event' | 'job';
-
 const SUPPORT = 'test/e2e/support/start-application.ts';
 
-/** What the spec needs of the support of the project: `init` writes it, older projects add `publish` by hand. */
-function noteSupport(scope: Scope, starts: Starter): void {
+/** How a project whose support was written before a function existed adds it by hand. */
+const ADDED_BY_HAND: Readonly<Record<Support, string>> = {
+  runJob: `${SUPPORT} has no runJob(name): add \`runJob(name: string): Promise<void>;\` to RunningApplication and implement it with \`async (name) => { await application.jobs.runNow(name); }\` on the composed application (\`jobs\` is its JobScheduler: \`platform.jobs\` by hand, \`container.resolve(JobScheduler)\` on tsyringe), as a new project has it.`,
+  runDueJobs: `${SUPPORT} has no runDueJobs(): add \`runDueJobs(): Promise<string[]>;\` to RunningApplication and implement it on the queue worker of the composed application (\`application.container.resolve(QueueWorker)\` on a container; by hand, \`application.platform.backgroundJobs\` once \`runDue: () => worker.runDue()\` is among what \`jobs/create-background-work.ts\` answers): \`await worker.stop()\`, then \`await worker.runDue()\`, rejecting when the outcome of a run is not \`succeeded\` and answering the name of each job run, as a new project has it.`,
+  publish: `${SUPPORT} has no publish(events): add \`publish(events: readonly IntegrationEvent[]): Promise<void>;\` to RunningApplication and implement it with \`(events) => application.eventBus.publish(events)\` on the composed application, as a new project has it.`,
+};
+
+/** What the spec needs of the support of the project: `init` writes it, older projects add what they lack by hand. */
+function noteSupport(scope: Scope, needs: readonly Support[]): void {
   const support = scope.ws.read(SUPPORT);
 
   if (support === undefined) {
     scope.ws.note(`${SUPPORT} is missing: \`ddd-ts-kit init\` creates it (existing files are kept).`);
-  } else if (starts === 'job' && !/^\s*runJob\(/m.test(support)) {
-    scope.ws.note(
-      `${SUPPORT} has no runJob(name): add \`runJob(name: string): Promise<void>;\` to RunningApplication and implement it with \`async (name) => { await application.jobs.runNow(name); }\` on the composed application (\`jobs\` is its JobScheduler: \`platform.jobs\` by hand, \`container.resolve(JobScheduler)\` on tsyringe), as a new project has it.`,
-    );
-  } else if (starts === 'event' && !/^\s*publish\(/m.test(support)) {
-    scope.ws.note(
-      `${SUPPORT} has no publish(events): add \`publish(events: readonly IntegrationEvent[]): Promise<void>;\` to RunningApplication and implement it with \`(events) => application.eventBus.publish(events)\` on the composed application, as a new project has it.`,
-    );
+
+    return;
+  }
+
+  for (const need of needs) {
+    if (!new RegExp(String.raw`^\s*${need}\(`, 'm').test(support)) {
+      scope.ws.note(ADDED_BY_HAND[need]);
+    }
   }
 }
 
@@ -118,12 +137,10 @@ interface Declared {
   readonly isProtected: boolean;
 }
 
+type Endpoint = RenderContext & { readonly method: string; readonly path: string };
+
 /** What the route of the use case declares, when it has one: an end-to-end spec drives the application through it. */
-function endpointOf(
-  scope: Scope,
-  name: Name,
-  file: string,
-): (RenderContext & { readonly method: string; readonly path: string }) | undefined {
+function endpointOf(scope: Scope, name: Name, file: string): Endpoint | undefined {
   const route = functionRoute(scope.ws.read(file) ?? '');
 
   if (route !== undefined) {

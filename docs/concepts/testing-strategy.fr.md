@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:9c50a0832e9cc3a2 -->
+<!-- translation-of: testing-strategy.md sha256:8104320dc8f211de -->
 
 # Stratégie de test
 
@@ -528,6 +528,23 @@ et laisse à remplir ce qu'il faut observer. Le générateur cherche une route, 
 qui envoie la commande, puis un *job* qui l'envoie, et nomme les trois quand il n'en trouve aucun. `runJob` échoue quand le *job* est par *tenant* et que
 l'exécution n'a atteint aucun *tenant* (`JobRun.tenants` vaut `0`, le *job* n'a jamais été appelé) :
 ouvrez d'abord un *tenant*, après `reset()`.
+
+Un cas d'usage qu'un *job* en arrière-plan lance (`generate background-job`, mis en file par un
+autre cas d'usage) est trouvé de la même façon, et sa *spec* a trois temps : la requête dont le cas
+d'usage met le *job* en file, envoyée par l'API ; `const ran = await application.runDueJobs()`, qui
+exécute ce qui est échu dans les files comme le ferait le *worker*, jusqu'à ce qu'il ne reste
+rien, et répond le nom de chaque *job* exécuté ; puis `application.settled()` et ce qu'un client
+observe. La *spec* générée vérifie que le *job* est parmi `ran` : elle échoue donc tant que la
+requête qui met en file n'est pas écrite. `runDueJobs` rejette quand une exécution n'a pas réussi,
+en nommant le *job*, l'issue et le code de l'erreur (`The background job billing.void-invoice ended
+retried (UNEXPECTED_ERROR).`), jamais son message. Dès son premier appel, la *spec* est le seul
+consommateur des files : le *worker* du processus, qu'une file gardée en mémoire démarre, est
+d'abord arrêté, donc aucun *job* ne se termine dans le dos de la *spec*. Un *job* mis en file avec
+un délai n'est pas échu avant son heure : la *spec* de ses cas d'usage sur une horloge qu'elle
+avance est la *spec* unitaire du *job*. `--job <JobName>` nomme un seul *job*, planifié ou en
+arrière-plan, par sa classe ou par le nom sous lequel il s'exécute, y compris pour un cas d'usage
+qu'une route atteint : sa *spec* est écrite à côté de celle de la route, dans
+`test/e2e/<use-case>-<job>.e2e.spec.ts`.
 
 L'acceptation d'une *story* est une *spec* de bout en bout écrite avant son code, à partir des
 critères de la *story* (`docs/architecture/stories/<story>.md`) :

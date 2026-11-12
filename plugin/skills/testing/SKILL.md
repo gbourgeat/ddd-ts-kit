@@ -148,7 +148,7 @@ the birth by its fact (`issuedAt(at)`) and the spec proves the event.
 
 ## End to end
 
-For an end-to-end spec (`npx ddd-ts-kit generate e2e <ctx> <UseCase>`), read [end-to-end.md](end-to-end.md) first: the baseline cases, `settled()`, `publish`, `runJob`.
+For an end-to-end spec (`npx ddd-ts-kit generate e2e <ctx> <UseCase>`), read [end-to-end.md](end-to-end.md) first: the baseline cases, `settled()`, `publish`, `runJob`, `runDueJobs`.
 
 ## Acceptance of a story, before its code
 
