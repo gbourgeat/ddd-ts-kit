@@ -1,4 +1,5 @@
 import type { CriteriaPlan } from '../criteria/criteria-plan';
+import type { ReadModelTableState } from '../read-model/read-model-table-state';
 import type { SearchedRows } from '../read-model/searched-rows';
 import type { TouchedKey } from '../read-model/touched-key';
 import { ReadModelRows } from './read-model-rows';
@@ -35,4 +36,11 @@ export abstract class ReadModelTable<Row> extends ReadModelRows<Row> {
 
   /** Drops what a rebuild opened, if anything: the table itself is left as it is. */
   abstract abandonRebuild(): Promise<void>;
+
+  /**
+   * Where the rows are kept in a table of a database: what that table can hold of the trace of a
+   * deleted row, read from the database for the columns the adapter maps. Absent in memory and in
+   * a search engine, which have no such table.
+   */
+  tableState?(): Promise<ReadModelTableState>;
 }

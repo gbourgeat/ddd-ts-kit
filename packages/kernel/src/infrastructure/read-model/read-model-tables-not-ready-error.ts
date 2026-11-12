@@ -1,16 +1,17 @@
 import { ReadModelTableNotReadyError } from './read-model-table-not-ready-error';
-import type { UnreadyReadModelTable } from './unready-read-model-table';
+import type { ReadModelTableState } from '../../application/read-model/read-model-table-state';
 
 /**
- * Read model tables of the database cannot hold the trace of a deleted row: every one of them, in
- * one error, each with its columns and the migration to write. Raised when the tables are checked
- * in one pass, at the start of an application or before a deployment, where
- * `ReadModelTableNotReadyError` is the refusal of one store before its first trace.
+ * Read model tables the application lists cannot hold the trace of a deleted row: every one of
+ * them, in one error, each with what keeps it from it and the migration to write. Raised when the
+ * tables are checked in one pass, at the start of an application or before a deployment, where
+ * `ReadModelTableNotReadyError` is the refusal of one store before its first trace. Each entry is
+ * that very refusal: the verdict and the migration are the ones the store would give.
  */
 export class ReadModelTablesNotReadyError extends Error {
   readonly tables: readonly ReadModelTableNotReadyError[];
 
-  constructor(unready: readonly UnreadyReadModelTable[]) {
+  constructor(unready: readonly ReadModelTableState[]) {
     const tables = unready.map((table) => new ReadModelTableNotReadyError(table));
     const counted = tables.length === 1 ? '1 read model table is' : `${String(tables.length)} read model tables are`;
 

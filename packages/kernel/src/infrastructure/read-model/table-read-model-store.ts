@@ -6,6 +6,7 @@ import type { Page } from '../../application/pagination/page';
 import type { ReadModelStore } from '../../application/ports/read-model-store';
 import type { ReadModelTable } from '../../application/ports/read-model-table';
 import type { EventStamp } from '../../application/read-model/event-stamp';
+import type { ReadModelTableState } from '../../application/read-model/read-model-table-state';
 import type { ReadModelWrite } from '../../application/read-model/read-model-write';
 import { writeIfNewer, type StampedChange } from './write-if-newer';
 
@@ -38,6 +39,15 @@ export class TableReadModelStore<Row extends object> implements ReadModelStore<R
 
   delete(key: string, stamp: EventStamp): Promise<ReadModelWrite> {
     return this.written({ key, stamp });
+  }
+
+  /**
+   * What the table of the read model can hold, read by the code the adapter runs before its first
+   * trace; `undefined` where the rows are not kept in a table (memory, a search engine). What
+   * `ReadModelTables` asks of each store an application lists.
+   */
+  async tableState(): Promise<ReadModelTableState | undefined> {
+    return this.table.tableState?.();
   }
 
   async search(criteria: ScopedCriteria<Row>): Promise<Page<Row>> {

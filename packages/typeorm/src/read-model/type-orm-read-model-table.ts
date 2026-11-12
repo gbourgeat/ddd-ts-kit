@@ -9,6 +9,7 @@ import {
   type SearchedRows,
   type ReadModelRows,
   type ReadModelTable,
+  type ReadModelTableState,
   type StampedRow,
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
@@ -73,6 +74,11 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
     return plan.kind === 'cursor'
       ? { rows }
       : { rows, total: await predicateToTypeOrm(kept(), plan.filter, { alias: ALIAS }).getCount() };
+  }
+
+  /** What the table can hold of the trace of a deleted row, read as before the first trace: what `ReadModelTables` asks. */
+  tableState(): Promise<ReadModelTableState> {
+    return this.traces.state();
   }
 
   rebuilding(): Promise<boolean> {
@@ -140,6 +146,7 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
 
     return new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
       table: tableName,
+      deletedColumn: this.traced().deleted ?? 'deleted',
       ...(schema === undefined ? {} : { schema }),
     });
   }
@@ -149,8 +156,9 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
     const { schema, tableName, columns } = this.metadata();
     const kept = keptOf(this.options);
     const data = columns.filter((column) => !kept.has(column.propertyName)).map((column) => column.databaseName);
+    const deleted = columns.find((column) => column.propertyName === 'deleted')?.databaseName ?? 'deleted';
 
-    return { table: tableName, data, ...(schema === undefined ? {} : { schema }) };
+    return { table: tableName, data, deleted, ...(schema === undefined ? {} : { schema }) };
   }
 
   private async run(
@@ -185,8 +193,11 @@ function holdsTraces<Row>(options: TypeOrmReadModelOptions<Row>): void {
   if (refusing.length > 0) {
     throw new ReadModelTableNotReadyError({
       table: tableName ?? name,
+      exists: true,
       refusing,
+      unfit: [],
       row: data.map((column) => column.name),
+      deleted: columns.deleted?.name ?? 'deleted',
       ...(schema === undefined ? {} : { schema }),
     });
   }

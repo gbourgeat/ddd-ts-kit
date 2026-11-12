@@ -7,6 +7,7 @@ import {
   type SearchedRows,
   type ReadModelRows,
   type ReadModelTable,
+  type ReadModelTableState,
   type StampedRow,
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
@@ -36,6 +37,8 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
 
   private readonly rebuild: PostgresReadModelRebuild;
 
+  private readonly traces: PostgresTraceColumns;
+
   constructor(
     private readonly context: PrismaContext<Tx>,
     options: PrismaReadModelOptions<Row, Tx>,
@@ -47,14 +50,16 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
 
     this.mapper = new RowMapper<Row>(options.columns);
 
+    this.traces = new PostgresTraceColumns(
+      (statement, parameters) => this.run(statement, parameters),
+      () => tracedTable(options),
+    );
+
     const named = {
       key: options.key ?? 'id',
       mapper: this.mapper,
       tenant: new TenantOfRows(options.tenant, options.columns),
-      traces: new PostgresTraceColumns(
-        (statement, parameters) => this.run(statement, parameters),
-        () => tracedTable(options),
-      ),
+      traces: this.traces,
     };
 
     this.rows = new PrismaModelRows(
@@ -93,6 +98,11 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
     return plan.kind === 'cursor'
       ? { rows }
       : { rows, total: await model.count({ where: { AND: [...kept, counted] } }) };
+  }
+
+  /** What the table can hold of the trace of a deleted row, read as before the first trace: what `ReadModelTables` asks. */
+  tableState(): Promise<ReadModelTableState> {
+    return this.traces.state();
   }
 
   rebuilding(): Promise<boolean> {

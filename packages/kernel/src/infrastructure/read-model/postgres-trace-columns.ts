@@ -1,5 +1,7 @@
 import { liveRowsConstraintOf } from './live-rows-constraint-of';
 import { ReadModelTableNotReadyError } from './read-model-table-not-ready-error';
+import { readModelTableReady } from './read-model-table-ready';
+import type { ReadModelTableState } from '../../application/read-model/read-model-table-state';
 import type { SqlRun } from './sql-run';
 
 export interface TracedTable {
@@ -7,17 +9,26 @@ export interface TracedTable {
   readonly table: string;
   /** The columns of the row, in which a trace holds NULL: the key, the tenant and the stamp are not among them. */
   readonly data: readonly string[];
+  /** The column that marks a deleted row, as the definition of the table names it. Default `deleted`. */
+  readonly deleted?: string;
 }
 
+/** Every column of the table, as a statement resolves it: what a trace needs to know of each. */
+const COLUMNS = `select col.attname as "column", col.attnotnull as "refusing", col.attidentity <> '' as "identity", col.attgenerated <> '' as "generated", exists (select 1 from pg_index as pk where pk.indrelid = col.attrelid and pk.indisprimary and col.attnum = any (pk.indkey)) as "key" from pg_attribute as col where col.attrelid = to_regclass($1) and col.attnum > 0 and not col.attisdropped`;
+
+const CONSTRAINT = `select convalidated as "valid", pg_get_constraintdef(oid) as "definition" from pg_constraint where conrelid = to_regclass($1) and contype = 'c' and conname = $2`;
+
 /**
- * Whether the table of a read model on PostgreSQL can hold the trace of a deleted row: every
- * column of the row accepts NULL in the database, whatever its definition in the code says. The
- * columns are read once, before the first write of a trace, on the table as a statement would
- * resolve it (the search path when no schema is named), so a table that is not ready is refused
- * by name and not by a statement that would abort the transaction of the event. A refusal reads
- * the check constraint of the table too, to say whether it is missing. The copy of a rebuild is
- * made like the table. Shared by the ORM adapters, which differ only in how they run a statement.
- * `PostgresReadModelTables` asks the same of every table at once, before any store is built.
+ * Whether the table of a read model on PostgreSQL can hold the trace of a deleted row, read from
+ * the database for the columns the store maps and for no other: each accepts NULL, and none is a
+ * part of the primary key, an identity or a generated column, which nothing can open. The table
+ * is read as a statement would resolve it (the search path when no schema is named). `require`
+ * is the refusal of a store before its first trace, by name and not by a statement that would
+ * abort the transaction of the event; it reads once, and the check constraint only for a table
+ * it refuses. `state` is the same reading with the constraint, for the tables an application
+ * lists and checks when it starts (`ReadModelTables`): one code, so one verdict. The copy of a
+ * rebuild is made like the table. Shared by the ORM adapters, which differ only in how they run
+ * a statement.
  */
 export class PostgresTraceColumns {
   private ready = false;
@@ -32,39 +43,103 @@ export class PostgresTraceColumns {
       return;
     }
 
-    const { schema, table, data } = this.target();
-    const path = schema === undefined ? quoted(table) : `${quoted(schema)}.${quoted(table)}`;
+    const columns = await this.columns();
 
-    const refusing = await this.run(
-      'select attname as "column" from pg_attribute where attrelid = to_regclass($1) and attnotnull and attnum > 0 and not attisdropped',
-      [path],
-    );
-
-    const named = new Set(refusing.map((row) => row['column']));
-    const columns = data.filter((column) => named.has(column));
-
-    if (columns.length > 0) {
-      throw new ReadModelTableNotReadyError({
-        table,
-        refusing: columns,
-        row: data,
-        constraint: await this.holdsConstraint(path, table),
-        ...(schema === undefined ? {} : { schema }),
-      });
+    if (!readModelTableReady(columns)) {
+      throw new ReadModelTableNotReadyError(columns.exists ? await this.withConstraint(columns) : columns);
     }
 
     this.ready = true;
   }
 
-  /** Asked only of a table that is refused: what its message says of the check constraint. */
-  private async holdsConstraint(path: string, table: string): Promise<boolean> {
-    const held = await this.run(
-      'select conname as "constraint" from pg_constraint where conrelid = to_regclass($1) and contype = \'c\' and conname = $2',
-      [path, liveRowsConstraintOf(table)],
-    );
+  /** What the table can hold and what its check constraint keeps whole. */
+  async state(): Promise<ReadModelTableState> {
+    const columns = await this.columns();
 
-    return held.length > 0;
+    return columns.exists ? this.withConstraint(columns) : columns;
   }
+
+  private async columns(): Promise<ReadModelTableState> {
+    const { schema, table, data, deleted = 'deleted' } = this.target();
+    const held = new Map((await this.run(COLUMNS, [pathOf(schema, table)])).map((row) => [row['column'], row]));
+    const kinds = data.map((column) => ({ column, because: kindOf(held.get(column)) }));
+    const unfit = kinds.flatMap(({ column, because }) => (because === undefined ? [] : [{ column, because }]));
+    const row = data.filter((column) => !unfit.some((left) => left.column === column));
+
+    return {
+      table,
+      exists: held.size > 0,
+      refusing: held.size === 0 ? [] : row.filter((column) => held.get(column)?.['refusing'] === true),
+      unfit: held.size === 0 ? [] : unfit,
+      row,
+      deleted,
+      ...(schema === undefined ? {} : { schema }),
+    };
+  }
+
+  private async withConstraint(columns: ReadModelTableState): Promise<ReadModelTableState> {
+    const { schema, table, deleted } = columns;
+    const [held] = await this.run(CONSTRAINT, [pathOf(schema, table), liveRowsConstraintOf(table)]);
+
+    if (held === undefined) {
+      return { ...columns, constraint: { state: 'missing', columns: [] } };
+    }
+
+    const definition = String(held['definition']);
+    const whole = wholeColumnsOf(definition, deleted);
+
+    if (whole === undefined) {
+      return { ...columns, constraint: { state: 'unexpected', columns: [], definition } };
+    }
+
+    return { ...columns, constraint: { state: held['valid'] === true ? 'held' : 'not-valid', columns: whole } };
+  }
+}
+
+type Unfit = ReadModelTableState['unfit'][number]['because'];
+
+/** Why a trace can never hold NULL in the column, when it cannot. */
+function kindOf(column: Readonly<Record<string, unknown>> | undefined): Unfit | undefined {
+  if (column === undefined) {
+    return 'absent';
+  }
+
+  if (column['key'] === true) {
+    return 'primary-key';
+  }
+
+  if (column['identity'] === true) {
+    return 'identity';
+  }
+
+  return column['generated'] === true ? 'generated' : undefined;
+}
+
+/**
+ * The columns a constraint keeps whole, read from its definition as PostgreSQL writes it,
+ * `CHECK ((deleted OR ((a IS NOT NULL) AND (b IS NOT NULL))))`; `undefined` for any other check.
+ */
+function wholeColumnsOf(definition: string, deleted: string): string[] | undefined {
+  const flat = definition
+    .replace(/ NOT VALID$/, '')
+    .replace(/^CHECK /, '')
+    .replaceAll(/[()]/g, '');
+  const [marked, live, ...more] = flat.split(' OR ');
+  const columns = (live ?? '').split(' AND ').map((part) => / IS NOT NULL$/.test(part) && part.slice(0, -12));
+
+  if (more.length > 0 || unquoted(marked ?? '') !== deleted || columns.includes(false)) {
+    return undefined;
+  }
+
+  return columns.flatMap((column) => (column === false ? [] : [unquoted(column)]));
+}
+
+function unquoted(identifier: string): string {
+  return /^".*"$/.test(identifier) ? identifier.slice(1, -1).replaceAll('""', '"') : identifier;
+}
+
+function pathOf(schema: string | undefined, table: string): string {
+  return schema === undefined ? quoted(table) : `${quoted(schema)}.${quoted(table)}`;
 }
 
 function quoted(identifier: string): string {

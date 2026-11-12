@@ -87,6 +87,8 @@ export { readModelTablesContract, type ReadModelTablesContractOptions } from './
 export type { ReadModelRowsUnderContract } from './contracts/read-model/read-model-rows-under-contract';
 export type { ReadModelStorageUnderContract } from './contracts/read-model/read-model-storage-under-contract';
 export type { ReadModelStoreUnderContract } from './contracts/read-model/read-model-store-under-contract';
+export type { ReadModelTableShape } from './contracts/read-model/read-model-table-shape';
+export { READ_MODEL_TABLE_SHAPES } from './contracts/read-model/read-model-table-shapes';
 export type { ReadModelTablesUnderContract } from './contracts/read-model/read-model-tables-under-contract';
 export { SourceOfTruth } from './contracts/read-model/source-of-truth';
 export {
