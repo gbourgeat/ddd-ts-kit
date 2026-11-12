@@ -26,6 +26,7 @@ import { EVENTS_FIXTURES } from './events-fixtures';
 import { EXTENSION_FIXTURES } from './extension-fixtures';
 import { EXTRACTABLE_FIXTURES } from './extractable-fixtures';
 import { FILES_FIXTURES } from './files-fixtures';
+import { UPLOAD_FIXTURES } from './upload-fixtures';
 import { GOVERNANCE_FIXTURES } from './governance-fixtures';
 import { IMPORTS_FIXTURES } from './imports-fixtures';
 import { LANGUAGE_FIXTURES } from './language-fixtures';
@@ -96,6 +97,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...EXTENSION_FIXTURES,
   ...EXTRACTABLE_FIXTURES,
   ...FILES_FIXTURES,
+  ...UPLOAD_FIXTURES,
   ...GOVERNANCE_FIXTURES,
   ...IMPORTS_FIXTURES,
   ...LANGUAGE_FIXTURES,
