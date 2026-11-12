@@ -149,11 +149,22 @@ export async function project(slots: OpenSlots, event: SlotEvent, open: boolean)
 ```
 
 Ordering by instant relies on the clock of the producer; when the upstream gives a version per
-key, `stampOf(event, version)` carries it and the order no longer depends on clocks. The
+key, `stampOf(event, version)` carries it and the order no longer depends on clocks. Every
+event that writes a key should be stamped the same way, with a version or without: between one
+of each the instants decide, which is not an order
+([one kind of stamp per key](cqrs.md#which-write-for-which-event)). The
 projections of the kit are written this way ([CQRS as used here](cqrs.md)). A deletion is
 ordered the same way, even when it is delivered before the creation it follows: it leaves a
 trace under its key
 ([what a deleted row leaves](cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)).
+
+The sample writes the whole row, so any event can come first. An event that only changes part
+of a row (a slot moved, a note added) is right only when the events of its key are applied in
+order: the store refuses to go back in time, and cannot put back a change that arrived before
+the creation of its row or after a later change. `ReadModelStore.updateIfNewer` writes such a
+change and answers `missing` when the row is not there; which feeds keep the order of a key, and
+what to do with `missing` on each, is in
+[which write for which event](cqrs.md#which-write-for-which-event).
 
 ## Limits and when not to use it
 

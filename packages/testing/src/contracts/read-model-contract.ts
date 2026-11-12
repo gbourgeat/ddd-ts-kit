@@ -21,8 +21,8 @@ export interface ReadModelContractOptions<Row> {
 /**
  * What every adapter of the read model port of a context, fake or real, guarantees to its projection
  * and to its readers, on the rows of that context: a row read back as it was written, an event
- * applied once and never after a later one, a deletion that lasts, under a key it does not hold
- * yet too, and a search that lists the rows.
+ * applied once and never after a later one, a change that says when the row it changes is missing,
+ * a deletion that lasts, under a key it does not hold yet too, and a search that lists the rows.
  * `readModelStoreContract` holds the table of an ORM package; this one holds the port a context
  * declares over it.
  */
@@ -45,6 +45,7 @@ class ReadModelSuite<Row extends object> extends ContractSuite<ReadModelStore<Ro
     this.keepsRows();
     this.appliesInOrder();
     this.appliesALaterEvent();
+    this.changesARowItHolds();
     this.deletes();
     this.searches();
   }
@@ -104,6 +105,30 @@ class ReadModelSuite<Row extends object> extends ContractSuite<ReadModelStore<Ro
       this.expect(written).toBe('applied');
       this.expect(seen).toEqual([this.options.createRow('row-1')]);
       this.expect(await this.subject.get('row-1')).toEqual(changed);
+    });
+  }
+
+  private changesARowItHolds(): void {
+    const change = this.options.change ?? ((row: Row): Row => row);
+
+    this.it('answers missing for a change delivered before its creation, then applies it after it', async () => {
+      this.expect(await this.subject.updateIfNewer('row-1', at('evt-2', 2), change)).toBe('missing');
+      this.expect(await this.subject.get('row-1')).toBe(undefined);
+
+      await this.put('row-1', 1);
+
+      this.expect(await this.subject.updateIfNewer('row-1', at('evt-2', 2), change)).toBe('applied');
+      this.expect(await this.subject.updateIfNewer('row-1', at('evt-2', 2), change)).toBe('stale');
+      this.expect(await this.subject.get('row-1')).toEqual(change(this.options.createRow('row-1')));
+    });
+
+    this.it('answers missing for a change later than the deletion of its row, and stale for an older one', async () => {
+      await this.put('row-1', 1);
+      await this.subject.delete('row-1', at('evt-3', 3));
+
+      this.expect(await this.subject.updateIfNewer('row-1', at('evt-4', 4), change)).toBe('missing');
+      this.expect(await this.subject.updateIfNewer('row-1', at('evt-2', 2), change)).toBe('stale');
+      this.expect(await this.subject.get('row-1')).toBe(undefined);
     });
   }
 

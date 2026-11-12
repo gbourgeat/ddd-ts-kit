@@ -1,5 +1,5 @@
 [English](read-side.md) · **Français**
-<!-- translation-of: read-side.md sha256:95594e7eb00b81cb -->
+<!-- translation-of: read-side.md sha256:c9497776a36b29c0 -->
 
 # Proposition : le côté lecture
 
@@ -373,7 +373,10 @@ au retard ; et certaines lectures (plein texte, facettes, grandes listes filtré
   écrit son modèle de lecture par un port et ne fait rien d'autre : il n'envoie aucune commande
   et ne lit aucun autre contexte. Ses écritures sont idempotentes et ordonnées par clé par
   construction : chaque ligne porte l'estampille de l'événement qui l'a modifiée en dernier
-  (`stampOf`), et `upsertIfNewer` n'écrit que pour un événement plus récent.
+  (`stampOf`), et `upsertIfNewer` n'écrit que pour un événement plus récent. Un événement qui
+  change une partie d'une ligne qu'un autre événement a créée passe par `updateIfNewer`, qui
+  répond `missing` quand cette ligne n'est pas tenue : juste seulement sur une alimentation qui
+  garde l'ordre d'une clé.
 - **Un port de stockage de modèle de lecture**, `ReadModelStore<Row>`, avec une implémentation
   (`TableReadModelStore`) au-dessus d'une table que donne un adaptateur : en mémoire pour les
   *fakes*, Knex, Drizzle, Prisma et TypeORM pour une table SQL dans le schéma du contexte, écrite
@@ -386,7 +389,7 @@ au retard ; et certaines lectures (plein texte, facettes, grandes listes filtré
   pendant que les événements continuent d'être appliqués, puis échange les deux en une
   transaction. PostgreSQL seulement.
 - **Observabilité.** `projection_events_total` par résultat (`applied`, `traced`, `stale`, `ignored`,
-  `failed`) et `projection_last_event_age_ms`, le retard, sur le port `Metrics` ; un *span*
+  `missing`, `failed`) et `projection_last_event_age_ms`, le retard, sur le port `Metrics` ; un *span*
   `process <projection>` par livraison ; un événement enterré après ses nouvelles tentatives
   parvient à la remontée des erreurs comme pour tout consommateur.
 

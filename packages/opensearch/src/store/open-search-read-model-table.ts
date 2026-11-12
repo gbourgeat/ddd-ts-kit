@@ -1,11 +1,12 @@
-import type {
-  CriteriaPlan,
-  EventStamp,
-  ReadModelRows,
-  ReadModelTable,
-  SearchedRows,
-  StampedRow,
-  TouchedKey,
+import {
+  sameStamp,
+  type CriteriaPlan,
+  type EventStamp,
+  type ReadModelRows,
+  type ReadModelTable,
+  type SearchedRows,
+  type StampedRow,
+  type TouchedKey,
 } from '@ddd-ts-kit/kernel';
 import { UnsupportedRebuildError } from '../errors/unsupported-rebuild-error';
 import { DocumentMapper } from '../mapping/document.mapper';
@@ -190,12 +191,4 @@ export class OpenSearchReadModelTable<Row extends object> implements ReadModelTa
 
 function refused<T>(step: string): Promise<T> {
   return Promise.reject(new UnsupportedRebuildError(step));
-}
-
-function sameStamp(left: EventStamp, right: EventStamp): boolean {
-  return (
-    left.eventId === right.eventId &&
-    left.occurredAt.getTime() === right.occurredAt.getTime() &&
-    left.version === right.version
-  );
 }

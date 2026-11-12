@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:17ee1683933fdbad -->
+<!-- translation-of: README.md sha256:a91c2a406c27407d -->
 
 # @ddd-ts-kit/drizzle
 
@@ -838,7 +838,7 @@ entier est `integer` : un `bigint` revient du pilote sous forme de chaîne.
 ## Modèles de lecture
 
 L'adaptateur d'un port de modèle de lecture étend `DrizzleReadModelStore` et n'ajoute rien : il
-en reçoit `get`, `upsertIfNewer`, `delete` et `search`.
+en reçoit `get`, `upsertIfNewer`, `updateIfNewer`, `delete` et `search`.
 
 <!-- checked sample -->
 ```ts

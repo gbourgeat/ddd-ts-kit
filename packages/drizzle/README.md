@@ -817,7 +817,7 @@ An integer is `integer`: a `bigint` comes back as a string from the driver.
 ## Read models
 
 The adapter of a read model port extends `DrizzleReadModelStore` and adds nothing: it gets
-`get`, `upsertIfNewer`, `delete` and `search` from it.
+`get`, `upsertIfNewer`, `updateIfNewer`, `delete` and `search` from it.
 
 <!-- checked sample -->
 ```ts

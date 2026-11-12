@@ -30,6 +30,13 @@ type Announced = {
   readonly day: string;
 };
 
+/**
+ * The rank of a fact in its millisecond: one above the stamp of the export a rebuild copies, which
+ * holds the instant the appointment last changed and no fact, so a fact of that very instant is
+ * applied once more.
+ */
+const FACT = 1;
+
 /** Keeps the outcome of each appointment: every fact sets the whole line, so a replay or a late delivery ends on the same one. */
 @Projection('analytics.outcomes')
 export class OutcomesProjection {
@@ -76,7 +83,7 @@ export class OutcomesProjection {
   private set(event: IntegrationEvent<Announced>, state: OutcomeState): Promise<ReadModelWrite> {
     const { appointmentId, calendarId, practiceId, startsAt, endsAt, day } = event.payload;
 
-    return this.outcomes.upsertIfNewer(appointmentId, storableStamp(stampOf(event)), () => ({
+    return this.outcomes.upsertIfNewer(appointmentId, storableStamp(stampOf(event), FACT), () => ({
       id: appointmentId,
       practiceId,
       calendarId,

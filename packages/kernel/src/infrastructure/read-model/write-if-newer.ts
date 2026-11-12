@@ -14,6 +14,11 @@ export interface StampedChange<Row> {
    * key is not held: the trace it leaves stops the older creation delivered after it.
    */
   readonly next?: (current: Row | undefined) => Row | undefined;
+  /**
+   * The row to write from the one the key holds, for an event that changes a row and does not
+   * create it. Without a live row to hand it, nothing is written and the answer is `missing`.
+   */
+  readonly change?: (current: Row) => Row;
 }
 
 const ATTEMPTS = 5;
@@ -22,7 +27,9 @@ const ATTEMPTS = 5;
  * "Apply if newer", once for every store. It reads the row, gives up when the row holds this
  * event or a later one, and writes on the condition that the row still holds the stamp it
  * read: a concurrent write makes it read again, so two events of one key never overwrite each
- * other blindly, with or without a transaction. A key that reads as absent, refuses an insert and
+ * other blindly, with or without a transaction. A `change` that finds no live row, or the trace
+ * of a deletion older than its event, writes nothing and answers `missing`: a key another tenant
+ * holds reads as absent there too, since nothing of this tenant is there to change. A key that reads as absent, refuses an insert and
  * still reads as absent is held out of the reach of this work, by another tenant: that is settled
  * at once, since no further attempt would change it.
  */
@@ -38,6 +45,10 @@ export async function writeIfNewer<Row>(rows: ReadModelRows<Row>, change: Stampe
 
     if (held !== undefined && !isNewer(change.stamp, held.stamp)) {
       return 'stale';
+    }
+
+    if (change.change !== undefined && held?.row === undefined) {
+      return 'missing';
     }
 
     const written = await attempted(rows, change, held);
@@ -64,12 +75,14 @@ function heldElsewhere<Row>({ key, next }: StampedChange<Row>): ReadModelWrite {
 /** `undefined` when another write got there first. */
 async function attempted<Row>(
   rows: ReadModelRows<Row>,
-  { key, stamp, next }: StampedChange<Row>,
+  change: StampedChange<Row>,
   held: StampedRow<Row> | undefined,
 ): Promise<ReadModelWrite | undefined> {
-  const row = next?.(held?.row);
+  const { key, stamp } = change;
+  const deletion = change.next === undefined && change.change === undefined;
+  const row = rowOf(change, held);
 
-  if (row === undefined && next !== undefined) {
+  if (row === undefined && !deletion) {
     return 'ignored';
   }
 
@@ -81,5 +94,10 @@ async function attempted<Row>(
   }
 
   // A deletion that found no live row removed nothing: it left, or moved forward, a trace.
-  return next === undefined && held?.row === undefined ? 'traced' : 'applied';
+  return deletion && held?.row === undefined ? 'traced' : 'applied';
+}
+
+/** What the change writes: nothing for a deletion, or for a `next` that answers nothing. */
+function rowOf<Row>({ next, change }: StampedChange<Row>, held: StampedRow<Row> | undefined): Row | undefined {
+  return change === undefined || held?.row === undefined ? next?.(held?.row) : change(held.row);
 }

@@ -13,13 +13,15 @@ export interface ProjectedEvent {
 type Applying = (occurredAt: Date, apply: () => Promise<unknown>) => Promise<void>;
 
 /** What a write answers when it wrote or removed no row: counted under its own name, and no measure of the lag. */
-const SKIPPED = new Set<unknown>(['traced', 'stale', 'ignored']);
+const SKIPPED = new Set<unknown>(['traced', 'stale', 'ignored', 'missing']);
 
 /**
  * What measures a projection from outside, through the `Metrics` port: `projection_events_total`
- * counts each event by `result` (`applied`, `traced`, `stale`, `ignored`, `failed`), and
+ * counts each event by `result` (`applied`, `traced`, `stale`, `ignored`, `missing`, `failed`), and
  * `projection_last_event_age_ms` is the age of the last event applied when it was, which is
- * the lag of the projection. Without a bound `Metrics`, nothing is measured.
+ * the lag of the projection. `missing` is a change that found no row and that its projection
+ * answered: a count that grows is a change delivered before its creation, or after a removal.
+ * Without a bound `Metrics`, nothing is measured.
  */
 export function observedProjection(resolve: Resolve, { projection, context, event }: ProjectedEvent): Applying {
   const metrics = bound(resolve, Metrics);
