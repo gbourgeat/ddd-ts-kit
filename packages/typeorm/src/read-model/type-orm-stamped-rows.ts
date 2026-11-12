@@ -54,7 +54,7 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
       row: read('deleted') === true ? undefined : mapper.toRow({ ...record }),
       stamp: {
         eventId: String(read('lastEventId')),
-        occurredAt: new Date(String(read('lastEventAt'))),
+        occurredAt: instantOf(read('lastEventAt')),
         ...(version === null ? {} : { version: Number(version) }),
       },
     };
@@ -88,7 +88,8 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
     void update
       .where(`${column(this.target.key)} = :key`, { key: entry.key })
       .andWhere(`${column('lastEventId')} = :heldId`, { heldId: held.eventId })
-      .andWhere(`${column('lastEventAt')} = :heldAt`, { heldAt: held.occurredAt });
+      .andWhere(`${column('lastEventAt')} = :heldAt`, { heldAt: held.occurredAt })
+      .andWhere(...heldVersion(column('lastEventVersion'), held));
 
     return affected(manager, confined(update, tenant.writing(column)));
   }
@@ -162,4 +163,14 @@ function onKeyAlone(manager: EntityManager, keyColumn: string): (statement: stri
   const key = manager.dataSource.driver.escape(keyColumn);
 
   return (statement) => statement.replace(' ON CONFLICT DO NOTHING', ` ON CONFLICT (${key}) DO NOTHING`);
+}
+
+/** The version the row must still hold with the rest of its stamp, or none: on every dialect. */
+function heldVersion(column: string, { version }: EventStamp): [string, Record<string, unknown>] {
+  return version === undefined ? [`${column} is null`, {}] : [`${column} = :heldVersion`, { heldVersion: version }];
+}
+
+/** The instant as the driver gave it: the text of a `Date` has no milliseconds, so a date is never read through it. */
+function instantOf(value: unknown): Date {
+  return value instanceof Date ? value : new Date(String(value));
 }

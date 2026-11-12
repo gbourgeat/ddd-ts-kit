@@ -26,6 +26,10 @@ export class ShadowReadModelStore<Row> implements ReadModelStore<Row> {
     return writeIfNewer(this.rows, { key, stamp, next });
   }
 
+  updateIfNewer(key: string, stamp: EventStamp, change: (current: Row) => Row): Promise<ReadModelWrite> {
+    return writeIfNewer(this.rows, { key, stamp, change });
+  }
+
   delete(key: string, stamp: EventStamp): Promise<ReadModelWrite> {
     return writeIfNewer(this.rows, { key, stamp });
   }

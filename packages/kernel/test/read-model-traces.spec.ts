@@ -145,6 +145,13 @@ describe('a key held out of the reach of the work', () => {
     expect(rows.reads).toBe(2);
   });
 
+  it('answers missing for a change at the first read: nothing of this tenant is there to change', async () => {
+    const { rows, table } = elsewhere();
+
+    expect(await writeIfNewer(table, { key: 'r1', stamp: at(1), change: (held) => held })).toBe('missing');
+    expect(rows.reads).toBe(1);
+  });
+
   it('refuses an upsert by name, as a concurrency error that says the key is unique across tenants', async () => {
     const { rows, table } = elsewhere();
     const written = writeIfNewer(table, { key: 'r1', stamp: at(1), next: () => room('r1') });

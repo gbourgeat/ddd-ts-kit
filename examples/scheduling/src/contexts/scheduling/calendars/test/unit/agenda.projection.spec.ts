@@ -205,17 +205,20 @@ describe('The agenda, given facts twice or out of order', () => {
     });
   });
 
-  it('ignores the move of an appointment it never saw', async () => {
+  it('answers missing for the move of an appointment it never saw, and applies it once the booking is there', async () => {
     const agenda = new FakeAgenda();
     const projection = new AgendaProjection(agenda);
     const { booking } = planned().build();
+    const moved = new AppointmentRescheduled('appointment-1', at('07:00'), { booking, previous: booking });
 
-    const write = await projection.rescheduled(
-      new AppointmentRescheduled('appointment-1', at('07:00'), { booking, previous: booking }),
-    );
+    expect(await projection.rescheduled(moved)).toBe('missing');
 
-    expect(write).toBe('ignored');
     expect(await agenda.get('appointment-1')).toBeUndefined();
+
+    await projection.booked(new AppointmentBooked('appointment-1', at('06:00'), { booking }));
+
+    expect(await projection.rescheduled(moved)).toBe('applied');
+    expect(await agenda.get('appointment-1')).toMatchObject({ status: 'booked', changedAt: at('07:00') });
   });
 });
 

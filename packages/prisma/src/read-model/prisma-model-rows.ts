@@ -74,7 +74,7 @@ export class PrismaModelRows<Row extends object, Tx extends PrismaRawQueries> im
     const written = this.written(entry);
 
     const { count } = await this.model().updateMany({
-      where: { [this.keyField()]: entry.key, lastEventId: held.eventId, lastEventAt: held.occurredAt, ...own },
+      where: { [this.keyField()]: entry.key, ...heldStamp(held), ...own },
       data: { ...written, ...own },
     });
 
@@ -97,4 +97,13 @@ export class PrismaModelRows<Row extends object, Tx extends PrismaRawQueries> im
   private keyField(): string {
     return this.options.key ?? 'id';
   }
+}
+
+/** The whole stamp the row must still hold, its version included: `null` filters the rows that have none. */
+function heldStamp(held: EventStamp): Record<string, unknown> {
+  return {
+    lastEventId: held.eventId,
+    lastEventAt: held.occurredAt,
+    lastEventVersion: held.version === undefined ? null : BigInt(held.version),
+  };
 }
