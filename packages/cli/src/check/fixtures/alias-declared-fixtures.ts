@@ -62,6 +62,16 @@ export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: aliasDeclarations({ 'test/support/test-database-run.ts': 'export const run = 1;\n' }),
   },
+  {
+    ruleId: RULE,
+    name: 'imports written with ".js", and a project that chose to rewrite the ".ts" of a neighbour in what it builds',
+    expect: 'pass',
+    files: aliasDeclarations({
+      ...NEIGHBOURS,
+      'tsconfig.json': tsconfig(PATHS, { allowImportingTsExtensions: true, rewriteRelativeImportExtensions: true }),
+      'tsconfig.build.json': EXTENDS,
+    }),
+  },
   failingIn(
     'a neighbour of test/support named by its ".ts", which tsconfig.json does not let the compiler read',
     'tsconfig.json',
@@ -71,6 +81,15 @@ export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
     'a build config that inherits "noEmit" from the type check and would write nothing',
     'tsconfig.build.json',
     { ...NEIGHBOURS, 'tsconfig.json': tsconfig(PATHS, READS_SOURCES), 'tsconfig.build.json': EXTENDS },
+  ),
+  failingIn(
+    'a build config that emits again and still reads ".ts", which the compiler refuses of it',
+    'tsconfig.build.json',
+    {
+      ...NEIGHBOURS,
+      'tsconfig.json': tsconfig(PATHS, READS_SOURCES),
+      'tsconfig.build.json': json({ extends: './tsconfig.json', compilerOptions: { noEmit: false } }),
+    },
   ),
   failing('a Node subpath import as the alias', CONFIG_FILE, config({ importAlias: '#app/' })),
   failing('an alias that could be any package', CONFIG_FILE, config({ importAlias: 'app/' })),

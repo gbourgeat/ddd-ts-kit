@@ -1,5 +1,5 @@
 [English](import-aliases.md) · **Français**
-<!-- translation-of: import-aliases.md sha256:f023806781d7a66c -->
+<!-- translation-of: import-aliases.md sha256:c18a867ad6eeb071 -->
 
 # Alias d'import : les `paths` de tsconfig, réécrits à la construction
 
@@ -399,7 +399,7 @@ Ce qu'elle signale :
 | un `tsconfig.build.json` dont les `paths` ou le `baseUrl` diffèrent de `tsconfig.json` | la construction ne compilerait pas ce qui a été vérifié |
 | `module` et `moduleResolution` de `tsconfig.json`, ou d'un `tsconfig.build.json` qui fixe les siens, qui ne sont pas ce que donne `importExtension` (`ESNext`, `Bundler` et `customConditions` contenant `node` sous `none` ; sous `js`, une valeur écrite qui n'est pas `Node16`, `Node18`, `Node20` ni `NodeNext`) | sous l'autre résolution, le compilateur refuse chaque import du projet, ou accepte une graphie que la construction ne réécrit pas ; un autre format de module ne serait pas les modules ECMAScript que complète la construction |
 | sous `js`, un fichier placé directement sous `test/support/` qui nomme un voisin par son `.ts` alors que `tsconfig.json` ne fixe ni `allowImportingTsExtensions` ni `rewriteRelativeImportExtensions` | le compilateur refuse cette terminaison (`TS5097`) ; la correction nomme les deux lignes de `tsconfig.json` (`"allowImportingTsExtensions": true`, qui n'est accepté qu'avec `"noEmit": true`) et les deux de `tsconfig.build.json` qui les remettent |
-| sous `js`, un `tsconfig.build.json` qui hérite de `"noEmit": true` ou de `"allowImportingTsExtensions": true` | le compilateur n'écrirait rien, sans erreur, et `build-aliases` ne trouverait alors aucune sortie, ou en réécrirait une plus ancienne ; avec la seconde option seule, le compilateur refuse le build (`TS5096`) |
+| sous `js`, un `tsconfig.build.json` qui hérite de `"noEmit": true`, ou de `"allowImportingTsExtensions": true` sans `rewriteRelativeImportExtensions` | le compilateur n'écrirait rien, sans erreur, et `build-aliases` ne trouverait alors aucune sortie, ou en réécrirait une plus ancienne ; avec la seconde option seule, le compilateur refuse le build (`TS5096`) |
 | un script qui compile (`tsc` sans `--noEmit`) et ne lance pas `build-aliases` ensuite | la sortie s'arrêterait sous `node` à son premier import : aucun alias, et sous `none` aucune extension non plus |
 | un script qui lance `tsx` avec `--tsconfig` sur un autre fichier | l'exécuteur de développement lirait une déclaration que rien ne compare |
 | une configuration `vitest` à la racine du projet sans `tsconfigPaths: true` (une configuration qui en étend une autre du projet est lue comme la portant) | les *specs* ne résoudraient pas un alias |

@@ -53,9 +53,14 @@ function supportFiles(root: string): string[] {
   }
 }
 
-/** A build that emits nothing, or that the compiler refuses: it inherited what the type check needs. */
-function silent(built: Options | undefined): boolean {
-  return built?.['noEmit'] === true || built?.['allowImportingTsExtensions'] === true;
+/**
+ * A build that emits nothing, or that the compiler refuses: it inherited what the type check
+ * needs. The compiler accepts `allowImportingTsExtensions` of a build that rewrites those endings.
+ */
+function silent(built: Options = {}): boolean {
+  const refused = built['allowImportingTsExtensions'] === true && built['rewriteRelativeImportExtensions'] !== true;
+
+  return built['noEmit'] === true || refused;
 }
 
 function unread({ report }: Inspected): Violation {
