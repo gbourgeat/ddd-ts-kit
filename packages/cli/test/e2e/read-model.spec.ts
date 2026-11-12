@@ -62,7 +62,7 @@ describe('the read model tables of the database', () => {
   const column = 'alter table shipping.invoices_to_ship alter column customer_id';
   const alter = (statement: string): Promise<unknown> => Promise.resolve(${run});
 
-  it('are ready as generated, and one that is not is refused by name, with its migration', async () => {
+  it('are ready as generated, and one that is not is refused by name, with its migration, by the root that hosts it', async () => {
     const tables = readModelTables(database.persistence);
 
     expect(await tables.notReady()).toEqual([]);
@@ -73,8 +73,14 @@ describe('the read model tables of the database', () => {
     await alter(column + ' set not null');
 
     const refusal = await tables.require().catch((error: unknown) => error);
+    // A root checks the tables of the contexts it hosts: the one that does not host shipping is not stopped by its table.
+    const elsewhere = await readModelTables(database.persistence, ['order-fulfilment']).notReady();
+    const own = await readModelTables(database.persistence, ['shipping']).notReady();
 
     await alter(column + ' drop not null');
+
+    expect(elsewhere).toEqual([]);
+    expect(own.map(({ table }) => table)).toEqual(['invoices_to_ship']);
 
     expect(String(refusal)).toContain('1 read model table is not ready for this version: shipping.invoices_to_ship.');
     expect(String(refusal)).toContain('alter table "shipping"."invoices_to_ship" alter column "customer_id" drop not null;');

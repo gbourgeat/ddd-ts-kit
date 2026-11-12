@@ -840,11 +840,32 @@ working on one context alike. A context extracted as a service takes its tables 
 **What a migration left undone, before a deployment.** The order above is read from the files;
 what the migrations make of the read model tables is read from a database. `npm run
 db:read-models` reads, on the database `DATABASE_URL` names, the read model tables the application
-lists, each by its own store: it prints those that cannot hold the trace of a deleted row, with
-the migration each needs, and exits 1 (2 without a database to read, 3 when it could not be
-read). The application makes the same check when it starts, so a table an upgrade left as it was
-stops the start and not the first event that reaches it
+lists, each by its own store (`-- --context <context>`, once per context, for the tables of those
+contexts alone, as a context run as a service checks them on its database): it prints the
+database it read, those of its tables that cannot hold the trace of a deleted row, with the
+migration each needs, and exits 1 (2 without a database to read, 3 when no table could be read).
+The application makes the same check when it starts, of the contexts it hosts, so a table an
+upgrade left as it was stops the start and not the first event that reaches it
 ([Every table checked at the start, and before a deployment](../concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment)).
+
+### A large read model table: the second step apart
+
+The migration a refusal writes has two steps. The first changes the definition in one statement
+and takes ACCESS EXCLUSIVE on the table, which stops its readers and its writers until the
+transaction ends. The second validates the check constraint and empties the rows deleted before:
+it reads the whole table. In the transaction of the first it runs under that lock; outside it,
+under SHARE UPDATE EXCLUSIVE and ROW EXCLUSIVE, which stop neither readers nor writers. **On a
+small table, write both steps in one migration.** On a large one, the second step goes in a
+migration of its own, and what puts it outside the transaction of the first differs by tool. Each
+line below was run on PostgreSQL 18 with the versions the kit installs, the locks read in
+`pg_locks` while the second step ran:
+
+| Tool | What it does with the pending migrations | The second step outside the transaction of the first |
+|---|---|---|
+| knex 3 (`knex migrate:latest`) | runs them all in one transaction: a second file still holds ACCESS EXCLUSIVE | the second migration ends with `export const config = { transaction: false };` (`exports.config` in CommonJS): knex then runs the migrations one by one, and that one statement by statement. |
+| TypeORM (`typeorm migration:run`) | one transaction for all (`migrationsTransactionMode: 'all'`, the default) | `migrationsTransactionMode: 'each'` in the data source (`data-source.ts`): each migration has its transaction, and the second step holds SHARE UPDATE EXCLUSIVE and ROW EXCLUSIVE alone. `transaction = false` on the migration class is refused under `'all'` ("override the transaction mode") and works under `'each'` |
+| Drizzle (`drizzle-kit migrate`) | one transaction for every pending file, and no setting changes it (read on `migrate()` of drizzle-orm 0.45, which the command calls) | the second file is applied by a later run: deploy the first migration, then add the second and migrate again; or run the second step by hand (`psql`) once the first is applied |
+| Prisma 7 (`prisma migrate deploy`) | commits each statement of a file, except a file that holds a `do` block, which it sends in one piece: the first step holds one, so a file with both steps is one transaction | two migrations: the second, plain statements, holds no lock on the table between them. A statement that fails in a file of plain statements leaves the statements before it applied and the command fails: the statements of the second step can be run again |
 
 ## Recommendation by situation
 

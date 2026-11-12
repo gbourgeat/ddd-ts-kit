@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:c5ad6218cb3a43b7 -->
+<!-- translation-of: parallel-work.md sha256:c52fc36026adaae7 -->
 
 # Travailler en parallèle sans collisions
 
@@ -37,7 +37,7 @@ est intestable tant que l'autre n'existe pas, et les deux se rencontrent dans ch
 | deux dossiers de cas d'usage d'un même contexte | des *workers* différents | en grande partie | ils se rencontrent dans l'agrégat, les déclarations de leur couche et le fichier des routes : fusionnez souvent |
 | `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate worker`, `generate adr --deviation` | **non** | créez tous les contextes et toutes les relations à l'amorçage ; les changements ultérieurs un par un, par le propriétaire de la plateforme |
 | `src/platform/composition/compose-application.ts`, `src/platform/composition/platform.module.ts`, `src/platform/composition/platform-test.module.ts` | `generate context` (la racine de composition), `generate gateway` (les deux modules, dans le style déclaré), des modifications à la main | **non** | les régions d'enregistrement sont écrites entre des marqueurs ; deux branches qui ajoutent chacune un contexte les touchent toutes les deux |
-| les registres de la plateforme : `src/platform/database/schema.ts` (avec Prisma, la datasource de `prisma/schema/schema.prisma`), `src/platform/auth/authorization/permissions.ts`, `src/platform/auth/authorization/role.ts`, `src/platform/auth/authorization/access-policies.ts` (style explicite), `src/platform/audit/audited-events.ts`, `src/platform/jobs/job-settings.ts`, les attributions sous `src/platform/auth/`, et l'utilitaire `src/platform/resilience/own-policy.ts` | `generate context`, `generate repository` (le premier d'un contexte), `generate command --aggregate` sur un agrégat qui n'a pas encore de *repository*, `generate route-group --role` avec un nouveau rôle, `generate policy` (style explicite), `generate integration-event`, `generate job`, `generate adapter` (le premier d'un projet câblé sur tsyringe) | **non** | lancez ces générateurs sur le tronc avant que les *workers* ne commencent ; `generate --help --json` dit quelles sortes écrivent des fichiers partagés (`writesShared`) et lesquels |
+| les registres de la plateforme : `src/platform/database/schema.ts` (avec Prisma, la datasource de `prisma/schema/schema.prisma`), `src/platform/auth/authorization/permissions.ts`, `src/platform/auth/authorization/role.ts`, `src/platform/auth/authorization/access-policies.ts` (style explicite), `src/platform/audit/audited-events.ts`, `src/platform/jobs/job-settings.ts`, `src/platform/database/read-model-tables.ts` (les tables de modèle de lecture que l'application vérifie à son démarrage), les attributions sous `src/platform/auth/`, et l'utilitaire `src/platform/resilience/own-policy.ts` | `generate context`, `generate repository` (le premier d'un contexte), `generate command --aggregate` sur un agrégat qui n'a pas encore de *repository*, `generate route-group --role` avec un nouveau rôle, `generate policy` (style explicite), `generate integration-event`, `generate job`, `generate read-model` (sur l'un des quatre ORM : il liste son registre), `generate adapter` (le premier d'un projet câblé sur tsyringe) | **non** | lancez ces générateurs sur le tronc avant que les *workers* ne commencent ; `generate --help --json` dit quelles sortes écrivent des fichiers partagés (`writesShared`) et lesquels |
 | `src/main.ts` | des modifications à la main | **non** | le propriétaire de la plateforme |
 | `test/architecture/extractable.spec.ts`, `knip.json` (le premier contexte) | `init`, `generate context` | **non** | de même : écrits avec chaque contexte |
 | `<context>.declarations.ts` et le `<layer>.declarations.ts` de chaque couche (ce qui est injecté dans chaque constructeur), `<context>.dependencies.ts` en mode découverte | chaque `generate` dans ce contexte, `docs`, et `npm run dev` | par contexte | dérivés : ne jamais fusionner à la main, régénérer (ci-dessous) |
@@ -493,7 +493,10 @@ Le refus d'un `job` ou d'un `integration-event` affiche la commande exacte (la m
 `--local-only`). Un job ou un événement d'intégration de la ligne d'un *worker* est une étape du
 chef d'orchestre sur le tronc, avant la ligne du *worker* (les contrats d'abord) : le plan la tient
 pour une ligne `skeleton` ou `contract` dont dépend la ligne du *worker*, qui fusionne le tronc
-puis remplit les TODO.
+puis remplit les TODO. Un modèle de lecture gardé dans une table (`generate read-model` sur
+Drizzle, Knex, Prisma ou TypeORM) est aussi une telle étape, à chaque fois : le générateur ajoute
+son registre à `src/platform/database/read-model-tables.ts`, la liste qu'une application vérifie
+à son démarrage.
 
 ### Quand un agent s'arrête
 

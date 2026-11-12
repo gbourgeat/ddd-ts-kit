@@ -207,7 +207,7 @@ describe('init: the check of the listed read model tables, at the start and from
       'await openPersistence({ databaseUrl, databaseTransaction: { waitMs: 2_000, timeoutMs: 5_000 } });',
     );
 
-    expect(read(root, 'README.md')).toContain(' run db:read-models` says the same of that database');
+    expect(read(root, 'README.md')).toContain(' run db:read-models` says the same of that');
     expect(read(root, 'README.md')).toContain("`readModelTables: 'reported'` to `composeApplication`");
   });
 

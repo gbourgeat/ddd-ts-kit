@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:831992cd6d21fa70 -->
+<!-- translation-of: persistence.md sha256:f2a927f5b4963097 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -897,12 +897,33 @@ en service emporte alors ses tables avec lui (`generate service`).
 **Ce qu'une migration a laissé de côté, avant un déploiement.** L'ordre ci-dessus se lit dans les
 fichiers ; ce que les migrations font des tables de modèle de lecture se lit dans une base.
 `npm run db:read-models` lit, sur la base que nomme `DATABASE_URL`, les tables de modèle de lecture
-que l'application liste, chacune par son propre registre : il affiche celles qui ne peuvent pas
-contenir la trace d'une ligne supprimée, avec la migration qu'il faut à chacune, et sort avec le
-code 1 (2 sans base à lire, 3 quand elle n'a pas pu être lue). L'application fait la même
-vérification à son démarrage, si bien qu'une table qu'une montée de version a laissée telle quelle
-arrête le démarrage et non le premier événement qui l'atteint
+que l'application liste, chacune par son propre registre (`-- --context <contexte>`, une fois par
+contexte, pour les tables de ces seuls contextes, comme un contexte exécuté en service les vérifie
+sur sa base) : il affiche la base qu'il a lue, celles de ses tables qui ne peuvent pas contenir la
+trace d'une ligne supprimée, avec la migration qu'il faut à chacune, et sort avec le code 1 (2
+sans base à lire, 3 quand aucune table n'a pu être lue). L'application fait la même vérification à
+son démarrage, des contextes qu'elle héberge, si bien qu'une table qu'une montée de version a
+laissée telle quelle arrête le démarrage et non le premier événement qui l'atteint
 ([Chaque table vérifiée au démarrage, et avant un déploiement](../concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement)).
+
+### Une grande table de modèle de lecture : la seconde étape à part
+
+La migration qu'écrit un refus a deux étapes. La première change la définition en une instruction
+et prend ACCESS EXCLUSIVE sur la table, qui arrête ses lecteurs et ses écrivains jusqu'à la fin de
+la transaction. La seconde valide la contrainte de vérification et vide les lignes supprimées
+auparavant : elle lit toute la table. Dans la transaction de la première, elle s'exécute sous ce
+verrou ; hors d'elle, sous SHARE UPDATE EXCLUSIVE et ROW EXCLUSIVE, qui n'arrêtent ni lecteurs ni
+écrivains. **Sur une petite table, écrivez les deux étapes dans une seule migration.** Sur une
+grande, la seconde étape va dans une migration à elle, et ce qui la met hors de la transaction de
+la première diffère selon l'outil. Chaque ligne ci-dessous a été exécutée sur PostgreSQL 18 avec
+les versions que le kit installe, les verrous lus dans `pg_locks` pendant la seconde étape :
+
+| Outil | Ce qu'il fait des migrations en attente | La seconde étape hors de la transaction de la première |
+|---|---|---|
+| knex 3 (`knex migrate:latest`) | les exécute toutes dans une seule transaction : un second fichier tient encore ACCESS EXCLUSIVE | la seconde migration finit par `export const config = { transaction: false };` (`exports.config` en CommonJS) : knex exécute alors les migrations une par une, et celle-ci instruction par instruction |
+| TypeORM (`typeorm migration:run`) | une transaction pour toutes (`migrationsTransactionMode: 'all'`, la valeur par défaut) | `migrationsTransactionMode: 'each'` dans la source de données (`data-source.ts`) : chaque migration a sa transaction, et la seconde étape ne tient que SHARE UPDATE EXCLUSIVE et ROW EXCLUSIVE. `transaction = false` sur la classe de la migration est refusé sous `'all'` (« override the transaction mode ») et fonctionne sous `'each'` |
+| Drizzle (`drizzle-kit migrate`) | une transaction pour tous les fichiers en attente, et aucun réglage ne le change (lu sur `migrate()` de drizzle-orm 0.45, que la commande appelle) | le second fichier est appliqué par une exécution ultérieure : déployez la première migration, puis ajoutez la seconde et migrez de nouveau ; ou exécutez la seconde étape à la main (`psql`) une fois la première appliquée |
+| Prisma 7 (`prisma migrate deploy`) | valide chaque instruction d'un fichier, sauf un fichier qui porte un bloc `do`, qu'il envoie d'un seul tenant : la première étape en porte un, si bien qu'un fichier avec les deux étapes est une seule transaction | deux migrations : la seconde, des instructions simples, ne tient aucun verrou sur la table entre elles. Une instruction qui échoue dans un fichier d'instructions simples laisse appliquées celles qui la précèdent et la commande échoue : les instructions de la seconde étape peuvent être exécutées de nouveau |
 
 ## Recommandation selon la situation
 

@@ -28,7 +28,7 @@ export function wiringNotes(
       : 'What it could not keep is named here; `git diff` shows the rest.';
 
   return [
-    `--force rewrote the files of the platform from their templates and kept what the generators and the team wrote in their regions, the grants of the roles and the services of the compose file included. It wired the declared contexts again (${contexts.join(', ')}), and listed again from the tree the tables and the audited events of each one that a region did not hold. ${left === '' ? '' : `${left} `}${outcome}`,
+    `--force rewrote the files of the platform from their templates and kept what the generators and the team wrote in their regions, the grants of the roles and the services of the compose file included. It wired the declared contexts again (${contexts.join(', ')}), and listed again from the tree the tables, the audited events and the read model stores of each one that a region did not hold. ${left === '' ? '' : `${left} `}${outcome}`,
     ...named,
   ];
 }

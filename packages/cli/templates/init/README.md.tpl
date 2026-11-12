@@ -45,13 +45,17 @@ migrations that a merge left out of order (`npx ddd-ts-kit explain persistence/m
 the trunk, and names the command that puts it after.
 
 The application checks its read model tables when it starts, whenever their stores are built:
-those `{{config.platformDir}}/database/read-model-tables.ts` lists, where `generate read-model`
-adds each store. A table is read by its own store, so it is found ready exactly when that store
-will take the trace of a deleted row; one that is not stops the start, named with what keeps it
-from it and the migration to write, which touches the columns the store maps and no other. Before
-a deployment, `DATABASE_URL=<its database> npm run db:read-models` says the same of that database
-(exit code 1 when a table is not ready, 2 without a database to read, 3 when it could not be
-read) and needs no other variable. A pipeline that starts the application before its migrations
+those `{{config.platformDir}}/database/read-model-tables.ts` lists for the contexts it hosts (a
+context run as a service checks its own, on its database), where `generate read-model` adds each
+store and `init` those of the tree. A table is read by its own store, so the verdict is the one
+that store gives before its first trace; one that is not ready stops the start, named with what
+keeps it from it and the migration to write, in two steps, which touches the columns the store
+maps and no other. On a large table the second step runs in a migration of its own, outside the
+transaction of the first (the documentation of the persistence says how on each migration tool).
+Before a deployment, `DATABASE_URL=<its database> npm run db:read-models` says the same of that
+database (`-- --context <context>` for the tables of one context; exit code 1 when a table is not
+ready, 2 without a database to read, 3 when no table could be read) and needs no other variable:
+it prints the database it read. A pipeline that starts the application before its migrations
 ran passes `readModelTables: 'reported'` to `composeApplication` in `{{config.sourceRoot}}/main.ts`:
 the tables are logged as one error, the start goes on, and each store still refuses by name before
 its first trace.
