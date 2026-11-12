@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:c6f49595a3fc7fe8 -->
+<!-- translation-of: test-runners.md sha256:5f770125bd613119 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -499,10 +499,15 @@ export default {
   chaque fichier s'exécute sur une base à lui, copiée du modèle que son exécution a fait de la base
   migrée (`test/support/test-database-clone.ts`), et la configuration nomme la mise en place
   globale qui ouvre cette exécution (`test/support/test-database-setup.ts`), puisqu'un *hook* n'y
-  a que les 20 secondes d'un test. Jest charge cette mise en place, et ce qu'elle importe, avec la
-  résolution de Node, qui ne connaît aucun alias : les fichiers de `test/support/` s'importent par
-  un chemin relatif, si bien que `npx jest -c jest.e2e.config.js` et le lanceur d'un éditeur
-  démarrent l'exécution comme les scripts. Un *broker* ou un serveur au protocole Redis est le même
+  a que les 20 secondes d'un test. Jest charge cette mise en place, et ce qu'elle importe, avant
+  qu'aucun alias n'existe (aucun `moduleNameMapper` ne s'y applique) : les fichiers placés
+  directement sous `test/support/` s'importent par un chemin relatif, qui se termine par le `.ts`
+  de la source sous `"importExtension": "js"`, si bien que la mise en place se charge quelle que
+  soit la façon dont Jest est démarré. Pas les fichiers de *spec* : ce sont des modules ES, et un
+  `npx jest -c jest.e2e.config.js` nu échoue avec `Must use import to load ES Module`.
+  Démarrez-le comme les scripts, avec
+  `NODE_OPTIONS=--experimental-vm-modules npx jest -c jest.e2e.config.js`, et donnez la même
+  variable au lanceur d'un éditeur. Un *broker* ou un serveur au protocole Redis est le même
   pour tous les fichiers, qui consommeraient les événements et liraient les clés les uns des
   autres : avec son adresse (`AMQP_URL`, `KAFKA_BROKERS`, `NATS_URL`, `REDIS_URL`) la configuration
   garde un seul *worker*, en bande, et le tas d'une longue suite demande

@@ -71,7 +71,8 @@ untouched.
 | | `none` (default of a new project) | `js` |
 |---|---|---|
 | An import | `'@/contexts/billing/domain/aggregates/invoice.aggregate'` | `'@/contexts/billing/domain/aggregates/invoice.aggregate.js'` |
-| `tsconfig.json` | `"module": "ESNext"`, `"moduleResolution": "Bundler"`, `"customConditions": ["node"]` | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"`, `"rewriteRelativeImportExtensions": true` |
+| `tsconfig.json` | `"module": "ESNext"`, `"moduleResolution": "Bundler"`, `"customConditions": ["node"]` | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"`, `"allowImportingTsExtensions": true`, `"noEmit": true` |
+| `tsconfig.build.json` | extends `tsconfig.json` | extends it, with `"allowImportingTsExtensions": false`, `"noEmit": false` |
 | A relative import between two files of `test/support/` | `'./test-database-run'` | `'./test-database-run.ts'` |
 | What the compiler accepts | both spellings, and a directory that holds an `index.ts` | `.js` only (`TS2835` otherwise) |
 | Who refuses the other spelling | `imports/extension` (checker and ESLint), then `build-aliases` | the compiler, `imports/extension`, then `build-aliases` |
@@ -304,13 +305,20 @@ segment. `eslint --fix` rewrites a relative import: it computes the alias from t
 the file and the config. An alias path with a `.` or `..` segment is reported without an
 automatic fix: you write the path from the alias directory by hand. One relative path stands: a
 file directly under `test/support/` imports its neighbour by `./<name>`. A test runner loads its
-global setup, and what that file imports, with the resolution of Node, before any alias exists
-(Jest applies no `moduleNameMapper` there), so the files that open a run on a server
-(`test-database-setup.ts` and those it is made of) name one another that way, and the run starts
-from `npx jest`, from an editor and from the script alike. Under `js` the neighbour is named by
-the `.ts` of its source, which Node resolves where it would look for a `.js` that does not exist,
-and which `rewriteRelativeImportExtensions` lets the compiler read. A path that leaves
-`test/support/`, or enters a directory of it, is refused as anywhere else. Not judged: a JavaScript file at the project root (a tool config, a
+global setup, and what that file imports, before any alias exists (Jest applies no
+`moduleNameMapper` there), so the files that open a run on a server (`test-database-setup.ts` and
+those it is made of) name one another that way, and the global setup loads however the runner is
+started. On Jest the spec files still need Node started with `--experimental-vm-modules`: the
+generated scripts pass it, and `npx jest` or the runner of an editor is given
+`NODE_OPTIONS=--experimental-vm-modules`. The ending of that path is judged too, with a fix: under
+`none` it carries no extension; under `js` the neighbour is named by the `.ts` of its source,
+which the transform of the runner finds where a `.js` names a file that does not exist. A `.js`
+there passes the type check and the lint of the other rules, then stops the run on
+`Cannot find module`: `eslint --fix` writes the `.ts`. The type check reads that ending because
+`tsconfig.json` sets `allowImportingTsExtensions`, which `imports/alias-declared` holds. A path
+that leaves `test/support/` (`../e2e/...`, `./..`), names the directory itself (`./.`) or enters a
+directory of it (`./parts/part`, or `./parts` when that is a directory with no `parts.ts` beside
+it) is refused as anywhere else. Not judged: a JavaScript file at the project root (a tool config, a
 knex migration, which Node runs as written and which therefore uses relative paths), and the
 client under `generated/`. A directory given to `discoverContext` as a URL is not an import.
 
@@ -371,6 +379,8 @@ What it reports:
 | a `baseUrl` | every `paths` target would be resolved from it |
 | a `tsconfig.build.json` whose `paths` or `baseUrl` differ from `tsconfig.json` | the build would not compile what was checked |
 | `module` and `moduleResolution` of `tsconfig.json`, or of a `tsconfig.build.json` that sets its own, that are not what `importExtension` gives (`ESNext`, `Bundler` and `customConditions` holding `node` under `none`; under `js`, a written value that is not `Node16`, `Node18`, `Node20` or `NodeNext`) | under the other resolution the compiler refuses every import of the project, or accepts a spelling the build does not rewrite; another module format would not be the ECMAScript modules the build completes |
+| under `js`, a file directly under `test/support/` that names a neighbour by its `.ts` while `tsconfig.json` sets neither `allowImportingTsExtensions` nor `rewriteRelativeImportExtensions` | the compiler refuses that ending (`TS5097`); the fix names the two lines of `tsconfig.json` (`"allowImportingTsExtensions": true`, which is accepted only with `"noEmit": true`) and the two of `tsconfig.build.json` that set them back |
+| under `js`, a `tsconfig.build.json` that inherits `"noEmit": true` or `"allowImportingTsExtensions": true` | the compiler would write nothing, without an error, and `build-aliases` would then find no output, or rewrite an earlier one; with the second option alone the compiler refuses the build (`TS5096`) |
 | a script that compiles (`tsc` without `--noEmit`) and does not run `build-aliases` afterwards | the output would stop under `node` at its first import: no alias, and under `none` no extension either |
 | a script that runs `tsx` with `--tsconfig` on another file | the dev runner would read a declaration nothing compares |
 | a `vitest` config at the project root without `tsconfigPaths: true` (one that extends another config of the project is read as carrying it) | the specs would not resolve an alias |

@@ -470,8 +470,11 @@ copies once, when it starts: a migration applied meanwhile reaches the files aft
   table of its copy except those `KEPT_TABLES` lists in `test/support/test-database-kept.ts`, a
   file of the project: `<schema>.<table>`, or `<schema>.*`, written as the server stores the name
   and without quotes, so in lower case unless the table was created between quotes (`"Countries"`
-  is listed as `public.Countries`, `Countries` as `public.countries`). Any other shape (`*`,
-  `public`, a quoted name) refuses the run with the shapes a name takes, and a name that is no
+  is listed as `public.Countries`, `Countries` as `public.countries`). `<schema>.*` keeps every
+  table of the schema whatever its name holds: a table whose name holds a dot or a quote has no
+  name of its own in the list and is kept through `<schema>.*` only, and a schema whose name holds
+  one cannot be listed. Any other shape (`*`, `public`, a quoted name, `public.plans.v2`) refuses
+  the run with the shapes a name takes, and a name that is no
   table of the database (a misspelling, another case, a view) is said in one line, since it keeps
   nothing; the names the generated list holds for a table its tool has not created yet are not.
   As generated it lists what the
@@ -500,8 +503,10 @@ copies once, when it starts: a migration applied meanwhile reaches the files aft
   global setup: the count is the spec files under `test/` that the patterns of the command line
   match, on the path from the root of the project or on the whole path as Jest matches them, less
   those `testPathIgnorePatterns` ignores, and the share of a shard, a number the run cannot
-  exceed. When the count cannot be made (a run that watches, a runner that lists nothing, a
-  pattern that is no expression, no `test/` directory) the workers alone count. The setup then
+  exceed. When the count cannot be made, or finds nothing (a run that watches, a runner that
+  lists nothing, a pattern that is no expression, no `test/` directory, no spec file under `test/`
+  among those of the run, which then has files this count does not see) the workers alone count.
+  The setup then
   reads what the server has left (`max_connections`, less
   what it reserves and what is open, and no more than the connection limit of the role), and gives
   each file its share, less one connection to spare: the application under test opens a pool of
@@ -535,7 +540,10 @@ copies once, when it starts: a migration applied meanwhile reaches the files aft
   says that it lost its databases, and each file that then cannot copy the template fails with
   the same sentence instead of the `template database ... does not exist` of the server. The copy
   of the migrated database has a session of its own: when the server ends that one, what is left
-  of the copy is dropped and the copy made once more, and a second end is said as such. **The address is a direct one**: behind a pooler in transaction mode a
+  of the copy is dropped and the copy made once more, and a second end is said as such. A
+  statement of the run that somebody cancels (`pg_cancel_backend`, a job that cancels the
+  statements that last) is no ended session: the run says that its copy was cancelled and does
+  not take it again. **The address is a direct one**: behind a pooler in transaction mode a
   session lock means nothing, and the run needs the server itself. `DATABASE_URL` cannot name the
   `postgres` database, where the runs hold their sessions: the run says so.
 - **Outside an end-to-end run** (`openTestDatabase(url)` called by a spec of the unit run, or a
@@ -556,7 +564,15 @@ What this asks of the server:
 - nobody else is connected to the migrated database while the run starts, because PostgreSQL
   copies a database only then: an application left running on it, or a console, makes the global
   setup fail after about ten seconds with a message that says so. The files never connect to it:
-  they copy the template of their run through the `postgres` database of the server.
+  they copy the template of their run through the `postgres` database of the server;
+- nothing of the timeouts a role, a database or the server sets for the requests of an
+  application (`alter role <role> set statement_timeout = '30s'`): the sessions of the run itself,
+  the one that holds its lock and those that copy, empty and drop its databases, set
+  `statement_timeout`, `lock_timeout` and, from PostgreSQL 17, `transaction_timeout` to 0 for
+  themselves, since what they do lasts as long as the database is large and a run waits its turn
+  behind another. They open no transaction of their own, so
+  `idle_in_transaction_session_timeout` never applies to them. The pool of the application under
+  test is no session of the run: it keeps the timeouts of its role, as in production.
 
 A broker or a Redis protocol server stays one for every file: with its address in the environment,
 the configuration of the end-to-end run keeps the files one after the other.
@@ -568,14 +584,23 @@ the one of the end-to-end run, which saves the cluster or opens the run on a ser
 `test/support/test-database-teardown.ts`, named by `globalTeardown`, deletes the cluster or ends
 the run; the workers Jest starts after the setup inherit the variables it sets
 (`TEST_DATABASE_TEMPLATE`, or `TEST_DATABASE_RUN` and `TEST_DATABASE_POOL_SIZE` on a server). A
-runner loads its global setup, and what that file imports, with the resolution of Node, before
-any import alias of the project exists: the files of `test/support/` import one another by a
-relative path of that directory (`./test-database-run`), the one place where
-[`imports/alias-only`](../tools/import-aliases.md) lets a relative path stand. The run therefore
-starts the same from its script, from `npx jest -c jest.e2e.config.js` and from the runner of an
-editor. Under `"importExtension": "js"` that path ends with the `.ts` of the source
-(`./test-database-run.ts`), which `rewriteRelativeImportExtensions` of `tsconfig.json` lets the
-compiler read.
+runner loads its global setup, and what that file imports, before any import alias of the project
+exists (Jest applies no `moduleNameMapper` there): the files directly under `test/support/` import
+one another by a relative path of that directory (`./test-database-run`), the one place where
+[`imports/alias-only`](../tools/import-aliases.md) lets a relative path stand. The global setup
+therefore asks nothing of what starts the runner. The spec files of a project on Jest still do:
+they are ES modules, which Jest loads only when Node runs with `--experimental-vm-modules`. The
+generated scripts pass it; a bare `npx jest -c jest.e2e.config.js` fails with
+`Must use import to load ES Module`, and
+`NODE_OPTIONS=--experimental-vm-modules npx jest -c jest.e2e.config.js`, or the runner of an
+editor given that variable, starts the run as the script does. Under `"importExtension": "js"`
+the relative path ends with the `.ts` of the source (`./test-database-run.ts`): the runner loads
+the sources through its transform, which finds the file under the name it has, where a `.js` names
+a file that does not exist and stops the run (`Cannot find module`), although the compiler would
+accept it. `imports/alias-only` holds that ending, and `tsconfig.json` lets the type check read
+it: `"allowImportingTsExtensions": true`, which the compiler accepts only with `"noEmit": true`,
+both set back to `false` in `tsconfig.build.json`, so that the build emits what it emitted without
+them. `imports/alias-declared` holds those four lines.
 On the identity preset, the
 integration specs under Jest took 45 CPU seconds with an initdb per spec file and 26 with the copy
 ([measured](../tools/test-runners.md#speed-measured)).

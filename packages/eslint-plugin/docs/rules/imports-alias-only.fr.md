@@ -1,5 +1,5 @@
 [English](imports-alias-only.md) · **Français**
-<!-- translation-of: imports-alias-only.md sha256:50b0b771ef706859 -->
+<!-- translation-of: imports-alias-only.md sha256:00f3491452afce20 -->
 
 # ddd-ts-kit/imports-alias-only
 
@@ -56,7 +56,9 @@ Les alias d'un projet :
 
 La correction calcule l'alias à partir de l'emplacement du fichier et de la configuration : le spécificateur relatif est résolu depuis le répertoire du fichier, et le résultat est écrit depuis le répertoire que nomme son alias, avec la terminaison que dit `importExtension` de la configuration : rien sous `none`, `.js` sous `js` (une configuration sans la clé). Elle garde les guillemets du spécificateur. Un import corrigé est souvent plus long que la ligne : lancez le formateur après la correction (`npm run format`). Corriger deux fois ne change rien.
 
-Un seul chemin relatif est admis : un fichier placé directement sous `test/support/` importe son voisin par `./<nom>`. Un lanceur de tests charge sa mise en place globale (*global setup*), et chaque fichier que celle-ci importe, avec la résolution de Node, avant qu'aucun alias du projet n'existe : Jest n'y résout aucun `moduleNameMapper`, et une mise en place qui importerait par alias ne démarrerait que depuis le script du projet, ni depuis `npx jest` ni depuis un éditeur. Rien d'autre n'est épargné : depuis `test/support/`, `../e2e/support/start-application` et `./parts/part` sont signalés, et un fichier de tout autre répertoire importe son voisin par alias. Sous `"importExtension": "js"`, le voisin est nommé par le `.ts` de sa source (`./test-database-run.ts`), que Node résout et que `rewriteRelativeImportExtensions` de `tsconfig.json` laisse lire au compilateur.
+Un seul chemin relatif est admis : un fichier placé directement sous `test/support/` importe son voisin par `./<nom>`. Un lanceur de tests charge sa mise en place globale (*global setup*), et chaque fichier que celle-ci importe, avant qu'aucun alias du projet n'existe : Jest n'y applique aucun `moduleNameMapper`, et une mise en place qui importerait par alias ne se chargerait que depuis le script du projet, ni depuis `NODE_OPTIONS=--experimental-vm-modules npx jest` ni depuis un éditeur. Rien d'autre n'est épargné : depuis `test/support/`, `../e2e/support/start-application`, `./parts/part`, `./.` et `./..` sont signalés, de même que `./parts` quand le disque porte un répertoire de ce nom sans `parts.ts` à côté ; un fichier de tout autre répertoire importe son voisin par alias.
+
+La terminaison de ce chemin est jugée, et corrigée. Sous `"importExtension": "none"`, il ne porte aucune extension (`./test-database-run`). Sous `"importExtension": "js"`, le voisin est nommé par le `.ts` de sa source (`./test-database-run.ts` ; `.mts` et `.cts` passent) : le lanceur charge les sources à travers sa transformation, qui trouve le fichier sous le nom qu'il porte. Un `.js` à cet endroit passe la vérification des types, puis arrête l'exécution sur `Cannot find module` : la correction écrit le `.ts`. La vérification des types lit cette terminaison grâce à `allowImportingTsExtensions` et `noEmit` dans `tsconfig.json`, tous deux remis dans `tsconfig.build.json`, ce que tient `imports/alias-declared` de `ddd-ts-kit check`. Qu'un `./parts` soit un répertoire se lit sur le disque au moment où le fichier est analysé ; `ddd-ts-kit check` le lit dans les fichiers du projet.
 
 ```ts
 // test/support/test-database-setup.ts
