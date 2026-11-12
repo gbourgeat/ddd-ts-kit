@@ -3,8 +3,10 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
+import { AgendaProjection } from '@/contexts/scheduling/calendars/application/projections/agenda.projection';
 import { RescheduleAppointmentCommand } from '@/contexts/scheduling/calendars/application/commands/reschedule-appointment/reschedule-appointment.command';
 import type { Appointment } from '@/contexts/scheduling/calendars/domain/aggregates/appointment.aggregate';
+import { AppointmentBooked } from '@/contexts/scheduling/calendars/domain/events/appointment-booked.event';
 import { anAppointment } from '@/contexts/scheduling/calendars/test/builders/appointment.builder';
 import { aCalendar } from '@/contexts/scheduling/calendars/test/builders/calendar.builder';
 import { aSchedulingWorld } from '@/contexts/scheduling/shared/test/worlds/scheduling.world';
@@ -23,6 +25,7 @@ const holder = anActor().withRole('holder').build();
 const patient = anActor().named('patient-1').withRole('holder').build();
 // Tuesday 3 March 2026 in Europe/Paris is UTC+1: 09:00 on the wall clock is 08:00Z.
 const NOW = new Date('2026-03-02T08:00:00.000Z');
+const BOOKED_AT = new Date('2026-03-01T08:00:00.000Z');
 
 describe('Reschedule appointment', () => {
   it('moves the appointment to the free slot in one step and answers its identifier', async () => {
@@ -170,10 +173,13 @@ async function arrange(...stored: readonly Appointment[]) {
     given: async (fakes) => {
       await fakes.calendarRepository.save(calendar);
 
-      await stored.reduce(
-        (saved, appointment) => saved.then(() => fakes.appointmentRepository.save(appointment)),
-        Promise.resolve(),
-      );
+      // The agenda holds the entry of each appointment, as its booking wrote it: a move changes that entry.
+      const agenda = new AgendaProjection(fakes.agenda);
+
+      for (const appointment of stored) {
+        await fakes.appointmentRepository.save(appointment);
+        await agenda.booked(new AppointmentBooked(appointment.id, BOOKED_AT, { booking: appointment.booking }));
+      }
     },
   });
 
