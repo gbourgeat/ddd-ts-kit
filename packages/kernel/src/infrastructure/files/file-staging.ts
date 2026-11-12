@@ -4,6 +4,7 @@ import { errorReportOf } from '../../application/error-reporting/error-report-of
 import { reportOnce } from '../../application/error-reporting/report-once';
 import { assertFinalKey } from '../../application/files/assert-final-key';
 import type { ContentExpectation } from '../../application/files/content-expectation';
+import { contentRuleDefects } from '../../application/files/content-rule-defects';
 import { FileError } from '../../application/files/file-error';
 import type { FileSource } from '../../application/files/file-source';
 import { mediaTypeOf } from '../../application/files/media-type-of';
@@ -49,13 +50,20 @@ export class FileStaging {
 
   /**
    * A request the client sends the file with, straight to the staged key, and the grant to keep
-   * on the server (on the aggregate that awaits the file) for `confirm` to read back.
+   * on the server (on the aggregate that awaits the file) for `confirm` to read back. The grant
+   * carries the text rule and the content rules stated with the accepted media types; an accepted
+   * type no content could prove is a defect of the caller, thrown here and never signed.
    */
   async uploadUrl(
     key: string,
-    options: UploadUrlOptions & Pick<ContentExpectation, 'accepted'>,
+    options: UploadUrlOptions & Pick<ContentExpectation, 'accepted' | 'text' | 'contentRules'>,
   ): Promise<PendingUploadLink> {
-    const { expiresInSeconds, mediaType, maxBytes, accepted } = options;
+    const { expiresInSeconds, mediaType, maxBytes, accepted, text, contentRules } = options;
+    const [defect] = contentRuleDefects(options);
+
+    if (defect !== undefined) {
+      throw new Error(`The upload of "${key}" can receive no file: ${defect}`);
+    }
 
     const link = await this.storage.signedUploadUrl(stagedKeyOf(assertFinalKey(key)), {
       expiresInSeconds,
@@ -63,7 +71,9 @@ export class FileStaging {
       maxBytes,
     });
 
-    return { link, pending: { key, mediaType: mediaTypeOf(mediaType), accepted, maxBytes } };
+    const rules = { ...(text === undefined ? {} : { text }), ...(contentRules === undefined ? {} : { contentRules }) };
+
+    return { link, pending: { key, mediaType: mediaTypeOf(mediaType), accepted, maxBytes, ...rules } };
   }
 
   /**
@@ -72,14 +82,14 @@ export class FileStaging {
    * is discarded.
    */
   async confirm(pending: PendingUpload): Promise<StoredFile> {
-    const { key, maxBytes, mediaType, accepted } = pending;
+    const { key, maxBytes } = pending;
     const content = await this.storage.get(stagedKeyOf(assertFinalKey(key)));
 
     if (content === undefined) {
       throw FileError.notFound(key);
     }
 
-    const inspection = new FileInspection({ maxBytes, expected: { mediaType, accepted } });
+    const inspection = new FileInspection({ maxBytes, expected: pending });
 
     await pipeline(content.stream, inspection, sink()).catch(async (error: unknown) => {
       await this.discard(key);
@@ -89,7 +99,7 @@ export class FileStaging {
     return this.scanned({
       key,
       size: inspection.size,
-      mediaType: mediaTypeOf(mediaType),
+      mediaType: mediaTypeOf(pending.mediaType),
       checksum: inspection.checksum,
     });
   }

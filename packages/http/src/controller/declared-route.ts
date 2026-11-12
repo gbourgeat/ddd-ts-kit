@@ -1,6 +1,7 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
 import type { CachePolicy } from '../cache/cache-policy';
 import { ROUTE_PATH_PATTERN } from '../route/route-path-pattern';
+import { uploadDefects } from '../route/upload-defects';
 import type { ControllerSpec } from './controller-spec';
 import type { GuardReference } from './guard-reference';
 import { Public } from './guards/public';
@@ -43,6 +44,7 @@ export function declaredRoute(className: string, spec: ControllerSpec): Declared
   assertPath(className, spec.path, path);
   assertAccess(className, guards);
   assertRawBody(className, spec);
+  assertUpload(className, spec);
 
   return {
     path,
@@ -112,6 +114,15 @@ function assertRawBody(className: string, spec: ControllerSpec): void {
     throw new DeclarationError(
       `Controller ${className} declares rawBody and ${reading.join(', ')}: the body is left unparsed, so nothing reads it. Parse the bytes in handle after checking them, or drop rawBody.`,
     );
+  }
+}
+
+/** An upload whose media types no content could prove receives no file: said when the route is declared, not by a 415 to each client. */
+function assertUpload(className: string, { upload }: ControllerSpec): void {
+  const defects = uploadDefects(upload);
+
+  if (defects.length > 0) {
+    throw new DeclarationError(`Controller ${className} declares an upload it cannot receive: ${defects.join(' ')}`);
   }
 }
 
