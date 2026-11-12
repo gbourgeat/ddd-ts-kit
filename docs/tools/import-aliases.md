@@ -71,7 +71,8 @@ untouched.
 | | `none` (default of a new project) | `js` |
 |---|---|---|
 | An import | `'@/contexts/billing/domain/aggregates/invoice.aggregate'` | `'@/contexts/billing/domain/aggregates/invoice.aggregate.js'` |
-| `tsconfig.json` | `"module": "ESNext"`, `"moduleResolution": "Bundler"`, `"customConditions": ["node"]` | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"` |
+| `tsconfig.json` | `"module": "ESNext"`, `"moduleResolution": "Bundler"`, `"customConditions": ["node"]` | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"`, `"rewriteRelativeImportExtensions": true` |
+| A relative import between two files of `test/support/` | `'./test-database-run'` | `'./test-database-run.ts'` |
 | What the compiler accepts | both spellings, and a directory that holds an `index.ts` | `.js` only (`TS2835` otherwise) |
 | Who refuses the other spelling | `imports/extension` (checker and ESLint), then `build-aliases` | the compiler, `imports/extension`, then `build-aliases` |
 | A file that does not exist | `TS2307`, by both compilers | `TS2307`, by both compilers |
@@ -301,7 +302,15 @@ well (`npm run ci:test:alias`).
 specifier is refused, the same directory included, and so is an alias path with a `.` or `..`
 segment. `eslint --fix` rewrites a relative import: it computes the alias from the place of
 the file and the config. An alias path with a `.` or `..` segment is reported without an
-automatic fix: you write the path from the alias directory by hand. Not judged: a JavaScript file at the project root (a tool config, a
+automatic fix: you write the path from the alias directory by hand. One relative path stands: a
+file directly under `test/support/` imports its neighbour by `./<name>`. A test runner loads its
+global setup, and what that file imports, with the resolution of Node, before any alias exists
+(Jest applies no `moduleNameMapper` there), so the files that open a run on a server
+(`test-database-setup.ts` and those it is made of) name one another that way, and the run starts
+from `npx jest`, from an editor and from the script alike. Under `js` the neighbour is named by
+the `.ts` of its source, which Node resolves where it would look for a `.js` that does not exist,
+and which `rewriteRelativeImportExtensions` lets the compiler read. A path that leaves
+`test/support/`, or enters a directory of it, is refused as anywhere else. Not judged: a JavaScript file at the project root (a tool config, a
 knex migration, which Node runs as written and which therefore uses relative paths), and the
 client under `generated/`. A directory given to `discoverContext` as a URL is not an import.
 

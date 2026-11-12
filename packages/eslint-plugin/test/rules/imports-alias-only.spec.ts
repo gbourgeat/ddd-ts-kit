@@ -18,6 +18,12 @@ ruleTester.run('imports-alias-only', importsAliasOnly, {
     at('scripts/openapi.ts', "import { composeApplication } from '@/platform/composition/compose-application.js';"),
     at('src/platform/database/database.ts', "import { PrismaClient } from '$generated/prisma/client.js';", WITH_PRISMA),
     at('vitest.config.ts', "import base from './vitest.base.js';"),
+    // A test runner loads its global setup before any alias exists: the files of test/support import one another by `./<name>`.
+    at('test/support/test-database-setup.ts', "import { openRun } from './test-database-run.js';"),
+    at(
+      'test/support/test-database-run.ts',
+      "export * from './test-database-server';\nconst later = import('./test-database-budget');",
+    ),
     at('generated/prisma/client.ts', "export * from './internal/class.js';", WITH_PRISMA),
     at(HANDLER, 'const later = import(`./${name}.js`);'),
     at(
@@ -27,6 +33,24 @@ ruleTester.run('imports-alias-only', importsAliasOnly, {
     at(HANDLER, "import { x } from './x.js';", { ...SAMPLE_CONFIG, rules: { 'imports/alias-only': 'off' } }),
   ],
   invalid: [
+    {
+      ...at(
+        'test/support/test-database-setup.ts',
+        "import { startApplication } from '../e2e/support/start-application.js';",
+      ),
+      output: "import { startApplication } from '$test/e2e/support/start-application.js';",
+      errors: [{ messageId: 'relative' }],
+    },
+    {
+      ...at('test/support/test-database-setup.ts', "import { part } from './parts/part.js';"),
+      output: "import { part } from '$test/support/parts/part.js';",
+      errors: [{ messageId: 'relative' }],
+    },
+    {
+      ...at('test/e2e/support/start-application.ts', "import { credentials } from './create-credentials.js';"),
+      output: "import { credentials } from '$test/e2e/support/create-credentials.js';",
+      errors: [{ messageId: 'relative' }],
+    },
     {
       ...at(HANDLER, "import { IssueInvoiceCommand } from './issue-invoice.command.js';"),
       output: `import { IssueInvoiceCommand } from '${COMMAND}';`,

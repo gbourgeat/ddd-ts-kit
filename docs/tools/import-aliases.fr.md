@@ -1,5 +1,5 @@
 [English](import-aliases.md) · **Français**
-<!-- translation-of: import-aliases.md sha256:72c4173eaa6a9212 -->
+<!-- translation-of: import-aliases.md sha256:55d4f6de8ad52c5b -->
 
 # Alias d'import : les `paths` de tsconfig, réécrits à la construction
 
@@ -76,7 +76,8 @@ clé continue de fonctionner sans retouche.
 | | `none` (par défaut pour un nouveau projet) | `js` |
 |---|---|---|
 | Un import | `'@/contexts/billing/domain/aggregates/invoice.aggregate'` | `'@/contexts/billing/domain/aggregates/invoice.aggregate.js'` |
-| `tsconfig.json` | `"module": "ESNext"`, `"moduleResolution": "Bundler"`, `"customConditions": ["node"]` | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"` |
+| `tsconfig.json` | `"module": "ESNext"`, `"moduleResolution": "Bundler"`, `"customConditions": ["node"]` | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"`, `"rewriteRelativeImportExtensions": true` |
+| Un import relatif entre deux fichiers de `test/support/` | `'./test-database-run'` | `'./test-database-run.ts'` |
 | Ce qu'accepte le compilateur | les deux graphies, et un répertoire qui contient un `index.ts` | `.js` seulement (`TS2835` sinon) |
 | Qui refuse l'autre graphie | `imports/extension` (*checker* et ESLint), puis `build-aliases` | le compilateur, `imports/extension`, puis `build-aliases` |
 | Un fichier qui n'existe pas | `TS2307`, par les deux compilateurs | `TS2307`, par les deux compilateurs |
@@ -316,7 +317,16 @@ relatif est refusé, même dans le même répertoire, et de même un chemin d'al
 segment `.` ou `..`. `eslint --fix` réécrit un import relatif : il calcule l'alias à partir de
 l'emplacement du fichier et de la configuration. Un chemin d'alias qui contient un segment `.` ou
 `..` est signalé sans correction automatique : vous réécrivez à la main le chemin depuis le
-répertoire de l'alias. Non jugés : un fichier JavaScript à la racine du
+répertoire de l'alias. Un seul chemin relatif est admis : un fichier placé directement sous
+`test/support/` importe son voisin par `./<nom>`. Un lanceur de tests charge sa mise en place
+globale (*global setup*), et ce que ce fichier importe, avec la résolution de Node, avant qu'aucun
+alias n'existe (Jest n'y applique aucun `moduleNameMapper`) : les fichiers qui ouvrent une
+exécution sur un serveur (`test-database-setup.ts` et ceux dont il est fait) se nomment donc
+ainsi, et l'exécution démarre de la même façon depuis `npx jest`, depuis un éditeur et depuis le
+script. Sous `js`, le voisin est nommé par le `.ts` de sa source, que Node résout là où il
+chercherait un `.js` qui n'existe pas, et que `rewriteRelativeImportExtensions` laisse lire au
+compilateur. Un chemin qui sort de `test/support/`, ou qui entre dans un de ses répertoires, est
+refusé comme partout ailleurs. Non jugés : un fichier JavaScript à la racine du
 projet (une configuration d'outil, une migration knex, que Node exécute telle qu'elle est écrite
 et qui utilise donc des chemins relatifs), et le client sous `generated/`. Un répertoire donné à
 `discoverContext` sous forme d'URL n'est pas un import.

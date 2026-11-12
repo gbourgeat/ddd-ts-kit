@@ -1,6 +1,6 @@
 import pg from 'pg';
 import { describe, expect, it } from 'vitest';
-import { cli, read, tempDir, write } from '../helpers';
+import { cli, read, removeTempDir, tempDir, write } from '../helpers';
 import { copiesLike, runEndToEndTwiceAtOnce } from './end-to-end-on-copies';
 import { installForReal } from './install-for-real';
 import { runIn } from './run-in';
@@ -17,12 +17,17 @@ const GUARD = [
   'audit_entries_no_truncate',
 ];
 
-/** The ORM, and how the second table reaches a migration on each, as `db:generate` takes its name and the guides write it. */
+/**
+ * The ORM, the test runner, and how the second table reaches a migration on each ORM, as
+ * `db:generate` takes its name and the guides write it. Jest runs once: what differs under it is the
+ * global setup and the configuration of the end-to-end run, the same on the four ORM.
+ */
 const TOOLS = [
-  ['drizzle', 'npm run db:generate add-invoices'],
-  ['knex', 'npm run db:generate add-invoices'],
-  ['prisma', 'npm run db:generate add-invoices'],
-  ['typeorm', 'npm run build && npm run db:generate migrations/add-invoices'],
+  ['drizzle', 'vitest', 'npm run db:generate add-invoices'],
+  ['knex', 'vitest', 'npm run db:generate add-invoices'],
+  ['prisma', 'vitest', 'npm run db:generate add-invoices'],
+  ['typeorm', 'vitest', 'npm run build && npm run db:generate migrations/add-invoices'],
+  ['knex', 'jest', 'npm run db:generate add-invoices'],
 ] as const;
 
 const ORDER_TERM = 'Order=A purchase';
@@ -32,18 +37,19 @@ const INVOICE_TERM = 'Invoice=A bill';
  * Slow, opt-in (DDD_TS_KIT_E2E=1 and DDD_TS_KIT_MIGRATIONS_SERVER): a project with an audit trail,
  * installed for real, runs the database lines of its README as written from an empty real
  * PostgreSQL, `DATABASE_URL` in `.env` and nowhere else; its end-to-end specs, started twice at the
- * same time on that server, each run their files on copies of the migrated database, at the same
- * time, and leave none behind; a second table reaches the same database
+ * same time on that server while the migrated database holds 80 MB of rows, each run their files on
+ * copies of its tables, empty, at the same time, and leave none behind, and a run the server has no
+ * connection for is refused with its numbers; a second table reaches the same database
  * by `db:generate` and `db:migrate`; a fresh database built from the migrations alone then holds
  * the same columns, the audit trail append-only on both, and every gate stays green.
  */
 describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated project, on a real PostgreSQL', () => {
   it.each(TOOLS)(
-    'on %s, the README builds the tables, two end-to-end runs share the server, a second table arrives, a fresh database replays them all',
-    async (orm, generateInvoices) => {
-      const existing = `migrations_${orm}`;
-      const fresh = `migrations_${orm}_fresh`;
-      const root = tempDir(`migrations-${orm}`);
+    'on %s under %s, the README builds the tables, two end-to-end runs share the server, a second table arrives, a fresh database replays them all',
+    async (orm, tests, generateInvoices) => {
+      const existing = `migrations_${orm}_${tests}`;
+      const fresh = `migrations_${orm}_${tests}_fresh`;
+      const root = tempDir(`migrations-${orm}-${tests}`);
 
       const sh = (command: string): string =>
         runIn(root, { command: 'sh', args: ['-c', `unset DATABASE_URL; ${command} 2>&1`] });
@@ -51,7 +57,8 @@ describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated proj
       await renewed(existing);
       await renewed(fresh);
 
-      const init = ['init', '--orm', orm, '--audit', 'on', '--context', 'ordering:core', '--package-manager', 'npm'];
+      const stack = ['--orm', orm, '--tests', tests, '--audit', 'on'];
+      const init = ['init', ...stack, '--context', 'ordering:core', '--package-manager', 'npm'];
 
       expect(cli(root, ...init).code).toBe(0);
       expect(cli(root, 'generate', 'aggregate', 'ordering', 'Order', '--term', ORDER_TERM).code).toBe(0);
@@ -70,10 +77,17 @@ describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated proj
       expect(await columnsOf(existing)).toContain('ordering.orders.id');
       expect(await triggersOf(existing)).toEqual(GUARD);
 
-      const endToEnd = runEndToEndTwiceAtOnce(root, SERVER ?? '', existing);
+      const endToEnd = await runEndToEndTwiceAtOnce(root, SERVER ?? '', existing, tests);
 
-      expect(endToEnd.printed.match(/Test Files\s+3 passed/g)).toHaveLength(2);
+      expect(endToEnd.passed, endToEnd.printed).toBe(2);
       expect(endToEnd.together).toBeGreaterThanOrEqual(2);
+
+      expect(endToEnd.refused).toMatch(
+        /\d+ spec files at once need \d+ connections \(2 for each application at least and 1 to spare\), and TEST_DATABASE_CONNECTIONS allows 1: state more in TEST_DATABASE_CONNECTIONS/,
+      );
+
+      // The run counts its three spec files, not the workers it could start.
+      expect(endToEnd.unfit).toBe('');
       expect(await copiesOf(existing)).toEqual([]);
 
       expect(cli(root, 'generate', 'aggregate', 'ordering', 'Invoice', '--term', INVOICE_TERM).code).toBe(0);
@@ -92,6 +106,8 @@ describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated proj
       expect(await triggersOf(fresh)).toEqual(GUARD);
       // Each gate fails the shell, and so the spec, on a finding.
       sh('npm run typecheck && npm run lint && npm run format:check && npm run check:arch && npm run deadcode');
+      // An installed project is several hundred megabytes: five of them are not kept until the file ends.
+      removeTempDir(root);
     },
     1_200_000,
   );

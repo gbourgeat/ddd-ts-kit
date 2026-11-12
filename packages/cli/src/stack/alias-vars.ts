@@ -13,7 +13,9 @@ import type { RenderContext } from '../templating';
  * The alias of each tree and of each directory of the config, without a final slash: a template
  * writes the rest of the path after it, then `ext`: what a specifier ends with under
  * "importExtension". `index` completes the alias of a directory: nothing under `none`, `/index.js`
- * under `js`. `jestMapper` is the lines of the mapping jest is given.
+ * under `js`. `sibling` ends the relative path of a file of `test/support/` to its neighbour, which
+ * a test runner resolves as Node does, before any alias exists: nothing under `none`, the `.ts` of
+ * the source under `js`. `jestMapper` is the lines of the mapping jest is given.
  */
 export function aliasVars(config: Config): RenderContext {
   const roots = aliasRoots(config);
@@ -30,6 +32,7 @@ export function aliasVars(config: Config): RenderContext {
     ext: specifierSuffix(config.importExtension),
     index: specifierSuffix(config.importExtension) === '' ? '' : '/index.js',
     extensionless: specifierSuffix(config.importExtension) === '',
+    sibling: specifierSuffix(config.importExtension) === '' ? '' : '.ts',
     jestMapper: jestMapperLines(config),
   };
 }
