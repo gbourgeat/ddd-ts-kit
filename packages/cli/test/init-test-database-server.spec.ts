@@ -159,6 +159,25 @@ describe('a run on a server', () => {
     expect(support(initProject(), 'server')).toContain("client.on('error', () => undefined);");
   });
 
+  it('sets no timeout of the role on its own sessions, which copy, empty, drop and wait as long as the database is large', () => {
+    const server = support(initProject(), 'server');
+
+    expect(server).toContain(
+      "select set_config(name, '0', false) from pg_settings where name in ('statement_timeout', 'lock_timeout', 'transaction_timeout')",
+    );
+
+    expect(server).toContain('await client.connect();\n  await client.query(NO_TIMEOUT);');
+  });
+
+  it('holds a cancelled statement for what it is, not for a session that ended: said once, and not taken again', () => {
+    const copy = support(initProject(), 'copy');
+
+    expect(copy).toContain("const CANCELLED = '57014';");
+    expect(copy).toContain('const SESSION_ENDED = /^(?:57P|08)/;');
+    expect(copy).toContain('[CANCELLED]: (database) =>');
+    expect(copy).toContain('was cancelled: the run sets no statement timeout on its own sessions');
+  });
+
   it('ends on its session or, when the server ended that one, on another, and never throws', () => {
     const run = support(initProject(), 'run');
 
@@ -270,6 +289,7 @@ describe('what a run empties', () => {
       );
 
       expect(support(root, 'kept')).toContain(kept);
+      expect(support(root, 'kept')).toContain('a table whose name holds a dot or a quote is kept through `<schema>.*`');
       expect(support(root, 'kept')).toContain("  'audit.*',\n];");
       expect(support(initProject('--orm', orm, '--audit', 'off'), 'kept')).not.toContain('audit');
     },
@@ -279,7 +299,10 @@ describe('what a run empties', () => {
     const emptying = support(initProject(), 'emptying');
 
     expect(emptying).toContain("import { KEPT_TABLES } from './test-database-kept';");
-    expect(emptying).toContain("return listed === table || listed === table.replace(/\\.[^.]*$/, '.*');");
+    // A schema listed with `.*` keeps each of its tables whatever the name holds, a dot included: the schema is read apart.
+    expect(emptying).toContain('return listed === name || listed === `${schema}.*`;');
+    expect(emptying).toContain("select n.nspname || '.' || c.relname as name, n.nspname as schema,");
+    expect(emptying).toContain('a table whose name holds a dot or a quote is kept through <schema>.* only.`,');
     expect(emptying).toContain('(table.partitioned ? table.quoted : `only ${table.quoted}`)');
     expect(emptying).toContain('restart identity`);');
     expect(emptying).not.toContain('restart identity cascade');

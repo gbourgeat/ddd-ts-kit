@@ -44,6 +44,29 @@ describe.runIf(ON_A_SERVER)('the tables a project keeps, on a real PostgreSQL', 
     ]);
   });
 
+  it('keep their rows, whatever their name holds, when the project lists their schema: a dot there ends no schema', async () => {
+    const { openRun, cloneDatabase } = await support({ kept: [...GENERATED, 'reference.*'] });
+    const told: string[] = [];
+
+    await migrated('copies_kept');
+    await rowsOf(urlOf('copies_kept'), 'create schema reference');
+    await rowsOf(urlOf('copies_kept'), `create table reference."plans.v2" as select 'pro' as code`);
+    await rowsOf(urlOf('copies_kept'), `create table reference."the ""best""" as select 1 as rank`);
+    // The same name in a schema that is not listed is emptied.
+    await rowsOf(urlOf('copies_kept'), `create table "plans.v2" as select 'pro' as code`);
+    hand(await openRun(urlOf('copies_kept'), 1, (line) => told.push(line)));
+
+    const clone = await cloneDatabase(urlOf('copies_kept'));
+
+    expect(await valueOf(clone.url, COUNT + 'reference."plans.v2"')).toBe(1);
+    expect(await valueOf(clone.url, COUNT + 'reference."the ""best"""')).toBe(1);
+    expect(await valueOf(clone.url, COUNT + '"plans.v2"')).toBe(0);
+
+    expect(told.join('')).toContain(
+      'emptied 2 table(s) of its copy of "copies_kept" that held rows (public.countries, public.plans.v2)',
+    );
+  });
+
   it('are refused with both names when one references a table the run empties, which no cascade then empties for it', async () => {
     const { openRun } = await support({ kept: ['public.knex_migrations', 'public.order_lines', 'audit.*'] });
 
@@ -113,7 +136,7 @@ describe.runIf(ON_A_SERVER)('a name of the list that keeps nothing, on a real Po
     expect(await valueOf(clone.url, COUNT + 'countries')).toBe(0);
   });
 
-  it.each([['*'], ['public'], ['*.*'], ['"public"."countries"'], ['a.b.c'], ['']])(
+  it.each([['*'], ['public'], ['*.*'], ['"public"."countries"'], ['a.b.c'], ['public.plans.v2'], ['']])(
     'is refused with the shapes a name takes when it is "%s"',
     async (shapeless) => {
       const { openRun } = await support({ kept: ['public.knex_migrations', shapeless] });
@@ -121,7 +144,7 @@ describe.runIf(ON_A_SERVER)('a name of the list that keeps nothing, on a real Po
       await migrated('copies_named');
 
       await expect(openRun(urlOf('copies_named'), 1)).rejects.toThrow(
-        `${KEPT} holds "${shapeless}": a name is <schema>.<table>, or <schema>.* for every table of a schema, written as the server stores it and without quotes (a table created as "Countries" is public.Countries, one created as countries or Countries without quotes is public.countries).`,
+        `${KEPT} holds "${shapeless}": a name is <schema>.<table>, or <schema>.* for every table of a schema, written as the server stores it and without quotes (a table created as "Countries" is public.Countries, one created as countries or Countries without quotes is public.countries); a table whose name holds a dot or a quote is kept through <schema>.* only.`,
       );
 
       expect(await databasesLike('copies_named_test_')).toEqual([]);

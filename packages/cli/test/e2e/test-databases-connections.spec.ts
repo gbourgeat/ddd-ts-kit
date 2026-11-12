@@ -174,6 +174,8 @@ describe.runIf(ON_A_SERVER)(
       ['less those the configuration ignores', { ignored: [String.raw`two\.e2e`] }, 5],
       ['the share of a shard, rounded up', { shard: { shardIndex: 1, shardCount: 2 } }, 5],
       ['the workers when a pattern is no expression', { patterns: ['('], maxWorkers: 4 }, 2],
+      // Jest then runs spec files this count does not see, outside test/: counted as one file, they would share every connection.
+      ['the workers when no spec file under test/ is of the run', { patterns: ['elsewhere/'], maxWorkers: 4 }, 2],
       ['the workers where there is no test/ to read', { rootDir: '/nowhere', maxWorkers: 4 }, 2],
     ])('with Jest, are %s', async (_, { patterns = [], ignored = [], shard, rootDir, maxWorkers = 19 }, pool) => {
       const { globalSetup, root } = await support({ flags: ['--orm', 'knex', '--tests', 'jest'] });

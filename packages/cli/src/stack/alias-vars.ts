@@ -4,6 +4,7 @@ import {
   FIXED_ALIAS_ROOTS,
   mapperTargetText,
   moduleNameMapper,
+  neighbourSuffix,
   specifierSuffix,
 } from '../alias';
 import type { Config } from '../config';
@@ -32,7 +33,7 @@ export function aliasVars(config: Config): RenderContext {
     ext: specifierSuffix(config.importExtension),
     index: specifierSuffix(config.importExtension) === '' ? '' : '/index.js',
     extensionless: specifierSuffix(config.importExtension) === '',
-    sibling: specifierSuffix(config.importExtension) === '' ? '' : '.ts',
+    sibling: neighbourSuffix(config.importExtension),
     jestMapper: jestMapperLines(config),
   };
 }

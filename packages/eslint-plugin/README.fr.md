@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:41752c5917f92e99 -->
+<!-- translation-of: README.md sha256:71350248628b22c6 -->
 
 # @ddd-ts-kit/eslint-plugin
 
@@ -281,7 +281,7 @@ chaque règle à `error`.
 | [`lifecycle/status-through-machine`](docs/rules/lifecycle-status-through-machine.fr.md) | `ddd-ts-kit/lifecycle-status-through-machine` | dans un agrégat qui importe sa machine à états, le statut n'est écrit que depuis la machine (`next`, `start`) ou copié d'un statut déjà lu | `error` | maison |
 | [`process/sends-commands-only`](docs/rules/process-sends-commands-only.fr.md) | `ddd-ts-kit/process-sends-commands-only` | un gestionnaire de processus de `application/processes/` n'importe aucun agrégat, entité, *repository*, service du domaine, port ni infrastructure : il change le monde par les commandes qu'il décide | `error` | maison |
 | [`schema/presentation-only`](docs/rules/schema-presentation-only.fr.md) | `ddd-ts-kit/schema-presentation-only` | sous `stack.schemas: shared`, un schéma du contrat HTTP vit dans `presentation/` de son contexte ou du noyau partagé : le noyau partagé n'importe aucune bibliothèque de validation hors de `presentation/`, et aucun domaine, application, infrastructure ni langage publié n'importe un fichier de `presentation/` du noyau partagé | `error` | maison |
-| [`imports/alias-only`](docs/rules/imports-alias-only.fr.md) | `ddd-ts-kit/imports-alias-only` | un fichier du projet est importé par son alias (`@/...`, `$test/...`, `$scripts/...`), jamais par un chemin relatif, même répertoire compris, sauf entre les fichiers de `test/support/`, qu'un lanceur de tests charge avant qu'aucun alias n'existe ; aucun segment `.` ou `..` dans le chemin d'un alias ; corrigeable automatiquement | `error` | maison |
+| [`imports/alias-only`](docs/rules/imports-alias-only.fr.md) | `ddd-ts-kit/imports-alias-only` | un fichier du projet est importé par son alias (`@/...`, `$test/...`, `$scripts/...`), jamais par un chemin relatif, même répertoire compris, sauf entre les fichiers placés directement sous `test/support/`, qu'un lanceur de tests charge avant qu'aucun alias n'existe et qui nomment leur voisin par `./<nom>`, avec son `.ts` sous `js` ; aucun segment `.` ou `..` dans le chemin d'un alias ; corrigeable automatiquement | `error` | maison |
 | [`imports/extension`](docs/rules/imports-extension.fr.md) | `ddd-ts-kit/imports-extension` | un import d'un fichier du projet se termine comme le dit `importExtension` de la config : pas d'extension sous `none`, `.js` sous `js` ; corrigeable automatiquement | `error` | maison |
 
 Les identifiants `domain/*` et `application/*` sont ajoutés par ce plugin : la forme d'une classe

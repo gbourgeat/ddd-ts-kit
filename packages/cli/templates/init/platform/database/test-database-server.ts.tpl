@@ -16,9 +16,21 @@ export const LIVE = 0x64646b74;
 const COPYING = LIVE + 1;
 
 /**
+ * What a role, a database or a server may set that ends a statement or a wait after some time
+ * (`alter role ... set statement_timeout`), for the requests of an application: the sessions of a
+ * run only copy, empty and drop its own databases and wait their turn to do so, which lasts as
+ * long as the database is large, so none applies to them. Read from the settings the server has:
+ * `transaction_timeout` came with PostgreSQL 17. These sessions open no transaction of their own:
+ * `idle_in_transaction_session_timeout` never applies. The pool of an application under test is
+ * another session, with the timeouts of its role.
+ */
+const NO_TIMEOUT = `select set_config(name, '0', false) from pg_settings where name in ('statement_timeout', 'lock_timeout', 'transaction_timeout')`;
+
+/**
  * A session on a database of the server, `postgres` by default: the runs hold their locks there,
  * and copy and drop from there, since a session on a database makes its copy refused. A run
- * therefore cannot have `postgres` itself as its migrated database.
+ * therefore cannot have `postgres` itself as its migrated database. No timeout of the role ends
+ * what the session does.
  */
 export async function connectedTo(url: string, database = 'postgres'): Promise<pg.Client> {
   if (databaseOf(url) === 'postgres') {
@@ -32,6 +44,7 @@ export async function connectedTo(url: string, database = 'postgres'): Promise<p
   // A client whose session the server ended emits an error: with nobody listening, it would end the runner. Its queries reject.
   client.on('error', () => undefined);
   await client.connect();
+  await client.query(NO_TIMEOUT);
 
   return client;
 }

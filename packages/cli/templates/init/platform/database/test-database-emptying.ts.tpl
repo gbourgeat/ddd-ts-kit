@@ -17,6 +17,7 @@ export interface Emptied {
 interface Table {
   /** `<schema>.<table>`, as KEPT_TABLES names it and as the server stores it. */
   readonly name: string;
+  readonly schema: string;
   /** The same, as a statement names it. */
   readonly quoted: string;
   /** The role of the run may empty it: it owns it, a truncate that restarts the sequences being the right of the owner, and may use its schema. */
@@ -29,9 +30,10 @@ interface Table {
 interface Link {
   readonly from: string;
   readonly to: string;
+  readonly schema: string;
 }
 
-/** What a name of KEPT_TABLES looks like: a schema, then a table or `*`, as the server stores them, without quotes. */
+/** What a name of KEPT_TABLES looks like: a schema, then a table or `*`, as the server stores them, without quotes; a dot ends the schema. */
 const NAME = /^[^.*"]+\.(?:[^.*"]+|\*)$/;
 /** What the generated list names that a project may not hold yet: nothing is said when one of these is no table. */
 {{#if orm.drizzle}}
@@ -48,7 +50,7 @@ const MAY_BE_ABSENT = ['public.migrations', 'public.typeorm_metadata', 'audit.*'
 {{/if}}
 
 /** The tables of the project: not those of the server, nor those of an extension, which keeps its own, nor a partition, which goes with its table. */
-const TABLES = `select n.nspname || '.' || c.relname as name, format('%I.%I', n.nspname, c.relname) as quoted,
+const TABLES = `select n.nspname || '.' || c.relname as name, n.nspname as schema, format('%I.%I', n.nspname, c.relname) as quoted,
     pg_has_role(c.relowner, 'USAGE') and has_schema_privilege(n.oid, 'USAGE') as owned,
     c.relkind = 'p' as partitioned, pg_total_relation_size(c.oid)::text as bytes
   from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -60,11 +62,14 @@ const TABLES = `select n.nspname || '.' || c.relname as name, format('%I.%I', n.
 const NAMED = (alias: string, name: string): string =>
   `join pg_class ${alias} on ${alias}.oid = ${name} join pg_namespace ${alias}n on ${alias}n.oid = ${alias}.relnamespace`;
 
-const REFERENCES = `select rn.nspname || '.' || r.relname as "from", fn.nspname || '.' || f.relname as "to"
+/** A table, the one it references or is a partition of, and its own schema. */
+const LINK = `rn.nspname || '.' || r.relname as "from", fn.nspname || '.' || f.relname as "to", rn.nspname as schema`;
+
+const REFERENCES = `select ${LINK}
   from pg_constraint k ${NAMED('r', 'k.conrelid')} ${NAMED('f', 'k.confrelid')} where k.contype = 'f'`;
 
 /** Each partition and the table it is a partition of. */
-const PARTITIONS = `select rn.nspname || '.' || r.relname as "from", fn.nspname || '.' || f.relname as "to"
+const PARTITIONS = `select ${LINK}
   from pg_inherits i ${NAMED('r', 'i.inhrelid')} ${NAMED('f', 'i.inhparent')} where r.relispartition`;
 
 /** The materialized views that hold a result and that the role may refresh, the oldest first: one may read another. */
@@ -88,7 +93,7 @@ export async function emptied(url: string, name: string): Promise<Emptied> {
     refuseAShapelessName();
 
     const tables = (await copy.query<Table>(TABLES)).rows;
-    const emptying = tables.filter((table) => table.owned && !kept(table.name));
+    const emptying = tables.filter((table) => table.owned && !kept(table));
 
     if (tables.length === 0) {
       throw new Error(`The database "${databaseOf(url)}" holds no table: migrate it first (npm run db:migrate).`);
@@ -102,7 +107,7 @@ export async function emptied(url: string, name: string): Promise<Emptied> {
 
     return {
       held,
-      ofAnotherRole: tables.filter((table) => !table.owned && !kept(table.name)).map((table) => table.name),
+      ofAnotherRole: tables.filter((table) => !table.owned && !kept(table)).map((table) => table.name),
       unmatched: unmatched(tables),
       bytes: emptying.reduce((sum, table) => sum + Number(table.bytes), 0),
     };
@@ -113,19 +118,17 @@ export async function emptied(url: string, name: string): Promise<Emptied> {
   }
 }
 
-function kept(name: string): boolean {
-  return KEPT_TABLES.some((listed) => names(listed, name));
+function kept(table: Pick<Table, 'name' | 'schema'>): boolean {
+  return KEPT_TABLES.some((listed) => names(listed, table));
 }
 
-/** A listed name is the table, letter for letter, or its schema followed by `.*`. */
-function names(listed: string, table: string): boolean {
-  return listed === table || listed === table.replace(/\.[^.]*$/, '.*');
+/** A listed name is the table, letter for letter, or its schema followed by `.*`, whatever the name of the table holds. */
+function names(listed: string, { name, schema }: Pick<Table, 'name' | 'schema'>): boolean {
+  return listed === name || listed === `${schema}.*`;
 }
 
 function unmatched(tables: readonly Table[]): string[] {
-  return KEPT_TABLES.filter(
-    (listed) => !MAY_BE_ABSENT.includes(listed) && !tables.some((table) => names(listed, table.name)),
-  );
+  return KEPT_TABLES.filter((one) => !MAY_BE_ABSENT.includes(one) && !tables.some((table) => names(one, table)));
 }
 
 function refuseAShapelessName(): void {
@@ -133,7 +136,7 @@ function refuseAShapelessName(): void {
 
   if (shapeless !== undefined) {
     throw new Error(
-      `KEPT_TABLES of test/support/test-database-kept.ts holds "${shapeless}": a name is <schema>.<table>, or <schema>.* for every table of a schema, written as the server stores it and without quotes (a table created as "Countries" is public.Countries, one created as countries or Countries without quotes is public.countries).`,
+      `KEPT_TABLES of test/support/test-database-kept.ts holds "${shapeless}": a name is <schema>.<table>, or <schema>.* for every table of a schema, written as the server stores it and without quotes (a table created as "Countries" is public.Countries, one created as countries or Countries without quotes is public.countries); a table whose name holds a dot or a quote is kept through <schema>.* only.`,
     );
   }
 }
@@ -156,7 +159,7 @@ async function refuseWhatAKeptTableLoses(
   const stays = (name: string): boolean =>
     tables.some((table) => table.name === rootOf(name)) && !gone.has(rootOf(name));
 
-  const partition = partitions.map((link) => link.from).find((name) => kept(name) && gone.has(rootOf(name)));
+  const partition = partitions.find(({ from, schema }) => kept({ name: from, schema }) && gone.has(rootOf(from)))?.from;
   const broken = (await copy.query<Link>(REFERENCES)).rows.find(({ from, to }) => stays(from) && gone.has(rootOf(to)));
   const where = 'in KEPT_TABLES of test/support/test-database-kept.ts';
 

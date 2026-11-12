@@ -2,6 +2,7 @@ import { CONFIG_FILE } from '../../config';
 import { aliasDeclarations } from './alias-declarations';
 import { config } from './config';
 import type { Fixture } from './fixture';
+import type { FixtureFiles } from './fixture-files';
 
 const RULE = 'imports/alias-declared';
 const PATHS = { '@/*': ['./src/*'], '$test/*': ['./test/*'], '$scripts/*': ['./scripts/*'] };
@@ -11,6 +12,23 @@ const JEST_MAPPER = String.raw`moduleNameMapper: { '^\\$app/(.*)\\.js$': '<rootD
 
 const BARE_JEST_MAPPER = String.raw`moduleNameMapper: { '^@/(.*)$': ['<rootDir>/src/$1.ts', '<rootDir>/src/$1/index.ts'], '^\\$test/(.*)$': ['<rootDir>/test/$1.ts', '<rootDir>/test/$1/index.ts'], '^\\$scripts/(.*)$': ['<rootDir>/scripts/$1.ts', '<rootDir>/scripts/$1/index.ts'] }`;
 const BUNDLER = { module: 'ESNext', moduleResolution: 'Bundler', customConditions: ['node'] };
+
+const READS_SOURCES = { allowImportingTsExtensions: true, noEmit: true };
+const EXTENDS = json({ extends: './tsconfig.json', exclude: ['test'] });
+
+/** The global setup of a test runner and the neighbour it names, with a build config that emits. */
+const NEIGHBOURS = {
+  'test/support/test-database-run.ts': 'export const run = 1;\n',
+  'test/support/test-database-setup.ts': "import { run } from './test-database-run.ts';\nexport const setup = run;\n",
+  'tsconfig.build.json': json({
+    extends: './tsconfig.json',
+    compilerOptions: { allowImportingTsExtensions: false, noEmit: false },
+    exclude: ['test'],
+  }),
+};
+
+/** The same, with a type check that reads the ".ts" of a neighbour and emits nothing. */
+const EMITLESS = { ...NEIGHBOURS, 'tsconfig.json': tsconfig(PATHS, READS_SOURCES) };
 
 export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
   { ruleId: RULE, name: 'one declaration, and every tool pointed at it', expect: 'pass', files: aliasDeclarations() },
@@ -33,6 +51,103 @@ export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
       [CONFIG_FILE]: config({ importAlias: '@/', importExtension: 'none' }),
       'tsconfig.json': tsconfig(PATHS, BUNDLER),
       'jest.config.js': `export default { ${BARE_JEST_MAPPER}, ...governedJestCoverage() };\n`,
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'imports written with ".js": the type check reads the ".ts" of a neighbour of test/support, and the build emits',
+    expect: 'pass',
+    files: aliasDeclarations({ ...NEIGHBOURS, 'tsconfig.json': tsconfig(PATHS, READS_SOURCES) }),
+  },
+  {
+    ruleId: RULE,
+    name: 'imports written with ".js" and no file of test/support that names a neighbour: nothing more is asked of tsconfig.json',
+    expect: 'pass',
+    files: aliasDeclarations({ 'test/support/test-database-run.ts': 'export const run = 1;\n' }),
+  },
+  {
+    ruleId: RULE,
+    name: 'imports written with ".js", and a project that chose to rewrite the ".ts" of a neighbour in what it builds',
+    expect: 'pass',
+    files: aliasDeclarations({
+      ...NEIGHBOURS,
+      'tsconfig.json': tsconfig(PATHS, { allowImportingTsExtensions: true, rewriteRelativeImportExtensions: true }),
+      'tsconfig.build.json': EXTENDS,
+    }),
+  },
+  failingIn(
+    'a neighbour of test/support named by its ".ts", which tsconfig.json does not let the compiler read',
+    'tsconfig.json',
+    { ...NEIGHBOURS, 'tsconfig.json': tsconfig(PATHS) },
+  ),
+  failingIn(
+    'a build config that inherits "noEmit" from the type check and would write nothing',
+    'tsconfig.build.json',
+    { ...NEIGHBOURS, 'tsconfig.json': tsconfig(PATHS, READS_SOURCES), 'tsconfig.build.json': EXTENDS },
+  ),
+  failingIn(
+    'a build config that emits again and still reads ".ts", which the compiler refuses of it',
+    'tsconfig.build.json',
+    {
+      ...NEIGHBOURS,
+      'tsconfig.json': tsconfig(PATHS, READS_SOURCES),
+      'tsconfig.build.json': json({ extends: './tsconfig.json', compilerOptions: { noEmit: false } }),
+    },
+  ),
+  failingIn(
+    'a build config under another name, which the build script compiles and which inherits "noEmit"',
+    'tsconfig.prod.json',
+    {
+      ...EMITLESS,
+      'tsconfig.prod.json': EXTENDS,
+      'package.json': manifest({
+        build: `${COMPILE.replace('tsconfig.build.json', './tsconfig.prod.json')} && ddd-ts-kit build-aliases`,
+      }),
+    },
+  ),
+  failingIn('a build script that compiles the type check itself, which emits nothing', 'tsconfig.json', {
+    ...EMITLESS,
+    'package.json': manifest({ build: 'tsc && ddd-ts-kit build-aliases' }),
+  }),
+  failingIn(
+    'a build config that extends the type check without the ".json" of its name, and inherits "noEmit" all the same',
+    'tsconfig.build.json',
+    { ...EMITLESS, 'tsconfig.build.json': json({ extends: './tsconfig', exclude: ['test'] }) },
+  ),
+  failingIn('a build config that inherits "noEmit" from a package installed in the project', 'tsconfig.build.json', {
+    'node_modules/@acme/tsconfig/checks.json': json({ compilerOptions: { noEmit: true } }),
+    'tsconfig.build.json': json({ extends: ['./tsconfig.json', '@acme/tsconfig/checks'] }),
+  }),
+  {
+    ruleId: RULE,
+    name: 'imports written with ".js": a comment that quotes an import, and a declaration file named as a neighbour, ask nothing of tsconfig.json',
+    expect: 'pass',
+    files: aliasDeclarations({
+      'test/support/test-database-run.ts': 'export const run = 1;\n',
+      'test/support/test-database-types.d.ts': 'export type Run = number;\n',
+      'test/support/test-database-setup.ts':
+        "// formerly: import { run } from './test-database-run.ts';\nimport type { Run } from './test-database-types.d.ts';\nexport const setup: Run = 1;\n",
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'imports written with ".js": a build config that reads ".ts" and emits declarations alone, which the compiler accepts',
+    expect: 'pass',
+    files: aliasDeclarations({
+      ...EMITLESS,
+      'tsconfig.build.json': json({
+        extends: './tsconfig.json',
+        compilerOptions: { noEmit: false, emitDeclarationOnly: true },
+      }),
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'without an extension: a build config that inherits a "noEmit" written by hand in the type check',
+    expect: { file: 'tsconfig.build.json' },
+    files: aliasDeclarations({
+      [CONFIG_FILE]: config({ importAlias: '@/', importExtension: 'none' }),
+      'tsconfig.json': tsconfig(PATHS, { ...BUNDLER, noEmit: true }),
     }),
   },
   failing('a Node subpath import as the alias', CONFIG_FILE, config({ importAlias: '#app/' })),
@@ -150,7 +265,12 @@ function manifest(scripts: Record<string, string>): string {
 }
 
 function failing(name: string, file: string, content: string): Fixture {
-  return { ruleId: RULE, name, expect: { file }, files: aliasDeclarations({ [file]: content }) };
+  return failingIn(name, file, { [file]: content });
+}
+
+/** A failing fixture that changes several files, reported in `file`. */
+function failingIn(name: string, file: string, files: FixtureFiles): Fixture {
+  return { ruleId: RULE, name, expect: { file }, files: aliasDeclarations(files) };
 }
 
 function json(value: unknown): string {
