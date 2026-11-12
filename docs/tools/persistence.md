@@ -768,26 +768,36 @@ pre-push hook passes, softens what a merge lost and never this: the push stops.
 | knex, Prisma, TypeORM | a migration the branch adds whose name sorts before the last migration of the trunk: the tool would run it after that one where it is applied, and before it on a new database | `npx ddd-ts-kit merge-trunk --to-land`, which renames it after the last of the trunk as it brings the trunk in. On a branch that already holds the trunk there is nothing to merge: it renames all the same, only the migrations that do not follow the trunk's already, in their order, and leaves the rename to commit. It stops, nothing renamed, when the migration and a later one of the trunk change one table: delete that migration first (`git show HEAD:<file>` keeps what was written by hand), then `npm run db:generate <what-it-does>`, which refuses a name while a migration carries it |
 
 A working migration (`working-<what-it-does>`) is left out: its place is decided when the branch
-lands, and `persistence/migration-history` already refuses it on the trunk. Only what is named as
-a migration, a number then a name, is ordered: a helper beside them (`helpers.js`) is not. Nothing
-is compared for a named commit, without the config of the kit, or when no ref names a trunk.
+lands, and `persistence/migration-history` already refuses it on the trunk. What is ordered is
+what the tool itself takes for a migration, by what it orders it by: under knex every script of
+`migrations/`, by its name (knex loads them all, whatever their name); under Prisma the folders
+that hold a `migration.sql`, by their name; under TypeORM the classes whose name ends with 13
+digits, by that number, however the file is named. `verify-merge` and `merge-trunk --to-land`
+read the same order. Nothing is compared for a named commit, without the config of the kit, or
+when no ref names a trunk.
 
 **A database that already applied the old name.** A migration renamed or generated again is a new
-one for the tool, which would run it a second time on a database of development, of a preview or
-shared that applied it under its old name. Reset that database, or correct its migration table:
+one for the tool, on a database of development, of a preview or shared that applied it under its
+old name. Reset that database, or correct what it recorded:
 
-| Tool | The table, and what to correct |
-|---|---|
-| drizzle-kit | `drizzle.__drizzle_migrations`: add a row whose `created_at` is the `when` of the new entry of the journal |
-| knex | `knex_migrations`: rename the row (`name`, the file name) |
-| Prisma | `_prisma_migrations`: rename the row (`migration_name`) |
-| TypeORM | `migrations`: correct `timestamp`, and `name`, the class |
+| Tool | What happens there | What to correct |
+|---|---|---|
+| drizzle-kit | the migrator runs the migration again | `drizzle.__drizzle_migrations`: add a row whose `created_at` is the `when` of the new entry of the journal, with any `hash` (the column is required and never compared) |
+| knex | every `migrate` is refused: `The migration directory is corrupt, the following files are missing` | `knex_migrations`: set `name` of the row to the new file name, extension included |
+| Prisma | it still knows the migration by the old name | record the new name as applied: `npx prisma migrate resolve --applied <new name>` |
+| TypeORM | it runs the migration again | `migrations`: correct `timestamp`, and `name`, the class |
+
+The knex and TypeORM lines are read in the code of the two tools; the Prisma command is the one
+its CLI documents, and what Prisma then does with the old row was not verified here.
 
 `merge-trunk --to-land` says so each time it renames or replays, and so does the fix of
 `verify-merge`. `--to-land --dry-run` on a branch that already holds the trunk says which
 migrations would move and moves nothing. A landing that stops there leaves the migrations folder
 as it found it, under drizzle-kit too, whose replay deletes before it generates: the same command
-runs again once the cause is fixed. Read in the code
+runs again once the cause is fixed. A rename never takes a number a file of the folder carries
+already: it takes the next free one, the order kept. When the last migration of the trunk carries
+no number a migration can follow (a `helpers.js` in the folder of knex, which knex would load as a
+migration and fail on), the landing stops and says to move that file: no rename can sort after it. Read in the code
 of the four tools, and run here on git repositories with the files of each; not measured against
 a database.
 

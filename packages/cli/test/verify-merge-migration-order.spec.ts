@@ -159,6 +159,16 @@ describe('verify-merge, a migration of the branch that sorts before the last of 
 });
 
 describe('verify-merge, the journal of drizzle-kit against the trunk', () => {
+  it('says nothing of a working migration the journal does not list: its place is decided when the branch lands', () => {
+    const root = branches('drizzle', {
+      base: DRIZZLE.base,
+      ours: { 'migrations/0001_working-add-invoices.sql': 'CREATE TABLE "invoices" ();' },
+      theirs: { 'NOTES.md': 'Payments.\n' },
+    });
+
+    expect(migrationsOf(root)).toEqual([]);
+  });
+
   it("says nothing of a file out of the journal that the trunk holds too: it is the trunk's to list, no branch can", () => {
     const root = branches('drizzle', {
       base: { ...DRIZZLE.base, 'migrations/0000_seed.sql': 'INSERT INTO "accounts" DEFAULT VALUES;' },

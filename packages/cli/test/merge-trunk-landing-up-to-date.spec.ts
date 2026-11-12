@@ -60,7 +60,7 @@ describe('merge-trunk --to-land on a branch that already holds the trunk', () =>
     expect(result.stdout).toContain('stopped: 20261015101500_add-due-date changes invoices');
 
     expect(result.stdout).toContain(
-      'Generate it again on the trunk: delete migrations/20261015101500_add-due-date.js (`git show HEAD:migrations/20261015101500_add-due-date.js` keeps what was written by hand), then `npm run db:generate add-due-date`, which refuses the name while the old migration is there.',
+      'Generate it again on the trunk: delete migrations/20261015101500_add-due-date.js (`git show HEAD:./migrations/20261015101500_add-due-date.js` keeps what was written by hand), then `npm run db:generate add-due-date`, which refuses the name while the old migration is there.',
     );
 
     expect(result.stdout).toContain('next: no merge is in progress, and the migrations are as they were found.');

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, read, write } from './helpers';
+import { cli, write } from './helpers';
 import { git } from './support/git';
 import { mergeWith } from './support/merge-repository';
 import { mergedByGit, names, PAYMENTS } from './support/merged-by-git';
@@ -39,18 +39,20 @@ describe('merge-trunk --to-land without a merge, the stop on a table the trunk c
       'prisma',
       'prisma/migrations/20261015101500_add_due_date/migration.sql',
       'prisma/migrations/20261016090000_add_currency/migration.sql',
-      'delete the folder prisma/migrations/20261015101500_add_due_date/ (`git show HEAD:prisma/migrations/20261015101500_add_due_date/migration.sql` keeps what was written by hand), then `npm run db:generate add_due_date`',
+      'delete the folder prisma/migrations/20261015101500_add_due_date/ (`git show HEAD:./prisma/migrations/20261015101500_add_due_date/migration.sql` keeps what was written by hand), then `npm run db:generate add_due_date`',
     ],
     [
       'typeorm',
       'migrations/1760000000000-AddDueDate.ts',
       'migrations/1760500000000-AddCurrency.ts',
-      'delete migrations/1760000000000-AddDueDate.ts (`git show HEAD:migrations/1760000000000-AddDueDate.ts` keeps what was written by hand), then `npm run db:generate migrations/AddDueDate`',
+      'delete migrations/1760000000000-AddDueDate.ts (`git show HEAD:./migrations/1760000000000-AddDueDate.ts` keeps what was written by hand), then `npm run db:generate migrations/AddDueDate`',
     ],
   ] as const)('says the same sequence in the words of %s', (orm, mine, theirs, sequence) => {
     const root = mergedByGit(orm, {
-      ours: { [mine]: 'ALTER TABLE "invoices" ADD COLUMN "due" date;\n' },
-      theirs: { [theirs]: 'ALTER TABLE "invoices" ADD COLUMN "currency" text;\n' },
+      ours: { [mine]: 'export class AddDueDate1760000000000 {}\n// ALTER TABLE "invoices" ADD COLUMN "due" date;\n' },
+      theirs: {
+        [theirs]: 'export class AddCurrency1760500000000 {}\n// ALTER TABLE "invoices" ADD COLUMN "currency" text;\n',
+      },
     });
 
     expect(mergeTrunk(root, '--to-land').stdout).toContain(sequence);
@@ -102,48 +104,8 @@ describe('merge-trunk --to-land without a merge, which migrations it renames', (
     expect(result.stdout).not.toContain('add-credit-notes renamed');
 
     expect(result.stdout).toContain(
-      'A database that already applied a migration under its old name (development, preview, shared) would run it again under the new one: reset it, or rename its row in `knex_migrations` (`name`, the file name).',
+      'A database that already applied a migration under its old name (development, preview, shared) then refuses every migration (`The migration directory is corrupt, the following files are missing`): reset it, or set `name` of its row in `knex_migrations` to the new file name, extension included.',
     );
-  });
-
-  it('orders only what is named as a migration: a helper of the trunk that sorts last moves nothing', () => {
-    const root = mergedByGit('knex', {
-      ours: { 'migrations/20261017101500_add-invoices.js': 'export const up = () => undefined;\n' },
-      theirs: { ...PAYMENTS, 'migrations/helpers.js': 'export const timestamps = () => undefined;\n' },
-    });
-
-    expect(cli(root, 'verify-merge', '--since', 'main', '--json').json()).toMatchObject({ migrations: [] });
-    expect(mergeTrunk(root, '--to-land', '--json').json()).toMatchObject({ status: 'up-to-date', migrations: [] });
-    expect(names(root)).toContain('20261017101500_add-invoices.js');
-  });
-
-  it('renames the class of a TypeORM migration and its name property, and nothing else that holds the same letters', () => {
-    const root = mergedByGit('typeorm', {
-      ours: {
-        'migrations/1760000000000-AddInvoices.ts': [
-          'export class AddInvoices1760000000000Helper {}',
-          'export class AddInvoices1760000000000 {',
-          "  name = 'AddInvoices1760000000000';",
-          "  up = (runner) => runner.query(`INSERT INTO notes VALUES ('AddInvoices1760000000000 ran')`);",
-          '}',
-          '',
-        ].join('\n'),
-      },
-      theirs: { 'migrations/1760500000000-AddPayments.ts': 'export class AddPayments1760500000000 {}\n' },
-    });
-
-    const result = mergeTrunk(root, '--to-land');
-    const [, renamed = ''] = names(root);
-    const number = renamed.slice(0, 13);
-
-    expect(read(root, `migrations/${renamed}`).split('\n').slice(0, 4)).toEqual([
-      'export class AddInvoices1760000000000Helper {}',
-      `export class AddInvoices${number} {`,
-      `  name = 'AddInvoices${number}';`,
-      "  up = (runner) => runner.query(`INSERT INTO notes VALUES ('AddInvoices1760000000000 ran')`);",
-    ]);
-
-    expect(result.stdout).toContain('correct its row in `migrations` (`timestamp`, and `name`, the class)');
   });
 });
 
@@ -182,6 +144,11 @@ describe('merge-trunk --to-land without a merge, in a project that sits in a fol
 
     expect(result.code).toBe(1);
     expect(result.stdout).toContain('stopped: 20261015101500_add-due-date changes invoices');
+
+    const [, advised = ''] = /`(git show [^`]+)`/.exec(result.stdout) ?? [];
+
+    expect(advised).toBe('git show HEAD:./migrations/20261015101500_add-due-date.js');
+    expect(git(path.join(top, 'app'), ...advised.split(' ').slice(1))).toContain("alterTable('invoices'");
     expect(names(top, 'app/migrations')).toContain('20261015101500_add-due-date.js');
   });
 });

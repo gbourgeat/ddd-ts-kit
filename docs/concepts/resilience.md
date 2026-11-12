@@ -361,7 +361,9 @@ silent on each of these, where the message of the error is what tells:
 - a `timeout(` nested in the options of another aspect, and a `@Timeout` on a method: the text
   does not say which method calls the port;
 - a port or an adapter bound more than once, bound again by `rebind(`, or bound under a condition;
-- two ports of one name, unless each file imports its own from the file that declares it;
+- a parameter typed by a name the adapter does not import from a file of the project (a type of
+  a package, a declaration of its own file), and two ports of one name, unless each file imports
+  its own from the file that declares it;
 - an adapter the outer one reaches through a middle adapter, or without receiving its port;
 - a default limit that is not one number, an environment that sets `OUTBOUND_TIMEOUT_MS`, and the
   retries, which multiply both limits.

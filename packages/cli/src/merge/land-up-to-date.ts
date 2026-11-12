@@ -1,14 +1,16 @@
-import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder';
 import { isWorkingMigration } from '../check/migrations/is-working-migration';
+import type { Migration } from '../check/migrations/migration-folder';
 import { readMigrationFolder } from '../check/migrations/read-migration-folder';
 import type { OrmStack } from '../config';
-import { migrationFiles, restoreMigrationFolder } from '../migration';
 import { replayedOn } from './land-drizzle';
 import type { MergeContext } from './merge-context';
 import type { MergeReport } from './merge-report';
 import { migrationsAt } from './migrations-at';
 import { NEXT_STEPS } from './next-steps';
 import { appliedUnderOldName } from './order/applied-under-old-name';
+import { migrationsOfCommit } from './order/migrations-of-commit';
+import { migrationsOfTree } from './order/migrations-of-tree';
+import type { NamedOrm } from './order/ordered-migration';
 import { migrationOrder } from './order/migration-order';
 import { type MigrationsLanded, renumberMigrations } from './renumber-migrations';
 
@@ -47,9 +49,7 @@ export function landUpToDate(
   const landing = { root: context.root, orm, trunk: trunk.commit, now, dryRun };
 
   const landed =
-    orm === 'drizzle'
-      ? replayedOrPutBack(landing, trunk.name)
-      : renumberMigrations({ ...landing, orm, base: trunk.commit });
+    orm === 'drizzle' ? replayed(landing, trunk.name) : renumberMigrations({ ...landing, orm, base: trunk.commit });
 
   const migrations = [...report.migrations, ...landed.lines];
 
@@ -66,24 +66,37 @@ function hasMigrationsToLand(root: string, orm: MigratedOrm, trunk: { name: stri
 
 /** The working migrations of the branch and those that do not follow the trunk's, by name. */
 function toReplay(root: string, orm: MigratedOrm, trunk: { name: string; commit: string }): string[] {
-  const folder = readMigrationFolder(root, orm);
-  const where = { folder: folder?.folder ?? 'migrations', directories: orm === 'prisma' };
-  const held = new Set(migrationsAt(root, trunk.commit, where).map(({ name }) => name));
+  const added = orm === 'drizzle' ? addedUnderDrizzle(root, trunk.commit) : addedBy(root, orm, trunk.commit);
 
-  const working = (folder?.migrations ?? [])
-    .map(({ name }) => name)
-    .filter((name) => isWorkingMigration(name) && !held.has(name));
+  return [
+    ...new Set([
+      ...added.map(({ name }) => name).filter(isWorkingMigration),
+      ...migrationOrder(root, trunk).map(({ migration }) => migration),
+    ]),
+  ];
+}
 
-  return [...new Set([...working, ...migrationOrder(root, trunk).map(({ migration }) => migration)])];
+function addedBy(root: string, orm: NamedOrm, trunk: string): Migration[] {
+  const held = new Set(migrationsOfCommit(root, orm, trunk).map(({ file }) => file));
+
+  return migrationsOfTree(root, orm).filter(({ file }) => !held.has(file));
+}
+
+function addedUnderDrizzle(root: string, trunk: string): Migration[] {
+  const folder = readMigrationFolder(root, 'drizzle');
+  const where = { folder: folder?.folder ?? 'migrations', directories: false };
+  const held = new Set(migrationsAt(root, trunk, where).map(({ name }) => name));
+
+  return (folder?.migrations ?? []).filter(({ name }) => !held.has(name));
 }
 
 /**
  * The replay of drizzle-kit, which deletes the migrations of the branch before it generates them
- * again: when it stops in between, the folder and its `meta/` are put back as they were found.
- * A deleted migration left in the tree could only be committed as a deletion, and the command
- * refuses to run again on a changed tree.
+ * again: it is asked to put the folder back when it stops in between. A deleted migration left in
+ * the tree could only be committed as a deletion, and the command refuses to run again on a
+ * changed tree.
  */
-function replayedOrPutBack({ root, trunk, dryRun }: Landing, trunkName: string): MigrationsLanded {
+function replayed({ root, trunk, dryRun }: Landing, trunkName: string): MigrationsLanded {
   if (dryRun) {
     return {
       lines: toReplay(root, 'drizzle', { name: trunkName, commit: trunk }).map(
@@ -92,22 +105,10 @@ function replayedOrPutBack({ root, trunk, dryRun }: Landing, trunkName: string):
     };
   }
 
-  const folder = drizzleOutFolder(root);
-  const found = migrationFiles(root, folder);
-  const landed = replayedOn(root, { trunk, toLand: true });
+  const landed = replayedOn(root, { trunk, toLand: true, putBack: true });
+  const moved = landed.stop === undefined && landed.lines.some((line) => /^(?:Generated|Renamed) /.test(line));
 
-  if (landed.stop === undefined) {
-    const moved = landed.lines.some((line) => /^(?:Generated|Renamed) /.test(line));
-
-    return { lines: moved ? [...landed.lines, appliedUnderOldName('drizzle')] : landed.lines };
-  }
-
-  restoreMigrationFolder({ root, folder, found });
-
-  return {
-    lines: landed.lines,
-    stop: `${landed.stop.replace(/\.?$/, '.')} ${folder}/ is back as it was found: nothing is left to undo.`,
-  };
+  return moved ? { lines: [...landed.lines, appliedUnderOldName('drizzle')] } : landed;
 }
 
 /** The ORM whose migrations the kit generates and orders. */

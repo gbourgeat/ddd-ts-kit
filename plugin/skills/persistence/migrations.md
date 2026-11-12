@@ -76,8 +76,9 @@ otherwise, the `meta/` of the trunk then `drizzle-generate --replay --base <trun
 `merge-trunk --to-land` under knex, Prisma and TypeORM, which renames it after the trunk's last
 even on a branch that already holds the trunk (only those out of order; `--dry-run` lists them),
 and leaves that rename to commit. A working migration is left out until it lands. Fetch first: it
-compares with the trunk git knows. A database that already applied the old name runs the
-migration again: reset it, or correct its migration table as the command says. When it stops on a
+compares with the trunk git knows. A database that already applied the old name no longer
+matches (knex refuses every migrate, drizzle and TypeORM run it again): reset it, or correct what it
+recorded as the command says. When it stops on a
 table the trunk changed too, delete the migration, then `db:generate` it again.
 
 `db:generate` refuses a name a migration already carries, on the four tools: name the new one by

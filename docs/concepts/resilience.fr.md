@@ -1,5 +1,5 @@
 [English](resilience.md) · **Français**
-<!-- translation-of: resilience.md sha256:7e0221a959fd854a -->
+<!-- translation-of: resilience.md sha256:13ed04cb5e060fee -->
 
 # Résilience
 
@@ -384,8 +384,9 @@ l'erreur qui le dit :
   le texte ne dit pas quelle méthode appelle le port ;
 - un port ou un adaptateur lié plus d'une fois, lié de nouveau par `rebind(`, ou lié sous une
   condition ;
-- deux ports du même nom, sauf si chaque fichier importe le sien depuis le fichier qui le
-  déclare ;
+- un paramètre typé par un nom que l'adaptateur n'importe pas d'un fichier du projet (un type
+  d'un paquet, une déclaration de son propre fichier), et deux ports du même nom, sauf si chaque
+  fichier importe le sien depuis le fichier qui le déclare ;
 - un adaptateur que l'adaptateur extérieur atteint à travers un adaptateur intermédiaire, ou sans
   recevoir son port ;
 - un délai par défaut qui n'est pas un seul nombre, un environnement qui fixe

@@ -193,22 +193,38 @@ function servingOf(port: string, outer: Outer, reading: Reading): AdapterPolicy 
 }
 
 /**
- * Two files that name a port name the same one when a single class of the sources has that name
- * at most, or when each shows the file that declares it and it is one file. With several ports
- * of one name, a file that reaches its own through a barrel, a package or no import is not judged.
+ * Whether the port the outer adapter is given is the one the inner adapter is bound to. The
+ * outer file has to import that name from a file of the project: a type of a package, a class or
+ * an interface of its own file, or a name it imports from nowhere is not a port the text can
+ * follow. With one port of that name in the sources, an import through a barrel is enough; with
+ * several, each side has to show the file that declares its own, and it is one file.
  */
 function isSamePort(
   port: string,
   { given, served }: { given: SourceFile; served: SourceFile },
   sources: readonly SourceFile[],
 ): boolean {
-  if (sources.filter((file) => classNamed(file, port) !== undefined).length <= 1) {
+  const declaring = sources.filter((file) => classNamed(file, port) !== undefined);
+  const imported = importedFrom(given, port)?.target;
+
+  if (imported?.kind !== 'file' || declaring.length === 0 || !isOfTheProject(port, served)) {
+    return false;
+  }
+
+  if (declaring.length === 1) {
     return true;
   }
 
   const givenFrom = originOf(port, given, sources);
 
   return givenFrom !== undefined && givenFrom === originOf(port, served, sources);
+}
+
+/** A file names a class of the project unless it imports that name from a package. */
+function isOfTheProject(name: string, file: SourceFile): boolean {
+  const target = importedFrom(file, name)?.target;
+
+  return target === undefined || target.kind === 'file';
 }
 
 /** The file that declares the class `name` as `file` reads it: itself or the one it imports it from; undefined through a barrel or a package. */

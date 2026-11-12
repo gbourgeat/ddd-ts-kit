@@ -56,7 +56,10 @@ function generatedBefore(
     }));
 }
 
-/** A file the trunk holds too is the trunk's to list: every branch would report it, and none could fix it. */
+/**
+ * A file the trunk holds too is the trunk's to list: every branch would report it, and none could
+ * fix it. A working migration is left out here as everywhere: its place is decided when it lands.
+ */
 function unlisted(
   { entries, files, folder }: DrizzleMigrations,
   held: ReadonlySet<string>,
@@ -64,7 +67,7 @@ function unlisted(
   const listed = new Set(entries.map((entry) => entry.tag));
 
   return files
-    .filter((tag) => !listed.has(tag) && !held.has(tag))
+    .filter((tag) => !listed.has(tag) && !held.has(tag) && !isWorkingMigration(tag))
     .map((tag) => ({
       kind: 'not-in-journal',
       migration: tag,

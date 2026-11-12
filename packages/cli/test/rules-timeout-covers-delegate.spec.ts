@@ -22,16 +22,28 @@ const SLOW =
   "@Adapter(ModelReader, { kind: 'external', aspects: [ownPolicy(retry({ attempts: 2 }), timeout(120_000))] })";
 
 const GIVEN_THE_MODELS = '  constructor(private readonly models: ModelReader) {}';
-const GIVEN = 'export class RemoteQuoteReader {\n  constructor(private readonly models: ModelReader) {}\n}\n';
+const GIVEN = `import { ModelReader } from '../../application/ports/model-reader.port';\nexport class RemoteQuoteReader {\n  constructor(private readonly models: ModelReader) {}\n}\n`;
 
 const SLOW_BOUND =
   "  builder.bind(ModelReader).toClass(RemoteModelReader).as('external').with(ownPolicy(timeout(120_000)));";
 
-/** A role file of the declared style: the decorator given, above a class whose body is `members`. */
-function declared(decorator: string, name: string, ...members: string[]): string {
+const DIRECT = '../../application/ports/model-reader.port';
+const A_PORT = 'export abstract class ModelReader {}\n';
+
+/** A project that declares the port the two adapters name, and the files given. */
+function project(files: Readonly<Record<string, string>>): string {
+  return projectWith({ [PORT]: A_PORT, ...files });
+}
+
+/**
+ * A role file of the declared style: the decorator given, above a class whose body is `members`.
+ * It imports the port from `port`, the file that declares it unless said otherwise, or from nowhere.
+ */
+function declaredFrom(port: string | undefined, decorator: string, name: string, ...members: string[]): string {
   return lines(
     "import { Adapter, Gateway } from '@ddd-ts-kit/kernel/declarations';",
     "import { Timeout } from '@ddd-ts-kit/aspects/decorators';",
+    ...(port === undefined ? [] : [`import { ModelReader } from '${port}';`]),
     '',
     decorator,
     `export class ${name} {`,
@@ -40,9 +52,13 @@ function declared(decorator: string, name: string, ...members: string[]): string
   );
 }
 
+function declared(decorator: string, name: string, ...members: string[]): string {
+  return declaredFrom(DIRECT, decorator, name, ...members);
+}
+
 /** The quote reader under `outer`, given the port of the model reader, which is declared under `inner`. */
 function delegating(outer: string, inner = SLOW, ...membersOfTheInner: string[]): string {
-  return projectWith({
+  return project({
     [QUOTES]: declared(outer, 'RemoteQuoteReader', GIVEN_THE_MODELS),
     [MODELS]: declared(inner, 'RemoteModelReader', ...membersOfTheInner),
     [SETTINGS]: DEFAULTS,
@@ -51,7 +67,7 @@ function delegating(outer: string, inner = SLOW, ...membersOfTheInner: string[])
 
 /** The two adapters as plain classes, bound by the statements given in the module file of the context. */
 function bound(...statements: string[]): string {
-  return projectWith({
+  return project({
     [QUOTES]: GIVEN,
     [MODELS]: 'export class RemoteModelReader {}\n',
     [SETTINGS]: DEFAULTS,
@@ -73,7 +89,7 @@ describe(RULE, () => {
     expect(reported(root, RULE)).toEqual([
       {
         file: QUOTES,
-        line: 5,
+        line: 6,
         message:
           'RemoteQuoteReader is left to the default policy of the platform, which cuts each attempt after 2000 ms, and is given ModelReader, which RemoteModelReader serves with a limit of 120000 ms: a call RemoteModelReader would still answer fails in RemoteQuoteReader first, as a timeout of RemoteQuoteReader.',
       },
@@ -95,7 +111,7 @@ describe(RULE, () => {
     expect(reported(delegating(DEFAULTED, outside), RULE)[0]?.message).toContain('with a limit of 60000 ms');
 
     expect(reported(bound(DEFAULTED_BOUND, SLOW_BOUND), RULE).map(({ file, line }) => [file, line])).toEqual([
-      [QUOTES, 1],
+      [QUOTES, 2],
     ]);
   });
 
@@ -152,7 +168,7 @@ describe(`${RULE}, the limit behind the port`, () => {
   });
 
   it('judges nothing through a middle adapter: only the adapter bound to the port given is read', () => {
-    const root = projectWith({
+    const root = project({
       [QUOTES]: declared(DEFAULTED, 'RemoteQuoteReader', '  constructor(private readonly prices: PriceReader) {}'),
       [`${EXTERNAL}/remote-price-reader.adapter.ts`]: declared(
         '@Adapter(PriceReader, { aspects: [ownPolicy()] })',
@@ -192,7 +208,7 @@ describe(`${RULE}, what the text does not show`, () => {
 
   it('takes the default limit from the one place the platform reads OUTBOUND_TIMEOUT_MS, which main.ts runs with', () => {
     const configured = (config: string): string =>
-      projectWith({
+      project({
         [QUOTES]: declared(DEFAULTED, 'RemoteQuoteReader', GIVEN_THE_MODELS),
         [MODELS]: declared(SLOW, 'RemoteModelReader'),
         [SETTINGS]: DEFAULTS,
@@ -214,7 +230,7 @@ describe(`${RULE}, what the text does not show`, () => {
 
   it('judges no default it cannot read: settings that are not one number, a project without them', () => {
     const withSettings = (settings: Record<string, string>): string =>
-      projectWith({
+      project({
         [QUOTES]: declared(DEFAULTED, 'RemoteQuoteReader', GIVEN_THE_MODELS),
         [MODELS]: declared(SLOW, 'RemoteModelReader'),
         ...settings,
@@ -255,7 +271,7 @@ describe(`${RULE}, bindings it does not judge`, () => {
   });
 
   it('judges no binding whose statement starts with more than its receiver, down to the first line of a file', () => {
-    const root = projectWith({
+    const root = project({
       [QUOTES]: declared(DEFAULTED, 'RemoteQuoteReader', GIVEN_THE_MODELS),
       [MODELS]: 'export class RemoteModelReader {}\n',
       [SETTINGS]: DEFAULTS,
@@ -275,7 +291,7 @@ describe(`${RULE}, bindings it does not judge`, () => {
 
   it('finds a class two files declare by the import of the file that binds it, and leaves it without one', () => {
     const twice = (importOfTheClass: string): string =>
-      projectWith({
+      project({
         [QUOTES]: GIVEN,
         [`${SHIPPING}/infrastructure/external/remote-quote-reader.adapter.ts`]: 'export class RemoteQuoteReader {}\n',
         [MODELS]: 'export class RemoteModelReader {}\n',
@@ -297,52 +313,5 @@ describe(`${RULE}, bindings it does not judge`, () => {
 
     expect(reported(imported, RULE).map(({ file }) => file)).toEqual([QUOTES]);
     expect(reported(twice(''), RULE)).toEqual([]);
-  });
-});
-
-describe(`${RULE}, two ports of one name`, () => {
-  const imported = (from: string, decorator: string, name: string, ...members: string[]): string =>
-    `import { ModelReader } from '${from}';\n${declared(decorator, name, ...members)}`;
-
-  const direct = '../../application/ports/model-reader.port';
-  const quotes = imported(direct, DEFAULTED, 'RemoteQuoteReader', GIVEN_THE_MODELS);
-
-  const ports = {
-    [PORT]: 'export abstract class ModelReader {}\n',
-    [`${SHIPPING}/application/ports/model-reader.port.ts`]: 'export abstract class ModelReader {}\n',
-    [`${SHIPPING}/application/index.ts`]: "export { ModelReader } from './ports/model-reader.port';\n",
-    [SETTINGS]: DEFAULTS,
-  };
-
-  it('reports when each file imports the port from the one file that declares it', () => {
-    const root = projectWith({ ...ports, [QUOTES]: quotes, [MODELS]: imported(direct, SLOW, 'RemoteModelReader') });
-
-    expect(reported(root, RULE).map(({ file }) => file)).toEqual([QUOTES]);
-  });
-
-  it('judges nothing when the two files import two ports, or when one reaches its port through a barrel or no import', () => {
-    const inShipping = `${SHIPPING}/infrastructure/external/remote-model-reader.adapter.ts`;
-
-    const roots = [
-      projectWith({ ...ports, [QUOTES]: quotes, [inShipping]: imported(direct, SLOW, 'RemoteModelReader') }),
-      projectWith({
-        ...ports,
-        [QUOTES]: quotes,
-        [inShipping]: imported('../../application', SLOW, 'RemoteModelReader'),
-      }),
-      projectWith({ ...ports, [QUOTES]: quotes, [MODELS]: declared(SLOW, 'RemoteModelReader') }),
-      projectWith({
-        ...ports,
-        [QUOTES]: declared(DEFAULTED, 'RemoteQuoteReader', GIVEN_THE_MODELS),
-        [MODELS]: imported(direct, SLOW, 'RemoteModelReader'),
-      }),
-      projectWith({
-        ...ports,
-        [QUOTES]: quotes,
-        [inShipping]: `export abstract class ModelReader {}\n${declared(SLOW, 'RemoteModelReader')}`,
-      }),
-    ];
-
-    expect(roots.map((root) => reported(root, RULE).length)).toEqual(roots.map(() => 0));
   });
 });

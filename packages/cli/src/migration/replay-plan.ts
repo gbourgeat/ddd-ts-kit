@@ -14,6 +14,6 @@ export interface ReplayPlan {
    * Otherwise the migrations of the branch already follow the last one of the base.
    */
   readonly forked: boolean;
-  /** The files of the migrations folder and of its `meta/` as the replay found them, by path: what a refusal puts back. */
-  readonly found: ReadonlyMap<string, string>;
+  /** The bytes of the files of the migrations folder and of its `meta/` as the replay found them, by path: what a stop puts back. */
+  readonly snapshot: ReadonlyMap<string, Buffer>;
 }

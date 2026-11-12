@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:bacae300313dd273 -->
+<!-- translation-of: persistence.md sha256:cb047f7905f8e4d4 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -820,28 +820,39 @@ ceci : le *push* s'arrête.
 | knex, Prisma, TypeORM | une migration que la branche ajoute et dont le nom se trie avant la dernière migration du tronc : l'outil la jouerait après celle-ci là où elle est appliquée, et avant elle sur une base neuve | `npx ddd-ts-kit merge-trunk --to-land`, qui la renomme après la dernière du tronc en ramenant le tronc. Sur une branche qui contient déjà le tronc, il n'y a rien à fusionner : elle renomme quand même, seulement les migrations qui ne suivent pas déjà celles du tronc, dans leur ordre, et laisse le renommage à committer. Elle s'arrête, sans rien renommer, quand la migration et une migration plus récente du tronc changent la même table : supprimer d'abord cette migration (`git show HEAD:<file>` garde ce qui a été écrit à la main), puis `npm run db:generate <what-it-does>`, qui refuse un nom tant qu'une migration le porte |
 
 Une migration de travail (`working-<what-it-does>`) est laissée de côté : sa place se décide quand
-la branche atterrit, et `persistence/migration-history` la refuse déjà sur le tronc. Seul ce qui
-est nommé comme une migration, un numéro puis un nom, est ordonné : un fichier d'aide à côté
-(`helpers.js`) ne l'est pas. Rien n'est comparé pour un commit nommé, sans la configuration du
-kit, ou quand aucune référence ne nomme un tronc.
+la branche atterrit, et `persistence/migration-history` la refuse déjà sur le tronc. Ce qui est
+ordonné est ce que l'outil lui-même prend pour une migration, selon ce par quoi il l'ordonne :
+sous knex chaque script de `migrations/`, par son nom (knex les charge tous, quel que soit leur
+nom) ; sous Prisma les dossiers qui contiennent un `migration.sql`, par leur nom ; sous TypeORM
+les classes dont le nom se termine par 13 chiffres, par ce nombre, quel que soit le nom du
+fichier. `verify-merge` et `merge-trunk --to-land` lisent le même ordre. Rien n'est comparé pour
+un commit nommé, sans la configuration du kit, ou quand aucune référence ne nomme un tronc.
 
 **Une base qui a déjà appliqué l'ancien nom.** Une migration renommée ou générée de nouveau est
-une nouvelle migration pour l'outil, qui la jouerait une seconde fois sur une base de
-développement, de prévisualisation ou partagée qui l'a appliquée sous son ancien nom. Réinitialiser
-cette base, ou corriger sa table des migrations :
+une nouvelle migration pour l'outil, sur une base de développement, de prévisualisation ou
+partagée qui l'a appliquée sous son ancien nom. Réinitialiser cette base, ou corriger ce qu'elle
+a enregistré :
 
-| Outil | La table, et ce qu'il faut corriger |
-|---|---|
-| drizzle-kit | `drizzle.__drizzle_migrations` : ajouter une ligne dont le `created_at` est le `when` de la nouvelle entrée du journal |
-| knex | `knex_migrations` : renommer la ligne (`name`, le nom du fichier) |
-| Prisma | `_prisma_migrations` : renommer la ligne (`migration_name`) |
-| TypeORM | `migrations` : corriger `timestamp`, et `name`, la classe |
+| Outil | Ce qui s'y passe | Ce qu'il faut corriger |
+|---|---|---|
+| drizzle-kit | le *migrator* joue la migration de nouveau | `drizzle.__drizzle_migrations` : ajouter une ligne dont le `created_at` est le `when` de la nouvelle entrée du journal, avec un `hash` quelconque (la colonne est obligatoire et jamais comparée) |
+| knex | chaque `migrate` est refusé : `The migration directory is corrupt, the following files are missing` | `knex_migrations` : mettre dans `name` de la ligne le nouveau nom du fichier, extension comprise |
+| Prisma | il connaît encore la migration sous l'ancien nom | enregistrer le nouveau nom comme appliqué : `npx prisma migrate resolve --applied <new name>` |
+| TypeORM | il joue la migration de nouveau | `migrations` : corriger `timestamp`, et `name`, la classe |
+
+Les lignes de knex et de TypeORM sont lues dans le code des deux outils ; la commande de Prisma
+est celle que sa CLI documente, et ce que Prisma fait ensuite de l'ancienne ligne n'a pas été
+vérifié ici.
 
 `merge-trunk --to-land` le dit chaque fois qu'elle renomme ou rejoue, et le correctif de
 `verify-merge` aussi. `--to-land --dry-run` sur une branche qui contient déjà le tronc dit quelles
 migrations bougeraient et n'en bouge aucune. Un atterrissage qui s'y arrête laisse le dossier des
 migrations comme il l'a trouvé, sous drizzle-kit aussi, dont le rejeu supprime avant de générer :
-la même commande se relance une fois la cause corrigée. Lu dans le code des quatre outils, et exécuté ici sur des dépôts git portant les fichiers
+la même commande se relance une fois la cause corrigée. Un renommage ne prend jamais un numéro
+qu'un fichier du dossier porte déjà : il prend le suivant qui est libre, l'ordre gardé. Quand la
+dernière migration du tronc ne porte aucun numéro qu'une migration puisse suivre (un `helpers.js`
+dans le dossier de knex, que knex chargerait comme une migration et sur lequel il échouerait),
+l'atterrissage s'arrête et dit de déplacer ce fichier : aucun renommage ne peut se trier après. Lu dans le code des quatre outils, et exécuté ici sur des dépôts git portant les fichiers
 de chacun ; non mesuré face à une base de données.
 
 Une migration déjà fusionnée sur la branche principale n'est jamais modifiée ni régénérée : une

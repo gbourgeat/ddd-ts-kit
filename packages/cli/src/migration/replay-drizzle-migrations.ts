@@ -26,6 +26,11 @@ export interface DrizzleReplay {
    * names even in the worktree of a worker, which otherwise keeps them working ones.
    */
   readonly final?: boolean;
+  /**
+   * Puts the folder back as it was found when drizzle-kit fails after the deletion: the replay of
+   * a landing without a merge, which nothing else would undo and which has to run again.
+   */
+  readonly putBack?: boolean;
 }
 
 /**
@@ -121,9 +126,7 @@ function generateAgain(
   const sql = written.paths.find((file) => file.endsWith('.sql') && path.posix.dirname(file) === plan.folder);
 
   if (code !== 0) {
-    io.err(
-      `drizzle-kit failed on ${name}: the migrations generated above are written, the others stay deleted. Delete what this run generated, restore ${plan.folder}/ as the merge left it (\`git checkout HEAD -- ${plan.folder}\`), fix the cause above and run the replay again.`,
-    );
+    io.err(failureOf(plan, name, replay.putBack === true));
 
     return code;
   }
@@ -143,6 +146,17 @@ function generateAgain(
   io.out(`Generated ${path.posix.basename(sql, '.sql')} in place of ${migration.tag}.`);
 
   return written.paths;
+}
+
+/** What a failure of drizzle-kit leaves, said once: the folder put back, or what is left to undo by hand. */
+function failureOf(plan: ReplayPlan, name: string, putBack: boolean): string {
+  if (putBack) {
+    restoreMigrationFolder(plan);
+
+    return `drizzle-kit failed on ${name}: ${plan.folder}/ is put back as the replay found it, nothing is left to undo. Fix the cause above and run the same command again.`;
+  }
+
+  return `drizzle-kit failed on ${name}: the migrations generated above are written, the others stay deleted. Delete what this run generated, restore ${plan.folder}/ as the merge left it (\`git checkout HEAD -- ${plan.folder}\`), fix the cause above and run the replay again.`;
 }
 
 /**
@@ -166,7 +180,7 @@ function refuseChangedStatements({ plan, migration, name }: Regeneration, genera
 
   throw new CliError(
     `${migration.tag} is not what drizzle-kit writes for its change on top of ${plan.base}: the branch has ${quoted(branch[at])}, drizzle-kit writes ${quoted(now[at])}. Its SQL was edited by hand, or ${plan.base} changed what it changes, and generating it again would lose that: ${plan.folder}/ is back as the replay found it.`,
-    `Generate it yourself on top of ${plan.base}: delete the migrations of the branch ${plan.base} does not have (each .sql file, its snapshot under meta/ and its journal entry), run \`npm run db:generate ${name}\`, write the edits again (\`git show HEAD:${plan.folder}/${migration.tag}.sql\` holds them; \`--custom\` for a migration written by hand). The replay then finds nothing forked.`,
+    `Generate it yourself on top of ${plan.base}: delete the migrations of the branch ${plan.base} does not have (each .sql file, its snapshot under meta/ and its journal entry), run \`npm run db:generate ${name}\`, write the edits again (\`git show HEAD:./${plan.folder}/${migration.tag}.sql\` holds them; \`--custom\` for a migration written by hand). The replay then finds nothing forked.`,
   );
 }
 

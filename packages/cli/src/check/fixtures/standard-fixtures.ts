@@ -154,8 +154,9 @@ function delegation(policyOfTheDelegating: string, alsoBound = '', underConditio
   const slow = "builder.bind(ModelReader).toClass(RemoteModelReader).as('external').with(ownPolicy(timeout(120_000)));";
 
   return {
+    [`${BILLING}/application/ports/model-reader.port.ts`]: 'export abstract class ModelReader {}\n',
     [QUOTE_READER]:
-      'export class RemoteQuoteReader {\n  constructor(private readonly models: ModelReader) {}\n\n  read(): unknown {\n    return this.models;\n  }\n}\n',
+      "import { ModelReader } from '@/contexts/billing/application/ports/model-reader.port.js';\nexport class RemoteQuoteReader {\n  constructor(private readonly models: ModelReader) {}\n\n  read(): unknown {\n    return this.models;\n  }\n}\n",
     [`${BILLING}/infrastructure/external/remote-model-reader.adapter.ts`]: 'export class RemoteModelReader {}\n',
     'src/platform/resilience/default-resilience-settings.ts':
       'export const defaultResilienceSettings = { retryAttempts: 3, retryBaseDelayMs: 100, timeoutMs: 2000 };\n',

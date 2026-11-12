@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { cli, read, write } from './helpers';
 import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub';
@@ -64,6 +66,12 @@ describe('merge-trunk --to-land on a drizzle branch that already holds the trunk
     'puts the folder back when the replay stops after it deleted the migration: the tree is clean and the same command runs again',
     () => {
       const root = drizzleMergedByGit();
+      const latin1 = Buffer.from([0x2d, 0x2d, 0x20, 0xe9, 0x74, 0xe9, 0x0a]);
+      const note = path.join(root, 'migrations/notes.txt');
+
+      fs.writeFileSync(note, latin1);
+      commitFiles(root, {}, 'docs(billing): a note beside the migrations');
+      fs.utimesSync(note, new Date(1_000_000), new Date(1_000_000));
 
       write(
         root,
@@ -72,6 +80,9 @@ describe('merge-trunk --to-land on a drizzle branch that already holds the trunk
       );
 
       const stopped = mergeTrunk(root, '--to-land');
+
+      expect(fs.readFileSync(note).equals(latin1)).toBe(true);
+      expect(fs.statSync(note).mtimeMs).toBe(1_000_000);
 
       write(root, 'node_modules/drizzle-kit/bin.cjs', DRIZZLE_KIT_STUB);
 
@@ -82,8 +93,11 @@ describe('merge-trunk --to-land on a drizzle branch that already holds the trunk
       expect(stopped.stdout).toContain('Deleted, with their snapshots and journal entries');
 
       expect(stopped.stdout).toContain(
-        'stopped: the drizzle replay failed: read its output above. migrations/ is back as it was found: nothing is left to undo.',
+        'drizzle-kit failed on add-invoices: migrations/ is put back as the replay found it, nothing is left to undo. Fix the cause above and run the same command again.',
       );
+
+      expect(stopped.stdout).not.toContain('stay deleted');
+      expect(stopped.stdout).not.toContain('git checkout HEAD');
 
       expect(stopped.stdout).toContain('next: no merge is in progress, and the migrations are as they were found.');
       expect(cleanAfterTheStop).toBe('');
