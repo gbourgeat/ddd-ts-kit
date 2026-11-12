@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:318ab26fb1e83298 -->
+<!-- translation-of: modules.md sha256:565b20e99060d36a -->
 
 # Modules du modèle
 
@@ -261,6 +261,23 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   autre module du contexte tient un fichier du même rôle et du même nom (les déclarations du
   contexte l'exporteraient deux fois), ou quand un fichier n'est pas du texte. `--dry-run` montre
   le plan ; viennent ensuite les vérifications et les tests.
+- `move-to-module` n'écrit rien non plus quand le déplacement fermerait un cycle entre modules
+  qui n'existe pas aujourd'hui : un module importerait un autre qui l'importe en retour,
+  directement ou par un troisième. Il lit les imports comme `module/no-cycle`, avant le
+  déplacement puis le déplacement planifié, et nomme le cycle, chacune de ses étapes avec ses
+  imports (fichier et ligne, les étapes que le déplacement ajoute distinguées de celles qui
+  existent déjà), et le fichier à l'autre bout des imports que le déplacement ajoute, à déplacer
+  avec, dans la même commande. La règle est un avertissement, pour un cycle que quelqu'un
+  découvre ; la commande s'apprête à en écrire un à votre place, dans chaque import des fichiers
+  déplacés, alors elle demande d'abord. `--allow-cycle` déplace quand même et dit le cycle avec le
+  déplacement ; `--dry-run` refuse ou montre la même chose. Un cycle qui existait avant le
+  déplacement n'est pas compté, et un projet qui désactive `module/no-cycle` n'est pas jugé, pas plus qu'un
+  cycle dont chaque import est dans un fichier pour lequel la configuration désactive la règle. Le
+  cycle nommé est le plus court qui passe par la dépendance que le déplacement ajoute ; un fichier
+  d'un cas d'usage est nommé par son dossier, un import d'un dossier par son `index.ts` ; et seuls
+  les fichiers que lit `ddd-ts-kit check` sont lus.
+  `context-layout` n'a pas besoin d'un tel refus : il laisse où il est un fichier qui ferait
+  dépendre un module d'un autre.
 
 ### Ce qui lit les modules
 
@@ -322,7 +339,8 @@ modules, sinon les *specs* d'intégration d'un module tournent avec les *specs* 
    qu'il est, les fichiers de ses couches là où ils étaient.
 3. **Déplacez un groupe par commit** : `move-to-module <context> <module> <paths>...`, son modèle,
    ses cas d'usage, ses adaptateurs et ses routes, puis `npm run verify`. Les *specs* qui portent
-   le nom des fichiers déplacés les suivent dans `<module>/test/`.
+   le nom des fichiers déplacés les suivent dans `<module>/test/`. Un déplacement qui fermerait un
+   cycle entre modules est refusé avec le fichier à déplacer avec : un groupe se déplace entier.
 4. **Disposez ce qui reste** : `npx ddd-ts-kit context-layout <context>`, une fois les fichiers
    des couches dans leurs modules, ou plus tôt pour générer tout de suite dans un module. Les
    *fakes* et les *builders* suivent leur sujet dans son module, le schéma, les groupes de routes

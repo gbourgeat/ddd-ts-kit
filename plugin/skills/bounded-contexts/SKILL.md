@@ -78,7 +78,7 @@ is in one `shared/` folder, never a module name; no layer folder stays at the ro
   `docs/guides/many-dependencies.md`.
 
 Once the owner agreed, `npx ddd-ts-kit generate module <context> <module> --purpose "..."` and
-`npx ddd-ts-kit move-to-module <context> <module> <path>...` (a path may be a spec, a fake or a builder; `npx ddd-ts-kit context-layout` moves a project laid out before) (skill `ddd-ts-kit:scaffold`).
+`npx ddd-ts-kit move-to-module <context> <module> <path>...` (a path may be a spec, a fake or a builder; a move that would close a cycle between modules is refused with the file to move along: follow it, `--allow-cycle` is the owner's call; `npx ddd-ts-kit context-layout` moves a project laid out before) (skill `ddd-ts-kit:scaffold`).
 
 ## 4. Write the artefact
 

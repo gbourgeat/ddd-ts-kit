@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:05e9be8bb27743c7 -->
+<!-- translation-of: commands.md sha256:ed6cf9e19ad85734 -->
 
 # Quelle commande, quand
 
@@ -90,7 +90,7 @@ exemple, reste un `TODO(domain)` du schéma et de l'appel.
 | `npx ddd-ts-kit generate context <name> --classification <c> --reason "..." --term "<Term>=<meaning>\|<not to be confused with>" ... --upstream ...` | déclare un contexte avec son langage, la phrase qui dit pourquoi il a sa classification, et ses relations | après l'amorçage, un par ligne de `contexts.md`, les amonts d'abord | le répertoire du contexte, son `CONTEXT.md`, l'entrée de configuration | `npx ddd-ts-kit docs` |
 | `npx ddd-ts-kit list`, `describe <context>` | ce qui existe, par contexte ou pour un seul | avant de planifier ou de modifier un contexte | une carte des contextes, ou un contexte sous forme de faits (`--json`) | `/ddd-ts-kit:plan-slices` |
 | `npx ddd-ts-kit generate module <context> <module> --purpose "..." [--term ...]` | déclare un [module du modèle](../concepts/modules.fr.md) : l'entrée de la configuration, sa ligne de `## Modules` dans `CONTEXT.md`, ses termes, et dans le style explicite son fichier de module `<module>/<module>.module.ts`, composé par `<context>.module.ts` ; peut être relancé, il ajoute ce qui manque | quand un contexte tient des groupes de concepts d'un même langage qu'un lecteur ouvre séparément ; jamais pour cacher un second langage | le module, déclaré et documenté | `move-to-module`, puis `generate ... --module` |
-| `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]` | déplace des fichiers et des dossiers des couches d'un contexte, et ses *specs*, *fakes* et *builders*, dans un module déclaré (`<module>/<layer>/`, `<module>/test/`), avec chacun de leurs imports dans le projet | un groupe par commit, jusqu'à ce que `module/complete` n'avertisse plus | les fichiers déplacés et les imports réécrits | `npm run verify` |
+| `npx ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run] [--allow-cycle]` | déplace des fichiers et des dossiers des couches d'un contexte, et ses *specs*, *fakes* et *builders*, dans un module déclaré (`<module>/<layer>/`, `<module>/test/`), avec chacun de leurs imports dans le projet ; n'écrit rien quand le déplacement fermerait un cycle entre modules qui n'existe pas aujourd'hui, et nomme le cycle et le fichier à déplacer avec, sauf avec `--allow-cycle` | un groupe par commit, jusqu'à ce que `module/complete` n'avertisse plus | les fichiers déplacés et les imports réécrits | `npm run verify` |
 
 ## Construire une tranche
 
@@ -260,6 +260,14 @@ erreur de l'appelant : une ligne avec la version du kit et où la signaler (sous
 `error` avec `"internal": true`) ; signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues
 avec la commande qu'elle donne.
 
+Sous `--json`, un refus est `{"error": {"message": "...", "fix": "..."}}`. Le refus de
+`move-to-module` qui fermerait un cycle entre modules y ajoute ce qu'un script lit sans analyser
+les phrases : `cycles`, chacun avec ses `modules` dans l'ordre et ses `steps` (`from`, `to`,
+`added` pour une étape que le déplacement ajoute, et `imports`, chacun avec `file`, `line` et
+`imported`, les chemins tels qu'ils sont avant le déplacement), et `along`, les fichiers ou
+dossiers à nommer dans la même commande, relatifs au contexte. Avec `--allow-cycle`, les mêmes
+`cycles` sont dans le rapport du déplacement.
+
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->
 
@@ -322,7 +330,7 @@ Usage
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]
-  ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run]
+  ddd-ts-kit move-to-module <context> <module> <path>... [--dry-run] [--allow-cycle]
   ddd-ts-kit context-layout [<context>...] [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit affected --base <git-ref> --run <script>
@@ -399,7 +407,11 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    the source root, test/ and scripts/ follows, a migration that names the compiled file too,
                    and the generated declarations are rewritten; what belongs to no module stays: the code
                    list and the permission set at the root of the context, and in shared/ the schema of its
-                   database, its route groups, guards and shared shapes, its worlds
+                   database, its route groups, guards and shared shapes, its worlds. A move that would close a
+                   cycle between modules that is not there now writes nothing, with or without --dry-run: it
+                   names the cycle, the imports that make it (file and line) and the file to move along;
+                   --allow-cycle moves all the same, and module/no-cycle then reports the cycle. A project
+                   that turns module/no-cycle off is not judged
   context-layout   takes the files of the contexts, or of the ones named, to their place of today. The code
                    list and the permission set that 0.86 or 0.87 wrote in a role folder: domain/errors/codes.ts
                    to <context>.codes.ts and application/authorization/<context>.permissions.ts to
