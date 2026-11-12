@@ -247,6 +247,17 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   files would land on one path, when another module of the context holds a file of the same role
   and name (the declarations of the context would export it twice), or when a file is not text. `--dry-run` shows the plan; the checks and the
   tests come next.
+- `move-to-module` writes nothing either when the move would close a cycle between modules that
+  is not there now: a module would import another that imports it back, directly or through a
+  third. It reads the imports as `module/no-cycle` does, before the move and with the move
+  planned, and names the cycle, each step of it with its imports (file and line, the steps the
+  move adds told apart from the ones there now), and the file at the other end of the imports the
+  move adds, to move along in the same command. The rule is a warning, for a cycle someone finds;
+  the command is about to write one on your behalf, into every import of the moved files, so it
+  asks first. `--allow-cycle` moves all the same and says the cycle with the move; `--dry-run`
+  refuses or shows the same. A cycle there before the move is not counted, and a project that
+  turns `module/no-cycle` off is not judged. `context-layout` needs no such refusal: it leaves
+  where it is a file that would make a module depend on another.
 
 ### What reads the modules
 
@@ -303,7 +314,8 @@ integration specs of a module run with the unit specs.
    as it is, its files of a layer where they were.
 3. **Move one cluster per commit**: `move-to-module <context> <module> <paths>...`, its model,
    its use cases, its adapters and its routes, then `npm run verify`. The specs named after the
-   moved files follow them into `<module>/test/`.
+   moved files follow them into `<module>/test/`. A move that would close a cycle between modules
+   is refused with the file to move along: a cluster moves whole.
 4. **Lay out what is left**: `npx ddd-ts-kit context-layout <context>`, once the files of the
    layers are in their modules, or earlier to generate into a module at once. The fakes and the
    builders follow their subject into its module, the schema, the route groups and the worlds go

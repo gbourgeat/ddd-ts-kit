@@ -2,7 +2,16 @@ import { CliError } from '../cli-error';
 import { readConfig, type Config } from '../config';
 import { refreshDocs } from '../generate/refresh-docs';
 import { declaredModule } from '../model-modules';
-import { type ModuleMoves, moveToModule } from '../move-to-module';
+import {
+  ALLOW_CYCLE,
+  beforeTheMove,
+  type ClosedCycle,
+  cycleLines,
+  cycleRefusal,
+  type ModuleMoves,
+  moveToModule,
+  watchCycles,
+} from '../move-to-module';
 import { contextArgument } from '../generate/context-argument';
 import { readName } from '../naming';
 import { exitCodeOf, tellUnwritable, Workspace } from '../workspace';
@@ -14,9 +23,19 @@ import { stdoutJson } from '../json/stdout-json';
 
 const MODULE_FIX = 'Name the module as the config of its context declares it, in kebab-case.';
 
-/** Takes files of the model and of the use cases of a context into a module of its model, their imports with them. */
+const FLAGS = {
+  'dry-run': { type: 'boolean', default: false },
+  [ALLOW_CYCLE]: { type: 'boolean', default: false },
+} as const;
+
+/**
+ * Takes files of the model and of the use cases of a context into a module of its model, their
+ * imports with them. A move that would close a cycle between modules that is not there now writes
+ * nothing, unless `--allow-cycle` is passed: the cycle is said before the files move, not by the
+ * checks after.
+ */
 export const moveToModuleCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, { 'dry-run': { type: 'boolean', default: false } });
+  const args = Arguments.parse(argv, FLAGS);
   const [contextName = '', moduleName = '', ...paths] = args.positionals;
   const ws = new Workspace(args.projectRoot, false);
   const { config } = readConfig(args.projectRoot);
@@ -40,6 +59,7 @@ export const moveToModuleCommand: Command = (argv, io) => {
     );
   }
 
+  const closedBy = watchCycles(ws, config, context);
   const outcome = moveToModule(ws, config, { context, module, paths });
 
   // A moved use case leaves no empty folder behind, which would still read as a use case.
@@ -49,6 +69,12 @@ export const moveToModuleCommand: Command = (argv, io) => {
   refreshDocs(ws, 'move');
 
   const dryRun = args.flag('dry-run');
+  const { cycles, along } = closedBy(outcome.moved);
+
+  if (cycles.length > 0 && !args.flag(ALLOW_CYCLE)) {
+    throw cycleRefusal({ context, cycles: beforeTheMove(cycles, outcome.moved), along });
+  }
+
   const report = ws.commit(dryRun);
   // A file the move rewrote and the refresh then deleted ends deleted; one it moved to is said moved.
   const rewritten = outcome.rewritten.filter((file) => !report.deleted.includes(file));
@@ -60,6 +86,8 @@ export const moveToModuleCommand: Command = (argv, io) => {
     rewritten,
     written: [...report.created, ...report.updated].filter((file) => !listed.has(file)),
     deleted: report.deleted,
+    // Nothing is written by a dry run: its files are named where they still are.
+    cycles: dryRun ? beforeTheMove(cycles, outcome.moved) : cycles,
   });
 
   tellUnwritable(io, report);
@@ -85,6 +113,8 @@ interface Outcome extends ModuleMoves {
   /** The files the move derived besides the ones it moved and rewrote: the generated declarations, CONTEXT.md. */
   readonly written: readonly string[];
   readonly deleted: readonly string[];
+  /** The cycles between modules the move closes, passed with `--allow-cycle`: what `module/no-cycle` reports next. */
+  readonly cycles: readonly ClosedCycle[];
 }
 
 function print(io: Io, json: boolean, outcome: Outcome): void {
@@ -101,8 +131,20 @@ function print(io: Io, json: boolean, outcome: Outcome): void {
     ...outcome.rewritten.map((file) => `${verb('rewrite')}${file}`),
     ...outcome.written.map((file) => `${verb('write')}${file}`),
     ...outcome.deleted.map((file) => `${verb('delete')}${file}`),
+    ...closed(outcome),
     ...(outcome.moved.length > 0 ? ['', 'Left to you:', ...LEFT.map((line) => `  - ${line}`)] : []),
   ];
 
   io.out(lines.length > 0 ? lines.join('\n') : 'Nothing to do: these files are in the module already.');
+}
+
+/** The cycles the move closes, said with the move when `--allow-cycle` let it through. */
+function closed({ dryRun, cycles }: Outcome): string[] {
+  if (cycles.length === 0) {
+    return [];
+  }
+
+  const head = `${dryRun ? 'Would close' : 'Closed'} between modules, which module/no-cycle reports:`;
+
+  return ['', head, ...cycleLines(cycles).map((line) => `  ${line}`)];
 }

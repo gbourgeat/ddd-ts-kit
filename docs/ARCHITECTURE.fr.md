@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:55e80bdb3c386b3e -->
+<!-- translation-of: ARCHITECTURE.md sha256:7c574f8bdf1f62a1 -->
 
 # Référence de l'architecture
 
@@ -202,7 +202,8 @@ chemin, dossier du module ou `shared/` retiré, et un fichier de `shared/` n'est
 *builders* avec leur sujet, et écrit dans `shared/` ce qui n'appartient à aucun module ;
 `generate module <context> <module>` déclare un module, et
 `move-to-module <context> <module> <path>...` y déplace des fichiers existants avec leurs imports,
-les *specs* qui portent leur nom les suivant. Dans un contexte qui déclare des modules, le
+les *specs* qui portent leur nom les suivant, et n'écrit rien quand le déplacement fermerait un
+cycle entre modules qui n'existe pas aujourd'hui, sauf avec `--allow-cycle`. Dans un contexte qui déclare des modules, le
 générateur refuse d'écrire un fichier d'une couche sans `--module`, ce qui n'appartient à aucun
 module excepté, et nomme les modules. Les générateurs qui écrivent un tel fichier
 affichent `[--module <module>]` dans leur usage, et les autres refusent `--module`. Un contexte

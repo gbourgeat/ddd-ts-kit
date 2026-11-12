@@ -1,19 +1,11 @@
-import type { Project } from '../model/project';
 import type { Rule } from '../model/rule';
-import type { SourceFile } from '../model/source-file';
+import { importedModules } from '../modules/imported-modules';
+import { type ModuleImport, moduleImports } from '../modules/module-imports';
 import { cyclesIn } from '../support/cycles-in';
 import { reporter } from '../support/reporter';
 
 const FIX =
   'Look for a way to change the model to disentangle the concepts (Evans, Modules): an effect that follows a decision of one module becomes a domain event the other handles; a concept both reach for may be an overlooked module of its own, which both import; reads of the other module can go through a projection of its events. Coupling between modules is a signal about the model, which is why this is a warning.';
-
-/** One import from a file of one module to a file of another module of the same context: where it is written. */
-interface Edge {
-  readonly from: string;
-  readonly to: string;
-  readonly file: string;
-  readonly line: number;
-}
 
 export const moduleNoCycle: Rule = {
   id: 'module/no-cycle',
@@ -23,19 +15,15 @@ export const moduleNoCycle: Rule = {
   run(project) {
     const report = reporter(project, this.id);
 
-    return [...edgesByContext(project)].flatMap(([context, edges]) => {
-      const modules = [...new Set(edges.map((edge) => edge.from))].sort();
+    return [...byContext(moduleImports(project.files))].flatMap(([context, imports]) => {
+      const modules = [...new Set(imports.map((one) => one.from))].sort();
 
-      const next = (module: string): string[] => [
-        ...new Set(edges.filter((edge) => edge.from === module).map((edge) => edge.to)),
-      ];
-
-      return cyclesIn(modules, next).map((cycle) => {
+      return cyclesIn(modules, importedModules(imports)).map((cycle) => {
         const [first = '', second = ''] = cycle;
-        const edge = edges.find((candidate) => candidate.from === first && candidate.to === second);
+        const closing = imports.find((candidate) => candidate.from === first && candidate.to === second);
 
         return report(
-          { file: edge?.file ?? '', line: edge?.line ?? 1 },
+          { file: closing?.file ?? '', line: closing?.line ?? 1 },
           `The modules of the model of "${context}" import each other in a cycle: ${[...cycle, first].join(' -> ')}.`,
           FIX,
         );
@@ -44,37 +32,12 @@ export const moduleNoCycle: Rule = {
   },
 };
 
-function edgesByContext(project: Project): Map<string, Edge[]> {
-  const byContext = new Map<string, Edge[]>();
+function byContext(imports: readonly ModuleImport[]): Map<string, ModuleImport[]> {
+  const grouped = new Map<string, ModuleImport[]>();
 
-  for (const file of project.files.filter((candidate) => !candidate.isTest)) {
-    for (const edge of edgesOf(file)) {
-      const edges = byContext.get(edge.context);
-
-      if (edges === undefined) {
-        byContext.set(edge.context, [edge]);
-      } else {
-        edges.push(edge);
-      }
-    }
+  for (const one of imports) {
+    grouped.set(one.context, [...(grouped.get(one.context) ?? []), one]);
   }
 
-  return byContext;
-}
-
-/** The imports of a file of one module of the model to another module of the same context. */
-function edgesOf({ location, imports, path }: SourceFile): (Edge & { readonly context: string })[] {
-  if (location.area !== 'context' || location.module === undefined) {
-    return [];
-  }
-
-  const { context, module: from } = location;
-
-  return imports.flatMap(({ target, line }) => {
-    const to = target.kind === 'file' && target.location.area === 'context' ? target.location : undefined;
-
-    return to?.context === context && to.module !== undefined && to.module !== from
-      ? [{ context, from, to: to.module, file: path, line }]
-      : [];
-  });
+  return grouped;
 }
