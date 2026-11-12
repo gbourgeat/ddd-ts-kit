@@ -24,3 +24,15 @@ export const KIT_CONTENT_TYPES: readonly string[] = [
   'application/json',
   'application/csv',
 ];
+
+/**
+ * The media types the rule of a family never reaches, as `NAMED_ONLY_MEDIA_TYPES` of the kernel
+ * lists them: a browser runs them, so an upload takes one only by naming it in `contentRules`.
+ */
+export const NAMED_ONLY_CONTENT_TYPES: readonly string[] = [
+  'image/svg+xml',
+  'text/html',
+  'application/xhtml+xml',
+  'text/javascript',
+  'application/javascript',
+];

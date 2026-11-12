@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f0865606eeb490bb -->
+<!-- translation-of: README.md sha256:314a1331fe1201ef -->
 
 # @ddd-ts-kit/kernel
 
@@ -1522,7 +1522,9 @@ les formats binaires inconnus ne correspondent jamais).
 Chaque type de média a une règle de contenu (`contentRuleOf`) : une signature
 (`SIGNED_MEDIA_TYPES`), le texte (`TEXT_MEDIA_TYPES`), ou celle que l'attente énonce dans
 `contentRules` pour un type pour lequel le kit n'en a pas, `text` ou `unchecked` (les octets
-sont pris tels quels). `contentRuleDefects` liste, avant qu'un contenu n'arrive, les types
+sont pris tels quels) ; une règle énoncée pour une famille (`image/*`) n'atteint jamais un type
+qu'un navigateur exécute (`NAMED_ONLY_MEDIA_TYPES` : SVG, HTML, JavaScript), qui s'énonce par
+son nom. `contentRuleDefects` liste, avant qu'un contenu n'arrive, les types
 acceptés qu'aucun contenu ne pourrait prouver et les règles énoncées qui ne font rien :
 `@ddd-ts-kit/http` refuse une route là-dessus, `uploadUrl` un lien. L'attente dit aussi le
 texte qu'elle prend (`TextRule`) : `utf-8`, le défaut, ou `single-byte`, qui laisse aussi passer

@@ -1,6 +1,6 @@
-import { SIGNED_MEDIA_TYPES, TEXT_MEDIA_TYPES, contentRuleDefects } from '@ddd-ts-kit/kernel';
+import { NAMED_ONLY_MEDIA_TYPES, SIGNED_MEDIA_TYPES, TEXT_MEDIA_TYPES, contentRuleDefects } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
-import { KIT_CONTENT_TYPES } from '../src/check/files/kit-content-types';
+import { KIT_CONTENT_TYPES, NAMED_ONLY_CONTENT_TYPES } from '../src/check/files/kit-content-types';
 import { uploadContentDefects } from '../src/check/files/upload-content-defects';
 import { uploadDeclarations } from '../src/check/files/upload-declarations';
 import { scan } from '../src/check/scan/scan';
@@ -27,6 +27,9 @@ const UPLOADS: readonly Declared[] = [
   { mediaTypes: ['video/mp4'], contentRules: { 'video/*': 'unchecked' } },
   { mediaTypes: ['video/*'], contentRules: { 'video/mp4': 'unchecked', 'audio/*': 'unchecked' } },
   { mediaTypes: ['application/pdf', 'text/csv'], contentRules: { 'application/pdf': 'unchecked', 'text/csv': 'text' } },
+  { mediaTypes: ['image/*', 'image/svg+xml', 'image/x-icon'], contentRules: { 'image/*': 'unchecked' } },
+  { mediaTypes: ['image/*', 'Image/SVG+XML'], contentRules: { 'image/*': 'unchecked', 'image/svg+xml': 'text' } },
+  { mediaTypes: ['text/*', 'text/html', 'text/javascript'], contentRules: { 'text/*': 'text' } },
 ];
 
 function written({ mediaTypes, contentRules }: Declared): string {
@@ -38,6 +41,10 @@ function written({ mediaTypes, contentRules }: Declared): string {
 describe('the content rules of an upload, as the checker reads them and as the kernel judges them', () => {
   it('knows the media types the kernel has a rule for, in the same order', () => {
     expect(KIT_CONTENT_TYPES).toEqual([...SIGNED_MEDIA_TYPES, ...TEXT_MEDIA_TYPES]);
+  });
+
+  it('knows the media types the kernel lets no family rule reach, in the same order', () => {
+    expect(NAMED_ONLY_CONTENT_TYPES).toEqual(NAMED_ONLY_MEDIA_TYPES);
   });
 
   it.each(UPLOADS.map((upload) => [written(upload), upload] as const))(

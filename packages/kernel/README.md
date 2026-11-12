@@ -1460,7 +1460,9 @@ match).
 
 Each media type has a content rule (`contentRuleOf`): a signature (`SIGNED_MEDIA_TYPES`), text
 (`TEXT_MEDIA_TYPES`), or the one the expectation states in `contentRules` for a type the kit
-has none for, `text` or `unchecked` (the bytes are taken as they are). `contentRuleDefects`
+has none for, `text` or `unchecked` (the bytes are taken as they are); a rule stated for a
+family (`image/*`) never reaches a type a browser runs (`NAMED_ONLY_MEDIA_TYPES`: SVG, HTML,
+JavaScript), which is stated by its name. `contentRuleDefects`
 lists, before any content arrives, the accepted types no content could prove and the stated
 rules that do nothing: `@ddd-ts-kit/http` refuses a route on it, `uploadUrl` a link. The
 expectation also says the text it takes (`TextRule`): `utf-8`, the default, or `single-byte`,

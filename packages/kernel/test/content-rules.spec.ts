@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FileError,
   FileInspection,
+  NAMED_ONLY_MEDIA_TYPES,
   SIGNED_MEDIA_TYPES,
   TEXT_MEDIA_TYPES,
   contentMatches,
@@ -115,6 +116,23 @@ describe('the content rule of a media type', () => {
     expect(contentMatches(XLS, 'video/mp4', { contentRules })).toBe(true);
     expect(contentMatches(XLS, 'video/x-notes', { contentRules })).toBe(false);
     expect(contentMatches(XLS, 'audio/mpeg', { contentRules })).toBe(false);
+  });
+
+  it('never reaches a type a browser runs through its family: SVG, HTML and JavaScript are stated by name', () => {
+    const byFamily = { 'image/*': 'unchecked', 'text/*': 'text', 'application/*': 'unchecked' } as const;
+    const SVG = bytes('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+
+    for (const type of NAMED_ONLY_MEDIA_TYPES) {
+      expect(contentRuleOf(type, byFamily)).toBeUndefined();
+      expect(contentMatches(SVG, type, { contentRules: byFamily })).toBe(false);
+    }
+
+    expect(contentMatches(SVG, 'image/x-icon', { contentRules: byFamily })).toBe(true);
+    expect(contentMatches(SVG, 'Image/SVG+XML', { contentRules: { 'image/svg+xml': 'text' } })).toBe(true);
+
+    expect(contentRuleDefects({ accepted: ['image/*', 'image/svg+xml'], contentRules: byFamily })).toContainEqual(
+      expect.stringContaining('"image/svg+xml" has no content rule'),
+    );
   });
 });
 
