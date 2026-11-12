@@ -9,6 +9,7 @@ import { runGit } from '../commit/run-git';
 import type { BranchMigration } from './branch-migration';
 import { branchMigrations } from './branch-migrations';
 import { migrationFiles } from './migration-files';
+import { snapshotMigrationFolder } from './snapshot-migration-folder';
 import type { ReplayPlan } from './replay-plan';
 
 const CONFLICT_MARKER = /^(?:<{7}|={7}|>{7})(?: |$)/m;
@@ -50,7 +51,7 @@ export function planReplay({ root, base }: Pick<ReplayPlan, 'root' | 'base'>): R
     refuseSeveralSchemaChanges(migrations);
   }
 
-  return { root, base, folder, migrations, forked, found: files };
+  return { root, base, folder, migrations, forked, snapshot: snapshotMigrationFolder(root, folder) };
 }
 
 /**

@@ -6,7 +6,7 @@ import type { SliceVerification } from '../src/slice/slice-verification';
 
 const PASSED = { ok: true, output: '' };
 
-const NO_MERGE = { merges: [], errorCount: 0, warningCount: 0, ok: true };
+const NO_MERGE = { merges: [], migrations: [], errorCount: 0, warningCount: 0, ok: true };
 
 const warning: Violation = {
   ruleId: 'clean/function-size',
@@ -148,11 +148,11 @@ describe('the report of verify-slice, on the merges of the branch', () => {
     } as const;
 
     const reported = formatSliceVerification(
-      verification({ merges: { since: 'main', merges: [merge], errorCount: 1, warningCount: 0, ok: false } }),
+      verification({ merges: { ...NO_MERGE, since: 'main', merges: [merge], errorCount: 1, ok: false } }),
     );
 
     const passed = formatSliceVerification(
-      verification({ merges: { merges: [{ ...merge, errors: [] }], errorCount: 0, warningCount: 0, ok: true } }),
+      verification({ merges: { ...NO_MERGE, merges: [{ ...merge, errors: [] }] } }),
     );
 
     expect(reported).toContain(
@@ -167,5 +167,27 @@ describe('the report of verify-slice, on the merges of the branch', () => {
 
     expect(reported).toContain('next: nothing to commit');
     expect(passed).toContain('merges since main: ok\n');
+  });
+
+  it('shows a migration of the branch that sorts before the last of the trunk, although the branch made no merge', () => {
+    const migration = {
+      kind: 'before-trunk',
+      migration: '20261015101500_add-invoices',
+      file: 'migrations/20261015101500_add-invoices.js',
+      trunkLast: '20261016090000_add-payments',
+      text: 'the migration "20261015101500_add-invoices" of this branch sorts before "20261016090000_add-payments"',
+      fix: 'Run `npx ddd-ts-kit merge-trunk --to-land` before the landing.',
+    } as const;
+
+    const reported = formatSliceVerification(
+      verification({ merges: { ...NO_MERGE, since: 'main', migrations: [migration], errorCount: 1, ok: false } }),
+    );
+
+    expect(reported).toContain(
+      `merges since main: 1 migration(s) out of order, which the push is refused on\n    migrations against main: 1 error(s)\n        ${migration.file}  ${migration.text}\n    next: ${migration.fix}\n  put each migration above after the trunk's before the push: \`npx ddd-ts-kit verify-merge\` exits 1 on them, \`--warn\` included, and so does the pre-push hook`,
+    );
+
+    expect(reported).not.toContain('not failing the slice in this version');
+    expect(reported).not.toContain('a later minor version');
   });
 });

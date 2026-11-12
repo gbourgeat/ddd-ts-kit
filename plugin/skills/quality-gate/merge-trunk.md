@@ -15,6 +15,14 @@ both sides, never by taking one side of a source file or a test (`-X theirs`, `-
 sub-agent), `git add` it, then `npx ddd-ts-kit merge-trunk --continue`: it replays the
 migrations, regenerates, runs `verify-merge` on the result and commits only once no line, row
 or test is lost (a removal decided on purpose: `--continue --accept-lost`; `--abort` undoes, and restores the derived files the kit regenerated). On Prisma it also runs `npm run db:client` when the merge changed a schema, so the test database is current. When the trunk moved since the merge started, `--continue` says so: it concludes the commit of the first run, so run `merge-trunk` again after it.
+`verify-merge` also fails, `--warn` included, on a migration of the branch that sorts before the
+last one of the trunk (a working one aside) or that the drizzle-kit journal does not list: it
+names both migrations and the command, `merge-trunk` under drizzle-kit, `merge-trunk --to-land`
+under knex, Prisma and TypeORM. On a branch that already holds the trunk, `--to-land` has nothing
+to merge and still lands the migrations out of order (replayed, or renamed after the trunk's
+last; `--dry-run` lists them): commit them, then `npm run verify`. A stop leaves the folder as it
+was. Tell the user that a database which applied an old name is reset, or its migration table
+corrected, as the output says.
 Under the sandbox, a trunk that changes the settings of the project (`.claude/settings.json`) or
 another path the session cannot write is the owner's merge: `merge-trunk` stops with nothing
 changed and exit 3, naming the paths; hand the owner the same command to run from a terminal

@@ -17,7 +17,7 @@ export function formatMergeReport(report: MergeReport): string {
 
   return [
     `merge-trunk ${report.branch} <- ${report.trunk.ref} (${short})${report.status === 'dry-run' ? ', dry run: nothing changed' : ''}`,
-    ...(report.status === 'up-to-date' ? [] : bodyLines(report)),
+    ...(report.status === 'up-to-date' ? migrationLines(report) : bodyLines(report)),
     `next: ${report.next}`,
   ].join('\n');
 }
@@ -32,7 +32,7 @@ function bodyLines(report: MergeReport): string[] {
       ? []
       : ['automatic:', ...report.automatic.map(({ file, how }) => `  ${file}  ${how}`)]),
     ...forYouLines(report),
-    ...(report.migrations.length === 0 ? [] : ['migrations:', ...report.migrations.map((line) => `  ${line}`)]),
+    ...migrationLines(report),
     ...regenerateLines(report),
     ...clientLines(report),
     ...movedLines(report),
@@ -45,6 +45,10 @@ function bodyLines(report: MergeReport): string[] {
       ? []
       : [`committed ${report.commit.slice(0, 7)} "Merge ${report.trunk.ref} into ${report.branch}"`]),
   ];
+}
+
+function migrationLines({ migrations }: MergeReport): string[] {
+  return migrations.length === 0 ? [] : ['migrations:', ...migrations.map((line) => `  ${line}`)];
 }
 
 function baseLines(base: BasePoint): string[] {

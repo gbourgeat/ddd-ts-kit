@@ -4,10 +4,23 @@ import type { MergeVerification } from './merge-verification';
 
 /**
  * The verification of the merges as a short report: each merge with what it lost, then what to
- * do. Nothing at all without a merge to check, so that a hook running it stays silent.
+ * do, then the migrations that do not follow the trunk's. Nothing at all without a merge to
+ * check nor such a migration, so that a hook running it stays silent.
  */
 export function formatMergeVerification(verification: MergeVerification): string {
-  return verification.merges.flatMap(mergeLines).join('\n');
+  return [...verification.merges.flatMap(mergeLines), ...migrationLines(verification)].join('\n');
+}
+
+function migrationLines({ migrations, since }: MergeVerification): string[] {
+  if (migrations.length === 0) {
+    return [];
+  }
+
+  return [
+    `migrations against ${since ?? 'the trunk'}: ${migrations.length} error(s)`,
+    ...migrations.map(({ file, text }) => `    ${file}  ${text}`),
+    ...[...new Set(migrations.map(({ fix }) => fix))].map((fix) => `next: ${fix}`),
+  ];
 }
 
 function mergeLines(merge: MergeCheck): string[] {

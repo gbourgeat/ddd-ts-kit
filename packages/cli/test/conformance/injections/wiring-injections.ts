@@ -21,6 +21,25 @@ const LISTED =
 const STALE =
   'The generated list of a class is read from its constructor: a changed signature leaves the barrel stale until it is regenerated.';
 
+const ARCHIVE_PORT = `${PATHS.NOTIFICATION}/application/ports/mail-archive.port.ts`;
+const ARCHIVE = `${PATHS.NOTIFICATION}/infrastructure/external/remote-mail-archive.adapter.ts`;
+
+/** A second adapter of the context, slow by nature, that states its own limit. */
+const REMOTE_ARCHIVE = [
+  "import { timeout } from '@ddd-ts-kit/aspects';",
+  "import { Adapter } from '@ddd-ts-kit/kernel/declarations';",
+  `import { MailArchive } from '${ALIAS}/application/ports/mail-archive.port${SOURCE_SUFFIX}';`,
+  `import { ownPolicy } from '${SOURCE_ALIAS}platform/resilience/own-policy${SOURCE_SUFFIX}';`,
+  '',
+  "@Adapter(MailArchive, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })",
+  'export class RemoteMailArchive implements MailArchive {',
+  '  async keep(notificationId: string): Promise<void> {',
+  '    await Promise.resolve(notificationId);',
+  '  }',
+  '}',
+  '',
+].join('\n');
+
 const SECOND_STATEMENT = [
   { tool: 'checker', rule: 'declarations/constructor-injection', reason: LISTED },
   { tool: 'eslint', rule: 'ddd-ts-kit/declarations-constructor-injection', reason: LISTED },
@@ -240,6 +259,40 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     file: ROUTE,
     changes: [{ file: ROUTE, where: 'start', to: "import '@nestjs/common';\n" }],
     checker: true,
+  },
+  {
+    rule: 'aspects/timeout-covers-delegate',
+    what: 'the mailer left to the default policy and given the port of an archive that states a longer limit',
+    file: ADAPTER,
+    changes: [
+      {
+        file: ARCHIVE_PORT,
+        to: 'export abstract class MailArchive {\n  abstract keep(notificationId: string): Promise<void>;\n}\n',
+      },
+      { file: ARCHIVE, to: REMOTE_ARCHIVE },
+      {
+        file: ADAPTER,
+        where: 'start',
+        to: `import { MailArchive } from '${ALIAS}/application/ports/mail-archive.port${SOURCE_SUFFIX}';\n`,
+      },
+      {
+        file: ADAPTER,
+        from: `import { ownPolicy } from '${SOURCE_ALIAS}platform/resilience/own-policy${SOURCE_SUFFIX}';\n`,
+        to: '',
+      },
+      {
+        file: ADAPTER,
+        from: "@Adapter(Mailer, { kind: 'external', aspects: [ownPolicy()] })",
+        to: "@Adapter(Mailer, { kind: 'external' })",
+      },
+      {
+        file: ADAPTER,
+        from: '  constructor(private readonly logger: Logger) {}',
+        to: '  constructor(\n    private readonly logger: Logger,\n    readonly archive: MailArchive,\n  ) {}',
+      },
+    ],
+    checker: true,
+    alsoReports: [{ tool: 'checker', rule: 'declarations/barrel-current', reason: STALE }],
   },
   {
     rule: 'standard/no-parallel-interface',

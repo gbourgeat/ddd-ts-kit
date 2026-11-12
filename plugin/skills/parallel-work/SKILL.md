@@ -241,7 +241,9 @@ second merge can conflict. For each branch:
    meanwhile, regenerates and checks nothing was lost; `npm run verify` in the worktree, push,
    then the squash merge (a squash made outside GitHub or GitLab:
    `npx ddd-ts-kit verify-merge <squash commit> --theirs <head of the branch>`). Only you run
-   `--to-land`: the guard refuses it to a sub-agent;
+   `--to-land`: the guard refuses it to a sub-agent. A branch pushed without it fails
+   `verify-merge` on each migration that sorts before the trunk's last; on a branch that already
+   holds the trunk, `--to-land` still lands the migrations and leaves them to commit;
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;
 3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
    a slice merges with `TODO(review)` markers, a story or a milestone closes once

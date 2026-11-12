@@ -10,6 +10,22 @@ builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]).wi
 // infrastructure/external/stripe-payment.gateway.ts
 import { Retry } from '@ddd-ts-kit/aspects/decorators';`,
   },
+  'aspects/timeout-covers-delegate': {
+    why: 'The platform puts a default policy around every `external` or `gateway` adapter that states none: retries, and a time limit for each attempt (the fallback of OUTBOUND_TIMEOUT_MS in the configuration of the platform, else `timeoutMs` of resilience/default-resilience-settings.ts: 2 seconds as generated). An adapter that only hands its call to another adapter, slow by nature and bound with a longer limit of its own, is then cut by a limit nobody chose: every call fails at the default, as a timeout of the outer adapter, and nothing points at the adapter behind it. The rule reports that one case: an adapter left to the default policy (no `ownPolicy(...)`, no `timeout(...)` of its own, a kind `external` or `gateway`, which an `@Adapter` that names no kind has), given a port whose adapter states a longer `timeout(<ms>)` around all its methods. An adapter that states its own limit, even a shorter one, chose it and is never reported. It reads `@Adapter`, `@Gateway` and the bindings of the container of the kit (`bind(Port).toClass(Adapter).as(kind).with(...)`), and judges nothing the text does not show: a platform wired by hand (`platform.adapter(...)`); a duration or a kind that is not a literal; an aspect that is a variable, a spread, a call of another name or under `when(...)`; a `timeout(` nested in the options of another aspect; a `@Timeout` on a method; a port or an adapter bound more than once, bound again by `rebind(`, or bound under a condition; a parameter typed by a name the adapter does not import from a file of the project (a type of a package, a declaration of its own file); two ports of one name unless each file imports its own from the file that declares it; an adapter reached through a middle adapter; a default limit that is not one number, or an environment that sets OUTBOUND_TIMEOUT_MS; and the retries around a limit.',
+    bad: `// infrastructure/external/remote-quote-reader.adapter.ts
+@Adapter(QuoteReader, { kind: 'external' })
+export class RemoteQuoteReader implements QuoteReader {
+  constructor(private readonly models: ModelReader) {}
+}
+// infrastructure/external/remote-model-reader.adapter.ts
+@Adapter(ModelReader, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })
+export class RemoteModelReader implements ModelReader {}`,
+    good: `// infrastructure/external/remote-quote-reader.adapter.ts
+@Adapter(QuoteReader, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })
+export class RemoteQuoteReader implements QuoteReader {
+  constructor(private readonly models: ModelReader) {}
+}`,
+  },
   'tracing/platform-only': {
     why: 'Tracing is non-invasive and wired once. One action is one trace because every span is opened by the same few places: the request boundary, the bus middleware, the instrumentation around adapters and handlers, the outbox relay. A context that imports @ddd-ts-kit/tracing or an @opentelemetry package opens spans of its own, with names and attributes nobody reviews, and can no longer be traced differently by changing the composition root alone. Judged: every source under the source root, tests included, but the platform directory, main.ts and apps/.',
     bad: `// infrastructure/external/stripe-payment.gateway.ts

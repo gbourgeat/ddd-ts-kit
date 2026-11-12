@@ -157,7 +157,7 @@ describe('ddd-ts-kit drizzle-generate --replay of a forked history', () => {
       expect(result.code).toBe(2);
       expect(result.stderr).toContain(`${tag} is not what drizzle-kit writes for its change on top of main`);
       expect(result.stderr).toContain('the branch has `CREATE INDEX "invoices_due" ON "invoices" ("due")`');
-      expect(result.stderr).toContain(`git show HEAD:migrations/${tag}.sql`);
+      expect(result.stderr).toContain(`git show HEAD:./migrations/${tag}.sql`);
       expect(git(root, 'status', '--porcelain')).toBe(before);
       expect(fs.readdirSync(path.join(root, 'migrations')).filter((entry) => entry.endsWith('.sql'))).toHaveLength(3);
     },

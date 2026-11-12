@@ -17,6 +17,12 @@ export interface TimeoutOptions {
   readonly signal?: boolean;
   /** Defaults to the scheduler of the aspect runtime. */
   readonly scheduler?: Scheduler;
+  /**
+   * Who states this limit, in a few words: the `TimeoutError` carries it and ends its message with
+   * it. A policy applied to adapters that did not ask for it (the default one of a platform) names
+   * itself here, and says how an adapter states its own.
+   */
+  readonly statedBy?: string;
 }
 
 /**
@@ -37,7 +43,7 @@ export function timeoutAdvice(timeoutMs: number, options: TimeoutOptions = {}): 
       const controller = new AbortController();
 
       const cancel = schedulerOr(options.scheduler).schedule(() => {
-        const error = new TimeoutError(`${joinPoint.className}.${joinPoint.method}`, timeoutMs);
+        const error = new TimeoutError(`${joinPoint.className}.${joinPoint.method}`, timeoutMs, options.statedBy);
 
         controller.abort(error);
         reject(error);

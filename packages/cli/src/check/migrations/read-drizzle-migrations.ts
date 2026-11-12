@@ -1,24 +1,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { isRecord } from '../support/is-record';
-import type { DrizzleMigrations, JournalEntry, SnapshotLink } from './drizzle-migrations';
+import type { DrizzleMigrations, SnapshotLink } from './drizzle-migrations';
 import { drizzleOutFolder } from './drizzle-out-folder';
+import { journalEntries } from './journal-entries';
 
 /** The journal, the SQL files and the snapshots of the project; undefined when it has no journal to read. */
 export function readDrizzleMigrations(root: string): DrizzleMigrations | undefined {
   const folder = drizzleOutFolder(root);
   const directory = path.join(root, folder);
   const journalText = readIfPresent(path.join(directory, 'meta', '_journal.json'));
-  const journal = journalText === undefined ? undefined : parsed(journalText);
+  const entries = journalText === undefined ? undefined : journalEntries(journalText);
 
-  if (journalText === undefined || !isRecord(journal) || !Array.isArray(journal['entries'])) {
+  if (journalText === undefined || entries === undefined) {
     return undefined;
   }
 
   return {
     folder,
     journalText,
-    entries: journal['entries'].filter(isEntry),
+    entries,
     files: namesEndingWith(directory, '.sql'),
     snapshots: snapshotsIn(path.join(directory, 'meta')),
   };
@@ -38,15 +39,6 @@ function linkOf(snapshot: Record<string, unknown>): SnapshotLink | undefined {
   const { id, prevId } = snapshot;
 
   return typeof id === 'string' && typeof prevId === 'string' ? { id, prevId } : undefined;
-}
-
-function isEntry(value: unknown): value is JournalEntry {
-  return (
-    isRecord(value) &&
-    typeof value['idx'] === 'number' &&
-    typeof value['when'] === 'number' &&
-    typeof value['tag'] === 'string'
-  );
 }
 
 function namesEndingWith(directory: string, suffix: string): string[] {

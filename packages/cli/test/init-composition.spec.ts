@@ -95,6 +95,10 @@ describe('the composition root init writes, on tsyringe', () => {
     expect(platform(root, 'auth/authentication/http-boundary.ts')).toContain('around: tracedRoutes(),');
     expect(exists(root, 'src/platform/decorate-bindings.ts')).toBe(false);
     expect(platform(root, 'resilience/default-policy.ts')).not.toContain('traceDependency');
+
+    expect(platform(root, 'resilience/default-policy.ts')).toContain(
+      'timeout(settings.timeoutMs, { statedBy: STATED_BY }),',
+    );
   });
 
   it('closes the event provider inside the stop of the application, before the logger is flushed', () => {

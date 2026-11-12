@@ -37,6 +37,22 @@ describe('timeout', () => {
     });
   });
 
+  it('ends the message with who stated the limit, when the aspect was told: a default policy names itself', async () => {
+    const scheduler = new ManualScheduler();
+    const statedBy = 'the default policy of the external adapters: `ownPolicy(timeout(<ms>))` states another';
+    const gateway = timeout(2000, { scheduler, statedBy })(new SlowGateway());
+    const pending = gateway.fetch('customer-4111');
+
+    scheduler.advance(2000);
+
+    expect(await pending.catch((caught: unknown) => caught)).toMatchObject({
+      code: TIMEOUT,
+      timeoutMs: 2000,
+      statedBy,
+      message: `SlowGateway.fetch did not answer within 2000 ms (${statedBy})`,
+    });
+  });
+
   it('answers all the same when the scheduler of the project cannot cancel the timer it armed', async () => {
     const cancelled: string[] = [];
 
