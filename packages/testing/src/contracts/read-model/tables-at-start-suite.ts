@@ -12,6 +12,11 @@ const ALL = [TABLES.ready, TABLES.agenda, TABLES.contacts] as const;
  */
 export class TablesAtStartSuite extends ReadModelTablesSuite {
   protected tests(): void {
+    this.readsTheListAlone();
+    this.refusesOrReports();
+  }
+
+  private readsTheListAlone(): void {
     this.it(
       'never reads a table nobody lists: one of another schema that carries the stamp changes nothing',
       async () => {
@@ -27,7 +32,9 @@ export class TablesAtStartSuite extends ReadModelTablesSuite {
         this.expect(await this.listed().states()).toEqual([]);
       },
     );
+  }
 
+  private refusesOrReports(): void {
     this.it('refuses the start of an application with one error that names every listed table not ready', async () => {
       await this.create(...ALL);
 
@@ -35,7 +42,9 @@ export class TablesAtStartSuite extends ReadModelTablesSuite {
       const refusal = await failureOf(() => this.listed(...ALL.map(({ shape }) => shape)).atStart(logger));
 
       this.expect(
-        refusal instanceof ReadModelTablesNotReadyError ? refusal.tables.map(({ state: found }) => found) : [],
+        [refusal]
+          .filter((refused) => refused instanceof ReadModelTablesNotReadyError)
+          .flatMap(({ tables }) => tables.map(({ state }) => state)),
       ).toEqual([this.agenda, this.contacts]);
 
       this.expect(logger.entries).toEqual([]);

@@ -31,9 +31,6 @@ export abstract class ReadModelTablesSuite extends ContractSuite<ReadModelTables
     constraint: { state: 'held', columns: ['label'] },
   });
 
-  /** The statements each table was migrated with, to run them a second time. */
-  private readonly migrations = new Map<string, readonly string[]>();
-
   constructor(runner: ContractRunner, createTables: () => Awaitable<ReadModelTablesUnderContract>) {
     super(runner, async () => {
       const subject = await createTables();
@@ -107,19 +104,22 @@ export abstract class ReadModelTablesSuite extends ContractSuite<ReadModelTables
   }
 
   protected async statementsOf(shape: ReadModelTableShape): Promise<readonly string[]> {
-    const refusal = await this.traced(shape);
-
-    return refusal instanceof ReadModelTableNotReadyError ? refusal.statements : [];
+    return [await this.traced(shape)]
+      .filter((refusal) => refusal instanceof ReadModelTableNotReadyError)
+      .flatMap((refusal) => refusal.statements);
   }
 
-  /** Runs the migration the store writes for the table, each statement as it is; `again` runs the same statements a second time. */
-  protected async migrate({ shape }: { readonly shape: ReadModelTableShape }, again?: 'again'): Promise<void> {
-    this.migrations.set(
-      shape.table,
-      again === undefined ? await this.statementsOf(shape) : (this.migrations.get(shape.table) ?? []),
-    );
+  /** Runs the migration the store writes for the table, each statement as it is, and answers it. */
+  protected async migrate({ shape }: { readonly shape: ReadModelTableShape }): Promise<readonly string[]> {
+    const statements = await this.statementsOf(shape);
 
-    for (const statement of this.migrations.get(shape.table) ?? []) {
+    await this.run(statements);
+
+    return statements;
+  }
+
+  protected async run(statements: readonly string[]): Promise<void> {
+    for (const statement of statements) {
       await this.subject.execute(statement);
     }
   }

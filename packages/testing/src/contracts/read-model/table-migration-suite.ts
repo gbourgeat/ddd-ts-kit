@@ -47,8 +47,7 @@ export class TableMigrationSuite extends ReadModelTablesSuite {
         await this.create(TABLES.agenda);
         await this.subject.execute(this.agendaRow('gone', "'booked', '09:00', 'a note'"));
         await this.subject.execute(this.agendaRow('kept', "'booked', '10:00', null"));
-        await this.migrate(TABLES.agenda);
-        await this.migrate(TABLES.agenda, 'again');
+        await this.run(await this.migrate(TABLES.agenda));
 
         const rows = await this.subject.execute(
           `select slug, status, starts_at, note, tenant_id, owner, created_at is not null as created, id is not null as numbered from ${this.schema}.agenda order by slug`,
@@ -89,12 +88,10 @@ export class TableMigrationSuite extends ReadModelTablesSuite {
       const statements = await this.statementsOf(TABLES.agenda.shape);
       const validation = statements.findIndex((statement) => statement.includes(' validate constraint '));
 
-      for (const statement of statements.slice(0, validation)) {
-        await this.subject.execute(statement);
-      }
+      await this.run(statements.slice(0, validation));
 
       const locks = await this.subject.transaction(async () => {
-        await this.subject.execute(statements[validation] ?? '');
+        await this.run(statements.slice(validation, validation + 1));
 
         return this.subject.execute(
           `select mode from pg_locks where relation = to_regclass('${this.schema}.agenda') and pid = pg_backend_pid()`,
@@ -127,7 +124,7 @@ export class TableMigrationSuite extends ReadModelTablesSuite {
 
       this.expect(logger.entries.map(({ level }) => level)).toEqual(['warn']);
 
-      await this.subject.execute(/Run: (.+)$/.exec(logger.entries[0]?.message ?? '')?.[1] ?? '');
+      await this.run(logger.entries.flatMap(({ message }) => message.split('Run: ').slice(1)));
       await this.agrees(TABLES.noted, { ...found, constraint: { state: 'held', columns: ['title'] } }, 'created');
     });
 

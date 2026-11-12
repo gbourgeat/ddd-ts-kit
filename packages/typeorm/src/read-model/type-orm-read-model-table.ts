@@ -146,7 +146,7 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
 
     return new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
       table: tableName,
-      deletedColumn: this.traced().deleted ?? 'deleted',
+      deletedColumn: deletedColumnOf(this.options),
       ...(schema === undefined ? {} : { schema }),
     });
   }
@@ -156,9 +156,13 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
     const { schema, tableName, columns } = this.metadata();
     const kept = keptOf(this.options);
     const data = columns.filter((column) => !kept.has(column.propertyName)).map((column) => column.databaseName);
-    const deleted = columns.find((column) => column.propertyName === 'deleted')?.databaseName ?? 'deleted';
 
-    return { table: tableName, data, deleted, ...(schema === undefined ? {} : { schema }) };
+    return {
+      table: tableName,
+      data,
+      deleted: deletedColumnOf(this.options),
+      ...(schema === undefined ? {} : { schema }),
+    };
   }
 
   private async run(
@@ -197,7 +201,7 @@ function holdsTraces<Row>(options: TypeOrmReadModelOptions<Row>): void {
       refusing,
       unfit: [],
       row: data.map((column) => column.name),
-      deleted: columns.deleted?.name ?? 'deleted',
+      deleted: deletedColumnOf(options),
       ...(schema === undefined ? {} : { schema }),
     });
   }
@@ -206,4 +210,9 @@ function holdsTraces<Row>(options: TypeOrmReadModelOptions<Row>): void {
 /** The properties a trace keeps: the stamp, the key and the tenant. */
 function keptOf<Row>({ key, tenant }: TypeOrmReadModelOptions<Row>): ReadonlySet<string> {
   return new Set([...STAMPS, key ?? 'id', ...(tenant === undefined ? [] : [tenant.property ?? 'tenantId'])]);
+}
+
+/** The column of the mark of a deleted row, as the entity names it. */
+function deletedColumnOf<Row>(options: TypeOrmReadModelOptions<Row>): string {
+  return options.entity.options.columns.deleted?.name ?? 'deleted';
 }
