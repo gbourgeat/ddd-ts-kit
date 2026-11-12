@@ -3,6 +3,8 @@ import { isWorkingMigration } from '../../check/migrations/is-working-migration'
 import { journalEntries } from '../../check/migrations/journal-entries';
 import { readDrizzleMigrations } from '../../check/migrations/read-drizzle-migrations';
 import { runGit } from '../../commit/run-git';
+import { migrationsAt } from '../migrations-at';
+import { appliedUnderOldName } from './applied-under-old-name';
 import type { MigrationOrderFinding } from './migration-order-finding';
 import type { TrunkToFollow } from './trunk-to-follow';
 
@@ -10,7 +12,8 @@ import type { TrunkToFollow } from './trunk-to-follow';
  * Under drizzle-kit the order is the journal's: the migrator applies the entries generated after
  * the last one a database applied, by their `when`, and nothing else. An entry of the branch
  * generated before the last entry of the trunk is skipped there without a word, and a file the
- * journal does not list (a merge kept the journal of one side) is never applied anywhere.
+ * journal does not list (a merge kept the journal of one side) is never applied anywhere; one the
+ * trunk holds as well is not the branch's to list.
  */
 export function drizzleOrder(root: string, trunk: TrunkToFollow): MigrationOrderFinding[] {
   const here = readDrizzleMigrations(root);
@@ -23,7 +26,11 @@ export function drizzleOrder(root: string, trunk: TrunkToFollow): MigrationOrder
   const theirs = journalEntries(runGit(root, ['show', `${trunk.commit}:${journal}`]) ?? '') ?? [];
   const fix = fixOf(here.folder, trunk);
 
-  return [...generatedBefore(here, theirs, trunk), ...unlisted(here)].map((finding) => ({ ...finding, fix }));
+  const held = new Set(
+    migrationsAt(root, trunk.commit, { folder: here.folder, directories: false }).map(({ name }) => name),
+  );
+
+  return [...generatedBefore(here, theirs, trunk), ...unlisted(here, held)].map((finding) => ({ ...finding, fix }));
 }
 
 function generatedBefore(
@@ -49,11 +56,15 @@ function generatedBefore(
     }));
 }
 
-function unlisted({ entries, files, folder }: DrizzleMigrations): Omit<MigrationOrderFinding, 'fix'>[] {
+/** A file the trunk holds too is the trunk's to list: every branch would report it, and none could fix it. */
+function unlisted(
+  { entries, files, folder }: DrizzleMigrations,
+  held: ReadonlySet<string>,
+): Omit<MigrationOrderFinding, 'fix'>[] {
   const listed = new Set(entries.map((entry) => entry.tag));
 
   return files
-    .filter((tag) => !listed.has(tag))
+    .filter((tag) => !listed.has(tag) && !held.has(tag))
     .map((tag) => ({
       kind: 'not-in-journal',
       migration: tag,
@@ -68,8 +79,8 @@ function fixOf(folder: string, trunk: TrunkToFollow): string {
     'A branch with more than one migration that changes the schema is refused, with the steps to generate them again one at a time.';
 
   if (!trunk.merged) {
-    return `Run \`npx ddd-ts-kit merge-trunk\`: it brings ${trunk.name} in, takes its journal and its snapshots, and generates the migrations of the branch again after them, under their names. ${limit}`;
+    return `Run \`npx ddd-ts-kit merge-trunk\`: it brings ${trunk.name} in, takes its journal and its snapshots, and generates the migrations of the branch again after them, under their names. ${limit} ${appliedUnderOldName('drizzle')}`;
   }
 
-  return `Take the journal and the snapshots of the trunk, \`git checkout ${trunk.name} -- ${folder}/meta\`, then run \`npx ddd-ts-kit drizzle-generate --replay --base ${trunk.name}\`: it finds the migrations of the branch by their files and generates them again after the trunk's, under their names. ${limit}`;
+  return `Take the journal and the snapshots of the trunk, \`git checkout ${trunk.name} -- ${folder}/meta\`, then run \`npx ddd-ts-kit drizzle-generate --replay --base ${trunk.name}\`: it finds the migrations of the branch by their files and generates them again after the trunk's, under their names. ${limit} ${appliedUnderOldName('drizzle')}`;
 }

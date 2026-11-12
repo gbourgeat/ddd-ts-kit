@@ -12,9 +12,27 @@ const QUOTE_READER = `${BILLING}/infrastructure/external/remote-quote-reader.ada
 export const STANDARD_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'aspects/timeout-covers-delegate',
-    name: 'a delegating adapter whose own policy lasts as long as the adapter behind the port it is given',
+    name: 'a delegating adapter that states its own policy, as long as the adapter behind the port it is given',
     expect: 'pass',
     files: project(delegation('.with(ownPolicy(timeout(120_000)))')),
+  },
+  {
+    ruleId: 'aspects/timeout-covers-delegate',
+    name: 'a delegating adapter that chose a shorter limit than the adapter it calls: failing fast is its choice',
+    expect: 'pass',
+    files: project(delegation('.with(ownPolicy(timeout(500)))')),
+  },
+  {
+    ruleId: 'aspects/timeout-covers-delegate',
+    name: 'a port bound again by rebind: which adapter serves it is known at run time only',
+    expect: 'pass',
+    files: project(delegation('', '  builder.rebind(ModelReader).toClass(FastModelReader);\n')),
+  },
+  {
+    ruleId: 'aspects/timeout-covers-delegate',
+    name: 'a slow adapter bound under a condition',
+    expect: 'pass',
+    files: project(delegation('', '', true)),
   },
   {
     ruleId: 'aspects/timeout-covers-delegate',
@@ -132,13 +150,15 @@ export const STANDARD_FIXTURES: readonly Fixture[] = [
 ];
 
 /** An adapter given the port of a slow one, the default settings of the platform, and the module that binds both. */
-function delegation(policyOfTheDelegating: string): Record<string, string> {
+function delegation(policyOfTheDelegating: string, alsoBound = '', underCondition = false): Record<string, string> {
+  const slow = "builder.bind(ModelReader).toClass(RemoteModelReader).as('external').with(ownPolicy(timeout(120_000)));";
+
   return {
     [QUOTE_READER]:
       'export class RemoteQuoteReader {\n  constructor(private readonly models: ModelReader) {}\n\n  read(): unknown {\n    return this.models;\n  }\n}\n',
     [`${BILLING}/infrastructure/external/remote-model-reader.adapter.ts`]: 'export class RemoteModelReader {}\n',
     'src/platform/resilience/default-resilience-settings.ts':
       'export const defaultResilienceSettings = { retryAttempts: 3, retryBaseDelayMs: 100, timeoutMs: 2000 };\n',
-    [MODULE]: `import type { ContainerBuilder } from '@ddd-ts-kit/di';\nexport function billingModule(builder: ContainerBuilder): void {\n  builder.bind(QuoteReader).toClass(RemoteQuoteReader).as('external')${policyOfTheDelegating};\n  builder.bind(ModelReader).toClass(RemoteModelReader).as('external').with(ownPolicy(timeout(120_000)));\n}\n`,
+    [MODULE]: `import type { ContainerBuilder } from '@ddd-ts-kit/di';\nexport function billingModule(builder: ContainerBuilder): void {\n  builder.bind(QuoteReader).toClass(RemoteQuoteReader).as('external')${policyOfTheDelegating};\n${underCondition ? `  if (settings.remote) {\n    ${slow}\n  }` : `  ${slow}`}\n${alsoBound}}\n`,
   };
 }

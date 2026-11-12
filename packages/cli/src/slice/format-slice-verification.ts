@@ -6,6 +6,9 @@ import type { SliceVerification } from './slice-verification';
 const MERGES_WILL_BLOCK =
   '  restore each loss above before the commit: a later minor version fails the slice on them; `npx ddd-ts-kit verify-merge` alone already exits 1 on them';
 
+const MIGRATIONS_BLOCK =
+  "  put each migration above after the trunk's before the push: `npx ddd-ts-kit verify-merge` exits 1 on them, `--warn` included, and so does the pre-push hook";
+
 /** The verification of a slice as a short report: each step, what failed with its cause, then what to do next. */
 export function formatSliceVerification(verification: SliceVerification): string {
   const { check, context, since } = verification;
@@ -30,14 +33,18 @@ function step(name: string, run: ScriptRun): string[] {
 
 /**
  * The merges of the branch: none, ok, or what each lost, as `verify-merge` reports it. In this
- * version an error is reported, loudly, without failing the slice: the check reaches projects as
- * a warning first.
+ * version what a merge lost is reported, loudly, without failing the slice: the check reaches
+ * projects as a warning first. A migration that does not follow the trunk's is said apart: the
+ * slice does not fail on it either, and the push is refused on it already.
  */
 function mergesLines({ merges, since }: SliceVerification): string[] {
   const { errorCount, warningCount } = merges;
+  const unordered = merges.migrations.length;
+  const lost = errorCount - unordered;
 
   const counted = [
-    ...(errorCount === 0 ? [] : [`${errorCount} error(s), not failing the slice in this version`]),
+    ...(lost === 0 ? [] : [`${lost} error(s), not failing the slice in this version`]),
+    ...(unordered === 0 ? [] : [`${unordered} migration(s) out of order, which the push is refused on`]),
     ...(warningCount === 0 ? [] : [`${warningCount} warning(s)`]),
   ];
 
@@ -46,7 +53,8 @@ function mergesLines({ merges, since }: SliceVerification): string[] {
   return [
     `merges since ${since}: ${verdict}`,
     ...(errorCount + warningCount === 0 ? [] : indented(formatMergeVerification(merges))),
-    ...(errorCount === 0 ? [] : [MERGES_WILL_BLOCK]),
+    ...(lost === 0 ? [] : [MERGES_WILL_BLOCK]),
+    ...(unordered === 0 ? [] : [MIGRATIONS_BLOCK]),
   ];
 }
 

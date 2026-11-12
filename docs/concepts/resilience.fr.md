@@ -1,5 +1,5 @@
 [English](resilience.md) · **Français**
-<!-- translation-of: resilience.md sha256:f5b376894f80f54b -->
+<!-- translation-of: resilience.md sha256:7e0221a959fd854a -->
 
 # Résilience
 
@@ -354,17 +354,15 @@ binding of this adapter states another, at least as long as the adapter it calls
 
 **La règle [`aspects/timeout-covers-delegate`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) le
 signale avant l'exécution.** `ddd-ts-kit check` lit les adaptateurs que le projet déclare
-(`@Adapter`, `@Gateway`) ou lie avec le conteneur du kit, les classes qui typent le constructeur
-de chacun, et les durées écrites comme des nombres : un adaptateur dont le délai (le
-`timeout(<ms>)` de sa déclaration ou de sa liaison, et celui par défaut de la plateforme quand son
-genre est `external` ou `gateway` et qu'il ne déclare aucun `ownPolicy(...)`) est plus court que
-celui que l'adaptateur derrière l'un de ses ports déclare pour lui-même, ses `@Timeout` compris,
-est une erreur, avec les deux durées. Le délai par défaut est celui avec lequel `main.ts`
-s'exécute : la valeur de repli de `OUTBOUND_TIMEOUT_MS` dans la configuration de la plateforme,
-sinon le `timeoutMs` de `resilience/default-resilience-settings.ts`. Le correctif déclare la
-politique de l'adaptateur extérieur, au moins aussi longue
-que celle de l'adaptateur intérieur, ou `ownPolicy()` seul quand il ne fait que passer l'appel et
-que l'adaptateur intérieur porte la politique :
+(`@Adapter`, `@Gateway`) ou lie avec le conteneur du kit, et les classes qui typent le
+constructeur de chacun. Elle signale un seul cas, celui que personne n'a choisi : un adaptateur
+`external` ou `gateway` laissé à la politique par défaut (aucun `ownPolicy(...)`, aucun
+`timeout(...)` à lui) qui reçoit un port dont l'adaptateur déclare un `timeout(<ms>)` plus long
+autour de toutes ses méthodes. Le délai par défaut est celui avec lequel `main.ts` s'exécute : la
+valeur de repli de `OUTBOUND_TIMEOUT_MS` dans la configuration de la plateforme, sinon le
+`timeoutMs` de `resilience/default-resilience-settings.ts`. Le correctif déclare la politique de
+l'adaptateur extérieur, ou `ownPolicy()` seul quand il ne fait que passer l'appel et que
+l'adaptateur intérieur porte la politique :
 
 ```ts
 @Adapter(QuoteReader, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })
@@ -373,13 +371,25 @@ export class RemoteQuoteReader implements QuoteReader {
 }
 ```
 
-Ce qu'elle ne peut pas lire, elle ne le juge pas : une durée ou un genre pris dans la
-configuration ou dans une variable, un aspect sous `when(...)`, qui n'entoure que certains appels,
-un `@Timeout` sur une méthode de l'adaptateur extérieur (le texte ne dit pas quelle méthode
-appelle le port), un environnement qui fixe `OUTBOUND_TIMEOUT_MS`, une plateforme câblée à la main
-(`platform.adapter(...)`), un adaptateur que l'adaptateur extérieur atteint sans recevoir son
-port, et les nouvelles tentatives, qui multiplient les deux délais. Là, c'est le message de
-l'erreur qui le dit.
+Un adaptateur qui déclare son propre délai n'est jamais signalé, même quand ce délai est plus
+court que celui de l'adaptateur qu'il appelle : échouer vite est un choix. Et ce que le texte ne
+montre pas n'est pas jugé ; la règle se tait donc sur chacun de ces cas, où c'est le message de
+l'erreur qui le dit :
+
+- une plateforme câblée à la main (`platform.adapter(ownPolicy(...)(new X(), { ... }))`, le style
+  explicite sans le conteneur du kit) : rien n'y est lu ;
+- une durée ou un genre qui n'est pas un littéral, et un aspect qui est une variable, une
+  décomposition, un appel d'un autre nom ou sous `when(...)` ;
+- un `timeout(` imbriqué dans les options d'un autre aspect, et un `@Timeout` sur une méthode :
+  le texte ne dit pas quelle méthode appelle le port ;
+- un port ou un adaptateur lié plus d'une fois, lié de nouveau par `rebind(`, ou lié sous une
+  condition ;
+- deux ports du même nom, sauf si chaque fichier importe le sien depuis le fichier qui le
+  déclare ;
+- un adaptateur que l'adaptateur extérieur atteint à travers un adaptateur intermédiaire, ou sans
+  recevoir son port ;
+- un délai par défaut qui n'est pas un seul nombre, un environnement qui fixe
+  `OUTBOUND_TIMEOUT_MS`, et les nouvelles tentatives, qui multiplient les deux délais.
 
 Les cas d'usage reçoivent leur comportement transverse des *middlewares* des bus. Aucune des
 trois formes n'est permise dans `domain/` ou `application/` : règle

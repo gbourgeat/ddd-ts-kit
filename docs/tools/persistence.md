@@ -764,12 +764,30 @@ pre-push hook passes, softens what a merge lost and never this: the push stops.
 
 | Tool | What it reports | What brings the order right |
 |---|---|---|
-| drizzle-kit | an entry the branch adds to the journal whose `when` is not after the last entry of the trunk's journal, which the migrator would skip; a `.sql` file no entry of the journal lists, as after a merge that kept the journal of one side | `npx ddd-ts-kit merge-trunk`, which replays as it brings the trunk in. Once the trunk is merged otherwise: the `meta/` of the trunk, then `npx ddd-ts-kit drizzle-generate --replay --base <trunk>` (or `merge-trunk --to-land`, which does it at the landing). The replay refuses a branch with two migrations that change the schema: they are generated again by hand, one at a time, as above |
-| knex, Prisma, TypeORM | a migration the branch adds whose name sorts before the last migration of the trunk: the tool would run it after that one where it is applied, and before it on a new database | `npx ddd-ts-kit merge-trunk --to-land`, which renames it after the last of the trunk as it brings the trunk in. On a branch that already holds the trunk there is nothing to merge: it renames all the same and leaves the rename to commit. It stops when the migration and a later one of the trunk change one table: that one is generated again with `npm run db:generate <what-it-does>` |
+| drizzle-kit | an entry the branch adds to the journal whose `when` is not after the last entry of the trunk's journal, which the migrator would skip; a `.sql` file no entry of the journal lists and the trunk does not hold, as after a merge that kept the journal of one side (one the trunk holds too is the trunk's to list) | `npx ddd-ts-kit merge-trunk`, which replays as it brings the trunk in. Once the trunk is merged otherwise: the `meta/` of the trunk, then `npx ddd-ts-kit drizzle-generate --replay --base <trunk>` (or `merge-trunk --to-land`, which does it at the landing). The replay refuses a branch with two migrations that change the schema: they are generated again by hand, one at a time, as above |
+| knex, Prisma, TypeORM | a migration the branch adds whose name sorts before the last migration of the trunk: the tool would run it after that one where it is applied, and before it on a new database | `npx ddd-ts-kit merge-trunk --to-land`, which renames it after the last of the trunk as it brings the trunk in. On a branch that already holds the trunk there is nothing to merge: it renames all the same, only the migrations that do not follow the trunk's already, in their order, and leaves the rename to commit. It stops, nothing renamed, when the migration and a later one of the trunk change one table: delete that migration first (`git show HEAD:<file>` keeps what was written by hand), then `npm run db:generate <what-it-does>`, which refuses a name while a migration carries it |
 
 A working migration (`working-<what-it-does>`) is left out: its place is decided when the branch
-lands, and `persistence/migration-history` already refuses it on the trunk. Nothing is compared
-for a named commit, without the config of the kit, or when no ref names a trunk. Read in the code
+lands, and `persistence/migration-history` already refuses it on the trunk. Only what is named as
+a migration, a number then a name, is ordered: a helper beside them (`helpers.js`) is not. Nothing
+is compared for a named commit, without the config of the kit, or when no ref names a trunk.
+
+**A database that already applied the old name.** A migration renamed or generated again is a new
+one for the tool, which would run it a second time on a database of development, of a preview or
+shared that applied it under its old name. Reset that database, or correct its migration table:
+
+| Tool | The table, and what to correct |
+|---|---|
+| drizzle-kit | `drizzle.__drizzle_migrations`: add a row whose `created_at` is the `when` of the new entry of the journal |
+| knex | `knex_migrations`: rename the row (`name`, the file name) |
+| Prisma | `_prisma_migrations`: rename the row (`migration_name`) |
+| TypeORM | `migrations`: correct `timestamp`, and `name`, the class |
+
+`merge-trunk --to-land` says so each time it renames or replays, and so does the fix of
+`verify-merge`. `--to-land --dry-run` on a branch that already holds the trunk says which
+migrations would move and moves nothing. A landing that stops there leaves the migrations folder
+as it found it, under drizzle-kit too, whose replay deletes before it generates: the same command
+runs again once the cause is fixed. Read in the code
 of the four tools, and run here on git repositories with the files of each; not measured against
 a database.
 

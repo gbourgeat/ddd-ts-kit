@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0bf106b4c0bff630 -->
+<!-- translation-of: README.md sha256:0e9c7817a9158848 -->
 
 # ddd-ts-kit
 
@@ -2170,7 +2170,9 @@ d'`init` ne la lancent pas.
 de l'arbre de travail face au même tronc, avec les quatre ORM : une migration que la branche
 ajoute et dont le nom se trie avant la dernière migration du tronc (knex, Prisma, TypeORM), une
 entrée que la branche ajoute au journal de drizzle-kit et dont le `when` n'est pas après la
-dernière entrée de celui du tronc, et un fichier `.sql` que ce journal ne liste pas. Chacune est
+dernière entrée de celui du tronc, et un fichier `.sql` que ce journal ne liste pas et que le
+tronc ne contient pas. Seul ce qui est nommé comme une migration, un numéro puis un nom, est
+ordonné. Chacune est
 une erreur qui nomme la migration, la dernière du tronc et la commande qui remet l'ordre
 (`merge-trunk` sous drizzle-kit, ou le `meta/` du tronc puis `drizzle-generate --replay` une fois
 le tronc fusionné ; `merge-trunk --to-land` ailleurs), et `--warn` ne l'adoucit pas : code de
@@ -2276,9 +2278,14 @@ Sortie 0 une fois commité, à jour ou en aperçu, 1 sur un arrêt, 2 quand il n
 Sur une branche qui contient déjà le tronc, il n'y a rien à fusionner. `--to-land` fait quand
 même atterrir ses migrations quand l'une est une migration de travail, se trie avant la dernière
 du tronc ou manque au journal de drizzle-kit : rejouées sous drizzle-kit, renommées après la
-dernière du tronc sous knex, Prisma et TypeORM (un arrêt, code de sortie 1, quand l'une d'elles
-et une migration plus récente du tronc nomment la même table). Elles sont laissées à committer :
-aucun commit de fusion ne les porte.
+dernière du tronc sous knex, Prisma et TypeORM, seulement celles qui ne suivent pas déjà celles du
+tronc et dans leur ordre (un arrêt, code de sortie 1, quand l'une d'elles et une migration plus
+récente du tronc nomment la même table : l'arrêt dit de la supprimer, puis de la générer de
+nouveau). Elles sont laissées à committer : aucun commit de fusion ne les porte. Un arrêt laisse
+le dossier des migrations comme il a été trouvé, donc la même commande se relance, et `--dry-run`
+dit quelles migrations bougeraient. Chaque renommage ou rejeu se termine par ce qu'il faut faire
+d'une base qui a déjà appliqué l'ancien nom : la réinitialiser, ou corriger sa table des
+migrations (la table de chaque outil est dans `docs/tools/persistence.fr.md`).
 
 ```text
 merge-trunk build/billing-2 <- origin/main (d8d281b)
@@ -2554,7 +2561,7 @@ règle.
 | `authz/actor-explicit` | dans `domain/` et `application/` : `ActorContext`, `ExecutionScope` (comme type ou comme valeur : la classe est le jeton d'une liste de dépendances), `AsyncLocalStorageExecutionScope`, `ScopedActorContext`, `AsyncLocalStorage` ; `.current()` ou `.require()` sur un contexte d'acteur ou sur quelque chose nommé `scope`, `scopes` ou `...executionScope` ; un import de `stampCreation`, `stampUpdate` ou `tenantScopeOf` |
 | `authz/fields-by-schema` | sous `application/queries/` : `roles.includes(`, `.some(`, `.every(`, `.find(`, `.indexOf(`, une comparaison avec un `role`, `isAdmin` |
 | `aspects/outside-in` | un import de `@ddd-ts-kit/aspects/decorators` hors de `infrastructure/` d'un contexte et du répertoire de la plateforme : `presentation/`, le fichier de module, `published-language/`, le noyau partagé, `main.ts`, toute autre source (`domain/` et `application/` sont signalés par les deux règles `layer/*` à la place) |
-| `aspects/timeout-covers-delegate` | un adaptateur déclaré avec `@Adapter` ou `@Gateway`, ou lié par `bind(Port).toClass(Adapter)` dans un fichier qui importe `@ddd-ts-kit/di`, dont le constructeur a un paramètre typé par un port auquel un autre adaptateur de ce genre est lié, et dont le délai est plus court que celui que cet adaptateur déclare. Le délai d'un adaptateur est le plus petit `timeout(<nombre>)` écrit dans sa déclaration ou sa liaison et, sans `ownPolicy(` et avec le genre `external` ou `gateway` (le littéral de `kind:` ou de `.as(` ; `external` pour un `@Adapter` sans `kind`, aucun pour une liaison sans `.as(`), le délai par défaut de la plateforme : le `fallback: <nombre>` écrit après la chaîne `'OUTBOUND_TIMEOUT_MS'` dans un fichier du répertoire de la plateforme, sinon le `timeoutMs: <nombre>` de `<platform>/resilience/default-resilience-settings.ts`. L'adaptateur derrière le port compte aussi ses `@Timeout(<nombre>)`, et n'est jugé que s'il déclare lui-même un délai. La classe d'une liaison est celle que le fichier de la liaison déclare ou importe sous ce nom, sinon la seule classe de ce nom ; deux ports du même nom sont distingués quand chaque fichier importe le sien depuis le fichier qui le déclare. Un `timeout(` qui reçoit autre chose qu'un nombre, un `when(`, un genre qui n'est pas un littéral sans `ownPolicy(`, un délai par défaut qui n'est pas un seul nombre, ou un `@Timeout(` qui reçoit autre chose qu'un nombre derrière le port, rend l'adaptateur muet |
+| `aspects/timeout-covers-delegate` | un adaptateur déclaré avec `@Adapter` ou `@Gateway`, ou lié par `bind(Port).toClass(Adapter)` dans un fichier qui importe `@ddd-ts-kit/di`, qui s'exécute sous la seule politique par défaut et dont le constructeur a un paramètre typé par un port dont l'adaptateur déclare un délai plus long. Sous la seule politique par défaut : le genre `external` ou `gateway` (le littéral de `kind:` ou de `.as(` ; `external` pour un `@Adapter` sans `kind`, aucun pour une liaison sans `.as(`), aucun `ownPolicy(...)` et aucun `timeout(...)` parmi les éléments de `aspects: [...]` ou les arguments de `.with(...)`. Le délai par défaut : le `fallback: <nombre>` écrit après la chaîne `'OUTBOUND_TIMEOUT_MS'`, premier argument d'un appel, dans un seul fichier du répertoire de la plateforme, sinon le `timeoutMs: <nombre>` de `<platform>/resilience/default-resilience-settings.ts`. Le délai derrière le port : le plus petit `timeout(<nombre>)` qui est un élément de ses aspects ou un argument de son `ownPolicy(...)`, quand il a un `ownPolicy(...)` ou un genre que la politique par défaut laisse de côté. La classe d'une liaison est celle que le fichier de la liaison déclare ou importe sous ce nom, sinon la seule classe de ce nom. Muette sur : une plateforme câblée à la main (`platform.adapter(...)`) ; une durée ou un genre qui n'est pas un littéral ; un aspect qui est une variable, une décomposition, un appel d'un autre nom ou sous `when(...)` ; un `timeout(` imbriqué dans les options d'un autre aspect ; un `@Timeout` sur une méthode ; un port ou un adaptateur lié plus d'une fois, lié de nouveau par `rebind(`, ou lié sous une condition ; deux ports du même nom, sauf si chaque fichier importe le sien depuis le fichier qui le déclare ; un adaptateur atteint à travers un adaptateur intermédiaire ; un délai par défaut qui n'est pas un seul nombre, ou un environnement qui fixe `OUTBOUND_TIMEOUT_MS` ; les nouvelles tentatives |
 | `tracing/platform-only` | un import de `@ddd-ts-kit/tracing` ou d'un *package* `@opentelemetry/*` hors du répertoire de la plateforme, de `main.ts` et de `apps/`, tests compris |
 | `nest/no-parallel-pipeline` | dans `presentation/`, `infrastructure/` ou le fichier de module d'un contexte, tests à part : un import d'un contrôleur que Nest sert (ses décorateurs de route et de paramètres, sauf si le fichier importe `KitRoute` ou `KitRoutes` de `@ddd-ts-kit/http/nest`), de la requête ou de la réponse brutes, d'un *guard*, d'un *pipe*, d'un filtre d'exceptions ou d'une `HttpException`, d'un intercepteur ou du `Logger` de `@nestjs/common`, un import sans nom de celui-ci, ou un import d'un *package* de Nest dont le kit fait le travail (`@nestjs/core`, `@nestjs/swagger`, `@nestjs/cqrs`, `@nestjs/passport`, `@nestjs/config`, `@nestjs/schedule` et les autres de la section 3 d'ARCHITECTURE.md) ; le message dit ce que le kit fait à sa place ; sous la racine des sources hors des contextes, tests à part : un fichier qui importe `Controller` de `@nestjs/common`, ni `KitRoute` ni `KitRoutes`, et nomme `CommandBus` ou `QueryBus` ou importe un fichier d'un contexte |
 | `nest/controllers-current` | avec `"stack.routes": "nest"` : un `<context>.controllers.ts` qui diffère de ce que donnent les contrôleurs Nest du contexte et les signatures de leurs méthodes, ou absent ; une partie de la requête prise entière par aucune classe DTO et que `request` de `@KitRoute` ne donne pas ; une méthode de route qui ne répond ni une classe DTO, ni `Accepted`, ni `void`, et ne déclare pas de `response` dans `@KitRoute` |

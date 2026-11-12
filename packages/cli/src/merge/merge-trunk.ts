@@ -82,7 +82,7 @@ export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
   if (runGit(top, ['merge-base', '--is-ancestor', trunk.commit, head]) !== undefined) {
     const upToDate = { ...report, next: `${report.next}${unreadDefault(top, { request, trunk, head })}` };
 
-    return request.toLand && !request.dryRun ? landUpToDate(context, upToDate, request.now ?? new Date()) : upToDate;
+    return request.toLand ? landUpToDate(context, upToDate, request) : upToDate;
   }
 
   refuseShallowHistory(top, { ours: head, theirs: trunk.commit });

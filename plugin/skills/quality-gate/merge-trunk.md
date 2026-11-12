@@ -19,8 +19,10 @@ or test is lost (a removal decided on purpose: `--continue --accept-lost`; `--ab
 last one of the trunk (a working one aside) or that the drizzle-kit journal does not list: it
 names both migrations and the command, `merge-trunk` under drizzle-kit, `merge-trunk --to-land`
 under knex, Prisma and TypeORM. On a branch that already holds the trunk, `--to-land` has nothing
-to merge and still lands the migrations (replayed, or renamed after the trunk's last): commit
-them, then `npm run verify`.
+to merge and still lands the migrations out of order (replayed, or renamed after the trunk's
+last; `--dry-run` lists them): commit them, then `npm run verify`. A stop leaves the folder as it
+was. Tell the user that a database which applied an old name is reset, or its migration table
+corrected, as the output says.
 Under the sandbox, a trunk that changes the settings of the project (`.claude/settings.json`) or
 another path the session cannot write is the owner's merge: `merge-trunk` stops with nothing
 changed and exit 3, naming the paths; hand the owner the same command to run from a terminal

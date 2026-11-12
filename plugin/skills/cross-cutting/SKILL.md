@@ -46,12 +46,12 @@ attempt then counts for the breaker and has its own time limit, and an open circ
 the retries at once.
 
 An `external` or `gateway` adapter that states no policy gets the default one of
-`src/platform/resilience/` (2 seconds per attempt). One that is given the port of a slower
-adapter is cut first, under its own name: `aspects/timeout-covers-delegate` reports it with the
-two durations, and the `TimeoutError` of the default policy says so in its message. State the
-policy of the outer adapter, `ownPolicy(timeout(<ms>))` at least as long as the adapter it calls,
-or `ownPolicy()` alone when it only hands the call over. A duration read at run time or a
-platform wired by hand is not judged: read the message of the error there.
+`src/platform/resilience/` (2 seconds per attempt). Left to it and given the port of an adapter
+that states a longer limit, it is cut first, under its own name: `aspects/timeout-covers-delegate`
+reports that case, and the `TimeoutError` of the default policy says so in its message. State the
+policy of the outer adapter, `ownPolicy(timeout(<ms>))`, or `ownPolicy()` alone when it only hands
+the call over. The rule reads declarations and container bindings only: on a platform wired by
+hand, a limit read at run time, a port bound twice or under a condition, check it yourself.
 
 ## What may be recorded
 

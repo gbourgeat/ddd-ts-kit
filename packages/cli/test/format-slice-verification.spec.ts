@@ -184,7 +184,10 @@ describe('the report of verify-slice, on the merges of the branch', () => {
     );
 
     expect(reported).toContain(
-      `merges since main: 1 error(s), not failing the slice in this version\n    migrations against main: 1 error(s)\n        ${migration.file}  ${migration.text}\n    next: ${migration.fix}`,
+      `merges since main: 1 migration(s) out of order, which the push is refused on\n    migrations against main: 1 error(s)\n        ${migration.file}  ${migration.text}\n    next: ${migration.fix}\n  put each migration above after the trunk's before the push: \`npx ddd-ts-kit verify-merge\` exits 1 on them, \`--warn\` included, and so does the pre-push hook`,
     );
+
+    expect(reported).not.toContain('not failing the slice in this version');
+    expect(reported).not.toContain('a later minor version');
   });
 });

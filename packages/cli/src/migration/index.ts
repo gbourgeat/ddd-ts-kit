@@ -26,3 +26,5 @@ export { knexSchemaDifference } from './knex-schema-difference';
 export { migrationsUnder } from './audit-guard/migrations-under';
 export { answeredAsJson } from './answered-as-json';
 export { writtenPaths } from './written-paths';
+export { migrationFiles } from './migration-files';
+export { restoreMigrationFolder } from './restore-migration-folder';

@@ -230,6 +230,7 @@ describe('merge-trunk: knex, Prisma and TypeORM migrations on --to-land', () => 
       status: 'committed',
       migrations: [
         `20261015101500_working-add-invoices renamed ${renamed.slice(0, -3)}, after the last migration of the trunk`,
+        'A database that already applied a migration under its old name (development, preview, shared) would run it again under the new one: reset it, or rename its row in `knex_migrations` (`name`, the file name).',
       ],
     });
 
@@ -300,7 +301,10 @@ describe('merge-trunk: knex, Prisma and TypeORM migrations on --to-land', () => 
       'stopped: 20261015101500_working-add-due-date changes invoices, which a migration the trunk gained since the base changes too (20261016090000_add-currency)',
     );
 
-    expect(result.stdout).toContain('Regenerate it on the trunk: `npm run db:generate add-due-date`');
+    expect(result.stdout).toContain(
+      'Generate it again on the trunk: delete migrations/20261015101500_working-add-due-date.js (`git show HEAD:migrations/20261015101500_working-add-due-date.js` keeps what was written by hand), then `npm run db:generate add-due-date`',
+    );
+
     expect(fs.existsSync(path.join(root, '.git', 'MERGE_HEAD'))).toBe(true);
   });
 });

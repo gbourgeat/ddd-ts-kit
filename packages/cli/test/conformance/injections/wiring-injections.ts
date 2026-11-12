@@ -3,8 +3,7 @@ import { PATHS } from '../paths';
 import { SOURCE_ALIAS } from '../source-alias';
 import { SOURCE_SUFFIX } from '../source-suffix';
 
-const { ADAPTER, DUE_HANDLER, EVENT_HANDLER, GATEWAY, JOB, OCCUPANCY_ROUTE, PLAN_HANDLER, PORT, ROUTE, SEND_HANDLER } =
-  PATHS;
+const { ADAPTER, DUE_HANDLER, EVENT_HANDLER, JOB, OCCUPANCY_ROUTE, PLAN_HANDLER, PORT, ROUTE, SEND_HANDLER } = PATHS;
 
 const CONCRETE =
   'What implements a port lives outside the application layer: naming it there is also an import that leaves the layer.';
@@ -22,8 +21,24 @@ const LISTED =
 const STALE =
   'The generated list of a class is read from its constructor: a changed signature leaves the barrel stale until it is regenerated.';
 
-const UNIMPORTED =
-  'The mailer is a port of another context, which the gateway could not import without breaking a boundary: the parameter names it without an import, and the rule that reads the constructor reports that too.';
+const ARCHIVE_PORT = `${PATHS.NOTIFICATION}/application/ports/mail-archive.port.ts`;
+const ARCHIVE = `${PATHS.NOTIFICATION}/infrastructure/external/remote-mail-archive.adapter.ts`;
+
+/** A second adapter of the context, slow by nature, that states its own limit. */
+const REMOTE_ARCHIVE = [
+  "import { timeout } from '@ddd-ts-kit/aspects';",
+  "import { Adapter } from '@ddd-ts-kit/kernel/declarations';",
+  `import { MailArchive } from '${ALIAS}/application/ports/mail-archive.port${SOURCE_SUFFIX}';`,
+  `import { ownPolicy } from '${SOURCE_ALIAS}platform/resilience/own-policy${SOURCE_SUFFIX}';`,
+  '',
+  "@Adapter(MailArchive, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })",
+  'export class RemoteMailArchive implements MailArchive {',
+  '  async keep(notificationId: string): Promise<void> {',
+  '    await Promise.resolve(notificationId);',
+  '  }',
+  '}',
+  '',
+].join('\n');
 
 const SECOND_STATEMENT = [
   { tool: 'checker', rule: 'declarations/constructor-injection', reason: LISTED },
@@ -247,21 +262,37 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
   },
   {
     rule: 'aspects/timeout-covers-delegate',
-    what: 'a gateway left to the default policy and given the port of the mailer, which states a longer limit',
-    file: GATEWAY,
+    what: 'the mailer left to the default policy and given the port of an archive that states a longer limit',
+    file: ADAPTER,
     changes: [
       {
-        file: GATEWAY,
-        from: '  constructor(readonly upstream: PersonDirectoryContract) {}',
-        to: '  constructor(\n    readonly upstream: PersonDirectoryContract,\n    readonly mailer: Mailer,\n  ) {}',
+        file: ARCHIVE_PORT,
+        to: 'export abstract class MailArchive {\n  abstract keep(notificationId: string): Promise<void>;\n}\n',
       },
-      { file: ADAPTER, from: '  @Timeout(2000, { signal: true })', to: '  @Timeout(120_000, { signal: true })' },
+      { file: ARCHIVE, to: REMOTE_ARCHIVE },
+      {
+        file: ADAPTER,
+        where: 'start',
+        to: `import { MailArchive } from '${ALIAS}/application/ports/mail-archive.port${SOURCE_SUFFIX}';\n`,
+      },
+      {
+        file: ADAPTER,
+        from: `import { ownPolicy } from '${SOURCE_ALIAS}platform/resilience/own-policy${SOURCE_SUFFIX}';\n`,
+        to: '',
+      },
+      {
+        file: ADAPTER,
+        from: "@Adapter(Mailer, { kind: 'external', aspects: [ownPolicy()] })",
+        to: "@Adapter(Mailer, { kind: 'external' })",
+      },
+      {
+        file: ADAPTER,
+        from: '  constructor(private readonly logger: Logger) {}',
+        to: '  constructor(\n    private readonly logger: Logger,\n    readonly archive: MailArchive,\n  ) {}',
+      },
     ],
     checker: true,
-    alsoReports: [
-      { tool: 'checker', rule: 'declarations/barrel-current', reason: STALE },
-      { tool: 'checker', rule: 'declarations/constructor-injection', reason: UNIMPORTED },
-    ],
+    alsoReports: [{ tool: 'checker', rule: 'declarations/barrel-current', reason: STALE }],
   },
   {
     rule: 'standard/no-parallel-interface',

@@ -4,7 +4,7 @@ import { migrationFiles } from './migration-files';
 import type { ReplayPlan } from './replay-plan';
 
 /** Puts the migrations folder and its `meta/` back as the replay found them: what it wrote is deleted, what it deleted written again. */
-export function restoreMigrationFolder({ root, folder, found }: ReplayPlan): void {
+export function restoreMigrationFolder({ root, folder, found }: Pick<ReplayPlan, 'root' | 'folder' | 'found'>): void {
   for (const file of migrationFiles(root, folder).keys()) {
     if (!found.has(file)) {
       fs.rmSync(path.join(root, file));

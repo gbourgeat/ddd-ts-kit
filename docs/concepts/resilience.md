@@ -334,15 +334,14 @@ binding of this adapter states another, at least as long as the adapter it calls
 
 **The rule [`aspects/timeout-covers-delegate`](../ARCHITECTURE.md#3-dependency-rules) reports it
 before it runs.** `ddd-ts-kit check` reads the adapters the project declares (`@Adapter`,
-`@Gateway`) or binds with the container of the kit, the classes that type the constructor of
-each, and the durations written as numbers: an adapter whose limit (the `timeout(<ms>)` of its
-declaration or binding, and the default of the platform when its kind is `external` or `gateway`
-and it states no `ownPolicy(...)`) is shorter than the limit the adapter behind one of its ports
-states for itself, its `@Timeout` included, is an error, with the two durations. The default is
-the one `main.ts` runs with: the fallback of `OUTBOUND_TIMEOUT_MS` in the configuration of the
-platform, else `timeoutMs` of `resilience/default-resilience-settings.ts`. The fix states the
-policy of the outer adapter, at least as long as the inner one, or `ownPolicy()` alone when it
-only hands the call over and the inner adapter carries the policy:
+`@Gateway`) or binds with the container of the kit, and the classes that type the constructor of
+each. It reports one case, the one nobody chose: an `external` or `gateway` adapter left to the
+default policy (no `ownPolicy(...)`, no `timeout(...)` of its own) that is given a port whose
+adapter states a longer `timeout(<ms>)` around all its methods. The default limit is the one
+`main.ts` runs with: the fallback of `OUTBOUND_TIMEOUT_MS` in the configuration of the platform,
+else `timeoutMs` of `resilience/default-resilience-settings.ts`. The fix states the policy of the
+outer adapter, or `ownPolicy()` alone when it only hands the call over and the inner adapter
+carries the policy:
 
 ```ts
 @Adapter(QuoteReader, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })
@@ -351,12 +350,21 @@ export class RemoteQuoteReader implements QuoteReader {
 }
 ```
 
-What it cannot read it does not judge: a duration or a kind taken from the configuration or a
-variable, an aspect under `when(...)`, which goes around some calls only, a `@Timeout` on a method
-of the outer adapter (the text does not say which method calls the port), an environment that
-sets `OUTBOUND_TIMEOUT_MS`, a platform wired by hand (`platform.adapter(...)`), an adapter the
-outer one reaches without receiving its port, and the retries, which multiply both limits. There
-the message of the error is what tells.
+An adapter that states its own limit is never reported, even when it is shorter than the adapter
+it calls: failing fast is a choice. And what the text does not show is not judged, so the rule is
+silent on each of these, where the message of the error is what tells:
+
+- a platform wired by hand (`platform.adapter(ownPolicy(...)(new X(), { ... }))`, the explicit
+  style without the container of the kit): nothing there is read;
+- a duration or a kind that is not a literal, and an aspect that is a variable, a spread, a call
+  of another name or under `when(...)`;
+- a `timeout(` nested in the options of another aspect, and a `@Timeout` on a method: the text
+  does not say which method calls the port;
+- a port or an adapter bound more than once, bound again by `rebind(`, or bound under a condition;
+- two ports of one name, unless each file imports its own from the file that declares it;
+- an adapter the outer one reaches through a middle adapter, or without receiving its port;
+- a default limit that is not one number, an environment that sets `OUTBOUND_TIMEOUT_MS`, and the
+  retries, which multiply both limits.
 
 Use cases get their cross-cutting behaviour from bus middlewares instead. None of the three
 forms is allowed in `domain/` or `application/`: rule
