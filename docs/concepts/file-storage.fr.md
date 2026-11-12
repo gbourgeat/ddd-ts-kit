@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:78e7e0822045e2cf -->
+<!-- translation-of: file-storage.md sha256:8ef64291bab7f5c2 -->
 
 # Stockage de fichiers
 
@@ -200,6 +200,9 @@ refusé avec `UNSUPPORTED_MEDIA_TYPE`, avant qu'un seul octet n'atteigne le stoc
 commence par `%PDF-` ; un document Word ou Excel est une archive zip ; un texte est en UTF-8
 sans caractère de contrôle ; le SVG et les formats binaires que le kit ne reconnaît pas ne
 passent jamais, puisqu'un nom ou un type déclaré ne prouve rien.
+[Ce qu'une route accepte](#ce-quune-route-accepte--une-règle-de-contenu-par-type-de-média) dit
+comment une route prend un texte qui n'est pas en UTF-8, et un type pour lequel le kit n'a pas
+de règle.
 
 Le gestionnaire ne voit donc jamais d'octets. Il enregistre la référence et demande la
 promotion :
@@ -273,11 +276,99 @@ annule contre une vraie base de données et un vrai répertoire :
 et
 [`document-lands-with-its-file.spec.ts`](../../examples/scheduling/src/contexts/scheduling/calendars/test/integration/document-lands-with-its-file.spec.ts).
 
+### Ce qu'une route accepte : une règle de contenu par type de média
+
+Un type de média dans `mediaTypes` n'est qu'un nom : ce qui laisse passer un fichier, c'est la
+règle à laquelle ses premiers octets sont tenus. Chaque type accepté en a une, celle du kit ou
+celle que la route énonce.
+
+| La règle de contenu | Pour | Ce qui passe |
+|---|---|---|
+| une signature | `application/pdf`, `image/png`, `image/jpeg`, `image/gif`, `image/webp`, `application/zip`, `application/gzip`, et les conteneurs zip : les documents Office (`...wordprocessingml.document`, `...spreadsheetml.sheet`, `...presentationml.presentation`), le texte et le tableur OpenDocument, `application/epub+zip` | les premiers octets de ce format |
+| le texte | `text/plain`, `text/csv`, `text/tab-separated-values`, `text/markdown`, `application/json`, `application/csv` | aucun NUL ni caractère de contrôle hors tabulation, saut de ligne, saut de page et retour chariot, jamais la signature d'un format binaire, et la règle de texte du téléversement, ci-dessous |
+| `text`, énoncée dans `contentRules` | un type pour lequel le kit n'a pas de règle et dont le contenu est du texte : `application/vnd.ms-excel`, le nom qu'un navigateur sous Windows donne à un CSV | la même chose que le texte |
+| `unchecked`, énoncée dans `contentRules` | un type pour lequel le kit n'a pas de règle, pris tel quel : `application/octet-stream`, `video/*` | n'importe quels octets ; le plafond de taille et l'analyse s'appliquent toujours |
+
+Un type sans règle ne pourrait recevoir aucun fichier : chaque envoi de ce type recevrait un
+415. C'est donc la déclaration qui est refusée. `@Controller`, `defineRoute` et les routes d'un
+contrôleur Nest lèvent une erreur quand la route est déclarée, en nommant le type et les deux
+règles qu'elle peut énoncer ; `FileStaging.uploadUrl` fait de même pour un envoi direct ; et
+`ddd-ts-kit check` le signale sur la ligne du type (`files/upload-content-rule`) quand la liste
+est écrite dans la déclaration. Une famille est acceptée quand le kit ou la route a une règle
+pour l'un de ses types (`image/*`, ou `video/*` avec `{ 'video/*': 'unchecked' }`) ; une règle
+énoncée pour un type que le kit vérifie déjà, ou pour un type que le téléversement n'accepte
+pas, est refusée aussi, puisqu'elle ne ferait rien.
+
+La règle d'une famille n'atteint jamais un type qu'un navigateur exécute en l'ouvrant :
+`image/svg+xml`, `text/html`, `application/xhtml+xml`, `text/javascript` et
+`application/javascript` (`NAMED_ONLY_MEDIA_TYPES`). Avec `{ 'image/*': 'unchecked' }`, un SVG
+reste refusé ; une route qui en reçoit le nomme, `{ 'image/svg+xml': 'text' }`, et répond alors
+de la façon dont il est servi.
+
+**Un texte qui n'est pas en UTF-8.** Par défaut, un type de texte est de l'UTF-8 valide et rien
+d'autre : c'est la preuve la plus forte que des octets donnent d'être du texte, et ce qu'un
+analyseur qui lit de l'UTF-8 peut prendre sans y regarder à deux fois. Un export de banque ou
+de tableur est souvent en Windows-1252 ou en ISO-8859-1, où une lettre accentuée tient sur un
+octet et où aucune séquence n'est jamais invalide. Une route qui reçoit de tels fichiers le dit
+avec `text: 'single-byte'` : l'UTF-8 et tout encodage sur un octet qui prolonge l'ASCII passent,
+et un fichier binaire sous le nom d'un CSV est toujours refusé, par sa signature, ses octets NUL
+ou ses caractères de contrôle. L'UTF-16 et l'UTF-32 sont refusés sous les deux règles. C'est
+une option et non le défaut parce que les octets ne peuvent pas dire dans quel encodage ils
+sont : une route qui attend de l'UTF-8 recevrait sinon, sans refus, un fichier qu'elle décode
+mal.
+
+<!-- checked sample -->
+```ts
+import { Controller, Public, type HttpRequest, type IncomingFile } from '@ddd-ts-kit/http';
+import { Command, isUtf8, type CommandBus } from '@ddd-ts-kit/kernel';
+
+declare class ImportStatementCommand extends Command<void> {
+  constructor(file: IncomingFile);
+}
+
+@Controller({
+  method: 'POST',
+  path: '/statements',
+  summary: 'Import a bank statement',
+  guards: [Public],
+  upload: {
+    field: 'statement',
+    maxBytes: 5_000_000,
+    mediaTypes: ['text/csv', 'application/csv', 'application/vnd.ms-excel'],
+    text: 'single-byte',
+    contentRules: { 'application/vnd.ms-excel': 'text' },
+  },
+  response: { status: 201, description: 'Received.' },
+})
+export class ImportStatementController {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle({ upload }: HttpRequest<{ upload: IncomingFile }>): Promise<void> {
+    await this.commands.execute(new ImportStatementCommand(upload));
+  }
+}
+
+/** Whoever reads the stored file decodes it: the kit hands over the bytes as they came. */
+export function decoded(bytes: Uint8Array): string {
+  return new TextDecoder(isUtf8(bytes) ? 'utf-8' : 'windows-1252').decode(bytes);
+}
+```
+
+Le kit ne décode jamais : le fichier stocké est fait des octets que le client a envoyés, et sa
+somme de contrôle est la leur. `isUtf8(bytes)` du noyau dit au lecteur lequel des deux il
+tient ; de quel encodage sur un octet il s'agit (Windows-1252 pour un export d'Europe de
+l'Ouest) est un fait de la source que le projet connaît, pas un fait que les octets portent. Le
+`charset` qu'un client peut écrire sur la partie (`text/csv; charset=windows-1252`) n'est pas
+transmis : les navigateurs n'en envoient pas, et l'analyseur multipart ne l'expose pas.
+`generate file-upload --text single-byte` écrit cette déclaration, et une *spec* qui envoie un
+fichier en Windows-1252 à travers le lecteur multipart et un classeur sous le nom d'un CSV.
+
 Pour un gros fichier, le client l'envoie directement au stockage. Une première commande génère
 la clé et signe un lien d'envoi pour elle (`FileStaging.uploadUrl(key, { expiresInSeconds,
 mediaType, accepted, maxBytes })`) ; elle remet le `link` au client et enregistre l'autorisation
-d'envoi `pending` (clé, plafond de taille, types de média) sur l'agrégat qui attend le fichier.
-Le client envoie le fichier au lien. Une seconde commande, qui nomme l'agrégat et jamais une
+d'envoi `pending` (clé, plafond de taille, types de média, et la règle `text` et les
+`contentRules` données avec eux) sur l'agrégat qui attend le fichier. Le client envoie le
+fichier au lien. Une seconde commande, qui nomme l'agrégat et jamais une
 clé, relit l'autorisation sur lui et confirme (`FileStaging.confirm(pending)`) : ce qui est
 arrivé est mesuré contre le plafond de l'autorisation, vérifié sur ses octets et analysé, puis
 enregistré et promu comme tout fichier mis en attente. Un client ne peut ni choisir la clé qu'il

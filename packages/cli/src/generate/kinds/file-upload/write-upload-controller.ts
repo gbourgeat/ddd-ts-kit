@@ -7,6 +7,7 @@ import { controllerImports } from '../route/controller-imports';
 import type { ControllerPlan } from '../route/controller-plan';
 import { controllerVars } from '../route/controller-vars';
 import { groupVars } from '../route/group-vars';
+import { uploadFileVars } from './upload-file-vars';
 
 /** Writes the controller of an upload in its folder, its group when it is new, and its spec; registers it where controllers are listed. */
 export function writeUploadController(scope: Scope, plan: ControllerPlan): void {
@@ -25,7 +26,7 @@ export function writeUploadController(scope: Scope, plan: ControllerPlan): void 
   const context = vars(scope, {
     name: named(name),
     route: { ...controllerVars(scope, plan), imports: [message, ...groupImport].join('\n') },
-    upload: { httpImports: httpImports.join(', ') },
+    upload: { ...uploadFileVars(scope), httpImports: httpImports.join(', ') },
     ...(group === undefined
       ? {}
       : {

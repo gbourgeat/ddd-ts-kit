@@ -352,6 +352,8 @@ handlers, each with its own answer to idempotence, rebuild and lag; and some rea
   through a port and does nothing else: it sends no command and reads no other context. Its
   writes are idempotent and ordered per key by construction: every row carries the stamp of
   the event that last changed it (`stampOf`), and `upsertIfNewer` writes only for a newer one.
+  An event that changes part of a row another event created goes through `updateIfNewer`, which
+  answers `missing` when that row is not held: right only on a feed that keeps the order of a key.
 - **A read model store port**, `ReadModelStore<Row>`, with one implementation
   (`TableReadModelStore`) over a table an adapter gives: in memory for the fakes, Knex,
   Drizzle, Prisma and TypeORM for a SQL table in the context's schema, written in the unit of
@@ -362,7 +364,7 @@ handlers, each with its own answer to idempotence, rebuild and lag; and some rea
   through its published language, `ProjectionRebuild` copies it into a new table while events keep being applied,
   then swaps the two in one transaction. PostgreSQL only.
 - **Observability.** `projection_events_total` by result (`applied`, `traced`, `stale`, `ignored`,
-  `failed`) and `projection_last_event_age_ms`, the lag, on the `Metrics` port; one
+  `missing`, `failed`) and `projection_last_event_age_ms`, the lag, on the `Metrics` port; one
   `process <projection>` span per delivery; an event buried after its retries reaches the
   error reporter as for any consumer.
 

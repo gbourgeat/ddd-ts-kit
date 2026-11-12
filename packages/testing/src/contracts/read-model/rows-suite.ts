@@ -1,4 +1,4 @@
-import { Criteria, cursorPage, scoped } from '@ddd-ts-kit/kernel';
+import { Criteria, cursorPage, scoped, type EventStamp } from '@ddd-ts-kit/kernel';
 import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
 import { criteriaContractRows } from '../criteria/criteria-contract-rows';
 import { everything } from './everything';
@@ -8,13 +8,21 @@ import { stampedAt as at } from './stamped-at';
 
 type Row = CriteriaContractRow;
 
-/** Rows that round trip, events applied once and in order, and searching. `DeletionsSuite` holds the deletions. */
+/**
+ * Rows that round trip, events applied once and in order, a change that says when its row is missing,
+ * and searching. `DeletionsSuite` holds the deletions.
+ */
 export class RowsSuite extends ReadModelStoreSuite {
   protected tests(): void {
     this.closesAfterEach();
     this.keepsRows();
     this.appliesInOrder();
+    this.changesARowItHolds();
+    this.findsNoRowToChange();
     this.appliesByVersion();
+    this.ordersEachKindOfStamp();
+    this.deletesOutsideTheHistory();
+    this.replacesOnTheWholeStamp();
     this.searches();
   }
 
@@ -84,6 +92,48 @@ export class RowsSuite extends ReadModelStoreSuite {
     });
   }
 
+  private changesARowItHolds(): void {
+    this.it('changes the row it holds, and is stale when the row holds this event or a later one', async () => {
+      await this.put(row('a1'), at('evt-1', 1));
+
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('applied');
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('stale');
+      this.expect(await this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats)).toBe('stale');
+      this.expect(await this.store.get('a1')).toEqual({ ...row('a1'), seats: 3 });
+    });
+
+    this.it('is stale when a change meets the trace of a deletion that is not older than it', async () => {
+      await this.put(row('a1'), at('evt-1', 1));
+      await this.store.delete('a1', at('evt-3', 3));
+
+      this.expect(await this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats)).toBe('stale');
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('stale');
+      this.expect(await this.store.get('a1')).toBe(undefined);
+    });
+  }
+
+  private findsNoRowToChange(): void {
+    this.it('answers missing for a change delivered before its creation, then applies it after it', async () => {
+      this.expect(await this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats)).toBe('missing');
+      this.expect(await this.subject.table.find('a1')).toBe(undefined);
+
+      this.expect(await this.put(row('a1'), at('evt-1', 1))).toBe('applied');
+      this.expect(await this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats)).toBe('applied');
+      this.expect(await this.store.get('a1')).toEqual({ ...row('a1'), seats: 3 });
+    });
+
+    this.it('answers missing for a change later than the deletion of its row, and leaves the trace', async () => {
+      await this.store.delete('a1', at('evt-1', 1));
+
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('missing');
+      this.expect(await this.subject.table.find('a1')).toEqual({ key: 'a1', row: undefined, stamp: at('evt-1', 1) });
+
+      await this.put(row('a1'), at('evt-2', 2));
+
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('applied');
+    });
+  }
+
   private appliesByVersion(): void {
     this.it('orders by version when both stamps carry one, whatever the clocks say', async () => {
       await this.put({ ...row('a1'), title: 'v2' }, { ...at('evt-2', 5), version: 2 });
@@ -93,10 +143,85 @@ export class RowsSuite extends ReadModelStoreSuite {
       this.expect((await this.store.get('a1'))?.title).toBe('v3');
     });
 
+    this.it(
+      'keeps the instant of a stamp to the millisecond, so the next event of the key replaces the row',
+      async () => {
+        const first = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.123Z') };
+        const second = { eventId: 'evt-2', occurredAt: new Date('2026-10-10T12:00:00.456Z') };
+
+        await this.put(row('a1'), first);
+
+        this.expect((await this.subject.table.find('a1'))?.stamp).toEqual(first);
+        this.expect(await this.put({ ...row('a1'), seats: 7 }, second)).toBe('applied');
+        this.expect(await this.put({ ...row('a1'), seats: 9 }, first)).toBe('stale');
+        this.expect((await this.store.get('a1'))?.seats).toBe(7);
+      },
+    );
+
     this.it('keeps the version with the row', async () => {
       await this.put(row('a1'), { ...at('evt-1', 1), version: 7 });
 
       this.expect((await this.subject.table.find('a1'))?.stamp).toEqual({ ...at('evt-1', 1), version: 7 });
+    });
+  }
+
+  private ordersEachKindOfStamp(): void {
+    const kinds: [string, EventStamp[]][] = [
+      ['without a version', [at('evt-1', 1), at('evt-2', 2), at('evt-3', 3)]],
+      ['with a version', [versioned('evt-1', 3, 1), versioned('evt-2', 2, 2), versioned('evt-3', 1, 3)]],
+    ];
+
+    for (const [kind, stamps] of kinds) {
+      this.it(`ends on the latest of three events ${kind}, whatever the order of their deliveries`, async () => {
+        const ends: (number | undefined)[] = [];
+
+        for (const [index, order] of permutationsOf(stamps).entries()) {
+          const key = `a${String(index + 1)}`;
+
+          for (const stamp of order) {
+            await this.put({ ...row(key), seats: stamps.indexOf(stamp) + 1 }, stamp);
+          }
+
+          ends.push((await this.store.get(key))?.seats);
+        }
+
+        this.expect(ends).toEqual([3, 3, 3, 3, 3, 3]);
+      });
+    }
+  }
+
+  private deletesOutsideTheHistory(): void {
+    this.it('removes a row of versioned events by a deletion stamped at the clock, as an erasure is', async () => {
+      await this.put(row('a1'), versioned('evt-1', 1, 4));
+
+      this.expect(await this.store.delete('a1', at('evt-5', 5))).toBe('applied');
+      this.expect(await this.put(row('a1'), versioned('evt-2', 2, 5))).toBe('stale');
+      this.expect(await this.store.updateIfNewer('a1', versioned('evt-6', 6, 6), moreSeats)).toBe('missing');
+      this.expect(await this.store.get('a1')).toBe(undefined);
+    });
+  }
+
+  private replacesOnTheWholeStamp(): void {
+    this.it('replaces a row only when it still holds the whole stamp, its version included', async () => {
+      const { table } = this.subject;
+      const next = { key: 'a1', row: { ...row('a1'), title: 'next' }, stamp: versioned('evt-2', 2, 5) };
+
+      await table.insert({ key: 'a1', row: row('a1'), stamp: versioned('evt-1', 1, 2) });
+
+      this.expect(await table.replace(next, versioned('evt-1', 1, 3))).toBe(false);
+      this.expect(await table.replace(next, at('evt-1', 1))).toBe(false);
+      this.expect(await table.replace(next, versioned('evt-1', 1, 2))).toBe(true);
+      this.expect((await this.store.get('a1'))?.title).toBe('next');
+    });
+
+    this.it('replaces a row that holds no version only on a stamp that has none', async () => {
+      const { table } = this.subject;
+      const next = { key: 'a1', row: { ...row('a1'), title: 'next' }, stamp: at('evt-2', 2) };
+
+      await table.insert({ key: 'a1', row: row('a1'), stamp: at('evt-1', 1) });
+
+      this.expect(await table.replace(next, versioned('evt-1', 1, 0))).toBe(false);
+      this.expect(await table.replace(next, at('evt-1', 1))).toBe(true);
     });
   }
 
@@ -140,4 +265,22 @@ export class RowsSuite extends ReadModelStoreSuite {
       this.expect((await this.store.search(scoped(Criteria.of<Row>(), { kind: 'none' }))).items).toEqual([]);
     });
   }
+}
+
+function moreSeats(current: Row): Row {
+  return { ...current, seats: current.seats + 1 };
+}
+
+function versioned(eventId: string, minute: number, version: number): EventStamp {
+  return { ...at(eventId, minute), version };
+}
+
+function permutationsOf<T>(items: readonly T[]): T[][] {
+  if (items.length <= 1) {
+    return [[...items]];
+  }
+
+  return items.flatMap((item, index) =>
+    permutationsOf([...items.slice(0, index), ...items.slice(index + 1)]).map((rest) => [item, ...rest]),
+  );
 }

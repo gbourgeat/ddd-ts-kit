@@ -23,6 +23,9 @@ by several jobs and followed by a process manager.
 1. **Receiving.** The file arrives as any other: a `FileUpload` the bus stages and scans before
    the transaction, or a direct upload confirmed from its `PendingUpload` for a large one.
    `FileScanner` is where a policy on the format lives (a CSV of at most 50 MB, a single sheet).
+   An export of a bank or of a spreadsheet is often not UTF-8: the upload says
+   `text: 'single-byte'` to receive it, and the job that reads the rows decodes the bytes itself
+   (`isUtf8`, see [File storage](file-storage.md#what-a-route-accepts-a-content-rule-for-each-media-type)).
 2. **Starting.** The handler of `StartImport` records an `Import` aggregate with the
    `StoredFile`, its owner and its status, and enqueues `ImportRowsBackgroundJob` with the
    identifier of the import as its whole payload. Both commit together, so an import exists

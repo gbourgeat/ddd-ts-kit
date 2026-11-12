@@ -1,1 +1,0 @@
-**The briefing of a worker says upfront that a branch keeps one working migration.** A worker whose second slice changed the schema generated a second working migration, and learned only from the refusal of `drizzle-generate --replay` at the merge that a branch keeps one and generates it again. `worker-scope` and the context builder agent now say it before the first slice.

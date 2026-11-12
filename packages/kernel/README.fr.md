@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:997772347f74a313 -->
+<!-- translation-of: README.md sha256:314a1331fe1201ef -->
 
 # @ddd-ts-kit/kernel
 
@@ -1505,8 +1505,10 @@ Une écriture dans le stockage n'est pas annulée avec une transaction.
 
 Pour un gros fichier, le client téléverse directement vers le stockage :
 `uploadUrl(key, { expiresInSeconds, mediaType, accepted, maxBytes })` renvoie le `link` pour le
-client et l'autorisation `pending` (`PendingUpload` : clé, plafond de taille, types de média) que
-la commande enregistre sur l'agrégat ; `confirm(pending)`, appelé par une commande qui relit
+client et l'autorisation `pending` (`PendingUpload` : clé, plafond de taille, types de média, et
+la règle `text` et les `contentRules` données avec eux) que la commande enregistre sur
+l'agrégat ; il lève une erreur quand un type accepté n'a pas de règle de contenu, puisqu'aucun
+fichier de ce type ne pourrait être confirmé ; `confirm(pending)`, appelé par une commande qui relit
 l'autorisation depuis l'agrégat, jamais depuis le client, vérifie ce qui est arrivé par rapport
 au plafond et sur ses octets (`contentMatches`), l'analyse, et renvoie le `StoredFile`. Aucune
 clé finale ne peut commencer par `staging/` (`assertFinalKey`).
@@ -1516,6 +1518,19 @@ hache et, avec une attente, retient les premiers octets jusqu'à ce qu'ils prouv
 média déclaré (`acceptsMediaType`, `contentMatches` : un PDF commence par `%PDF-`, les documents
 bureautiques sont des archives zip, le texte est de l'UTF-8 sans caractères de contrôle, SVG et
 les formats binaires inconnus ne correspondent jamais).
+
+Chaque type de média a une règle de contenu (`contentRuleOf`) : une signature
+(`SIGNED_MEDIA_TYPES`), le texte (`TEXT_MEDIA_TYPES`), ou celle que l'attente énonce dans
+`contentRules` pour un type pour lequel le kit n'en a pas, `text` ou `unchecked` (les octets
+sont pris tels quels) ; une règle énoncée pour une famille (`image/*`) n'atteint jamais un type
+qu'un navigateur exécute (`NAMED_ONLY_MEDIA_TYPES` : SVG, HTML, JavaScript), qui s'énonce par
+son nom. `contentRuleDefects` liste, avant qu'un contenu n'arrive, les types
+acceptés qu'aucun contenu ne pourrait prouver et les règles énoncées qui ne font rien :
+`@ddd-ts-kit/http` refuse une route là-dessus, `uploadUrl` un lien. L'attente dit aussi le
+texte qu'elle prend (`TextRule`) : `utf-8`, le défaut, ou `single-byte`, qui laisse aussi passer
+un texte en Windows-1252 ou en ISO-8859-1 (aucun NUL, aucun caractère de contrôle, aucune marque
+d'ordre d'octets UTF-16 ou UTF-32) et refuse toujours un fichier binaire. Le kit ne décode
+jamais les octets : `isUtf8(bytes)` dit à un lecteur quel décodeur prendre.
 
 Connecteurs : `InMemoryFileStorage` pour les tests (`keys()` liste ce qu'il contient) et
 `LocalFileStorage({ directory, baseUrl, secret })` pour le développement, tous deux
@@ -2025,9 +2040,10 @@ export class AppointmentListProjection {
 
   @On(PaymentCaptured)
   paid(event: IntegrationEvent<PaymentCapturedPayload>) {
-    return this.appointments.upsertIfNewer(event.payload.appointmentId, stampOf(event), (row) =>
-      row === undefined ? undefined : { ...row, paid: true },
-    );
+    return this.appointments.updateIfNewer(event.payload.appointmentId, stampOf(event), (row) => ({
+      ...row,
+      paid: true,
+    }));
   }
 
   @On(AppointmentCancelled)
@@ -2054,27 +2070,29 @@ constructeur, et `ddd-ts-kit describe` et la référence de `CONTEXT.md` le list
 
 ### Idempotentes et ordonnées par construction
 
-`ReadModelStore<Row>` est le port d'un modèle de lecture : `get`, `upsertIfNewer`, `delete` et
+`ReadModelStore<Row>` est le port d'un modèle de lecture : `get`, `upsertIfNewer`, `updateIfNewer`, `delete` et
 `search(scopedCriteria)`. Chaque ligne porte le tampon de l'événement qui l'a modifiée en dernier,
 et une écriture n'a lieu que si son événement est plus récent :
 
 | Règle | |
 |---|---|
 | Tampon | `stampOf(event)` : l'id et l'instant d'un événement d'intégration ; le nom, l'agrégat et l'instant d'un événement du domaine ; plus `stampOf(event, version)` quand l'événement porte une version par clé |
-| Plus récent | une `version` plus grande quand les deux tampons en portent une ; sinon un instant plus tardif ; au même instant, le plus grand id d'événement. Un même événement n'est jamais plus récent que lui-même |
-| `upsertIfNewer(key, stamp, next)` | écrit `next(current)` ; `stale` quand la ligne contient cet événement ou un plus tardif ; `ignored` quand `next` renvoie `undefined` (un correctif d'une ligne qui n'existe pas) |
+| Plus récent | une `version` plus grande quand les deux tampons en portent une ; sinon un instant plus tardif ; au même instant, le plus grand id d'événement. Un même événement n'est jamais plus récent que lui-même. L'ordre est total parmi des tampons qui portent tous une version, et parmi des tampons qui n'en portent aucune ; entre un de chaque les instants décident, ce qui n'est pas un ordre, si bien qu'une clé devrait n'en voir qu'une sorte ([une seule sorte de tampon par clé](../../docs/concepts/cqrs.fr.md#quelle-écriture-pour-quel-événement)) |
+| `upsertIfNewer(key, stamp, next)` | pour un événement qui dit toute la ligne, ou peut la créer : écrit `next(current)`, `current` valant `undefined` quand la clé ne tient aucune ligne ; `stale` quand la ligne contient cet événement ou un plus tardif ; `ignored` quand `next` renvoie `undefined`, ce qui est un filtre (l'événement ne concerne pas ce modèle de lecture) et jamais la façon d'attendre une ligne |
+| `updateIfNewer(key, stamp, change)` | pour un événement qui change une partie d'une ligne qu'un autre événement a créée : écrit `change(current)` ; `stale` quand la ligne, ou la trace de sa suppression, contient cet événement ou un plus tardif ; `missing` quand la clé ne tient aucune ligne, la trace d'une suppression plus ancienne que l'événement, ou une ligne d'un autre locataire : rien n'est écrit, le store ne lève jamais pour cela, et la projection décide. Juste seulement quand les événements de la clé sont appliqués dans l'ordre ([quelle écriture pour quel événement](../../docs/concepts/cqrs.fr.md#quelle-écriture-pour-quel-événement)) |
 | `delete(key, stamp)` | la ligne disparaît pour `get` et `search`, et une trace reste, sa clé et son tampon sans aucune de ses données : un événement plus ancien livré en retard ne la ramène pas, un plus tardif oui. Une clé que le modèle de lecture ne tient pas prend la même trace et répond `traced`, puisqu'aucune ligne n'a été retirée (comme une suppression par-dessus une trace antérieure), si bien que la création que cette suppression suit est `stale` quand elle est livrée après elle. Sur un stockage SQL, chaque colonne de la ligne accepte NULL, sinon le registre refuse la table par `ReadModelTableNotReadyError` ([ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)) |
-| Concurrence | une écriture est conditionnée au tampon qu'elle a lu et est relue quand une autre est arrivée d'abord ; cinq tentatives, puis `ConcurrencyError` et la nouvelle livraison de l'événement |
+| Concurrence | une écriture est conditionnée au tampon entier qu'elle a lu (`sameStamp` : l'id de l'événement, l'instant et la version, dans chaque store) et est relue quand une autre est arrivée d'abord ; cinq tentatives, puis `ConcurrencyError` et la nouvelle livraison de l'événement |
 | Transaction | le store écrit sur l'exécuteur de l'unité de travail, si bien que la ligne et la marque d'événement traité sont validées ou annulées ensemble |
 
 Ainsi une nouvelle livraison, un doublon et deux événements d'une même clé livrés dans le
 désordre aboutissent tous à la même ligne. **Ce que cela ne donne pas** : un événement plus
 ancien écarté comme périmé n'est pas appliqué plus tard, si bien qu'un événement devrait porter
-l'état des champs qu'il pose, ou arriver dans l'ordre par clé (l'outbox ordonne par clé) ; une
-suppression qui atteint une ligne jamais vue ne laisse aucune trace ; avec des instants et sans
+l'état des champs qu'il pose, ou arriver dans l'ordre par clé (l'outbox ordonne par clé) ; un
+changement pour lequel `updateIfNewer` a répondu `missing` ou `stale` n'est pas appliqué plus tard
+non plus ; avec des instants et sans
 version, l'ordre de deux événements d'une même clé est l'ordre des horloges qui les ont
 tamponnés ; une version est comparée à la version que contient la ligne, alors n'en passez une
-que si chaque événement d'une ligne vient du même flux. Une écriture vaut une ligne : un événement
+que si chaque événement d'une ligne vient du même flux, et alors sur chacun d'eux. Une écriture vaut une ligne : un événement
 qui concerne de nombreuses lignes les liste avec des critères et écrit chacune.
 
 `TableReadModelStore` est l'unique implémentation du port, sur une `ReadModelTable` que donne un
@@ -2163,9 +2181,9 @@ une telle projection lève au chargement du fichier.
 ### Vue de l'extérieur
 
 Par les ports qui existent. `@ddd-ts-kit/di` compte `projection_events_total` par `context`,
-`projection`, `event` et `result` (`applied`, `traced`, `stale`, `ignored`, `failed`) sur `Metrics`, et
+`projection`, `event` et `result` (`applied`, `traced`, `stale`, `ignored`, `missing`, `failed`) sur `Metrics`, et
 pose `projection_last_event_age_ms`, l'âge du dernier événement appliqué au moment où il l'a été :
-le retard. Une projection est abonnée comme consommateur sous son nom, si bien que chaque
+le retard. `missing` est un changement pour lequel `updateIfNewer` n'a trouvé aucune ligne. Une projection est abonnée comme consommateur sous son nom, si bien que chaque
 livraison est un *span* `process <projection>`, avec les appels à son modèle de lecture en
 dessous, et qu'un événement enterré après ses nouvelles tentatives atteint le rapporteur
 d'erreurs comme pour tout consommateur.

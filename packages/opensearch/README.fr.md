@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c7365bafda9281e8 -->
+<!-- translation-of: README.md sha256:073169573fd25a25 -->
 
 # @ddd-ts-kit/opensearch
 
@@ -163,7 +163,7 @@ type est refusé par OpenSearch).
 | Méthode du port | Sur OpenSearch |
 |---|---|
 | `get(key)` | `GET /<alias>/_doc/<id>` ; le locataire du document est vérifié, puisqu'un alias filtré ne filtre pas un *get* |
-| `upsertIfNewer`, `delete` | le *get* ci-dessus, puis `PUT /<alias>/_doc/<id>?require_alias=true` avec `op_type=create` pour une clé nouvelle, ou `if_seq_no` et `if_primary_term` du document lu ; sur un conflit il relit, cinq tentatives, puis `ConcurrencyError` |
+| `upsertIfNewer`, `updateIfNewer`, `delete` | le *get* ci-dessus, puis `PUT /<alias>/_doc/<id>?require_alias=true` avec `op_type=create` pour une clé nouvelle, ou `if_seq_no` et `if_primary_term` du document lu ; sur un conflit il relit, cinq tentatives, puis `ConcurrencyError` |
 | `search(scopedCriteria)` | `POST /<alias>/_search` : chaque opérateur, groupe, tri et page des critères en filtres du DSL de requête ; les lignes supprimées laissées de côté ; une page par décalage comptée exactement (`track_total_hits`) |
 | `ensureMapping()`, `provision(tenant)` | `PUT /<index>`, `PUT /<index>/_mapping`, `POST /_aliases` |
 

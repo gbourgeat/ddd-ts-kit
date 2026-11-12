@@ -1445,7 +1445,9 @@ reporter)` gives the order that keeps both consistent, each step once:
 
 For a large file the client uploads straight to the storage: `uploadUrl(key, { expiresInSeconds,
 mediaType, accepted, maxBytes })` answers the `link` for the client and the `pending` grant
-(`PendingUpload`: key, size cap, media types) that the command records on the aggregate;
+(`PendingUpload`: key, size cap, media types, and the `text` rule and `contentRules` given with
+them) that the command records on the aggregate; it throws when an accepted type has no content
+rule, since no file of it could be confirmed;
 `confirm(pending)`, called by a command that reads the grant back from the aggregate, never
 from the client, checks what arrived against the cap and on its bytes (`contentMatches`), scans
 it, and answers the `StoredFile`. No final key may start with `staging/` (`assertFinalKey`).
@@ -1455,6 +1457,18 @@ with an expectation holds back the first bytes until they prove the declared med
 (`acceptsMediaType`, `contentMatches`: a PDF starts with `%PDF-`, office documents are zip
 archives, text is UTF-8 without control characters, SVG and unknown binary formats never
 match).
+
+Each media type has a content rule (`contentRuleOf`): a signature (`SIGNED_MEDIA_TYPES`), text
+(`TEXT_MEDIA_TYPES`), or the one the expectation states in `contentRules` for a type the kit
+has none for, `text` or `unchecked` (the bytes are taken as they are); a rule stated for a
+family (`image/*`) never reaches a type a browser runs (`NAMED_ONLY_MEDIA_TYPES`: SVG, HTML,
+JavaScript), which is stated by its name. `contentRuleDefects`
+lists, before any content arrives, the accepted types no content could prove and the stated
+rules that do nothing: `@ddd-ts-kit/http` refuses a route on it, `uploadUrl` a link. The
+expectation also says the text it takes (`TextRule`): `utf-8`, the default, or `single-byte`,
+which also passes text in Windows-1252 or ISO-8859-1 (no NUL, no control character, no UTF-16
+or UTF-32 byte order mark) and still refuses a binary file. The bytes are never decoded by the
+kit: `isUtf8(bytes)` tells a reader which decoder to take.
 
 Connectors: `InMemoryFileStorage` for the tests (`keys()` lists what it holds) and
 `LocalFileStorage({ directory, baseUrl, secret })` for development, both `ServedFileStorage`:
@@ -1942,9 +1956,10 @@ export class AppointmentListProjection {
 
   @On(PaymentCaptured)
   paid(event: IntegrationEvent<PaymentCapturedPayload>) {
-    return this.appointments.upsertIfNewer(event.payload.appointmentId, stampOf(event), (row) =>
-      row === undefined ? undefined : { ...row, paid: true },
-    );
+    return this.appointments.updateIfNewer(event.payload.appointmentId, stampOf(event), (row) => ({
+      ...row,
+      paid: true,
+    }));
   }
 
   @On(AppointmentCancelled)
@@ -1971,26 +1986,28 @@ the events it applies.
 
 ### Idempotent and ordered by construction
 
-`ReadModelStore<Row>` is the port of a read model: `get`, `upsertIfNewer`, `delete` and
+`ReadModelStore<Row>` is the port of a read model: `get`, `upsertIfNewer`, `updateIfNewer`, `delete` and
 `search(scopedCriteria)`. Every row carries the stamp of the event that last changed it, and a
 write happens only if its event is newer:
 
 | Rule | |
 |---|---|
 | Stamp | `stampOf(event)`: the id and the instant of an integration event; the name, the aggregate and the instant of a domain event; plus `stampOf(event, version)` when the event carries a per-key version |
-| Newer | a greater `version` when both stamps carry one; else a later instant; at the same instant, the greater event id. The same event is never newer than itself |
-| `upsertIfNewer(key, stamp, next)` | writes `next(current)`; `stale` when the row holds this event or a later one; `ignored` when `next` answers `undefined` (a patch of a row that does not exist) |
+| Newer | a greater `version` when both stamps carry one; else a later instant; at the same instant, the greater event id. The same event is never newer than itself. The order is total among stamps that all carry a version, and among stamps that carry none; between one of each the instants decide, which is not an order, so a key should see one kind ([one kind of stamp per key](../../docs/concepts/cqrs.md#which-write-for-which-event)) |
+| `upsertIfNewer(key, stamp, next)` | for an event that says the whole row, or may create it: writes `next(current)`, `current` being `undefined` when the key holds no row; `stale` when the row holds this event or a later one; `ignored` when `next` answers `undefined`, which is a filter (the event does not concern this read model) and never the way to wait for a row |
+| `updateIfNewer(key, stamp, change)` | for an event that changes part of a row another event created: writes `change(current)`; `stale` when the row, or the trace of its deletion, holds this event or a later one; `missing` when the key holds no row, the trace of a deletion older than the event, or a row of another tenant: nothing is written, the store never throws for it, and the projection decides. Right only when the events of the key are applied in order ([which write for which event](../../docs/concepts/cqrs.md#which-write-for-which-event)) |
 | `delete(key, stamp)` | the row is gone for `get` and `search`, and a trace stays, its key and its stamp without any of its data: an older event delivered late does not bring it back, a later one does. A key the read model does not hold takes the same trace and answers `traced`, since no row was removed (as does a deletion over an earlier trace), so the creation this deletion follows is `stale` when it is delivered after it. On an SQL store every column of the row is nullable, or the store refuses the table with `ReadModelTableNotReadyError` ([what a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)) |
-| Concurrency | a write is conditional on the stamp it read and is read again when another got there first; five attempts, then `ConcurrencyError` and the redelivery of the event |
+| Concurrency | a write is conditional on the whole stamp it read (`sameStamp`: the event id, the instant and the version, in every store) and is read again when another got there first; five attempts, then `ConcurrencyError` and the redelivery of the event |
 | Transaction | the store writes on the executor of the unit of work, so the row and the processed-event mark of the event commit or roll back together |
 
 So a redelivery, a duplicate and two events of one key delivered out of order all end on the
 same row. **What this does not give**: an older event skipped as stale is not applied later, so
 an event should carry the state of the fields it sets, or come in order per key (the outbox
-orders per key); a deletion that reaches a row never seen leaves no trace; with instants and
+orders per key); a change `updateIfNewer` answered `missing` or `stale` for is not applied later
+either; with instants and
 no version, the order of two events of one key is the order of the clocks that stamped them;
 a version is compared with the version the row holds, so pass one only when every event of a
-row comes from the same stream. One write is one row: an event that concerns many rows lists
+row comes from the same stream, and then on every one of them. One write is one row: an event that concerns many rows lists
 them with a criteria and writes each.
 
 `TableReadModelStore` is the one implementation of the port, over a `ReadModelTable` an
@@ -2075,8 +2092,9 @@ throws when the file loads.
 ### Seen from outside
 
 Through the ports that exist. `@ddd-ts-kit/di` counts `projection_events_total` by `context`,
-`projection`, `event` and `result` (`applied`, `traced`, `stale`, `ignored`, `failed`) on `Metrics`, and
+`projection`, `event` and `result` (`applied`, `traced`, `stale`, `ignored`, `missing`, `failed`) on `Metrics`, and
 sets `projection_last_event_age_ms`, the age of the last event applied when it was: the lag.
+`missing` is a change `updateIfNewer` found no row for.
 A projection is subscribed as a consumer under its name, so each delivery is one `process
 <projection>` span, with the calls to its read model below it, and an event buried after its
 retries reaches the error reporter as for any consumer.

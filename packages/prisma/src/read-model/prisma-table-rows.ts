@@ -70,11 +70,18 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
     const changes = record.map(([column], index) => `${quoted(column)} = $${String(index + 1)}`).join(', ');
     const key = this.column(this.target.key);
     const next = (offset: number): string => `$${String(record.length + offset)}`;
-    const own = this.target.tenant.writingSql(record.length + 4);
+    const own = this.target.tenant.writingSql(record.length + 5);
 
     const replaced = await this.run(
-      `update ${this.target.path} set ${changes} where ${key} = ${next(1)} and "last_event_id" = ${next(2)} and "last_event_at" = ${next(3)}${own.clause} returning ${key}`,
-      [...record.map(([, value]) => value), entry.key, held.eventId, held.occurredAt, ...own.values],
+      `update ${this.target.path} set ${changes} where ${key} = ${next(1)} and "last_event_id" = ${next(2)} and "last_event_at" = ${next(3)} and "last_event_version" is not distinct from ${next(4)}::bigint${own.clause} returning ${key}`,
+      [
+        ...record.map(([, value]) => value),
+        entry.key,
+        held.eventId,
+        held.occurredAt,
+        held.version ?? null,
+        ...own.values,
+      ],
     );
 
     return replaced.length === 1;

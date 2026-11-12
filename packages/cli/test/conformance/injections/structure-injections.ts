@@ -13,6 +13,7 @@ const CHANNEL_SPEC = `${NOTIFICATION}/test/unit/channel.vo.spec.ts`;
 const MANAGER = `${NOTIFICATION}/domain/services/reminder-manager.service.ts`;
 const SECOND = `${PATHS.SCHEDULING}/published-language/appointment-expired.v1.second.integration-event.ts`;
 const DOCUMENT_HANDLER = `${PATHS.SCHEDULING}/calendars/application/queries/get-appointment-document/get-appointment-document.handler.ts`;
+const DOCUMENT_CONTROLLER = `${PATHS.SCHEDULING}/calendars/presentation/http/appointments/attach-appointment-document/attach-appointment-document.controller.ts`;
 const TWO_EXPORTS = 'Two exported classes in one file break the rule of the role and the rule of every file at once.';
 
 const DECLARED_TWICE = `import { defineIntegrationEvent } from '@ddd-ts-kit/events';
@@ -306,5 +307,18 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
         reason: 'the constructor names another class than the list the generated file of the context registers for it',
       },
     ],
+  },
+  {
+    rule: 'files/upload-content-rule',
+    what: 'an upload that accepts bytes of any kind without stating their content rule',
+    file: DOCUMENT_CONTROLLER,
+    changes: [
+      {
+        file: DOCUMENT_CONTROLLER,
+        from: "mediaTypes: ['application/pdf', 'image/png', 'image/jpeg'] },",
+        to: "mediaTypes: ['application/pdf', 'application/octet-stream'] },",
+      },
+    ],
+    checker: true,
   },
 ];

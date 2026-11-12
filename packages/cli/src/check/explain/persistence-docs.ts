@@ -45,6 +45,27 @@ export class AttachReceiptHandler {
   constructor(private readonly staging: FileStaging, private readonly keys: FileKeys) {}
 }`,
   },
+  'files/upload-content-rule': {
+    why: "An upload is checked twice: the media type the client declares must be one the route accepts, and the first bytes must prove that type, by the signature of its format or, for text, by holding no control character and being valid UTF-8 (or any single-byte text when the upload says `text: 'single-byte'`). A type the kit has no such rule for can never be proven: `application/vnd.ms-excel`, which a browser on Windows sends for a CSV, `application/octet-stream`, a video. A route that accepts it without saying how its content is judged answers 415 to every file of it, which looks like a client mistake and is a declaration that could never work. So the route states the rule in `contentRules`: `text`, the content is text under another name, or `unchecked`, the route takes the bytes as they are and says so in its contract. `@ddd-ts-kit/http` refuses the route when it is declared, with the same sentence; this rule reads the upload of a *.route.ts or a *.controller.ts when its `mediaTypes` and `contentRules` are written as literals, and reports the string. Reported too: an entry that is no media type (`*/*`, a bare word), a family none of whose types has a rule (`video/*`), and a stated rule that does nothing, for a type the kit already verifies or one the upload does not accept. The rule of a family never reaches a type a browser runs (`image/svg+xml`, `text/html`, `application/xhtml+xml`, `text/javascript`, `application/javascript`): accepted, such a type is reported until `contentRules` names it. A list built elsewhere (a constant, a spread) is not read here: the declaration of the route judges it.",
+    bad: `@Controller({
+  method: 'POST',
+  path: '/statements',
+  upload: { field: 'file', maxBytes: 5_000_000, mediaTypes: ['text/csv', 'application/vnd.ms-excel'] },
+  response: { status: 201 },
+})`,
+    good: `@Controller({
+  method: 'POST',
+  path: '/statements',
+  upload: {
+    field: 'file',
+    maxBytes: 5_000_000,
+    mediaTypes: ['text/csv', 'application/vnd.ms-excel'],
+    text: 'single-byte',
+    contentRules: { 'application/vnd.ms-excel': 'text' },
+  },
+  response: { status: 201 },
+})`,
+  },
   'search/store-from-platform': {
     why: 'Which node a read model reaches and how its tenants are kept apart are choices of the platform, made once for every store: a context that opens a transport or names a tenancy of its own has chosen them for itself, out of reach of the provisioning, of the credentials of the deployment and of the tenancy of the project, and one of its stores may read the documents of every tenant; spreading the answer of `search.options` to replace its tenancy is the same choice made over the platform. The domain and the use cases see a read model through its port, as on any store.',
     bad: `import { OpenSearchReadModelStore, fetchTransport } from '@ddd-ts-kit/opensearch';

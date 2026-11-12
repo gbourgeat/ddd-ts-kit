@@ -80,6 +80,8 @@ export interface KindFlags {
   readonly serializer: boolean;
   /** The cache policy of a controller: `public`, `private` or `no-store`. */
   readonly cache?: string;
+  /** An upload receives a text file, held to this text rule: `utf-8` or `single-byte`. */
+  readonly text?: string;
   /** An aggregate keeps its state as the stream of its events. */
   readonly eventSourced: boolean;
   /** The fact an aggregate is born with, as `--birth "<Fact>"` in business words: its domain event is written and `create` records it; an event-sourced aggregate is born `Created` when absent. */

@@ -50,9 +50,11 @@ function multipartBody(upload: UploadSpec, fields: JsonSchema | undefined): Json
       [upload.field]: {
         type: 'string',
         contentMediaType: 'application/octet-stream',
-        description: `The file: ${types}, at most ${String(upload.maxBytes)} bytes, its type checked on its content.`,
+        description: `The file: ${types}, at most ${String(upload.maxBytes)} bytes, its type checked on its content.${textOf(upload)}${uncheckedOf(upload)}`,
         'x-max-bytes': upload.maxBytes,
         'x-media-types': [...upload.mediaTypes],
+        ...(upload.text === undefined ? {} : { 'x-text': upload.text }),
+        ...(upload.contentRules === undefined ? {} : { 'x-content-rules': { ...upload.contentRules } }),
       },
     },
     required: [upload.field],
@@ -68,4 +70,15 @@ function multipartBody(upload: UploadSpec, fields: JsonSchema | undefined): Json
       },
     },
   };
+}
+
+/** What a client may send as text, when the route takes more than UTF-8. */
+function textOf({ text }: UploadSpec): string {
+  return text === 'single-byte' ? ' Text is UTF-8 or a single-byte encoding such as Windows-1252.' : '';
+}
+
+function uncheckedOf({ contentRules = {} }: UploadSpec): string {
+  const unchecked = Object.keys(contentRules).filter((type) => contentRules[type] === 'unchecked');
+
+  return unchecked.length === 0 ? '' : ` Taken as sent, its content not checked: ${unchecked.join(', ')}.`;
 }

@@ -1,5 +1,5 @@
 [English](search-read-models.md) · **Français**
-<!-- translation-of: search-read-models.md sha256:5dd948550f4cfef8 -->
+<!-- translation-of: search-read-models.md sha256:185b4f9e7fdf7c4a -->
 
 # Modèles de lecture de recherche sur OpenSearch
 
@@ -81,7 +81,8 @@ export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> impl
   préfixe, au-delà des droits du compte de service ; un second store construit sous un nom déjà
   pris, avec une autre définition ou d'autres champs, lève `SearchNameTakenError`.
 - Seule sa projection l'écrit, par le port : `upsertIfNewer` avec le tampon de l'événement,
-  `delete`, qui garde une pierre tombale pour qu'un événement plus ancien ne ramène pas la ligne.
+  `updateIfNewer` pour un événement qui change une ligne qu'un autre événement a créée, `delete`,
+  qui garde une pierre tombale pour qu'un événement plus ancien ne ramène pas la ligne.
 - `domain/` ne le lit jamais, et aucun handler n'y décide un invariant ou un droit.
 - Seule la plateforme connaît OpenSearch : un contexte ne nomme rien du paquet sinon
   `OpenSearchReadModelStore` et ses refus, ne nomme le store que dans `extends`, appelle

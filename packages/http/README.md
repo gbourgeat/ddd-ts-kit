@@ -1802,10 +1802,55 @@ far larger than the file allowed is refused before it is read; a form without th
 Text fields sent after the file are not read. `fileName` is shown back to people, never used as
 a key: the key is generated on the server.
 
+Each media type of `mediaTypes` has a content rule. The kit has one for the formats it
+recognises by their first bytes (PDF, PNG, JPEG, GIF, WebP, zip and the office documents, gzip)
+and for text (`text/plain`, `text/csv`, `text/tab-separated-values`, `text/markdown`,
+`application/json`, `application/csv`). For any other type the route states it in
+`contentRules`: `text`, the content is text under another name, or `unchecked`, the route takes
+the bytes as they are. A type with no rule could receive no file, so the declaration is refused
+when the route is declared (`@Controller`, `defineRoute`, the routes of a Nest controller), with
+the type and the rules it may state, and `ddd-ts-kit check` reports it
+(`files/upload-content-rule`).
+
+Text is valid UTF-8 by default. A route that receives exports in Windows-1252 or ISO-8859-1
+says `text: 'single-byte'`: UTF-8 and any single-byte encoding pass, a binary file under the
+name of a CSV is still refused, and so are UTF-16 and UTF-32. The handler receives the bytes as
+they came and decodes them itself; `isUtf8` of the kernel tells which it holds. The charset a
+client may write on the part is not handed over: browsers send none, and busboy does not expose
+it.
+
+<!-- checked sample -->
+```ts
+import type { UploadSpec } from '@ddd-ts-kit/http';
+import { isUtf8 } from '@ddd-ts-kit/kernel';
+
+/** The statement of a bank: a CSV under the names browsers give it, in UTF-8 or in a single-byte encoding. */
+export const statement: UploadSpec = {
+  field: 'statement',
+  maxBytes: 5_000_000,
+  mediaTypes: ['text/csv', 'application/csv', 'application/vnd.ms-excel'],
+  text: 'single-byte',
+  contentRules: { 'application/vnd.ms-excel': 'text' },
+};
+
+/** Bytes of any kind, which the route takes as they are and says so. */
+export const attachment: UploadSpec = {
+  field: 'attachment',
+  maxBytes: 50_000_000,
+  mediaTypes: ['application/pdf', 'application/octet-stream'],
+  contentRules: { 'application/octet-stream': 'unchecked' },
+};
+
+export function decoded(bytes: Uint8Array): string {
+  return new TextDecoder(isUtf8(bytes) ? 'utf-8' : 'windows-1252').decode(bytes);
+}
+```
+
 For a large file, the client uploads straight to the storage instead: a command signs an upload
 link (`FileStaging.uploadUrl`) and records the grant it answers on the aggregate, the client
 sends the file to the link, and a second command confirms from that grant
-(`FileStaging.confirm(pending)`, which checks the size and the media type on what arrived). A
+(`FileStaging.confirm(pending)`, which checks the size and the media type on what arrived, under
+the `text` rule and the `contentRules` given to `uploadUrl`). A
 client that drops the connection part-way fails the file stream, so a handler waiting on it
 rejects instead of waiting forever.
 

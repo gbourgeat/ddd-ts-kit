@@ -83,6 +83,37 @@ describe('FileStaging, for a file sent straight to the storage', () => {
     expect(await codeOf(staging.confirm(pending))).toBe('FILE_NOT_FOUND');
   });
 
+  it('keeps in the grant the text rule and the content rules of the upload, which the confirmation applies', async () => {
+    const { staging, storage } = aDesk();
+    const statement = new Uint8Array(Buffer.from('Libell\xe9;Montant\r\nCaf\xe9;3,50\r\n', 'latin1'));
+
+    const { link, pending } = await staging.uploadUrl(KEY, {
+      expiresInSeconds: 300,
+      mediaType: 'application/vnd.ms-excel',
+      accepted: ['text/csv', 'application/vnd.ms-excel'],
+      maxBytes: 1_000,
+      text: 'single-byte',
+      contentRules: { 'application/vnd.ms-excel': 'text' },
+    });
+
+    expect(pending).toMatchObject({ text: 'single-byte', contentRules: { 'application/vnd.ms-excel': 'text' } });
+
+    await storage.acceptSigned(tokenOf(link.url), Readable.from([statement]), 'application/vnd.ms-excel');
+    expect(await staging.confirm(pending)).toMatchObject({ key: KEY, mediaType: 'application/vnd.ms-excel' });
+
+    await storage.put(stagedKeyOf(KEY), Readable.from([statement]), { mediaType: 'application/vnd.ms-excel' });
+    expect(await codeOf(staging.confirm({ ...pending, text: 'utf-8' }))).toBe('UNSUPPORTED_MEDIA_TYPE');
+  });
+
+  it('signs no link for media types no content could prove: a defect, said before a client uploads anything', async () => {
+    const { staging } = aDesk();
+    const signing = staging.uploadUrl(KEY, { ...GRANT, accepted: ['application/pdf', 'application/octet-stream'] });
+
+    await expect(signing).rejects.toThrow(
+      `The upload of "${KEY}" can receive no file: "application/octet-stream" has no content rule`,
+    );
+  });
+
   it('reaches only the key of the grant it is given: what a client sent under another key, or a key it made up, is not confirmed', async () => {
     const { staging, storage } = aDesk();
     const granted = await staging.uploadUrl(KEY, GRANT);

@@ -226,7 +226,8 @@ preceded it. Three ways to cope, cheapest first:
    ![Making order irrelevant: the producer emits versions 1, 2 and 3 of one appointment; they arrive as 1, 3, 2; the consumer applies 1, then 3, and ignores 2 because the row already holds a later version, so it ends in the state of version 3 whatever the order of arrival](../assets/diagrams/delivery-and-idempotency-ordering.svg)
 
    The kernel compares stamps for you: `stampOf(event, version)` and `isNewer`, the rule the
-   read model stores apply in `upsertIfNewer`:
+   read model stores apply in `upsertIfNewer`. Two stamps with a version are ordered by it;
+   otherwise their instants decide, so the stamps of one key should all carry a version, or none:
 
    <!-- checked sample -->
    ```ts

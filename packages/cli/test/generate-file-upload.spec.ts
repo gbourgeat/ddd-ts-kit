@@ -3,6 +3,8 @@ import { cli, exists, read } from './helpers';
 import { initProject } from './support/init-project';
 
 const BILLING = 'src/contexts/billing';
+const UNIT = `${BILLING}/test/unit`;
+const CONTROLLER = `${BILLING}/presentation/http/invoices/attach-invoice-scan/attach-invoice-scan.controller.ts`;
 
 const TERMS = [
   '--term',
@@ -92,6 +94,74 @@ describe('generate file-upload', () => {
     ]);
 
     expect([withoutHttp.code, withoutHttp.stderr]).toEqual([2, expect.stringContaining('stack.http is "none"')]);
+  });
+});
+
+describe('generate file-upload --text', () => {
+  it('declares a document unless told the file is text: no text rule, and specs on a PDF', () => {
+    const root = initProject('--context', 'billing:core');
+
+    expect(upload(root, '--public').code).toBe(0);
+
+    const spec = read(root, `${UNIT}/attach-invoice-scan.controller.spec.ts`);
+
+    expect(read(root, CONTROLLER)).toContain("mediaTypes: ['application/pdf', 'image/png', 'image/jpeg'] },");
+    expect(read(root, CONTROLLER)).not.toContain('contentRules');
+    expect(spec).not.toContain('multipartUploads');
+    expect(read(root, `${UNIT}/attach-invoice-scan.handler.spec.ts`)).toContain("fileName: 'scan.pdf'");
+  });
+
+  it('declares with --text single-byte a text file under the names browsers give a CSV, and covers one that is not UTF-8', () => {
+    const root = initProject('--context', 'billing:core');
+
+    expect(upload(root, '--public', '--text', 'single-byte').code).toBe(0);
+
+    const controller = read(root, CONTROLLER);
+    const spec = read(root, `${UNIT}/attach-invoice-scan.controller.spec.ts`);
+
+    expect(controller).toContain("mediaTypes: ['text/csv', 'application/csv', 'application/vnd.ms-excel'],");
+    expect(controller).toContain("text: 'single-byte',");
+    expect(controller).toContain("contentRules: { 'application/vnd.ms-excel': 'text' },");
+    expect(spec).toContain("const WINDOWS_1252 = Buffer.from('label;amount\\r\\ncaf\\xe9;3,50\\r\\n', 'latin1');");
+    expect(spec).toContain("it('receives byte for byte a text file that is not UTF-8, and refuses a workbook");
+    expect(spec).toContain('routeOf(new AttachInvoiceScanController(commands), { uploads: multipartUploads() });');
+    expect(spec).toContain('const taken = await send({ ...sent, ...aForm(WINDOWS_1252) });');
+    expect(spec).toContain('expect(received).toEqual(WINDOWS_1252);');
+    expect(spec).not.toContain('UTF_8');
+    expect(read(root, `${UNIT}/attach-invoice-scan.handler.spec.ts`)).toContain("fileName: 'export.csv'");
+  });
+
+  it('declares with --text utf-8 a text file read as UTF-8, whose spec refuses another encoding', () => {
+    const root = initProject('--context', 'billing:core');
+
+    expect(upload(root, '--public', '--text', 'utf-8').code).toBe(0);
+
+    const spec = read(root, `${UNIT}/attach-invoice-scan.controller.spec.ts`);
+
+    expect(read(root, CONTROLLER)).toContain("text: 'utf-8',");
+    expect(spec).toContain('const taken = await send({ ...sent, ...aForm(UTF_8) });');
+    expect(spec).toContain('const inAnotherEncoding = await send({ ...sent, ...aForm(WINDOWS_1252) });');
+  });
+
+  it('writes the same declaration and the same spec on a Nest controller', () => {
+    const root = initProject('--http', 'nest', '--context', 'billing:core');
+
+    expect(upload(root, '--public', '--text', 'single-byte').code).toBe(0);
+
+    expect(read(root, CONTROLLER)).toContain("    contentRules: { 'application/vnd.ms-excel': 'text' },");
+
+    expect(read(root, `${UNIT}/attach-invoice-scan.controller.spec.ts`)).toContain(
+      'const { send } = routeOf(served, { uploads: multipartUploads() });',
+    );
+  });
+
+  it('refuses a text rule it does not know, saying the two it takes', () => {
+    const refused = upload(initProject('--context', 'billing:core'), '--public', '--text', 'latin1');
+
+    expect([refused.code, refused.stderr]).toEqual([
+      2,
+      expect.stringContaining('--text takes utf-8 or single-byte, not "latin1".'),
+    ]);
   });
 });
 

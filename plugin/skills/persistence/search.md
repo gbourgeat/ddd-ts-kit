@@ -5,7 +5,8 @@ and what does not, the tests, the tenants and the rights in production are in
 `docs/tools/search-read-models.md` of the kit.
 
 - **A copy for reading.** A search index is a read model: written by its projection only, through
-  the port (`upsertIfNewer` with the stamp of the event, `delete` that keeps a tombstone), rebuilt
+  the port (`upsertIfNewer` with the stamp of the event, `updateIfNewer` for an event that changes
+  a row another event created, `delete` that keeps a tombstone), rebuilt
   from the events, never a source of truth. `domain/` never reads it, and no handler decides an
   invariant (uniqueness, a balance) or a right on it: it lags the write by a refresh.
 - **The port** is an abstract class over `ReadModelStore<Row>` of the kernel in

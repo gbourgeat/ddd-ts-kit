@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { anExecutionContext } from '@ddd-ts-kit/testing';
-import { Criteria, ProjectionRebuild, scoped, FixedExecutionScope } from '@ddd-ts-kit/kernel';
+import { Criteria, ProjectionRebuild, scoped, FixedExecutionScope, type EventStamp } from '@ddd-ts-kit/kernel';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port';
 import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
@@ -8,6 +8,7 @@ import { createAnalyticsTables } from '@/contexts/analytics/infrastructure/persi
 import { KnexOutcomeRegister } from '@/contexts/analytics/infrastructure/persistence/knex-outcome-register.repository';
 import { anOutcome } from '@/contexts/analytics/test/builders/outcome.builder';
 import { FakeAppointmentExportGateway } from '@/contexts/analytics/test/fakes/appointment-export-gateway.fake';
+import { storableStamp } from '@/shared-kernel/storable-stamp';
 
 /** The work of these specs runs in one network: every table here holds tenant data. */
 const north = new FixedExecutionScope(anExecutionContext().ofTenant('north').build());
@@ -31,7 +32,7 @@ const WRONG: readonly Outcome[] = [
   anOutcome({ id: 'appointment-ghost' }),
 ];
 
-const seen = { eventId: 'fact-seen', occurredAt: new Date('2026-10-01T10:00:00.000Z') };
+const seen = factAt('fact-seen', '2026-10-01T10:00:00.000Z');
 
 let database: TestDatabase;
 let outcomes: KnexOutcomeRegister;
@@ -86,14 +87,12 @@ describe('The outcomes, rebuilt from what scheduling states', () => {
 
     const earlier = await outcomes.upsertIfNewer(
       'appointment-1',
-      { eventId: 'fact-early', occurredAt: new Date('2026-10-12T08:00:00.000Z') },
+      factAt('fact-early', '2026-10-12T08:00:00.000Z'),
       () => anOutcome({ state: 'held' }),
     );
 
-    const later = await outcomes.upsertIfNewer(
-      'appointment-1',
-      { eventId: 'fact-late', occurredAt: new Date('2026-10-12T10:00:00.000Z') },
-      () => anOutcome({ state: 'no-show' }),
+    const later = await outcomes.upsertIfNewer('appointment-1', factAt('fact-late', '2026-10-12T10:00:00.000Z'), () =>
+      anOutcome({ state: 'no-show' }),
     );
 
     expect([earlier, later]).toEqual(['stale', 'applied']);
@@ -114,4 +113,9 @@ function rebuild() {
     source: new FakeAppointmentExportGateway(TRUTH),
     unitOfWork: database.persistence.unitOfWork,
   }).run();
+}
+
+/** The stamp of a fact as the projection gives it: a version, like the stamps of the export. */
+function factAt(eventId: string, instant: string): EventStamp {
+  return storableStamp({ eventId, occurredAt: new Date(instant) }, 1);
 }

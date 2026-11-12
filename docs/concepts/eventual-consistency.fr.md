@@ -1,5 +1,5 @@
 [English](eventual-consistency.md) · **Français**
-<!-- translation-of: eventual-consistency.md sha256:ac9ab5847b70b0e2 -->
+<!-- translation-of: eventual-consistency.md sha256:edcb67b8013df6f0 -->
 
 # La cohérence à terme, expliquée à un responsable produit
 
@@ -160,11 +160,23 @@ export async function project(slots: OpenSlots, event: SlotEvent, open: boolean)
 ```
 
 L'ordre par instant repose sur l'horloge du producteur ; quand l'amont fournit une version par
-clé, `stampOf(event, version)` la porte et l'ordre ne dépend plus des horloges. Les projections
+clé, `stampOf(event, version)` la porte et l'ordre ne dépend plus des horloges. Chaque
+événement qui écrit une clé devrait être tamponné de la même façon, avec une version ou sans :
+entre un de chaque les instants décident, ce qui n'est pas un ordre
+([une seule sorte de tampon par clé](cqrs.fr.md#quelle-écriture-pour-quel-événement)). Les projections
 du kit sont écrites de cette façon ([CQRS tel qu'il est employé ici](cqrs.fr.md)). Une
 suppression est ordonnée de la même façon, même livrée avant la création qu'elle suit : elle
 laisse une trace sous sa clé
 ([ce que laisse une ligne supprimée](cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)).
+
+L'exemple écrit toute la ligne, si bien que n'importe quel événement peut arriver le premier. Un
+événement qui ne fait que changer une partie d'une ligne (un créneau déplacé, une note ajoutée)
+n'est juste que si les événements de sa clé sont appliqués dans l'ordre : le registre refuse de
+remonter le temps, et ne peut pas remettre un changement arrivé avant la création de sa ligne ou
+après un changement plus tardif. `ReadModelStore.updateIfNewer` écrit un tel changement et répond
+`missing` quand la ligne n'est pas là ; quelles alimentations gardent l'ordre d'une clé, et que
+faire de `missing` sur chacune, est dans
+[quelle écriture pour quel événement](cqrs.fr.md#quelle-écriture-pour-quel-événement).
 
 ## Limites et cas où s'en passer
 

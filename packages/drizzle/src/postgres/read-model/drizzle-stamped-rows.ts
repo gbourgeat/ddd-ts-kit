@@ -113,7 +113,7 @@ export class DrizzleStampedRows<
     const replaced = await this.context
       .executor()
       .execute(
-        sql`update ${this.table()} set ${changes} where ${key} = ${entry.key} and ${named(stamps.lastEventId)} = ${held.eventId} and ${named(stamps.lastEventAt)} = ${held.occurredAt.toISOString()} and ${this.own()} returning ${key}`,
+        sql`update ${this.table()} set ${changes} where ${key} = ${entry.key} and ${named(stamps.lastEventId)} = ${held.eventId} and ${named(stamps.lastEventAt)} = ${held.occurredAt.toISOString()} and ${named(stamps.lastEventVersion)} is not distinct from ${held.version ?? null}::bigint and ${this.own()} returning ${key}`,
       );
 
     return rowsOf(replaced).length === 1;

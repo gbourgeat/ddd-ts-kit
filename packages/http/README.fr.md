@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ca0b1f9495bbcd23 -->
+<!-- translation-of: README.md sha256:c1e19772dde9e37c -->
 
 # @ddd-ts-kit/http
 
@@ -1877,11 +1877,56 @@ lue ; un formulaire sans le fichier, 422. Les champs texte envoyés après le fi
 lus. `fileName` est montré aux personnes, jamais utilisé comme clé : la clé est générée sur le
 serveur.
 
+Chaque type de média de `mediaTypes` a une règle de contenu. Le kit en a une pour les formats
+qu'il reconnaît à leurs premiers octets (PDF, PNG, JPEG, GIF, WebP, zip et les documents
+bureautiques, gzip) et pour le texte (`text/plain`, `text/csv`, `text/tab-separated-values`,
+`text/markdown`, `application/json`, `application/csv`). Pour tout autre type, la route
+l'énonce dans `contentRules` : `text`, le contenu est du texte sous un autre nom, ou
+`unchecked`, la route prend les octets tels quels. Un type sans règle ne pourrait recevoir aucun
+fichier, alors la déclaration est refusée quand la route est déclarée (`@Controller`,
+`defineRoute`, les routes d'un contrôleur Nest), avec le type et les règles qu'elle peut
+énoncer, et `ddd-ts-kit check` le signale (`files/upload-content-rule`).
+
+Le texte est de l'UTF-8 valide par défaut. Une route qui reçoit des exports en Windows-1252 ou
+en ISO-8859-1 dit `text: 'single-byte'` : l'UTF-8 et tout encodage sur un octet passent, un
+fichier binaire sous le nom d'un CSV est toujours refusé, l'UTF-16 et l'UTF-32 aussi. Le
+gestionnaire reçoit les octets tels qu'ils sont arrivés et les décode lui-même ; `isUtf8` du
+kernel dit lequel des deux il tient. Le charset qu'un client peut écrire sur la partie n'est
+pas transmis : les navigateurs n'en envoient pas, et busboy ne l'expose pas.
+
+<!-- checked sample -->
+```ts
+import type { UploadSpec } from '@ddd-ts-kit/http';
+import { isUtf8 } from '@ddd-ts-kit/kernel';
+
+/** The statement of a bank: a CSV under the names browsers give it, in UTF-8 or in a single-byte encoding. */
+export const statement: UploadSpec = {
+  field: 'statement',
+  maxBytes: 5_000_000,
+  mediaTypes: ['text/csv', 'application/csv', 'application/vnd.ms-excel'],
+  text: 'single-byte',
+  contentRules: { 'application/vnd.ms-excel': 'text' },
+};
+
+/** Bytes of any kind, which the route takes as they are and says so. */
+export const attachment: UploadSpec = {
+  field: 'attachment',
+  maxBytes: 50_000_000,
+  mediaTypes: ['application/pdf', 'application/octet-stream'],
+  contentRules: { 'application/octet-stream': 'unchecked' },
+};
+
+export function decoded(bytes: Uint8Array): string {
+  return new TextDecoder(isUtf8(bytes) ? 'utf-8' : 'windows-1252').decode(bytes);
+}
+```
+
 Pour un gros fichier, le client téléverse plutôt directement vers le stockage : une commande
 signe un lien de téléversement (`FileStaging.uploadUrl`) et enregistre sur l'agrégat
 l'autorisation qu'il renvoie, le client envoie le fichier au lien, et une deuxième commande
 confirme à partir de cette autorisation (`FileStaging.confirm(pending)`, qui contrôle la taille
-et le type de média de ce qui est arrivé). Un client qui coupe la connexion en cours de route
+et le type de média de ce qui est arrivé, sous la règle `text` et les `contentRules` données à
+`uploadUrl`). Un client qui coupe la connexion en cours de route
 fait échouer le flux du fichier, si bien qu'un gestionnaire qui l'attend est rejeté au lieu
 d'attendre sans fin.
 

@@ -22,13 +22,17 @@ const TERMS = [
 
 const PROTECTED = ['--permission', 'invoice.attach-scan'];
 
-/** The three wirings a generated upload lands in, and both storages a project keeps its files in. */
-const FILE_STACKS: readonly (readonly [string, StackFlags])[] = [
-  ['declared, files in a bucket of the S3 protocol', { ...DEFAULT_STACK, storage: 's3' }],
-  ['explicit module files, files in a local directory', { ...EXPLICIT_STACK, storage: 'local' }],
+/**
+ * The three wirings a generated upload lands in, both storages a project keeps its files in, and
+ * the text rule of the text file it receives beside the document.
+ */
+const FILE_STACKS: readonly (readonly [string, StackFlags, string])[] = [
+  ['declared, files in a bucket of the S3 protocol', { ...DEFAULT_STACK, storage: 's3' }, 'single-byte'],
+  ['explicit module files, files in a local directory', { ...EXPLICIT_STACK, storage: 'local' }, 'utf-8'],
   [
     'wired by hand on Fastify and knex, files in a bucket of the S3 protocol',
     { http: 'fastify', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'knex', events: 'outbox', storage: 's3' },
+    'single-byte',
   ],
 ];
 
@@ -41,11 +45,11 @@ function step(root: string, ...args: string[]): void {
 }
 
 /**
- * Slow, opt-in (DDD_TS_KIT_E2E=1): `init` with a file storage, then two uploads generated, one
- * protected and one public, held to what the project runs: the checker and the three analyzers,
+ * Slow, opt-in (DDD_TS_KIT_E2E=1): `init` with a file storage, then two uploads generated, a
+ * protected one of a document and a public one of a text file, held to what the project runs: the checker and the three analyzers,
  * the compiler, and the specs generated with them, which stage the file through the bus.
  */
-describe.runIf(SLOW).each(FILE_STACKS)('a project that receives files (%s)', (_label, stack) => {
+describe.runIf(SLOW).each(FILE_STACKS)('a project that receives files (%s)', (_label, stack, text) => {
   let root: string;
 
   beforeAll(() => {
@@ -65,7 +69,9 @@ describe.runIf(SLOW).each(FILE_STACKS)('a project that receives files (%s)', (_l
       ...grantOf(stack)('accountant'),
     );
 
-    step(root, 'generate', 'file-upload', 'billing', 'ImportPriceList', '--path', '/price-lists/import', '--public');
+    const priceList = ['billing', 'ImportPriceList', '--path', '/price-lists/import', '--public', '--text', text];
+
+    step(root, 'generate', 'file-upload', ...priceList);
     installAsPublished(root);
   }, 120_000);
 
@@ -80,7 +86,7 @@ describe.runIf(SLOW).each(FILE_STACKS)('a project that receives files (%s)', (_l
     );
   }, 240_000);
 
-  it('passes the specs generated with the uploads: the file staged by the bus, promoted with the commit', () => {
+  it('passes the specs generated with the uploads: a document staged by the bus, a text file through the multipart reader', () => {
     const specs = runIn(root, {
       command: bin('vitest'),
       args: [

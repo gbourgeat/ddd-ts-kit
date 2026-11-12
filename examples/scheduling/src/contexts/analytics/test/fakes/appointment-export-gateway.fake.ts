@@ -1,6 +1,7 @@
 import { pageOf, type Page, type StampedRow } from '@ddd-ts-kit/kernel';
 import type { AppointmentExportGateway } from '@/contexts/analytics/application/ports/appointment-export-gateway.port';
 import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port';
+import { storableStamp } from '@/shared-kernel/storable-stamp';
 
 const PAGE_SIZE = 2;
 
@@ -24,5 +25,5 @@ export class FakeAppointmentExportGateway implements AppointmentExportGateway {
 }
 
 function stamped(outcome: Outcome): StampedRow<Outcome> {
-  return { key: outcome.id, row: outcome, stamp: { eventId: '', occurredAt: outcome.changedAt } };
+  return { key: outcome.id, row: outcome, stamp: storableStamp({ eventId: '', occurredAt: outcome.changedAt }) };
 }

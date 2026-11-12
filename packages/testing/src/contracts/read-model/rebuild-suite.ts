@@ -15,6 +15,7 @@ export class RebuildSuite extends ReadModelStoreSuite<ReadModelStoreUnderContrac
     this.closesAfterEach();
     this.rebuilds();
     this.rebuildsUnderEvents();
+    this.rebuildsAroundAMissingRow();
     this.appliesAfterTheSwap();
     this.rebuildsAroundDeletions();
     this.rebuildsAroundTraces();
@@ -92,6 +93,25 @@ export class RebuildSuite extends ReadModelStoreSuite<ReadModelStoreUnderContrac
 
       this.expect(report).toEqual({ copied: 3, reread: 1, rounds: 1 });
       this.expect((await this.store.get('a3'))?.seats).toBe(9);
+    });
+  }
+
+  private rebuildsAroundAMissingRow(): void {
+    this.it('reads again the key of a change that found no row while it exports, applied after the swap', async () => {
+      const source = this.sourceOf(['a1', 'a3', 'a4', 'a5'], 2);
+      const renamed = (current: Row): Row => ({ ...current, title: 'renamed' });
+      const answers: string[] = [];
+
+      source.duringExport = async () => {
+        answers.push(await this.store.updateIfNewer('a5', at('evt-9', 9), renamed));
+      };
+
+      const report = await this.rebuild(source);
+
+      this.expect(answers).toEqual(['missing']);
+      this.expect(report.reread).toBe(1);
+      this.expect(await this.store.get('a5')).toEqual(row('a5'));
+      this.expect(await this.store.updateIfNewer('a5', at('evt-9', 9), renamed)).toBe('applied');
     });
   }
 

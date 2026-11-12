@@ -5,6 +5,7 @@ import { ROUTE_PATH_PATTERN } from './route-path-pattern';
 import type { RouteHandler } from './route-handler';
 import type { RouteSpec } from './route-spec';
 import type { Route } from './route';
+import { uploadDefects } from './upload-defects';
 
 export function defineRoute<const Request extends RequestSchemas, const Responses extends ResponsesSpec>(
   spec: RouteSpec<Request, Responses>,
@@ -18,6 +19,7 @@ export function defineRoute<const Request extends RequestSchemas, const Response
 
   assertSecurityDeclared(spec);
   assertCacheDeclaration(spec);
+  assertUploadReceivable(spec);
 
   return { ...spec, handle: handler };
 }
@@ -33,4 +35,13 @@ function assertSecurityDeclared(spec: Pick<RouteSpec, 'operationId'> & { readonl
   throw new Error(
     `Route "${spec.operationId}": declare "security" with the names of its security schemes, or false for a public route.`,
   );
+}
+
+/** An upload whose media types no content could prove receives no file: said when the route is defined, not by a 415 to each client. */
+function assertUploadReceivable({ operationId, upload }: Pick<RouteSpec, 'operationId' | 'upload'>): void {
+  const defects = uploadDefects(upload);
+
+  if (defects.length > 0) {
+    throw new Error(`Route "${operationId}" declares an upload it cannot receive: ${defects.join(' ')}`);
+  }
 }
