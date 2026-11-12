@@ -2031,7 +2031,10 @@ those the list holds; `states()` and `notReady()` list, `require()` refuses with
 the tables as one error and lets the start go on), and `report()` is what a command prints, with
 an `outcome` that tells a table that is not ready from a database that could not be read. Every
 entry is tried: one whose store cannot be built or whose table the database refuses to read is
-told under its name, in `unread` of the error, and the others are still read. The verdict is the
+told under its name, in `unread` of the error, with its cause in a few words (the message of the
+driver, never the statement), and the others are still read. A database that cannot be reached is
+no refusal of a start: `atStart` logs one warning with the short cause and goes on, `report()`
+answers `unread`. The verdict is the
 store's by construction, a table nobody lists is never read, and a store without a table (memory,
 OpenSearch) has nothing to say. What the check cannot decide is a warning: a constraint that is
 not validated, a constraint of that name that is not written as the kit writes it (the form is

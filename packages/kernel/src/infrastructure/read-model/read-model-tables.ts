@@ -1,4 +1,5 @@
 import type { Logger } from '../../application/ports/logger';
+import { databaseFailure } from './database-failure';
 import { ReadModelTableNotReadyError } from './read-model-table-not-ready-error';
 import { readModelTableNotes } from './read-model-table-notes';
 import { readModelTableReady } from './read-model-table-ready';
@@ -39,6 +40,8 @@ type Unread = ReadModelTablesNotReadyError['unread'][number];
 interface Reading {
   readonly states: readonly ReadModelTableState[];
   readonly unread: readonly Unread[];
+  /** The entry at which the database could not be reached: nothing was asked of it after that one. */
+  readonly unreached?: Unread;
 }
 
 /**
@@ -51,7 +54,10 @@ interface Reading {
  * read its schema) is told under its name with what failed, the others still read. Nothing is
  * guessed from the database: a table that is not listed is not read, and an empty list checks
  * nothing. `unlisted` names the read model stores the application knows it does not list: they
- * are told as a warning, since nothing checks them.
+ * are told as a warning, since nothing checks them. A database that cannot be reached (a refused
+ * connection, a host that is not found, a timeout) is no answer about a table: the reading stops
+ * there, a start goes on with one warning, since it never depended on the database being up, and
+ * a command says the database could not be read.
  */
 export class ReadModelTables {
   constructor(
@@ -90,7 +96,7 @@ export class ReadModelTables {
 
   /** Refuses with `ReadModelTablesNotReadyError`, which names every listed table that is not ready, with its migration, and every one that could not be read. */
   async require(): Promise<void> {
-    const refusal = refusalOf(await this.read());
+    const refusal = refusalOf(await this.read(), 'strict');
 
     if (refusal !== undefined) {
       throw refusal;
@@ -102,13 +108,15 @@ export class ReadModelTables {
    * `reported` writes the same message as an error and lets the start go on: each store still
    * refuses by name before its first trace. What the check cannot decide is a warning either
    * way: a check constraint that is not validated or that checks something else, another check
-   * on a column of the row, a view, a store nobody lists.
+   * on a column of the row, a view, a store nobody lists. A database that could not be reached
+   * is one warning too, with its cause in a few words, and never a refusal: the check tells the
+   * tables that are not ready, it does not make the start wait for the database.
    */
   async atStart(logger: Logger, unready: ReadModelTablesAtStart = 'required'): Promise<void> {
     const reading = await this.read();
     const refusal = refusalOf(reading);
 
-    for (const note of this.notes(reading)) {
+    for (const note of [...unreachedNote(reading), ...this.notes(reading)]) {
       logger.warn(note);
     }
 
@@ -129,7 +137,7 @@ export class ReadModelTables {
   /** The same check as a command prints it: how many tables it read and their names, the warnings, then every refusal. */
   async report(): Promise<ReadModelTablesReport> {
     const reading = await this.read();
-    const refusal = refusalOf(reading);
+    const refusal = refusalOf(reading, 'strict');
     const { states } = reading;
     const counted = states.length === 1 ? '1 read model table' : `${String(states.length)} read model tables`;
 
@@ -140,7 +148,7 @@ export class ReadModelTables {
       ...(refusal === undefined && states.length > 0 ? ['Each can hold the trace of a deleted row.'] : []),
     ];
 
-    const unread = states.length === 0 && reading.unread.length > 0;
+    const unread = reading.unreached !== undefined || (states.length === 0 && reading.unread.length > 0);
 
     return {
       ready: refusal === undefined,
@@ -155,7 +163,11 @@ export class ReadModelTables {
       : 'No listed read model keeps a table that could be read.';
   }
 
-  /** Every entry is tried, in the order of the list: one that fails does not hide the next. */
+  /**
+   * Every entry is tried, in the order of the list: one that fails does not hide the next. The
+   * reading stops at the first one that finds the database unreachable: the next would wait for
+   * the same refusal.
+   */
   private async read(): Promise<Reading> {
     const states: ReadModelTableState[] = [];
     const unread: Unread[] = [];
@@ -166,6 +178,8 @@ export class ReadModelTables {
       } catch (cause) {
         if (cause instanceof ReadModelTableNotReadyError) {
           states.push(cause.state);
+        } else if (databaseFailure(cause).unreachable) {
+          return { states, unread, unreached: { name: entry.name, cause } };
         } else {
           unread.push({ name: entry.name, cause });
         }
@@ -187,10 +201,21 @@ export class ReadModelTables {
   }
 }
 
-function refusalOf({ states, unread }: Reading): ReadModelTablesNotReadyError | undefined {
-  const refused = states.filter((state) => !readModelTableReady(state));
+/** The refusal of a reading; `strict`, for a command, a database that could not be reached is one too. */
+function refusalOf(reading: Reading, strict?: 'strict'): ReadModelTablesNotReadyError | undefined {
+  const refused = reading.states.filter((state) => !readModelTableReady(state));
+  const unreached = strict === undefined || reading.unreached === undefined ? [] : [reading.unreached];
+  const unread = [...reading.unread, ...unreached];
 
   return refused.length + unread.length === 0 ? undefined : new ReadModelTablesNotReadyError(refused, unread);
+}
+
+function unreachedNote({ unreached }: Reading): string[] {
+  return unreached === undefined
+    ? []
+    : [
+        `The read model tables could not be checked: the database could not be reached (${databaseFailure(unreached.cause).cause}). The start goes on; each store still refuses a table that is not ready before its first trace.`,
+      ];
 }
 
 function nameOf({ schema, table }: ReadModelTableState): string {

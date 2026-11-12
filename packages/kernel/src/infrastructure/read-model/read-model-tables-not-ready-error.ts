@@ -1,3 +1,4 @@
+import { databaseFailure } from './database-failure';
 import { ReadModelTableNotReadyError } from './read-model-table-not-ready-error';
 import type { ReadModelTableState } from '../../application/read-model/read-model-table-state';
 
@@ -11,7 +12,8 @@ interface UnreadReadModel {
 /**
  * Read model tables the application lists cannot hold the trace of a deleted row, or could not be
  * read: every one of them, in one error, each table with what keeps it from it and the migration
- * to write, each unread one under its name with what failed. Raised when the tables are checked
+ * to write, each unread one under its name with what failed, in a few words: the message of the
+ * driver, never the statement an ORM wraps it in. Raised when the tables are checked
  * in one pass, at the start of an application or before a deployment, where
  * `ReadModelTableNotReadyError` is the refusal of one store before its first trace. Each entry of
  * `tables` is that very refusal: the verdict and the migration are the ones the store would give.
@@ -52,7 +54,7 @@ function notRead(unread: readonly UnreadReadModel[]): string[] {
   const counted =
     unread.length === 1 ? 'The table of 1 read model' : `The tables of ${String(unread.length)} read models`;
 
-  const each = unread.map(({ name, cause }) => `${name} (${cause instanceof Error ? cause.message : String(cause)})`);
+  const each = unread.map(({ name, cause }) => `${name} (${databaseFailure(cause).cause})`);
 
   return [`${counted} could not be read, so nothing says whether a trace is taken: ${each.join('; ')}.`];
 }

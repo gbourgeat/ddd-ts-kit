@@ -1,5 +1,7 @@
+import type { ReadModelInATable } from '@ddd-ts-kit/kernel';
 import type { Awaitable } from './awaitable';
 import type { ContractRunner } from './contract-runner';
+import type { ReadModelTableShape } from './read-model/read-model-table-shape';
 import type { ReadModelTablesUnderContract } from './read-model/read-model-tables-under-contract';
 import { TableAgreementSuite } from './read-model/table-agreement-suite';
 import { TableDoubtsSuite } from './read-model/table-doubts-suite';
@@ -16,6 +18,17 @@ export interface ReadModelTablesContractOptions {
   readonly renamedStamps?: boolean;
   /** True where a table has a definition that says which columns refuse NULL, read when the store is built. */
   readonly definition?: boolean;
+  /**
+   * The table of a shape over a connection to a port nothing listens on, and what closes that
+   * connection. Left out where the member connects when its storage is opened, before any table
+   * is built: an application on it never starts without its database.
+   */
+  unreachable?(shape: ReadModelTableShape): Awaitable<UnreachableTable>;
+}
+
+interface UnreachableTable {
+  readonly table: ReadModelInATable;
+  close(): Awaitable<unknown>;
 }
 
 /**
@@ -30,7 +43,8 @@ export interface ReadModelTablesContractOptions {
  * scans without the lock that stops readers; a constraint of the kit's name written otherwise is
  * read as another check and never dropped; another check on a field of the row and a view are
  * warnings; a table that cannot be read is told under its name, the others still read; a table
- * nobody lists is never read; the start of an application is refused, or told as an error.
+ * nobody lists is never read; the start of an application is refused, or told as an error; a
+ * database that cannot be reached is one warning with its cause in a few words, and no refusal.
  */
 export function readModelTablesContract(runner: ContractRunner, options: ReadModelTablesContractOptions): void {
   const createTables = (): Awaitable<ReadModelTablesUnderContract> => options.createTables();
@@ -39,5 +53,10 @@ export function readModelTablesContract(runner: ContractRunner, options: ReadMod
   new TableAgreementSuite(runner, createTables, options).describe(`${named}: the list and the store)`);
   new TableMigrationSuite(runner, createTables).describe(`${named}: the migration)`);
   new TableDoubtsSuite(runner, createTables).describe(`${named}: what the check does not decide)`);
-  new TablesAtStartSuite(runner, createTables).describe(`${named}: the start)`);
+
+  new TablesAtStartSuite(
+    runner,
+    createTables,
+    options.unreachable === undefined ? undefined : (shape) => options.unreachable?.(shape),
+  ).describe(`${named}: the start)`);
 }

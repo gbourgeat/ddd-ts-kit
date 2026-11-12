@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:0017f948886fd4ad -->
+<!-- translation-of: cqrs.md sha256:2659f63b7c0a0bb9 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -500,7 +500,19 @@ update "notification"."contacts" set "address" = null, "label" = null where "del
 **Chaque entrée est essayée.** Une entrée dont le registre ne peut pas être construit, ou dont la
 base refuse de lire la table (un rôle sans le droit d'utiliser le schéma), ne cache pas les
 autres : elle est dite sous son nom avec ce qui a échoué, dans `unread` de la même erreur, et les
-tables restantes sont lues quand même.
+tables restantes sont lues quand même. Ce qui a échoué est dit en quelques mots, le message du
+pilote et jamais l'instruction dans laquelle un ORM l'enveloppe.
+
+**Une base injoignable n'est pas un refus du démarrage.** La vérification dit les tables qui ne
+sont pas prêtes ; elle ne fait pas attendre sa base à une application, qui ne l'attendait pas
+avant sa première requête. Quand la lecture ne trouve pas de base (une connexion refusée, un hôte
+introuvable, un délai dépassé, une connexion que le serveur ferme, lus à travers l'enveloppe de
+chaque ORM), elle s'arrête là et le démarrage se poursuit, en `'required'` comme en `'reported'`,
+avec un seul avertissement qui le dit et dit pourquoi (`ECONNREFUSED 127.0.0.1:5432`) ; chaque
+registre refuse encore avant sa première trace. Une base qui répond et refuse la lecture (un
+droit, une instruction qui échoue) est une table non lue, qui arrête un démarrage `'required'`.
+`db:read-models` sort avec le code 3 sur une base qu'il ne peut pas joindre, avec la même cause
+courte.
 
 **Ce pour quoi une table est lue.** Les colonnes que le registre associe comme champs de sa ligne,
 et aucune autre : la clé, la colonne du locataire sous le nom que le registre lui donne, le tampon

@@ -1,4 +1,6 @@
 import { getTableColumns, sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pg from 'pg';
 import { bigint, boolean, pgSchema, text, timestamp, type PgColumn, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedExecutionScope } from '@ddd-ts-kit/kernel';
@@ -47,8 +49,29 @@ afterAll(async () => {
   await database.close();
 });
 
+/** A port nothing listens on: a connection there is refused at once. */
+const CLOSED = 'postgresql://app:app@127.0.0.1:1/none';
+
 readModelTablesContract(runner, {
   name: 'DrizzleReadModelTable',
+  unreachable: (shape) => {
+    const pool = new pg.Pool({ connectionString: CLOSED, max: 1 });
+    const defined = definitionOf(shape);
+    const columns: Readonly<Record<string, PgColumn>> = getTableColumns(defined);
+    const column = (field: string): PgColumn => columns[field] ?? defined.deleted;
+
+    return {
+      table: new DrizzleReadModelTable<Record<string, string | null>, PgQueryResultHKT>(
+        createDrizzleUnitOfWork(drizzle(pool)),
+        {
+          table: defined,
+          key: column(shape.key),
+          columns: Object.fromEntries([shape.key, ...shape.fields].map((field) => [field, column(field)])),
+        },
+      ),
+      close: () => pool.end(),
+    };
+  },
   tenantColumn: true,
   renamedStamps: true,
   definition: true,

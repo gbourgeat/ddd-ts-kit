@@ -467,7 +467,18 @@ update "notification"."contacts" set "address" = null, "label" = null where "del
 **Every entry is tried.** An entry whose store cannot be built, or whose table the database
 refuses to read (a role without the right to use the schema), does not hide the others: it is
 told under its name with what failed, in `unread` of the same error, and the remaining tables are
-still read.
+still read. What failed is said in a few words, the message of the driver and never the statement
+an ORM wraps it in.
+
+**A database that cannot be reached is not a refusal of the start.** The check tells the tables
+that are not ready; it does not make an application wait for its database, which it never did
+before its first request. When the reading finds no database (a refused connection, a host that
+is not found, a timeout, a connection the server closes, read through the wrapping of each ORM),
+it stops there and the start goes on, `'required'` or `'reported'`, with one warning that says so
+and why (`ECONNREFUSED 127.0.0.1:5432`); each store still refuses before its first trace. A
+database that answers and refuses the reading (a permission, a failed statement) is an unread
+table, which stops a `'required'` start. `db:read-models` exits 3 on a database it cannot reach,
+with the same short cause.
 
 **What a table is read for.** The columns the store maps as fields of its row, and no other: the
 key, the tenant column under the name the store gives it, the stamp under the names the

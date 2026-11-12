@@ -1,3 +1,4 @@
+import knex from 'knex';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import { READ_MODEL_TABLE_SHAPES, readModelTablesContract } from '@ddd-ts-kit/testing/contracts';
@@ -17,8 +18,24 @@ afterAll(async () => {
   await database.close();
 });
 
+/** A port nothing listens on: a connection there is refused at once. */
+const CLOSED = 'postgresql://app:app@127.0.0.1:1/none';
+
 readModelTablesContract(runner, {
   name: 'KnexReadModelTable',
+  unreachable: ({ table, key, fields }) => {
+    const closed = knex({ client: 'pg', connection: CLOSED, pool: { min: 0, max: 1 } });
+
+    return {
+      table: new KnexReadModelTable<Record<string, string | null>>(createKnexUnitOfWork(closed), {
+        schema: READ_MODEL_TABLE_SHAPES.schema,
+        table,
+        keyColumn: key,
+        columns: Object.fromEntries([key, ...fields].map((field) => [field, field])),
+      }),
+      close: () => closed.destroy(),
+    };
+  },
   createTables: () => {
     const unitOfWork = createKnexUnitOfWork(database.knex);
     const scope = new FixedExecutionScope(anExecutionContext().ofTenant('acme').build());

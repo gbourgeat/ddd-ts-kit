@@ -3,7 +3,8 @@ import { FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import { anExecutionContext } from '@ddd-ts-kit/testing';
 import { READ_MODEL_TABLE_SHAPES, readModelTablesContract } from '@ddd-ts-kit/testing/contracts';
 import { PrismaReadModelTable, createPrismaUnitOfWork } from '../../src';
-import type { Prisma } from '../generated/client/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient, type Prisma } from '../generated/client/client';
 import { createDatabase, type TestDatabase } from '../support/database';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
@@ -18,8 +19,28 @@ afterAll(async () => {
   await database.close();
 });
 
+/** A port nothing listens on: a connection there is refused at once. */
+const CLOSED = 'postgresql://app:app@127.0.0.1:1/none';
+
 readModelTablesContract(runner, {
   name: 'PrismaReadModelTable',
+  unreachable: ({ table, key, fields }) => {
+    const closed = new PrismaClient({ adapter: new PrismaPg({ connectionString: CLOSED }) });
+
+    return {
+      table: new PrismaReadModelTable<Record<string, string | null>, Prisma.TransactionClient>(
+        createPrismaUnitOfWork(closed),
+        {
+          delegate: (client) => client.criteriaContractRow,
+          schema: READ_MODEL_TABLE_SHAPES.schema,
+          table,
+          key,
+          columns: Object.fromEntries([key, ...fields].map((field) => [field, field])),
+        },
+      ),
+      close: () => closed.$disconnect(),
+    };
+  },
   tenantColumn: true,
   createTables: () => {
     const unitOfWork = createPrismaUnitOfWork(database.prisma);

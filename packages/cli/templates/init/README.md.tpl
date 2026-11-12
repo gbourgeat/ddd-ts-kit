@@ -48,7 +48,7 @@ The application checks its read model tables when it starts, whenever their stor
 those `{{config.platformDir}}/database/read-model-tables.ts` lists for the contexts it hosts (a
 context run as a service checks its own, on its database), where `generate read-model` adds each
 store and `init` those of the tree. A table is read by its own store, so the verdict is the one
-that store gives before its first trace; one that is not ready stops the start, named with what
+that store gives before its first trace; a database that cannot be reached is one warning and the start goes on; one that is not ready stops the start, named with what
 keeps it from it and the migration to write, in two steps, which touches the columns the store
 maps and no other. On a large table the second step runs in a migration of its own, outside the
 transaction of the first (the documentation of the persistence says how on each migration tool).

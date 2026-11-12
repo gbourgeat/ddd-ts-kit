@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b42fb63a065c977c -->
+<!-- translation-of: README.md sha256:bcc2bfaf4621aaee -->
 
 # @ddd-ts-kit/kernel
 
@@ -2116,8 +2116,10 @@ qu'appelle une application à son démarrage (`atStart(logger, 'reported')` jour
 une erreur et laisse le démarrage se poursuivre), et `report()` est ce qu'affiche une commande,
 avec un `outcome` qui distingue une table qui n'est pas prête d'une base qui n'a pas pu être lue.
 Chaque entrée est essayée : celle dont le store ne peut pas être construit ou dont la base refuse
-de lire la table est dite sous son nom, dans `unread` de l'erreur, et les autres sont lues quand
-même. Le verdict est celui du store par construction, une table que personne ne liste n'est jamais
+de lire la table est dite sous son nom, dans `unread` de l'erreur, avec sa cause en quelques mots
+(le message du pilote, jamais l'instruction), et les autres sont lues quand même. Une base
+injoignable n'est pas un refus de démarrage : `atStart` journalise un seul avertissement avec la
+cause courte et poursuit, `report()` rend `unread`. Le verdict est celui du store par construction, une table que personne ne liste n'est jamais
 lue, et un store sans table (mémoire, OpenSearch) n'a rien à dire. Ce que la vérification ne peut
 pas trancher est un avertissement : une contrainte non validée, une contrainte de ce nom qui n'est
 pas écrite comme le kit l'écrit (la forme est lue exactement, telle que PostgreSQL l'affiche), une
