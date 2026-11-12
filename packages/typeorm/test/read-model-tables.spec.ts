@@ -14,7 +14,12 @@ type Row = Record<string, string | null>;
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const { schema, ...tables } = READ_MODEL_TABLE_SHAPES;
-const STAMPS = { lastEventId: 'last_event_id', lastEventAt: 'last_event_at', lastEventVersion: 'last_event_version', deleted: 'deleted' };
+const STAMPS = {
+  lastEventId: 'last_event_id',
+  lastEventAt: 'last_event_at',
+  lastEventVersion: 'last_event_version',
+  deleted: 'deleted',
+};
 
 /** The entity a project would write for a table of the contract: text fields, nullable unless the shape says the definition is not. */
 function entityOf({ table, key, fields, tenant, stamps = STAMPS, required = [] }: ReadModelTableShape) {
@@ -67,7 +72,8 @@ readModelTablesContract(runner, {
         const rows: readonly unknown[] = Array.isArray(answered) ? answered : [];
 
         return rows.filter(
-          (row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null && !Array.isArray(row),
+          (row): row is Readonly<Record<string, unknown>> =>
+            typeof row === 'object' && row !== null && !Array.isArray(row),
         );
       },
       transaction: (work) => unitOfWork.run(work),

@@ -33,7 +33,9 @@ readModelTablesContract(runner, {
           schema: READ_MODEL_TABLE_SHAPES.schema,
           table,
           key,
-          columns: Object.fromEntries([key, ...fields, ...(tenant === undefined ? [] : [tenant])].map((field) => [field, field])),
+          columns: Object.fromEntries(
+            [key, ...fields, ...(tenant === undefined ? [] : [tenant])].map((field) => [field, field]),
+          ),
           ...(tenant === undefined ? {} : { tenant: { scope, field: tenant } }),
         }),
       execute: async (statement) => {

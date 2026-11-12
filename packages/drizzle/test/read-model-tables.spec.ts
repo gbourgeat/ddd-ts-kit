@@ -14,14 +14,21 @@ import { createContractDatabase, type ContractDatabase } from './support/read-mo
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const schema = pgSchema(READ_MODEL_TABLE_SHAPES.schema);
-const STAMPS = { lastEventId: 'last_event_id', lastEventAt: 'last_event_at', lastEventVersion: 'last_event_version', deleted: 'deleted' };
+const STAMPS = {
+  lastEventId: 'last_event_id',
+  lastEventAt: 'last_event_at',
+  lastEventVersion: 'last_event_version',
+  deleted: 'deleted',
+};
 
 /** The definition a project would write for a table of the contract: text fields, NOT NULL where the shape says the definition is. */
 function definitionOf({ table, key, fields, tenant, stamps = STAMPS, required = [] }: ReadModelTableShape) {
   const mapped = [key, ...fields, ...(tenant === undefined ? [] : [tenant])];
 
   return schema.table(table, {
-    ...Object.fromEntries(mapped.map((field) => [field, required.includes(field) ? text(field).notNull() : text(field)])),
+    ...Object.fromEntries(
+      mapped.map((field) => [field, required.includes(field) ? text(field).notNull() : text(field)]),
+    ),
     lastEventId: text(stamps.lastEventId).notNull(),
     lastEventAt: timestamp(stamps.lastEventAt, { withTimezone: true, mode: 'string' }).notNull(),
     lastEventVersion: bigint(stamps.lastEventVersion, { mode: 'number' }),

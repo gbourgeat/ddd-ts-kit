@@ -149,6 +149,6 @@ describe('DrizzleReadModelTable', () => {
       'The read model table strict_rows cannot hold the trace of a deleted row: "title", "owner" refuse NULL',
     );
 
-    expect(declare).toThrow('check (deleted or ("title" is not null and "owner" is not null))');
+    expect(declare).toThrow('The definition the store reads says so: declare these columns nullable there');
   });
 });

@@ -34,7 +34,8 @@ readModelTablesContract(runner, {
         }),
       execute: async (statement) => {
         const answered: unknown = await unitOfWork.executor().raw(statement);
-        const rows: unknown = typeof answered === 'object' && answered !== null && 'rows' in answered ? answered.rows : [];
+        const rows: unknown =
+          typeof answered === 'object' && answered !== null && 'rows' in answered ? answered.rows : [];
 
         return Array.isArray(rows) ? rows : [];
       },
