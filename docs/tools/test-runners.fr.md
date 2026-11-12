@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:203a8a2f3d490b5a -->
+<!-- translation-of: test-runners.md sha256:2a06a2c366beee59 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -498,8 +498,11 @@ export default {
   fichiers de bout en bout a alors manqué de tas. Avec `DATABASE_URL`, les deux *workers* restent :
   chaque fichier s'exécute sur une base à lui, copiée du modèle que son exécution a fait de la base
   migrée (`test/support/test-database-clone.ts`), et la configuration nomme la mise en place
-  globale qui démarre cette exécution (`test/support/test-database-run.ts`), puisqu'un *hook* n'y
-  a que les 20 secondes d'un test. Un *broker* ou un serveur au protocole Redis est le même
+  globale qui ouvre cette exécution (`test/support/test-database-setup.ts`), puisqu'un *hook* n'y
+  a que les 20 secondes d'un test. Cette mise en place importe les fichiers de l'exécution par
+  alias, ce que Jest ne résout pas dans une mise en place globale : les scripts de bout en bout
+  démarrent Jest sous tsx
+  (`node --import tsx --experimental-vm-modules node_modules/jest/bin/jest.js`). Un *broker* ou un serveur au protocole Redis est le même
   pour tous les fichiers, qui consommeraient les événements et liraient les clés les uns des
   autres : avec son adresse (`AMQP_URL`, `KAFKA_BROKERS`, `NATS_URL`, `REDIS_URL`) la configuration
   garde un seul *worker*, en bande, et le tas d'une longue suite demande

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { exists, read } from './helpers';
+import { cli, exists, read, write } from './helpers';
+import { commitAll } from './support/commit-all';
 import { initProject } from './support/init-project';
 
-const CLONE = 'test/support/test-database-clone.ts';
-const RUN = 'test/support/test-database-run.ts';
 const OPEN = 'src/platform/database/open-test-database.ts';
+const PARTS = ['clone', 'run', 'session', 'leftovers', 'budget', 'emptying', 'server', 'kept'];
+
+const support = (root: string, part: string): string => read(root, `test/support/test-database-${part}.ts`);
 
 /** How each ORM connects to the copy, with the pool the run left the file, and what its `close` ends before the copy is dropped. */
 const ON_THE_COPY = [
@@ -26,12 +28,12 @@ const ON_THE_COPY = [
   ],
 ] as const;
 
-/** The tables each migration tool writes what it applied in: a run empties every other one. */
+/** The tables each migration tool writes what it applied in: listed as kept when the project is generated. */
 const KEPT = [
-  ['drizzle', "const KEPT = '__drizzle_migrations';"],
-  ['knex', "const KEPT = 'knex_migrations, knex_migrations_lock';"],
-  ['prisma', "const KEPT = '_prisma_migrations';"],
-  ['typeorm', "const KEPT = 'migrations, typeorm_metadata';"],
+  ['drizzle', "  'drizzle.__drizzle_migrations',\n"],
+  ['knex', "  'public.knex_migrations',\n  'public.knex_migrations_lock',\n"],
+  ['prisma', "  'public._prisma_migrations',\n"],
+  ['typeorm', "  'public.migrations',\n  'public.typeorm_metadata',\n"],
 ] as const;
 
 describe('the test database of a project on a PostgreSQL server', () => {
@@ -43,10 +45,10 @@ describe('the test database of a project on a PostgreSQL server', () => {
       expect(open).toContain("import { cloneDatabase } from '$test/support/test-database-clone';");
       expect(open).toContain(`const clone = await cloneDatabase(url);\n  ${connecting}`);
       expect(open).toContain(`${closing}\n      await clone.drop();`.replace('\n      ', closingIndent(orm)));
-      expect(open).toContain('  readonly url?: string;');
       expect(open).toMatch(/return \{\n? *url: clone\.url,/);
       // Nothing connects to the database the URL names: it is only copied.
       expect(open).not.toMatch(/(?:connectToDatabase|createClient|createDataSource)\(url\)/);
+      expect(open).toContain('any other caller\n * copies the migrated database itself.');
     },
   );
 
@@ -58,220 +60,236 @@ describe('the test database of a project on a PostgreSQL server', () => {
   });
 
   it('names the copy in the configuration of the application under test, and what stands for a database in process', () => {
-    const support = read(initProject(), 'test/e2e/support/start-application.ts');
+    const application = read(initProject(), 'test/e2e/support/start-application.ts');
 
-    expect(support).toContain("testEnvironment({ DATABASE_URL: database.url ?? 'postgres://in-process/tests' })");
-    expect(support).not.toContain('DATABASE_URL: url');
+    expect(application).toContain("testEnvironment({ DATABASE_URL: database.url ?? 'postgres://in-process/tests' })");
   });
 
-  it('copies, for a file, the template its run made, one copy at a time, through the maintenance database', () => {
-    const clone = read(initProject(), CLONE);
-    const run = read(initProject(), RUN);
+  it('is written in parts no longer than a file may be, with Jest too, and without an HTTP stack, not without an ORM', () => {
+    for (const root of [
+      initProject(),
+      initProject('--tests', 'jest', '--orm', 'typeorm'),
+      initProject('--http', 'none'),
+    ]) {
+      for (const part of PARTS) {
+        expect(support(root, part).split('\n').length, part).toBeLessThan(200);
+      }
+    }
+
+    expect(exists(initProject('--orm', 'none'), 'test/support/test-database-clone.ts')).toBe(false);
+    expect(exists(initProject('--orm', 'none'), 'test/support/test-database-kept.ts')).toBe(false);
+  });
+});
+
+describe('the database of a caller, on a server', () => {
+  it('is a copy of the template of the run its global setup started, one copy at a time', () => {
+    const clone = support(initProject(), 'clone');
+    const server = support(initProject(), 'server');
 
     expect(clone).toContain("const template = process.env[RUN_TEMPLATE] ?? '';");
     expect(clone).toContain('oneAtATime(server, run, () => server.query(copying(template, name)))');
     expect(clone).toContain('poolSize: Number(process.env[POOL_SIZE]),');
     expect(clone).toContain('drop: () => onServer(url, (server) => server.query(dropping(name))),');
-    expect(clone).toContain('test/support/test-database-run.ts did not run on it.');
-    expect(run).toContain("return 'create database ' + quoted(to) + ' template ' + quoted(from);");
-    expect(run).toContain("return 'drop database if exists ' + quoted(name) + ' with (force)';");
-    expect(run).toContain("return databaseOf(url) === 'postgres' ? 'template1' : 'postgres';");
-    expect(run).toContain('await server.query(`select pg_advisory_lock(${COPYING}, ${keyOf(run)})`);');
+    expect(server).toContain("return 'create database ' + quoted(to) + ' template ' + quoted(from);");
+    expect(server).toContain("return 'drop database if exists ' + quoted(name) + force;");
+    expect(server).toContain('await server.query(`select pg_advisory_lock(${COPYING}, ${keyOf(run)})`);');
   });
 
-  it('copies the migrated database once per run, in the global setup, one run at a time, and empties the copy', () => {
-    const run = read(initProject(), RUN);
+  it('is a run of its own where no global setup started one: a spec of the unit run, a project with no end-to-end run', () => {
+    const clone = support(initProject('--http', 'none', '--orm', 'typeorm'), 'clone');
 
-    expect(run).toContain("await oneAtATime(server, '0', () => copied(server, databaseOf(url), template));");
-    expect(run).toContain('const bytes = await emptied(url, template);');
-    expect(run).toContain("execute 'truncate table ' || names || ' restart identity cascade'");
-    // The guard of the audit trail refuses a truncate: off for the transaction that empties, on in every copy.
-    expect(run).toContain("execute format('alter table %s disable trigger user', guarded);");
-    expect(run).toContain("execute format('alter table %s enable trigger user', guarded);");
-    expect(run).toContain("and d.deptype = 'e')");
-    expect(run).toContain('process.env[RUN_TEMPLATE] = nameOf(url, run.id, TEMPLATE);');
+    expect(clone).toContain('if (run === undefined) {\n    return runOfItsOwn(url);\n  }');
+    expect(clone).toContain('const run = await openRun(url, 1);');
+    expect(clone).toContain('return { url: urlOf(url, run.template), poolSize: run.poolSize, drop: run.end };');
+  });
 
-    expect(run).toContain(
-      'holds ${Math.round(bytes / (1024 * 1024))} MB of rows: copying it took ${seconds} s of this run',
+  it('is never the database "postgres", where the runs hold their locks', () => {
+    const server = support(initProject(), 'server');
+
+    expect(server).toContain(
+      "export async function connectedTo(url: string, database = 'postgres'): Promise<pg.Client> {",
     );
 
-    expect(run).toContain('const LARGE = 64 * 1024 * 1024;');
+    expect(server).toContain("if (databaseOf(url) === 'postgres') {");
+    expect(server).toContain('give the tests a database of their own (create database <name>');
   });
+});
 
-  it.each(KEPT)('on %s, leaves their rows to the tables of the migration tool', (orm, kept) => {
-    expect(read(initProject('--orm', orm), RUN)).toContain(kept);
-  });
+describe('a run on a server', () => {
+  it('takes its lock, drops what died, checks its connections, copies the migrated database once and empties the copy', () => {
+    const run = support(initProject(), 'run');
 
-  it('gives each file its share of the connections the server has left, and refuses with its numbers a run that does not fit', () => {
-    const run = read(initProject(), RUN);
-
-    expect(run).toContain('process.env[POOL_SIZE] = String(poolSizeFor(await connectionsLeft(server), workers));');
-    expect(run).toContain('const each = Math.min(LARGEST_POOL, Math.floor(left / workers));');
-    expect(run).toContain("current_setting('max_connections')::int as max,");
-    expect(run).toContain('case when rolsuper then -1 else rolconnlimit end');
-    expect(run).toContain("const ALLOWED = 'TEST_DATABASE_CONNECTIONS';");
-    expect(run).toContain('`the server leaves ${left} (max_connections ${max}, ${reserved} reserved, ${used} open)`');
+    expect(run).toContain('const session = await openSession(url, tell);');
+    expect(run).toContain('await dropLeftovers(session.server(), url, session.id);');
+    expect(run).toContain('const poolSize = await poolSizeFor(session.server(), atOnce);');
 
     expect(run).toContain(
-      '${workers} spec files at once need ${workers * SMALLEST_POOL} connections, ${SMALLEST_POOL} each at least, and ${counted}: ${fewer}raise max_connections, or state what the run may take (${ALLOWED}).',
+      "await oneAtATime(session.server(), '0', () => copied(session.server(), databaseOf(url), template));",
     );
 
-    expect(run).toContain('run at most ${fitting} at once (pnpm run test:e2e --maxWorkers=${fitting}), ');
+    expect(run).toContain('await session.beatOn(template);');
+
+    expect(run).toContain(
+      'tell(said(await emptied(url, template), databaseOf(url), Math.ceil((Date.now() - from) / 1000)));',
+    );
   });
 
-  it('names what the server refuses: other sessions, a role that creates no database, a database absent, not migrated, or of another role', () => {
-    const run = read(initProject(), RUN);
+  it('names what the server refuses: other sessions, a role that creates no database, a database absent or not migrated', () => {
+    const run = support(initProject(), 'run');
 
     expect(run).toContain("const OTHER_SESSIONS = '55006';");
-    expect(run).toContain('if (codeOf(error) !== OTHER_SESSIONS) {');
     expect(run).toContain('return server.query(copying(database, template));');
     expect(run).toContain('PostgreSQL copies a database only while nobody else is connected to it.');
-    expect(run).toContain("'42501': (database) =>");
     expect(run).toContain('(alter role <role> createdb)');
     expect(run).toContain("'3D000': (database) =>");
-    expect(run).toContain('holds no table: migrate it first (pnpm run db:migrate).');
-    expect(run).toContain('could not be emptied (${String(error)}): the role of DATABASE_URL owns its tables');
+    expect(support(initProject(), 'emptying')).toContain('holds no table: migrate it first (pnpm run db:migrate).');
   });
 
-  it('drops what a run that died left: named after a run, its lock free, and nobody connected', () => {
-    const run = read(initProject(), RUN);
-
-    expect(run).toContain("const MARKER = '_test_';");
-    expect(run).toContain('return /^([0-9a-f]{8})_(?:template|[0-9a-f]{8})$/.exec(rest)?.[1];');
-    // The lock is taken before any database carries the name of the run, and held until its end.
-    expect(run).toContain('const run = { server, url, id: await lockedRun(server) };');
-    expect(run).toContain('locked(run.server, `pg_try_advisory_lock(${LIVE}, ${keyOf(dead)})`)');
-    expect(run).toContain("await run.server.query('drop database if exists ' + quoted(name)).catch(() => undefined);");
-    expect(run).toContain('await locked(run.server, `pg_advisory_unlock(${LIVE}, ${keyOf(dead)})`);');
-    // At its end a run drops what is its own, the copy of a file that failed while it started included.
-    expect(run).toContain('if (runOf(name, run.url) === run.id) {\n      await run.server.query(dropping(name));');
-  });
-
-  it('is written with Jest too, and without an HTTP stack, where the test database imports it, not without an ORM', () => {
-    expect(exists(initProject('--tests', 'jest', '--orm', 'typeorm'), CLONE)).toBe(true);
-    expect(exists(initProject('--tests', 'jest', '--orm', 'typeorm'), RUN)).toBe(true);
-    expect(exists(initProject('--http', 'none'), RUN)).toBe(true);
-    expect(exists(initProject('--orm', 'none'), CLONE)).toBe(false);
-    expect(exists(initProject('--orm', 'none'), RUN)).toBe(false);
-  });
-});
-
-describe('the global setup of an end-to-end run on a server', () => {
-  it('with Vitest, starts the run for the workers of the project when DATABASE_URL is set, and resolves its end', () => {
-    const run = read(initProject(), RUN);
-
-    expect(run).toContain("import type { TestProject } from 'vitest/node';");
-    expect(run).toContain('export async function setup(project: TestProject): Promise<() => Promise<void>> {');
-    expect(run).toContain("return url === '' ? () => Promise.resolve() : startRun(url, project.config.maxWorkers);");
-    expect(run).not.toContain('export default');
-  });
-
-  it('with Jest, is a default export that imports nothing of the project, and the teardown finds the end of the run', () => {
-    const root = initProject('--tests', 'jest');
-    const run = read(root, RUN);
-    const teardown = read(root, 'test/support/test-database-teardown.ts');
+  it('ends on its session or, when the server ended that one, on another, and never throws', () => {
+    const run = support(initProject(), 'run');
 
     expect(run).toContain(
-      'export default async function setup(jest: { readonly maxWorkers: number }): Promise<void> {',
+      'await dropOwn(session.server())\n    .catch(() => onServer(url, dropOwn))\n    .catch(() => undefined);',
     );
 
-    expect(run).toContain("await startRun(process.env['DATABASE_URL'] ?? '', jest.maxWorkers);");
-    expect(run).not.toContain('vitest');
-    expect(run.match(/^import .*$/gm)).toEqual(["import { randomBytes } from 'node:crypto';", "import pg from 'pg';"]);
-    expect(run).toContain("const END = Symbol.for('ddd-ts-kit.test-database-run');");
-    expect(run).toContain('Reflect.set(globalThis, END, end);');
-    expect(teardown).toContain("Reflect.get(globalThis, Symbol.for('ddd-ts-kit.test-database-run'));");
-    expect(teardown).toContain('await Reflect.apply(end, undefined, []);');
-    expect(teardown).not.toMatch(/from '[.$@]/);
+    expect(run).toContain('rows.filter((row) => runOf(row.datname, url) === session.id)');
   });
 
-  it('is an entry for knip where no configuration it reads names it: under Jest, and without an HTTP stack', () => {
-    const entry = '"test/support/test-database-run.ts"';
+  it('says what it emptied that held rows, what it left to another role, and what a large copy took', () => {
+    const run = support(initProject(), 'run');
 
-    // jest.e2e.config.js names it only when DATABASE_URL is set.
-    expect(read(initProject('--tests', 'jest'), 'knip.json')).toContain(`"test/e2e/**/*.e2e.spec.ts",\n      ${entry}`);
-    // Without an HTTP stack there is no end-to-end run yet, and the test database imports the file.
-    expect(read(initProject('--http', 'none'), 'knip.json')).toContain(entry);
-    expect(read(initProject('--tests', 'jest', '--http', 'none'), 'knip.json')).toContain(entry);
-    expect(read(initProject('--tests', 'jest', '--orm', 'none'), 'knip.json')).not.toContain(entry);
-    // The configuration of Vitest names it whatever the environment: its plugin finds it there.
-    expect(read(initProject(), 'knip.json')).not.toContain(entry);
+    expect(run).toContain(
+      'The run emptied ${held.length} table(s) of its copy of "${database}" that held rows (${named(held)})',
+    );
+
+    expect(run).toContain('It left ${ofAnotherRole.length} table(s) with their rows, which another role owns');
+    expect(run).toContain('copying them took ${seconds} s of this run.');
+    expect(run).toContain('const LARGE = 64 * 1024 * 1024;');
   });
 });
 
-describe('the files of an end-to-end run with Vitest', () => {
-  it('run at the same time whatever DATABASE_URL, each on a database of its own, after both global setups', () => {
-    const config = read(initProject('--orm', 'prisma'), 'vitest.e2e.config.ts');
+describe('the session of a run', () => {
+  it('holds the lock of a name taken before any database carries it, and takes both again when the server ends it', () => {
+    const session = support(initProject(), 'session');
 
-    expect(config).toContain('a copy of the one\n// DATABASE_URL names (test/support/test-database-clone.ts)');
-    expect(config).toMatch(/on a server too\.\nexport default defineConfig\(\{/);
-    expect(config).not.toContain('fileParallelism');
+    expect(session).toContain('held.id = await lockedRun(held.client);');
+    expect(session).toContain("client.on('error', () => {");
+    expect(session).toContain('if (held.client === client && !held.retaking && !held.ended) {');
+    expect(session).toContain('if (!(await locked(client, `pg_try_advisory_lock(${LIVE}, ${keyOf(held.id)})`))) {');
+    expect(session).toContain('The run lost its session on the server and could not take it again');
+    expect(session).toContain('await held.client.end().catch(() => undefined);');
+  });
 
-    expect(config).toContain(
-      "globalSetup: ['test/support/test-database-template.ts', 'test/support/test-database-run.ts'],",
+  it('says every 15 seconds, in the comment of its template, that the run lives', () => {
+    const session = support(initProject(), 'session');
+
+    expect(session).toContain('const BEAT_SECONDS = 15;');
+    expect(session).toContain('export const DEAD_AFTER_SECONDS = 60;');
+
+    expect(session).toContain(
+      "execute format('comment on database %I is %L', ${name}, '${BEAT}' || extract(epoch from now())::bigint);",
     );
-  });
 
-  it('run at the same time without an ORM, where each application keeps what it stores', () => {
-    const config = read(initProject('--orm', 'none'), 'vitest.e2e.config.ts');
-
-    expect(config).toContain('which keeps what it stores in its own memory');
-    expect(config).not.toContain('DATABASE_URL');
-    expect(config).not.toContain('fileParallelism');
-    expect(config).not.toContain('globalSetup');
-  });
-
-  it.each([
-    [['--broker', 'rabbitmq'], "(process.env['AMQP_URL'] ?? '') === ''", 'A broker is one for every file'],
-    [['--broker', 'kafka'], "(process.env['KAFKA_BROKERS'] ?? '') === ''", 'with KAFKA_BROKERS set'],
-    [['--broker', 'nats'], "(process.env['NATS_URL'] ?? '') === ''", 'consume the events of the others'],
-    [['--cache', 'redis'], "(process.env['REDIS_URL'] ?? '') === ''", 'which would read the keys of the others'],
-    [['--broker', 'redis'], "(process.env['REDIS_URL'] ?? '') === ''", 'consume the events and read the keys'],
-    [
-      ['--broker', 'rabbitmq', '--cache', 'redis'],
-      "(process.env['AMQP_URL'] ?? '') === '' && (process.env['REDIS_URL'] ?? '') === ''",
-      'A broker and a Redis server are one for every file',
-    ],
-  ])('with %j, run one after the other on the server every file would share', (flags, apart, reason) => {
-    const config = read(initProject(...flags), 'vitest.e2e.config.ts');
-
-    expect(config).toContain(`    fileParallelism: ${apart},\n`);
-    expect(config).toContain(reason);
+    expect(session).toContain('held.beating.unref();');
   });
 });
 
-describe('the workers of an end-to-end run with Jest', () => {
-  it('are two whatever DATABASE_URL, each replaced once it grew, and the global setup is the one of the server when it is set', () => {
-    const config = read(initProject('--tests', 'jest', '--orm', 'prisma'), 'jest.e2e.config.js');
+describe('what a run drops of the runs before it', () => {
+  it('is named after a run whose lock is free and that has not said for a minute that it lives, with nobody connected', () => {
+    const leftovers = support(initProject(), 'leftovers');
 
-    expect(config).toContain('  maxWorkers: 2,\n');
-    expect(config).toContain("workerIdleMemoryLimit: '800MB',");
-    expect(config).not.toContain('sharedServer');
-    expect(config).toContain("import process from 'node:process';");
-
-    expect(config).toContain(
-      "...((process.env.DATABASE_URL ?? '') === '' ? {} : { globalSetup: '<rootDir>/test/support/test-database-run.ts' }),",
-    );
-  });
-
-  it('name no global setup of a server, and import nothing more, without an ORM', () => {
-    const config = read(initProject('--tests', 'jest', '--orm', 'none'), 'jest.e2e.config.js');
-
-    expect(config).not.toContain('globalSetup');
-    expect(config).not.toContain("from 'node:process'");
-  });
-
-  it('are one, in band, on a broker or a Redis server every file would share', () => {
-    const flags = ['--tests', 'jest', '--broker', 'rabbitmq', '--cache', 'redis'];
-    const config = read(initProject(...flags), 'jest.e2e.config.js');
-
-    expect(config).toContain(
-      "const sharedServer = (process.env.AMQP_URL ?? '') !== '' || (process.env.REDIS_URL ?? '') !== '';",
+    expect(support(initProject(), 'server')).toContain(
+      'return /^([0-9a-f]{8})_(?:template|[0-9a-f]{8})$/.exec(rest)?.[1];',
     );
 
-    expect(config).toContain('with AMQP_URL or REDIS_URL set, one worker');
-    expect(config).toContain('  maxWorkers: sharedServer ? 1 : 2,\n');
-    expect(config.match(/import process from 'node:process';/g)).toHaveLength(1);
+    expect(leftovers).toContain(
+      'const left = rows.filter(({ name }) => ![undefined, own].includes(runOf(name, url)));',
+    );
+
+    expect(leftovers).toContain(
+      'if (!lives(ofTheRun) && (await locked(server, `pg_try_advisory_lock(${LIVE}, ${keyOf(run)})`))) {',
+    );
+
+    expect(leftovers).toContain('for (const { name } of ofTheRun.filter((database) => !database.connected)) {');
+    expect(leftovers).toContain("await server.query(dropping(name, '')).catch(() => undefined);");
+    expect(leftovers).toContain('return Number(now) - last < DEAD_AFTER_SECONDS;');
+  });
+});
+
+describe('the connections of a run', () => {
+  it('are what the tightest bound leaves, shared between the files at once, one to spare for each', () => {
+    const budget = support(initProject(), 'budget');
+
+    expect(budget).toContain('const SPARE = 1;');
+    expect(budget).toContain('return Math.min(LARGEST_POOL, Math.floor(left / atOnce) - SPARE);');
+    expect(budget).toContain("current_setting('max_connections')::int as max,");
+    expect(budget).toContain('case when rolsuper then -1 else rolconnlimit end');
+  });
+
+  it('are refused with the numbers of the bound that holds them, and what raises that one', () => {
+    const budget = support(initProject(), 'budget');
+
+    expect(budget).toContain("remedy: 'raise max_connections',");
+    expect(budget).toContain('remedy: `raise the limit of the role (alter role ${role} connection limit <more>)`,');
+    expect(budget).toContain('remedy: `state more in ${STATED} (${ofTheServer.left} at most)`,');
+    expect(budget).toContain('run at most ${fitting} at once (pnpm run test:e2e --maxWorkers=${fitting}), or ');
+    expect(budget).toContain('state a whole number of connections, 1 or more, or leave it unset.');
+    expect(budget).toContain('state ${ofTheServer.left} at most, or leave it unset.');
+  });
+});
+
+describe('what a run empties', () => {
+  it.each(KEPT)(
+    'on %s, is every table but those the project lists, the ones of its migration tool as generated',
+    (orm, kept) => {
+      const root = initProject('--orm', orm, '--audit', 'on');
+
+      expect(support(root, 'kept')).toContain(
+        `export const KEPT_TABLES: readonly string[] = [\n  // What the migration tool`,
+      );
+
+      expect(support(root, 'kept')).toContain(kept);
+      expect(support(root, 'kept')).toContain("  'audit.*',\n];");
+      expect(support(initProject('--orm', orm, '--audit', 'off'), 'kept')).not.toContain('audit');
+    },
+  );
+
+  it('is emptied in one statement without cascade, and neither a table of another role nor one of an extension', () => {
+    const emptying = support(initProject(), 'emptying');
+
+    expect(emptying).toContain("import { KEPT_TABLES } from '$test/support/test-database-kept';");
+
+    expect(emptying).toContain(
+      "return KEPT_TABLES.includes(name) || KEPT_TABLES.includes(name.replace(/\\.[^.]*$/, '.*'));",
+    );
+
+    expect(emptying).toContain('restart identity`);');
+    expect(emptying).not.toContain('restart identity cascade');
+    expect(emptying).not.toContain('disable trigger');
+    expect(emptying).toContain("pg_has_role(c.relowner, 'USAGE') as owned");
+    expect(emptying).toContain("and d.deptype = 'e')");
+    expect(emptying).toContain('await copy.query(`refresh materialized view ${view.quoted}`);');
+  });
+
+  it('keeps the list of the project when init --force rewrites the support around it', () => {
+    const root = initProject();
+    const mine = "export const KEPT_TABLES: readonly string[] = ['public.countries'];\n";
+
+    write(root, 'test/support/test-database-kept.ts', mine);
+    write(root, 'test/support/test-database-budget.ts', '// an earlier version\n');
+    commitAll(root);
+
+    const forced = cli(root, 'init', '--force');
+
+    expect(forced.stdout).toContain('kept         test/support/test-database-kept.ts (yours since the first init)');
+    expect(support(root, 'kept')).toBe(mine);
+    expect(support(root, 'budget')).toContain('export async function poolSizeFor(');
+  });
+
+  it('refuses, with both names, a kept table that references an emptied one', () => {
+    expect(support(initProject(), 'emptying')).toContain(
+      'The table ${broken.from} keeps its rows and references ${broken.to}, which the run empties: keep ${broken.to} too, in KEPT_TABLES of test/support/test-database-kept.ts.',
+    );
   });
 });
 

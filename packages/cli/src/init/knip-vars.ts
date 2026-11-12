@@ -26,8 +26,6 @@ export function knipVars(config: Config): RenderContext {
     testDatabase: opensTestDatabaseLater(config)
       ? `,\n      "${config.platformDir}/database/open-test-database.ts"`
       : '',
-    // The global setup of a server, where no configuration knip reads names it: an entry of its own.
-    serverSetup: namesNoServerSetup(config) ? ',\n      "test/support/test-database-run.ts"' : '',
     ignores: ignored.length > 0,
     ignored: JSON.stringify(ignored),
   };
@@ -58,13 +56,6 @@ function ignoredDependencies(config: Config): string[] {
     ...(ci === 'gitlab' || ci === 'both' ? ['eslint-formatter-gitlab'] : []),
     ...(validates ? [] : validationDependencies(config)),
   ];
-}
-
-/** jest.e2e.config.js names that setup only when DATABASE_URL is set, and a project without an HTTP stack has no end-to-end run yet. */
-function namesNoServerSetup(config: Config): boolean {
-  const { tests, http, orm } = config.stack;
-
-  return WITH_DATABASE.includes(orm) && (tests === 'jest' || http === 'none');
 }
 
 /** With an HTTP boundary the end-to-end support opens the database of the tests; without one it waits for the first repository spec, as a fake waits for its spec. */

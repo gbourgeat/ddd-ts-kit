@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:789778a0140c7b20 -->
+<!-- translation-of: testing-strategy.md sha256:6d14426bc3629fe9 -->
 
 # Stratégie de test
 
@@ -471,60 +471,88 @@ fait.
 
 Contre un serveur (`DATABASE_URL`, que lit le support de bout en bout), la base que nomme l'URL
 est migrée à l'avance (`npm run db:migrate`) et chaque fichier de *spec* s'exécute sur une base à
-lui, avec les tables de celle-là et aucune de ses lignes. Une mise en place globale de l'exécution
-de bout en bout (`test/support/test-database-run.ts`) démarre l'exécution une fois, là où aucun
-délai de *hook* ne s'applique : elle copie la base migrée (`create database ... template`) et vide
-la copie, journal d'audit compris, dont le garde est levé pour cette seule transaction.
-`openTestDatabase(url)` copie ensuite ce modèle pour son fichier
-(`test/support/test-database-clone.ts`), connecte la persistance à la copie, et la supprime à
-`close()`. Un fichier attend donc sa base une fraction de seconde quoi que contienne la base
-migrée, les fichiers s'exécutent en même temps sur un serveur comme dans le processus, deux
-exécutions lancées ensemble ne s'attendent pas, le journal d'audit commence vide dans chaque
-fichier, et la base migrée elle-même n'est jamais écrite. `reset()` vide toujours les tables de la
-copie entre deux tests. Mesuré sur PostgreSQL 18 avec une base migrée de 474 Mo (2026-11-12) : une
-copie prend 6 secondes, quatre en même temps 46 à 56 secondes chacune, plus que les 30 secondes
-d'un *hook* ; avec le modèle de l'exécution, la mise en place globale prend 6 secondes une fois et
-chaque fichier attend 0,1 à 0,5 seconde.
+lui, avec les tables de celle-là, vidées. Une mise en place globale de l'exécution de bout en bout
+(`test/support/test-database-setup.ts`) ouvre l'exécution une fois, là où aucun délai de *hook* ne
+s'applique (`test/support/test-database-run.ts`) : elle copie la base migrée
+(`create database ... template`) et vide la copie. `openTestDatabase(url)` copie ensuite ce modèle
+pour son fichier (`test/support/test-database-clone.ts`), connecte la persistance à la copie, et la
+supprime à `close()`. Un fichier attend donc sa base une fraction de seconde quoi que contienne la
+base migrée, les fichiers s'exécutent en même temps sur un serveur comme dans le processus, et la
+base migrée elle-même n'est jamais écrite. `reset()` vide toujours les tables de la copie entre
+deux tests. Mesuré sur PostgreSQL 18 avec une base migrée de 474 Mo (2026-11-12) : une copie prend
+6 secondes, quatre en même temps 46 à 56 secondes chacune, plus que les 30 secondes d'un *hook* ;
+avec le modèle de l'exécution, la mise en place globale prend 6 secondes une fois et chaque
+fichier attend 0,1 à 0,5 seconde. Deux exécutions lancées ensemble copient la base migrée l'une
+après l'autre (un verrou pour tout le serveur, puisque deux copies en même temps se
+ralentissent) : la seconde attend la copie de la première, dans sa mise en place globale, et leurs
+fichiers ne s'attendent jamais. Une exécution qui surveille les fichiers copie une fois, à son
+démarrage : une migration appliquée entre-temps atteint les fichiers après un redémarrage.
 
-- **Un fichier part de tables vides, comme sur PostgreSQL dans le processus.** Ce qu'une migration
-  insère, ce qu'une application ou une *spec* a laissé dans la base migrée, n'atteint jamais une
-  *spec* : une *spec* enregistre ce dont elle a besoin. Les tables de l'outil de migration gardent
-  leurs lignes, et une table d'une extension aussi. Quand les tables vidées contenaient plus de
-  64 Mo, l'exécution le dit sur sa sortie d'erreur, avec ce qu'a pris la copie : donnez aux tests
-  une base à eux, migrée et vide, pour épargner ce temps.
+- **Un fichier part de tables vides, sauf celles que le projet garde.** L'exécution vide chaque
+  table de sa copie sauf celles que liste `KEPT_TABLES` dans
+  `test/support/test-database-kept.ts`, un fichier du projet : `<schéma>.<table>`, ou
+  `<schéma>.*`. Tel que généré, il liste ce que l'outil de migration écrit de ce qu'il a appliqué
+  et, avec un journal d'audit, le schéma `audit`, laissé tel que la base migrée le contient (son
+  garde refuse un *truncate*, et le [paquet audit](../../packages/audit/README.fr.md) conseille
+  un journal que le rôle de l'application ne possède pas). Un outil de migration à qui l'on fait
+  nommer sa table autrement (`tableName` du knexfile, `migrationsTableName` de la source de
+  données, `migrations.table` de `drizzle.config.ts`) y voit ce nom écrit à la main. Ajoutez une
+  table dont une migration insère les lignes et que l'application lit : tout le reste de ce
+  qu'une migration insère, de ce qu'une application ou une *spec* a laissé, n'atteint jamais une
+  *spec*, comme sur PostgreSQL dans le processus. Les tables sont vidées en un seul `truncate`
+  sans `cascade` : une table gardée qui référence une table vidée fait refuser l'exécution avec
+  les deux noms, et se garde avec celle qu'elle référence. Une table qu'un autre rôle possède est
+  laissée avec ses lignes et nommée en une ligne, une table d'une extension est laissée aussi,
+  les vues matérialisées sont rafraîchies, et une séquence qu'aucune colonne ne possède garde sa
+  valeur. L'exécution nomme sur sa sortie d'erreur les tables vidées qui contenaient des lignes,
+  pour qu'une ligne qui manque à une *spec* ait sa cause à l'écran, et au-delà de 64 Mo ce qu'a
+  pris la copie : donnez aux tests une base à eux, migrée et vide, pour épargner ce temps.
 - **Les connexions sont partagées entre les fichiers qui s'exécutent en même temps.** La mise en
-  place globale lit ce qu'il reste au serveur (`max_connections`, moins ce qu'il réserve et ce qui
-  est ouvert, et pas plus que la limite de connexions du rôle), le divise par les *workers* de
-  l'exécution, et chaque application sous test ouvre un *pool* de cette taille, 10 au plus
-  (`DatabaseClone.poolSize`, que les quatre ORM remettent à leur connexion). Sous deux connexions
-  par fichier l'exécution est refusée avant qu'un fichier démarre, avec ses nombres et le nombre de
-  *workers* qui tient (`--maxWorkers`), au lieu d'un `too many clients` du pilote au milieu d'une
-  *spec*. `TEST_DATABASE_CONNECTIONS` énonce ce que l'exécution peut prendre à la place de ce que
-  dit le serveur, pour un serveur derrière un *pooler* ou partagé avec d'autres exécutions. Le
-  compte est pris au démarrage de l'exécution : une seconde exécution lancée plus tard voit ce que
-  la première a d'ouvert, pas ce qu'elle ouvrira, et un adaptateur ou une *spec* qui ouvre ses
-  propres connexions les prend au même serveur.
-- **Une copie à la fois.** Deux copies en même temps se ralentissent plus qu'elles ne gagnent : un
-  fichier tient un verrou consultatif de son exécution pendant qu'il copie, et une exécution en
-  tient un pour tout le serveur pendant qu'elle copie la base migrée.
-- **Ce que laisse une exécution tuée est supprimé par l'exécution suivante.** Une base d'une
-  exécution s'appelle `<base>_test_<exécution>_template` ou `<base>_test_<exécution>_<aléa>`, et
-  l'exécution tient un verrou consultatif sur la base de maintenance, dont la clé est son nom,
-  d'avant sa première base jusqu'à son démontage, qui supprime ce qu'il reste des siennes (la copie
-  d'un fichier qui a échoué en démarrant comprise). La mise en place globale d'une exécution
-  supprime les bases nommées d'après une exécution dont personne ne tient le verrou, et seulement
-  celles auxquelles personne n'est connecté : une exécution qui vit, dans un autre *checkout* ou
-  sur une autre machine, garde son verrou, donc ses bases restent, et une base d'un autre nom n'est
-  jamais supprimée. Le verrou a été préféré à l'âge d'une copie, qui ne dit rien d'une exécution
-  longue, et à `pg_stat_activity` seul, qui ne montre personne sur le modèle d'une exécution entre
-  deux fichiers. Le verrou vit dans la session de la mise en place globale : un serveur atteint par
-  un *pooler* en mode transaction ne le garde pas, et les tests ont besoin là d'une adresse
-  directe.
+  place globale compte les fichiers qui s'exécutent en même temps, les *workers* de l'exécution et
+  pas plus que ses fichiers de *spec* (3 fichiers sur une machine de 16 *workers* comptent 3), lit
+  ce qu'il reste au serveur (`max_connections`, moins ce qu'il réserve et ce qui est ouvert, et
+  pas plus que la limite de connexions du rôle), et donne à chaque fichier sa part, moins une
+  connexion de réserve : l'application sous test ouvre un *pool* de cette taille, 10 au plus
+  (`DatabaseClone.poolSize`, que les quatre ORM remettent à leur connexion), et celle de réserve
+  est la connexion qui copie et supprime la base, ou un client qu'une *spec* ouvre elle-même. Une
+  seconde application démarrée dans le même fichier, ou un adaptateur qui ouvre son propre
+  *pool*, n'est pas comptée. Sous deux connexions pour le *pool* l'exécution est refusée avant
+  qu'un fichier démarre, avec ses nombres, le nombre de fichiers en même temps qui tient
+  (`--maxWorkers`) et ce qui relève la borne qui la retient (`max_connections`, la limite du rôle,
+  ou la variable ci-dessous), au lieu d'un `too many clients` du pilote au milieu d'une *spec*.
+  `TEST_DATABASE_CONNECTIONS` énonce un nombre plus petit que ce que laisse le serveur, pour un
+  serveur que d'autres exécutions vont utiliser ; une valeur qui n'est pas un nombre entier, ou
+  qui dépasse ce que laisse le serveur, est refusée. Le compte est pris au démarrage de
+  l'exécution : une exécution lancée plus tard voit ce que la première a d'ouvert, pas ce qu'elle
+  ouvrira.
+- **Une exécution dit qu'elle vit, deux fois.** Une base d'une exécution s'appelle
+  `<base>_test_<exécution>_template` ou `<base>_test_<exécution>_<aléa>`. L'exécution tient un
+  verrou consultatif dont la clé est son nom, sur une session de la base `postgres` du serveur,
+  d'avant sa première base jusqu'à son démontage, et toutes les 15 secondes elle écrit l'heure du
+  serveur dans le commentaire de son modèle (`comment on database`). La mise en place globale
+  d'une exécution ne supprime une base nommée d'après une exécution que si le verrou de celle-ci
+  est libre, si elle n'a rien écrit depuis une minute, et si personne n'est connecté à la base :
+  une exécution qui vit, dans un autre *checkout* ou sur une autre machine, garde ses bases, et
+  une base d'un autre nom n'est jamais supprimée. Le verrou seul ne suffirait pas : un serveur
+  termine des sessions (un redémarrage, une bascule, un délai des sessions inactives, un portable
+  qui a dormi), l'exécution reprend alors aussitôt une session et son verrou, et le commentaire
+  couvre ce moment ; les sessions sur une base ne suffiraient pas non plus, puisqu'un *pool*
+  inactif n'en a pas et qu'un modèle n'en a pas entre deux fichiers. Ce qu'une exécution tuée à
+  l'instant a laissé est donc supprimé par une exécution qui démarre une minute plus tard, pas par
+  la toute suivante. Une exécution qui ne peut pas reprendre de session le dit, et son démontage
+  ne lève jamais d'erreur : il supprime ce qui est à elle sur une autre session. **L'adresse est
+  directe** : derrière un *pooler* en mode transaction un verrou de session ne veut rien dire, et
+  l'exécution a besoin du serveur lui-même. `DATABASE_URL` ne peut pas nommer la base `postgres`,
+  où les exécutions tiennent leurs sessions : l'exécution le dit.
+- **Hors d'une exécution de bout en bout** (`openTestDatabase(url)` appelé par une *spec* de
+  l'exécution unitaire, ou un projet sans pile HTTP) aucune mise en place globale n'a ouvert
+  d'exécution : l'appel en ouvre une à lui, qui copie et vide elle-même la base migrée, dans le
+  temps que cela prend, et tient une session de plus, celle de son verrou.
 
 Ce que cela demande au serveur :
 
-- le rôle de l'URL peut créer une base (`alter role <role> createdb`) et possède la base migrée et
-  ses tables, ou est un super-utilisateur, et le serveur est PostgreSQL 13 ou plus récent
+- le rôle de l'URL peut créer une base (`alter role <role> createdb`) et possède la base migrée,
+  ou est un super-utilisateur, et le serveur est PostgreSQL 13 ou plus récent
   (`drop database ... with (force)`) ;
 - personne d'autre n'est connecté à la base migrée quand l'exécution démarre, car PostgreSQL ne
   copie une base qu'à cette condition : une application laissée en marche sur elle, ou une
@@ -538,13 +566,18 @@ l'un après l'autre.
 
 Sous Vitest, chaque mise en place globale renvoie son démontage : l'un supprime le cluster
 enregistré, l'autre termine l'exécution sur le serveur, et `vitest.e2e.config.ts` nomme les deux.
-Sous Jest, une mise en place est l'export par défaut de son fichier, et
-`test/support/test-database-teardown.ts`, nommé par `globalTeardown` dans `jest.config.js`,
-supprime le cluster ou termine l'exécution ; les *workers* que Jest démarre après la mise en place
-héritent des variables qu'elle définit (`TEST_DATABASE_TEMPLATE`, ou `TEST_DATABASE_RUN` et
-`TEST_DATABASE_POOL_SIZE` sur un serveur). Jest prend une seule mise en place globale et n'y
-résout aucun alias d'import : `jest.e2e.config.js` nomme `test-database-run.ts` quand
-`DATABASE_URL` est définie, et ce fichier n'importe rien du projet. Sur le *preset* identity, les *specs* d'intégration sous
+Sous Jest, une mise en place est l'export par défaut de son fichier : `jest.config.js` nomme celle
+qui enregistre le cluster, `jest.e2e.config.js` celle de l'exécution de bout en bout, qui
+enregistre le cluster ou ouvre l'exécution sur un serveur, et
+`test/support/test-database-teardown.ts`, nommé par `globalTeardown`, supprime le cluster ou
+termine l'exécution ; les *workers* que Jest démarre après la mise en place héritent des variables
+qu'elle définit (`TEST_DATABASE_TEMPLATE`, ou `TEST_DATABASE_RUN` et `TEST_DATABASE_POOL_SIZE` sur
+un serveur). Jest charge une mise en place globale avec la résolution de Node, qui ne connaît
+aucun alias d'import du projet, et le support d'une exécution est fait de plusieurs fichiers qui
+s'importent par alias : les scripts `test:e2e` et `ci:test:e2e` d'un projet sur Jest avec une base
+de données démarrent Jest sous tsx (`node --import tsx ...`), qui résout les alias de
+`tsconfig.json` dans ce processus.
+Sur le *preset* identity, les *specs* d'intégration sous
 Jest prenaient 45 secondes de CPU avec un initdb par fichier de *spec*, et 26 avec la copie
 ([mesuré](../tools/test-runners.fr.md#vitesse-mesurée)).
 

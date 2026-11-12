@@ -1,22 +1,22 @@
 import { randomBytes } from 'node:crypto';
-import type pg from 'pg';
+import { openRun } from '{{alias.test}}/support/test-database-run{{alias.ext}}';
 import {
-  connectedTo,
   copying,
   dropping,
   nameOf,
   oneAtATime,
+  onServer,
   POOL_SIZE,
   RUN_TEMPLATE,
   runOf,
   urlOf,
-} from '{{alias.test}}/support/test-database-run{{alias.ext}}';
+} from '{{alias.test}}/support/test-database-server{{alias.ext}}';
 
-/** The database of one spec file, on the server the run was given. */
+/** A database of its own for one caller, on the server it was given. */
 export interface DatabaseClone {
   readonly url: string;
 
-  /** The connections the application of the file may open: its share of what the server has left, so that every file of the run fits. */
+  /** The connections the application of the caller may open: its share of what the server has left, so that every file of a run fits. */
   readonly poolSize: number;
 
   /** Drops the database, whoever is still connected to it. */
@@ -24,21 +24,22 @@ export interface DatabaseClone {
 }
 
 /**
- * A database for one spec file: a copy of the template of the run (`create database ... template`),
- * which the global setup made from the migrated database `url` names and emptied
- * (test-database-run.ts). The copy holds the tables and no row, so it takes a fraction of a second
- * whatever the migrated database holds, one copy at a time in a run. Files run at the same time on
- * one server, two runs at once never wait for each other, and nothing a file stores reaches
- * another. The copy is dropped when its file closes it, or when the run ends.
+ * A database of its own on the server `url` names: the tables of the migrated database and none
+ * of the rows a run empties (test-database-emptying.ts). In an end-to-end run the global setup
+ * copied and emptied the migrated database once (test-database-setup.ts), and this copies that
+ * template (`create database ... template`), one copy at a time in the run, in a fraction of a
+ * second whatever the migrated database holds. Anywhere else (a spec of the unit run, a project
+ * with no end-to-end run) nothing started a run: the call is a run of its own, which copies the
+ * migrated database itself, in the time that takes. Either way spec files run at the same time on
+ * one server and nothing one stores reaches another. The copy is dropped when its caller closes
+ * it, at the end of its run, or by a later run when its own was killed.
  */
 export async function cloneDatabase(url: string): Promise<DatabaseClone> {
   const template = process.env[RUN_TEMPLATE] ?? '';
   const run = runOf(template, url);
 
   if (run === undefined) {
-    throw new Error(
-      'The run has no copy of the database of DATABASE_URL for this file to copy: test/support/test-database-run.ts did not run on it. The configuration of the end-to-end run names that file as a global setup.',
-    );
+    return runOfItsOwn(url);
   }
 
   const name = nameOf(url, run, randomBytes(4).toString('hex'));
@@ -52,16 +53,9 @@ export async function cloneDatabase(url: string): Promise<DatabaseClone> {
   };
 }
 
-/**
- * Runs `work` on a connection of its own to the maintenance database of the server: the copy of a
- * file, or its drop, the one connection a file holds besides its pool, and never at the same time.
- */
-async function onServer(url: string, work: (server: pg.Client) => Promise<unknown>): Promise<void> {
-  const server = await connectedTo(url);
+/** The template of a run of one file is the database of that file: it holds one more session than a file of an end-to-end run, the one of its lock. */
+async function runOfItsOwn(url: string): Promise<DatabaseClone> {
+  const run = await openRun(url, 1);
 
-  try {
-    await work(server);
-  } finally {
-    await server.end();
-  }
+  return { url: urlOf(url, run.template), poolSize: run.poolSize, drop: run.end };
 }

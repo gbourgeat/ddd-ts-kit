@@ -1,11 +1,6 @@
-{{#if persistence.hasDatabase}}
-import process from 'node:process';
-{{/if}}
-{{#unless persistence.hasDatabase}}
 {{#if endToEnd.sharedServer}}
 import process from 'node:process';
 {{/if}}
-{{/unless}}
 import base from './jest.config.js';
 
 {{#if persistence.hasDatabase}}
@@ -29,9 +24,10 @@ export default {
   testMatch: ['<rootDir>/test/e2e/**/*.e2e.spec.ts', '<rootDir>/test/acceptance/**/*.acceptance.spec.ts'],
   testTimeout: 20000,
 {{#if persistence.hasDatabase}}
-  // With DATABASE_URL, the global setup copies the migrated database once and checks that the workers of the run fit in
-  // the connections of the server; without it, the one of jest.config.js initialises PostgreSQL in process.
-  ...((process.env.DATABASE_URL ?? '') === '' ? {} : { globalSetup: '<rootDir>/test/support/test-database-run.ts' }),
+  // With DATABASE_URL, copies the migrated database once and checks that the files of the run fit in the connections of
+  // the server; without it, initialises PostgreSQL in process as jest.config.js does. It imports by alias, which Jest
+  // does not resolve in a global setup: the scripts of the end-to-end run start Jest under tsx (--import tsx).
+  globalSetup: '<rootDir>/test/support/test-database-setup.ts',
 {{/if}}
 {{#if endToEnd.sharedServer}}
   maxWorkers: sharedServer ? 1 : 2,

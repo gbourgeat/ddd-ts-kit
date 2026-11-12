@@ -66,7 +66,8 @@ it('runs on a copy of the migrated database, without the rows it holds', async (
   await application.settled();
 
   expect(await copies()).toBeGreaterThanOrEqual(1);
-  expect(await copies('pg_database_size(datname) > 40 * 1024 * 1024')).toBe(0);
+  // The template of a run that starts meanwhile holds the rows until that run has emptied it: the databases of the files never do.
+  expect(await copies("datname not like '%template' and pg_database_size(datname) > 40 * 1024 * 1024")).toBe(0);
   await new Promise((resolve) => setTimeout(resolve, 1500));
 });
 `;
@@ -80,6 +81,8 @@ export interface TwoRuns {
   readonly together: number;
   /** What a third run printed when it was told that the server had one connection left for it. */
   readonly refused: string;
+  /** What a fourth run printed when it failed: 19 workers asked for, 9 connections allowed, which its three files take. */
+  readonly unfit: string;
 }
 
 /** What `like` matches the copies of `database` with: an underscore is a wildcard unless escaped. */
@@ -90,7 +93,7 @@ export function copiesLike(database: string): string {
 /**
  * Runs the end-to-end specs of the project twice at the same time on the migrated `database` of
  * `server`, three files each; a run that fails throws. Then once more with one connection allowed,
- * which is refused before any file starts. The migrated database holds 80 MB of rows an application
+ * which is refused before any file starts, and once with nine and 19 workers, which its three files fit in. The migrated database holds 80 MB of rows an application
  * left meanwhile, in a table of their own, removed with the spec files: they are the proof, not
  * part of the project.
  */
@@ -135,6 +138,11 @@ export async function runEndToEndTwiceAtOnce(
       passed: printed.match(THREE_PASSED[runner])?.length ?? 0,
       together: mostTogether(read(root, HELD)),
       refused: findingsOf(root, { command: 'sh', args: ['-c', run], env: { ...env, TEST_DATABASE_CONNECTIONS: '1' } }),
+      unfit: findingsOf(root, {
+        command: 'sh',
+        args: ['-c', `${run} -- --maxWorkers=19`],
+        env: { ...env, TEST_DATABASE_CONNECTIONS: '9' },
+      }),
     };
   } finally {
     await onDatabase(`${server}/${database}`, 'drop table if exists left_by_an_application');

@@ -30,8 +30,8 @@ export default defineConfig({
 {{/if}}
 {{#if persistence.hasDatabase}}
     // Initialises PostgreSQL in process once: each application starts on a copy of that cluster, and creates its tables there.
-    // With DATABASE_URL, copies the migrated database once instead, and checks that the workers of the run fit on the server.
-    globalSetup: ['test/support/test-database-template.ts', 'test/support/test-database-run.ts'],
+    // With DATABASE_URL, copies the migrated database once instead, and checks that the files of the run fit on the server.
+    globalSetup: ['test/support/test-database-template.ts', 'test/support/test-database-setup.ts'],
 {{/if}}
     testTimeout: 20_000,
     hookTimeout: 30_000,

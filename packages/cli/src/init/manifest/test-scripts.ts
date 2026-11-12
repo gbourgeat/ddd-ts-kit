@@ -1,6 +1,13 @@
 import type { Config } from '../../config';
+import { WITH_DATABASE } from '../../stack/with-database';
 
 const JEST = 'node --experimental-vm-modules node_modules/jest/bin/jest.js';
+/**
+ * The end-to-end run of a project with a database: its global setup imports the files that start a
+ * run on a server by their alias, and Jest loads a global setup with the resolution of Node, which
+ * knows none. tsx resolves the aliases of tsconfig.json for the process it is imported in.
+ */
+const JEST_UNDER_TSX = JEST.replace('node ', 'node --import tsx ');
 const NO_END_TO_END = { 'ci:test:e2e': 'echo "No HTTP stack: nothing to drive end to end."' };
 
 /**
@@ -9,10 +16,10 @@ const NO_END_TO_END = { 'ci:test:e2e': 'echo "No HTTP stack: nothing to drive en
  * same measure between its unit and integration jobs.
  */
 export function testScripts(config: Config): Record<string, string> {
-  const { http, tests } = config.stack;
+  const { http, tests, orm } = config.stack;
 
   if (tests === 'jest') {
-    return jestScripts(http !== 'none');
+    return jestScripts(http !== 'none', WITH_DATABASE.includes(orm) ? JEST_UNDER_TSX : JEST);
   }
 
   return {
@@ -24,8 +31,8 @@ export function testScripts(config: Config): Record<string, string> {
   };
 }
 
-function jestScripts(endToEnd: boolean): Record<string, string> {
-  const e2e = `${JEST} --config jest.e2e.config.js --passWithNoTests`;
+function jestScripts(endToEnd: boolean, endToEndJest: string): Record<string, string> {
+  const e2e = `${endToEndJest} --config jest.e2e.config.js --passWithNoTests`;
 
   return {
     test: JEST,

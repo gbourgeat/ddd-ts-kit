@@ -450,55 +450,81 @@ is not done.
 
 Against a server (`DATABASE_URL`, which the end-to-end support reads), the database the URL names
 is migrated beforehand (`npm run db:migrate`) and each spec file runs on a database of its own,
-with the tables of that one and none of its rows. A global setup of the end-to-end run
-(`test/support/test-database-run.ts`) starts the run once, where no timeout of a hook applies: it
-copies the migrated database (`create database ... template`) and empties the copy, the audit trail
-included, whose guard is off for that transaction alone. `openTestDatabase(url)` then copies that
+with the tables of that one, emptied. A global setup of the end-to-end run
+(`test/support/test-database-setup.ts`) opens the run once, where no timeout of a hook applies
+(`test/support/test-database-run.ts`): it copies the migrated database
+(`create database ... template`) and empties the copy. `openTestDatabase(url)` then copies that
 template for its file (`test/support/test-database-clone.ts`), connects the persistence to the
 copy, and drops it at `close()`. A file therefore waits a fraction of a second for its database
 whatever the migrated one holds, the files run at the same time on a server as they do in process,
-two runs started at once do not wait for each other, the audit trail starts empty in each file, and
-the migrated database itself is never written. `reset()` still empties the tables of the copy
+and the migrated database itself is never written. `reset()` still empties the tables of the copy
 between two tests. Measured on PostgreSQL 18 with a migrated database of 474 MB (2026-11-12): one
 copy takes 6 seconds, four at the same time 46 to 56 seconds each, more than the 30 seconds of a
 hook; with the template of the run, the global setup takes 6 seconds once and each file waits 0.1
-to 0.5 second.
+to 0.5 second. Two runs started together copy the migrated database one after the other (a lock
+for the whole server, since two copies at once slow each other): the second waits for the copy of
+the first, in its global setup, and their files never wait for each other. A run that watches
+copies once, when it starts: a migration applied meanwhile reaches the files after a restart.
 
-- **A file starts from empty tables, as on PostgreSQL in process.** What a migration inserts, what
-  an application or a spec left in the migrated database, never reaches a spec: a spec stores what
-  it needs. The tables of the migration tool keep their rows, and so does a table of an extension.
-  When the tables emptied held more than 64 MB, the run says so on its error output, with what the
-  copy took: give the tests a database of their own, migrated and empty, to spare that time.
-- **The connections are shared between the files that run at once.** The global setup reads what
-  the server has left (`max_connections`, less what it reserves and what is open, and no more than
-  the connection limit of the role), divides it by the workers of the run, and each application
-  under test opens a pool of that size, 10 at most (`DatabaseClone.poolSize`, which the four ORM
-  hand to their connection). Under two connections per file the run is refused before any file
-  starts, with its numbers and the number of workers that fits (`--maxWorkers`), instead of
-  `too many clients` from the driver in the middle of a spec. `TEST_DATABASE_CONNECTIONS` states
-  what the run may take instead of what the server says, for a server behind a pooler or shared
-  with other runs. The count is taken when the run starts: a second run started later sees what
-  the first has open, not what it will open, and an adapter or a spec that opens connections of
-  its own takes them from the same server.
-- **One copy at a time.** Two copies at once slow each other more than they gain: a file holds an
-  advisory lock of its run while it copies, and a run holds one for the whole server while it
-  copies the migrated database.
-- **What a killed run leaves is dropped by the next run.** A database of a run is named
-  `<database>_test_<run>_template` or `<database>_test_<run>_<random>`, and the run holds an
-  advisory lock on the maintenance database, keyed by its name, from before its first database
-  until its teardown, which drops what is left of its own (the copy of a file that failed while it
-  started included). The global setup of a run drops the databases named after a run whose lock
-  nobody holds, and only those nobody is connected to: a run that lives, in another checkout or on
-  another machine, keeps its lock, so its databases stay, and a database with any other name is
-  never dropped. The lock was preferred to the age of a copy, which says nothing of a long run,
-  and to `pg_stat_activity` alone, which shows nobody on the template of a run between two files.
-  The lock lives in the session of the global setup: a server reached through a pooler in
-  transaction mode does not keep it, and the tests need a direct address there.
+- **A file starts from empty tables, but for those the project keeps.** The run empties every
+  table of its copy except those `KEPT_TABLES` lists in `test/support/test-database-kept.ts`, a
+  file of the project: `<schema>.<table>`, or `<schema>.*`. As generated it lists what the
+  migration tool writes of what it applied and, with an audit trail, the `audit` schema, which is
+  left as the migrated database holds it (its guard refuses a truncate, and the
+  [audit package](../../packages/audit/README.md) advises a trail the role of the application
+  does not own). A migration tool told to name its table otherwise (`tableName` of the knexfile,
+  `migrationsTableName` of the data source, `migrations.table` of `drizzle.config.ts`) has that
+  name written there by hand. Add a table whose rows a migration inserts and the application reads:
+  everything else a migration inserts, an application or a spec left, never reaches a spec, as on
+  PostgreSQL in process. The tables are emptied in one `truncate` without `cascade`: a kept table
+  that references an emptied one refuses the run with both names, and is kept with the one it
+  references. A table another role owns is left with its rows and named in one line, a table of
+  an extension is left too, the materialized views are refreshed, and a sequence no column owns
+  keeps its value. The run names on its error output the tables it emptied that held rows, so that
+  a row a spec misses has its cause on screen, and above 64 MB what the copy took: give the tests
+  a database of their own, migrated and empty, to spare that time.
+- **The connections are shared between the files that run at once.** The global setup counts the
+  files that run at the same time, the workers of the run and no more than its spec files (3 files
+  on a machine of 16 workers count 3), reads what the server has left (`max_connections`, less
+  what it reserves and what is open, and no more than the connection limit of the role), and gives
+  each file its share, less one connection to spare: the application under test opens a pool of
+  that size, 10 at most (`DatabaseClone.poolSize`, which the four ORM hand to their connection),
+  and the spare one is the connection that copies and drops the database, or a client a spec
+  opens itself. A second application started in the same file, or an adapter that opens a pool of
+  its own, is not counted. Under two connections for the pool the run is refused before any file
+  starts, with its numbers, the number of files at once that fits (`--maxWorkers`) and what raises
+  the bound that holds it (`max_connections`, the limit of the role, or the variable below),
+  instead of `too many clients` from the driver in the middle of a spec.
+  `TEST_DATABASE_CONNECTIONS` states a smaller number than the server leaves, for a server other
+  runs are about to use; a value that is not a whole number, or more than the server leaves, is
+  refused. The count is taken when the run starts: a run started later sees what the first has
+  open, not what it will open.
+- **A run says that it lives, twice.** A database of a run is named
+  `<database>_test_<run>_template` or `<database>_test_<run>_<random>`. The run holds an advisory
+  lock keyed by its name, on a session to the `postgres` database of the server, from before its
+  first database until its teardown, and every 15 seconds it writes the time of the server in the
+  comment of its template (`comment on database`). The global setup of a run drops a database
+  named after a run only when the lock of that run is free, it has not written for a minute, and
+  nobody is connected to the database: a run that lives, in another checkout or on another
+  machine, keeps its databases, and a database with any other name is never dropped. The lock
+  alone would not do: a server ends sessions (a restart, a failover, a timeout of idle sessions,
+  a laptop that slept), the run then takes another session and its lock again at once, and the
+  comment covers that moment; the sessions on a database would not do either, since a pool that
+  is idle has none and a template has none between two files. What a run killed a moment ago
+  left is therefore dropped by a run that starts a minute later, not by the very next one. A run
+  that cannot take a session again says so, and its teardown never throws: it drops what is its
+  own on another session. **The address is a direct one**: behind a pooler in transaction mode a
+  session lock means nothing, and the run needs the server itself. `DATABASE_URL` cannot name the
+  `postgres` database, where the runs hold their sessions: the run says so.
+- **Outside an end-to-end run** (`openTestDatabase(url)` called by a spec of the unit run, or a
+  project without an HTTP stack) no global setup opened a run: the call opens one of its own,
+  which copies and empties the migrated database itself, in the time that takes, and holds one
+  more session, the one of its lock.
 
 What this asks of the server:
 
 - the role of the URL may create a database (`alter role <role> createdb`) and owns the migrated
-  one and its tables, or is a superuser, and the server is PostgreSQL 13 or later
+  one, or is a superuser, and the server is PostgreSQL 13 or later
   (`drop database ... with (force)`);
 - nobody else is connected to the migrated database while the run starts, because PostgreSQL
   copies a database only then: an application left running on it, or a console, makes the global
@@ -510,12 +536,16 @@ the configuration of the end-to-end run keeps the files one after the other.
 
 Under Vitest each global setup returns its teardown: one deletes the saved cluster, the other ends
 the run on the server, and `vitest.e2e.config.ts` names both. Under Jest a setup is the default
-export of its file, and `test/support/test-database-teardown.ts`, named by `globalTeardown` of
-`jest.config.js`, deletes the cluster or ends the run; the workers Jest starts after the setup
-inherit the variables it sets (`TEST_DATABASE_TEMPLATE`, or `TEST_DATABASE_RUN` and
-`TEST_DATABASE_POOL_SIZE` on a server). Jest takes one global setup and resolves no import alias
-in it: `jest.e2e.config.js` names `test-database-run.ts` when `DATABASE_URL` is set, and that file
-imports nothing of the project. On the identity preset, the
+export of its file: `jest.config.js` names the one that saves the cluster, `jest.e2e.config.js`
+the one of the end-to-end run, which saves the cluster or opens the run on a server, and
+`test/support/test-database-teardown.ts`, named by `globalTeardown`, deletes the cluster or ends
+the run; the workers Jest starts after the setup inherit the variables it sets
+(`TEST_DATABASE_TEMPLATE`, or `TEST_DATABASE_RUN` and `TEST_DATABASE_POOL_SIZE` on a server). Jest
+loads a global setup with the resolution of Node, which knows no import alias of the project, and
+the support of a run is several files that import each other by alias: the `test:e2e` and
+`ci:test:e2e` scripts of a project on Jest with a database start Jest under tsx
+(`node --import tsx ...`), which resolves the aliases of `tsconfig.json` in that process.
+On the identity preset, the
 integration specs under Jest took 45 CPU seconds with an initdb per spec file and 26 with the copy
 ([measured](../tools/test-runners.md#speed-measured)).
 

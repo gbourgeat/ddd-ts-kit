@@ -83,9 +83,11 @@ describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated proj
       expect(endToEnd.together).toBeGreaterThanOrEqual(2);
 
       expect(endToEnd.refused).toMatch(
-        /\d+ spec files at once need \d+ connections, 2 each at least, and TEST_DATABASE_CONNECTIONS allows 1: raise/,
+        /\d+ spec files at once need \d+ connections \(2 for each application at least and 1 to spare\), and TEST_DATABASE_CONNECTIONS allows 1: state more in TEST_DATABASE_CONNECTIONS/,
       );
 
+      // The run counts its three spec files, not the workers it could start.
+      expect(endToEnd.unfit).toBe('');
       expect(await copiesOf(existing)).toEqual([]);
 
       expect(cli(root, 'generate', 'aggregate', 'ordering', 'Invoice', '--term', INVOICE_TERM).code).toBe(0);
