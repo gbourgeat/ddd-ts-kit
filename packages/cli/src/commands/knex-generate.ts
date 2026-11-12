@@ -9,6 +9,7 @@ import {
   knexSchemaDifference,
   migrationsUnder,
   refuseOtherOrm,
+  refuseTakenMigrationName,
   requiredMigrationName,
   runOrmTool,
   writtenPaths,
@@ -37,6 +38,7 @@ export const knexGenerateCommand: Command = (argv, io) => {
 
   const name = requiredMigrationName(args.text('name'));
 
+  refuseTakenMigrationName(root, 'knex', name);
   refuseLiveMigrations(root);
 
   return args.json

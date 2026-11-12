@@ -558,7 +558,10 @@ shares, which no spec has proven.
 
 Several people add migrations at the same time, on one context or on several. Every migration
 a generated project writes is named `<timestamp>_<what-it-does>`, and `npm run db:generate`
-refuses to run without the description: two branches never write the same file.
+refuses to run without the description: two branches never write the same file. It refuses a
+description a migration of the folder already carries too, and names that migration, on the four
+tools: two migrations of one name read as one in a review, and `verify-merge` knows a migration
+by its description.
 
 | Tool | `db:generate` | Writes | A migration merged older than one already applied |
 |---|---|---|---|
@@ -751,6 +754,24 @@ by hand is refused, and the folder is as before the replay.
 `npx ddd-ts-kit verify-merge`, run after the merge, reports a migration of either side that the
 result lost. It knows a migration by its description, its name without its number and without
 `working-`: a migration generated again under another number, or without the prefix, is kept.
+
+**A migration that does not follow the trunk's fails `verify-merge`.** A branch that lives more
+than a day holds a migration generated before the last one the trunk gained meanwhile. Without a
+`<commit>`, `npx ddd-ts-kit verify-merge` also reads the migrations of the working tree against
+the trunk (the base of the worker, else `origin/HEAD`, else `origin/main`, as git knows them:
+fetch first) and fails, naming the migration and the last one of the trunk. `--warn`, which the
+pre-push hook passes, softens what a merge lost and never this: the push stops.
+
+| Tool | What it reports | What brings the order right |
+|---|---|---|
+| drizzle-kit | an entry the branch adds to the journal whose `when` is not after the last entry of the trunk's journal, which the migrator would skip; a `.sql` file no entry of the journal lists, as after a merge that kept the journal of one side | `npx ddd-ts-kit merge-trunk`, which replays as it brings the trunk in. Once the trunk is merged otherwise: the `meta/` of the trunk, then `npx ddd-ts-kit drizzle-generate --replay --base <trunk>` (or `merge-trunk --to-land`, which does it at the landing). The replay refuses a branch with two migrations that change the schema: they are generated again by hand, one at a time, as above |
+| knex, Prisma, TypeORM | a migration the branch adds whose name sorts before the last migration of the trunk: the tool would run it after that one where it is applied, and before it on a new database | `npx ddd-ts-kit merge-trunk --to-land`, which renames it after the last of the trunk as it brings the trunk in. On a branch that already holds the trunk there is nothing to merge: it renames all the same and leaves the rename to commit. It stops when the migration and a later one of the trunk change one table: that one is generated again with `npm run db:generate <what-it-does>` |
+
+A working migration (`working-<what-it-does>`) is left out: its place is decided when the branch
+lands, and `persistence/migration-history` already refuses it on the trunk. Nothing is compared
+for a named commit, without the config of the kit, or when no ref names a trunk. Read in the code
+of the four tools, and run here on git repositories with the files of each; not measured against
+a database.
 
 A migration already merged on the main branch is never edited or regenerated: a correction is a
 new migration.

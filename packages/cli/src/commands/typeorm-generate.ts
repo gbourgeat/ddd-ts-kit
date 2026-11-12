@@ -10,6 +10,7 @@ import {
   hasDatabaseUrl,
   migrationName,
   refuseOtherOrm,
+  refuseTakenMigrationName,
   runOnInProcessDatabase,
   runOrmTool,
   schemasFirst,
@@ -42,6 +43,7 @@ export const typeormGenerateCommand: Command = (argv, io) => {
   refuseOtherOrm(root, 'typeorm');
   const target = migrationTarget(args.positionals[0]);
 
+  refuseTakenMigrationName(root, 'typeorm', path.posix.basename(target));
   ensureDatabaseReachable();
 
   const offline = !hasDatabaseUrl();

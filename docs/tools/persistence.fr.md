@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:df8d349f528bdd24 -->
+<!-- translation-of: persistence.md sha256:56d0b72d9279f8b3 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -588,7 +588,9 @@ qu'Elasticsearch partage, ce qu'aucune spec n'a prouvé.
 Plusieurs personnes ajoutent des migrations en même temps, sur un contexte ou sur plusieurs.
 Chaque migration qu'écrit un projet généré est nommée `<timestamp>_<what-it-does>`, et
 `npm run db:generate` refuse de s'exécuter sans la description : deux branches n'écrivent jamais
-le même fichier.
+le même fichier. Elle refuse aussi une description qu'une migration du dossier porte déjà, et
+nomme cette migration, avec les quatre outils : deux migrations du même nom se lisent comme une
+seule dans une revue, et `verify-merge` reconnaît une migration à sa description.
 
 | Outil | `db:generate` | Écrit | Une migration fusionnée plus ancienne qu'une migration déjà appliquée |
 |---|---|---|---|
@@ -803,6 +805,25 @@ refusée, et le dossier est comme avant le *replay*.
 côté que le résultat a perdue. Elle reconnaît une migration à sa description, son nom sans son
 numéro et sans `working-` : une migration générée de nouveau sous un autre numéro, ou sans le
 préfixe, est gardée.
+
+**Une migration qui ne suit pas celles du tronc fait échouer `verify-merge`.** Une branche qui vit
+plus d'un jour porte une migration générée avant la dernière que le tronc a reçue entre-temps.
+Sans `<commit>`, `npx ddd-ts-kit verify-merge` lit aussi les migrations de l'arbre de travail
+face au tronc (la base du *worker*, sinon `origin/HEAD`, sinon `origin/main`, tels que git les
+connaît : faites un `git fetch` d'abord) et échoue, en nommant la migration et la dernière du
+tronc. `--warn`, que passe le *hook* de pre-push, adoucit ce qu'une fusion a perdu et jamais
+ceci : le *push* s'arrête.
+
+| Outil | Ce qu'elle signale | Ce qui remet l'ordre |
+|---|---|---|
+| drizzle-kit | une entrée que la branche ajoute au journal et dont le `when` n'est pas après la dernière entrée du journal du tronc, que le *migrator* sauterait ; un fichier `.sql` qu'aucune entrée du journal ne liste, comme après une fusion qui a gardé le journal d'un seul côté | `npx ddd-ts-kit merge-trunk`, qui rejoue en ramenant le tronc. Une fois le tronc fusionné autrement : le `meta/` du tronc, puis `npx ddd-ts-kit drizzle-generate --replay --base <trunk>` (ou `merge-trunk --to-land`, qui le fait à l'atterrissage). Le rejeu refuse une branche qui porte deux migrations changeant le schéma : elles sont générées de nouveau à la main, une à la fois, comme plus haut |
+| knex, Prisma, TypeORM | une migration que la branche ajoute et dont le nom se trie avant la dernière migration du tronc : l'outil la jouerait après celle-ci là où elle est appliquée, et avant elle sur une base neuve | `npx ddd-ts-kit merge-trunk --to-land`, qui la renomme après la dernière du tronc en ramenant le tronc. Sur une branche qui contient déjà le tronc, il n'y a rien à fusionner : elle renomme quand même et laisse le renommage à committer. Elle s'arrête quand la migration et une migration plus récente du tronc changent la même table : celle-là est générée de nouveau avec `npm run db:generate <what-it-does>` |
+
+Une migration de travail (`working-<what-it-does>`) est laissée de côté : sa place se décide quand
+la branche atterrit, et `persistence/migration-history` la refuse déjà sur le tronc. Rien n'est
+comparé pour un commit nommé, sans la configuration du kit, ou quand aucune référence ne nomme un
+tronc. Lu dans le code des quatre outils, et exécuté ici sur des dépôts git portant les fichiers
+de chacun ; non mesuré face à une base de données.
 
 Une migration déjà fusionnée sur la branche principale n'est jamais modifiée ni régénérée : une
 correction est une nouvelle migration.

@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:fc8639b676b1d135 -->
+<!-- translation-of: commands.md sha256:2775981fa7c9c89b -->
 
 # Quelle commande, quand
 
@@ -639,7 +639,11 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    trailer of the merge, else git merge-base; entries of a Lost-Accepted: <file:line>,...
                    trailer are listed and never fail, nor what a later commit restored; silent and exit 0
                    without a merge, exit 1 on an error; --warn prints the same and exits 0, as the
-                   pre-push hook of init runs it in this version (a later minor version blocks the push)
+                   pre-push hook of init runs it in this version (a later minor version blocks the push).
+                   Then, without a <commit>, the migrations of the working tree against that trunk: one the
+                   branch adds that sorts before the last migration of the trunk (a working- one aside), or,
+                   under drizzle-kit, was generated before it or is out of the journal. An error with the
+                   command that brings the order right, which --warn never softens: exit 1
   merge-trunk      brings the trunk (--trunk; by default the base of .ddd-ts-kit/worker.json in the worktree of
                    a worker, then origin/HEAD, then origin/main; nothing is fetched) into the
                    branch as one merge commit computed from the branch's own diff: from the newest commit of
@@ -658,6 +662,8 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    records renumbered, regenerate, verify-merge on the uncommitted result (an error stops;
                    --accept-lost records a Lost-Accepted: trailer), and the commit of the merge's paths only,
                    with the trailers Merge-Base:, Trunk: and Landed:; any other changed path blocks it.
+                   On a branch that already holds the trunk, --to-land still lands the migrations (replayed
+                   or renamed after the last of the trunk) and leaves them to commit.
                    --dry-run previews, --abort undoes; refused (exit 2) on a dirty tree, another operation in
                    progress, no committer known to git, an unknown trunk, a --since at the head of the branch,
                    or a git older than 2.40 with a base git would not compute

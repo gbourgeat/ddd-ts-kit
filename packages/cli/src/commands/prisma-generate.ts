@@ -5,6 +5,7 @@ import {
   hasDatabaseUrl,
   offlinePrismaMigration,
   refuseOtherOrm,
+  refuseTakenMigrationName,
   requiredMigrationName,
   runOrmTool,
 } from '../migration';
@@ -25,6 +26,7 @@ export const prismaGenerateCommand: Command = (argv, io) => {
 
   const name = requiredMigrationName(args.text('name'));
 
+  refuseTakenMigrationName(root, 'prisma', name);
   ensureDatabaseReachable();
 
   const offline = !hasDatabaseUrl();

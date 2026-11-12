@@ -37,6 +37,11 @@ export function landDrizzle(root: string, landing: DrizzleLanding): MigrationsLa
     return { lines: [] };
   }
 
+  return replayedOn(root, landing);
+}
+
+/** The replay of the migrations of the branch on those of the trunk, its output kept; a refusal is a stop. */
+export function replayedOn(root: string, landing: Pick<DrizzleLanding, 'trunk' | 'toLand'>): MigrationsLanded {
   const lines: string[] = [];
   const io = { out: (text: string) => lines.push(text), err: (text: string) => lines.push(text) };
 

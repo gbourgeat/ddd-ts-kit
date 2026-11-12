@@ -15,6 +15,10 @@ export const NEXT_STEPS = {
   leftOut:
     'stage each path that belongs to the merge (`git add`), move the others aside, then `npx ddd-ts-kit merge-trunk --continue`',
   commit: 'fix what git refused (above), then `npx ddd-ts-kit merge-trunk --continue`',
+  migrationsUpToDate:
+    'no merge is in progress. Do what the migrations step says, then `npx ddd-ts-kit merge-trunk --to-land` again',
+  landedUpToDate:
+    'commit the migrations as they are now (`git add` their folder, then `git commit`), `npm run verify` in this worktree, push, then squash-merge the pull request',
   committed: '`npm run verify` in this worktree, then push',
   landed: '`npm run verify` in this worktree, push, then squash-merge the pull request',
 } as const;

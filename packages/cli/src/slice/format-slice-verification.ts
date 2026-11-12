@@ -41,7 +41,7 @@ function mergesLines({ merges, since }: SliceVerification): string[] {
     ...(warningCount === 0 ? [] : [`${warningCount} warning(s)`]),
   ];
 
-  const verdict = merges.merges.length === 0 ? 'none' : counted.join(', ') || 'ok';
+  const verdict = merges.merges.length + errorCount === 0 ? 'none' : counted.join(', ') || 'ok';
 
   return [
     `merges since ${since}: ${verdict}`,

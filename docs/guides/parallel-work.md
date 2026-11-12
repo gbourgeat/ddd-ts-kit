@@ -196,7 +196,12 @@ migration of the branch the trunk does not have: a number after the trunk's last
 When a migration the trunk gained since the base changes a table a migration of the branch
 changes too, their order is a decision: the merge stops and says to generate it again on the
 trunk (`npm run db:generate <what-it-does>`). `drizzle-generate --replay` stays for a merge made
-without `merge-trunk`. A decision record of the branch whose number the trunk took meanwhile
+without `merge-trunk`. A migration of the branch that sorts before the last one of the trunk is an
+error of `verify-merge`, `--warn` included, so the pre-push hook stops it: the report names both
+migrations and the command above that brings the order right, and a working migration is left
+out until it lands ([persistence](../tools/persistence.md#migrations-names-merges-and-order)). On
+a branch that already holds the trunk, `merge-trunk --to-land` has nothing to merge and still
+lands the migrations, left to commit. A decision record of the branch whose number the trunk took meanwhile
 gets the next free number (its file, its `# ADR-NNNN` title, the links of its translations).
 
 A decision taken while building a slice (how a late fee is rounded, from which date a deadline

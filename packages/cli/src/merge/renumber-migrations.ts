@@ -11,7 +11,10 @@ import { nextMigrationNumber } from './next-migration-number';
 export interface Renumbering {
   readonly root: string;
   readonly orm: 'knex' | 'prisma' | 'typeorm';
-  /** The base of the merge and the commit of the trunk. */
+  /**
+   * The base of the merge and the commit of the trunk. With the trunk as the base (a branch that
+   * already holds it), what the trunk gained is what sorts after the first migration to land.
+   */
   readonly base: string;
   readonly trunk: string;
   readonly now: Date;
@@ -43,7 +46,10 @@ export function renumberMigrations(renumbering: Renumbering): MigrationsLanded {
   );
 
   const before = new Set(migrationsAt(root, base, where).map((migration) => migration.name));
-  const gained = onTrunk.filter((migration) => !before.has(migration.name));
+  const first = branch[0]?.name ?? '';
+
+  const gained = onTrunk.filter((migration) => (base === trunk ? migration.name > first : !before.has(migration.name)));
+
   const overlap = overlapOf(root, { branch, gained, trunk });
 
   if (overlap !== undefined) {

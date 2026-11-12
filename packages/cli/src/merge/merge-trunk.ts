@@ -7,6 +7,7 @@ import { continueMerge } from './continue-merge';
 import { ensureMergeable } from './ensure-mergeable';
 import { forYouEntry } from './for-you-entry';
 import { gitVersion } from './git-version';
+import { landUpToDate } from './land-up-to-date';
 import { landedPoint } from './landed-point';
 import { commitOf } from '../commit/commit-of';
 import { type MergeContext, mergeContextOf } from './merge-context';
@@ -51,7 +52,8 @@ interface Opening {
  * the landed point, the newest commit of the branch the trunk holds. Settles what a kit derives,
  * leaves the rest in a merge in progress for a person, then (or on `--continue`) lands the
  * migrations, regenerates, checks that no line was lost and commits the paths of the merge.
- * Never rebases, never fetches.
+ * A branch that already holds the trunk has nothing to merge: `--to-land` still lands its
+ * migrations, left to commit. Never rebases, never fetches.
  */
 export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
   const context = mergeContextOf(request.root);
@@ -78,7 +80,9 @@ export function mergeTrunk(request: MergeTrunkRequest): MergeReport {
   const report: MergeReport = { ...blank, ...EMPTY, next: NEXT_STEPS.upToDate };
 
   if (runGit(top, ['merge-base', '--is-ancestor', trunk.commit, head]) !== undefined) {
-    return { ...report, next: `${report.next}${unreadDefault(top, { request, trunk, head })}` };
+    const upToDate = { ...report, next: `${report.next}${unreadDefault(top, { request, trunk, head })}` };
+
+    return request.toLand && !request.dryRun ? landUpToDate(context, upToDate, request.now ?? new Date()) : upToDate;
   }
 
   refuseShallowHistory(top, { ours: head, theirs: trunk.commit });
