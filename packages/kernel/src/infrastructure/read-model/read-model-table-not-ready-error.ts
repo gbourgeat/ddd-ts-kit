@@ -50,6 +50,6 @@ function constraintOf(unready: UnreadyReadModelTable, table: string): string {
   }
 
   return unready.constraint
-    ? `The check constraint ${name} is there, and does not hold these columns yet.`
+    ? `The check constraint ${name} is there: whether it holds these columns was not read.`
     : `The check constraint ${name}, which keeps the live rows whole, is missing.`;
 }

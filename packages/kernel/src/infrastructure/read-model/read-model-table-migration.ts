@@ -4,8 +4,8 @@ import type { UnreadyReadModelTable } from './unready-read-model-table';
 /**
  * The migration that makes a read model table ready, as PostgreSQL statements: NOT NULL dropped on
  * the columns that refuse it, the check constraint that keeps the live rows whole in its place, and
- * the rows deleted before emptied. A constraint the table already holds is not written again: its
- * check is to take the columns up, which a comment says.
+ * the rows deleted before emptied. A constraint the table already holds is not written again, and
+ * its check is not read: a comment says what it has to hold.
  */
 export function readModelTableMigration(unready: UnreadyReadModelTable): string {
   const { table, refusing, row, constraint } = unready;
@@ -18,7 +18,9 @@ export function readModelTableMigration(unready: UnreadyReadModelTable): string 
 
   return [
     `alter table ${path}\n  ${[...dropped, ...added].join(',\n  ')};`,
-    ...(constraint === true ? [`-- ${name} is there already: write it again so that it holds (${whole}) too.`] : []),
+    ...(constraint === true
+      ? [`-- ${name} is there already: if its check does not hold (${whole}), drop it and add it again with them.`]
+      : []),
     `update ${path} set ${emptied} where deleted;`,
   ].join('\n');
 }

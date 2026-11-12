@@ -48,18 +48,18 @@ describe('ReadModelTableNotReadyError', () => {
     expect(message).toContain('check (deleted or ("starts_at" is not null and "status" is not null))');
   });
 
-  it('leaves a constraint the table holds as it is, and says that it is to take the columns up', () => {
+  it('leaves a constraint the table holds as it is, and says what its check has to hold', () => {
     const { message, migration } = new ReadModelTableNotReadyError({ ...AGENDA, constraint: true });
 
     expect(message).toContain(
-      'The check constraint agenda_live_rows_whole is there, and does not hold these columns yet.',
+      'The check constraint agenda_live_rows_whole is there: whether it holds these columns was not read.',
     );
 
     expect(migration).toBe(
       [
         'alter table scheduling.agenda',
         '  alter column "starts_at" drop not null;',
-        '-- agenda_live_rows_whole is there already: write it again so that it holds ("starts_at" is not null) too.',
+        '-- agenda_live_rows_whole is there already: if its check does not hold ("starts_at" is not null), drop it and add it again with them.',
         'update scheduling.agenda set "starts_at" = null, "note" = null where deleted;',
       ].join('\n'),
     );
