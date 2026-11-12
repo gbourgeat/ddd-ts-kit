@@ -179,6 +179,7 @@ const TEXT_FLAGS = [
   'prefix',
   'role',
   'cache',
+  'text',
   'module',
   'personal',
   'subject',

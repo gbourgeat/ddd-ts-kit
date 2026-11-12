@@ -35,6 +35,15 @@ const SCAN = [
   'Scan=The image of a paper',
 ];
 
+const PRICE_LIST = [
+  '--term',
+  'Import=To bring rows from a file',
+  '--term',
+  'Price=What a customer pays for one item',
+  '--term',
+  'List=The prices of a supplier, sent as one file',
+];
+
 const ACCOUNTANT = grantOf(STACK)('accountant');
 
 /**
@@ -126,6 +135,19 @@ function scaffold(root: string): void {
       'invoice.attach-scan',
       ...ACCOUNTANT,
       ...SCAN,
+    ],
+    // A text file that may not be UTF-8: its spec sends one in Windows-1252 through the multipart reader.
+    [
+      'generate',
+      'file-upload',
+      'billing',
+      'ImportPriceList',
+      '--path',
+      '/price-lists/import',
+      '--public',
+      '--text',
+      'single-byte',
+      ...PRICE_LIST,
     ],
     ['generate', 'form', 'billing', 'IssueInvoice'],
     ['generate', 'representation', 'billing', 'IssueInvoice', 'xml'],

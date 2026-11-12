@@ -11,6 +11,7 @@ import type { Scope } from '../scope';
 import { specVars } from '../spec-vars';
 import { vars } from '../vars';
 import { wire } from '../wire';
+import { uploadFileVars } from './file-upload/upload-file-vars';
 import { writeNestUploadController } from './file-upload/write-nest-upload-controller';
 import { writeUploadController } from './file-upload/write-upload-controller';
 import { findUseCase } from './route/find-use-case';
@@ -21,9 +22,9 @@ export const fileUploadKind: Kind = {
   name: 'file-upload',
   aliases: [],
   usage:
-    'file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>] [--term "<Term>=<meaning>"]...',
+    'file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> [--grant <role>] | --public) [--method <POST|PUT>] [--group <Name>] [--text <utf-8|single-byte>] [--term "<Term>=<meaning>"]...',
   summary:
-    'An upload: a controller that declares the file it receives (`@Upload()` of a Nest controller; size and media types in the contract, checked as it streams), the command that carries it as a FileUpload (staged by the command bus before the transaction), the handler that records it and promotes it with the commit, and their specs. Needs "stack.storage".',
+    'An upload: a controller that declares the file it receives (`@Upload()` of a Nest controller; size and media types in the contract, checked as it streams; with `--text` a text file such as a CSV, `single-byte` when it may be in Windows-1252 as well as UTF-8), the command that carries it as a FileUpload (staged by the command bus before the transaction), the handler that records it and promotes it with the commit, and their specs. Needs "stack.storage".',
   positionals: ['context', 'UseCaseName'],
   writesShared: true,
   writesInModules: true,
@@ -39,7 +40,8 @@ export const fileUploadKind: Kind = {
     });
 
     const access = accessVars(scope, { name, kind: 'Command' });
-    const context = vars(scope, { name: named(name), access, spec: specVars(scope, access) });
+    const upload = uploadFileVars(scope);
+    const context = vars(scope, { name: named(name), access, spec: specVars(scope, access), upload });
     const folder = `application/commands/${name.kebab}`;
 
     emit(scope, context, [

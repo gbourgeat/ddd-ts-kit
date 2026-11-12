@@ -33,7 +33,7 @@ const holders = authorizationMiddleware({
 const holder = anActor().withRole('holder').build();
 {{/if}}
 
-const PDF = '%PDF-1.7\n%%EOF\n';
+const {{upload.sampleName}} = {{upload.sample}};
 
 describe('{{name.title}}', () => {
   it('keeps the file under a key of its own, visible once the command has committed', async () => {
@@ -42,7 +42,7 @@ describe('{{name.title}}', () => {
     const key = await commandBus.execute(new {{name.pascal}}Command({{#if access.protected}}holder, {{/if}}aFile()));
 
     expect(storage.keys()).toEqual([key]);
-    expect(await storage.stat(key)).toMatchObject({ size: PDF.length, mediaType: 'application/pdf' });
+    expect(await storage.stat(key)).toMatchObject({ size: {{upload.sampleName}}.length, mediaType: '{{upload.mediaType}}' });
   });
   {{#if access.protected}}
 
@@ -61,7 +61,7 @@ describe('{{name.title}}', () => {
 });
 
 function aFile() {
-  return { fileName: 'scan.pdf', mediaType: 'application/pdf', stream: Readable.from([Buffer.from(PDF)]) };
+  return { fileName: '{{upload.fileName}}', mediaType: '{{upload.mediaType}}', stream: Readable.from([Buffer.from({{upload.sampleName}})]) };
 }
 
 function arrange() {

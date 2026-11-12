@@ -45,6 +45,7 @@ export const GENERATE_OPTIONS = {
   mapper: SWITCH,
   serializer: SWITCH,
   cache: TEXT,
+  text: TEXT,
   module: TEXT,
   'event-sourced': SWITCH,
   creates: SWITCH,
