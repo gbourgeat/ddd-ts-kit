@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:9dbaff8420f86733 -->
+<!-- translation-of: commands.md sha256:ed6cf9e19ad85734 -->
 
 # Quelle commande, quand
 
@@ -259,6 +259,14 @@ bac à sable : `init` donne la commande dans une note. `4` est une erreur intern
 erreur de l'appelant : une ligne avec la version du kit et où la signaler (sous `--json`, une
 `error` avec `"internal": true`) ; signalez-la sur https://github.com/gbourgeat/ddd-ts-kit/issues
 avec la commande qu'elle donne.
+
+Sous `--json`, un refus est `{"error": {"message": "...", "fix": "..."}}`. Le refus de
+`move-to-module` qui fermerait un cycle entre modules y ajoute ce qu'un script lit sans analyser
+les phrases : `cycles`, chacun avec ses `modules` dans l'ordre et ses `steps` (`from`, `to`,
+`added` pour une étape que le déplacement ajoute, et `imports`, chacun avec `file`, `line` et
+`imported`, les chemins tels qu'ils sont avant le déplacement), et `along`, les fichiers ou
+dossiers à nommer dans la même commande, relatifs au contexte. Avec `--allow-cycle`, les mêmes
+`cycles` sont dans le rapport du déplacement.
 
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->

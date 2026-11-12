@@ -1,5 +1,5 @@
 [English](modules.md) · **Français**
-<!-- translation-of: modules.md sha256:42bdc4f31ee242d0 -->
+<!-- translation-of: modules.md sha256:565b20e99060d36a -->
 
 # Modules du modèle
 
@@ -271,7 +271,11 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   découvre ; la commande s'apprête à en écrire un à votre place, dans chaque import des fichiers
   déplacés, alors elle demande d'abord. `--allow-cycle` déplace quand même et dit le cycle avec le
   déplacement ; `--dry-run` refuse ou montre la même chose. Un cycle qui existait avant le
-  déplacement n'est pas compté, et un projet qui désactive `module/no-cycle` n'est pas jugé.
+  déplacement n'est pas compté, et un projet qui désactive `module/no-cycle` n'est pas jugé, pas plus qu'un
+  cycle dont chaque import est dans un fichier pour lequel la configuration désactive la règle. Le
+  cycle nommé est le plus court qui passe par la dépendance que le déplacement ajoute ; un fichier
+  d'un cas d'usage est nommé par son dossier, un import d'un dossier par son `index.ts` ; et seuls
+  les fichiers que lit `ddd-ts-kit check` sont lus.
   `context-layout` n'a pas besoin d'un tel refus : il laisse où il est un fichier qui ferait
   dépendre un module d'un autre.
 

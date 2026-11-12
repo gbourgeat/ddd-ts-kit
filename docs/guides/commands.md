@@ -254,6 +254,13 @@ kit, never a mistake of the caller: one line with the version of the kit and whe
 (under `--json`, an `error` with `"internal": true`); report it at
 https://github.com/gbourgeat/ddd-ts-kit/issues with the command it gives.
 
+Under `--json`, a refusal is `{"error": {"message": "...", "fix": "..."}}`. The refusal of
+`move-to-module` that would close a cycle between modules adds to it what a script reads without
+parsing the sentences: `cycles`, each with its `modules` in order and its `steps` (`from`, `to`,
+`added` for a step the move adds, and `imports`, each with `file`, `line` and `imported`, the paths
+as they are before the move), and `along`, the files or folders to name in the same command,
+relative to the context. With `--allow-cycle` the same `cycles` are in the report of the move.
+
 <!-- ddd-ts-kit:commands -->
 <!-- Generated from the help of the CLI: `npm run build`, then `node pipeline/monorepo/commands-guide.mjs`. -->
 

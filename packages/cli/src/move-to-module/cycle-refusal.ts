@@ -5,6 +5,9 @@ import { cycleLines } from './cycle-lines';
 /** The flag that lets a move close a cycle between modules. */
 export const ALLOW_CYCLE = 'allow-cycle';
 
+/** The exit code of a mistake of the caller. */
+const REFUSED = 2;
+
 const INVERT =
   'Invert one of the imports above before the move: `ddd-ts-kit explain module/no-cycle` gives the ways (a domain event, a module of its own for the concept both reach for, a projection).';
 
@@ -38,5 +41,7 @@ export function cycleRefusal({ context, cycles, along }: Refused): CliError {
       ...cycleLines(cycles).map((line) => `  ${line}`),
     ].join('\n'),
     [...moveAlong, INVERT, ALLOW].join('\n'),
+    REFUSED,
+    { cycles, along },
   );
 }

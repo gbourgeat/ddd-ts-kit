@@ -46,18 +46,41 @@ function stepKey({ from, to }: Step): string {
 
 /**
  * The shortest cycle that goes through a step, its modules from the first in the alphabet, none when
- * the step closes no cycle. The search is the one of `module/no-cycle` (`cyclesIn`), started on the
- * module the step leaves and made to leave it by that step alone.
+ * the step closes no cycle. Whether it closes one is the search of `module/no-cycle` (`cyclesIn`),
+ * started on the module the step leaves and made to leave it by that step alone; the cycle told is
+ * then the shortest way back from the module the step reaches.
  */
 function cycleThrough({ from, to }: Step, after: readonly ModuleImport[]): string[][] {
   const imported = importedModules(after);
   const next = (module: string): string[] => (module === from ? [to] : imported(module));
+  const closes = cyclesIn([from], next).some(([first]) => first === from);
 
-  const [shortest] = cyclesIn([from], next)
-    .filter(([first]) => first === from)
-    .sort((one, other) => one.length - other.length || one.join(' ').localeCompare(other.join(' ')));
+  return closes ? [fromTheFirst([from, ...shortestWay({ from: to, to: from }, imported)])] : [];
+}
 
-  return shortest === undefined ? [] : [fromTheFirst(shortest)];
+/**
+ * The modules of the shortest way from one module to another it reaches, the first included and the
+ * last left out: every way one step longer is tried at once, each module entered once, the modules in
+ * the order of the alphabet so that two ways of one length always give the same one.
+ */
+function shortestWay({ from, to }: Step, imported: (module: string) => string[]): string[] {
+  const entered = new Set([from]);
+  let ways = [[from]];
+
+  while (!ways.some((way) => imported(way.at(-1) ?? '').includes(to))) {
+    ways = ways.flatMap((way) =>
+      imported(way.at(-1) ?? '')
+        .filter((module) => !entered.has(module))
+        .sort()
+        .map((module) => {
+          entered.add(module);
+
+          return [...way, module];
+        }),
+    );
+  }
+
+  return ways.find((way) => imported(way.at(-1) ?? '').includes(to)) ?? [];
 }
 
 /** The same cycle, told from its first module in the alphabet: two steps of one cycle then answer it once. */

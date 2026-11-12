@@ -1,7 +1,8 @@
-import type { ModuleImport } from '../check/modules/module-imports';
+import { posix } from 'node:path';
+import { fileSeverity } from '../check/project/file-severity';
 import { type Config, projectSeverity } from '../config';
 import type { FileMove } from '../file-moves';
-import { declaredModules } from '../model-modules';
+import { declaredModules, moduleSplit } from '../model-modules';
 import type { Workspace } from '../workspace';
 import { type ClosedCycle, closedCycles } from './closed-cycles';
 import { moduleImportsIn } from './module-imports-in';
@@ -19,8 +20,9 @@ export interface MoveCycles {
 
 /**
  * Reads the imports between the modules of a context before a move, and answers what tells, once
- * the move is planned in the workspace, the cycles it closes. A project that turns `module/no-cycle`
- * off is told of none: the command judges what the rule judges.
+ * the move is planned in the workspace, the cycles it closes. The command judges what the rule
+ * judges: a project that turns `module/no-cycle` off is told of none, nor of a cycle whose every
+ * import is in a file the config turns the rule off for.
  */
 export function watchCycles(
   ws: Workspace,
@@ -34,7 +36,9 @@ export function watchCycles(
   const before = moduleImportsIn(ws, config, context);
 
   return (moved) => {
-    const cycles = closedCycles(before, moduleImportsIn(ws, config, context));
+    const cycles = closedCycles(before, moduleImportsIn(ws, config, context)).filter((cycle) =>
+      cycle.steps.some(({ imports }) => imports.some(({ file }) => fileSeverity(config, RULE, file) !== 'off')),
+    );
 
     return { cycles, along: alongOf(ws, config, { context, cycles, moved }) };
   };
@@ -49,7 +53,9 @@ interface Closed {
 
 /**
  * An import the move adds joins a file it moves and one it leaves: moved too, the second one is in
- * the module of the first, and the import no longer goes from a module to another.
+ * the module of the first, and the import no longer goes from a module to another. A file of a
+ * folder below its role folder (a use case, a route) is named by that folder, which moves whole,
+ * and so is the `index.ts` an import of a folder reaches.
  */
 function alongOf(ws: Workspace, config: Config, { context, cycles, moved }: Closed): string[] {
   const directory = `${config.contextsDir}/${context}`;
@@ -58,14 +64,21 @@ function alongOf(ws: Workspace, config: Config, { context, cycles, moved }: Clos
 
   const others = cycles
     .flatMap(({ steps }) => steps.filter(({ added }) => added).flatMap(({ imports }) => imports))
-    .map(otherEnd(arrived))
+    .map(({ file, imported }) => (arrived.has(file) ? imported : file))
     .filter((file) => ws.exists(file))
     .map((file) => file.slice(directory.length + 1))
-    .filter((file) => placeInModule(file, held) === 'moves');
+    .filter((file) => placeInModule(file, held) === 'moves')
+    .map((file) => whatMovesWith(file, held.modules));
 
   return [...new Set(others)].sort();
 }
 
-function otherEnd(arrived: ReadonlySet<string>): (one: ModuleImport) => string {
-  return ({ file, imported }) => (arrived.has(file) ? imported : file);
+/** The number of folders that lead to a file directly in its role folder: its layer and that folder. */
+const TO_THE_ROLE_FOLDER = 2;
+
+/** The file itself, or the folder it moves with: the one below its role folder, or the one its `index.ts` stands for. */
+function whatMovesWith(file: string, modules: readonly string[]): string {
+  const folders = moduleSplit(file, modules).path.split('/').length - 1;
+
+  return folders > TO_THE_ROLE_FOLDER || posix.basename(file) === 'index.ts' ? posix.dirname(file) : file;
 }

@@ -256,7 +256,10 @@ npx ddd-ts-kit move-to-module appointments booking domain/aggregates/appointment
   the command is about to write one on your behalf, into every import of the moved files, so it
   asks first. `--allow-cycle` moves all the same and says the cycle with the move; `--dry-run`
   refuses or shows the same. A cycle there before the move is not counted, and a project that
-  turns `module/no-cycle` off is not judged. `context-layout` needs no such refusal: it leaves
+  turns `module/no-cycle` off is not judged, nor is a cycle whose every import is in a file the
+  config turns the rule off for. The cycle named is the shortest through the dependency the move
+  adds; a file of a use case is named by its folder, an import of a folder by its `index.ts`; and
+  only the files `ddd-ts-kit check` reads are read. `context-layout` needs no such refusal: it leaves
   where it is a file that would make a module depend on another.
 
 ### What reads the modules

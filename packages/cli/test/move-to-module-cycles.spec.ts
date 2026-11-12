@@ -1,33 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, tempDir, write } from './helpers';
+import { cli, exists, read } from './helpers';
 import { failure } from './reports';
-
-const BILLING = 'src/contexts/billing';
-const MODULES = { invoices: {}, reminders: {}, ledgers: {} };
-const INVOICE = 'invoices/domain/aggregates/invoice.aggregate.ts';
-const REMINDER = 'reminders/domain/aggregates/reminder.aggregate.ts';
-const DUNNING = 'domain/services/dunning.service.ts';
-
-/** A source that imports the files named, relative to billing, by the alias of the project. */
-function importing(...files: string[]): string {
-  const imports = files.map((file, at) => `import { n${at} } from '@/contexts/billing/${file.replace(/\.ts$/, '')}';`);
-
-  return [...imports, `export const n0 = ${files.length};`, ''].join('\n');
-}
-
-/** A project holding billing as `files` lay it out: each path relative to billing, with what it imports. */
-function billingWith(files: Readonly<Record<string, readonly string[]>>, rules: object = {}): string {
-  const root = tempDir('move-to-module-cycles');
-  const contexts = { billing: { classification: 'core', upstreams: [], modules: MODULES } };
-
-  write(root, 'ddd-ts-kit.config.json', JSON.stringify({ contexts, rules }));
-
-  for (const [file, imported] of Object.entries(files)) {
-    write(root, `${BILLING}/${file}`, importing(...imported));
-  }
-
-  return root;
-}
+import { BILLING, billingWith, DUNNING, INVOICE, REMINDER } from './support/billing-in-modules';
 
 /** Reminders imports invoices already; dunning, at the level of the context, imports reminders. */
 function dunningBetween(rules: object = {}): string {
@@ -150,7 +124,7 @@ describe('move-to-module, on what it names of a cycle', () => {
     expect(refused.fix).toMatch(/^Invert one of the imports above/);
   });
 
-  it('names each cycle the move closes, the shortest through each step, and the first imports of a step there now', () => {
+  it('names each cycle the move closes, one through each step it adds, and the first imports of a step there now', () => {
     const ledger = 'ledgers/domain/aggregates/ledger.aggregate.ts';
     const others = ['one', 'two', 'three', 'four'].map((name) => `reminders/domain/services/${name}.service.ts`);
 

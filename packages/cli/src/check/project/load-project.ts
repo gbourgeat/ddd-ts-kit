@@ -4,10 +4,10 @@ import { readConfig, type Config } from '../../config';
 import type { Project } from '../model/project';
 import type { SourceFile } from '../model/source-file';
 import { assembleProject } from './assemble-project';
-import { gitIgnored, type Ignored } from './git-ignored';
 import { isSource } from './is-source';
 import { isUnder } from './is-under';
 import { loadSourceFile } from './load-source-file';
+import { notInTheTree } from './not-in-the-tree';
 import { walkDirectory } from './walk-directory';
 
 export interface ProjectOptions {
@@ -60,18 +60,6 @@ function walkTree(root: string, config: Config): Tree {
   walkDirectory({ root, directory: config.sourceRoot, skip: notInTheTree(root, config) }, visit);
 
   return { files, contextEntries, contextsOnDisk };
-}
-
-/**
- * The tree under the source root is what git sees: an entry git ignores is not read, nor a
- * dot-directory under the contexts directory, which a tool writes and no context declares.
- */
-function notInTheTree(root: string, { sourceRoot, contextsDir }: Config): Ignored {
-  const ignored = gitIgnored(root, sourceRoot);
-
-  return (file, isDirectory) =>
-    ignored(file, isDirectory) ||
-    (isDirectory && file !== contextsDir && isUnder(file, contextsDir) && path.posix.basename(file).startsWith('.'));
 }
 
 function readSource(root: string, config: Config, file: string): SourceFile {
