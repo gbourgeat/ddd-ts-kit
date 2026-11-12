@@ -14,10 +14,12 @@ import { readModelTables } from '@/platform/database/read-model-tables';
 // tables it read and each one that cannot hold the trace of a deleted row, or that it could not
 // read, with what keeps it from it and the migration to write. Exit code: 0 when every listed
 // table is ready, 1 when one is not, 2 when DATABASE_URL names no database, 3 when no table
-// could be read (the database does not answer, or refuses the reading).
+// could be read (the database does not answer, or refuses the reading), 4 when `--context` names
+// a context no listed read model belongs to: a misspelt name would otherwise check nothing.
 const NOT_READY = 1;
 const NO_DATABASE = 2;
 const UNREAD = 3;
+const NO_SUCH_CONTEXT = 4;
 
 process.exitCode = await checked(process.env['DATABASE_URL'], contextsOf(process.argv));
 
@@ -53,7 +55,18 @@ async function read(databaseUrl: string, contexts?: readonly string[]): Promise<
   const persistence = openPersistence({ databaseUrl });
 
   try {
-    const { outcome, text } = await readModelTables(persistence, contexts).report();
+    const tables = readModelTables(persistence);
+    const unknown = (contexts ?? []).filter((context) => !tables.contexts.includes(context));
+
+    if (unknown.length > 0) {
+      const held = tables.contexts.length === 0 ? 'no read model' : `those of ${tables.contexts.join(', ')}`;
+
+      console.error(`No listed read model belongs to ${unknown.join(', ')}: the list holds ${held}.`);
+
+      return NO_SUCH_CONTEXT;
+    }
+
+    const { outcome, text } = await tables.hosting(contexts).report();
 
     console.log(text);
 

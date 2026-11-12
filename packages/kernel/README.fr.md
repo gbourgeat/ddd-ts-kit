@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a53c41b1cf50ca83 -->
+<!-- translation-of: README.md sha256:b42fb63a065c977c -->
 
 # @ddd-ts-kit/kernel
 
@@ -2109,8 +2109,9 @@ vérification `<table>_live_rows_whole` garde entier, quelles autres contraintes
 nomment une colonne de la ligne, et si c'est une vue. C'est le refus d'un store avant sa première
 trace, et `tableState()` d'un `TableReadModelStore` rend la même lecture sous la forme d'un
 `ReadModelTableState`. `ReadModelTables` le demande aux stores qu'une application liste, chaque
-entrée un nom et ce qui construit le store comme l'application le lie : `states()` et `notReady()`
-listent, `require()` refuse avec `ReadModelTablesNotReadyError`, `atStart(logger)` est ce
+entrée un nom et ce qui construit le store comme l'application le lie : `hosting(contexts)` garde
+les entrées des contextes qu'une application héberge et `contexts` nomme ceux que tient la liste ;
+`states()` et `notReady()` listent, `require()` refuse avec `ReadModelTablesNotReadyError`, `atStart(logger)` est ce
 qu'appelle une application à son démarrage (`atStart(logger, 'reported')` journalise les tables en
 une erreur et laisse le démarrage se poursuivre), et `report()` est ce qu'affiche une commande,
 avec un `outcome` qui distingue une table qui n'est pas prête d'une base qui n'a pas pu être lue.
@@ -2120,7 +2121,8 @@ même. Le verdict est celui du store par construction, une table que personne ne
 lue, et un store sans table (mémoire, OpenSearch) n'a rien à dire. Ce que la vérification ne peut
 pas trancher est un avertissement : une contrainte non validée, une contrainte de ce nom qui n'est
 pas écrite comme le kit l'écrit (la forme est lue exactement, telle que PostgreSQL l'affiche), une
-autre vérification sur une colonne de la ligne, une vue, un store que l'application nomme comme
+autre vérification sur une colonne de la ligne sauf si elle est écrite pour les seules lignes
+vivantes (`deleted or ..`), une vue, un store que l'application nomme comme
 non listé. Un refus nomme la table, ce qui l'empêche de contenir une trace et la migration à
 écrire, dans `steps` (`statements` tient les deux dans l'ordre) : le changement de définition, une
 instruction qui ne touche que les colonnes associées, écrit la contrainte `not valid` et ne

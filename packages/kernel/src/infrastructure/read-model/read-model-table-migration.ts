@@ -69,16 +69,32 @@ function rewritten(state: ReadModelTableState, whole: readonly string[]): string
   const name = liveRowsConstraintOf(state.table);
   const checked = whole.map((column) => `${quoted(column)} is not null`).join(' and ');
 
-  return [
-    'do $kit$',
+  const table = state.schema === undefined ? state.table : `${state.schema}.${state.table}`;
+  const refused = `The constraint ${name} of ${table} is not written as ddd-ts-kit writes the one that keeps the live rows of a read model whole: it is left as it is, and nothing was changed.`;
+
+  const body = [
     'begin',
     `  if exists (select 1 from pg_constraint where conrelid = to_regclass(${literal(path)}) and conname = ${literal(name)} and pg_get_constraintdef(oid) !~ ${literal(LIVE_ROWS_CONSTRAINT_FORM)}) then`,
-    "    raise exception 'A constraint named as the one that keeps the live rows of a read model whole checks something else: it is left as it is.';",
+    `    raise exception ${literal(refused.replaceAll('%', '%%'))};`,
     '  end if;',
     `  alter table ${path} ${opened(state)}, drop constraint if exists ${quoted(name)}, add constraint ${quoted(name)} check (${quoted(state.deleted)} or (${checked})) not valid;`,
     'end',
-    '$kit$;',
   ].join('\n');
+
+  const tag = dollarTagFor(body);
+
+  return `do ${tag}\n${body}\n${tag};`;
+}
+
+/** A dollar quote no name of the statement can close: `$kit$`, lengthened while the body holds it. */
+function dollarTagFor(body: string): string {
+  let tag = 'kit';
+
+  while (body.includes(`$${tag}$`)) {
+    tag += '_';
+  }
+
+  return `$${tag}$`;
 }
 
 function validated(state: ReadModelTableState): string {

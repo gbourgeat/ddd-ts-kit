@@ -39,6 +39,11 @@ export function wireContext(ws: Workspace, plan: ContextPlan): void {
     applyWiring(ws, file, renderTemplate(wiring, vars));
   }
 
+  // An entry of the list of the read model tables names a context of the project: the list knows them.
+  if (ws.exists(`${config.platformDir}/database/read-model-tables.ts`)) {
+    applyWiring(ws, `${config.platformDir}/database/read-model-tables.ts`, `@@contexts\n'${context.kebab}',\n`);
+  }
+
   if (ws.exists(registry) && ws.exists(`${config.contextsDir}/${context.kebab}/${permissionsFile(context)}`)) {
     applyWiring(ws, registry, renderTemplate('context/permission-set.tpl', vars));
   }

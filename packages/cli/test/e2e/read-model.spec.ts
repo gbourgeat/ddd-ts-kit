@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cli, DEFAULT_STACK } from '../helpers';
+import { cli, DEFAULT_STACK, read } from '../helpers';
 import { EditedProject } from './edited-project';
 import { bin, runIn } from './run-in';
 import { FAILED_COUNT } from './run-specs';
@@ -10,6 +10,8 @@ const SHIPPING = 'src/contexts/shipping';
 const CONTRACT = `${SHIPPING}/test/integration/invoices-to-ship.contract.spec.ts`;
 /** The read model of tenant data the scaffold generates beside the table of an aggregate. */
 const ORDERS = 'src/contexts/order-fulfilment';
+/** The list of the read model tables the application checks when it starts. */
+const LIST = 'src/platform/database/read-model-tables.ts';
 const TENANT_CONTRACT = `${ORDERS}/test/integration/order-board.contract.spec.ts`;
 
 /** A field of each type, one that may hold null: five required ones make a check too long for its line. */
@@ -36,6 +38,7 @@ function generatedOn(orm: string): string[] {
     `${ORDERS}/infrastructure/persistence/${orm}-order-board.repository.ts`,
     `${ORDERS}/infrastructure/persistence/${tables('order-fulfilment')}.ts`,
     TENANT_CONTRACT,
+    LIST,
   ];
 }
 
@@ -105,6 +108,8 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
 
         // The first table of shipping: the read model starts the schema of the context.
         cli(root, 'generate', 'read-model', 'shipping', 'InvoicesToShip', ...fields);
+        // A read model of the same name in a second context: its store carries the same class name.
+        cli(root, 'generate', 'read-model', 'billing', 'InvoicesToShip', '--field', 'weight:number');
       },
       { ...DEFAULT_STACK, orm },
     );
@@ -114,7 +119,15 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
     project.restore();
   });
 
-  it('type-checks as generated: the ports, the store adapters over the read model store of the ORM package, the fakes and the contracts', () => {
+  it('lists the store of the same name of a second context under an alias, so that the list compiles', () => {
+    expect(read(project.root, LIST)).toMatch(
+      /import \{ (\w+InvoicesToShip) as Billing\1 \} from '@\/contexts\/billing\/infrastructure\/persistence\/[\w-]+\.repository';/,
+    );
+
+    expect(read(project.root, LIST)).toMatch(/\['billing', Billing\w+InvoicesToShip\],/);
+  });
+
+  it('type-checks as generated: the ports, the store adapters over the read model store of the ORM package, the fakes, the contracts and the list of the tables', () => {
     const compiled = runIn(project.root, {
       command: process.execPath,
       args: [NATIVE_COMPILER, '-p', 'tsconfig.json', '--noEmit'],

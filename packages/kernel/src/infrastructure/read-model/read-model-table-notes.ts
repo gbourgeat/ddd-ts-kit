@@ -27,7 +27,7 @@ export function readModelTableNotes(state: ReadModelTableState): string[] {
     ...(others.length === 0
       ? []
       : [
-          `Other check constraints of ${table} name a column of its row: ${others.join('; ')}. One that refuses NULL there refuses the trace of a deleted row: make it hold for the live rows only ("deleted or ...").`,
+          `Other check constraints of ${table} name a column of its row: ${others.join('; ')}. One that refuses NULL there refuses the trace of a deleted row: written for the live rows only ("deleted or ..."), it lets every trace in and is no longer named here.`,
         ]),
     ...(state.relation === undefined
       ? []

@@ -2024,7 +2024,9 @@ whole, which other check constraints name a column of the row, and whether it is
 the refusal of one store before its first trace, and `tableState()` of a `TableReadModelStore`
 answers the same reading as a `ReadModelTableState`. `ReadModelTables` asks it of the stores an
 application lists, each entry a name and what builds the store as the application binds it:
-`states()` and `notReady()` list, `require()` refuses with `ReadModelTablesNotReadyError`,
+`hosting(contexts)` keeps the entries of the contexts an application hosts and `contexts` names
+those the list holds; `states()` and `notReady()` list, `require()` refuses with
+`ReadModelTablesNotReadyError`,
 `atStart(logger)` is what an application calls when it starts (`atStart(logger, 'reported')` logs
 the tables as one error and lets the start go on), and `report()` is what a command prints, with
 an `outcome` that tells a table that is not ready from a database that could not be read. Every
@@ -2033,7 +2035,8 @@ told under its name, in `unread` of the error, and the others are still read. Th
 store's by construction, a table nobody lists is never read, and a store without a table (memory,
 OpenSearch) has nothing to say. What the check cannot decide is a warning: a constraint that is
 not validated, a constraint of that name that is not written as the kit writes it (the form is
-read exactly, as PostgreSQL prints it), another check on a column of the row, a view, a store the
+read exactly, as PostgreSQL prints it), another check on a column of the row unless it is written for the live rows only (`deleted or
+..`), a view, a store the
 application names as not listed. A refusal names the table, what keeps it from holding a trace
 and the migration to write, in `steps` (`statements` holds both in order): the change of
 definition, one statement that touches the mapped columns alone, writes the constraint `not valid`

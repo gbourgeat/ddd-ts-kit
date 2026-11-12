@@ -54,7 +54,8 @@ maps and no other. On a large table the second step runs in a migration of its o
 transaction of the first (the documentation of the persistence says how on each migration tool).
 Before a deployment, `DATABASE_URL=<its database> npm run db:read-models` says the same of that
 database (`-- --context <context>` for the tables of one context; exit code 1 when a table is not
-ready, 2 without a database to read, 3 when no table could be read) and needs no other variable:
+ready, 2 without a database to read, 3 when no table could be read, 4 when the context holds no
+listed read model) and needs no other variable:
 it prints the database it read. A pipeline that starts the application before its migrations
 ran passes `readModelTables: 'reported'` to `composeApplication` in `{{config.sourceRoot}}/main.ts`:
 the tables are logged as one error, the start goes on, and each store still refuses by name before

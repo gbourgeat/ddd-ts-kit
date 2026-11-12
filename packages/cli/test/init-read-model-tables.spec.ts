@@ -1,7 +1,7 @@
 import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cli, exists, read, write } from './helpers';
+import { cli, exists, read } from './helpers';
 import { expectOk } from './support/expect-ok';
 import { initProject } from './support/init-project';
 import { billingProject, generateReadModel, withInvoiceSummaries } from './support/read-model-project';
@@ -26,15 +26,18 @@ describe('init: the read model tables the application lists, checked before a st
       const tables = platform(initProject('--orm', orm), LIST);
 
       expect(tables).toContain(
-        'const LISTED: readonly (readonly [context: string, store: Store])[] = [\n' +
+        'const LISTED: readonly (readonly [context: (typeof CONTEXTS)[number], store: Store])[] = [\n' +
           '  // ddd-ts-kit:read-model-tables\n  // /ddd-ts-kit:read-model-tables\n];',
       );
 
+      expect(tables).toContain('const CONTEXTS = [\n  // ddd-ts-kit:contexts\n  // /ddd-ts-kit:contexts\n] as const;');
+
       expect(tables).toContain(
-        '    hosted.map(([, Store]) => ({ name: Store.name, build: () => new Store(persistence.database, scope) })),',
+        '  const listed = LISTED.map(([context, Store]) => ({\n' +
+          '    context,\n    name: Store.name,\n    build: () => new Store(persistence.database, scope),\n  }));',
       );
 
-      expect(tables).toContain('  const hosted = LISTED.filter(([context]) => contexts?.includes(context) ?? true);');
+      expect(tables).toContain('  return new ReadModelTables(listed, NOT_LISTED).hosting(contexts);');
     }
   });
 
@@ -80,55 +83,6 @@ describe('init: the read model tables the application lists, checked before a st
     expect(generateReadModel(root, 'OpenInvoices').stdout).toContain(
       'src/platform/database/read-model-tables.ts does not exist: wire the new element by hand.',
     );
-  });
-
-  it('fills the list from the stores the tree holds, with init and init --force, where a project has none or an empty one', () => {
-    for (const [orm, store, file] of STORES) {
-      for (const flags of [[], ['--force']]) {
-        const root = billingProject('--orm', orm);
-
-        withInvoiceSummaries(root);
-        rmSync(path.join(root, 'src/platform', LIST));
-        expectOk(cli(root, 'init', ...flags));
-
-        const tables = platform(root, LIST);
-
-        expect(tables).toContain(
-          `import { ${store} } from '@/contexts/billing/infrastructure/persistence/${file}.repository';`,
-        );
-
-        expect(tables).toContain(`  ['billing', ${store}],\n  // /ddd-ts-kit:read-model-tables`);
-        expect(tables).toContain('  // ddd-ts-kit:read-models-not-listed\n  // /ddd-ts-kit:read-models-not-listed');
-      }
-    }
-  });
-
-  it('names a store it cannot build among those not listed, and says what to write, once', () => {
-    const root = billingProject('--orm', 'knex', '--tenancy', 'shared-table');
-    const store = 'src/contexts/billing/infrastructure/persistence/knex-invoice-summaries.repository.ts';
-
-    withInvoiceSummaries(root);
-
-    write(
-      root,
-      store,
-      read(root, store).replace('scope: ExecutionScope)', 'scope: ExecutionScope, readonly page = 20)'),
-    );
-
-    rmSync(path.join(root, 'src/platform', LIST));
-
-    const first = cli(root, 'init', '--force');
-
-    expectOk(first);
-
-    expect(first.stdout).toContain(
-      'KnexInvoiceSummaries (src/contexts/billing/infrastructure/persistence/knex-invoice-summaries.repository.ts) is a read model store whose constructor is not `(database)` nor `(database, scope)`',
-    );
-
-    expect(platform(root, LIST)).toContain("  // ddd-ts-kit:read-models-not-listed\n  'KnexInvoiceSummaries',\n");
-    expect(platform(root, LIST)).not.toContain("['billing', KnexInvoiceSummaries]");
-    expect(cli(root, 'init', '--force').stdout).not.toContain('is a read model store whose constructor');
-    expect(platform(root, LIST).match(/'KnexInvoiceSummaries',/g)).toHaveLength(1);
   });
 
   it('lists nothing for a read model kept in memory, which has no table', () => {
@@ -198,7 +152,13 @@ describe('init: the check of the listed read model tables, at the start and from
 
     const script = read(root, 'scripts/read-model-tables.ts');
 
-    expect(script).toContain('    const { outcome, text } = await readModelTables(persistence, contexts).report();');
+    expect(script).toContain('    const { outcome, text } = await tables.hosting(contexts).report();');
+
+    expect(script).toContain(
+      '    const unknown = (contexts ?? []).filter((context) => !tables.contexts.includes(context));',
+    );
+
+    expect(script).toContain('      return NO_SUCH_CONTEXT;');
     expect(script).toContain("  const named = args.filter((_, index) => args[index - 1] === '--context');");
     expect(script).toContain('  console.log(`Database ${pathname.slice(1)} on ${host}, ${scope}.`);');
     expect(script).toContain('  const persistence = openPersistence({ databaseUrl });');

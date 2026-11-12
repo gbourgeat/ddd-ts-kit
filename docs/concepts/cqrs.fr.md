@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:ad4f003877b44b98 -->
+<!-- translation-of: cqrs.md sha256:91e849e11cc27621 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -485,7 +485,7 @@ The read model table notification.contacts cannot hold the trace of a deleted ro
 do $kit$
 begin
   if exists (select 1 from pg_constraint where conrelid = to_regclass('"notification"."contacts"') and conname = 'contacts_live_rows_whole' and pg_get_constraintdef(oid) !~ '^CHECK [(][(]..( NOT VALID|)$') then
-    raise exception 'A constraint named as the one that keeps the live rows of a read model whole checks something else: it is left as it is.';
+    raise exception 'The constraint contacts_live_rows_whole of notification.contacts is not written as ddd-ts-kit writes the one that keeps the live rows of a read model whole: it is left as it is, and nothing was changed.';
   end if;
   alter table "notification"."contacts" alter column "address" drop not null, drop constraint if exists "contacts_live_rows_whole", add constraint "contacts_live_rows_whole" check ("deleted" or ("address" is not null)) not valid;
 end
@@ -524,10 +524,13 @@ contrainte de vérification réécrite avec les champs qu'elle tenait et ceux qu
 NOT NULL, `not valid`. C'est une seule instruction pour qu'aucune ligne ne soit écrite entre les
 deux, quoi qui valide chaque instruction, et elle lit d'abord la contrainte que la base tient sous
 ce nom : celle qui n'est pas écrite comme le kit l'écrit n'est jamais supprimée, l'instruction
-échoue sur elle et ne change rien. La seconde étape valide la contrainte et vide les lignes
+échoue sur elle, en nommant la contrainte et sa table, et ne change rien. La seconde étape valide la contrainte et vide les lignes
 supprimées auparavant, celles qui tiennent encore des données seulement. Chaque identifiant est
-entre guillemets, et les instructions ne portent ni barre oblique inverse ni point d'interrogation,
-si bien qu'une chaîne de JavaScript ou `knex.raw` les transporte telles quelles. Exécutée deux
+entre guillemets, le délimiteur dollar de la première étape est un délimiteur qu'aucun nom de
+l'instruction ne porte, et les instructions ne portent ni barre oblique inverse ni point
+d'interrogation, si bien qu'une chaîne de JavaScript ou `knex.raw` les transporte telles quelles ;
+une colonne dont le nom porte lui-même un point d'interrogation est l'exception, et l'erreur le
+dit sous ses instructions : écrivez-le `\?` dans `knex.raw`. Exécutée deux
 fois, la migration finit là où elle a fini la première fois et n'échoue sur rien. C'est la
 migration de la base qui a été lue : lancez `db:read-models` sur chaque environnement.
 
@@ -549,16 +552,28 @@ champs : `(deleted or title is not null) and ..` ou `deleted or not (..)` sous c
 vérification. Le démarrage avertit, et `db:read-models` affiche, une contrainte non validée (avec
 l'instruction qui la valide), une autre vérification sous ce nom, toute autre contrainte de
 vérification de la table qui nomme un champ de la ligne (celle qui y refuse NULL refuse une
-trace), et une table qui est une vue, dont les colonnes de base ne sont pas lues.
+trace ; celle qui est écrite pour les seules lignes vivantes, `deleted or ..`, laisse entrer toute
+trace et n'est pas nommée), et une table qui est une vue, dont les colonnes de base ne sont pas
+lues.
 
 **Au démarrage, les tables des contextes que l'application héberge.** Un projet généré garde la
 liste dans `src/platform/database/read-model-tables.ts`, entre des marqueurs : une entrée est le
 contexte d'un modèle de lecture et la classe de son registre, `['billing', KnexInvoiceSummaries]`.
-`generate read-model` ajoute le registre qu'il écrit ; `init`, avec ou sans `--force`, ajoute les
-registres que l'arbre contient et que la liste ne contient pas, si bien qu'un projet généré avant
-l'existence de la liste la retrouve remplie ; un registre dont le constructeur n'est pas celui que
-le générateur écrit est nommé dans une note et dans `NOT_LISTED`, que la vérification dit à chaque
-démarrage tant que le registre n'est pas listé. Une application vérifie, à son démarrage et avant
+Le contexte est l'un de ceux que le fichier tient dans `CONTEXTS`, que `generate context`
+remplit : une entrée sous un autre nom, mal orthographié compris, ne compile pas. `generate
+read-model` ajoute le registre qu'il écrit ; `init`, avec ou sans `--force`, ajoute les registres
+que l'arbre contient et que la liste ne contient pas, si bien qu'un projet généré avant
+l'existence de la liste la retrouve remplie. Il lit chaque classe de la persistance de chaque
+contexte, plusieurs dans un même fichier comprises, et tient pour un registre une classe au-dessus
+du registre du kit, directement ou par une classe de base du projet. Un nom de classe que deux
+contextes partagent est importé sous un alias qui porte le contexte (`KnexSummaries as
+ShippingKnexSummaries`), par le générateur comme par `init`. Un registre qu'il ne peut pas lister
+avec certitude (son propre constructeur n'est pas celui que le générateur écrit, ou est hérité ;
+la classe est générique) est nommé dans une note et dans `NOT_LISTED`, que la vérification dit à
+chaque démarrage tant que le registre n'est pas listé. Un registre laissé de côté exprès est un
+commentaire de la liste qui porte `<contexte>: <Registre>` et la raison : `init` le laisse alors
+de côté, et rien n'en avertit ; une entrée simplement supprimée revient au prochain
+`init --force`. Une application vérifie, à son démarrage et avant
 qu'un consommateur soit abonné ou une requête servie, les entrées des contextes qu'elle héberge
 (le module de la plateforme sur tsyringe, InversifyJS et Awilix, dans le style déclaré comme
 explicite ; `start` de `compose-application.ts` sur une plateforme câblée à la main).
@@ -586,7 +601,9 @@ de commande ne la donne pas : le script affiche donc d'abord la base qu'il lit (
 hôte, jamais les identifiants), puis combien de tables il a lues et leurs noms, les avertissements
 et chaque refus. Son code de sortie distingue les cas : 0 quand chaque table listée est prête, 1
 quand l'une ne l'est pas, 2 quand `DATABASE_URL` ne nomme aucune base, 3 quand aucune table n'a pu
-être lue (la base ne répond pas, ou refuse la lecture). Lancée sur la base de l'environnement une
+être lue (la base ne répond pas, ou refuse la lecture), 4 quand `--context` nomme un contexte
+auquel aucun modèle de lecture listé n'appartient, avec les contextes que tient la liste : un nom
+mal orthographié ne passe jamais pour une vérification. Lancée sur la base de l'environnement une
 fois ses migrations passées, c'est la porte du déploiement ; lancée après `npm run db:migrate` sur
 une base vide, comme en a une chaîne d'intégration, elle dit la même chose des migrations du
 projet, une table qu'elles ne créent jamais comprise. C'est un script du projet et non une

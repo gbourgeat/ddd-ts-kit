@@ -55,7 +55,10 @@ export class TableDoubtsSuite extends ReadModelTablesSuite {
         const refusal = await failureOf(() => this.run(statements));
         const [found] = await this.listed(TABLES.agenda.shape).states();
 
-        this.expect(String(refusal).includes('checks something else')).toBe(true);
+        this.expect(
+          String(refusal).includes('The constraint agenda_live_rows_whole of tables_contract.agenda is not written as'),
+        ).toBe(true);
+
         this.expect(found?.constraint?.state).toBe('unexpected');
         this.expect(found?.refusing).toEqual(this.agenda.refusing);
       },
@@ -65,6 +68,11 @@ export class TableDoubtsSuite extends ReadModelTablesSuite {
   private warnsOfWhatItDoesNotRead(): void {
     this.it('warns of another check constraint that names a field of the row, and of no other', async () => {
       await this.create(TABLES.checked);
+
+      // Written for the live rows only, as the warning advises: it lets every trace in and is not named.
+      await this.subject.execute(
+        `alter table ${this.schema}.checked_rows add constraint checked_rows_titled check (deleted or (length(title) > 0))`,
+      );
 
       const logger = new InMemoryLogger();
       const [found] = await this.listed(TABLES.checked.shape).states();

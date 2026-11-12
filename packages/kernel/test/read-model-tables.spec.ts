@@ -206,7 +206,7 @@ const DOUBTED: ReadModelTableState = {
 };
 
 const DOUBTS = [
-  'Other check constraints of scheduling.ledger name a column of its row: ledger_noted CHECK ((note IS NOT NULL)); ledger_dated CHECK ((starts_at > 0)). One that refuses NULL there refuses the trace of a deleted row: make it hold for the live rows only ("deleted or ...").',
+  'Other check constraints of scheduling.ledger name a column of its row: ledger_noted CHECK ((note IS NOT NULL)); ledger_dated CHECK ((starts_at > 0)). One that refuses NULL there refuses the trace of a deleted row: written for the live rows only ("deleted or ..."), it lets every trace in and is no longer named here.',
   'scheduling.ledger is a materialized view, not a table: what its base columns refuse is not read, so nothing says whether a trace is taken.',
   'Read model stores of the application are not listed, so nothing checks their tables: KnexLedger, KnexRooms. Add each to the list of the read model tables.',
 ];
@@ -252,5 +252,23 @@ describe('ReadModelTables: what a start warns of and what a command prints', () 
         new ReadModelTablesNotReadyError([AGENDA]).message,
       ].join('\n'),
     });
+  });
+});
+
+describe('ReadModelTables: the contexts of an application', () => {
+  it('selects the entries of the contexts an application hosts, and names the contexts the list holds', async () => {
+    const tables = new ReadModelTables([
+      { context: 'billing', name: 'Invoices', build: () => ({ tableState: async () => READY }) },
+      { context: 'shipping', name: 'Parcels', build: () => ({ tableState: async () => AGENDA }) },
+      { context: 'billing', name: 'Ledger', build: () => ({ tableState: async () => CONTACTS }) },
+      { name: 'Loose', build: () => ({ tableState: async () => READY }) },
+    ]);
+
+    expect(tables.contexts).toEqual(['billing', 'shipping']);
+    expect(await tables.hosting(['billing']).states()).toEqual([READY, CONTACTS]);
+    expect(await tables.hosting(['shipping', 'billing']).states()).toEqual([READY, AGENDA, CONTACTS]);
+    expect(await tables.hosting(['biling']).states()).toEqual([]);
+    expect(await tables.hosting().states()).toEqual([READY, AGENDA, CONTACTS, READY]);
+    expect(tables.hosting(['billing']).contexts).toEqual(['billing']);
   });
 });

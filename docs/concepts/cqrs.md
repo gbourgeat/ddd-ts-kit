@@ -452,7 +452,7 @@ The read model table notification.contacts cannot hold the trace of a deleted ro
 do $kit$
 begin
   if exists (select 1 from pg_constraint where conrelid = to_regclass('"notification"."contacts"') and conname = 'contacts_live_rows_whole' and pg_get_constraintdef(oid) !~ '^CHECK [(][(]..( NOT VALID|)$') then
-    raise exception 'A constraint named as the one that keeps the live rows of a read model whole checks something else: it is left as it is.';
+    raise exception 'The constraint contacts_live_rows_whole of notification.contacts is not written as ddd-ts-kit writes the one that keeps the live rows of a read model whole: it is left as it is, and nothing was changed.';
   end if;
   alter table "notification"."contacts" alter column "address" drop not null, drop constraint if exists "contacts_live_rows_whole", add constraint "contacts_live_rows_whole" check ("deleted" or ("address" is not null)) not valid;
 end
@@ -489,10 +489,13 @@ dropped on the fields that refuse it and, in the same `alter table`, the check c
 again with the fields it held and those that just lost NOT NULL, `not valid`. It is one statement
 so that no row is written between the two, whatever commits each statement, and it reads first
 the constraint the database holds under that name: one that is not written as the kit writes it
-is never dropped, the statement fails on it and changes nothing. The second step validates the
+is never dropped, the statement fails on it, naming the constraint and its table, and changes
+nothing. The second step validates the
 constraint and empties the rows deleted before, those that still hold data alone. Every
-identifier is quoted, and the statements hold no backslash and no question mark, so a string of
-JavaScript or `knex.raw` carries them as they are. Run twice, the migration ends where it ended
+identifier is quoted, the dollar quote of the first step is one no name of the statement holds,
+and the statements hold no backslash and no question mark, so a string of JavaScript or
+`knex.raw` carries them as they are; a column whose own name holds a question mark is the
+exception, and the error says so under its statements: write it `\?` in `knex.raw`. Run twice, the migration ends where it ended
 the first time and fails on nothing. It is the migration of the database that was read: run
 `db:read-models` against each environment.
 
@@ -512,15 +515,25 @@ prints it back, is read as holding fields: `(deleted or title is not null) and .
 `deleted or not (..)` under that name is another check. The start warns, and `db:read-models`
 prints, a constraint that is not validated (with the statement that validates it), another check
 under that name, any other check constraint of the table that names a field of the row (one that
-refuses NULL there refuses a trace), and a table that is a view, whose base columns are not read.
+refuses NULL there refuses a trace; one written for the live rows only, `deleted or ..`, lets
+every trace in and is not named), and a table that is a view, whose base columns are not read.
 
 **At the start, the tables of the contexts the application hosts.** A generated project keeps the
 list in `src/platform/database/read-model-tables.ts`, between markers: an entry is the context of
-a read model and the class of its store, `['billing', KnexInvoiceSummaries]`. `generate
-read-model` adds the store it writes; `init`, with or without `--force`, adds the stores the tree
-holds and the list does not, so a project generated before the list existed gets it filled; a
-store whose constructor is not the generated one is named in a note and in `NOT_LISTED`, which
-the check tells at each start until the store is listed. An application checks, when it starts
+a read model and the class of its store, `['billing', KnexInvoiceSummaries]`. The context is one
+of those the file holds in `CONTEXTS`, which `generate context` fills: an entry under another
+name, a misspelt one included, does not compile. `generate read-model` adds the store it writes;
+`init`, with or without `--force`, adds the stores the tree holds and the list does not, so a
+project generated before the list existed gets it filled. It reads every class of the
+persistence of each context, several in one file included, and takes as a store a class over
+the store of the kit, directly or through a base class of the project. A class name two contexts
+share is imported under an alias that carries the context (`KnexSummaries as
+ShippingKnexSummaries`), by the generator as by `init`. A store it cannot list with certainty (its
+own constructor is not the generated one, or is inherited; the class is generic) is named in a
+note and in `NOT_LISTED`, which the check tells at each start until the store is listed. A store
+left out on purpose is a comment of the list that holds `<context>: <Store>` and the reason:
+`init` then leaves it out, and nothing warns of it; an entry merely deleted comes back at the
+next `init --force`. An application checks, when it starts
 and before a consumer is subscribed or a request served, the entries of the contexts it hosts
 (the platform module on tsyringe, InversifyJS and Awilix, in the declared and the explicit style;
 `start` of `compose-application.ts` on a platform wired by hand). The whole application and the
@@ -546,7 +559,8 @@ command line does not, so the script first prints the database it reads (its nam
 never the credentials), then how many tables it read and their names, the warnings and every
 refusal. Its exit code tells the cases apart: 0 when every listed table is ready, 1 when one is
 not, 2 when `DATABASE_URL` names no database, 3 when no table could be read (the database does
-not answer, or refuses the reading). Run against the database of the environment once its
+not answer, or refuses the reading), 4 when `--context` names a context no listed read model
+belongs to, with the contexts the list holds: a misspelt name never passes for a check. Run against the database of the environment once its
 migrations ran, it is the gate of the deployment; run after `npm run db:migrate` on an empty
 database, as a pipeline has one, it says the same of the migrations of the project, a table they
 never create included. It is a script of the project and not a command of `ddd-ts-kit`, which has

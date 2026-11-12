@@ -28,7 +28,7 @@ const rewritten = (path: string, table: string, changed: string) =>
     'do $kit$',
     'begin',
     `  if exists (select 1 from pg_constraint where conrelid = to_regclass('${path}') and conname = '${table}_live_rows_whole' and pg_get_constraintdef(oid) !~ '${FORM}') then`,
-    "    raise exception 'A constraint named as the one that keeps the live rows of a read model whole checks something else: it is left as it is.';",
+    `    raise exception 'The constraint ${table}_live_rows_whole of scheduling.${table} is not written as ddd-ts-kit writes the one that keeps the live rows of a read model whole: it is left as it is, and nothing was changed.';`,
     '  end if;',
     `  alter table ${path} ${changed} not valid;`,
     'end',
@@ -94,6 +94,30 @@ describe('ReadModelTableNotReadyError', () => {
     expect(error.statements[2]).toBe(
       `update "o'rder" set "a" = null, "b" = null where "removed" and ("a" is not null or "b" is not null);`,
     );
+
+    expect(error.statements[0]).toContain(
+      `raise exception 'The constraint o''rder_live_rows_whole of o''rder is not written as ddd-ts-kit writes`,
+    );
+  });
+
+  it('closes the statement with a dollar quote no name of it holds, and writes a percent sign of a name as the raise reads it', () => {
+    const named = (table: string) =>
+      new ReadModelTableNotReadyError({ ...AGENDA, table }).statements[0]?.split('\n') ?? [];
+
+    expect([named('agenda')[0], named('agenda').at(-1)]).toEqual(['do $kit$', '$kit$;']);
+    expect([named('a$kit$b')[0], named('a$kit$b').at(-1)]).toEqual(['do $kit_$', '$kit_$;']);
+    expect([named('a$kit$b$kit_$')[0], named('a$kit$b$kit_$').at(-1)]).toEqual(['do $kit__$', '$kit__$;']);
+    expect(named('50%')[3]).toContain("raise exception 'The constraint 50%%_live_rows_whole of scheduling.50%% is not");
+  });
+
+  it('says of a name that holds a question mark that knex.raw would read it as a placeholder', () => {
+    const asked = new ReadModelTableNotReadyError({ ...AGENDA, refusing: ['why?'], row: ['why?'] });
+
+    expect(asked.message.split('\n').at(-1)).toBe(
+      '-- A name of these statements holds a question mark, which knex.raw reads as a placeholder: write it "\\?" there, or run the statements otherwise.',
+    );
+
+    expect(new ReadModelTableNotReadyError(AGENDA).message).not.toContain('question mark');
   });
 });
 

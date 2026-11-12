@@ -123,12 +123,18 @@ function constraintOf(held: Row | undefined, deleted: string): NonNullable<ReadM
   return { state: held['valid'] === true ? 'held' : 'not-valid', columns: whole };
 }
 
-/** Another check constraint, when it names a column of the row: it may refuse the NULL of a trace there. */
-function namingTheRow(check: Row, { row }: ReadModelTableState): NonNullable<ReadModelTableState['checks']> {
+/**
+ * Another check constraint, when it names a column of the row: it may refuse the NULL of a trace
+ * there. One that holds for the live rows only, written `deleted or ..` as PostgreSQL prints it,
+ * lets every trace in and is not named.
+ */
+function namingTheRow(check: Row, { row, deleted }: ReadModelTableState): NonNullable<ReadModelTableState['checks']> {
   const named: unknown = JSON.parse(String(check['columns']));
+  const definition = String(check['definition']);
+  const live = [deleted, quoted(deleted)].some((mark) => definition.startsWith(`CHECK ((${mark} OR `));
 
-  return Array.isArray(named) && named.some((column) => row.includes(String(column)))
-    ? [{ name: String(check['name']), definition: String(check['definition']) }]
+  return !live && Array.isArray(named) && named.some((column) => row.includes(String(column)))
+    ? [{ name: String(check['name']), definition }]
     : [];
 }
 

@@ -140,6 +140,16 @@ function migrationOf({ definition, validation }: ReturnType<typeof readModelTabl
             `-- Then ${second}, which reads the whole table: in the same migration on a small table; on a large one, in a migration that runs outside the transaction of the change of definition, where it stops neither readers nor writers.`,
             ...validation,
           ]),
+      ...placeholderNote([...definition, ...validation]),
     ].join('\n'),
   ];
+}
+
+/** The statements hold a question mark only when a name does: `knex.raw` would read it as a placeholder. */
+function placeholderNote(statements: readonly string[]): string[] {
+  return statements.some((statement) => statement.includes('?'))
+    ? [
+        '-- A name of these statements holds a question mark, which knex.raw reads as a placeholder: write it "\\?" there, or run the statements otherwise.',
+      ]
+    : [];
 }

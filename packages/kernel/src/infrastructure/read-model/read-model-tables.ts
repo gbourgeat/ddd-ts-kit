@@ -14,6 +14,8 @@ export interface ReadModelInATable {
 /** One entry of the list: the name a failure is told under, and how the store is built, as the application binds it. */
 export interface ListedReadModel {
   readonly name: string;
+  /** The bounded context the read model belongs to, when the application hosts several: what `hosting` selects by. */
+  readonly context?: string;
   build(): ReadModelInATable;
 }
 
@@ -56,6 +58,25 @@ export class ReadModelTables {
     private readonly listed: readonly ListedReadModel[],
     private readonly unlisted: readonly string[] = [],
   ) {}
+
+  /** The contexts the entries belong to, each once, in the order of the list: what a command names when it is asked for one the list does not hold. */
+  get contexts(): readonly string[] {
+    return [...new Set(this.listed.flatMap(({ context }) => (context === undefined ? [] : [context])))];
+  }
+
+  /**
+   * The entries of these contexts alone, for an application that hosts some of them; every entry
+   * when none is named. A name no entry carries selects nothing, which is right for a root (a
+   * context may keep no read model) and wrong for a command: it compares the name with `contexts`.
+   */
+  hosting(contexts?: readonly string[]): ReadModelTables {
+    return contexts === undefined
+      ? this
+      : new ReadModelTables(
+          this.listed.filter(({ context }) => context !== undefined && contexts.includes(context)),
+          this.unlisted,
+        );
+  }
 
   /** What each listed table that could be read can hold, in the order of the list. */
   async states(): Promise<readonly ReadModelTableState[]> {

@@ -15,19 +15,30 @@ import type { Persistence } from '{{alias.platform}}/database/persistence{{alias
 type Store = new (database: Persistence['database'], scope: ExecutionScope) => ReadModelInATable;
 
 /**
+ * The bounded contexts of the project: `generate context` adds each. An entry of the list names
+ * one of them, or does not compile.
+ */
+const CONTEXTS = [
+  // ddd-ts-kit:contexts
+  // /ddd-ts-kit:contexts
+] as const;
+
+/**
  * The read models the application keeps in a table: the context each belongs to and the class of
  * its store. `generate read-model` adds its store here, and `init` those it finds in the tree; a
- * store written by hand is added by hand. A table that is not listed is never read.
+ * store written by hand is added by hand. A table that is not listed is never read. A store left
+ * out on purpose is a comment here that holds `<context>: <Store>` and the reason: `init` then
+ * leaves it out, and the check says nothing of it.
  */
-const LISTED: readonly (readonly [context: string, store: Store])[] = [
+const LISTED: readonly (readonly [context: (typeof CONTEXTS)[number], store: Store])[] = [
   // ddd-ts-kit:read-model-tables
   // /ddd-ts-kit:read-model-tables
 ];
 
 /**
- * The read model stores of the tree `init` could not list, since their constructor takes
- * something else: the check says at each start that nothing checks their tables, until each is
- * listed through a class of its own that builds it.
+ * The read model stores of the tree `init` could not list, `<context>: <Store>`, since their
+ * constructor takes something else: the check says at each start that nothing checks their
+ * tables, until each is listed through a class of its own that builds it.
  */
 const NOT_LISTED: readonly string[] = [
   // ddd-ts-kit:read-models-not-listed
@@ -45,10 +56,12 @@ const NOT_LISTED: readonly string[] = [
  */
 export function readModelTables(persistence: Persistence, contexts?: readonly string[]): ReadModelTables {
   const scope = new AsyncLocalStorageExecutionScope();
-  const hosted = LISTED.filter(([context]) => contexts?.includes(context) ?? true);
 
-  return new ReadModelTables(
-    hosted.map(([, Store]) => ({ name: Store.name, build: () => new Store(persistence.database, scope) })),
-    NOT_LISTED,
-  );
+  const listed = LISTED.map(([context, Store]) => ({
+    context,
+    name: Store.name,
+    build: () => new Store(persistence.database, scope),
+  }));
+
+  return new ReadModelTables(listed, NOT_LISTED).hosting(contexts);
 }

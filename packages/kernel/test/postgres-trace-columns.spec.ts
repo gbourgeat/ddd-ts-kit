@@ -223,6 +223,13 @@ describe('PostgresTraceColumns: the constraint of the table', () => {
         columns: '["last_event_id"]',
       },
       { name: 'agenda_odd', valid: true, definition: 'CHECK (true)', columns: 'null' },
+      // Written for the live rows only, as the warning advises: every trace passes it.
+      {
+        name: 'agenda_titled',
+        valid: true,
+        definition: 'CHECK ((deleted OR (length(status) > 0)))',
+        columns: '["deleted","status"]',
+      },
     );
 
     const state = await new PostgresTraceColumns(run, () => target).state();

@@ -843,7 +843,8 @@ db:read-models` reads, on the database `DATABASE_URL` names, the read model tabl
 lists, each by its own store (`-- --context <context>`, once per context, for the tables of those
 contexts alone, as a context run as a service checks them on its database): it prints the
 database it read, those of its tables that cannot hold the trace of a deleted row, with the
-migration each needs, and exits 1 (2 without a database to read, 3 when no table could be read).
+migration each needs, and exits 1 (2 without a database to read, 3 when no table could be read,
+4 when `--context` names a context no listed read model belongs to).
 The application makes the same check when it starts, of the contexts it hosts, so a table an
 upgrade left as it was stops the start and not the first event that reaches it
 ([Every table checked at the start, and before a deployment](../concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment)).

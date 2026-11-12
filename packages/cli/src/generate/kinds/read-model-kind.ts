@@ -1,7 +1,7 @@
+import { contextAlias, specifierSuffix } from '../../alias';
 import { CliError } from '../../cli-error';
 import type { Name } from '../../naming';
-import { renderTemplate, type RenderContext } from '../../templating';
-import { applyWiring } from '../apply-wiring';
+import type { RenderContext } from '../../templating';
 import { emit } from '../emit';
 import type { Kind } from '../kind';
 import { label } from '../label';
@@ -15,6 +15,7 @@ import { wiringFamily } from '../wiring-family';
 import { declareTable } from './declare-table';
 import { noteTheMigration } from './note-the-migration';
 import { fieldLines } from './read-model/field-lines';
+import { listReadModel } from './read-model/list-read-model';
 import { readModelFields } from './read-model/read-model-fields';
 import { readModelStore, type ReadModelStore } from './read-model/read-model-store';
 
@@ -49,7 +50,7 @@ export const readModelKind: Kind = {
 
     declareTable(scope, context, { table: store.table, templates: 'read-model', changedBy: CHANGED_BY_HAND });
     register(scope, context, { name, store });
-    listTable(scope, context, store);
+    listTable(scope, store);
     noteTheMigration(scope);
 
     if (scope.flags.tenantScoped && !store.needsDatabase) {
@@ -104,13 +105,16 @@ function readModelVars(scope: Scope, name: Name, store: ReadModelStore): RenderC
  * (`<platformDir>/database/read-model-tables.ts`): its store is built there as the application
  * binds it, so its table is read by the code the store itself runs before its first trace.
  */
-function listTable(scope: Scope, context: RenderContext, store: ReadModelStore): void {
+function listTable(scope: Scope, store: ReadModelStore): void {
+  const { config, context } = scope;
+  const persistence = `${contextAlias(config, context.kebab)}/infrastructure/persistence`;
+
   if (store.needsDatabase) {
-    applyWiring(
-      scope.ws,
-      `${scope.config.platformDir}/database/read-model-tables.ts`,
-      renderTemplate('read-model/tables.wiring.tpl', context),
-    );
+    listReadModel(scope.ws, `${config.platformDir}/database/read-model-tables.ts`, {
+      context: context.kebab,
+      store: store.adapter,
+      from: `${persistence}/${store.file}${specifierSuffix(config.importExtension)}`,
+    });
   }
 }
 
