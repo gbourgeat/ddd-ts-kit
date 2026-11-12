@@ -28,6 +28,12 @@ export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id exten
    */
   readonly createAggregateTaking?: (holder: A) => A;
   /**
+   * The same new aggregate built once more: another instance under the id of `first`, with the value the
+   * storage keeps unique, as a request delivered twice builds it. Optional: without it, the case of the
+   * first saves made at once is not run.
+   */
+  readonly createAggregateAgain?: (first: A) => A;
+  /**
    * A new valid aggregate with an id of its own that keeps `value` in a JSON column (`jsonb`). Optional: without
    * it, the case of the JSON column is not run. The contract hands it an object, a list and a string.
    */
@@ -36,6 +42,15 @@ export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id exten
   /** A plain-data view of the business state (not of `version`), compared with `toEqual`. */
   stateOf(aggregate: A): unknown;
 }
+
+/** Enough rounds for a storage that refuses one save in ten for its unique value to fail the case all but once in a hundred runs. */
+const ROUNDS = 40;
+
+/** The other instances of the aggregate of a round, saved with the first. */
+const COPIES = [2, 3, 4, 5];
+
+/** What the saves of one round are answered, in one order: one wrote the aggregate, the others lost the update. */
+const ONE_SAVED = [CONCURRENCY_CONFLICT, CONCURRENCY_CONFLICT, CONCURRENCY_CONFLICT, CONCURRENCY_CONFLICT, 'saved'];
 
 /** What every adapter of a `Repository` port, fake or real, guarantees to the application layer. */
 export function repositoryContract<A extends AggregateRoot<Id>, Id extends string | number = string>(
@@ -62,6 +77,7 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
     this.ignoresWhatWasNotSaved();
     this.refusesToOverwriteAnUnseenChange();
     this.refusesATakenUniqueValue();
+    this.savesOnceAnAggregateSavedAtOnce();
     this.keepsAnyJsonValue();
   }
 
@@ -207,6 +223,39 @@ class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> e
         this.expect(this.options.stateOf(await this.reload(holder))).toEqual(this.options.stateOf(holder));
       },
     );
+  }
+
+  private savesOnceAnAggregateSavedAtOnce(): void {
+    const { createAggregateAgain } = this.options;
+
+    if (createAggregateAgain === undefined) {
+      return;
+    }
+
+    this.it(
+      'saves once a new aggregate saved several times at once, the others refused as a lost update, not for its unique value',
+      async () => {
+        const rounds: string[][] = [];
+
+        for (let round = 0; round < ROUNDS; round += 1) {
+          const first = this.options.createAggregate();
+          const saved = [first, ...COPIES.map(() => createAggregateAgain(first))];
+
+          rounds.push(await this.answersOf(saved));
+        }
+
+        this.expect(rounds).toEqual(new Array(ROUNDS).fill(ONE_SAVED));
+      },
+    );
+  }
+
+  /** What each save answered, in one order whichever came first: `saved`, or the code of its refusal. */
+  private async answersOf(saved: readonly A[]): Promise<string[]> {
+    const settled = await Promise.allSettled(saved.map((aggregate) => this.subject.save(aggregate)));
+
+    return settled
+      .map((save) => (save.status === 'fulfilled' ? 'saved' : String(codeOf(save.reason))))
+      .sort((left, right) => left.localeCompare(right));
   }
 
   private keepsAnyJsonValue(): void {

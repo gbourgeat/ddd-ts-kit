@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate, primaryKeyOf } from '../../../../../src/postgres';
+import { insertIgnoringConflict, optimisticUpdate } from '../../../../../src/postgres';
 import type { Database } from '../../../platform/database/database';
 import { Invoice, type InvoiceState } from '../../domain/invoice';
 import type { InvoiceRepository } from '../../domain/repositories/invoice.repository';
@@ -42,19 +42,18 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { ...invoice.state, version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.length;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).length;
     });
   }
 
-  private insert(state: VersionedInvoice) {
+  private async insert(state: VersionedInvoice): Promise<number> {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
 
     // The key alone: a row that takes a value another row holds under another unique constraint is refused.
-    const insertion = this.database.executor().insert(invoices).values(row);
+    const insertion = () => this.database.executor().insert(invoices).values(row);
 
-    return insertion.onConflictDoNothing({ target: primaryKeyOf(invoices) }).returning({ id: invoices.id });
+    return (await insertIgnoringConflict(insertion, invoices)) ? 1 : 0;
   }
 
   private update(state: VersionedInvoice, expected: number) {

@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:cb047f7905f8e4d4 -->
+<!-- translation-of: persistence.md sha256:9597e2605f786503 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -285,9 +285,16 @@ Un enregistrement qui prend une valeur qu'une autre ligne détient sous une cont
 quatre ORM y répondent de même, sur une insertion comme sur une mise à jour :
 `UniqueViolationError`, une `ConflictError` (code `CONFLICT`, 409) dont la `cause` est l'erreur
 du pilote (`23505`, `ER_DUP_ENTRY`, `SQLITE_CONSTRAINT_UNIQUE`, `SQLITE_CONSTRAINT_PRIMARYKEY`, un `SQLITE_CONSTRAINT` brut dont le message nomme une clé unique, `P2002`), levée par
-`optimisticUpdate`. Le premier enregistrement n'ignore qu'un conflit sur l'id
-(`ON CONFLICT (id) DO NOTHING`) ; sur Prisma, dont `skipDuplicates` ne nomme aucune cible,
-`rowsCreated` cherche l'id quand rien n'a été écrit. Un *handler* qui a une réponse métier pour
+`optimisticUpdate`. Le premier enregistrement n'ignore qu'un conflit sur l'id :
+`insertIgnoringConflict` de Drizzle, Knex et TypeORM ; sur Prisma, dont `skipDuplicates` ne nomme
+aucune cible, `rowsCreated` cherche l'id quand rien n'a été écrit. Deux premiers enregistrements
+d'un même agrégat faits en même temps (une requête livrée deux fois) sont une mise à jour perdue,
+sur une table qui a une colonne unique aussi : l'un écrit la ligne et l'autre reçoit
+`ConcurrencyError`, jamais une `UniqueViolationError` pour la valeur qu'ils écrivent tous les
+deux. Sur PostgreSQL, une insertion dont la cible de conflit est l'id seul la lèverait, puisque
+les deux insertions se rencontrent d'abord sur l'autre index unique : `insertIgnoringConflict`
+insère donc par `ON CONFLICT DO NOTHING`, et seulement quand rien n'a été écrit par
+`ON CONFLICT (id) DO NOTHING`, ce qui distingue un id pris d'une valeur prise. Un *handler* qui a une réponse métier pour
 la valeur prise (`EMAIL_TAKEN`) attrape `UniqueViolationError` et lève son propre refus. Sur
 MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` écarte aussi cette ligne,
 `insertIgnoringConflict` de Knex et de TypeORM demande si une ligne détient l'id quand rien n'a

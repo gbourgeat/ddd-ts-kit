@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a91c2a406c27407d -->
+<!-- translation-of: README.md sha256:fc9c8921ec22d2a3 -->
 
 # @ddd-ts-kit/drizzle
 
@@ -241,7 +241,7 @@ import { and, eq } from 'drizzle-orm';
 import { integer, text, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { contextSchema, DrizzleContext, optimisticUpdate, primaryKeyOf } from '@ddd-ts-kit/drizzle/postgres';
+import { contextSchema, DrizzleContext, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
 
 // L'agrégat et son port de l'exemple précédent, réduits à leur forme.
 type OrderStatus = 'open' | 'placed';
@@ -297,14 +297,16 @@ export class DrizzleOrderRepository implements OrderRepository {
 
     await optimisticUpdate(order, async ({ expected, next }) => {
       const row = OrderMapper.toRow(order, next);
-      const written =
-        expected === 0
-          ? await db.insert(orders).values(row).onConflictDoNothing({ target: primaryKeyOf(orders) }).returning({ id: orders.id })
-          : await db
-              .update(orders)
-              .set(row)
-              .where(and(eq(orders.id, order.id), eq(orders.version, expected)))
-              .returning({ id: orders.id });
+
+      if (expected === 0) {
+        return (await insertIgnoringConflict(() => db.insert(orders).values(row), orders)) ? 1 : 0;
+      }
+
+      const written = await db
+        .update(orders)
+        .set(row)
+        .where(and(eq(orders.id, order.id), eq(orders.version, expected)))
+        .returning({ id: orders.id });
 
       return written.length; // 0 ligne : optimisticUpdate lève ConcurrencyError
     });
@@ -324,16 +326,23 @@ schéma relationnel (`drizzle(url, { schema })`), déclarez `Database` comme
 
 | `expected` | Instruction | Aucune ligne écrite signifie |
 |---|---|---|
-| `0` : jamais enregistré | `INSERT ... ON CONFLICT (id) DO NOTHING` | l'id est déjà pris |
+| `0` : jamais enregistré | `insertIgnoringConflict` : `INSERT ... ON CONFLICT DO NOTHING`, puis `ON CONFLICT (id) DO NOTHING` quand elle n'a rien écrit | l'id est déjà pris |
 | `n` | `UPDATE ... SET version = n + 1 WHERE id = ... AND version = n` | une autre transaction l'a enregistré depuis sa lecture |
 
-La cible du conflit est la clé primaire seule, telle que la table la déclare
-(`onConflictDoNothing({ target: primaryKeyOf(orders) })`, l'id, ou chaque colonne d'une clé qui
-porte le tenant) : sans elle,
-PostgreSQL écarte aussi une ligne qui prend une valeur qu'une autre ligne détient sous une
-contrainte d'unicité (un e-mail), et l'enregistrement se lit comme une mise à jour perdue.
-Nommée, cette ligne est refusée par la base, et `optimisticUpdate` lève `UniqueViolationError`
-(code `CONFLICT`, 409), comme pour une mise à jour qui prend une telle valeur.
+`insertIgnoringConflict(() => db.insert(orders).values(row), orders)` insère sauf si la clé
+primaire existe, telle que la table la déclare (`primaryKeyOf(orders)`, l'id, ou chaque colonne
+d'une clé qui porte le tenant), et dit si elle l'a fait. Elle prend deux instructions au plus,
+c'est pourquoi l'insertion est donnée comme une fonction. Aucune des deux clauses de conflit ne
+suffit seule. Sans cible, PostgreSQL écarte aussi une ligne qui prend une valeur qu'une autre ligne
+détient sous une contrainte d'unicité (un e-mail), et l'enregistrement se lit comme une mise à
+jour perdue. Avec la clé pour cible, deux premiers enregistrements d'un même agrégat faits en même
+temps (une requête livrée deux fois) se rencontrent d'abord sur l'autre index unique, et celui qui
+a perdu est refusé pour une valeur qu'aucune autre ligne ne détient, là où il a perdu une mise à
+jour. La première instruction ne nomme donc aucune cible, et seulement quand elle n'a rien écrit
+la seconde nomme la clé : une clé tenue n'écrit aucune ligne, ce que `optimisticUpdate` lève comme
+une `ConcurrencyError`, et une valeur que détient une autre ligne est refusée par la base, ce
+qu'elle lève comme une `UniqueViolationError` (code `CONFLICT`, 409), comme pour une mise à jour
+qui prend une telle valeur.
 
 ### Un verrou sur une clé métier
 
@@ -400,9 +409,9 @@ import {
   auditColumns,
   contextSchema,
   DrizzleContext,
+  insertIgnoringConflict,
   optimisticUpdate,
   ownTenantCondition,
-  primaryKeyOf,
   tenantColumn,
   tenantCondition,
 } from '@ddd-ts-kit/drizzle/postgres';
@@ -472,19 +481,17 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { id: invoice.id, amount: invoice.amount, status: invoice.status, version: next };
-      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
-      return written.length;
+      return expected === 0 ? this.insert(state) : (await this.update(state, expected)).length;
     });
   }
 
-  private insert(state: VersionedInvoice) {
+  private async insert(state: VersionedInvoice): Promise<number> {
     // tenant_id vient du travail en cours, created_* et updated_* de son acteur et de la Clock
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
+    const insertion = () => this.database.executor().insert(invoices).values(row);
 
-    const insertion = this.database.executor().insert(invoices).values(row);
-
-    return insertion.onConflictDoNothing({ target: primaryKeyOf(invoices) }).returning({ id: invoices.id });
+    return (await insertIgnoringConflict(insertion, invoices)) ? 1 : 0;
   }
 
   private update(state: VersionedInvoice, expected: number) {
