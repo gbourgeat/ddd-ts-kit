@@ -28,7 +28,8 @@ on a copy of that template, dropped when the application closes: a file starts f
 there too, and never connects to the migrated database itself. A row a migration inserts and the
 application reads: list its table in `KEPT_TABLES` of `test/support/test-database-kept.ts`, as
 the server stores its name (`public.countries`); any other row, the spec stores. The files of
-`test/support/` import one another by `./<name>`, since a runner loads them before any alias. A
+`test/support/` import one another by `./<name>` (`./<name>.ts` under `"importExtension": "js"`),
+since a runner loads them before any alias. A
 run refused with `spec files at once need ... connections` does what its message says (fewer
 files at once, or the bound it names).
 

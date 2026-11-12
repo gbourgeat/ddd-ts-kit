@@ -1,5 +1,5 @@
 [English](import-aliases.md) · **Français**
-<!-- translation-of: import-aliases.md sha256:55d4f6de8ad52c5b -->
+<!-- translation-of: import-aliases.md sha256:32f7edaa76b8a69a -->
 
 # Alias d'import : les `paths` de tsconfig, réécrits à la construction
 
@@ -76,7 +76,8 @@ clé continue de fonctionner sans retouche.
 | | `none` (par défaut pour un nouveau projet) | `js` |
 |---|---|---|
 | Un import | `'@/contexts/billing/domain/aggregates/invoice.aggregate'` | `'@/contexts/billing/domain/aggregates/invoice.aggregate.js'` |
-| `tsconfig.json` | `"module": "ESNext"`, `"moduleResolution": "Bundler"`, `"customConditions": ["node"]` | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"`, `"rewriteRelativeImportExtensions": true` |
+| `tsconfig.json` | `"module": "ESNext"`, `"moduleResolution": "Bundler"`, `"customConditions": ["node"]` | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"`, `"allowImportingTsExtensions": true`, `"noEmit": true` |
+| `tsconfig.build.json` | étend `tsconfig.json` | l'étend, avec `"allowImportingTsExtensions": false`, `"noEmit": false` |
 | Un import relatif entre deux fichiers de `test/support/` | `'./test-database-run'` | `'./test-database-run.ts'` |
 | Ce qu'accepte le compilateur | les deux graphies, et un répertoire qui contient un `index.ts` | `.js` seulement (`TS2835` sinon) |
 | Qui refuse l'autre graphie | `imports/extension` (*checker* et ESLint), puis `build-aliases` | le compilateur, `imports/extension`, puis `build-aliases` |
@@ -251,7 +252,10 @@ Elle échoue, sort avec le code 2 et n'écrit rien quand :
   connaître le fichier, et Node ne connaît aucun alias. Construisez plutôt le chemin à partir de
   `import.meta.url`, comme le fait le `scripts/events.ts` généré (ce chemin nomme un fichier
   compilé et garde son `.js`) ;
-- le tsconfig ne nomme aucun répertoire de sortie qui existe.
+- le tsconfig ne nomme aucun répertoire de sortie qui existe ;
+- le tsconfig résout `"noEmit": true`, le sien ou un hérité : le compilateur n'a rien écrit avec
+  lui, et ce que contient son répertoire de sortie est un build plus ancien. Le refus nomme le
+  tsconfig et ce qu'il faut y écrire.
 
 ```ts
 // Au lieu de : un alias complété à l'exécution ; build-aliases le refuse.
@@ -319,14 +323,27 @@ l'emplacement du fichier et de la configuration. Un chemin d'alias qui contient 
 `..` est signalé sans correction automatique : vous réécrivez à la main le chemin depuis le
 répertoire de l'alias. Un seul chemin relatif est admis : un fichier placé directement sous
 `test/support/` importe son voisin par `./<nom>`. Un lanceur de tests charge sa mise en place
-globale (*global setup*), et ce que ce fichier importe, avec la résolution de Node, avant qu'aucun
-alias n'existe (Jest n'y applique aucun `moduleNameMapper`) : les fichiers qui ouvrent une
-exécution sur un serveur (`test-database-setup.ts` et ceux dont il est fait) se nomment donc
-ainsi, et l'exécution démarre de la même façon depuis `npx jest`, depuis un éditeur et depuis le
-script. Sous `js`, le voisin est nommé par le `.ts` de sa source, que Node résout là où il
-chercherait un `.js` qui n'existe pas, et que `rewriteRelativeImportExtensions` laisse lire au
-compilateur. Un chemin qui sort de `test/support/`, ou qui entre dans un de ses répertoires, est
-refusé comme partout ailleurs. Non jugés : un fichier JavaScript à la racine du
+globale (*global setup*), et ce que ce fichier importe, avant qu'aucun alias n'existe (Jest n'y
+applique aucun `moduleNameMapper`) : les fichiers qui ouvrent une exécution sur un serveur
+(`test-database-setup.ts` et ceux dont il est fait) se nomment donc ainsi, et la mise en place
+globale se charge quelle que soit la façon dont le lanceur est démarré. Sous Jest, les fichiers de
+*spec* ont toujours besoin d'un Node démarré avec `--experimental-vm-modules` : les scripts
+générés le passent, et `npx jest` ou le lanceur d'un éditeur reçoit
+`NODE_OPTIONS=--experimental-vm-modules`. Le nom de ce voisin est jugé lui aussi, d'après les
+fichiers présents sur le disque, avec une correction : sous `none`, une source `.ts` ne porte
+aucune extension ; sous `js`, le voisin est nommé par le nom de sa source, que la transformation
+du lanceur trouve là où le nom du fichier émis ne nomme rien : `./run.ts` pour `./run` et
+`./run.js`, `./esm.mts` pour `./esm.mjs`, `./common.cts` pour `./common.cjs`. Un `.js` à cet
+endroit passe la vérification des types et les autres règles du *lint*, puis arrête l'exécution
+sur `Cannot find module` : `eslint --fix` écrit le nom de la source. Un fichier qui existe tel
+qu'il est nommé est laissé tel quel (un fichier JSON, un fichier JavaScript, une source `.mts`),
+de même qu'un nom auquel aucune source ne répond, que le compilateur signale. La vérification des
+types lit une terminaison `.ts` parce que `tsconfig.json` fixe `allowImportingTsExtensions`, ce
+que tient `imports/alias-declared`. Un chemin qui sort de `test/support/` (`../e2e/...`, `./..`),
+qui nomme le répertoire lui-même (`./.`) ou qui entre dans un de ses répertoires (`./parts/part`,
+ou `./parts` quand c'est un répertoire sans `parts.ts` à côté) est refusé comme partout ailleurs ;
+la correction d'un répertoire est l'alias de son fichier d'index sous `js`
+(`$test/support/parts/index.js`), celui du répertoire sous `none`. Non jugés : un fichier JavaScript à la racine du
 projet (une configuration d'outil, une migration knex, que Node exécute telle qu'elle est écrite
 et qui utilise donc des chemins relatifs), et le client sous `generated/`. Un répertoire donné à
 `discoverContext` sous forme d'URL n'est pas un import.
@@ -389,6 +406,8 @@ Ce qu'elle signale :
 | un `baseUrl` | chaque cible de `paths` serait résolue à partir de lui |
 | un `tsconfig.build.json` dont les `paths` ou le `baseUrl` diffèrent de `tsconfig.json` | la construction ne compilerait pas ce qui a été vérifié |
 | `module` et `moduleResolution` de `tsconfig.json`, ou d'un `tsconfig.build.json` qui fixe les siens, qui ne sont pas ce que donne `importExtension` (`ESNext`, `Bundler` et `customConditions` contenant `node` sous `none` ; sous `js`, une valeur écrite qui n'est pas `Node16`, `Node18`, `Node20` ni `NodeNext`) | sous l'autre résolution, le compilateur refuse chaque import du projet, ou accepte une graphie que la construction ne réécrit pas ; un autre format de module ne serait pas les modules ECMAScript que complète la construction |
+| sous `js`, un fichier placé directement sous `test/support/` qui importe un voisin par son `.ts` (un import, pas un commentaire ; pas un `.d.ts`) alors que `tsconfig.json` ne fixe ni `allowImportingTsExtensions` ni `rewriteRelativeImportExtensions` | le compilateur refuse cette terminaison (`TS5097`) ; la correction nomme les deux lignes de `tsconfig.json` (`"allowImportingTsExtensions": true`, qui n'est accepté qu'avec `"noEmit": true`) et les deux de `tsconfig.build.json` qui les remettent |
+| un `tsconfig.build.json`, ou un tsconfig qu'un script de `package.json` compile pour ce qui est livré (`tsc -p <fichier>`, `tsc` seul pour `tsconfig.json`), qui résout `"noEmit": true`, ou `"allowImportingTsExtensions": true` sans `rewriteRelativeImportExtensions` ni `emitDeclarationOnly`, quel que soit `importExtension` | le compilateur n'écrirait rien, sans erreur, et une sortie plus ancienne serait livrée ; avec la seconde option seule, le compilateur refuse le build (`TS5096`). `build-aliases` refuse lui aussi un tsconfig qui résout `noEmit`. Un `extends` est suivi comme le compilateur le suit : un chemin relatif avec ou sans son `.json`, et un paquet installé dans le `node_modules` de la racine du projet (un fichier, un fichier sans son `.json`, un répertoire qui contient un `tsconfig.json`) ; un paquet trouvé par ses `exports`, ou dans un `node_modules` au-dessus de la racine, ne l'est pas |
 | un script qui compile (`tsc` sans `--noEmit`) et ne lance pas `build-aliases` ensuite | la sortie s'arrêterait sous `node` à son premier import : aucun alias, et sous `none` aucune extension non plus |
 | un script qui lance `tsx` avec `--tsconfig` sur un autre fichier | l'exécuteur de développement lirait une déclaration que rien ne compare |
 | une configuration `vitest` à la racine du projet sans `tsconfigPaths: true` (une configuration qui en étend une autre du projet est lue comme la portant) | les *specs* ne résoudraient pas un alias |

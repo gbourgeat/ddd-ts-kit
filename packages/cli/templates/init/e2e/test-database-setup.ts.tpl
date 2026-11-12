@@ -88,11 +88,13 @@ export default async function setup(jest: JestRun, project: JestProject): Promis
 /**
  * As many files at once as the run has workers, and no more than the files of this run: 3 files
  * never need the connections of 16 workers. Jest does not hand its list to a global setup: the
- * count is one it cannot exceed, and the workers alone count when it cannot be made.
+ * count is one it cannot exceed, and the workers alone count when it cannot be made, or finds no
+ * file: Jest then runs spec files that are not under test/, which this count does not see.
  */
 function filesAtOnce(jest: JestRun, project: JestProject): number {
   try {
-    const files = Math.ceil(specFiles(jest, project).length / (jest.shard?.shardCount ?? 1));
+    const listed = specFiles(jest, project).length;
+    const files = listed === 0 ? jest.maxWorkers : Math.ceil(listed / (jest.shard?.shardCount ?? 1));
 
     return Math.max(1, Math.min(jest.maxWorkers, files));
   } catch {

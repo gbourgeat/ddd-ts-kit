@@ -473,10 +473,14 @@ export default {
   `DATABASE_URL` set the two workers stay: each file runs on a database of its own, copied from the
   template its run made of the migrated one (`test/support/test-database-clone.ts`), and the config
   names the global setup that opens that run (`test/support/test-database-setup.ts`), since a hook
-  has the 20 seconds of a test there. Jest loads that setup, and what it imports, with the
-  resolution of Node, which knows no alias: the files of `test/support/` import one another by a
-  relative path, so `npx jest -c jest.e2e.config.js` and the runner of an editor start the run as
-  the scripts do. A broker or a Redis protocol server is one for every
+  has the 20 seconds of a test there. Jest loads that setup, and what it imports, before any
+  alias exists (no `moduleNameMapper` applies there): the files directly under `test/support/`
+  import one another by a relative path, which ends with the `.ts` of the source under
+  `"importExtension": "js"`, so the setup loads however Jest is started. The spec files do not:
+  they are ES modules, and a bare `npx jest -c jest.e2e.config.js` fails with
+  `Must use import to load ES Module`. Start it as the scripts do, with
+  `NODE_OPTIONS=--experimental-vm-modules npx jest -c jest.e2e.config.js`, and give the runner of
+  an editor the same variable. A broker or a Redis protocol server is one for every
   file, which would consume the events and read the keys of the others: with its address set
   (`AMQP_URL`, `KAFKA_BROKERS`, `NATS_URL`, `REDIS_URL`) the config keeps one worker, in band, and
   the heap of a long suite needs `NODE_OPTIONS=--max-old-space-size=<MB>`. Vitest isolates each

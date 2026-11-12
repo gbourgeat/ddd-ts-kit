@@ -10,6 +10,8 @@ export { directoryAlias } from './directory-alias';
 export { FIXED_ALIAS_ROOTS } from './fixed-alias-roots';
 export { moduleNameMapper, type MapperTarget } from './module-name-mapper';
 export { mapperTargetText } from './mapper-target-text';
+export { NEIGHBOUR_SOURCES } from './neighbour-sources';
+export { neighbourSuffix } from './neighbour-suffix';
 export { specifierOf } from './specifier-of';
 export { specifierSuffix } from './specifier-suffix';
 export { toAlias } from './to-alias';

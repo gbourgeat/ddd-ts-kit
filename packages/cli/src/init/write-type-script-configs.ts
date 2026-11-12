@@ -1,4 +1,11 @@
-import { aliasRoots, compilerPaths, compilerResolutionOf, DEFAULT_BUILD_LAYOUT, specifierSuffix } from '../alias';
+import {
+  aliasRoots,
+  compilerPaths,
+  compilerResolutionOf,
+  DEFAULT_BUILD_LAYOUT,
+  NEIGHBOUR_SOURCES,
+  neighbourSuffix,
+} from '../alias';
 import type { Config } from '../config';
 import { usesLegacyDecorators } from '../stack/uses-legacy-decorators';
 import type { Workspace } from '../workspace';
@@ -11,7 +18,9 @@ const ORM_FOLDERS: Readonly<Record<string, readonly string[]>> = { prisma: ['gen
  * `tsconfig.json` for the editor and the type check, `tsconfig.build.json` for what ships: no test,
  * no test database. `paths` declares the import alias for the compiler and for every tool that
  * reads tsconfig; the build config extends the other, so the two cannot disagree. How a specifier
- * is resolved follows "importExtension".
+ * is resolved follows "importExtension". Where the type check is let read a neighbour by the `.ts`
+ * of its source, which requires a configuration that emits nothing, the build sets both back: what
+ * it compiles is what it compiled without them.
  */
 export function writeTypeScriptConfigs(ws: Workspace, config: Config): void {
   const orm = ORM_FOLDERS[config.stack.orm] ?? [];
@@ -23,6 +32,7 @@ export function writeTypeScriptConfigs(ws: Workspace, config: Config): void {
     'tsconfig.build.json',
     serialize({
       extends: './tsconfig.json',
+      ...(readsNeighbourSources(config) ? { compilerOptions: NEIGHBOUR_SOURCES.build } : {}),
       exclude: ['test', '**/test/**', '**/*.spec.ts', '**/open-test-database.ts'],
     }),
   );
@@ -38,7 +48,7 @@ function compilerOptions(config: Config): Record<string, unknown> {
     exactOptionalPropertyTypes: true,
     noImplicitOverride: true,
     verbatimModuleSyntax: true,
-    ...relativeSources(config),
+    ...(readsNeighbourSources(config) ? NEIGHBOUR_SOURCES.typeCheck : {}),
     skipLibCheck: true,
     ...(usesLegacyDecorators(config) ? { experimentalDecorators: true, emitDecoratorMetadata: true } : {}),
     types: ['node'],
@@ -50,11 +60,11 @@ function compilerOptions(config: Config): Record<string, unknown> {
 
 /**
  * The files of `test/support/` a test runner loads as its global setup import one another by a
- * relative path, which that runner resolves as Node does: where the compiler requires an extension
- * it is the `.ts` of the source, which this option lets it read.
+ * relative path, before any alias exists: where the compiler requires an extension it is the `.ts`
+ * of the source, which the type check is let read.
  */
-function relativeSources(config: Config): Record<string, unknown> {
-  return specifierSuffix(config.importExtension) === '' ? {} : { rewriteRelativeImportExtensions: true };
+function readsNeighbourSources(config: Config): boolean {
+  return neighbourSuffix(config.importExtension) !== '';
 }
 
 function serialize(value: unknown): string {

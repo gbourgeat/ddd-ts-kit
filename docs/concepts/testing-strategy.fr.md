@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:340f0ac97d94eebe -->
+<!-- translation-of: testing-strategy.md sha256:9f8562d7ce866eff -->
 
 # Stratégie de test
 
@@ -493,8 +493,11 @@ démarrage : une migration appliquée entre-temps atteint les fichiers après un
   `test/support/test-database-kept.ts`, un fichier du projet : `<schéma>.<table>`, ou
   `<schéma>.*`, écrit comme le serveur stocke le nom et sans guillemets, donc en minuscules sauf
   si la table a été créée entre guillemets (`"Countries"` se liste `public.Countries`, `Countries`
-  se liste `public.countries`). Toute autre forme (`*`, `public`, un nom entre guillemets) fait
-  refuser l'exécution avec les formes qu'un nom prend, et un nom qui n'est aucune table de la base
+  se liste `public.countries`). `<schéma>.*` garde chaque table du schéma, quoi que son nom
+  contienne : une table dont le nom contient un point ou un guillemet n'a pas de nom à elle dans
+  la liste et ne se garde que par `<schéma>.*`, et un schéma dont le nom en contient un ne peut
+  pas être listé. Toute autre forme (`*`, `public`, un nom entre guillemets, `public.plans.v2`)
+  fait refuser l'exécution avec les formes qu'un nom prend, et un nom qui n'est aucune table de la base
   (une faute de frappe, une autre casse, une vue) est dit en une ligne, puisqu'il ne garde rien ;
   les noms que la liste générée tient pour une table que son outil n'a pas encore créée ne le
   sont pas. Tel que généré, il liste ce que l'outil de migration écrit de ce qu'il a appliqué
@@ -526,9 +529,11 @@ démarrage : une migration appliquée entre-temps atteint les fichiers après un
   le compte est celui des fichiers de *spec* sous `test/` que les motifs de la ligne de commande
   retiennent, sur le chemin depuis la racine du projet ou sur le chemin entier comme Jest les
   applique, moins ceux qu'ignore `testPathIgnorePatterns`, et la part d'un *shard*, un nombre que
-  l'exécution ne peut pas dépasser. Quand le compte ne peut pas se faire (une exécution qui
-  surveille, un lanceur qui ne liste rien, un motif qui n'est pas une expression, pas de
-  répertoire `test/`), seuls les *workers* comptent. La mise en place lit ensuite
+  l'exécution ne peut pas dépasser. Quand le compte ne peut pas se faire, ou ne trouve rien (une
+  exécution qui surveille, un lanceur qui ne liste rien, un motif qui n'est pas une expression,
+  pas de répertoire `test/`, aucun fichier de *spec* sous `test/` parmi ceux de l'exécution, qui
+  a alors des fichiers que ce compte ne voit pas), seuls les *workers* comptent. La mise en place
+  lit ensuite
   ce qu'il reste au serveur (`max_connections`, moins ce qu'il réserve et ce qui est ouvert, et
   pas plus que la limite de connexions du rôle), et donne à chaque fichier sa part, moins une
   connexion de réserve : l'application sous test ouvre un *pool* de cette taille, 10 au plus
@@ -565,7 +570,10 @@ démarrage : une migration appliquée entre-temps atteint les fichiers après un
   dit qu'elle a perdu ses bases, et chaque fichier qui ne peut alors pas copier le modèle échoue
   avec la même phrase au lieu du `template database ... does not exist` du serveur. La copie de
   la base migrée a une session à elle : quand le serveur la termine, ce qui reste de la copie est
-  supprimé et la copie refaite une fois, et une seconde fin est dite comme telle. **L'adresse est
+  supprimé et la copie refaite une fois, et une seconde fin est dite comme telle. Une
+  instruction de l'exécution que quelqu'un annule (`pg_cancel_backend`, une tâche qui annule les
+  instructions qui durent) n'est pas une session terminée : l'exécution dit que sa copie a été
+  annulée et ne la reprend pas. **L'adresse est
   directe** : derrière un *pooler* en mode transaction un verrou de session ne veut rien dire, et
   l'exécution a besoin du serveur lui-même. `DATABASE_URL` ne peut pas nommer la base `postgres`,
   où les exécutions tiennent leurs sessions : l'exécution le dit.
@@ -589,7 +597,16 @@ Ce que cela demande au serveur :
   copie une base qu'à cette condition : une application laissée en marche sur elle, ou une
   console, fait échouer la mise en place globale après une dizaine de secondes, avec un message qui
   le dit. Les fichiers ne s'y connectent jamais : ils copient le modèle de leur exécution par la
-  base `postgres` du serveur.
+  base `postgres` du serveur ;
+- rien des délais qu'un rôle, une base ou le serveur fixe pour les requêtes d'une application
+  (`alter role <rôle> set statement_timeout = '30s'`) : les sessions de l'exécution elle-même,
+  celle qui tient son verrou et celles qui copient, vident et suppriment ses bases, mettent
+  `statement_timeout`, `lock_timeout` et, à partir de PostgreSQL 17, `transaction_timeout` à 0
+  pour elles-mêmes, puisque ce qu'elles font dure autant que la base est grande et qu'une
+  exécution attend son tour derrière une autre. Elles n'ouvrent aucune transaction à elles :
+  `idle_in_transaction_session_timeout` ne s'y applique donc jamais. Le *pool* de l'application
+  sous test n'est pas une session de l'exécution : il garde les délais de son rôle, comme en
+  production.
 
 Un *broker* ou un serveur au protocole Redis reste le même pour tous les fichiers : avec son
 adresse dans l'environnement, la configuration de l'exécution de bout en bout garde les fichiers
@@ -603,15 +620,25 @@ enregistre le cluster ou ouvre l'exécution sur un serveur, et
 `test/support/test-database-teardown.ts`, nommé par `globalTeardown`, supprime le cluster ou
 termine l'exécution ; les *workers* que Jest démarre après la mise en place héritent des variables
 qu'elle définit (`TEST_DATABASE_TEMPLATE`, ou `TEST_DATABASE_RUN` et `TEST_DATABASE_POOL_SIZE` sur
-un serveur). Un lanceur charge sa mise en place globale, et ce que ce fichier importe, avec la
-résolution de Node, avant qu'aucun alias d'import du projet n'existe : les fichiers de
-`test/support/` s'importent par un chemin relatif de ce répertoire (`./test-database-run`), le
-seul endroit où [`imports/alias-only`](../tools/import-aliases.fr.md) admet un chemin relatif.
-L'exécution démarre donc de la même façon depuis son script, depuis
-`npx jest -c jest.e2e.config.js` et depuis le lanceur d'un éditeur. Sous
-`"importExtension": "js"`, ce chemin se termine par le `.ts` de la source
-(`./test-database-run.ts`), que `rewriteRelativeImportExtensions` de `tsconfig.json` laisse lire
-au compilateur.
+un serveur). Un lanceur charge sa mise en place globale, et ce que ce fichier importe, avant
+qu'aucun alias d'import du projet n'existe (Jest n'y applique aucun `moduleNameMapper`) : les
+fichiers placés directement sous `test/support/` s'importent par un chemin relatif de ce
+répertoire (`./test-database-run`), le seul endroit où
+[`imports/alias-only`](../tools/import-aliases.fr.md) admet un chemin relatif. La mise en place
+globale ne demande donc rien à ce qui démarre le lanceur. Les fichiers de *spec* d'un projet sous
+Jest, si : ce sont des modules ES, que Jest ne charge que si Node tourne avec
+`--experimental-vm-modules`. Les scripts générés le passent ; un `npx jest -c jest.e2e.config.js`
+nu échoue avec `Must use import to load ES Module`, et
+`NODE_OPTIONS=--experimental-vm-modules npx jest -c jest.e2e.config.js`, ou le lanceur d'un
+éditeur à qui l'on donne cette variable, démarre l'exécution comme le script. Sous
+`"importExtension": "js"`, le chemin relatif se termine par le `.ts` de la source
+(`./test-database-run.ts`) : le lanceur charge les sources à travers sa transformation, qui
+trouve le fichier sous le nom qu'il porte, là où un `.js` nomme un fichier qui n'existe pas et
+arrête l'exécution (`Cannot find module`), alors que le compilateur l'accepterait.
+`imports/alias-only` tient cette terminaison, et `tsconfig.json` la laisse lire à la vérification
+des types : `"allowImportingTsExtensions": true`, que le compilateur n'accepte qu'avec
+`"noEmit": true`, tous deux remis à `false` dans `tsconfig.build.json`, si bien que le build émet
+ce qu'il émettait sans eux. `imports/alias-declared` tient ces quatre lignes.
 Sur le *preset* identity, les *specs* d'intégration sous
 Jest prenaient 45 secondes de CPU avec un initdb par fichier de *spec*, et 26 avec la copie
 ([mesuré](../tools/test-runners.fr.md#vitesse-mesurée)).

@@ -7,6 +7,7 @@ import {
   hand,
   LIVE,
   migrated,
+  migratedByALimitedRole,
   onServer,
   rowsOf,
   type Run,
@@ -146,6 +147,26 @@ describe.runIf(ON_A_SERVER)('a run whose session the server ends, on a real Post
     expect(await valueOf((await cloneDatabase(urlOf('left_lost'))).url, 'select count(*)::int from orders')).toBe(0);
   });
 
+  it('says that the copy was cancelled when somebody cancels its statement, which is no ended session and is not taken again', async () => {
+    const { openRun } = await support();
+    const before = await connected(urlOf('postgres'));
+
+    await migrated('left_lost', { megabytes: 1 });
+    await before.query('select pg_advisory_lock($1, 0)', [LIVE + 1]);
+
+    const opened = openRun(urlOf('left_lost'), 1, () => undefined).then(() => 'copied', String);
+
+    await onServer(`select pg_cancel_backend(${await waitingToCopy(0)})`);
+    // Taken again as an ended session, the copy would find the lock free a second later, and be made.
+    await before.end();
+
+    expect(await opened).toBe(
+      'Error: The copy of the database "left_lost" was cancelled: the run sets no statement timeout on its own sessions, so somebody or a tool of the server cancelled the statement (pg_cancel_backend, a job that cancels the statements that last). Run again, or find what cancels it in the log of the server.',
+    );
+
+    expect(await databasesLike('left_lost_test_')).toEqual([]);
+  });
+
   it('ends without an error and drops its databases even when it ends before it has a session again', async () => {
     const { openRun, cloneDatabase } = await support();
 
@@ -159,6 +180,35 @@ describe.runIf(ON_A_SERVER)('a run whose session the server ends, on a real Post
     await expect(run.end()).resolves.toBeUndefined();
     expect(await databasesLike('left_lost_test_')).toEqual([]);
   });
+});
+
+describe.runIf(ON_A_SERVER)('a run under the timeouts of its role, on a real PostgreSQL', { timeout: 120_000 }, () => {
+  afterEach(endRuns);
+
+  // What `alter role ... set` bounds for the requests of an application: the sessions of a run set none.
+  it.each([['statement_timeout'], ['lock_timeout'], ['transaction_timeout']])(
+    'waits its turn, copies and empties under a role whose %s is shorter than its wait',
+    async (timeout) => {
+      const { openRun, cloneDatabase } = await support();
+      const url = await migratedByALimitedRole('left_timed', 20);
+      const before = await connected(urlOf('postgres'));
+
+      await onServer(`alter role left_timed set ${timeout} = '200ms'`);
+      await before.query('select pg_advisory_lock($1, 0)', [LIVE + 1]);
+
+      const opened = openRun(url, 1, () => undefined).then((run) => run, String);
+
+      // Five times the timeout of the role later, the same session still waits its turn.
+      const waited = await stillWaitingToCopy(1).finally(() => before.end());
+      const run = await opened;
+
+      expect(waited).toBe(true);
+
+      expect(run).toHaveProperty('template');
+      hand(run as Run);
+      expect(await valueOf((await cloneDatabase(url)).url, 'select count(*)::int from orders')).toBe(0);
+    },
+  );
 });
 
 describe.runIf(ON_A_SERVER)('what a run refuses before it starts, on a real PostgreSQL', { timeout: 120_000 }, () => {
@@ -228,6 +278,15 @@ async function waitingToCopy(known: number): Promise<number> {
   await expect.poll(pid, { timeout: 15_000 }).toBeGreaterThan(0);
 
   return pid();
+}
+
+/** Whether the session that waits to copy is the same one `seconds` later. */
+async function stillWaitingToCopy(seconds: number): Promise<boolean> {
+  const waiting = await waitingToCopy(0);
+
+  await onServer(`select pg_sleep(${seconds})`);
+
+  return (await waitingToCopy(0)) === waiting;
 }
 
 /** The session that holds the lock of the run, 0 when none does. */
