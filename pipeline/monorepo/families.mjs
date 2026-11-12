@@ -120,6 +120,7 @@ const ORM = {
       },
       contract: 'personalDataErasureContract',
     },
+    { port: 'advisory lock', options: NO_OPTIONS, contract: 'advisoryLockContract' },
     { port: 'personal data export', options: NO_OPTIONS, contract: 'personalDataExportContract' },
     { port: 'personal data retention', options: NO_OPTIONS, contract: 'personalDataRetentionContract' },
     { port: 'repository', options: NO_OPTIONS, contract: 'repositoryContract' },
