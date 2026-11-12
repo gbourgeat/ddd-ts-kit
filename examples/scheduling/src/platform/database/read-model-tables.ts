@@ -23,14 +23,14 @@ type Store = new (database: Persistence['database'], scope: ExecutionScope) => R
  * The bounded contexts of the project: `generate context` adds each. An entry of the list names
  * one of them, or does not compile.
  */
-const CONTEXTS = [
+type Contexts = [
   // ddd-ts-kit:contexts
   'identity',
   'scheduling',
   'notification',
   'analytics',
   // /ddd-ts-kit:contexts
-] as const;
+];
 
 /**
  * The read models the application keeps in a table: the context each belongs to and the class of
@@ -39,7 +39,7 @@ const CONTEXTS = [
  * out on purpose is a comment here that holds `<context>: <Store>` and the reason: `init` then
  * leaves it out, and the check says nothing of it.
  */
-const LISTED: readonly (readonly [context: (typeof CONTEXTS)[number], store: Store])[] = [
+const LISTED: readonly (readonly [context: Contexts[number], store: Store])[] = [
   // ddd-ts-kit:read-model-tables
   ['scheduling', KnexPractitionerDirectory],
   ['scheduling', KnexAgenda],

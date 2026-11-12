@@ -26,11 +26,11 @@ describe('init: the read model tables the application lists, checked before a st
       const tables = platform(initProject('--orm', orm), LIST);
 
       expect(tables).toContain(
-        'const LISTED: readonly (readonly [context: (typeof CONTEXTS)[number], store: Store])[] = [\n' +
+        'const LISTED: readonly (readonly [context: Contexts[number], store: Store])[] = [\n' +
           '  // ddd-ts-kit:read-model-tables\n  // /ddd-ts-kit:read-model-tables\n];',
       );
 
-      expect(tables).toContain('const CONTEXTS = [\n  // ddd-ts-kit:contexts\n  // /ddd-ts-kit:contexts\n] as const;');
+      expect(tables).toContain('type Contexts = [\n  // ddd-ts-kit:contexts\n  // /ddd-ts-kit:contexts\n];');
 
       expect(tables).toContain(
         '  const listed = LISTED.map(([context, Store]) => ({\n' +

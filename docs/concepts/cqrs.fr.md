@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:91e849e11cc27621 -->
+<!-- translation-of: cqrs.md sha256:0017f948886fd4ad -->
 
 # CQRS tel qu'utilisé ici
 
@@ -559,7 +559,7 @@ lues.
 **Au démarrage, les tables des contextes que l'application héberge.** Un projet généré garde la
 liste dans `src/platform/database/read-model-tables.ts`, entre des marqueurs : une entrée est le
 contexte d'un modèle de lecture et la classe de son registre, `['billing', KnexInvoiceSummaries]`.
-Le contexte est l'un de ceux que le fichier tient dans `CONTEXTS`, que `generate context`
+Le contexte est l'un de ceux que le fichier tient dans `Contexts`, que `generate context`
 remplit : une entrée sous un autre nom, mal orthographié compris, ne compile pas. `generate
 read-model` ajoute le registre qu'il écrit ; `init`, avec ou sans `--force`, ajoute les registres
 que l'arbre contient et que la liste ne contient pas, si bien qu'un projet généré avant

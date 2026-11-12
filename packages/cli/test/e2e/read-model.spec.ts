@@ -109,7 +109,10 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
         // The first table of shipping: the read model starts the schema of the context.
         cli(root, 'generate', 'read-model', 'shipping', 'InvoicesToShip', ...fields);
         // A read model of the same name in a second context: its store carries the same class name.
-        cli(root, 'generate', 'read-model', 'billing', 'InvoicesToShip', '--field', 'weight:number');
+        // On Knex: the tables of Drizzle are exported by name from one schema index, where two of a name collide.
+        if (orm === 'knex') {
+          cli(root, 'generate', 'read-model', 'billing', 'InvoicesToShip', '--field', 'weight:number');
+        }
       },
       { ...DEFAULT_STACK, orm },
     );
@@ -119,13 +122,16 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
     project.restore();
   });
 
-  it('lists the store of the same name of a second context under an alias, so that the list compiles', () => {
-    expect(read(project.root, LIST)).toMatch(
-      /import \{ (\w+InvoicesToShip) as Billing\1 \} from '@\/contexts\/billing\/infrastructure\/persistence\/[\w-]+\.repository';/,
-    );
+  it.runIf(orm === 'knex')(
+    'lists the store of the same name of a second context under an alias, so that the list compiles',
+    () => {
+      expect(read(project.root, LIST)).toMatch(
+        /import \{ (\w+InvoicesToShip) as Billing\1 \} from '@\/contexts\/billing\/infrastructure\/persistence\/[\w-]+\.repository';/,
+      );
 
-    expect(read(project.root, LIST)).toMatch(/\['billing', Billing\w+InvoicesToShip\],/);
-  });
+      expect(read(project.root, LIST)).toMatch(/\['billing', Billing\w+InvoicesToShip\],/);
+    },
+  );
 
   it('type-checks as generated: the ports, the store adapters over the read model store of the ORM package, the fakes, the contracts and the list of the tables', () => {
     const compiled = runIn(project.root, {

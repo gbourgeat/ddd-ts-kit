@@ -521,7 +521,7 @@ every trace in and is not named), and a table that is a view, whose base columns
 **At the start, the tables of the contexts the application hosts.** A generated project keeps the
 list in `src/platform/database/read-model-tables.ts`, between markers: an entry is the context of
 a read model and the class of its store, `['billing', KnexInvoiceSummaries]`. The context is one
-of those the file holds in `CONTEXTS`, which `generate context` fills: an entry under another
+of those the file holds in `Contexts`, which `generate context` fills: an entry under another
 name, a misspelt one included, does not compile. `generate read-model` adds the store it writes;
 `init`, with or without `--force`, adds the stores the tree holds and the list does not, so a
 project generated before the list existed gets it filled. It reads every class of the

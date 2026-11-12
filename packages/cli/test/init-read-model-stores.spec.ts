@@ -78,7 +78,7 @@ describe('the list of the read model tables: the contexts an entry may name, and
     expectOk(cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting'));
 
     expect(platform(root, LIST)).toContain(
-      "const CONTEXTS = [\n  // ddd-ts-kit:contexts\n  'billing',\n  'shipping',\n  // /ddd-ts-kit:contexts\n] as const;",
+      "type Contexts = [\n  // ddd-ts-kit:contexts\n  'billing',\n  'shipping',\n  // /ddd-ts-kit:contexts\n];",
     );
 
     expectOk(cli(root, 'init', '--force'));
