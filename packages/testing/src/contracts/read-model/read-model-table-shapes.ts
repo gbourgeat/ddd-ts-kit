@@ -9,11 +9,14 @@ const STAMP =
 interface ContractTable {
   readonly shape: ReadModelTableShape;
   readonly created: string;
+  /** What the table needs before it is created: a domain, the table a view reads. */
+  readonly first?: string;
 }
 
-const table = (shape: ReadModelTableShape, columns: string): ContractTable => ({
+const table = (shape: ReadModelTableShape, columns: string, first?: string): ContractTable => ({
   shape,
   created: `create table ${SCHEMA}.${shape.table} (${columns})`,
+  ...(first === undefined ? {} : { first }),
 });
 
 /**
@@ -79,6 +82,23 @@ export const READ_MODEL_TABLE_SHAPES = {
   ),
   /** Ready, with a constraint the tests add: not validated, or one that checks something else. */
   noted: table({ table: 'noted_rows', key: 'id', fields: ['title'] }, `id text primary key, title text, ${STAMP}`),
+  /** A field of the row is of a domain that refuses NULL: nothing on the column says so. */
+  domained: table(
+    { table: 'domained_rows', key: 'id', fields: ['title'] },
+    `id text primary key, title ${SCHEMA}.present_text, ${STAMP}`,
+    `create domain ${SCHEMA}.present_text as text not null`,
+  ),
+  /** Another check constraint, the project's own, refuses NULL in a field of the row; one more names no field. */
+  checked: table(
+    { table: 'checked_rows', key: 'id', fields: ['title'] },
+    `id text primary key, title text, ${STAMP}, constraint checked_rows_title_present check (title is not null), constraint checked_rows_stamped check (last_event_id <> '')`,
+  ),
+  /** The store reads a view: its columns say nothing of what the table under it refuses. */
+  viewed: {
+    shape: { table: 'viewed_rows', key: 'id', fields: ['title'] },
+    first: `create table ${SCHEMA}.viewed_base (id text primary key, title text not null, ${STAMP})`,
+    created: `create view ${SCHEMA}.viewed_rows as select * from ${SCHEMA}.viewed_base`,
+  },
   /** Never created: its migration did not run. */
   absent: table({ table: 'absent_rows', key: 'id', fields: ['title'] }, ''),
 } as const;

@@ -1,7 +1,6 @@
 import type { Logger } from '../../application/ports/logger';
-import { liveRowsConstraintOf } from './live-rows-constraint-of';
-import { readModelTableMigration } from './read-model-table-migration';
 import { ReadModelTableNotReadyError } from './read-model-table-not-ready-error';
+import { readModelTableNotes } from './read-model-table-notes';
 import { readModelTableReady } from './read-model-table-ready';
 import type { ReadModelTableState } from '../../application/read-model/read-model-table-state';
 import { ReadModelTablesNotReadyError } from './read-model-tables-not-ready-error';
@@ -12,17 +11,32 @@ export interface ReadModelInATable {
   tableState?(): Promise<ReadModelTableState | undefined>;
 }
 
+/** One entry of the list: the name a failure is told under, and how the store is built, as the application binds it. */
+export interface ListedReadModel {
+  readonly name: string;
+  build(): ReadModelInATable;
+}
+
 /**
- * What an application does at its start with the listed tables that are not ready: `required`
- * refuses to start, `reported` logs them as one error and starts, for a deployment that starts
- * the application before its migrations ran.
+ * What an application does at its start with the listed tables that are not ready or could not
+ * be read: `required` refuses to start, `reported` logs them as one error and starts, for a
+ * deployment that starts the application before its migrations ran.
  */
 export type ReadModelTablesAtStart = 'required' | 'reported';
 
 /** What a check of the listed tables found, as a command says it. */
 export interface ReadModelTablesReport {
   readonly ready: boolean;
+  /** `unread` when no listed table could be read and one failed: the database does not answer, or refuses the reading. */
+  readonly outcome: 'ready' | 'not-ready' | 'unread';
   readonly text: string;
+}
+
+type Unread = ReadModelTablesNotReadyError['unread'][number];
+
+interface Reading {
+  readonly states: readonly ReadModelTableState[];
+  readonly unread: readonly Unread[];
 }
 
 /**
@@ -30,22 +44,22 @@ export interface ReadModelTablesReport {
  * event reaches a store, whenever the stores themselves are built. Each entry builds the store of
  * one read model, the class the application binds, with its own options: the table is then read
  * by the code that store runs before its first trace, so the verdict is the store's and the
- * migration names its columns. A store whose definition already refuses its table is reported
- * like the others. Nothing is guessed from the database: a table that is not listed is not read,
- * and an empty list checks nothing and says nothing.
+ * migration names its columns. Every entry is tried: a store whose definition refuses its table
+ * is reported like the others, and one that cannot be built or read (a role without the right to
+ * read its schema) is told under its name with what failed, the others still read. Nothing is
+ * guessed from the database: a table that is not listed is not read, and an empty list checks
+ * nothing. `unlisted` names the read model stores the application knows it does not list: they
+ * are told as a warning, since nothing checks them.
  */
 export class ReadModelTables {
-  constructor(private readonly listed: readonly (() => ReadModelInATable)[]) {}
+  constructor(
+    private readonly listed: readonly ListedReadModel[],
+    private readonly unlisted: readonly string[] = [],
+  ) {}
 
-  /** What each listed table can hold, in the order of the list. */
+  /** What each listed table that could be read can hold, in the order of the list. */
   async states(): Promise<readonly ReadModelTableState[]> {
-    const states: (ReadModelTableState | undefined)[] = [];
-
-    for (const build of this.listed) {
-      states.push(await stateOf(build));
-    }
-
-    return states.filter((state) => state !== undefined);
+    return (await this.read()).states;
   }
 
   /** The listed tables that cannot hold the trace of a deleted row, every one of them. */
@@ -53,91 +67,111 @@ export class ReadModelTables {
     return (await this.states()).filter((state) => !readModelTableReady(state));
   }
 
-  /** Refuses with `ReadModelTablesNotReadyError`, which names every listed table that is not ready and its migration. */
+  /** Refuses with `ReadModelTablesNotReadyError`, which names every listed table that is not ready, with its migration, and every one that could not be read. */
   async require(): Promise<void> {
-    const unready = await this.notReady();
+    const refusal = refusalOf(await this.read());
 
-    if (unready.length > 0) {
-      throw new ReadModelTablesNotReadyError(unready);
+    if (refusal !== undefined) {
+      throw refusal;
     }
   }
 
   /**
    * The check an application makes when it starts. `required`, the default, refuses to start;
    * `reported` writes the same message as an error and lets the start go on: each store still
-   * refuses by name before its first trace. A check constraint that is not validated, or that
-   * checks something else, is a warning either way: such a table holds a trace.
+   * refuses by name before its first trace. What the check cannot decide is a warning either
+   * way: a check constraint that is not validated or that checks something else, another check
+   * on a column of the row, a view, a store nobody lists.
    */
   async atStart(logger: Logger, unready: ReadModelTablesAtStart = 'required'): Promise<void> {
-    const states = await this.states();
-    const refused = states.filter((state) => !readModelTableReady(state));
+    const reading = await this.read();
+    const refusal = refusalOf(reading);
 
-    for (const note of states.flatMap(noteOf)) {
+    for (const note of this.notes(reading)) {
       logger.warn(note);
     }
 
-    if (refused.length === 0) {
+    if (refusal === undefined) {
       return;
     }
-
-    const refusal = new ReadModelTablesNotReadyError(refused);
 
     if (unready === 'required') {
       throw refusal;
     }
 
-    logger.error(refusal.message, { tables: refusal.tables.map(({ table }) => table).join(', ') });
+    logger.error(refusal.message, {
+      tables: refusal.tables.map(({ table }) => table).join(', '),
+      unread: refusal.unread.map(({ name }) => name).join(', '),
+    });
   }
 
   /** The same check as a command prints it: how many tables it read and their names, the warnings, then every refusal. */
   async report(): Promise<ReadModelTablesReport> {
-    const states = await this.states();
-    const refused = states.filter((state) => !readModelTableReady(state));
+    const reading = await this.read();
+    const refusal = refusalOf(reading);
+    const { states } = reading;
     const counted = states.length === 1 ? '1 read model table' : `${String(states.length)} read model tables`;
 
     const lines = [
-      states.length === 0
-        ? 'No read model table is listed: nothing was checked.'
-        : `Checked ${counted}: ${states.map(nameOf).join(', ')}.`,
-      ...states.flatMap(noteOf),
-      ...(refused.length === 0 ? [] : ['', new ReadModelTablesNotReadyError(refused).message]),
-      ...(refused.length === 0 && states.length > 0 ? ['Each can hold the trace of a deleted row.'] : []),
+      states.length === 0 ? this.nothingRead() : `Checked ${counted}: ${states.map(nameOf).join(', ')}.`,
+      ...this.notes(reading),
+      ...(refusal === undefined ? [] : ['', refusal.message]),
+      ...(refusal === undefined && states.length > 0 ? ['Each can hold the trace of a deleted row.'] : []),
     ];
 
-    return { ready: refused.length === 0, text: lines.join('\n') };
+    const unread = states.length === 0 && reading.unread.length > 0;
+
+    return {
+      ready: refusal === undefined,
+      outcome: refusal === undefined ? 'ready' : unread ? 'unread' : 'not-ready',
+      text: lines.join('\n'),
+    };
+  }
+
+  private nothingRead(): string {
+    return this.listed.length === 0
+      ? 'No read model table is listed: nothing was checked.'
+      : 'No listed read model keeps a table that could be read.';
+  }
+
+  /** Every entry is tried, in the order of the list: one that fails does not hide the next. */
+  private async read(): Promise<Reading> {
+    const states: ReadModelTableState[] = [];
+    const unread: Unread[] = [];
+
+    for (const entry of this.listed) {
+      try {
+        states.push(...[await entry.build().tableState?.()].filter((state) => state !== undefined));
+      } catch (cause) {
+        if (cause instanceof ReadModelTableNotReadyError) {
+          states.push(cause.state);
+        } else {
+          unread.push({ name: entry.name, cause });
+        }
+      }
+    }
+
+    return { states, unread };
+  }
+
+  private notes({ states }: Reading): string[] {
+    return [
+      ...states.flatMap(readModelTableNotes),
+      ...(this.unlisted.length === 0
+        ? []
+        : [
+            `Read model stores of the application are not listed, so nothing checks their tables: ${this.unlisted.join(', ')}. Add each to the list of the read model tables.`,
+          ]),
+    ];
   }
 }
 
-/** A store built on a definition that refuses its table says so when it is built: that refusal is the state of its table. */
-async function stateOf(build: () => ReadModelInATable): Promise<ReadModelTableState | undefined> {
-  try {
-    return await build().tableState?.();
-  } catch (error) {
-    if (error instanceof ReadModelTableNotReadyError) {
-      return error.state;
-    }
+function refusalOf({ states, unread }: Reading): ReadModelTablesNotReadyError | undefined {
+  const refused = states.filter((state) => !readModelTableReady(state));
 
-    throw error;
-  }
+  return refused.length + unread.length === 0 ? undefined : new ReadModelTablesNotReadyError(refused, unread);
 }
 
 function nameOf({ schema, table }: ReadModelTableState): string {
   return schema === undefined ? table : `${schema}.${table}`;
-}
-
-/** What is said of a check constraint that does not keep the live rows whole as the kit writes it: the table holds a trace all the same. */
-function noteOf(state: ReadModelTableState): string[] {
-  const name = liveRowsConstraintOf(state.table);
-
-  if (state.constraint?.state === 'not-valid') {
-    return [
-      `The check constraint ${name} of ${nameOf(state)} is not validated: the rows written before it are not held to it. Run: ${readModelTableMigration(state).join(' ')}`,
-    ];
-  }
-
-  return state.constraint?.state === 'unexpected'
-    ? [
-        `The check constraint ${name} of ${nameOf(state)} does not read as "deleted or (<column> is not null and ...)": ${String(state.constraint.definition)}. It is left as it is.`,
-      ]
-    : [];
 }

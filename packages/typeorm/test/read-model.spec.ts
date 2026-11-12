@@ -155,7 +155,7 @@ describe('TypeOrmReadModelTable of an entity whose columns refuse NULL', () => {
     expect(declare()).toThrow(ReadModelTableNotReadyError);
 
     expect(declare()).toThrow(
-      'The read model table StrictRow cannot hold the trace of a deleted row: "title", "tenant_id" refuse NULL',
+      'The read model table strict_row cannot hold the trace of a deleted row: "title", "tenant_id" refuse NULL',
     );
 
     expect(declare()).toThrow('The definition the store reads says so: declare these columns nullable there');

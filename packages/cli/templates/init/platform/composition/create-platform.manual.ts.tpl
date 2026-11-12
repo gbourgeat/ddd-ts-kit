@@ -82,7 +82,7 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
     domainEvents,
     persistence,
 {{#if persistence.hasDatabase}}
-    readModelTables: readModelTables(persistence),
+    readModelTables: (contexts) => readModelTables(persistence, contexts),
 {{/if}}
     access: new PolicyAccess({ authorizer, clock, policies: accessPolicies, onDecision }),
     actors: new ScopedActorContext(scope, foundations.ids),

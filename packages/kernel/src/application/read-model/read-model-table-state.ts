@@ -12,12 +12,13 @@ export interface ReadModelTableState {
   readonly refusing: readonly string[];
   /**
    * The columns the store maps as fields of the row and that can never hold NULL: a part of the
-   * primary key, an identity column, a generated one, or a column the table does not have. No
-   * migration of the kit touches them: the store has to stop mapping them.
+   * primary key, an identity column, a generated one, a column of a domain that refuses NULL, or
+   * a column the table does not have. No migration of the kit touches them: the store has to
+   * stop mapping them.
    */
   readonly unfit: readonly {
     readonly column: string;
-    readonly because: 'primary-key' | 'identity' | 'generated' | 'absent';
+    readonly because: 'primary-key' | 'identity' | 'generated' | 'domain' | 'absent';
   }[];
   /** The columns a trace holds NULL in, the unfit ones left out: what the rows deleted before are emptied of. */
   readonly row: readonly string[];
@@ -34,4 +35,15 @@ export interface ReadModelTableState {
     readonly columns: readonly string[];
     readonly definition?: string;
   };
+  /**
+   * What the store reads its rows from when it is not a table: a view shows none of what its base
+   * columns refuse, so nothing above says whether a trace is taken. Left out for a table.
+   */
+  readonly relation?: 'view' | 'materialized-view' | 'foreign-table';
+  /**
+   * The other check constraints of the table that name a column of the row, as PostgreSQL writes
+   * them: one of them may refuse NULL there, which the kit does not decide. Left out when there
+   * is none, and when the definition of the table was read, not the database.
+   */
+  readonly checks?: readonly { readonly name: string; readonly definition: string }[];
 }

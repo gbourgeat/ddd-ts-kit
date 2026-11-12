@@ -4,25 +4,42 @@ import { PostgresTraceColumns, ReadModelTableNotReadyError } from '../src';
 /** A column of the catalog, as the statement of the columns answers it. */
 const column = (
   name: string,
-  flags: { refusing?: boolean; key?: boolean; identity?: boolean; generated?: boolean } = {},
+  flags: {
+    refusing?: boolean;
+    key?: boolean;
+    identity?: boolean;
+    generated?: boolean;
+    domain?: boolean;
+    relation?: string;
+  } = {},
 ) => ({
   column: name,
   refusing: false,
   key: false,
   identity: false,
   generated: false,
+  domain: false,
+  relation: 'r',
   ...flags,
 });
 
-/** A database that holds these columns for the table, and this constraint under its name. */
-function aDatabase(columns: readonly ReturnType<typeof column>[], constraint?: { valid: boolean; definition: string }) {
+interface Check {
+  readonly valid: boolean;
+  readonly definition: string;
+  /** Default: the name of the kit's constraint, on the columns of the row. */
+  readonly name?: string;
+  readonly columns?: string;
+}
+
+/** A database that holds these columns for the table, and these check constraints, the first under the kit's name. */
+function aDatabase(columns: readonly ReturnType<typeof column>[], ...checks: readonly Check[]) {
   const statements: [string, readonly unknown[]][] = [];
 
   const run = async (statement: string, parameters: readonly unknown[]) => {
     statements.push([statement, parameters]);
 
     if (statement.includes('pg_constraint')) {
-      return constraint === undefined ? [] : [constraint];
+      return checks.map((check) => ({ name: 'agenda_live_rows_whole', columns: '["status"]', ...check }));
     }
 
     return columns;
@@ -68,10 +85,14 @@ describe('PostgresTraceColumns', () => {
 
     expect(statements.map(([, parameters]) => parameters)).toEqual([
       ['"sched""uling"."agenda"'],
-      ['"sched""uling"."agenda"', 'agenda_live_rows_whole'],
       ['"sched""uling"."agenda"'],
-      ['"sched""uling"."agenda"', 'agenda_live_rows_whole'],
+      ['"sched""uling"."agenda"'],
+      ['"sched""uling"."agenda"'],
     ]);
+
+    expect(statements[1]?.[0]).toContain(
+      "from pg_constraint as con where con.conrelid = to_regclass($1) and con.contype = 'c'",
+    );
   });
 
   it('reads the state of the table for the columns the store maps: no other column counts, whatever it refuses', async () => {
@@ -167,13 +188,66 @@ describe('PostgresTraceColumns: the constraint of the table', () => {
       columns: ['status'],
     });
 
+    expect(
+      await constraintOf('CHECK ((deleted OR ((a IS NOT NULL) AND ("b ""c"" x" IS NOT NULL) AND (d_1 IS NOT NULL))))'),
+    ).toEqual({ state: 'held', columns: ['a', 'b "c" x', 'd_1'] });
+
     for (const other of [
       "CHECK ((status <> ''::text))",
       WHOLE.replace('deleted', 'removed'),
       'CHECK ((deleted OR (status IS NOT NULL) OR (note IS NULL)))',
       'CHECK ((deleted OR (status IS NULL)))',
+      'CHECK (((deleted OR (status IS NOT NULL)) AND (code IS NOT NULL)))',
+      'CHECK ((deleted OR (NOT (status IS NOT NULL))))',
+      'CHECK ((deleted OR ((status IS NOT NULL) OR (code IS NOT NULL))))',
+      'CHECK ((deleted OR (status IS NOT NULL))) NO INHERIT',
     ]) {
       expect(await constraintOf(other)).toEqual({ state: 'unexpected', columns: [], definition: other });
     }
+  });
+
+  it('names the other check constraints that name a column of the row, and no other', async () => {
+    const { run } = aDatabase(
+      held,
+      { valid: true, definition: WHOLE },
+      {
+        name: 'agenda_status_known',
+        valid: true,
+        definition: "CHECK ((status <> ''::text))",
+        columns: '["status","id"]',
+      },
+      {
+        name: 'agenda_stamped',
+        valid: true,
+        definition: "CHECK ((last_event_id <> ''::text))",
+        columns: '["last_event_id"]',
+      },
+      { name: 'agenda_odd', valid: true, definition: 'CHECK (true)', columns: 'null' },
+    );
+
+    const state = await new PostgresTraceColumns(run, () => target).state();
+
+    expect(state.constraint).toEqual({ state: 'held', columns: ['status', 'startsAt'] });
+    expect(state.checks).toEqual([{ name: 'agenda_status_known', definition: "CHECK ((status <> ''::text))" }]);
+  });
+
+  it('names a column of a domain that refuses NULL as one nothing opens, and a view as what it is', async () => {
+    const viewed = [column('status', { domain: true, relation: 'v' }), column('startsAt', { relation: 'v' })];
+    const state = await new PostgresTraceColumns(aDatabase(viewed).run, () => target).state();
+
+    expect(state).toMatchObject({
+      unfit: [{ column: 'status', because: 'domain' }],
+      row: ['startsAt'],
+      relation: 'view',
+    });
+
+    const kinds = async (relation: string) =>
+      (await new PostgresTraceColumns(aDatabase([column('status', { relation })]).run, () => target).state()).relation;
+
+    expect([await kinds('m'), await kinds('f'), await kinds('p')]).toEqual([
+      'materialized-view',
+      'foreign-table',
+      undefined,
+    ]);
   });
 });

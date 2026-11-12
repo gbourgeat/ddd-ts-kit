@@ -18,25 +18,33 @@ export class ReadModelTableNotReadyError extends Error {
   /** The columns of the row that refuse NULL. */
   readonly columns: readonly string[];
 
-  /** The migration to write, one statement per entry; none when no migration makes the table ready. */
+  /**
+   * The migration to write, in the two steps a large table runs apart: the change of definition,
+   * then the validation of the constraint and the cleaning of the rows deleted before. Both empty
+   * when no migration makes the table ready.
+   */
+  readonly steps: ReturnType<typeof readModelTableMigration>;
+
+  /** The statements of both steps, in order. */
   readonly statements: readonly string[];
 
   constructor(readonly state: ReadModelTableState) {
     const table = state.schema === undefined ? state.table : `${state.schema}.${state.table}`;
-    const statements = readModelTableMigration(state);
+    const steps = readModelTableMigration(state);
 
     super(
       [
         `The read model table ${table} cannot hold the trace of a deleted row: ${reasonsOf(state).join('; ')}.`,
         ...adviceOf(state, table),
-        ...migrationOf(statements),
+        ...migrationOf(steps),
       ].join(' '),
     );
 
     this.name = 'ReadModelTableNotReadyError';
     this.table = table;
     this.columns = state.refusing;
-    this.statements = statements;
+    this.steps = steps;
+    this.statements = [...steps.definition, ...steps.validation];
   }
 }
 
@@ -44,6 +52,7 @@ const UNFIT = {
   'primary-key': 'is part of the primary key',
   identity: 'is an identity column',
   generated: 'is a generated column',
+  domain: 'is of a domain that refuses NULL',
   absent: 'is not a column of the table',
 };
 
@@ -100,12 +109,37 @@ function constraintAdviceOf({ table: named, constraint }: ReadModelTableState, t
     : [];
 }
 
-function migrationOf(statements: readonly string[]): string[] {
-  if (statements.length === 0) {
+/** The two steps as a migration file holds them, each under what it does and what it costs. */
+function migrationOf({ definition, validation }: ReturnType<typeof readModelTableMigration>): string[] {
+  if (definition.length + validation.length === 0) {
     return [];
   }
 
+  const validates = validation.some((statement) => statement.includes(' validate constraint '));
+  const cleans = validation.some((statement) => statement.startsWith('update '));
+
+  const second = [
+    validates ? ['the validation of the constraint'] : [],
+    cleans ? ['the cleaning of the rows deleted before'] : [],
+  ]
+    .flat()
+    .join(' and ');
+
   return [
-    `The migration to write:\n${statements.join('\n')}\n-- On a large table, run "validate constraint" in a transaction of its own (it then scans without stopping readers nor writers) and the update by ranges of the key: it rewrites only the deleted rows that still hold data.`,
+    [
+      'The migration to write:',
+      ...(definition.length === 0
+        ? []
+        : [
+            '-- The change of definition: brief, under the lock that stops the readers and the writers of the table.',
+            ...definition,
+          ]),
+      ...(validation.length === 0
+        ? []
+        : [
+            `-- Then ${second}, which reads the whole table: in the same migration on a small table; on a large one, in a migration that runs outside the transaction of the change of definition, where it stops neither readers nor writers.`,
+            ...validation,
+          ]),
+    ].join('\n'),
   ];
 }

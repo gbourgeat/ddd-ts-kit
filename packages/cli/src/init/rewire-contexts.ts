@@ -1,4 +1,5 @@
 import type { Config } from '../config';
+import { listReadModels } from './list-read-models';
 import { addComposeService } from '../generate/kinds/extraction/add-compose-service';
 import { composeServiceOf } from '../generate/kinds/extraction/compose-service-of';
 import { wireContext } from '../generate/kinds/wire-context';
@@ -23,9 +24,17 @@ export interface Rewired {
  * `--force` just rewrote the files of the platform from their templates, what their regions held
  * kept: the contexts the config declares, which it kept, are wired into them again, and what the
  * tree says of each one joins them where a region does not hold it, a region lost or emptied by
- * an earlier version included. What is there already is left as it is.
+ * an earlier version included. What is there already is left as it is. With or without `--force`,
+ * the read model stores of the tree join the list the application checks when it starts: a list
+ * just written, or emptied, would check nothing and say so to nobody.
  */
-export function rewireContexts(ws: Workspace, config: Config): Rewired {
+export function rewireContexts(ws: Workspace, config: Config, forced: boolean): Rewired {
+  if (!forced) {
+    listReadModels(ws, config);
+
+    return { contexts: [], repositories: [] };
+  }
+
   // A project initialised again may keep its code lists and permission sets where 0.86 and 0.87 wrote them.
   placeContextFiles(ws, config);
 
@@ -47,6 +56,7 @@ export function rewireContexts(ws: Workspace, config: Config): Rewired {
   }
 
   stopIgnoringValidation(ws, config);
+  listReadModels(ws, config);
 
   return {
     contexts: present.map(([name]) => name),

@@ -154,13 +154,25 @@ export interface PlatformOptions {
 /**
  * What this platform puts in place of the in-process defaults of the kernel module: the storage
  * and whatever else `main.ts` opened for it. Replacing a provider happens here and nowhere else.
+{{#if persistence.hasDatabase}}
+ * `hosted` names the contexts this application hosts: it checks their read model tables and no other.
+{{/if}}
  */
+{{#if persistence.hasDatabase}}
+export function platformModule(
+  persistence: Persistence,
+  options: PlatformOptions,
+  hosted?: readonly string[],
+): ContextModule {
+{{/if}}
+{{#unless persistence.hasDatabase}}
 export function platformModule(persistence: Persistence, options: PlatformOptions): ContextModule {
+{{/unless}}
   return defineContextModule({
     name: 'platform',
     {{#if persistence.hasDatabase}}
-    // Before a consumer is subscribed or a request served, whenever a store is built: each listed read model table, read by its own store.
-    onStart: ({ resolve }) => readModelTables(persistence).atStart(resolve(Logger), options.readModelTables),
+    // Before a consumer is subscribed or a request served, whenever a store is built: each listed read model table of the hosted contexts, read by its own store.
+    onStart: ({ resolve }) => readModelTables(persistence, hosted).atStart(resolve(Logger), options.readModelTables),
     {{/if}}
     // Closed inside `stop()` of the application, after the jobs and the consumers and before the logger is flushed.
     onStop: () => options.events.close(),

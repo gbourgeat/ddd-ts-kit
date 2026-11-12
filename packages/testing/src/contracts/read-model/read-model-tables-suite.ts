@@ -61,7 +61,7 @@ export abstract class ReadModelTablesSuite extends ContractSuite<ReadModelTables
   }
 
   protected listed(...shapes: readonly ReadModelTableShape[]): ReadModelTables {
-    return new ReadModelTables(shapes.map((shape) => () => this.subject.table(shape)));
+    return new ReadModelTables(shapes.map((shape) => ({ name: shape.table, build: () => this.subject.table(shape) })));
   }
 
   /** What the store answers to the trace of a deleted row under a key it does not hold: nothing when it wrote it. */
@@ -95,11 +95,9 @@ export abstract class ReadModelTablesSuite extends ContractSuite<ReadModelTables
     return refused;
   }
 
-  protected async create(...tables: readonly { readonly created: string }[]): Promise<void> {
-    for (const { created } of tables) {
-      if (!created.endsWith('()')) {
-        await this.subject.execute(created);
-      }
+  protected async create(...tables: readonly { readonly created: string; readonly first?: string }[]): Promise<void> {
+    for (const { created, first } of tables) {
+      await this.run([...(first === undefined ? [] : [first]), ...(created.endsWith('()') ? [] : [created])]);
     }
   }
 

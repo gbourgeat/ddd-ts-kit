@@ -2,6 +2,7 @@ import type { Awaitable } from './awaitable';
 import type { ContractRunner } from './contract-runner';
 import type { ReadModelTablesUnderContract } from './read-model/read-model-tables-under-contract';
 import { TableAgreementSuite } from './read-model/table-agreement-suite';
+import { TableDoubtsSuite } from './read-model/table-doubts-suite';
 import { TableMigrationSuite } from './read-model/table-migration-suite';
 import { TablesAtStartSuite } from './read-model/tables-at-start-suite';
 
@@ -26,8 +27,10 @@ export interface ReadModelTablesContractOptions {
  * fills), and names what no migration opens (a part of the primary key, an identity or a
  * generated column, a table that is not there); the migration a refusal writes, run as it is and
  * run twice, makes the table ready and touches nothing the store does not map; its validation
- * scans without the lock that stops readers; a table nobody lists is never read; the start of an
- * application is refused, or told as an error.
+ * scans without the lock that stops readers; a constraint of the kit's name written otherwise is
+ * read as another check and never dropped; another check on a field of the row and a view are
+ * warnings; a table that cannot be read is told under its name, the others still read; a table
+ * nobody lists is never read; the start of an application is refused, or told as an error.
  */
 export function readModelTablesContract(runner: ContractRunner, options: ReadModelTablesContractOptions): void {
   const createTables = (): Awaitable<ReadModelTablesUnderContract> => options.createTables();
@@ -35,5 +38,6 @@ export function readModelTablesContract(runner: ContractRunner, options: ReadMod
 
   new TableAgreementSuite(runner, createTables, options).describe(`${named}: the list and the store)`);
   new TableMigrationSuite(runner, createTables).describe(`${named}: the migration)`);
+  new TableDoubtsSuite(runner, createTables).describe(`${named}: what the check does not decide)`);
   new TablesAtStartSuite(runner, createTables).describe(`${named}: the start)`);
 }

@@ -72,8 +72,8 @@ export interface Platform {
   readonly eventBus: IntegrationEventPublisher;
   readonly persistence: Persistence;
   {{#if persistence.hasDatabase}}
-  /** The read model tables the application lists, which it checks in one pass when it starts, before an event reaches a store. */
-  readonly readModelTables: ReadModelTables;
+  /** The listed read model tables of these contexts, which an application checks in one pass when it starts, before an event reaches a store. */
+  readModelTables(contexts: readonly string[]): ReadModelTables;
   {{/if}}
   /** Asks the policies about one element, then the authorizer: for the rules that need loaded state. */
   readonly access: Access;

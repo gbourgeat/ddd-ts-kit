@@ -243,7 +243,12 @@ export function composeApplication(
     ready: () => options.redis?.ready() ?? Promise.resolve(true),
 {{/if}}
     platform,
+{{#if persistence.hasDatabase}}
+    start: () => start(platform, options, contexts.map(({ name }) => name)),
+{{/if}}
+{{#unless persistence.hasDatabase}}
     start: () => start(platform, options),
+{{/unless}}
     stop: () => stop(platform, options),
   };
 }
@@ -272,7 +277,7 @@ function boundaryOf(platform: Platform, options: ApplicationOptions{{#if present
 
 /**
 {{#if persistence.hasDatabase}}
- * The listed read model tables first, then the consumers, then the jobs: a job sends commands whose events must find their handlers.
+ * The listed read model tables of the hosted contexts first, then the consumers, then the jobs: a job sends commands whose events must find their handlers.
 {{/if}}
 {{#unless persistence.hasDatabase}}
  * The consumers first, then the jobs: a job sends commands whose events must find their handlers.
@@ -280,7 +285,12 @@ function boundaryOf(platform: Platform, options: ApplicationOptions{{#if present
  * The worker of the background jobs runs in the process that runs the jobs{{#if queue.memory}}, and in every
  * process while the queue is kept in its memory: no other process would see what this one enqueues{{/if}}.
  */
+{{#if persistence.hasDatabase}}
+async function start(platform: Platform, options: ApplicationOptions, hosted: readonly string[]): Promise<void> {
+{{/if}}
+{{#unless persistence.hasDatabase}}
 async function start(platform: Platform, options: ApplicationOptions): Promise<void> {
+{{/unless}}
 {{#if authz.rebac}}
   await relateSystemActors();
 
@@ -295,7 +305,7 @@ async function start(platform: Platform, options: ApplicationOptions): Promise<v
 {{/unless}}
 {{/if}}
 {{#if persistence.hasDatabase}}
-  await platform.readModelTables.atStart(platform.logger, options.readModelTables);
+  await platform.readModelTables(hosted).atStart(platform.logger, options.readModelTables);
 {{/if}}
 {{#if search.opensearch}}
   // The index of every read model of OpenSearch the contexts built, before an event reaches its projection.

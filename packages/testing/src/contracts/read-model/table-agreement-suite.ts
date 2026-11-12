@@ -80,6 +80,14 @@ export class TableAgreementSuite extends ReadModelTablesSuite {
       this.expect(refusal?.statements).toEqual([]);
     });
 
+    this.it('refuses, as the store does, a field of a domain that refuses NULL', async () => {
+      const unfit = [{ column: 'title', because: 'domain' }] as const;
+      const refusal = await this.agrees(TABLES.domained, this.expected('domained_rows', { unfit }));
+
+      this.expect(refusal?.statements).toEqual([]);
+      this.expect(refusal?.message.includes('"title" is of a domain that refuses NULL')).toBe(true);
+    });
+
     this.it('refuses, as the store does, a table that is not in the database', async () => {
       const refusal = await this.agrees(TABLES.absent, this.expected('absent_rows', { exists: false }, 'unread'));
 
