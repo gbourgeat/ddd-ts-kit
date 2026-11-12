@@ -62,8 +62,7 @@ function reasonsOf({ exists, refusing, unfit }: ReadModelTableState): string[] {
 
 /** What to do about each reason, and what is known of the check constraint that keeps the live rows whole. */
 function adviceOf(state: ReadModelTableState, table: string): string[] {
-  const { exists, refusing, unfit, constraint } = state;
-  const name = liveRowsConstraintOf(state.table);
+  const { exists, refusing, unfit } = state;
 
   if (!exists) {
     return ['The migration that creates it did not run on this database: apply the migrations of the project.'];
@@ -76,20 +75,29 @@ function adviceOf(state: ReadModelTableState, table: string): string[] {
       : [
           'No migration opens a column of that kind: a store maps as a field of the row only a plain column, which a trace can hold NULL in. Take it out of the columns the store maps, or make it one.',
         ]),
-    ...(refusing.length > 0 && constraint === undefined
-      ? [
-          `The definition the store reads says so: declare these columns nullable there, with the check constraint ${name} that keeps the live rows whole; the store then reads what ${table} needs in the database.`,
-        ]
-      : []),
-    ...(refusing.length > 0 && constraint?.state === 'missing'
-      ? [`The check constraint ${name}, which keeps the live rows whole, is missing.`]
-      : []),
-    ...(refusing.length > 0 && constraint?.state === 'unexpected'
-      ? [
-          `A constraint ${name} is there and checks something else (${String(constraint.definition)}): the migration leaves it as it is, write by hand what keeps these columns whole in the live rows.`,
-        ]
-      : []),
+    ...(refusing.length === 0 ? [] : constraintAdviceOf(state, table)),
   ];
+}
+
+/** What is known of the check constraint of a table whose columns refuse NULL: nothing before the database is read. */
+function constraintAdviceOf({ table: named, constraint }: ReadModelTableState, table: string): string[] {
+  const name = liveRowsConstraintOf(named);
+
+  if (constraint === undefined) {
+    return [
+      `The definition the store reads says so: declare these columns nullable there, with the check constraint ${name} that keeps the live rows whole; the store then reads what ${table} needs in the database.`,
+    ];
+  }
+
+  if (constraint.state === 'missing') {
+    return [`The check constraint ${name}, which keeps the live rows whole, is missing.`];
+  }
+
+  return constraint.state === 'unexpected'
+    ? [
+        `A constraint ${name} is there and checks something else (${String(constraint.definition)}): the migration leaves it as it is, write by hand what keeps these columns whole in the live rows.`,
+      ]
+    : [];
 }
 
 function migrationOf(statements: readonly string[]): string[] {

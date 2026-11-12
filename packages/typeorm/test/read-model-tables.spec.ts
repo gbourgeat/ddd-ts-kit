@@ -14,6 +14,7 @@ type Row = Record<string, string | null>;
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const { schema, ...tables } = READ_MODEL_TABLE_SHAPES;
+
 const STAMPS = {
   lastEventId: 'last_event_id',
   lastEventAt: 'last_event_at',

@@ -124,6 +124,7 @@ function wholeColumnsOf(definition: string, deleted: string): string[] | undefin
     .replace(/ NOT VALID$/, '')
     .replace(/^CHECK /, '')
     .replaceAll(/[()]/g, '');
+
   const [marked, live, ...more] = flat.split(' OR ');
   const columns = (live ?? '').split(' AND ').map((part) => / IS NOT NULL$/.test(part) && part.slice(0, -12));
 

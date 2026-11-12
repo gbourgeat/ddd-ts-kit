@@ -29,7 +29,7 @@ readModelTablesContract(runner, {
       table: ({ table, key, fields, tenant }) =>
         new PrismaReadModelTable<Record<string, string | null>, Prisma.TransactionClient>(unitOfWork, {
           // The tables of the contract have no model: it writes traces and reads states, which go by the table.
-          delegate: (client) => client.criteriaContract,
+          delegate: (client) => client.criteriaContractRow,
           schema: READ_MODEL_TABLE_SHAPES.schema,
           table,
           key,

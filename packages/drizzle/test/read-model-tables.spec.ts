@@ -14,6 +14,7 @@ import { createContractDatabase, type ContractDatabase } from './support/read-mo
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const schema = pgSchema(READ_MODEL_TABLE_SHAPES.schema);
+
 const STAMPS = {
   lastEventId: 'last_event_id',
   lastEventAt: 'last_event_at',
