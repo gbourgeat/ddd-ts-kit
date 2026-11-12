@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:9d60d18a827cfe7d -->
+<!-- translation-of: cqrs.md sha256:ae4b587cba5ac929 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -255,7 +255,8 @@ il y a une seconde, et c'est `appointments` qui refuse la double réservation (v
 
 Le projecteur applique chaque événement à une ligne, et son registre n'écrit que quand
 l'événement est plus récent que celui que tient la ligne, si bien qu'une nouvelle livraison ou un
-événement en retard ne change rien :
+événement en retard ne change rien. Une réservation dit toute la ligne de son créneau ; une
+annulation change la ligne que sa réservation a écrite :
 
 <!-- checked sample -->
 ```ts
@@ -298,17 +299,16 @@ export class OpenSlotsProjection {
 
   @On(appointmentBooked)
   booked(event: IntegrationEvent<PayloadOf<typeof appointmentBooked>>): Promise<ReadModelWrite> {
-    // un créneau hors des heures de travail n'a pas de ligne : répondre undefined n'écrit rien
-    return this.slots.upsertIfNewer(keyOf(event.payload), stampOf(event), (row) =>
-      row === undefined ? undefined : { ...row, open: false },
-    );
+    const { calendarId, startsAt } = event.payload;
+
+    // l'événement dit toute la ligne : il la crée, ou remplace ce qu'un événement plus ancien a écrit
+    return this.slots.upsertIfNewer(keyOf(event.payload), stampOf(event), () => ({ calendarId, startsAt, open: false }));
   }
 
   @On(appointmentCancelled)
   cancelled(event: IntegrationEvent<PayloadOf<typeof appointmentCancelled>>): Promise<ReadModelWrite> {
-    return this.slots.upsertIfNewer(keyOf(event.payload), stampOf(event), (row) =>
-      row === undefined ? undefined : { ...row, open: true },
-    );
+    // l'événement change une ligne qu'une réservation a créée : livré avant elle, il est renvoyé
+    return this.slots.updateIfNewer(keyOf(event.payload), stampOf(event), (row) => ({ ...row, open: true }));
   }
 }
 ```
@@ -316,6 +316,45 @@ export class OpenSlotsProjection {
 `FindOpenSlots` lit ensuite `OpenSlots` avec des critères, comme n'importe quel autre port de
 lecture. Le projecteur n'envoie aucune commande et ne lit aucun autre contexte : il ne fait que
 garder sa table à jour.
+
+### Quelle écriture pour quel événement
+
+| L'événement | L'écriture | Quand la clé ne tient aucune ligne |
+|---|---|---|
+| dit toute la ligne, ou peut la créer | `upsertIfNewer(key, stamp, next)` | `next` reçoit `undefined` et la ligne qu'il répond est écrite |
+| ne concerne pas ce modèle de lecture | `upsertIfNewer` dont le `next` répond `undefined` | rien n'est écrit : `ignored`, et rien n'est gardé de l'événement |
+| change une ligne qu'un autre événement a créée | `updateIfNewer(key, stamp, change)` | `RowNotHeldError` : l'événement est renvoyé |
+| retire la ligne | `delete(key, stamp)` | la trace est écrite : `traced` |
+
+Les livraisons n'ont pas d'ordre, si bien qu'un changement peut arriver avant la création qu'il
+suit. Écrit comme un `upsertIfNewer` dont le `next` répond `undefined` quand il n'y a pas de
+ligne, il serait `ignored` et acquitté ; la création écrirait ensuite la ligne telle qu'elle
+était au départ, et le changement ne serait plus jamais appliqué. `updateIfNewer` refuse à la
+place : il n'écrit rien et lève `RowNotHeldError`, qui porte la clé. Laissez-la sortir de la
+méthode : l'unité de travail de l'événement est annulée avec sa marque d'événement traité, le
+fournisseur livre de nouveau l'événement, et il est appliqué une fois la création appliquée.
+
+- **Par-dessus la trace d'une suppression**, un changement qui n'est pas plus tardif que la
+  suppression est `stale`. Un changement plus tardif est refusé de la même façon : dans
+  l'histoire, une ligne supprimée puis changée a été créée de nouveau entre les deux, et cette
+  création n'a pas encore été appliquée.
+- **Quand la création ne vient jamais**, l'événement est retenté comme tout événement en échec et
+  finit dans la file de rejet de son fournisseur ([quand un gestionnaire échoue sans cesse](delivery-and-idempotency.fr.md#quand-un-gestionnaire-échoue-sans-cesse)) :
+  il est rejoué une fois que la ligne existe. Un fournisseur qui retente quelques fois à un délai
+  court et constant peut enterrer le changement avant une création elle-même en retard :
+  dimensionnez ses tentatives pour le délai que la création peut prendre.
+- **Il est compté à part.** `projection_events_total` compte la livraison sous le résultat
+  `early`, pas `failed` : une livraison dans le désordre n'est pas un défaut, et un compte `early`
+  qui ne cesse de monter pour un événement est la création qui ne vient pas.
+- **Un événement du domaine du contexte lui-même** est appliqué dans la sauvegarde, dans l'ordre
+  où l'agrégat l'a enregistré. Une ligne absente y est une erreur de la projection, et elle fait
+  échouer la sauvegarde.
+- **Pendant une reconstruction**, la clé d'un changement refusé est tout de même relue dans la
+  source avant l'échange, et un rejeu du registre d'événements qui rencontre un changement sans
+  sa ligne s'arrête sur l'erreur.
+
+N'employez `upsertIfNewer` avec un `next` qui répond `undefined` que comme un filtre, pour un
+événement dont ce modèle de lecture n'a pas la ligne et ne l'aura jamais.
 
 ### La table d'un modèle de lecture, et ce que laisse une ligne supprimée
 

@@ -1,5 +1,5 @@
 [English](eventual-consistency.md) · **Français**
-<!-- translation-of: eventual-consistency.md sha256:ac9ab5847b70b0e2 -->
+<!-- translation-of: eventual-consistency.md sha256:e25fcc36e2a88077 -->
 
 # La cohérence à terme, expliquée à un responsable produit
 
@@ -165,6 +165,13 @@ du kit sont écrites de cette façon ([CQRS tel qu'il est employé ici](cqrs.fr.
 suppression est ordonnée de la même façon, même livrée avant la création qu'elle suit : elle
 laisse une trace sous sa clé
 ([ce que laisse une ligne supprimée](cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)).
+
+L'exemple écrit toute la ligne, si bien que n'importe quel événement peut arriver le premier. Un
+événement qui ne fait que changer une ligne (un créneau déplacé, une note ajoutée) ne peut pas
+être écrit avant l'événement qui crée la ligne, et ne doit pas être abandonné non plus :
+`ReadModelStore.updateIfNewer` le refuse avec `RowNotHeldError` tant que la ligne n'est pas là,
+le consommateur échoue, et le fournisseur livre de nouveau l'événement après la création
+([quelle écriture pour quel événement](cqrs.fr.md#quelle-écriture-pour-quel-événement)).
 
 ## Limites et cas où s'en passer
 

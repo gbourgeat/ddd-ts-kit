@@ -76,7 +76,8 @@ export class SearchInvoiceList extends OpenSearchReadModelStore<InvoiceRow> impl
   beyond the rights of the service account; a second store built under a name already taken, with
   another definition or other fields, throws `SearchNameTakenError`.
 - It is written by its projection only, through the port: `upsertIfNewer` with the stamp of the
-  event, `delete`, which keeps a tombstone so that an older event does not bring the row back.
+  event, `updateIfNewer` for an event that changes a row another event created, `delete`, which
+  keeps a tombstone so that an older event does not bring the row back.
 - `domain/` never reads it, and no handler decides an invariant or a right on it.
 - Only the platform knows OpenSearch: a context names nothing of the package but
   `OpenSearchReadModelStore` and its refusals, names the store only in `extends`, calls

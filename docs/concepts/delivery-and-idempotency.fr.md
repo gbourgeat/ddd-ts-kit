@@ -1,5 +1,5 @@
 [English](delivery-and-idempotency.md) · **Français**
-<!-- translation-of: delivery-and-idempotency.md sha256:1a2bc89c38a14e13 -->
+<!-- translation-of: delivery-and-idempotency.md sha256:f2573fd1f43de7ba -->
 
 # Garanties de livraison et consommateurs idempotents
 
@@ -303,6 +303,12 @@ découlent :
   nouveau ;
 - seuls des codes voyagent avec un message rejeté, jamais des messages d'erreur, qui peuvent citer
   des données de la charge utile.
+
+Un échec peut être voulu : une projection qui reçoit un changement avant la création de la ligne
+qu'il change lève `RowNotHeldError` pour que l'événement revienne après elle
+([quelle écriture pour quel événement](cqrs.fr.md#quelle-écriture-pour-quel-événement)). Il est
+retenté et rejeté comme tout autre, si bien qu'un message rejeté avec ce code est une création qui
+n'est jamais venue.
 
 Deux faits de plus, communs aux fournisseurs du kit :
 

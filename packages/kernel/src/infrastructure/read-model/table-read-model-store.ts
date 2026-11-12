@@ -32,6 +32,10 @@ export class TableReadModelStore<Row extends object> implements ReadModelStore<R
     return this.written({ key, stamp, next });
   }
 
+  updateIfNewer(key: string, stamp: EventStamp, change: (current: Row) => Row): Promise<ReadModelWrite> {
+    return this.written({ key, stamp, change });
+  }
+
   delete(key: string, stamp: EventStamp): Promise<ReadModelWrite> {
     return this.written({ key, stamp });
   }

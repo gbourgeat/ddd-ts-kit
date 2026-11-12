@@ -155,6 +155,12 @@ ordered the same way, even when it is delivered before the creation it follows: 
 trace under its key
 ([what a deleted row leaves](cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)).
 
+The sample writes the whole row, so any event can come first. An event that only changes a row
+(a slot moved, a note added) cannot be written before the event that creates the row, and must
+not be dropped either: `ReadModelStore.updateIfNewer` refuses it with `RowNotHeldError` while
+the row is not there, the consumer fails, and the provider delivers the event again after the
+creation ([which write for which event](cqrs.md#which-write-for-which-event)).
+
 ## Limits and when not to use it
 
 - **Do not use it for an invariant.** If the business cannot tolerate seeing the rule broken

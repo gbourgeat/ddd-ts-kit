@@ -16,4 +16,5 @@ describe('{{name.title}}, kept from what {{publisher.kebab}} announces', () => {
   // TODO(domain): replace each entry below by a test of the same shape: the fact given, the line kept asserted.
   it.todo('keeps the same line when the same event is delivered twice');
   it.todo('keeps the newest line when an older event is delivered late');
+  it.todo('refuses an event that changes a line it does not hold yet, then applies it once the line is there (when an event of this projection changes a line another event created)');
 });

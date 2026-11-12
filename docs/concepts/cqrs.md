@@ -240,7 +240,8 @@ been taken a second ago, and `appointments` is what refuses the double booking (
 ![A projection as read model: calendars and appointments publish integration events through their outbox; the projector of availability applies them to its own open slots table; the FindOpenSlots query reads that table alone, and booking itself is still refused by appointments when the slot is taken](../assets/diagrams/cqrs-projection.svg)
 
 The projector applies each event to one row, and its store writes only when the event is newer
-than the one the row holds, so a redelivery or a late event changes nothing:
+than the one the row holds, so a redelivery or a late event changes nothing. A booking says the
+whole row of its slot; a cancellation changes the row its booking wrote:
 
 <!-- checked sample -->
 ```ts
@@ -283,23 +284,57 @@ export class OpenSlotsProjection {
 
   @On(appointmentBooked)
   booked(event: IntegrationEvent<PayloadOf<typeof appointmentBooked>>): Promise<ReadModelWrite> {
-    // a slot outside the working hours has no row: answering undefined writes nothing
-    return this.slots.upsertIfNewer(keyOf(event.payload), stampOf(event), (row) =>
-      row === undefined ? undefined : { ...row, open: false },
-    );
+    const { calendarId, startsAt } = event.payload;
+
+    // the event says the whole row: it creates it, or replaces what an older event wrote
+    return this.slots.upsertIfNewer(keyOf(event.payload), stampOf(event), () => ({ calendarId, startsAt, open: false }));
   }
 
   @On(appointmentCancelled)
   cancelled(event: IntegrationEvent<PayloadOf<typeof appointmentCancelled>>): Promise<ReadModelWrite> {
-    return this.slots.upsertIfNewer(keyOf(event.payload), stampOf(event), (row) =>
-      row === undefined ? undefined : { ...row, open: true },
-    );
+    // the event changes a row a booking created: delivered before it, it is thrown back
+    return this.slots.updateIfNewer(keyOf(event.payload), stampOf(event), (row) => ({ ...row, open: true }));
   }
 }
 ```
 
 `FindOpenSlots` then reads `OpenSlots` with a criteria, like any other read port. The
 projector sends no command and reads no other context: it only keeps its table current.
+
+### Which write for which event
+
+| The event | The write | When the key holds no row |
+|---|---|---|
+| says the whole row, or may create it | `upsertIfNewer(key, stamp, next)` | `next` is handed `undefined` and the row it answers is written |
+| does not concern this read model | `upsertIfNewer` whose `next` answers `undefined` | nothing is written: `ignored`, and nothing is kept of the event |
+| changes a row another event created | `updateIfNewer(key, stamp, change)` | `RowNotHeldError`: the event is thrown back |
+| removes the row | `delete(key, stamp)` | the trace is written: `traced` |
+
+Deliveries have no order, so a change can arrive before the creation it follows. Written as an
+`upsertIfNewer` whose `next` answers `undefined` when there is no row, it would be `ignored` and
+acknowledged; the creation would then write the row as it was at first, and the change would never
+be applied again. `updateIfNewer` refuses instead: it writes nothing and throws `RowNotHeldError`,
+which carries the key. Let it leave the method: the unit of work of the event rolls back with its
+processed mark, the provider delivers the event again, and it is applied once the creation is.
+
+- **Over the trace of a deletion**, a change that is not later than the deletion is `stale`. A
+  later one is refused the same way: in the history, a row deleted and then changed was created
+  again in between, and that creation has not been applied yet.
+- **When the creation never comes**, the event is retried as any failed event and ends in the
+  dead letters of its provider ([when a handler keeps failing](delivery-and-idempotency.md#when-a-handler-keeps-failing)):
+  it is replayed once the row exists. A provider that retries a few times at a short, constant
+  delay may bury the change before a creation that is itself late: size its retries for the delay
+  the creation can take.
+- **It is counted apart.** `projection_events_total` counts the delivery under the result `early`,
+  not `failed`: a delivery out of order is not a defect, and an `early` count that keeps growing
+  for one event is the creation that does not come.
+- **A domain event of the context itself** is applied inside the save, in the order the aggregate
+  recorded it. A missing row there is an error of the projection, and it fails the save.
+- **During a rebuild**, the key of a refused change is still read again from the source before the
+  swap, and a replay of the event store that meets a change without its row stops on the error.
+
+Use `upsertIfNewer` with a `next` that answers `undefined` only as a filter, for an event this
+read model has no row for and never will.
 
 ### The table of a read model, and what a deleted row leaves
 

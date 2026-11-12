@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7093aad7d26be44f -->
+<!-- translation-of: README.md sha256:ef1957d975583532 -->
 
 # @ddd-ts-kit/kernel
 
@@ -2013,9 +2013,10 @@ export class AppointmentListProjection {
 
   @On(PaymentCaptured)
   paid(event: IntegrationEvent<PaymentCapturedPayload>) {
-    return this.appointments.upsertIfNewer(event.payload.appointmentId, stampOf(event), (row) =>
-      row === undefined ? undefined : { ...row, paid: true },
-    );
+    return this.appointments.updateIfNewer(event.payload.appointmentId, stampOf(event), (row) => ({
+      ...row,
+      paid: true,
+    }));
   }
 
   @On(AppointmentCancelled)
@@ -2042,7 +2043,7 @@ constructeur, et `ddd-ts-kit describe` et la référence de `CONTEXT.md` le list
 
 ### Idempotentes et ordonnées par construction
 
-`ReadModelStore<Row>` est le port d'un modèle de lecture : `get`, `upsertIfNewer`, `delete` et
+`ReadModelStore<Row>` est le port d'un modèle de lecture : `get`, `upsertIfNewer`, `updateIfNewer`, `delete` et
 `search(scopedCriteria)`. Chaque ligne porte le tampon de l'événement qui l'a modifiée en dernier,
 et une écriture n'a lieu que si son événement est plus récent :
 
@@ -2050,7 +2051,8 @@ et une écriture n'a lieu que si son événement est plus récent :
 |---|---|
 | Tampon | `stampOf(event)` : l'id et l'instant d'un événement d'intégration ; le nom, l'agrégat et l'instant d'un événement du domaine ; plus `stampOf(event, version)` quand l'événement porte une version par clé |
 | Plus récent | une `version` plus grande quand les deux tampons en portent une ; sinon un instant plus tardif ; au même instant, le plus grand id d'événement. Un même événement n'est jamais plus récent que lui-même |
-| `upsertIfNewer(key, stamp, next)` | écrit `next(current)` ; `stale` quand la ligne contient cet événement ou un plus tardif ; `ignored` quand `next` renvoie `undefined` (un correctif d'une ligne qui n'existe pas) |
+| `upsertIfNewer(key, stamp, next)` | pour un événement qui dit toute la ligne, ou peut la créer : écrit `next(current)`, `current` valant `undefined` quand la clé ne tient aucune ligne ; `stale` quand la ligne contient cet événement ou un plus tardif ; `ignored` quand `next` renvoie `undefined`, ce qui est un filtre (l'événement ne concerne pas ce modèle de lecture) et jamais la façon d'attendre une ligne |
+| `updateIfNewer(key, stamp, change)` | pour un événement qui change une ligne qu'un autre événement a créée : écrit `change(current)` ; `stale` quand la ligne, ou la trace de sa suppression, contient cet événement ou un plus tardif ; `RowNotHeldError` quand la clé ne tient aucune ligne, ou la trace d'une suppression plus ancienne que l'événement : rien n'est écrit et l'événement est renvoyé, pour être livré de nouveau après la création qu'il suit ([quelle écriture pour quel événement](../../docs/concepts/cqrs.fr.md#quelle-écriture-pour-quel-événement)) |
 | `delete(key, stamp)` | la ligne disparaît pour `get` et `search`, et une trace reste, sa clé et son tampon sans aucune de ses données : un événement plus ancien livré en retard ne la ramène pas, un plus tardif oui. Une clé que le modèle de lecture ne tient pas prend la même trace et répond `traced`, puisqu'aucune ligne n'a été retirée (comme une suppression par-dessus une trace antérieure), si bien que la création que cette suppression suit est `stale` quand elle est livrée après elle. Sur un stockage SQL, chaque colonne de la ligne accepte NULL, sinon le registre refuse la table par `ReadModelTableNotReadyError` ([ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)) |
 | Concurrence | une écriture est conditionnée au tampon qu'elle a lu et est relue quand une autre est arrivée d'abord ; cinq tentatives, puis `ConcurrencyError` et la nouvelle livraison de l'événement |
 | Transaction | le store écrit sur l'exécuteur de l'unité de travail, si bien que la ligne et la marque d'événement traité sont validées ou annulées ensemble |
@@ -2058,8 +2060,9 @@ et une écriture n'a lieu que si son événement est plus récent :
 Ainsi une nouvelle livraison, un doublon et deux événements d'une même clé livrés dans le
 désordre aboutissent tous à la même ligne. **Ce que cela ne donne pas** : un événement plus
 ancien écarté comme périmé n'est pas appliqué plus tard, si bien qu'un événement devrait porter
-l'état des champs qu'il pose, ou arriver dans l'ordre par clé (l'outbox ordonne par clé) ; une
-suppression qui atteint une ligne jamais vue ne laisse aucune trace ; avec des instants et sans
+l'état des champs qu'il pose, ou arriver dans l'ordre par clé (l'outbox ordonne par clé) ; un
+événement renvoyé par `updateIfNewer` dont la création ne vient jamais finit dans la file de rejet
+de son fournisseur ; avec des instants et sans
 version, l'ordre de deux événements d'une même clé est l'ordre des horloges qui les ont
 tamponnés ; une version est comparée à la version que contient la ligne, alors n'en passez une
 que si chaque événement d'une ligne vient du même flux. Une écriture vaut une ligne : un événement
@@ -2151,9 +2154,10 @@ une telle projection lève au chargement du fichier.
 ### Vue de l'extérieur
 
 Par les ports qui existent. `@ddd-ts-kit/di` compte `projection_events_total` par `context`,
-`projection`, `event` et `result` (`applied`, `traced`, `stale`, `ignored`, `failed`) sur `Metrics`, et
+`projection`, `event` et `result` (`applied`, `traced`, `stale`, `ignored`, `early`, `failed`) sur `Metrics`, et
 pose `projection_last_event_age_ms`, l'âge du dernier événement appliqué au moment où il l'a été :
-le retard. Une projection est abonnée comme consommateur sous son nom, si bien que chaque
+le retard. `early` est une livraison que `updateIfNewer` a renvoyée parce que la ligne que
+l'événement change n'est pas encore tenue. Une projection est abonnée comme consommateur sous son nom, si bien que chaque
 livraison est un *span* `process <projection>`, avec les appels à son modèle de lecture en
 dessous, et qu'un événement enterré après ses nouvelles tentatives atteint le rapporteur
 d'erreurs comme pour tout consommateur.

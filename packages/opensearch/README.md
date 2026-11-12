@@ -156,7 +156,7 @@ fields its mapping lacks (a field mapped with another type is refused by OpenSea
 | Port method | On OpenSearch |
 |---|---|
 | `get(key)` | `GET /<alias>/_doc/<id>`; the tenant of the document is checked, since a filtered alias does not filter a get |
-| `upsertIfNewer`, `delete` | the get above, then `PUT /<alias>/_doc/<id>?require_alias=true` with `op_type=create` for a new key, or `if_seq_no` and `if_primary_term` of the document read; on a conflict it reads again, five attempts, then `ConcurrencyError` |
+| `upsertIfNewer`, `updateIfNewer`, `delete` | the get above, then `PUT /<alias>/_doc/<id>?require_alias=true` with `op_type=create` for a new key, or `if_seq_no` and `if_primary_term` of the document read; on a conflict it reads again, five attempts, then `ConcurrencyError` |
 | `search(scopedCriteria)` | `POST /<alias>/_search`: every operator, group, sort and page of the criteria as filters of the query DSL; the deleted rows left out; an offset page counted exactly (`track_total_hits`) |
 | `ensureMapping()`, `provision(tenant)` | `PUT /<index>`, `PUT /<index>/_mapping`, `POST /_aliases` |
 

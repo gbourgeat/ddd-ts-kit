@@ -1,6 +1,7 @@
-import { Criteria, cursorPage, scoped } from '@ddd-ts-kit/kernel';
+import { Criteria, RowNotHeldError, cursorPage, scoped } from '@ddd-ts-kit/kernel';
 import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
 import { criteriaContractRows } from '../criteria/criteria-contract-rows';
+import { failureOf } from '../failure-of';
 import { everything } from './everything';
 import { ReadModelStoreSuite } from './read-model-store-suite';
 import { rowOf as row } from './row-of';
@@ -8,12 +9,17 @@ import { stampedAt as at } from './stamped-at';
 
 type Row = CriteriaContractRow;
 
-/** Rows that round trip, events applied once and in order, and searching. `DeletionsSuite` holds the deletions. */
+/**
+ * Rows that round trip, events applied once and in order, a change that waits for its creation,
+ * and searching. `DeletionsSuite` holds the deletions.
+ */
 export class RowsSuite extends ReadModelStoreSuite {
   protected tests(): void {
     this.closesAfterEach();
     this.keepsRows();
     this.appliesInOrder();
+    this.changesARowItHolds();
+    this.refusesAChangeWithoutARow();
     this.appliesByVersion();
     this.searches();
   }
@@ -84,6 +90,52 @@ export class RowsSuite extends ReadModelStoreSuite {
     });
   }
 
+  private changesARowItHolds(): void {
+    this.it('changes the row it holds, and is stale when the row holds this event or a later one', async () => {
+      await this.put(row('a1'), at('evt-1', 1));
+
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('applied');
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('stale');
+      this.expect(await this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats)).toBe('stale');
+      this.expect(await this.store.get('a1')).toEqual({ ...row('a1'), seats: 3 });
+    });
+
+    this.it('is stale when a change meets the trace of a deletion that is not older than it', async () => {
+      await this.put(row('a1'), at('evt-1', 1));
+      await this.store.delete('a1', at('evt-3', 3));
+
+      this.expect(await this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats)).toBe('stale');
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('stale');
+      this.expect(await this.store.get('a1')).toBe(undefined);
+    });
+  }
+
+  private refusesAChangeWithoutARow(): void {
+    this.it('refuses a change delivered before its creation, then applies it after it', async () => {
+      const refusal = await failureOf(() => this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats));
+
+      this.expect(refusal instanceof RowNotHeldError).toBe(true);
+      this.expect(await this.subject.table.find('a1')).toBe(undefined);
+
+      this.expect(await this.put(row('a1'), at('evt-1', 1))).toBe('applied');
+      this.expect(await this.store.updateIfNewer('a1', at('evt-2', 2), moreSeats)).toBe('applied');
+      this.expect(await this.store.get('a1')).toEqual({ ...row('a1'), seats: 3 });
+    });
+
+    this.it('refuses a change later than the deletion of its row, until a later event creates it again', async () => {
+      await this.store.delete('a1', at('evt-1', 1));
+
+      const refusal = await failureOf(() => this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats));
+
+      this.expect(refusal instanceof RowNotHeldError).toBe(true);
+      this.expect(await this.subject.table.find('a1')).toEqual({ key: 'a1', row: undefined, stamp: at('evt-1', 1) });
+
+      await this.put(row('a1'), at('evt-2', 2));
+
+      this.expect(await this.store.updateIfNewer('a1', at('evt-3', 3), moreSeats)).toBe('applied');
+    });
+  }
+
   private appliesByVersion(): void {
     this.it('orders by version when both stamps carry one, whatever the clocks say', async () => {
       await this.put({ ...row('a1'), title: 'v2' }, { ...at('evt-2', 5), version: 2 });
@@ -140,4 +192,8 @@ export class RowsSuite extends ReadModelStoreSuite {
       this.expect((await this.store.search(scoped(Criteria.of<Row>(), { kind: 'none' }))).items).toEqual([]);
     });
   }
+}
+
+function moreSeats(current: Row): Row {
+  return { ...current, seats: current.seats + 1 };
 }

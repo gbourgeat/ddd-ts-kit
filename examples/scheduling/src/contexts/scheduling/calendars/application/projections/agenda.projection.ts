@@ -29,7 +29,8 @@ type Standing = Pick<AgendaEntry, 'status'> &
 /**
  * Keeps the agenda from the facts of the appointments of this context. Every fact but a move
  * carries the whole entry it leaves, so a fact applied twice or late ends on the same entry;
- * a move changes the place and keeps where the appointment stands.
+ * a move changes the place and keeps where the appointment stands, so it needs the entry its
+ * booking wrote: without it the move is refused, never dropped.
  */
 @Projection('scheduling.agenda')
 export class AgendaProjection {
@@ -49,9 +50,11 @@ export class AgendaProjection {
 
   @On(AppointmentRescheduled)
   async rescheduled(event: AppointmentRescheduled): Promise<ReadModelWrite> {
-    return this.agenda.upsertIfNewer(event.aggregateId, stampOfFact(event), (current) =>
-      current === undefined ? undefined : { ...current, ...placeOf(event.moved.booking), changedAt: event.occurredAt },
-    );
+    return this.agenda.updateIfNewer(event.aggregateId, stampOfFact(event), (current) => ({
+      ...current,
+      ...placeOf(event.moved.booking),
+      changedAt: event.occurredAt,
+    }));
   }
 
   /** The note carries the whole entry: met before the booking of the same instant, it writes the entry the booking would, with the note. */

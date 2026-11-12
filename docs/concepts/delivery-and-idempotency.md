@@ -282,6 +282,11 @@ directly. Rules that follow:
 - replay after fixing the cause; replaying a poison message only kills it again;
 - only codes travel with a dead letter, never error messages, which may quote payload data.
 
+A failure can be the design: a projection that receives a change before the creation of the row
+it changes throws `RowNotHeldError` so that the event comes back after it
+([which write for which event](cqrs.md#which-write-for-which-event)). It is retried and
+dead-lettered like any other, so a dead letter with that code is a creation that never came.
+
 Two more facts shared by the providers of the kit:
 
 - **A redelivery runs every handler of the consumer for that type again**, those that succeeded

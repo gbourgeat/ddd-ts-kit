@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { RowNotHeldError } from '@ddd-ts-kit/kernel';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { schedulingPermissions } from '@/contexts/scheduling/scheduling.permissions';
@@ -205,17 +206,19 @@ describe('The agenda, given facts twice or out of order', () => {
     });
   });
 
-  it('ignores the move of an appointment it never saw', async () => {
+  it('refuses the move of an appointment it never saw, and applies it once the booking is there', async () => {
     const agenda = new FakeAgenda();
     const projection = new AgendaProjection(agenda);
     const { booking } = planned().build();
+    const moved = new AppointmentRescheduled('appointment-1', at('07:00'), { booking, previous: booking });
 
-    const write = await projection.rescheduled(
-      new AppointmentRescheduled('appointment-1', at('07:00'), { booking, previous: booking }),
-    );
-
-    expect(write).toBe('ignored');
+    await expect(projection.rescheduled(moved)).rejects.toThrow(RowNotHeldError);
     expect(await agenda.get('appointment-1')).toBeUndefined();
+
+    await projection.booked(new AppointmentBooked('appointment-1', at('06:00'), { booking }));
+
+    expect(await projection.rescheduled(moved)).toBe('applied');
+    expect(await agenda.get('appointment-1')).toMatchObject({ status: 'booked', changedAt: at('07:00') });
   });
 });
 
