@@ -81,14 +81,14 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
   it('runs the contract on the fake and on the adapter, a field of each type read back as written, the later event pending', () => {
     const contract = runIn(project.root, { command: bin('vitest'), args: ['run', CONTRACT] });
 
-    expect(contract).toMatch(/Tests\s+18 passed \|\s*2 todo/);
+    expect(contract).toMatch(/Tests\s+22 passed \|\s*2 todo/);
     expect(contract).not.toMatch(FAILED_COUNT);
   }, 120_000);
 
   it('keeps the rows of a tenant from another, in the contract of a read model of tenant data', () => {
     const contract = runIn(project.root, { command: bin('vitest'), args: ['run', TENANT_CONTRACT] });
 
-    expect(contract).toMatch(/Tests\s+19 passed \|\s*2 todo/);
+    expect(contract).toMatch(/Tests\s+23 passed \|\s*2 todo/);
     expect(contract).not.toMatch(FAILED_COUNT);
   }, 120_000);
 
@@ -101,6 +101,6 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
 
     const contract = runIn(project.root, { command: bin('vitest'), args: ['run', CONTRACT] });
 
-    expect(contract).toMatch(/Tests\s+20 passed \(20\)/);
+    expect(contract).toMatch(/Tests\s+24 passed \(24\)/);
   }, 120_000);
 });
