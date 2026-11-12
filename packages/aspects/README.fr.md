@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5bafae03d301bfe1 -->
+<!-- translation-of: README.md sha256:edbc8736a9859c84 -->
 
 # @ddd-ts-kit/aspects
 
@@ -251,7 +251,7 @@ dans le *runtime* des aspects au moment d'un appel.
 | `logged({ level?, fields?, logger?, clock? })` | entrées `<Class>.<method> started` (debug), puis `succeeded` (`level`, info par défaut) ou `failed` | une `DomainError` échoue au niveau `warn`, une défaillance au niveau `error` ; champs `class`, `method`, `kind`, `context`, `durationMs`, `errorType`, `errorCode` | les arguments, les résultats, les messages d'erreur |
 | `timed({ name?, metrics?, clock? })` | histogramme `<name>_duration_ms`, compteur `<name>_total` | `name` vaut `dependency_call` ; libellés `class`, `method`, `kind`, `context`, `outcome`, `error_code` | les arguments, les résultats, les messages d'erreur, les identifiants |
 | `retry({ attempts, backoff?, retryOn?, sleep? })` | rappelle après un échec | jamais après une `DomainError`, un circuit ouvert ou une cloison pleine (`isTransient`) ; 100 ms doublés jusqu'à 30 s avec gigue complète | rien : il n'enregistre rien |
-| `timeout(ms, { signal?, scheduler? })` | rejette avec `TimeoutError` (`TIMEOUT`) | l'appel sous-jacent continue de s'exécuter, sauf avec `signal: true` | le message ne nomme que la classe et la méthode |
+| `timeout(ms, { signal?, scheduler?, statedBy? })` | rejette avec `TimeoutError` (`TIMEOUT`) | l'appel sous-jacent continue de s'exécuter, sauf avec `signal: true` | le message ne nomme que la classe et la méthode, puis qui a déclaré le délai quand `statedBy` le dit |
 | `circuitBreaker({ failureThreshold, resetAfterMs, halfOpenMax?, scope?, isFailure?, onStateChange?, clock? })` | refuse les appels avec `CircuitOpenError` (`CIRCUIT_OPEN`) après des échecs consécutifs, puis laisse passer des appels d'essai | un circuit par instance et par méthode ; une `DomainError` n'est pas un échec ; un appel d'essai | `onStateChange` reçoit la classe, la méthode, le contexte et les deux états |
 | `cached({ key, ttlMs, cache?, shared?, allowKinds? })` | répond à une lecture répétée depuis le port `Cache` | refuse les genres `repository` et `use-case` ; demande `scope` dans le *runtime* ou `shared: true` et lève l'erreur à l'appel sans l'un ni l'autre ; une entrée appartient au *tenant* du travail sauf avec `shared: true`, le travail qui ne nomme aucun *tenant* garde la clé telle qu'elle est écrite, et le travail sous une élévation (`acrossTenants`) ne lit ni n'écrit le cache ; un appel dont la clé est `undefined` n'est pas mis en cache ; les échecs ne sont pas mis en cache ; des appels identiques simultanés d'un même *tenant* partagent un seul appel ; un cache défaillant vaut un défaut de cache | la clé est construite par le projet à partir des arguments et ne va qu'au cache |
 | `bulkhead({ maxConcurrent, maxQueued?, scope? })` | borne les appels qui s'exécutent en même temps, refuse au-delà avec `BulkheadFullError` (`BULKHEAD_FULL`) | pas de file d'attente ; un compartiment par instance et par méthode | rien |
@@ -268,6 +268,12 @@ dernier paramètre déclaré, interrompu quand le temps est écoulé. Déclarez 
 en dernier, sans valeur par défaut, et passez-le à l'appel sous-jacent. Un signal que l'appelant
 a passé à cet endroit est conservé : l'un ou l'autre interrompt. Une méthode sans paramètre n'en
 reçoit aucun.
+
+**`timeout` et qui l'a déclaré.** `statedBy` tient en quelques mots que la `TimeoutError` garde et
+par lesquels son message se termine : `Class.method did not answer within 2000 ms (<statedBy>)`.
+Une politique posée autour d'adaptateurs qui ne l'ont pas demandée, comme celle par défaut d'une
+plateforme, s'y nomme et dit comment un adaptateur déclare la sienne, pour qu'un appel coupé par
+un délai que personne n'a écrit sur cet adaptateur ne se lise pas comme sa faute.
 
 **`retry` et la gigue.** `backoff: { baseMs, factor, maxMs, jitter }`. `jitter` est une fonction
 `(delayMs, attempt) => delayMs` : `fullJitter()` par défaut, `fullJitter(seededRandom)` ou

@@ -41,6 +41,8 @@ listen on in its `ports` entry (`"0.0.0.0:5432:5432"`), with credentials of its 
 Every migration is named `<timestamp>_<what-it-does>`: `npm run db:generate` refuses to run
 without a name, so two branches never write the same file, and `npm run check:arch` reports
 migrations that a merge left out of order (`npx ddd-ts-kit explain persistence/migration-history`).
+`npx ddd-ts-kit verify-merge` fails on a migration of the branch that sorts before the last one of
+the trunk, and names the command that puts it after.
 
 {{/if}}
 `npm run dev` restarts the application when a source file changes. It runs `tsx watch`, which

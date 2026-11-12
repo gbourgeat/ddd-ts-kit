@@ -558,7 +558,10 @@ shares, which no spec has proven.
 
 Several people add migrations at the same time, on one context or on several. Every migration
 a generated project writes is named `<timestamp>_<what-it-does>`, and `npm run db:generate`
-refuses to run without the description: two branches never write the same file.
+refuses to run without the description: two branches never write the same file. It refuses a
+description a migration of the folder already carries too, and names that migration, on the four
+tools: two migrations of one name read as one in a review, and `verify-merge` knows a migration
+by its description.
 
 | Tool | `db:generate` | Writes | A migration merged older than one already applied |
 |---|---|---|---|
@@ -751,6 +754,52 @@ by hand is refused, and the folder is as before the replay.
 `npx ddd-ts-kit verify-merge`, run after the merge, reports a migration of either side that the
 result lost. It knows a migration by its description, its name without its number and without
 `working-`: a migration generated again under another number, or without the prefix, is kept.
+
+**A migration that does not follow the trunk's fails `verify-merge`.** A branch that lives more
+than a day holds a migration generated before the last one the trunk gained meanwhile. Without a
+`<commit>`, `npx ddd-ts-kit verify-merge` also reads the migrations of the working tree against
+the trunk (the base of the worker, else `origin/HEAD`, else `origin/main`, as git knows them:
+fetch first) and fails, naming the migration and the last one of the trunk. `--warn`, which the
+pre-push hook passes, softens what a merge lost and never this: the push stops.
+
+| Tool | What it reports | What brings the order right |
+|---|---|---|
+| drizzle-kit | an entry the branch adds to the journal whose `when` is not after the last entry of the trunk's journal, which the migrator would skip; a `.sql` file no entry of the journal lists and the trunk does not hold, as after a merge that kept the journal of one side (one the trunk holds too is the trunk's to list) | `npx ddd-ts-kit merge-trunk`, which replays as it brings the trunk in. Once the trunk is merged otherwise: the `meta/` of the trunk, then `npx ddd-ts-kit drizzle-generate --replay --base <trunk>` (or `merge-trunk --to-land`, which does it at the landing). The replay refuses a branch with two migrations that change the schema: they are generated again by hand, one at a time, as above |
+| knex, Prisma, TypeORM | a migration the branch adds whose name sorts before the last migration of the trunk: the tool would run it after that one where it is applied, and before it on a new database | `npx ddd-ts-kit merge-trunk --to-land`, which renames it after the last of the trunk as it brings the trunk in. On a branch that already holds the trunk there is nothing to merge: it renames all the same, only the migrations that do not follow the trunk's already, in their order, and leaves the rename to commit. It stops, nothing renamed, when the migration and a later one of the trunk change one table: delete that migration first (`git show HEAD:<file>` keeps what was written by hand), then `npm run db:generate <what-it-does>`, which refuses a name while a migration carries it |
+
+A working migration (`working-<what-it-does>`) is left out: its place is decided when the branch
+lands, and `persistence/migration-history` already refuses it on the trunk. What is ordered is
+what the tool itself takes for a migration, by what it orders it by: under knex every script of
+`migrations/`, by its name (knex loads them all, whatever their name); under Prisma the folders
+that hold a `migration.sql`, by their name; under TypeORM the classes whose name ends with 13
+digits, by that number, however the file is named. `verify-merge` and `merge-trunk --to-land`
+read the same order. Nothing is compared for a named commit, without the config of the kit, or
+when no ref names a trunk.
+
+**A database that already applied the old name.** A migration renamed or generated again is a new
+one for the tool, on a database of development, of a preview or shared that applied it under its
+old name. Reset that database, or correct what it recorded:
+
+| Tool | What happens there | What to correct |
+|---|---|---|
+| drizzle-kit | the migrator runs the migration again | `drizzle.__drizzle_migrations`: add a row whose `created_at` is the `when` of the new entry of the journal, with any `hash` (the column is required and never compared) |
+| knex | every `migrate` is refused: `The migration directory is corrupt, the following files are missing` | `knex_migrations`: set `name` of the row to the new file name, extension included |
+| Prisma | it still knows the migration by the old name | record the new name as applied: `npx prisma migrate resolve --applied <new name>` |
+| TypeORM | it runs the migration again | `migrations`: correct `timestamp`, and `name`, the class |
+
+The knex and TypeORM lines are read in the code of the two tools; the Prisma command is the one
+its CLI documents, and what Prisma then does with the old row was not verified here.
+
+`merge-trunk --to-land` says so each time it renames or replays, and so does the fix of
+`verify-merge`. `--to-land --dry-run` on a branch that already holds the trunk says which
+migrations would move and moves nothing. A landing that stops there leaves the migrations folder
+as it found it, under drizzle-kit too, whose replay deletes before it generates: the same command
+runs again once the cause is fixed. A rename never takes a number a file of the folder carries
+already: it takes the next free one, the order kept. When the last migration of the trunk carries
+no number a migration can follow (a `helpers.js` in the folder of knex, which knex would load as a
+migration and fail on), the landing stops and says to move that file: no rename can sort after it. Read in the code
+of the four tools, and run here on git repositories with the files of each; not measured against
+a database.
 
 A migration already merged on the main branch is never edited or regenerated: a correction is a
 new migration.

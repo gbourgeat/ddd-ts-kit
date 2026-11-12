@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:462a4d0841722ffb -->
+<!-- translation-of: parallel-work.md sha256:c5ad6218cb3a43b7 -->
 
 # Travailler en parallèle sans collisions
 
@@ -208,7 +208,13 @@ et son `name` suivent, Prisma : le dossier), le contenu gardé. Quand une migrat
 tronc depuis la base change une table qu'une migration de la branche change aussi, leur ordre
 est une décision : la fusion s'arrête et dit de la générer de nouveau sur le tronc
 (`npm run db:generate <what-it-does>`). `drizzle-generate --replay` reste pour une fusion faite
-sans `merge-trunk`. Un enregistrement de décision de la branche dont le tronc a pris le numéro
+sans `merge-trunk`. Une migration de la branche qui se trie avant la dernière du tronc est une
+erreur de `verify-merge`, `--warn` compris, donc le *hook* de pre-push l'arrête : le rapport nomme
+les deux migrations et la commande ci-dessus qui remet l'ordre, et une migration de travail est
+laissée de côté jusqu'à son atterrissage
+([persistance](../tools/persistence.fr.md#migrations--noms-fusions-et-ordre)). Sur une branche
+qui contient déjà le tronc, `merge-trunk --to-land` n'a rien à fusionner et fait quand même
+atterrir les migrations, laissées à committer. Un enregistrement de décision de la branche dont le tronc a pris le numéro
 entre-temps reçoit le prochain numéro libre (son fichier, son titre `# ADR-NNNN`, les liens de
 ses traductions).
 

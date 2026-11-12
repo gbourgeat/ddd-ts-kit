@@ -87,3 +87,42 @@ describe('ddd-ts-kit typeorm-generate <folder>/<name>', () => {
     expect(exists(root, 'tool-ran')).toBe(false);
   });
 });
+
+describe('db:generate with a name a migration already carries', () => {
+  it.each([
+    [
+      'knex-generate',
+      'node_modules/knex/bin/cli.js',
+      'migrations/20261015101500_add-invoices.js',
+      ['--name', 'add-invoices'],
+    ],
+    [
+      'prisma-generate',
+      'node_modules/prisma/build/index.js',
+      'prisma/migrations/20261015101500_add_invoices/migration.sql',
+      ['--name', 'add-invoices'],
+    ],
+    [
+      'typeorm-generate',
+      'node_modules/typeorm/cli.js',
+      'migrations/1760000000000-add-invoices.ts',
+      ['migrations/add-invoices'],
+    ],
+  ])('%s refuses it before the tool runs, and names the migration that carries it', (command, bin, held, named) => {
+    const root = projectWithTool(bin);
+
+    write(root, held, '');
+
+    const refused = cli(root, command, ...named);
+
+    const carried = held
+      .split('/')
+      .at(held.endsWith('migration.sql') ? -2 : -1)
+      ?.replace(/\.(?:js|ts)$/, '');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain(`error: A migration named add-invoices already exists: ${carried}.`);
+    expect(refused.stderr).toContain('fix: Name this one by what it changes this time, a column or a table');
+    expect(exists(root, 'tool-ran')).toBe(false);
+  });
+});

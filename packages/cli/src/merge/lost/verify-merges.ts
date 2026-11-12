@@ -1,5 +1,7 @@
 import { CliError } from '../../cli-error';
 import { knownCommit } from '../../commit/known-commit';
+import { migrationOrder } from '../order/migration-order';
+import type { MigrationOrderFinding } from '../order/migration-order-finding';
 import { refuseShallowHistory } from '../refuse-shallow-history';
 import { inProgressMerge } from './in-progress-merge';
 import type { MergeCheck } from './merge-check';
@@ -28,17 +30,18 @@ export interface MergesToVerify {
 
 /**
  * Checks the merges of a branch: one named commit, or else every merge commit since the trunk
- * plus the merge in progress. Reads git and the working tree, changes nothing.
+ * plus the merge in progress, and the order of the migrations of the working tree against that
+ * trunk. Reads git and the working tree, changes nothing.
  */
 export function verifyMerges(request: MergesToVerify): MergeVerification {
   const repo = mergeRepositoryOf(request.root);
   const since = request.commit === undefined ? sinceOf(request.root, repo.top, request) : undefined;
   const merges = request.commit === undefined ? listed(repo, request, since) : [named(repo, request.commit, request)];
 
-  return summarized(
-    since?.name,
-    merges.map((merge) => verifyMerge(repo, merge)),
-  );
+  return summarized(since?.name, {
+    merges: merges.map((merge) => verifyMerge(repo, merge)),
+    migrations: since === undefined ? [] : migrationOrder(request.root, since),
+  });
 }
 
 function named(repo: MergeRepository, commit: string, request: MergesToVerify): MergeToVerify {
@@ -84,12 +87,16 @@ function listed(repo: MergeRepository, request: MergesToVerify, since: Since | u
   ];
 }
 
-function summarized(since: string | undefined, merges: readonly MergeCheck[]): MergeVerification {
-  const errorCount = merges.reduce((sum, merge) => sum + merge.errors.length, 0);
+function summarized(
+  since: string | undefined,
+  { merges, migrations }: { merges: readonly MergeCheck[]; migrations: readonly MigrationOrderFinding[] },
+): MergeVerification {
+  const errorCount = merges.reduce((sum, merge) => sum + merge.errors.length, migrations.length);
 
   return {
     ...(since === undefined ? {} : { since }),
     merges,
+    migrations,
     errorCount,
     warningCount: merges.reduce((sum, merge) => sum + merge.warnings.length, 0),
     ok: errorCount === 0,

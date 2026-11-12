@@ -157,7 +157,11 @@ describe('verify-merge, warnings and what it leaves out', () => {
     expect(blocking.code).toBe(1);
     expect(warned.code).toBe(0);
     expect(warned.stdout.startsWith(blocking.stdout)).toBe(true);
-    expect(warned.stdout).toMatch(/\nwarning only \(--warn\): these errors do not block yet, a later minor version/);
+
+    expect(warned.stdout).toMatch(
+      /\nwarning only \(--warn\): what a merge lost does not block yet, a later minor version/,
+    );
+
     expect(cli(root, 'verify-merge', 'HEAD', '--warn', '--json').json()).toMatchObject({ ok: false, errorCount: 8 });
   });
 
@@ -170,6 +174,7 @@ describe('verify-merge, warnings and what it leaves out', () => {
 
     expect(cli(root, 'verify-merge', '--json').json()).toEqual({
       merges: [],
+      migrations: [],
       errorCount: 0,
       warningCount: 0,
       ok: true,

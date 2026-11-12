@@ -45,6 +45,14 @@ outermost first: logging and metrics, then retry, then circuit breaker, then tim
 attempt then counts for the breaker and has its own time limit, and an open circuit ends
 the retries at once.
 
+An `external` or `gateway` adapter that states no policy gets the default one of
+`src/platform/resilience/` (2 seconds per attempt). Left to it and given the port of an adapter
+that states a longer limit, it is cut first, under its own name: `aspects/timeout-covers-delegate`
+reports that case, and the `TimeoutError` of the default policy says so in its message. State the
+policy of the outer adapter, `ownPolicy(timeout(<ms>))`, or `ownPolicy()` alone when it only hands
+the call over. The rule reads declarations and container bindings only: on a platform wired by
+hand, a limit read at run time, a port bound twice or under a condition, check it yourself.
+
 ## What may be recorded
 
 By a log, a span, a metric, an error report: class, method, context, duration, error code,

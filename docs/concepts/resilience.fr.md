@@ -1,5 +1,5 @@
 [English](resilience.md) · **Français**
-<!-- translation-of: resilience.md sha256:4f861fdf6a95bb0f -->
+<!-- translation-of: resilience.md sha256:13ed04cb5e060fee -->
 
 # Résilience
 
@@ -43,6 +43,11 @@ absente.
 - *Des délais plus longs que celui de l'appelant.* Si le client de la route abandonne après 5
   secondes, un délai intérieur de 30 secondes ne fait que gaspiller des ressources. Les budgets
   rétrécissent vers l'intérieur.
+- *Un délai par défaut qui coupe un adaptateur plus lent derrière lui.* La politique par défaut
+  donne à chaque adaptateur `external` ou `gateway` qui n'en déclare aucune un délai de 2
+  secondes. Un adaptateur qui ne fait que passer son appel à un autre, lent par nature et lié avec
+  120 secondes à lui, échoue alors à chaque appel au bout de 2 secondes, comme un délai dépassé de
+  l'adaptateur extérieur. Voir « Un adaptateur qui délègue » plus bas.
 
 Un adaptateur qui peut être annulé prend le signal en dernier paramètre et le remet à l'appel ;
 `timeout(2000, { signal: true })` interrompt alors la requête HTTP elle-même, pas seulement
@@ -328,6 +333,64 @@ export class ProviderMailer implements Mailer {
   }
 }
 ```
+
+### Un adaptateur qui délègue
+
+Un adaptateur peut recevoir le port d'un autre adaptateur et ne faire que lui passer l'appel : un
+lecteur qui ajoute une clé de cache, une passerelle qui choisit un fournisseur parmi deux. Le
+délai qui compte est alors le plus court du chemin, et l'adaptateur extérieur en a un qu'il n'a
+jamais écrit : celui par défaut de son genre. Deux choses le rendent visible.
+
+**L'erreur dit quelle politique a coupé l'appel.** `timeout(ms, { statedBy })` termine le message
+de la `TimeoutError` par qui a déclaré le délai, et le garde dans `statedBy` ; le code reste
+`TIMEOUT`. La politique par défaut d'un projet généré s'y nomme
+(`src/platform/resilience/default-policy.ts`) :
+
+```text
+RemoteQuoteReader.read did not answer within 2000 ms (the default policy of the external and
+gateway adapters, OUTBOUND_TIMEOUT_MS: `ownPolicy(timeout(<ms>))` on the declaration or the
+binding of this adapter states another, at least as long as the adapter it calls)
+```
+
+**La règle [`aspects/timeout-covers-delegate`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) le
+signale avant l'exécution.** `ddd-ts-kit check` lit les adaptateurs que le projet déclare
+(`@Adapter`, `@Gateway`) ou lie avec le conteneur du kit, et les classes qui typent le
+constructeur de chacun. Elle signale un seul cas, celui que personne n'a choisi : un adaptateur
+`external` ou `gateway` laissé à la politique par défaut (aucun `ownPolicy(...)`, aucun
+`timeout(...)` à lui) qui reçoit un port dont l'adaptateur déclare un `timeout(<ms>)` plus long
+autour de toutes ses méthodes. Le délai par défaut est celui avec lequel `main.ts` s'exécute : la
+valeur de repli de `OUTBOUND_TIMEOUT_MS` dans la configuration de la plateforme, sinon le
+`timeoutMs` de `resilience/default-resilience-settings.ts`. Le correctif déclare la politique de
+l'adaptateur extérieur, ou `ownPolicy()` seul quand il ne fait que passer l'appel et que
+l'adaptateur intérieur porte la politique :
+
+```ts
+@Adapter(QuoteReader, { kind: 'external', aspects: [ownPolicy(timeout(120_000))] })
+export class RemoteQuoteReader implements QuoteReader {
+  constructor(private readonly models: ModelReader) {}
+}
+```
+
+Un adaptateur qui déclare son propre délai n'est jamais signalé, même quand ce délai est plus
+court que celui de l'adaptateur qu'il appelle : échouer vite est un choix. Et ce que le texte ne
+montre pas n'est pas jugé ; la règle se tait donc sur chacun de ces cas, où c'est le message de
+l'erreur qui le dit :
+
+- une plateforme câblée à la main (`platform.adapter(ownPolicy(...)(new X(), { ... }))`, le style
+  explicite sans le conteneur du kit) : rien n'y est lu ;
+- une durée ou un genre qui n'est pas un littéral, et un aspect qui est une variable, une
+  décomposition, un appel d'un autre nom ou sous `when(...)` ;
+- un `timeout(` imbriqué dans les options d'un autre aspect, et un `@Timeout` sur une méthode :
+  le texte ne dit pas quelle méthode appelle le port ;
+- un port ou un adaptateur lié plus d'une fois, lié de nouveau par `rebind(`, ou lié sous une
+  condition ;
+- un paramètre typé par un nom que l'adaptateur n'importe pas d'un fichier du projet (un type
+  d'un paquet, une déclaration de son propre fichier), et deux ports du même nom, sauf si chaque
+  fichier importe le sien depuis le fichier qui le déclare ;
+- un adaptateur que l'adaptateur extérieur atteint à travers un adaptateur intermédiaire, ou sans
+  recevoir son port ;
+- un délai par défaut qui n'est pas un seul nombre, un environnement qui fixe
+  `OUTBOUND_TIMEOUT_MS`, et les nouvelles tentatives, qui multiplient les deux délais.
 
 Les cas d'usage reçoivent leur comportement transverse des *middlewares* des bus. Aucune des
 trois formes n'est permise dans `domain/` ou `application/` : règle

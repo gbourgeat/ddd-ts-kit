@@ -69,6 +69,21 @@ again on top.
 `persistence/migration-history` reports the forked or unordered history otherwise, which
 drizzle's migrator would skip silently.
 
+`npx ddd-ts-kit verify-merge` (the pre-push hook runs it) fails, `--warn` included, on a migration
+of the branch that sorts before the last one of the trunk, or that the drizzle-kit journal does
+not list, and names both and the fix: `merge-trunk` under drizzle-kit (after a merge made
+otherwise, the `meta/` of the trunk then `drizzle-generate --replay --base <trunk>`),
+`merge-trunk --to-land` under knex, Prisma and TypeORM, which renames it after the trunk's last
+even on a branch that already holds the trunk (only those out of order; `--dry-run` lists them),
+and leaves that rename to commit. A working migration is left out until it lands. Fetch first: it
+compares with the trunk git knows. A database that already applied the old name no longer
+matches (knex refuses every migrate, drizzle and TypeORM run it again): reset it, or correct what it
+recorded as the command says. When it stops on a
+table the trunk changed too, delete the migration, then `db:generate` it again.
+
+`db:generate` refuses a name a migration already carries, on the four tools: name the new one by
+what it changes this time.
+
 ## In a parallel build
 
 A worker generates a working migration only, `npm run db:generate working-<what>`, which the
