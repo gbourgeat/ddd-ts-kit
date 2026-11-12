@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:d9af3fd83f565316 -->
+<!-- translation-of: persistence.md sha256:831992cd6d21fa70 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -896,11 +896,12 @@ en service emporte alors ses tables avec lui (`generate service`).
 
 **Ce qu'une migration a laissé de côté, avant un déploiement.** L'ordre ci-dessus se lit dans les
 fichiers ; ce que les migrations font des tables de modèle de lecture se lit dans une base.
-`npm run db:read-models` liste, sur la base que nomme `DATABASE_URL`, chaque table de modèle de
-lecture qui ne peut pas contenir la trace d'une ligne supprimée, avec la migration qu'il faut à
-chacune, et sort avec le code 1 ; l'application fait la même vérification à son démarrage, si bien
-qu'une table qu'une montée de version a laissée telle quelle arrête le démarrage et non le premier
-événement qui l'atteint
+`npm run db:read-models` lit, sur la base que nomme `DATABASE_URL`, les tables de modèle de lecture
+que l'application liste, chacune par son propre registre : il affiche celles qui ne peuvent pas
+contenir la trace d'une ligne supprimée, avec la migration qu'il faut à chacune, et sort avec le
+code 1 (2 sans base à lire, 3 quand elle n'a pas pu être lue). L'application fait la même
+vérification à son démarrage, si bien qu'une table qu'une montée de version a laissée telle quelle
+arrête le démarrage et non le premier événement qui l'atteint
 ([Chaque table vérifiée au démarrage, et avant un déploiement](../concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement)).
 
 ## Recommandation selon la situation

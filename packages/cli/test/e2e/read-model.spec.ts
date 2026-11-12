@@ -66,6 +66,7 @@ describe('the read model tables of the database', () => {
     const tables = readModelTables(database.persistence);
 
     expect(await tables.notReady()).toEqual([]);
+    expect((await tables.report()).text).toContain('shipping.invoices_to_ship');
 
     // The traces the contract left hold NULL there: the column is put back on an empty table.
     await database.reset();
@@ -76,7 +77,7 @@ describe('the read model tables of the database', () => {
     await alter(column + ' drop not null');
 
     expect(String(refusal)).toContain('1 read model table is not ready for this version: shipping.invoices_to_ship.');
-    expect(String(refusal)).toContain('alter table shipping.invoices_to_ship\\n  alter column "customer_id" drop not null');
+    expect(String(refusal)).toContain('alter table "shipping"."invoices_to_ship" alter column "customer_id" drop not null;');
     expect(await tables.notReady()).toEqual([]);
   });
 });

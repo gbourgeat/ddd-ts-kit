@@ -88,3 +88,9 @@ what it changes this time.
 
 A worker generates a working migration only, `npm run db:generate working-<what>`, which the
 conductor replaces on the trunk at merge.
+
+## After a migration that touches a read model
+
+Run `npm run db:read-models` on the migrated database (it needs `DATABASE_URL` alone): each read
+model table the project lists is read by its own store. On `ReadModelTablesNotReadyError`, from
+that command or at the start, write the migration the error carries, as it is, in a new migration.

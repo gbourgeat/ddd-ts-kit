@@ -839,10 +839,11 @@ working on one context alike. A context extracted as a service takes its tables 
 
 **What a migration left undone, before a deployment.** The order above is read from the files;
 what the migrations make of the read model tables is read from a database. `npm run
-db:read-models` lists, on the database `DATABASE_URL` names, every read model table that cannot
-hold the trace of a deleted row, with the migration each needs, and exits 1; the application
-makes the same check when it starts, so a table an upgrade left as it was stops the start and
-not the first event that reaches it
+db:read-models` reads, on the database `DATABASE_URL` names, the read model tables the application
+lists, each by its own store: it prints those that cannot hold the trace of a deleted row, with
+the migration each needs, and exits 1 (2 without a database to read, 3 when it could not be
+read). The application makes the same check when it starts, so a table an upgrade left as it was
+stops the start and not the first event that reaches it
 ([Every table checked at the start, and before a deployment](../concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment)).
 
 ## Recommendation by situation

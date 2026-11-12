@@ -2015,17 +2015,21 @@ adapter gives (three statements and the query of a plan): `InMemoryReadModelStor
 the fakes, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore` and
 `TypeOrmReadModelStore` in the adapter packages, all held to `readModelStoreContract`.
 
-On PostgreSQL the table of such a store holds the trace of a deleted row only if every column of
-its row accepts NULL. `PostgresTraceColumns` is the refusal of one store, before its first trace,
-from the columns it maps. `PostgresReadModelTables` asks the same of every read model table of the
-database, in one statement on the catalog and before any store exists: `notReady()` lists the
-tables, `require()` refuses with `ReadModelTablesNotReadyError`, and `atStart(logger)` is what an
-application calls when it starts (`atStart(logger, 'reported')` logs the tables as one error and
-lets the start go on). Both refusals name the table, the columns that refuse NULL, whether the
-check constraint `<table>_live_rows_whole` is missing, and the migration to write, as statements
-(their `migration` field holds them alone). Each ORM package gives the check over its own
-context (`knexReadModelTables`, `drizzleReadModelTables`, `prismaReadModelTables`,
-`typeOrmReadModelTables`), all held to `readModelTablesContract`: see
+On PostgreSQL the table of such a store holds the trace of a deleted row only if every column the
+store maps as a field of its row accepts NULL. `PostgresTraceColumns` reads it from the database,
+for those columns and no other: which refuse NULL, which nothing can open (a part of the primary
+key, an identity or a generated column, a column that is not there), whether the table exists, and
+what its check constraint `<table>_live_rows_whole` keeps whole. It is the refusal of one store
+before its first trace, and `tableState()` of a `TableReadModelStore` answers the same reading as
+a `ReadModelTableState`. `ReadModelTables` asks it of the stores an application lists, each built
+as the application binds it: `states()` and `notReady()` list, `require()` refuses with
+`ReadModelTablesNotReadyError`, `atStart(logger)` is what an application calls when it starts
+(`atStart(logger, 'reported')` logs the tables as one error and lets the start go on), and
+`report()` is what a command prints. The verdict is the store's by construction, a table nobody
+lists is never read, and a store without a table (memory, OpenSearch) has nothing to say. A
+refusal names the table, what keeps it from holding a trace and the migration to write, in
+`statements`: it touches the mapped columns alone, adds the constraint `not valid` and validates
+it apart, and can be run twice. All held to `readModelTablesContract` on the four ORM: see
 [Every table checked at the start, and before a deployment](../../docs/concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment).
 
 ### Rebuild

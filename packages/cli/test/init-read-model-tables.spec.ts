@@ -141,7 +141,7 @@ describe('init: the read model tables the application lists, checked before a st
     expect(read(initProject('--orm', 'prisma'), 'scripts/read-model-tables.ts')).toContain(
       'await openPersistence({ databaseUrl, databaseTransaction: { waitMs: 2_000, timeoutMs: 5_000 } });',
     );
-    expect(read(root, 'README.md')).toContain(' run db:read-models` says the same of that database and exits 1.');
+    expect(read(root, 'README.md')).toContain(' run db:read-models` says the same of that database');
     expect(read(root, 'README.md')).toContain("`readModelTables: 'reported'` to `composeApplication`");
   });
 

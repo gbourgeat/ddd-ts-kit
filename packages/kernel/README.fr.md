@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9a3f0e46e14fc95b -->
+<!-- translation-of: README.md sha256:74058f6e2cab6842 -->
 
 # @ddd-ts-kit/kernel
 
@@ -2101,17 +2101,22 @@ adaptateur (trois instructions et la requête d'un plan) : `InMemoryReadModelSto
 `TypeOrmReadModelStore` dans les *packages* d'adaptateurs, tous tenus à `readModelStoreContract`.
 
 Sur PostgreSQL, la table d'un tel store ne contient la trace d'une ligne supprimée que si chaque
-colonne de sa ligne accepte NULL. `PostgresTraceColumns` est le refus d'un store, avant sa première
-trace, d'après les colonnes qu'il associe. `PostgresReadModelTables` demande la même chose de chaque
-table de modèle de lecture de la base, en une instruction sur le catalogue et avant qu'aucun store
-n'existe : `notReady()` liste les tables, `require()` refuse avec `ReadModelTablesNotReadyError`, et
-`atStart(logger)` est ce qu'appelle une application à son démarrage (`atStart(logger, 'reported')`
-journalise les tables en une erreur et laisse le démarrage se poursuivre). Les deux refus nomment la
-table, les colonnes qui refusent NULL, si la contrainte de vérification `<table>_live_rows_whole`
-manque, et la migration à écrire, en instructions (leur champ `migration` les contient seules). Chaque
-*package* d'ORM donne la vérification sur son propre contexte (`knexReadModelTables`,
-`drizzleReadModelTables`, `prismaReadModelTables`, `typeOrmReadModelTables`), tous tenus à
-`readModelTablesContract` : voir
+colonne que le store associe comme champ de sa ligne accepte NULL. `PostgresTraceColumns` le lit
+dans la base, pour ces colonnes et aucune autre : celles qui refusent NULL, celles que rien ne peut
+ouvrir (une partie de la clé primaire, une colonne d'identité ou générée, une colonne qui n'existe
+pas), si la table existe, et ce que sa contrainte de vérification `<table>_live_rows_whole` garde
+entier. C'est le refus d'un store avant sa première trace, et `tableState()` d'un
+`TableReadModelStore` rend la même lecture sous la forme d'un `ReadModelTableState`.
+`ReadModelTables` le demande aux stores qu'une application liste, chacun construit comme
+l'application le lie : `states()` et `notReady()` listent, `require()` refuse avec
+`ReadModelTablesNotReadyError`, `atStart(logger)` est ce qu'appelle une application à son démarrage
+(`atStart(logger, 'reported')` journalise les tables en une erreur et laisse le démarrage se
+poursuivre), et `report()` est ce qu'affiche une commande. Le verdict est celui du store par
+construction, une table que personne ne liste n'est jamais lue, et un store sans table (mémoire,
+OpenSearch) n'a rien à dire. Un refus nomme la table, ce qui l'empêche de contenir une trace et la
+migration à écrire, dans `statements` : elle ne touche que les colonnes associées, ajoute la
+contrainte `not valid` et la valide à part, et peut être exécutée deux fois. Le tout tenu à
+`readModelTablesContract` sur les quatre ORM : voir
 [Chaque table vérifiée au démarrage, et avant un déploiement](../../docs/concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement).
 
 ### Reconstruction

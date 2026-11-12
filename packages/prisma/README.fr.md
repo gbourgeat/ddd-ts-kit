@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bdc9e9d121c06ed3 -->
+<!-- translation-of: README.md sha256:e46a81f758bea207 -->
 
 # @ddd-ts-kit/prisma
 
@@ -807,7 +807,7 @@ vérification garde entières les lignes vivantes (`check (deleted or (status is
 starts_at is not null))`), une requête à vous sur la table écarte les lignes supprimées
 (`deleted = false`), et une table dont des colonnes refusent NULL est refusée par
 `ReadModelTableNotReadyError` avant l'écriture de la première trace, par une lecture des colonnes de la table
-([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). Une application n'attend pas cette première trace : `prismaReadModelTables(context)` lit chaque table de modèle de lecture de la base en une instruction sur le catalogue, quel que soit le registre construit, et son `require()` refuse avec `ReadModelTablesNotReadyError`, qui nomme chaque table qui n'est pas prête, ses colonnes et la migration à écrire ; un projet généré l'appelle à son démarrage, et `npm run db:read-models` avant un déploiement ([Chaque table vérifiée au démarrage, et avant un déploiement](../../docs/concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement)). Les
+([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). Une application n'attend pas cette première trace : `tableState()` d'un `PrismaReadModelStore` lit sa table comme le registre le fait avant sa première trace, pour les colonnes qu'il associe et aucune autre, et `ReadModelTables` du noyau le demande à chaque registre que l'application liste, puis refuse avec `ReadModelTablesNotReadyError`, qui nomme chaque table qui n'est pas prête, ce qui l'en empêche et la migration à écrire ; un projet généré garde la liste, la vérifie à son démarrage, et `npm run db:read-models` la vérifie avant un déploiement ([Chaque table vérifiée au démarrage, et avant un déploiement](../../docs/concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement)). Les
 champs du modèle sont optionnels eux aussi (`String?`) : le registre lit les colonnes de la table,
 pas le modèle, si bien qu'un champ laissé requis sur une colonne qui accepte NULL fait refuser la
 trace par le client Prisma avec sa propre erreur de validation, avant toute requête, et non avec
