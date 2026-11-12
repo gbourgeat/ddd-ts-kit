@@ -76,12 +76,13 @@ async function inProcessPostgres(): Promise<PGlite> {
 }
 
 /**
- * A database of its own on the server, copied from the migrated one and dropped at close
- * (test/support/test-database-clone.ts): no other file, and no other run, reads or empties its rows.
+ * A database of its own on the server, with the tables of the migrated one and none of its rows,
+ * dropped at close (test/support/test-database-clone.ts): no other file, and no other run, reads
+ * or empties its rows. Its pool is the share this file has of the connections of the server.
  */
 async function openServer(url: string): Promise<TestDatabase> {
   const clone = await cloneDatabase(url);
-  const dataSource = createDataSource(clone.url);
+  const dataSource = createDataSource(clone.url, { poolSize: clone.poolSize });
 
   await dataSource.initialize();
 

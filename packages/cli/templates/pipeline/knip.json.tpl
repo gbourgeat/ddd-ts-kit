@@ -22,7 +22,7 @@
       "{{config.contextsDir}}/*/test/worlds/*.ts",
       "{{config.contextsDir}}/*/*/test/fakes/*.ts",
       "{{config.contextsDir}}/*/*/test/worlds/*.ts",
-      "test/architecture/**/*.spec.ts"{{knip.e2eSpecs}}{{knip.testDatabase}}
+      "test/architecture/**/*.spec.ts"{{knip.e2eSpecs}}{{knip.testDatabase}}{{knip.serverSetup}}
     ]
   }
 }

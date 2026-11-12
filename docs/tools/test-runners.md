@@ -470,8 +470,10 @@ export default {
   one once it holds more than 800 MB (`workerIdleMemoryLimit`). Jest keeps the modules of every spec
   file it ran in the process, about 15 MB each with ES modules, and a single worker runs in band,
   where that limit does not apply: a suite of about 200 end-to-end files then ran out of heap. With
-  `DATABASE_URL` set the two workers stay: each file runs on a copy of the migrated database, its
-  own (`test/support/test-database-clone.ts`). A broker or a Redis protocol server is one for every
+  `DATABASE_URL` set the two workers stay: each file runs on a database of its own, copied from the
+  template its run made of the migrated one (`test/support/test-database-clone.ts`), and the config
+  names the global setup that starts that run (`test/support/test-database-run.ts`), since a hook
+  has the 20 seconds of a test there. A broker or a Redis protocol server is one for every
   file, which would consume the events and read the keys of the others: with its address set
   (`AMQP_URL`, `KAFKA_BROKERS`, `NATS_URL`, `REDIS_URL`) the config keeps one worker, in band, and
   the heap of a long suite needs `NODE_OPTIONS=--max-old-space-size=<MB>`. Vitest isolates each

@@ -24,6 +24,7 @@ export const ELSEWHERE = [
   /^alias-.*\.spec\.ts$/,
   /^pairwise\.spec\.ts$/,
   /^migrations-for-real\.spec\.ts$/,
+  /^test-databases-.*\.spec\.ts$/,
   /^package-managers\.spec\.ts$/,
   /^mutation-on-managers\.spec\.ts$/,
   /^first-minute(?:-proven|-js)?\.spec\.ts$/,

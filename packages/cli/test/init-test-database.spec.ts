@@ -16,7 +16,8 @@ describe('the test database of a project on an ORM', () => {
 
       expect(read(root, TEMPLATE)).toContain("process.env['TEST_DATABASE_TEMPLATE'] = file;");
       expect(read(root, 'vitest.config.ts')).toContain(GLOBAL_SETUP);
-      expect(read(root, 'vitest.e2e.config.ts')).toContain(GLOBAL_SETUP);
+      // The end-to-end run names a second global setup after it, the one of a server (init-test-database-server.spec.ts).
+      expect(read(root, 'vitest.e2e.config.ts')).toContain(`globalSetup: ['${TEMPLATE}', `);
 
       expect(read(root, OPEN)).toContain(
         'return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });',

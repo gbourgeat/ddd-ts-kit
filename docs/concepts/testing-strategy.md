@@ -449,32 +449,73 @@ tables in the copy as well would spare those 25 ms and leave the code that creat
 is not done.
 
 Against a server (`DATABASE_URL`, which the end-to-end support reads), the database the URL names
-is migrated beforehand (`npm run db:migrate`) and each spec file runs on a copy of it:
-`openTestDatabase(url)` creates a database from that one (`create database ... template`, in
-`test/support/test-database-clone.ts`), connects the persistence to it, and drops it at `close()`.
-The files therefore run at the same time on a server as they do in process, two runs started at
-once do not wait for each other, the audit trail starts empty in each file, and the migrated
-database itself is never written. `reset()` still empties the tables of the copy between two
-tests. What this asks of the server:
+is migrated beforehand (`npm run db:migrate`) and each spec file runs on a database of its own,
+with the tables of that one and none of its rows. A global setup of the end-to-end run
+(`test/support/test-database-run.ts`) starts the run once, where no timeout of a hook applies: it
+copies the migrated database (`create database ... template`) and empties the copy, the audit trail
+included, whose guard is off for that transaction alone. `openTestDatabase(url)` then copies that
+template for its file (`test/support/test-database-clone.ts`), connects the persistence to the
+copy, and drops it at `close()`. A file therefore waits a fraction of a second for its database
+whatever the migrated one holds, the files run at the same time on a server as they do in process,
+two runs started at once do not wait for each other, the audit trail starts empty in each file, and
+the migrated database itself is never written. `reset()` still empties the tables of the copy
+between two tests. Measured on PostgreSQL 18 with a migrated database of 474 MB (2026-11-12): one
+copy takes 6 seconds, four at the same time 46 to 56 seconds each, more than the 30 seconds of a
+hook; with the template of the run, the global setup takes 6 seconds once and each file waits 0.1
+to 0.5 second.
+
+- **A file starts from empty tables, as on PostgreSQL in process.** What a migration inserts, what
+  an application or a spec left in the migrated database, never reaches a spec: a spec stores what
+  it needs. The tables of the migration tool keep their rows, and so does a table of an extension.
+  When the tables emptied held more than 64 MB, the run says so on its error output, with what the
+  copy took: give the tests a database of their own, migrated and empty, to spare that time.
+- **The connections are shared between the files that run at once.** The global setup reads what
+  the server has left (`max_connections`, less what it reserves and what is open, and no more than
+  the connection limit of the role), divides it by the workers of the run, and each application
+  under test opens a pool of that size, 10 at most (`DatabaseClone.poolSize`, which the four ORM
+  hand to their connection). Under two connections per file the run is refused before any file
+  starts, with its numbers and the number of workers that fits (`--maxWorkers`), instead of
+  `too many clients` from the driver in the middle of a spec. `TEST_DATABASE_CONNECTIONS` states
+  what the run may take instead of what the server says, for a server behind a pooler or shared
+  with other runs. The count is taken when the run starts: a second run started later sees what
+  the first has open, not what it will open, and an adapter or a spec that opens connections of
+  its own takes them from the same server.
+- **One copy at a time.** Two copies at once slow each other more than they gain: a file holds an
+  advisory lock of its run while it copies, and a run holds one for the whole server while it
+  copies the migrated database.
+- **What a killed run leaves is dropped by the next run.** A database of a run is named
+  `<database>_test_<run>_template` or `<database>_test_<run>_<random>`, and the run holds an
+  advisory lock on the maintenance database, keyed by its name, from before its first database
+  until its teardown, which drops what is left of its own (the copy of a file that failed while it
+  started included). The global setup of a run drops the databases named after a run whose lock
+  nobody holds, and only those nobody is connected to: a run that lives, in another checkout or on
+  another machine, keeps its lock, so its databases stay, and a database with any other name is
+  never dropped. The lock was preferred to the age of a copy, which says nothing of a long run,
+  and to `pg_stat_activity` alone, which shows nobody on the template of a run between two files.
+  The lock lives in the session of the global setup: a server reached through a pooler in
+  transaction mode does not keep it, and the tests need a direct address there.
+
+What this asks of the server:
 
 - the role of the URL may create a database (`alter role <role> createdb`) and owns the migrated
-  one, or is a superuser, and the server is PostgreSQL 13 or later
+  one and its tables, or is a superuser, and the server is PostgreSQL 13 or later
   (`drop database ... with (force)`);
-- nobody else is connected to the migrated database while a file starts, because PostgreSQL
-  copies a database only then: an application left running on it, or a console, makes the copy
-  fail after about ten seconds with a message that says so. The files themselves connect to the
-  `postgres` database of the server to create and drop their copies;
-- a copy is named `<database>_test_<seconds of its date>_<random>`. A run that is killed leaves
-  its copies; the next file that starts drops those that are more than an hour old, and never a
-  database with another name.
+- nobody else is connected to the migrated database while the run starts, because PostgreSQL
+  copies a database only then: an application left running on it, or a console, makes the global
+  setup fail after about ten seconds with a message that says so. The files never connect to it:
+  they copy the template of their run through the `postgres` database of the server.
 
 A broker or a Redis protocol server stays one for every file: with its address in the environment,
 the configuration of the end-to-end run keeps the files one after the other.
 
-Under Vitest the global setup returns its teardown, which deletes the saved cluster. Under Jest
-the setup is the default export of that file, and `test/support/test-database-teardown.ts`, named
-by `globalTeardown` of `jest.config.js`, deletes it; the workers Jest starts after the setup
-inherit the variable that names the file (`TEST_DATABASE_TEMPLATE`). On the identity preset, the
+Under Vitest each global setup returns its teardown: one deletes the saved cluster, the other ends
+the run on the server, and `vitest.e2e.config.ts` names both. Under Jest a setup is the default
+export of its file, and `test/support/test-database-teardown.ts`, named by `globalTeardown` of
+`jest.config.js`, deletes the cluster or ends the run; the workers Jest starts after the setup
+inherit the variables it sets (`TEST_DATABASE_TEMPLATE`, or `TEST_DATABASE_RUN` and
+`TEST_DATABASE_POOL_SIZE` on a server). Jest takes one global setup and resolves no import alias
+in it: `jest.e2e.config.js` names `test-database-run.ts` when `DATABASE_URL` is set, and that file
+imports nothing of the project. On the identity preset, the
 integration specs under Jest took 45 CPU seconds with an initdb per spec file and 26 with the copy
 ([measured](../tools/test-runners.md#speed-measured)).
 

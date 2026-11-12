@@ -22,10 +22,12 @@ until you send the request that enqueues. Never wait for the worker with a delay
 `--job <JobName>` names one job, also for a use case a route reaches
 (`test/e2e/<use-case>-<job>.e2e.spec.ts`). On an ORM, each spec opens a copy of the PostgreSQL
 cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
-creates its tables there. With `DATABASE_URL` set, each spec file runs on a copy of that migrated
-database instead (`test/support/test-database-clone.ts`), dropped when the application closes:
-files run at the same time there too, and a spec never connects to the migrated database itself,
-which PostgreSQL copies only while nobody else is connected to it.
+creates its tables there. With `DATABASE_URL` set, a global setup copies the migrated database it
+names once and empties the copy (`test/support/test-database-run.ts`), and each spec file runs on
+a copy of that template, dropped when the application closes: a file starts from empty tables
+there too, so a spec stores what it needs, never counts on a row a migration inserted, and never
+connects to the migrated database itself. A run refused with
+`spec files at once need ... connections` takes fewer workers (`--maxWorkers`).
 
 A spec past 350 lines (`clean/file-size`) is split by behaviour into parts named after it:
 `test/e2e/place-order-refusals.e2e.spec.ts` beside `test/e2e/place-order.e2e.spec.ts`. With a
