@@ -1,5 +1,5 @@
 [English](read-side.md) · **Français**
-<!-- translation-of: read-side.md sha256:b36f4a1e1b4f45c2 -->
+<!-- translation-of: read-side.md sha256:95594e7eb00b81cb -->
 
 # Proposition : le côté lecture
 
@@ -385,7 +385,7 @@ au retard ; et certaines lectures (plein texte, facettes, grandes listes filtré
   estampillées par son langage publié, `ProjectionRebuild` le copie dans une nouvelle table
   pendant que les événements continuent d'être appliqués, puis échange les deux en une
   transaction. PostgreSQL seulement.
-- **Observabilité.** `projection_events_total` par résultat (`applied`, `stale`, `ignored`,
+- **Observabilité.** `projection_events_total` par résultat (`applied`, `traced`, `stale`, `ignored`,
   `failed`) et `projection_last_event_age_ms`, le retard, sur le port `Metrics` ; un *span*
   `process <projection>` par livraison ; un événement enterré après ses nouvelles tentatives
   parvient à la remontée des erreurs comme pour tout consommateur.

@@ -17,6 +17,7 @@ export class RebuildSuite extends ReadModelStoreSuite<ReadModelStoreUnderContrac
     this.rebuildsUnderEvents();
     this.appliesAfterTheSwap();
     this.rebuildsAroundDeletions();
+    this.rebuildsAroundTraces();
     this.survivesARebuild();
   }
 
@@ -129,6 +130,42 @@ export class RebuildSuite extends ReadModelStoreSuite<ReadModelStoreUnderContrac
       this.expect(await this.put(row('a2'), at('evt-3', 3))).toBe('stale');
       this.expect(await this.put(row('a2'), at('evt-9', 9))).toBe('applied');
       this.expect(await this.ids()).toEqual(['a1', 'a2']);
+    });
+  }
+
+  private rebuildsAroundTraces(): void {
+    this.it('keeps deleted a row deleted while it exports, before its page was copied', async () => {
+      const source = this.sourceOf(['a1', 'a3', 'a4', 'a5'], 2);
+
+      await this.put(row('a5'), at('evt-1', 1));
+
+      source.duringExport = async () => {
+        source.remove('a5');
+        await this.store.delete('a5', at('evt-9', 9));
+      };
+
+      await this.rebuild(source);
+
+      this.expect(await this.ids()).toEqual(['a1', 'a3', 'a4']);
+      this.expect(await this.put(row('a5'), at('evt-5', 5))).toBe('stale');
+      this.expect(await this.put(row('a5'), at('evt-10', 10))).toBe('applied');
+    });
+
+    this.it('keeps the trace of a key it never held, written before it started or while it exports', async () => {
+      const source = this.sourceOf(['a1', 'a3', 'a4'], 2);
+
+      await this.store.delete('a2', at('evt-4', 4));
+
+      source.duringExport = async () => {
+        await this.store.delete('a6', at('evt-9', 9));
+      };
+
+      await this.rebuild(source);
+
+      this.expect(await this.put(row('a2'), at('evt-3', 3))).toBe('stale');
+      this.expect(await this.put(row('a6'), at('evt-8', 8))).toBe('stale');
+      this.expect((await this.subject.table.find('a6'))?.stamp).toEqual(at('evt-9', 9));
+      this.expect(await this.ids()).toEqual(['a1', 'a3', 'a4']);
     });
   }
 

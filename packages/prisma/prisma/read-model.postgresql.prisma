@@ -7,12 +7,16 @@
 // criteria order strings by code point: add `COLLATE "C"` to those columns in the migration
 // (`ALTER TABLE ... ALTER COLUMN room TYPE text COLLATE "C"`), which the schema cannot say.
 //
-// A unique index of your own leaves the deleted rows out: `WHERE NOT deleted`.
+// Every field of your row is optional: a deleted row keeps its key and its stamp, and NULL in
+// every other column, so a unique value it held is free again. Keep the live rows whole with a
+// check constraint in the migration, which the schema cannot say either:
+// `ALTER TABLE ... ADD CONSTRAINT appointment_list_live_rows_whole CHECK (deleted OR (status IS NOT NULL
+// AND starts_at IS NOT NULL))`.
 
 model AppointmentRow {
   id               String   @id
-  status           String
-  startsAt         DateTime @map("starts_at") @db.Timestamptz(3)
+  status           String?
+  startsAt         DateTime? @map("starts_at") @db.Timestamptz(3)
   /// The event that last changed the row: an older one changes nothing.
   lastEventId      String   @map("last_event_id")
   lastEventAt      DateTime @map("last_event_at") @db.Timestamptz(3)

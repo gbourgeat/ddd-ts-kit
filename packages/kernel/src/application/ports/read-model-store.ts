@@ -24,7 +24,12 @@ export abstract class ReadModelStore<Row> {
     next: (current: Row | undefined) => Row | undefined,
   ): Promise<ReadModelWrite>;
 
-  /** Removes the row, keeping its stamp: an older event delivered late does not bring it back. */
+  /**
+   * Removes the row, keeping its key and its stamp and none of its data: an older event delivered
+   * late does not bring it back (`applied`). A key the read model does not hold takes the same
+   * trace, so the creation this deletion follows changes nothing when it is delivered after it:
+   * no row was removed, and the answer is `traced`, as over the trace of an earlier deletion.
+   */
   abstract delete(key: string, stamp: EventStamp): Promise<ReadModelWrite>;
 
   abstract search(criteria: ScopedCriteria<Row>): Promise<Page<Row>>;

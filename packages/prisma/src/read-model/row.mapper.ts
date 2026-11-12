@@ -39,6 +39,11 @@ export class RowMapper<Row extends object> {
     );
   }
 
+  /** The fields of the row. */
+  fields(): string[] {
+    return Object.keys(this.columns);
+  }
+
   columnOf(field: string): string {
     const column = Object.hasOwn(this.columns, field) ? this.columns[field] : undefined;
 

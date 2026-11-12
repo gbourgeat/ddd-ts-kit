@@ -12,11 +12,12 @@ export interface ProjectedEvent {
 
 type Applying = (occurredAt: Date, apply: () => Promise<unknown>) => Promise<void>;
 
-const SKIPPED = new Set<unknown>(['stale', 'ignored']);
+/** What a write answers when it wrote or removed no row: counted under its own name, and no measure of the lag. */
+const SKIPPED = new Set<unknown>(['traced', 'stale', 'ignored']);
 
 /**
  * What measures a projection from outside, through the `Metrics` port: `projection_events_total`
- * counts each event by `result` (`applied`, `stale`, `ignored`, `failed`), and
+ * counts each event by `result` (`applied`, `traced`, `stale`, `ignored`, `failed`), and
  * `projection_last_event_age_ms` is the age of the last event applied when it was, which is
  * the lag of the projection. Without a bound `Metrics`, nothing is measured.
  */

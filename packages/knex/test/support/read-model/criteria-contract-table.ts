@@ -26,7 +26,14 @@ export const CONTRACT_TABLE: KnexReadModelOptions<CriteriaContractRow> = {
   schema: READ_SIDE,
 };
 
-/** What the migration of a read model would contain. The text columns that are ordered take the "C" collation. */
+/** What a live row always holds, which the columns no longer say: a deleted row keeps its key and its stamp alone. */
+const LIVE_ROWS =
+  'deleted or (status is not null and title is not null and seats is not null and price is not null and starts_at is not null and remote is not null and tenant_id is not null)';
+
+/**
+ * What the migration of a read model would contain: every column of the row accepts NULL, which is
+ * what a deleted row holds there, and the check constraint keeps the live rows whole. `remote` has a
+ * default, which a deleted row does not take. The text columns that are ordered take the "C" collation. */
 export function createContractTable(knex: Knex): Promise<void> {
   return createContractTableIn(knex, READ_SIDE);
 }
@@ -45,16 +52,17 @@ async function createContractTableIn(knex: Knex, schema: string | undefined): Pr
 
   await tables.createTable(CONTRACT_TABLE.table, (table) => {
     table.text('id').primary();
-    table.text('status').notNullable();
-    table.text('title').notNullable();
-    table.integer('seats').notNullable();
-    table.specificType('price', 'numeric').notNullable();
-    table.datetime('starts_at', { useTz: true, precision: 3 }).notNullable();
+    table.text('status').nullable();
+    table.text('title').nullable().unique({ indexName: 'criteria_contract_title_key' });
+    table.integer('seats').nullable();
+    table.specificType('price', 'numeric').nullable();
+    table.datetime('starts_at', { useTz: true, precision: 3 }).nullable();
     table.datetime('cancelled_at', { useTz: true, precision: 3 }).nullable();
     table.specificType('room', 'text collate "C"').nullable();
-    table.boolean('remote').notNullable();
-    table.text('tenant_id').notNullable();
+    table.boolean('remote').nullable().defaultTo(false);
+    table.text('tenant_id').nullable();
     readModelColumns(table);
+    table.check(LIVE_ROWS, [], 'criteria_contract_live_rows');
     table.index(['tenant_id', 'starts_at', 'id'], 'criteria_contract_tenant_starts_idx');
   });
 }

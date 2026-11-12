@@ -1,6 +1,14 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { Criteria, FixedExecutionScope, defineCriteria, scoped, type TenantScoped } from '@ddd-ts-kit/kernel';
+import {
+  AsyncLocalStorageExecutionScope,
+  Criteria,
+  FixedExecutionScope,
+  ReadModelTableNotReadyError,
+  defineCriteria,
+  scoped,
+  type TenantScoped,
+} from '@ddd-ts-kit/kernel';
 import { anExecutionContext } from '@ddd-ts-kit/testing';
 import { EntitySchema } from 'typeorm';
 import {
@@ -25,7 +33,7 @@ interface LedgerRow {
 const ledgerRows = new EntitySchema<LedgerRow & ReadModelStamps>({
   name: 'LedgerRow',
   tableName: 'ledger',
-  columns: { id: { type: 'text', primary: true }, holder: { type: 'text' }, ...readModelColumns() },
+  columns: { id: { type: 'text', primary: true }, holder: { type: 'text', nullable: true }, ...readModelColumns() },
 });
 
 /** A read model of tenant data whose rows do not carry their tenant: the column is the store's, not a field of the row. */
@@ -34,7 +42,7 @@ const tenantLedgerRows = new EntitySchema<LedgerRow & TenantScoped & ReadModelSt
   tableName: 'tenant_ledger',
   columns: {
     id: { type: 'text', primary: true },
-    holder: { type: 'text' },
+    holder: { type: 'text', nullable: true },
     tenantId: { ...tenantColumn().tenantId, select: false },
     ...readModelColumns(),
   },
@@ -63,7 +71,17 @@ async function emptied() {
   return tableOf();
 }
 
-readModelStoreContract(runner, { name: 'TypeOrmReadModelTable', createTable: emptied });
+/** What the table holds under a key, by field of the row, read beside the store. */
+async function stored(key: string) {
+  const rows: Record<string, unknown>[] = await database.dataSource.query(
+    'select id, status, title, seats, price, starts_at as "startsAt", cancelled_at as "cancelledAt", room, remote, tenant_id as "tenantId" from read_side.criteria_contract where id = $1',
+    [key],
+  );
+
+  return rows[0];
+}
+
+readModelStoreContract(runner, { name: 'TypeOrmReadModelTable', createTable: emptied, stored, uniqueTitle: true });
 
 describe('TypeOrmReadModelTable', () => {
   const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z') };
@@ -107,6 +125,49 @@ describe('TypeOrmReadModelTable', () => {
   });
 });
 
+describe('TypeOrmReadModelTable of an entity whose columns refuse NULL', () => {
+  interface StrictRow {
+    readonly id: string;
+    readonly title: string;
+    readonly note: string | null;
+    readonly tenantId: string;
+  }
+
+  const columns = {
+    id: { type: 'text', primary: true },
+    title: { type: 'text' },
+    note: { type: 'text', nullable: true },
+    tenantId: { name: 'tenant_id', type: 'text' },
+    ...readModelColumns(),
+  } as const;
+
+  const declare = (schema?: string) => () =>
+    new TypeOrmReadModelTable<StrictRow>(createTypeOrmUnitOfWork(database.dataSource), {
+      entity: new EntitySchema<StrictRow & ReadModelStamps>({
+        name: 'StrictRow',
+        ...(schema === undefined ? {} : { schema, tableName: 'strict_rows' }),
+        columns,
+      }),
+      ...(schema === undefined ? {} : { tenant: { scope: new AsyncLocalStorageExecutionScope() } }),
+    });
+
+  it('refuses it when it is built, naming the columns to make nullable and the check constraint', () => {
+    expect(declare()).toThrow(ReadModelTableNotReadyError);
+
+    expect(declare()).toThrow(
+      'The read model table StrictRow cannot hold the trace of a deleted row: "title", "tenant_id" refuse NULL',
+    );
+
+    expect(declare()).toThrow('check (deleted or ("title" is not null and "tenant_id" is not null))');
+  });
+
+  it('leaves the tenant of a read model of tenant data out of it', () => {
+    expect(declare('read_side')).toThrow(
+      'The read model table read_side.strict_rows cannot hold the trace of a deleted row: "title" refuses NULL',
+    );
+  });
+});
+
 describe('TypeOrmReadModelTable of an entity in the default schema', () => {
   const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z') };
   const account = { id: 'acct-1', holder: 'Jane Doe' };
@@ -126,6 +187,27 @@ describe('TypeOrmReadModelTable of an entity in the default schema', () => {
     expect((await table.shadow().find('acct-1'))?.row).toEqual({ ...account, holder: 'J. Doe' });
     expect(await database.dataSource.query('select count(*)::int as count from public.ledger')).toEqual([{ count: 1 }]);
     await table.abandonRebuild();
+  });
+
+  it('refuses a trace by name when the database is behind the entity, before the statement it would refuse', async () => {
+    await database.truncate();
+    await database.dataSource.query('alter table public.ledger alter column holder set not null');
+
+    const unitOfWork = createTypeOrmUnitOfWork(database.dataSource);
+    const table = new TypeOrmReadModelTable<LedgerRow>(unitOfWork, { entity: ledgerRows });
+
+    const written = unitOfWork.run(async () => {
+      const refusal = await table.insert({ key: 'acct-2', row: undefined, stamp }).catch((error: unknown) => error);
+
+      // The transaction is still usable: nothing was sent that PostgreSQL refused.
+      await table.insert({ key: 'acct-1', row: account, stamp });
+
+      return refusal;
+    });
+
+    await expect(written).resolves.toMatchObject({ table: 'ledger', columns: ['holder'] });
+    expect((await table.find('acct-1'))?.row).toEqual(account);
+    await database.dataSource.query('alter table public.ledger alter column holder drop not null');
   });
 });
 

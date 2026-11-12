@@ -17,6 +17,9 @@ import {
   InMemoryReadModelTable,
   InMemoryUnitOfWork,
   evaluateCriteria,
+  UniqueViolationError,
+  type EventStamp,
+  type StampedRow,
 } from '@ddd-ts-kit/kernel';
 import { InMemoryOutboxStore } from '@ddd-ts-kit/events';
 import { InMemoryRepository, resetSequences, snapshots } from '../src';
@@ -220,10 +223,59 @@ readModelRowsContract(runner, {
   createTable: () => ({ table: new InMemoryReadModelTable<CriteriaContractRow>() }),
 });
 
+const NO_DATA = {
+  status: null,
+  title: null,
+  seats: null,
+  price: null,
+  startsAt: null,
+  cancelledAt: null,
+  room: null,
+  remote: null,
+  tenantId: null,
+};
+
+/** The in-memory table holding `title` unique among its live rows, as a unique index would. */
+class UniqueTitles extends InMemoryReadModelTable<CriteriaContractRow> {
+  private readonly titles = new Map<string, string | undefined>();
+
+  override async insert(entry: StampedRow<CriteriaContractRow>): Promise<boolean> {
+    return this.kept(entry, await super.insert(this.free(entry)));
+  }
+
+  override async replace(entry: StampedRow<CriteriaContractRow>, held: EventStamp): Promise<boolean> {
+    return this.kept(entry, await super.replace(this.free(entry), held));
+  }
+
+  private free(entry: StampedRow<CriteriaContractRow>): StampedRow<CriteriaContractRow> {
+    const taken = [...this.titles].some(([key, title]) => key !== entry.key && title === entry.row?.title);
+
+    if (entry.row !== undefined && taken) {
+      throw new UniqueViolationError(entry.key);
+    }
+
+    return entry;
+  }
+
+  private kept(entry: StampedRow<CriteriaContractRow>, written: boolean): boolean {
+    if (written) {
+      this.titles.set(entry.key, entry.row?.title);
+    }
+
+    return written;
+  }
+}
+
+let readModelTable = new UniqueTitles();
+
+// In memory a deleted row is its key and its stamp.
 readModelStoreContract(runner, {
   name: 'InMemoryReadModelTable',
-  createTable: () => ({
-    table: new InMemoryReadModelTable<CriteriaContractRow>(),
-    unitOfWork: new InMemoryUnitOfWork(),
-  }),
+  createTable: () => {
+    readModelTable = new UniqueTitles();
+
+    return { table: readModelTable, unitOfWork: new InMemoryUnitOfWork() };
+  },
+  stored: async (key) => ({ ...NO_DATA, ...(await readModelTable.find(key))?.row, id: key }),
+  uniqueTitle: true,
 });

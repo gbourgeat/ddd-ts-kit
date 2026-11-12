@@ -1,4 +1,4 @@
-import type { EventStamp, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
+import type { EventStamp, PostgresTraceColumns, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
 import type { PrismaRawQueries } from '../outbox/prisma-raw-queries';
 import type { PrismaContext } from '../unit-of-work/prisma-context';
 import { quoted } from './quoted';
@@ -15,11 +15,14 @@ export interface NamedTable<Row extends object> {
   readonly mapper: RowMapper<Row>;
   /** The tenant of the rows, for a read model of tenant data. */
   readonly tenant: TenantOfRows;
+  /** Of the table the copy is made like. */
+  readonly traces: PostgresTraceColumns;
 }
 
 /**
- * The stamped rows of a table that has no model: the copy of a rebuild, on PostgreSQL.
- * Statements are written here with quoted identifiers that come from the options of the
+ * The stamped rows of a table reached without a model, on PostgreSQL: the copy of a rebuild, and
+ * the table itself for the trace of a deleted row, which holds SQL NULL in every column, a `Json`
+ * one included, where the model would write a JSON `null`. Statements are written here with quoted identifiers that come from the options of the
  * adapter; every value is a `$n` parameter.
  */
 export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> implements ReadModelRows<Row> {
@@ -49,11 +52,7 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) {
-      return false;
-    }
-
-    const record = this.recordOf(entry);
+    const record = await this.recordOf(entry);
     const columns = record.map(([column]) => quoted(column)).join(', ');
     const places = record.map((_, index) => `$${String(index + 1)}`).join(', ');
     const key = this.column(this.target.key);
@@ -67,7 +66,7 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
-    const record = this.recordOf(entry);
+    const record = await this.recordOf(entry);
     const changes = record.map(([column], index) => `${quoted(column)} = $${String(index + 1)}`).join(', ');
     const key = this.column(this.target.key);
     const next = (offset: number): string => `$${String(record.length + offset)}`;
@@ -81,11 +80,28 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
     return replaced.length === 1;
   }
 
-  /** What the entry writes, by column: its fields and stamps, and the tenant of the work for a read model of tenant data. */
-  private recordOf(entry: StampedRow<Row>): [string, unknown][] {
-    const { mapper, key, tenant } = this.target;
+  /** Whether any row holds the key, whatever its tenant: what tells a conflict on the key from one on another unique value. */
+  async holds(key: string): Promise<boolean> {
+    const found = await this.run(
+      `select 1 as held from ${this.target.path} where ${this.column(this.target.key)} = $1 limit 1`,
+      [key],
+    );
 
-    return Object.entries({ ...mapper.toRecord(writtenOf(entry, key)), ...tenant.written() });
+    return found.length === 1;
+  }
+
+  /**
+   * What the entry writes, by column: its fields and stamps, and the tenant of the work for a read
+   * model of tenant data. The trace of a deleted row is written once the table is known to accept it.
+   */
+  private async recordOf(entry: StampedRow<Row>): Promise<[string, unknown][]> {
+    const { mapper, key, tenant, traces } = this.target;
+
+    if (entry.row === undefined) {
+      await traces.require();
+    }
+
+    return Object.entries({ ...mapper.toRecord(writtenOf(entry, key, mapper.fields())), ...tenant.written() });
   }
 
   private column(field: string): string {

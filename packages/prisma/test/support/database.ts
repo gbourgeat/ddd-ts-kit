@@ -27,6 +27,7 @@ const TABLES = [
   'billing_core.invoices',
   'read_side.criteria_contract',
   'public.ledger',
+  'public.strict_rows',
   'public.stored_events',
   'public.stored_events_head',
   'public.stream_snapshots',
@@ -39,6 +40,10 @@ const TABLES = [
 /** What the Prisma schema cannot say, and a migration of the project adds by hand: strings ordered by code point. */
 const BINARY_ORDER = 'alter table read_side.criteria_contract alter column room type text collate "C"';
 
+/** What the Prisma schema cannot say either: the check constraint that keeps the live rows of a read model whole. */
+const LIVE_ROWS =
+  'alter table read_side.criteria_contract add constraint criteria_contract_live_rows check (deleted or (status is not null and title is not null and seats is not null and price is not null and starts_at is not null and remote is not null and tenant_id is not null))';
+
 /**
  * One PostgreSQL database with the tables of the test schema, created by the DDL that
  * `prisma migrate diff` derived from the shipped fragment.
@@ -50,6 +55,7 @@ export async function createDatabase(): Promise<TestDatabase> {
   await migration.connect();
   await migration.query(await readFile(DDL_PATH, 'utf8'));
   await migration.query(BINARY_ORDER);
+  await migration.query(LIVE_ROWS);
   await migration.end();
 
   const prisma = new PrismaClient({

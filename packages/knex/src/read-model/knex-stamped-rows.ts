@@ -1,5 +1,11 @@
 import type { Knex } from 'knex';
-import { tenantScopeOf, type EventStamp, type ReadModelRows, type StampedRow } from '@ddd-ts-kit/kernel';
+import {
+  tenantScopeOf,
+  type EventStamp,
+  type PostgresTraceColumns,
+  type ReadModelRows,
+  type StampedRow,
+} from '@ddd-ts-kit/kernel';
 import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict';
 import { TENANT_COLUMN, whereTenant } from '../tenancy/where-tenant';
 import type { KnexContext } from '../unit-of-work/knex-context';
@@ -14,6 +20,8 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   constructor(
     private readonly context: KnexContext,
     private readonly options: KnexReadModelOptions<Row>,
+    /** Of the table itself, which the copy of a rebuild is made like. */
+    private readonly traces: PostgresTraceColumns,
   ) {
     this.mapper = new RowMapper<Row>(options.columns);
   }
@@ -40,9 +48,7 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) {
-      return false;
-    }
+    await this.holdsTrace(entry);
 
     return insertIgnoringConflict(this.context.executor(), this.table(), {
       row: this.recordOf(entry),
@@ -51,6 +57,8 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
+    await this.holdsTrace(entry);
+
     const replaced: unknown = await this.writing()
       .where(this.keyColumn(), entry.key)
       .where('last_event_id', held.eventId)
@@ -81,11 +89,19 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
     return tenant === undefined ? this.table() : this.table().where(TENANT_COLUMN, tenantScopeOf(tenant).tenantId);
   }
 
+  /** Before the trace of a deleted row is written: the columns of the table accept it. */
+  private async holdsTrace({ row }: StampedRow<Row>): Promise<void> {
+    if (row === undefined) {
+      await this.traces.require();
+    }
+  }
+
   private recordOf({ key, row, stamp }: StampedRow<Row>): Record<string, unknown> {
     const { tenant } = this.options;
 
     return {
-      ...(row === undefined ? {} : this.mapper.toRecord(row)),
+      // A deleted row keeps no data: every column of the row is written NULL, not left to its default.
+      ...(row === undefined ? this.mapper.toNulls() : this.mapper.toRecord(row)),
       ...(tenant === undefined ? {} : { [TENANT_COLUMN]: tenantScopeOf(tenant).tenantId }),
       [this.keyColumn()]: key,
       last_event_id: stamp.eventId,

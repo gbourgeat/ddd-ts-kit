@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c90776f3af4a5fb6 -->
+<!-- translation-of: README.md sha256:b328be94c9364cb2 -->
 
 # @ddd-ts-kit/prisma
 
@@ -726,8 +726,8 @@ projection.
 ```prisma
 model AppointmentRow {
   id               String   @id
-  status           String
-  startsAt         DateTime @map("starts_at") @db.Timestamptz(3)
+  status           String?   // NULL dans une ligne supprimée, comme chaque champ de la ligne
+  startsAt         DateTime? @map("starts_at") @db.Timestamptz(3)
   lastEventId      String   @map("last_event_id")
   lastEventAt      DateTime @map("last_event_at") @db.Timestamptz(3)
   lastEventVersion BigInt?  @map("last_event_version")
@@ -756,9 +756,19 @@ export class PrismaAppointmentList extends PrismaReadModelStore<AppointmentRow, 
 
 Chaque écriture passe par `TableReadModelStore` du noyau : une ligne n'est écrite que si son
 événement est plus récent que celui qu'elle porte, sur l'exécuteur de l'unité de travail, si
-bien que la ligne et la marque d'événement traité sont validées ensemble. Une ligne retirée
-reste dans la table avec `deleted` positionné : une requête à vous sur la table écarte ces
-lignes, tout comme un index unique (`WHERE NOT deleted`). `store.table` est ce que prend
+bien que la ligne et la marque d'événement traité sont validées ensemble. Une ligne supprimée
+reste dans la table comme une trace, avec `deleted` positionné : sa clé et son tampon, et NULL
+dans toutes les autres colonnes, ce pour quoi chaque colonne de la ligne accepte NULL. La
+suppression d'une clé que la table ne tient pas encore laisse la même trace. Une contrainte de
+vérification garde entières les lignes vivantes (`check (deleted or (status is not null and
+starts_at is not null))`), une requête à vous sur la table écarte les lignes supprimées
+(`deleted = false`), et une table dont des colonnes refusent NULL est refusée par
+`ReadModelTableNotReadyError` avant l'écriture de la première trace, par une lecture des colonnes de la table
+([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). Les
+champs du modèle sont optionnels eux aussi (`String?`) : le registre lit les colonnes de la table,
+pas le modèle, si bien qu'un champ laissé requis sur une colonne qui accepte NULL fait refuser la
+trace par le client Prisma avec sa propre erreur de validation, avant toute requête, et non avec
+l'erreur nommée. `store.table` est ce que prend
 `ProjectionRebuild` ; la reconstruction est réservée à PostgreSQL (une copie `<table>__rebuild`
 faite `LIKE ... INCLUDING ALL`, les clés écrites entre-temps dans `<table>__touched`, l'échange
 par renommage en une transaction) et ses garanties et limites sont dans le README de

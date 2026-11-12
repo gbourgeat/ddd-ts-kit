@@ -95,10 +95,6 @@ export class OpenSearchReadModelTable<Row extends object> implements ReadModelTa
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) {
-      return false;
-    }
-
     const { alias, tenant } = this.targets.write();
     const document = this.fields.documentOf(entry.row, entry.stamp, tenant);
 

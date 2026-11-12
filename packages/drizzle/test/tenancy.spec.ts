@@ -9,6 +9,8 @@ import {
   NoCurrentTenantError,
   TENANT_ISOLATION_POLICIES,
   type UnitOfWork,
+  ReadModelKeyHeldElsewhereError,
+  writeIfNewer,
 } from '@ddd-ts-kit/kernel';
 import { anExecutionContext, asTenant, scoped } from '@ddd-ts-kit/testing';
 import { tenantIsolationContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
@@ -271,6 +273,18 @@ describe('tenant conditions on drizzle', () => {
 
     expect((await asTenant(scope, 'acme', () => table().find('a1')))?.row?.tenantId).toBe('acme');
     expect(await asTenant(scope, 'globex', () => table().find('a1'))).toBeUndefined();
+    // The trace of a deleted row is written in the tenant of the work too, under a key it did not hold.
+    expect(await asTenant(scope, 'acme', () => table().insert({ key: 't1', row: undefined, stamp }))).toBe(true);
+    expect(await asTenant(scope, 'acme', () => table().find('t1'))).toEqual({ key: 't1', row: undefined, stamp });
+    expect(await asTenant(scope, 'globex', () => table().find('t1'))).toBeUndefined();
+
+    // A key another tenant holds is out of reach: a deletion finds nothing to delete, an upsert is refused by name.
+    const elsewhere = { key: 'a1', stamp: { eventId: 'evt-9', occurredAt: new Date('2026-10-10T13:00:00.000Z') } };
+    const upsert = () => asTenant(scope, 'globex', () => writeIfNewer(table(), { ...elsewhere, next: () => row }));
+
+    expect(await asTenant(scope, 'globex', () => writeIfNewer(table(), elsewhere))).toBe('ignored');
+    await expect(upsert()).rejects.toThrow(ReadModelKeyHeldElsewhereError);
+    expect((await asTenant(scope, 'acme', () => table().find('a1')))?.stamp).toEqual(stamp);
     expect(await asTenant(scope, 'globex', () => table().replace({ key: 'a1', row, stamp }, stamp))).toBe(false);
     expect((await asTenant(scope, 'globex', () => table().search(plan))).rows).toEqual([]);
     expect((await asTenant(scope, 'acme', () => table().search(plan))).rows).toHaveLength(1);

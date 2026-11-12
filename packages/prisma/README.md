@@ -705,8 +705,8 @@ the template, with the four fields that order the events of a projection.
 ```prisma
 model AppointmentRow {
   id               String   @id
-  status           String
-  startsAt         DateTime @map("starts_at") @db.Timestamptz(3)
+  status           String?   // NULL in a deleted row, as every field of the row
+  startsAt         DateTime? @map("starts_at") @db.Timestamptz(3)
   lastEventId      String   @map("last_event_id")
   lastEventAt      DateTime @map("last_event_at") @db.Timestamptz(3)
   lastEventVersion BigInt?  @map("last_event_version")
@@ -735,9 +735,16 @@ export class PrismaAppointmentList extends PrismaReadModelStore<AppointmentRow, 
 
 Every write goes through `TableReadModelStore` of the kernel: a row is written only if its
 event is newer than the one it holds, on the executor of the unit of work, so the row and the
-processed-event mark commit together. A removed row stays in the table with `deleted` set:
-a query of your own on the table leaves those rows out, and so does a unique index
-(`WHERE NOT deleted`). `store.table` is what `ProjectionRebuild` takes; the rebuild is
+processed-event mark commit together. A removed row stays in the table as a trace, with `deleted`
+set: its key and its stamp, and NULL in every other column, which is why every column of the row
+is nullable. A deletion of a key the table does not hold yet leaves the same trace. A check
+constraint keeps the live rows whole (`check (deleted or (status is not null and starts_at is
+not null))`), a query of your own on the table leaves the deleted rows out (`deleted = false`),
+and a table whose columns refuse NULL is refused with `ReadModelTableNotReadyError` before the first trace is written, from one read of the columns of the table
+([What a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)). The
+fields of the model are optional as well (`String?`): the store reads the columns of the table,
+not the model, so a field left required over a nullable column makes the Prisma client refuse the
+trace with its own validation error, before any statement, and not with the named one. `store.table` is what `ProjectionRebuild` takes; the rebuild is
 PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
 meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees
 and limits are in the README of `@ddd-ts-kit/kernel` ("Rebuild"). The store passes

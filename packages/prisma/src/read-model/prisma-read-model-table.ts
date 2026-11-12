@@ -1,5 +1,7 @@
 import {
   PostgresReadModelRebuild,
+  PostgresTraceColumns,
+  type TracedTable,
   type CriteriaPlan,
   type EventStamp,
   type SearchedRows,
@@ -14,6 +16,7 @@ import { criteriaToPrisma } from './criteria-to-prisma';
 import { PrismaModelRows } from './prisma-model-rows';
 import type { PrismaReadModelOptions } from './prisma-read-model-options';
 import { PrismaTableRows } from './prisma-table-rows';
+import { quoted } from './quoted';
 import { RowMapper } from './row.mapper';
 import { TenantOfRows } from './tenant-of-rows';
 
@@ -38,17 +41,29 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
     options: PrismaReadModelOptions<Row, Tx>,
   ) {
     const { table, schema } = options;
-    const shadow = `"${PostgresReadModelRebuild.shadowOf(table).replaceAll('"', '""')}"`;
+
+    const inSchema = (name: string): string =>
+      schema === undefined ? quoted(name) : `${quoted(schema)}.${quoted(name)}`;
 
     this.mapper = new RowMapper<Row>(options.columns);
-    this.rows = new PrismaModelRows(context, options);
 
-    this.copy = new PrismaTableRows(context, {
-      path: schema === undefined ? shadow : `"${schema.replaceAll('"', '""')}".${shadow}`,
+    const named = {
       key: options.key ?? 'id',
       mapper: this.mapper,
       tenant: new TenantOfRows(options.tenant, options.columns),
-    });
+      traces: new PostgresTraceColumns(
+        (statement, parameters) => this.run(statement, parameters),
+        () => tracedTable(options),
+      ),
+    };
+
+    this.rows = new PrismaModelRows(
+      context,
+      options,
+      new PrismaTableRows(context, { ...named, path: inSchema(table) }),
+    );
+
+    this.copy = new PrismaTableRows(context, { ...named, path: inSchema(PostgresReadModelRebuild.shadowOf(table)) });
 
     this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
       table,
@@ -126,4 +141,13 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
       ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null)
       : [];
   }
+}
+
+/** The table and the columns of the row, in which a trace holds NULL: every one but the key and the tenant. */
+function tracedTable<Row, Tx>({ table, schema, columns, key, tenant }: PrismaReadModelOptions<Row, Tx>): TracedTable {
+  const kept = new Set<string>([key ?? 'id', ...(tenant === undefined ? [] : [tenant.field ?? 'tenantId'])]);
+  const mapped: [string, string][] = Object.entries(columns);
+  const data = mapped.filter(([field]) => !kept.has(field)).map(([, column]) => column);
+
+  return { table, data, ...(schema === undefined ? {} : { schema }) };
 }

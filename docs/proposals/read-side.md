@@ -361,7 +361,7 @@ handlers, each with its own answer to idempotence, rebuild and lag; and some rea
   `EventStoreProjectionRebuild`): the owning context exposes a paged export of stamped rows
   through its published language, `ProjectionRebuild` copies it into a new table while events keep being applied,
   then swaps the two in one transaction. PostgreSQL only.
-- **Observability.** `projection_events_total` by result (`applied`, `stale`, `ignored`,
+- **Observability.** `projection_events_total` by result (`applied`, `traced`, `stale`, `ignored`,
   `failed`) and `projection_last_event_age_ms`, the lag, on the `Metrics` port; one
   `process <projection>` span per delivery; an event buried after its retries reaches the
   error reporter as for any consumer.

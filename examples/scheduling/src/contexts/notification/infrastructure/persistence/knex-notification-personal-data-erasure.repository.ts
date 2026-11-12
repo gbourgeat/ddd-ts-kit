@@ -32,6 +32,7 @@ export class KnexNotificationPersonalDataErasure implements NotificationPersonal
 
     const stamp = storableStamp({ eventId: `erasure:${personId}`, occurredAt: this.clock.now() });
 
+    // `traced` is not counted: no contact was there, and the trace keeps a creation still on its way from bringing one.
     return (await this.contacts.delete(personId, stamp)) === 'applied' ? 1 : 0;
   }
 }

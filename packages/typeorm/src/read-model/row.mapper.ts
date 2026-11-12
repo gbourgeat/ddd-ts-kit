@@ -34,6 +34,11 @@ export class RowMapper<Row extends object> {
     ) as Row;
   }
 
+  /** NULL in every field of the row, by property: what a deleted row holds. */
+  toNulls(): Record<string, null> {
+    return Object.fromEntries(this.fields.map((column) => [column.propertyName, null]));
+  }
+
   toRecord(properties: Readonly<Record<string, unknown>>): Record<string, unknown> {
     const written = this.columns.filter((column) => Object.hasOwn(properties, column.propertyName));
 

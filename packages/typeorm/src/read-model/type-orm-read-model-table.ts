@@ -1,6 +1,9 @@
-import type { ObjectLiteral } from 'typeorm';
+import type { EntitySchemaColumnOptions, ObjectLiteral } from 'typeorm';
 import {
   PostgresReadModelRebuild,
+  PostgresTraceColumns,
+  type TracedTable,
+  ReadModelTableNotReadyError,
   type CriteriaPlan,
   type EventStamp,
   type SearchedRows,
@@ -27,11 +30,17 @@ const ALIAS = 'row';
 export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadModelTable<Row> {
   private readonly tenant: TenantOfRows;
 
+  private readonly traces = new PostgresTraceColumns(
+    (statement, parameters) => this.run(statement, parameters),
+    () => this.traced(),
+  );
+
   constructor(
     private readonly context: TypeOrmContext,
     private readonly options: TypeOrmReadModelOptions<Row>,
   ) {
     this.tenant = new TenantOfRows(options.tenant);
+    holdsTraces(options);
   }
 
   find(key: string): Promise<StampedRow<Row> | undefined> {
@@ -121,6 +130,7 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
       key: this.options.key ?? 'id',
       mapper: this.mapper(),
       tenant: this.tenant,
+      traces: this.traces,
       ...(copy === undefined ? { entity: this.options.entity } : {}),
     });
   }
@@ -128,15 +138,56 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
   private rebuild(): PostgresReadModelRebuild {
     const { schema, tableName } = this.metadata();
 
-    return new PostgresReadModelRebuild(
-      async (statement, parameters) => {
-        const rows: unknown = await this.context.manager().query(statement, [...parameters]);
-
-        return Array.isArray(rows)
-          ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null)
-          : [];
-      },
-      { table: tableName, ...(schema === undefined ? {} : { schema }) },
-    );
+    return new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
+      table: tableName,
+      ...(schema === undefined ? {} : { schema }),
+    });
   }
+
+  /** The table and the columns of the row, in which a trace holds NULL: every one but the key, the tenant and the stamp. */
+  private traced(): TracedTable {
+    const { schema, tableName, columns } = this.metadata();
+    const kept = keptOf(this.options);
+    const data = columns.filter((column) => !kept.has(column.propertyName)).map((column) => column.databaseName);
+
+    return { table: tableName, data, ...(schema === undefined ? {} : { schema }) };
+  }
+
+  private async run(
+    statement: string,
+    parameters: readonly (string | number)[],
+  ): Promise<readonly Readonly<Record<string, unknown>>[]> {
+    const rows: unknown = await this.context.manager().query(statement, [...parameters]);
+
+    return Array.isArray(rows)
+      ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null)
+      : [];
+  }
+}
+
+const STAMPS: readonly string[] = ['lastEventId', 'lastEventAt', 'lastEventVersion', 'deleted'];
+
+/**
+ * Refuses, when the store is built, an entity whose columns could not hold the trace of a
+ * deleted row: every column of the row is `nullable`, the key and the tenant apart. An early
+ * signal: the database is asked before the first trace.
+ */
+function holdsTraces<Row>(options: TypeOrmReadModelOptions<Row>): void {
+  const { columns, schema, tableName, name } = options.entity.options;
+  const kept = keptOf(options);
+
+  const refusing = Object.entries<EntitySchemaColumnOptions | undefined>(columns).flatMap(([property, column]) =>
+    column === undefined || column.nullable === true || kept.has(property) ? [] : [column.name ?? property],
+  );
+
+  if (refusing.length > 0) {
+    const table = tableName ?? name;
+
+    throw new ReadModelTableNotReadyError(schema === undefined ? table : `${schema}.${table}`, refusing);
+  }
+}
+
+/** The properties a trace keeps: the stamp, the key and the tenant. */
+function keptOf<Row>({ key, tenant }: TypeOrmReadModelOptions<Row>): ReadonlySet<string> {
+  return new Set([...STAMPS, key ?? 'id', ...(tenant === undefined ? [] : [tenant.property ?? 'tenantId'])]);
 }

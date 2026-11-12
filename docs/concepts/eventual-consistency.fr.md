@@ -1,5 +1,5 @@
 [English](eventual-consistency.md) · **Français**
-<!-- translation-of: eventual-consistency.md sha256:e89f171d8775d363 -->
+<!-- translation-of: eventual-consistency.md sha256:ac9ab5847b70b0e2 -->
 
 # La cohérence à terme, expliquée à un responsable produit
 
@@ -161,7 +161,10 @@ export async function project(slots: OpenSlots, event: SlotEvent, open: boolean)
 
 L'ordre par instant repose sur l'horloge du producteur ; quand l'amont fournit une version par
 clé, `stampOf(event, version)` la porte et l'ordre ne dépend plus des horloges. Les projections
-du kit sont écrites de cette façon ([CQRS tel qu'il est employé ici](cqrs.fr.md)).
+du kit sont écrites de cette façon ([CQRS tel qu'il est employé ici](cqrs.fr.md)). Une
+suppression est ordonnée de la même façon, même livrée avant la création qu'elle suit : elle
+laisse une trace sous sa clé
+([ce que laisse une ligne supprimée](cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)).
 
 ## Limites et cas où s'en passer
 

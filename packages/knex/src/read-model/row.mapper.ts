@@ -8,6 +8,11 @@ export class RowMapper<Row extends object> {
     ) as Row;
   }
 
+  /** NULL in every column of the row: what a deleted row holds. */
+  toNulls(): Record<string, null> {
+    return Object.fromEntries(Object.values(this.columns).map((column) => [column, null]));
+  }
+
   toRecord(row: Row): Record<string, unknown> {
     return Object.fromEntries(
       Object.entries(this.columns).map(([field, column]) => {

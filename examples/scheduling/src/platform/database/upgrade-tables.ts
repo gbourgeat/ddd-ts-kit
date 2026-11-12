@@ -1,4 +1,5 @@
 import type { Knex } from 'knex';
+import { keepNoDataOfADeletedRow } from '@/platform/database/keep-no-data-of-a-deleted-row';
 import { addAppointmentDocuments } from '@/contexts/scheduling/shared/infrastructure/persistence/add-appointment-documents.schema';
 import { addInternalNotes } from '@/contexts/scheduling/shared/infrastructure/persistence/add-internal-notes.schema';
 
@@ -9,4 +10,5 @@ import { addInternalNotes } from '@/contexts/scheduling/shared/infrastructure/pe
 export const upgradeTables = async (knex: Knex): Promise<void> => {
   await addAppointmentDocuments(knex);
   await addInternalNotes(knex);
+  await keepNoDataOfADeletedRow(knex);
 };

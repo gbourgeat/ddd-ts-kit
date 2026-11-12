@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:a2233a8f4fba34de -->
+<!-- translation-of: cqrs.md sha256:9d60d18a827cfe7d -->
 
 # CQRS tel qu'utilisé ici
 
@@ -226,8 +226,9 @@ qu'on le trouve.
   qu'il tient : le port au-dessus de `ReadModelStore` avec le type de sa ligne et ses critères, la
   table dans le schéma du contexte, l'adaptateur de stockage de l'ORM du projet lié au port, le
   *fake*, et une *spec* qui lance `readModelContract` sur les deux. Les colonnes des champs
-  acceptent null, puisqu'une ligne supprimée est une trace qui ne garde que sa clé et son tampon,
-  et une contrainte de vérification garde entière toute autre ligne (sur Prisma, dont le langage de
+  acceptent null, puisqu'une ligne supprimée est une trace qui ne garde que sa clé et son tampon
+  ([ce que laisse une ligne supprimée](#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)),
+  et une contrainte de vérification, `<table>_live_rows_whole`, garde entière toute autre ligne (sur Prisma, dont le langage de
   schéma n'en a pas, l'instruction reste à ajouter à la migration) ; une colonne de texte qu'une
   lecture trie ou compare par intervalle prend la collation `"C"` dans sa migration, les critères
   ordonnant les chaînes par point de code. L'état de chaque partie est dans la
@@ -315,6 +316,55 @@ export class OpenSlotsProjection {
 `FindOpenSlots` lit ensuite `OpenSlots` avec des critères, comme n'importe quel autre port de
 lecture. Le projecteur n'envoie aucune commande et ne lit aucun autre contexte : il ne fait que
 garder sa table à jour.
+
+### La table d'un modèle de lecture, et ce que laisse une ligne supprimée
+
+`delete(key, stamp)` ne retire pas la ligne de sa table. Il laisse une trace : la clé, le tampon
+et `deleted = true`, et rien d'autre. C'est la trace qui fait tenir une suppression quel que soit
+l'ordre des livraisons : un événement plus ancien qui arrive plus tard trouve un tampon plus
+récent et ne change rien. Cela vaut pour une clé que la table ne tient pas encore : une
+suppression livrée avant la création qu'elle suit insère la trace, et la création en retard est
+`stale`. Une telle suppression répond `traced`, pas `applied` : elle a enregistré sa trace et n'a
+retiré aucune ligne, comme une suppression par-dessus une trace antérieure. Un code qui compte
+ce qu'il a retiré (un effacement qui rapporte ce qu'il a atteint) ne compte que `applied`. Sur un stockage SQL, cela demande quatre choses à la table et à qui la lit :
+
+- **Chaque colonne de la ligne accepte NULL.** Une trace ne garde aucune donnée : chaque colonne
+  que le registre associe contient NULL, hormis la clé, le locataire et le tampon, si bien que les
+  données personnelles d'une ligne supprimée ont disparu et qu'une valeur unique qu'elle tenait
+  est de nouveau libre. Une table dont des colonnes refusent NULL est refusée par son nom
+  (`ReadModelTableNotReadyError`, qui liste les colonnes) : à la construction du registre sur
+  Drizzle et TypeORM, d'après la définition, et sur les quatre ORM avant l'écriture de la première
+  trace, par une lecture des colonnes que tient la base, si bien qu'une migration pas encore
+  exécutée est vue elle aussi, et jamais par une requête qui ferait échouer la transaction de
+  l'événement. Sur Prisma, les champs du modèle sont optionnels eux aussi (`String?`).
+- **Une contrainte de vérification garde entières les lignes vivantes**, à la place du NOT NULL
+  que les colonnes ne portent plus. `generate read-model` l'écrit avec la table, sous ce nom ; une
+  table écrite avant, ou à la main, la prend dans une migration :
+
+  ```sql
+  alter table scheduling.appointment_list
+    alter column status drop not null,
+    alter column starts_at drop not null,
+    add constraint appointment_list_live_rows_whole
+      check (deleted or (status is not null and starts_at is not null));
+  ```
+- **Un lecteur qui interroge la table directement filtre `deleted = false`.** Le registre le fait
+  dans `get` et `search` ; une requête à vous (une jointure, un agrégat) doit le faire.
+- **Les traces ne sont jamais purgées.** Une purge par `last_event_at` n'est pas sûre : le tampon
+  est l'instant de l'événement, pas celui de sa livraison, si bien qu'aucun âge d'une trace ne dit
+  qu'un événement plus ancien de sa clé ne sera pas livré de nouveau, et cet événement recréerait
+  alors la ligne.
+
+**La clé est unique entre les locataires.** La trace d'un modèle de lecture de données d'un
+locataire porte le locataire du travail en cours, et sa clé est prise pour tous les locataires,
+comme la clé d'une ligne vivante : une clé que deux locataires pourraient partager est un
+identifiant généré ou porte le locataire (`acme:2026-03-01`). Sous une clé que tient un autre
+locataire, une suppression est `ignored`, puisque rien de ce locataire n'est là à supprimer et
+que sa trace ne peut pas être écrite, et un *upsert* est refusé aussitôt par
+`ReadModelKeyHeldElsewhereError`, une `ConcurrencyError` dont le message le dit. Un travail élevé
+sur plusieurs locataires lit une telle clé comme tenue et n'écrit que dans son propre locataire,
+si bien que son écriture d'une clé que tient un autre locataire se termine encore, après cinq
+tentatives, par une simple `ConcurrencyError`.
 
 ## Limites et quand ne pas l'utiliser
 

@@ -82,6 +82,7 @@ export { readModelContract, type ReadModelContractOptions } from './contracts/re
 export { readModelRowsContract, type ReadModelRowsContractOptions } from './contracts/read-model-rows-contract';
 export { readModelStoreContract, type ReadModelStoreContractOptions } from './contracts/read-model-store-contract';
 export type { ReadModelRowsUnderContract } from './contracts/read-model/read-model-rows-under-contract';
+export type { ReadModelStorageUnderContract } from './contracts/read-model/read-model-storage-under-contract';
 export type { ReadModelStoreUnderContract } from './contracts/read-model/read-model-store-under-contract';
 export { SourceOfTruth } from './contracts/read-model/source-of-truth';
 export {

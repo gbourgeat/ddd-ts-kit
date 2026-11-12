@@ -1,7 +1,9 @@
 import { and, eq, sql, type ExtractTablesWithRelations, type TablesRelationalConfig } from 'drizzle-orm';
-import { getTableConfig, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { getTableConfig, type PgColumn, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import {
   PostgresReadModelRebuild,
+  PostgresTraceColumns,
+  ReadModelTableNotReadyError,
   type CriteriaPlan,
   type EventStamp,
   type SearchedRows,
@@ -45,12 +47,20 @@ export class DrizzleReadModelTable<
   ) {
     const { name, schema } = getTableConfig(options.table);
 
+    const data = holdsTraces(options, schema === undefined ? name : `${schema}.${name}`);
+
+    const traces = new PostgresTraceColumns(
+      (statement, parameters) => this.run(statement, parameters),
+      () => ({ table: name, data, ...(schema === undefined ? {} : { schema }) }),
+    );
+
     this.target = {
       schema,
       name,
       key: options.key,
       columns: options.columns,
       stamps: stampColumns(options.table),
+      traces,
       ...(options.tenant === undefined ? {} : { tenant: options.tenant }),
     };
 
@@ -148,4 +158,25 @@ export class DrizzleReadModelTable<
 
     return rowsOf(await this.context.executor().execute(query));
   }
+}
+
+/**
+ * Refuses, when the store is built, a table whose definition could not hold the trace of a
+ * deleted row: every column of the row accepts NULL, the key and the tenant apart. An early
+ * signal: the database is asked before the first trace. Answers the columns of the row.
+ */
+function holdsTraces<Row>({ columns, key, tenant }: DrizzleReadModelOptions<Row>, table: string): string[] {
+  const mapped: readonly PgColumn[] = Object.values(columns);
+  const kept = new Set([key.name, tenant?.column.name]);
+  const data = mapped.filter((column) => !kept.has(column.name));
+  const refusing = data.filter((column) => column.notNull);
+
+  if (refusing.length > 0) {
+    throw new ReadModelTableNotReadyError(
+      table,
+      refusing.map((column) => column.name),
+    );
+  }
+
+  return data.map((column) => column.name);
 }

@@ -216,8 +216,9 @@ found.
   the port over `ReadModelStore` with the type of its row and its criteria, the table in the schema
   of the context, the store adapter of the ORM of the project bound to the port, the fake, and a
   spec that runs `readModelContract` on both. The columns of the fields accept null, since a removed
-  row is a trace that keeps its key and its stamp alone, and a check constraint keeps every other row
-  whole (on Prisma, whose schema language has none, the statement is left to add to the migration);
+  row is a trace that keeps its key and its stamp alone
+  ([what a deleted row leaves](#the-table-of-a-read-model-and-what-a-deleted-row-leaves)), and a
+  check constraint, `<table>_live_rows_whole`, keeps every other row whole (on Prisma, whose schema language has none, the statement is left to add to the migration);
   a text column a read sorts or compares by range takes the collation `"C"` in its migration, criteria
   ordering strings by code point. The
   status of each part is in the [read side proposal](../proposals/read-side.md).
@@ -299,6 +300,51 @@ export class OpenSlotsProjection {
 
 `FindOpenSlots` then reads `OpenSlots` with a criteria, like any other read port. The
 projector sends no command and reads no other context: it only keeps its table current.
+
+### The table of a read model, and what a deleted row leaves
+
+`delete(key, stamp)` does not take the row out of its table. It leaves a trace: the key, the
+stamp and `deleted = true`, and nothing else. The trace is what makes a deletion hold whatever
+the order of the deliveries: an older event that arrives later finds a newer stamp and changes
+nothing. That holds for a key the table does not hold yet: a deletion delivered before the
+creation it follows inserts the trace, and the late creation is `stale`. Such a deletion answers
+`traced`, not `applied`: it recorded its trace and removed no row, as a deletion over an earlier
+trace does. Code that counts what it removed (an erasure that reports what it reached) counts
+`applied` alone. On an SQL store, this
+asks four things of the table and of whoever reads it:
+
+- **Every column of the row is nullable.** A trace keeps no data: every column the store maps
+  holds NULL, the key, the tenant and the stamp apart, so the personal data of a deleted row is
+  gone and a unique value it held is free again. A table whose columns refuse NULL is refused by
+  name (`ReadModelTableNotReadyError`, which lists the columns): when the store is built on Drizzle
+  and TypeORM, from the definition, and on the four ORM before the first trace is written, from
+  one read of the columns the database holds, so a migration not run yet is caught too, and never
+  by a statement that would abort the transaction of the event. On Prisma the fields of the model are optional as well (`String?`).
+- **A check constraint keeps the live rows whole**, in place of the NOT NULL the columns no
+  longer carry. `generate read-model` writes it with the table, under this name; a table written
+  before, or by hand, takes it in a migration:
+
+  ```sql
+  alter table scheduling.appointment_list
+    alter column status drop not null,
+    alter column starts_at drop not null,
+    add constraint appointment_list_live_rows_whole
+      check (deleted or (status is not null and starts_at is not null));
+  ```
+- **A reader that queries the table directly filters `deleted = false`.** The store does it in
+  `get` and `search`; a statement of your own (a join, an aggregate) has to.
+- **Traces are never purged.** A purge by `last_event_at` is unsafe: the stamp is the instant of
+  the event, not of its delivery, so no age of a trace tells that an older event of its key will
+  not be delivered again, and that event would then recreate the row.
+
+**The key is unique across tenants.** The trace of a read model of tenant data carries the tenant
+of the work, and its key is taken for every tenant, as the key of a live row is: a key two
+tenants could share is a generated id or carries the tenant (`acme:2026-03-01`). Under a key
+another tenant holds, a deletion is `ignored`, since nothing of this tenant is there to delete
+and its trace cannot be written, and an upsert is refused at once with
+`ReadModelKeyHeldElsewhereError`, a `ConcurrencyError` whose message says so. Work elevated over
+several tenants reads such a key as held and writes only in its own tenant, so its write of a key
+another tenant holds still ends, after five attempts, in a plain `ConcurrencyError`.
 
 ## Limits and when not to use it
 

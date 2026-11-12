@@ -18,6 +18,11 @@ export class RowMapper<Row extends object> {
     return Object.fromEntries(Object.keys(this.columns).map((field) => [field, selected[field] ?? null])) as Row;
   }
 
+  /** NULL in every column of the row: what a deleted row holds. */
+  toNulls(): [PgColumn, unknown][] {
+    return Object.values(this.columns).map((column) => [column, null]);
+  }
+
   /** The values of the row by column, encoded as the driver expects them. */
   toValues(row: Row): [PgColumn, unknown][] {
     return Object.entries(this.columns).map(([field, column]) => [column, encoded(column, Reflect.get(row, field))]);

@@ -2,7 +2,10 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { sql } from 'drizzle-orm';
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { DrizzleReadModelTable, createDrizzleUnitOfWork } from '../src/postgres';
+import { pgTable, text } from 'drizzle-orm/pg-core';
+import { AsyncLocalStorageExecutionScope, ReadModelTableNotReadyError } from '@ddd-ts-kit/kernel';
+import { DrizzleReadModelTable, createDrizzleUnitOfWork, readModelColumns } from '../src/postgres';
+import { rowsOf } from '../src/postgres/read-model/rows-of';
 import { createContractDatabase, type ContractDatabase } from './support/read-model/contract-database';
 import { CONTRACT_TABLE, contractRows } from './support/read-model/criteria-contract-table';
 import { invoices as plain } from './support/billing-core/infrastructure/persistence/invoices';
@@ -36,7 +39,16 @@ async function emptied() {
   return tableOf();
 }
 
-readModelStoreContract(runner, { name: 'DrizzleReadModelTable', createTable: emptied });
+/** What the table holds under a key, by field of the row, read beside the store. */
+async function stored(key: string) {
+  const held = await database.db.execute(
+    sql`select id, status, title, seats, price, starts_at as "startsAt", cancelled_at as "cancelledAt", room, remote, tenant_id as "tenantId" from ${contractRows} where id = ${key}`,
+  );
+
+  return rowsOf(held)[0];
+}
+
+readModelStoreContract(runner, { name: 'DrizzleReadModelTable', createTable: emptied, stored, uniqueTitle: true });
 
 describe('DrizzleReadModelTable', () => {
   const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z') };
@@ -79,6 +91,25 @@ describe('DrizzleReadModelTable', () => {
     expect((await table.find('a1'))?.row).toEqual({ ...row, seats: 2 });
   });
 
+  it('refuses a trace by name when the database is behind the definition, before the statement it would refuse', async () => {
+    const { table, unitOfWork } = await emptied();
+
+    await database.db.execute(sql`alter table ${contractRows} alter column seats set not null`);
+
+    const written = unitOfWork.run(async () => {
+      const refusal = await table.insert({ key: 'a2', row: undefined, stamp }).catch((error: unknown) => error);
+
+      // The transaction is still usable: nothing was sent that PostgreSQL refused.
+      await table.insert({ key: 'a1', row, stamp });
+
+      return refusal;
+    });
+
+    await expect(written).resolves.toMatchObject({ table: 'read_side.criteria_contract', columns: ['seats'] });
+    expect((await table.find('a1'))?.row).toEqual(row);
+    await database.db.execute(sql`alter table ${contractRows} alter column seats drop not null`);
+  });
+
   it('refuses a table declared without the columns of a read model', () => {
     const declare = () =>
       new DrizzleReadModelTable<CriteriaContractRow, PgQueryResultHKT>(createDrizzleUnitOfWork(database.db), {
@@ -87,5 +118,37 @@ describe('DrizzleReadModelTable', () => {
       });
 
     expect(declare).toThrow('readModelColumns');
+  });
+
+  it('refuses, when it is built, a table whose columns could not hold the trace of a deleted row', () => {
+    const strict = pgTable('strict_rows', {
+      id: text('id').primaryKey(),
+      title: text('title').notNull(),
+      owner: text('owner').notNull(),
+      note: text('note'),
+      tenantId: text('tenant_id').notNull(),
+      ...readModelColumns(),
+    });
+
+    const columns = { id: strict.id, title: strict.title, owner: strict.owner, note: strict.note };
+
+    const declare = () =>
+      new DrizzleReadModelTable<{ id: string; title: string; owner: string; note: string | null }, PgQueryResultHKT>(
+        createDrizzleUnitOfWork(database.db),
+        {
+          table: strict,
+          key: strict.id,
+          columns,
+          tenant: { scope: new AsyncLocalStorageExecutionScope(), column: strict.tenantId },
+        },
+      );
+
+    expect(declare).toThrow(ReadModelTableNotReadyError);
+
+    expect(declare).toThrow(
+      'The read model table strict_rows cannot hold the trace of a deleted row: "title", "owner" refuse NULL',
+    );
+
+    expect(declare).toThrow('check (deleted or ("title" is not null and "owner" is not null))');
   });
 });

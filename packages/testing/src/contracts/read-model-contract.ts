@@ -21,7 +21,8 @@ export interface ReadModelContractOptions<Row> {
 /**
  * What every adapter of the read model port of a context, fake or real, guarantees to its projection
  * and to its readers, on the rows of that context: a row read back as it was written, an event
- * applied once and never after a later one, a deletion that lasts, and a search that lists the rows.
+ * applied once and never after a later one, a deletion that lasts, under a key it does not hold
+ * yet too, and a search that lists the rows.
  * `readModelStoreContract` holds the table of an ORM package; this one holds the port a context
  * declares over it.
  */
@@ -113,6 +114,19 @@ class ReadModelSuite<Row extends object> extends ContractSuite<ReadModelStore<Ro
       this.expect(await this.subject.delete('row-1', at('evt-3', 3))).toBe('applied');
       this.expect(await this.put('row-1', 2)).toBe('stale');
       this.expect(await this.subject.get('row-1')).toBe(undefined);
+    });
+
+    this.it('keeps the trace of a deletion delivered before the creation it follows, which is then stale', async () => {
+      this.expect(await this.subject.delete('row-1', at('evt-3', 3))).toBe('traced');
+      this.expect(await this.put('row-1', 2)).toBe('stale');
+      this.expect(await this.subject.get('row-1')).toBe(undefined);
+    });
+
+    this.it('writes the row of a later event over the trace of a key it never held', async () => {
+      await this.subject.delete('row-1', at('evt-3', 3));
+
+      this.expect(await this.put('row-1', 4)).toBe('applied');
+      this.expect(await this.subject.get('row-1')).toEqual(this.options.createRow('row-1'));
     });
   }
 

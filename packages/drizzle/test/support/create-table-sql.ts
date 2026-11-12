@@ -41,6 +41,8 @@ export function createTableSql(table: PgTable): string[] {
     (key) => `primary key (${key.columns.map((column) => quote(column.name)).join(', ')})`,
   );
 
+  const checks = config.checks.map(({ name, value }) => `constraint ${quote(name)} check (${render(value)})`);
+
   const indexes = config.indexes.map(({ config: index }) => {
     const on = index.columns.map((column) => {
       if ('name' in column && column.name !== undefined) {
@@ -57,7 +59,7 @@ export function createTableSql(table: PgTable): string[] {
 
   return [
     ...(config.schema === undefined ? [] : [`create schema if not exists ${quote(config.schema)}`]),
-    `create table ${tableName} (${[...columns, ...primaryKeys].join(', ')})`,
+    `create table ${tableName} (${[...columns, ...primaryKeys, ...checks].join(', ')})`,
     ...indexes,
   ];
 }

@@ -1,6 +1,9 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
-import { KnexReadModelTable, createKnexUnitOfWork } from '../src';
+import type { Knex } from 'knex';
+import { AsyncLocalStorageExecutionScope, ReadModelTableNotReadyError } from '@ddd-ts-kit/kernel';
+import { asTenant } from '@ddd-ts-kit/testing';
+import { KnexReadModelTable, createKnexUnitOfWork, readModelColumns, type KnexReadModelOptions } from '../src';
 import { createDatabase, type TestDatabase } from './support/database';
 import {
   CONTRACT_TABLE,
@@ -13,6 +16,28 @@ import {
 const runner = { describe, it, expect, beforeEach, afterEach };
 const TABLE = `${READ_SIDE}.${CONTRACT_TABLE.table}`;
 
+interface StrictRow {
+  readonly id: string;
+  readonly title: string;
+  readonly note: string | null;
+}
+
+/** A read model as it was declared before a deleted row kept no data: `title` refuses NULL. */
+const STRICT: KnexReadModelOptions<StrictRow> = {
+  table: 'strict_rows',
+  columns: { id: 'id', title: 'title', note: 'note' },
+};
+
+async function createStrictTable(knex: Knex): Promise<void> {
+  await knex.schema.createTable(STRICT.table, (table) => {
+    table.text('id').primary();
+    table.text('title').notNullable();
+    table.text('note').nullable();
+    table.text('tenant_id').notNullable();
+    readModelColumns(table);
+  });
+}
+
 let database: TestDatabase;
 
 beforeAll(async () => {
@@ -20,8 +45,9 @@ beforeAll(async () => {
     async (knex) => {
       await createContractTable(knex);
       await createContractTableInDefaultSchema(knex);
+      await createStrictTable(knex);
     },
-    [TABLE, CONTRACT_TABLE_IN_DEFAULT_SCHEMA.table],
+    [TABLE, CONTRACT_TABLE_IN_DEFAULT_SCHEMA.table, STRICT.table],
   );
 });
 
@@ -35,6 +61,19 @@ const tableOf = () => {
   return { table: new KnexReadModelTable<CriteriaContractRow>(unitOfWork, CONTRACT_TABLE), unitOfWork };
 };
 
+const FIELDS =
+  'id, status, title, seats, price, starts_at as "startsAt", cancelled_at as "cancelledAt", room, remote, tenant_id as "tenantId"';
+
+/** What a table holds under a key, by field of the row, read beside the store. */
+const storedIn = (table: string) => async (key: string) => {
+  const { rows } = await database.knex.raw<{ rows: Record<string, unknown>[] }>(
+    `select ${FIELDS} from ${table} where id = ?`,
+    [key],
+  );
+
+  return rows[0];
+};
+
 readModelStoreContract(runner, {
   name: 'KnexReadModelTable',
   createTable: async () => {
@@ -43,6 +82,8 @@ readModelStoreContract(runner, {
 
     return tableOf();
   },
+  stored: storedIn(TABLE),
+  uniqueTitle: true,
 });
 
 // A read model in the default schema of the connection, its rebuild included.
@@ -57,6 +98,8 @@ readModelStoreContract(runner, {
 
     return { table, unitOfWork };
   },
+  stored: storedIn(CONTRACT_TABLE_IN_DEFAULT_SCHEMA.table),
+  uniqueTitle: true,
 });
 
 describe('KnexReadModelTable', () => {
@@ -144,5 +187,58 @@ describe('KnexReadModelTable', () => {
     );
 
     expect(rows.map(({ tablename }) => tablename)).toEqual(['criteria_contract']);
+  });
+});
+
+describe('KnexReadModelTable of a table whose columns refuse NULL', () => {
+  const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z') };
+  const later = { eventId: 'evt-2', occurredAt: new Date('2026-10-10T12:01:00.000Z') };
+  const scope = new AsyncLocalStorageExecutionScope();
+
+  const strict = () => {
+    const unitOfWork = createKnexUnitOfWork(database.knex);
+
+    return { table: new KnexReadModelTable<StrictRow>(unitOfWork, { ...STRICT, tenant: scope }), unitOfWork };
+  };
+
+  beforeEach(async () => {
+    await database.truncate();
+  });
+
+  it('refuses the trace of a deleted row by name, before any statement the database would refuse', async () => {
+    const { table, unitOfWork } = strict();
+
+    const written = asTenant(scope, 'acme', () =>
+      unitOfWork.run(async () => {
+        const refusal = await table.insert({ key: 's1', row: undefined, stamp }).catch((error: unknown) => error);
+
+        // The transaction is still usable: nothing was sent that PostgreSQL refused.
+        await table.insert({ key: 's2', row: { id: 's2', title: 'kept', note: null }, stamp });
+
+        return refusal;
+      }),
+    );
+
+    await expect(written).resolves.toBeInstanceOf(ReadModelTableNotReadyError);
+    await expect(written).resolves.toMatchObject({ table: 'strict_rows', columns: ['title'] });
+    expect(await asTenant(scope, 'acme', () => table.find('s2'))).toBeDefined();
+  });
+
+  it('refuses the same way to empty a row it holds, each time, and on the copy of a rebuild', async () => {
+    const { table } = strict();
+
+    await asTenant(scope, 'acme', async () => {
+      await table.insert({ key: 's1', row: { id: 's1', title: 'held', note: 'n' }, stamp });
+
+      await expect(table.replace({ key: 's1', row: undefined, stamp: later }, stamp)).rejects.toThrow(
+        'check (deleted or ("title" is not null))',
+      );
+
+      await expect(table.shadow().insert({ key: 's3', row: undefined, stamp })).rejects.toThrow(
+        ReadModelTableNotReadyError,
+      );
+
+      expect((await table.find('s1'))?.row).toEqual({ id: 's1', title: 'held', note: 'n' });
+    });
   });
 });
