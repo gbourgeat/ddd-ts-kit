@@ -102,6 +102,13 @@ describe.runIf(SLOW).each(CASES)(
       expect(exists(root, 'dist/src/main.js')).toBe(true);
       expect(read(root, 'dist/src/main.js')).not.toMatch(/from '@\//);
       expect(run.unresolved, run.output).toBe(false);
+
+      // The type check alone is let read the ".ts" of a neighbour of test/support: no option rewrites an import of the build, so no helper reaches what ships.
+      expect(
+        walk(root, 'dist').filter(
+          (file) => file.endsWith('.js') && read(root, file).includes('__rewriteRelativeImportExtension'),
+        ),
+      ).toEqual([]);
     }, 600_000);
   },
 );

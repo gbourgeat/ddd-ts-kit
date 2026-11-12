@@ -21,7 +21,8 @@ export function inProject(
   return { code, settings: { 'ddd-ts-kit': { config, filename: file, rootDir: root } } };
 }
 
-function onDisk(file: string, code: string): void {
+/** Writes a file of the project on disk. */
+export function onDisk(file: string, code: string): void {
   fs.mkdirSync(path.join(root, path.dirname(file)), { recursive: true });
   fs.writeFileSync(path.join(root, file), code);
 }

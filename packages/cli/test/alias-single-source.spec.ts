@@ -75,6 +75,20 @@ const EXTENSION_MUTATIONS: readonly Mutation[] = [
     flags: WITH_JS,
   },
   {
+    what: 'tsconfig.json no longer lets the type check read the ".ts" a file of test/support names its neighbour by',
+    file: 'tsconfig.json',
+    change: swap('"allowImportingTsExtensions": true', '"allowImportingTsExtensions": false'),
+    finding: /tsconfig\.json does not let the compiler read the "\.ts" by which a file of test\/support\/ names/,
+    flags: WITH_JS,
+  },
+  {
+    what: 'tsconfig.build.json no longer sets back what the type check alone needs, and would write nothing',
+    file: 'tsconfig.build.json',
+    change: swap('"noEmit": false', '"noEmit": true'),
+    finding: /tsconfig\.build\.json inherits "noEmit" or "allowImportingTsExtensions" from tsconfig\.json/,
+    flags: WITH_JS,
+  },
+  {
     what: 'the jest config maps a specifier with ".js" although the imports carry none',
     file: 'jest.config.js',
     change: swap("'^@/(.*)$'", String.raw`'^@/(.*)\.js$'`),

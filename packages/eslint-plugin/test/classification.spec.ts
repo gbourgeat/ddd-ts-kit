@@ -5,6 +5,7 @@ import { resolveImport as cliResolveImport } from '../../cli/src/check/project/r
 import { parallelNames as cliParallelNames } from '../../cli/src/check/standard/parallel-names';
 import {
   aliasRoots as cliAliasRoots,
+  neighbourSuffix as cliNeighbourSuffix,
   specifierSuffix as cliSpecifierSuffix,
   toAlias as cliToAlias,
 } from '../../cli/src/alias';
@@ -12,6 +13,7 @@ import { parseConfig as cliParseConfig } from '../../cli/src/config/parse-config
 import { isTestFile } from '../src/project/is-test-file';
 import { locate } from '../src/project/locate';
 import { resolveImport } from '../src/project/resolve-import';
+import { neighbourSuffix } from '../src/project/neighbour-suffix';
 import { specifierSuffix } from '../src/project/specifier-suffix';
 import { aliasRoots } from '../src/project/alias-roots';
 import { parseConfig } from '../src/project/parse-config';
@@ -207,6 +209,10 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
 
     expect(suffix).toBe(cliSpecifierSuffix(cliParseConfig(raw).importExtension));
     expect(suffix).toBe(raw['importExtension'] === 'none' ? '' : '.js');
+
+    expect(neighbourSuffix(parseConfig(raw).importExtension)).toBe(
+      cliNeighbourSuffix(cliParseConfig(raw).importExtension),
+    );
 
     for (const file of PATHS) {
       expect(toAlias(roots, file, suffix), file).toBe(cliToAlias(cliRoots, file, suffix));

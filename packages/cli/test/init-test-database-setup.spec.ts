@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { exists, read } from './helpers';
+import { cli, exists, read } from './helpers';
 import { initProject } from './support/init-project';
 import { jsonAt } from './support/json-at';
 
@@ -44,6 +44,12 @@ describe('the global setup of an end-to-end run on a server', () => {
     expect(setup).toContain("if (url === '') {\n    await saveCluster();");
     expect(setup).toContain('const run = await openRun(url, filesAtOnce(jest, project));');
     expect(setup).toContain('} catch {\n    return jest.maxWorkers;\n  }');
+
+    // No spec file found under test/ is no count: the workers, as with Vitest, never one file.
+    expect(setup).toContain(
+      'const files = listed === 0 ? jest.maxWorkers : Math.ceil(listed / (jest.shard?.shardCount ?? 1));',
+    );
+
     expect(setup).toContain('pattern.test(file) || pattern.test(whole(file))');
     expect(setup).toContain('Reflect.set(globalThis, END, run.end);');
     expect(teardown).toContain("Reflect.get(globalThis, Symbol.for('ddd-ts-kit.test-database-run'));");
@@ -87,17 +93,36 @@ describe('the global setup of an end-to-end run on a server', () => {
     },
   );
 
-  it('under "importExtension": "js", names its neighbours by the .ts of their source, which the compiler is let read', () => {
+  it('under "importExtension": "js", names its neighbours by the .ts of their source, which the type check alone is let read', () => {
     const root = initProject('--tests', 'jest', '--import-extension', 'js');
-    const options = jsonAt(JSON.parse(read(root, 'tsconfig.json')), 'compilerOptions');
+    const options = Object(jsonAt(JSON.parse(read(root, 'tsconfig.json')), 'compilerOptions')) as object;
+    const build: unknown = JSON.parse(read(root, 'tsconfig.build.json'));
 
     expect(read(root, SETUP)).toContain("import { openRun } from './test-database-run.ts';");
     expect(read(root, 'test/support/test-database-run.ts')).toContain("from './test-database-server.ts';");
-    expect(jsonAt(options, 'rewriteRelativeImportExtensions')).toBe(true);
+    expect(options).toMatchObject({ allowImportingTsExtensions: true, noEmit: true });
+    // The build emits what it emitted before: no option that rewrites an import, and so no helper in the compiled output.
+    expect(Object.keys(options)).not.toContain('rewriteRelativeImportExtensions');
+    expect(jsonAt(build, 'compilerOptions')).toEqual({ allowImportingTsExtensions: false, noEmit: false });
+
+    expect(cli(root, 'check', '--rule', 'imports/alias-declared', '--rule', 'imports/alias-only').stdout).toContain(
+      '0 errors',
+    );
+  });
+
+  it('without an extension, asks nothing more of the compiler: neither configuration names an option for it', () => {
+    const root = initProject();
 
     expect(
-      Object.keys(Object(jsonAt(JSON.parse(read(initProject(), 'tsconfig.json')), 'compilerOptions'))),
-    ).not.toContain('rewriteRelativeImportExtensions');
+      Object.keys(Object(jsonAt(JSON.parse(read(root, 'tsconfig.json')), 'compilerOptions')) as object).filter(
+        (option) => /noEmit|TsExtensions|ImportExtensions/.test(option),
+      ),
+    ).toEqual([]);
+
+    expect(Object.keys(Object(JSON.parse(read(root, 'tsconfig.build.json'))) as object)).toEqual([
+      'extends',
+      'exclude',
+    ]);
   });
 
   it('is written where there is an end-to-end run on a database, and Jest starts as before without one', () => {
