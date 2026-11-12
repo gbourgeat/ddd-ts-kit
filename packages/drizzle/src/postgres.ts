@@ -28,6 +28,7 @@ export * from './postgres/read-model/drizzle-read-model-options';
 export * from './postgres/read-model/read-model-tenant';
 export * from './postgres/read-model/drizzle-read-model-table';
 export * from './postgres/read-model/drizzle-read-model-store';
+export * from './postgres/read-model/drizzle-read-model-tables';
 export * from './postgres/tenancy/sql-executor';
 export * from './postgres/tenancy/tenant-condition';
 export * from './postgres/tenancy/own-tenant-condition';

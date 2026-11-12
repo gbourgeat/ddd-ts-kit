@@ -41,6 +41,7 @@ export * from './read-model/type-orm-read-model-options';
 export * from './read-model/type-orm-read-model-tenant';
 export * from './read-model/type-orm-read-model-table';
 export * from './read-model/type-orm-read-model-store';
+export * from './read-model/type-orm-read-model-tables';
 export * from './personal-data/type-orm-personal-data-erasure';
 export * from './personal-data/type-orm-personal-data-erasure-options';
 export * from './personal-data/type-orm-personal-data-export';

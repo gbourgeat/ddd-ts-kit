@@ -176,14 +176,19 @@ function holdsTraces<Row>(options: TypeOrmReadModelOptions<Row>): void {
   const { columns, schema, tableName, name } = options.entity.options;
   const kept = keptOf(options);
 
-  const refusing = Object.entries<EntitySchemaColumnOptions | undefined>(columns).flatMap(([property, column]) =>
-    column === undefined || column.nullable === true || kept.has(property) ? [] : [column.name ?? property],
+  const data = Object.entries<EntitySchemaColumnOptions | undefined>(columns).flatMap(([property, column]) =>
+    column === undefined || kept.has(property) ? [] : [{ name: column.name ?? property, nullable: column.nullable }],
   );
 
-  if (refusing.length > 0) {
-    const table = tableName ?? name;
+  const refusing = data.filter((column) => column.nullable !== true).map((column) => column.name);
 
-    throw new ReadModelTableNotReadyError(schema === undefined ? table : `${schema}.${table}`, refusing);
+  if (refusing.length > 0) {
+    throw new ReadModelTableNotReadyError({
+      table: tableName ?? name,
+      refusing,
+      row: data.map((column) => column.name),
+      ...(schema === undefined ? {} : { schema }),
+    });
   }
 }
 

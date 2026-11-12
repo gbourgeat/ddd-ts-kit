@@ -4,6 +4,7 @@ import {
   PostgresReadModelRebuild,
   PostgresTraceColumns,
   ReadModelTableNotReadyError,
+  type TracedTable,
   type CriteriaPlan,
   type EventStamp,
   type SearchedRows,
@@ -47,7 +48,7 @@ export class DrizzleReadModelTable<
   ) {
     const { name, schema } = getTableConfig(options.table);
 
-    const data = holdsTraces(options, schema === undefined ? name : `${schema}.${name}`);
+    const data = holdsTraces(options, { table: name, ...(schema === undefined ? {} : { schema }) });
 
     const traces = new PostgresTraceColumns(
       (statement, parameters) => this.run(statement, parameters),
@@ -165,18 +166,19 @@ export class DrizzleReadModelTable<
  * deleted row: every column of the row accepts NULL, the key and the tenant apart. An early
  * signal: the database is asked before the first trace. Answers the columns of the row.
  */
-function holdsTraces<Row>({ columns, key, tenant }: DrizzleReadModelOptions<Row>, table: string): string[] {
+function holdsTraces<Row>(
+  { columns, key, tenant }: DrizzleReadModelOptions<Row>,
+  named: Pick<TracedTable, 'schema' | 'table'>,
+): string[] {
   const mapped: readonly PgColumn[] = Object.values(columns);
   const kept = new Set([key.name, tenant?.column.name]);
   const data = mapped.filter((column) => !kept.has(column.name));
-  const refusing = data.filter((column) => column.notNull);
+  const row = data.map((column) => column.name);
+  const refusing = data.filter((column) => column.notNull).map((column) => column.name);
 
   if (refusing.length > 0) {
-    throw new ReadModelTableNotReadyError(
-      table,
-      refusing.map((column) => column.name),
-    );
+    throw new ReadModelTableNotReadyError({ ...named, refusing, row });
   }
 
-  return data.map((column) => column.name);
+  return row;
 }

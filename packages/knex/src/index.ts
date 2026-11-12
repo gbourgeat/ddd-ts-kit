@@ -33,6 +33,7 @@ export * from './read-model/criteria-to-knex';
 export * from './read-model/knex-read-model-options';
 export * from './read-model/knex-read-model-table';
 export * from './read-model/knex-read-model-store';
+export * from './read-model/knex-read-model-tables';
 export * from './tenancy/cleared-tenant-condition-error';
 export * from './tenancy/ungrouped-or-error';
 export * from './tenancy/where-tenant';

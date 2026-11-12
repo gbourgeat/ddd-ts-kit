@@ -3,11 +3,9 @@ import {
   InMemoryReadModelStore,
   InMemoryReadModelTable,
   InMemoryUnitOfWork,
-  PostgresTraceColumns,
   ProjectionRebuild,
   ConcurrencyError,
   ReadModelKeyHeldElsewhereError,
-  ReadModelTableNotReadyError,
   writeIfNewer,
   type ReadModelRows,
   defineCriteria,
@@ -100,26 +98,6 @@ describe('the trace of a deletion', () => {
   });
 });
 
-describe('ReadModelTableNotReadyError', () => {
-  it('names the column that refuses NULL and the check constraint of the live rows', () => {
-    const error = new ReadModelTableNotReadyError('scheduling.agenda', ['starts_at']);
-
-    expect(error.name).toBe('ReadModelTableNotReadyError');
-    expect(error.columns).toEqual(['starts_at']);
-
-    expect(error.message).toBe(
-      'The read model table scheduling.agenda cannot hold the trace of a deleted row: "starts_at" refuses NULL, and a deleted row keeps its key and its stamp only. Write a migration that drops NOT NULL there (alter table scheduling.agenda alter column <column> drop not null) and keeps the live rows whole with a check constraint: check (deleted or ("starts_at" is not null))',
-    );
-  });
-
-  it('names every column when several refuse NULL', () => {
-    const { message } = new ReadModelTableNotReadyError('agenda', ['starts_at', 'status']);
-
-    expect(message).toContain('"starts_at", "status" refuse NULL');
-    expect(message).toContain('check (deleted or ("starts_at" is not null and "status" is not null))');
-  });
-});
-
 describe('a key held out of the reach of the work', () => {
   /** Rows of another tenant: the key reads as absent, and its insert is refused by a conflict. */
   const elsewhere = () => {
@@ -160,49 +138,5 @@ describe('a key held out of the reach of the work', () => {
     await expect(written).rejects.toThrow(ConcurrencyError);
     await expect(written).rejects.toThrow('The key "r1" of the read model is held by another tenant');
     expect(rows.reads).toBe(2);
-  });
-});
-
-describe('PostgresTraceColumns', () => {
-  /** A database whose table refuses NULL in these columns. */
-  const aDatabase = (refusing: readonly string[]) => {
-    const statements: [string, readonly unknown[]][] = [];
-
-    const run = async (statement: string, parameters: readonly unknown[]) => {
-      statements.push([statement, parameters]);
-
-      return refusing.map((column) => ({ column }));
-    };
-
-    return { statements, run };
-  };
-
-  it('reads once the columns of the table as a statement resolves it, and lets a ready table through', async () => {
-    const { statements, run } = aDatabase(['id', 'last_event_id']);
-    const traces = new PostgresTraceColumns(run, () => ({ table: 'agenda', data: ['status', 'starts_at'] }));
-
-    await traces.require();
-    await traces.require();
-
-    expect(statements).toEqual([
-      [
-        'select attname as "column" from pg_attribute where attrelid = to_regclass($1) and attnotnull and attnum > 0 and not attisdropped',
-        ['"agenda"'],
-      ],
-    ]);
-  });
-
-  it('refuses by name a table whose columns refuse NULL in the database, each time it is asked', async () => {
-    const { statements, run } = aDatabase(['id', 'status']);
-    const target = { schema: 'sched"uling', table: 'agenda', data: ['status', 'starts_at'] };
-    const traces = new PostgresTraceColumns(run, () => target);
-
-    await expect(traces.require()).rejects.toThrow(ReadModelTableNotReadyError);
-    await expect(traces.require()).rejects.toMatchObject({ table: 'sched"uling.agenda', columns: ['status'] });
-
-    expect(statements.map(([, parameters]) => parameters)).toEqual([
-      ['"sched""uling"."agenda"'],
-      ['"sched""uling"."agenda"'],
-    ]);
   });
 });
