@@ -19,6 +19,7 @@ import { IGNORING_CASE_CASES } from './criteria/ignoring-case-cases';
 import { OPERATOR_CASES } from './criteria/operator-cases';
 import { SCOPE_CASES } from './criteria/scope-cases';
 import { SORT_CASES } from './criteria/sort-cases';
+import { failureOf } from './failure-of';
 
 /** What the contract reads through: the `search` of a read port over the rows it was given. */
 export interface ReadModelUnderContract {
@@ -69,12 +70,8 @@ class CriteriaSuite extends ContractSuite<ReadModelUnderContract> {
   private refusesAnEmptyText(): void {
     this.it('an empty text to search is refused, whatever the case, where every row would hold it', async () => {
       for (const operator of ['contains', 'startsWith', 'containsIgnoringCase', 'startsWithIgnoringCase'] as const) {
-        const refusal = await this.subject
-          .search(scoped(Criteria.of<CriteriaContractRow>().where('title', operator, ''), { kind: 'all' }))
-          .then(
-            () => undefined,
-            (error: unknown) => error,
-          );
+        const empty = scoped(Criteria.of<CriteriaContractRow>().where('title', operator, ''), { kind: 'all' });
+        const refusal = await failureOf(() => this.subject.search(empty));
 
         this.expect(refusal instanceof InvalidCriteriaError).toBe(true);
       }

@@ -31,6 +31,8 @@ export * from './columns/tenant-column';
 export * from './tenancy/tenant-where';
 export * from './tenancy/own-tenant-where';
 export * from './sql/insert-ignoring-conflict';
+export * from './locks/advisory-lock';
+export * from './locks/try-advisory-lock';
 export * from './read-model/read-model-stamps';
 export * from './read-model/read-model-columns';
 export * from './read-model/predicate-to-type-orm';
