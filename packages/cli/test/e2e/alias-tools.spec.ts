@@ -21,6 +21,8 @@ import { started } from './started';
 import { NATIVE_COMPILER } from './type-errors';
 
 const TOOLS_COMPILER = path.join(REPO_ROOT, 'node_modules/typescript/bin/tsc');
+/** What the build configuration of a project sets back over its type check, which emits nothing under ".js". */
+const EMITS = { allowImportingTsExtensions: false, noEmit: false };
 const escaped = (text: string): string => text.replace(/[.*+?^${}()|[\]\\/]/g, String.raw`\$&`);
 
 /** The two spellings a project can take: the default of `init`, and the one kept for the projects written before it. */
@@ -128,7 +130,13 @@ describe.runIf(SLOW).each(SPELLINGS)(
       expect(findingsOf(root, KNIP)).toContain(nowhere);
 
       // The compiler emits in spite of the error: the rewrite step is the last one that can refuse the output.
-      write(root, 'tsconfig.probe.json', JSON.stringify({ extends: './tsconfig.json', include: [PROBE_SPEC] }));
+      // Under ".js" the type check emits nothing, so that it may read the ".ts" of a neighbour of test/support: a configuration that extends it and emits says so, as tsconfig.build.json does.
+      write(
+        root,
+        'tsconfig.probe.json',
+        JSON.stringify({ extends: './tsconfig.json', compilerOptions: EMITS, include: [PROBE_SPEC] }),
+      );
+
       findingsOf(root, { command: process.execPath, args: [NATIVE_COMPILER, '-p', 'tsconfig.probe.json'] });
 
       expect(() => rewriteAliases(root)).toThrow(
