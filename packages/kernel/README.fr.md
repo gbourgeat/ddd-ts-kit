@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ef1957d975583532 -->
+<!-- translation-of: README.md sha256:900ce1aa933cf11d -->
 
 # @ddd-ts-kit/kernel
 
@@ -2050,11 +2050,11 @@ et une écriture n'a lieu que si son événement est plus récent :
 | Règle | |
 |---|---|
 | Tampon | `stampOf(event)` : l'id et l'instant d'un événement d'intégration ; le nom, l'agrégat et l'instant d'un événement du domaine ; plus `stampOf(event, version)` quand l'événement porte une version par clé |
-| Plus récent | une `version` plus grande quand les deux tampons en portent une ; sinon un instant plus tardif ; au même instant, le plus grand id d'événement. Un même événement n'est jamais plus récent que lui-même |
+| Plus récent | une `version` plus grande quand les deux tampons en portent une ; un instant plus tardif quand aucun n'en porte et, au même instant, le plus grand id d'événement. Un même événement n'est jamais plus récent que lui-même. Chaque sorte est un ordre total ; un tampon avec une version et un sans n'en ont pas, et l'écriture est refusée avec `MixedStampsError`, qui nomme la clé : chaque événement qui écrit une clé est tamponné de la même façon, les lignes de la source d'une reconstruction comprises |
 | `upsertIfNewer(key, stamp, next)` | pour un événement qui dit toute la ligne, ou peut la créer : écrit `next(current)`, `current` valant `undefined` quand la clé ne tient aucune ligne ; `stale` quand la ligne contient cet événement ou un plus tardif ; `ignored` quand `next` renvoie `undefined`, ce qui est un filtre (l'événement ne concerne pas ce modèle de lecture) et jamais la façon d'attendre une ligne |
 | `updateIfNewer(key, stamp, change)` | pour un événement qui change une ligne qu'un autre événement a créée : écrit `change(current)` ; `stale` quand la ligne, ou la trace de sa suppression, contient cet événement ou un plus tardif ; `RowNotHeldError` quand la clé ne tient aucune ligne, ou la trace d'une suppression plus ancienne que l'événement : rien n'est écrit et l'événement est renvoyé, pour être livré de nouveau après la création qu'il suit ([quelle écriture pour quel événement](../../docs/concepts/cqrs.fr.md#quelle-écriture-pour-quel-événement)) |
 | `delete(key, stamp)` | la ligne disparaît pour `get` et `search`, et une trace reste, sa clé et son tampon sans aucune de ses données : un événement plus ancien livré en retard ne la ramène pas, un plus tardif oui. Une clé que le modèle de lecture ne tient pas prend la même trace et répond `traced`, puisqu'aucune ligne n'a été retirée (comme une suppression par-dessus une trace antérieure), si bien que la création que cette suppression suit est `stale` quand elle est livrée après elle. Sur un stockage SQL, chaque colonne de la ligne accepte NULL, sinon le registre refuse la table par `ReadModelTableNotReadyError` ([ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)) |
-| Concurrence | une écriture est conditionnée au tampon qu'elle a lu et est relue quand une autre est arrivée d'abord ; cinq tentatives, puis `ConcurrencyError` et la nouvelle livraison de l'événement |
+| Concurrence | une écriture est conditionnée au tampon entier qu'elle a lu (`sameStamp` : l'id de l'événement, l'instant et la version, dans chaque store) et est relue quand une autre est arrivée d'abord ; cinq tentatives, puis `ConcurrencyError` et la nouvelle livraison de l'événement |
 | Transaction | le store écrit sur l'exécuteur de l'unité de travail, si bien que la ligne et la marque d'événement traité sont validées ou annulées ensemble |
 
 Ainsi une nouvelle livraison, un doublon et deux événements d'une même clé livrés dans le
@@ -2065,7 +2065,7 @@ l'état des champs qu'il pose, ou arriver dans l'ordre par clé (l'outbox ordonn
 de son fournisseur ; avec des instants et sans
 version, l'ordre de deux événements d'une même clé est l'ordre des horloges qui les ont
 tamponnés ; une version est comparée à la version que contient la ligne, alors n'en passez une
-que si chaque événement d'une ligne vient du même flux. Une écriture vaut une ligne : un événement
+que si chaque événement d'une ligne vient du même flux, et alors sur chacun d'eux. Une écriture vaut une ligne : un événement
 qui concerne de nombreuses lignes les liste avec des critères et écrit chacune.
 
 `TableReadModelStore` est l'unique implémentation du port, sur une `ReadModelTable` que donne un

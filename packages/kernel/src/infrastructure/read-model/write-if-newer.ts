@@ -44,7 +44,7 @@ export async function writeIfNewer<Row>(rows: ReadModelRows<Row>, change: Stampe
       return heldElsewhere(change);
     }
 
-    if (held !== undefined && !isNewer(change.stamp, held.stamp)) {
+    if (held !== undefined && !isNewer(change.stamp, held.stamp, change.key)) {
       return 'stale';
     }
 

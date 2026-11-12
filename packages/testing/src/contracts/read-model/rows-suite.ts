@@ -1,4 +1,4 @@
-import { Criteria, RowNotHeldError, cursorPage, scoped } from '@ddd-ts-kit/kernel';
+import { Criteria, MixedStampsError, RowNotHeldError, cursorPage, scoped, type EventStamp } from '@ddd-ts-kit/kernel';
 import type { CriteriaContractRow } from '../criteria/criteria-contract-row';
 import { criteriaContractRows } from '../criteria/criteria-contract-rows';
 import { failureOf } from '../failure-of';
@@ -21,6 +21,9 @@ export class RowsSuite extends ReadModelStoreSuite {
     this.changesARowItHolds();
     this.refusesAChangeWithoutARow();
     this.appliesByVersion();
+    this.ordersEachKindOfStamp();
+    this.refusesAMixOfKinds();
+    this.replacesOnTheWholeStamp();
     this.searches();
   }
 
@@ -152,6 +155,75 @@ export class RowsSuite extends ReadModelStoreSuite {
     });
   }
 
+  private ordersEachKindOfStamp(): void {
+    const kinds: [string, EventStamp[]][] = [
+      ['without a version', [at('evt-1', 1), at('evt-2', 2), at('evt-3', 3)]],
+      ['with a version', [versioned('evt-1', 3, 1), versioned('evt-2', 2, 2), versioned('evt-3', 1, 3)]],
+    ];
+
+    for (const [kind, stamps] of kinds) {
+      this.it(`ends on the latest of three events ${kind}, whatever the order of their deliveries`, async () => {
+        const ends: (number | undefined)[] = [];
+
+        for (const [index, order] of permutationsOf(stamps).entries()) {
+          const key = `a${String(index + 1)}`;
+
+          for (const stamp of order) {
+            await this.put({ ...row(key), seats: stamps.indexOf(stamp) + 1 }, stamp);
+          }
+
+          ends.push((await this.store.get(key))?.seats);
+        }
+
+        this.expect(ends).toEqual([3, 3, 3, 3, 3, 3]);
+      });
+    }
+  }
+
+  private refusesAMixOfKinds(): void {
+    this.it('refuses a stamp with a version under a key that holds one without, and the reverse', async () => {
+      await this.put(row('a1'), at('evt-5', 5));
+      await this.put(row('a2'), versioned('evt-9', 9, 1));
+      await this.store.delete('a3', at('evt-5', 5));
+
+      const refusals = [
+        await failureOf(() => this.put({ ...row('a1'), seats: 9 }, versioned('evt-1', 1, 2))),
+        await failureOf(() => this.put({ ...row('a2'), seats: 9 }, at('evt-5', 5))),
+        await failureOf(() => this.store.delete('a2', at('evt-5', 5))),
+        await failureOf(() => this.put(row('a3'), versioned('evt-9', 9, 1))),
+      ];
+
+      this.expect(refusals.map((refusal) => refusal instanceof MixedStampsError)).toEqual([true, true, true, true]);
+      this.expect(await this.store.get('a1')).toEqual(row('a1'));
+      this.expect(await this.store.get('a2')).toEqual(row('a2'));
+      this.expect(await this.store.get('a3')).toBe(undefined);
+    });
+  }
+
+  private replacesOnTheWholeStamp(): void {
+    this.it('replaces a row only when it still holds the whole stamp, its version included', async () => {
+      const { table } = this.subject;
+      const next = { key: 'a1', row: { ...row('a1'), title: 'next' }, stamp: versioned('evt-2', 2, 5) };
+
+      await table.insert({ key: 'a1', row: row('a1'), stamp: versioned('evt-1', 1, 2) });
+
+      this.expect(await table.replace(next, versioned('evt-1', 1, 3))).toBe(false);
+      this.expect(await table.replace(next, at('evt-1', 1))).toBe(false);
+      this.expect(await table.replace(next, versioned('evt-1', 1, 2))).toBe(true);
+      this.expect((await this.store.get('a1'))?.title).toBe('next');
+    });
+
+    this.it('replaces a row that holds no version only on a stamp that has none', async () => {
+      const { table } = this.subject;
+      const next = { key: 'a1', row: { ...row('a1'), title: 'next' }, stamp: at('evt-2', 2) };
+
+      await table.insert({ key: 'a1', row: row('a1'), stamp: at('evt-1', 1) });
+
+      this.expect(await table.replace(next, versioned('evt-1', 1, 0))).toBe(false);
+      this.expect(await table.replace(next, at('evt-1', 1))).toBe(true);
+    });
+  }
+
   private searches(): void {
     this.it('searches by criteria, without the deleted rows', async () => {
       for (const written of criteriaContractRows()) {
@@ -196,4 +268,18 @@ export class RowsSuite extends ReadModelStoreSuite {
 
 function moreSeats(current: Row): Row {
   return { ...current, seats: current.seats + 1 };
+}
+
+function versioned(eventId: string, minute: number, version: number): EventStamp {
+  return { ...at(eventId, minute), version };
+}
+
+function permutationsOf<T>(items: readonly T[]): T[][] {
+  if (items.length <= 1) {
+    return [[...items]];
+  }
+
+  return items.flatMap((item, index) =>
+    permutationsOf([...items.slice(0, index), ...items.slice(index + 1)]).map((rest) => [item, ...rest]),
+  );
 }

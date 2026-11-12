@@ -9,7 +9,8 @@ import type { ReadModelWrite } from '../read-model/read-model-write';
  * `export abstract class AppointmentList extends ReadModelStore<AppointmentRow> {}`.
  *
  * Writes are idempotent and ordered by construction: an event older than, or the same as, what
- * the row holds changes nothing, whatever the order of the deliveries.
+ * the row holds changes nothing, whatever the order of the deliveries. The stamps of one key are
+ * of one kind, all with a version or all without: one of each is refused with `MixedStampsError`.
  *
  * Which write for which event: `upsertIfNewer` for an event that says the whole row, or that may
  * create it; `updateIfNewer` for an event that changes a row another event created; `delete` for

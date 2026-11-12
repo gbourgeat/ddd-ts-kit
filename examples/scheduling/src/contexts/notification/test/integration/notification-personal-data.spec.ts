@@ -5,13 +5,14 @@ import type { Contact } from '@/contexts/notification/application/ports/contacts
 import { KnexContacts } from '@/contexts/notification/infrastructure/persistence/knex-contacts.repository';
 import { KnexNotificationPersonalDataErasure } from '@/contexts/notification/infrastructure/persistence/knex-notification-personal-data-erasure.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+import { storableStamp } from '@/shared-kernel/storable-stamp';
 
 const north = new FixedExecutionScope(anExecutionContext().ofTenant('north').build());
 const south = new FixedExecutionScope(anExecutionContext().ofTenant('south').build());
 const clock = new FixedClock(new Date('2026-02-01T09:00:00.000Z'));
 
-/** The announcement that made the contact known, before the erasure. */
-const registered = { eventId: 'person-registered-1', occurredAt: new Date('2026-01-02T08:00:00.000Z') };
+/** The announcement that made the contact known, before the erasure, stamped as the projection stamps it. */
+const registered = storableStamp({ eventId: 'person-registered-1', occurredAt: new Date('2026-01-02T08:00:00.000Z') });
 const ada: Contact = { recipientId: 'person-1', address: 'ada@example.test' };
 
 let database: TestDatabase;

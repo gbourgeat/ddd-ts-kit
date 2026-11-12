@@ -63,6 +63,8 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
       .where(this.keyColumn(), entry.key)
       .where('last_event_id', held.eventId)
       .where('last_event_at', held.occurredAt)
+      // The whole stamp: null is written `is null`, so a row whose version alone moved is not replaced.
+      .where('last_event_version', held.version ?? null)
       .update(this.recordOf(entry));
 
     return Number(replaced) === 1;

@@ -3,6 +3,7 @@ import { Gateway } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentExportContract, type ExportedAppointment } from '@/contexts/scheduling/published-language';
 import { AppointmentExportGateway } from '@/contexts/analytics/application/ports/appointment-export-gateway.port';
 import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port';
+import { storableStamp } from '@/shared-kernel/storable-stamp';
 
 // TODO(platform): when scheduling runs as its own service, turn this class into the remote adapter of AppointmentExportGateway (an HTTP or RPC client with a timeout, retries and a fallback): the declaration stays, nothing else changes.
 @Gateway(AppointmentExportGateway)
@@ -27,7 +28,12 @@ export class InProcessAppointmentExportGateway implements AppointmentExportGatew
   }
 }
 
-/** Scheduling says when the appointment last changed, not by which fact: the stamp holds that instant alone, so a fact of the very same instant is applied once more, which changes nothing since it sets the same line. */
+/**
+ * Scheduling says when the appointment last changed, not by which fact: the stamp holds that
+ * instant alone, as a version like the stamps of the facts (a read model refuses one stamp with a
+ * version and one without), at the rank below theirs. A fact of the very same instant is therefore
+ * applied once more, which changes nothing since it sets the same line.
+ */
 function toOutcome(appointment: ExportedAppointment): StampedRow<Outcome> {
   const { appointmentId, practiceId, calendarId, day, outcome } = appointment;
   const changedAt = new Date(appointment.changedAt);
@@ -43,5 +49,5 @@ function toOutcome(appointment: ExportedAppointment): StampedRow<Outcome> {
     changedAt,
   };
 
-  return { key: appointmentId, row, stamp: { eventId: '', occurredAt: changedAt } };
+  return { key: appointmentId, row, stamp: storableStamp({ eventId: '', occurredAt: changedAt }) };
 }

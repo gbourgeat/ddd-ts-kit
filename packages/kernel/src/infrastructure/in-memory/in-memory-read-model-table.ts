@@ -3,6 +3,7 @@ import { selectRows } from '../../application/criteria/select-rows';
 import type { ReadModelRows } from '../../application/ports/read-model-rows';
 import type { ReadModelTable } from '../../application/ports/read-model-table';
 import type { EventStamp } from '../../application/read-model/event-stamp';
+import { sameStamp } from '../../application/read-model/same-stamp';
 import type { SearchedRows } from '../../application/read-model/searched-rows';
 import type { StampedRow } from '../../application/read-model/stamped-row';
 import type { TouchedKey } from '../../application/read-model/touched-key';
@@ -118,12 +119,4 @@ function replaced<Row>(rows: Rows<Row>, entry: StampedRow<Row>, held: EventStamp
   rows.set(entry.key, structuredClone({ ...entry, row: entry.row ?? undefined }));
 
   return true;
-}
-
-function sameStamp(left: EventStamp, right: EventStamp): boolean {
-  return (
-    left.eventId === right.eventId &&
-    left.occurredAt.getTime() === right.occurredAt.getTime() &&
-    left.version === right.version
-  );
 }

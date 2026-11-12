@@ -1,5 +1,5 @@
 [English](delivery-and-idempotency.md) · **Français**
-<!-- translation-of: delivery-and-idempotency.md sha256:f2573fd1f43de7ba -->
+<!-- translation-of: delivery-and-idempotency.md sha256:2e7cf7b89fa53d1a -->
 
 # Garanties de livraison et consommateurs idempotents
 
@@ -241,7 +241,9 @@ qui l'a précédé. Trois façons d'y faire face, de la moins coûteuse à la pl
    ![Rendre l'ordre indifférent : le producteur émet les versions 1, 2 et 3 d'un même rendez-vous ; elles arrivent dans l'ordre 1, 3, 2 ; le consommateur applique 1, puis 3, et ignore 2 parce que la ligne tient déjà une version plus récente, si bien qu'il finit dans l'état de la version 3, quel que soit l'ordre d'arrivée](../assets/diagrams/delivery-and-idempotency-ordering.fr.svg)
 
    Le noyau compare les estampilles pour vous : `stampOf(event, version)` et `isNewer`, la règle
-   qu'appliquent les registres de modèles de lecture dans `upsertIfNewer` :
+   qu'appliquent les registres de modèles de lecture dans `upsertIfNewer`. Deux estampilles avec
+   une version sont ordonnées par elle, deux sans par leur instant ; une de chaque n'a pas d'ordre,
+   et `isNewer` lève `MixedStampsError` :
 
    <!-- checked sample -->
    ```ts

@@ -6,7 +6,8 @@ import { storedOrigins } from './stored-origins';
  * The stamp of a domain event read from an event store, for the row of a read model it changes:
  * the id of the stored event, its instant and its version in its stream, so that the rows of one
  * stream are ordered by the stream and not by clocks. `undefined` for an event that was not read
- * from a store (dispatched by a save): a projection fed both ways falls back to `stampOf`.
+ * from a store (dispatched by a save). A projection fed both ways gives the same version to both
+ * stamps of a key, since a read model refuses one stamp with a version and one without.
  */
 export function storedStampOf(event: DomainEvent): EventStamp | undefined {
   const stored = storedOrigins.get(event);

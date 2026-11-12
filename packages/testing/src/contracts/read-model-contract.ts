@@ -1,4 +1,4 @@
-import { Criteria, RowNotHeldError, scoped, type ReadModelStore } from '@ddd-ts-kit/kernel';
+import { Criteria, MixedStampsError, RowNotHeldError, scoped, type ReadModelStore } from '@ddd-ts-kit/kernel';
 import type { Awaitable } from './awaitable';
 import type { ContractRunner } from './contract-runner';
 import { ContractSuite } from './contract-suite';
@@ -23,7 +23,8 @@ export interface ReadModelContractOptions<Row> {
  * What every adapter of the read model port of a context, fake or real, guarantees to its projection
  * and to its readers, on the rows of that context: a row read back as it was written, an event
  * applied once and never after a later one, a change refused until the row it changes is there,
- * a deletion that lasts, under a key it does not hold yet too, and a search that lists the rows.
+ * a deletion that lasts, under a key it does not hold yet too, stamps of one kind per key, and a
+ * search that lists the rows.
  * `readModelStoreContract` holds the table of an ORM package; this one holds the port a context
  * declares over it.
  */
@@ -79,6 +80,16 @@ class ReadModelSuite<Row extends object> extends ContractSuite<ReadModelStore<Ro
 
       this.expect(await this.put('row-1', 1)).toBe('stale');
       this.expect(await this.subject.get('row-1')).toEqual(this.options.createRow('row-1'));
+    });
+
+    this.it('refuses an event whose stamp carries a version under a key whose stamp has none', async () => {
+      await this.put('row-1', 2);
+
+      const refusal = await failureOf(() =>
+        this.subject.upsertIfNewer('row-1', { ...at('evt-1', 1), version: 9 }, () => this.options.createRow('row-1')),
+      );
+
+      this.expect(refusal instanceof MixedStampsError).toBe(true);
     });
   }
 

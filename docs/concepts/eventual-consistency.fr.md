@@ -1,5 +1,5 @@
 [English](eventual-consistency.md) · **Français**
-<!-- translation-of: eventual-consistency.md sha256:e25fcc36e2a88077 -->
+<!-- translation-of: eventual-consistency.md sha256:53b6c5c1bf86b8c8 -->
 
 # La cohérence à terme, expliquée à un responsable produit
 
@@ -160,7 +160,11 @@ export async function project(slots: OpenSlots, event: SlotEvent, open: boolean)
 ```
 
 L'ordre par instant repose sur l'horloge du producteur ; quand l'amont fournit une version par
-clé, `stampOf(event, version)` la porte et l'ordre ne dépend plus des horloges. Les projections
+clé, `stampOf(event, version)` la porte et l'ordre ne dépend plus des horloges. Chaque
+événement qui écrit une clé est tamponné de la même façon, avec une version ou sans : une
+écriture qui rencontre un tampon de l'autre sorte est refusée avec `MixedStampsError`, puisque
+les deux ne s'ordonnent pas l'un l'autre
+([une seule sorte de tampon par clé](cqrs.fr.md#quelle-écriture-pour-quel-événement)). Les projections
 du kit sont écrites de cette façon ([CQRS tel qu'il est employé ici](cqrs.fr.md)). Une
 suppression est ordonnée de la même façon, même livrée avant la création qu'elle suit : elle
 laisse une trace sous sa clé

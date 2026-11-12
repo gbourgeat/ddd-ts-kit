@@ -149,7 +149,10 @@ export async function project(slots: OpenSlots, event: SlotEvent, open: boolean)
 ```
 
 Ordering by instant relies on the clock of the producer; when the upstream gives a version per
-key, `stampOf(event, version)` carries it and the order no longer depends on clocks. The
+key, `stampOf(event, version)` carries it and the order no longer depends on clocks. Every
+event that writes a key is stamped the same way, with a version or without: a write that meets
+a stamp of the other kind is refused with `MixedStampsError`, since the two do not order each
+other ([one kind of stamp per key](cqrs.md#which-write-for-which-event)). The
 projections of the kit are written this way ([CQRS as used here](cqrs.md)). A deletion is
 ordered the same way, even when it is delivered before the creation it follows: it leaves a
 trace under its key

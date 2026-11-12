@@ -1967,11 +1967,11 @@ write happens only if its event is newer:
 | Rule | |
 |---|---|
 | Stamp | `stampOf(event)`: the id and the instant of an integration event; the name, the aggregate and the instant of a domain event; plus `stampOf(event, version)` when the event carries a per-key version |
-| Newer | a greater `version` when both stamps carry one; else a later instant; at the same instant, the greater event id. The same event is never newer than itself |
+| Newer | a greater `version` when both stamps carry one; a later instant when neither does and, at the same instant, the greater event id. The same event is never newer than itself. Each kind is a total order; one stamp with a version and one without have none, and the write is refused with `MixedStampsError`, which names the key: every event that writes a key is stamped the same way, the rows of the source of a rebuild included |
 | `upsertIfNewer(key, stamp, next)` | for an event that says the whole row, or may create it: writes `next(current)`, `current` being `undefined` when the key holds no row; `stale` when the row holds this event or a later one; `ignored` when `next` answers `undefined`, which is a filter (the event does not concern this read model) and never the way to wait for a row |
 | `updateIfNewer(key, stamp, change)` | for an event that changes a row another event created: writes `change(current)`; `stale` when the row, or the trace of its deletion, holds this event or a later one; `RowNotHeldError` when the key holds no row, or the trace of a deletion older than the event: nothing is written and the event is thrown back, to be delivered again after the creation it follows ([which write for which event](../../docs/concepts/cqrs.md#which-write-for-which-event)) |
 | `delete(key, stamp)` | the row is gone for `get` and `search`, and a trace stays, its key and its stamp without any of its data: an older event delivered late does not bring it back, a later one does. A key the read model does not hold takes the same trace and answers `traced`, since no row was removed (as does a deletion over an earlier trace), so the creation this deletion follows is `stale` when it is delivered after it. On an SQL store every column of the row is nullable, or the store refuses the table with `ReadModelTableNotReadyError` ([what a deleted row leaves](../../docs/concepts/cqrs.md#the-table-of-a-read-model-and-what-a-deleted-row-leaves)) |
-| Concurrency | a write is conditional on the stamp it read and is read again when another got there first; five attempts, then `ConcurrencyError` and the redelivery of the event |
+| Concurrency | a write is conditional on the whole stamp it read (`sameStamp`: the event id, the instant and the version, in every store) and is read again when another got there first; five attempts, then `ConcurrencyError` and the redelivery of the event |
 | Transaction | the store writes on the executor of the unit of work, so the row and the processed-event mark of the event commit or roll back together |
 
 So a redelivery, a duplicate and two events of one key delivered out of order all end on the
@@ -1981,7 +1981,7 @@ orders per key); an event thrown back by `updateIfNewer` whose creation never co
 dead letters of its provider; with instants and
 no version, the order of two events of one key is the order of the clocks that stamped them;
 a version is compared with the version the row holds, so pass one only when every event of a
-row comes from the same stream. One write is one row: an event that concerns many rows lists
+row comes from the same stream, and then on every one of them. One write is one row: an event that concerns many rows lists
 them with a criteria and writes each.
 
 `TableReadModelStore` is the one implementation of the port, over a `ReadModelTable` an

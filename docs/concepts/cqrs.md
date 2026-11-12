@@ -336,6 +336,19 @@ processed mark, the provider delivers the event again, and it is applied once th
 Use `upsertIfNewer` with a `next` that answers `undefined` only as a filter, for an event this
 read model has no row for and never will.
 
+**One kind of stamp per key.** `stampOf(event)` orders by the instant of the event, then by its
+id; `stampOf(event, version)` orders by a version the upstream counts per key. Each is a total
+order: the latest of a set of events is the same whatever the order of their deliveries. One of
+each is not. A version says nothing of an instant, and "the version when both have one, else the
+instant" made a cycle: with A (version 1, 12:09), B (no version, 12:05) and C (version 2, 12:01),
+C was newer than A, A newer than B and B newer than C, so the row that stayed depended on the
+order of the deliveries. A write whose stamp is not of the kind its key holds is therefore refused
+with `MixedStampsError`, which names the key and both events: no rule that ranked one kind above
+the other could do better than drop events in silence. Stamp every event that writes a key the
+same way, the rows of the source of a rebuild included
+([rebuild](../../packages/kernel/README.md#rebuild)); a read model that changes kind is emptied
+and rebuilt.
+
 ### The table of a read model, and what a deleted row leaves
 
 `delete(key, stamp)` does not take the row out of its table. It leaves a trace: the key, the

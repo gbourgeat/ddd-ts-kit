@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:ae4b587cba5ac929 -->
+<!-- translation-of: cqrs.md sha256:fc4caaf87b72f10d -->
 
 # CQRS tel qu'utilisé ici
 
@@ -355,6 +355,20 @@ fournisseur livre de nouveau l'événement, et il est appliqué une fois la cré
 
 N'employez `upsertIfNewer` avec un `next` qui répond `undefined` que comme un filtre, pour un
 événement dont ce modèle de lecture n'a pas la ligne et ne l'aura jamais.
+
+**Une seule sorte de tampon par clé.** `stampOf(event)` ordonne par l'instant de l'événement,
+puis par son id ; `stampOf(event, version)` ordonne par une version que l'amont compte par clé.
+Chacune est un ordre total : le plus récent d'un ensemble d'événements est le même quel que soit
+l'ordre de leurs livraisons. Un de chaque ne l'est pas. Une version ne dit rien d'un instant, et
+« la version quand les deux en ont une, sinon l'instant » faisait un cycle : avec A (version 1,
+12:09), B (sans version, 12:05) et C (version 2, 12:01), C était plus récent que A, A plus récent
+que B et B plus récent que C, si bien que la ligne qui restait dépendait de l'ordre des
+livraisons. Une écriture dont le tampon n'est pas de la sorte que tient sa clé est donc refusée
+avec `MixedStampsError`, qui nomme la clé et les deux événements : aucune règle qui rangerait une
+sorte au-dessus de l'autre ne ferait mieux qu'abandonner des événements en silence. Tamponnez de
+la même façon chaque événement qui écrit une clé, les lignes de la source d'une reconstruction
+comprises ([reconstruction](../../packages/kernel/README.fr.md#reconstruction)) ; un modèle de
+lecture qui change de sorte est vidé et reconstruit.
 
 ### La table d'un modèle de lecture, et ce que laisse une ligne supprimée
 
