@@ -13,6 +13,13 @@ type MessageId = 'relative' | 'unnamed' | 'segment';
 
 const RELATIVE = /^\.{1,2}(?:\/|$)/;
 const DOT_SEGMENT = /\/\.{1,2}(?:\/|$)/;
+/**
+ * A test runner loads its global setup, and what that file imports, with the resolution of Node,
+ * before any alias of the project exists: the files of `test/support/` import one another by a
+ * relative path of that same directory, `./<name>`, and nothing else is spared.
+ */
+const LOADED_BY_A_RUNNER = /^test\/support\/[^/]+$/;
+const SIBLING = /^\.\/[^/]+$/;
 
 export const importsAliasOnly = defineRule<MessageId>({
   id: 'imports/alias-only',
@@ -20,7 +27,7 @@ export const importsAliasOnly = defineRule<MessageId>({
   recommended: 'error',
   fixable: 'code',
   description:
-    'A file of the project is imported by its alias (`@/...`), never by a relative path, the same directory included; an alias path holds no `.` or `..` segment.',
+    'A file of the project is imported by its alias (`@/...`), never by a relative path, the same directory included; an alias path holds no `.` or `..` segment. The files of `test/support/`, which a test runner loads before any alias exists, import one another by `./<name>`.',
   messages: {
     relative:
       '"{{specifier}}" is a relative import. Import the file by its alias, \'{{alias}}\': the alias names the file from the root of the project, so the import reads the same from anywhere and survives a move of this file.',
@@ -37,7 +44,7 @@ export const importsAliasOnly = defineRule<MessageId>({
     }
 
     return importListener(file, ({ node, specifier }) => {
-      const finding = RELATIVE.test(specifier) ? relative(file, specifier) : dotSegment(roots, specifier);
+      const finding = judged(roots, file, specifier);
 
       if (finding !== undefined) {
         report({ node, ...finding, ...fixOf(node, finding) });
@@ -49,6 +56,14 @@ export const importsAliasOnly = defineRule<MessageId>({
 interface Found {
   readonly messageId: MessageId;
   readonly data: Readonly<Record<string, string>>;
+}
+
+function judged(roots: readonly AliasRoot[], file: LintedFile, specifier: string): Found | undefined {
+  if (LOADED_BY_A_RUNNER.test(file.path) && SIBLING.test(specifier)) {
+    return undefined;
+  }
+
+  return RELATIVE.test(specifier) ? relative(file, specifier) : dotSegment(roots, specifier);
 }
 
 function relative(file: LintedFile, specifier: string): Found {

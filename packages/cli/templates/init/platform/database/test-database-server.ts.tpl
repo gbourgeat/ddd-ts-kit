@@ -29,6 +29,8 @@ export async function connectedTo(url: string, database = 'postgres'): Promise<p
 
   const client = new pg.Client({ connectionString: urlOf(url, database), keepAlive: true });
 
+  // A client whose session the server ended emits an error: with nobody listening, it would end the runner. Its queries reject.
+  client.on('error', () => undefined);
   await client.connect();
 
   return client;
@@ -107,6 +109,14 @@ export function dropping(name: string, force = ' with (force)'): string {
 
 function quoted(name: string): string {
   return '"' + name.replaceAll('"', '""') + '"';
+}
+
+/** The SQLSTATE of a server that is asked for a database it does not have. */
+export const NO_SUCH_DATABASE = '3D000';
+
+/** Said by the run when it finds its template gone, and by a file that cannot copy it. */
+export function lostDatabases(template: string): string {
+  return `The run lost its databases: its template "${template}" is no longer on the server. A run whose session ended for more than a minute is held dead, and a later run drops what it left; an administrator may have dropped it too. Run again.`;
 }
 
 /** The SQLSTATE of an error of the server, empty for any other error. */

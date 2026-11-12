@@ -26,6 +26,10 @@ export interface Run {
 
 /** What a generated project runs its spec files on a server with. */
 export interface Support {
+  /** Where the project is. */
+  readonly root: string;
+  /** `test/support/test-database-setup.ts`, the global setup of the end-to-end run, as the runner loads it. */
+  globalSetup(): Promise<unknown>;
   /** `test/support/test-database-run.ts`, as the global setup of an end-to-end run calls it. */
   openRun(url: string, atOnce: number, tell?: (line: string) => void): Promise<Run>;
   /** `test/support/test-database-clone.ts`, as a spec file calls it. */
@@ -76,19 +80,22 @@ export async function endRuns(): Promise<void> {
 }
 
 /**
- * The files of the support as the project holds them, in a copy where each import by the alias of
- * the tests, which nothing resolves here, names the copied file, and `pg` the package of the kit.
+ * The files of the support as the project holds them, in a copy where each import of a neighbour
+ * names the copied file as Vite resolves it, `pg` is the package of the kit, and PostgreSQL in
+ * process, which the kit does not install here, is not started.
  */
 async function load(root: string, kept?: readonly string[]): Promise<Support> {
   const pgOfTheKit = pathToFileURL(createRequire(import.meta.url).resolve('pg')).href;
 
   for (const file of fs.readdirSync(path.join(root, SUPPORT))) {
     const source = read(root, `${SUPPORT}/${file}`)
-      .replaceAll(/from '\$test\/support\/([^']+)'/g, "from './$1.ts'")
+      .replaceAll(/from '\.\/([^']+)'/g, "from './$1.ts'")
       .replace("from 'pg'", `from '${pgOfTheKit}'`);
 
     write(root, `${RESOLVED}/${file}`, source);
   }
+
+  write(root, `${RESOLVED}/test-database-template.ts`, 'export default async function saveCluster() {}\n');
 
   if (kept !== undefined) {
     write(root, `${RESOLVED}/test-database-kept.ts`, `export const KEPT_TABLES = ${JSON.stringify(kept)};\n`);
@@ -99,6 +106,8 @@ async function load(root: string, kept?: readonly string[]): Promise<Support> {
   const { cloneDatabase } = (await import(at('test-database-clone.ts'))) as Pick<Support, 'cloneDatabase'>;
 
   return {
+    root,
+    globalSetup: () => import(at('test-database-setup.ts')),
     openRun: async (...asked) => {
       const run = await openRun(...asked);
 
@@ -172,6 +181,12 @@ function rowsLeft(megabytes: number): string[] {
  */
 export async function migratedByALimitedRole(name: string, connections: number): Promise<string> {
   await migrated(name, { megabytes: 1 });
+
+  // What a run of that role left when it was killed is the role's: dropped before the role is.
+  for (const left of await databasesLike(`${name}_test_`)) {
+    await onServer(`drop database "${left}" with (force)`);
+  }
+
   await onServer(`drop role if exists ${name}`);
   await onServer(`create role ${name} login password '${name}' createdb connection limit ${connections}`);
   await onServer(`alter database ${name} owner to ${name}`);

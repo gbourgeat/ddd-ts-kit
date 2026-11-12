@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:6d14426bc3629fe9 -->
+<!-- translation-of: testing-strategy.md sha256:340f0ac97d94eebe -->
 
 # Stratégie de test
 
@@ -491,7 +491,13 @@ démarrage : une migration appliquée entre-temps atteint les fichiers après un
 - **Un fichier part de tables vides, sauf celles que le projet garde.** L'exécution vide chaque
   table de sa copie sauf celles que liste `KEPT_TABLES` dans
   `test/support/test-database-kept.ts`, un fichier du projet : `<schéma>.<table>`, ou
-  `<schéma>.*`. Tel que généré, il liste ce que l'outil de migration écrit de ce qu'il a appliqué
+  `<schéma>.*`, écrit comme le serveur stocke le nom et sans guillemets, donc en minuscules sauf
+  si la table a été créée entre guillemets (`"Countries"` se liste `public.Countries`, `Countries`
+  se liste `public.countries`). Toute autre forme (`*`, `public`, un nom entre guillemets) fait
+  refuser l'exécution avec les formes qu'un nom prend, et un nom qui n'est aucune table de la base
+  (une faute de frappe, une autre casse, une vue) est dit en une ligne, puisqu'il ne garde rien ;
+  les noms que la liste générée tient pour une table que son outil n'a pas encore créée ne le
+  sont pas. Tel que généré, il liste ce que l'outil de migration écrit de ce qu'il a appliqué
   et, avec un journal d'audit, le schéma `audit`, laissé tel que la base migrée le contient (son
   garde refuse un *truncate*, et le [paquet audit](../../packages/audit/README.fr.md) conseille
   un journal que le rôle de l'application ne possède pas). Un outil de migration à qui l'on fait
@@ -500,16 +506,29 @@ démarrage : une migration appliquée entre-temps atteint les fichiers après un
   table dont une migration insère les lignes et que l'application lit : tout le reste de ce
   qu'une migration insère, de ce qu'une application ou une *spec* a laissé, n'atteint jamais une
   *spec*, comme sur PostgreSQL dans le processus. Les tables sont vidées en un seul `truncate`
-  sans `cascade` : une table gardée qui référence une table vidée fait refuser l'exécution avec
-  les deux noms, et se garde avec celle qu'elle référence. Une table qu'un autre rôle possède est
-  laissée avec ses lignes et nommée en une ligne, une table d'une extension est laissée aussi,
-  les vues matérialisées sont rafraîchies, et une séquence qu'aucune colonne ne possède garde sa
-  valeur. L'exécution nomme sur sa sortie d'erreur les tables vidées qui contenaient des lignes,
-  pour qu'une ligne qui manque à une *spec* ait sa cause à l'écran, et au-delà de 64 Mo ce qu'a
-  pris la copie : donnez aux tests une base à eux, migrée et vide, pour épargner ce temps.
+  sans `cascade`, chacune seule (`only`) : une table gardée qui référence une table vidée fait
+  refuser l'exécution avec les deux noms, et se garde avec celle qu'elle référence ; une table
+  gardée qui hérite d'une table vidée garde ses lignes. Une partition se vide avec sa table : une
+  partition gardée d'une table vidée fait refuser l'exécution avec les deux noms, de même qu'une
+  table gardée qui référence une partition d'une telle table. Une table qu'un autre rôle possède,
+  ou placée dans un schéma que le rôle de l'exécution ne peut pas utiliser, est laissée avec ses
+  lignes et nommée en une ligne, une table d'une extension est laissée aussi, les vues
+  matérialisées sont rafraîchies, et une séquence qu'aucune colonne ne possède garde sa valeur.
+  L'exécution nomme sur sa sortie d'erreur les tables vidées qui contenaient des lignes, jusqu'à
+  20 d'entre elles, pour qu'une ligne qui manque à une *spec* ait sa cause à l'écran, et au-delà
+  de 64 Mo ce qu'a pris la copie : donnez aux tests une base à eux, migrée et vide, pour épargner
+  ce temps.
 - **Les connexions sont partagées entre les fichiers qui s'exécutent en même temps.** La mise en
   place globale compte les fichiers qui s'exécutent en même temps, les *workers* de l'exécution et
-  pas plus que ses fichiers de *spec* (3 fichiers sur une machine de 16 *workers* comptent 3), lit
+  pas plus que les fichiers de cette exécution (3 fichiers sur une machine de 16 *workers*
+  comptent 3). Sous Vitest, c'est la liste du lanceur une fois appliqués les filtres de la ligne
+  de commande, et la part d'un *shard*. Jest ne remet aucune liste à une mise en place globale :
+  le compte est celui des fichiers de *spec* sous `test/` que les motifs de la ligne de commande
+  retiennent, sur le chemin depuis la racine du projet ou sur le chemin entier comme Jest les
+  applique, moins ceux qu'ignore `testPathIgnorePatterns`, et la part d'un *shard*, un nombre que
+  l'exécution ne peut pas dépasser. Quand le compte ne peut pas se faire (une exécution qui
+  surveille, un lanceur qui ne liste rien, un motif qui n'est pas une expression, pas de
+  répertoire `test/`), seuls les *workers* comptent. La mise en place lit ensuite
   ce qu'il reste au serveur (`max_connections`, moins ce qu'il réserve et ce qui est ouvert, et
   pas plus que la limite de connexions du rôle), et donne à chaque fichier sa part, moins une
   connexion de réserve : l'application sous test ouvre un *pool* de cette taille, 10 au plus
@@ -540,14 +559,26 @@ démarrage : une migration appliquée entre-temps atteint les fichiers après un
   inactif n'en a pas et qu'un modèle n'en a pas entre deux fichiers. Ce qu'une exécution tuée à
   l'instant a laissé est donc supprimé par une exécution qui démarre une minute plus tard, pas par
   la toute suivante. Une exécution qui ne peut pas reprendre de session le dit, et son démontage
-  ne lève jamais d'erreur : il supprime ce qui est à elle sur une autre session. **L'adresse est
+  ne lève jamais d'erreur : il supprime ce qui est à elle sur une autre session. Une exécution qui
+  reprend une session et ne trouve plus son modèle (elle n'en a pas eu pendant plus d'une minute
+  et une autre exécution a supprimé ce qu'elle tenait pour mort, ou un administrateur l'a fait)
+  dit qu'elle a perdu ses bases, et chaque fichier qui ne peut alors pas copier le modèle échoue
+  avec la même phrase au lieu du `template database ... does not exist` du serveur. La copie de
+  la base migrée a une session à elle : quand le serveur la termine, ce qui reste de la copie est
+  supprimé et la copie refaite une fois, et une seconde fin est dite comme telle. **L'adresse est
   directe** : derrière un *pooler* en mode transaction un verrou de session ne veut rien dire, et
   l'exécution a besoin du serveur lui-même. `DATABASE_URL` ne peut pas nommer la base `postgres`,
   où les exécutions tiennent leurs sessions : l'exécution le dit.
 - **Hors d'une exécution de bout en bout** (`openTestDatabase(url)` appelé par une *spec* de
   l'exécution unitaire, ou un projet sans pile HTTP) aucune mise en place globale n'a ouvert
   d'exécution : l'appel en ouvre une à lui, qui copie et vide elle-même la base migrée, dans le
-  temps que cela prend, et tient une session de plus, celle de son verrou.
+  temps que cela prend, et tient une session de plus, celle de son verrou. Rien ne compte les
+  fichiers qui le font en même temps, chacun une exécution qui voit les connexions restantes à son
+  démarrage : chacun ouvre un petit *pool*, 4 connexions au plus (16 fichiers de ce genre à la
+  fois tiennent dans les 100 connexions d'un serveur laissé tel qu'installé), et est refusé quand
+  le serveur n'a pas de place pour lui à ce moment. Un refus avant tout fichier, et une part de ce que laisse le
+  serveur, sont ce que donne une exécution de bout en bout ; hors d'elle, bornez vous-même les
+  *workers* de l'exécution.
 
 Ce que cela demande au serveur :
 
@@ -572,11 +603,15 @@ enregistre le cluster ou ouvre l'exécution sur un serveur, et
 `test/support/test-database-teardown.ts`, nommé par `globalTeardown`, supprime le cluster ou
 termine l'exécution ; les *workers* que Jest démarre après la mise en place héritent des variables
 qu'elle définit (`TEST_DATABASE_TEMPLATE`, ou `TEST_DATABASE_RUN` et `TEST_DATABASE_POOL_SIZE` sur
-un serveur). Jest charge une mise en place globale avec la résolution de Node, qui ne connaît
-aucun alias d'import du projet, et le support d'une exécution est fait de plusieurs fichiers qui
-s'importent par alias : les scripts `test:e2e` et `ci:test:e2e` d'un projet sur Jest avec une base
-de données démarrent Jest sous tsx (`node --import tsx ...`), qui résout les alias de
-`tsconfig.json` dans ce processus.
+un serveur). Un lanceur charge sa mise en place globale, et ce que ce fichier importe, avec la
+résolution de Node, avant qu'aucun alias d'import du projet n'existe : les fichiers de
+`test/support/` s'importent par un chemin relatif de ce répertoire (`./test-database-run`), le
+seul endroit où [`imports/alias-only`](../tools/import-aliases.fr.md) admet un chemin relatif.
+L'exécution démarre donc de la même façon depuis son script, depuis
+`npx jest -c jest.e2e.config.js` et depuis le lanceur d'un éditeur. Sous
+`"importExtension": "js"`, ce chemin se termine par le `.ts` de la source
+(`./test-database-run.ts`), que `rewriteRelativeImportExtensions` de `tsconfig.json` laisse lire
+au compilateur.
 Sur le *preset* identity, les *specs* d'intégration sous
 Jest prenaient 45 secondes de CPU avec un initdb par fichier de *spec*, et 26 avec la copie
 ([mesuré](../tools/test-runners.fr.md#vitesse-mesurée)).

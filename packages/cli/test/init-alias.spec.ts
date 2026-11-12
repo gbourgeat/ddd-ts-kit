@@ -7,6 +7,15 @@ import { jsonAt } from './support/json-at';
 import { readJson } from './support/read-json';
 
 const RELATIVE = /(?:\bfrom|\bimport\(?)\s*['"]\.{1,2}\//;
+/** A test runner loads its global setup before any alias exists: the files directly under test/support name a neighbour by `./<name>`, and nothing else. */
+const NEIGHBOUR = /(?:\bfrom|\bimport\(?)\s*['"]\.\/[^/'"]+['"]/g;
+
+function relative(root: string, file: string): boolean {
+  const text = read(root, file);
+
+  return RELATIVE.test(/^test\/support\/[^/]+$/.test(file) ? text.replaceAll(NEIGHBOUR, '') : text);
+}
+
 const sources = (root: string): string[] => ['src', 'test', 'scripts'].flatMap((tree) => walk(root, tree));
 
 describe('init and the import alias', () => {
@@ -73,7 +82,7 @@ describe('init and the import alias', () => {
 
     const written = sources(root).filter((file) => file.endsWith('.ts'));
 
-    expect(written.filter((file) => RELATIVE.test(read(root, file)))).toEqual([]);
+    expect(written.filter((file) => relative(root, file))).toEqual([]);
     expect(written.filter((file) => read(root, file).includes("from '@/")).length).toBeGreaterThan(100);
     expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toContain("from '$test/e2e/support/");
     expect(read(root, 'scripts/openapi.ts')).toContain("from '@/platform/");
@@ -94,7 +103,7 @@ describe('init and the import alias', () => {
     expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'paths', '$app/*')).toEqual(['./src/*']);
 
     expect(written.filter((file) => /['"]@\//.test(read(root, file)))).toEqual([]);
-    expect(written.filter((file) => RELATIVE.test(read(root, file)))).toEqual([]);
+    expect(written.filter((file) => relative(root, file))).toEqual([]);
     expect(read(root, 'src/main.ts')).toContain("from '$app/platform/composition/compose-application';");
     expect(report.violations).toEqual([]);
     expect(cli(root, 'docs', '--check').code).toBe(0);

@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { setTimeout as later } from 'node:timers/promises';
 import type pg from 'pg';
-import { connectedTo, keyOf, LIVE, locked } from '{{alias.test}}/support/test-database-server{{alias.ext}}';
+import { connectedTo, keyOf, LIVE, locked, lostDatabases } from './test-database-server{{alias.sibling}}';
 
 /** A run says that it lives every 15 seconds, and is held dead a minute after it last did (test-database-leftovers.ts). */
 const BEAT_SECONDS = 15;
@@ -34,6 +34,8 @@ interface Held {
   client: pg.Client;
   retaking: boolean;
   ended: boolean;
+  /** The database that carries the comment of the run, once it has one. */
+  database?: string;
   beating?: NodeJS.Timeout;
 }
 
@@ -90,15 +92,34 @@ async function retaken(held: Held, attempts: number): Promise<void> {
     }
 
     held.client = client;
+    await sayDatabasesLost(held);
   } catch (error) {
     if (attempts > 1 && !held.ended) {
       await later(1000);
       await retaken(held, attempts - 1);
     } else if (!held.ended) {
+      // Nothing is left to say that the run lives: the comment is not asked of a session that is gone.
+      clearInterval(held.beating);
+
       held.tell(
         `The run lost its session on the server and could not take it again (${String(error)}): a minute from now nothing says that its databases are in use, and another run may drop them. A spec file that finds its database gone failed for that reason: run again.\n`,
       );
     }
+  }
+}
+
+/** While the run had no session, nothing held its databases: a later run may have dropped them, and the files to come would fail one by one. */
+async function sayDatabasesLost(held: Held): Promise<void> {
+  const { database, client } = held;
+
+  if (database === undefined) {
+    return;
+  }
+
+  const found = await client.query('select 1 from pg_database where datname = $1', [database]).catch(() => undefined);
+
+  if (found?.rowCount === 0) {
+    held.tell(lostDatabases(database) + '\n');
   }
 }
 
@@ -107,6 +128,7 @@ async function beatingOn(held: Held, database: string): Promise<void> {
   const beat = `do $$ begin execute format('comment on database %I is %L', ${name}, '${BEAT}' || extract(epoch from now())::bigint); end $$`;
 
   await held.client.query(beat);
+  held.database = database;
   // Between two sessions a beat is lost: the next one says it, well before the run is held dead.
   held.beating = setInterval(() => void held.client.query(beat).catch(() => undefined), BEAT_SECONDS * 1000);
   held.beating.unref();

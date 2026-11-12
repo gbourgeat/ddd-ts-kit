@@ -1,16 +1,19 @@
 import { randomBytes } from 'node:crypto';
-import { openRun } from '{{alias.test}}/support/test-database-run{{alias.ext}}';
+import { openRun } from './test-database-run{{alias.sibling}}';
 import {
+  codeOf,
   copying,
   dropping,
+  lostDatabases,
   nameOf,
+  NO_SUCH_DATABASE,
   oneAtATime,
   onServer,
   POOL_SIZE,
   RUN_TEMPLATE,
   runOf,
   urlOf,
-} from '{{alias.test}}/support/test-database-server{{alias.ext}}';
+} from './test-database-server{{alias.sibling}}';
 
 /** A database of its own for one caller, on the server it was given. */
 export interface DatabaseClone {
@@ -22,6 +25,9 @@ export interface DatabaseClone {
   /** Drops the database, whoever is still connected to it. */
   drop(): Promise<void>;
 }
+
+/** The pool of a file that is a run of its own: nothing shares the connections of the server between such runs, so each takes few. */
+const POOL_OF_ITS_OWN = 4;
 
 /**
  * A database of its own on the server `url` names: the tables of the migrated database and none
@@ -44,7 +50,11 @@ export async function cloneDatabase(url: string): Promise<DatabaseClone> {
 
   const name = nameOf(url, run, randomBytes(4).toString('hex'));
 
-  await onServer(url, (server) => oneAtATime(server, run, () => server.query(copying(template, name))));
+  await onServer(url, (server) => oneAtATime(server, run, () => server.query(copying(template, name)))).catch(
+    (error: unknown) => {
+      throw codeOf(error) === NO_SUCH_DATABASE ? new Error(lostDatabases(template), { cause: error }) : error;
+    },
+  );
 
   return {
     url: urlOf(url, name),
@@ -53,9 +63,13 @@ export async function cloneDatabase(url: string): Promise<DatabaseClone> {
   };
 }
 
-/** The template of a run of one file is the database of that file: it holds one more session than a file of an end-to-end run, the one of its lock. */
+/**
+ * The template of a run of one file is the database of that file. Nothing counts the files that
+ * do this at the same time, each one a run that sees the connections left when it starts: each
+ * takes a small pool, and the session of its lock.
+ */
 async function runOfItsOwn(url: string): Promise<DatabaseClone> {
   const run = await openRun(url, 1);
 
-  return { url: urlOf(url, run.template), poolSize: run.poolSize, drop: run.end };
+  return { url: urlOf(url, run.template), poolSize: Math.min(run.poolSize, POOL_OF_ITS_OWN), drop: run.end };
 }

@@ -5,7 +5,6 @@ import {
   endRuns,
   hand,
   migrated,
-  migratedByALimitedRole,
   rowsOf,
   SERVER,
   support,
@@ -22,7 +21,8 @@ const COUNT = 'select count(*)::int from ';
  * Slow, opt-in (DDD_TS_KIT_E2E=1 and DDD_TS_KIT_MIGRATIONS_SERVER): the support a generated project
  * runs its spec files with on a server, called as the global setup of its end-to-end run and its
  * files call it, on a real PostgreSQL. Here, what a file finds in its database;
- * test-databases-connections.spec.ts holds the connections of a run, and
+ * test-databases-kept-by-a-run.spec.ts holds the tables a project keeps,
+ * test-databases-connections.spec.ts the connections of a run, and
  * test-databases-left-by-a-run.spec.ts what a run leaves, loses and refuses.
  */
 describe.runIf(ON_A_SERVER)('the database of a spec file, on a real PostgreSQL', { timeout: 120_000 }, () => {
@@ -72,70 +72,10 @@ describe.runIf(ON_A_SERVER)('the database of a spec file, on a real PostgreSQL',
 
     const clone = await cloneDatabase(urlOf('copies_clean'));
 
-    expect(told).toEqual(['']);
+    expect(told).toEqual([]);
     expect(await valueOf(clone.url, COUNT + 'knex_migrations')).toBe(1);
     expect(await valueOf(clone.url, COUNT + 'audit.audit_entries')).toBe(1);
     await expect(rowsOf(clone.url, 'truncate table audit.audit_entries')).rejects.toThrow('append-only');
-  });
-});
-
-describe.runIf(ON_A_SERVER)('the tables a project keeps, on a real PostgreSQL', { timeout: 120_000 }, () => {
-  afterEach(endRuns);
-
-  it('keep their rows when the project lists them, by name or by schema', async () => {
-    const kept = ['public.knex_migrations', 'public.countries', 'audit.*'];
-    const { openRun, cloneDatabase } = await support({ kept });
-    const told: string[] = [];
-
-    await migrated('copies_kept', { megabytes: 1 });
-    hand(await openRun(urlOf('copies_kept'), 1, (line) => told.push(line)));
-
-    const clone = await cloneDatabase(urlOf('copies_kept'));
-
-    expect(await valueOf(clone.url, COUNT + 'countries')).toBe(2);
-    expect(await valueOf(clone.url, COUNT + 'orders')).toBe(0);
-
-    expect(told.join('')).toMatch(
-      /^The run emptied 2 table\(s\) of its copy of "copies_kept" that held rows \(public\.order/,
-    );
-  });
-
-  it('are refused with both names when one references a table the run empties, which no cascade then empties for it', async () => {
-    const { openRun } = await support({ kept: ['public.knex_migrations', 'public.order_lines', 'audit.*'] });
-
-    await migrated('copies_kept', { megabytes: 1 });
-
-    await expect(openRun(urlOf('copies_kept'), 1)).rejects.toThrow(
-      'The table public.order_lines keeps its rows and references public.orders, which the run empties: keep public.orders too, in KEPT_TABLES of test/support/test-database-kept.ts.',
-    );
-
-    expect(await databasesLike('copies_kept_test_')).toEqual([]);
-  });
-
-  it('are left as they are, and named, when another role owns them: the trail of a project whose role only appends to it', async () => {
-    const { openRun, cloneDatabase } = await support({ kept: ['public.knex_migrations'] });
-    const url = await migratedByALimitedRole('copies_owned', 20);
-    const told: string[] = [];
-
-    hand(await openRun(url, 1, (line) => told.push(line)));
-
-    const clone = await cloneDatabase(url);
-
-    expect(told.join('')).toContain(
-      'It left 1 table(s) with their rows, which another role owns (audit.audit_entries).\n',
-    );
-
-    expect(await valueOf(clone.url, COUNT + 'audit.audit_entries')).toBe(1);
-    expect(await valueOf(clone.url, COUNT + 'orders')).toBe(0);
-  });
-
-  it('are the trail too as the project is generated: a role that owns no table of it runs as any other', async () => {
-    const { openRun } = await support();
-    const told: string[] = [];
-
-    await openRun(await migratedByALimitedRole('copies_owned', 20), 1, (line) => told.push(line));
-
-    expect(told.join('')).not.toContain('another role');
   });
 });
 
@@ -154,7 +94,9 @@ describe.runIf(ON_A_SERVER)(
 
       expect(first?.url).not.toBe(second?.url);
       expect(await valueOf(first?.url ?? '', COUNT + 'orders')).toBe(0);
-      expect(first?.poolSize).toBe(10);
+      // Nothing counts the files that do this at once: each takes a small pool.
+      expect(first?.poolSize).toBe(4);
+      expect(second?.poolSize).toBe(4);
       expect(await databasesLike('copies_alone_test_')).toHaveLength(2);
 
       await first?.drop();

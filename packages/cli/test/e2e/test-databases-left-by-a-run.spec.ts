@@ -107,6 +107,45 @@ describe.runIf(ON_A_SERVER)('a run whose session the server ends, on a real Post
     expect(await databasesLike('left_lost_test_')).toEqual([]);
   });
 
+  it('says that it lost its databases when it finds its template gone, and so does the file that cannot copy it', async () => {
+    const { openRun, cloneDatabase } = await support();
+    const told: string[] = [];
+
+    await migrated('left_lost');
+
+    const run = hand(await openRun(urlOf('left_lost'), 2, (line) => told.push(line)));
+    const lost = `The run lost its databases: its template "${run.template}" is no longer on the server. A run whose session ended for more than a minute is held dead, and a later run drops what it left; an administrator may have dropped it too. Run again.`;
+
+    // What a later run does to a run it holds dead, while this one has no session.
+    await onServer(`drop database ${run.template}`);
+    await onServer(`select pg_terminate_backend(${await holderOf(run)})`);
+
+    await expect.poll(() => told.at(-1), { timeout: 15_000 }).toBe(lost + '\n');
+    await expect(cloneDatabase(urlOf('left_lost'))).rejects.toThrow(lost);
+  });
+
+  it('copies the migrated database once more, on another session, when the server ends the one that copies it', async () => {
+    const { openRun, cloneDatabase } = await support();
+    const before = await connected(urlOf('postgres'));
+
+    await migrated('left_lost', { megabytes: 1 });
+    // Another run copies its own migrated database: this one waits its turn, on the session of its copy.
+    await before.query('select pg_advisory_lock($1, 0)', [LIVE + 1]);
+
+    const opening = openRun(urlOf('left_lost'), 1, () => undefined);
+    const first = await waitingToCopy(0);
+
+    await onServer(`select pg_terminate_backend(${first})`);
+
+    expect(await waitingToCopy(first)).not.toBe(first);
+
+    await before.end();
+
+    hand(await opening);
+
+    expect(await valueOf((await cloneDatabase(urlOf('left_lost'))).url, 'select count(*)::int from orders')).toBe(0);
+  });
+
   it('ends without an error and drops its databases even when it ends before it has a session again', async () => {
     const { openRun, cloneDatabase } = await support();
 
@@ -179,6 +218,16 @@ async function said(database: string | undefined, words: string): Promise<void> 
 
 function commentOf(database: string): string {
   return `select shobj_description(oid, 'pg_database') from pg_database where datname = '${database}'`;
+}
+
+/** The session that waits for the lock under which a run copies its migrated database, other than `known`. */
+async function waitingToCopy(known: number): Promise<number> {
+  const waiting = `select pid from pg_locks where locktype = 'advisory' and classid = ${LIVE + 1} and objid = 0 and not granted and pid <> ${known}`;
+  const pid = async (): Promise<number> => Number(Reflect.get(Object((await onServer(waiting))[0]), 'pid') ?? 0);
+
+  await expect.poll(pid, { timeout: 15_000 }).toBeGreaterThan(0);
+
+  return pid();
 }
 
 /** The session that holds the lock of the run, 0 when none does. */

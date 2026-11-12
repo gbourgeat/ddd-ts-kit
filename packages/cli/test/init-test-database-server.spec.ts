@@ -4,7 +4,7 @@ import { commitAll } from './support/commit-all';
 import { initProject } from './support/init-project';
 
 const OPEN = 'src/platform/database/open-test-database.ts';
-const PARTS = ['clone', 'run', 'session', 'leftovers', 'budget', 'emptying', 'server', 'kept'];
+const PARTS = ['clone', 'run', 'session', 'leftovers', 'budget', 'copy', 'emptying', 'server', 'kept'];
 
 const support = (root: string, part: string): string => read(root, `test/support/test-database-${part}.ts`);
 
@@ -100,7 +100,13 @@ describe('the database of a caller, on a server', () => {
 
     expect(clone).toContain('if (run === undefined) {\n    return runOfItsOwn(url);\n  }');
     expect(clone).toContain('const run = await openRun(url, 1);');
-    expect(clone).toContain('return { url: urlOf(url, run.template), poolSize: run.poolSize, drop: run.end };');
+
+    // Nothing counts the files that do this at once: each takes a small pool.
+    expect(clone).toContain('const POOL_OF_ITS_OWN = 4;');
+
+    expect(clone).toContain(
+      'return { url: urlOf(url, run.template), poolSize: Math.min(run.poolSize, POOL_OF_ITS_OWN), drop: run.end };',
+    );
   });
 
   it('is never the database "postgres", where the runs hold their locks', () => {
@@ -123,26 +129,34 @@ describe('a run on a server', () => {
     expect(run).toContain('await dropLeftovers(session.server(), url, session.id);');
     expect(run).toContain('const poolSize = await poolSizeFor(session.server(), atOnce);');
 
-    expect(run).toContain(
-      "await oneAtATime(session.server(), '0', () => copied(session.server(), databaseOf(url), template));",
-    );
+    expect(run).toContain('await copied(url, template);\n    await session.beatOn(template);');
+    // A run with nothing to say writes nothing: one call a line.
+    expect(run).toContain("tell(line + '\\n');");
 
-    expect(run).toContain('await session.beatOn(template);');
-
-    expect(run).toContain(
-      'tell(said(await emptied(url, template), databaseOf(url), Math.ceil((Date.now() - from) / 1000)));',
+    expect(support(initProject(), 'copy')).toContain(
+      "onServer(url, (server) => oneAtATime(server, '0', () => copiedOn(server, databaseOf(url), template)));",
     );
   });
 
   it('names what the server refuses: other sessions, a role that creates no database, a database absent or not migrated', () => {
-    const run = support(initProject(), 'run');
+    const copy = support(initProject(), 'copy');
 
-    expect(run).toContain("const OTHER_SESSIONS = '55006';");
-    expect(run).toContain('return server.query(copying(database, template));');
-    expect(run).toContain('PostgreSQL copies a database only while nobody else is connected to it.');
-    expect(run).toContain('(alter role <role> createdb)');
-    expect(run).toContain("'3D000': (database) =>");
+    expect(copy).toContain("const OTHER_SESSIONS = '55006';");
+    expect(copy).toContain('return server.query(copying(database, template));');
+    expect(copy).toContain('PostgreSQL copies a database only while nobody else is connected to it.');
+    expect(copy).toContain('(alter role <role> createdb)');
+    expect(copy).toContain("'3D000': (database) =>");
     expect(support(initProject(), 'emptying')).toContain('holds no table: migrate it first (pnpm run db:migrate).');
+  });
+
+  it('copies once more, on another session, when the one that copied ended, and says so when that one ended too', () => {
+    const copy = support(initProject(), 'copy');
+
+    expect(copy).toContain('if (!sessionEnded(error)) {\n        throw error;\n      }');
+    expect(copy).toContain('await onServer(url, (server) => server.query(dropping(template)));\n      await once();');
+    expect(copy).toContain('ended twice before the copy did');
+    // No client of a run ends the runner when the server ends its session.
+    expect(support(initProject(), 'server')).toContain("client.on('error', () => undefined);");
   });
 
   it('ends on its session or, when the server ended that one, on another, and never throws', () => {
@@ -162,7 +176,11 @@ describe('a run on a server', () => {
       'The run emptied ${held.length} table(s) of its copy of "${database}" that held rows (${named(held)})',
     );
 
-    expect(run).toContain('It left ${ofAnotherRole.length} table(s) with their rows, which another role owns');
+    expect(run).toContain(
+      'It left ${ofAnotherRole.length} table(s) with their rows, which another role owns or whose schema the role of the run may not use',
+    );
+
+    expect(run).toContain('const NAMED = 20;');
     expect(run).toContain('copying them took ${seconds} s of this run.');
     expect(run).toContain('const LARGE = 64 * 1024 * 1024;');
   });
@@ -178,6 +196,9 @@ describe('the session of a run', () => {
     expect(session).toContain('if (!(await locked(client, `pg_try_advisory_lock(${LIVE}, ${keyOf(held.id)})`))) {');
     expect(session).toContain('The run lost its session on the server and could not take it again');
     expect(session).toContain('await held.client.end().catch(() => undefined);');
+    // With its lock again, the run looks for its template; without it, it stops asking a session that is gone.
+    expect(session).toContain('held.client = client;\n    await sayDatabasesLost(held);');
+    expect(session).toContain('clearInterval(held.beating);\n\n      held.tell(');
   });
 
   it('says every 15 seconds, in the comment of its template, that the run lives', () => {
@@ -254,19 +275,16 @@ describe('what a run empties', () => {
     },
   );
 
-  it('is emptied in one statement without cascade, and neither a table of another role nor one of an extension', () => {
+  it('is emptied in one statement without cascade, each table alone, and neither a table of another role nor one of an extension', () => {
     const emptying = support(initProject(), 'emptying');
 
-    expect(emptying).toContain("import { KEPT_TABLES } from '$test/support/test-database-kept';");
-
-    expect(emptying).toContain(
-      "return KEPT_TABLES.includes(name) || KEPT_TABLES.includes(name.replace(/\\.[^.]*$/, '.*'));",
-    );
-
+    expect(emptying).toContain("import { KEPT_TABLES } from './test-database-kept';");
+    expect(emptying).toContain("return listed === table || listed === table.replace(/\\.[^.]*$/, '.*');");
+    expect(emptying).toContain('(table.partitioned ? table.quoted : `only ${table.quoted}`)');
     expect(emptying).toContain('restart identity`);');
     expect(emptying).not.toContain('restart identity cascade');
     expect(emptying).not.toContain('disable trigger');
-    expect(emptying).toContain("pg_has_role(c.relowner, 'USAGE') as owned");
+    expect(emptying).toContain("pg_has_role(c.relowner, 'USAGE') and has_schema_privilege(n.oid, 'USAGE') as owned");
     expect(emptying).toContain("and d.deptype = 'e')");
     expect(emptying).toContain('await copy.query(`refresh materialized view ${view.quoted}`);');
   });
@@ -286,10 +304,14 @@ describe('what a run empties', () => {
     expect(support(root, 'budget')).toContain('export async function poolSizeFor(');
   });
 
-  it('refuses, with both names, a kept table that references an emptied one', () => {
-    expect(support(initProject(), 'emptying')).toContain(
-      'The table ${broken.from} keeps its rows and references ${broken.to}, which the run empties: keep ${broken.to} too, in KEPT_TABLES of test/support/test-database-kept.ts.',
+  it('refuses, with both names, a kept table that references an emptied one, and a kept partition of one', () => {
+    const emptying = support(initProject(), 'emptying');
+
+    expect(emptying).toContain(
+      'The table ${rootOf(broken.from)} keeps its rows and references ${rootOf(broken.to)}, which the run empties: keep ${rootOf(broken.to)} too, ${where}.',
     );
+
+    expect(emptying).toContain('is a partition of ${rootOf(partition)}, which the run empties');
   });
 });
 

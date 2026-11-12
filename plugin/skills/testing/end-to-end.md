@@ -26,9 +26,11 @@ creates its tables there. With `DATABASE_URL` set, a global setup copies the mig
 names once and empties the copy (`test/support/test-database-setup.ts`), and each spec file runs
 on a copy of that template, dropped when the application closes: a file starts from empty tables
 there too, and never connects to the migrated database itself. A row a migration inserts and the
-application reads: list its table in `KEPT_TABLES` of `test/support/test-database-kept.ts`; any
-other row, the spec stores. A run refused with `spec files at once need ... connections` does
-what its message says (fewer files at once, or the bound it names).
+application reads: list its table in `KEPT_TABLES` of `test/support/test-database-kept.ts`, as
+the server stores its name (`public.countries`); any other row, the spec stores. The files of
+`test/support/` import one another by `./<name>`, since a runner loads them before any alias. A
+run refused with `spec files at once need ... connections` does what its message says (fewer
+files at once, or the bound it names).
 
 A spec past 350 lines (`clean/file-size`) is split by behaviour into parts named after it:
 `test/e2e/place-order-refusals.e2e.spec.ts` beside `test/e2e/place-order.e2e.spec.ts`. With a

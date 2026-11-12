@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { exists, read } from './helpers';
 import { initProject } from './support/init-project';
@@ -6,14 +8,19 @@ import { jsonAt } from './support/json-at';
 const SETUP = 'test/support/test-database-setup.ts';
 
 describe('the global setup of an end-to-end run on a server', () => {
-  it('with Vitest, opens the run for the files that run at once, no more than the spec files, and resolves its end', () => {
+  it('with Vitest, opens the run for the files that run at once, no more than the runner lists for this run, and resolves its end', () => {
     const root = initProject('--orm', 'prisma');
     const setup = read(root, SETUP);
     const config = read(root, 'vitest.e2e.config.ts');
 
     expect(setup).toContain('export async function setup(project: TestProject): Promise<() => Promise<void>> {');
-    expect(setup).toContain('const run = await openRun(url, await filesAtOnce(project));');
-    expect(setup).toContain('const files = watch ? maxWorkers : (await project.globTestFiles()).testFiles.length;');
+    expect(setup).toContain('const run = await openRun(url, filesAtOnce(project));');
+    expect(setup).toContain('const listed = project.vitest.state.getPaths().length;');
+
+    expect(setup).toContain(
+      'const files = watch || listed === 0 ? maxWorkers : Math.ceil(listed / (shard?.count ?? 1));',
+    );
+
     expect(setup).toContain('return Math.max(1, Math.min(maxWorkers, files));');
     expect(setup).toContain('process.env[RUN_TEMPLATE] = run.template;');
     expect(setup).not.toContain('export default');
@@ -25,16 +32,19 @@ describe('the global setup of an end-to-end run on a server', () => {
     expect(config).not.toContain('fileParallelism');
   });
 
-  it('with Jest, counts the spec files the command line asks for, saves the cluster in process without a server, and leaves its end to the teardown', () => {
+  it('with Jest, counts no fewer spec files than the run has, saves the cluster in process without a server, and leaves its end to the teardown', () => {
     const root = initProject('--tests', 'jest');
     const setup = read(root, SETUP);
     const teardown = read(root, 'test/support/test-database-teardown.ts');
 
-    expect(setup).toContain('export default async function setup(jest: JestRun): Promise<void> {');
-    expect(setup).toContain("import saveCluster from '$test/support/test-database-template';");
+    expect(setup).toContain(
+      'export default async function setup(jest: JestRun, project: JestProject): Promise<void> {',
+    );
+
     expect(setup).toContain("if (url === '') {\n    await saveCluster();");
-    expect(setup).toContain('const run = await openRun(url, filesAtOnce(jest));');
-    expect(setup).toContain('return Math.max(1, Math.min(maxWorkers, files.length));');
+    expect(setup).toContain('const run = await openRun(url, filesAtOnce(jest, project));');
+    expect(setup).toContain('} catch {\n    return jest.maxWorkers;\n  }');
+    expect(setup).toContain('pattern.test(file) || pattern.test(whole(file))');
     expect(setup).toContain('Reflect.set(globalThis, END, run.end);');
     expect(teardown).toContain("Reflect.get(globalThis, Symbol.for('ddd-ts-kit.test-database-run'));");
     expect(teardown).toContain('await Reflect.apply(end, undefined, []);');
@@ -42,20 +52,52 @@ describe('the global setup of an end-to-end run on a server', () => {
     expect(teardown).not.toMatch(/from '[.$@]/);
   });
 
-  it('with Jest, is named by the configuration, whose scripts start Jest under tsx so that its imports by alias resolve', () => {
+  it('with Jest, is named by the configuration and started by Jest alone, as an editor or `npx jest` starts it', () => {
     const root = initProject('--tests', 'jest', '--orm', 'prisma');
     const config = read(root, 'jest.e2e.config.js');
     const scripts = jsonAt(JSON.parse(read(root, 'package.json')), 'scripts');
-
-    const underTsx =
-      'node --import tsx --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.e2e.config.js --passWithNoTests';
+    const plain = 'node --experimental-vm-modules node_modules/jest/bin/jest.js';
 
     expect(config).toContain("  globalSetup: '<rootDir>/test/support/test-database-setup.ts',\n");
     expect(config).toContain('  maxWorkers: 2,\n');
     expect(config).not.toContain("from 'node:process'");
-    expect(jsonAt(scripts, 'test:e2e')).toBe(underTsx);
-    expect(jsonAt(scripts, 'ci:test:e2e')).toBe(underTsx);
-    expect(jsonAt(scripts, 'test')).toBe('node --experimental-vm-modules node_modules/jest/bin/jest.js');
+    expect(jsonAt(scripts, 'test:e2e')).toBe(`${plain} --config jest.e2e.config.js --passWithNoTests`);
+    expect(jsonAt(scripts, 'ci:test:e2e')).toBe(`${plain} --config jest.e2e.config.js --passWithNoTests`);
+    expect(jsonAt(scripts, 'test')).toBe(plain);
+  });
+
+  it.each([
+    ['vitest', 'drizzle'],
+    ['jest', 'knex'],
+    ['jest', 'prisma'],
+    ['vitest', 'typeorm'],
+  ])(
+    'with %s on %s, is loaded with what it imports before any alias exists: by a relative path of test/support',
+    (tests, orm) => {
+      const root = initProject('--tests', tests, '--orm', orm);
+      const support = fs.readdirSync(path.join(root, 'test/support')).map((file) => read(root, `test/support/${file}`));
+
+      const imports = support.flatMap((source) =>
+        [...source.matchAll(/from '([^']+)'/g)].map(([, specifier]) => specifier),
+      );
+
+      expect(imports.filter((specifier) => /^[$@]\//.test(specifier ?? ''))).toEqual([]);
+      expect(imports).toContain('./test-database-run');
+      expect(read(root, SETUP)).toContain("import { openRun } from './test-database-run';");
+    },
+  );
+
+  it('under "importExtension": "js", names its neighbours by the .ts of their source, which the compiler is let read', () => {
+    const root = initProject('--tests', 'jest', '--import-extension', 'js');
+    const options = jsonAt(JSON.parse(read(root, 'tsconfig.json')), 'compilerOptions');
+
+    expect(read(root, SETUP)).toContain("import { openRun } from './test-database-run.ts';");
+    expect(read(root, 'test/support/test-database-run.ts')).toContain("from './test-database-server.ts';");
+    expect(jsonAt(options, 'rewriteRelativeImportExtensions')).toBe(true);
+
+    expect(
+      Object.keys(Object(jsonAt(JSON.parse(read(initProject(), 'tsconfig.json')), 'compilerOptions'))),
+    ).not.toContain('rewriteRelativeImportExtensions');
   });
 
   it('is written where there is an end-to-end run on a database, and Jest starts as before without one', () => {

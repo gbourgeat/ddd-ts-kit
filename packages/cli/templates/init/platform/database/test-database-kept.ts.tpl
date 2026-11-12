@@ -1,9 +1,12 @@
 /**
  * The tables an end-to-end run on a server leaves their rows (test-database-emptying.ts): every
  * other table of its copy of the migrated database is emptied before a spec file starts. A name is
- * `<schema>.<table>`, or `<schema>.*` for every table of a schema. Add a table whose rows a
- * migration inserts and the application reads (a list of countries, a plan). A kept table that
- * references an emptied one needs that one kept too: the run says which.
+ * `<schema>.<table>`, or `<schema>.*` for every table of a schema, written as the server stores it
+ * and without quotes: in lower case unless the table was created between quotes (`"Countries"` is
+ * `public.Countries`). The run says of a name that it is no table of the database. Add a table
+ * whose rows a migration inserts and the application reads (a list of countries, a plan). A kept
+ * table that references an emptied one, or is a partition of one, needs that one kept too: the run
+ * says which.
  */
 export const KEPT_TABLES: readonly string[] = [
   // What the migration tool writes of what it applied: a table it is told to name otherwise goes here under that name.

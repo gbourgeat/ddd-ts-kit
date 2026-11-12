@@ -25,8 +25,7 @@ export default {
   testTimeout: 20000,
 {{#if persistence.hasDatabase}}
   // With DATABASE_URL, copies the migrated database once and checks that the files of the run fit in the connections of
-  // the server; without it, initialises PostgreSQL in process as jest.config.js does. It imports by alias, which Jest
-  // does not resolve in a global setup: the scripts of the end-to-end run start Jest under tsx (--import tsx).
+  // the server; without it, initialises PostgreSQL in process as jest.config.js does.
   globalSetup: '<rootDir>/test/support/test-database-setup.ts',
 {{/if}}
 {{#if endToEnd.sharedServer}}

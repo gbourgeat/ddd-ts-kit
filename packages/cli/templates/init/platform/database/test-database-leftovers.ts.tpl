@@ -1,6 +1,6 @@
 import type pg from 'pg';
-import { dropping, keyOf, LIVE, locked, runOf } from '{{alias.test}}/support/test-database-server{{alias.ext}}';
-import { BEAT, DEAD_AFTER_SECONDS } from '{{alias.test}}/support/test-database-session{{alias.ext}}';
+import { dropping, keyOf, LIVE, locked, runOf } from './test-database-server{{alias.sibling}}';
+import { BEAT, DEAD_AFTER_SECONDS } from './test-database-session{{alias.sibling}}';
 
 interface Leftover {
   readonly name: string;

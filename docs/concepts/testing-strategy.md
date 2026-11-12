@@ -468,7 +468,13 @@ copies once, when it starts: a migration applied meanwhile reaches the files aft
 
 - **A file starts from empty tables, but for those the project keeps.** The run empties every
   table of its copy except those `KEPT_TABLES` lists in `test/support/test-database-kept.ts`, a
-  file of the project: `<schema>.<table>`, or `<schema>.*`. As generated it lists what the
+  file of the project: `<schema>.<table>`, or `<schema>.*`, written as the server stores the name
+  and without quotes, so in lower case unless the table was created between quotes (`"Countries"`
+  is listed as `public.Countries`, `Countries` as `public.countries`). Any other shape (`*`,
+  `public`, a quoted name) refuses the run with the shapes a name takes, and a name that is no
+  table of the database (a misspelling, another case, a view) is said in one line, since it keeps
+  nothing; the names the generated list holds for a table its tool has not created yet are not.
+  As generated it lists what the
   migration tool writes of what it applied and, with an audit trail, the `audit` schema, which is
   left as the migrated database holds it (its guard refuses a truncate, and the
   [audit package](../../packages/audit/README.md) advises a trail the role of the application
@@ -476,16 +482,27 @@ copies once, when it starts: a migration applied meanwhile reaches the files aft
   `migrationsTableName` of the data source, `migrations.table` of `drizzle.config.ts`) has that
   name written there by hand. Add a table whose rows a migration inserts and the application reads:
   everything else a migration inserts, an application or a spec left, never reaches a spec, as on
-  PostgreSQL in process. The tables are emptied in one `truncate` without `cascade`: a kept table
-  that references an emptied one refuses the run with both names, and is kept with the one it
-  references. A table another role owns is left with its rows and named in one line, a table of
-  an extension is left too, the materialized views are refreshed, and a sequence no column owns
-  keeps its value. The run names on its error output the tables it emptied that held rows, so that
-  a row a spec misses has its cause on screen, and above 64 MB what the copy took: give the tests
-  a database of their own, migrated and empty, to spare that time.
+  PostgreSQL in process. The tables are emptied in one `truncate` without `cascade`, each one alone
+  (`only`): a kept table that references an emptied one refuses the run with both names, and is
+  kept with the one it references; a kept table that inherits from an emptied one keeps its rows.
+  A partition is emptied with its table: a kept partition of an emptied table refuses the run with
+  both names, and so does a kept table that references a partition of one. A table another role
+  owns, or one in a schema the role of the run may not use, is left with its rows and named in one
+  line, a table of an extension is left too, the materialized views are refreshed, and a sequence
+  no column owns keeps its value. The run names on its error output the tables it emptied that
+  held rows, up to 20 of them, so that a row a spec misses has its cause on screen, and above
+  64 MB what the copy took: give the tests a database of their own, migrated and empty, to spare
+  that time.
 - **The connections are shared between the files that run at once.** The global setup counts the
-  files that run at the same time, the workers of the run and no more than its spec files (3 files
-  on a machine of 16 workers count 3), reads what the server has left (`max_connections`, less
+  files that run at the same time, the workers of the run and no more than the files of this run
+  (3 files on a machine of 16 workers count 3). Under Vitest that is the list of the runner once
+  the filters of the command line are applied, and the share of a shard. Jest hands no list to a
+  global setup: the count is the spec files under `test/` that the patterns of the command line
+  match, on the path from the root of the project or on the whole path as Jest matches them, less
+  those `testPathIgnorePatterns` ignores, and the share of a shard, a number the run cannot
+  exceed. When the count cannot be made (a run that watches, a runner that lists nothing, a
+  pattern that is no expression, no `test/` directory) the workers alone count. The setup then
+  reads what the server has left (`max_connections`, less
   what it reserves and what is open, and no more than the connection limit of the role), and gives
   each file its share, less one connection to spare: the application under test opens a pool of
   that size, 10 at most (`DatabaseClone.poolSize`, which the four ORM hand to their connection),
@@ -513,13 +530,23 @@ copies once, when it starts: a migration applied meanwhile reaches the files aft
   is idle has none and a template has none between two files. What a run killed a moment ago
   left is therefore dropped by a run that starts a minute later, not by the very next one. A run
   that cannot take a session again says so, and its teardown never throws: it drops what is its
-  own on another session. **The address is a direct one**: behind a pooler in transaction mode a
+  own on another session. A run that takes a session again and finds its template gone (it had
+  none for more than a minute and another run dropped what it held dead, or an administrator did)
+  says that it lost its databases, and each file that then cannot copy the template fails with
+  the same sentence instead of the `template database ... does not exist` of the server. The copy
+  of the migrated database has a session of its own: when the server ends that one, what is left
+  of the copy is dropped and the copy made once more, and a second end is said as such. **The address is a direct one**: behind a pooler in transaction mode a
   session lock means nothing, and the run needs the server itself. `DATABASE_URL` cannot name the
   `postgres` database, where the runs hold their sessions: the run says so.
 - **Outside an end-to-end run** (`openTestDatabase(url)` called by a spec of the unit run, or a
   project without an HTTP stack) no global setup opened a run: the call opens one of its own,
   which copies and empties the migrated database itself, in the time that takes, and holds one
-  more session, the one of its lock.
+  more session, the one of its lock. Nothing counts the files that do so at the same time, each a
+  run that sees the connections left when it starts: each opens a small pool, 4 connections at
+  most (16 such files at once fit in the 100 connections of a server left as installed), and is
+  refused when the server has no room for it at that moment. A refusal before any file
+  starts, and a share of what the server leaves, are what an end-to-end run gives; outside one,
+  bound the workers of the run yourself.
 
 What this asks of the server:
 
@@ -540,11 +567,15 @@ export of its file: `jest.config.js` names the one that saves the cluster, `jest
 the one of the end-to-end run, which saves the cluster or opens the run on a server, and
 `test/support/test-database-teardown.ts`, named by `globalTeardown`, deletes the cluster or ends
 the run; the workers Jest starts after the setup inherit the variables it sets
-(`TEST_DATABASE_TEMPLATE`, or `TEST_DATABASE_RUN` and `TEST_DATABASE_POOL_SIZE` on a server). Jest
-loads a global setup with the resolution of Node, which knows no import alias of the project, and
-the support of a run is several files that import each other by alias: the `test:e2e` and
-`ci:test:e2e` scripts of a project on Jest with a database start Jest under tsx
-(`node --import tsx ...`), which resolves the aliases of `tsconfig.json` in that process.
+(`TEST_DATABASE_TEMPLATE`, or `TEST_DATABASE_RUN` and `TEST_DATABASE_POOL_SIZE` on a server). A
+runner loads its global setup, and what that file imports, with the resolution of Node, before
+any import alias of the project exists: the files of `test/support/` import one another by a
+relative path of that directory (`./test-database-run`), the one place where
+[`imports/alias-only`](../tools/import-aliases.md) lets a relative path stand. The run therefore
+starts the same from its script, from `npx jest -c jest.e2e.config.js` and from the runner of an
+editor. Under `"importExtension": "js"` that path ends with the `.ts` of the source
+(`./test-database-run.ts`), which `rewriteRelativeImportExtensions` of `tsconfig.json` lets the
+compiler read.
 On the identity preset, the
 integration specs under Jest took 45 CPU seconds with an initdb per spec file and 26 with the copy
 ([measured](../tools/test-runners.md#speed-measured)).

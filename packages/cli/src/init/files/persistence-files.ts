@@ -80,7 +80,7 @@ export function persistenceFiles(config: Config): InitFile[] {
       ['test/support/test-database-template.ts', 'init/platform/database/test-database-template.ts.tpl'],
       // On a server, whatever the ORM: the database of one caller, the run that copies and empties the migrated one,
       // and what a run is made of. The tables a run does not empty are the list of the project.
-      ...['clone', 'run', 'session', 'leftovers', 'budget', 'emptying', 'server', 'kept'].map(
+      ...['clone', 'run', 'session', 'leftovers', 'budget', 'copy', 'emptying', 'server', 'kept'].map(
         (part): InitFile => [
           `test/support/test-database-${part}.ts`,
           `init/platform/database/test-database-${part}.ts.tpl`,

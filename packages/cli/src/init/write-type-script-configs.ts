@@ -1,4 +1,4 @@
-import { aliasRoots, compilerPaths, compilerResolutionOf, DEFAULT_BUILD_LAYOUT } from '../alias';
+import { aliasRoots, compilerPaths, compilerResolutionOf, DEFAULT_BUILD_LAYOUT, specifierSuffix } from '../alias';
 import type { Config } from '../config';
 import { usesLegacyDecorators } from '../stack/uses-legacy-decorators';
 import type { Workspace } from '../workspace';
@@ -38,6 +38,7 @@ function compilerOptions(config: Config): Record<string, unknown> {
     exactOptionalPropertyTypes: true,
     noImplicitOverride: true,
     verbatimModuleSyntax: true,
+    ...relativeSources(config),
     skipLibCheck: true,
     ...(usesLegacyDecorators(config) ? { experimentalDecorators: true, emitDecoratorMetadata: true } : {}),
     types: ['node'],
@@ -45,6 +46,15 @@ function compilerOptions(config: Config): Record<string, unknown> {
     outDir: DEFAULT_BUILD_LAYOUT.outDir,
     paths: compilerPaths(aliasRoots(config)),
   };
+}
+
+/**
+ * The files of `test/support/` a test runner loads as its global setup import one another by a
+ * relative path, which that runner resolves as Node does: where the compiler requires an extension
+ * it is the `.ts` of the source, which this option lets it read.
+ */
+function relativeSources(config: Config): Record<string, unknown> {
+  return specifierSuffix(config.importExtension) === '' ? {} : { rewriteRelativeImportExtensions: true };
 }
 
 function serialize(value: unknown): string {
