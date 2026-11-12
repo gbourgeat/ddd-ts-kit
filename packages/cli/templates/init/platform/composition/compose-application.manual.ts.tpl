@@ -60,6 +60,9 @@ import { createPlatform } from '{{alias.platform}}/composition/create-platform{{
 import { platformErrorMapper } from '{{alias.platform}}/composition/platform-error-mapper{{alias.ext}}';
 {{/if}}
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if persistence.hasDatabase}}
+import { readModelTables } from '{{alias.platform}}/database/read-model-tables{{alias.ext}}';
+{{/if}}
 {{#if files.http}}
 import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
 {{/if}}
@@ -277,6 +280,11 @@ function boundaryOf(platform: Platform, options: ApplicationOptions{{#if present
  * process while the queue is kept in its memory: no other process would see what this one enqueues{{/if}}.
  */
 async function start(platform: Platform, options: ApplicationOptions): Promise<void> {
+{{#if persistence.hasDatabase}}
+  // Before a consumer is subscribed or a request served, whatever builds a store and whenever: one read of the catalog.
+  await readModelTables(platform.persistence).atStart(platform.logger, options.readModelTables);
+
+{{/if}}
 {{#if authz.rebac}}
   await relateSystemActors();
 

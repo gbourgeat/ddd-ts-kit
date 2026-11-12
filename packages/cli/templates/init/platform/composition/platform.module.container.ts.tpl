@@ -65,9 +65,14 @@ import { {{#if broker.external}}EventSubscribers, {{/if}}ProcessedEventStore, Un
 import { ExecutionScope, ProcessStore } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{/unless}}
+{{#if persistence.hasDatabase}}
+import { Logger, type ReadModelTablesAtStart } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless persistence.hasDatabase}}
 {{#if queue.redis}}
 import { Logger } from '@ddd-ts-kit/kernel';
 {{/if}}
+{{/unless}}
 {{#if queue.stored}}
 import { JobStore } from '@ddd-ts-kit/scheduling';
 {{/if}}
@@ -79,6 +84,9 @@ import { Database } from '{{alias.platform}}/database/database{{alias.ext}}';
 {{/if}}
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if persistence.hasDatabase}}
+import { readModelTables } from '{{alias.platform}}/database/read-model-tables{{alias.ext}}';
+{{/if}}
 {{#if http.any}}
 import { platformErrorMapper } from '{{alias.platform}}/composition/platform-error-mapper{{alias.ext}}';
 {{/if}}
@@ -116,6 +124,14 @@ export interface PlatformOptions {
   readonly resilience?: ResilienceSettings;
   /** Whether a consumed event continues the trace of its publication (the default) or starts one linked to it. */
   readonly traceConsumers?: ConsumerTrace;
+  {{#if persistence.hasDatabase}}
+  /**
+   * What the start does with a read model table that cannot hold the trace of a deleted row. Left out, it
+   * refuses to start, with every such table and the migration to write; `'reported'` logs them as one error
+   * and starts, for a deployment that starts the application before its migrations ran.
+   */
+  readonly readModelTables?: ReadModelTablesAtStart;
+  {{/if}}
   {{#if errors.sentry}}
   /** Where unexpected failures are reported: the reporter of `errors.ts` in `main.ts`; left out (the tools, the tests), nowhere. */
   readonly errors?: ErrorReporter;
@@ -142,6 +158,10 @@ export interface PlatformOptions {
 export function platformModule(persistence: Persistence, options: PlatformOptions): ContextModule {
   return defineContextModule({
     name: 'platform',
+    {{#if persistence.hasDatabase}}
+    // Before a consumer is subscribed or a request served, whatever builds a store and whenever: one read of the catalog.
+    onStart: ({ resolve }) => readModelTables(persistence).atStart(resolve(Logger), options.readModelTables),
+    {{/if}}
     // Closed inside `stop()` of the application, after the jobs and the consumers and before the logger is flushed.
     onStop: () => options.events.close(),
     register(builder) {

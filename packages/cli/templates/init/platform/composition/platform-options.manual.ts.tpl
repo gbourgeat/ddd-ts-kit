@@ -14,6 +14,9 @@ import type { FileStorage, JobSettings } from '@ddd-ts-kit/kernel';
 import type { JobSettings } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{/unless}}
+{{#if persistence.hasDatabase}}
+import type { ReadModelTablesAtStart } from '@ddd-ts-kit/kernel';
+{{/if}}
 import type { QueueWorkerOptions } from '@ddd-ts-kit/scheduling';
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
 {{#if search.opensearch}}
@@ -66,6 +69,14 @@ export interface PlatformOptions {
   readonly queues?: Pick<QueueWorkerOptions, 'concurrency' | 'pollIntervalMs' | 'graceMs'>;
   /** Whether a consumed event continues the trace of its publication (the default) or starts one linked to it. */
   readonly traceConsumers?: ConsumerTrace;
+{{#if persistence.hasDatabase}}
+  /**
+   * What the start does with a read model table that cannot hold the trace of a deleted row. Left out, it
+   * refuses to start, with every such table and the migration to write; `'reported'` logs them as one error
+   * and starts, for a deployment that starts the application before its migrations ran.
+   */
+  readonly readModelTables?: ReadModelTablesAtStart;
+{{/if}}
 {{#if cache.redis}}
   /** The Redis protocol server; left out, the cache, the lock and the limiter stay in the memory of the process. */
   readonly redis?: RedisServices;

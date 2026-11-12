@@ -1,5 +1,6 @@
 import type { Config } from '../../config';
 import { PRISMA_SCHEMA_FOLDER } from '../../prisma-schema';
+import { WITH_DATABASE } from '../../stack/with-database';
 import { prismaClientScript } from './prisma-client-script';
 
 /** The pipelines call `db:migrate` before the adapter specs whatever the stack: without a database it says so and succeeds. */
@@ -27,11 +28,19 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
 
 const GUARDED = ['drizzle', 'prisma', 'typeorm'];
 
+/**
+ * The read model tables of the database of `DATABASE_URL`, checked as the application checks them
+ * when it starts: before a deployment, each table that cannot hold the trace of a deleted row is
+ * listed with the migration to write, and the exit code is 1.
+ */
+const READ_MODEL_TABLES = { 'db:read-models': 'tsx --env-file-if-exists=.env scripts/read-model-tables.ts' };
+
 export function databaseScripts(config: Config): Record<string, string> {
   const { orm, audit } = config.stack;
 
   return {
     ...scriptsOf(config),
+    ...(WITH_DATABASE.includes(orm) ? READ_MODEL_TABLES : {}),
     ...(GUARDED.includes(orm) && audit === 'on' ? { 'db:audit-guard': auditGuard(orm) } : {}),
   };
 }

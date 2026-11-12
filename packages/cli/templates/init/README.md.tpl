@@ -44,6 +44,16 @@ migrations that a merge left out of order (`npx ddd-ts-kit explain persistence/m
 `npx ddd-ts-kit verify-merge` fails on a migration of the branch that sorts before the last one of
 the trunk, and names the command that puts it after.
 
+The application reads the read model tables of the database when it starts, in one statement on
+the catalog and whatever builds their stores: a table that cannot hold the trace of a deleted row
+stops the start, named with the columns that refuse NULL and the migration to write
+(`{{config.platformDir}}/database/read-model-tables.ts`). Before a deployment,
+`DATABASE_URL=<its database> npm run db:read-models` says the same of that database and exits 1.
+A pipeline that starts the application before its migrations ran passes
+`readModelTables: 'reported'` to `composeApplication` in `{{config.sourceRoot}}/main.ts`: the
+tables are logged as one error, the start goes on, and each store still refuses by name before
+its first trace.
+
 {{/if}}
 `npm run dev` restarts the application when a source file changes. It runs `tsx watch`, which
 executes TypeScript directly and resolves an import alias from the `paths` of `tsconfig.json`;
