@@ -57,7 +57,13 @@ describe('an upload whose media types could receive no file', () => {
 
   it('is refused on a function route as well, when it is defined', () => {
     const upload = { field: 'file', maxBytes: 64, mediaTypes: ['application/octet-stream'] };
-    const spec = { ...route, operationId: 'importExport', security: false, responses: { 201: {} } } as const;
+
+    const spec = {
+      ...route,
+      operationId: 'importExport',
+      security: false,
+      responses: { 201: { description: 'Imported.' } },
+    } as const;
 
     expect(() => defineRoute({ ...spec, upload }, () => ({ status: 201 }))).toThrow(
       /Route "importExport" declares an upload it cannot receive: "application\/octet-stream" has no content rule/,
