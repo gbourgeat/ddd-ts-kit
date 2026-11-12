@@ -108,6 +108,7 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
 
         // The first table of shipping: the read model starts the schema of the context.
         cli(root, 'generate', 'read-model', 'shipping', 'InvoicesToShip', ...fields);
+
         // A read model of the same name in a second context: its store carries the same class name.
         // On Knex: the tables of Drizzle are exported by name from one schema index, where two of a name collide.
         if (orm === 'knex') {
