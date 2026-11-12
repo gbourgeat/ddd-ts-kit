@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { AliasRoot } from '../alias';
 import { buildLayoutOf } from '../check/alias/build-layout-of';
+import { compilerOptionsOf } from '../check/alias/compiler-options-of';
 import { walkDirectory } from '../check/project/walk-directory';
 import { CliError } from '../cli-error';
 import type { EmittedPlace } from './emitted-place';
@@ -31,6 +32,8 @@ export function rewriteAliases({ root, roots, suffix, project }: RewriteRequest)
   if (!fs.existsSync(path.join(root, project))) {
     throw new CliError(`${project} does not exist.`, 'Name the tsconfig of the build with --project <file>.');
   }
+
+  refuseABuildThatEmitsNothing(root, project);
 
   const layout = buildLayoutOf({ root }, project);
 
@@ -64,6 +67,19 @@ export function rewriteAliases({ root, roots, suffix, project }: RewriteRequest)
     changed: changed.length,
     specifiers: changed.reduce((sum, { count }) => sum + count, 0),
   };
+}
+
+/**
+ * A configuration that resolves `noEmit` made the compiler write nothing, without an error: what its
+ * output directory holds, if anything, is an earlier build, and rewriting it would let it ship.
+ */
+function refuseABuildThatEmitsNothing(root: string, project: string): void {
+  if (compilerOptionsOf({ root }, project)?.['noEmit'] === true) {
+    throw new CliError(
+      `${project} resolves "noEmit": true: the compiler wrote nothing with it, and what its output directory holds is not this build.`,
+      `Write "noEmit": false under "compilerOptions" in ${project}, and "allowImportingTsExtensions": false when it inherits that one too: a configuration that extends the type check inherits what makes it emit nothing. Or name the tsconfig the build compiled with --project <file>.`,
+    );
+  }
 }
 
 function noOutput(project: string): CliError {

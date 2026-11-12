@@ -16,6 +16,12 @@ onDisk('test/support/parts/index.ts', 'export const part = 1;\n');
 onDisk('test/support/parts-of-a-run.ts', 'export const run = 1;\n');
 onDisk('test/support/test-database-run/part.ts', 'export const part = 1;\n');
 onDisk('test/support/test-database-run.ts', 'export const run = 1;\n');
+onDisk('test/support/test-database-server.ts', 'export const server = 1;\n');
+onDisk('test/support/test-database-budget.ts', 'export const budget = 1;\n');
+onDisk('test/support/esm.mts', 'export const esm = 1;\n');
+onDisk('test/support/common.cts', 'export const common = 1;\n');
+onDisk('test/support/data.json', '{}\n');
+onDisk('test/support/helper.js', 'export const help = 1;\n');
 
 ruleTester.run('imports-alias-only', importsAliasOnly, {
   valid: [
@@ -33,6 +39,17 @@ ruleTester.run('imports-alias-only', importsAliasOnly, {
       "export * from './test-database-server';\nconst later = import('./test-database-budget');",
       BARE,
     ),
+    // A neighbour that is no ".ts" source is named as the file is, and a name no source answers is left to the compiler.
+    inProject(
+      SETUP,
+      "import data from './data.json' with { type: 'json' };\nimport { help } from './helper.js';\nimport { esm } from './esm.mts';\nimport { absent } from './absent.js';",
+      SAMPLE_CONFIG,
+    ),
+    inProject(
+      SETUP,
+      "import data from './data.json' with { type: 'json' };\nimport { help } from './helper.js';\nimport { esm } from './esm.mts';",
+      BARE,
+    ),
     // A file that has a directory of its name beside it is the neighbour.
     inProject('test/support/parts-of-a-run.ts', "import { openRun } from './test-database-run';", BARE),
     at('generated/prisma/client.ts', "export * from './internal/class.js';", WITH_PRISMA),
@@ -46,18 +63,27 @@ ruleTester.run('imports-alias-only', importsAliasOnly, {
   invalid: [
     // The ".js" the compiler would emit passes the type check, and a test runner then finds no such file.
     {
-      ...at(SETUP, "import { openRun } from './test-database-run.js';\nexport * from './test-database-server';"),
+      ...inProject(
+        SETUP,
+        "import { openRun } from './test-database-run.js';\nexport * from './test-database-server';",
+        SAMPLE_CONFIG,
+      ),
       output: "import { openRun } from './test-database-run.ts';\nexport * from './test-database-server.ts';",
       errors: [
         {
           messageId: 'neighbourSource',
-          data: { specifier: './test-database-run.js', extension: '.js', expected: './test-database-run.ts' },
+          data: {
+            specifier: './test-database-run.js',
+            extension: '.js',
+            expected: './test-database-run.ts',
+            source: 'test-database-run.ts',
+          },
         },
         { messageId: 'neighbourSource' },
       ],
     },
     {
-      ...at(
+      ...inProject(
         SETUP,
         "import { openRun } from './test-database-run.ts';\nconst later = import('./test-database-budget.js');",
         BARE,
@@ -66,10 +92,27 @@ ruleTester.run('imports-alias-only', importsAliasOnly, {
       errors: [
         {
           messageId: 'neighbourExtension',
-          data: { specifier: './test-database-run.ts', extension: '.ts', expected: './test-database-run' },
+          data: {
+            specifier: './test-database-run.ts',
+            extension: '.ts',
+            expected: './test-database-run',
+            source: 'test-database-run',
+          },
         },
         { messageId: 'neighbourExtension' },
       ],
+    },
+    // The source the compiler emits the named file from: ".mts" for ".mjs", ".cts" for ".cjs".
+    {
+      ...inProject(SETUP, "import { esm } from './esm.mjs';\nimport { common } from './common.cjs';", SAMPLE_CONFIG),
+      output: "import { esm } from './esm.mts';\nimport { common } from './common.cts';",
+      errors: [{ messageId: 'neighbourSource' }, { messageId: 'neighbourSource' }],
+    },
+    // A directory is named by the alias of its index file where an import carries an extension.
+    {
+      ...inProject(SETUP, "import { part } from './parts';", SAMPLE_CONFIG),
+      output: "import { part } from '$test/support/parts/index.js';",
+      errors: [{ messageId: 'relative' }],
     },
     // Neither the directory itself, nor its parent, nor a directory of it is a neighbour file.
     {

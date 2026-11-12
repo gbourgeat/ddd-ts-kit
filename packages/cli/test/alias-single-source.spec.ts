@@ -85,7 +85,15 @@ const EXTENSION_MUTATIONS: readonly Mutation[] = [
     what: 'tsconfig.build.json no longer sets back what the type check alone needs, and would write nothing',
     file: 'tsconfig.build.json',
     change: swap('"noEmit": false', '"noEmit": true'),
-    finding: /tsconfig\.build\.json inherits "noEmit" or "allowImportingTsExtensions" from tsconfig\.json/,
+    finding: /tsconfig\.build\.json builds what ships and resolves "noEmit": true/,
+    flags: WITH_JS,
+  },
+  {
+    what: 'the build script compiles another config, which inherits what makes the type check emit nothing',
+    file: 'package.json',
+    change: swap('-p tsconfig.build.json', '-p tsconfig.json'),
+    reportedIn: 'tsconfig.json',
+    finding: /tsconfig\.json builds what ships and resolves "noEmit": true/,
     flags: WITH_JS,
   },
   {

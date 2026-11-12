@@ -58,6 +58,39 @@ export const IMPORTS_FIXTURES: readonly Fixture[] = [
       [SETUP]: "import { run } from './test-database-run.js';\nexport const setup = run;\n",
     },
   ),
+  {
+    ruleId: 'imports/alias-only',
+    name: 'neighbours of test/support that are no ".ts" source, named as the file is: a JSON file, a JavaScript file, an ".mts" source',
+    expect: 'pass',
+    files: project({
+      'test/support/data.json': '{}\n',
+      'test/support/helper.js': 'export const help = 1;\n',
+      'test/support/esm.mts': 'export const esm = 1;\n',
+      [SETUP]:
+        "import data from './data.json' with { type: 'json' };\nimport { help } from './helper.js';\nimport { esm } from './esm.mts';\nexport const setup = [data, help, esm];\n",
+    }),
+  },
+  {
+    ruleId: 'imports/alias-only',
+    name: 'without an extension, neighbours of test/support that are no ".ts" source, named as the file is',
+    expect: 'pass',
+    files: project({
+      [CONFIG_FILE]: config({ importExtension: 'none' }),
+      'test/support/data.json': '{}\n',
+      'test/support/helper.js': 'export const help = 1;\n',
+      'test/support/esm.mts': 'export const esm = 1;\n',
+      [SETUP]:
+        "import data from './data.json' with { type: 'json' };\nimport { help } from './helper.js';\nimport { esm } from './esm.mts';\nexport const setup = [data, help, esm];\n",
+    }),
+  },
+  setupFailing('an ".mts" neighbour of test/support named by the ".mjs" the compiler would emit', {
+    'test/support/esm.mts': 'export const esm = 1;\n',
+    [SETUP]: "import { esm } from './esm.mjs';\nexport const setup = esm;\n",
+  }),
+  setupFailing('under ".js", a directory of test/support named as a neighbour', {
+    'test/support/parts/index.ts': 'export const run = 1;\n',
+    [SETUP]: "import { run } from './parts';\nexport const setup = run;\n",
+  }),
   setupFailing('a neighbour of test/support named without the ".ts" of its source', {
     [SETUP]: "import { run } from './test-database-run';\nexport const setup = run;\n",
   }),

@@ -241,7 +241,10 @@ It fails, exits 2 and writes nothing when:
   (`` import(`@/handlers/${name}`) ``, `import('@/handlers/' + name)`): no tool can know the
   file, and Node knows no alias. Build the path from `import.meta.url` instead, as the
   generated `scripts/events.ts` does (that path names a compiled file and keeps its `.js`);
-- the tsconfig names no output directory that exists.
+- the tsconfig names no output directory that exists;
+- the tsconfig resolves `"noEmit": true`, its own or one it inherits: the compiler wrote nothing
+  with it, and what its output directory holds is an earlier build. The refusal names the tsconfig
+  and what to write there.
 
 ```ts
 // Instead of: an alias completed at run time; build-aliases refuses it.
@@ -310,15 +313,20 @@ global setup, and what that file imports, before any alias exists (Jest applies 
 those it is made of) name one another that way, and the global setup loads however the runner is
 started. On Jest the spec files still need Node started with `--experimental-vm-modules`: the
 generated scripts pass it, and `npx jest` or the runner of an editor is given
-`NODE_OPTIONS=--experimental-vm-modules`. The ending of that path is judged too, with a fix: under
-`none` it carries no extension; under `js` the neighbour is named by the `.ts` of its source,
-which the transform of the runner finds where a `.js` names a file that does not exist. A `.js`
-there passes the type check and the lint of the other rules, then stops the run on
-`Cannot find module`: `eslint --fix` writes the `.ts`. The type check reads that ending because
-`tsconfig.json` sets `allowImportingTsExtensions`, which `imports/alias-declared` holds. A path
-that leaves `test/support/` (`../e2e/...`, `./..`), names the directory itself (`./.`) or enters a
-directory of it (`./parts/part`, or `./parts` when that is a directory with no `parts.ts` beside
-it) is refused as anywhere else. Not judged: a JavaScript file at the project root (a tool config, a
+`NODE_OPTIONS=--experimental-vm-modules`. The name of that neighbour is judged too, against the
+files on disk, with a fix: under `none` a `.ts` source carries no extension; under `js` the
+neighbour is named by the name of its source, which the transform of the runner finds where the
+name of the emitted file names nothing: `./run.ts` for `./run` and `./run.js`, `./esm.mts` for
+`./esm.mjs`, `./common.cts` for `./common.cjs`. A `.js` there passes the type check and the lint
+of the other rules, then stops the run on `Cannot find module`: `eslint --fix` writes the name of
+the source. A file that exists as it is named is left alone (a JSON file, a JavaScript file, an
+`.mts` source), and so is a name no source answers, which the compiler reports. The type check
+reads a `.ts` ending because `tsconfig.json` sets `allowImportingTsExtensions`, which
+`imports/alias-declared` holds. A path that leaves `test/support/` (`../e2e/...`, `./..`), names
+the directory itself (`./.`) or enters a directory of it (`./parts/part`, or `./parts` when that
+is a directory with no `parts.ts` beside it) is refused as anywhere else; the fix of a directory
+is the alias of its index file under `js` (`$test/support/parts/index.js`), of the directory
+under `none`. Not judged: a JavaScript file at the project root (a tool config, a
 knex migration, which Node runs as written and which therefore uses relative paths), and the
 client under `generated/`. A directory given to `discoverContext` as a URL is not an import.
 
@@ -379,8 +387,8 @@ What it reports:
 | a `baseUrl` | every `paths` target would be resolved from it |
 | a `tsconfig.build.json` whose `paths` or `baseUrl` differ from `tsconfig.json` | the build would not compile what was checked |
 | `module` and `moduleResolution` of `tsconfig.json`, or of a `tsconfig.build.json` that sets its own, that are not what `importExtension` gives (`ESNext`, `Bundler` and `customConditions` holding `node` under `none`; under `js`, a written value that is not `Node16`, `Node18`, `Node20` or `NodeNext`) | under the other resolution the compiler refuses every import of the project, or accepts a spelling the build does not rewrite; another module format would not be the ECMAScript modules the build completes |
-| under `js`, a file directly under `test/support/` that names a neighbour by its `.ts` while `tsconfig.json` sets neither `allowImportingTsExtensions` nor `rewriteRelativeImportExtensions` | the compiler refuses that ending (`TS5097`); the fix names the two lines of `tsconfig.json` (`"allowImportingTsExtensions": true`, which is accepted only with `"noEmit": true`) and the two of `tsconfig.build.json` that set them back |
-| under `js`, a `tsconfig.build.json` that inherits `"noEmit": true`, or `"allowImportingTsExtensions": true` without `rewriteRelativeImportExtensions` | the compiler would write nothing, without an error, and `build-aliases` would then find no output, or rewrite an earlier one; with the second option alone the compiler refuses the build (`TS5096`) |
+| under `js`, a file directly under `test/support/` that imports a neighbour by its `.ts` (an import, not a comment; not a `.d.ts`) while `tsconfig.json` sets neither `allowImportingTsExtensions` nor `rewriteRelativeImportExtensions` | the compiler refuses that ending (`TS5097`); the fix names the two lines of `tsconfig.json` (`"allowImportingTsExtensions": true`, which is accepted only with `"noEmit": true`) and the two of `tsconfig.build.json` that set them back |
+| a `tsconfig.build.json`, or a tsconfig a script of `package.json` compiles what ships with (`tsc -p <file>`, `tsc` alone for `tsconfig.json`), that resolves `"noEmit": true`, or `"allowImportingTsExtensions": true` without `rewriteRelativeImportExtensions` or `emitDeclarationOnly`, whatever `importExtension` is | the compiler would write nothing, without an error, and an earlier output would ship; with the second option alone the compiler refuses the build (`TS5096`). `build-aliases` refuses a tsconfig that resolves `noEmit` too. An `extends` is followed as the compiler follows it: a relative path with or without its `.json`, and a package installed in the `node_modules` of the project root (a file, a file without its `.json`, a directory that holds a `tsconfig.json`); a package found through its `exports`, or in a `node_modules` above the root, is not |
 | a script that compiles (`tsc` without `--noEmit`) and does not run `build-aliases` afterwards | the output would stop under `node` at its first import: no alias, and under `none` no extension either |
 | a script that runs `tsx` with `--tsconfig` on another file | the dev runner would read a declaration nothing compares |
 | a `vitest` config at the project root without `tsconfigPaths: true` (one that extends another config of the project is read as carrying it) | the specs would not resolve an alias |

@@ -19,14 +19,16 @@ const DOT_SEGMENT = /\/\.{1,2}(?:\/|$)/;
  * A test runner loads its global setup, and what that file imports, from the sources and before
  * any alias of the project exists: the files directly under `test/support/` import one another by
  * a relative path of that same directory, `./<name>`, and nothing else is spared: not the
- * directory itself (`./.`), its parent (`./..`), nor a directory of it. The path ends as the
- * runner finds the file: with the `.ts` of the source where an import carries an extension.
+ * directory itself (`./.`), its parent (`./..`), nor a directory of it. The path names the file
+ * the runner finds: the source, with its `.ts` where an import carries an extension. What is on
+ * disk when the file is linted says which file that is.
  */
 const LOADED_BY_A_RUNNER = /^test\/support\/[^/]+$/;
 const NEIGHBOUR = /^\.\/(?!\.{1,2}$)[^/]+$/;
 /** The extensions a module of the project or the file emitted for it can bear. */
 const EXTENSION = /\.(?:[cm]?js|[cm]?ts)$/;
-const SOURCE = /\.[cm]?ts$/;
+/** The source the compiler emits a JavaScript file from, by their extensions. */
+const SOURCE_OF: Readonly<Record<string, string>> = { '.js': '.ts', '.mjs': '.mts', '.cjs': '.cts' };
 
 export const importsAliasOnly = defineRule<MessageId>({
   id: 'imports/alias-only',
@@ -41,7 +43,7 @@ export const importsAliasOnly = defineRule<MessageId>({
     unnamed:
       '"{{specifier}}" is a relative import of a file no alias names. Keep what the code imports under {{directories}}; a file elsewhere (a manifest, a build product) is read at run time, not imported.',
     neighbourSource:
-      '"{{specifier}}" does not name its neighbour of test/support/ by the ".ts" of its source. Write \'{{expected}}\': a test runner loads its global setup, and what that file imports, from the sources and before any alias exists, where the file is "<name>.ts". A ".js" passes the type check, then stops the run on a module that cannot be found.',
+      '"{{specifier}}" does not name its neighbour of test/support/ by the name of its source. Write \'{{expected}}\': a test runner loads its global setup, and what that file imports, from the sources and before any alias exists, where the file is "{{source}}". The name of the file the compiler would emit passes the type check, then stops the run on a module that cannot be found.',
     neighbourExtension:
       '"{{specifier}}" ends with "{{extension}}" although "importExtension" is "none". Write \'{{expected}}\': a file of test/support/ names its neighbour as every import of the project names a file, without its extension.',
     segment:
@@ -70,8 +72,8 @@ interface Found {
 }
 
 function judged(roots: readonly AliasRoot[], file: LintedFile, specifier: string): Found | undefined {
-  if (LOADED_BY_A_RUNNER.test(file.path) && NEIGHBOUR.test(specifier) && !namesADirectory(file, specifier)) {
-    return neighbour(file, specifier);
+  if (LOADED_BY_A_RUNNER.test(file.path) && NEIGHBOUR.test(specifier)) {
+    return namesADirectory(file, specifier) ? directory(file, specifier) : neighbour(file, specifier);
   }
 
   return RELATIVE.test(specifier) ? relative(file, specifier) : dotSegment(roots, specifier);
@@ -81,29 +83,65 @@ function judged(roots: readonly AliasRoot[], file: LintedFile, specifier: string
 function namesADirectory(file: LintedFile, specifier: string): boolean {
   const named = path.join(file.root, path.posix.dirname(file.path), specifier);
 
-  return !fs.existsSync(`${named}.ts`) && fs.statSync(named, { throwIfNoEntry: false })?.isDirectory() === true;
+  return !isFile(`${named}.ts`) && fs.statSync(named, { throwIfNoEntry: false })?.isDirectory() === true;
 }
 
-/** The ending alone is judged: what the runner finds on disk is the source, whatever the compiler would accept. */
-function neighbour(file: LintedFile, specifier: string): Found | undefined {
-  const suffix = neighbourSuffix(file.config.importExtension);
-  const extension = EXTENSION.exec(specifier)?.[0] ?? '';
-  const expected = `${specifier.slice(0, specifier.length - extension.length)}${suffix}`;
+/** A directory is no neighbour: its index is a file of another directory, named by its alias, which names the index file where an import carries an extension. */
+function directory(file: LintedFile, specifier: string): Found {
+  const bare = specifierSuffix(file.config.importExtension) === '';
 
-  if (suffix === '' ? extension === '' : SOURCE.test(specifier)) {
+  return relative(file, specifier, bare ? specifier : `${specifier}/index`);
+}
+
+/** What the runner finds on disk is judged, whatever the compiler would accept: a neighbour named as it should be, or left to the compiler, is not reported. */
+function neighbour(file: LintedFile, specifier: string): Found | undefined {
+  const expected = neighbourName(file, specifier);
+  const extension = EXTENSION.exec(specifier)?.[0] ?? '';
+  const bare = neighbourSuffix(file.config.importExtension) === '';
+
+  if (expected === undefined) {
     return undefined;
   }
 
   return {
-    messageId: suffix === '' ? 'neighbourExtension' : 'neighbourSource',
-    data: { specifier, extension, expected },
+    messageId: bare ? 'neighbourExtension' : 'neighbourSource',
+    data: { specifier, extension, expected, source: expected.slice(2) },
   };
 }
 
-function relative(file: LintedFile, specifier: string): Found {
+/**
+ * The name a neighbour is to be imported by, when it is imported by another one. Under `none`, the
+ * source `<name>.ts` without its extension. Otherwise the source that exists: `<name>.ts` for
+ * `<name>` and `<name>.js`, `<name>.mts` for `<name>.mjs`, `<name>.cts` for `<name>.cjs`. A file
+ * that exists as it is named (a source, a JSON file, a JavaScript file) is left alone, and so is a
+ * name no source answers, which the compiler reports.
+ */
+function neighbourName(file: LintedFile, specifier: string): string | undefined {
+  const extension = EXTENSION.exec(specifier)?.[0] ?? '';
+  const bare = specifier.slice(0, specifier.length - extension.length);
+  const exists = (name: string): boolean => isFile(path.join(file.root, path.posix.dirname(file.path), name));
+  const source = `${bare}${SOURCE_OF[extension] ?? '.ts'}`;
+
+  if (neighbourSuffix(file.config.importExtension) === '') {
+    return namedWithItsExtension(extension, exists(specifier)) && exists(`${bare}.ts`) ? bare : undefined;
+  }
+
+  return !exists(specifier) && exists(source) ? source : undefined;
+}
+
+/** Under `none`: a source named with its `.ts`, or by the `.js` the compiler would emit, unless a JavaScript file of that name is there. */
+function namedWithItsExtension(extension: string, isThere: boolean): boolean {
+  return extension === '.ts' || (extension === '.js' && !isThere);
+}
+
+function isFile(file: string): boolean {
+  return fs.statSync(file, { throwIfNoEntry: false })?.isFile() === true;
+}
+
+function relative(file: LintedFile, specifier: string, target = specifier): Found {
   const roots = aliasRoots(file.config);
   const suffix = specifierSuffix(file.config.importExtension);
-  const alias = toAlias(roots, path.posix.join(path.posix.dirname(file.path), specifier), suffix);
+  const alias = toAlias(roots, path.posix.join(path.posix.dirname(file.path), target), suffix);
 
   if (alias !== undefined) {
     return { messageId: 'relative', data: { specifier, alias } };
