@@ -1777,7 +1777,8 @@ held to the same table by `criteriaContract` of `@ddd-ts-kit/testing/contracts`.
 | `eq`, `ne`, `in` | by value: two instants of the same time are equal whatever the zone they were written in, `10.5` is `10.50` |
 | `gt`, `gte`, `lt`, `lte` | numbers, decimals and instants by value; strings by Unicode code point, so upper case comes before lower case (`'B' < 'a'`); not on a boolean |
 | `between` | both bounds included |
-| `contains`, `startsWith` | on a string only, case sensitive, the text taken literally: `%`, `_` and `\` are characters. A search that ignores case reads a lower-cased column the projection writes |
+| `contains`, `startsWith` | on a string only, case sensitive, the text taken literally: `%`, `_` and `\` are characters; an empty text is refused |
+| `containsIgnoringCase`, `startsWithIgnoringCase` | the same searches with each letter of both sides in lower case, and nothing else folded: an accent is kept (`e` does not find `é`), no letter is rewritten (`ss` does not find `ß`). Every store answers the same for the ASCII letters and for a letter with one upper-case and one lower-case form, each one character long (`É` and `é`, `Ñ` and `ñ`, Greek and Cyrillic included); see below for the others |
 | `isNull` | `true` keeps the rows without a value, `false` those with one; only on a field declared `nullable` |
 | A null | never satisfies a comparison, `ne` included; only `isNull` sees it |
 | Conditions | joined by AND |
@@ -1789,6 +1790,17 @@ held to the same table by `criteriaContract` of `@ddd-ts-kit/testing/contracts`.
 | Offset page | the slice and `total`, the count of the filtered rows |
 | Cursor page | no `total`; `nextCursor` when another page follows. The cursor holds the sort values of the last row, is checked against the declared types when it comes back, and belongs to one sort |
 | No page | the first page of the default size |
+
+**A search that ignores case.** `foldCase(text)` is the rule in memory: `toLowerCase()` of
+JavaScript on both sides. The ORM packages write an `ILIKE` (the `insensitive` mode of Prisma),
+which PostgreSQL folds with the locale of the database: a database created with the `C` locale
+folds the ASCII letters alone. OpenSearch gets a regular expression that names both forms of
+each letter. Outside the letters the table above guarantees, each store follows its own table:
+the dotted and dotless `I` of Turkish, `ß` and `ẞ`, the final sigma, the ligatures and the
+Kelvin sign may be found by one store and not by another. A b-tree index serves neither
+`LIKE '%x%'` nor any `ILIKE`: on PostgreSQL, a GIN index of the `pg_trgm` extension on the
+column (`gin_trgm_ops`) serves both, for a text of three characters or more. The kit does not
+create it: it goes in a migration of the project.
 
 Two things follow from where a store keeps its data, and are written in each adapter README.
 **Strings are ordered by the collation of their column**: the reference is the `"C"` collation

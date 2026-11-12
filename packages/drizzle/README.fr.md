@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b9f0c6136cd49fc6 -->
+<!-- translation-of: README.md sha256:a91c2a406c27407d -->
 
 # @ddd-ts-kit/drizzle
 
@@ -334,6 +334,49 @@ PostgreSQL écarte aussi une ligne qui prend une valeur qu'une autre ligne déti
 contrainte d'unicité (un e-mail), et l'enregistrement se lit comme une mise à jour perdue.
 Nommée, cette ligne est refusée par la base, et `optimisticUpdate` lève `UniqueViolationError`
 (code `CONFLICT`, 409), comme pour une mise à jour qui prend une telle valeur.
+
+### Un verrou sur une clé métier
+
+La concurrence optimiste protège une ligne qui existe. Une décision prise sur des lignes qui
+n'existent pas encore (compter les réservations d'un créneau puis en insérer une, donner le
+numéro suivant d'une séquence par *tenant*) n'a pas de version à comparer : deux unités de travail
+lisent le même compte et écrivent toutes les deux. `advisoryLock(context, key, { tenant })` les
+met en file : il attend qu'aucune autre transaction ne tienne le verrou sur `key`, puis le tient
+jusqu'à ce que l'unité de travail valide ou annule (`pg_advisory_xact_lock`). Rien ne le relâche
+à la main.
+
+```ts
+// infrastructure/persistence/drizzle-invoice-numbers.repository.ts
+import { advisoryLock } from '@ddd-ts-kit/drizzle/postgres';
+
+async next(): Promise<number> {
+  // First in the unit of work, before the read it protects.
+  await advisoryLock(this.database, 'invoice-number', { tenant: this.scope });
+
+  return (await this.lastNumber()) + 1;
+}
+```
+
+- **La clé est un texte**, que PostgreSQL hache vers le nombre de 64 bits qu'il verrouille
+  (`hashtextextended(text, 0)`). Avec `tenant`, un `ExecutionScope`, le texte est
+  `tenant:<id>:<key>` (`tenantKey` du kernel) : deux *tenants* ne s'attendent jamais, et un
+  travail qui ne nomme aucun *tenant* est refusé. Deux textes de même hachage, environ une paire
+  sur 2^64, s'attendent comme le ferait une seule clé : une attente, jamais une réponse fausse.
+- **Dans une unité de travail seulement.** Hors d'une unité de travail, le verrou serait relâché
+  à la fin de son instruction : `AdvisoryLockOutsideUnitOfWorkError`. Garder l'isolation par
+  défaut, `read committed` : la lecture qui suit le verrou voit alors ce que le détenteur
+  précédent a validé, là où `repeatable read` et `serializable` lisent à l'instant où le verrou
+  a été demandé.
+- **`tryAdvisoryLock(context, key, { tenant })`** n'attend pas : `true` quand il a pris le
+  verrou, `false` quand une autre transaction le tient (`pg_try_advisory_xact_lock`).
+- **Un cas d'usage n'importe aucun *package* d'ORM.** Le verrou se place dans la méthode du
+  *repository* qui en a besoin, ou derrière un port du contexte (`InvoiceNumbering.reserve()`)
+  dont l'adaptateur est ce seul appel et dont le *fake* ne fait rien.
+- PostgreSQL seulement. Dans un projet multitenant, `tenancy/scoped-statement` accepte le
+  *helper* et signale un `pg_advisory_xact_lock` écrit à la main, comme tout SQL brut.
+- Tenu au contrat `advisoryLockContract` de `@ddd-ts-kit/testing/contracts`. L'attente d'une
+  seconde unité de travail est prouvée sur un vrai serveur : PGlite est une seule session, où
+  la seconde attend la connexion elle-même.
 
 ## Colonnes d'audit, restriction au tenant et pages
 
@@ -702,7 +745,7 @@ requête : `where` (les filtres, le périmètre de l'acteur et le *keyset* d'une
 par le champ qui départage), `limit` et `offset`. `predicateToDrizzle(predicate, columns)` donne
 une condition. `columns` associe chaque champ du modèle de lecture à sa colonne, et c'est la
 seule source d'identifiants : chaque valeur est un paramètre encodé par sa colonne, une
-recherche textuelle est `like $1 escape $2`, avec `%`, `_` et `\` échappés.
+recherche textuelle est `like $1 escape $2`, avec `%`, `_` et `\` échappés. `containsIgnoringCase` et `startsWithIgnoringCase` sont la même recherche en `ILIKE`, que PostgreSQL replie avec la locale de la base (la règle et ses limites sont dans le README du kernel, « Ce que signifient des critères ») ; aucun index b-tree ne la sert, un index GIN de `pg_trgm` sur la colonne le fait.
 
 Un port de lecture déclare ce qu'un appelant peut demander avec `defineCriteria` ; une requête
 à vous sur la table d'un modèle de lecture planifie les critères, puis remet le plan au

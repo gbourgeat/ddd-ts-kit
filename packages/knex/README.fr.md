@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f2b9067377746930 -->
+<!-- translation-of: README.md sha256:000777e67e268115 -->
 
 # @ddd-ts-kit/knex
 
@@ -402,6 +402,49 @@ perdue ; sur MySQL, qui n'a pas de cible de conflit et dont `INSERT IGNORE` éca
 Le second écrivain est refusé au lieu d'écraser le premier en silence. Rien ne le retente pour
 vous : l'appelant reçoit la `ConcurrencyError` et décide s'il recharge la facture.
 
+### Un verrou sur une clé métier
+
+La concurrence optimiste protège une ligne qui existe. Une décision prise sur des lignes qui
+n'existent pas encore (compter les réservations d'un créneau puis en insérer une, donner le
+numéro suivant d'une séquence par *tenant*) n'a pas de version à comparer : deux unités de travail
+lisent le même compte et écrivent toutes les deux. `advisoryLock(context, key, { tenant })` les
+met en file : il attend qu'aucune autre transaction ne tienne le verrou sur `key`, puis le tient
+jusqu'à ce que l'unité de travail valide ou annule (`pg_advisory_xact_lock`). Rien ne le relâche
+à la main.
+
+```ts
+// infrastructure/persistence/knex-invoice-numbers.repository.ts
+import { advisoryLock } from '@ddd-ts-kit/knex';
+
+async next(): Promise<number> {
+  // First in the unit of work, before the read it protects.
+  await advisoryLock(this.context, 'invoice-number', { tenant: this.scope });
+
+  return (await this.lastNumber()) + 1;
+}
+```
+
+- **La clé est un texte**, que PostgreSQL hache vers le nombre de 64 bits qu'il verrouille
+  (`hashtextextended(text, 0)`). Avec `tenant`, un `ExecutionScope`, le texte est
+  `tenant:<id>:<key>` (`tenantKey` du kernel) : deux *tenants* ne s'attendent jamais, et un
+  travail qui ne nomme aucun *tenant* est refusé. Deux textes de même hachage, environ une paire
+  sur 2^64, s'attendent comme le ferait une seule clé : une attente, jamais une réponse fausse.
+- **Dans une unité de travail seulement.** Hors d'une unité de travail, le verrou serait relâché
+  à la fin de son instruction : `AdvisoryLockOutsideUnitOfWorkError`. Garder l'isolation par
+  défaut, `read committed` : la lecture qui suit le verrou voit alors ce que le détenteur
+  précédent a validé, là où `repeatable read` et `serializable` lisent à l'instant où le verrou
+  a été demandé.
+- **`tryAdvisoryLock(context, key, { tenant })`** n'attend pas : `true` quand il a pris le
+  verrou, `false` quand une autre transaction le tient (`pg_try_advisory_xact_lock`).
+- **Un cas d'usage n'importe aucun *package* d'ORM.** Le verrou se place dans la méthode du
+  *repository* qui en a besoin, ou derrière un port du contexte (`InvoiceNumbering.reserve()`)
+  dont l'adaptateur est ce seul appel et dont le *fake* ne fait rien.
+- PostgreSQL seulement. Dans un projet multitenant, `tenancy/scoped-statement` accepte le
+  *helper* et signale un `pg_advisory_xact_lock` écrit à la main, comme tout SQL brut.
+- Tenu au contrat `advisoryLockContract` de `@ddd-ts-kit/testing/contracts`. L'attente d'une
+  seconde unité de travail est prouvée sur un vrai serveur : PGlite est une seule session, où
+  la seconde attend la connexion elle-même.
+
 ## Colonnes d'audit, restriction au tenant et pages
 
 Les formes de persistance standard du noyau, sur knex. Quatre petits *helpers*, pour que les
@@ -701,7 +744,7 @@ les filtres et le périmètre de l'acteur, le jeu de clés (keyset) d'une page p
 total terminé par le départage, la fenêtre. `predicateToKnex(builder, predicate, columns)` ajoute
 les filtres seuls, pour un comptage. `columns` associe chaque champ du modèle de lecture à sa
 colonne, et c'est la seule source d'identifiants : chaque valeur est un paramètre lié, et une
-recherche textuelle est `like ? escape ?`, avec `%`, `_` et `\` échappés.
+recherche textuelle est `like ? escape ?`, avec `%`, `_` et `\` échappés. `containsIgnoringCase` et `startsWithIgnoringCase` sont la même recherche en `ILIKE`, que PostgreSQL replie avec la locale de la base (la règle et ses limites sont dans le README du kernel, « Ce que signifient des critères ») ; aucun index b-tree ne la sert, un index GIN de `pg_trgm` sur la colonne le fait.
 
 ```ts
 // infrastructure/persistence/knex-appointment-queries.reader.ts

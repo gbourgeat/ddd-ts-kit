@@ -1,7 +1,20 @@
-import type { FieldValue, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
+import { isTextSearch, type FieldValue, type Predicate, type PredicateTest } from '@ddd-ts-kit/kernel';
 import type { DocumentMapper } from '../mapping/document.mapper';
+import { ignoringCase } from './ignoring-case';
 
 type Query = Readonly<Record<string, unknown>>;
+
+/**
+ * The query of each text search. In a wildcard pattern `*`, `?` and `\` of the text match
+ * themselves; a search that ignores case is a regular expression that names both forms of each
+ * letter, since `case_insensitive` folds the ASCII letters alone.
+ */
+const SEARCHES = {
+  contains: { query: 'wildcard', pattern: (text: string) => `*${text.replace(/[\\*?]/g, '\\$&')}*` },
+  startsWith: { query: 'prefix', pattern: (text: string) => text },
+  containsIgnoringCase: { query: 'regexp', pattern: (text: string) => `.*${ignoringCase(text)}.*` },
+  startsWithIgnoringCase: { query: 'regexp', pattern: (text: string) => `${ignoringCase(text)}.*` },
+} as const;
 
 /**
  * A predicate of a plan as a query of the DSL, in filter context: no score. A test never holds on
@@ -39,6 +52,10 @@ function testToQuery(test: PredicateTest, fields: DocumentMapper<unknown>): Quer
 function comparison(operator: PredicateTest['operator'], path: string, operands: readonly unknown[]): Query {
   const [first, second] = operands;
 
+  if (isTextSearch(operator)) {
+    return { [SEARCHES[operator].query]: { [path]: { value: SEARCHES[operator].pattern(String(first)) } } };
+  }
+
   switch (operator) {
     case 'in':
       return { terms: { [path]: operands } };
@@ -49,16 +66,7 @@ function comparison(operator: PredicateTest['operator'], path: string, operands:
       return { range: { [path]: { [operator]: first } } };
     case 'between':
       return { range: { [path]: { gte: first, lte: second } } };
-    case 'contains':
-      return { wildcard: { [path]: { value: `*${escaped(String(first))}*` } } };
-    case 'startsWith':
-      return { prefix: { [path]: { value: String(first) } } };
     default:
       return { term: { [path]: first } };
   }
-}
-
-/** The text of a `contains` as a wildcard pattern: its `*`, `?` and `\` match themselves. */
-function escaped(text: string): string {
-  return text.replace(/[\\*?]/g, (character) => `\\${character}`);
 }

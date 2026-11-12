@@ -1,3 +1,4 @@
+import { ADVISORY_LOCK_FIXTURES } from './tenancy-advisory-lock-fixtures';
 import type { Fixture } from './fixture';
 import { PATHS } from './paths';
 import { project } from './project';
@@ -208,6 +209,7 @@ export const TENANCY_FIXTURES: readonly Fixture[] = [
     'export class KnexInvoiceTotals extends KnexReadModelStore<Total> {\n  constructor(context: KnexContext, scope: ExecutionScope) {\n    super(context, { table: TABLE, tenant: scope });\n  }\n}\n',
     'pass',
   ),
+  ...ADVISORY_LOCK_FIXTURES,
   {
     ruleId: RULE,
     name: 'a project of one customer, which says nothing of tenancy',

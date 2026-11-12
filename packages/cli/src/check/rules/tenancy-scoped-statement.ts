@@ -11,14 +11,20 @@ import { typeormUnscoped } from '../tenancy/typeorm-unscoped';
 import { unscopedReadModels } from '../tenancy/unscoped-read-models';
 
 const FIX =
-  'Reach tenant data through the helpers of the ORM package: `tenantTable` to read and `ownTenantTable` to write (Knex), `tenantCondition` and `ownTenantCondition` in the where of each statement and `tenantScopeOf` in each inserted row (Drizzle), `tenantWhere` and `ownTenantWhere` spread into the where of each statement and `tenantScopeOf` into each created row (Prisma, TypeORM), the `tenant` option of a read model store. The condition is a conjunct of the statement, since SQL binds `and` before `or`: alternatives go in a group beside it, `.where((either) => either.where(a).orWhere(b))` (Knex), `.where(and(tenantCondition(...), or(a, b)))` (Drizzle), an `OR` beside the top-level spread (Prisma), `new Brackets(...)` in an `andWhere` and a where array whose every entry spreads the helper (TypeORM). A context whose tables belong to no tenant (the control plane of the tenants) is declared so, `"contexts.<name>.tenancy": "control-plane"` recorded in "deviations"; one table that holds no tenant data is a deviation: `// ddd-ts-kit-disable-next-line tenancy/scoped-statement -- ADR-NNNN: <why>`.';
+  'Reach tenant data through the helpers of the ORM package: `tenantTable` to read and `ownTenantTable` to write (Knex), `tenantCondition` and `ownTenantCondition` in the where of each statement and `tenantScopeOf` in each inserted row (Drizzle), `tenantWhere` and `ownTenantWhere` spread into the where of each statement and `tenantScopeOf` into each created row (Prisma, TypeORM), the `tenant` option of a read model store. The condition is a conjunct of the statement, since SQL binds `and` before `or`: alternatives go in a group beside it, `.where((either) => either.where(a).orWhere(b))` (Knex), `.where(and(tenantCondition(...), or(a, b)))` (Drizzle), an `OR` beside the top-level spread (Prisma), `new Brackets(...)` in an `andWhere` and a where array whose every entry spreads the helper (TypeORM). A context whose tables belong to no tenant (the control plane of the tenants) is declared so, `"contexts.<name>.tenancy": "control-plane"` recorded in "deviations"; a lock on a business key is taken with `advisoryLock(context, key, { tenant: scope })` or `tryAdvisoryLock` of the ORM package, never with a raw `pg_advisory_xact_lock`; one table that holds no tenant data is a deviation: `// ddd-ts-kit-disable-next-line tenancy/scoped-statement -- ADR-NNNN: <why>`.';
+
+const LOCK_BY_HAND =
+  'An advisory lock is taken by a raw statement: take it with `advisoryLock(context, key, { tenant: scope })` or `tryAdvisoryLock` of the ORM package, which keeps the key of two tenants apart and refuses outside a unit of work.';
+
+/** The advisory lock functions of PostgreSQL, of the transaction or of the session, waiting or not. */
+const ADVISORY_LOCK = /\bpg_(?:try_)?advisory_(?:xact_)?lock(?:_shared)?\b/i;
 
 const READ_MODEL = 'A read model store is built without the `tenant` option: its rows are shared by every tenant.';
 
 export const tenancyScopedStatement: Rule = {
   id: 'tenancy/scoped-statement',
   description:
-    'In a multi-tenant project ("stack.tenancy" other than "none"), a persistence adapter of a context that is not the control plane of the tenants confines every statement to the tenant of the work through the helpers of its ORM package: never the executor, client or manager used straight, raw SQL, a relational query, a row reached by its key alone, or a read model store without its tenant. The condition is a conjunct of the statement: never beside an `or` at its top, or under an `or`, a `not` or a `sql` template.',
+    'In a multi-tenant project ("stack.tenancy" other than "none"), a persistence adapter of a context that is not the control plane of the tenants confines every statement to the tenant of the work through the helpers of its ORM package: never the executor, client or manager used straight, raw SQL, a relational query, a row reached by its key alone, or a read model store without its tenant; a lock on a business key is taken with `advisoryLock` or `tryAdvisoryLock` of the ORM package. The condition is a conjunct of the statement: never beside an `or` at its top, or under an `or`, a `not` or a `sql` template.',
   scope: 'file',
   run(project) {
     const { tenancy, orm } = project.config.stack;
@@ -51,7 +57,14 @@ function unscoped(file: SourceFile, orm: string): Finding[] {
 
   return [...statements, ...readModels].map(({ offset, message }) => ({
     line: file.scan.lineAt(offset),
-    message,
+    message: ADVISORY_LOCK.test(statementAt(file, offset)) ? LOCK_BY_HAND : message,
     fix: FIX,
   }));
+}
+
+/** The source of the statement reported at `offset`, its SQL included, up to its end. */
+function statementAt(file: SourceFile, offset: number): string {
+  const end = file.scan.code.indexOf(';', offset);
+
+  return file.text.slice(offset, end === -1 ? file.text.length : end);
 }

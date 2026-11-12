@@ -48,6 +48,8 @@ describe('criteriaFrom: the grammar', () => {
     ['filter[cancelledAt]=isNull', [condition('cancelledAt', 'isNull', true)]],
     ['filter[title]=contains:knee', [condition('title', 'contains', 'knee')]],
     ['filter[title]=startsWith:Follow-up: knee', [condition('title', 'startsWith', 'Follow-up: knee')]],
+    ['filter[title]=containsIgnoringCase:KNEE, left', [condition('title', 'containsIgnoringCase', 'KNEE, left')]],
+    ['filter[title]=startsWithIgnoringCase:follow', [condition('title', 'startsWithIgnoringCase', 'follow')]],
   ])('%s', (search, filters) => {
     expect(filtersOf(search)).toEqual(filters);
   });

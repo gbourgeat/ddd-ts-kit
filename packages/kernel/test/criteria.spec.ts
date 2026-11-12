@@ -205,6 +205,16 @@ describe('validateCriteria', () => {
     ],
     ['an empty text to search', criteria.where('status', 'contains', ''), ['filter.status: invalid_value']],
     [
+      'an empty text to search whatever the case',
+      criteria.where('status', 'containsIgnoringCase', ''),
+      ['filter.status: invalid_value'],
+    ],
+    [
+      'an empty text to start with whatever the case',
+      criteria.where('status', 'startsWithIgnoringCase', ''),
+      ['filter.status: invalid_value'],
+    ],
+    [
       'a group inside a group',
       criteria.or((any) => any.and((every) => every.where('seats', 'eq', 1))),
       ['filter: too_deep'],

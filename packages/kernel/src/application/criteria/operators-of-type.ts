@@ -5,7 +5,7 @@ const ANY: readonly FilterOperator[] = ['eq', 'ne', 'in', 'isNull'];
 const ORDERED: readonly FilterOperator[] = [...ANY, 'gt', 'gte', 'lt', 'lte', 'between'];
 
 const BY_TYPE: Readonly<Record<FieldType, readonly FilterOperator[]>> = {
-  string: [...ORDERED, 'contains', 'startsWith'],
+  string: [...ORDERED, 'contains', 'startsWith', 'containsIgnoringCase', 'startsWithIgnoringCase'],
   number: ORDERED,
   instant: ORDERED,
   decimal: ORDERED,

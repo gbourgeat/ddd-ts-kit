@@ -2,6 +2,7 @@ import type { CriteriaDefinition } from './criteria-definition';
 import type { CriteriaViolation, CriteriaViolationCode } from './criteria-violation';
 import type { FieldDeclaration } from './field-declaration';
 import type { FilterCondition, FilterNode } from './filter-node';
+import { isTextSearch } from './is-text-search';
 import { isValueOf } from './is-value-of';
 
 export function filterViolations<Row>(
@@ -82,12 +83,13 @@ function operandFits(
   value: unknown,
   fits: (operand: unknown) => boolean,
 ): boolean {
+  if (isTextSearch(operator)) {
+    return typeof value === 'string' && value !== '';
+  }
+
   switch (operator) {
     case 'isNull':
       return typeof value === 'boolean';
-    case 'contains':
-    case 'startsWith':
-      return typeof value === 'string' && value !== '';
     case 'between':
       return Array.isArray(value) && value.length === 2 && value.every(fits);
     default:

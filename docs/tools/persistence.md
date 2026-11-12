@@ -355,6 +355,27 @@ stays pending (`it.todo`, with the reason `give the contract a mutate that recor
 state`), which is how a freshly generated contract spec starts. A save without a change is not
 judged: a table adapter moves the version, an event store appends nothing.
 
+### A decision no version protects: a lock on a business key
+
+Optimistic concurrency compares the version of a row that exists. Counting the bookings of a
+slot before inserting one, or giving the next number of a sequence per tenant, decides on rows
+that are not there yet: two units of work read the same count and both write. The four ORM
+packages give the same two helpers for it. `advisoryLock(context, key, { tenant: scope })`
+waits until no other transaction holds the lock on `key`, then holds it until the unit of work
+commits or rolls back (`pg_advisory_xact_lock`); `tryAdvisoryLock` answers `false` instead of
+waiting. The key is a text PostgreSQL hashes into 64 bits (`hashtextextended`), prefixed with
+the tenant of the work when `tenant` is given, so two tenants never wait for each other; two
+keys of the same hash wait for each other and nothing else happens. Outside a unit of work the
+lock would be released at once, and the helper refuses (`AdvisoryLockOutsideUnitOfWorkError`).
+
+They are functions of the adapter, not a port of the kernel: a use case imports no ORM
+package, so the lock sits in the repository method that needs it, or behind a port of the
+context whose fake does nothing. Take it first in the unit of work and keep the default
+isolation (`read committed`), under which the read that follows sees what the previous holder
+committed. `tenancy/scoped-statement` accepts the helper and reports a raw
+`pg_advisory_xact_lock`. PostgreSQL only; `advisoryLockContract` holds the four packages to it,
+the wait itself on a real server, since PGlite is one session.
+
 ## Comparison
 
 Versions checked on 2026-10-10 against the npm registry.

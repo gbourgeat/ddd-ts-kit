@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9bcfed2ce8cc1d96 -->
+<!-- translation-of: README.md sha256:849d095a5138f5c4 -->
 
 # @ddd-ts-kit/kernel
 
@@ -1853,7 +1853,8 @@ store est tenu au même tableau par `criteriaContract` de `@ddd-ts-kit/testing/c
 | `eq`, `ne`, `in` | par valeur : deux instants identiques sont égaux quel que soit le fuseau dans lequel ils ont été écrits, `10.5` vaut `10.50` |
 | `gt`, `gte`, `lt`, `lte` | nombres, décimaux et instants par valeur ; chaînes par point de code Unicode, si bien que les majuscules viennent avant les minuscules (`'B' < 'a'`) ; pas sur un booléen |
 | `between` | les deux bornes incluses |
-| `contains`, `startsWith` | sur une chaîne seulement, sensibles à la casse, le texte pris littéralement : `%`, `_` et `\` sont des caractères. Une recherche qui ignore la casse lit une colonne en minuscules qu'écrit la projection |
+| `contains`, `startsWith` | sur une chaîne seulement, sensibles à la casse, le texte pris littéralement : `%`, `_` et `\` sont des caractères ; un texte vide est refusé |
+| `containsIgnoringCase`, `startsWithIgnoringCase` | les mêmes recherches, chaque lettre des deux côtés mise en minuscule, et rien d'autre : un accent est gardé (`e` ne trouve pas `é`), aucune lettre n'est réécrite (`ss` ne trouve pas `ß`). Tous les stockages répondent la même chose pour les lettres ASCII et pour une lettre qui a une seule majuscule et une seule minuscule, d'un caractère chacune (`É` et `é`, `Ñ` et `ñ`, grec et cyrillique compris) ; voir plus bas pour les autres |
 | `isNull` | `true` garde les lignes sans valeur, `false` celles qui en ont une ; seulement sur un champ déclaré `nullable` |
 | Un nul | ne satisfait jamais une comparaison, `ne` compris ; seul `isNull` le voit |
 | Conditions | jointes par ET |
@@ -1865,6 +1866,17 @@ store est tenu au même tableau par `criteriaContract` de `@ddd-ts-kit/testing/c
 | Page par décalage | la tranche et `total`, le nombre de lignes filtrées |
 | Page par curseur | pas de `total` ; `nextCursor` quand une autre page suit. Le curseur contient les valeurs de tri de la dernière ligne, est vérifié par rapport aux types déclarés à son retour, et appartient à un seul tri |
 | Pas de page | la première page de la taille par défaut |
+
+**Une recherche qui ignore la casse.** `foldCase(text)` est la règle en mémoire : le
+`toLowerCase()` de JavaScript des deux côtés. Les *packages* d'ORM écrivent un `ILIKE` (le mode
+`insensitive` de Prisma), que PostgreSQL replie avec la locale de la base : une base créée avec
+la locale `C` ne replie que les lettres ASCII. OpenSearch reçoit une expression régulière qui
+nomme les deux formes de chaque lettre. Hors des lettres que le tableau garantit, chaque
+stockage suit sa propre table : le `I` avec et sans point du turc, `ß` et `ẞ`, le sigma final,
+les ligatures et le signe Kelvin peuvent être trouvés par un stockage et pas par un autre. Un
+index b-tree ne sert ni `LIKE '%x%'` ni aucun `ILIKE` : sur PostgreSQL, un index GIN de
+l'extension `pg_trgm` sur la colonne (`gin_trgm_ops`) sert les deux, pour un texte de trois
+caractères ou plus. Le kit ne le crée pas : il va dans une migration du projet.
 
 Deux conséquences découlent de l'endroit où un store garde ses données, et sont écrites dans le
 README de chaque adaptateur. **Les chaînes sont ordonnées par la collation de leur colonne** : la

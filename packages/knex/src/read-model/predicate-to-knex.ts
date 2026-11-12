@@ -1,5 +1,12 @@
 import type { Knex } from 'knex';
-import type { FieldValue, FilterOperand, FilterOperator, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
+import {
+  isTextSearch,
+  type FieldValue,
+  type FilterOperand,
+  type FilterOperator,
+  type Predicate,
+  type PredicateTest,
+} from '@ddd-ts-kit/kernel';
 import { columnOf } from './column-of';
 import { likePattern } from './like-pattern';
 
@@ -10,6 +17,14 @@ interface Comparison {
   readonly operator: Exclude<FilterOperator, 'isNull'>;
   readonly value: FilterOperand;
 }
+
+/** A search that ignores case is an `ilike`: PostgreSQL folds it with the locale of the database, see `foldCase` of the kernel. */
+const LIKE = {
+  contains: '?? like ? escape ?',
+  startsWith: '?? like ? escape ?',
+  containsIgnoringCase: '?? ilike ? escape ?',
+  startsWithIgnoringCase: '?? ilike ? escape ?',
+} as const;
 
 const COMPARISONS = { eq: '=', ne: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=' } as const;
 
@@ -72,16 +87,18 @@ function compared(builder: Knex.QueryBuilder, { operator, value }: Comparison, c
   const values: FieldValue[] = typeof value === 'object' && !(value instanceof Date) ? [...value] : [value];
   const [first = null, second = null] = values;
 
+  if (isTextSearch(operator)) {
+    void builder.whereRaw(LIKE[operator], [column, likePattern(operator, String(first)), '\\']);
+
+    return;
+  }
+
   switch (operator) {
     case 'in':
       void builder.whereIn(column, values);
       break;
     case 'between':
       void builder.whereBetween(column, [first, second]);
-      break;
-    case 'contains':
-    case 'startsWith':
-      void builder.whereRaw('?? like ? escape ?', [column, likePattern(operator, String(first)), '\\']);
       break;
     default:
       void builder.where(column, COMPARISONS[operator], first);
