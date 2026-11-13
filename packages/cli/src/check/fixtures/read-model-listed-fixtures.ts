@@ -199,12 +199,12 @@ export const READ_MODEL_LISTED_FIXTURES: readonly Fixture[] = [
           "import { PackagedTotals, type Unused } from '@acme/read-models';",
         ],
         entries: [
+          "  ['billing', Looping],",
           ENTRY,
           "  ['billing', FromFolder],",
           "  ['billing', KnexLateTotals],",
           "  ['billing', PackagedTotals],",
           "  ['billing', OwnTotals],",
-          "  ['billing', Looping],",
         ],
         more: 'class OwnTotals {}\n\nclass Looping extends Looping {}',
       }),

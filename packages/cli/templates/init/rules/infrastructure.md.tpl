@@ -18,7 +18,7 @@ paths:
 - Rows never leave `persistence/`: a mapper translates to and from the aggregate, and is the only place for a type assertion (`clean/no-escape-hatch`).
 - The content of a file never goes in a table: no binary or base64 column (`persistence/no-file-content`). The file lives in the `FileStorage` port; a row keeps the key, size, media type and checksum of its `StoredFile`.
 {{#if orm.database}}
-- A read model store written by hand is listed in `{{platformDir}}/database/read-model-tables.ts`, as `generate read-model` lists the one it writes: the start and `npm run db:read-models` check the tables of the listed stores only (`persistence/read-model-listed`).
+- A read model store written by hand is listed in `{{config.platformDir}}/database/read-model-tables.ts`, as `generate read-model` lists the one it writes: the start and `npm run db:read-models` check the tables of the listed stores only (`persistence/read-model-listed`).
 {{/if}}
 - Own tables, in the schema of the context: no join, foreign key or transaction across contexts (`context/extractable`).
 - Audit columns and the tenant column are stamped from the execution scope with the kernel helpers (`stampCreation`, `stampUpdate`, `tenantScopeOf`), never handed over by a use case.
