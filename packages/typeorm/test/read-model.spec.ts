@@ -155,10 +155,22 @@ describe('TypeOrmReadModelTable of an entity whose columns refuse NULL', () => {
     expect(declare()).toThrow(ReadModelTableNotReadyError);
 
     expect(declare()).toThrow(
-      'The read model table StrictRow cannot hold the trace of a deleted row: "title", "tenant_id" refuse NULL',
+      'The read model table strict_row cannot hold the trace of a deleted row: "title", "tenant_id" refuse NULL',
     );
 
-    expect(declare()).toThrow('check (deleted or ("title" is not null and "tenant_id" is not null))');
+    expect(declare()).toThrow('The definition the store reads says so: declare these columns nullable there');
+  });
+
+  it('names the mark of a deleted row after its property when the entity gives its column no name', () => {
+    const unnamed = () =>
+      new TypeOrmReadModelTable<StrictRow>(createTypeOrmUnitOfWork(database.dataSource), {
+        entity: new EntitySchema<StrictRow & ReadModelStamps>({
+          name: 'StrictRow',
+          columns: { ...columns, deleted: { type: 'boolean', default: false } },
+        }),
+      });
+
+    expect(unnamed).toThrow(expect.objectContaining({ state: expect.objectContaining({ deleted: 'deleted' }) }));
   });
 
   it('leaves the tenant of a read model of tenant data out of it', () => {

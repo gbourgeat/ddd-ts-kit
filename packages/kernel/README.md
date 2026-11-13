@@ -2015,6 +2015,39 @@ adapter gives (three statements and the query of a plan): `InMemoryReadModelStor
 the fakes, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore` and
 `TypeOrmReadModelStore` in the adapter packages, all held to `readModelStoreContract`.
 
+On PostgreSQL the table of such a store holds the trace of a deleted row only if every column the
+store maps as a field of its row accepts NULL. `PostgresTraceColumns` reads it from the database,
+for those columns and no other: which refuse NULL, which nothing can open (a part of the primary
+key, an identity or a generated column, a column of a domain that refuses NULL, a column that is
+not there), whether the table exists, what its check constraint `<table>_live_rows_whole` keeps
+whole, which other check constraints name a column of the row, and whether it is a view. It is
+the refusal of one store before its first trace, and `tableState()` of a `TableReadModelStore`
+answers the same reading as a `ReadModelTableState`. `ReadModelTables` asks it of the stores an
+application lists, each entry a name and what builds the store as the application binds it:
+`hosting(contexts)` keeps the entries of the contexts an application hosts and `contexts` names
+those the list holds; `states()` and `notReady()` list, `require()` refuses with
+`ReadModelTablesNotReadyError`,
+`atStart(logger)` is what an application calls when it starts (`atStart(logger, 'reported')` logs
+the tables as one error and lets the start go on), and `report()` is what a command prints, with
+an `outcome` that tells a table that is not ready from a database that could not be read. Every
+entry is tried: one whose store cannot be built or whose table the database refuses to read is
+told under its name, in `unread` of the error, with its cause in a few words (the message of the
+driver, never the statement), and the others are still read. A database that cannot be reached is
+no refusal of a start: `atStart` logs one warning with the short cause and goes on, `report()`
+answers `unread`. The verdict is the
+store's by construction, a table nobody lists is never read, and a store without a table (memory,
+OpenSearch) has nothing to say. What the check cannot decide is a warning: a constraint that is
+not validated, a constraint of that name that is not written as the kit writes it (the form is
+read exactly, as PostgreSQL prints it), another check on a column of the row unless it is written for the live rows only (`deleted or
+..`), a view, a store the
+application names as not listed. A refusal names the table, what keeps it from holding a trace
+and the migration to write, in `steps` (`statements` holds both in order): the change of
+definition, one statement that touches the mapped columns alone, writes the constraint `not valid`
+and never drops a constraint that is not the kit's; then the validation and the cleaning of the
+rows deleted before, which a large table runs outside the transaction of the first step. It can
+be run twice. All held to `readModelTablesContract` on the four ORM: see
+[Every table checked at the start, and before a deployment](../../docs/concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment).
+
 ### Rebuild
 
 A read model fed by events that no event store keeps is rebuilt from the source of truth, the

@@ -103,7 +103,7 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
   writeCopilotSettings(ws);
   ws.create(`${config.sharedKernelDir}/.gitkeep`, '');
 
-  const rewired = options.force ? rewireContexts(ws, config) : { contexts: [], repositories: [] };
+  const rewired = rewireContexts(ws, config, options.force);
 
   const declared = addContexts(ws, config, [...options.contexts, ...presetContexts(config, options)]);
   const withContexts = addPresets(ws, declared, [...new Set(options.presets ?? [])]);

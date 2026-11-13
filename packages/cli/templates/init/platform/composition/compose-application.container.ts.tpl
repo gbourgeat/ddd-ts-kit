@@ -216,7 +216,12 @@ export function composeApplication(
   const container = createApplication({
     modules: [
       kernel(foundations, persistence, options),
+{{#if persistence.hasDatabase}}
+      platformModule(persistence, options, contexts.modules),
+{{/if}}
+{{#unless persistence.hasDatabase}}
       platformModule(persistence, options),
+{{/unless}}
 {{#if eventSourcing.on}}
       eventSourcingModule(foundations.eventSourcing),
 {{/if}}

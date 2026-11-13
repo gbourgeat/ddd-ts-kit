@@ -4,11 +4,13 @@ import {
   PostgresReadModelRebuild,
   PostgresTraceColumns,
   ReadModelTableNotReadyError,
+  type TracedTable,
   type CriteriaPlan,
   type EventStamp,
   type SearchedRows,
   type ReadModelRows,
   type ReadModelTable,
+  type ReadModelTableState,
   type StampedRow,
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
@@ -41,17 +43,21 @@ export class DrizzleReadModelTable<
 
   private readonly rebuild: PostgresReadModelRebuild;
 
+  private readonly traces: PostgresTraceColumns;
+
   constructor(
     private readonly context: DrizzleContext<Q, F, S>,
     private readonly options: DrizzleReadModelOptions<Row>,
   ) {
     const { name, schema } = getTableConfig(options.table);
 
-    const data = holdsTraces(options, schema === undefined ? name : `${schema}.${name}`);
+    const stamps = stampColumns(options.table);
+    const named = { table: name, deleted: stamps.deleted.name, ...(schema === undefined ? {} : { schema }) };
+    const data = holdsTraces(options, named);
 
-    const traces = new PostgresTraceColumns(
+    this.traces = new PostgresTraceColumns(
       (statement, parameters) => this.run(statement, parameters),
-      () => ({ table: name, data, ...(schema === undefined ? {} : { schema }) }),
+      () => ({ ...named, data }),
     );
 
     this.target = {
@@ -59,8 +65,8 @@ export class DrizzleReadModelTable<
       name,
       key: options.key,
       columns: options.columns,
-      stamps: stampColumns(options.table),
-      traces,
+      stamps,
+      traces: this.traces,
       ...(options.tenant === undefined ? {} : { tenant: options.tenant }),
     };
 
@@ -69,6 +75,7 @@ export class DrizzleReadModelTable<
 
     this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
       table: name,
+      deletedColumn: stamps.deleted.name,
       ...(schema === undefined ? {} : { schema }),
     });
   }
@@ -104,6 +111,11 @@ export class DrizzleReadModelTable<
     const rows = records.map((record) => mapper.fromSelected(record));
 
     return plan.kind === 'cursor' ? { rows } : { rows, total: await db.$count(table, and(kept, counted)) };
+  }
+
+  /** What the table can hold of the trace of a deleted row, read as before the first trace: what `ReadModelTables` asks. */
+  tableState(): Promise<ReadModelTableState> {
+    return this.traces.state();
   }
 
   rebuilding(): Promise<boolean> {
@@ -165,18 +177,26 @@ export class DrizzleReadModelTable<
  * deleted row: every column of the row accepts NULL, the key and the tenant apart. An early
  * signal: the database is asked before the first trace. Answers the columns of the row.
  */
-function holdsTraces<Row>({ columns, key, tenant }: DrizzleReadModelOptions<Row>, table: string): string[] {
+function holdsTraces<Row>(
+  { columns, key, tenant }: DrizzleReadModelOptions<Row>,
+  named: Omit<TracedTable, 'data'>,
+): string[] {
   const mapped: readonly PgColumn[] = Object.values(columns);
   const kept = new Set([key.name, tenant?.column.name]);
   const data = mapped.filter((column) => !kept.has(column.name));
-  const refusing = data.filter((column) => column.notNull);
+  const row = data.map((column) => column.name);
+  const refusing = data.filter((column) => column.notNull).map((column) => column.name);
 
   if (refusing.length > 0) {
-    throw new ReadModelTableNotReadyError(
-      table,
-      refusing.map((column) => column.name),
-    );
+    throw new ReadModelTableNotReadyError({
+      ...named,
+      deleted: named.deleted ?? 'deleted',
+      exists: true,
+      refusing,
+      unfit: [],
+      row,
+    });
   }
 
-  return data.map((column) => column.name);
+  return row;
 }

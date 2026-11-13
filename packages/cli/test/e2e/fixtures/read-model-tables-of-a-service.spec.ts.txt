@@ -1,0 +1,103 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { ReadModelTablesNotReadyError } from '@ddd-ts-kit/kernel';
+import { createBillingTables } from '@/contexts/billing/infrastructure/persistence/create-billing-tables.schema';
+import { createShippingTables } from '@/contexts/shipping/infrastructure/persistence/create-shipping-tables.schema';
+import { offlineAuthenticator } from '@/platform/auth/authentication/offline-authenticator';
+import { composeApplication, everyContext, hostedContexts } from '@/platform/composition/compose-application';
+import { openPersistence } from '@/platform/database/open-persistence';
+import type { Persistence } from '@/platform/database/persistence';
+import { readModelTables } from '@/platform/database/read-model-tables';
+import { inProcessEvents } from '@/platform/events/in-process-events';
+
+const SERVER = process.env['DDD_TS_KIT_MIGRATIONS_SERVER'] ?? '';
+const RUN = `rmt_${String(Date.now())}`;
+
+/** The database of that name on the server, reached as this role when one is named. */
+function urlOf(database: string, role?: string): string {
+  const url = new URL(SERVER);
+
+  url.pathname = `/${database}`;
+  url.username = role ?? url.username;
+  url.password = role ?? url.password;
+
+  return url.toString();
+}
+
+/** What `apps/billing/main.ts` hosts: billing alone. */
+const SERVICE = __SERVICE__;
+
+const options = () => ({ events: inProcessEvents(), authenticator: offlineAuthenticator });
+
+async function started(application: { start(): Promise<void>; stop(): Promise<void> }): Promise<string> {
+  await application.start();
+  await application.stop();
+
+  return 'started';
+}
+
+describe('the read model tables of a context run as a service, each context on a database of its own', () => {
+  let admin: Persistence;
+  let billing: Persistence;
+  let shipping: Persistence;
+  let limited: Persistence;
+
+  const raw = (persistence: Persistence, statement: string) => persistence.database.executor().raw(statement);
+
+  beforeAll(async () => {
+    admin = openPersistence({ databaseUrl: SERVER });
+    await raw(admin, `create database ${RUN}_billing`);
+    await raw(admin, `create database ${RUN}_shipping`);
+    await raw(admin, `create role ${RUN} login password '${RUN}'`);
+
+    billing = openPersistence({ databaseUrl: urlOf(`${RUN}_billing`) });
+    shipping = openPersistence({ databaseUrl: urlOf(`${RUN}_shipping`) });
+    limited = openPersistence({ databaseUrl: urlOf(`${RUN}_shipping`, RUN) });
+
+    // "Move the context's schema and migrations with it": each database holds the tables of its context and no other.
+    await createBillingTables(billing.database.executor());
+    await createShippingTables(shipping.database.executor());
+  });
+
+  afterAll(async () => {
+    await Promise.all([billing.close(), shipping.close(), limited.close()]);
+    await raw(admin, `drop database ${RUN}_billing with (force)`);
+    await raw(admin, `drop database ${RUN}_shipping with (force)`);
+    await raw(admin, `drop role ${RUN}`);
+    await admin.close();
+  });
+
+  it('starts each root on the database of its own contexts, which holds none of the tables of the other', async () => {
+    expect(await started(composeApplication(billing, { ...options(), platformJobs: false }, SERVICE))).toBe('started');
+    expect(await started(composeApplication(shipping, options(), hostedContexts))).toBe('started');
+
+    // The whole list, which no root asks any more, finds the tables of the other context missing on either database.
+    await expect(readModelTables(billing).require()).rejects.toThrow('shipping.parcels cannot hold');
+    await expect(readModelTables(shipping).require()).rejects.toThrow('billing.invoice_summaries cannot hold');
+  });
+
+  it('refuses the start of the root whose own table is not ready, by its name, and of no other root', async () => {
+    await raw(billing, 'alter table billing.invoice_summaries alter column customer_id set not null');
+
+    const service = composeApplication(billing, { ...options(), platformJobs: false }, SERVICE);
+    const refusal: unknown = await service.start().catch((error: unknown) => error);
+
+    expect(refusal).toBeInstanceOf(ReadModelTablesNotReadyError);
+    expect(refusal).toMatchObject({ tables: [{ table: 'billing.invoice_summaries' }], unread: [] });
+    expect(await started(composeApplication(shipping, options(), hostedContexts))).toBe('started');
+  });
+
+  it('tells a table its role may not read under the name of its store, and starts when told to report', async () => {
+    const refusal: unknown = await composeApplication(limited, options(), hostedContexts)
+      .start()
+      .catch((error: unknown) => error);
+
+    expect(refusal).toBeInstanceOf(ReadModelTablesNotReadyError);
+    expect(refusal).toMatchObject({ tables: [], unread: [{ name: 'KnexParcels' }] });
+    expect(String(refusal)).toContain('KnexParcels (');
+    expect(String(refusal)).toContain('permission denied for schema shipping');
+
+    const reported = composeApplication(limited, { ...options(), readModelTables: 'reported' }, hostedContexts);
+
+    expect(await started(reported)).toBe('started');
+  });
+});

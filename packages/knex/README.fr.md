@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:af44010accf881c2 -->
+<!-- translation-of: README.md sha256:d723d12bcfe5ca31 -->
 
 # @ddd-ts-kit/knex
 
@@ -810,7 +810,7 @@ vérification garde entières les lignes vivantes (`check (deleted or (status is
 starts_at is not null))`), une requête à vous sur la table écarte les lignes supprimées
 (`deleted = false`), et une table dont des colonnes refusent NULL est refusée par
 `ReadModelTableNotReadyError` avant l'écriture de la première trace, par une lecture des colonnes de la table
-([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). `store.table` est ce que prend
+([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). Une application n'attend pas cette première trace : `tableState()` d'un `KnexReadModelStore` lit sa table comme le registre le fait avant sa première trace, pour les colonnes qu'il associe et aucune autre, et `ReadModelTables` du noyau le demande à chaque registre que l'application liste, puis refuse avec `ReadModelTablesNotReadyError`, qui nomme chaque table qui n'est pas prête, ce qui l'en empêche et la migration à écrire en deux étapes, ainsi que chaque table qu'il n'a pas pu lire ; un projet généré garde la liste, vérifie à son démarrage les tables des contextes qu'il héberge, et `npm run db:read-models` la vérifie avant un déploiement ([Chaque table vérifiée au démarrage, et avant un déploiement](../../docs/concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement)). `store.table` est ce que prend
 `ProjectionRebuild` ; la reconstruction est réservée à PostgreSQL (une copie `<table>__rebuild`
 faite par `LIKE ... INCLUDING ALL`, les clés écrites entre-temps dans `<table>__touched`,
 l'échange par renommage dans une seule transaction), et ses garanties et ses limites sont dans le

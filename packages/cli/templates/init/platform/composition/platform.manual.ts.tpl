@@ -26,6 +26,9 @@ import type {
   RateLimiter,
   {{/if}}
 } from '@ddd-ts-kit/kernel';
+{{#if persistence.hasDatabase}}
+import type { ReadModelTables } from '@ddd-ts-kit/kernel';
+{{/if}}
 {{#if queue.stored}}
 import type { JobStore } from '@ddd-ts-kit/scheduling';
 {{/if}}
@@ -68,6 +71,10 @@ export interface Platform {
   /** The provider itself: what the outbox relay delivers to. */
   readonly eventBus: IntegrationEventPublisher;
   readonly persistence: Persistence;
+  {{#if persistence.hasDatabase}}
+  /** The listed read model tables of these contexts, which an application checks in one pass when it starts, before an event reaches a store. */
+  readModelTables(contexts: readonly string[]): ReadModelTables;
+  {{/if}}
   /** Asks the policies about one element, then the authorizer: for the rules that need loaded state. */
   readonly access: Access;
   /**

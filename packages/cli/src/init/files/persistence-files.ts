@@ -46,6 +46,8 @@ function onDatabase(orm: string, opening: string): Variants {
     [INERT, opening],
     ['persistence-over.ts', orm],
     ['open-test-database.ts', orm],
+    // The read model tables of the database, checked in one pass at the start and by `npm run db:read-models`.
+    ['read-model-tables.ts'],
     // The stores of the kit as the platform wires them, held to their contracts with the capabilities of the stack.
     ['persistence.contract.spec.ts'],
   ];

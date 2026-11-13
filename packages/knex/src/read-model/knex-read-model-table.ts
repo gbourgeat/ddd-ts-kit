@@ -7,6 +7,7 @@ import {
   type SearchedRows,
   type ReadModelRows,
   type ReadModelTable,
+  type ReadModelTableState,
   type StampedRow,
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
@@ -31,21 +32,23 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
 
   private readonly rebuild: PostgresReadModelRebuild;
 
+  private readonly traces: PostgresTraceColumns;
+
   constructor(
     private readonly context: KnexContext,
     private readonly options: KnexReadModelOptions<Row>,
   ) {
     const { table, schema } = options;
 
-    const traces = new PostgresTraceColumns(
+    this.traces = new PostgresTraceColumns(
       (statement, parameters) => this.run(statement, parameters),
       () => tracedTable(options),
     );
 
     const copied = { ...options, table: PostgresReadModelRebuild.shadowOf(table) };
 
-    this.rows = new KnexStampedRows(context, options, traces);
-    this.copy = new KnexStampedRows(context, copied, traces);
+    this.rows = new KnexStampedRows(context, options, this.traces);
+    this.copy = new KnexStampedRows(context, copied, this.traces);
 
     this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
       table,
@@ -79,6 +82,11 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
     const counted: unknown = await predicateToKnex(kept(), plan.filter, columns).count({ total: '*' });
 
     return { rows, total: Number(recordsOf(counted)[0]?.['total'] ?? 0) };
+  }
+
+  /** What the table can hold of the trace of a deleted row, read as before the first trace: what `ReadModelTables` asks. */
+  tableState(): Promise<ReadModelTableState> {
+    return this.traces.state();
   }
 
   rebuilding(): Promise<boolean> {

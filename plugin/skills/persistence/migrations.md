@@ -88,3 +88,22 @@ what it changes this time.
 
 A worker generates a working migration only, `npm run db:generate working-<what>`, which the
 conductor replaces on the trunk at merge.
+
+## After a migration that touches a read model
+
+Run `npm run db:read-models` on the migrated database (it needs `DATABASE_URL` alone; `-- --context
+<context>` for the tables of a context run as a service): each read model table the project lists
+is read by its own store. On `ReadModelTablesNotReadyError`, from that command or at the start,
+the error carries the migration of each table in two steps, to copy as they are.
+
+- **A small table**: both steps in one new migration.
+- **A large table**: the first step (the change of definition, brief, under the lock that stops
+  readers and writers) in one migration, the second (the validation and the cleaning, which read
+  the whole table) in another that runs outside the transaction of the first. Knex: the second
+  file ends with `export const config = { transaction: false };`. TypeORM:
+  `migrationsTransactionMode: 'each'` in `data-source.ts`. Drizzle: every pending file shares one
+  transaction, so add and apply the second migration after the first was applied. Prisma: two
+  migrations (the `do` block of the first step makes its file one transaction).
+
+A warning of the check (a constraint not validated, another check on a column of the row, a view,
+a store that is not listed) is to read, not to silence: it names what the check could not decide.

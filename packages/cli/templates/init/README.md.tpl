@@ -44,6 +44,23 @@ migrations that a merge left out of order (`npx ddd-ts-kit explain persistence/m
 `npx ddd-ts-kit verify-merge` fails on a migration of the branch that sorts before the last one of
 the trunk, and names the command that puts it after.
 
+The application checks its read model tables when it starts, whenever their stores are built:
+those `{{config.platformDir}}/database/read-model-tables.ts` lists for the contexts it hosts (a
+context run as a service checks its own, on its database), where `generate read-model` adds each
+store and `init` those of the tree. A table is read by its own store, so the verdict is the one
+that store gives before its first trace; a database that cannot be reached is one warning and the start goes on; one that is not ready stops the start, named with what
+keeps it from it and the migration to write, in two steps, which touches the columns the store
+maps and no other. On a large table the second step runs in a migration of its own, outside the
+transaction of the first (the documentation of the persistence says how on each migration tool).
+Before a deployment, `DATABASE_URL=<its database> npm run db:read-models` says the same of that
+database (`-- --context <context>` for the tables of one context; exit code 1 when a table is not
+ready, 2 without a database to read, 3 when no table could be read, 4 when the context holds no
+listed read model) and needs no other variable:
+it prints the database it read. A pipeline that starts the application before its migrations
+ran passes `readModelTables: 'reported'` to `composeApplication` in `{{config.sourceRoot}}/main.ts`:
+the tables are logged as one error, the start goes on, and each store still refuses by name before
+its first trace.
+
 {{/if}}
 `npm run dev` restarts the application when a source file changes. It runs `tsx watch`, which
 executes TypeScript directly and resolves an import alias from the `paths` of `tsconfig.json`;

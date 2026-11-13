@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:314a1331fe1201ef -->
+<!-- translation-of: README.md sha256:bcc2bfaf4621aaee -->
 
 # @ddd-ts-kit/kernel
 
@@ -2099,6 +2099,40 @@ qui concerne de nombreuses lignes les liste avec des critères et écrit chacune
 adaptateur (trois instructions et la requête d'un plan) : `InMemoryReadModelStore` ici pour les
 *fakes*, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore` et
 `TypeOrmReadModelStore` dans les *packages* d'adaptateurs, tous tenus à `readModelStoreContract`.
+
+Sur PostgreSQL, la table d'un tel store ne contient la trace d'une ligne supprimée que si chaque
+colonne que le store associe comme champ de sa ligne accepte NULL. `PostgresTraceColumns` le lit
+dans la base, pour ces colonnes et aucune autre : celles qui refusent NULL, celles que rien ne peut
+ouvrir (une partie de la clé primaire, une colonne d'identité ou générée, une colonne d'un domaine
+qui refuse NULL, une colonne qui n'existe pas), si la table existe, ce que sa contrainte de
+vérification `<table>_live_rows_whole` garde entier, quelles autres contraintes de vérification
+nomment une colonne de la ligne, et si c'est une vue. C'est le refus d'un store avant sa première
+trace, et `tableState()` d'un `TableReadModelStore` rend la même lecture sous la forme d'un
+`ReadModelTableState`. `ReadModelTables` le demande aux stores qu'une application liste, chaque
+entrée un nom et ce qui construit le store comme l'application le lie : `hosting(contexts)` garde
+les entrées des contextes qu'une application héberge et `contexts` nomme ceux que tient la liste ;
+`states()` et `notReady()` listent, `require()` refuse avec `ReadModelTablesNotReadyError`, `atStart(logger)` est ce
+qu'appelle une application à son démarrage (`atStart(logger, 'reported')` journalise les tables en
+une erreur et laisse le démarrage se poursuivre), et `report()` est ce qu'affiche une commande,
+avec un `outcome` qui distingue une table qui n'est pas prête d'une base qui n'a pas pu être lue.
+Chaque entrée est essayée : celle dont le store ne peut pas être construit ou dont la base refuse
+de lire la table est dite sous son nom, dans `unread` de l'erreur, avec sa cause en quelques mots
+(le message du pilote, jamais l'instruction), et les autres sont lues quand même. Une base
+injoignable n'est pas un refus de démarrage : `atStart` journalise un seul avertissement avec la
+cause courte et poursuit, `report()` rend `unread`. Le verdict est celui du store par construction, une table que personne ne liste n'est jamais
+lue, et un store sans table (mémoire, OpenSearch) n'a rien à dire. Ce que la vérification ne peut
+pas trancher est un avertissement : une contrainte non validée, une contrainte de ce nom qui n'est
+pas écrite comme le kit l'écrit (la forme est lue exactement, telle que PostgreSQL l'affiche), une
+autre vérification sur une colonne de la ligne sauf si elle est écrite pour les seules lignes
+vivantes (`deleted or ..`), une vue, un store que l'application nomme comme
+non listé. Un refus nomme la table, ce qui l'empêche de contenir une trace et la migration à
+écrire, dans `steps` (`statements` tient les deux dans l'ordre) : le changement de définition, une
+instruction qui ne touche que les colonnes associées, écrit la contrainte `not valid` et ne
+supprime jamais une contrainte qui n'est pas celle du kit ; puis la validation et le nettoyage des
+lignes supprimées auparavant, qu'une grande table exécute hors de la transaction de la première
+étape. Elle peut être exécutée deux fois. Le tout tenu à `readModelTablesContract` sur les quatre
+ORM : voir
+[Chaque table vérifiée au démarrage, et avant un déploiement](../../docs/concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement).
 
 ### Reconstruction
 

@@ -9,6 +9,7 @@ import {
   type SearchedRows,
   type ReadModelRows,
   type ReadModelTable,
+  type ReadModelTableState,
   type StampedRow,
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
@@ -40,7 +41,7 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
     private readonly options: TypeOrmReadModelOptions<Row>,
   ) {
     this.tenant = new TenantOfRows(options.tenant);
-    holdsTraces(options);
+    holdsTraces(context, options);
   }
 
   find(key: string): Promise<StampedRow<Row> | undefined> {
@@ -73,6 +74,11 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
     return plan.kind === 'cursor'
       ? { rows }
       : { rows, total: await predicateToTypeOrm(kept(), plan.filter, { alias: ALIAS }).getCount() };
+  }
+
+  /** What the table can hold of the trace of a deleted row, read as before the first trace: what `ReadModelTables` asks. */
+  tableState(): Promise<ReadModelTableState> {
+    return this.traces.state();
   }
 
   rebuilding(): Promise<boolean> {
@@ -136,10 +142,11 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
   }
 
   private rebuild(): PostgresReadModelRebuild {
-    const { schema, tableName } = this.metadata();
+    const { schema, tableName, columns } = this.metadata();
 
     return new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
       table: tableName,
+      deletedColumn: deletedColumnOf(columns),
       ...(schema === undefined ? {} : { schema }),
     });
   }
@@ -150,7 +157,12 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
     const kept = keptOf(this.options);
     const data = columns.filter((column) => !kept.has(column.propertyName)).map((column) => column.databaseName);
 
-    return { table: tableName, data, ...(schema === undefined ? {} : { schema }) };
+    return {
+      table: tableName,
+      data,
+      deleted: deletedColumnOf(columns),
+      ...(schema === undefined ? {} : { schema }),
+    };
   }
 
   private async run(
@@ -170,24 +182,44 @@ const STAMPS: readonly string[] = ['lastEventId', 'lastEventAt', 'lastEventVersi
 /**
  * Refuses, when the store is built, an entity whose columns could not hold the trace of a
  * deleted row: every column of the row is `nullable`, the key and the tenant apart. An early
- * signal: the database is asked before the first trace.
+ * signal: the database is asked before the first trace. The table and its columns are named as
+ * the database will hold them, through the naming strategy of the data source, which is there
+ * before the metadata of the entity is.
  */
-function holdsTraces<Row>(options: TypeOrmReadModelOptions<Row>): void {
+function holdsTraces<Row>(context: TypeOrmContext, options: TypeOrmReadModelOptions<Row>): void {
   const { columns, schema, tableName, name } = options.entity.options;
+  const { namingStrategy } = context.manager().dataSource;
   const kept = keptOf(options);
+  const declared = Object.entries<EntitySchemaColumnOptions | undefined>(columns);
 
-  const refusing = Object.entries<EntitySchemaColumnOptions | undefined>(columns).flatMap(([property, column]) =>
-    column === undefined || column.nullable === true || kept.has(property) ? [] : [column.name ?? property],
+  const named = (property: string): string =>
+    namingStrategy.columnName(property, declared.find(([name]) => name === property)?.[1]?.name, []);
+
+  const data = declared.flatMap(([property, column]) =>
+    column === undefined || kept.has(property) ? [] : [{ name: named(property), nullable: column.nullable }],
   );
 
-  if (refusing.length > 0) {
-    const table = tableName ?? name;
+  const refusing = data.filter((column) => column.nullable !== true).map((column) => column.name);
 
-    throw new ReadModelTableNotReadyError(schema === undefined ? table : `${schema}.${table}`, refusing);
+  if (refusing.length > 0) {
+    throw new ReadModelTableNotReadyError({
+      table: namingStrategy.tableName(name, tableName),
+      exists: true,
+      refusing,
+      unfit: [],
+      row: data.map((column) => column.name),
+      deleted: named('deleted'),
+      ...(schema === undefined ? {} : { schema }),
+    });
   }
 }
 
 /** The properties a trace keeps: the stamp, the key and the tenant. */
 function keptOf<Row>({ key, tenant }: TypeOrmReadModelOptions<Row>): ReadonlySet<string> {
   return new Set([...STAMPS, key ?? 'id', ...(tenant === undefined ? [] : [tenant.property ?? 'tenantId'])]);
+}
+
+/** The column of the mark of a deleted row, as the database holds it. */
+function deletedColumnOf(columns: readonly { readonly propertyName: string; readonly databaseName: string }[]): string {
+  return columns.reduce((name, column) => (column.propertyName === 'deleted' ? column.databaseName : name), 'deleted');
 }

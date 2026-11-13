@@ -89,12 +89,12 @@ blocked; plan it, or hold those rows back.
    contract in the upstream's `published-language/` with the owners of both sides, commit. A
    downstream starts only against a committed contract. A job or an integration event that a
    worker's row needs is such a step too, run here before that row starts: a worker's
-   `generate job` or `generate integration-event` with `--local-only` is refused (they write
+   `generate job`, `generate integration-event` or, on an ORM, `generate read-model` with `--local-only` is refused (they write
    shared files), and the refusal prints the exact command to run on the trunk. Route paths and methods of each
    context are the ones written in the slices table.
 2. **Skeleton next.** Run every `skeleton` row: `generate aggregate` (with
    `--event-sourced` when planned so) with its `generate repository` (no flag, an aggregate
-   a command row names always has one), `generate job`, `generate policy`, any new `generate context`, and,
+   a command row names always has one), `generate job`, `generate read-model` (on an ORM), `generate policy`, any new `generate context`, and,
    when a slice plans an adapter and the project has none yet, the first `generate adapter`
    (it writes `platform/resilience/own-policy.ts`, which the next ones only import).
    These kinds write shared files (`generate --help --json` says which, under
@@ -142,7 +142,7 @@ stale `node_modules`, packages of the kit at another version and submodules not 
 | Shared | Touched by | Kept conflict-free by |
 |---|---|---|
 | `ddd-ts-kit.config.json`, `src/main.ts`, `src/platform/**`, `src/apps/**`, `src/shared-kernel/**` | conductor, on the trunk | workers report the need and wait for the trunk |
-| registries the generators fill between markers (composition root, database schema index, audited events, job settings, access policies) | generators, run by the conductor | skeleton first; at a merge, `merge-trunk` keeps both sides' lines |
+| registries the generators fill between markers (composition root, database schema index, read model tables, audited events, job settings, access policies) | generators, run by the conductor | skeleton first; at a merge, `merge-trunk` keeps both sides' lines |
 | `<context>.declarations.ts` and the `<layer>.declarations.ts` of each layer, `docs/context-map.md`, `openapi/*`, `docs/integration/*`, `.dependency-cruiser.cjs`, `clients/*` | `npm run regenerate`, a worker's included | a worker regenerates and commits them with its slice; never merged by hand: `merge-trunk` takes the trunk's side and regenerates |
 | `package.json`, the lockfile | conductor | a worker asks for a dependency; `merge-trunk` takes the trunk's lockfile and installs again when the branch changed `package.json` |
 | migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); `merge-trunk` replays the drizzle ones of both sides, and `merge-trunk --to-land` gives them their real names before the squash merge |

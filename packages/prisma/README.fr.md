@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:27ebaea62a8fd141 -->
+<!-- translation-of: README.md sha256:1199cc9f704b653e -->
 
 # @ddd-ts-kit/prisma
 
@@ -807,7 +807,7 @@ vérification garde entières les lignes vivantes (`check (deleted or (status is
 starts_at is not null))`), une requête à vous sur la table écarte les lignes supprimées
 (`deleted = false`), et une table dont des colonnes refusent NULL est refusée par
 `ReadModelTableNotReadyError` avant l'écriture de la première trace, par une lecture des colonnes de la table
-([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). Les
+([Ce que laisse une ligne supprimée](../../docs/concepts/cqrs.fr.md#la-table-dun-modèle-de-lecture-et-ce-que-laisse-une-ligne-supprimée)). Une application n'attend pas cette première trace : `tableState()` d'un `PrismaReadModelStore` lit sa table comme le registre le fait avant sa première trace, pour les colonnes qu'il associe et aucune autre, et `ReadModelTables` du noyau le demande à chaque registre que l'application liste, puis refuse avec `ReadModelTablesNotReadyError`, qui nomme chaque table qui n'est pas prête, ce qui l'en empêche et la migration à écrire en deux étapes, ainsi que chaque table qu'il n'a pas pu lire ; un projet généré garde la liste, vérifie à son démarrage les tables des contextes qu'il héberge, et `npm run db:read-models` la vérifie avant un déploiement ([Chaque table vérifiée au démarrage, et avant un déploiement](../../docs/concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement)). Les
 champs du modèle sont optionnels eux aussi (`String?`) : le registre lit les colonnes de la table,
 pas le modèle, si bien qu'un champ laissé requis sur une colonne qui accepte NULL fait refuser la
 trace par le client Prisma avec sa propre erreur de validation, avant toute requête, et non avec

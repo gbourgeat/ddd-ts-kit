@@ -19,12 +19,13 @@ import path from 'node:path';
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const DIRECTORY = 'packages/cli/test/e2e';
 
-/** Run by jobs of their own: the alias at run time on both Node lines, the real installs per package manager, the pairwise stacks and the first migrations on a real PostgreSQL at night and before a release. */
+/** Run by jobs of their own: the alias at run time on both Node lines, the real installs per package manager, the pairwise stacks and the first migrations and the roots of a service on a real PostgreSQL at night and before a release. */
 export const ELSEWHERE = [
   /^alias-.*\.spec\.ts$/,
   /^pairwise\.spec\.ts$/,
   /^migrations-for-real\.spec\.ts$/,
   /^test-databases-.*\.spec\.ts$/,
+  /^read-model-tables-of-a-service\.spec\.ts$/,
   /^package-managers\.spec\.ts$/,
   /^mutation-on-managers\.spec\.ts$/,
   /^first-minute(?:-proven|-js)?\.spec\.ts$/,

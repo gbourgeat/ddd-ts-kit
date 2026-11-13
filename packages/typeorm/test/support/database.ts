@@ -1,4 +1,4 @@
-import { DataSource, type EntitySchema } from 'typeorm';
+import { DataSource, type EntitySchema, type NamingStrategyInterface } from 'typeorm';
 import { startPostgres } from './postgres';
 import { RecordingLogger } from './recording-logger';
 
@@ -16,7 +16,10 @@ export interface TestDatabase {
  * One PostgreSQL database with the tables of the given entities, created from their
  * `EntitySchema` the way a generated migration would.
  */
-export async function createDatabase(entities: readonly EntitySchema[]): Promise<TestDatabase> {
+export async function createDatabase(
+  entities: readonly EntitySchema[],
+  namingStrategy?: NamingStrategyInterface,
+): Promise<TestDatabase> {
   const postgres = await startPostgres();
   const logger = new RecordingLogger();
 
@@ -26,6 +29,7 @@ export async function createDatabase(entities: readonly EntitySchema[]): Promise
     entities: [...entities],
     poolSize: postgres.poolSize,
     logger,
+    ...(namingStrategy === undefined ? {} : { namingStrategy }),
   });
 
   await dataSource.initialize();

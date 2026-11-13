@@ -28,6 +28,9 @@ import { layFoundations } from '{{alias.platform}}/composition/lay-foundations{{
 import type { Platform } from '{{alias.platform}}/composition/platform{{alias.ext}}';
 import type { PlatformOptions } from '{{alias.platform}}/composition/platform-options{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if persistence.hasDatabase}}
+import { readModelTables } from '{{alias.platform}}/database/read-model-tables{{alias.ext}}';
+{{/if}}
 import { platformEvents } from '{{alias.platform}}/events/platform-events{{alias.ext}}';
 {{#if files.any}}
 import { createFiles, type Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
@@ -78,6 +81,9 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
     queries: createQueryBus(foundations, protection.guard),
     domainEvents,
     persistence,
+{{#if persistence.hasDatabase}}
+    readModelTables: (contexts) => readModelTables(persistence, contexts),
+{{/if}}
     access: new PolicyAccess({ authorizer, clock, policies: accessPolicies, onDecision }),
     actors: new ScopedActorContext(scope, foundations.ids),
     adapter,

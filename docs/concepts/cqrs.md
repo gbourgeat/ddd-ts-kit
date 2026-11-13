@@ -384,10 +384,13 @@ asks four things of the table and of whoever reads it:
 - **Every column of the row is nullable.** A trace keeps no data: every column the store maps
   holds NULL, the key, the tenant and the stamp apart, so the personal data of a deleted row is
   gone and a unique value it held is free again. A table whose columns refuse NULL is refused by
-  name (`ReadModelTableNotReadyError`, which lists the columns): when the store is built on Drizzle
+  name (`ReadModelTableNotReadyError`): when the store is built on Drizzle
   and TypeORM, from the definition, and on the four ORM before the first trace is written, from
   one read of the columns the database holds, so a migration not run yet is caught too, and never
-  by a statement that would abort the transaction of the event. On Prisma the fields of the model are optional as well (`String?`).
+  by a statement that would abort the transaction of the event. Its message names the table, what
+  keeps it from holding a trace, what the check constraint is, and the migration to write, as
+  statements that name the columns the store maps and no other. On Prisma the fields of the model are optional as well (`String?`). An application
+  does not wait for that first trace: [every table is checked when it starts](#every-table-checked-at-the-start-and-before-a-deployment).
 - **A check constraint keeps the live rows whole**, in place of the NOT NULL the columns no
   longer carry. `generate read-model` writes it with the table, under this name; a table written
   before, or by hand, takes it in a migration:
@@ -423,6 +426,175 @@ conflict target, since two inserts that cross then meet on the other index first
 four ORM insert with a statement that skips on any unique value, and only when it wrote nothing with
 a second one that names the key, which tells a key that is held, for which the event is compared
 with the row and applied if newer, from a value another row holds, which is refused.
+
+### Every table checked at the start, and before a deployment
+
+A store refuses its table before its first trace, and on Drizzle and TypeORM when it is built. A
+container builds a store when something first asks for it, so in an application wired that way
+both refusals come with the first request or the first event that reaches the read model, in
+production, and one table at a time. Two things say it earlier, for every table at once.
+
+**The tables an application lists.** `ReadModelTables` of the kernel takes a list of entries, each
+a name and what builds the store of one read model as the application binds it: the same class,
+with the same options. Each table is then read by its own store, through the code that store runs
+before its first trace (`tableState()`, on the four ORM): the verdict is the store's by
+construction, not a second opinion. Nothing is guessed from the database: a table nobody lists is
+never read, whatever columns it carries (another service in the same database, a backup, a schema
+the role cannot use), and an empty list checks nothing. `states()` answers what each listed table
+can hold, `notReady()` those that cannot hold a trace, `require()` refuses with
+`ReadModelTablesNotReadyError`, one error that names them all:
+
+```text
+1 read model table is not ready for this version: notification.contacts. Apply the migrations of the project before the application starts; a table they leave as it is takes the migration written under its name.
+
+The read model table notification.contacts cannot hold the trace of a deleted row: "address" refuses NULL. A deleted row keeps its key, its tenant and its stamp only. The check constraint contacts_live_rows_whole, which keeps the live rows whole, is missing. The migration to write:
+-- The change of definition: brief, under the lock that stops the readers and the writers of the table.
+do $kit$
+begin
+  if exists (select 1 from pg_constraint where conrelid = to_regclass('"notification"."contacts"') and conname = 'contacts_live_rows_whole' and pg_get_constraintdef(oid) !~ '^CHECK [(][(]..( NOT VALID|)$') then
+    raise exception 'The constraint contacts_live_rows_whole of notification.contacts is not written as ddd-ts-kit writes the one that keeps the live rows of a read model whole: it is left as it is, and nothing was changed.';
+  end if;
+  alter table "notification"."contacts" alter column "address" drop not null, drop constraint if exists "contacts_live_rows_whole", add constraint "contacts_live_rows_whole" check ("deleted" or ("address" is not null)) not valid;
+end
+$kit$;
+-- Then the validation of the constraint and the cleaning of the rows deleted before, which reads the whole table: in the same migration on a small table; on a large one, in a migration that runs outside the transaction of the change of definition, where it stops neither readers nor writers.
+alter table "notification"."contacts" validate constraint "contacts_live_rows_whole";
+update "notification"."contacts" set "address" = null, "label" = null where "deleted" and ("address" is not null or "label" is not null);
+```
+
+(The regular expression of the statement is shortened here: the error writes it whole.)
+
+**Every entry is tried.** An entry whose store cannot be built, or whose table the database
+refuses to read (a role without the right to use the schema), does not hide the others: it is
+told under its name with what failed, in `unread` of the same error, and the remaining tables are
+still read. What failed is said in a few words, the message of the driver and never the statement
+an ORM wraps it in.
+
+**A database that cannot be reached is not a refusal of the start.** The check tells the tables
+that are not ready; it does not make an application wait for its database, which it never did
+before its first request. When the reading finds no database (a refused connection, a host that
+is not found, a timeout, a connection the server closes, read through the wrapping of each ORM),
+it stops there and the start goes on, `'required'` or `'reported'`, with one warning that says so
+and why (`ECONNREFUSED 127.0.0.1:5432`); each store still refuses before its first trace. A
+database that answers and refuses the reading (a permission, a failed statement) is an unread
+table, which stops a `'required'` start. `db:read-models` exits 3 on a database it cannot reach,
+with the same short cause.
+
+**What a table is read for.** The columns the store maps as fields of its row, and no other: the
+key, the tenant column under the name the store gives it, the stamp under the names the
+definition gives it, a column the store does not map (a surrogate primary key, a column the
+database fills, one that belongs to somebody else) are never counted, never altered and never
+emptied. Of a mapped column the database says whether it refuses NULL, which a migration opens,
+or whether nothing can open it: a part of the primary key, an identity column, a generated one, a
+column of a domain that refuses NULL, a column the table does not have. Such a column is named
+with what it is and no statement is written for it: the store has to stop mapping it as a field.
+A table that is not in the database is said so, since its migration did not run. On Drizzle and
+TypeORM, a definition that declares a field NOT NULL refuses the store when it is built, whatever
+the database holds: the list reports that refusal like the others, and writes no statement before
+the definition is corrected. On TypeORM the table and its columns are named as the database holds
+them, through the naming strategy of the data source.
+
+**The migration, in two steps.** It is written from that reading (`steps` of the error holds the
+two, `statements` both in order). The first is the change of definition, one statement: NOT NULL
+dropped on the fields that refuse it and, in the same `alter table`, the check constraint written
+again with the fields it held and those that just lost NOT NULL, `not valid`. It is one statement
+so that no row is written between the two, whatever commits each statement, and it reads first
+the constraint the database holds under that name: one that is not written as the kit writes it
+is never dropped, the statement fails on it, naming the constraint and its table, and changes
+nothing. The second step validates the
+constraint and empties the rows deleted before, those that still hold data alone. Every
+identifier is quoted, the dollar quote of the first step is one no name of the statement holds,
+and the statements hold no backslash and no question mark, so a string of JavaScript or
+`knex.raw` carries them as they are; a column whose own name holds a question mark is the
+exception, and the error says so under its statements: write it `\?` in `knex.raw`. Run twice, the migration ends where it ended
+the first time and fails on nothing. It is the migration of the database that was read: run
+`db:read-models` against each environment.
+
+**A large table runs the second step apart.** The first step takes ACCESS EXCLUSIVE, which stops
+readers and writers, and holds it until its transaction ends. Validated in that transaction, the
+constraint is checked against the whole table under that lock. Outside it, the validation takes
+SHARE UPDATE EXCLUSIVE and the update ROW EXCLUSIVE, which stop neither. On a small table one
+migration with both steps is fine. On a large one the second step goes in a migration of its
+own, and each tool needs something more to run it outside the transaction of the first
+([per tool](../tools/persistence.md#a-large-read-model-table-the-second-step-apart)).
+
+**What the check reads beside the columns, as warnings.** A table whose fields accept NULL is not
+refused for its constraints: a row may require no field. What the database holds under
+`<table>_live_rows_whole` is read all the same, on the four ORM alike: missing, held with the
+fields it names, not validated, or another check. Only the form the kit writes, as PostgreSQL
+prints it back, is read as holding fields: `(deleted or title is not null) and ..` or
+`deleted or not (..)` under that name is another check. The start warns, and `db:read-models`
+prints, a constraint that is not validated (with the statement that validates it), another check
+under that name, any other check constraint of the table that names a field of the row (one that
+refuses NULL there refuses a trace; one written for the live rows only, `deleted or ..`, lets
+every trace in and is not named), and a table that is a view, whose base columns are not read.
+
+**At the start, the tables of the contexts the application hosts.** A generated project keeps the
+list in `src/platform/database/read-model-tables.ts`, between markers: an entry is the context of
+a read model and the class of its store, `['billing', KnexInvoiceSummaries]`. The context is one
+of those the file holds in `Contexts`, which `generate context` fills: an entry under another
+name, a misspelt one included, does not compile. `generate read-model` adds the store it writes;
+`init`, with or without `--force`, adds the stores the tree holds and the list does not, so a
+project generated before the list existed gets it filled. It reads every class of the
+persistence of each context, several in one file included, and takes as a store a class over
+the store of the kit, directly or through a base class of the project. A class name two contexts
+share is imported under an alias that carries the context (`KnexSummaries as
+ShippingKnexSummaries`), by the generator as by `init`. A store it cannot list with certainty (its
+own constructor is not the generated one, or is inherited; the class is generic) is named in a
+note and in `NOT_LISTED`, which the check tells at each start until the store is listed. A store
+left out on purpose is a comment of the list that holds `<context>: <Store>` and the reason:
+`init` then leaves it out, and nothing warns of it; an entry merely deleted comes back at the
+next `init --force`. An application checks, when it starts
+and before a consumer is subscribed or a request served, the entries of the contexts it hosts
+(the platform module on tsyringe, InversifyJS and Awilix, in the declared and the explicit style;
+`start` of `compose-application.ts` on a platform wired by hand). The whole application and the
+worker host every context but those run as services; a service (`generate service`) hosts its
+context alone, so once its schema and its migrations moved to a database of its own, each root
+starts on the tables it has. It is on by default, two short reads of the catalog per listed
+table, no row and no lock.
+
+**A deployment that starts the application before its migrations ran.** By default the start
+fails, and that is the safe answer of a rolling deployment: the new instances never become ready,
+the old ones keep serving, and the new ones start once the migration ran. A pipeline in which the
+migration waits for the new version to be up would wait for ever: it passes
+`readModelTables: 'reported'` to `composeApplication` in `main.ts`. The same message is then
+logged as one error, a table that could not be read included, the start goes on, and each store
+still refuses by name before its first trace.
+
+**Before a deployment.** `DATABASE_URL=<the database of the deployment> npm run db:read-models`
+runs the same check from the command line (`scripts/read-model-tables.ts`), on every listed
+table; `npm run db:read-models -- --context billing`, once per context, on the tables of those
+contexts, as the service of billing checks them on its database. It needs the address of the
+database and no other variable of the application. A `.env` file gives the address when the
+command line does not, so the script first prints the database it reads (its name and its host,
+never the credentials), then how many tables it read and their names, the warnings and every
+refusal. Its exit code tells the cases apart: 0 when every listed table is ready, 1 when one is
+not, 2 when `DATABASE_URL` names no database, 3 when no table could be read (the database does
+not answer, or refuses the reading), 4 when `--context` names a context no listed read model
+belongs to, with the contexts the list holds: a misspelt name never passes for a check. Run against the database of the environment once its
+migrations ran, it is the gate of the deployment; run after `npm run db:migrate` on an empty
+database, as a pipeline has one, it says the same of the migrations of the project, a table they
+never create included. It is a script of the project and not a command of `ddd-ts-kit`, which has
+no database driver: the script reads through the stores the project already has. Nothing reads
+the migration files themselves: the four tools write them in four forms, and what a file says of
+a column is not what the database holds once every migration ran.
+
+What the check does not do:
+
+- **It does not prove that a trace will be written.** It reads what refuses NULL on the columns
+  themselves, the domain of a column, and the constraint of the live rows; it warns of the other
+  check constraints and of a view. It does not read a trigger, a rule, a check constraint of a
+  domain, an exclusion constraint, nor the table under a view: a table found ready can still
+  refuse a trace for one of those, and the store then fails on the statement.
+- **A store that is not listed is not checked.** `generate read-model` and `init` list what they
+  can read in the tree; a store written by hand afterwards is added by hand, and one that is
+  missing from the list is refused, as before, by its own store before its first trace.
+- **A database per tenant** is checked through the connection of each; a schema per tenant through
+  the search path of the connection the check is given.
+- **A read model on OpenSearch or in memory has no such table.** The trace of a deletion is a
+  document that keeps its key and its stamp, and a mapping refuses no absent field: there is
+  nothing to migrate, and the index of each store is provisioned at the start already. Listed, such
+  a store has nothing to say.
 
 ## Limits and when not to use it
 

@@ -1,5 +1,6 @@
 import { CONFIG_FILE } from '../../config';
 import { inertPersistenceFile } from '../../init/files/inert-persistence-file';
+import { WITH_DATABASE } from '../../stack/with-database';
 import { renderTemplate } from '../../templating';
 import type { Kind } from '../kind';
 import { openScope } from '../open-scope';
@@ -49,8 +50,19 @@ export const serviceKind: Kind = {
     ws.note(
       `${context.pascal} leaves the application of src/main.ts and the worker: \`hostedContexts\` of the composition root omits it, so its consumers, its processes, its jobs and its routes run in the service only. \`everyContext\` stays the full list for the contracts and the end-to-end tests. Set the same DEPLOYMENT_NAME in every container, and a different OTEL_SERVICE_NAME.`,
     );
+
+    noteTheReadModelTables(scope);
   },
 };
+
+/** A root checks the read model tables of the contexts it hosts: the service its own, on its own database. */
+function noteTheReadModelTables({ ws, config, context }: Scope): void {
+  if (WITH_DATABASE.includes(config.stack.orm)) {
+    ws.note(
+      `Each root checks at its start the read model tables of the contexts it hosts, and no other: the service those of ${context.kebab}, on its database. Before a deployment of the service, \`DATABASE_URL=<its database> npm run db:read-models -- --context ${context.kebab}\` checks the same.`,
+    );
+  }
+}
 
 /**
  * The context stops being hosted by the whole application: the root of `main.ts` and of the worker

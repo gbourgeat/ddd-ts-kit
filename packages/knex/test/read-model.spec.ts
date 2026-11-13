@@ -231,7 +231,7 @@ describe('KnexReadModelTable of a table whose columns refuse NULL', () => {
       await table.insert({ key: 's1', row: { id: 's1', title: 'held', note: 'n' }, stamp });
 
       await expect(table.replace({ key: 's1', row: undefined, stamp: later }, stamp)).rejects.toThrow(
-        'check (deleted or ("title" is not null))',
+        'check ("deleted" or ("title" is not null)) not valid',
       );
 
       await expect(table.shadow().insert({ key: 's3', row: undefined, stamp })).rejects.toThrow(
