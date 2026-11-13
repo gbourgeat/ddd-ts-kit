@@ -44,6 +44,7 @@ import { NEST_CONTROLLERS_FIXTURES } from './nest-controllers-fixtures';
 import { NEST_FIXTURES } from './nest-fixtures';
 import { OUTBOX_FIXTURES } from './outbox-fixtures';
 import { PERSISTENCE_FIXTURES } from './persistence-fixtures';
+import { READ_MODEL_LISTED_FIXTURES } from './read-model-listed-fixtures';
 import { PORTS_FIXTURES } from './ports-fixtures';
 import { ROLE_FOLDER_FIXTURES } from './role-folder-fixtures';
 import { PURITY_FIXTURES } from './purity-fixtures';
@@ -113,6 +114,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...BUSINESS_NAME_FIXTURES,
   ...OUTBOX_FIXTURES,
   ...PERSISTENCE_FIXTURES,
+  ...READ_MODEL_LISTED_FIXTURES,
   ...PORTS_FIXTURES,
   ...PURITY_FIXTURES,
   ...SCHEDULING_FIXTURES,

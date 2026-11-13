@@ -93,7 +93,8 @@ conductor replaces on the trunk at merge.
 
 Run `npm run db:read-models` on the migrated database (it needs `DATABASE_URL` alone; `-- --context
 <context>` for the tables of a context run as a service): each read model table the project lists
-is read by its own store. On `ReadModelTablesNotReadyError`, from that command or at the start,
+is read by its own store (a store written by hand joins
+`src/platform/database/read-model-tables.ts`, or `persistence/read-model-listed` reports it). On `ReadModelTablesNotReadyError`, from that command or at the start,
 the error carries the migration of each table in two steps, to copy as they are.
 
 - **A small table**: both steps in one new migration.

@@ -15,6 +15,7 @@ import { persistenceVars } from './persistence-vars';
 import { redisVars } from './redis-vars';
 import { filesVars } from './files-vars';
 import { usesLegacyDecorators } from './uses-legacy-decorators';
+import { WITH_DATABASE } from './with-database';
 
 /** The line width of the formatter of a generated project (`biome.json`, `lineWidth`). */
 const FORMATTED_WIDTH = 120;
@@ -35,7 +36,7 @@ export function stackVars(config: Config): RenderContext {
       container: onKitContainer(config),
       entry: diEntry(config),
     },
-    orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
+    orm: ormVars(orm),
     events: eventVars(config),
     authn: authenticationVars(config),
     authz: { ...one(authz, ['rbac', 'abac', 'rebac', 'custom']), roles: declaresRoles(config) },
@@ -60,6 +61,15 @@ export function stackVars(config: Config): RenderContext {
 }
 
 /** The tenants the storage confines to, the read models of OpenSearch, the event store and the requests of a data subject, and the hand-wired foundations. */
+/** The ORM of the stack: which one, any at all, and one of the four that reach a database. */
+function ormVars(orm: string): RenderContext {
+  return {
+    ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']),
+    any: orm !== 'none',
+    database: WITH_DATABASE.includes(orm),
+  };
+}
+
 function platformVars(config: Config): RenderContext {
   const { tenancy, eventSourcing, privacy, search } = config.stack;
 

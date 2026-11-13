@@ -191,9 +191,21 @@ function unwired(
   };
 }
 
-/** The files that could bind the adapter: the composition root outside the contexts and the module files of its own context. */
+/**
+ * The files the wiring of the adapter is written in: the module files of its own context, and the
+ * files of the composition root outside the contexts that import a file of that context. Any other
+ * file of the platform binds nothing of the context, and a check asked about it says nothing of this.
+ */
 function rootsOf(roots: readonly SourceFile[], context: string): string[] {
+  const isOfContext = (location: SourceFile['location']): boolean =>
+    location.area === 'context' && location.context === context;
+
   return roots
-    .filter(({ location }) => location.area !== 'context' || location.context === context)
+    .filter(
+      ({ location, imports }) =>
+        isOfContext(location) ||
+        (location.area !== 'context' &&
+          imports.some(({ target }) => target.kind === 'file' && isOfContext(target.location))),
+    )
     .map(({ path }) => path);
 }

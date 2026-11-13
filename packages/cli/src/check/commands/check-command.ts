@@ -198,9 +198,10 @@ function baselineSummary(baseline: ReturnType<typeof recordedBaseline>): string 
   return `${BASELINE_FILE}: ${errors} error${errors === 1 ? '' : 's'} recorded in ${Object.keys(baseline).length} file${Object.keys(baseline).length === 1 ? '' : 's'}. Commit it; \`ddd-ts-kit check\` reports only what it does not hold, and fails when a count it records is no longer reached.`;
 }
 
-function isInScope(violation: Violation, scopes: readonly string[]): boolean {
-  return (
-    scopes.length === 0 ||
-    scopes.some((scope) => scope === '' || violation.file === scope || violation.file.startsWith(`${scope}/`))
-  );
+/** In scope: a finding on a file given, or one repaired in a file given (the list a store is missing from). */
+function isInScope({ file, subjects = [] }: Violation, scopes: readonly string[]): boolean {
+  const isGiven = (candidate: string): boolean =>
+    scopes.some((scope) => scope === '' || candidate === scope || candidate.startsWith(`${scope}/`));
+
+  return scopes.length === 0 || [file, ...subjects].some(isGiven);
 }

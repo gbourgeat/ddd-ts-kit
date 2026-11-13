@@ -535,16 +535,41 @@ a read model and the class of its store, `['billing', KnexInvoiceSummaries]`. Th
 of those the file holds in `Contexts`, which `generate context` fills: an entry under another
 name, a misspelt one included, does not compile. `generate read-model` adds the store it writes;
 `init`, with or without `--force`, adds the stores the tree holds and the list does not, so a
-project generated before the list existed gets it filled. It reads every class of the
-persistence of each context, several in one file included, and takes as a store a class over
-the store of the kit, directly or through a base class of the project. A class name two contexts
+project generated before the list existed gets it filled. It reads every class of each context,
+several in one file included and tests aside, and takes as a store a class that is not abstract
+over the store of the kit of one of the four ORM (`KnexReadModelStore` and its three siblings),
+directly or through classes of the project. A class name two contexts
 share is imported under an alias that carries the context (`KnexSummaries as
 ShippingKnexSummaries`), by the generator as by `init`. A store it cannot list with certainty (its
-own constructor is not the generated one, or is inherited; the class is generic) is named in a
-note and in `NOT_LISTED`, which the check tells at each start until the store is listed. A store
-left out on purpose is a comment of the list that holds `<context>: <Store>` and the reason:
-`init` then leaves it out, and nothing warns of it; an entry merely deleted comes back at the
-next `init --force`. An application checks, when it starts
+own constructor is not the one of a generated store, or is inherited; the class is generic; its
+file does not export it by its name) is named in a note, with the reason, and in `NOT_LISTED`,
+which the check tells at each start until the store is listed: a class written beside it, in a
+file of its own, that extends it with the constructor of a generated store (`(database: <Type>)`
+or `(database: <Type>, scope: ExecutionScope)`, `<Type>` a name or a member of one such as
+`Persistence['database']`) is listed by `init`, and answers for it. A store left out on purpose
+is a comment that holds `<context>: <Store>` and the reason, written between the markers of
+`LISTED` (`// ddd-ts-kit:read-model-tables`): `init` then leaves it out, and nothing warns of it.
+`init --force` keeps what the markers it writes hold and nothing else, a pair of markers added by hand included, so a comment, or a class, written elsewhere in the file is lost at the next one, and such a comment leaves nothing
+out; an entry merely deleted comes back at the next `init --force`.
+
+**A store written by hand and never listed is reported.** `ddd-ts-kit check` reads the stores of
+the tree as `init` does, by the same reading, and `persistence/read-model-listed` reports, as an
+error, each one the list does not answer for: no entry of `LISTED` under its context names it or
+a class that extends it, `NOT_LISTED` does not name it, and no comment between the markers holds
+`<context>: <Store>`. An entry imported through a file that re-exports the class, `export { A as B } from` or `export * from`, one level, answers for the class that name leads to, and for no other store that file re-exports. Its fix gives the import and the entry to add, the entry alone
+when the list still imports the class, and, for a store the list cannot build, what stands in
+the way. The finding sits on the file of the store and is repaired in the list: `check` asked
+about the list alone, as the pre-commit hook asks of the staged files, reports it too. The list
+is held to the tree as well: an entry whose class the file neither imports nor declares, whose
+import leads to no file, or whose class another context declares, and a line of `NOT_LISTED`
+whose class is gone or whose store `LISTED` answers for. A project on one of the four ORM that
+holds stores and no list, generated before 0.112.0, is reported once, with
+`ddd-ts-kit init --force` as the fix; without one of them `init` writes no list and the rule says
+nothing. A `LISTED` whose entries are spread or built by a call cannot be read: the rule says so
+once and judges no store. What the rule does not judge, since the text does not tell it:
+an abstract class; a store in memory or in a search engine, and a class directly over `TableReadModelStore` of the kernel; a store of the tests; a class declared in a function or in a `namespace` block, and a class expression that has no name of its own (one that has is read under that name); a base that is not the name of the store of the kit or of a class of the project: a namespace (`kit.KnexReadModelStore`), an import alias, a call (`mixin(KnexReadModelStore)`); of two classes of one name in one context, which one an entry names; whether a class that extends a store reads the same table; the reason a comment gives; what a package exports (`npx ddd-ts-kit explain persistence/read-model-listed`).
+
+**Where the check runs.** An application checks, when it starts
 and before a consumer is subscribed or a request served, the entries of the contexts it hosts
 (the platform module on tsyringe, InversifyJS and Awilix, in the declared and the explicit style;
 `start` of `compose-application.ts` on a platform wired by hand). The whole application and the

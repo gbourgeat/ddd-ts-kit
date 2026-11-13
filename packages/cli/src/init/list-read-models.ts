@@ -1,107 +1,100 @@
-import { contextAlias, specifierSuffix } from '../alias';
+import { specifierOf } from '../alias';
+import type { SourceFile } from '../check/model/source-file';
+import { isSource } from '../check/project/is-source';
+import { loadSourceFile } from '../check/project/load-source-file';
+import { resolveImport } from '../check/project/resolve-import';
 import type { Config } from '../config';
+import { ownEntry } from '../config/values/own-entry';
 import { applyWiring } from '../generate/apply-wiring';
 import { filesUnder } from '../generate/files-under';
-import { listReadModel } from '../generate/kinds/read-model/list-read-model';
+import { BUILDABLE_CONSTRUCTOR } from '../read-models/buildable-constructor';
+import { DeclaredClasses } from '../read-models/declared-classes';
+import { ListAnswers } from '../read-models/list-answers';
+import { listingOf } from '../read-models/listing-of';
+import type { ImportedClass } from '../read-models/read-model-list';
+import { readModelListOf } from '../read-models/read-model-list-of';
+import type { ReadModelStore } from '../read-models/read-model-store';
+import { readModelStoresOf } from '../read-models/read-model-stores-of';
 import type { Workspace } from '../workspace';
-
-/** Every class a file declares over another, with what follows its name: type parameters make it generic. */
-const CLASS = /^(?:export )?(abstract )?class (\w+)(<[^{]*?>)?\s+extends\s+(\w+)/gm;
-
-/** The store of a read model kept in a table, of one of the four ORM packages or of the kernel. */
-const KIT_STORE = /^(?:Drizzle|Knex|Prisma|TypeOrm|Table)ReadModelStore$/;
-
-/** The constructor a generated store has: the storage, and the scope of the work when it keeps tenant data. */
-const BUILT_ON_THE_STORAGE = /\bconstructor\(\s*\w+: [\w.]+(?:,\s*\w+: ExecutionScope)?,?\s*\)/;
-
-const PERSISTENCE = 'infrastructure/persistence/';
-
-/** A class of the persistence of a context, as its file declares it. */
-interface Declared {
-  readonly context: string;
-  /** Its file, from the directory of its context. */
-  readonly file: string;
-  readonly name: string;
-  readonly base: string;
-  readonly abstract: boolean;
-  readonly generic: boolean;
-  /** Its own text, up to the next class of the file. */
-  readonly body: string;
-}
 
 /**
  * The read model stores the tree holds join the list the application checks when it starts
  * (`<platformDir>/database/read-model-tables.ts`): a project generated before the list existed,
  * or whose list was emptied, would otherwise start and pass `db:read-models` with nothing
- * checked. Every class of the persistence of a context is read, several in one file included, and
- * a store is a class over the store of the kit, directly or through a base class of the project.
- * One whose own constructor is the generated one is listed under its context, under an alias when
- * another context holds a class of that name. Any other (a constructor that takes something else
- * or is inherited, a generic class) is named in `NOT_LISTED`, which the check tells at each
- * start, with a note that says what to write. An abstract class is no store to build. What the
- * file already names, `<context>: <Store>` in a comment included, is left as it is: that is how a
- * store left out on purpose stays out.
+ * checked. The stores are those `persistence/read-model-listed` of the checker reads, by the
+ * same reading (`readModelStoresOf`): a class of a declared context over the store of the kit of
+ * one of the four ORM, directly or through classes of the project. One whose own constructor is
+ * the generated one is listed under its context, under an alias when the list already binds its
+ * name. Any other (a constructor that takes something else or is inherited, a generic class, a
+ * class its file does not export by its name) is named in `NOT_LISTED`, which the check tells at
+ * each start, with a note that says what to write. An abstract class is no store to build. What
+ * the list already answers for is left as it is, a store that a listed class extends (the class
+ * written beside it to build it) and `<context>: <Store>` in a comment between its markers
+ * included: that is how a store left out on purpose stays out. The sources and the list are
+ * read once, whatever the number of stores.
  */
 export function listReadModels(ws: Workspace, config: Config): void {
   const list = `${config.platformDir}/database/read-model-tables.ts`;
 
-  const declared = ws.exists(list)
-    ? Object.keys(config.contexts).flatMap((context) => classesOf(ws, config, context))
-    : [];
+  if (!ws.exists(list)) {
+    return;
+  }
 
-  const bases = new Map(declared.map((entry) => [entry.name, entry.base]));
+  const sources = sourcesOf(ws, config, list);
+  const classes = new DeclaredClasses(config, sources);
+  const held = readModelListOf(config, loadSourceFile(config, list, ws.read(list) ?? ''));
+  const answers = new ListAnswers(held, classes);
+  const imports = new Map(held.imports);
 
-  for (const store of declared.filter((entry) => !entry.abstract && isStore(entry.base, bases))) {
-    if ((ws.read(list) ?? '').includes(`${store.context}: ${store.name}`)) {
-      continue;
+  const stores = readModelStoresOf(classes).filter(({ context }) => ownEntry(config.contexts, context) !== undefined);
+
+  // A class written to build a store joins the list before that store is judged, which the list then answers for.
+  for (const store of stores.filter(({ obstacle }) => obstacle === undefined)) {
+    if (!answers.holds(store)) {
+      answers.listed(store.context, listStore(ws, { config, path: list, imports }, store));
     }
+  }
 
-    if (!store.generic && BUILT_ON_THE_STORAGE.test(store.body)) {
-      listReadModel(ws, list, { context: store.context, store: store.name, from: importOf(config, store) });
-    } else {
-      leaveOut(ws, config, store);
+  for (const store of stores.filter(({ obstacle }) => obstacle !== undefined)) {
+    if (!answers.holds(store)) {
+      leaveOut(ws, list, store);
     }
   }
 }
 
-function classesOf(ws: Workspace, config: Config, context: string): Declared[] {
-  const directory = `${config.contextsDir}/${context}`;
-  const files = filesUnder(ws, directory).filter((held) => held.includes(PERSISTENCE) && held.endsWith('.ts'));
+/** The sources of the project, on disk or planned, and the list wherever the platform is. */
+function sourcesOf(ws: Workspace, config: Config, list: string): SourceFile[] {
+  const files = filesUnder(ws, config.sourceRoot)
+    .filter(isSource)
+    .map((file) => `${config.sourceRoot}/${file}`);
 
-  return files.flatMap((file) => {
-    const source = ws.read(`${directory}/${file}`) ?? '';
-    const found = [...source.matchAll(CLASS)];
-
-    return found.map(([, abstract, name = '', generic, base = ''], position) => ({
-      context,
-      file,
-      name,
-      base,
-      abstract: abstract !== undefined,
-      generic: generic !== undefined,
-      body: source.slice(found[position]?.index, found[position + 1]?.index),
-    }));
-  });
+  return [...new Set([...files, list])].map((file) => loadSourceFile(config, file, ws.read(file) ?? ''));
 }
 
-/** Whether a base class is the store of the kit, or a class of the project that extends it, however far. */
-function isStore(base: string, bases: ReadonlyMap<string, string>, seen: readonly string[] = []): boolean {
-  const next = bases.get(base);
-
-  return KIT_STORE.test(base) || (next !== undefined && !seen.includes(base) && isStore(next, bases, [...seen, base]));
+/** The list being written: its file, and the classes it imports, those this run adds included. */
+interface Written {
+  readonly config: Config;
+  readonly path: string;
+  readonly imports: Map<string, ImportedClass>;
 }
 
-function importOf(config: Config, { context, file }: Declared): string {
-  return `${contextAlias(config, context)}/${file.slice(0, -'.ts'.length)}${specifierSuffix(config.importExtension)}`;
+/** Writes the import and the entry of a store, and answers the name of its class. */
+function listStore(ws: Workspace, { config, path, imports }: Written, store: ReadModelStore): string {
+  const { context, name, file } = store;
+  const from = specifierOf(config, file);
+  const { imported, local, entry } = listingOf(imports, { context, store: name, file, from });
+
+  imports.set(local, { name, target: resolveImport(config, path, from) });
+  applyWiring(ws, path, `@@imports\n${imported ?? ''}\n@@contexts\n'${context}',\n@@read-model-tables\n${entry}\n`);
+
+  return name;
 }
 
 /** A store the list cannot build with certainty is named among those not listed, once, with what to write. */
-function leaveOut(ws: Workspace, config: Config, { context, file, name }: Declared): void {
-  const list = `${config.platformDir}/database/read-model-tables.ts`;
-
+function leaveOut(ws: Workspace, list: string, { context, file, name, obstacle }: ReadModelStore): void {
   applyWiring(ws, list, `@@read-models-not-listed\n'${context}: ${name}',\n`);
 
   ws.note(
-    `${name} (${config.contextsDir}/${context}/${file}) is a read model store this command cannot list with certainty: its own constructor is not \`(database)\` nor \`(database, scope)\`, or the class is generic. ${list} names it in NOT_LISTED, and the check of the read model tables says at each start that nothing checks its table. Write there a class that builds it, \`class Listed${name} extends ${name} { constructor(database: Persistence['database']) { super(..); } }\`, add \`['${context}', Listed${name}],\` to LISTED and remove its line from NOT_LISTED; to leave it out on purpose, replace that line by a comment that holds \`${context}: ${name}\` and the reason.`,
+    `${name} (${file}) is a read model store this command cannot list with certainty: ${obstacle}. ${list} names it in NOT_LISTED, and the check of the read model tables says at each start that nothing checks its table. Write beside it, in a file of its own, a class that builds it, \`export class Listed${name} extends ${name} { constructor(database: Persistence['database']) { super(..); } }\` (its own constructor ${BUILDABLE_CONSTRUCTOR}): \`init\` lists that class, the list then answers for ${name}, and its line of NOT_LISTED is yours to remove; to leave it out on purpose, replace that line by a comment that holds \`${context}: ${name}\` and the reason, between the markers, which is all \`init --force\` keeps of the file.`,
   );
 }

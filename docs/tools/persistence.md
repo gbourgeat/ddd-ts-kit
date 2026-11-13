@@ -845,6 +845,8 @@ contexts alone, as a context run as a service checks them on its database): it p
 database it read, those of its tables that cannot hold the trace of a deleted row, with the
 migration each needs, and exits 1 (2 without a database to read, 3 when no table could be read,
 4 when `--context` names a context no listed read model belongs to).
+A table is read only when its store is listed: `ddd-ts-kit check` reports a store written by hand
+that the list does not answer for (`persistence/read-model-listed`).
 The application makes the same check when it starts, of the contexts it hosts, so a table an
 upgrade left as it was stops the start and not the first event that reaches it
 ([Every table checked at the start, and before a deployment](../concepts/cqrs.md#every-table-checked-at-the-start-and-before-a-deployment)).

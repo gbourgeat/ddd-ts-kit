@@ -1,9 +1,10 @@
 import type { Injection } from '../injection';
 import { PATHS } from '../paths';
 
-const { CONFIG } = PATHS;
+const { CONFIG, REPOSITORY } = PATHS;
+const READ_MODEL_LIST = 'src/platform/database/read-model-tables.ts';
 
-/** The migrations of the project: their order, the order of a change of key, no file content. */
+/** The migrations of the project: their order, the order of a change of key, no file content; the read model stores the list answers for. */
 export const PERSISTENCE_INJECTIONS: readonly Injection[] = [
   {
     rule: 'persistence/migration-history',
@@ -78,6 +79,20 @@ export const PERSISTENCE_INJECTIONS: readonly Injection[] = [
           '',
         ].join('\n'),
       },
+    ],
+    checker: true,
+  },
+  {
+    rule: 'persistence/read-model-listed',
+    what: 'a read model store of a context that the list of the read model tables no longer holds',
+    file: REPOSITORY,
+    changes: [
+      {
+        file: READ_MODEL_LIST,
+        from: "import { KnexContacts } from '@/contexts/notification/infrastructure/persistence/knex-contacts.repository';\n",
+        to: '',
+      },
+      { file: READ_MODEL_LIST, from: "  ['notification', KnexContacts],\n", to: '' },
     ],
     checker: true,
   },

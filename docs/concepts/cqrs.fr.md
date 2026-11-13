@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:2659f63b7c0a0bb9 -->
+<!-- translation-of: cqrs.md sha256:de6ed9153ffcaa47 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -575,17 +575,45 @@ Le contexte est l'un de ceux que le fichier tient dans `Contexts`, que `generate
 remplit : une entrée sous un autre nom, mal orthographié compris, ne compile pas. `generate
 read-model` ajoute le registre qu'il écrit ; `init`, avec ou sans `--force`, ajoute les registres
 que l'arbre contient et que la liste ne contient pas, si bien qu'un projet généré avant
-l'existence de la liste la retrouve remplie. Il lit chaque classe de la persistance de chaque
-contexte, plusieurs dans un même fichier comprises, et tient pour un registre une classe au-dessus
-du registre du kit, directement ou par une classe de base du projet. Un nom de classe que deux
+l'existence de la liste la retrouve remplie. Il lit chaque classe de chaque contexte, plusieurs
+dans un même fichier comprises et tests mis à part, et tient pour un registre une classe qui n'est
+pas abstraite au-dessus du registre du kit de l'un des quatre ORM (`KnexReadModelStore` et ses
+trois pareils), directement ou par des classes du projet. Un nom de classe que deux
 contextes partagent est importé sous un alias qui porte le contexte (`KnexSummaries as
 ShippingKnexSummaries`), par le générateur comme par `init`. Un registre qu'il ne peut pas lister
-avec certitude (son propre constructeur n'est pas celui que le générateur écrit, ou est hérité ;
-la classe est générique) est nommé dans une note et dans `NOT_LISTED`, que la vérification dit à
-chaque démarrage tant que le registre n'est pas listé. Un registre laissé de côté exprès est un
-commentaire de la liste qui porte `<contexte>: <Registre>` et la raison : `init` le laisse alors
-de côté, et rien n'en avertit ; une entrée simplement supprimée revient au prochain
-`init --force`. Une application vérifie, à son démarrage et avant
+avec certitude (son propre constructeur n'est pas celui d'un registre généré, ou est hérité ; la
+classe est générique ; son fichier ne l'exporte pas par son nom) est nommé dans une note, avec la
+raison, et dans `NOT_LISTED`, que la vérification dit à chaque démarrage tant que le registre
+n'est pas listé : une classe écrite à côté de lui, dans un fichier à elle, qui l'étend avec le
+constructeur d'un registre généré (`(database: <Type>)` ou
+`(database: <Type>, scope: ExecutionScope)`, `<Type>` étant un nom ou un membre d'un nom comme
+`Persistence['database']`) est listée par `init` et en répond. Un registre laissé de côté exprès
+est un commentaire qui porte `<contexte>: <Registre>` et la raison, écrit entre les marqueurs de
+`LISTED` (`// ddd-ts-kit:read-model-tables`) : `init` le laisse alors de côté, et rien n'en
+avertit. `init --force` garde ce que contiennent les marqueurs qu'il écrit et rien d'autre, une paire de marqueurs ajoutée à la main comprise, si bien qu'un commentaire, ou une classe, écrit ailleurs dans le fichier est perdu au suivant, et
+qu'un tel commentaire ne laisse rien de côté ; une entrée simplement supprimée revient au prochain
+`init --force`.
+
+**Un registre écrit à la main et jamais listé est signalé.** `ddd-ts-kit check` lit les registres
+de l'arbre comme `init`, par la même lecture, et `persistence/read-model-listed` signale, en
+erreur, chacun de ceux dont la liste ne répond pas : aucune entrée de `LISTED` sous son contexte
+ne le nomme ni ne nomme une classe qui l'étend, `NOT_LISTED` ne le nomme pas, et aucun commentaire
+entre les marqueurs ne porte `<contexte>: <Registre>`. Une entrée importée par un fichier qui réexporte la classe, `export { A as B } from` ou `export * from`, sur un niveau, répond de la classe à laquelle ce nom mène, et d'aucun autre registre que ce fichier réexporte. Son correctif donne l'import et
+l'entrée à ajouter, l'entrée seule quand la liste importe encore la classe, et, pour un registre
+que la liste ne peut pas construire, ce qui s'y oppose. Le constat est posé sur le fichier du
+registre et se répare dans la liste : `check` interrogé sur la seule liste, comme le crochet de
+pré-commit l'interroge sur les fichiers indexés, le signale aussi. La liste est tenue à l'arbre
+elle aussi : une entrée dont le fichier n'importe ni ne déclare la classe, dont l'import ne mène
+à aucun fichier, ou dont un autre contexte déclare la classe, et une ligne de `NOT_LISTED` dont
+la classe a disparu ou dont `LISTED` répond du registre. Un projet sur l'un des quatre ORM qui
+contient des registres et aucune liste, généré avant la 0.112.0, est signalé une fois, avec
+`ddd-ts-kit init --force` pour correctif ; sans l'un d'eux, `init` n'écrit pas de liste et la
+règle ne dit rien. Un `LISTED` dont les entrées sont étalées ou construites par un appel ne peut
+pas être lu : la règle le dit une fois et ne juge aucun registre. Ce que la règle ne juge pas,
+puisque le texte ne le dit pas : une classe abstraite ; un registre en mémoire ou dans un moteur de recherche, et une classe directement au-dessus de `TableReadModelStore` du noyau ; un registre des tests ; une classe déclarée dans une fonction ou dans un bloc `namespace`, et une expression de classe qui n'a pas de nom à elle (celle qui en a un est lue sous ce nom) ; une base qui n'est pas le nom du registre du kit ni d'une classe du projet : un espace de noms (`kit.KnexReadModelStore`), un alias d'import, un appel (`mixin(KnexReadModelStore)`) ; de deux classes de même nom dans un même contexte, laquelle une entrée nomme ; le fait qu'une classe qui étend un registre lise la même table ; la raison que donne un commentaire ; ce qu'un paquet exporte
+(`npx ddd-ts-kit explain persistence/read-model-listed`).
+
+**Où la vérification tourne.** Une application vérifie, à son démarrage et avant
 qu'un consommateur soit abonné ou une requête servie, les entrées des contextes qu'elle héberge
 (le module de la plateforme sur tsyringe, InversifyJS et Awilix, dans le style déclaré comme
 explicite ; `start` de `compose-application.ts` sur une plateforme câblée à la main).

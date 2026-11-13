@@ -2,6 +2,7 @@ import { ADVISORY_LOCK_FIXTURES } from './tenancy-advisory-lock-fixtures';
 import type { Fixture } from './fixture';
 import { PATHS } from './paths';
 import { project } from './project';
+import { readModelListFiles } from './read-model-list-files';
 import { controlPlaneFixtures } from './control-plane-fixtures';
 import { tenancyBypass } from './tenancy-bypass';
 import { TENANCY_CONJUNCT_FIXTURES } from './tenancy-conjunct-fixtures';
@@ -83,7 +84,7 @@ const readModel = (name: string, source: string, expected: Fixture['expect']): F
   ruleId: RULE,
   name: `read model store ${name}`,
   expect: expected,
-  files: project({ [READ_MODEL]: source }, tenancyConfig('knex')),
+  files: project({ [READ_MODEL]: source, ...readModelListFiles('KnexInvoiceTotals') }, tenancyConfig('knex')),
 });
 
 export const TENANCY_FIXTURES: readonly Fixture[] = [
