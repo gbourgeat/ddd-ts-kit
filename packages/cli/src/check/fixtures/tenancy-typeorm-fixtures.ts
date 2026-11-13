@@ -1,6 +1,7 @@
 import type { Fixture } from './fixture';
 import { PATHS } from './paths';
 import { project } from './project';
+import { readModelListFiles } from './read-model-list-files';
 import { tenancyBypass } from './tenancy-bypass';
 import { tenancyConfig } from './tenancy-config';
 
@@ -113,6 +114,7 @@ export const TENANCY_TYPEORM_FIXTURES: readonly Fixture[] = [
       {
         [TYPEORM_READ_MODEL]:
           'export class TypeOrmInvoiceTotals extends TypeOrmReadModelStore<Total> {\n  constructor(database: TypeOrmContext, scope: ExecutionScope) {\n    super(database, { entity: totals, definition, tenant: { scope } });\n  }\n}\n',
+        ...readModelListFiles('TypeOrmInvoiceTotals'),
       },
       tenancyConfig('typeorm'),
     ),

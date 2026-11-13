@@ -196,3 +196,63 @@ export class KnexAny<Row extends object> extends KnexReadModelStore<Row> {
     expect(platform(root, LIST)).not.toContain("'billing: KnexInvoiceSummaries',");
   });
 });
+
+describe('init and the rule of the checker read the same stores', () => {
+  it('agrees with persistence/read-model-listed: what init lists passes, a store built by a class beside it is answered for, an entry removed is reported', () => {
+    const root = billingProject('--orm', 'knex');
+    const store = `${PERSISTENCE}/knex-invoice-summaries.repository.ts`;
+    const listed = `${PERSISTENCE}/listed-knex-any.repository.ts`;
+    const judged = (): ReturnType<typeof cli> => cli(root, 'check', '--rule', 'persistence/read-model-listed');
+
+    withInvoiceSummaries(root);
+
+    write(
+      root,
+      `${PERSISTENCE}/knex-any.repository.ts`,
+      "import { KnexReadModelStore, type KnexContext } from '@ddd-ts-kit/knex';\n\nexport class KnexAny<Row extends object> extends KnexReadModelStore<Row> {\n  constructor(database: KnexContext, readonly size: number) {\n    super(database, { table: 'any', columns: {}, definition: { fields: {}, tieBreaker: 'id' } as never });\n  }\n}\n",
+    );
+
+    expect(judged().stdout).toContain(
+      'KnexAny is a read model store of billing that src/platform/database/read-model-tables.ts neither lists',
+    );
+
+    expect(judged().stdout).toContain("add `'billing: KnexAny',` to NOT_LISTED");
+    expectOk(cli(root, 'init'));
+    expect(platform(root, LIST)).toContain("  'billing: KnexAny',\n");
+    expect(judged().code).toBe(0);
+
+    write(
+      root,
+      listed,
+      "import type { KnexContext } from '@ddd-ts-kit/knex';\nimport { KnexAny } from '@/contexts/billing/infrastructure/persistence/knex-any.repository';\n\nexport class ListedKnexAny extends KnexAny<object> {\n  constructor(database: KnexContext) {\n    super(database, 20);\n  }\n}\n",
+    );
+
+    write(root, `src/platform/${LIST}`, platform(root, LIST).replace("  'billing: KnexAny',\n", ''));
+
+    const again = expectOk(cli(root, 'init'));
+
+    expect(again.stdout).not.toContain('cannot list with certainty');
+    expect(platform(root, LIST)).toContain("  ['billing', ListedKnexAny],\n");
+    expect(platform(root, LIST)).not.toContain("'billing: KnexAny'");
+    expect(judged().code).toBe(0);
+
+    write(root, `src/platform/${LIST}`, platform(root, LIST).replace("  ['billing', KnexInvoiceSummaries],\n", ''));
+
+    const reported = judged();
+
+    expect(reported.code).not.toBe(0);
+    expect(reported.stdout).toContain(`${store}:`);
+
+    expect(reported.stdout).toContain(
+      "add `import { KnexInvoiceSummaries as BillingKnexInvoiceSummaries } from '@/contexts/billing/infrastructure/persistence/knex-invoice-summaries.repository';` to the imports and `['billing', BillingKnexInvoiceSummaries],` to LISTED",
+    );
+
+    rmSync(path.join(root, 'src/platform', LIST));
+
+    expect(judged().stdout).toContain(
+      'the project holds read model stores and no src/platform/database/read-model-tables.ts',
+    );
+
+    expect(judged().stdout).toContain('ddd-ts-kit init --force');
+  });
+});

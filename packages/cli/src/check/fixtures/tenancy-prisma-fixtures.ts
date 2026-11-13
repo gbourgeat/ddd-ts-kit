@@ -1,6 +1,7 @@
 import type { Fixture } from './fixture';
 import { PATHS } from './paths';
 import { project } from './project';
+import { readModelListFiles } from './read-model-list-files';
 import { tenancyBypass } from './tenancy-bypass';
 import { tenancyConfig } from './tenancy-config';
 
@@ -102,6 +103,7 @@ export const TENANCY_PRISMA_FIXTURES: readonly Fixture[] = [
       {
         [PRISMA_READ_MODEL]:
           'export class PrismaInvoiceTotals extends PrismaReadModelStore<Total, Prisma.TransactionClient> {\n  constructor(database: Database) {\n    super(database, { ...TOTALS, definition });\n  }\n}\n',
+        ...readModelListFiles('PrismaInvoiceTotals'),
       },
       tenancyConfig('prisma'),
     ),

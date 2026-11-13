@@ -81,6 +81,7 @@ import { nestNoParallelPipeline } from '../rules/nest-no-parallel-pipeline';
 import { persistenceMigrationHistory } from '../rules/persistence-migration-history';
 import { persistenceNoFileContent } from '../rules/persistence-no-file-content';
 import { persistencePrimaryKeyOrder } from '../rules/persistence-primary-key-order';
+import { persistenceReadModelListed } from '../rules/persistence-read-model-listed';
 import { portsAbstractClass } from '../rules/ports-abstract-class';
 import { portsImplementsNeverExtends } from '../rules/ports-implements-never-extends';
 import { portsNoConcreteDependency } from '../rules/ports-no-concrete-dependency';
@@ -219,6 +220,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   persistenceMigrationHistory,
   persistenceNoFileContent,
   persistencePrimaryKeyOrder,
+  persistenceReadModelListed,
   filesPortNotConnector,
   filesUploadContentRule,
   searchStoreFromPlatform,

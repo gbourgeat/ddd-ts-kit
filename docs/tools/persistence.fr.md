@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:f34e810720dbbe5d -->
+<!-- translation-of: persistence.md sha256:dd86eca40e56fc1c -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -902,7 +902,9 @@ contexte, pour les tables de ces seuls contextes, comme un contexte exécuté en
 sur sa base) : il affiche la base qu'il a lue, celles de ses tables qui ne peuvent pas contenir la
 trace d'une ligne supprimée, avec la migration qu'il faut à chacune, et sort avec le code 1 (2
 sans base à lire, 3 quand aucune table n'a pu être lue, 4 quand `--context` nomme un contexte
-auquel aucun modèle de lecture listé n'appartient). L'application fait la même vérification à
+auquel aucun modèle de lecture listé n'appartient). Une table n'est lue que si son registre est
+listé : `ddd-ts-kit check` signale un registre écrit à la main dont la liste ne répond pas
+(`persistence/read-model-listed`). L'application fait la même vérification à
 son démarrage, des contextes qu'elle héberge, si bien qu'une table qu'une montée de version a
 laissée telle quelle arrête le démarrage et non le premier événement qui l'atteint
 ([Chaque table vérifiée au démarrage, et avant un déploiement](../concepts/cqrs.fr.md#chaque-table-vérifiée-au-démarrage-et-avant-un-déploiement)).

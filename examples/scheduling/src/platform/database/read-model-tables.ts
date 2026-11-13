@@ -35,7 +35,8 @@ type Contexts = [
 /**
  * The read models the application keeps in a table: the context each belongs to and the class of
  * its store. `generate read-model` adds its store here, and `init` those it finds in the tree; a
- * store written by hand is added by hand. A table that is not listed is never read. A store left
+ * store written by hand is added by hand, or `ddd-ts-kit check` reports it
+ * (`persistence/read-model-listed`). A table that is not listed is never read. A store left
  * out on purpose is a comment here that holds `<context>: <Store>` and the reason: `init` then
  * leaves it out, and the check says nothing of it.
  */

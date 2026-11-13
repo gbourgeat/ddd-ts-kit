@@ -19,6 +19,23 @@ ALTER TABLE "invoices" DROP CONSTRAINT "invoices_pkey";   -- too late: the ADD a
     good: `ALTER TABLE "invoices" DROP CONSTRAINT "invoices_pkey";--> statement-breakpoint
 ALTER TABLE "invoices" ADD CONSTRAINT "invoices_id_issuer_pk" PRIMARY KEY("id","issuer");`,
   },
+  'persistence/read-model-listed': {
+    why: 'The application checks the tables of its read models when it starts, and `npm run db:read-models` before a deployment: a table an upgrade left as it was stops the start and not the first event that reaches it. Both read the stores `<platformDir>/database/read-model-tables.ts` lists, and no other. `generate read-model` lists the store it writes and `init` those it finds, but a store written by hand and never listed is checked by nothing, and nothing says so. This rule reads the tree as `init` does, by one reading: a store is a class of a context that is not abstract and extends `DrizzleReadModelStore`, `KnexReadModelStore`, `PrismaReadModelStore` or `TypeOrmReadModelStore`, named so, directly or through classes of the project. The list answers for it when an entry of `LISTED` under its context names it or a class that extends it (the class the list declares to build a generic store), when `NOT_LISTED` names it, which the start tells, or when a comment holds `<context>: <Store>` with the reason it is left out. The list is held to the tree too: an entry whose class the file neither imports nor declares, whose import leads to no file or to a file that does not name the class, or whose class another context declares, and a line of `NOT_LISTED` whose class its context no longer names. What the rule does not judge: an abstract class, a store in memory or in a search engine and a class over `TableReadModelStore` of the kernel, which have no table the kit knows; a store of the tests; a store whose base is reached through a namespace, an alias or a class expression; whether a class that extends a store reads the same table; the reason a comment gives; what a barrel or a package exports. An entry spread into `LISTED` or built by a call cannot be read: the rule says so once and judges no store. A project on one of the four ORM with stores and no list, generated before 0.112.0, is reported once, since nothing checks any of its tables; without one of them `init` writes no list and no check, and the rule says nothing.',
+    bad: `// src/contexts/billing/infrastructure/persistence/knex-late-invoices.repository.ts, written by hand
+export class KnexLateInvoices extends KnexReadModelStore<LateInvoice> implements LateInvoices { .. }
+
+// src/platform/database/read-model-tables.ts
+const LISTED = [
+  ['billing', KnexInvoiceSummaries],   // KnexLateInvoices is not there: its table is never read
+];`,
+    good: `import { KnexLateInvoices } from '@/contexts/billing/infrastructure/persistence/knex-late-invoices.repository';
+
+const LISTED = [
+  ['billing', KnexInvoiceSummaries],
+  ['billing', KnexLateInvoices],
+  // billing: KnexNightlyTotals, left out: its table is dropped and rebuilt each night
+];`,
+  },
   'persistence/no-file-content': {
     why: 'A file in a column is read whole into the memory of the application and of the database, travels in every backup, every replica and every dump, swells the table its rows share pages with, and cannot be handed out by a short signed link: an upload of a few megabytes becomes a transaction, a replication lag and a backup to restore. An object store is made for it: it streams, it is cheap per gigabyte, it has lifecycle rules and signed links. The row keeps what the domain needs to know about the file, its reference.',
     bad: `export const invoices = pgTable('invoices', {
