@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5b7a5d73515b3894 -->
+<!-- translation-of: README.md sha256:0a0cee453998b8fe -->
 
 # ddd-ts-kit
 
@@ -2373,6 +2373,13 @@ ddd-ts-kit check --commit-size [--staged] [--strict]
 Un chemin qui n'existe nulle part, ou un dossier sans fichier TypeScript sous la racine des
 sources, est une erreur de l'appelant : `check` le refuse (code 2) au lieu de déclarer le projet
 propre.
+
+Avec des chemins, `check` signale les constats posés sur un fichier donné ou sous un dossier
+donné, et ceux qui s'y réparent : un registre de modèle de lecture absent de la liste, signalé
+sur son propre fichier, est signalé quand la liste est le chemin demandé, et un gestionnaire dont
+aucune politique ne répond quand son fichier de module l'est. Le crochet de pré-commit, qui
+interroge sur les fichiers indexés, signale alors ce qu'un changement indexé casse dans un fichier
+qui ne l'est pas. `--changed-since` garde un constat d'après ces deux mêmes fichiers.
 
 Chaque violation a un identifiant de règle, une sévérité, un fichier, une ligne, un message et un
 `fix` : une phrase qui dit quoi faire à la place. Code de sortie 1 quand il y a au moins une

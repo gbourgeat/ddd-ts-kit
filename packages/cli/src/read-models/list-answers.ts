@@ -1,22 +1,21 @@
 import type { DeclaredClasses } from './declared-classes';
 import type { ReadModelList } from './read-model-list';
 
-/** A class of a context, by its name and, when it is known, its file. */
+/** A class of a context, by its name. */
 interface Named {
   readonly context: string;
   readonly name: string;
-  readonly file?: string;
 }
 
 /**
- * What the list answers for, worked out once from its entries: the names each entry stands for
- * (the class it names, read by the name its file gives it, and every class that one extends, so
- * that a class written to build a store answers for that store), and the files an entry imports
- * through, a barrel that re-exports from the file of a store, under another name or not.
+ * What the list answers for, worked out once from its entries: the names each entry stands for.
+ * An entry stands for the class it names, read by the name its file gives it (an alias, a default
+ * import and one re-export, `export { A as B } from` or `export * from`, are read through), and
+ * for every class that one extends, so that a class written to build a store answers for that
+ * store. A file that re-exports several stores answers for the one the entry names, no other.
  */
 export class ListAnswers {
   private readonly names = new Map<string, Set<string>>();
-  private readonly files = new Map<string, Set<string>>();
   private readonly notListed: ReadonlySet<string>;
 
   constructor(
@@ -31,10 +30,8 @@ export class ListAnswers {
   }
 
   /** Whether an entry of `LISTED` under its context stands for the store. */
-  lists({ context, name, file }: Named): boolean {
-    return (
-      this.names.get(context)?.has(name) === true || (file !== undefined && this.files.get(context)?.has(file) === true)
-    );
+  lists({ context, name }: Named): boolean {
+    return this.names.get(context)?.has(name) === true;
   }
 
   /**
@@ -51,36 +48,26 @@ export class ListAnswers {
   /** One more entry, which `init` is about to write: the store it names, and what that one extends. */
   listed(context: string, local: string): void {
     const names = this.names.get(context) ?? new Set<string>();
-    const files = this.files.get(context) ?? new Set<string>();
 
     this.names.set(context, names);
-    this.files.set(context, files);
 
     for (const name of this.classes.lineage(local)) {
-      const through = this.fileBehind(name);
-
       names.add(name);
       this.classes.lineage(this.nameBehind(name)).forEach((behind) => names.add(behind));
-      (through === undefined ? [] : this.classes.reexportedBy(through)).forEach((reexported) => files.add(reexported));
     }
   }
 
-  /** The file a name of the list is imported from, when it is one of the project. */
-  private fileBehind(name: string): string | undefined {
-    const target = this.list.imports.get(name)?.target;
-
-    return target?.kind === 'file' ? target.path : undefined;
-  }
-
-  /** The name a class of the list has in the file that declares it: an alias and a default import are read through. */
+  /** The name a class of the list has in the file that declares it. */
   private nameBehind(name: string): string {
     const imported = this.list.imports.get(name);
-    const through = this.fileBehind(name);
 
-    if (imported?.name === 'default') {
-      return (through === undefined ? undefined : this.classes.defaultOf(through)?.shape.name) ?? name;
+    if (imported === undefined) {
+      return name;
     }
 
-    return imported?.name ?? name;
+    const declared =
+      imported.target.kind === 'file' ? this.classes.behind(imported.target.path, imported.name) : undefined;
+
+    return declared?.shape.name ?? (imported.name === 'default' ? name : imported.name);
   }
 }

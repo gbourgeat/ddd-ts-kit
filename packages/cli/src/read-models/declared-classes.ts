@@ -4,13 +4,21 @@ import { escapeRegExp } from '../check/text/escape-reg-exp';
 import type { Config } from '../config';
 import type { DeclaredClass } from './declared-class';
 
+const REEXPORT = /(?<![\w$.])export\s+(?:type\s+)?(?:\*|\{([^}]*)\})\s*from\s*(?=['"`])/g;
+
+/** A re-export of a file: the file it leads to, and the names it gives by the names it takes, none for `export *`. */
+interface Reexport {
+  readonly target: string;
+  readonly names: Map<string, string> | undefined;
+}
+
 const DEFAULT_CLASS = /(?<![\w$.])export\s+default\s+(?:abstract\s+)?$/;
 
 /**
  * The classes the sources declare at the level of a module, several in one file included, read
  * once and found by name: the tests are not read, nor a class declared in a function or in a
- * `namespace` block. What is asked of them several times (the names a class extends, the files a
- * file re-exports from) is worked out once.
+ * `namespace` block. What is asked of them several times (the names a class extends, what a file
+ * re-exports) is worked out once.
  */
 export class DeclaredClasses {
   readonly all: readonly DeclaredClass[];
@@ -18,7 +26,7 @@ export class DeclaredClasses {
   private readonly byName = new Map<string, DeclaredClass[]>();
   private readonly sources = new Map<string, SourceFile>();
   private readonly lineages = new Map<string, readonly string[]>();
-  private readonly reexports = new Map<string, readonly string[]>();
+  private readonly reexports = new Map<string, readonly Reexport[]>();
 
   constructor(
     private readonly config: Config,
@@ -73,23 +81,72 @@ export class DeclaredClasses {
     return lineage;
   }
 
-  /** The files of the project a file re-exports from, `export .. from`, a renaming one included. */
-  reexportedBy(file: string): readonly string[] {
+  /**
+   * The class a name imported from a file leads to: the one that file declares under it (its
+   * default export for `default`), or, one level further, the one a re-export of that file
+   * names, `export { A as B } from` read as `A` and `export * from` under the same name.
+   */
+  behind(file: string, name: string): DeclaredClass | undefined {
+    if (name === 'default') {
+      return this.defaultOf(file);
+    }
+
+    const declared = this.named(name).find((candidate) => candidate.file === file);
+
+    if (declared !== undefined) {
+      return declared;
+    }
+
+    const [through] = this.reexportsOf(file).flatMap(({ target, names }) => {
+      const original = names === undefined ? name : names.get(name);
+
+      return original === undefined ? [] : this.named(original).filter((candidate) => candidate.file === target);
+    });
+
+    return through;
+  }
+
+  private reexportsOf(file: string): readonly Reexport[] {
     const known = this.reexports.get(file);
 
     if (known !== undefined) {
       return known;
     }
 
-    const targets = (this.source(file)?.scan.imports ?? [])
-      .filter(({ kind }) => kind === 'export')
-      .map(({ specifier }) => resolveImport(this.config, file, specifier))
-      .flatMap((target) => (target.kind === 'file' ? [target.path] : []));
+    const source = this.source(file);
+    const found = source === undefined ? [] : reexportsIn(this.config, source);
 
-    this.reexports.set(file, targets);
+    this.reexports.set(file, found);
 
-    return targets;
+    return found;
   }
+}
+
+/** The statements `export .. from` of a file that lead to a file of the project. */
+function reexportsIn(config: Config, { path, scan }: SourceFile): Reexport[] {
+  return [...scan.code.matchAll(REEXPORT)].flatMap((match) => {
+    const end = match.index + match[0].length;
+    const specifier = scan.strings.find(({ start }) => start === end)?.value ?? '';
+    const target = resolveImport(config, path, specifier);
+
+    return target.kind === 'file' ? [{ target: target.path, names: namesOf(match[1]) }] : [];
+  });
+}
+
+/** What the braces of a re-export bind, the name it gives by the name it takes; none for `export *`. */
+function namesOf(braces: string | undefined): Map<string, string> | undefined {
+  if (braces === undefined) {
+    return undefined;
+  }
+
+  const bindings = braces.split(',').map((binding) =>
+    binding
+      .trim()
+      .replace(/^type\s+/, '')
+      .split(/\s+as\s+/),
+  );
+
+  return new Map(bindings.flatMap(([original = '', given = original]) => (original === '' ? [] : [[given, original]])));
 }
 
 function declaredIn(file: SourceFile): DeclaredClass[] {

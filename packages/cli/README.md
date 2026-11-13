@@ -2219,6 +2219,13 @@ ddd-ts-kit check --commit-size [--staged] [--strict]
 A path that exists nowhere, or a folder that holds no TypeScript file under the source root, is a
 mistake of the caller: `check` refuses it (exit 2) in place of reporting a clean project.
 
+With paths, `check` reports the findings that sit on a file given or under a folder given, and
+those that are repaired in one: a read model store missing from the list, reported on its own
+file, is reported when the list is the path asked about, and a handler no policy answers for when
+its module file is. The pre-commit hook, which asks about the staged files, then reports what a
+staged change breaks in a file that is not staged. `--changed-since` keeps a finding by the same
+two files.
+
 Each violation has a rule id, a severity, a file, a line, a message and a `fix`: one sentence
 saying what to do instead. Exit code 1 when there is at least one error. Suppose that the
 `Reminder` aggregate of the example application read the system clock in its domain: an `isDue()`

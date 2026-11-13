@@ -1,5 +1,5 @@
 [English](cqrs.md) · **Français**
-<!-- translation-of: cqrs.md sha256:25aeccb3d3d6f4e6 -->
+<!-- translation-of: cqrs.md sha256:de6ed9153ffcaa47 -->
 
 # CQRS tel qu'utilisé ici
 
@@ -590,8 +590,7 @@ constructeur d'un registre généré (`(database: <Type>)` ou
 `Persistence['database']`) est listée par `init` et en répond. Un registre laissé de côté exprès
 est un commentaire qui porte `<contexte>: <Registre>` et la raison, écrit entre les marqueurs de
 `LISTED` (`// ddd-ts-kit:read-model-tables`) : `init` le laisse alors de côté, et rien n'en
-avertit. `init --force` garde ce que les marqueurs du fichier contiennent et rien d'autre, si
-bien qu'un commentaire, ou une classe, écrit ailleurs dans le fichier est perdu au suivant, et
+avertit. `init --force` garde ce que contiennent les marqueurs qu'il écrit et rien d'autre, une paire de marqueurs ajoutée à la main comprise, si bien qu'un commentaire, ou une classe, écrit ailleurs dans le fichier est perdu au suivant, et
 qu'un tel commentaire ne laisse rien de côté ; une entrée simplement supprimée revient au prochain
 `init --force`.
 
@@ -599,7 +598,7 @@ qu'un tel commentaire ne laisse rien de côté ; une entrée simplement supprim�
 de l'arbre comme `init`, par la même lecture, et `persistence/read-model-listed` signale, en
 erreur, chacun de ceux dont la liste ne répond pas : aucune entrée de `LISTED` sous son contexte
 ne le nomme ni ne nomme une classe qui l'étend, `NOT_LISTED` ne le nomme pas, et aucun commentaire
-entre les marqueurs ne porte `<contexte>: <Registre>`. Une entrée importée par un fichier qui réexporte depuis le fichier d'un registre, sous un autre nom ou non, répond de ce registre. Son correctif donne l'import et
+entre les marqueurs ne porte `<contexte>: <Registre>`. Une entrée importée par un fichier qui réexporte la classe, `export { A as B } from` ou `export * from`, sur un niveau, répond de la classe à laquelle ce nom mène, et d'aucun autre registre que ce fichier réexporte. Son correctif donne l'import et
 l'entrée à ajouter, l'entrée seule quand la liste importe encore la classe, et, pour un registre
 que la liste ne peut pas construire, ce qui s'y oppose. Le constat est posé sur le fichier du
 registre et se répare dans la liste : `check` interrogé sur la seule liste, comme le crochet de

@@ -549,15 +549,14 @@ or `(database: <Type>, scope: ExecutionScope)`, `<Type>` a name or a member of o
 `Persistence['database']`) is listed by `init`, and answers for it. A store left out on purpose
 is a comment that holds `<context>: <Store>` and the reason, written between the markers of
 `LISTED` (`// ddd-ts-kit:read-model-tables`): `init` then leaves it out, and nothing warns of it.
-`init --force` keeps what the markers of the file hold and nothing else, so a comment, or a
-class, written elsewhere in the file is lost at the next one, and such a comment leaves nothing
+`init --force` keeps what the markers it writes hold and nothing else, a pair of markers added by hand included, so a comment, or a class, written elsewhere in the file is lost at the next one, and such a comment leaves nothing
 out; an entry merely deleted comes back at the next `init --force`.
 
 **A store written by hand and never listed is reported.** `ddd-ts-kit check` reads the stores of
 the tree as `init` does, by the same reading, and `persistence/read-model-listed` reports, as an
 error, each one the list does not answer for: no entry of `LISTED` under its context names it or
 a class that extends it, `NOT_LISTED` does not name it, and no comment between the markers holds
-`<context>: <Store>`. An entry imported through a file that re-exports from the file of a store, under another name or not, answers for that store. Its fix gives the import and the entry to add, the entry alone
+`<context>: <Store>`. An entry imported through a file that re-exports the class, `export { A as B } from` or `export * from`, one level, answers for the class that name leads to, and for no other store that file re-exports. Its fix gives the import and the entry to add, the entry alone
 when the list still imports the class, and, for a store the list cannot build, what stands in
 the way. The finding sits on the file of the store and is repaired in the list: `check` asked
 about the list alone, as the pre-commit hook asks of the staged files, reports it too. The list

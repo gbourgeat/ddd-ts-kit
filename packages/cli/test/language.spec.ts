@@ -191,7 +191,9 @@ describe('structure reader', () => {
       ['#store', 'private', false, 1, 1],
     ]);
   });
+});
 
+describe('structure reader: the heritage of a class', () => {
   it('reads what a class extends and implements past type parameters and arguments that hold object types and arrows', () => {
     const read = (declaration: string): unknown => {
       const [shape] = readStructure(scan(`${declaration} {\n  size(): number {\n    return 0;\n  }\n}\n`)).classes;
@@ -217,5 +219,20 @@ describe('structure reader', () => {
     ).toEqual(['Totals', 'Store', ['Sized', 'Named'], ['size']]);
 
     expect(read('class Totals implements Sized')).toEqual(['Totals', undefined, ['Sized'], ['size']]);
+
+    // No space after a type argument, and a base that is a call whose arguments hold a comparison.
+    expect(read('class Totals<Row>extends Store<Row>implements Sized<Row>,Named<Row>')).toEqual([
+      'Totals',
+      'Store',
+      ['Sized', 'Named'],
+      ['size'],
+    ]);
+
+    expect(read('class Totals extends mixin(a < b ? Store : Other) implements Sized')).toEqual([
+      'Totals',
+      'mixin',
+      ['Sized'],
+      ['size'],
+    ]);
   });
 });

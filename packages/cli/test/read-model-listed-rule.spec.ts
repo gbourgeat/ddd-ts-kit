@@ -143,3 +143,86 @@ describe('persistence/read-model-listed: the fix says what to write, and what is
     expect(finding?.message).toContain('which an entry of LISTED answers for: the start still warns');
   });
 });
+
+describe('persistence/read-model-listed: a barrel answers for the class the entry names, and no other', () => {
+  const barrel = `${PERSISTENCE}/knex-all-totals.repository.ts`;
+
+  const fromBarrel = (names: string): string =>
+    `import { ${names} } from '@/contexts/billing/infrastructure/persistence/knex-all-totals.repository';`;
+
+  const reexport = (names: string): string =>
+    `export { ${names} } from '@/contexts/billing/infrastructure/persistence/knex-invoice-totals.repository';\n`;
+
+  it('reports the second store of a file whose first one the list imports under the name a barrel gives it', () => {
+    const findings = reported({
+      [TOTALS]: `${store('KnexInvoiceTotals')}\n${store('KnexLaterTotals')}`,
+      [barrel]: reexport('KnexInvoiceTotals as Totals'),
+      [LIST]: list({ imports: fromBarrel('Totals'), entries: "  ['billing', Totals]," }),
+    });
+
+    expect(findings.map(({ message }) => message.split(' ')[0])).toEqual(['KnexLaterTotals']);
+  });
+
+  it('reports a store a barrel re-exports beside the one the list imports through it, as a declarations barrel does', () => {
+    const late = `${PERSISTENCE}/knex-late-totals.repository.ts`;
+
+    const findings = reported({
+      [TOTALS]: store('KnexInvoiceTotals'),
+      [late]: store('KnexLateTotals'),
+      [barrel]: `export * from '@/contexts/billing/infrastructure/persistence/knex-invoice-totals.repository';\nexport * from '@/contexts/billing/infrastructure/persistence/knex-late-totals.repository';\n`,
+      [LIST]: list({ imports: fromBarrel('KnexInvoiceTotals'), entries: "  ['billing', KnexInvoiceTotals]," }),
+    });
+
+    expect(findings.map(({ file }) => file)).toEqual([late]);
+  });
+
+  it('takes no comment between markers the template does not write, which init --force deletes with them', () => {
+    const more =
+      '// ddd-ts-kit:extra\n// billing: KnexInvoiceTotals, left out: rebuilt each night\n// /ddd-ts-kit:extra';
+
+    const kept = '  // billing: KnexInvoiceTotals, left out: rebuilt each night';
+
+    expect(reported({ [TOTALS]: store('KnexInvoiceTotals'), [LIST]: list({ more }) }).map(({ file }) => file)).toEqual([
+      TOTALS,
+    ]);
+
+    expect(reported({ [TOTALS]: store('KnexInvoiceTotals'), [LIST]: list({ notListed: kept }) })).toEqual([]);
+  });
+
+  it('reports a store a barrel re-exports when the entry names another class, which that barrel declares', () => {
+    const findings = reported({
+      [TOTALS]: store('KnexInvoiceTotals'),
+      [barrel]: `${reexport('KnexInvoiceTotals')}\nexport class NotAStore {}\n`,
+      [LIST]: list({ imports: fromBarrel('NotAStore'), entries: "  ['billing', NotAStore]," }),
+    });
+
+    expect(findings.map(({ file }) => file)).toEqual([TOTALS]);
+  });
+
+  it('says of an entry through a barrel that renames the class that another context declares it', () => {
+    const findings = reported({
+      [TOTALS]: store('KnexInvoiceTotals'),
+      [barrel]: reexport('KnexInvoiceTotals as Totals'),
+      [LIST]: list({ imports: fromBarrel('Totals'), entries: "  ['catalog', Totals]," }),
+    });
+
+    expect(findings.map(({ file }) => file).sort()).toEqual([TOTALS, LIST].sort());
+
+    expect(findings.find(({ file }) => file === LIST)?.message).toContain(
+      'LISTED names KnexInvoiceTotals under catalog, and src/contexts/billing/infrastructure/persistence/knex-invoice-totals.repository.ts declares it in billing',
+    );
+  });
+
+  it('says once, on the class written to build a store, to list it, when neither is listed', () => {
+    const builder = `${PERSISTENCE}/listed-knex-invoice-totals.repository.ts`;
+
+    const findings = reported({
+      [TOTALS]: store('KnexInvoiceTotals', { parameters: 'context: KnexContext, readonly size: number' }),
+      [builder]: store('ListedKnexInvoiceTotals', { base: 'KnexInvoiceTotals' }),
+      [LIST]: list(),
+    });
+
+    expect(findings.map(({ file }) => file)).toEqual([builder]);
+    expect(findings[0]?.fix).toContain("`['billing', ListedKnexInvoiceTotals],` to LISTED");
+  });
+});

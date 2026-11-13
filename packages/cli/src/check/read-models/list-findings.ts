@@ -22,7 +22,8 @@ interface Read {
 /**
  * What the list says that the tree contradicts: an entry of `LISTED` whose class the file neither
  * imports nor declares, whose import leads to no file or to a file that does not name the class,
- * or whose class is declared in another context than the one the entry names; a line of
+ * or whose class, read through one re-export, is declared in another context than the one the
+ * entry names; a line of
  * `NOT_LISTED` whose class no file of its context names, or whose store an entry of `LISTED`
  * answers for. What a barrel re-exports, a package exports or a file of the tests declares is not
  * judged.
@@ -60,8 +61,7 @@ function problemOf({ project, classes, answers: { list } }: Read, entry: ListedE
 
   const { name, target } = imported;
 
-  const declared =
-    name === 'default' ? classes.defaultOf(target.path) : classes.named(name).find(({ file }) => file === target.path);
+  const declared = classes.behind(target.path, name);
 
   if (declared === undefined) {
     const missing = whatIsMissing(project, name, target.path);
@@ -71,7 +71,7 @@ function problemOf({ project, classes, answers: { list } }: Read, entry: ListedE
 
   return declared.context === undefined || declared.context === entry.context
     ? undefined
-    : `LISTED names ${declared.shape.name} under ${entry.context}, and ${target.path} declares it in ${declared.context}: its table is checked for the wrong context.`;
+    : `LISTED names ${declared.shape.name} under ${entry.context}, and ${declared.file} declares it in ${declared.context}: its table is checked for the wrong context.`;
 }
 
 /** The import an entry leads to: its own, or the one a class the list declares extends, however far. */

@@ -66,19 +66,26 @@ function heritageOf(heritage: string): Pick<ClassShape, 'superclass' | 'implemen
   };
 }
 
-/** The text outside every `<..>`, however nested; the `>` of an arrow closes nothing. */
+/**
+ * The text outside every `<..>` and every `(..)`, however nested, a space left where one stood so
+ * that `Base<T>implements Port` stays two words; the `>` of an arrow closes nothing.
+ */
 function withoutTypeArguments(text: string): string {
-  let depth = 0;
+  let angles = 0;
   let kept = '';
 
   for (let at = 0; at < text.length; at += 1) {
     const char = text.charAt(at);
 
-    if (char === '<') {
-      depth += 1;
+    if (char === '(') {
+      at = matchingBracket(text, at);
+      kept += angles === 0 ? ' ' : '';
+    } else if (char === '<') {
+      angles += 1;
     } else if (char === '>' && text.charAt(at - 1) !== '=') {
-      depth = Math.max(0, depth - 1);
-    } else if (depth === 0) {
+      angles = Math.max(0, angles - 1);
+      kept += angles === 0 ? ' ' : '';
+    } else if (angles === 0) {
       kept += char;
     }
   }

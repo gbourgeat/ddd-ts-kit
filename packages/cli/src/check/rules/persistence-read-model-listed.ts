@@ -77,8 +77,10 @@ function againstList(project: Project, source: SourceFile): Violation[] {
     ];
   }
 
-  const unlisted = readModelStoresOf(classes)
-    .filter((store) => !answers.holds(store))
+  const missing = readModelStoresOf(classes).filter((store) => !answers.holds(store));
+
+  const unlisted = missing
+    .filter((store) => !isBuiltByAnother(classes, missing, store))
     .map((store) =>
       report(
         { file: store.file, line: store.line, subjects: [list.file] },
@@ -88,6 +90,23 @@ function againstList(project: Project, source: SourceFile): Violation[] {
     );
 
   return [...unlisted, ...told];
+}
+
+/**
+ * A store the list cannot build, which a class written to build it extends: that class is
+ * reported with the lines that list it, and listing it answers for the store, so one finding says it.
+ */
+function isBuiltByAnother(
+  classes: DeclaredClasses,
+  missing: readonly ReadModelStore[],
+  store: ReadModelStore,
+): boolean {
+  return (
+    store.obstacle !== undefined &&
+    missing.some(
+      (other) => other !== store && other.context === store.context && classes.lineage(other.name).includes(store.name),
+    )
+  );
 }
 
 /** What to write: the lines `init` would, for a store the list can build; what stands in the way, for one it cannot. */

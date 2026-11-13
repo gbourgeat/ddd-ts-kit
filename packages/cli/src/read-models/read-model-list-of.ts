@@ -8,6 +8,9 @@ import type { ImportedClass, ListedEntry, NamedStore, ReadModelList } from './re
 
 const ENTRY = /\[\s*(['"])[^'"]*\1\s*,\s*([\w$]+)\s*,?\s*\]/g;
 const IMPORT = /(?<![\w$.])import\s+(?:type\s+)?(?:([\w$]+)\s*,?\s*)?(?:\{([^}]*)\}\s*)?from\s*(?=['"])/g;
+/** The regions `init` writes in the list, which `init --force` keeps: it deletes any other, markers and all. */
+const KEPT_REGIONS = ['imports', 'contexts', 'read-model-tables', 'read-models-not-listed'];
+
 const LEFT_OUT = /(?<![\w$-])([\w-]+): ([\w$]+)/g;
 const NAMED = /^([^\s:]+): ([\w$]+)$/;
 
@@ -80,10 +83,11 @@ function namedIn(scan: Scan, { open, close }: Extent): NamedStore[] {
     });
 }
 
-/** What the comments between the markers of a region name, `<context>: <Store>`. */
+/** What the comments between the markers of a region the template writes name, `<context>: <Store>`. */
 function leftOutIn(scan: Scan, text: string): Set<string> {
   const regions = regionsOf(text.split('\n'));
-  const isKept = (line: number): boolean => regions.some(({ open, close }) => line > open + 1 && line < close + 1);
+  const kept = regions.filter(({ name }) => KEPT_REGIONS.includes(name));
+  const isKept = (line: number): boolean => kept.some(({ open, close }) => line > open + 1 && line < close + 1);
   const comments = [...scan.comments, ...scan.blockComments].filter(({ line }) => isKept(line));
 
   return new Set(
