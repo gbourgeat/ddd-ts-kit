@@ -28,8 +28,10 @@ type Contexts = [
  * its store. `generate read-model` adds its store here, and `init` those it finds in the tree; a
  * store written by hand is added by hand, or `ddd-ts-kit check` reports it
  * (`persistence/read-model-listed`). A table that is not listed is never read. A store left
- * out on purpose is a comment here that holds `<context>: <Store>` and the reason: `init` then
- * leaves it out, and the check says nothing of it.
+ * out on purpose is a comment between the two markers below that holds `<context>: <Store>` and
+ * the reason: `init` then leaves it out, and the check says nothing of it. `init --force` keeps
+ * what the markers of this file hold and nothing else: a comment, or a class, written anywhere
+ * else is lost, and such a comment leaves nothing out.
  */
 const LISTED: readonly (readonly [context: Contexts[number], store: Store])[] = [
   // ddd-ts-kit:read-model-tables
@@ -39,7 +41,7 @@ const LISTED: readonly (readonly [context: Contexts[number], store: Store])[] = 
 /**
  * The read model stores of the tree `init` could not list, `<context>: <Store>`, since their
  * constructor takes something else: the check says at each start that nothing checks their
- * tables, until each is listed through a class of its own that builds it.
+ * tables, until each is listed through a class that builds it, written beside the store.
  */
 const NOT_LISTED: readonly string[] = [
   // ddd-ts-kit:read-models-not-listed

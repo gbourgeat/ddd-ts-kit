@@ -228,6 +228,72 @@ export const READ_MODEL_LISTED_FIXTURES: readonly Fixture[] = [
     expect: { file: LIST },
     files: onKnex({ [TOTALS]: STORE, [LIST]: 'export const tables = [];\n' }),
   },
+  {
+    ruleId: RULE,
+    name: 'a comment that names the store outside the markers, which init --force does not keep',
+    expect: { file: TOTALS },
+    files: onKnex({
+      [TOTALS]: STORE,
+      [LIST]: list({ more: '// billing: KnexInvoiceTotals, left out: rebuilt each night' }),
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'a store whose type parameter is constrained by an object type, which the list does not hold',
+    expect: { file: ANY_TOTALS },
+    files: onKnex({
+      [ANY_TOTALS]: GENERIC.replace('<Row extends object>', '<Row extends { id: string } = { id: string }>'),
+      [LIST]: list({}),
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'a store the list imports as the default export of its file',
+    expect: 'pass',
+    files: onKnex({
+      [TOTALS]: STORE.replace('export class', 'export default class'),
+      [LIST]: list({
+        imports: [`import KnexInvoiceTotals, { type Total } from '${TOTALS_ALIAS}';`],
+        entries: [ENTRY],
+      }),
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'an entry whose class is the default import of a file that has no default export',
+    expect: { file: LIST },
+    files: onKnex({
+      [TOTALS]: 'export const TABLE = "totals";\n',
+      [LIST]: list({ imports: [`import KnexInvoiceTotals from '${TOTALS_ALIAS}';`], entries: [ENTRY] }),
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'a store the list imports under another name through a barrel that renames it',
+    expect: 'pass',
+    files: onKnex({
+      [TOTALS]: STORE,
+      [`${PERSISTENCE}/knex-all-totals.repository.ts`]: `export { KnexInvoiceTotals as Totals } from '${TOTALS_ALIAS}';\n`,
+      [LIST]: list({
+        imports: ["import { Totals } from '@/contexts/billing/infrastructure/persistence/knex-all-totals.repository';"],
+        entries: ["  ['billing', Totals],"],
+      }),
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'a line of NOT_LISTED for a store that a class of LISTED builds, which the start still warns of',
+    expect: { file: LIST },
+    files: onKnex({
+      [ANY_TOTALS]: GENERIC,
+      [LIST]: list({
+        imports: [`import { KnexAnyTotals } from '${ANY_ALIAS}';`],
+        entries: ["  ['billing', ListedKnexAnyTotals],"],
+        notListed: ["  'billing: KnexAnyTotals',"],
+        more: 'class ListedKnexAnyTotals extends KnexAnyTotals<object> {}',
+      }),
+    }),
+  },
 ];
 
 function onKnex(files: FixtureFiles): FixtureFiles {

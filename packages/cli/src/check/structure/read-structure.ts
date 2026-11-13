@@ -46,32 +46,44 @@ function classShape(scan: Scan, match: RegExpExecArray): ClassShape {
     depth: braceDepthAt(code, match.index),
     isExported: before?.[1] !== undefined,
     isAbstract: before?.[2] !== undefined,
-    superclass: match[2],
-    implemented: implementedBy(match[3] ?? ''),
+    ...heritageOf(code.slice(match.index + named, bodyStart)),
     methods: methodsOf(scan, bodyStart, bodyClose),
   };
 }
 
-function implementedBy(heritage: string): string[] {
-  const clause = /(?<![\w$])implements\s+([\s\S]+)$/.exec(heritage)?.[1] ?? '';
+/**
+ * What a class extends and implements, read between its name and its body with every type
+ * argument left out, its own type parameters first: one whose constraint or default holds an
+ * object type, `class Totals<Row extends { id: string }> extends Store<Row>`, hides neither.
+ */
+function heritageOf(heritage: string): Pick<ClassShape, 'superclass' | 'implemented'> {
+  const bare = withoutTypeArguments(heritage);
+  const clause = /(?<![\w$])implements\s+([\s\S]+)$/.exec(bare)?.[1] ?? '';
 
-  return withoutTypeArguments(clause)
-    .split(',')
-    .flatMap((part) => /^[\w$.]+/.exec(part.trim())?.[0] ?? []);
+  return {
+    superclass: /^\s*extends\s+([\w$.]+)/.exec(bare)?.[1],
+    implemented: clause.split(',').flatMap((part) => /^[\w$.]+/.exec(part.trim())?.[0] ?? []),
+  };
 }
 
+/** The text outside every `<..>`, however nested; the `>` of an arrow closes nothing. */
 function withoutTypeArguments(text: string): string {
-  let current = text;
+  let depth = 0;
+  let kept = '';
 
-  for (;;) {
-    const stripped = current.replace(/<[^<>]*>/g, '');
+  for (let at = 0; at < text.length; at += 1) {
+    const char = text.charAt(at);
 
-    if (stripped === current) {
-      return current;
+    if (char === '<') {
+      depth += 1;
+    } else if (char === '>' && text.charAt(at - 1) !== '=') {
+      depth = Math.max(0, depth - 1);
+    } else if (depth === 0) {
+      kept += char;
     }
-
-    current = stripped;
   }
+
+  return kept;
 }
 
 function topLevelFunctions(scan: Scan): TopLevelFunction[] {

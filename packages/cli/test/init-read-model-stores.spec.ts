@@ -243,9 +243,16 @@ describe('init and the rule of the checker read the same stores', () => {
     expect(reported.code).not.toBe(0);
     expect(reported.stdout).toContain(`${store}:`);
 
+    // The import is still there: the entry alone is to add, under the name the list already gives the class.
     expect(reported.stdout).toContain(
-      "add `import { KnexInvoiceSummaries as BillingKnexInvoiceSummaries } from '@/contexts/billing/infrastructure/persistence/knex-invoice-summaries.repository';` to the imports and `['billing', BillingKnexInvoiceSummaries],` to LISTED",
+      "add `['billing', KnexInvoiceSummaries],` to LISTED (`ddd-ts-kit init` writes it)",
     );
+
+    expect(reported.stdout).not.toContain('BillingKnexInvoiceSummaries');
+    expectOk(cli(root, 'init'));
+    expect(platform(root, LIST).match(/import \{ KnexInvoiceSummaries \}/g)).toHaveLength(1);
+    expect(platform(root, LIST)).toContain("  ['billing', KnexInvoiceSummaries],\n");
+    expect(judged().code).toBe(0);
 
     rmSync(path.join(root, 'src/platform', LIST));
 

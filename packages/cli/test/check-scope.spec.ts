@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { cli, write } from './helpers';
+import { cli, read, write } from './helpers';
 import { initProject } from './support/init-project';
+import { PERSISTENCE, billingProject, withInvoiceSummaries } from './support/read-model-project';
 
 describe('check, a path it is asked about', () => {
   const root = initProject('--context', 'billing:core');
@@ -29,5 +30,29 @@ describe('check, a path it is asked about', () => {
 
     expect(cli(fresh, 'check').code).toBe(0);
     expect(cli(fresh, 'check', 'docs').code).toBe(2);
+  });
+});
+
+describe('check, a finding repaired in another file than the one it sits on', () => {
+  it('reports it when that other file is the one asked about, as the pre-commit hook asks of the staged files', () => {
+    const root = billingProject('--orm', 'knex');
+    const list = 'src/platform/database/read-model-tables.ts';
+    const store = `${PERSISTENCE}/knex-invoice-summaries.repository.ts`;
+
+    withInvoiceSummaries(root);
+
+    expect(cli(root, 'check', list).code).toBe(0);
+
+    write(root, list, read(root, list).replace("  ['billing', KnexInvoiceSummaries],\n", ''));
+
+    for (const asked of [list, store, 'src/platform/database']) {
+      const reported = cli(root, 'check', asked);
+
+      expect(reported.code, asked).toBe(1);
+      expect(reported.stdout).toContain(`${store}:`);
+      expect(reported.stdout).toContain('persistence/read-model-listed');
+    }
+
+    expect(cli(root, 'check', 'src/platform/auth').code).toBe(0);
   });
 });

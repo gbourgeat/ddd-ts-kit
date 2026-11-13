@@ -191,4 +191,31 @@ describe('structure reader', () => {
       ['#store', 'private', false, 1, 1],
     ]);
   });
+
+  it('reads what a class extends and implements past type parameters and arguments that hold object types and arrows', () => {
+    const read = (declaration: string): unknown => {
+      const [shape] = readStructure(scan(`${declaration} {\n  size(): number {\n    return 0;\n  }\n}\n`)).classes;
+
+      return [shape?.name, shape?.superclass, shape?.implemented, shape?.methods.map((method) => method.name)];
+    };
+
+    expect(read('export class Totals<Row extends { id: string }> extends Store<Row> implements Sized')).toEqual([
+      'Totals',
+      'Store',
+      ['Sized'],
+      ['size'],
+    ]);
+
+    expect(
+      read(
+        'class Totals<Row = { id: string }, Key extends (row: Row) => string = (row: Row) => string> extends Store<Row>',
+      ),
+    ).toEqual(['Totals', 'Store', [], ['size']]);
+
+    expect(
+      read('class Totals extends Store<{ id: string }> implements Sized<{ of: Map<string, number> }>, Named'),
+    ).toEqual(['Totals', 'Store', ['Sized', 'Named'], ['size']]);
+
+    expect(read('class Totals implements Sized')).toEqual(['Totals', undefined, ['Sized'], ['size']]);
+  });
 });

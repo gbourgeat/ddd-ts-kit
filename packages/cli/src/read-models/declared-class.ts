@@ -9,4 +9,6 @@ export interface DeclaredClass {
   readonly shape: ClassShape;
   /** Its own text, from `class` to the brace that closes it, comments and literals blanked. */
   readonly code: string;
+  /** True when its file exports it as its default and not by its name. */
+  readonly isDefaultOnly: boolean;
 }

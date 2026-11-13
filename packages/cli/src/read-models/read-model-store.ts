@@ -5,9 +5,11 @@ export interface ReadModelStore {
   readonly file: string;
   readonly name: string;
   readonly line: number;
+  /** The class it extends, as its file names it. */
+  readonly base: string;
   /**
-   * Whether the list can build it as it is: an exported class that is not generic, whose own
-   * constructor is the generated one, `(database)` or `(database, scope)`.
+   * Why the list cannot build it as it is, in a few words; none for an exported class that is not
+   * generic, whose own constructor is the one of a generated store.
    */
-  readonly listable: boolean;
+  readonly obstacle: string | undefined;
 }

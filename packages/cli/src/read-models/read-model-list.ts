@@ -15,9 +15,9 @@ export interface NamedStore {
   readonly line: number;
 }
 
-/** A class the list imports by name. */
+/** A class the list imports, by name or as the default of a file. */
 export interface ImportedClass {
-  /** Its name in the file that declares it. */
+  /** Its name in the file that declares it; `default` for the default export of that file. */
   readonly name: string;
   readonly target: ImportTarget;
 }
@@ -33,8 +33,12 @@ export interface ReadModelList {
   readonly unread: number | undefined;
   readonly entries: readonly ListedEntry[];
   readonly notListed: readonly NamedStore[];
-  /** The classes the file imports by name, by the name it gives them. */
+  /** The classes the file imports, by the name it gives them. */
   readonly imports: ReadonlyMap<string, ImportedClass>;
-  /** The text of each comment of the file. */
-  readonly comments: readonly string[];
+  /**
+   * The stores left out on purpose, `<context>: <Store>`: what a comment between the markers of a
+   * region of the file holds. `init --force` keeps what the markers hold and nothing else, so a
+   * comment written anywhere else leaves nothing out.
+   */
+  readonly leftOut: ReadonlySet<string>;
 }

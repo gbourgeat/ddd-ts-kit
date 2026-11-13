@@ -110,7 +110,7 @@ function listTable(scope: Scope, store: ReadModelStore): void {
   const persistence = `${contextAlias(config, context.kebab)}/infrastructure/persistence`;
 
   if (store.needsDatabase) {
-    listReadModel(scope.ws, `${config.platformDir}/database/read-model-tables.ts`, {
+    listReadModel(scope.ws, config, {
       context: context.kebab,
       store: store.adapter,
       from: `${persistence}/${store.file}${specifierSuffix(config.importExtension)}`,
