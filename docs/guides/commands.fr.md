@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:7adddd5f683fe042 -->
+<!-- translation-of: commands.md sha256:33304afd4fd8c092 -->
 
 # Quelle commande, quand
 
@@ -624,8 +624,9 @@ ddd-ts-kit <command> --help prints the usage and the notes of that command alone
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, its
                    Prisma models, an end-to-end spec, a working migration, the pages of docs/behaviour/ but
                    those of other contexts, prisma/schema/schema.prisma when its one change is the context
-                   joining the schemas of the datasource, the schema index of the platform when every line
-                   changed there is of the context, the derived files git tracks) and every other
+                   joining the schemas of the datasource, the schema index of the platform and the list of the
+                   read model tables when every line changed there is of the context, the derived files git
+                   tracks) and every other
                    changed path, left out and never to stage with it; the merges since --since, as
                    verify-merge checks them, reported without failing the slice in this version (a later
                    minor version fails it; a migration out of order is said apart, the push being refused
