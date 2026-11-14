@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { runGit } from '../commit/run-git';
+import { namedBindingsOf } from '../migration';
 import { PRISMA_MAIN_SCHEMA, schemaOfContext } from '../prisma-schema';
 import type { ChangedEntry } from './changed-entry';
 import type { SliceToVerify } from './slice-to-verify';
@@ -14,6 +15,9 @@ interface ChangedFile {
 }
 
 const HUNK = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
+/** The line that opens an import written on several lines. */
+const OPENING = /^\s*import (?:type )?\{$/;
+
 const SCHEMAS = /^\s*schemas\s*=\s*\[([^\]]*)\]/;
 
 /**
@@ -70,18 +74,25 @@ function schemasListed(lines: readonly string[], changed: readonly number[]): Se
   );
 }
 
-/** Every changed line is blank, imports the tables file of the context, or names what it imports from there. */
+/**
+ * Every changed line is blank, imports the tables file of the context, or names what it imports from
+ * there: the line that lets the context that held a table of the same name first keep that name is one.
+ * An import the formatter wrote on several lines is read whole: its opening line is one of them too.
+ */
 function ofTheContextInIndex(context: string, { before, after, removed, added }: ChangedFile): boolean {
   const tablesFile = new RegExp(`/(?:${context}|create-${context}-tables)\\.schema(?:\\.js)?['"]`);
+  const text = after.join('\n');
 
-  const names = after
-    .filter((line) => tablesFile.test(line))
-    .flatMap((line) => (/\{([^}]*)\}/.exec(line)?.[1] ?? '').split(','))
-    .map((name) => name.replace(/^\s*type\s+/, '').trim())
-    .filter((name) => name !== '');
+  // `orders as billingOrders`, a table of the same name as another context's: the index may name either.
+  const names = [...namedBindingsOf(text, 'import'), ...namedBindingsOf(text, 'export')]
+    .filter(({ source }) => tablesFile.test(`/${source}'`))
+    .flatMap(({ names: bound }) => bound.flatMap(({ name, local }) => [name, local]));
 
   const ofTheContext = (line: string): boolean =>
-    line.trim() === '' || tablesFile.test(line) || names.some((name) => new RegExp(`\\b${name}\\b`).test(line));
+    line.trim() === '' ||
+    OPENING.test(line) ||
+    tablesFile.test(line) ||
+    names.some((name) => new RegExp(`\\b${name}\\b`).test(line));
 
   return removed.every((at) => ofTheContext(before[at] ?? '')) && added.every((at) => ofTheContext(after[at] ?? ''));
 }

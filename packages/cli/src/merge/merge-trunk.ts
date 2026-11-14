@@ -17,6 +17,7 @@ import { mergeState } from './merge-state';
 import { NEXT_STEPS } from './next-steps';
 import { plainGitMerge } from './plain-git-merge';
 import { type PreviewRequest, previewMerge, type StageEntry } from './preview-merge';
+import { previewTableNames } from './preview-table-names';
 import { refuseShallowHistory } from './refuse-shallow-history';
 import { resolveConflict } from './resolve-conflict';
 import type { Resolution } from './resolution';
@@ -173,7 +174,9 @@ function opened(opening: Opening): MergeReport {
   const counted = counts(context, report, { resolutions, own: own.conflicts, plainMerge: plain.conflicts.size });
 
   if (request.dryRun) {
-    return { ...counted, status: 'dry-run', next: NEXT_STEPS.dryRun };
+    const names = previewTableNames(context, { tree: own.tree, trunk: report.trunk.commit, resolutions });
+
+    return { ...counted, automatic: [...counted.automatic, ...names], status: 'dry-run', next: NEXT_STEPS.dryRun };
   }
 
   startMerge(top, { preview: own, trunk: report.trunk.commit, message: mergeMessage(report) });

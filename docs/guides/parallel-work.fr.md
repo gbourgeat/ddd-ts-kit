@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:c52fc36026adaae7 -->
+<!-- translation-of: parallel-work.md sha256:4e8b34f4d6cc2d37 -->
 
 # Travailler en parallèle sans collisions
 
@@ -102,7 +102,53 @@ celle qu'il trouve ; une version qui n'est pas une version sémantique vous est 
 régions générées de `CONTEXT.md` et de la carte
 des contextes prennent le côté du tronc, un conflit à l'intérieur d'un registre généré
 (`// ddd-ts-kit:<region>`) garde les lignes des deux côtés (une ligne retirée par un côté reste
-retirée), `slices.md` se fusionne ligne par ligne (chaque statut le plus avancé des deux côtés),
+retirée), l'index des schémas de Drizzle ou de TypeORM dont les deux côtés ont chacun stocké une
+table du même nom, chacune dans le fichier de tables de son contexte, est réglé en entier comme le
+règlent les générateurs quand les deux côtés sont lus avec certitude (la table que le tronc
+exporte sous un nom le garde, quel que soit l'ordre de l'index et qu'un côté ait ou non découpé
+le contexte en modules, chaque côté étant lu tel que son commit le dispose, et celle que la branche apporte
+est listée sous le nom de son contexte, `shippingOrders` ; sur TypeORM, où les noms des imports
+sont locaux à l'index, une entité que chaque côté importait et listait sous son propre nom garde
+le nom du tronc et n'est listée qu'une fois, l'import de la branche qui disparaît étant noté
+dans le commit de fusion ; sur TypeORM, la fusion ne règle les entités que dans un index que le
+kit a écrit en entier : une ligne qu'il n'a pas écrite, où que ce soit dans l'index, l'empêche de
+renommer ou de retirer le moindre import, et la fusion cite cette ligne (le kit l'a écrit en entier
+quand, hors de ses régions, c'est le texte du modèle d'`init` pour les options du projet, aux
+espaces près, et que ses régions ne contiennent que des imports par nom de fichiers de tables de
+contextes ou de paquets du kit et des noms nus suivis d'une virgule ; la phrase ne vient que
+quand il y a quelque chose à régler et, pour une ligne hors des régions, dit de lancer
+`init --force` après un commit pour réécrire l'index depuis le modèle de cette version ; le kit
+ne distingue deux entités que par les fichiers de tables qui les déclarent : un nom réexporté,
+renommé ou alias d'un autre dans un fichier de tables n'est pas réglé, et la fusion le dit, comme
+elle le dit d'une même entité importée deux fois sous un nom, qu'elle laisse ; un nom n'est départagé que quand la région
+l'importe deux fois, pour deux entités qu'elle n'importe sous aucun autre nom, et le liste une
+fois : toute autre forme ne voit rien écrit et une phrase, et ce qu'un règlement laisse est
+vérifié, chaque entité qu'il a touchée sous un seul nom listé une fois, sinon l'index est remis
+tel quel) ; le rapport dit chacun sous `automatic:`, en simulation
+aussi). Ce que le kit ne répare pas, il le dit, en simulation comme à la fusion : chaque table
+qu'un côté avait à portée et que l'index fusionné n'exporte sous aucun nom, avec son fichier et
+le nom qui la cache (une ligne écrite à la main, un module qui n'est pas le fichier de tables
+d'un contexte), et chaque nom du tronc ou de la branche qui nomme une autre table après la
+fusion, quand la table qu'il nommait est encore réexportée en entier par l'index fusionné. Une
+ligne ou un import de l'index qui nomme la place où un côté tenait un fichier de tables que
+l'autre côté a déplacé n'est pas réécrit : le rapport dit chacun, avec la place du fichier dans
+l'arbre fusionné, et le kit n'écrit aucun nom dans cette fusion. Les lignes que le kit écrit dans
+l'index sont notées dans un *trailer* `Kit-Written:` et ne comptent jamais comme celles de la
+fusion pour la vérification des lignes perdues : une ligne qu'une résolution négligente a perdue
+arrête encore la fusion. Sur Drizzle, un
+contexte pour lequel l'arbre fusionné tient deux fichiers de tables (un côté l'a découpé en
+modules, l'autre a stocké une table à plat) ne reçoit aucune ligne, ni aucun autre nom de cette fusion, quand
+les deux fichiers déclarent un nom en commun : le rapport le dit une fois, avec les noms que les
+deux déclarent, lequel des deux fichiers garde chacun (celui dont l'index du tronc l'exporte,
+sous ce nom ou un autre), et ce qui doit tenir une fois qu'une
+personne en a fait l'unique fichier de `shared/` (puis un *commit* et `init --force`), et nomme
+encore chaque table cachée et chaque nom déplacé. Deux tels fichiers sans nom commun se fusionnent
+comme les autres. Sur TypeORM, la fusion ne dit rien des deux fichiers : une entité que les deux
+fichiers exportent sous un même nom reste importée deux fois, ce qui ne compile pas, et la note
+dit d'écrire à la main le second import `<nom> as <autre nom>` ; les autres noms de cette fusion
+sont réglés comme dans toute fusion. Un fichier que le kit ne lit pas avec certitude, ou un index qu'il ne peut pas écrire, lui
+fait ne rien écrire et donner, une fois, les lignes à écrire à la main ; il n'en donne aucune
+quand il donnerait un nom du tronc à une autre table. Pour le reste, `slices.md` se fusionne ligne par ligne (chaque statut le plus avancé des deux côtés),
 le verrou des événements stockés se fusionne par clé, le journal et les *snapshots* de
 drizzle-kit prennent le côté du tronc avant le rejeu, le fichier de verrouillage prend le côté du
 tronc et est réinstallé quand la branche a changé `package.json`.

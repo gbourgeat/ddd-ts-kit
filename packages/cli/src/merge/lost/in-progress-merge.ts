@@ -20,7 +20,13 @@ export function inProgressMerge(top: string, base: string | undefined): MergeToV
 
   const message = mergeMessage(top);
   const trailer = /^Merge-Base:\s*(\S+)/m.exec(message)?.[1];
-  const accepted = [...message.matchAll(/^Lost-Accepted:(.*)$/gm)].flatMap((match) => (match[1] ?? '').split(/[\s,]+/));
+
+  const entriesOf = (key: string): string[] =>
+    [...message.matchAll(new RegExp(`^${key}:(.*)$`, 'gm'))]
+      .flatMap((match) => (match[1] ?? '').split(/[\s,]+/))
+      .filter((entry) => entry !== '');
+
+  const accepted = entriesOf('Lost-Accepted');
 
   return {
     subject: message.split('\n')[0]?.trim() || 'merge in progress',
@@ -32,7 +38,8 @@ export function inProgressMerge(top: string, base: string | undefined): MergeToV
     }),
     ours,
     theirs,
-    accepted: accepted.filter((entry) => entry !== ''),
+    accepted,
+    kitWritten: entriesOf('Kit-Written'),
   };
 }
 

@@ -36,6 +36,7 @@ export default defineConfig(
       'coverage/**',
       'reports/**',
       'packages/cli/templates/**',
+      'packages/cli/test/.loaded-index/**',
       'packages/prisma/test/generated/**',
       'packages/audit/test/generated/**',
       'site/src/content/**',

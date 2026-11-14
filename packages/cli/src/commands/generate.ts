@@ -13,6 +13,7 @@ import { refuseUndeclaredFlags } from '../generate/refuse-undeclared-flags';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation';
 import { MODULE_OPTION, usageOf } from '../generate/usage-of';
 import { contextArgument } from '../generate/context-argument';
+import { keepThePicture } from '../generate/kinds/same-name/keep-the-picture';
 import { Workspace } from '../workspace';
 import { withGeneratorLock } from '../generator-lock';
 import type { Arguments } from './arguments';
@@ -84,6 +85,9 @@ function generateKind({ argv, io, probe, args, kind, rest }: Asked): number {
     // A worker confined to its context leaves knip.json alone: the next command on the trunk, or `docs`, does this.
     stopIgnoringValidation(ws, config);
   }
+
+  // Once every generator of the command has run: what the schema index gave before it is what it gives after.
+  keepThePicture(ws, config, 'generate');
 
   const report = ws.commit(args.flag('dry-run'));
 

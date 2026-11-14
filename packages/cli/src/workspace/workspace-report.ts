@@ -12,6 +12,8 @@ export interface WorkspaceReport {
   readonly kept: string[];
   /** Files this command could not write where it ran, such as paths the sandbox of an agent protects; also in `skipped`. */
   readonly unwritable: string[];
+  /** Files this command meant to change and left as they stood, a note saying what to write by hand; also in `skipped`. */
+  readonly left?: string[];
   /** The `TODO(domain)` of the files written, then the steps on the lines a command changed, the language first. */
   readonly todos: TodoPlace[];
   readonly notes: string[];

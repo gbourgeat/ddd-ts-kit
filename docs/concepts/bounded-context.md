@@ -105,7 +105,11 @@ Three consequences are worth spelling out:
 
 - **Own data.** One database schema per context, no foreign key, join or transaction across
   contexts. A context that needs another's data reads a published contract or keeps a local
-  projection fed by integration events.
+  projection fed by integration events. Two contexts may name a table alike, `billing.invoices`
+  and `shipping.invoices`: each is in the schema of its context and keeps its name there, and
+  the schema index of the platform (`src/platform/database/schema.ts`), where Drizzle and
+  TypeORM list every table by name, lists the second under a name that carries its context,
+  `shippingInvoices`.
 - **`CONTEXT.md` is part of the code.** Its glossary is what names are checked against
   ([Ubiquitous language](ubiquitous-language.md)), and its first sentence of purpose is reused
   in the generated context map.

@@ -12,4 +12,6 @@ export interface MergeToVerify {
   readonly theirs: string;
   /** The `file:line` (or `file`) entries of its `Lost-Accepted:` trailer: removals someone decided. */
   readonly accepted: readonly string[];
+  /** The entries of its `Kit-Written:` trailer: lines the kit wrote in the merge, never the merge's own. */
+  readonly kitWritten?: readonly string[];
 }

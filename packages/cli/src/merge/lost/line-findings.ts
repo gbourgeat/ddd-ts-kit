@@ -14,10 +14,15 @@ export interface MergeChanges {
 /**
  * The line findings of a merge: the lines it lost or brought back; as warnings, those one side
  * wrote where the other changed the same lines and those the merge replaced by lines of its own;
- * a file the merge deleted as one finding.
+ * a file the merge deleted as one finding. A line the kit wrote in the merge (`kitWritten`, each
+ * `<file>#<hash>`) is never one of the merge's own: it rewrites no lost line into a warning.
  */
-export function lineFindings(sides: MergeSides, changes: MergeChanges): MergeFinding[] {
-  const lost = supersededLines(lostLines(sides), sides, changes.fromBase);
+export function lineFindings(
+  sides: MergeSides,
+  changes: MergeChanges,
+  kitWritten: ReadonlySet<string> = new Set(),
+): MergeFinding[] {
+  const lost = supersededLines(lostLines(sides, kitWritten), sides, changes.fromBase);
 
-  return collapsedFiles(rewrittenInPlace(lost, sides, changes.toResult), sides);
+  return collapsedFiles(rewrittenInPlace(lost, sides, { toResult: changes.toResult, kitWritten }), sides);
 }

@@ -37,6 +37,10 @@ export class Lexer {
   readonly strings: StringRecord[] = [];
   readonly comments: CommentRecord[] = [];
   readonly blockComments: BlockCommentRecord[] = [];
+  /** How many regular expression literals were read: a slash after some expressions is a division read as one. */
+  regexes = 0;
+  /** Whether a template or a regular expression ran to the end of its line, or of the source, without closing. */
+  unclosed = false;
   private readonly lineStarts: number[] = [0];
   /** Depth of `{` inside each open `${ ... }`, so the matching `}` returns to the template. */
   private readonly templateDepths: number[] = [];
@@ -53,6 +57,10 @@ export class Lexer {
   run(): void {
     while (this.at < this.source.length) {
       this.step();
+    }
+
+    if (this.templateDepths.length > 0) {
+      this.unclosed = true;
     }
   }
 
@@ -190,6 +198,10 @@ export class Lexer {
     const closed = this.source[this.at] === '`';
     const ending = interpolates ? '${' : closed ? '`' : '';
 
+    if (ending === '') {
+      this.unclosed = true;
+    }
+
     this.code += (opening ? '`' : '') + blank(this.source.slice(opening ? start + 1 : start, this.at)) + ending;
     this.at += ending.length;
 
@@ -230,6 +242,7 @@ export class Lexer {
     const start = this.at;
     let inClass = false;
 
+    this.regexes += 1;
     this.at += 1;
 
     while (this.at < this.source.length && this.source[this.at] !== '\n') {

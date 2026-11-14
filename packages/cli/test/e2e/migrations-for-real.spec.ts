@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import pg from 'pg';
 import { describe, expect, it } from 'vitest';
 import { cli, read, removeTempDir, tempDir, write } from '../helpers';
@@ -32,6 +34,7 @@ const TOOLS = [
 
 const ORDER_TERM = 'Order=A purchase';
 const INVOICE_TERM = 'Invoice=A bill';
+const SHIPPED_ORDER_TERM = 'Order=What a carrier is asked to deliver';
 
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1 and DDD_TS_KIT_MIGRATIONS_SERVER): a project with an audit trail,
@@ -39,13 +42,13 @@ const INVOICE_TERM = 'Invoice=A bill';
  * PostgreSQL, `DATABASE_URL` in `.env` and nowhere else; its end-to-end specs, started twice at the
  * same time on that server while the migrated database holds 80 MB of rows, each run their files on
  * copies of its tables, empty, at the same time, and leave none behind, and a run the server has no
- * connection for is refused with its numbers; a second table reaches the same database
- * by `db:generate` and `db:migrate`; a fresh database built from the migrations alone then holds
+ * connection for is refused with its numbers; a second table, and one of the name of the first in a
+ * second context, reach the same database by `db:generate` and `db:migrate`; a fresh database built from the migrations alone then holds
  * the same columns, the audit trail append-only on both, and every gate stays green.
  */
 describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated project, on a real PostgreSQL', () => {
   it.each(TOOLS)(
-    'on %s under %s, the README builds the tables, two end-to-end runs share the server, a second table arrives, a fresh database replays them all',
+    'on %s under %s, the README builds the tables, two end-to-end runs share the server, a second table and one of the same name in a second context arrive, a fresh database replays them all',
     async (orm, tests, generateInvoices) => {
       const existing = `migrations_${orm}_${tests}`;
       const fresh = `migrations_${orm}_${tests}_fresh`;
@@ -58,7 +61,8 @@ describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated proj
       await renewed(fresh);
 
       const stack = ['--orm', orm, '--tests', tests, '--audit', 'on'];
-      const init = ['init', ...stack, '--context', 'ordering:core', '--package-manager', 'npm'];
+      const contexts = ['--context', 'ordering:core', '--context', 'shipping:supporting'];
+      const init = ['init', ...stack, ...contexts, '--package-manager', 'npm'];
 
       expect(cli(root, ...init).code).toBe(0);
       expect(cli(root, 'generate', 'aggregate', 'ordering', 'Order', '--term', ORDER_TERM).code).toBe(0);
@@ -92,12 +96,22 @@ describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated proj
 
       expect(cli(root, 'generate', 'aggregate', 'ordering', 'Invoice', '--term', INVOICE_TERM).code).toBe(0);
       expect(cli(root, 'generate', 'repository', 'ordering', 'Invoice').code).toBe(0);
+      // A table of the name of one of ordering, in the schema of a second context: the migration holds both.
+      expect(cli(root, 'generate', 'aggregate', 'shipping', 'Order', '--term', SHIPPED_ORDER_TERM).code).toBe(0);
+      expect(cli(root, 'generate', 'repository', 'shipping', 'Order').code).toBe(0);
+      exportUnderASecondName(root, orm);
       sh(generateInvoices);
       sh('npm run db:migrate');
+
+      if (orm === 'drizzle') {
+        // One table the index exports under two names is one table to drizzle-kit: created once, no word about it.
+        expect(migrationsOf(root).split('CREATE TABLE "shipping"."orders"')).toHaveLength(2);
+      }
 
       const columns = await columnsOf(existing);
 
       expect(columns).toContain('ordering.invoices.id');
+      expect(columns).toContain('shipping.orders.id');
 
       pointEnvAt(root, fresh);
       sh('npm run db:migrate');
@@ -112,6 +126,36 @@ describe.runIf(SLOW && SERVER !== undefined)('the migrations of a generated proj
     1_200_000,
   );
 });
+
+/**
+ * On Drizzle, the table of shipping exported by the index under a second name, as a merge of two
+ * branches that each settled the name its own way leaves one table under two names.
+ */
+function exportUnderASecondName(root: string, orm: string): void {
+  if (orm === 'drizzle') {
+    const index = 'src/platform/database/schema.ts';
+
+    const settled =
+      "export { orders as shippingOrders } from '@/contexts/shipping/infrastructure/persistence/shipping.schema';";
+
+    expect(read(root, index)).toContain(settled);
+
+    write(
+      root,
+      index,
+      read(root, index).replace(settled, `${settled}\n${settled.replace('shippingOrders', 'carriedOrders')}`),
+    );
+  }
+}
+
+/** Every migration of the project, as one text. */
+function migrationsOf(root: string): string {
+  return fs
+    .readdirSync(path.join(root, 'migrations'), { recursive: true, encoding: 'utf8' })
+    .filter((file) => file.endsWith('.sql'))
+    .map((file) => read(root, `migrations/${file}`))
+    .join('\n');
+}
 
 /** The lines of "Run it" that reach the database, as the README writes them, their comments left out. */
 function databaseLinesOfReadme(root: string): string[] {

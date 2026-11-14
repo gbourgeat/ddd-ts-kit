@@ -1,5 +1,5 @@
 [English](agent-sandbox.md) · **Français**
-<!-- translation-of: agent-sandbox.md sha256:5afbd6fc0fd539fd -->
+<!-- translation-of: agent-sandbox.md sha256:3e9d99e990244137 -->
 
 # Isoler les agents de code : sécurité et charge de la machine
 
@@ -339,7 +339,10 @@ Dans une session sous le profil régulé, l'agent écrit donc le schéma et le c
 Quand `DATABASE_URL` est définie et que son serveur ne répond pas (la retirer génère sur la base en processus), `prisma-generate` et
 `typeorm-generate` s'arrêtent avant l'outil, sortent en 3 (le code de ce qu'une session ne peut pas
 faire ici) et le disent, au lieu d'une erreur de connexion brute ; la commande est alors remise au
-propriétaire telle quelle.
+propriétaire telle quelle. `generate` et `init --force` sortent aussi en 3 quand ils laissent
+l'index des schémas tel qu'il était (le rapport le liste sous `left`) : aucun bac à sable n'est en
+cause, la note dit quelle table serait perdue, quel nom passerait à une autre table ou quelle
+ligne le kit ne lit pas, et ce qu'il faut écrire ou déplacer à la main, et cela aussi se remet à une personne.
 
 #### Les fichiers vides que laisse le bac à sable
 

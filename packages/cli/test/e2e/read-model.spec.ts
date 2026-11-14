@@ -1,10 +1,10 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cli, DEFAULT_STACK, read } from '../helpers';
+import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir } from '../helpers';
 import { EditedProject } from './edited-project';
 import { bin, runIn } from './run-in';
 import { FAILED_COUNT } from './run-specs';
 import { SLOW } from './stacks';
-import { NATIVE_COMPILER } from './type-errors';
+import { NATIVE_COMPILER, typeErrors } from './type-errors';
 
 const SHIPPING = 'src/contexts/shipping';
 const CONTRACT = `${SHIPPING}/test/integration/invoices-to-ship.contract.spec.ts`;
@@ -13,6 +13,20 @@ const ORDERS = 'src/contexts/order-fulfilment';
 /** The list of the read model tables the application checks when it starts. */
 const LIST = 'src/platform/database/read-model-tables.ts';
 const TENANT_CONTRACT = `${ORDERS}/test/integration/order-board.contract.spec.ts`;
+/** The schema index, which lists the tables of every context for the migration tooling and the test database. */
+const INDEX = 'src/platform/database/schema.ts';
+
+/**
+ * The contracts of the read model and of the repository that bear, in billing and in shipping, the same names,
+ * and of the repository whose table bears the name of the background jobs of the platform.
+ */
+const SAME_NAMES = [
+  ...['billing', 'shipping'].flatMap((context) => [
+    `src/contexts/${context}/test/integration/invoices-to-ship.contract.spec.ts`,
+    `src/contexts/${context}/test/integration/invoice.repository.contract.spec.ts`,
+  ]),
+  `${SHIPPING}/test/integration/job.repository.contract.spec.ts`,
+];
 
 /** A field of each type, one that may hold null: five required ones make a check too long for its line. */
 const FIELDS = [
@@ -39,7 +53,22 @@ function generatedOn(orm: string): string[] {
     `${ORDERS}/infrastructure/persistence/${tables('order-fulfilment')}.ts`,
     TENANT_CONTRACT,
     LIST,
+    INDEX,
   ];
+}
+
+/**
+ * In billing, which stores its aggregate Invoice, a read model of the name of the one of shipping, and in shipping
+ * an aggregate Invoice with its repository: two tables of the same name, each in the schema of its context. And
+ * in shipping an aggregate Job, whose table bears the name of one the platform keeps in its own schema.
+ */
+function storeTheSameNames(root: string): void {
+  cli(root, 'generate', 'read-model', 'billing', 'InvoicesToShip', '--field', 'weight:number');
+  cli(root, 'generate', 'aggregate', 'shipping', 'Invoice', '--term', 'Invoice=The bill a parcel is sent for');
+  cli(root, 'generate', 'repository', 'shipping', 'Invoice');
+  // `jobs`, as the table of the background jobs the schema index declares itself.
+  cli(root, 'generate', 'aggregate', 'shipping', 'Job', '--term', 'Job=What a carrier is asked to do');
+  cli(root, 'generate', 'repository', 'shipping', 'Job');
 }
 
 /** How a spec of the project runs one statement beside its stores, on each ORM. */
@@ -109,11 +138,8 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
         // The first table of shipping: the read model starts the schema of the context.
         cli(root, 'generate', 'read-model', 'shipping', 'InvoicesToShip', ...fields);
 
-        // A read model of the same name in a second context: its store carries the same class name.
-        // On Knex: the tables of Drizzle are exported by name from one schema index, where two of a name collide.
-        if (orm === 'knex') {
-          cli(root, 'generate', 'read-model', 'billing', 'InvoicesToShip', '--field', 'weight:number');
-        }
+        // The same names in a second context: the stores carry the same class names, the tables the same constants.
+        storeTheSameNames(root);
       },
       { ...DEFAULT_STACK, orm },
     );
@@ -123,16 +149,36 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
     project.restore();
   });
 
-  it.runIf(orm === 'knex')(
-    'lists the store of the same name of a second context under an alias, so that the list compiles',
-    () => {
-      expect(read(project.root, LIST)).toMatch(
-        /import \{ (\w+InvoicesToShip) as Billing\1 \} from '@\/contexts\/billing\/infrastructure\/persistence\/[\w-]+\.repository';/,
-      );
+  it('lists the store of the same name of a second context under an alias, so that the list compiles', () => {
+    expect(read(project.root, LIST)).toMatch(
+      /import \{ (\w+InvoicesToShip) as Billing\1 \} from '@\/contexts\/billing\/infrastructure\/persistence\/[\w-]+\.repository';/,
+    );
 
-      expect(read(project.root, LIST)).toMatch(/\['billing', Billing\w+InvoicesToShip\],/);
+    expect(read(project.root, LIST)).toMatch(/\['billing', Billing\w+InvoicesToShip\],/);
+  });
+
+  it.runIf(orm === 'drizzle')(
+    'exports the tables of the same name of a second context under its context, so that the index holds both',
+    () => {
+      const index = read(project.root, INDEX);
+
+      const from = (context: string): string =>
+        `from '@/contexts/${context}/infrastructure/persistence/${context}.schema';`;
+
+      expect(index).toContain(`export { invoicesToShip } ${from('shipping')}`);
+      expect(index).toContain(`export { invoicesToShip as billingInvoicesToShip } ${from('billing')}`);
+      expect(index).toContain(`export { invoices } ${from('billing')}`);
+      expect(index).toContain(`export { invoices as shippingInvoices } ${from('shipping')}`);
+      expect(index).toContain(`export { jobs as shippingJobs } ${from('shipping')}`);
     },
   );
+
+  it('creates both tables of a name in the test database, and each store reads its own', () => {
+    const contracts = runIn(project.root, { command: bin('vitest'), args: ['run', ...SAME_NAMES] });
+
+    expect(contracts).toMatch(/Test Files\s+5 passed \(5\)/);
+    expect(contracts).not.toMatch(FAILED_COUNT);
+  }, 120_000);
 
   it('type-checks as generated: the ports, the store adapters over the read model store of the ORM package, the fakes, the contracts and the list of the tables', () => {
     const compiled = runIn(project.root, {
@@ -183,4 +229,55 @@ describe.runIf(SLOW).each(['drizzle', 'knex'])('a read model as generated, on %s
 
     expect(contract).toMatch(/Tests\s+24 passed \(24\)/);
   }, 120_000);
+
+  it.runIf(orm === 'drizzle')(
+    'compiles once a name two tables files declare as a table and as the type of its rows is settled: each is exported as a value',
+    () => {
+      const tables = (context: string): string =>
+        `src/contexts/${context}/infrastructure/persistence/${context}.schema.ts`;
+
+      for (const context of ['billing', 'shipping']) {
+        project.append(
+          tables(context),
+          `\nexport const ledgers = ${context}Schema.table('ledgers', { id: text('id').primaryKey() });\nexport type ledgers = typeof ledgers.$inferSelect;\n`,
+        );
+      }
+
+      // Last of the file: what this generates stays in the project.
+      cli(project.root, 'generate', 'read-model', 'order-fulfilment', 'Crates');
+
+      const index = read(project.root, INDEX);
+
+      const compiled = runIn(project.root, {
+        command: process.execPath,
+        args: [NATIVE_COMPILER, '-p', 'tsconfig.json', '--noEmit'],
+      });
+
+      expect(index).toMatch(/^export \{ ledgers \} from /m);
+      expect(index).toMatch(/^export \{ ledgers as \w+Ledgers \} from /m);
+      expect(index).not.toMatch(/^export type \{ ledgers/m);
+      expect(compiled).toBe('');
+    },
+    240_000,
+  );
+});
+
+/**
+ * Slow, opt-in (DDD_TS_KIT_E2E=1): TypeORM, which this workspace cannot run, lists its entities by name in the
+ * schema index, where the entity of the same name of a second context is imported under its context.
+ */
+describe.runIf(SLOW)('tables of the same name in two contexts, on typeorm', () => {
+  it('type-checks as generated, the index listing both entities of each name', () => {
+    const root = tempDir('same-names');
+
+    scaffoldEverything(root, { ...DEFAULT_STACK, orm: 'typeorm' });
+    cli(root, 'generate', 'read-model', 'shipping', 'InvoicesToShip', '--field', 'weight:number');
+    storeTheSameNames(root);
+
+    expect(read(root, INDEX)).toMatch(/\binvoices as shippingInvoices\b/);
+    expect(read(root, INDEX)).toMatch(/\binvoicesToShip as billingInvoicesToShip\b/);
+    expect(read(root, INDEX)).toMatch(/^ {2}shippingInvoices,$/m);
+    expect(read(root, INDEX)).toMatch(/^ {2}shippingJobs,$/m);
+    expect(typeErrors(root)).toBe('');
+  }, 240_000);
 });

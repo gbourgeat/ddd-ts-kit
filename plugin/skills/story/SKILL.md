@@ -160,6 +160,7 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
    resolve what it stops on keeping both sides, `--continue` (skill `ddd-ts-kit:quality-gate`,
    `merge-trunk.md`); on exit 3, hand the owner the command it prints and wait.
    A migration to generate (Prisma, TypeORM) or a spec against a real database exits 3 under the sandbox too (no setting reaches the database): the owner or the CI runs it.
+   A `generate` or an `init --force` that exits 3 with the schema index under `left` left that index as it stood, to keep a table or a name; its note says what to write, move or restore by hand: hand them to a person with the note, the slice waits for them.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
    fixed, the others settled or written as the `TODO(review)` line the reviewer gives, and each
    line it gives for `## Mistakes seen here` of `AGENTS.md` (the rule of two) committed in this

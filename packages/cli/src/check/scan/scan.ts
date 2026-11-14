@@ -12,6 +12,12 @@ export interface Scan {
   readonly comments: readonly CommentRecord[];
   readonly blockComments: readonly BlockCommentRecord[];
   readonly imports: readonly ImportRecord[];
+  /**
+   * Whether the lexer may have taken code for text: it read a regular expression literal, which a
+   * division after some expressions is read as, or a template or a regular expression that did not
+   * close. What decides on `code` alone, with nothing to check it against, reads such a source as uncertain.
+   */
+  readonly uncertain: boolean;
   lineAt(offset: number): number;
 }
 
@@ -29,6 +35,7 @@ export function scan(source: string): Scan {
     comments: lexer.comments,
     blockComments: lexer.blockComments,
     imports: findImports(lexer.code, lexer.strings, lineAt),
+    uncertain: lexer.regexes > 0 || lexer.unclosed,
     lineAt,
   };
 }

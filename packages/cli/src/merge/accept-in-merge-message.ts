@@ -1,5 +1,4 @@
-import fs from 'node:fs';
-import { gitPath } from './git-path';
+import { trailerInMergeMessage } from './trailer-in-merge-message';
 
 /**
  * Adds a `Lost-Accepted:` trailer to the message of the merge in progress: lines it does not keep
@@ -7,11 +6,5 @@ import { gitPath } from './git-path';
  * lists without failing, in this merge and after its commit.
  */
 export function acceptInMergeMessage(top: string, entries: readonly string[]): void {
-  if (entries.length === 0) {
-    return;
-  }
-
-  const file = gitPath(top, 'MERGE_MSG');
-
-  fs.writeFileSync(file, `${fs.readFileSync(file, 'utf8').trimEnd()}\nLost-Accepted: ${entries.join(', ')}\n`);
+  trailerInMergeMessage(top, { key: 'Lost-Accepted', entries });
 }

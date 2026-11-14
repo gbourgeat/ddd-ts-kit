@@ -9,10 +9,12 @@ export interface MergeRecord {
   readonly mergeBase?: string;
   /** The entries of its `Lost-Accepted:` trailers. */
   readonly accepted: readonly string[];
+  /** The entries of its `Kit-Written:` trailers. */
+  readonly kitWritten: readonly string[];
 }
 
 const TRAILERS = 'valueonly,separator=%x2C';
-const FORMAT = `--format=%H%x1f%P%x1f%s%x1f%(trailers:key=Merge-Base,${TRAILERS})%x1f%(trailers:key=Lost-Accepted,${TRAILERS})%x1e`;
+const FORMAT = `--format=%H%x1f%P%x1f%s%x1f%(trailers:key=Merge-Base,${TRAILERS})%x1f%(trailers:key=Lost-Accepted,${TRAILERS})%x1f%(trailers:key=Kit-Written,${TRAILERS})%x1e`;
 
 /** The commits `git log <args>` lists, newest first; none when git fails. */
 export function mergeRecords(top: string, args: readonly string[]): MergeRecord[] {
@@ -26,7 +28,9 @@ export function mergeRecords(top: string, args: readonly string[]): MergeRecord[
 }
 
 function recordOf(record: string): MergeRecord {
-  const [commit = '', parents = '', subject = '', mergeBase = '', accepted = ''] = record.split('\x1f');
+  const [commit = '', parents = '', subject = '', mergeBase = '', accepted = '', kitWritten = ''] =
+    record.split('\x1f');
+
   const base = mergeBase.split(',')[0]?.trim() ?? '';
 
   return {
@@ -35,5 +39,6 @@ function recordOf(record: string): MergeRecord {
     subject,
     ...(base === '' ? {} : { mergeBase: base }),
     accepted: accepted.split(/[\s,]+/).filter((entry) => entry !== ''),
+    kitWritten: kitWritten.split(/[\s,]+/).filter((entry) => entry !== ''),
   };
 }

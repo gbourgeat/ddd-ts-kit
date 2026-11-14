@@ -48,7 +48,13 @@ export const readModelKind: Kind = {
       ['read-model/contract.spec.ts.tpl', `test/integration/${name.kebab}.contract.spec.ts`],
     ]);
 
-    declareTable(scope, context, { table: store.table, templates: 'read-model', changedBy: CHANGED_BY_HAND });
+    declareTable(scope, context, {
+      table: store.table,
+      constant: name.camel,
+      templates: 'read-model',
+      changedBy: CHANGED_BY_HAND,
+    });
+
     register(scope, context, { name, store });
     listTable(scope, store);
     noteTheMigration(scope);

@@ -8,6 +8,8 @@ import { roleFoldersOf, treeOf } from '../model-modules';
 import { schemaOfContext } from '../prisma-schema';
 import { Workspace } from '../workspace';
 import { declaredTables, type DeclaredTable } from './declared-tables';
+import { hiddenInIndex } from './hidden-in-index';
+import { isSourceOfContext } from './is-source-of-context';
 import { listedInIndex } from './listed-in-index';
 import { migrationFiles } from './migration-files';
 
@@ -33,13 +35,11 @@ export function warnDroppedContextTables(root: string, io: Io, tool: MigrationTo
   const index = readIfPresent(path.join(root, file));
   const recorded = tool === 'typeorm' ? createdTables(root) : lastSnapshotTables(root);
 
-  for (const context of index === undefined ? [] : Object.keys(config.contexts)) {
-    const schema = schemaOfContext(context);
+  const held = index === undefined ? [] : Object.keys(config.contexts);
+  const tables = new Map(held.map((context) => [context, tablesOf(root, config, context)]));
 
-    const dropped = tablesOf(root, config, context)
-      .filter(({ table }) => recorded.includes(`${schema}.${table}`))
-      .filter((table) => !listedInIndex(index ?? '', table))
-      .map(({ table }) => `${schema}.${table}`);
+  for (const context of held) {
+    const dropped = droppedOf(context, { config, file, index: index ?? '', tables, recorded, tool });
 
     if (dropped.length > 0) {
       io.err(
@@ -50,6 +50,41 @@ export function warnDroppedContextTables(root: string, io: Io, tool: MigrationTo
       );
     }
   }
+}
+
+/** What the tables of a context are read against: the index, the tables of every context, those a migration recorded. */
+interface Read {
+  readonly config: Config;
+  /** The schema index, from the project root. */
+  readonly file: string;
+  readonly index: string;
+  readonly tables: ReadonlyMap<string, readonly ContextTable[]>;
+  readonly recorded: readonly string[];
+  readonly tool: MigrationTool;
+}
+
+/** The tables of a context a migration recorded and the index no longer lists, each as `<schema>.<table>`. */
+function droppedOf(context: string, { config, file, index, tables, recorded, tool }: Read): string[] {
+  const schema = schemaOfContext(context);
+  const isOfItsContext = (source: string): boolean => isSourceOfContext(config, { from: file, source, context });
+
+  // On Drizzle a table of the same name in two tables files the index re-exports whole is listed by neither.
+  const sharesItsName = ({ constant }: ContextTable): boolean =>
+    tool === 'drizzle-kit' &&
+    [...tables]
+      .filter(([other]) => other !== context)
+      .some(([, others]) =>
+        others.some((other) => other.constant === constant && listedInIndex(index, { file: other.file })),
+      );
+
+  return (tables.get(context) ?? [])
+    .filter(({ table }) => recorded.includes(`${schema}.${table}`))
+    .filter(
+      (table) =>
+        !listedInIndex(index, { ...table, isOfItsContext }) ||
+        hiddenInIndex(index, { ...table, sharesItsName: sharesItsName(table) }),
+    )
+    .map(({ table }) => `${schema}.${table}`);
 }
 
 /** The tables the files of the persistence of a context export: its own, those of `shared/` and of each module of its model. */

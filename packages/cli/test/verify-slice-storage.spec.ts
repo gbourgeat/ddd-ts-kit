@@ -100,4 +100,18 @@ describe('verify-slice counts what the generator wrote for the slice outside its
 
     expect(plan(root).leftOut).toEqual([SCHEMA_INDEX]);
   });
+
+  it('stages the schema index of a TypeORM project for the import and the entry of the slice', () => {
+    const root = billingSlice('typeorm');
+
+    expect(plan(root).toStage).toEqual(expect.arrayContaining([SCHEMA_INDEX]));
+  });
+
+  it('leaves out the schema index when a line of the platform reads a table of the context: a line is of the context by the module it names', () => {
+    const root = billingSlice('typeorm');
+
+    write(root, SCHEMA_INDEX, `${read(root, SCHEMA_INDEX)}\nexport const first = invoices;\n`);
+
+    expect(plan(root).leftOut).toEqual(expect.arrayContaining([SCHEMA_INDEX]));
+  });
 });

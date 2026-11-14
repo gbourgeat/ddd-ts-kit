@@ -12,6 +12,7 @@ import { rewireAuditedEvents } from './rewire-audited-events';
 import { rewirePersonalData } from './rewire-personal-data';
 import { rewirePreset } from './rewire-preset';
 import { rewireTables } from './rewire-tables';
+import { settleIndexNames } from './settle-index-names';
 import { stackBefore } from './stack-before';
 
 /** What wiring the contexts again gave: the contexts, and the commands that write what it could not. */
@@ -55,6 +56,7 @@ export function rewireContexts(ws: Workspace, config: Config, forced: boolean): 
     }
   }
 
+  settleIndexNames(ws, config);
   stopIgnoringValidation(ws, config);
   listReadModels(ws, config);
 

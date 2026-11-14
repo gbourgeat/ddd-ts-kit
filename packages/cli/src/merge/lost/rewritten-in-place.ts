@@ -1,5 +1,6 @@
 import type { MergeFinding } from './merge-finding';
 import type { MergeSides } from './merge-sides';
+import { lineKey } from './line-key';
 import { normalizedLines } from './normalized-lines';
 import type { Hunk } from './hunk';
 import type { SideChanges } from './superseded-lines';
@@ -9,12 +10,12 @@ import type { SideChanges } from './superseded-lines';
  * line edited in the merge commit (a version in a heading, a call adapted to the other side's
  * rename). They become warnings, `rewritten`. Taking the other side's lines in their place, as
  * `-X theirs` does, never is: those lines are not the merge's own. Nor is a hunk that dropped more
- * than twice the lines it wrote plus two.
+ * than twice the lines it wrote plus two. A line the kit wrote (`kitWritten`) is not the merge's own.
  */
 export function rewrittenInPlace(
   findings: readonly MergeFinding[],
   sides: MergeSides,
-  toResult: SideChanges,
+  { toResult, kitWritten }: { toResult: SideChanges; kitWritten: ReadonlySet<string> },
 ): MergeFinding[] {
   const known = new Set(
     [sides.base, sides.ours, sides.theirs].flatMap((files) =>
@@ -23,7 +24,7 @@ export function rewrittenInPlace(
   );
 
   return findings.map((finding) =>
-    finding.kind === 'lost-line' && isReplacedByOwnLines(finding, { sides, toResult, known })
+    finding.kind === 'lost-line' && isReplacedByOwnLines(finding, { sides, toResult, known, kitWritten })
       ? { ...finding, kind: 'rewritten' }
       : finding,
   );
@@ -33,9 +34,14 @@ interface Context {
   readonly sides: MergeSides;
   readonly toResult: SideChanges;
   readonly known: ReadonlySet<string>;
+  /** The lines the kit wrote, `<file>#<hash>`: not the merge's own. */
+  readonly kitWritten: ReadonlySet<string>;
 }
 
-function isReplacedByOwnLines({ file, line, side }: MergeFinding, { sides, toResult, known }: Context): boolean {
+function isReplacedByOwnLines(
+  { file, line, side }: MergeFinding,
+  { sides, toResult, known, kitWritten }: Context,
+): boolean {
   const hunk = (toResult[side === 'theirs' ? 'theirs' : 'ours'].get(file) ?? []).find(
     (candidate) => line >= candidate.oldStart && line < candidate.oldStart + candidate.oldCount,
   );
@@ -48,7 +54,9 @@ function isReplacedByOwnLines({ file, line, side }: MergeFinding, { sides, toRes
     .split('\n')
     .slice(hunk.newStart - 1, hunk.newStart - 1 + hunk.newCount);
 
-  return normalizedLines(written.join('\n')).some(({ text }) => !known.has(text));
+  return normalizedLines(written.join('\n')).some(
+    ({ text }) => !known.has(text) && !kitWritten.has(lineKey(file, text)),
+  );
 }
 
 function isInPlace({ oldCount, newCount }: Hunk): boolean {

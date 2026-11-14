@@ -1,8 +1,14 @@
 import type { RenderContext } from '../../templating';
+import { workspaceSources } from './same-name/workspace-sources';
 import { renderTemplate, templateExists } from '../../templating';
 import { applyWiring } from '../apply-wiring';
 import type { Scope } from '../scope';
 import { CliError } from '../../cli-error';
+import { isSourceOfContext } from '../../migration';
+import { listedEntity } from './same-name/listed-entity';
+import { readTablesFile } from './same-name/read-tables-file';
+import { settleSameNames } from './same-name/settle-same-names';
+import { tablesConstants } from './same-name/tables-constants';
 import { TABLES_FILES } from './tables-files';
 import {
   keepsSinglePrismaSchema,
@@ -19,6 +25,8 @@ import {
 export interface DeclaredTable {
   /** The name of the table in the database. */
   readonly table: string;
+  /** The constant the tables file exports it under, on the ORM that have one: the Drizzle table, the TypeORM entity. */
+  readonly constant: string;
   /** The folder of the templates that write it, per ORM; a file it does not hold is the one of `repository`. */
   readonly templates: string;
   /** How to change a table already declared, since the generator declares it once; `<file>`, `<context>` and `<table>` are filled in. */
@@ -53,13 +61,95 @@ export function declareTable(scope: Scope, context: RenderContext, declared: Dec
     scope.ws.create(tables, renderTemplate(template('schema.ts.tpl'), context));
   }
 
+  const held = heldBefore(scope, { tables, constant: declared.constant });
+
   declareOnce(scope, { file: tables, declared }, renderTemplate(template('table.tpl'), context));
 
-  applyWiring(
-    scope.ws,
-    `${scope.config.platformDir}/database/schema.ts`,
-    renderTemplate(template('schema-export.tpl'), context),
-  );
+  listInIndex(scope, context, { ...declared, brought: held ? [] : [declared.constant] });
+}
+
+/**
+ * Whether the tables file of the context exported the constant before this command: read, never a
+ * word of its text. A context that held it is no newcomer to its name. One that exports it from
+ * another file, a module it re-exports, is refused: the declaration this command would write
+ * would take the name from the table that bears it, which would be in no migration any more.
+ */
+function heldBefore(
+  { ws, config, context }: Scope,
+  { tables, constant }: { tables: string; constant: string },
+): boolean {
+  const { symbols } = readTablesFile(workspaceSources(ws, config), tables);
+
+  const held = symbols.find(({ name, kind }) => kind === 'value' && name === constant);
+  const [from = ''] = held?.origin.split('#') ?? [];
+
+  if (held !== undefined && from !== tables) {
+    throw new CliError(
+      `${tables} already exports \`${constant}\`, from ${from}: a table of that name declared in the tables file of ${context.kebab} would take its place, and the one that bears it would be listed nowhere.`,
+      `Give the aggregate or the read model another name, or rename \`${constant}\` in ${from}.`,
+    );
+  }
+
+  return held !== undefined;
+}
+
+/**
+ * The tables file joins the schema index, which is all the migration tooling reads. A table of the
+ * same name in another context is listed beside it, under a name of the index that carries its
+ * context: the index would not compile otherwise, and one of the two tables would never be created.
+ */
+function listInIndex(scope: Scope, context: RenderContext, declared: Listed): void {
+  const { config, ws } = scope;
+  const index = `${config.platformDir}/database/schema.ts`;
+
+  const listed = listedEntity(ws.read(index) ?? '', {
+    context: scope.context,
+    constant: declared.constant,
+    reserved: tablesConstants(ws, config),
+    isOfItsContext: (source) => isSourceOfContext(config, { from: index, source, context: scope.context.kebab }),
+  });
+
+  const wiring = renderTemplate(`repository/${config.stack.orm}/schema-export.tpl`, {
+    ...context,
+    listed: { ...listed },
+  });
+
+  applyWiring(ws, index, wiring);
+
+  const said = namesSettled(scope, { declared, local: listed.local, wiring });
+
+  // What the command ends with is compared with what the index gave, once, when every generator has run (`keepThePicture`).
+  said.forEach((note) => {
+    ws.note(note);
+  });
+}
+
+/** A table to list in the index, with the names its command brings to its context. */
+interface Listed extends DeclaredTable {
+  readonly brought: readonly string[];
+}
+
+/** What the index says of the name it gives the table, once the names it shares with another are settled. */
+function namesSettled(
+  { config, ws, context }: Scope,
+  { declared, local, wiring }: { declared: Listed; local: string; wiring: string },
+): string[] {
+  const index = `${config.platformDir}/database/schema.ts`;
+
+  if (config.stack.orm === 'typeorm' && local !== declared.constant) {
+    return [
+      `${index} lists the entity \`${declared.constant}\` of ${context.kebab} as \`${local}\`: the index already holds the name \`${declared.constant}\`. The tables file and what reads it keep that name.`,
+    ];
+  }
+
+  return config.stack.orm === 'drizzle'
+    ? settleSameNames(ws, config, {
+        newcomers: [context.kebab],
+        brought: declared.brought,
+        // The line as the index holds it: written at the path of the module that holds the tables file.
+        stars: (wiring.match(/^export \* from .*$/gm) ?? []).map((line) => ws.withImports(index, line)),
+      })
+    : [];
 }
 
 /** The template of the kind that declares the table, or the one a repository starts the same file with. */

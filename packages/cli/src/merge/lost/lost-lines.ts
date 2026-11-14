@@ -1,4 +1,5 @@
 import { expectedOver } from './expected-over';
+import { lineKey } from './line-key';
 import { LineCounts } from './line-counts';
 import type { MergeFinding } from './merge-finding';
 import type { MergeSides } from './merge-sides';
@@ -22,7 +23,7 @@ interface Counted {
  * by the merge otherwise. Lines both sides lost in a file the merge wrote lines of its own in are
  * a hunk the merge rewrote: a warning, not an error.
  */
-export function lostLines(sides: MergeSides): MergeFinding[] {
+export function lostLines(sides: MergeSides, kitWritten: ReadonlySet<string> = new Set()): MergeFinding[] {
   const counted: Counted = {
     base: LineCounts.of(sides.base),
     ours: LineCounts.of(sides.ours),
@@ -33,7 +34,12 @@ export function lostLines(sides: MergeSides): MergeFinding[] {
 
   const texts = new Set([...counted.base.texts(), ...counted.ours.texts(), ...counted.theirs.texts()]);
   const findings = [...texts].flatMap((text) => findingsOf(text, counted));
-  const written = new Set([...counted.result.texts()].flatMap((text) => writtenIn(text, counted)));
+
+  const written = new Set(
+    [...counted.result.texts()].flatMap((text) =>
+      writtenIn(text, counted).filter((file) => !kitWritten.has(lineKey(file, text))),
+    ),
+  );
 
   return findings.map(
     (finding): MergeFinding => (isRewritten(finding, findings, written) ? { ...finding, kind: 'rewritten' } : finding),

@@ -315,7 +315,10 @@ So in a session under the regulated profile the agent writes the schema and the 
 
 When `DATABASE_URL` is set and its server does not answer (unset it to generate on the in-process database), `prisma-generate` and `typeorm-generate`
 stop before the tool, exit 3 (the code of what a session cannot do here) and say it, instead of a
-raw connection error; the command is then handed to the owner as it stands.
+raw connection error; the command is then handed to the owner as it stands. `generate` and
+`init --force` exit 3 too when they leave the schema index as it stood (the report lists it under
+`left`): no sandbox is in the way there, the note says which table would be lost, which name
+would move or which line the kit cannot read, and what to write or move by hand, and that is handed to a person as well.
 
 #### The empty files the sandbox leaves
 

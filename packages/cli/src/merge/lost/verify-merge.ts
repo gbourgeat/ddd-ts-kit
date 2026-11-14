@@ -9,6 +9,7 @@ import { isGeneratedText } from './is-generated-text';
 import { isLineChecked } from './is-line-checked';
 import { keptRows } from './kept-rows';
 import { lineFindings, type MergeChanges } from './line-findings';
+import { lineKey } from './line-key';
 import { lostMigrations } from './lost-migrations';
 import { lostTests } from './lost-tests';
 import type { MergeCheck } from './merge-check';
@@ -67,7 +68,7 @@ function findingsAt(
   const slices = `${repo.prefix}${SLICES_FILE}`;
 
   const findings = [
-    ...lineFindings(linesOf(sides, repo), changesOf(repo.top, merge, at.result)),
+    ...lineFindings(linesOf(sides, repo), changesOf(repo.top, merge, at.result), new Set(merge.kitWritten ?? [])),
     ...keptRows(sides, slices, forked.get(slices)),
     ...lostTests(sides),
     ...deletedSpecs(sides),
@@ -132,6 +133,12 @@ function keyOf({ kind, file, line, text }: MergeFinding): string {
   return `${kind === 'rewritten' || kind === 'superseded' ? 'lost-line' : kind}|${file}|${line}|${text}`;
 }
 
-function isAccepted({ file, line }: MergeFinding, entries: readonly string[]): boolean {
-  return entries.some((entry) => entry === file || entry === `${file}:${line}`);
+/**
+ * Whether a trailer names the finding: by its file, or `file:line`, as a person or an earlier
+ * version writes it; or by the file, the side and the text of the line, `file@side#hash`, as the
+ * kit writes the lines it takes out, so that a loss of the other side at the same line is never
+ * accepted for it.
+ */
+function isAccepted({ file, line, side, text }: MergeFinding, entries: readonly string[]): boolean {
+  return entries.some((entry) => entry === file || entry === `${file}:${line}` || entry === lineKey(file, text, side));
 }

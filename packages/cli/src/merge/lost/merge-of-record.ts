@@ -44,5 +44,6 @@ export function mergeOfRecord(top: string, record: MergeRecord, options: MergeOp
     ours,
     theirs,
     accepted: record.accepted,
+    kitWritten: record.kitWritten,
   };
 }

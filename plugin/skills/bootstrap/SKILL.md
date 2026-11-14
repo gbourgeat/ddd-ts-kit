@@ -74,7 +74,10 @@ with `unwritable` means "hand `init` to the owner", not a failure to retry or to
 the dry run, show the owner the same command without `--dry-run` and `--json`, to run from a
 terminal outside the sandbox, and wait for their word that it ran; resume at `pnpm install`. An
 `init` run in the sandbox anyway exits 3 too, after writing every other file, and ends with a
-note that gives the command to finish: hand it to the owner the same way.
+note that gives the command to finish: hand it to the owner the same way. Exit 3 with
+`src/platform/database/schema.ts` under `left` is another case: `init --force` left the schema
+index as it stood because its rewrite would lose a table, move a name, or drop a line it cannot read; no sandbox is involved,
+and the note says what to move by hand. Hand that note to a person too, never retry around it.
 
 Under `--agent-profile regulated`, the first `pnpm install` is the owner's too, from the same
 terminal outside the agent, right after `init`; resume at `pnpm run verify`. The sandbox makes no

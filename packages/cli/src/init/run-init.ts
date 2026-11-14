@@ -9,8 +9,9 @@ import { keptWiring } from './kept-wiring';
 import type { OrphanedWiring } from './orphaned-wiring-notes';
 import { rewireContexts } from './rewire-contexts';
 import { stackBefore } from './stack-before';
+import { endOfTheIndex } from './end-of-the-index';
 import { wiringNotes } from './wiring-notes';
-import { formatJson } from '../json/format-json';
+import { laidOut } from './laid-out';
 import { toName } from '../naming';
 import { ignoreCodeTypesWhereTheyAre } from '../knip';
 import { inDialect } from '../package-manager/in-dialect';
@@ -112,7 +113,7 @@ export function runInit(root: string, options: InitOptions, disk: DiskWrites = f
   writeContracts(ws, { config: withContexts, projectName, presetApplied: (options.presets ?? []).length > 0 });
   setUpSdk(ws, withContexts);
 
-  wiringNotes(ws, rewired, orphaned).forEach((note) => ws.note(note));
+  endOfTheIndex(ws, withContexts, wiringNotes(ws, rewired, orphaned));
 
   const report = ws.commit(options.dryRun);
 
@@ -339,11 +340,4 @@ function keptPrismaFiles(ws: Workspace, config: Config): readonly string[] {
   );
 
   return [PRISMA_MAIN_SCHEMA, 'prisma.config.ts'];
-}
-
-/** The lists of knip.json depend on the stack: they are laid out as the formatter of the project would, whatever their length. */
-function laidOut(json: string): string {
-  const value: unknown = JSON.parse(json);
-
-  return formatJson(value);
 }

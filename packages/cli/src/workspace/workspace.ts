@@ -11,7 +11,8 @@ import type { TodoPlace } from './todo-place';
 import { todosIn } from './todos-in';
 import { isFileOrAbsent } from './is-file-or-absent';
 import { namesOnDisk } from './names-on-disk';
-import { pruneEmptied } from './prune-emptied';
+import { locatedStep } from './located-step';
+import { removeFile } from './remove-file';
 import { refuseLeaving } from './refuse-leaving';
 import { refuseUnheld } from './refuse-unheld';
 import { writtenOf } from './written-of';
@@ -46,6 +47,9 @@ export class Workspace {
 
   /** Files on disk this command removes: no longer derived from anything. */
   private readonly removed = new Set<string>();
+
+  /** Files this command leaves as they stood: what it would have written is said, to write by hand. */
+  private readonly left = new Set<string>();
 
   private readonly steps: NextStep[] = [];
 
@@ -194,6 +198,15 @@ export class Workspace {
     this.pending.set(file, { content, existed: fs.existsSync(this.absolute(file)) });
   }
 
+  /** Puts a file back as it stood before the command, which does not write it: reported as left, like one it could not write. */
+  leave(asked: string, stood: string): void {
+    const file = this.placed(asked, true);
+
+    this.pending.delete(file);
+    this.update(asked, stood);
+    this.left.add(file);
+  }
+
   /**
    * Writes a file as it is, no dialect of the package manager and no import rewrite applied:
    * what a move carries from one place to another, which must lose nothing of the text.
@@ -308,10 +321,10 @@ export class Workspace {
       .flatMap(({ file, content }) => todosIn(file, content));
 
     const markers = left.map(({ file, line, text }): TodoPlace => ({ file, line, gist: gistOf(text) }));
-    const todos = [...markers, ...this.steps.map((step) => this.located(step))];
+    const todos = [...markers, ...this.steps.map((step) => locatedStep(this.read(step.file) ?? '', step))];
 
     if (!dryRun) {
-      deleted.forEach((file) => this.remove(file));
+      deleted.forEach((file) => removeFile(this.root, file, this.pruning));
     }
 
     // The language comes before the code: its definition is the first thing to do.
@@ -319,29 +332,15 @@ export class Workspace {
 
     return {
       created: written.filter(({ existed }) => !existed).map(({ file }) => file),
-      updated: written.filter(({ existed }) => existed).map(({ file }) => file),
+      updated: written.filter(({ existed, file }) => existed && !this.left.has(file)).map(({ file }) => file),
       deleted,
-      skipped: [...new Set([...this.skipped, ...unwritable])].sort(),
+      skipped: [...new Set([...this.skipped, ...unwritable, ...this.left])].sort(),
       kept: [...this.kept].sort(),
       unwritable,
+      left: [...this.left].sort(),
       todos,
       notes: this.notes.map((note) => this.spoken(note)),
     };
-  }
-
-  private remove(file: string): void {
-    fs.rmSync(this.absolute(file), { force: true });
-
-    if (this.pruning) {
-      pruneEmptied(this.root, path.posix.dirname(file));
-    }
-  }
-
-  /** A step, with its whole sentence: it is written in no file. */
-  private located({ file, anchor, text }: NextStep): TodoPlace {
-    const at = (this.read(file) ?? '').split('\n').findIndex((line) => line.includes(anchor));
-
-    return { file, line: Math.max(at, 0) + 1, gist: gistOf(text), text };
   }
 
   private absolute(file: string): string {

@@ -16,3 +16,5 @@ dist
 /plugin/evals/results/
 # The cache of ESLint and the key it was written for (pipeline/monorepo/lint.mjs).
 .eslintcache/
+# The copies of generated schema indexes a spec of the CLI loads (test/support/index-tables.ts), removed when it ends.
+/packages/cli/test/.loaded-index/

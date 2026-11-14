@@ -8,5 +8,10 @@ const AGGREGATE_TABLE =
 
 /** The table or model of the aggregate, declared where the migration tooling of the ORM reads it. */
 export function declareStorage(scope: Scope, aggregate: Name, context: RenderContext): void {
-  declareTable(scope, context, { table: aggregate.table, templates: 'repository', changedBy: AGGREGATE_TABLE });
+  declareTable(scope, context, {
+    table: aggregate.table,
+    constant: aggregate.tableCamel,
+    templates: 'repository',
+    changedBy: AGGREGATE_TABLE,
+  });
 }

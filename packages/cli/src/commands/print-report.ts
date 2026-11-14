@@ -58,6 +58,10 @@ function skippedBecause(report: WorkspaceReport, file: string): string {
     return 'cannot be written here: a sandbox or the permissions protect the path';
   }
 
+  if (report.left?.includes(file) === true) {
+    return 'left as it stood: the note below says why';
+  }
+
   // A file of the team: --force does not replace it either.
   return report.kept.includes(file)
     ? 'exists, kept (yours since the first init)'

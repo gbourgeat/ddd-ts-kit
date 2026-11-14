@@ -5,6 +5,8 @@ export { primaryKeyOrderFindings } from './primary-key-order-findings';
 export { replayDrizzleMigrations } from './replay-drizzle-migrations';
 export { tidyWrittenMigration } from './tidy-written-migration';
 export { listedInIndex } from './listed-in-index';
+export { namedBindingsOf } from './named-bindings-of';
+export { isSourceOfContext } from './is-source-of-context';
 export { warnDroppedContextTables } from './warn-dropped-context-tables';
 export { appendAuditGuard } from './audit-guard/append-audit-guard';
 export { auditGuardStatementsOf } from './audit-guard/audit-guard-statements-of';
